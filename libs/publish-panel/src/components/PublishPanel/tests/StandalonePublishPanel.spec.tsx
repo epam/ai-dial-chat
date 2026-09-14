@@ -4,8 +4,14 @@ import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { StandalonePublishPanel } from '../StandalonePublishPanel';
 
+/* Records what the shell forwarded, so prop pass-through is assertable without rendering the real body. */
+const publishPanelProps = vi.fn();
+
 vi.mock('../PublishPanel', () => ({
-  PublishPanel: () => <span>Publish panel body</span>,
+  PublishPanel: (props: Record<string, unknown>) => {
+    publishPanelProps(props);
+    return <span>Publish panel body</span>;
+  },
 }));
 
 vi.mock('../PublishFooter', () => ({
@@ -37,6 +43,8 @@ const renderPanel = (
       hasExistingPublicationInFolder={false}
       hasWriteAccess
       isSubmitting={false}
+      author=""
+      onAuthorChange={vi.fn()}
       rules={[]}
       onRulesChange={vi.fn()}
       ruleSourceOptions={[]}
@@ -219,5 +227,13 @@ describe('StandalonePublishPanel', () => {
     const dialog = screen.getByRole('dialog', { hidden: true });
     expect(dialog.hasAttribute('inert')).toBe(true);
     expect(dialog.getAttribute('aria-hidden')).toBe('true');
+  });
+  it('forwards the author props through to the inner publish panel unmodified', () => {
+    const onAuthorChange = vi.fn();
+    renderPanel({ author: 'DIAL Team', onAuthorChange });
+
+    expect(publishPanelProps).toHaveBeenCalledWith(
+      expect.objectContaining({ author: 'DIAL Team', onAuthorChange }),
+    );
   });
 });

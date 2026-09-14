@@ -34,6 +34,7 @@ export {
 } from '../conversation/useConversationHandlers/message-utils';
 export {
   getStarterConversationText,
+  getStarterDisplayText,
   getStarterSubmitText,
 } from '../conversation/useConversationHandlers/starter-option';
 export * from '../conversation/useConversationHandlers/useConversationHandlers';

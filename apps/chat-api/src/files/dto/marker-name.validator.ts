@@ -1,4 +1,5 @@
 import { registerDecorator, type ValidationOptions } from 'class-validator';
+import { StringUtils } from '../../common/utils/string-utils';
 import { MARKER_NAME } from '../files.constants';
 
 /**
@@ -29,7 +30,7 @@ export const IsNotReservedMarkerName = (
 };
 
 const getLastPathSegment = (value: string): string => {
-  const withoutTrailingSlashes = value.replace(/\/+$/, '');
+  const withoutTrailingSlashes = StringUtils.stripTrailingSlashes(value);
   const lastSlashIndex = withoutTrailingSlashes.lastIndexOf('/');
   return lastSlashIndex === -1
     ? withoutTrailingSlashes

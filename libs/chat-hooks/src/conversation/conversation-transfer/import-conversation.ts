@@ -5,11 +5,14 @@ import {
   truncateToUtf8Bytes,
 } from '@epam/ai-dial-chat-shared';
 import type {
+  Annotation,
   Conversation,
   ExportFolder,
   ExportFormat,
+  Stage,
 } from '@epam/ai-dial-chat-shared';
-import { collectAttachmentRefs } from './attachment-refs';
+import { collectAttachmentRefs, splitFileIdAnchor } from './attachment-refs';
+import type { AttachmentReference } from './attachment-refs';
 import type {
   AllocatedUploadPath,
   UploadPathAllocator,
@@ -281,10 +284,94 @@ export interface RewrittenAttachmentTarget {
 }
 
 /**
- * Rewrites every message's attachment `url`/`reference_url` referencing an
- * old file id to its new uploaded location, and its `title` when the target
- * carries a renamed one. Attachments not present in `targetMap` are left
- * untouched (immutable — returns a new conversation).
+ * Resolves one reference against `targetMap`, matching on the file id alone
+ * and carrying any `#…` anchor (e.g. a citation's `#page=3`) over to the new
+ * location, so an imported citation still opens the page it cited.
+ */
+const resolveRewrittenTarget = (
+  url: string | undefined,
+  targetMap: Map<string, RewrittenAttachmentTarget>,
+): RewrittenAttachmentTarget | undefined => {
+  if (!url) return undefined;
+  const { fileId, anchor } = splitFileIdAnchor(url);
+  const target = targetMap.get(fileId);
+  if (target == null) return undefined;
+  return { ...target, url: `${target.url}${anchor}` };
+};
+
+/**
+ * Returns the `url`/`reference_url`/`title` fields to overwrite on one
+ * attachment, or `undefined` when neither of its references was uploaded.
+ * Returning a patch rather than a whole attachment keeps the caller's own
+ * shape (a `MessageAttachment` or a citation's `AttachmentResource`) intact.
+ */
+const buildAttachmentPatch = (
+  attachment: AttachmentReference,
+  targetMap: Map<string, RewrittenAttachmentTarget>,
+): AttachmentReference | undefined => {
+  const urlTarget = resolveRewrittenTarget(attachment.url, targetMap);
+  const referenceTarget = resolveRewrittenTarget(
+    attachment.reference_url,
+    targetMap,
+  );
+  if (urlTarget == null && referenceTarget == null) return undefined;
+
+  const newTitle = urlTarget?.title ?? referenceTarget?.title;
+  return {
+    ...(urlTarget != null ? { url: urlTarget.url } : {}),
+    ...(referenceTarget != null ? { reference_url: referenceTarget.url } : {}),
+    ...(newTitle != null ? { title: newTitle } : {}),
+  };
+};
+
+/** Rewrites the attachments an agent produced inside each execution stage. */
+const rewriteStages = (
+  stages: Stage[],
+  targetMap: Map<string, RewrittenAttachmentTarget>,
+): Stage[] =>
+  stages.map((stage) =>
+    stage.attachments?.length
+      ? {
+          ...stage,
+          attachments: stage.attachments.map((attachment) => {
+            const patch = buildAttachmentPatch(attachment, targetMap);
+            return patch ? { ...attachment, ...patch } : attachment;
+          }),
+        }
+      : stage,
+  );
+
+/** Rewrites the source document each citation points at. */
+const rewriteAnnotations = (
+  annotations: Annotation[],
+  targetMap: Map<string, RewrittenAttachmentTarget>,
+): Annotation[] =>
+  annotations.map((annotation) => {
+    const source = annotation.body?.source;
+    if (source?.attachment == null) return annotation;
+
+    const patch = buildAttachmentPatch(source.attachment, targetMap);
+    if (patch == null) return annotation;
+
+    return {
+      ...annotation,
+      body: {
+        ...annotation.body,
+        source: {
+          ...source,
+          attachment: { ...source.attachment, ...patch },
+        },
+      },
+    };
+  });
+
+/**
+ * Rewrites every attachment reference a message carries — its own
+ * `custom_content.attachments`, the attachments of each execution stage, and
+ * the source document of each citation — from an old file id to its new
+ * uploaded location, and its `title` when the target carries a renamed one.
+ * References not present in `targetMap` are left untouched (immutable —
+ * returns a new conversation).
  */
 export const rewriteAttachmentUrls = (
   conversation: Conversation,
@@ -292,32 +379,30 @@ export const rewriteAttachmentUrls = (
 ): Conversation => ({
   ...conversation,
   messages: conversation.messages.map((message) => {
-    const attachments = message.custom_content?.attachments;
-    if (!attachments?.length) return message;
+    const customContent = message.custom_content;
+    if (!customContent) return message;
+
+    const { attachments, stages, annotations } = customContent;
+    if (!attachments?.length && !stages?.length && !annotations?.length) {
+      return message;
+    }
 
     return {
       ...message,
       custom_content: {
-        ...message.custom_content,
-        attachments: attachments.map((attachment) => {
-          const urlTarget = attachment.url
-            ? targetMap.get(attachment.url)
-            : undefined;
-          const referenceTarget = attachment.reference_url
-            ? targetMap.get(attachment.reference_url)
-            : undefined;
-          if (urlTarget == null && referenceTarget == null) return attachment;
-
-          const newTitle = urlTarget?.title ?? referenceTarget?.title;
-          return {
-            ...attachment,
-            ...(urlTarget != null ? { url: urlTarget.url } : {}),
-            ...(referenceTarget != null
-              ? { reference_url: referenceTarget.url }
-              : {}),
-            ...(newTitle != null ? { title: newTitle } : {}),
-          };
-        }),
+        ...customContent,
+        ...(attachments?.length
+          ? {
+              attachments: attachments.map((attachment) => {
+                const patch = buildAttachmentPatch(attachment, targetMap);
+                return patch ? { ...attachment, ...patch } : attachment;
+              }),
+            }
+          : {}),
+        ...(stages?.length ? { stages: rewriteStages(stages, targetMap) } : {}),
+        ...(annotations?.length
+          ? { annotations: rewriteAnnotations(annotations, targetMap) }
+          : {}),
       },
     };
   }),

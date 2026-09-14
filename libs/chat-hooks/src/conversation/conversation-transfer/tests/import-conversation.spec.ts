@@ -497,6 +497,29 @@ describe('rewriteAttachmentUrls', () => {
     );
   });
 
+  it('does not carry an unparseable anchor onto the rewritten reference', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage(
+          'files/old-bucket/reports/q1.pdf#"><script>',
+          'q1.pdf',
+        ),
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/reports/q1.pdf',
+        { url: 'files/new-bucket/uploads/2026-07/q1.pdf' },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(result.messages[0].custom_content?.attachments?.[0].url).toBe(
+      'files/new-bucket/uploads/2026-07/q1.pdf',
+    );
+  });
+
   it('leaves unmatched attachment references untouched', () => {
     const conversation = makeConversation({
       messages: [
@@ -516,6 +539,92 @@ describe('rewriteAttachmentUrls', () => {
     expect(result.messages[0].custom_content?.attachments?.[0].url).toBe(
       'files/bucket/unmapped.png',
     );
+  });
+
+  it('rewrites a file an agent produced inside an execution stage', () => {
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: '',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            stages: [
+              {
+                index: 0,
+                name: 'Generate report',
+                status: null,
+                attachments: [
+                  {
+                    title: 'chart.png',
+                    url: 'files/app-bucket/appdata/chart.png',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/app-bucket/appdata/chart.png',
+        { url: 'files/new-bucket/uploads/2026-07/chart.png' },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(
+      result.messages[0].custom_content?.stages?.[0].attachments?.[0].url,
+    ).toBe('files/new-bucket/uploads/2026-07/chart.png');
+  });
+
+  it("rewrites a citation's source document and keeps its page anchor", () => {
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: '',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            annotations: [
+              {
+                body: {
+                  source: {
+                    type: 'attachment' as const,
+                    attachment: {
+                      type: 'application/pdf',
+                      url: 'files/old-bucket/sources/spec.pdf#page=7',
+                      title: 'spec.pdf',
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/sources/spec.pdf',
+        {
+          url: 'files/new-bucket/uploads/2026-07/spec (1).pdf',
+          title: 'spec (1).pdf',
+        },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+
+    expect(
+      result.messages[0].custom_content?.annotations?.[0].body?.source
+        ?.attachment,
+    ).toMatchObject({
+      url: 'files/new-bucket/uploads/2026-07/spec (1).pdf#page=7',
+      title: 'spec (1).pdf',
+    });
   });
 
   it('leaves messages without attachments untouched', () => {
@@ -632,6 +741,46 @@ describe('planAttachmentUploads', () => {
 
     expect(skippedNames).toEqual(['missing.pdf']);
     expect(plan.map((item) => item.allocated.fileName)).toEqual(['q1.pdf']);
+  });
+
+  it('plans an upload for a file referenced only from an execution stage', () => {
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: '',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            stages: [
+              {
+                index: 0,
+                name: 'Generate report',
+                status: null,
+                attachments: [
+                  {
+                    title: 'chart.png',
+                    url: 'files/app-bucket/appdata/chart.png',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const attachmentBytes = new Map([
+      ['appdata/chart.png', new Uint8Array([1])],
+    ]);
+    const allocator = createUploadPathAllocator({ date });
+
+    const { plan, skippedNames } = planAttachmentUploads(
+      conversation,
+      attachmentBytes,
+      allocator,
+    );
+
+    expect(skippedNames).toEqual([]);
+    expect(plan.map((item) => item.allocated.fileName)).toEqual(['chart.png']);
   });
 
   it('suffixes a name already present in a pre-filled allocator', () => {

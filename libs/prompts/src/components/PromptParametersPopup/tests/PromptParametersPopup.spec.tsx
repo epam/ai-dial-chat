@@ -5,21 +5,32 @@ import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PromptParametersPopup } from '../PromptParametersPopup';
 
+const popup = (
+  props?: Partial<ComponentProps<typeof PromptParametersPopup>>,
+) => (
+  <PromptParametersPopup
+    open
+    promptName="Summarizer"
+    content="Summarize {{text}} in {{tone}} tone."
+    parameters={[{ name: 'text' }, { name: 'tone' }]}
+    onClose={vi.fn()}
+    onCancel={vi.fn()}
+    onSubmit={vi.fn()}
+    {...props}
+  />
+);
+
+/** The popup as it is rendered for `content`, with parameters read out of it. */
+const popupFor = (content: string) =>
+  popup({ content, parameters: extractPromptParams(content) });
+
+const fieldValue = (name: string) =>
+  screen.getByRole<HTMLTextAreaElement>('textbox', { name }).value;
+
 const renderPopup = async (
   props?: Partial<ComponentProps<typeof PromptParametersPopup>>,
 ) => {
-  const view = render(
-    <PromptParametersPopup
-      open
-      promptName="Summarizer"
-      content="Summarize {{text}} in {{tone}} tone."
-      parameters={['text', 'tone']}
-      onClose={vi.fn()}
-      onCancel={vi.fn()}
-      onSubmit={vi.fn()}
-      {...props}
-    />,
-  );
+  const view = render(popup(props));
 
   /*
    * The Popup's FloatingFocusManager moves focus to the dialog container in a
@@ -99,6 +110,88 @@ describe('PromptParametersPopup', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm' }));
 
     expect(onSubmit).toHaveBeenCalledWith({ text: 'hello', tone: 'formal' });
+  });
+
+  it('opens a defaulted field holding its default value', async () => {
+    const content = 'Translate into {{language|Spanish}} for {{audience}}.';
+    await renderPopup({ content, parameters: extractPromptParams(content) });
+
+    expect(fieldValue('language')).toBe('Spanish');
+    expect(fieldValue('audience')).toBe('');
+  });
+
+  it('labels a defaulted field with the name alone, without the separator', async () => {
+    const content = 'Translate into {{language|Spanish}}.';
+    await renderPopup({ content, parameters: extractPromptParams(content) });
+
+    expect(
+      screen.queryByRole('textbox', { name: 'language|Spanish' }),
+    ).toBeNull();
+    expect(screen.getByRole('textbox', { name: 'language' })).toBeTruthy();
+  });
+
+  it('enables Submit with no typing when every parameter carries a default', async () => {
+    const content = 'Reply in {{language|Spanish}} in a {{tone|formal}} tone.';
+    await renderPopup({ content, parameters: extractPromptParams(content) });
+
+    expect(
+      screen.getByRole('button', { name: 'Confirm' }).hasAttribute('disabled'),
+    ).toBe(false);
+  });
+
+  it('submits the default when a defaulted field is left untouched', async () => {
+    const content = 'Translate into {{language|Spanish}}.';
+    const onSubmit = vi.fn();
+    await renderPopup({
+      content,
+      parameters: extractPromptParams(content),
+      onSubmit,
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    expect(onSubmit).toHaveBeenCalledWith({ language: 'Spanish' });
+  });
+
+  it('submits the edited value rather than the default when the field is changed', async () => {
+    const user = userEvent.setup();
+    const content = 'Translate into {{language|Spanish}}.';
+    const onSubmit = vi.fn();
+    await renderPopup({
+      content,
+      parameters: extractPromptParams(content),
+      onSubmit,
+    });
+
+    await user.clear(screen.getByRole('textbox', { name: 'language' }));
+    await user.type(
+      screen.getByRole('textbox', { name: 'language' }),
+      'German',
+    );
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    expect(onSubmit).toHaveBeenCalledWith({ language: 'German' });
+  });
+
+  it('offers the default again when the same prompt comes back after another', async () => {
+    const user = userEvent.setup();
+    const translate = 'Translate into {{language|Spanish}}.';
+    const summarize = 'Summarize {{text}}.';
+    const { rerender } = await renderPopup({
+      content: translate,
+      parameters: extractPromptParams(translate),
+    });
+
+    await user.clear(screen.getByRole('textbox', { name: 'language' }));
+    await user.type(
+      screen.getByRole('textbox', { name: 'language' }),
+      'German',
+    );
+
+    rerender(popupFor(summarize));
+    rerender(popupFor(translate));
+
+    expect(fieldValue('language')).toBe('Spanish');
   });
 
   it('calls onCancel when Cancel is clicked', async () => {

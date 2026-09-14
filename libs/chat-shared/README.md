@@ -551,6 +551,9 @@ import {
   sanitizeConversationName,
   stripTrailingDots,
   PROHIBITED_CONVERSATION_NAME_CHARS_RE,
+  extractPromptParams,
+  resolvePromptParams,
+  buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
 
 // Merge conditional class names — the only supported way to compose classes
@@ -606,6 +609,17 @@ stripTrailingDots('My Chat...'); // 'My Chat'
 
 // Regex of the prohibited characters (useful for testing a value before mutating it)
 PROHIBITED_CONVERSATION_NAME_CHARS_RE.test('clean name'); // false
+
+// Read the {{name}} / {{name|defaultValue}} parameters out of a prompt body,
+// distinct and in first-occurrence order
+extractPromptParams('Reply in {{language|Spanish}}, {{tone}} tone.');
+// [{ name: 'language', defaultValue: 'Spanish' }, { name: 'tone' }]
+
+// Seed a form with the defaults, keyed by parameter name
+buildPromptParamDefaults(extractPromptParams(content)); // { language: 'Spanish' }
+
+// Substitute the collected values, falling back to each token's own default
+resolvePromptParams('Reply in {{language|Spanish}}.', {}); // 'Reply in Spanish.'
 ```
 
 ## Constants

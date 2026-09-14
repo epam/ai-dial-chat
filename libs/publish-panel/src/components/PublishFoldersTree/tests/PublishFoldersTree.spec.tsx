@@ -6,6 +6,7 @@ import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PublishFolderNode } from '../../../models/publish';
 import { PublishFoldersTree } from '../PublishFoldersTree';
+import styles from '../PublishFoldersTree.module.scss';
 
 const capturedProps: {
   current: ComponentProps<
@@ -396,6 +397,19 @@ describe('PublishFoldersTree', () => {
         .getByRole('button', { name: 'Create new folder' })
         .hasAttribute('disabled'),
     ).toBe(true);
+  });
+
+  /*
+   * The tree's inline create/rename editor is rendered by DialFoldersTree, and
+   * the kit input inside it renders at its default 40px height, which the 24px
+   * tree row clips. The row-height correction is a CSS rule scoped to the
+   * element wrapping the tree, so the class has to stay on that element.
+   */
+  it('scopes the inline editor row-height rule to the element wrapping the tree', () => {
+    renderTree();
+    expect(screen.getByRole('tree').parentElement?.className).toContain(
+      styles.tree,
+    );
   });
 
   describe('root selection', () => {

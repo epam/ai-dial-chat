@@ -31,6 +31,63 @@ describe('PublishCatalogEntityDto — version', () => {
   });
 });
 
+describe('PublishCatalogEntityDto — author', () => {
+  it('passes when author is omitted', async () => {
+    const errors = await validateDto(BASE_BODY);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts a plain display author', async () => {
+    const errors = await validateDto({ ...BASE_BODY, author: 'DIAL Team' });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts an author at the 200-character limit', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      author: 'a'.repeat(200),
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts an author containing regex metacharacters and non-Latin script', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      author: 'p{Cc} — Команда DIAL (فريق)',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects an author longer than 200 characters', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      author: 'a'.repeat(201),
+    });
+    expect(errors.some((error) => error.property === 'author')).toBe(true);
+  });
+
+  it('rejects a non-string author', async () => {
+    const errors = await validateDto({ ...BASE_BODY, author: 42 });
+    expect(errors.some((error) => error.property === 'author')).toBe(true);
+  });
+
+  it('rejects an author containing a newline', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      author: 'DIAL Team\nInjected log line',
+    });
+    expect(errors.some((error) => error.property === 'author')).toBe(true);
+  });
+
+  it('rejects an author containing a NUL byte', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      author: 'DIAL\u0000Team',
+    });
+    expect(errors.some((error) => error.property === 'author')).toBe(true);
+  });
+});
+
 describe('PublishCatalogEntityDto — rules', () => {
   it('passes when rules is omitted', async () => {
     const errors = await validateDto(BASE_BODY);

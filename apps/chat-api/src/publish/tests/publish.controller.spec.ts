@@ -131,6 +131,78 @@ describe('PublishController (integration)', () => {
       );
     });
 
+    it('forwards a submitted author to the service in place of the session name', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, author: 'DIAL Team' })
+        .expect(201);
+
+      expect(service.publish).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        'toolset',
+        'tool-abc123',
+        'Organization/Data Science',
+        '1.2.0',
+        'DIAL Team',
+        undefined,
+      );
+    });
+
+    it('trims a submitted author before forwarding it', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, author: '  DIAL Team  ' })
+        .expect(201);
+
+      expect(service.publish).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'toolset',
+        'tool-abc123',
+        'Organization/Data Science',
+        '1.2.0',
+        'DIAL Team',
+        undefined,
+      );
+    });
+
+    it('falls back to the session display name when author is blank', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, author: '   ' })
+        .expect(201);
+
+      expect(service.publish).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'toolset',
+        'tool-abc123',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+        undefined,
+      );
+    });
+
+    it('returns 400 when author exceeds the 200-character limit', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, author: 'a'.repeat(201) })
+        .expect(400);
+
+      expect(service.publish).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when author contains a control character', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, author: 'DIAL Team\nInjected log line' })
+        .expect(400);
+
+      expect(service.publish).not.toHaveBeenCalled();
+    });
+
     it('returns 400 for an invalid rule function enum value', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/catalog/toolset/tool-abc123/publish')

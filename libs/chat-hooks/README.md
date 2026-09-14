@@ -145,8 +145,10 @@ const {
 // ./conversation
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks/conversation';
 
-/* Returns the model deployment id from the most recent `model_changed`
-   status message, or null if the conversation never switched models. */
+/* Returns the deployment the conversation was last running on — scanning
+   backwards, a `model_changed` status message's `new_deployment_id` or a
+   message's own `deploymentId`, whichever comes later. Null when the
+   conversation records neither. */
 const newDeploymentId = getLastDeploymentId(conversation.messages);
 ```
 
@@ -711,15 +713,15 @@ const VoiceComposer = ({
 
 **Parameters** (`UseTranscribeAudioParams`):
 
-| Name                      | Type                                                                                                 | Description                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `transcriptionApi`        | `Pick<TranscriptionApi, 'transcribeAudio'>`                                                              | Already-configured generated-client instance used for the ASR-model path.                                          |
-| `filesApi`                | `Pick<FilesApi, 'uploadFile'>`                                                                            | Already-configured generated-client instance used to upload the recording.                                         |
+| Name                       | Type                                                                                                           | Description                                                                                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transcriptionApi`         | `Pick<TranscriptionApi, 'transcribeAudio'>`                                                                    | Already-configured generated-client instance used for the ASR-model path.                                                                                                             |
+| `filesApi`                 | `Pick<FilesApi, 'uploadFile'>`                                                                                 | Already-configured generated-client instance used to upload the recording.                                                                                                            |
 | `transcribeWithDeployment` | `(params: { audioUrl: string; mimeType: string; deployment: string; signal: AbortSignal }) => Promise<string>` | Host-configured call for the selected-deployment path — the generated chat-completions client cannot express that endpoint's request shape, so the host supplies its own raw request. |
-| `bucket`                  | `string \| undefined \| null`                                                                             | DIAL Core bucket the recording is uploaded into.                                                                    |
-| `asrModelId`              | `string`                                                                                                  | Recognizes via `transcriptionApi` when set; otherwise `selectedDeploymentId` is used.                               |
-| `selectedDeploymentId`    | `string \| undefined \| null`                                                                             | Deployment id used for recognition when `asrModelId` is not set.                                                    |
-| `maxSizeBytes`            | `number`                                                                                                  | Recordings larger than this are rejected with `TooLarge` before upload.                                             |
+| `bucket`                   | `string \| undefined \| null`                                                                                  | DIAL Core bucket the recording is uploaded into.                                                                                                                                      |
+| `asrModelId`               | `string`                                                                                                       | Recognizes via `transcriptionApi` when set; otherwise `selectedDeploymentId` is used.                                                                                                 |
+| `selectedDeploymentId`     | `string \| undefined \| null`                                                                                  | Deployment id used for recognition when `asrModelId` is not set.                                                                                                                      |
+| `maxSizeBytes`             | `number`                                                                                                       | Recordings larger than this are rejected with `TooLarge` before upload.                                                                                                               |
 
 **Returns** (`UseTranscribeAudioResult`): `{ transcribeAudio: (file: File, signal: AbortSignal) => Promise<string> }`.
 
@@ -842,16 +844,16 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name             | Type                                | Description                                                                                   |
-| ---------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| `conversationId` | `string \| undefined`               | The currently displayed conversation's id.                                                    |
-| `state`          | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.      |
-| `transport`      | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                       |
-| `generation`     | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership. |
-| `channel`        | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.          |
-| `overlay`        | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.          |
-| `onStopError`    | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                         |
-| `generationConflictMessage` | `string` | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
+| Name                        | Type                                | Description                                                                                                                                                                                                                                     |
+| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                      |
+| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                        |
+| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                         |
+| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                   |
+| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                            |
+| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                            |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                           |
+| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
@@ -946,7 +948,38 @@ one — is the skill state the edit resolved and replaces them (empty means the
 user removed the skill). A skills-only change counts as a change: it re-runs
 the generation even when the text and attachments are untouched.
 
-Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterDisplayText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
+
+The three starter-text helpers share one precedence rule: a starter's own
+`dial:widgetOptions.populateText` always wins, and the schema property's shared
+`description` is only a fallback for a starter that carries no text of its own —
+otherwise every button in a described group would produce the same message.
+`getStarterSubmitText` additionally returns `''` for a submit button whose
+`populateText` is explicitly `null` ("submit no text"), and
+`getStarterDisplayText` falls back to `starter.title` in that case so the user's
+message bubble still shows the button label.
+
+```ts
+import {
+  getStarterDisplayText,
+  getStarterSubmitText,
+} from '@epam/ai-dial-chat-hooks';
+
+const starter = {
+  const: 0,
+  title: 'How does feature X work?',
+  'dial:widgetOptions': {
+    populateText:
+      'How does feature X work, and what are its configuration options?',
+    submit: true,
+    confirmationMessage: null,
+  },
+};
+
+// Both ignore the group description and use the starter's own populateText.
+getStarterSubmitText(starter, 'Follow-Up Questions');
+getStarterDisplayText(starter, 'Follow-Up Questions');
+```
 
 ### useAttachmentValidation
 
@@ -1744,18 +1777,20 @@ import { apSchedulerDayToJsDay } from '@epam/ai-dial-chat-hooks';
 apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
 ```
 
-### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes
+### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes / stripTrailingSlashes
 
-`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment.
+`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment, and `stripTrailingSlashes` strips trailing ones only.
 
 ```ts
 import {
   safeDecodeURI,
   stripSurroundingSlashes,
+  stripTrailingSlashes,
 } from '@epam/ai-dial-chat-hooks';
 
 safeDecodeURI('My%20File.txt'); // 'My File.txt'
 stripSurroundingSlashes('/reports/'); // 'reports'
+stripTrailingSlashes('/reports//'); // '/reports'
 ```
 
 ### isCustomAppSchema / isQuickAppSchema
@@ -2110,7 +2145,7 @@ const statusMessage = createDeploymentChangedMessage('gpt-4', 'gpt-4o');
 
 ### isMessageStreaming / getLastDeploymentId / messageHasStages / getLastUserMessageToolConfiguration / normalizeResponseFormat
 
-Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the last deployment a `model_changed` status message recorded, whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
+Pure predicates/lookups over a conversation's `Message[]`: whether a message is the actively-streaming assistant response, the deployment the conversation was last running on (the later of a `model_changed` status message's `new_deployment_id` and a message's own `deploymentId`), whether a message carries any stages, the last user message's persisted tool-configuration value, and normalizing a legacy `responseFormat` string to the current enum.
 
 ```ts
 import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';

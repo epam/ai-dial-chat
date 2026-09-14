@@ -32,10 +32,7 @@ vi.mock('../auth/UserContext', () => ({
     user: contextMocks.userSub ? { sub: contextMocks.userSub } : null,
   }),
 }));
-vi.mock(
-  '../AppConfigContext',
-  async () => import('./app-config-context-mock'),
-);
+vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
 mockUseAppConfig.mockImplementation(() => ({
   config: {
     defaultDeploymentId: contextMocks.defaultDeploymentId,

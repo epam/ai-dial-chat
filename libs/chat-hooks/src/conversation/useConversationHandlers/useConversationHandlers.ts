@@ -28,7 +28,7 @@ import {
   hasActiveToolConfig,
   shouldRerunGenerationOnEdit,
 } from './message-utils';
-import { getStarterSubmitText } from './starter-option';
+import { getStarterDisplayText, getStarterSubmitText } from './starter-option';
 
 /** The exact `startStream` shape `useConversationStream` returns. */
 export type ConversationStreamStarter = (
@@ -425,7 +425,7 @@ export const useConversationHandlers = ({
     (starter: StarterOption, propertyKey?: string, description?: string) => {
       if (!conversationId || !conversation) return;
 
-      const displayText = description ?? starter.title;
+      const displayText = getStarterDisplayText(starter, description);
       const submitText = getStarterSubmitText(starter, description);
       const configurationValue = propertyKey
         ? { [propertyKey]: starter.const }

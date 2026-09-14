@@ -326,3 +326,38 @@ This SHALL NOT change the existing requirement that `handleCreateConversation`/`
 
 - **WHEN** `ConversationRoute` mounts with no router-state `deploymentId` and `overlay.pendingModelId` is set (awaiting the overlay-pending-model effect in `app.tsx`)
 - **THEN** `restoreDefaultSelection()` is NOT called from `ConversationRoute`'s mount effect
+
+---
+
+### Requirement: Loading a conversation restores the deployment it was last running on
+
+`apps/chat/src/pages/Conversation/Conversation.tsx`'s `loadConversation` SHALL restore the model selector from `getLastDeploymentId(result.messages)` (`libs/chat-hooks/src/conversation/message-utils.ts`), falling back to `result.assistantModelId || result.model.id` only when that returns `null`.
+
+`getLastDeploymentId` SHALL scan the messages backwards and return the first of:
+
+1. a `model_changed` status message's `new_deployment_id`, or
+2. a message's own `deploymentId` (the backend stamps it on every assistant placeholder it creates, see `makeAssistantPlaceholder` in `apps/chat-api/src/conversations/utils/conversation-history-builder.ts`),
+
+whichever appears later in the timeline, and `null` when the conversation records neither.
+
+Both sources are required. The `model_changed` marker is appended at the **end** of the timeline when the user switches models, so a `regenerate` or an `edit` that truncates at an earlier message drops it — and `conversation.model.id` / `assistantModelId` are written once at creation and never updated, so the fallback then reports the conversation's *original* model. Reading only the markers therefore reverted the selector to the pre-switch model after a regenerate and a page refresh, even though the answer on screen had been produced by the newly picked one (issue #8712). The regenerated assistant message's own `deploymentId` survives that truncation because it *is* the regenerated message.
+
+`conversation.model.id` and `assistantModelId` keep their existing meaning — the deployment the conversation *started* on — and remain the seed for per-message icon attribution (`initialModelId`, see `conversation-history-panel`). Neither is rewritten by a completion.
+
+#### Scenario: Regenerating on a newly picked model survives a refresh
+
+- **GIVEN** a conversation created on model A with one answered turn
+- **WHEN** the user switches the selector to model B and regenerates the assistant message, then reloads the page
+- **THEN** the stored history is `[user, assistant(deploymentId: B)]` — the `model_changed` marker having been truncated away — and the selector is restored to B
+
+#### Scenario: A model switch with no message after it is still restored
+
+- **GIVEN** a conversation whose last message is a `model_changed` marker recording a switch to B
+- **WHEN** the conversation is loaded
+- **THEN** the selector is restored to B
+
+#### Scenario: A conversation that records no deployment falls back to its creation model
+
+- **GIVEN** a conversation whose messages carry neither a `model_changed` marker nor any `deploymentId`
+- **WHEN** the conversation is loaded
+- **THEN** the selector is restored to `assistantModelId || model.id`

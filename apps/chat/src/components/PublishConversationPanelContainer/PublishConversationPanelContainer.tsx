@@ -17,6 +17,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { publishConversation } from '../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
@@ -25,6 +26,7 @@ import {
 } from '../../types/entity-notification';
 import {
   getAccessRulesLabels,
+  getPublishAuthorLabels,
   getPublishFolderLabel,
 } from '../../utils/publish';
 
@@ -79,6 +81,8 @@ const PublishConversationPanelContainer: FC<Props> = ({
   const {
     config: { publicationFilterSources },
   } = useAppConfig();
+  /* The publish panel pre-fills its author field with this; the lib cannot read the session itself. */
+  const { displayName } = useUserProfile();
 
   const {
     folderItems,
@@ -98,8 +102,14 @@ const PublishConversationPanelContainer: FC<Props> = ({
     folderItems,
     hasWriteAccess: hasPublishWriteAccess,
     onCreateFolder: onCreatePublishFolder,
-    onPublish: async (_item, folderPath, rules) => {
-      await publishConversation(conversationPath, folderPath.join('/'), rules);
+    defaultAuthor: displayName,
+    onPublish: async (_item, folderPath, rules, author) => {
+      await publishConversation(
+        conversationPath,
+        folderPath.join('/'),
+        rules,
+        author,
+      );
     },
     onPublishSuccess: (_item, folderPath) => {
       rememberPublishFolder(folderPath);
@@ -152,6 +162,8 @@ const PublishConversationPanelContainer: FC<Props> = ({
       isSubmitting={publishFlow.isSubmitting}
       hasSubmitError={publishFlow.hasSubmitError}
       allowReplace={false}
+      author={publishFlow.author}
+      onAuthorChange={publishFlow.setAuthor}
       rules={publishFlow.rules}
       onRulesChange={publishFlow.setRules}
       ruleSourceOptions={publicationFilterSources}
@@ -179,6 +191,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
         submitError: t(PublishI18nKeys.SubmitErrorCallout),
         rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),
+        ...getPublishAuthorLabels(t),
       }}
       labels={{
         title: t(ButtonsI18nKeys.Publish),
