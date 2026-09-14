@@ -16,7 +16,7 @@ describe('MessageActions', () => {
     });
 
     it('does not render Agent action buttons', () => {
-      render(<MessageActions />);
+      render(<MessageActions onEdit={vi.fn()} />);
       expect(
         screen.queryByRole('button', { name: 'Regenerate response' }),
       ).toBeNull();
@@ -81,7 +81,9 @@ describe('MessageActions', () => {
     });
 
     it('does not render User action buttons', () => {
-      render(<MessageActions role={MessageRole.Assistant} />);
+      render(
+        <MessageActions role={MessageRole.Assistant} onRegenerate={vi.fn()} />,
+      );
       expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
       expect(
         screen.queryByRole('button', { name: 'Delete message' }),
@@ -239,20 +241,28 @@ describe('MessageActions', () => {
     });
   });
 
+  it('renders nothing when no action handler is provided', () => {
+    const { container } = render(<MessageActions />);
+    expect(container.firstElementChild).toBeNull();
+    expect(screen.queryByRole('toolbar')).toBeNull();
+  });
+
   it('merges additional className onto the wrapper element', () => {
     const { container } = render(
-      <MessageActions className="my-custom-class" />,
+      <MessageActions onEdit={vi.fn()} className="my-custom-class" />,
     );
     expect(container.firstElementChild?.className).toContain('my-custom-class');
   });
 
   it('hides actions by default (opacity-0)', () => {
-    const { container } = render(<MessageActions />);
+    const { container } = render(<MessageActions onEdit={vi.fn()} />);
     expect(container.firstElementChild?.className).toContain('opacity-0');
   });
 
   it('does not apply opacity-0 when isAlwaysVisible is true', () => {
-    const { container } = render(<MessageActions isAlwaysVisible />);
+    const { container } = render(
+      <MessageActions onEdit={vi.fn()} isAlwaysVisible />,
+    );
     expect(container.firstElementChild?.className).not.toContain('opacity-0');
   });
 });
