@@ -397,6 +397,9 @@ dialAdminTest(
           MenuOptions.unpublish,
           MenuOptions.info,
         ]);
+        await organizationConversations
+          .entityDotsMenu(conversation.name)
+          .click();
       },
     );
 

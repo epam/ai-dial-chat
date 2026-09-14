@@ -88,7 +88,7 @@ dialTest(
           Attachment.sunImageName,
           'visible',
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5673
+        //TODO: the issue is still reproduced https://github.com/epam/ai-dial-chat/issues/5673
         // await fileManagerGridAssertion.assertGridCheckboxByNameState(
         //   Attachment.sunImageName,
         //   CheckboxState.checked,
@@ -202,7 +202,7 @@ dialTest(
           Attachment.sunImageName,
           'visible',
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5673
+        //TODO: the issue is still reproduced https://github.com/epam/ai-dial-chat/issues/5673
         // await fileManagerGridAssertion.assertGridCheckboxByNameState(
         //   Attachment.sunImageName,
         //   CheckboxState.checked,
