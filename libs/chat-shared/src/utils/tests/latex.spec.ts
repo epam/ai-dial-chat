@@ -309,6 +309,17 @@ y$ which spans lines`;
       const expected = 'Total $$T = \\$1,000 + \\$100$$';
       expect(preprocessLaTeX(content)).toBe(expected);
     });
+
+    it('still sees a relation separated from the amount by several spaces', () => {
+      const content = 'Range $0 \t < x$ here';
+      const expected = 'Range $$0 \t < x$$ here';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
+    it('escapes an amount trailed by a long whitespace run in linear time', () => {
+      const tabs = '\t'.repeat(200_000);
+      expect(preprocessLaTeX(`$0${tabs}x`)).toBe(`\\$0${tabs}x`);
+    });
   });
 
   /* Issue #8753, first failure: `remark-math` reads the rest of a line-leading `$$` fence

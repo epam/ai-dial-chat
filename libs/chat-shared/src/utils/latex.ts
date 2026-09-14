@@ -20,9 +20,15 @@ const MATH_SUFFIX_REGEX = /[\^_\\]/y;
  * A relation after the amount: `$0 < x$`, `$0 \le \infty$`. Prose adds and subtracts
  * prices (`$500 + $200 = $850`) but never orders them, so an inequality marks the run
  * as a formula. `=` is deliberately absent — arithmetic prose is full of it.
+ *
+ * The whitespace before the relation is consumed by {@link skipWhitespace} rather
+ * than by a leading `\s*` here: no alternative can start with whitespace, so a
+ * `\s*` left without a matching alternative makes the engine retry from every
+ * offset of the run it just consumed, costing quadratic time on a long run of
+ * spaces or tabs (CodeQL js/polynomial-redos). The index scan is linear.
  */
 const MATH_RELATION_REGEX =
-  /\s*(?:[<>]|\\(?:le|leq|ll|ge|geq|gg|ne|neq|approx|equiv|sim|simeq|cong|in|notin|subset|subseteq|supset|supseteq|to|rightarrow|leftarrow|mapsto|implies|iff)\b)/y;
+  /(?:[<>]|\\(?:le|leq|ll|ge|geq|gg|ne|neq|approx|equiv|sim|simeq|cong|in|notin|subset|subseteq|supset|supseteq|to|rightarrow|leftarrow|mapsto|implies|iff)\b)/y;
 
 /** Converts single-dollar mhchem expressions (`$\ce{...}$`, `$\pu{...}$`) to the double-dollar form KaTeX expects. */
 const escapeMhchem = (text: string): string => {
@@ -103,6 +109,20 @@ const matchAt = (
   return regex.exec(content);
 };
 
+/** Matches a single whitespace character; used by {@link skipWhitespace}. */
+const WHITESPACE_REGEX = /\s/;
+
+/**
+ * Returns the index of the first non-whitespace character at or after `index`.
+ * Scans by index instead of letting a regex quantifier consume the run, for the
+ * reason given on {@link MATH_RELATION_REGEX}.
+ */
+const skipWhitespace = (content: string, index: number): number => {
+  let i = index;
+  while (i < content.length && WHITESPACE_REGEX.test(content[i])) i++;
+  return i;
+};
+
 /**
  * Rewrites `$$ ... $$` display blocks so the opening and closing fences each sit
  * alone on their line.
@@ -171,7 +191,8 @@ const isMoneyLike = (content: string, amountEnd: number): boolean => {
   if (amountEnd >= content.length) return true;
   if (!matchAt(CURRENCY_TERMINATOR_REGEX, content, amountEnd)) return false;
   if (matchAt(MATH_SUFFIX_REGEX, content, amountEnd)) return false;
-  if (matchAt(MATH_RELATION_REGEX, content, amountEnd)) return false;
+  if (matchAt(MATH_RELATION_REGEX, content, skipWhitespace(content, amountEnd)))
+    return false;
   return true;
 };
 
