@@ -49,6 +49,15 @@ export const MessageActions: FC<MessageActionsProps> = ({
   const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
   const [copyStatus, setCopyStatus] = useState('');
 
+  const hasAnyAction =
+    onEdit != null ||
+    onDelete != null ||
+    onRegenerate != null ||
+    onCopy != null ||
+    onCopyMarkdown != null ||
+    onLike != null ||
+    onDislike != null;
+
   const cssVars = buildCssVars({
     '--ma-active-rating-text': colors?.activeRatingText,
   });
@@ -68,6 +77,14 @@ export const MessageActions: FC<MessageActionsProps> = ({
     );
     setTimeout(() => setCopied(null), COPIED_RESET_MS);
   }, [onCopyMarkdown, ariaLabels?.copiedMarkdownStatus]);
+
+  /*
+   * No handler means a read-only message: an empty toolbar with a live region
+   * nothing ever populates is dead DOM, so render nothing at all.
+   */
+  if (!hasAnyAction) {
+    return null;
+  }
 
   return (
     <div

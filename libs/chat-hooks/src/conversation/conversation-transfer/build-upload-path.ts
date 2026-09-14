@@ -58,6 +58,8 @@ export interface UploadPathAllocator {
   allocate: (fileName: string) => AllocatedUploadPath;
   /** Records `fileName` as taken — used when the server rejects a name the registry believed free. */
   markTaken: (fileName: string) => void;
+  /** Returns a previously allocated `fileName` to the free pool — used when its upload failed for a reason other than a collision. */
+  release: (fileName: string) => void;
 }
 
 /**
@@ -100,5 +102,9 @@ export const createUploadPathAllocator = (params?: {
     takenNames.add(fileName);
   };
 
-  return { allocate, markTaken };
+  const release = (fileName: string): void => {
+    takenNames.delete(fileName);
+  };
+
+  return { allocate, markTaken, release };
 };

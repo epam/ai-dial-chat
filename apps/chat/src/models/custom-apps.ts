@@ -1,4 +1,4 @@
-export type { DeploymentGeneralFormData as CustomAppGeneralFormData } from './toolsets';
+export type { DeploymentGeneralFormData as CustomAppGeneralFormData } from '@epam/ai-dial-toolset-editor';
 
 export interface CustomAppFormData {
   completionUrl: string;

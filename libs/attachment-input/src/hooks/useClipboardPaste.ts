@@ -5,11 +5,38 @@ import { generateAttachmentId } from '../utils/attachment';
 
 /** Localised default file names used by `useClipboardPaste` for pasted content. */
 export interface UseClipboardPasteLabels {
-  /** Default file name given to a pasted image. Defaults to `'Screenshot.png'`. */
+  /** Name template a pasted image is derived from, with the paste timestamp inserted before the extension. Defaults to `'Screenshot.png'`. */
   screenshotName?: string;
   /** Default file name given to pasted plain text when it has no usable preview. Defaults to `'Pasted text'`. */
   pastedTextName?: string;
 }
+
+const pad = (value: number): string => String(value).padStart(2, '0');
+
+/** Formats a paste timestamp as `YYYY-MM-DD HH-mm-ss`, using only characters a DIAL Core file path allows. */
+const formatPasteTimestamp = (date: Date): string =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+  `${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+
+/*
+ * Without a timestamp every pasted image carries the same `screenshotName`,
+ * so the second paste resolves to the storage path the first one already
+ * occupies and overwrites it: the tray still shows both local previews, but
+ * the sent message references one uploaded file twice. The item's position is
+ * appended as well so a single paste carrying several images stays distinct.
+ */
+const buildPastedImageName = (
+  template: string,
+  date: Date,
+  index: number,
+): string => {
+  const dotIndex = template.lastIndexOf('.');
+  const hasExtension = dotIndex > 0;
+  const base = hasExtension ? template.slice(0, dotIndex) : template;
+  const extension = hasExtension ? template.slice(dotIndex) : '';
+  const position = index === 0 ? '' : ` (${index + 1})`;
+  return `${base} ${formatPasteTimestamp(date)}${position}${extension}`;
+};
 
 /**
  * Returns a `handlePaste` handler for a textarea that intercepts clipboard
@@ -42,15 +69,21 @@ export const useClipboardPaste = (
 
       if (imageItems.length > 0 && !hasText) {
         const imageAttachments: Attachment[] = [];
+        const pastedAt = new Date();
         for (const item of imageItems) {
           const blob = item.getAsFile();
           if (!blob) continue;
-          const file = new File([blob], screenshotName, {
+          const name = buildPastedImageName(
+            screenshotName,
+            pastedAt,
+            imageAttachments.length,
+          );
+          const file = new File([blob], name, {
             type: blob.type,
           });
           const attachment: Attachment = {
             id: generateAttachmentId(),
-            name: screenshotName,
+            name,
             contentType: blob.type,
             file,
             type: AttachmentType.Image,

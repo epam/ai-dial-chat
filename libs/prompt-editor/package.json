@@ -18,7 +18,7 @@
     }
   },
   "peerDependencies": {
-    "@epam/ai-dial-editor-builder": "*",
+    "@epam/ai-dial-builder-form": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-ui-kit": "^0.14.0-dev.30",
     "@tabler/icons-react": "^3.0.0",

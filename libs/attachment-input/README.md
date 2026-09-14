@@ -112,6 +112,8 @@ import { FileDndOverlay } from '@epam/ai-dial-attachment-input';
 
 Returns a `handlePaste` handler for a textarea. Pasted images become image attachments; pasted text longer than `threshold` characters becomes a pasted-text attachment instead of inline input content.
 
+`screenshotName` is a template, not the final name: the paste timestamp is inserted before the extension (`Screenshot 2026-09-14 09-05-03.png`), and a paste carrying several images appends the item's position, so each pasted image is stored under its own name.
+
 ```tsx
 import { useClipboardPaste } from '@epam/ai-dial-attachment-input';
 

@@ -228,8 +228,10 @@ The function SHALL:
 
 The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint is backed by DIAL Core metadata and the DIAL Core sharing API (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
 
-- `limit` — integer, default 100, max 1000 (`@IsInt @Min(1) @Max(1000) @IsOptional`)
+- `limit` — integer, min 1, max 1000, **no default** (`@IsInt @Min(1) @Max(1000) @IsOptional`)
 - `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
+
+**Two request modes.** When **both** `limit` and `nextToken` are omitted, the endpoint returns the **complete history**: the service follows DIAL Core's cursors itself, in pages of 1000 per bucket, until each bucket is exhausted, and the response carries no `nextToken`. This mirrors the file listing contract (see the [file-list spec](../file-list/spec.md)). When either parameter is present, the endpoint returns **one page per bucket** and a compound continuation cursor; the page size is `limit` when given and 100 when only `nextToken` is given.
 
 On success the endpoint returns HTTP 200 with `ConversationListResponseDto`:
 
@@ -255,11 +257,13 @@ class ConversationListResponseDto {
 ```
 
 **Four-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
-1. `getConversationMetadata(bucket, '', { recursive: true, limit, token: userCursor })` — user's own conversations
+1. `getConversationMetadata(bucket, '', { recursive: true, limit, permissions: true, token: userCursor })` — user's own conversations
 2. `getConversationMetadata('public', '', { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
 4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
 5. `ScheduledTaskUnreadService.getViewedIds(token, bucket)` — viewed scheduler-created conversation IDs
+
+**Cursor following in complete-history mode.** The personal and public bucket walks are independent — each follows its own `nextToken` chain to exhaustion, so an empty intermediate page that still carries a cursor does not end that bucket's walk. Each bucket's walk keeps the set of cursors it has already requested; if DIAL Core returns a cursor that bucket has already followed, the service throws `BadGatewayException` rather than looping forever. In paged mode no cursor following happens: exactly one request per bucket is issued.
 
 Items from all three data sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
 
@@ -271,7 +275,7 @@ Items from all three data sources are merged and sorted by `updatedAt` descendin
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
-**Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). If the user bucket call fails, the endpoint returns the error to the client.
+**Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). If the user bucket call fails, the endpoint returns the error to the client. In complete-history mode this applies to **every** page of the walk, not just the first: a failure on any personal-bucket page fails the whole request rather than returning a silently truncated history, and a failure on any public-bucket page drops the public contribution (including the pages already collected) while the request still succeeds.
 
 `isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). `isUnread` is populated by `ScheduledTaskUnreadService.getViewedIds` against the user's DIAL Core bucket. See the `scheduled-task-unread-tracking` spec. Both fall back to `[]`/`isUnread: true` on error.
 
@@ -286,7 +290,7 @@ Generated-client impact:
 Error codes:
 - `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer) or `nextToken` exceeds 512 chars
 - `401 Unauthorized` — missing or invalid bearer token
-- `502 Bad Gateway` — user bucket DIAL Core returned an error response
+- `502 Bad Gateway` — user bucket DIAL Core returned an error response on any page of the walk, or DIAL Core repeated a cursor already followed for a bucket
 
 #### Scenario: Returns merged items from user bucket, public bucket, and shared resources
 
@@ -312,6 +316,26 @@ Error codes:
 
 - **WHEN** items from all three sources are merged
 - **THEN** the response `items` array is ordered by `updatedAt` descending (newest first)
+
+#### Scenario: Omitting limit and nextToken returns the complete history
+
+- **WHEN** `GET /api/v1/conversations/list` is called with neither `limit` nor `nextToken`, and the personal bucket holds more conversations than one 1000-item page
+- **THEN** the service follows the personal bucket's cursors until exhausted, the response `items` contain the conversations from every page, and the response `nextToken` is absent
+
+#### Scenario: Personal and public cursors are followed independently
+
+- **WHEN** complete-history mode is requested and the public bucket returns an empty page that still carries a `nextToken`
+- **THEN** the public walk continues to the next page rather than stopping, and the personal walk follows its own cursor chain unaffected
+
+#### Scenario: A failed later personal page fails the request
+
+- **WHEN** complete-history mode is requested and the personal bucket's second page returns an error
+- **THEN** the endpoint returns 502 rather than a truncated list built from the first page
+
+#### Scenario: A repeated personal-bucket cursor is rejected
+
+- **WHEN** DIAL Core returns a `nextToken` that the personal-bucket walk has already followed
+- **THEN** the service throws `BadGatewayException` instead of looping
 
 #### Scenario: Returns compound nextToken when either paginated bucket has more results
 

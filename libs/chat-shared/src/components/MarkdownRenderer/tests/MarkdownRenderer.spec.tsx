@@ -607,6 +607,43 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByText('Price is $50 and $100')).toBeTruthy();
   });
 
+  /* Issue #8753: `$$\begin{aligned}` … `\end{aligned}$$` used to open a fenced math
+   * block that never closed, so every heading and paragraph after it was consumed as
+   * raw LaTeX — roughly the last tenth of a long answer. */
+  it('keeps a display block from swallowing the headings and prose after it', async () => {
+    render(
+      <MarkdownRenderer
+        content={
+          '$$\\begin{aligned}\n&\\left| \\int_0^T u \\right| \\le C\n\\end{aligned}$$\n\n##### Conclusion\n\nThe derivation ends here.'
+        }
+      />,
+    );
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: MathML has no role under jsdom
+      expect(document.querySelector('math[display="block"]')).toBeTruthy();
+    });
+
+    expect(
+      screen.getByRole('heading', { name: 'Conclusion', level: 5 }),
+    ).toBeTruthy();
+    expect(screen.getByText('The derivation ends here.')).toBeTruthy();
+  });
+
+  /* Issue #8753: escaping the currency-shaped `$0` on its own left its partner free to
+   * open the next span, so the English words were typeset and both formulas printed as
+   * source. Every formula on the line must typeset, whichever character it opens on. */
+  it('typesets a formula that opens on a digit without shifting the rest of the line', async () => {
+    render(<MarkdownRenderer content="B: $0 < x$ and then $y \\in H$ done." />);
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: MathML has no role under jsdom
+      expect(document.querySelectorAll('math').length).toBe(2);
+    });
+
+    expect(screen.getByText(/and then/)).toBeTruthy();
+  });
+
   /* `\(...\)`/`\[...\]` (the LLM-style delimiters preprocessLaTeX deliberately leaves untouched,
    * see latex.spec.ts) only render as math once micromark-extension-math is aliased to
    * micromark-extension-llm-math in the consuming app's bundler config. Vitest's SSR module

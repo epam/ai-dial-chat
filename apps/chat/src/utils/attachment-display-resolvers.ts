@@ -1,6 +1,10 @@
 import type { AttachmentCanvasUrlResolvers } from '@epam/ai-dial-chat-hooks';
 import type { AttachmentDisplayResolvers } from '@epam/ai-dial-chat-shared';
-import { resolveDialFileDownloadUrl, resolveDialUrl } from './dial-file';
+import {
+  resolveDialFileDownloadUrl,
+  resolveDialFileMetadataUrl,
+  resolveDialUrl,
+} from './dial-file';
 import { resolveCatalogIconUrl } from './icon-path';
 
 /**
@@ -16,4 +20,5 @@ export const attachmentDisplayResolvers: AttachmentDisplayResolvers = {
 export const attachmentCanvasUrlResolvers: AttachmentCanvasUrlResolvers = {
   resolveDialFileDownloadUrl,
   resolveDialUrl,
+  resolveDialFileMetadataUrl,
 };

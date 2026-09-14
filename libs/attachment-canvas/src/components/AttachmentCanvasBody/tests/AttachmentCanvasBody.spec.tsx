@@ -134,6 +134,30 @@ describe('AttachmentCanvasBody', () => {
     ).toBeTruthy();
   });
 
+  it('scrolls the body for a Markdown document taller than the panel', () => {
+    const { container } = renderBody({
+      type: AttachmentContentType.Markdown,
+      text: '# Title',
+    });
+
+    /* A markdown document flows as tall as its content, so clipping the body
+     * would make everything below the fold unreachable. */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting a CSS sizing class on the unlabeled body wrapper, which has no accessible role or text to query
+    expect(container.querySelector('.overflow-auto')).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same unlabeled wrapper; verifying the body itself is not clipped
+    expect(container.querySelector('.overflow-hidden')).toBeNull();
+  });
+
+  it('clips the body for MarkdownTable content so the table scrolls itself', () => {
+    const { container } = renderBody({
+      type: AttachmentContentType.MarkdownTable,
+      text: '| a |\n| - |\n| 1 |',
+    });
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting a CSS sizing class on the unlabeled body wrapper, which has no accessible role or text to query
+    expect(container.querySelector('.overflow-hidden')).toBeTruthy();
+  });
+
   it('renders JsonView for Json content', () => {
     renderBody({
       type: AttachmentContentType.Json,

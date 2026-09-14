@@ -24,9 +24,9 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../chat-shared/src/index.ts',
       ),
-      '@epam/ai-dial-editor-builder': path.resolve(
+      '@epam/ai-dial-builder-form': path.resolve(
         import.meta.dirname,
-        '../editor-builder/src/index.ts',
+        '../builder-form/src/index.ts',
       ),
     },
   },

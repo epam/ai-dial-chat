@@ -4,6 +4,7 @@ import { IsArray, IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { AnnotationDto } from './annotation.dto';
 import { AttachmentDto } from './attachment.dto';
 import { IsShallowObject } from './is-shallow-object.validator';
+import { RequestSkillDto } from './request-skill.dto';
 import { StageDto } from './stage.dto';
 
 /** Optional DIAL extra payload attached to a user or assistant message. */
@@ -71,4 +72,15 @@ export class MessageCustomContentDto {
   @IsOptional()
   @IsObject()
   state?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description:
+      'Skills used with this message, each entry carrying the skill resource URL (DIAL Core PR #1956)',
+    type: [RequestSkillDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RequestSkillDto)
+  skills?: RequestSkillDto[];
 }

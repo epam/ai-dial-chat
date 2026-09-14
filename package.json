@@ -13,7 +13,7 @@
     "build:quiet": "node scripts/run-quiet.mjs build:affected -- nx affected --target=build --base=origin/development",
     "build:api": "nx build chat-api",
     "build:all": "nx run-many --target=build --all",
-    "test": "nx run-many -t test --all --parallel=1",
+    "test": "nx run-many -t test --all --parallel=2",
     "test:file": "node scripts/run-test-files.mjs",
     "test:changed": "node scripts/run-quiet.mjs test:changed -- nx affected --target=test --base=origin/development --parallel=1 -- --reporter=minimal",
     "test:affected": "node scripts/run-quiet.mjs test:affected -- nx affected --target=test --base=origin/development --parallel=1 -- --reporter=minimal",
