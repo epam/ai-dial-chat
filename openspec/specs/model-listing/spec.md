@@ -2,7 +2,13 @@
 
 ## Purpose
 
-The authenticated model list endpoint, the shared `DialModel` type, and the frontend server-api helper.
+The authenticated model list endpoint and the shared `DialModel` type.
+
+`apps/chat` has no caller for this endpoint today — the frontend reads model
+metadata through the deployments endpoints (`deploymentsApi`) instead. The
+endpoint and its shared type are still served and still covered by the
+requirements below; the `apps/chat/src/server-api/models.ts` helper that used to
+front it was removed once it had zero call sites.
 
 ## Requirements
 
@@ -95,19 +101,3 @@ Unknown top-level fields from DIAL Core SHALL be preserved (index signature) so 
 
 - **WHEN** `apps/chat-api` and `apps/chat` are type-checked
 - **THEN** `DialModel` imported from `@epam/ai-dial-chat-shared` resolves with no type errors
-
----
-
-### Requirement: Frontend server-api helper for model listing
-
-`apps/chat/src/server-api/models.ts` SHALL export a typed async function `getModels` that:
-
-- Calls `GET /api/v1/models` using the existing `get<DialModelListResponse>` helper from `server-api/base.ts`
-- Returns `Promise<DialModelListResponse>`
-
-No direct `fetch` calls are permitted in this helper.
-
-#### Scenario: Helper returns typed list
-
-- **WHEN** `getModels()` is called from a component or hook
-- **THEN** the return type is `Promise<DialModelListResponse>` and TypeScript infers `data` as `DialModel[]`

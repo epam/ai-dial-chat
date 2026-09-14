@@ -150,7 +150,7 @@ Running `npm run openapi`, `npm run openapi:check`, `npm exec nx build chat-api-
 
 The generated `@epam/chat-api-client` request type SHALL be used directly as the param type (no hand-crafted wrapper type).
 
-`catalogApi` SHALL be instantiated in `api-client.ts` alongside `modelsApi` and `deploymentsApi`.
+`catalogApi` SHALL be instantiated in `api-client.ts` alongside `deploymentsApi` and `conversationsApi`.
 
 #### Scenario: getCatalogItems passes capability filter params to generated client
 - **WHEN** `getCatalogItems({ modelCapabilitiesChatCompletion: true, modelCapabilitiesEmbeddings: false })` is called

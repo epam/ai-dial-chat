@@ -8,7 +8,6 @@ import {
   DeploymentsApi,
   FilesApi,
   HealthApi,
-  ModelsApi,
   OfflineCredentialsApi,
   PromptsApi,
   PublishApi,
@@ -89,7 +88,6 @@ export const appConfigApi = new AppConfigApi(config);
 export const deploymentsApi = new DeploymentsApi(config);
 export const userApi = new UserApi(config);
 export const filesApi = new FilesApi(config);
-export const modelsApi = new ModelsApi(config);
 export const conversationsApi = new ConversationsApi(config);
 export const userConfigApi = new UserConfigApi(config);
 export const authApi = new AuthApi(config);

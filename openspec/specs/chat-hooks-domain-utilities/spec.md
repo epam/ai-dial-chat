@@ -130,7 +130,7 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 
 ### Requirement: Host-owned `apps/chat/src/utils/` files are unaffected
 
-`collect-stream.ts`, `conversation-id-match.ts`, `conversation-stream-transport.ts`, `entity-notification.ts`, `favorites.ts`, `icon-path.ts`, `local-storage.ts`, `apply-theme-colors.ts`, `map-deployment-limits-to-catalog.ts`, `map-scheduled-task-dto.ts`, `map-scheduled-task-run-dto.ts`, `map-usage-data-to-dashboard.ts`, `map-user-usage-to-model-limits.ts`, `scheduled-task-form-validation.ts`, `signin-interrupt.ts`, `toolsets.ts`, and `attachment-network-error-notification.tsx` SHALL NOT be modified by this change, since each either touches host-owned integration state directly or has its translated output as its entire purpose with nothing left to extract.
+`conversation-id-match.ts`, `conversation-stream-transport.ts`, `entity-notification.ts`, `favorites.ts`, `icon-path.ts`, `local-storage.ts`, `apply-theme-colors.ts`, `map-deployment-limits-to-catalog.ts`, `map-scheduled-task-dto.ts`, `map-scheduled-task-run-dto.ts`, `map-usage-data-to-dashboard.ts`, `map-user-usage-to-model-limits.ts`, `scheduled-task-form-validation.ts`, `signin-interrupt.ts`, `toolsets.ts`, and `attachment-network-error-notification.tsx` SHALL NOT be modified by this change, since each either touches host-owned integration state directly or has its translated output as its entire purpose with nothing left to extract.
 
 #### Scenario: No host-owned file is imported by `@epam/ai-dial-chat-hooks`
 - **WHEN** `libs/chat-hooks/src/**` is inspected
