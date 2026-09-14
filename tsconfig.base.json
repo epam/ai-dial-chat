@@ -42,9 +42,6 @@
       "@epam/ai-dial-source-panel/*": ["./libs/source-panel/*"],
       "@epam/ai-dial-attachment-canvas/*": ["./libs/attachment-canvas/*"],
       "@epam/ai-dial-attachment-input/*": ["./libs/attachment-input/*"],
-      "@epam/ai-dial-mcp-apps/constants": [
-        "./libs/mcp-apps/src/constants/mcp-protocol.ts"
-      ],
       "@epam/ai-dial-mcp-apps/*": ["./libs/mcp-apps/*"],
       "@epam/ai-dial-chat-overlay/*": ["./libs/chat-overlay/*"],
       "@epam/ai-dial-scheduled-tasks/*": ["./libs/scheduled-tasks/*"],

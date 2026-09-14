@@ -1,15 +1,15 @@
 import {
-  MCP_PROTOCOL_VERSION,
-  MCP_PROTOCOL_VERSION_HEADER,
-  MCP_SESSION_ID_HEADER,
-} from '@epam/ai-dial-mcp-apps/constants';
-import {
   BadGatewayException,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
+import {
+  MCP_PROTOCOL_VERSION,
+  MCP_PROTOCOL_VERSION_HEADER,
+  MCP_SESSION_ID_HEADER,
+} from '../constants/mcp-protocol';
 import { McpDeploymentKindDto } from '../dto/mcp-app.dto';
 import { McpAppService } from '../mcp-app.service';
 
