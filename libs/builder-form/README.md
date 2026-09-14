@@ -33,10 +33,9 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 ## Peer Dependencies
 
-- `react` ^19.0.0
+- `react` `^19.0.0`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` ^0.14.0-dev.15
-- `@tabler/icons-react` ^3.44.0
+- `@epam/ai-dial-ui-kit` `^0.14.0-dev.15`
 
 ## Components
 

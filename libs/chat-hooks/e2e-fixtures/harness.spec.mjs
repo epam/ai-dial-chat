@@ -23,7 +23,7 @@ test('resolves workspace peers to local artifacts and external peers to exact lo
 
   const closure = resolvePeerClosure(['@epam/ai-dial-chat-shared'], {
     resolveDependencySpec: (name) => specs[name],
-    readRequiredPeerDependencies: (name) => requiredPeers[name] ?? {},
+    readClosureDependencies: (name) => requiredPeers[name] ?? {},
   });
 
   assert.deepEqual(closure, specs);
@@ -39,7 +39,7 @@ test('deduplicates cycles in a peer dependency graph', () => {
   const calls = [];
   const closure = resolvePeerClosure(['a'], {
     resolveDependencySpec: (name) => `file:///tmp/${name}.tgz`,
-    readRequiredPeerDependencies: (name) => {
+    readClosureDependencies: (name) => {
       calls.push(name);
       return name === 'a' ? { b: '*' } : { a: '*' };
     },
@@ -50,4 +50,33 @@ test('deduplicates cycles in a peer dependency graph', () => {
     b: 'file:///tmp/b.tgz',
   });
   assert.deepEqual(calls, ['a', 'b']);
+});
+
+test('packs a workspace sibling reached through dependencies, not only peers', () => {
+  /*
+   * `conversation-panel` composes `sidebar` as a `dependency`. The publish
+   * transform rewrites that spec to the packed version, which exists only as a
+   * local tarball — so a closure that followed peers alone left the sibling
+   * unpacked and npm went to the registry for
+   * `@epam/ai-dial-sidebar@0.0.0-packed.0`.
+   */
+  const pulledIn = {
+    '@epam/ai-dial-conversation-panel': {
+      '@epam/ai-dial-chat-shared': '*',
+      '@epam/ai-dial-sidebar': '0.0.1',
+    },
+    '@epam/ai-dial-chat-shared': {},
+    '@epam/ai-dial-sidebar': {},
+  };
+
+  const closure = resolvePeerClosure(['@epam/ai-dial-conversation-panel'], {
+    resolveDependencySpec: (name) => `file:///tmp/${name}.tgz`,
+    readClosureDependencies: (name) => pulledIn[name] ?? {},
+  });
+
+  assert.deepEqual(Object.keys(closure).sort(), [
+    '@epam/ai-dial-chat-shared',
+    '@epam/ai-dial-conversation-panel',
+    '@epam/ai-dial-sidebar',
+  ]);
 });

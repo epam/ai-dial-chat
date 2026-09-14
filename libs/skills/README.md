@@ -36,14 +36,17 @@ the favorite rows render, so the skill's panel is visually one thing everywhere.
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-skills/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` `^19.0.0`
 - `@epam/ai-dial-ui-kit` `^0.14.0-dev.37`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-catalog` `*`
-- `@epam/ai-dial-conversation-input` `*`
-- `@tabler/icons-react` `^3.0.0`
 
 ## Components
 

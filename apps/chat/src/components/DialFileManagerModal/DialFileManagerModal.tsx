@@ -15,6 +15,7 @@ import {
   isHiddenPath,
   type AttachResult,
   type FileManagerAttachModalLabels,
+  type FileManagerSelectableNode,
 } from '@epam/ai-dial-chat-shared';
 import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
 import {
@@ -150,8 +151,16 @@ const DialFileManagerModal: FC<Props> = ({
 
   const [selectedPaths, setSelectedPaths] = useState(() => new Set<string>());
 
+  /*
+   * A plain passthrough: FileManagerAttachModal already re-applies
+   * isRowSelectable to every selection change, so non-selectable items
+   * (e.g. a folder auto-selected on creation when the model cannot attach
+   * folders) never reach this handler.
+   */
   const handleSelectedPathsChange = useCallback((paths: Set<string>) => {
-    setSelectedPaths(new Set([...paths].filter((p) => !isHiddenPath(p))));
+    // Defensive clone: the no-predicate branch of FileManagerAttachModal
+    // forwards the upstream package's Set reference unchanged.
+    setSelectedPaths(new Set(paths));
   }, []);
 
   const handleTabChange = useCallback(
@@ -222,7 +231,7 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   const isRowSelectable = useCallback(
-    (node: { data?: FileManagerGridRow | null }) => {
+    (node: { data?: FileManagerSelectableNode | null }) => {
       const row = node.data;
       if (row == null) return false;
 
