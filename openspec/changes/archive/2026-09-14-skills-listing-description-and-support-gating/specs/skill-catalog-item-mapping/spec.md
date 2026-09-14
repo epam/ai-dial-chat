@@ -1,19 +1,6 @@
-# skill-catalog-item-mapping Specification
+# skill-catalog-item-mapping Delta
 
-## Purpose
-
-Defines the app-level types and pure mapping that turn DIAL Core skill metadata into a `CatalogItem`: the `SkillSource` enum, the `skills/{bucket}/{path}` resource-URL parser, the field-by-field mapping contract, and how a skill's catalog folder path is derived.
-## Requirements
-### Requirement: `SkillSource` enum and skill resource URL helpers
-
-`SkillSource` SHALL contain `Personal`, `SharedWithMe`, and `Public`. `parseSkillResourceUrl` SHALL continue to parse `skills/{bucket}/{path}` into its owner bucket and relative path and reject malformed or differently-prefixed values.
-
-#### Scenario: Shared source is representable
-
-- **WHEN** a skill comes from the aggregate `sharedWithMe` array
-- **THEN** it is mapped with `SkillSource.SharedWithMe` without losing its owner bucket
-
----
+## MODIFIED Requirements
 
 ### Requirement: `mapSkillToCatalogItem` maps skill metadata to a catalog item
 
@@ -59,13 +46,3 @@ A skill whose listing entry carries no `description` (older Core, the shared-wit
 
 - **WHEN** a skill's listing entry omits `description` (older Core, shared-with-me without `attributes`, or no frontmatter field)
 - **THEN** the mapped `CatalogItem.description` is `''`, exactly as before the listing carried descriptions
-
-### Requirement: Folder path derives from source label plus grouping-folder segments
-
-The source label SHALL be Personal for `SkillSource.Personal`, Shared for `SkillSource.SharedWithMe`, and Public for `SkillSource.Public`, followed by decoded `parentPath` segments. Root-level skills contain only their source label.
-
-#### Scenario: Shared skill folder label
-
-- **WHEN** a shared skill has `parentPath: 'analysis/'`
-- **THEN** its folder is `[<Shared label>, 'analysis']`
-

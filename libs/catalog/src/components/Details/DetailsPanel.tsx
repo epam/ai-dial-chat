@@ -74,8 +74,9 @@ import { Tools } from './TabsContent/Tools/Tools';
 /*
  * Entity types that lead with their body instead of a description. A prompt's
  * content already carries its description, so an About tab would only repeat
- * it; a skill has no description at all in its metadata, so an About tab would
- * always render empty. Both open on Content, followed by Overview.
+ * it; a skill's listing description is already rendered as the Content tab's
+ * summary line, so an About tab would likewise only repeat it. Both open on
+ * Content, followed by Overview.
  */
 const CONTENT_FIRST_ENTITY_TYPES = new Set<CatalogEntityType>([
   CatalogEntityType.Prompt,

@@ -179,6 +179,11 @@ export class DeploymentFeaturesDetailsDto {
   @ApiPropertyOptional({ description: 'Supports the responses API' })
   responsesApi?: boolean;
 
+  @ApiPropertyOptional({
+    description: 'Supports custom skills in chat requests',
+  })
+  skillsSupported?: boolean;
+
   @ApiPropertyOptional({ description: 'Supports the max_tokens parameter' })
   maxTokensSupported?: boolean;
 

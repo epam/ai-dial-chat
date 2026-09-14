@@ -512,6 +512,59 @@ describe('DeploymentsDetailsService', () => {
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
     });
 
+    it('maps skills_supported to features.skillsSupported in details', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/my-app',
+          features: { skills_supported: true },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app',
+        'token',
+      );
+
+      expect(result.applicationDetails?.features?.skillsSupported).toBe(true);
+    });
+
+    it('omits features.skillsSupported in details when skills_supported is absent or non-boolean', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication
+        .mockResolvedValueOnce(
+          okResponse({
+            id: 'applications/my-app',
+            features: { tools: true },
+          }),
+        )
+        .mockResolvedValueOnce(
+          okResponse({
+            id: 'applications/my-app',
+            features: { skills_supported: 'yes' },
+          }),
+        );
+
+      const withoutFlag = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app',
+        'token',
+      );
+      const nonBooleanFlag = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app',
+        'token',
+      );
+
+      expect(
+        withoutFlag.applicationDetails?.features?.skillsSupported,
+      ).toBeUndefined();
+      expect(
+        nonBooleanFlag.applicationDetails?.features?.skillsSupported,
+      ).toBeUndefined();
+    });
+
     it('maps catalog_properties for an application, ignoring unknown/non-string keys', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getApplication.mockResolvedValue(

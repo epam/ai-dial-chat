@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines the skill details panel: how `Skill` joins `Prompt` as a content-first entity type in `libs/catalog`, how a skill's manifest and file listing resolve in parallel, how each half degrades independently, what the Overview section reports, and the panel's i18n, RTL, accessibility, caching, and content-safety contract.
-
 ## Requirements
-
 ### Requirement: `Skill` joins `Prompt` as a content-first entity type in `libs/catalog`
 
 `libs/catalog/src/components/Details/DetailsPanel.tsx` decided the tab row with a single `item.type === CatalogEntityType.Prompt` equality check. That check SHALL be replaced by membership in a module-level `CONTENT_FIRST_ENTITY_TYPES` set containing `CatalogEntityType.Prompt` and `CatalogEntityType.Skill`.
@@ -200,11 +198,11 @@ File-listing entries with `nodeType: 'folder'` SHALL be excluded from the count.
 
 `libs/catalog/src/models/item-details-data.ts` SHALL add an optional `description` to `CatalogItemPromptContent`, and `DetailsPanel` SHALL render `ContentTab`'s `description` prop as `item.details?.promptContent?.description ?? item.description`.
 
-The addition exists because a skill's summary is discovered by the details fetch, not by the list request: `mapSkillToCatalogItem` sets `description: ''` because skill metadata carries none. Prompts pass no `description` on `promptContent` and SHALL be unaffected — they keep rendering `item.description`.
+The ordering is unchanged, but both operands are now populated for skills: `mapSkillToCatalogItem` maps the listing-sourced `description` (DIAL Core PR #1970) onto `CatalogItem.description`, so the summary shows the listing description while the details fetch is in flight, and the manifest's own `description` frontmatter — the value Core itself derives the listing attributes from — takes over once the fetch resolves. Prompts pass no `description` on `promptContent` and SHALL be unaffected — they keep rendering `item.description`.
 
 The Skill branch of `onFetchDetails` SHALL set `promptContent.description` from the parsed manifest's `description` frontmatter field, omitting it when the field is absent, and SHALL set `promptContent.content` to the manifest **body** — the text after the frontmatter fence — rather than the raw file.
 
-No `About` tab SHALL be restored for skills. `CatalogEntityType.Skill` stays in `CONTENT_FIRST_ENTITY_TYPES`. An About tab derived from a description that only exists after the fetch settles would appear mid-interaction and push `Content` one slot along while the user is reading it; the summary slot delivers the same text at the same moment without moving the tab row.
+No `About` tab SHALL be restored for skills. `CatalogEntityType.Skill` stays in `CONTENT_FIRST_ENTITY_TYPES`. The original rationale — that an About tab would appear mid-interaction once the fetch settled — no longer applies (the listing description exists at item construction), but the tab stays omitted because it would only repeat the summary line the Content tab already leads with; the stale code comments claiming a skill's metadata carries no description are corrected in the same change.
 
 The manifest's parsed `name` field SHALL NOT be rendered anywhere in the Content tab — not in the summary, not in the body. The item's display name comes from `item.name` (set by `mapSkillToCatalogItem` from the skill's own metadata, independent of the manifest), and the parsed `name` field exists only because `parseSkillManifest` reads it; the Skill branch of `onFetchDetails` SHALL NOT thread it into `promptContent` at all.
 
@@ -214,6 +212,11 @@ A manifest that is nothing but frontmatter (no text after the closing fence) SHA
 
 - **WHEN** a skill's `SKILL.md` frontmatter carries `description: Finds and cites sources`
 - **THEN** the Content tab renders that text as its summary line above the divider, and the body below it
+
+#### Scenario: Listing description shows before the details fetch lands
+
+- **WHEN** a skill's listing entry carries `description: 'Finds and cites sources'` and its details panel is opened while the manifest fetch is still in flight
+- **THEN** the Content tab's summary line already shows that listing description, and no per-skill download is performed for it
 
 #### Scenario: Frontmatter is not rendered as body
 
@@ -254,8 +257,6 @@ A manifest that is nothing but frontmatter (no text after the closing fence) SHA
 
 - **WHEN** a skill's details panel is open, on `SKILL.md` or on any picked supporting file
 - **THEN** no editable form field, no frontmatter editor, and no Skill Builder action (save, validate, publish, upload) is rendered anywhere in the panel
-
----
 
 ### Requirement: The skill's files populate the Content tab's hierarchical selector
 
@@ -368,7 +369,6 @@ When Core returns `Content-Type: application/octet-stream`, the details loader S
 - **WHEN** a supporting file's declared or actual size exceeds `SKILL_MANIFEST_MAX_BYTES`
 - **THEN** its bytes are never decoded or turned into a `Blob`, and the shared attachment body renders the same load-error state as Skill Builder
 
-
 ---
 
 ### Requirement: `DetailsPanel` is exported and composable outside the Catalog page
@@ -384,3 +384,4 @@ The `DetailsPanel` component (today internal to `libs/catalog`, with only its `D
 
 - **WHEN** the export lands and the Catalog page renders skill details
 - **THEN** the page's details behavior is byte-identical to before the export
+

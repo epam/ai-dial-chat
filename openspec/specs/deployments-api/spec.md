@@ -3,9 +3,7 @@
 ## Purpose
 
 `GET /api/v1/deployments`: the DTO shape, domain structure, generated client, and frontend wrapper.
-
 ## Requirements
-
 ### Requirement: GET /api/v1/deployments endpoint
 
 The system SHALL expose `GET /api/v1/deployments` that proxies DIAL Core `GET /v1/deployments` and returns all models and applications (excluding toolsets) visible to the authenticated session user, optionally filtered by interface type.
@@ -118,7 +116,7 @@ The endpoint:
 - `owner?: string` — `owner` from DIAL Core's `DeploymentBase`; forwarded verbatim; omitted when DIAL Core does not provide it
 - `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
-- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the `mcp?: boolean` field, and the `responsesApi?: boolean` / `chatCompletion?: boolean` fields (see below)
+- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the `mcp?: boolean` field, and the `responsesApi?: boolean` / `chatCompletion?: boolean` / `skillsSupported?: boolean` fields (see below)
 - `reference?: string` — `reference` from DIAL Core's raw deployment payload, forwarded verbatim; omitted when DIAL Core does not provide it. Callers MAY receive a deployment `id` elsewhere in the system (e.g. a stored conversation's `model` value) that actually holds this `reference` value instead of `id` — the frontend is responsible for matching against either field (see `deployment-reference-resolution`)
 
 `DeploymentItemDto.conversationStarters?: ConversationStartersDto` SHALL expose Quick Apps conversation starter settings mapped from `application_properties.conversation_starters`. It SHALL be set only for `type === 'application'` items with at least one valid starter.
@@ -133,12 +131,12 @@ Invalid or blank starters SHALL be omitted. If no valid starters remain, `conver
 
 `DeploymentFeaturesDto.mcp?: boolean` SHALL be `true` when any of the following is present on the raw DIAL Core list entry, and `undefined` (omitted) otherwise:
 - `features.mcp === true` (read defensively, the same way `DeploymentFeaturesDetailsDto.mcp` is already populated for the deployment-details endpoint);
-- a root-level `mcp` descriptor object (`endpoint`/`transport`/`allowedTools`/...) is present (non-`null`), regardless of its contents;
+- a root-level `mcp` descriptor object (`endpoint`/`transport`/`allowedTools`/`...`) is present (non-`null`), regardless of its contents;
 - `interfaces` contains the string `'mcp'` (the same per-item signal DIAL Core's own `interface_type=mcp` list filter relies on).
 
 These three signals are not mutually exclusive but are also not reliably combined — real DIAL Core list responses have been observed reporting MCP support through any one of them alone, with the other two absent, depending on the application's configuration.
 
-`DeploymentFeaturesDto.responsesApi?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.responses_api === true`, and `undefined` (omitted) otherwise — mirroring how `DeploymentFeaturesDetailsDto.responsesApi` is already populated for the deployment-details endpoint (`mapDeploymentFeatures`). `DeploymentFeaturesDto.chatCompletion?: boolean` SHALL be mapped the same way from `features.chat_completion`. Both fields SHALL be read defensively (absent/non-boolean source values map to `undefined`, never throw). Neither field participates in any deployments-list caching key or filtering behavior; they are additive metadata only.
+`DeploymentFeaturesDto.responsesApi?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.responses_api === true`, and `undefined` (omitted) otherwise — mirroring how `DeploymentFeaturesDetailsDto.responsesApi` is already populated for the deployment-details endpoint (`mapDeploymentFeatures`). `DeploymentFeaturesDto.chatCompletion?: boolean` SHALL be mapped the same way from `features.chat_completion`. `DeploymentFeaturesDto.skillsSupported?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.skills_supported === true` (DIAL Core PR #1976 — whether the deployment accepts custom skills in chat completion requests), and `undefined` (omitted) otherwise. All three fields SHALL be read defensively (absent/non-boolean source values map to `undefined`, never throw). None of these fields participates in any deployments-list caching key or filtering behavior; they are additive metadata only.
 
 `DeploymentsResponseDto` SHALL wrap this as `{ deployments: DeploymentItemDto[] }`.
 
@@ -243,6 +241,21 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 - **WHEN** a DIAL Core entry has `features.chat_completion: true`
 - **THEN** the mapped `DeploymentItemDto` has `features.chatCompletion: true`
 
+#### Scenario: Item with skills support maps features.skillsSupported true
+
+- **WHEN** a DIAL Core entry (model, application, or toolset) has `features.skills_supported: true`
+- **THEN** the mapped `DeploymentItemDto` has `features.skillsSupported: true`
+
+#### Scenario: Item without skills support omits features.skillsSupported
+
+- **WHEN** a DIAL Core entry has no `features.skills_supported` field, or a non-boolean value there
+- **THEN** the mapped `DeploymentItemDto`'s `features.skillsSupported` is `undefined`
+
+#### Scenario: skills_supported does not change list caching or filtering
+
+- **WHEN** two DIAL Core deployments differ only in their `features.skills_supported` values
+- **THEN** both map to items in the same response with their respective `features.skillsSupported` values, and no cache key or list filtering considers the field
+
 #### Scenario: reference mapped from DIAL Core
 
 - **WHEN** a DIAL Core model entry has `id: 'gemini-3.1-flash-lite'` and `reference: 'ref-gemini-3-1-flash-lite'`
@@ -257,8 +270,6 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 - **WHEN** an existing client calls `GET /api/v1/deployments` and does not read `reference`
 - **THEN** the response is identical to the prior behavior for all pre-existing fields
-
----
 
 ### Requirement: Deployments domain structure
 
@@ -390,3 +401,4 @@ After removal, `GET /api/v1/catalog` SHALL return 404.
 
 - **WHEN** the codebase is scanned for `CatalogModule`, `CatalogService`, `CatalogFilterService`, `CatalogController`, `CatalogItemDto`
 - **THEN** no references are found in `apps/chat-api/src/`
+

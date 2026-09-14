@@ -42,8 +42,6 @@ export interface FavoriteSkillsPanelProps {
   onBrowse: () => void;
   /** Called when a row tooltip's "View details" button is clicked. */
   onViewDetails: (item: FavoriteSkillItem) => void;
-  /** Called with a skill's id each time one of its row's interactive tooltips opens (hover or focus). */
-  onItemTooltipOpen?: (id: string) => void;
   /**
    * When provided, the panel enters search mode: rows are filtered to names
    * containing this string case-insensitively and matched names render with a

@@ -33,6 +33,11 @@ export interface SkillSelectorOverlayLabels {
    * is open with an empty query. Defaults to `'Type to filter'`.
    */
   emptyQueryHintLabel?: string;
+  /**
+   * Message shown alone in the selected skill chip's error-state tooltip
+   * while the current deployment does not support skills.
+   */
+  unsupportedTooltipLabel?: string;
   /** Labels forwarded to the favorites panel rendered as the overlay. */
   panelLabels?: FavoriteSkillsPanelLabels;
 }
@@ -44,6 +49,14 @@ export interface UseSkillSelectorOverlayOptions {
    * outputs: no menu entry, no modal, no panel, no chips.
    */
   isEnabled: boolean;
+  /**
+   * Whether the input's current deployment supports skills. While `false`
+   * (with the flow enabled) the entry points are omitted — no Add-menu item
+   * and no slash menu — but an already-selected skill chip stays rendered in
+   * its error state with its removal gesture and "View details" panel
+   * available. The host resolves this from its own deployment data.
+   */
+  isSkillsSupported: boolean;
   /** The user's own skills. */
   skills: SkillListingEntry[];
   /** Skills shared with the user, when the host distinguishes them. */
@@ -54,11 +67,6 @@ export interface UseSkillSelectorOverlayOptions {
   favoriteIds: ReadonlySet<string>;
   /** Removes a skill from favorites; fired by a row's star button. */
   onToggleFavorite: (id: string) => void;
-  /**
-   * Resolves a skill's manifest description for its row tooltip. Returning
-   * `null` marks the skill as description-less for the rest of the session.
-   */
-  fetchSkillDescription: (skillId: string) => Promise<string | null>;
   /** Localizable string overrides. */
   labels?: SkillSelectorOverlayLabels;
   /**
@@ -86,16 +94,18 @@ export interface UseSkillSelectorOverlayOptions {
 export interface UseSkillSelectorOverlayResult {
   /**
    * The Skills entry for the `menuOverlays` prop of
-   * `ConversationInput`/`Input`. `undefined` while `isEnabled` is `false`: the
-   * host omits the entry entirely when this is `undefined`, so a stub renderer
-   * would leave the menu item in place with nothing behind it.
+   * `ConversationInput`/`Input`. `undefined` while the flow is disabled or the
+   * current deployment does not support skills: the host omits the entry
+   * entirely when this is `undefined`, so a stub renderer would leave the
+   * menu item in place with nothing behind it.
    */
   skillMenuOverlay?: MenuOverlayConfig;
   /**
    * The Skills entry for the `commandMenu` prop of
    * `ConversationInput`/`Input`: typing `/` into an empty textarea opens the
-   * favorites panel in search mode above the input. `undefined` while
-   * `isEnabled` is `false`, disabling the slash menu entirely.
+   * favorites panel in search mode above the input. `undefined` while the
+   * flow is disabled or the current deployment does not support skills,
+   * disabling the slash menu entirely.
    */
   commandMenu?: CommandMenuConfig;
   /**
@@ -111,12 +121,20 @@ export interface UseSkillSelectorOverlayResult {
   /**
    * The selected skill as a `ChatSkill` element for the conversation input's
    * `inlineStartSlot` — at most one, replaced on every selection, carrying
-   * the shared tooltip (with the same lazy description fetch as the favorite
-   * rows). The element has no remove control of its own; removal is the
+   * the shared tooltip (the listing-sourced description, same as the favorite
+   * rows), or the error state while the current deployment does not support
+   * skills. The element has no remove control of its own; removal is the
    * input's Backspace-at-start gesture, wired through `removeSelectedSkill`.
    * `null` while `isEnabled` is `false` or nothing is selected.
    */
   selectedSkillElement: ReactNode;
+  /**
+   * Whether a skill is selected while the current deployment does not
+   * support skills — the chip renders in its error state and hosts must fold
+   * this into their send-disabled conditions. Always `false` while
+   * `isEnabled` is `false`.
+   */
+  isSkillUnsupported: boolean;
   /**
    * The selected skill's resource URL (`skills/{bucket}/{path}`) — the value
    * the host sends as a `{ url }` entry in the outgoing message's
@@ -144,12 +162,12 @@ export interface UseSkillSelectorOverlayResult {
   /**
    * Renders a message's `custom_content.skills` entries as `ChatSkill`
    * elements beside the message bubble's first text line, with the text
-   * word-flowing after them — one per entry, sharing the session description
-   * cache, the lazy-fetch first-open trigger, and the "View details" details
-   * panel with the favorite rows and the input chip. Each entry's name comes
-   * from the listing pools matched on its url, falling back to the url's last
-   * non-empty segment. Returns `null` while `isEnabled` is `false` or the
-   * array is empty.
+   * word-flowing after them — one per entry, sharing the "View details"
+   * details panel with the favorite rows and the input chip. Each entry's
+   * name comes from the listing pools matched on its url, falling back to
+   * the url's last non-empty segment, and its description from the same
+   * match (absent when no pool carries the url). Returns `null` while
+   * `isEnabled` is `false` or the array is empty.
    */
   renderHistorySkills: (skills: RequestSkill[] | undefined) => ReactNode;
 }

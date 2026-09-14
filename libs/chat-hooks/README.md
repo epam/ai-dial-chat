@@ -2418,7 +2418,7 @@ const item = mapPromptToCatalogItem(promptDto, {
 
 ### mapSkillToCatalogItem / buildSkillOverview / buildSkillContentTree / resolveSkillManifestFileId / resolveSkillFileDownloadPath / readSkillFileBytes / readSkillManifest
 
-Maps a skill's DIAL Core metadata into a catalog `CatalogItem`; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`.
+Maps a skill's DIAL Core metadata into a catalog `CatalogItem` — the item's `description` carries the listing entry's `description` (an empty string when the listing has none), so the catalog card and details header show it before any manifest fetch; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`.
 
 ```ts
 import {
@@ -2610,7 +2610,7 @@ file loads) is delegated to `useSkillItemDetails` below — `CatalogDetailsApi`
 extends that hook's `SkillDetailsApi` port with the deployment and prompt
 methods.
 
-### useSkillItemDetails / fetchSkillDescription
+### useSkillItemDetails
 
 The skill-scoped half of the details pipeline, for hosts that only surface
 skill details and therefore have no deployment/prompt ports to inject.
@@ -2618,10 +2618,7 @@ skill details and therefore have no deployment/prompt ports to inject.
 supplying the four unused adapter methods the full pipeline requires.
 
 ```ts
-import {
-  fetchSkillDescription,
-  useSkillItemDetails,
-} from '@epam/ai-dial-chat-hooks';
+import { useSkillItemDetails } from '@epam/ai-dial-chat-hooks';
 
 const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
   useSkillItemDetails({
@@ -2632,10 +2629,6 @@ const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
 
 // Fetch full details for a skill catalog item (returns undefined on failure)
 const details = await onFetchSkillDetails(skillCatalogItem);
-
-// One-shot manifest description for a listing tooltip. Returns null on an
-// unparseable id, an unreadable manifest, or a failed request — never throws.
-const description = await fetchSkillDescription(api, skill.url);
 ```
 
 **Options** (`UseSkillItemDetailsOptions`): `api`
@@ -2645,10 +2638,6 @@ const description = await fetchSkillDescription(api, skill.url);
 **Returns** (`UseSkillItemDetailsResult`): `onFetchSkillDetails`,
 `onLoadContentFile`, and `onLoadSkillDetailsFile`, with the same shapes as
 the `useCatalogItemDetails` returns above.
-
-`fetchSkillDescription(api, skillId)` reuses the same manifest-download path
-as the full pipeline and resolves every failure to `null` so a listing
-tooltip can treat "no description" and "could not fetch" identically.
 
 ### useSkillDetailsPanelData
 
