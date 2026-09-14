@@ -13,6 +13,8 @@ export interface FilterTabsProps {
   onChange: (tab: FilterTab) => void;
   /** Class applied to each tab. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
+  /** Tab values to omit from the row entirely (see `ConversationPanelProps.hiddenSources`). */
+  hiddenSources?: FilterTab[];
 }
 
 /** Keys of `FilterLabels` that name a tab (i.e. all but the group's own label). */
@@ -29,26 +31,36 @@ const TABS: { value: FilterTab; labelKey: FilterTabLabelKey }[] = [
  * Row of selectable filter chips for filtering conversations by source.
  */
 export const FilterTabs: FC<FilterTabsProps> = memo(
-  ({ activeTab, labels, onChange, tabClassName = 'dial-tiny-semi-text' }) => (
-    <div
-      role="group"
-      aria-label={labels.groupAriaLabel ?? 'Filter chats'}
-      className="flex flex-nowrap gap-1 px-3 py-2"
-    >
-      {TABS.map(({ value, labelKey }) => (
-        <Tag
-          key={value}
-          label={labels[labelKey]}
-          appearance={TagAppearance.Selectable}
-          selected={activeTab === value}
-          onClick={() => onChange(value)}
-          className={mergeClasses(
-            /* The filter row splits its width evenly and keeps the pill silhouette. */
-            'flex-1 justify-center rounded-full',
-            tabClassName,
-          )}
-        />
-      ))}
-    </div>
-  ),
+  ({
+    activeTab,
+    labels,
+    onChange,
+    tabClassName = 'dial-tiny-semi-text',
+    hiddenSources,
+  }) => {
+    const tabs = TABS.filter(({ value }) => !hiddenSources?.includes(value));
+
+    return (
+      <div
+        role="group"
+        aria-label={labels.groupAriaLabel ?? 'Filter chats'}
+        className="flex flex-nowrap gap-1 px-3 py-2"
+      >
+        {tabs.map(({ value, labelKey }) => (
+          <Tag
+            key={value}
+            label={labels[labelKey]}
+            appearance={TagAppearance.Selectable}
+            selected={activeTab === value}
+            onClick={() => onChange(value)}
+            className={mergeClasses(
+              /* The filter row splits its width evenly and keeps the pill silhouette. */
+              'flex-1 justify-center rounded-full',
+              tabClassName,
+            )}
+          />
+        ))}
+      </div>
+    );
+  },
 );

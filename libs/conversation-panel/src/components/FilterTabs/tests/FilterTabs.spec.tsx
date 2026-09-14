@@ -10,13 +10,14 @@ const labels = {
   organization: 'Organization',
 };
 
-const renderTabs = (tabClassName?: string) =>
+const renderTabs = (tabClassName?: string, hiddenSources?: FilterTab[]) =>
   render(
     <FilterTabs
       activeTab={FilterTab.All}
       labels={labels}
       onChange={vi.fn()}
       tabClassName={tabClassName}
+      hiddenSources={hiddenSources}
     />,
   );
 
@@ -50,5 +51,11 @@ describe('FilterTabs', () => {
   it('applies the provided typography class to each tab', () => {
     renderTabs('dial-small-text');
     expect(getTab('All').className).toContain('dial-small-text');
+  });
+
+  it('omits a tab listed in hiddenSources', () => {
+    renderTabs(undefined, [FilterTab.Organization]);
+    expect(screen.queryByText('Organization')).toBeNull();
+    expect(screen.getByText('Shared')).toBeTruthy();
   });
 });

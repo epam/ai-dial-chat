@@ -210,6 +210,16 @@ export interface ConversationPanelProps {
    * otherwise. Defaults to `false`.
    */
   isFilterTabsHidden?: boolean;
+  /**
+   * Sources to exclude entirely. A conversation whose `source` is listed here
+   * is dropped before filtering/grouping, so it never appears under any tab
+   * (including `All`) or in a group heading, and its tab pill is not rendered
+   * in `FilterTabs`. Use this to fully gate a source (e.g. `Organization`)
+   * behind a deployment/config toggle, as opposed to `isFilterTabsHidden`,
+   * which only hides the tab row while leaving every source's conversations
+   * visible under `All`.
+   */
+  hiddenSources?: FilterTab[];
 }
 
 /** Describes a completed drag-and-drop move in the conversation panel. */
