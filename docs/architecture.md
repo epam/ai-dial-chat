@@ -242,12 +242,18 @@ NestJS 11 server. Entry: `apps/chat-api/src/main.ts`.
 
 Configured at startup:
 
-- `helmet` — security headers (CSP, HSTS, etc.)
+- `helmet` — security headers (CSP, HSTS, etc.). Generic responses do not allow
+  WebAssembly. App-owned frontend middleware gives chat HTML a fresh style nonce
+  and its required WebAssembly permission, while the PDF worker receives a
+  separate worker policy. `CSP_MODE` controls report-only rollout versus strict
+  enforcement; see [CSP configuration](../apps/chat-api/README.md#content-security-policy).
 - `ValidationPipe` — whitelist + `forbidNonWhitelisted` + `transform`
 - URI versioning — business endpoints at `/api/v{N}/{resource}`
 - CORS with `credentials: true`
 - Swagger at `/api/docs` (non-production)
-- Static React SPA serving from `apps/chat/dist` for non-`/api/*` routes
+- Static assets from `apps/chat/dist` and nonce-bearing React SPA HTML for
+  non-`/api/*` routes (`app/static-assets.ts`). HTML templates are cached in memory;
+  HTML responses use `no-store` with a fresh nonce, while asset caching is unchanged.
 - Global prefix: `api`
 - Global in-memory cache: an explicit Keyv memory adapter with a 100-entry LRU limit and periodic expiration cleanup; see [backend caching behavior](../apps/chat-api/README.md#performance).
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
@@ -345,6 +351,8 @@ prefix is fixed in `auth.controller.ts`, not derived from `API_PREFIX`.
 #### Conversations (`/api/v1/conversations`)
 
 No endpoint in this domain carries a per-route rate limit — repo-wide rate limiting was removed from `apps/chat-api`.
+
+`GET /api/v1/conversations/list` returns the complete history when both `limit` and `nextToken` are omitted. The BFF follows personal and public bucket cursors independently in batches of 1000, adds shared conversations once, and sorts the combined list by latest activity before bounded display-name enrichment. The conversation panel uses this full-history mode. An explicit `limit` or `nextToken` requests one page per bucket and returns a compound continuation cursor; with only `nextToken`, the page size is 100. A failed personal page fails the request rather than returning a truncated history; public and shared sources remain best-effort.
 
 | Method   | Path                                       | Description                                                                             |
 | -------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |

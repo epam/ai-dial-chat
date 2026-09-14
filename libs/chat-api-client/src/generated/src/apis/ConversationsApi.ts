@@ -642,7 +642,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.
+   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.
    * List conversations
    */
   async listConversationsRaw(
@@ -677,7 +677,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.
+   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.
    * List conversations
    */
   async listConversations(

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
@@ -33,6 +33,7 @@ import { parseScheduledTaskConversationPath } from '../utils/parse-scheduled-tas
 
 /** Leading segment of every DIAL Core conversation resource id. */
 const CONVERSATION_RESOURCE_TYPE = 'conversations';
+const FULL_CONVERSATION_LIST_PAGE_LIMIT = 1000;
 
 /** True for a writable list item in the caller's own bucket. */
 const isOwned = (item: ConversationListItemDto): boolean =>
@@ -57,34 +58,83 @@ export class ConversationListingService {
     private readonly persistenceService: ConversationPersistenceService,
   ) {}
 
+  private async listBucketMetadata(
+    token: string,
+    bucket: string,
+    limit: number,
+    cursor: string | undefined,
+    aggregateAllPages: boolean,
+    permissions?: boolean,
+  ): Promise<MetadataResult> {
+    const items: MetadataItem[] = [];
+    const seenCursors = new Set<string>();
+    let result: MetadataResult;
+
+    do {
+      result = (await this.dialClient.client.getConversationMetadata(
+        bucket,
+        '',
+        {
+          headers: getBearerAuthHeaders(token),
+          params: {
+            query: {
+              recursive: true,
+              limit,
+              ...(cursor ? { token: cursor } : {}),
+              ...(permissions != null ? { permissions } : {}),
+            },
+          },
+        },
+      )) as MetadataResult;
+
+      if (!aggregateAllPages || result.error != null || !result.data) {
+        return result;
+      }
+
+      items.push(...(result.data.items ?? []));
+      cursor = result.data.nextToken;
+      if (cursor && seenCursors.has(cursor)) {
+        throw new BadGatewayException(
+          'DIAL Core repeated a conversation listing cursor',
+        );
+      }
+      if (cursor) seenCursors.add(cursor);
+    } while (cursor);
+
+    return { data: { items }, response: result.response };
+  }
+
   async listConversations(
     token: string,
     bucket: string,
-    limit = 100,
+    limit?: number,
     nextToken?: string,
   ): Promise<ConversationListResponseDto> {
     const { u: userNextToken, p: publicNextToken } = decodeNextToken(nextToken);
 
-    const buildQuery = (cursor?: string) => ({
-      recursive: true as const,
-      limit,
-      ...(cursor ? { token: cursor } : {}),
-    });
+    /* Match file listing: omitted pagination requests the complete history. */
+    const aggregateAllPages = limit == null && nextToken == null;
+    const pageLimit = aggregateAllPages
+      ? FULL_CONVERSATION_LIST_PAGE_LIMIT
+      : (limit ?? 100);
 
     try {
       const [userResult, publicResult, sharedResult, pinnedIds, viewedIds] =
         await Promise.all([
-          this.dialClient.client.getConversationMetadata(bucket, '', {
-            headers: getBearerAuthHeaders(token),
-            params: {
-              query: { ...buildQuery(userNextToken), permissions: true },
-            },
-          }) as Promise<MetadataResult & { response: globalThis.Response }>,
-          (
-            this.dialClient.client.getConversationMetadata(PUBLIC_BUCKET, '', {
-              headers: getBearerAuthHeaders(token),
-              params: { query: buildQuery(publicNextToken) },
-            }) as Promise<MetadataResult>
+          this.listBucketMetadata(
+            token,
+            bucket,
+            pageLimit,
+            userNextToken,
+            aggregateAllPages,
+            true,
+          ),
+          this.listBucketMetadata(
+            token,
+            PUBLIC_BUCKET,
+            pageLimit,
+            publicNextToken,
+            aggregateAllPages,
           ).catch((err: unknown) => {
             this.logger.warn(
               'DIAL Core listConversations (public bucket) failed',

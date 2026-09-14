@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { validate } from '../validation';
 
 const baseConfig: Record<string, unknown> = {
@@ -7,6 +8,35 @@ const baseConfig: Record<string, unknown> = {
 };
 
 describe('validate', () => {
+  it('defaults CSP rollout to report-only and accepts explicit enforcement', () => {
+    expect(validate({ ...baseConfig }).CSP_MODE).toBe('report-only');
+    expect(validate({ ...baseConfig, CSP_MODE: 'enforce' }).CSP_MODE).toBe(
+      'enforce',
+    );
+  });
+
+  it('rejects an unsupported CSP mode', () => {
+    expect(() => validate({ ...baseConfig, CSP_MODE: 'off' })).toThrow();
+  });
+
+  it('accepts an HTTPS CSP reporting destination', () => {
+    const uri = 'https://reports.example.com/csp?deployment=chat';
+    expect(
+      validate({ ...baseConfig, CSP_REPORT_URI: uri }).CSP_REPORT_URI,
+    ).toBe(uri);
+  });
+
+  it.each([
+    'http://reports.example.com/csp',
+    'https://user:password@reports.example.com/csp',
+    'https://reports.example.com/csp;script-src *',
+    'https://reports.example.com/csp;script-src',
+    'https://reports.example.com/csp"',
+    'https://reports.example.com/csp\r\nX-Injected: yes',
+    'https://reports.example.com/csp#fragment',
+  ])('rejects unsafe CSP reporting destination %s', (uri) => {
+    expect(() => validate({ ...baseConfig, CSP_REPORT_URI: uri })).toThrow();
+  });
   it('boots successfully with a minimal valid config', () => {
     expect(() => validate({ ...baseConfig })).not.toThrow();
   });
