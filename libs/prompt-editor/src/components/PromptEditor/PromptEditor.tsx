@@ -1,3 +1,4 @@
+import { EditorLayout } from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
@@ -5,7 +6,6 @@ import {
   mergeClasses,
   useAvailableHeightCap,
 } from '@epam/ai-dial-chat-shared';
-import { EditorLayout } from '@epam/ai-dial-editor-builder';
 import {
   Input,
   Label,

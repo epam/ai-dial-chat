@@ -874,8 +874,7 @@ describe('useConversationStream', () => {
     it('keeps waiting on attach past the old 5-minute watch timeout instead of falling back (Issue #8494)', async () => {
       const encoder = new TextEncoder();
       let streamController:
-        | ReadableStreamDefaultController<Uint8Array>
-        | undefined;
+        ReadableStreamDefaultController<Uint8Array> | undefined;
       transport.attachToGeneration = vi.fn().mockResolvedValue(
         new ReadableStream<Uint8Array>({
           start(controller) {

@@ -13,11 +13,7 @@ import { safeDecodeURIComponent } from '../shared/string-utils';
  * the app's own `server-api` layer.
  */
 export type CatalogPublishEntityType =
-  | 'model'
-  | 'toolset'
-  | 'application'
-  | 'prompt'
-  | 'skill';
+  'model' | 'toolset' | 'application' | 'prompt' | 'skill';
 
 const PUBLISHABLE_ENTITY_TYPES: Partial<
   Record<CatalogEntityType, CatalogPublishEntityType>

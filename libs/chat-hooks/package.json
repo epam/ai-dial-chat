@@ -114,7 +114,7 @@
     }
   },
   "dependencies": {
-    "dompurify": "3.4.13",
+    "dompurify": "3.4.15",
     "fflate": "^0.8.3",
     "lru-cache": "^10.4.3",
     "mime-types": "^3.0.2",
@@ -124,11 +124,11 @@
     "react": "^19.2.6",
     "@epam/ai-dial-attachment-canvas": "*",
     "@epam/ai-dial-attachment-input": "*",
+    "@epam/ai-dial-builder-form": "*",
     "@epam/ai-dial-catalog": "*",
     "@epam/ai-dial-chat-api-client": "*",
     "@epam/ai-dial-chat-overlay": "*",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-deployment-creation-form": "*",
     "@epam/ai-dial-mcp-apps": "*",
     "@epam/ai-dial-publish-panel": "*",
     "@epam/ai-dial-quotations": "*",
@@ -149,6 +149,9 @@
     "@epam/ai-dial-attachment-input": {
       "optional": true
     },
+    "@epam/ai-dial-builder-form": {
+      "optional": true
+    },
     "@epam/ai-dial-catalog": {
       "optional": true
     },
@@ -159,9 +162,6 @@
       "optional": true
     },
     "@epam/ai-dial-chat-shared": {
-      "optional": true
-    },
-    "@epam/ai-dial-deployment-creation-form": {
       "optional": true
     },
     "@epam/ai-dial-mcp-apps": {

@@ -12,12 +12,15 @@ import { ROUTES } from '../../../types/routes';
 import CustomAppEditorPage from '../CustomAppEditor';
 
 /*
- * Swaps the General step for a stub exposing just the name field, so the
+ * Swaps the lib General step for a stub exposing just the name field, so the
  * wizard can be driven past the General → Settings gate without mounting the
  * avatar picker and the file-manager modal.
  */
-vi.mock('../EditorForm/GeneralForm', () => ({
-  default: (props: {
+vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-toolset-editor')>();
+
+  const GeneralFormStub = (props: {
     form: { name: string };
     onChange: (patch: { name: string }) => void;
   }) => (
@@ -26,10 +29,15 @@ vi.mock('../EditorForm/GeneralForm', () => ({
       value={props.form.name}
       onChange={(event) => props.onChange({ name: event.target.value })}
     />
-  ),
-}));
+  );
+
+  return { ...actual, GeneralForm: GeneralFormStub };
+});
 
 vi.mock('../../../context/NotificationContext');
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ user: { bucket: 'b' } }),
+}));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({
     items: [],

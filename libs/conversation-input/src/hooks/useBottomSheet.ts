@@ -94,6 +94,5 @@ export const useBottomSheet = (
     };
     // `sheetRef` is a stable ref object; the sheet element is only read at
     // open time and inside the handler.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, sheetRef]);
 };

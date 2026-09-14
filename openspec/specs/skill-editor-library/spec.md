@@ -6,7 +6,7 @@ Specifies `libs/skill-editor`'s host-agnostic `SkillEditor` React component: its
 ## Requirements
 
 ### Requirement: Public package surface
-`libs/skill-editor/src/index.ts` SHALL export a `SkillEditor` React component plus every TypeScript type reachable through its props (form values, labels/texts, file-tree node types, callback signatures, error/status enums, edit-mode/conflict-state types). Internal-only helpers SHALL NOT be exported from the barrel. The package `libs/skill-editor/package.json` SHALL declare `name: "@epam/ai-dial-skill-editor"`, an `exports` map matching `libs/prompt-editor/package.json`'s shape (source/types/import/default for `.`, plus `./package.json`), and peer dependencies on `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-editor-builder`, and `@tabler/icons-react`.
+`libs/skill-editor/src/index.ts` SHALL export a `SkillEditor` React component plus every TypeScript type reachable through its props (form values, labels/texts, file-tree node types, callback signatures, error/status enums, edit-mode/conflict-state types). Internal-only helpers SHALL NOT be exported from the barrel. The package `libs/skill-editor/package.json` SHALL declare `name: "@epam/ai-dial-skill-editor"`, an `exports` map matching `libs/prompt-editor/package.json`'s shape (source/types/import/default for `.`, plus `./package.json`), and peer dependencies on `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-builder-form`, and `@tabler/icons-react`.
 
 The `headerContent?: ReactNode` prop IS REMOVED from `SkillEditorProps`. It is replaced by:
 - `onBack: () => void` — called when the back button is clicked
@@ -150,7 +150,7 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **THEN** the library renders the conflict message and a "Reload latest" control that calls `onReloadLatest` when activated, without itself discarding any field value
 
 ### Requirement: EditorLayout delegates header and body frame
-`SkillEditor` SHALL use `EditorLayout` from `@epam/ai-dial-editor-builder` as its outer shell. `EditorLayout` SHALL receive:
+`SkillEditor` SHALL use `EditorLayout` from `@epam/ai-dial-builder-form` as its outer shell. `EditorLayout` SHALL receive:
 - `onBack` forwarded from `SkillEditorProps`
 - `backAriaLabel` forwarded from `SkillEditorProps`
 - `title` forwarded from `SkillEditorProps`

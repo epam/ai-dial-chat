@@ -5,11 +5,13 @@ import {
   ErrorText,
   GhostIconButton,
   PrimaryIconButton,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlayerStopFilled, IconX } from '@tabler/icons-react';
 import {
   type CSSProperties,
   type FC,
+  type ReactNode,
   type RefObject,
   useCallback,
   useEffect,
@@ -36,11 +38,13 @@ export interface VoiceBarProps {
   onStop: () => void;
   /** Called when the user clicks the X to discard the recording. */
   onDiscard: () => void;
+  /** Host-rendered attach-file trigger for the second row's inline start (the same control as the normal footer's `+`, disabled by the host while it must not interrupt the session). Omit to render no attach control. */
+  attachButton?: ReactNode;
   /** Accessible label for the stop-recording button. Defaults to `'Stop recording'`. */
   stopLabel?: string;
   /** Accessible label for the discard / cancel button. Defaults to `'Discard recording'`. */
   discardLabel?: string;
-  /** Status announced during recognition. Defaults to 'Transcribing audio…'. */
+  /** Accessible name for the processing spinner shown during recognition. Defaults to 'Transcribing audio…'. */
   processingLabel?: string;
   /** CSS custom properties forwarded from the parent (e.g. `--ci-bg`, `--ci-border`). */
   style?: CSSProperties;
@@ -57,6 +61,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
   errorMessage,
   onStop,
   onDiscard,
+  attachButton,
   stopLabel = 'Stop recording',
   discardLabel = 'Discard recording',
   processingLabel = 'Transcribing audio…',
@@ -207,6 +212,11 @@ export const VoiceBar: FC<VoiceBarProps> = ({
           className="mobile:min-h-11 mobile:min-w-11"
         />
       )}
+      {isProcessing && (
+        <span className="flex size-[40px] flex-shrink-0 items-center justify-center mobile:min-h-11 mobile:min-w-11">
+          <Spinner size={20} ariaLabel={processingLabel} />
+        </span>
+      )}
     </div>
   );
 
@@ -215,14 +225,19 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       <div
         style={style}
         className={mergeClasses(
-          'flex w-full min-w-0 flex-col justify-center gap-3 desktop:flex-row desktop:items-center desktop:gap-2',
+          'flex w-full min-w-0 flex-col justify-center gap-2',
           !embedded && inputStyles.wrapper,
           !embedded &&
-            'min-h-[64px] max-w-[748px] rounded-xl border px-3 shadow-md desktop:py-2',
+            'min-h-[64px] max-w-[748px] rounded-xl border px-3 shadow-md',
           isError && styles.wrapperError,
         )}
       >
-        {/* Row 1 on mobile / inline on desktop: recording dot + waveform canvas */}
+        {/*
+         * Row 1: recording dot + waveform canvas, full width. Canvas height
+         * matches the single-line textarea's line-height (dial-body-paragraph-text,
+         * 26px) so switching between typing and recording does not change the
+         * input's overall height.
+         */}
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {isRecording && (
             <span
@@ -233,27 +248,22 @@ export const VoiceBar: FC<VoiceBarProps> = ({
               aria-hidden
             />
           )}
-          {isProcessing && (
-            <span
-              role="status"
-              aria-live="polite"
-              className="min-w-0 break-words"
-            >
-              {processingLabel}
-            </span>
-          )}
           <canvas
             ref={canvasRef}
-            height={32}
+            height={26}
             aria-hidden
             className={mergeClasses(
               styles.waveformCanvas,
-              'h-8 min-w-0 flex-1 desktop:h-6',
+              'h-[26px] min-w-0 flex-1',
             )}
           />
         </div>
 
-        {controls}
+        {/* Row 2: attach-file trigger at the start, discard/stop/spinner at the end */}
+        <div className="flex items-center justify-between gap-2">
+          {attachButton ?? <span aria-hidden />}
+          {controls}
+        </div>
       </div>
 
       {isError && errorMessage && (

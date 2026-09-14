@@ -21,8 +21,7 @@ export const resolveToolsetInfo = (
     getToolsetFallbackName(toolsetId),
   displayVersion: toolset?.displayVersion,
   authenticationType: toolset?.authSettings?.authenticationType as
-    | RowAuthType
-    | undefined,
+    RowAuthType | undefined,
   credentialsLevel: isPublicToolsetId(toolsetId)
     ? ToolsetCredentialsLevel.User
     : ToolsetCredentialsLevel.Global,
