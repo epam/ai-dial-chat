@@ -13,6 +13,7 @@ import {
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useEffect, useMemo, useState, type FC } from 'react';
+import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import type { FileManagerController } from '../file-manager-controller';
 import {
   DialFileManagerActionProfile,
@@ -99,8 +100,10 @@ export interface DialFileManagerShellProps {
   allowedFileTypes?: DialFileAcceptType[];
   /** Maximum file size in bytes for selectable files. */
   maxSelectableFileSize?: number;
-  /** Custom row-selectability predicate. */
-  isRowSelectable?: (node: { data?: FileManagerGridRow | null }) => boolean;
+  /** Custom row-selectability predicate, forwarded to the grid's row selection. */
+  isRowSelectable?: (node: {
+    data?: FileManagerSelectableNode | null;
+  }) => boolean;
   /** Returns a tooltip for disabled rows, or undefined for enabled rows. */
   getDisabledTooltip?: (row: FileManagerGridRow) => string | undefined;
   /** Tooltip shown on files with an unsupported type. */

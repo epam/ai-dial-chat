@@ -759,7 +759,7 @@ import type { AttachResult } from '@epam/ai-dial-chat-shared';
 
 ### FileManagerAttachModal
 
-Controlled attach modal that composes `DialFileManagerShell` with selection state, deduplication, and MIME/size/count validation. The host drives open/close, tab and selection state, resolves folder paths through `resolveFolderPath`, and receives the confirmed `AttachResult` via `onAttach`.
+Controlled attach modal that composes `DialFileManagerShell` with selection state, deduplication, and MIME/size/count validation. The host drives open/close, tab and selection state, resolves folder paths through `resolveFolderPath`, and receives the confirmed `AttachResult` via `onAttach`. When `isRowSelectable` is provided, every selection change is re-checked against it before reaching `onSelectedPathsChange` — items the file manager selects programmatically (e.g. a newly created folder) cannot enter selection unless they would be manually selectable, and paths resolving to no listed node are dropped.
 
 ```tsx
 import {
@@ -798,6 +798,16 @@ import type { FileManagerAttachModalLabels } from '@epam/ai-dial-chat-shared';
 
 // { title: string; attachLabel: string; headerDescription?: string | null }
 // … plus every DialFileManagerShellLabels field
+```
+
+### FileManagerSelectableNode
+
+Minimal node shape that `isRowSelectable` predicates are evaluated against. Satisfied by both grid rows and `DialFile` controller items, so one predicate gates manual grid clicks and programmatic selection changes.
+
+```ts
+import type { FileManagerSelectableNode } from '@epam/ai-dial-chat-shared';
+
+// { path: string; nodeType: DialFileNodeType; contentType?: string; contentLength?: number }
 ```
 
 ### DialFileManagerVariant / DialFileManagerActionProfile
