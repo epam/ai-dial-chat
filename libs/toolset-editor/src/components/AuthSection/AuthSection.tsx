@@ -12,6 +12,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   Input,
   NeutralButton,
+  PasswordInput,
   Radio,
   SegmentedControl,
   TagInput,
@@ -297,7 +298,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
             invalid={!!errors.clientId}
             disabled={isControlsDisabled}
           />
-          <Input
+          <PasswordInput
             id="toolset-client-secret"
             value={auth.clientSecret ?? ''}
             onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
@@ -307,6 +308,12 @@ export const AuthSection: FC<AuthSectionProps> = ({
             }}
             placeholder={
               labels?.clientSecretPlaceholder ?? 'Enter client secret'
+            }
+            showPasswordLabel={
+              labels?.showClientSecretLabel ?? 'Show client secret'
+            }
+            hidePasswordLabel={
+              labels?.hideClientSecretLabel ?? 'Hide client secret'
             }
             error={errors.clientSecret || undefined}
             invalid={!!errors.clientSecret}
@@ -409,7 +416,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
         />
 
         {auth.withLogin === WithLogin.WithLogin && (
-          <Input
+          <PasswordInput
             id="toolset-api-key"
             value={auth.apiKey ?? ''}
             onChange={(value) => onAuthChange({ apiKey: value ?? '' })}
@@ -418,6 +425,8 @@ export const AuthSection: FC<AuthSectionProps> = ({
               required: true,
             }}
             placeholder={labels?.apiKeyPlaceholder ?? 'Enter API key'}
+            showPasswordLabel={labels?.showApiKeyLabel ?? 'Show API key'}
+            hidePasswordLabel={labels?.hideApiKeyLabel ?? 'Hide API key'}
             error={errors.apiKey || undefined}
             invalid={!!errors.apiKey}
             disabled={isControlsDisabled}
