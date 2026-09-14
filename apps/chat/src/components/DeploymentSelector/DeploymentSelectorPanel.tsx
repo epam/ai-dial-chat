@@ -53,9 +53,27 @@ export interface DeploymentSelectorLabels {
   listAriaLabel?: string;
 }
 
+/**
+ * A row that is not a deployment: a sentinel/mode choice the host pins above
+ * every catalog section (e.g. the "Default agent" / "Last used agent" modes of
+ * the default-agent preference). It carries no icon and no favourite toggle, so
+ * it reads as a mode rather than as an agent.
+ */
+export interface DeploymentSelectorExtraOption {
+  /** Value handed to `onSelect` when the row is picked. */
+  id: string;
+  /** Row text; also what the search box filters the row on. */
+  label: string;
+}
+
 interface Props {
   /** Starred catalog items to display in the Favorites list. */
   favorites: CatalogItem[];
+  /**
+   * Non-deployment rows rendered above every catalog section. Defaults to none,
+   * which is the plain deployment picker.
+   */
+  extraOptions?: DeploymentSelectorExtraOption[];
   /** Operator-default item pinned ahead of favorites, whether starred or not. */
   pinnedItem?: CatalogItem;
   /** ID of the currently selected deployment. */
@@ -93,8 +111,12 @@ const matchesQuery = (item: CatalogItem, query: string): boolean => {
   );
 };
 
+/* Module-level so the default never changes identity between renders. */
+const NO_EXTRA_OPTIONS: DeploymentSelectorExtraOption[] = [];
+
 const DeploymentSelectorPanel: FC<Props> = ({
   favorites,
+  extraOptions = NO_EXTRA_OPTIONS,
   pinnedItem,
   selectedId,
   selectedItem,
@@ -158,6 +180,12 @@ const DeploymentSelectorPanel: FC<Props> = ({
     return talkableItems.filter((f) => matchesQuery(f, query));
   }, [talkableItems, query]);
 
+  const filteredExtraOptions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return extraOptions;
+    return extraOptions.filter((o) => o.label.toLowerCase().includes(q));
+  }, [extraOptions, query]);
+
   const isSelectedInFavorites = talkableItems.some(
     (f) => f.id === selectedItem?.id,
   );
@@ -184,7 +212,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
         ),
       );
     }
-  }, [filteredFavorites, showCurrentlySelected]);
+  }, [filteredFavorites, filteredExtraOptions, showCurrentlySelected]);
 
   /*
    * Panel is remounted fresh each time the popover opens, so without this the
@@ -213,10 +241,12 @@ const DeploymentSelectorPanel: FC<Props> = ({
     searchInputRef.current?.focus();
   }, [isMobile]);
 
-  const handleSelect = (item: CatalogItem) => {
-    onSelect(item.id);
+  const handleSelectId = (id: string) => {
+    onSelect(id);
     onClose();
   };
+
+  const handleSelect = (item: CatalogItem) => handleSelectId(item.id);
 
   const handleBrowse = () => {
     onBrowseCatalog?.();
@@ -240,6 +270,45 @@ const DeploymentSelectorPanel: FC<Props> = ({
       leaveTimeoutsRef.current.delete(id);
     }, ROW_LEAVE_ANIMATION_MS);
     leaveTimeoutsRef.current.set(id, timeout);
+  };
+
+  /*
+   * Same row chrome as a deployment row — tinted when chosen, `menuitemradio`
+   * in the same menu — minus the icon and the favourite toggle, neither of
+   * which a mode has.
+   */
+  const renderExtraRow = (option: DeploymentSelectorExtraOption): ReactNode => {
+    const isSelected = option.id === selectedId;
+    return (
+      <li
+        key={option.id}
+        role="none"
+        ref={isSelected ? selectedRowRef : undefined}
+      >
+        <MenuItem
+          role="menuitemradio"
+          aria-checked={isSelected}
+          mark={MenuItemMark.Tint}
+          selected={isSelected}
+          className="h-auto py-1.5"
+          label={
+            query.trim() ? (
+              <Highlight
+                text={option.label}
+                query={query}
+                className="dial-small-text min-w-0 !flex-initial"
+              />
+            ) : (
+              <EllipsisTooltip
+                text={option.label}
+                className="dial-small-text min-w-0 !flex-initial"
+              />
+            )
+          }
+          onClick={() => handleSelectId(option.id)}
+        />
+      </li>
+    );
   };
 
   const renderRow = (item: CatalogItem, isFavoriteRow: boolean): ReactNode => {
@@ -365,6 +434,12 @@ const DeploymentSelectorPanel: FC<Props> = ({
         {/* The radio rows below are grouped per section, so the scroll body is
             the menu that owns them. */}
         <div role="menu" aria-label={listAriaLabel} ref={listContentRef}>
+          {filteredExtraOptions.length > 0 && (
+            <ul role="group" className="flex flex-col gap-1 px-1 pb-1 pt-1">
+              {filteredExtraOptions.map(renderExtraRow)}
+            </ul>
+          )}
+
           {showCurrentlySelected && selectedItem && (
             <>
               <p className={SECTION_HEADING_CLASS_NAME}>
