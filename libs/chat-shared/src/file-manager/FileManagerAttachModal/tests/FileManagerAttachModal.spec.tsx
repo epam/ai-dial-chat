@@ -12,10 +12,15 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from '../../file-manager-variant';
+import type { FileManagerSelectableNode } from '../../../types/file-manager-node';
 import {
   FileManagerAttachModal,
   type FileManagerAttachModalLabels,
 } from '../FileManagerAttachModal';
+
+const shellEmitted = vi.hoisted(() => ({
+  lastSet: null as Set<string> | null,
+}));
 
 vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
   const { DialFileManagerTabs: Tabs } =
@@ -42,6 +47,22 @@ vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
           onClick={() => onSelectedPathsChange(new Set(['/My files/docs/']))}
         >
           select folder
+        </button>
+        <button
+          onClick={() => {
+            const paths = new Set(['/My files/report.pdf', '/My files/docs/']);
+            shellEmitted.lastSet = paths;
+            onSelectedPathsChange(paths);
+          }}
+        >
+          select file and folder
+        </button>
+        <button
+          onClick={() =>
+            onSelectedPathsChange(new Set(['/My files/unknown.pdf']))
+          }
+        >
+          select unknown path
         </button>
         <button onClick={() => onTabChange(Tabs.Shared)}>change tab</button>
         <span data-testid="selection-size">{selectedPaths.size}</span>
@@ -143,6 +164,9 @@ interface RenderOptions {
   isAnyOperationInProgress?: boolean;
   resolveFolderPath?: (file: DialFile) => string | null;
   isFileTypeAllowed?: (contentType: string) => boolean;
+  isRowSelectable?: (node: {
+    data?: FileManagerSelectableNode | null;
+  }) => boolean;
   maximumAttachmentsAmount?: number;
   existingAttachmentsAmount?: number;
 }
@@ -347,6 +371,94 @@ describe('FileManagerAttachModal', () => {
     it('reflects the current selectedPaths in the shell', () => {
       renderModal({ selectedPaths: new Set(['/My files/report.pdf']) });
       expect(screen.getByTestId('selection-size').textContent).toBe('1');
+    });
+  });
+
+  describe('selection-change filtering (Issue #8760)', () => {
+    it('does not add a folder to selection when isRowSelectable rejects folders', async () => {
+      const onSelectedPathsChange = vi.fn();
+      renderModal({
+        onSelectedPathsChange,
+        isRowSelectable: (node) =>
+          node.data?.nodeType !== DialFileNodeType.FOLDER,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'select folder' }),
+      );
+
+      expect(onSelectedPathsChange).toHaveBeenCalledOnce();
+      const paths: Set<string> = vi.mocked(onSelectedPathsChange).mock
+        .calls[0][0];
+      expect(paths.size).toBe(0);
+    });
+
+    it('keeps a folder in selection when isRowSelectable accepts it so a clicked folder can be attached', async () => {
+      const onSelectedPathsChange = vi.fn();
+      renderModal({
+        onSelectedPathsChange,
+        isRowSelectable: () => true,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'select folder' }),
+      );
+
+      expect(onSelectedPathsChange).toHaveBeenCalledOnce();
+      const paths: Set<string> = vi.mocked(onSelectedPathsChange).mock
+        .calls[0][0];
+      expect([...paths]).toEqual(['/My files/docs/']);
+    });
+
+    it('keeps accepted files while dropping rejected folders from the same selection change', async () => {
+      const onSelectedPathsChange = vi.fn();
+      renderModal({
+        onSelectedPathsChange,
+        isRowSelectable: (node) =>
+          node.data?.nodeType !== DialFileNodeType.FOLDER,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'select file and folder' }),
+      );
+
+      expect(onSelectedPathsChange).toHaveBeenCalledOnce();
+      const paths: Set<string> = vi.mocked(onSelectedPathsChange).mock
+        .calls[0][0];
+      expect([...paths]).toEqual(['/My files/report.pdf']);
+    });
+
+    it('drops paths that resolve to no listed node', async () => {
+      const onSelectedPathsChange = vi.fn();
+      renderModal({
+        onSelectedPathsChange,
+        isRowSelectable: () => true,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'select unknown path' }),
+      );
+
+      expect(onSelectedPathsChange).toHaveBeenCalledOnce();
+      const paths: Set<string> = vi.mocked(onSelectedPathsChange).mock
+        .calls[0][0];
+      expect(paths.size).toBe(0);
+    });
+
+    it('forwards selection changes unfiltered when isRowSelectable is absent', async () => {
+      const onSelectedPathsChange = vi.fn();
+      renderModal({ onSelectedPathsChange });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'select file and folder' }),
+      );
+
+      expect(onSelectedPathsChange).toHaveBeenCalledOnce();
+      const paths: Set<string> = vi.mocked(onSelectedPathsChange).mock
+        .calls[0][0];
+      expect([...paths]).toEqual(['/My files/report.pdf', '/My files/docs/']);
+      // The host must own an independent snapshot, not the shell's live Set.
+      expect(paths).not.toBe(shellEmitted.lastSet);
     });
   });
 });

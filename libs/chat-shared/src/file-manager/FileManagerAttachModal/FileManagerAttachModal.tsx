@@ -8,6 +8,7 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import { Popup, PopupSize, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, type FC } from 'react';
+import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import type { AttachResult } from '../attach-result';
 import { DialFileManagerShell } from '../DialFileManagerShell/DialFileManagerShell';
 import type { FileManagerController } from '../file-manager-controller';
@@ -93,8 +94,16 @@ export interface FileManagerAttachModalProps {
   /** Count of attachments already present before this modal opens. Defaults to `0`. */
   existingAttachmentsAmount?: number;
 
-  /** Row selectability predicate forwarded to the grid. */
-  isRowSelectable?: (node: { data?: FileManagerGridRow | null }) => boolean;
+  /**
+   * Row selectability predicate forwarded to the grid and re-applied to every
+   * selection change, so items that were not clicked manually (e.g. the file
+   * manager's auto-select of newly created items) cannot enter selection
+   * unless manually selectable. Paths resolving to no listed node are dropped.
+   * When absent, selection changes are forwarded unfiltered.
+   */
+  isRowSelectable?: (node: {
+    data?: FileManagerSelectableNode | null;
+  }) => boolean;
   /** Returns a tooltip for disabled rows; forwarded to the grid. */
   getDisabledTooltip?: (row: FileManagerGridRow) => string | undefined;
   /** Tooltip shown on files with an unsupported type; forwarded to the grid. */
@@ -165,6 +174,33 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
           .map((selectedPath) => filesByPath.get(selectedPath))
           .filter((file): file is DialFile => file != null),
       [filesByPath, selectedPaths],
+    );
+
+    const handleSelectedPathsChange = useCallback(
+      (paths: Set<string>) => {
+        if (isRowSelectable == null) {
+          // Copy so no host ever stores the upstream package's live Set reference.
+          onSelectedPathsChange(new Set(paths));
+          return;
+        }
+        /*
+         * Selection that did not originate from a manual grid click — the
+         * file manager's auto-select of newly created/uploaded items being
+         * the known case — bypasses the grid's isRowSelectable gate, so the
+         * same rules are re-applied here before the host's selection state
+         * is updated. Paths resolving to no listed node are dropped, matching
+         * the file manager's own pruning of unknown paths.
+         */
+        const filteredPaths = new Set<string>();
+        for (const path of paths) {
+          const file = filesByPath.get(path);
+          if (file != null && isRowSelectable({ data: file })) {
+            filteredPaths.add(path);
+          }
+        }
+        onSelectedPathsChange(filteredPaths);
+      },
+      [filesByPath, isRowSelectable, onSelectedPathsChange],
     );
 
     const handleAttach = useCallback(() => {
@@ -282,7 +318,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
             tabs={tabs}
             onTabChange={onTabChange}
             selectedPaths={selectedPaths}
-            onSelectedPathsChange={onSelectedPathsChange}
+            onSelectedPathsChange={handleSelectedPathsChange}
             variant={variant}
             actionProfile={actionProfile}
             autoSelectUploadedItems={autoSelectUploadedItems}
