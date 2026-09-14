@@ -163,8 +163,15 @@ module.exports = {
 
     extend: {
       screens: {
-        mobile: { max: '768px' },
-        desktop: { min: '769px' },
+        /*
+         * Single source: DESKTOP_BREAKPOINT_PX in
+         * libs/chat-shared/src/constants/breakpoint.ts. This config is plain
+         * CJS run by tooling, so it cannot import the constant — the
+         * literals are pinned by
+         * apps/chat/src/hooks/breakpoint/breakpoint-sync.spec.ts.
+         */
+        mobile: { max: '1279px' },
+        desktop: { min: '1280px' },
       },
       /*
        * `outline` emits a 1px solid ring and `outline-focus` paints it with the

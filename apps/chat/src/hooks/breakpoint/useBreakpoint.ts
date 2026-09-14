@@ -1,17 +1,20 @@
+import { DESKTOP_MEDIA_QUERY } from '@epam/ai-dial-chat-shared';
 import { useEffect, useState } from 'react';
 
 export type Breakpoint = 'mobile' | 'desktop';
 
 /**
  * Min-width queries ordered from largest to smallest. The first query that
- * matches wins; if none match, the viewport is in the `mobile` band.
- * Keep these aligned with the `screens` map in the root `tailwind.config.js`
- * so JS-driven branches and Tailwind utility prefixes resolve to the same band.
+ * matches wins; if none match, the viewport is in the `mobile` band. The
+ * query is single-sourced from chat-shared's breakpoint constants, which the
+ * `screens` map in the root `tailwind.config.js` and the SCSS `@media`
+ * mirrors are pinned to by `breakpoint-sync.spec.ts`, so JS-driven branches
+ * and Tailwind utility prefixes resolve to the same band.
  */
 const BREAKPOINT_QUERIES: ReadonlyArray<{
   query: string;
   breakpoint: Breakpoint;
-}> = [{ query: '(min-width: 769px)', breakpoint: 'desktop' }];
+}> = [{ query: DESKTOP_MEDIA_QUERY, breakpoint: 'desktop' }];
 
 const resolveBreakpoint = (): Breakpoint => {
   if (
