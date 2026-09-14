@@ -340,7 +340,20 @@ describe('AuthSection', () => {
     it('renders key header and API key inputs when ApiKey + WithLogin is active', () => {
       renderSection({ auth: apiKeyAuth() });
       expect(screen.getByLabelText('API Key parameter name')).toBeTruthy();
-      expect(screen.getByLabelText('API key')).toBeTruthy();
+      expect(screen.getByLabelText(/^API key/)).toBeTruthy();
+    });
+
+    it('masks the API key value and exposes a reveal toggle', async () => {
+      renderSection({ auth: apiKeyAuth() });
+
+      const input = screen.getByLabelText(/^API key/) as HTMLInputElement;
+      expect(input.type).toBe('password');
+
+      await user.click(screen.getByRole('button', { name: 'Show API key' }));
+      expect((screen.getByLabelText(/^API key/) as HTMLInputElement).type).toBe(
+        'text',
+      );
+      expect(screen.getByRole('button', { name: 'Hide API key' })).toBeTruthy();
     });
 
     it('renders only the key header input when ApiKey + WithoutLogin is active', () => {
@@ -363,14 +376,40 @@ describe('AuthSection', () => {
     });
   });
 
+  /*
+   * The kit marks a required field inside its <label> — a visual asterisk plus
+   * visually hidden "(required)" text — rather than through the native
+   * `required` attribute, so the label text is what carries the requirement.
+   */
+  const clientSecretLabelText = (): string =>
+    (screen.getByLabelText(/^Client secret/) as HTMLInputElement).labels?.[0]
+      ?.textContent ?? '';
+
   describe('OAuth conditional fields', () => {
     it('renders client ID, client secret, auth endpoint, token endpoint, and scopes when OAuth + WithConfig is active', () => {
       renderSection({ auth: oauthWithConfigAuth() });
       expect(screen.getByLabelText('Client ID')).toBeTruthy();
-      expect(screen.getByLabelText('Client secret')).toBeTruthy();
+      expect(screen.getByLabelText(/^Client secret/)).toBeTruthy();
       expect(screen.getByLabelText('Authorization endpoint')).toBeTruthy();
       expect(screen.getByLabelText('Token endpoint')).toBeTruthy();
       expect(screen.getByLabelText('Scopes')).toBeTruthy();
+    });
+
+    it('masks the client secret value and exposes a reveal toggle', async () => {
+      renderSection({ auth: oauthWithConfigAuth() });
+
+      const input = screen.getByLabelText(/^Client secret/) as HTMLInputElement;
+      expect(input.type).toBe('password');
+
+      await user.click(
+        screen.getByRole('button', { name: 'Show client secret' }),
+      );
+      expect(
+        (screen.getByLabelText(/^Client secret/) as HTMLInputElement).type,
+      ).toBe('text');
+      expect(
+        screen.getByRole('button', { name: 'Hide client secret' }),
+      ).toBeTruthy();
     });
 
     it('renders Standard login and Custom login radio buttons for OAuth', () => {
@@ -385,18 +424,14 @@ describe('AuthSection', () => {
         toolsetId: 'toolsets/b/draft-123__1.0.0',
         isEditMode: false,
       });
-      expect(
-        (screen.getByLabelText('Client secret') as HTMLInputElement).required,
-      ).toBe(true);
+      expect(clientSecretLabelText()).toContain('(required)');
     });
 
     it('does not require client secret when editing an already-saved toolset', () => {
       renderSection({
         auth: { ...oauthWithConfigAuth(), clientSecret: '' },
       });
-      expect(
-        (screen.getByLabelText('Client secret') as HTMLInputElement).required,
-      ).toBe(false);
+      expect(clientSecretLabelText()).not.toContain('(required)');
       expect(
         (screen.getByRole('button', { name: 'Log in' }) as HTMLButtonElement)
           .disabled,
