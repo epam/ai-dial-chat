@@ -16,7 +16,6 @@ import {
   ChatI18nKeys,
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
-import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -59,7 +58,6 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
 
   const isAuthenticated = status === AuthStatus.Authenticated && !!user;
   const isUserMenuShown = isAuthenticated && !isUserMenuHidden;
-  const isSettingsPageEnabled = useFeatureFlag('settingsPageEnabled');
 
   const handleSelectItem = (item: NavigationPanelItem) => navigate(item.id);
 
@@ -86,23 +84,15 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
             isUserMenuShown && (
               <UserMenu
                 profile={profile}
-                groups={[languageGroup, keyboardGroup].filter(
-                  (group) => group != null,
-                )}
+                groups={languageGroup ? [languageGroup] : undefined}
                 labels={{
                   trigger: t(AuthI18nKeys.SignedInAs, { email: profile.email }),
                   avatarAlt: t(AuthI18nKeys.UserAvatar),
                   logOut: t(ButtonsI18nKeys.LogOut),
-                  ...(isSettingsPageEnabled && {
-                    settings: t(BasicI18nKeys.Settings),
-                  }),
+                  settings: t(BasicI18nKeys.Settings),
                 }}
                 onLogout={openLogout}
-                onSettings={
-                  isSettingsPageEnabled
-                    ? () => navigate(ROUTES.Settings)
-                    : undefined
-                }
+                onSettings={() => navigate(ROUTES.Settings)}
               />
             )
           }
@@ -118,8 +108,6 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           items={items}
           onSelectItem={handleSelectItem}
           profile={profile}
-          /* The sheet deliberately offers only the shortcut group — the locale
-             picker stays desktop-only, as it was before the lib extraction. */
           groups={keyboardGroup ? [keyboardGroup] : undefined}
           onLogout={openLogout}
           footer={<FooterMessage />}

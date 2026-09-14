@@ -12,16 +12,27 @@ import {
 import { SUPPORTED_LANGUAGES, useLanguage } from '../language/useLanguage';
 import { useUiFeature } from '../useUiFeature';
 
-/*
- * TODO: a theme group belongs here too, but only the light theme ships today.
- * Reinstate it by building a `NavigationMenuGroup` from `useThemeOptions`.
+/**
+ * Settings groups offered by the navigation menus.
+ *
+ * Theme and "Default agent for new chats" live only in the Settings page's Preferences tab.
+ * Language and the keyboard shortcut are additionally offered here, because the
+ * mobile `NavigationSheet` has no Settings entry point of its own and would
+ * otherwise strand mobile users. Both surfaces write through the same hooks
+ * (`useLanguage`, `useKeyboardShortcutPreference`), so they cannot disagree.
  */
-
-/** Single-select settings groups offered by the navigation menus. */
 export interface NavigationMenuGroups {
-  /** Locale picker; omitted when user settings are hidden or only one locale ships. */
+  /**
+   * Locale picker; omitted when user settings are hidden or only one locale
+   * ships. `SUPPORTED_LANGUAGES` holds a single entry today, so this is
+   * `undefined` in every shipping build — it is kept wired so the group appears
+   * the moment a second locale is registered.
+   */
   languageGroup?: NavigationMenuGroup;
-  /** Send-on-Enter picker; omitted when user settings or shortcuts are hidden. */
+  /**
+   * Send-on-Enter picker; omitted when user settings or keyboard shortcuts are
+   * hidden.
+   */
   keyboardGroup?: NavigationMenuGroup;
 }
 
