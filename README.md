@@ -134,6 +134,10 @@ the features with no replacement (`additional_css`, the `custom-logo` flag).
 └─────────────────────────────────────────────────┘
 ```
 
+For the production CSP browser check, run
+`npm exec -- nx run @epam/chat:test-csp-browser`; see the
+[chat CSP test prerequisites and scope](apps/chat/README.md#content-security-policy).
+
 ## Prerequisites
 
 - **Node.js**: 24 or higher (production images build on `node:24.17-alpine`)
