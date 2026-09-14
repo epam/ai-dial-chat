@@ -29,6 +29,11 @@ jobs:
         run: npm run validate:agent-docs:test
       - name: Validate agent configuration
         run: npm run validate:agent-docs
+      # Source-only: README coverage/identity, lib package metadata, lib
+      # stylesheet exports, relative links, README imports vs public exports.
+      # Needs no build, so it belongs in this fast job.
+      - name: Validate documentation and lib manifests
+        run: npm run validate:docs
 
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.11.0

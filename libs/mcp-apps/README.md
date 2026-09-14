@@ -22,11 +22,7 @@ Everything that requires host context — the current theme/locale, the configur
 
 - `react`
 - `@epam/ai-dial-chat-shared`
-- `@epam/ai-dial-attachment-canvas`
 - `@epam/ai-dial-ui-kit`
-- `@mcp-ui/client`
-- `@modelcontextprotocol/sdk`
-- `@tabler/icons-react`
 
 ## Hooks
 

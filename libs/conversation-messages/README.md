@@ -16,14 +16,17 @@ Message display components for rendering conversation history — user, assistan
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-conversation-messages/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-attachment-input`
-- `@tabler/icons-react`
-- `react-markdown`
 
 ## Components
 

@@ -21,8 +21,6 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 - `react`
 - `@epam/ai-dial-ui-kit` ^0.14.0-dev.30 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
-- `@epam/ai-dial-publish-panel` (the Publish flow rendered from `DetailsPanel`'s Manage menu)
-- `@tabler/icons-react`
 - `ag-grid-community@35.3.0`
 
 Both `@epam/ai-dial-chat-shared` and `@epam/ai-dial-publish-panel` are kept

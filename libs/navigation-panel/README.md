@@ -18,13 +18,17 @@ Everything in this library is presentational. It knows nothing about routing, fe
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-navigation-panel/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `@epam/ai-dial-chat-shared`
-- `@epam/ai-dial-conversation-input`
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 

@@ -64,6 +64,23 @@ export const rewriteExportsObj = (obj) => {
   return obj;
 };
 
+/*
+ * Collects every distinct file path an exports map points at, as written in the
+ * publish-ready manifest (i.e. after `rewriteExportsObj`). Condition keys are
+ * ignored — only the leaf target strings matter, and only relative ones: a bare
+ * specifier in an exports map is a package redirect, not a shipped file.
+ */
+export const collectExportFilePaths = (obj, found = new Set()) => {
+  if (typeof obj === 'string') {
+    if (obj.startsWith('./')) found.add(obj);
+  } else if (Array.isArray(obj)) {
+    obj.forEach((entry) => collectExportFilePaths(entry, found));
+  } else if (obj && typeof obj === 'object') {
+    Object.values(obj).forEach((value) => collectExportFilePaths(value, found));
+  }
+  return found;
+};
+
 /**
  * Mutates `json` (a parsed source package.json) into the publish-ready shape
  * and returns it: sets the version, drops "private", sets "repository",

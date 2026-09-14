@@ -1,5 +1,15 @@
 /** Public entry-point peer sets for isolated packed consumers. */
 
+/*
+ * `@epam/ai-dial-chat-api-client` appears in no list below: this package ships
+ * it as a `dependency`, because its conversation entry imports a runtime enum
+ * from it. `@epam/ai-dial-quotations` stays an optional peer and now appears
+ * only in the three rows whose entry really imports it — the conversation
+ * stream's annotation normalizer moved to `@epam/ai-dial-chat-shared`, which
+ * every one of these fixtures installs anyway
+ * ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)).
+ */
+
 /** The dependency-light entry with zero peers beyond `react`. */
 export const MINIMAL_FIXTURE = {
   name: 'minimal',
@@ -7,21 +17,54 @@ export const MINIMAL_FIXTURE = {
   peers: [],
 };
 
-/** Root re-exports require these peers to resolve before unused features are tree-shaken. */
+/*
+ * `@epam/ai-dial-ui-kit@0.14.0-dev.51` moved its editor stack from required
+ * peers to optional ones, but its published root entry still reaches all
+ * three by name, so an installing consumer still has to provide them
+ * ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)):
+ *
+ *  - the runtime root entry re-exports `LazyDialJsonEditor`, whose dynamic
+ *    import target does `import { Editor } from '@monaco-editor/react'`, and
+ *    a bundler has to resolve a dynamic import target to chunk it;
+ *  - the declaration root entry reaches `JsonEditor.d.ts`,
+ *    `MarkdownEditor.d.ts` and `types/editor.d.ts`, which import
+ *    `@monaco-editor/react`, `monaco-editor` and `@uiw/react-md-editor` by
+ *    name — unresolvable to `tsc`, which these fixtures deliberately run
+ *    with `skipLibCheck: false`, when the optional peer is absent.
+ *
+ * An optional peer reachable from the root entry is a kit-side bug; until
+ * the kit confines these to its `./editors` boundary, every fixture that
+ * installs the kit installs them too, at the ranges the kit asks for.
+ */
+export const UI_KIT_EDITOR_PEERS = [
+  '@monaco-editor/react',
+  'monaco-editor',
+  '@uiw/react-md-editor',
+];
+
+/*
+ * What a consumer still has to install itself once it pulls in
+ * `@epam/ai-dial-chat-shared` — which every entry below does through a root
+ * re-export, and a re-export has to *resolve* before unused features are
+ * tree-shaken.
+ *
+ * Two families are deliberately absent, and their absence is the assertion —
+ * a fixture that installed them anyway could not tell a working contract from
+ * a broken one:
+ *
+ *  - the markdown stack (`react-markdown`, `remark-*`, `rehype-*`, `katex`,
+ *    `react-syntax-highlighter`, `@tabler/icons-react`), which
+ *    `@epam/ai-dial-chat-shared` ships as dependencies;
+ *  - `@epam/ai-dial-react-file-manager` and `ag-grid-community`, which used to
+ *    be here because the root entry re-exported the two grid-rendering
+ *    components. They now live behind that package's `./file-manager` entry
+ *    ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)), so the
+ *    root closure no longer reaches the grid and only the `file-manager`
+ *    fixture below names the pair.
+ */
 export const CHAT_SHARED_ROOT_PEERS = [
-  '@tabler/icons-react',
-  'react-syntax-highlighter',
-  'react-markdown',
-  'remark-breaks',
-  'remark-gfm',
-  'remark-math',
-  'rehype-katex',
-  'rehype-raw',
-  'rehype-sanitize',
-  'katex',
   '@epam/ai-dial-ui-kit',
-  '@epam/ai-dial-react-file-manager',
-  'ag-grid-community',
+  ...UI_KIT_EDITOR_PEERS,
 ];
 
 /** Every published subpath, with its complete documented direct peer set. */
@@ -32,9 +75,7 @@ export const SUBPATH_FIXTURES = [
     name: 'conversation',
     subpath: 'conversation',
     peers: [
-      '@epam/ai-dial-chat-api-client',
       '@epam/ai-dial-chat-shared',
-      '@epam/ai-dial-quotations',
       '@epam/ai-dial-publish-panel',
       '@epam/ai-dial-chat-overlay',
       ...CHAT_SHARED_ROOT_PEERS,
@@ -43,11 +84,7 @@ export const SUBPATH_FIXTURES = [
   {
     name: 'conversation-transfer',
     subpath: 'conversation-transfer',
-    peers: [
-      '@epam/ai-dial-chat-api-client',
-      '@epam/ai-dial-chat-shared',
-      ...CHAT_SHARED_ROOT_PEERS,
-    ],
+    peers: ['@epam/ai-dial-chat-shared', ...CHAT_SHARED_ROOT_PEERS],
   },
   {
     name: 'conversation-sources',
@@ -62,10 +99,16 @@ export const SUBPATH_FIXTURES = [
   {
     name: 'file-manager',
     subpath: 'file-manager',
+    /*
+     * The one fixture that names the grid pair: this entry is where
+     * `@epam/ai-dial-chat-shared/file-manager` — and so
+     * `@epam/ai-dial-react-file-manager` with its `ag-grid-community` peer —
+     * enters the closure.
+     */
     peers: [
       '@epam/ai-dial-react-file-manager',
+      'ag-grid-community',
       '@epam/ai-dial-ui-kit',
-      '@epam/ai-dial-chat-api-client',
       '@epam/ai-dial-chat-shared',
       '@epam/ai-dial-attachment-canvas',
       '@epam/ai-dial-quotations',
@@ -76,7 +119,7 @@ export const SUBPATH_FIXTURES = [
   {
     name: 'skills-state',
     subpath: 'skills-state',
-    peers: ['@epam/ai-dial-chat-api-client'],
+    peers: [],
   },
   {
     name: 'catalog',
@@ -84,7 +127,6 @@ export const SUBPATH_FIXTURES = [
     peers: [
       '@epam/ai-dial-catalog',
       '@epam/ai-dial-chat-shared',
-      '@epam/ai-dial-chat-api-client',
       '@epam/ai-dial-attachment-input',
       '@epam/ai-dial-publish-panel',
       /*
@@ -102,40 +144,28 @@ export const SUBPATH_FIXTURES = [
       '@epam/ai-dial-skill-editor',
       '@epam/ai-dial-chat-shared',
       '@epam/ai-dial-ui-kit',
-      '@epam/ai-dial-chat-api-client',
       ...CHAT_SHARED_ROOT_PEERS,
     ],
   },
   {
     name: 'oauth',
     subpath: 'oauth',
-    peers: [
-      '@epam/ai-dial-chat-shared',
-      '@epam/ai-dial-chat-api-client',
-      ...CHAT_SHARED_ROOT_PEERS,
-    ],
+    peers: ['@epam/ai-dial-chat-shared', ...CHAT_SHARED_ROOT_PEERS],
   },
   {
     name: 'scheduled-tasks',
     subpath: 'scheduled-tasks',
-    peers: [
-      '@epam/ai-dial-scheduled-tasks',
-      '@epam/ai-dial-chat-api-client',
-      ...CHAT_SHARED_ROOT_PEERS,
-    ],
+    peers: ['@epam/ai-dial-scheduled-tasks', ...CHAT_SHARED_ROOT_PEERS],
   },
   {
     name: 'sharing',
     subpath: 'sharing',
     /*
-     * useShareLink.ts compares against ShareLinkResponseDtoAccessEnum,
-     * so chat-api-client is a runtime dependency.
+     * useShareLink.ts compares against ShareLinkResponseDtoAccessEnum, so
+     * chat-api-client is needed at runtime — this package ships it as a
+     * dependency, which is why the fixture no longer installs it.
      */
-    peers: [
-      '@epam/ai-dial-share',
-      '@epam/ai-dial-chat-api-client',
-      ...CHAT_SHARED_ROOT_PEERS,
-    ],
+    peers: ['@epam/ai-dial-share', ...CHAT_SHARED_ROOT_PEERS],
   },
   {
     name: 'attachments',
@@ -153,7 +183,6 @@ export const SUBPATH_FIXTURES = [
     subpath: 'utils',
     peers: [
       '@epam/ai-dial-builder-form',
-      '@epam/ai-dial-chat-api-client',
       '@epam/ai-dial-chat-shared',
       ...CHAT_SHARED_ROOT_PEERS,
     ],
@@ -177,7 +206,6 @@ export const ALL_OPTIONAL_PEERS = [
   '@epam/ai-dial-attachment-input',
   '@epam/ai-dial-builder-form',
   '@epam/ai-dial-catalog',
-  '@epam/ai-dial-chat-api-client',
   '@epam/ai-dial-chat-overlay',
   '@epam/ai-dial-chat-shared',
   '@epam/ai-dial-mcp-apps',
@@ -202,13 +230,15 @@ export const LEGACY_ROOT_FIXTURE = {
 
 /**
  * Installs every documented `./oauth` peer except
- * `@epam/ai-dial-chat-shared`, so the build has exactly one genuinely
- * missing direct peer and must name that package literally.
+ * `@epam/ai-dial-chat-shared` — which, since `@epam/ai-dial-chat-api-client`
+ * became a dependency of this package, leaves nothing to install at all. The
+ * build then has exactly one genuinely missing direct peer and must name that
+ * package literally.
  */
 export const NEGATIVE_FIXTURE = {
   name: 'negative-oauth',
   subpath: 'oauth',
-  peers: ['@epam/ai-dial-chat-api-client'],
+  peers: [],
   expectFailure: true,
   failureMustName: '@epam/ai-dial-chat-shared',
 };
