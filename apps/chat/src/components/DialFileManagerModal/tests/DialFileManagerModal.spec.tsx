@@ -326,6 +326,16 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         >
           Select docs folder
         </button>
+        <button
+          type="button"
+          onClick={() =>
+            onSelectedPathsChange?.(
+              new Set(['/My files/report.pdf', '/My files/docs/']),
+            )
+          }
+        >
+          Select report and docs folder
+        </button>
       </div>
     ),
   };
@@ -740,6 +750,35 @@ describe('DialFileManagerModal', () => {
     expect(
       screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
     ).toBe(true);
+  });
+
+  it('does not add a created folder to selection when the model cannot attach folders', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select docs folder' }));
+
+    expect(screen.queryByText('1 item selected')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('keeps an allowed file while dropping a non-selectable folder from the same selection', () => {
+    const onAttach = vi.fn();
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} onAttach={onAttach} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Select report and docs folder' }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
+
+    expect(screen.getByText('1 item selected')).toBeTruthy();
+    expect(onAttach).toHaveBeenCalledWith({
+      files: [expect.objectContaining({ name: 'report.pdf' })],
+      folderPaths: [],
+    });
   });
 
   it('does not render content when isOpen is false', () => {
