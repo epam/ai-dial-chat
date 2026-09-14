@@ -179,7 +179,8 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
     const handleSelectedPathsChange = useCallback(
       (paths: Set<string>) => {
         if (isRowSelectable == null) {
-          onSelectedPathsChange(paths);
+          // Copy so no host ever stores the upstream package's live Set reference.
+          onSelectedPathsChange(new Set(paths));
           return;
         }
         /*

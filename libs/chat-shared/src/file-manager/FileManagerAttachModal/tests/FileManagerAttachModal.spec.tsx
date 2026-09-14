@@ -18,6 +18,10 @@ import {
   type FileManagerAttachModalLabels,
 } from '../FileManagerAttachModal';
 
+const shellEmitted = vi.hoisted(() => ({
+  lastSet: null as Set<string> | null,
+}));
+
 vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
   const { DialFileManagerTabs: Tabs } =
     await import('@epam/ai-dial-react-file-manager');
@@ -45,11 +49,11 @@ vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
           select folder
         </button>
         <button
-          onClick={() =>
-            onSelectedPathsChange(
-              new Set(['/My files/report.pdf', '/My files/docs/']),
-            )
-          }
+          onClick={() => {
+            const paths = new Set(['/My files/report.pdf', '/My files/docs/']);
+            shellEmitted.lastSet = paths;
+            onSelectedPathsChange(paths);
+          }}
         >
           select file and folder
         </button>
@@ -453,6 +457,8 @@ describe('FileManagerAttachModal', () => {
       const paths: Set<string> = vi.mocked(onSelectedPathsChange).mock
         .calls[0][0];
       expect([...paths]).toEqual(['/My files/report.pdf', '/My files/docs/']);
+      // The host must own an independent snapshot, not the shell's live Set.
+      expect(paths).not.toBe(shellEmitted.lastSet);
     });
   });
 });
