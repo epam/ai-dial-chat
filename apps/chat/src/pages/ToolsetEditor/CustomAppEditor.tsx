@@ -300,6 +300,26 @@ const CustomAppEditor: FC = () => {
     });
   }, [computeGeneralErrors]);
 
+  /*
+   * Owned by the editor rather than the settings form so the error survives
+   * the form unmounting while the wizard is on the General step.
+   */
+  const handleCompletionUrlBlur = useCallback(() => {
+    const trimmed = settingsForm.completionUrl.trim();
+    let completionUrl: string | undefined;
+    if (!trimmed) {
+      completionUrl = t(CustomAppI18nKeys.CompletionUrlRequired);
+    } else if (!isValidAbsoluteUrl(trimmed)) {
+      completionUrl = t(CustomAppI18nKeys.CompletionUrlInvalid);
+    }
+    setSettingsErrors((prev) => {
+      const next = { ...prev };
+      if (completionUrl) next.completionUrl = completionUrl;
+      else delete next.completionUrl;
+      return next;
+    });
+  }, [settingsForm.completionUrl, t]);
+
   const handleNext = useCallback(() => {
     if (!validateGeneralForm()) return;
     setEditorStep(ToolsetEditorSteps.Settings);
@@ -498,6 +518,7 @@ const CustomAppEditor: FC = () => {
             onCancel={handleCancel}
             onNameBlur={handleNameBlur}
             onVersionBlur={handleVersionBlur}
+            onCompletionUrlBlur={handleCompletionUrlBlur}
             onGeneralChange={handleGeneralChange}
             onSettingsChange={handleSettingsChange}
           />
