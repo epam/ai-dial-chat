@@ -68,6 +68,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     activeFilter,
     onActiveFilterChange,
     isFilterTabsHidden = false,
+    hiddenSources,
   }) => {
     const {
       colors,
@@ -97,6 +98,21 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       if (activeFilter == null) return;
       setActiveTab(activeFilter);
     }, [activeFilter]);
+
+    /*
+     * Dropped before any tab/search filtering so a hidden source never
+     * surfaces under `All` or as a group heading, not just off its own tab.
+     */
+    const visibleConversations = useMemo(
+      () =>
+        hiddenSources?.length
+          ? conversations.filter(
+              (item) =>
+                item.source == null || !hiddenSources.includes(item.source),
+            )
+          : conversations,
+      [conversations, hiddenSources],
+    );
 
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
       () => ALL_GROUP_KEYS,
@@ -149,13 +165,17 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const handleDragStart = useCallback(
       (id: string, rows: VirtualRow[]) => {
         const groupKey = findGroupKeyForItem(rows, id);
-        const allowed = computeAllowedDropGroups(id, groupKey, conversations);
+        const allowed = computeAllowedDropGroups(
+          id,
+          groupKey,
+          visibleConversations,
+        );
         draggingIdRef.current = id;
         allowedDropGroupsRef.current = allowed;
         setDraggingId(id);
         setAllowedDropGroups(allowed);
       },
-      [conversations],
+      [visibleConversations],
     );
 
     const handleDragEnd = useCallback(() => {
@@ -211,11 +231,11 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
 
     const filteredItems = useMemo(
       () =>
-        conversations.filter(
+        visibleConversations.filter(
           (item) =>
             matchesTab(item, activeTab) && matchesSearch(item, searchQuery),
         ),
-      [conversations, activeTab, searchQuery],
+      [visibleConversations, activeTab, searchQuery],
     );
 
     const pinnedItems = useMemo(
@@ -369,8 +389,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       ],
     );
 
-    const isNoConversations = conversations.length === 0;
-    const isNoResults = conversations.length > 0 && filteredItems.length === 0;
+    const isNoConversations = visibleConversations.length === 0;
+    const isNoResults =
+      visibleConversations.length > 0 && filteredItems.length === 0;
 
     return (
       <SidebarPanel
@@ -429,6 +450,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
               onActiveFilterChange?.(tab);
             }}
             tabClassName={typography?.tabClassName}
+            hiddenSources={hiddenSources}
           />
         )}
 
