@@ -402,6 +402,8 @@ prefix is fixed in `auth.controller.ts`, not derived from `API_PREFIX`.
 
 No endpoint in this domain carries a per-route rate limit — repo-wide rate limiting was removed from `apps/chat-api`.
 
+`GET /api/v1/conversations/list` returns the complete history when both `limit` and `nextToken` are omitted. The BFF follows personal and public bucket cursors independently in batches of 1000, adds shared conversations once, and sorts the combined list by latest activity before bounded display-name enrichment. The conversation panel uses this full-history mode. An explicit `limit` or `nextToken` requests one page per bucket and returns a compound continuation cursor; with only `nextToken`, the page size is 100. A failed personal page fails the request rather than returning a truncated history; public and shared sources remain best-effort.
+
 | Method   | Path                                       | Description                                                                             |
 | -------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
 | `POST`   | `/api/v1/conversations`                    | Create conversation                                                                     |

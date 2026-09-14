@@ -2170,18 +2170,17 @@
     },
     "/api/v1/conversations/list": {
       "get": {
-        "description": "Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.",
+        "description": "Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.",
         "operationId": "listConversations",
         "parameters": [
           {
             "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Maximum number of conversations to return.",
+            "description": "Maximum number of conversations per bucket page. Omit both limit and nextToken to return the complete history; the BFF follows Core cursors in batches of 1000. With nextToken only, the page size defaults to 100.",
             "schema": {
               "minimum": 1,
               "maximum": 1000,
-              "default": 100,
               "example": 100,
               "type": "number"
             }
@@ -2190,7 +2189,7 @@
             "name": "nextToken",
             "required": false,
             "in": "query",
-            "description": "Pagination cursor returned in the previous response as `nextToken`. Omit for the first page.",
+            "description": "Pagination cursor returned in the previous response as `nextToken`. Set limit without nextToken for the first page; omit both to return the complete history.",
             "schema": {
               "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
               "type": "string"
@@ -9107,6 +9106,18 @@
           }
         }
       },
+      "RequestSkillDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The skill's resource URL (skills/{bucket}/{path})",
+            "example": "skills/my-bucket/team-a/docs-helper",
+            "maxLength": 1024
+          }
+        },
+        "required": ["url"]
+      },
       "MessageCustomContentDto": {
         "type": "object",
         "properties": {
@@ -9153,6 +9164,13 @@
           "state": {
             "type": "object",
             "description": "Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract."
+          },
+          "skills": {
+            "description": "Skills used with this message, each entry carrying the skill resource URL (DIAL Core PR #1956)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestSkillDto"
+            }
           }
         }
       },
@@ -9475,6 +9493,13 @@
           "state": {
             "type": "object",
             "description": "Opaque app-managed state to echo back verbatim on the next turn, per the DIAL stateful-app contract."
+          },
+          "skills": {
+            "description": "Skills used with this message, each entry carrying the skill resource URL (DIAL Core PR #1956)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestSkillDto"
+            }
           },
           "event_type": {
             "type": "string",

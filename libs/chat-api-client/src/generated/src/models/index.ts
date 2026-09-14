@@ -68,8 +68,7 @@ export interface AnnotationBodyDto {
  * @export
  */
 export type AnnotationBodyDtoSelector =
-  | AnnotationSelectorDto
-  | Array<AnnotationSelectorDto>;
+  AnnotationSelectorDto | Array<AnnotationSelectorDto>;
 /**
  *
  * @export
@@ -1154,6 +1153,12 @@ export interface ConversationMessageCustomContentDto {
    */
   state?: object;
   /**
+   * Skills used with this message, each entry carrying the skill resource URL (DIAL Core PR #1956)
+   * @type {Array<RequestSkillDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  skills?: Array<RequestSkillDto>;
+  /**
    * Status event discriminator when role is status
    * @type {string}
    * @memberof ConversationMessageCustomContentDto
@@ -1913,8 +1918,7 @@ export interface CreatedApplicationDto {
  * @export
  */
 export type CreatedApplicationDtoDisplayName =
-  | string
-  | { [key: string]: string };
+  string | { [key: string]: string };
 /**
  *
  * @export
@@ -4453,6 +4457,12 @@ export interface MessageCustomContentDto {
    * @memberof MessageCustomContentDto
    */
   state?: object;
+  /**
+   * Skills used with this message, each entry carrying the skill resource URL (DIAL Core PR #1956)
+   * @type {Array<RequestSkillDto>}
+   * @memberof MessageCustomContentDto
+   */
+  skills?: Array<RequestSkillDto>;
 }
 /**
  *
@@ -5577,6 +5587,19 @@ export const ReportClientChannelDtoResultEnum = {
 export type ReportClientChannelDtoResultEnum =
   (typeof ReportClientChannelDtoResultEnum)[keyof typeof ReportClientChannelDtoResultEnum];
 
+/**
+ *
+ * @export
+ * @interface RequestSkillDto
+ */
+export interface RequestSkillDto {
+  /**
+   * The skill's resource URL (skills/{bucket}/{path})
+   * @type {string}
+   * @memberof RequestSkillDto
+   */
+  url: string;
+}
 /**
  *
  * @export
