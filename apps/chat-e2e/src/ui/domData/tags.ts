@@ -21,4 +21,8 @@ export enum Tags {
   li = 'li',
   details = 'details',
   summary = 'summary',
+  ul = 'ul',
+  ol = 'ol',
+  blockquote = 'blockquote',
+  pre = 'pre',
 }
