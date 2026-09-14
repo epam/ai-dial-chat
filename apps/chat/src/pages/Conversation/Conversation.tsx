@@ -130,13 +130,18 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
   /*
-   * One-shot text hand-off into the composer's textarea: the overlay bridge
-   * and prompt insertion both write here rather than each owning a separate
-   * revision-token channel.
+   * One-shot text hand-off into the composer's textarea. The two writers differ
+   * in kind, so they own separate channels: the overlay bridge's setInputContent
+   * replaces the whole draft, while a picked prompt is inserted at the caret and
+   * must leave the user's own writing alone (issue #8754).
    */
   const [pendingInputContent, setPendingInputContent] = useState({
     revision: 0,
     value: '',
+  });
+  const [pendingInputInsertion, setPendingInputInsertion] = useState({
+    revision: 0,
+    text: '',
   });
   const notifiedLoadedConversationIdRef = useRef<string | null>(null);
 
@@ -598,6 +603,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     }));
   }, []);
 
+  const handleInsertText = useCallback((text: string) => {
+    setPendingInputInsertion((prev) => ({
+      revision: prev.revision + 1,
+      text,
+    }));
+  }, []);
+
   useActiveConversationBridge({
     conversation,
     conversationId,
@@ -693,7 +705,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onConversationChange={handleConversationChange}
           inputContent={pendingInputContent.value}
           inputContentRevision={pendingInputContent.revision}
-          onInsertText={handleSetPendingInputContent}
+          inputInsertion={pendingInputInsertion}
+          onInsertText={handleInsertText}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
