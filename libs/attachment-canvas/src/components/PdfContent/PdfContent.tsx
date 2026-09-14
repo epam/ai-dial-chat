@@ -315,27 +315,61 @@ export const PdfContent: FC<PdfContentProps> = ({
   );
 
   /*
-   * Scroll to the selected page by setting `scrollTop` on the panel
-   * directly, computed purely from page index * item height rather than
-   * looking up the thumbnail's DOM node — with virtualization the target
-   * page may not be mounted yet. (`Element.scrollIntoView()` is also
-   * unusable here: the panel is rendered through the `Dropdown`'s portal
-   * with floating-ui's `position: fixed` placement, which isn't anchored to
-   * any ancestor's scroll offset, so `scrollIntoView`'s ancestor walk falls
-   * through to scrolling the real `<html>` root instead.)
+   * Scroll to the selected page, computed purely from page index * item
+   * height rather than looking up the thumbnail's DOM node — with
+   * virtualization the target page may not be mounted yet.
+   * (`Element.scrollIntoView()` is also unusable here: the panel is
+   * rendered through the `Dropdown`'s portal with floating-ui's
+   * `position: fixed` placement, which isn't anchored to any ancestor's
+   * scroll offset, so `scrollIntoView`'s ancestor walk falls through to
+   * scrolling the real `<html>` root instead.)
+   *
+   * Both `scrollTop` React state and the container's real `scrollTop` are
+   * set here directly, synchronously, rather than animated with
+   * `scrollTo({ behavior: 'smooth' })` and left to the `onScroll`
+   * round-trip: an animation can be skipped or cut short before layout
+   * settles, which otherwise leaves both the real scrollbar and the
+   * virtualized window showing the wrong page until the reader scrolls
+   * manually.
    */
+  const scrollToSelectedPage = useCallback(
+    (container: HTMLDivElement) => {
+      if (totalPages === 0) return;
+      const targetTop = Math.max(
+        0,
+        (selectedPage - 1) * itemHeight -
+          container.clientHeight / 2 +
+          itemHeight / 2,
+      );
+      latestScrollTopRef.current = targetTop;
+      setScrollTop(targetTop);
+      container.scrollTop = targetTop;
+    },
+    [selectedPage, totalPages, itemHeight],
+  );
+
+  /*
+   * Applied through a callback ref, not only the effect below: the
+   * `Dropdown` portal tears down and recreates the panel's DOM node every
+   * time it closes and reopens, and on a reopen no dependency of the
+   * effect necessarily changes (the reader may not have scrolled the
+   * document while the panel was closed) — so the effect alone would not
+   * re-run in time for the freshly mounted node. Attaching the sync to
+   * mount itself guarantees it always runs against the current node.
+   */
+  const setPanelRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      panelRef.current = el;
+      if (el) scrollToSelectedPage(el);
+    },
+    [scrollToSelectedPage],
+  );
+
   useEffect(() => {
     const container = panelRef.current;
-    if (!container || totalPages === 0) return;
-    const targetTop =
-      (selectedPage - 1) * itemHeight -
-      container.clientHeight / 2 +
-      itemHeight / 2;
-    container.scrollTo({
-      top: Math.max(0, targetTop),
-      behavior: 'smooth',
-    });
-  }, [selectedPage, totalPages, isThumbnailsOpen, itemHeight]);
+    if (!container) return;
+    scrollToSelectedPage(container);
+  }, [scrollToSelectedPage]);
 
   const startIndex = Math.max(
     0,
@@ -383,6 +417,36 @@ export const PdfContent: FC<PdfContentProps> = ({
     }, THUMBNAIL_SCROLL_REQUEST_DEBOUNCE_MS);
     return () => clearTimeout(timeoutId);
   }, [isThumbnailsOpen, startIndex, endIndex, totalPages]);
+
+  /*
+   * Keep thumbnails ready around whichever page `onCurrentPageChange` moves
+   * `selectedPage` to — including while the panel is closed — since opening
+   * the panel immediately centers its scroll on `selectedPage` (see the
+   * effect below). Without this, a reader who scrolls the document past the
+   * eager batch and then opens the panel sees blank rows until the
+   * panel-scroll debounce above catches up with the jump.
+   */
+  useEffect(() => {
+    if (totalPages === 0) return;
+    const timeoutId = setTimeout(() => {
+      const halfWindow =
+        Math.ceil(panelHeight / itemHeight / 2) + THUMBNAIL_OVERSCAN;
+      const start = Math.max(0, selectedPage - 1 - halfWindow);
+      const end = Math.min(totalPages - 1, selectedPage - 1 + halfWindow);
+      setRequestedThumbnailPages((prev) => {
+        const next = new Set(prev);
+        let changed = false;
+        for (let pageNum = start + 1; pageNum <= end + 1; pageNum++) {
+          if (!next.has(pageNum)) {
+            next.add(pageNum);
+            changed = true;
+          }
+        }
+        return changed ? Array.from(next).sort((a, b) => a - b) : prev;
+      });
+    }, THUMBNAIL_SCROLL_REQUEST_DEBOUNCE_MS);
+    return () => clearTimeout(timeoutId);
+  }, [selectedPage, totalPages, panelHeight, itemHeight]);
 
   const handleThumbnailsLoaded = useCallback((map: Map<number, string>) => {
     setThumbnails((prev) => new Map([...prev, ...map]));
@@ -475,6 +539,12 @@ export const PdfContent: FC<PdfContentProps> = ({
     viewerApiRef.current?.navigateToPage(pageNum);
   }, []);
 
+  /* Keeps the page indicator and thumbnail highlight in sync while the reader
+   * scrolls the document, not only on explicit page selection. */
+  const handleCurrentPageChange = useCallback((page: number) => {
+    setSelectedPage(page);
+  }, []);
+
   /* Current-page input state, kept separate from `selectedPage` so the user
    * can freely edit/clear the field before committing a valid page number. */
   const [pageInputValue, setPageInputValue] = useState(() =>
@@ -565,7 +635,7 @@ export const PdfContent: FC<PdfContentProps> = ({
                   />
                 </div>
                 <div
-                  ref={panelRef}
+                  ref={setPanelRef}
                   id={thumbnailsRegionId}
                   role="region"
                   aria-label={thumbnailsLabel}
@@ -622,6 +692,7 @@ export const PdfContent: FC<PdfContentProps> = ({
           thumbnailPageNumbers={requestedThumbnailPages}
           onThumbnailsLoaded={handleThumbnailsLoaded}
           onViewerReady={handleViewerReady}
+          onCurrentPageChange={handleCurrentPageChange}
           viewerOptions={{ enableVirtualScrolling: true }}
           containerClassName={
             hideHeader ? '[&>div:first-child]:hidden' : undefined
