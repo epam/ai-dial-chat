@@ -2,11 +2,11 @@
   background: var(--stdv-bg, var(--bg-layer-base, #f5f7fa));
 }
 
+/* Set the color for every side at once: the divider is drawn below the
+ * header at desktop and above it at mobile/tablet, so only the side with a
+ * non-zero width from the utility classes shows. */
 .header {
-  border-bottom-color: var(
-    --stdv-header-border,
-    var(--stroke-tertiary, #e0e6f0)
-  );
+  border-color: var(--stdv-header-border, var(--stroke-tertiary, #e0e6f0));
 }
 
 .detailsColumn {
@@ -18,20 +18,4 @@
 
 .subtitleText {
   color: var(--stdv-subtitle-text, var(--text-secondary, #57647a));
-}
-
-.successIcon {
-  color: var(--stdv-success-icon, var(--text-success, #007274));
-}
-
-.errorIcon {
-  color: var(--stdv-error-icon, var(--text-error, #ae2f2f));
-}
-
-.missedIcon {
-  color: var(--stdv-missed-icon, var(--text-secondary, #57647a));
-}
-
-.historyCard {
-  background: var(--stdv-history-bg, var(--bg-layer-raised, #fcfcfc));
 }
