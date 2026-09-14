@@ -30,5 +30,3 @@ i18n
 
 i18n.on('languageChanged', applyDocumentDirection);
 applyDocumentDirection(i18n.language ?? 'en');
-
-export default i18n;

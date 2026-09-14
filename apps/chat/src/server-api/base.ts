@@ -280,8 +280,3 @@ export const put = <TResponse>(
   body?: unknown,
   options?: RequestOptions,
 ) => request<TResponse>(url, 'PUT', { ...options, body });
-
-export const del = <TResponse = void>(
-  url: string,
-  options?: Omit<RequestOptions, 'body'>,
-) => request<TResponse>(url, 'DELETE', options);
