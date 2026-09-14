@@ -156,6 +156,7 @@ describe('MessageBubble', () => {
       <MessageBubble
         text="msg"
         role={MessageRole.User}
+        actions={{ role: MessageRole.User, onEdit: vi.fn() }}
         hasAlwaysVisibleActions
       />,
     );
