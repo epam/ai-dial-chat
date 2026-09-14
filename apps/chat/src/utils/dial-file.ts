@@ -18,6 +18,20 @@ export const resolveDialFileDownloadUrl = (
   return `/api/v1/files/download?${params.toString()}`;
 };
 
+/**
+ * Converts a DIAL file ID (`files/{bucket}/{path}`) to the BFF metadata URL.
+ * Returns `undefined` if the input does not start with `files/` or has no path segment.
+ * The path segment is decoded with `decodeURIComponent` before being set as the query parameter.
+ */
+export const resolveDialFileMetadataUrl = (
+  fileId: string,
+): string | undefined => {
+  const resolved = resolveDialFileBucketAndPath(fileId);
+  if (!resolved) return undefined;
+  const params = new URLSearchParams(resolved);
+  return `/api/v1/files/metadata?${params.toString()}`;
+};
+
 /** Strips a trailing `#...` fragment (e.g. a PDF `#page=N` anchor) from a DIAL file id. */
 const stripFragment = (fileId: string): string => fileId.split('#')[0];
 

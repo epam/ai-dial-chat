@@ -10,7 +10,6 @@ import {
 import { memo, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UsageI18nKeys } from '../../../constants/translation-keys';
-import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useLanguage } from '../../../hooks/language/useLanguage';
@@ -24,12 +23,11 @@ const UsageTab: FC = () => {
   };
   const { language: activeLocale } = useLanguage();
   const { showErrorNotification } = useNotification();
-  const isSettingsPageEnabled = useFeatureFlag('settingsPageEnabled');
   const {
     usage,
     isLoading: isUsageLoading,
     usageError,
-  } = useUsageData(getUserUsage, isSettingsPageEnabled);
+  } = useUsageData(getUserUsage);
   const { items: deploymentItems, isLoading: isDeploymentsLoading } =
     useDeployments();
   const isLoading = isUsageLoading || isDeploymentsLoading;

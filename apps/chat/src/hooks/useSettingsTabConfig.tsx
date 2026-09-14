@@ -1,10 +1,11 @@
 import type { SettingsPanelItem } from '@epam/ai-dial-settings-panel';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
-import { IconChartBar } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconChartBar } from '@tabler/icons-react';
 import type { ComponentType } from 'react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BasicI18nKeys } from '../constants/translation-keys';
+import { BasicI18nKeys, SettingsI18nKeys } from '../constants/translation-keys';
+import PreferencesTab from '../pages/SettingsPage/PreferencesTab/PreferencesTab';
 import UsageTab from '../pages/SettingsPage/UsageTab/UsageTab';
 import { SettingsTabs } from '../types/settings-tabs';
 
@@ -27,6 +28,20 @@ export const useSettingsTabConfig = (): UseSettingsTabConfigResult => {
 
   const entries: SettingsTabConfigEntry[] = useMemo(
     () => [
+      {
+        item: {
+          id: SettingsTabs.Preferences,
+          label: t(SettingsI18nKeys.Preferences),
+          icon: (
+            <IconAdjustmentsHorizontal
+              size={DIAL_ICON_SIZE.MD}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          ),
+        },
+        Component: PreferencesTab,
+      },
       {
         item: {
           id: SettingsTabs.Usage,

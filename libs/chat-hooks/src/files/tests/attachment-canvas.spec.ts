@@ -90,15 +90,21 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
 }));
 
 /* Stand-in for the host's DIAL-URL resolvers, mirroring the app's real
- * `resolveDialFileDownloadUrl`/`resolveDialUrl` shape without depending on
- * its endpoint constants. */
+ * `resolveDialFileDownloadUrl`/`resolveDialUrl`/`resolveDialFileMetadataUrl`
+ * shape without depending on its endpoint constants. */
 const resolveDialFileDownloadUrl = (url: string): string | undefined =>
   url.startsWith('files/bucket/')
     ? `/download?path=${url.slice('files/bucket/'.length)}`
     : undefined;
 
+const resolveDialFileMetadataUrl = (url: string): string | undefined =>
+  url.startsWith('files/bucket/')
+    ? `/metadata?path=${url.slice('files/bucket/'.length)}`
+    : undefined;
+
 const resolvers: AttachmentCanvasUrlResolvers = {
   resolveDialFileDownloadUrl,
+  resolveDialFileMetadataUrl,
   resolveDialUrl: (attachment) => {
     if (attachment.url != null)
       return resolveDialFileDownloadUrl(attachment.url);
@@ -107,6 +113,44 @@ const resolvers: AttachmentCanvasUrlResolvers = {
     return undefined;
   },
 };
+
+/**
+ * Builds a `fetch` mock that answers `/metadata` requests with the given
+ * `etag` (via `metadata()`, re-evaluated on every call so a test can change
+ * the served etag mid-flight) and routes every other request to
+ * `contentHandler`. `metadata: 'fail'` simulates a non-2xx metadata response;
+ * `metadata: undefined` (the default when omitted) simulates a response body
+ * with no `etag` field.
+ */
+const stubDialFetch = (options: {
+  metadata: () => string | undefined | 'fail';
+  contentHandler: (url: string) => Promise<{
+    ok: boolean;
+    status?: number;
+    text?: () => Promise<string>;
+    blob?: () => Promise<Blob>;
+  }>;
+}) => {
+  const mockFetch = vi.fn((url: string) => {
+    if (url.startsWith('/metadata')) {
+      const etag = options.metadata();
+      if (etag === 'fail') return Promise.resolve({ ok: false, status: 500 });
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(etag != null ? { etag } : {}),
+      });
+    }
+    return options.contentHandler(url);
+  });
+  vi.stubGlobal('fetch', mockFetch);
+  return mockFetch;
+};
+
+/** Counts how many of `mockFetch`'s calls targeted a `/download` (content) URL. */
+const countContentFetches = (mockFetch: ReturnType<typeof vi.fn>): number =>
+  mockFetch.mock.calls.filter(([url]) =>
+    (url as string).startsWith('/download'),
+  ).length;
 
 const makeRemoteAttachment = (name: string, url: string): DisplayAttachment =>
   ({
@@ -912,12 +956,12 @@ describe('attachment cache deduplication', () => {
     URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
   });
 
-  it('issues only one fetch when the same DIAL text URL is resolved twice concurrently', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve('# Hello'),
+  it('issues only one content fetch when the same DIAL text URL is resolved twice concurrently, observing the same etag', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => 'etag-1',
+      contentHandler: () =>
+        Promise.resolve({ ok: true, text: () => Promise.resolve('# Hello') }),
     });
-    vi.stubGlobal('fetch', mockFetch);
 
     const att = makeRemoteAttachment(
       'readme.md',
@@ -928,15 +972,18 @@ describe('attachment cache deduplication', () => {
       resolveMarkdownCanvasContent(att, resolvers),
     ]);
 
-    expect(mockFetch).toHaveBeenCalledOnce();
+    expect(countContentFetches(mockFetch)).toBe(1);
   });
 
-  it('issues only one fetch when the same DIAL blob URL is resolved twice concurrently', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(new Blob(['%PDF'])),
+  it('issues only one content fetch when the same DIAL blob URL is resolved twice concurrently, observing the same etag', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => 'etag-1',
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(['%PDF'])),
+        }),
     });
-    vi.stubGlobal('fetch', mockFetch);
 
     const att = makeRemoteAttachment('doc.pdf', 'files/bucket/path/doc.pdf');
     await Promise.all([
@@ -944,36 +991,46 @@ describe('attachment cache deduplication', () => {
       resolvePdfCanvasContent(att, resolvers),
     ]);
 
-    expect(mockFetch).toHaveBeenCalledOnce();
+    expect(countContentFetches(mockFetch)).toBe(1);
   });
 
-  it('retries a failed fetch on the next call', async () => {
-    const mockFetch = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('network'))
-      .mockResolvedValue({
-        ok: true,
-        text: () => Promise.resolve('# Retry'),
-      });
-    vi.stubGlobal('fetch', mockFetch);
+  it('retries a failed content fetch on the next call rather than replaying the rejection', async () => {
+    let contentCalls = 0;
+    const mockFetch = stubDialFetch({
+      metadata: () => 'etag-1',
+      contentHandler: () => {
+        contentCalls += 1;
+        if (contentCalls === 1)
+          return Promise.resolve({ ok: false, status: 403 });
+        return Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve('# Retry'),
+        });
+      },
+    });
 
     const att = makeRemoteAttachment('retry.md', 'files/bucket/path/retry.md');
-    await resolveMarkdownCanvasContent(att, resolvers);
+    const failedResult = await resolveMarkdownCanvasContent(att, resolvers);
     const result = await resolveMarkdownCanvasContent(att, resolvers);
 
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(failedResult).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.Forbidden,
+      url: '/download?path=path/retry.md',
+    });
+    expect(countContentFetches(mockFetch)).toBe(2);
     expect(result).toEqual({
       type: AttachmentContentType.Markdown,
       text: '# Retry',
     });
   });
 
-  it('clears cached entries so the next call re-fetches', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve('v1'),
+  it('clears cached entries so the next call re-fetches, even with an unchanged etag', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => 'etag-1',
+      contentHandler: () =>
+        Promise.resolve({ ok: true, text: () => Promise.resolve('v1') }),
     });
-    vi.stubGlobal('fetch', mockFetch);
 
     const att = makeRemoteAttachment('doc.md', 'files/bucket/path/doc.md');
     await resolveMarkdownCanvasContent(att, resolvers);
@@ -981,7 +1038,168 @@ describe('attachment cache deduplication', () => {
     clearAttachmentCache();
     await resolveMarkdownCanvasContent(att, resolvers);
 
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(countContentFetches(mockFetch)).toBe(2);
+  });
+});
+
+describe('attachment cache freshness (ETag revalidation)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+  });
+
+  it('reuses the cached body when a second resolution observes the same etag', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => 'etag-1',
+      contentHandler: () =>
+        Promise.resolve({ ok: true, text: () => Promise.resolve('v1') }),
+    });
+
+    const att = makeRemoteAttachment('doc.md', 'files/bucket/path/doc.md');
+    const r1 = await resolveMarkdownCanvasContent(att, resolvers);
+    const r2 = await resolveMarkdownCanvasContent(att, resolvers);
+
+    expect(countContentFetches(mockFetch)).toBe(1);
+    expect(r1).toEqual({ type: AttachmentContentType.Markdown, text: 'v1' });
+    expect(r2).toEqual({ type: AttachmentContentType.Markdown, text: 'v1' });
+  });
+
+  it('discards the stale entry and refetches when a second resolution observes a different etag', async () => {
+    let etag = 'etag-1';
+    const mockFetch = stubDialFetch({
+      metadata: () => etag,
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve(etag === 'etag-1' ? 'v1' : 'v2'),
+        }),
+    });
+
+    const att = makeRemoteAttachment('doc.md', 'files/bucket/path/doc.md');
+    const r1 = await resolveMarkdownCanvasContent(att, resolvers);
+    etag = 'etag-2';
+    const r2 = await resolveMarkdownCanvasContent(att, resolvers);
+
+    expect(countContentFetches(mockFetch)).toBe(2);
+    expect(r1).toEqual({ type: AttachmentContentType.Markdown, text: 'v1' });
+    expect(r2).toEqual({ type: AttachmentContentType.Markdown, text: 'v2' });
+  });
+
+  it('issues a content fetch when the metadata call fails, even with an existing cache entry, and does not return the now-unverifiable entry', async () => {
+    let metadataShouldFail = false;
+    const mockFetch = stubDialFetch({
+      metadata: () => (metadataShouldFail ? 'fail' : 'etag-1'),
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve(metadataShouldFail ? 'v2' : 'v1'),
+        }),
+    });
+
+    const att = makeRemoteAttachment('doc.md', 'files/bucket/path/doc.md');
+    const r1 = await resolveMarkdownCanvasContent(att, resolvers);
+
+    metadataShouldFail = true;
+    const r2 = await resolveMarkdownCanvasContent(att, resolvers);
+
+    expect(countContentFetches(mockFetch)).toBe(2);
+    expect(r1).toEqual({ type: AttachmentContentType.Markdown, text: 'v1' });
+    expect(r2).toEqual({ type: AttachmentContentType.Markdown, text: 'v2' });
+  });
+
+  it('bypasses the cache when the metadata response has no etag field, the same as a failed call', async () => {
+    let hasEtag = true;
+    const mockFetch = stubDialFetch({
+      metadata: () => (hasEtag ? 'etag-1' : undefined),
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve(hasEtag ? 'v1' : 'v2'),
+        }),
+    });
+
+    const att = makeRemoteAttachment('doc.md', 'files/bucket/path/doc.md');
+    await resolveMarkdownCanvasContent(att, resolvers);
+
+    hasEtag = false;
+    const r2 = await resolveMarkdownCanvasContent(att, resolvers);
+
+    expect(countContentFetches(mockFetch)).toBe(2);
+    expect(r2).toEqual({ type: AttachmentContentType.Markdown, text: 'v2' });
+  });
+
+  it('does not let a late-resolving older fetch clobber a newer cache entry', async () => {
+    let etag = 'etag-1';
+    let resolveOldContent!: () => void;
+    const oldContentGate = new Promise<void>((resolve) => {
+      resolveOldContent = resolve;
+    });
+
+    const mockFetch = stubDialFetch({
+      metadata: () => etag,
+      contentHandler: () => {
+        if (etag === 'etag-1') {
+          return oldContentGate.then(() => ({
+            ok: true,
+            text: () => Promise.resolve('v1'),
+          }));
+        }
+        return Promise.resolve({ ok: true, text: () => Promise.resolve('v2') });
+      },
+    });
+
+    const att = makeRemoteAttachment('doc.md', 'files/bucket/path/doc.md');
+    const call1 = resolveMarkdownCanvasContent(att, resolvers);
+
+    /* Flush a macrotask so call1's metadata resolution and cache write (for
+     * etag-1) complete while its content fetch stays pending on
+     * `oldContentGate`. */
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    etag = 'etag-2';
+    const call2Result = await resolveMarkdownCanvasContent(att, resolvers);
+    expect(call2Result).toEqual({
+      type: AttachmentContentType.Markdown,
+      text: 'v2',
+    });
+
+    resolveOldContent();
+    const call1Result = await call1;
+    expect(call1Result).toEqual({
+      type: AttachmentContentType.Markdown,
+      text: 'v1',
+    });
+
+    const call3Result = await resolveMarkdownCanvasContent(att, resolvers);
+    expect(call3Result).toEqual({
+      type: AttachmentContentType.Markdown,
+      text: 'v2',
+    });
+    expect(countContentFetches(mockFetch)).toBe(2);
+  });
+
+  it('never calls the metadata resolver for local-File or inline-data attachments', async () => {
+    const mockFetch = vi.fn();
+    vi.stubGlobal('fetch', mockFetch);
+
+    await resolveMarkdownCanvasContent(
+      makeLocalAttachment('readme.md', '# Local'),
+      resolvers,
+    );
+    await resolveMarkdownCanvasContent(
+      {
+        id: 'stage-att',
+        name: 'inline.md',
+        contentType: 'text/markdown',
+        type: AttachmentType.File,
+        status: RequestStatus.Idle,
+        data: btoa('# Inline'),
+      },
+      resolvers,
+    );
+
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });
 

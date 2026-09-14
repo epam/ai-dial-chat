@@ -28,6 +28,23 @@ vi.mock('../../../context/NotificationContext', () => ({
 
 vi.mock('../../../context/DeploymentsContext');
 
+/* The real hook needs SkillsProvider/FavoriteApplicationsContext, which this
+ * harness does not mount; the stub mirrors its flag-off shape. */
+vi.mock('../../../components/SkillSelector/useSkillSelectorOverlay', () => ({
+  useSkillSelectorOverlay: () => ({
+    skillMenuOverlay: undefined,
+    commandMenu: undefined,
+    skillCatalogModal: null,
+    skillDetailsPanel: null,
+    selectedSkillElement: null,
+    selectedSkillPath: null,
+    selectedSkills: undefined,
+    selectSkill: vi.fn(),
+    removeSelectedSkill: vi.fn(),
+    renderHistorySkills: () => null,
+  }),
+}));
+
 vi.mock('../../../context/ClientChannelContext', () => ({
   useClientChannel: () => ({
     channelId: null,
@@ -226,6 +243,9 @@ describe('AppPreviewChat', () => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
         'Write a draft',
         'applications/bucket/My%20App',
+        undefined,
+        undefined,
+        undefined,
         undefined,
       );
     });

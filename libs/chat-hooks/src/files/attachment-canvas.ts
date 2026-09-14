@@ -54,6 +54,8 @@ export interface AttachmentCanvasUrlResolvers {
   resolveDialFileDownloadUrl: (fileId: string) => string | undefined;
   /** Resolves the best downloadable DIAL-file URL from an attachment's `url` or `referenceUrl`. */
   resolveDialUrl: (attachment: DisplayAttachment) => string | undefined;
+  /** Resolves a DIAL Core file id to a fetchable metadata URL (used for cache-freshness validation). */
+  resolveDialFileMetadataUrl: (fileId: string) => string | undefined;
 }
 
 /**
@@ -107,14 +109,31 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
  * two `export *` declarations for the same name in one file silently drop it.
  */
 
+/** A cached content fetch alongside the ETag it was validated against. */
+interface CachedAttachmentEntry<T> {
+  /** ETag captured from the metadata call that preceded this fetch. */
+  etag: string | undefined;
+  /** The in-flight or resolved content fetch itself. */
+  promise: Promise<T>;
+}
+
 /*
- * Session-scoped LRU caches keyed by DIAL download URL.
- * Cleared on conversation navigation via clearAttachmentCache().
+ * Session-scoped LRU caches keyed by DIAL download URL. Before a cached entry
+ * is reused, its `etag` is revalidated against a fresh metadata call
+ * (`fetchCurrentEtag`) — a cached body is only served on an exact ETag match,
+ * so a resource overwritten since it was cached (same conversation or a
+ * different one) is refetched instead of replayed. Also cleared wholesale on
+ * conversation navigation via clearAttachmentCache() as coarse
+ * defense-in-depth.
  * blobCache: up to 10 binary files (PDFs, etc.)
  * textCache: up to 50 text files (markdown, JSON, plain text)
  */
-const blobCache = new LRUCache<string, Promise<Blob>>({ max: 10 });
-const textCache = new LRUCache<string, Promise<string>>({ max: 50 });
+const blobCache = new LRUCache<string, CachedAttachmentEntry<Blob>>({
+  max: 10,
+});
+const textCache = new LRUCache<string, CachedAttachmentEntry<string>>({
+  max: 50,
+});
 
 /** Clears all cached fetch results. Call this when leaving a conversation. */
 export const clearAttachmentCache = (): void => {
@@ -123,53 +142,143 @@ export const clearAttachmentCache = (): void => {
 };
 
 /**
- * Fetches a DIAL download URL and returns its body as a Blob.
- * The result is cached by URL; failed requests are removed from cache so the
- * next call retries the network.
+ * Resolves the resource's current `etag` via
+ * `resolvers.resolveDialFileMetadataUrl(fileId)`. Never throws — returns
+ * `undefined` when the URL cannot be resolved, the fetch fails, the response
+ * is non-2xx, or the body has no `etag` field, so the caller can treat the
+ * validator as unusable and bypass the cache rather than serve unverifiable
+ * content.
  */
-const fetchDialBlob = (dialUrl: string): Promise<Blob> => {
-  let p = blobCache.get(dialUrl);
-  if (p == null) {
-    p = fetch(dialUrl)
-      .then((r) => {
-        if (!r.ok)
-          throw Object.assign(new Error(`HTTP ${r.status}`), {
-            status: r.status,
-          });
-        return r.blob();
-      })
-      .catch((err: unknown) => {
-        blobCache.delete(dialUrl);
-        throw err;
-      });
-    blobCache.set(dialUrl, p);
+const fetchCurrentEtag = async (
+  fileId: string,
+  resolvers: AttachmentCanvasUrlResolvers,
+): Promise<string | undefined> => {
+  const metadataUrl = resolvers.resolveDialFileMetadataUrl(fileId);
+  if (metadataUrl == null) return undefined;
+  try {
+    const response = await fetch(metadataUrl);
+    if (!response.ok) return undefined;
+    const body: unknown = await response.json();
+    const etag = (body as { etag?: unknown })?.etag;
+    return typeof etag === 'string' ? etag : undefined;
+  } catch {
+    return undefined;
   }
-  return p;
 };
 
 /**
- * Fetches a DIAL download URL and returns its body as text.
- * The result is cached by URL; failed requests are removed from cache so the
- * next call retries the network.
+ * Fetches a DIAL download URL and returns its body as a Blob, revalidating
+ * freshness against the resource's current ETag before reusing a cached
+ * entry. The cache is skipped entirely (no read, no write) when the ETag
+ * cannot be determined. A failed content fetch removes its cache entry so
+ * the next call retries the network.
  */
-const fetchDialText = (dialUrl: string): Promise<string> => {
-  let p = textCache.get(dialUrl);
-  if (p == null) {
-    p = fetch(dialUrl)
-      .then((r) => {
-        if (!r.ok)
-          throw Object.assign(new Error(`HTTP ${r.status}`), {
-            status: r.status,
-          });
-        return r.text();
-      })
-      .catch((err: unknown) => {
-        textCache.delete(dialUrl);
-        throw err;
-      });
-    textCache.set(dialUrl, p);
+const fetchDialBlob = async (
+  dialUrl: string,
+  fileId: string,
+  resolvers: AttachmentCanvasUrlResolvers,
+): Promise<Blob> => {
+  const etag = await fetchCurrentEtag(fileId, resolvers);
+  if (etag == null) {
+    return fetch(dialUrl).then((r) => {
+      if (!r.ok)
+        throw Object.assign(new Error(`HTTP ${r.status}`), {
+          status: r.status,
+        });
+      return r.blob();
+    });
   }
-  return p;
+
+  const existing = blobCache.get(dialUrl);
+  if (existing != null && existing.etag === etag) {
+    return existing.promise;
+  }
+
+  blobCache.delete(dialUrl);
+  const promise = fetch(dialUrl)
+    .then((r) => {
+      if (!r.ok)
+        throw Object.assign(new Error(`HTTP ${r.status}`), {
+          status: r.status,
+        });
+      return r.blob();
+    })
+    .catch((err: unknown) => {
+      blobCache.delete(dialUrl);
+      throw err;
+    });
+  blobCache.set(dialUrl, { etag, promise });
+  return promise;
+};
+
+/**
+ * Fetches a DIAL download URL and returns its body as text, revalidating
+ * freshness against the resource's current ETag before reusing a cached
+ * entry. The cache is skipped entirely (no read, no write) when the ETag
+ * cannot be determined. A failed content fetch removes its cache entry so
+ * the next call retries the network.
+ */
+const fetchDialText = async (
+  dialUrl: string,
+  fileId: string,
+  resolvers: AttachmentCanvasUrlResolvers,
+): Promise<string> => {
+  const etag = await fetchCurrentEtag(fileId, resolvers);
+  if (etag == null) {
+    return fetch(dialUrl).then((r) => {
+      if (!r.ok)
+        throw Object.assign(new Error(`HTTP ${r.status}`), {
+          status: r.status,
+        });
+      return r.text();
+    });
+  }
+
+  const existing = textCache.get(dialUrl);
+  if (existing != null && existing.etag === etag) {
+    return existing.promise;
+  }
+
+  textCache.delete(dialUrl);
+  const promise = fetch(dialUrl)
+    .then((r) => {
+      if (!r.ok)
+        throw Object.assign(new Error(`HTTP ${r.status}`), {
+          status: r.status,
+        });
+      return r.text();
+    })
+    .catch((err: unknown) => {
+      textCache.delete(dialUrl);
+      throw err;
+    });
+  textCache.set(dialUrl, { etag, promise });
+  return promise;
+};
+
+/** Strips a trailing `#...` fragment (e.g. a PDF `#page=N` anchor) from a DIAL file id. */
+const stripFragment = (fileId: string): string => fileId.split('#')[0];
+
+/**
+ * Extracts the raw `files/{bucket}/{path}` id backing an attachment's `url`
+ * or `referenceUrl`, mirroring the source-selection order
+ * `resolvers.resolveDialUrl` uses internally, so the metadata-freshness check
+ * validates the same resource the download URL was resolved from. Returns
+ * `undefined` when neither is a DIAL file id.
+ */
+const resolveAttachmentFileId = (
+  attachment: DisplayAttachment,
+): string | undefined => {
+  if (attachment.url != null && isDialFileId(attachment.url)) {
+    return stripFragment(attachment.url);
+  }
+  if (
+    attachment.referenceUrl != null &&
+    isDialFileId(attachment.referenceUrl)
+  ) {
+    return stripFragment(attachment.referenceUrl);
+  }
+  return undefined;
 };
 
 /**
@@ -189,7 +298,11 @@ const resolveAttachmentBlobUrl = async (
   const dialUrl = resolvers.resolveDialUrl(attachment);
   if (dialUrl != null) {
     try {
-      const blob = await fetchDialBlob(dialUrl);
+      const blob = await fetchDialBlob(
+        dialUrl,
+        resolveAttachmentFileId(attachment) ?? '',
+        resolvers,
+      );
       return URL.createObjectURL(blob);
     } catch (err) {
       const status = (err as { status?: number }).status;
@@ -219,7 +332,11 @@ const resolveAttachmentText = async (
   const downloadUrl = resolvers.resolveDialUrl(attachment);
   if (downloadUrl != null) {
     try {
-      return await fetchDialText(downloadUrl);
+      return await fetchDialText(
+        downloadUrl,
+        resolveAttachmentFileId(attachment) ?? '',
+        resolvers,
+      );
     } catch (err) {
       const status = (err as { status?: number }).status;
       if (status != null) return classifyFetchFailure(status, downloadUrl);

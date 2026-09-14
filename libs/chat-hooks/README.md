@@ -938,6 +938,16 @@ const ChatPage = ({
 state updater, so a host may update its own state from it — for example dropping
 the deleted conversation from a list it renders.
 
+`handleSend` accepts an optional third `skills` argument (`RequestSkill[]` from
+`@epam/ai-dial-chat-shared`) merged into the outgoing message's
+`custom_content.skills` — the field is omitted when the array is empty or
+absent. `handleEditMessage` accepts an optional fifth `skills` argument:
+`undefined` preserves the message's original skills untouched (e.g. an edit
+made while the host's feature flag is off), while an array — including an empty
+one — is the skill state the edit resolved and replaces them (empty means the
+user removed the skill). A skills-only change counts as a change: it re-runs
+the generation even when the text and attachments are untouched.
+
 Also exports the standalone `attachmentsToDtos`/`attachmentToDto`, `createMessagePair`, `hasActiveToolConfig`/`isMessageChanged`/`isAnswerIncomplete`/`shouldRerunGenerationOnEdit`, and `getStarterConversationText`/`getStarterDisplayText`/`getStarterSubmitText` (the pure functions the hook is built on) for hosts that need the same logic outside the hook.
 
 The three starter-text helpers share one precedence rule: a starter's own
@@ -3187,7 +3197,7 @@ openAnnotationAttachment(attachmentResource, (fileId) =>
 
 ### Attachment canvas content resolvers
 
-A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint.
+A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint. Before serving a cached blob/text body, the cache revalidates the resource's current ETag through `resolveDialFileMetadataUrl` and only reuses the cached body on an exact match, so a resource overwritten since it was cached is refetched instead of replayed.
 
 ```ts
 import {
@@ -3200,6 +3210,7 @@ import {
 const resolvers: AttachmentCanvasUrlResolvers = {
   resolveDialFileDownloadUrl: (fileId) => myResolveFileDownloadUrl(fileId),
   resolveDialUrl: (attachment) => myResolveDisplayAttachmentUrl(attachment),
+  resolveDialFileMetadataUrl: (fileId) => myResolveFileMetadataUrl(fileId),
 };
 
 const content = await resolveMarkdownCanvasContent(attachment, resolvers);
