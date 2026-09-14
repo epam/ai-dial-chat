@@ -1,14 +1,3 @@
-/*
- * MCP wire-protocol constants live in `@epam/ai-dial-mcp-apps` — imported
- * through its React-free `./constants` entry point, not the package barrel,
- * so this backend never pulls the frontend barrel or its React peers.
- */
-import {
-  MCP_CLIENT_INFO,
-  MCP_PROTOCOL_VERSION,
-  MCP_PROTOCOL_VERSION_HEADER,
-  MCP_SESSION_ID_HEADER,
-} from '@epam/ai-dial-mcp-apps/constants';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
@@ -28,6 +17,12 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import {
+  MCP_CLIENT_INFO,
+  MCP_PROTOCOL_VERSION,
+  MCP_PROTOCOL_VERSION_HEADER,
+  MCP_SESSION_ID_HEADER,
+} from './constants/mcp-protocol';
 import { McpAppToolSummaryDto, McpDeploymentKindDto } from './dto/mcp-app.dto';
 
 /** Response headers DIAL Core's `mcp/resources` endpoint sets and this service forwards verbatim. */

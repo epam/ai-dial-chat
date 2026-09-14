@@ -1,8 +1,6 @@
 /*
- * Shared MCP wire-protocol constants used by every surface that talks to an
- * MCP server over the Streamable HTTP transport. `apps/chat-api`'s MCP proxy
- * (the `initialize` handshake fallback) imports them through this package's
- * `./constants` entry point so it never pulls the React-peered barrel.
+ * Wire-protocol settings for the BFF's MCP Streamable HTTP handshake.
+ * The proxy owns protocol negotiation and the client identity it advertises.
  */
 
 /** MCP protocol version advertised in the `initialize` handshake. */
