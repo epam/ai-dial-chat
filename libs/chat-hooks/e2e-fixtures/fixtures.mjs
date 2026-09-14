@@ -18,6 +18,31 @@ export const MINIMAL_FIXTURE = {
 };
 
 /*
+ * `@epam/ai-dial-ui-kit@0.14.0-dev.51` moved its editor stack from required
+ * peers to optional ones, but its published root entry still reaches all
+ * three by name, so an installing consumer still has to provide them
+ * ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)):
+ *
+ *  - the runtime root entry re-exports `LazyDialJsonEditor`, whose dynamic
+ *    import target does `import { Editor } from '@monaco-editor/react'`, and
+ *    a bundler has to resolve a dynamic import target to chunk it;
+ *  - the declaration root entry reaches `JsonEditor.d.ts`,
+ *    `MarkdownEditor.d.ts` and `types/editor.d.ts`, which import
+ *    `@monaco-editor/react`, `monaco-editor` and `@uiw/react-md-editor` by
+ *    name — unresolvable to `tsc`, which these fixtures deliberately run
+ *    with `skipLibCheck: false`, when the optional peer is absent.
+ *
+ * An optional peer reachable from the root entry is a kit-side bug; until
+ * the kit confines these to its `./editors` boundary, every fixture that
+ * installs the kit installs them too, at the ranges the kit asks for.
+ */
+export const UI_KIT_EDITOR_PEERS = [
+  '@monaco-editor/react',
+  'monaco-editor',
+  '@uiw/react-md-editor',
+];
+
+/*
  * What a consumer still has to install itself once it pulls in
  * `@epam/ai-dial-chat-shared` — which every entry below does through a root
  * re-export, and a re-export has to *resolve* before unused features are
@@ -37,7 +62,10 @@ export const MINIMAL_FIXTURE = {
  *    root closure no longer reaches the grid and only the `file-manager`
  *    fixture below names the pair.
  */
-export const CHAT_SHARED_ROOT_PEERS = ['@epam/ai-dial-ui-kit'];
+export const CHAT_SHARED_ROOT_PEERS = [
+  '@epam/ai-dial-ui-kit',
+  ...UI_KIT_EDITOR_PEERS,
+];
 
 /** Every published subpath, with its complete documented direct peer set. */
 export const SUBPATH_FIXTURES = [
