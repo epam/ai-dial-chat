@@ -123,6 +123,14 @@ export interface CommandMenuConfig {
   menuLabel?: string;
 }
 
+/** One-shot text hand-off that the `Input` inserts at the caret. */
+export interface TextInsertion {
+  /** Text inserted at the caret, replacing whatever is selected. */
+  text: string;
+  /** Token that performs the insertion; bump it to insert the same text again. */
+  revision: number;
+}
+
 /** Props accepted by the `Input` component. */
 export interface InputProps {
   /**
@@ -135,6 +143,13 @@ export interface InputProps {
    * when `message` itself is the same string as before.
    */
   messageRevision?: number;
+  /**
+   * Text inserted at the caret each time its `revision` changes, leaving the
+   * surrounding draft intact. Unlike `message`, this never replaces what the
+   * user has written, and it is made through the browser's editing pipeline so
+   * the native undo shortcut reverts it.
+   */
+  textInsertion?: TextInsertion;
   /** Called on every keystroke with the current textarea value. */
   onChange?: (message: string) => void;
   /** Called when the user submits a message. */

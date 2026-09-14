@@ -1,7 +1,10 @@
+/* The 1280px literal mirrors DESKTOP_BREAKPOINT_PX from
+ * @epam/ai-dial-chat-shared's breakpoint constants — SCSS cannot import it,
+ * so apps/chat/src/hooks/breakpoint/breakpoint-sync.spec.ts pins it. */
 .dialog {
   background: var(--pare-mobile-bg, var(--bg-layer-sunken, #eef1f7));
 
-  @media (min-width: 769px) {
+  @media (min-width: 1280px) {
     background: var(--pare-bg, var(--bg-layer-base, #f5f7fa));
   }
 }

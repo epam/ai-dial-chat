@@ -120,7 +120,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           role="group"
           aria-label={labels.detailsSectionTitle}
           className={mergeClasses(
-            'flex flex-1 flex-col gap-5 border-e px-8 py-6',
+            'flex flex-1 flex-col gap-5 border-e px-4 py-6 desktop:px-8',
             styles.detailsColumn,
           )}
         >
@@ -248,7 +248,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     )}
                   </div>
                 )}
-
                 {values.repeat === ScheduledTaskRepeat.Weekly && (
                   <div className="flex flex-col gap-1">
                     <Calendar
@@ -279,7 +278,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     )}
                   </div>
                 )}
-
                 {values.repeat === ScheduledTaskRepeat.Monthly && (
                   <Input
                     id="scheduled-task-day-of-month"
@@ -295,7 +293,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     error={errors.dayOfMonth}
                   />
                 )}
-
                 {values.repeat === ScheduledTaskRepeat.Hourly && (
                   <NumberInput
                     id="scheduled-task-minute"
@@ -317,8 +314,12 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     error={errors.minute}
                   />
                 )}
-
-                <div className="flex flex-col gap-3 desktop:flex-row">
+                {/* The two date fields pair on one row at mobile, where the
+                 * column is full-width and the short pickers fit side by
+                 * side; from the desktop breakpoint up (tablet included) the
+                 * Details column is narrow, so each field takes its own
+                 * full-width row. */}
+                <div className="flex flex-row gap-3 desktop:flex-col">
                   <div className="flex flex-1 flex-col gap-1">
                     <Calendar
                       id="scheduled-task-start-date"
@@ -382,7 +383,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
       <div
         role="group"
         aria-label={labels.configurationSectionTitle}
-        className="flex flex-1 flex-col gap-5 px-8 py-6"
+        className="flex flex-1 flex-col gap-5 px-4 py-6 desktop:px-8"
       >
         <div className="flex flex-col gap-1">
           <h2 className={sectionTitleClassName}>

@@ -1,7 +1,7 @@
 import {
   buildCssVars,
-  MDMessageViewer,
   mergeClasses,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   ButtonVariant,
@@ -12,23 +12,32 @@ import {
   NeutralButton,
   Spinner,
   Switch,
+  Tabs,
 } from '@epam/ai-dial-ui-kit';
+import type { TabItem } from '@epam/ai-dial-ui-kit';
 import {
   IconArrowLeft,
   IconPencilMinus,
   IconTrashX,
 } from '@tabler/icons-react';
-import { type FC } from 'react';
+import { type FC, type ReactNode, useState } from 'react';
 import type { ScheduledTaskDetailViewProps } from '../../models/scheduled-task-detail-view-props';
-import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
+import { ScheduledTaskDetailTab } from '../../types/scheduled-task-detail-tab';
+import { ScheduledTaskHistorySectionVariant } from '../../types/scheduled-task-history-section-variant';
+import { ScheduledTaskConfigurationSection } from '../ScheduledTaskConfigurationSection/ScheduledTaskConfigurationSection';
+import { ScheduledTaskDetailsSection } from '../ScheduledTaskDetailsSection/ScheduledTaskDetailsSection';
+import { ScheduledTaskHistorySection } from '../ScheduledTaskHistorySection/ScheduledTaskHistorySection';
 import styles from './ScheduledTaskDetailView.module.scss';
 
 /**
  * Presentational Scheduled Task detail page: a back-navigable header, a
  * Details/Configuration body, and a paginated History panel ("Show more"
- * button, not scroll-triggered). Field values, runs, and markdown rendering
- * are all supplied by the host app; this component holds no state of its own
- * and performs no routing, i18n, or network calls.
+ * button, not scroll-triggered). Below the desktop breakpoint the three body
+ * sections render as tabs (Details active by default) with the History panel
+ * in standard top-to-bottom page flow; at desktop they render as the
+ * three-column layout. Field values, runs, and markdown rendering are all
+ * supplied by the host app; this component performs no routing, i18n, or
+ * network calls, and its only internal state is the selected mobile tab.
  */
 export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   labels,
@@ -79,34 +88,110 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     '--stdv-header-border': colors?.headerBorder,
     '--stdv-details-border': colors?.detailsColumnBorder,
     '--stdv-subtitle-text': colors?.subtitleText,
-    '--stdv-success-icon': colors?.successIconColor,
-    '--stdv-error-icon': colors?.errorIconColor,
-    '--stdv-missed-icon': colors?.missedIconColor,
     '--stdv-history-bg': colors?.historyCardBackground,
   });
 
-  const historyFooter =
-    onRunsLoadMore && runsHasMore && labels.historyShowMoreLabel ? (
-      <li
-        className={mergeClasses(
-          'sticky bottom-0 z-10 rounded-b-xl px-6 pb-5 pt-2',
-          styles.historyCard,
-        )}
-      >
-        <GhostButton
-          label={labels.historyShowMoreLabel}
-          onClick={onRunsLoadMore}
-          disabled={runsIsLoadingMore}
-        />
-      </li>
-    ) : undefined;
+  const isMobile = useIsMobile();
+  /*
+   * Keyed as a plain string so the kit's `onTabChange(tabId: string)` maps
+   * straight onto the state setter; the only ids ever stored are the
+   * `ScheduledTaskDetailTab` values. Held here — not under the mobile-only
+   * branch — so the selection survives a viewport resize across the
+   * breakpoint instead of resetting.
+   */
+  const [activeTabId, setActiveTabId] = useState<string>(
+    ScheduledTaskDetailTab.Details,
+  );
 
-  const renderInstructionsContent = (markdown: string) =>
-    renderInstructions ? (
-      renderInstructions(markdown)
-    ) : (
-      <MDMessageViewer content={markdown} />
-    );
+  const detailTabs: TabItem[] = [
+    { id: ScheduledTaskDetailTab.Details, label: labels.detailsTitle },
+    {
+      id: ScheduledTaskDetailTab.Configuration,
+      label: labels.configurationTitle,
+    },
+    { id: ScheduledTaskDetailTab.History, label: labels.historyTitle },
+  ];
+  const activeTabLabel =
+    detailTabs.find((tab) => tab.id === activeTabId)?.label ??
+    labels.detailsTitle;
+
+  /*
+   * The section elements are built once and composed by whichever layout the
+   * current viewport mounts, so section content cannot drift between the
+   * mobile/tab and desktop/column presentations. Only the History section
+   * differs by context (card vs flow chrome), so it's a builder.
+   */
+  const detailsSection = (
+    <ScheduledTaskDetailsSection
+      labels={{
+        descriptionLabel: labels.descriptionLabel,
+        modelLabel: labels.modelLabel,
+        repeatsLabel: labels.repeatsLabel,
+        activeWindowLabel: labels.activeWindowLabel,
+      }}
+      description={description}
+      modelLabel={modelLabel}
+      repeatsLabel={repeatsLabel}
+      activeWindowLabel={activeWindowLabel}
+      fieldLabelClassName={fieldLabelClassName}
+      fieldValueClassName={fieldValueClassName}
+    />
+  );
+
+  const configurationSection = (
+    <ScheduledTaskConfigurationSection
+      instructionsLabel={labels.instructionsLabel}
+      instructionsMarkdown={instructionsMarkdown}
+      renderInstructions={renderInstructions}
+      fieldLabelClassName={fieldLabelClassName}
+    />
+  );
+
+  const buildHistorySection = (
+    variant: ScheduledTaskHistorySectionVariant,
+  ): ReactNode => (
+    <ScheduledTaskHistorySection
+      variant={variant}
+      labels={{
+        historyTitle: labels.historyTitle,
+        historyEmptyLabel: labels.historyEmptyLabel,
+        historyErrorLabel: labels.historyErrorLabel,
+        historyRetryLabel: labels.historyRetryLabel,
+        historyLoadingMoreLabel: labels.historyLoadingMoreLabel,
+        historyShowMoreLabel: labels.historyShowMoreLabel,
+        runStatusLabels: labels.runStatusLabels,
+        unreadIndicatorLabel: labels.unreadIndicatorLabel,
+      }}
+      nextRunLabel={nextRunLabel}
+      items={runs}
+      isLoading={runsIsLoading}
+      isLoadingMore={runsIsLoadingMore}
+      skeletonCount={runsSkeletonCount}
+      error={runsError}
+      onRetry={onRunsRetry}
+      hasMore={runsHasMore}
+      onLoadMore={onRunsLoadMore}
+      onRunClick={onRunClick}
+      runTimestampClassName={runTimestampClassName}
+      sectionTitleClassName={sectionTitleClassName}
+      colors={colors}
+    />
+  );
+
+  /*
+   * Exactly one panel renders at a time. The tab row replaces the section
+   * titles below the desktop breakpoint, so the panels carry no headings of
+   * their own — the tab is the section's accessible name.
+   */
+  const renderActiveTabPanel = (): ReactNode => {
+    if (activeTabId === ScheduledTaskDetailTab.Configuration) {
+      return configurationSection;
+    }
+    if (activeTabId === ScheduledTaskDetailTab.History) {
+      return buildHistorySection(ScheduledTaskHistorySectionVariant.Flow);
+    }
+    return detailsSection;
+  };
 
   return (
     <div
@@ -118,7 +203,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     >
       <div
         className={mergeClasses(
-          'flex h-16 shrink-0 items-center justify-between gap-2 border-b px-8',
+          'flex h-16 shrink-0 items-center justify-between gap-2 border-t px-8 desktop:border-b desktop:border-t-0',
           styles.header,
         )}
       >
@@ -135,13 +220,23 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
             aria-label={labels.backAriaLabel}
             onClick={onBack}
           />
-          <h1 className={mergeClasses('truncate', titleClassName)}>
+          {/*
+           * Hidden below the desktop breakpoint, where the standalone title
+           * row after the header renders its own copy — exactly one copy of
+           * the title is visible at any width.
+           */}
+          <h1
+            className={mergeClasses(
+              'hidden truncate desktop:block',
+              titleClassName,
+            )}
+          >
             {displayName}
           </h1>
           {isDeleted && (
             <span
               className={mergeClasses(
-                'shrink-0',
+                'hidden shrink-0 desktop:inline',
                 fieldValueClassName,
                 styles.subtitleText,
               )}
@@ -197,6 +292,28 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         </div>
       </div>
 
+      {/*
+       * Standalone title row, visible only below the desktop breakpoint
+       * (mobile and tablet), where the in-header title is hidden — exactly
+       * one copy of the title is visible at any width.
+       */}
+      <div className="flex min-w-0 items-center gap-2 px-8 py-3 desktop:hidden">
+        <h1 className={mergeClasses('truncate', titleClassName)}>
+          {displayName}
+        </h1>
+        {isDeleted && (
+          <span
+            className={mergeClasses(
+              'shrink-0',
+              fieldValueClassName,
+              styles.subtitleText,
+            )}
+          >
+            {labels.deletedStateLabel}
+          </span>
+        )}
+      </div>
+
       {labels.activeStatusAnnouncement != null && (
         <span role="status" aria-live="polite" className="sr-only">
           {labels.activeStatusAnnouncement}
@@ -218,161 +335,56 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         </div>
       )}
 
-      {!isLoading && !error && (
-        <div className="flex flex-1 flex-col desktop:flex-row">
-          <div
-            role="group"
-            aria-label={labels.detailsTitle}
-            className={mergeClasses(
-              'flex w-full flex-col gap-5 border-e px-8 py-6 desktop:w-[360px] desktop:shrink-0',
-              styles.detailsColumn,
-            )}
-          >
-            <h2 className={sectionTitleClassName}>{labels.detailsTitle}</h2>
-
-            {description && (
-              <div className="flex flex-col gap-1">
-                <span
-                  className={mergeClasses(
-                    fieldLabelClassName,
-                    styles.subtitleText,
-                  )}
-                >
-                  {labels.descriptionLabel}
-                </span>
-                <p className={fieldValueClassName}>{description}</p>
-              </div>
-            )}
-
-            {modelLabel && (
-              <div className="flex flex-col gap-1">
-                <span
-                  className={mergeClasses(
-                    fieldLabelClassName,
-                    styles.subtitleText,
-                  )}
-                >
-                  {labels.modelLabel}
-                </span>
-                <p className={fieldValueClassName}>{modelLabel}</p>
-              </div>
-            )}
-
-            {repeatsLabel && (
-              <div className="flex flex-col gap-1">
-                <span
-                  className={mergeClasses(
-                    fieldLabelClassName,
-                    styles.subtitleText,
-                  )}
-                >
-                  {labels.repeatsLabel}
-                </span>
-                <p className={fieldValueClassName}>{repeatsLabel}</p>
-              </div>
-            )}
-
-            {activeWindowLabel && (
-              <div className="flex flex-col gap-1">
-                <span
-                  className={mergeClasses(
-                    fieldLabelClassName,
-                    styles.subtitleText,
-                  )}
-                >
-                  {labels.activeWindowLabel}
-                </span>
-                <p className={fieldValueClassName}>{activeWindowLabel}</p>
-              </div>
-            )}
+      {!isLoading &&
+        !error &&
+        (isMobile ? (
+          <div className="flex flex-1 flex-col">
+            <Tabs
+              ariaLabel={labels.tabsAriaLabel ?? 'Scheduled task sections'}
+              className="px-8"
+              tabs={detailTabs}
+              activeTabId={activeTabId}
+              onTabChange={setActiveTabId}
+            />
+            {/*
+             * One panel renders at a time. Its accessible name comes from the
+             * active tab's label — the kit's tab elements expose no
+             * referenceable ids for `aria-labelledby`.
+             */}
+            <div
+              role="tabpanel"
+              aria-label={activeTabLabel}
+              className="flex flex-1 flex-col gap-5 px-8 py-6"
+            >
+              {renderActiveTabPanel()}
+            </div>
           </div>
-
-          <div className="flex w-full min-w-0 flex-1 flex-col gap-5 px-8 py-6">
-            <h2 className={sectionTitleClassName}>
-              {labels.configurationTitle}
-            </h2>
-
+        ) : (
+          <div className="flex flex-1 flex-col desktop:flex-row">
             <div
               role="group"
-              aria-label={labels.instructionsLabel}
-              className="flex flex-col gap-1"
-            >
-              <span
-                className={mergeClasses(
-                  fieldLabelClassName,
-                  styles.subtitleText,
-                )}
-              >
-                {labels.instructionsLabel}
-              </span>
-              {instructionsMarkdown &&
-                renderInstructionsContent(instructionsMarkdown)}
-            </div>
-          </div>
-
-          <div className="flex w-full justify-center p-6 desktop:w-auto desktop:items-start">
-            <div
+              aria-label={labels.detailsTitle}
               className={mergeClasses(
-                'flex max-h-[70vh] w-full flex-col overflow-y-auto rounded-xl shadow-md desktop:w-[360px]',
-                styles.historyCard,
+                'flex w-full flex-col gap-5 border-e px-8 py-6 desktop:w-[360px] desktop:shrink-0',
+                styles.detailsColumn,
               )}
             >
-              <div
-                className={mergeClasses(
-                  'sticky top-0 z-10 flex flex-col gap-4 rounded-t-xl px-6 pb-2 pt-5',
-                  styles.historyCard,
-                )}
-              >
-                <h2 className={sectionTitleClassName}>{labels.historyTitle}</h2>
-                {nextRunLabel && (
-                  <p
-                    className={mergeClasses(
-                      runTimestampClassName,
-                      styles.subtitleText,
-                    )}
-                  >
-                    {nextRunLabel}
-                  </p>
-                )}
-                {labels.historyLoadingMoreLabel && (
-                  <span role="status" aria-live="polite" className="sr-only">
-                    {runsIsLoadingMore ? labels.historyLoadingMoreLabel : ''}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-1 flex-col gap-4 px-6 pb-2">
-                <ScheduledTaskRunHistoryList
-                  items={runs}
-                  isLoading={runsIsLoading}
-                  isLoadingMore={runsIsLoadingMore}
-                  skeletonCount={runsSkeletonCount}
-                  error={runsError}
-                  onRetry={onRunsRetry}
-                  onRunClick={onRunClick}
-                  labels={{
-                    historyTitle: labels.historyTitle,
-                    emptyLabel: labels.historyEmptyLabel,
-                    errorLabel: labels.historyErrorLabel,
-                    retryLabel: labels.historyRetryLabel,
-                    runStatusLabels: labels.runStatusLabels,
-                    unreadIndicatorLabel: labels.unreadIndicatorLabel,
-                  }}
-                  footer={historyFooter}
-                  styles={{
-                    typography: { runTimestampClassName },
-                    colors: {
-                      successIconColor: colors?.successIconColor,
-                      errorIconColor: colors?.errorIconColor,
-                      missedIconColor: colors?.missedIconColor,
-                      unreadDotColor: colors?.unreadDotColor,
-                    },
-                  }}
-                />
-              </div>
+              <h2 className={sectionTitleClassName}>{labels.detailsTitle}</h2>
+              {detailsSection}
+            </div>
+
+            <div className="flex w-full min-w-0 flex-1 flex-col gap-5 px-8 py-6">
+              <h2 className={sectionTitleClassName}>
+                {labels.configurationTitle}
+              </h2>
+              {configurationSection}
+            </div>
+
+            <div className="flex w-full justify-center p-6 desktop:w-auto desktop:items-start">
+              {buildHistorySection(ScheduledTaskHistorySectionVariant.Card)}
             </div>
           </div>
-        </div>
-      )}
+        ))}
     </div>
   );
 };

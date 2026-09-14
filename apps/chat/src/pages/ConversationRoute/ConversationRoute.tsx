@@ -86,10 +86,19 @@ const ConversationRoute: FC = () => {
   const routeSkillId = (state as { skillId?: string } | null)?.skillId;
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const [inputMessageRevision, setInputMessageRevision] = useState(0);
+  /*
+   * A picked prompt is inserted at the caret rather than written to
+   * `inputMessage`, so it cannot discard a draft the user has already typed on
+   * this screen (issue #8754). The route-state seeding below still replaces,
+   * because it arrives with a fresh navigation onto an empty composer.
+   */
+  const [inputInsertion, setInputInsertion] = useState({
+    revision: 0,
+    text: '',
+  });
 
   const handleInsertText = useCallback((text: string) => {
-    setInputMessage(text);
-    setInputMessageRevision((prev) => prev + 1);
+    setInputInsertion((prev) => ({ revision: prev.revision + 1, text }));
   }, []);
   const {
     renderOverlay: renderPromptsOverlay,
@@ -235,6 +244,7 @@ const ConversationRoute: FC = () => {
   useEffect(() => {
     if (routePromptContent == null) return;
     setInputMessage(routePromptContent);
+    setInputMessageRevision((prev) => prev + 1);
     navigate(pathname, { replace: true, state: null });
   }, [routePromptContent, navigate, pathname]);
 
@@ -492,6 +502,7 @@ const ConversationRoute: FC = () => {
         introText={starterIntroText}
         message={inputMessage}
         messageRevision={inputMessageRevision}
+        inputInsertion={inputInsertion}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
         menuOverlays={menuOverlays}

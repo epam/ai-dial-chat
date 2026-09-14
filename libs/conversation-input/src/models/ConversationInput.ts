@@ -15,6 +15,7 @@ import type {
   MenuOverlayConfig,
   ModelSelectorLabels,
   SendOnEnter,
+  TextInsertion,
   ToolsChipLabels,
 } from './Input';
 import type { TranscribeAudio } from './Voice';
@@ -174,6 +175,13 @@ export interface ConversationInputProps {
    * when `message` itself is the same string as before.
    */
   messageRevision?: number;
+  /**
+   * Text inserted at the caret each time its `revision` changes, leaving the
+   * surrounding draft intact. Unlike `message`, this never replaces what the
+   * user has written, and it is made through the browser's editing pipeline so
+   * the native undo shortcut reverts it.
+   */
+  textInsertion?: TextInsertion;
   /** Optional welcome heading rendered above the input. */
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */

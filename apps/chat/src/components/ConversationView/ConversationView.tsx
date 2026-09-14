@@ -37,7 +37,10 @@ import {
   type ToolMenuItem,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
-import type { ToolsChipLabels } from '@epam/ai-dial-conversation-input';
+import type {
+  TextInsertion,
+  ToolsChipLabels,
+} from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
@@ -167,9 +170,15 @@ interface Props {
   /** Token that forces `inputContent` to re-apply even if its string is unchanged. */
   inputContentRevision?: number;
   /**
+   * Text inserted at the composer's caret whenever its `revision` changes. This
+   * is the channel `onInsertText` feeds: unlike `inputContent` it keeps whatever
+   * the user has already typed, and it is undoable.
+   */
+  inputInsertion?: TextInsertion;
+  /**
    * Called with resolved text (e.g. a picked prompt, params substituted) that
-   * should be seeded into the composer via the same `inputContent`/
-   * `inputContentRevision` channel. Required for the Prompts picker to work.
+   * should be inserted into the composer via the `inputInsertion` channel.
+   * Required for the Prompts picker to work.
    */
   onInsertText?: (text: string) => void;
   /**
@@ -221,6 +230,7 @@ const ConversationView: FC<Props> = ({
   fixedModel,
   inputContent,
   inputContentRevision,
+  inputInsertion,
   onInsertText,
   toolsMenuItems,
   onToolToggle,
@@ -1010,6 +1020,7 @@ const ConversationView: FC<Props> = ({
               <ConversationInput
                 message={inputContent}
                 messageRevision={inputContentRevision}
+                textInsertion={inputInsertion}
                 onSend={handleSendWithAnchor}
                 onUploadAttachment={onUploadAttachment}
                 onStop={canStopAssistant ? onStop : undefined}

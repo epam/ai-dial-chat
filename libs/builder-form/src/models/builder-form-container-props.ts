@@ -33,15 +33,15 @@ export interface BuilderFormContainerProps {
   labels: BuilderFormHeaderLabels;
   /** Called when the user activates the header's back control. */
   onBack: () => void;
-  /** Called when the user activates the header's cancel action. */
+  /** Called when the user activates the form's cancel action (header on desktop, sticky footer on mobile). */
   onCancel: () => void;
-  /** Called when the user activates the header's submit action. */
+  /** Called when the user activates the form's submit action (header on desktop, sticky footer on mobile). */
   onSubmit: () => void;
-  /** When `true`, the header's cancel action is disabled. Defaults to `false`. */
+  /** When `true`, the cancel action is disabled on both surfaces. Defaults to `false`. */
   isCancelDisabled?: boolean;
-  /** When `true`, the header's submit action is disabled. Defaults to `false`. */
+  /** When `true`, the submit action is disabled on both surfaces. Defaults to `false`. */
   isSubmitDisabled?: boolean;
-  /** When `true`, the header's submit action shows a spinner and reports `aria-busy`. Defaults to `false`. */
+  /** When `true`, the submit action shows a spinner and reports `aria-busy` on both surfaces. Defaults to `false`. */
   isSubmitting?: boolean;
   /** Body's start-edge column. Full width on mobile, a fixed-width column on desktop. */
   left?: ReactNode;
