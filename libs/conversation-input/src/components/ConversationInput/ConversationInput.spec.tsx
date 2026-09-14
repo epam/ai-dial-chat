@@ -44,7 +44,9 @@ describe('ConversationInput', () => {
     const handleSend = vi.fn();
     render(<ConversationInput onSend={handleSend} />);
 
-    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
     expect(handleSend).not.toHaveBeenCalled();
   });
 

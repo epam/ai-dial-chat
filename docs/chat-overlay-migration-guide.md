@@ -117,6 +117,25 @@ or an explicit token, that flow cannot currently be migrated one-to-one. The
 user now completes the new chat's standard login flow in an external tab or
 window.
 
+`signInOptions.explicitToken` has no replacement because the new chat
+authenticates through a BFF that keeps the OIDC session in an encrypted
+`HttpOnly` cookie: the access token never reaches the browser, and the
+embedded SPA authenticates every `/api/*` call by cookie. See
+[BFF authentication with an encrypted session cookie](./auth/auth-bff-encrypted-cookie.md).
+
+The BFF can additionally authenticate a request that carries an
+`Authorization: Bearer <token>` header, verifying it against the issuing
+provider's JWKS — see
+[Header bearer-token authentication](./auth/auth-bff-encrypted-cookie.md#61-header-bearer-token-authentication-optional-extension).
+That path is not a successor to `explicitToken` and does not restore
+host-supplied token login for the overlay: the embedded SPA sends no
+`Authorization` header (its API client is configured with
+`credentials: 'include'` only), the overlay protocol has no field to carry a
+token into the iframe, and the iframe's initial document load is a plain
+browser navigation that cannot carry a header in any case. It is intended for
+programmatic API callers, and enabling it widens the BFF's trust boundary from
+"our SPA in a browser" to "anyone holding a valid IdP token".
+
 ### Configure per-provider overlay login modes
 
 Hosts that have verified iframe compatibility for a specific provider

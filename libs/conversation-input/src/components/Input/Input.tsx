@@ -28,7 +28,6 @@ import {
 } from 'react';
 import { useAttachments } from '../../hooks/useAttachments';
 import { useCommandMenu } from '../../hooks/useCommandMenu/useCommandMenu';
-import { useDelayedUnmount } from '../../hooks/useDelayedUnmount';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useMessageState } from '../../hooks/useMessageState';
 import { useTextInsertion } from '../../hooks/useTextInsertion';
@@ -46,8 +45,6 @@ import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';
 import styles from './Input.module.scss';
 import { ModelSelectorControl } from './ModelSelectorControl';
-
-const SEND_BUTTON_EXIT_MS = 160;
 
 /** Full conversation input field: textarea, send/stop, model selector, attachment menu, voice recording, and chat-settings controls. */
 export const Input: FC<InputProps> = ({
@@ -126,6 +123,7 @@ export const Input: FC<InputProps> = ({
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   isAttachmentsEnabled = true,
+  isTextAttachmentsAllowed = true,
   usageLimitsSlot,
   onMessageTooLong,
 }) => {
@@ -360,23 +358,32 @@ export const Input: FC<InputProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  /*
+   * A long plain-text paste becomes a `text/plain` attachment only when the
+   * selected model would accept one: `isAttachmentsEnabled` says attachments
+   * are supported at all, `isTextAttachmentsAllowed` says a `text/plain`
+   * attachment would pass the host's validation. On a model that accepts
+   * only other kinds of attachments (e.g. images only), converting the paste
+   * would produce an attachment the model rejects.
+   */
+  const isPasteAsAttachmentEnabled =
+    isAttachmentsEnabled && isTextAttachmentsAllowed;
   const { handlePaste: handleClipboardPaste } = useClipboardPaste(
     addAttachments,
-    isAttachmentsEnabled ? pasteTextThreshold : Infinity,
+    isPasteAsAttachmentEnabled ? pasteTextThreshold : Infinity,
   );
 
   const handlePaste = useCallback(
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
       /*
-       * Deliberately narrower than the send gate above. With attachments
-       * enabled an over-threshold paste is converted to an attachment and
-       * never reaches the textarea, so warning here would be about text the
-       * user did not paste inline; an under-threshold paste is at most
-       * pasteTextThreshold characters and cannot reach the cap on its own.
-       * Existing text plus a small paste crossing the cap is not visible from
-       * the pasted string's length at all — the send gate catches that.
+       * Deliberately narrower than the send gate above. When a paste becomes
+       * an attachment it never reaches the textarea, so warning here would be
+       * about text the user did not paste inline; an under-threshold paste is
+       * at most pasteTextThreshold characters and cannot reach the cap on its
+       * own. Existing text plus a small paste crossing the cap is not visible
+       * from the pasted string's length at all — the send gate catches that.
        */
-      if (!isAttachmentsEnabled) {
+      if (!isPasteAsAttachmentEnabled) {
         const text = e.clipboardData.getData('text/plain');
         if (text.length >= maxMessageLength) {
           onMessageTooLong?.(text.length, maxMessageLength);
@@ -385,7 +392,7 @@ export const Input: FC<InputProps> = ({
       handleClipboardPaste(e);
     },
     [
-      isAttachmentsEnabled,
+      isPasteAsAttachmentEnabled,
       maxMessageLength,
       onMessageTooLong,
       handleClipboardPaste,
@@ -404,19 +411,6 @@ export const Input: FC<InputProps> = ({
     !hasBlockedAttachments &&
     !isSendDisabled &&
     !isVoiceActive;
-  /*
-   * Keeps the send button mounted just long enough to play its exit
-   * animation (`.sendButtonExiting` in Input.module.scss) after content is
-   * cleared, instead of vanishing instantly.
-   */
-  const {
-    shouldRender: shouldRenderSendButton,
-    isExiting: isSendButtonExiting,
-    instanceKey: sendButtonKey,
-  } = useDelayedUnmount(
-    !isStreaming && hasSendableContent,
-    SEND_BUTTON_EXIT_MS,
-  );
   /*
    * Chips the user dismissed with the chip's ×. Dismissal is view state of this
    * input only: a dismissed tool comes back the moment it is switched on again
@@ -453,10 +447,7 @@ export const Input: FC<InputProps> = ({
 
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
-  const shouldShowMicButton = useMemo(
-    () => isAudioMessageSupported && !isSendButtonExiting && !isStreaming,
-    [isAudioMessageSupported, isSendButtonExiting, isStreaming],
-  );
+  const shouldShowMicButton = isAudioMessageSupported && !isStreaming;
 
   const handleSend = async () => {
     if (isSendDisabled || isVoiceActive) return;
@@ -680,6 +671,51 @@ export const Input: FC<InputProps> = ({
       commandMenuArea
     );
 
+  /*
+   * Shared between the normal footer and the voice bar's second row: same
+   * menu, same file input, only its disabled state differs. Disabled while
+   * a dictation/attachment recording is anything but actively Recording, so
+   * it cannot be used to interrupt a pending transcription.
+   */
+  const attachButtonNode = hideAddButton ? undefined : (
+    <AddAttachmentButton
+      onAttachClick={
+        hideAttachFile ? undefined : () => fileInputRef.current?.click()
+      }
+      attachLabel={attachLabel}
+      addMenuTitle={addMenuTitle}
+      menuTitle={menuTitle}
+      menuCloseLabel={menuCloseLabel}
+      style={cssVars}
+      isDisabled={
+        isInputDisabled ||
+        (isVoiceActive && voiceState !== VoiceRecorderState.Recording)
+      }
+      chatSettings={chatSettings}
+      extraMenuItems={dialFileSystemMenuItem}
+      onRecordVoice={
+        isVoiceRecordingSupported &&
+        isAttachmentsEnabled &&
+        !isStreaming &&
+        !isVoiceActive
+          ? () => startRecording(VoiceRecordingMode.Attachment)
+          : undefined
+      }
+      recordVoiceLabel={recordVoiceLabel}
+      /*
+       * The "Tools" submenu exists only to bring a dismissed chip
+       * back. With removal off every chip is always on screen, so the
+       * entry would be dead weight — and where tools are the menu's
+       * only content, withholding them drops the `+` button entirely.
+       */
+      toolsMenuItems={canRemoveTools ? toolsMenuItems : undefined}
+      onToolToggle={onToolToggle}
+      toolsMenuTitle={toolsMenuTitle}
+      toolsBackLabel={toolsBackLabel}
+      menuOverlays={menuOverlays}
+    />
+  );
+
   return (
     <div
       ref={containerRef}
@@ -688,9 +724,9 @@ export const Input: FC<InputProps> = ({
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
         isInputDisabled && 'cursor-not-allowed',
-        'flex w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border shadow-md',
+        'flex w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border',
         'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
-        attachments.length > 6 ? 'py-3 ps-3' : 'p-3',
+        attachments.length > 6 ? 'py-4 ps-4' : 'p-4',
         className,
       )}
     >
@@ -719,6 +755,18 @@ export const Input: FC<InputProps> = ({
           }
         />
       )}
+      {!hideAddButton && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept={fileAccept}
+          className="sr-only"
+          aria-hidden
+          tabIndex={-1}
+          onChange={handleFileChange}
+        />
+      )}
       {isVoiceActive && (
         <VoiceBar
           embedded
@@ -727,6 +775,7 @@ export const Input: FC<InputProps> = ({
           errorMessage={voiceError}
           onStop={stopRecording}
           onDiscard={discardRecording}
+          attachButton={attachButtonNode}
           stopLabel={stopRecordingLabel}
           discardLabel={discardRecordingLabel}
           processingLabel={transcribingLabel}
@@ -738,54 +787,7 @@ export const Input: FC<InputProps> = ({
           <div className="flex w-full min-w-0 items-center self-stretch">
             {textareaArea}
           </div>
-          {!hideAddButton && (
-            <div className="flex">
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept={fileAccept}
-                className="sr-only"
-                aria-hidden
-                tabIndex={-1}
-                onChange={handleFileChange}
-              />
-              <AddAttachmentButton
-                onAttachClick={
-                  hideAttachFile
-                    ? undefined
-                    : () => fileInputRef.current?.click()
-                }
-                attachLabel={attachLabel}
-                addMenuTitle={addMenuTitle}
-                menuTitle={menuTitle}
-                menuCloseLabel={menuCloseLabel}
-                style={cssVars}
-                isDisabled={isInputDisabled}
-                chatSettings={chatSettings}
-                extraMenuItems={dialFileSystemMenuItem}
-                onRecordVoice={
-                  isVoiceRecordingSupported &&
-                  isAttachmentsEnabled &&
-                  !isStreaming
-                    ? () => startRecording(VoiceRecordingMode.Attachment)
-                    : undefined
-                }
-                recordVoiceLabel={recordVoiceLabel}
-                /*
-                 * The "Tools" submenu exists only to bring a dismissed chip
-                 * back. With removal off every chip is always on screen, so the
-                 * entry would be dead weight — and where tools are the menu's
-                 * only content, withholding them drops the `+` button entirely.
-                 */
-                toolsMenuItems={canRemoveTools ? toolsMenuItems : undefined}
-                onToolToggle={onToolToggle}
-                toolsMenuTitle={toolsMenuTitle}
-                toolsBackLabel={toolsBackLabel}
-                menuOverlays={menuOverlays}
-              />
-            </div>
-          )}
+          {attachButtonNode && <div className="flex">{attachButtonNode}</div>}
           {visibleTools.length > 0 && onToolToggle != null && (
             <div className="min-w-0 flex-1">
               <ToolsChips
@@ -817,42 +819,36 @@ export const Input: FC<InputProps> = ({
                   onPickerToggle={() => setIsPickerOpen((prev) => !prev)}
                   onPickerOpenChange={setIsPickerOpen}
                 />
+                {shouldShowMicButton && (
+                  <GhostIconButton
+                    icon={
+                      <IconMicrophone
+                        size={DIAL_ICON_SIZE.LG}
+                        stroke={DIAL_KIT_ICON_STROKE}
+                        aria-hidden
+                      />
+                    }
+                    aria-label={micLabel}
+                    tooltipProps={{ tooltip: micLabel }}
+                    className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
+                    onClick={() =>
+                      startRecording(VoiceRecordingMode.Dictation)
+                    }
+                    disabled={isInputDisabled || isStreaming}
+                  />
+                )}
                 {isStreaming && onStop ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (
-                  !isStreaming &&
-                  shouldRenderSendButton && (
+                  !isStreaming && (
                     <SendButton
-                      key={sendButtonKey}
                       onSend={handleSend}
-                      isDisabled={
-                        !hasModelSelected ||
-                        hasBlockedAttachments ||
-                        isSendDisabled
-                      }
+                      isDisabled={!hasModelSelected || !canSend}
                       ariaLabel={sendLabel}
-                      isExiting={isSendButtonExiting}
                     />
                   )
                 )}
               </>
-            )}
-
-            {shouldShowMicButton && (
-              <GhostIconButton
-                icon={
-                  <IconMicrophone
-                    size={DIAL_ICON_SIZE.LG}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
-                }
-                aria-label={micLabel}
-                tooltipProps={{ tooltip: micLabel }}
-                className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
-                onClick={() => startRecording(VoiceRecordingMode.Dictation)}
-                disabled={isInputDisabled || isStreaming}
-              />
             )}
           </div>
         </div>

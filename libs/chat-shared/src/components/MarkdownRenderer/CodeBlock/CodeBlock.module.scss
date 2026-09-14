@@ -21,6 +21,22 @@
 }
 
 .scrollContainer {
+  /*
+   * Prism's markdown grammar tags every table punctuation/cell span with a
+   * bare `table` class (e.g. `token table table-header-row`) alongside its
+   * semantic classes. Tailwind ships a utility class of the same name
+   * (`.table { display: table }`); an unscoped `.table` selector matches it
+   * too, turning each inline span into its own table box and stacking every
+   * cell on its own line. Force Prism's structural token classes back to
+   * inline so a fenced ```markdown block renders as flat highlighted text.
+   */
+  :global(.token.table),
+  :global(.token.table-header-row),
+  :global(.token.table-line),
+  :global(.token.table-data-rows) {
+    display: inline;
+  }
+
   scrollbar-width: thin;
   scrollbar-color: var(
       --cm-code-block-scrollbar,

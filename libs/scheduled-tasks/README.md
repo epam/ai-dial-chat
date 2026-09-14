@@ -105,11 +105,7 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskCreateForm
-  labels={
-    {
-      /* ... */
-    }
-  }
+  labels={{/* ... */}}
   values={{
     displayName: '',
     repeat: ScheduledTaskRepeat.Daily,
@@ -143,11 +139,7 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskDetailView
-  labels={
-    {
-      /* ..., unreadIndicatorLabel: 'Unread' */
-    }
-  }
+  labels={{/* ..., unreadIndicatorLabel: 'Unread' */}}
   onBack={() => {}}
   onEdit={() => {}}
   displayName="Daily summary"

@@ -44,6 +44,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   onDropFilesConsumed,
   validateAttachment,
   isAttachmentsEnabled,
+  isTextAttachmentsAllowed,
   hideAttachFile = false,
   fileAccept,
   maximumAttachmentsAmount,
@@ -160,6 +161,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         onRemovePrefixAttachment={handleRemovePreExisting}
         validateAttachment={validateAttachment}
         isAttachmentsEnabled={isAttachmentsEnabled}
+        isTextAttachmentsAllowed={isTextAttachmentsAllowed}
         maximumAttachmentsAmount={maximumAttachmentsAmount}
         onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
         pendingAttachments={pendingAttachments}

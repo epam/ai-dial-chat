@@ -96,23 +96,29 @@ const getSkeletonsByVariant = (
   );
 
 describe('Input', () => {
-  it('should hide send button when textarea is empty', () => {
+  it('should disable send button when textarea is empty', () => {
     render(<Input />);
-    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
-  it('should show send button when user types non-whitespace text', () => {
+  it('should enable send button when user types non-whitespace text', () => {
     render(<Input />);
     const textarea = screen.getByRole('textbox');
     fireEvent.change(textarea, { target: { value: 'Hello' } });
-    expect(screen.getByLabelText('Send message')).toBeTruthy();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(false);
   });
 
-  it('should keep send button hidden for whitespace-only input', () => {
+  it('should keep send button disabled for whitespace-only input', () => {
     render(<Input />);
     const textarea = screen.getByRole('textbox');
     fireEvent.change(textarea, { target: { value: '   ' } });
-    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
   it('should pre-populate textarea with initialMessage', () => {
@@ -277,13 +283,17 @@ describe('Input', () => {
     expect(screen.getByText('doc')).toBeTruthy();
   });
 
-  it('should show send button when only an attachment is present and no text', () => {
+  it('should enable send button when only an attachment is present and no text', () => {
     render(<Input />);
-    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
     const fileInput = getFileInput();
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    expect(screen.getByLabelText('Send message')).toBeTruthy();
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(false);
   });
 
   it('should call onSend with empty text and the attachment on Enter when no text is typed', () => {
@@ -495,7 +505,7 @@ describe('Input — model selector', () => {
       screen
         .getAllByRole('button')
         .filter((button) => (button as HTMLButtonElement).disabled),
-    ).toHaveLength(7);
+    ).toHaveLength(8);
   });
 
   it('shows error label as disabled item when deployments is empty', () => {
@@ -975,6 +985,23 @@ describe('Input — pasted attachment expand', () => {
       );
     });
   });
+
+  /*
+   * An attachments-enabled model that does not accept text/plain (e.g. an
+   * image-only model) must not convert the paste — the converted attachment
+   * would fail validation with "File extension not supported".
+   */
+  it('does not convert a long paste to an attachment when text attachments are not allowed', () => {
+    render(<Input pasteTextThreshold={5} isTextAttachmentsAllowed={false} />);
+    const text = 'This is long enough to otherwise become a pasted attachment';
+
+    pasteText(screen.getByRole('textbox'), text);
+
+    expect(
+      screen.queryByRole('button', { name: 'Download attachment' }),
+    ).toBeNull();
+    expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
+  });
 });
 
 describe('Input — message length cap', () => {
@@ -1073,6 +1100,32 @@ describe('Input — message length cap', () => {
     });
 
     expect(onMessageTooLong).not.toHaveBeenCalled();
+  });
+
+  /*
+   * When the paste cannot become an attachment (text attachments not allowed),
+   * it lands inline, so the paste itself is the only chance to report the cap.
+   */
+  it('warns at paste time when text attachments are not allowed', () => {
+    const onMessageTooLong = vi.fn();
+    render(
+      <Input
+        isAttachmentsEnabled
+        isTextAttachmentsAllowed={false}
+        maxMessageLength={MAX}
+        pasteTextThreshold={2}
+        onMessageTooLong={onMessageTooLong}
+      />,
+    );
+
+    fireEvent.paste(screen.getByRole('textbox'), {
+      clipboardData: {
+        items: [] as unknown as DataTransferItemList,
+        getData: () => 'x'.repeat(MAX + 5),
+      },
+    });
+
+    expect(onMessageTooLong).toHaveBeenCalledWith(MAX + 5, MAX);
   });
 });
 

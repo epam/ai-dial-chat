@@ -40,7 +40,14 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           {welcomeText}
         </h1>
       )}
-      <div className="relative w-full max-w-[748px]">
+      <div
+        className={mergeClasses(
+          'relative w-full',
+          /* Narrower composer on the welcome screen only; the active-chat
+           * input keeps the 748px width shared with `Input`/`VoiceBar`. */
+          welcomeText ? 'max-w-[700px]' : 'max-w-[748px]',
+        )}
+      >
         <Input
           placeholder={placeholder}
           isStreaming={isStreaming}

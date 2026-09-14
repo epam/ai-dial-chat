@@ -211,8 +211,9 @@ export interface InputProps {
   /**
    * Maximum character count for the message text. Sending text at or above this
    * length triggers `onMessageTooLong` instead of being accepted, on every model.
-   * Pasting text that long additionally triggers it when `isAttachmentsEnabled`
-   * is `false`. Separate from `pasteTextThreshold`, which only decides when a
+   * Pasting text that long additionally triggers it when the paste-to-attachment
+   * conversion is disabled (`isAttachmentsEnabled` or `isTextAttachmentsAllowed`
+   * is `false`). Separate from `pasteTextThreshold`, which only decides when a
    * paste becomes an attachment. Defaults to `50000`.
    */
   maxMessageLength?: number;
@@ -223,6 +224,16 @@ export interface InputProps {
    * trigger an "Attachments not supported" error. Defaults to `true`.
    */
   isAttachmentsEnabled?: boolean;
+  /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment even while `isAttachmentsEnabled` is `true`.
+   * The host resolves it from the selected model's allowed attachment MIME
+   * types: `true` when they accept `text/plain` (a `text/plain` entry, the
+   * `text/*` wildcard, or an all-types wildcard), `false` for models that
+   * accept only other kinds of attachments (e.g. images only), whose
+   * validation would reject a converted paste. Defaults to `true`.
+   */
+  isTextAttachmentsAllowed?: boolean;
   /**
    * List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered.
    * `iconUrl` on each item must already be a fully resolved URL usable in `<img src>` — the host app
@@ -425,7 +436,8 @@ export interface InputProps {
   usageLimitsSlot?: ReactNode;
   /**
    * Called when the user sends text whose length is ≥ `maxMessageLength`, and when
-   * they paste text that long while `isAttachmentsEnabled` is `false`. A blocked
+   * they paste text that long while the paste-to-attachment conversion is disabled
+   * (`isAttachmentsEnabled` or `isTextAttachmentsAllowed` is `false`). A blocked
    * send leaves the textarea's content in place; a paste is still inserted inline.
    * The host is responsible for surfacing the error to the user.
    */
