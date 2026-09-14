@@ -148,7 +148,7 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 | `appsEditor.error.saveTimeout` | `Saving timed out. Please try again.` |
 | `appsEditor.error.settingsNotReady` | `The Settings editor did not report readiness. Please reload and try again.` |
 
-The additional-locale field labels the General step renders come from the `editor.locales.*` keys owned by the deployment-creation-form capability.
+The additional-locale field labels the General step renders come from the `editor.locales.*` keys owned by the builder-form capability.
 
 **Memoisation**: The resolved schema object and the `returnUrl` value SHALL be wrapped in `useMemo`. The `handleCreated`, `handleSave`, `handlePreview`, `handleSettingsUpdated`, `handleSaveSuccess`, and `handleSaveError` callbacks SHALL be wrapped in `useCallback`.
 
@@ -308,7 +308,7 @@ interface Props {
 
 **Left column** — form fields (scrollable, `desktop:w-1/2`, `border-b` on mobile / `desktop:border-e`).
 
-The fields SHALL NOT be hand-rolled here: the column renders the shared `DeploymentCreationForm` component from `@epam/ai-dial-deployment-creation-form`, driven by a single `DeploymentCreationFormValues` state object (`name`, `description`, `iconUrl`, `version`, `topics`, `otherLocales`) and a `DeploymentCreationFormFieldErrors` object, with labels supplied by this page. Those values map onto the create request as `name`, `description`, `iconUrl`, `version`, `topics`, plus the locale payload composed from `otherLocales`.
+The fields SHALL NOT be hand-rolled here: the column renders the shared `DeploymentCreationForm` component from `@epam/ai-dial-builder-form`, driven by a single `DeploymentCreationFormValues` state object (`name`, `description`, `iconUrl`, `version`, `topics`, `otherLocales`) and a `DeploymentCreationFormFieldErrors` object, with labels supplied by this page. Those values map onto the create request as `name`, `description`, `iconUrl`, `version`, `topics`, plus the locale payload composed from `otherLocales`.
 
 `GeneralForm` no longer renders its own Cancel/Next footer buttons — those live in the shared `EditorHeader` (see "Shared editor header component"). Instead, `GeneralForm` SHALL be wrapped in `forwardRef<GeneralFormHandle, Props>` and expose, via `useImperativeHandle`:
 

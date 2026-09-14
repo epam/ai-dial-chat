@@ -1,3 +1,13 @@
+import {
+  AvatarPickerModal,
+  DeploymentCreationFieldErrorCode,
+  DeploymentCreationForm,
+  DeploymentCreationFormFieldErrors,
+  DeploymentCreationFormLabels,
+  DeploymentCreationFormValues,
+  SEMVER_VERSION_PATTERN,
+  validateDeploymentCreationFields,
+} from '@epam/ai-dial-builder-form';
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { Card } from '@epam/ai-dial-catalog';
 import {
@@ -8,16 +18,6 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import {
-  AvatarPickerModal,
-  DeploymentCreationFieldErrorCode,
-  DeploymentCreationForm,
-  DeploymentCreationFormFieldErrors,
-  DeploymentCreationFormLabels,
-  DeploymentCreationFormValues,
-  SEMVER_VERSION_PATTERN,
-  validateDeploymentCreationFields,
-} from '@epam/ai-dial-deployment-creation-form';
 import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
