@@ -29,10 +29,11 @@ export const useAppEditorValidation = () => {
       [AppsEditorQuery.Id]: id = '',
       [AppsEditorQuery.Schema]: type = '',
       [AppsEditorQuery.PublicationUrl]: publicationUrl,
+      [AppsEditorQuery.IsCreating]: isCreating,
     },
   } = router;
 
-  const isEditing = !!id?.toString();
+  const isEditing = !!id?.toString() && !isCreating;
 
   const dispatch = useAppDispatch();
 
