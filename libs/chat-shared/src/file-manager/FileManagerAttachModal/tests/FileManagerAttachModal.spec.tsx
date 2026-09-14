@@ -6,17 +6,15 @@ import {
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FileManagerSelectableNode } from '../../../types/file-manager-node';
 import type { AttachResult } from '../../attach-result';
 import type { FileManagerController } from '../../file-manager-controller';
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from '../../file-manager-variant';
-import type { FileManagerSelectableNode } from '../../../types/file-manager-node';
-import {
-  FileManagerAttachModal,
-  type FileManagerAttachModalLabels,
-} from '../FileManagerAttachModal';
+import type { FileManagerAttachModalLabels } from '../../labels';
+import { FileManagerAttachModal } from '../FileManagerAttachModal';
 
 const shellEmitted = vi.hoisted(() => ({
   lastSet: null as Set<string> | null,

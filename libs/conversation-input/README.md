@@ -16,14 +16,18 @@ Message input component for conversations, supporting model selection, chat sett
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-conversation-input/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `react-dom`
-- `@epam/ai-dial-attachment-input`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@tabler/icons-react`
 
 ## Components
 

@@ -25,7 +25,6 @@ side effects, allowing unused publishing UI to be removed from eager consumers.
 ## Peer Dependencies
 
 - `react`
-- `@tabler/icons-react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-react-file-manager`

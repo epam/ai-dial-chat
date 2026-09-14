@@ -1,5 +1,13 @@
-import type { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
-import { DialFileManager } from '@epam/ai-dial-react-file-manager';
+/*
+ * `DialFileManager` is imported as a type: it is used only inside
+ * `typeof`/`ComponentProps` type queries, and a value import here would put
+ * the grid in the closure of this package's root entry, which every host
+ * reaches (see the note in `./index.ts`).
+ */
+import type {
+  DialFileManager,
+  DialFileManagerTabs,
+} from '@epam/ai-dial-react-file-manager';
 import type { ComponentProps, ReactNode } from 'react';
 
 type DialFileManagerComponentProps = ComponentProps<typeof DialFileManager>;
@@ -145,4 +153,21 @@ export interface DialFileManagerShellLabels {
   metadataSizeLabel: string;
   /** Label for the author in the metadata popup. */
   metadataAuthorLabel: string;
+}
+
+/**
+ * Labels for `FileManagerAttachModal`. Extends the shell labels with
+ * attach-specific strings.
+ *
+ * Declared here rather than beside the component so a host can type its label
+ * object from this package's root entry without reaching the `./file-manager`
+ * entry, which is the one that pulls in the grid.
+ */
+export interface FileManagerAttachModalLabels extends DialFileManagerShellLabels {
+  /** Title displayed in the Popup header. */
+  title: string;
+  /** Label for the primary Attach button. */
+  attachLabel: string;
+  /** Optional subtitle shown below the title (e.g. allowed types / size). Pass `null` to hide. */
+  headerDescription?: string | null;
 }

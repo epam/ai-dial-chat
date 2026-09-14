@@ -10,6 +10,7 @@ import {
   rewriteExportsObj,
   preparePublishPackageJson,
   countRawJsonKeyOccurrences,
+  collectExportFilePaths,
 } from './publish-lib-package-json.mjs';
 
 test('stripDistPrefix rewrites a "./dist/..." path to "./..."', () => {
@@ -181,6 +182,45 @@ test('preparePublishPackageJson removes the dev-only "nx" configuration block', 
   });
 
   assert.equal('nx' in json, false);
+});
+
+test('collectExportFilePaths gathers leaf targets from every condition and subpath', () => {
+  const targets = collectExportFilePaths({
+    './package.json': './package.json',
+    './styles.css': './index.css',
+    '.': {
+      types: './index.d.ts',
+      import: './index.js',
+      default: './index.js',
+    },
+    './markdown': {
+      types: './markdown.d.ts',
+      import: './markdown.js',
+      default: './markdown.js',
+    },
+  });
+
+  assert.deepEqual([...targets].sort(), [
+    './index.css',
+    './index.d.ts',
+    './index.js',
+    './markdown.d.ts',
+    './markdown.js',
+    './package.json',
+  ]);
+});
+
+test('collectExportFilePaths skips bare specifiers and array fallbacks keep both entries', () => {
+  const targets = collectExportFilePaths({
+    './aliased': 'some-other-package',
+    './fallback': ['./modern.js', './legacy.js'],
+  });
+
+  assert.deepEqual([...targets].sort(), ['./legacy.js', './modern.js']);
+});
+
+test('collectExportFilePaths returns an empty set for a package without exports', () => {
+  assert.deepEqual([...collectExportFilePaths(undefined)], []);
 });
 
 test('nested sideEffects metadata is not a duplicate root key', () => {

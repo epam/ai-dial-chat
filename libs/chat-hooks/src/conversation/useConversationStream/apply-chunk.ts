@@ -6,7 +6,7 @@ import type {
   Stage,
   StreamChunk,
 } from '@epam/ai-dial-chat-shared';
-import { normalizeRawAnnotations } from '@epam/ai-dial-quotations';
+import { normalizeRawAnnotations } from '@epam/ai-dial-chat-shared';
 
 /**
  * Narrowed via an explicit cast rather than control-flow narrowing, because

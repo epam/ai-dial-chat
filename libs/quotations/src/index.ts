@@ -45,7 +45,6 @@ export {
   isDocxRangeSelector,
   isExcelRcRangeSelector,
   isPptxRangeSelector,
-  normalizeRawAnnotations,
   resolveMessageAnnotations,
 } from './utils/annotation';
 export type {
