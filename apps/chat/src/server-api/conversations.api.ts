@@ -17,23 +17,21 @@ export const createConversation = (
     createConversationDto: {
       firstMessage,
       deploymentId,
-      ...(
-        attachments?.length ||
-        configurationValue ||
-        formValue ||
-        skills?.length
-          ? {
-              custom_content: {
-                ...(attachments?.length ? { attachments } : {}),
-                ...(configurationValue
-                  ? { configuration_value: configurationValue }
-                  : {}),
-                ...(formValue ? { form_value: formValue } : {}),
-                ...(skills?.length ? { skills } : {}),
-              },
-            }
-          : {}
-      ),
+      ...(attachments?.length ||
+      configurationValue ||
+      formValue ||
+      skills?.length
+        ? {
+            custom_content: {
+              ...(attachments?.length ? { attachments } : {}),
+              ...(configurationValue
+                ? { configuration_value: configurationValue }
+                : {}),
+              ...(formValue ? { form_value: formValue } : {}),
+              ...(skills?.length ? { skills } : {}),
+            },
+          }
+        : {}),
     },
   });
 
@@ -83,7 +81,7 @@ export const listConversations = (
 ) =>
   conversationsApi.listConversations(
     {
-      limit: params?.limit ?? 1000,
+      limit: params?.limit,
       nextToken: params?.nextToken,
     },
     ...(signal ? [{ signal }] : []),
