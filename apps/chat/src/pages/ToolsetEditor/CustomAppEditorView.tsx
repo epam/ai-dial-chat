@@ -31,6 +31,7 @@ interface Props {
   onSettingsChange: (patch: Partial<CustomAppFormData>) => void;
   onNameBlur: () => void;
   onVersionBlur: () => void;
+  onCompletionUrlBlur: () => void;
 }
 
 const CustomAppEditorView: FC<Props> = ({
@@ -47,6 +48,7 @@ const CustomAppEditorView: FC<Props> = ({
   onSettingsChange,
   onNameBlur,
   onVersionBlur,
+  onCompletionUrlBlur,
 }) => {
   const { t } = useTranslation();
   const isGeneralStep = step === ToolsetEditorSteps.General;
@@ -72,6 +74,7 @@ const CustomAppEditorView: FC<Props> = ({
               form={settingsForm}
               errors={settingsErrors}
               onChange={onSettingsChange}
+              onCompletionUrlBlur={onCompletionUrlBlur}
             />
           )}
         </div>
