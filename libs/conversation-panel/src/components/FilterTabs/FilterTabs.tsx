@@ -37,14 +37,16 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
     onChange,
     tabClassName = 'dial-tiny-semi-text',
     hiddenSources,
-  }) => (
-    <div
-      role="group"
-      aria-label={labels.groupAriaLabel ?? 'Filter chats'}
-      className="flex flex-nowrap gap-1 px-3 py-2"
-    >
-      {TABS.filter(({ value }) => !hiddenSources?.includes(value)).map(
-        ({ value, labelKey }) => (
+  }) => {
+    const tabs = TABS.filter(({ value }) => !hiddenSources?.includes(value));
+
+    return (
+      <div
+        role="group"
+        aria-label={labels.groupAriaLabel ?? 'Filter chats'}
+        className="flex flex-nowrap gap-1 px-3 py-2"
+      >
+        {tabs.map(({ value, labelKey }) => (
           <Tag
             key={value}
             label={labels[labelKey]}
@@ -57,8 +59,8 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
               tabClassName,
             )}
           />
-        ),
-      )}
-    </div>
-  ),
+        ))}
+      </div>
+    );
+  },
 );
