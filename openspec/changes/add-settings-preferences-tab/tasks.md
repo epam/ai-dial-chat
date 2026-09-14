@@ -71,6 +71,10 @@ hook with existing i18n keys, so it exercises the shell wiring with nothing else
 
 ## 4. Slice 3 — the `Default agent for new chats` control
 
+> **Superseded by group 17.** The searchable `Select` this slice built was later replaced by the
+> deployment selector panel. The tasks below record what shipped at the time; the current design is
+> in group 17 and in the requirement in `specs/settings-preferences-tab/spec.md`.
+
 - [x] 4.1 Create `apps/chat/src/components/Settings/DefaultAgentSelect/DefaultAgentSelect.tsx` as a searchable `Select` bound to `useDefaultAgentPreference()` and `useDeployments()`. Hold the overlay query in local `searchQuery` state fed by `onSearchQueryChange`; pass `searchable` and `searchPlaceholder={t(SettingsI18nKeys.DefaultAgentSearchPlaceholder)}`. Props interface named `Props` per `.claude/rules/apps.md`; `export default memo(DefaultAgentSelect)`.
 - [x] 4.2 Build the option list in a `useMemo` keyed on `[t, items, searchQuery]`: the two mode options first (no icon), then one per `items` entry with `value: item.id`, `label` from `resolveLocalizedText` (`apps/chat/src/utils/locale.ts`), `icon` from `resolveCatalogIconUrl` (`apps/chat/src/utils/icon-path.ts`), `rightControl` carrying `item.version` when present, and `labelNode: <Highlight text={name} query={searchQuery} />` from `@epam/ai-dial-ui-kit`. `Highlight` is mandatory for search-result text per `.claude/rules/search-results-highlight.md` — do not render the name as plain text and do not hand-roll a highlighter. Keep `label` as the plain string so the control's own field rendering and filtering still work.
   **Outcome:** the version field on the raw `DeploymentItemDto` is `displayVersion`, not `version` —
@@ -429,4 +433,42 @@ from chat both sources are already loaded, so the spinner only appears on a cold
 ### Verification
 
 - `npm run test:file -- apps/chat/src/pages/SettingsPage/PreferencesTab/tests/PreferencesTab.spec.tsx apps/chat/src/pages/SettingsPage/tests/SettingsPage.spec.tsx`
+- Full `apps/chat` Vitest suite; typecheck; lint
+
+## 17. Replace the Default agent `Select` with the deployment selector panel
+
+Reverses Decision 3 as originally shipped (group 4). The flat `Select` mapped the whole catalog into
+option nodes for a preference the user sets once, and duplicated the deployment panel's search,
+`Highlight`, icon and version rendering in a second place — so this one field opened a picker that
+looked nothing like the one the same user opens from the chat input.
+
+**What unblocked it:** the panel's new `extraOptions` input takes non-deployment rows as
+`{ id, label }` and renders them as `menuitemradio` rows above every catalog section, with no icon
+and no favourite toggle. The original objection — that the two modes would have to be faked as
+`CatalogItem`s, the `SPECIAL_DEFAULT_MODEL_DIC` hack from chat 1.0 — no longer applies. The
+`extraOptions` contract itself is specified by `deployment-selector-form-trigger`, not here.
+
+- [x] 17.1 Rewrite `DefaultAgentSelect` as a `Label` plus `DeploymentSelectorFieldTrigger`, passing
+  `selectedId={preference}`, `onSelect={setPreference}`, `labelledById` from `useId()`, and the two
+  modes as `extraOptions`. Dropped from the component: `useDeployments`, `useLanguage`,
+  `resolveLocalizedText`, `resolveCatalogIconUrl`, `Highlight`, `DeploymentIcon`, and the
+  `searchQuery` state — all of it is the panel's now.
+- [x] 17.2 Rewrite `DefaultAgentSelect.spec.tsx` against the trigger's props rather than option
+  nodes: the two modes arrive as the picker's pinned rows, the field is labeled and named by the
+  rendered label, choosing `Default agent` persists the sentinel, nothing stored resolves to the
+  last-used mode, a stored deployment id is handed down as the selected value, and a stored id that
+  has left the catalog is preserved.
+- [x] 17.3 Update the requirement in `specs/settings-preferences-tab/spec.md` and Decisions 2 and 3
+  in `design.md`, which both described the `Select`.
+
+**Also in this group, in the panel rather than this control:** the popup's width cap
+(`matchReferenceWidth` only sets a `min-width`, so a long agent name stretched the overlay past its
+field) and the `deploymentSelector.currentlySelectedLabel` rename from "My Collection" to "Current
+Selected". Both belong to `deployment-selector-form-trigger`/`catalog-model-selector`.
+
+**Left undone:** no real-browser check of the new field — the gap flagged in group 8 still stands.
+
+### Verification
+
+- `npm run test:file -- apps/chat/src/components/Settings/DefaultAgentSelect/tests/DefaultAgentSelect.spec.tsx apps/chat/src/components/DeploymentSelector/tests/DeploymentSelectorPanel.spec.tsx`
 - Full `apps/chat` Vitest suite; typecheck; lint

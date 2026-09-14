@@ -10,7 +10,8 @@ box plus "Add avatar" button), which opens the file manager restricted to a sing
 image up to 1 MB, rather than a plain URL text field. Name SHALL be required and restricted to
 letters, digits, spaces, underscores, dots, and dashes. The General step SHALL NOT render an
 Intro field. The name and description fields SHALL also allow editing translations for
-additional locales through the shared `DeploymentLocalesField` popup. These fields SHALL be
+additional locales through the shared `DeploymentLocalesField` popup, which is present only while
+the host supplies a non-empty `availableLocaleOptions` (see `builder-form`). These fields SHALL be
 rendered and validated through the shared `DeploymentCreationForm` component from `@epam/ai-dial-builder-form`, the same
 component used by Toolset creation's General step.
 

@@ -12,8 +12,8 @@ import { DefaultAgentMode } from '../../../types/default-agent';
 
 /**
  * The agent a new chat opens on. It is the same picker the chat input opens —
- * search, My Collection, Favorites, Catalog — so the preference is chosen the
- * way an agent is chosen everywhere else, and the panel stays cheap to open
+ * search, Current Selected, Favorites, Catalog — so the preference is chosen
+ * the way an agent is chosen everywhere else, and the panel stays cheap to open
  * because it never materialises the whole catalog. The two modes carried over
  * from chat 1.0 ("Default agent", "Last used agent") ride along as icon-less
  * rows pinned above the catalog sections, so they read as modes rather than
