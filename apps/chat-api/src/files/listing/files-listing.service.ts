@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { StringUtils } from '../../common/utils/string-utils';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -40,7 +41,7 @@ const isReservedRootFolder = (item: DialFileItem): boolean => {
   const nodeType = (item.nodeType ?? '').toLowerCase();
   if (nodeType !== 'folder') return false;
 
-  const parentPath = (item.parentPath ?? '').replace(/\/+$/, '');
+  const parentPath = StringUtils.stripTrailingSlashes(item.parentPath ?? '');
   if (parentPath !== '') return false;
 
   return RESERVED_ROOT_FOLDER_NAMES.includes(item.name ?? '');

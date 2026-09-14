@@ -713,15 +713,15 @@ const VoiceComposer = ({
 
 **Parameters** (`UseTranscribeAudioParams`):
 
-| Name                      | Type                                                                                                 | Description                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `transcriptionApi`        | `Pick<TranscriptionApi, 'transcribeAudio'>`                                                              | Already-configured generated-client instance used for the ASR-model path.                                          |
-| `filesApi`                | `Pick<FilesApi, 'uploadFile'>`                                                                            | Already-configured generated-client instance used to upload the recording.                                         |
+| Name                       | Type                                                                                                           | Description                                                                                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transcriptionApi`         | `Pick<TranscriptionApi, 'transcribeAudio'>`                                                                    | Already-configured generated-client instance used for the ASR-model path.                                                                                                             |
+| `filesApi`                 | `Pick<FilesApi, 'uploadFile'>`                                                                                 | Already-configured generated-client instance used to upload the recording.                                                                                                            |
 | `transcribeWithDeployment` | `(params: { audioUrl: string; mimeType: string; deployment: string; signal: AbortSignal }) => Promise<string>` | Host-configured call for the selected-deployment path — the generated chat-completions client cannot express that endpoint's request shape, so the host supplies its own raw request. |
-| `bucket`                  | `string \| undefined \| null`                                                                             | DIAL Core bucket the recording is uploaded into.                                                                    |
-| `asrModelId`              | `string`                                                                                                  | Recognizes via `transcriptionApi` when set; otherwise `selectedDeploymentId` is used.                               |
-| `selectedDeploymentId`    | `string \| undefined \| null`                                                                             | Deployment id used for recognition when `asrModelId` is not set.                                                    |
-| `maxSizeBytes`            | `number`                                                                                                  | Recordings larger than this are rejected with `TooLarge` before upload.                                             |
+| `bucket`                   | `string \| undefined \| null`                                                                                  | DIAL Core bucket the recording is uploaded into.                                                                                                                                      |
+| `asrModelId`               | `string`                                                                                                       | Recognizes via `transcriptionApi` when set; otherwise `selectedDeploymentId` is used.                                                                                                 |
+| `selectedDeploymentId`     | `string \| undefined \| null`                                                                                  | Deployment id used for recognition when `asrModelId` is not set.                                                                                                                      |
+| `maxSizeBytes`             | `number`                                                                                                       | Recordings larger than this are rejected with `TooLarge` before upload.                                                                                                               |
 
 **Returns** (`UseTranscribeAudioResult`): `{ transcribeAudio: (file: File, signal: AbortSignal) => Promise<string> }`.
 
@@ -844,16 +844,16 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name             | Type                                | Description                                                                                   |
-| ---------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| `conversationId` | `string \| undefined`               | The currently displayed conversation's id.                                                    |
-| `state`          | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.      |
-| `transport`      | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                       |
-| `generation`     | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership. |
-| `channel`        | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.          |
-| `overlay`        | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.          |
-| `onStopError`    | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                         |
-| `generationConflictMessage` | `string` | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
+| Name                        | Type                                | Description                                                                                                                                                                                                                                     |
+| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                      |
+| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                        |
+| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                         |
+| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                   |
+| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                            |
+| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                            |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                           |
+| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
@@ -1767,18 +1767,20 @@ import { apSchedulerDayToJsDay } from '@epam/ai-dial-chat-hooks';
 apSchedulerDayToJsDay(0); // 1 (Monday -> JS Monday)
 ```
 
-### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes
+### safeDecodeURI / safeDecodeURIComponent / stripSurroundingSlashes / stripTrailingSlashes
 
-`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment.
+`safeDecodeURI`/`safeDecodeURIComponent` decode a URI-encoded path segment, returning the original string unchanged if decoding fails; `stripSurroundingSlashes` strips leading and trailing slashes from a path segment, and `stripTrailingSlashes` strips trailing ones only.
 
 ```ts
 import {
   safeDecodeURI,
   stripSurroundingSlashes,
+  stripTrailingSlashes,
 } from '@epam/ai-dial-chat-hooks';
 
 safeDecodeURI('My%20File.txt'); // 'My File.txt'
 stripSurroundingSlashes('/reports/'); // 'reports'
+stripTrailingSlashes('/reports//'); // '/reports'
 ```
 
 ### isCustomAppSchema / isQuickAppSchema

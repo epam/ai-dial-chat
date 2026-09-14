@@ -4,12 +4,13 @@ import {
   ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Input,
   Notification,
   NotificationType,
   NotificationVariant,
   Search,
 } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode, useMemo, useState } from 'react';
+import { FC, ReactNode, useId, useMemo, useState } from 'react';
 import {
   PublicationRule,
   PublishCalloutKind,
@@ -29,6 +30,9 @@ import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 // import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 import styles from './PublishPanel.module.scss';
 
+/** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
+const MAX_AUTHOR_LENGTH = 200;
+
 /** Text overrides for all user-visible strings in {@link PublishPanel}. */
 export interface PublishPanelLabels {
   /** Label above the destination folder picker. Default: `'Publish to folder'`. */
@@ -37,6 +41,12 @@ export interface PublishPanelLabels {
   searchPlaceholder?: string;
   /** Accessible label for the search input's clear button. Default: `'Clear search'`. */
   clearSearchAriaLabel?: string;
+  /** Label for the display-author field. Default: `'Author'`. */
+  authorLabel?: string;
+  /** Placeholder for the display-author field. Default: `'Author name'`. */
+  authorPlaceholder?: string;
+  /** Helper text below the display-author field. Default explains the value is shown as the publication's author. */
+  authorHint?: string;
   /** Label above the publish history list. Default: `'Versions history'`. */
   historyLabel?: string;
   /** Warning callout body shown when the folder already has this version; `{version}` and `{folder}` are replaced, with the folder name rendered bold. */
@@ -134,6 +144,13 @@ export interface PublishPanelProps {
    * `PublishDerivationInput.allowReplace`). Default `true`.
    */
   allowReplace?: boolean;
+  /**
+   * Display author recorded on the publication. An empty value is valid and
+   * never blocks submission — the host decides what an unset author means.
+   */
+  author: string;
+  /** Called with the next author value on every edit. */
+  onAuthorChange: (author: string) => void;
   /** Current access rules, combined with AND. */
   rules: PublicationRule[];
   /** Called with the full next rules array on add, remove, or clear. */
@@ -178,6 +195,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   isSubmitting,
   hasSubmitError = false,
   allowReplace = true,
+  author,
+  onAuthorChange,
   rules,
   onRulesChange,
   ruleSourceOptions,
@@ -232,9 +251,14 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     accessRulesLabels,
     searchPlaceholder,
     clearSearchAriaLabel,
+    authorLabel = 'Author',
+    authorPlaceholder = 'Author name',
+    authorHint = 'Shown as the publication’s author. Defaults to you — replace it to credit a team instead.',
   } = labels;
 
   const [searchQuery, setSearchQuery] = useState('');
+  /* The kit associates the field with its visible label through this id, so the label is real rather than an aria-label. */
+  const authorFieldId = useId();
 
   const handleSearchChange = (value?: string) => {
     setSearchQuery(value ?? '');
@@ -364,6 +388,23 @@ export const PublishPanel: FC<PublishPanelProps> = ({
               />
             </div>
           )}
+
+        {/* Sits with the destination rather than in its own section: the
+            folder and the author together say what this publication is, and
+            the rules below say who may see it. An empty author is a valid
+            state, so nothing here can block submit. */}
+        <div className="mt-4">
+          <Input
+            id={authorFieldId}
+            labelProps={{ label: authorLabel }}
+            placeholder={authorPlaceholder}
+            caption={authorHint}
+            value={author}
+            onChange={(value) => onAuthorChange(value ?? '')}
+            maxLength={MAX_AUTHOR_LENGTH}
+            disabled={isSubmitting}
+          />
+        </div>
 
         {/* Nested inside the destination-folder block, and tighter than the
             inter-section gap, so the rules read as scoped to the selection

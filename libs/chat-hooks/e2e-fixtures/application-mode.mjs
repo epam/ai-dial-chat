@@ -234,7 +234,7 @@ export const buildEntry = (
       "    outDir: 'dist-app',",
       '    emptyOutDir: true,',
       '    manifest: true,',
-      '    rollupOptions: {',
+      '    rolldownOptions: {',
       "      input: 'entry.ts',",
       `      external: ${JSON.stringify(externalSpecifiers)},`,
       '    },',

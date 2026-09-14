@@ -81,7 +81,7 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es' as const],
     },
-    rollupOptions: {
+    rolldownOptions: {
       /*
        * A matcher, not a flat list: peer engines that ship deep JS subpaths
        * (`pdfjs-dist`, `@epam/ai-dial-react-pdf-highlighter`,

@@ -30,6 +30,21 @@ export const trimFileNameToByteLimit = (name: string, limit = 255): string => {
   return `${truncateToUtf8Bytes(base, baseLimit)}${ext}`;
 };
 
+const TRAILING_TRIMMABLE_CHAR = /[.\s]/;
+
+/*
+ * Trailing dots and whitespace are trimmed by index scan rather than a
+ * `/[.\s]+$/` regex: repetition anchored at `$` with an unanchored start makes
+ * the engine retry from every offset, so a name that is mostly dots costs
+ * quadratic time (CodeQL js/polynomial-redos). Testing one character at a time
+ * keeps `\s` semantics while staying linear.
+ */
+const stripTrailingDotsAndWhitespace = (value: string): string => {
+  let end = value.length;
+  while (end > 0 && TRAILING_TRIMMABLE_CHAR.test(value[end - 1])) end -= 1;
+  return value.slice(0, end);
+};
+
 /**
  * Sanitizes a filename for upload by replacing forbidden characters with `_`,
  * trimming trailing dots/whitespace from the base name, and capping the result
@@ -44,9 +59,9 @@ export const trimFileNameToByteLimit = (name: string, limit = 255): string => {
 export const sanitizeFileName = (name: string): string => {
   const { base: baseName, extension } = splitFileNameExtension(name);
 
-  const sanitizedBase = baseName
-    .replace(new RegExp(NOT_ALLOWED_SYMBOLS_REGEXP.source, 'g'), '_')
-    .replace(/[.\s]+$/, '');
+  const sanitizedBase = stripTrailingDotsAndWhitespace(
+    baseName.replace(new RegExp(NOT_ALLOWED_SYMBOLS_REGEXP.source, 'g'), '_'),
+  );
 
   if (sanitizedBase === '') {
     return name;

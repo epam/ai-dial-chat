@@ -2,6 +2,42 @@ import { describe, expect, it } from 'vitest';
 import { StringUtils } from './string-utils';
 
 describe('StringUtils', () => {
+  describe('stripTrailingSlashes', () => {
+    it('removes a single trailing slash', () => {
+      expect(StringUtils.stripTrailingSlashes('http://core/v1/')).toBe(
+        'http://core/v1',
+      );
+    });
+
+    it('removes repeated trailing slashes', () => {
+      expect(StringUtils.stripTrailingSlashes('folder///')).toBe('folder');
+    });
+
+    it('preserves slashes inside and at the start of the value', () => {
+      expect(StringUtils.stripTrailingSlashes('//a/b/c')).toBe('//a/b/c');
+    });
+
+    it('returns an empty string when the value is only slashes', () => {
+      expect(StringUtils.stripTrailingSlashes('////')).toBe('');
+    });
+
+    it('returns an empty string for an empty value', () => {
+      expect(StringUtils.stripTrailingSlashes('')).toBe('');
+    });
+
+    it('leaves a value without trailing slashes unchanged', () => {
+      expect(StringUtils.stripTrailingSlashes('folder/file.txt')).toBe(
+        'folder/file.txt',
+      );
+    });
+
+    it('handles a long run of trailing slashes in linear time', () => {
+      expect(
+        StringUtils.stripTrailingSlashes(`folder${'/'.repeat(100_000)}`),
+      ).toBe('folder');
+    });
+  });
+
   describe('sanitizeForLog', () => {
     it('strips C0 control characters that could forge extra log lines', () => {
       const result = StringUtils.sanitizeForLog(

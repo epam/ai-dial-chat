@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { StringUtils } from '../../common/utils/string-utils';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -146,7 +147,9 @@ export class SkillsListingService {
         .map((item) => {
           if (item.url == null) return mapToSkillMetadataItem(item);
 
-          const url = safeDecodeURIComponent(item.url).replace(/\/+$/, '');
+          const url = StringUtils.stripTrailingSlashes(
+            safeDecodeURIComponent(item.url),
+          );
           const [prefix, bucket, ...pathSegments] = url.split('/');
           if (prefix !== 'skills' || !bucket || pathSegments.length === 0) {
             return null;
