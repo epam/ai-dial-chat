@@ -158,7 +158,9 @@ const DialFileManagerModal: FC<Props> = ({
    * folders) never reach this handler.
    */
   const handleSelectedPathsChange = useCallback((paths: Set<string>) => {
-    setSelectedPaths(paths);
+    // Defensive clone: the no-predicate branch of FileManagerAttachModal
+    // forwards the upstream package's Set reference unchanged.
+    setSelectedPaths(new Set(paths));
   }, []);
 
   const handleTabChange = useCallback(
