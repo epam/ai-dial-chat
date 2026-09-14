@@ -3197,7 +3197,7 @@ openAnnotationAttachment(attachmentResource, (fileId) =>
 
 ### Attachment canvas content resolvers
 
-A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint.
+A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint. Before serving a cached blob/text body, the cache revalidates the resource's current ETag through `resolveDialFileMetadataUrl` and only reuses the cached body on an exact match, so a resource overwritten since it was cached is refetched instead of replayed.
 
 ```ts
 import {
@@ -3210,6 +3210,7 @@ import {
 const resolvers: AttachmentCanvasUrlResolvers = {
   resolveDialFileDownloadUrl: (fileId) => myResolveFileDownloadUrl(fileId),
   resolveDialUrl: (attachment) => myResolveDisplayAttachmentUrl(attachment),
+  resolveDialFileMetadataUrl: (fileId) => myResolveFileMetadataUrl(fileId),
 };
 
 const content = await resolveMarkdownCanvasContent(attachment, resolvers);
