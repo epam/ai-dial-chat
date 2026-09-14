@@ -1,86 +1,54 @@
-import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  Highlight,
-  Select,
-  type SelectOption,
-} from '@epam/ai-dial-ui-kit';
-import { memo, useMemo, useState, type FC } from 'react';
+import { Label } from '@epam/ai-dial-ui-kit';
+import { memo, useId, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import DeploymentSelectorFieldTrigger from '../../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
+import type { DeploymentSelectorExtraOption } from '../../../components/DeploymentSelector/DeploymentSelectorPanel';
 import {
   DeploymentSelectorI18nKeys,
   SettingsI18nKeys,
 } from '../../../constants/translation-keys';
-import { useDeployments } from '../../../context/DeploymentsContext';
 import { useDefaultAgentPreference } from '../../../hooks/default-agent/useDefaultAgentPreference';
-import { useLanguage } from '../../../hooks/language/useLanguage';
 import { DefaultAgentMode } from '../../../types/default-agent';
-import { resolveCatalogIconUrl } from '../../../utils/icon-path';
-import { resolveLocalizedText } from '../../../utils/locale';
 
 /**
- * The agent a new chat opens on: the two modes carried over from chat 1.0
- * ("Default agent", "Last used agent") followed by every deployment in the
- * catalog. The mode rows come first and carry no icon, so they read as modes
- * rather than as agents.
+ * The agent a new chat opens on. It is the same picker the chat input opens —
+ * search, Current Selected, Favorites, Catalog — so the preference is chosen
+ * the way an agent is chosen everywhere else, and the panel stays cheap to open
+ * because it never materialises the whole catalog. The two modes carried over
+ * from chat 1.0 ("Default agent", "Last used agent") ride along as icon-less
+ * rows pinned above the catalog sections, so they read as modes rather than
+ * as agents.
  */
 const DefaultAgentSelect: FC = () => {
   const { t } = useTranslation();
-  const { language: activeLocale } = useLanguage();
-  const { items } = useDeployments();
   const { preference, setPreference } = useDefaultAgentPreference();
-  const [searchQuery, setSearchQuery] = useState('');
+  const labelId = useId();
 
-  const options = useMemo<SelectOption[]>(() => {
-    const modeOptions: SelectOption[] = [
+  const modeOptions = useMemo<DeploymentSelectorExtraOption[]>(
+    () => [
       {
-        value: DefaultAgentMode.DefaultAgent,
+        id: DefaultAgentMode.DefaultAgent,
         label: t(SettingsI18nKeys.DefaultAgentOptionDefault),
       },
       {
-        value: DefaultAgentMode.LastUsedAgent,
+        id: DefaultAgentMode.LastUsedAgent,
         label: t(SettingsI18nKeys.DefaultAgentOptionLastUsed),
       },
-    ];
-
-    const deploymentOptions: SelectOption[] = items.map((item) => {
-      const name =
-        resolveLocalizedText(item.displayName, activeLocale) || item.id;
-      return {
-        value: item.id,
-        /* Kept as a plain string so the field and the built-in filter still work. */
-        label: name,
-        labelNode: <Highlight text={name} query={searchQuery} />,
-        icon: (
-          <DeploymentIcon
-            src={resolveCatalogIconUrl(item.iconUrl)}
-            size={DIAL_ICON_SIZE.MD}
-            initialsName={name}
-          />
-        ),
-        ...(item.displayVersion && {
-          rightControl: (
-            <span className="dial-tiny-text text-secondary">
-              {item.displayVersion}
-            </span>
-          ),
-        }),
-      };
-    });
-
-    return [...modeOptions, ...deploymentOptions];
-  }, [t, items, activeLocale, searchQuery]);
+    ],
+    [t],
+  );
 
   return (
-    <Select
-      labelProps={{ label: t(SettingsI18nKeys.DefaultAgent) }}
-      options={options}
-      value={preference}
-      onChange={(next) => setPreference(next as string)}
-      searchable
-      searchPlaceholder={t(DeploymentSelectorI18nKeys.SearchPlaceholder)}
-      onSearchQueryChange={setSearchQuery}
-    />
+    <div className="flex flex-col gap-1">
+      <Label id={labelId} label={t(SettingsI18nKeys.DefaultAgent)} />
+      <DeploymentSelectorFieldTrigger
+        selectedId={preference}
+        onSelect={setPreference}
+        placeholder={t(DeploymentSelectorI18nKeys.AriaLabel)}
+        labelledById={labelId}
+        extraOptions={modeOptions}
+      />
+    </div>
   );
 };
 

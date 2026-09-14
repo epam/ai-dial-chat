@@ -194,30 +194,31 @@ cross-instance-sync guarantee and chat-input behaviour specified by
 `t(SettingsI18nKeys.DefaultAgent)`, bound to `useDefaultAgentPreference()` — whose storage and
 resolution semantics are specified by `default-agent-preference`.
 
-The control SHALL be a **searchable** `Select` (`searchable`, `searchPlaceholder` =
-`t(DeploymentSelectorI18nKeys.SearchPlaceholder)`), holding the overlay's query in local state fed by
-`onSearchQueryChange`. The placeholder reuses the existing `deploymentSelector.searchPlaceholder`
-key ("Search models, agents…") rather than declaring a `settings.*` duplicate of the same English
-string, per the duplicate-value rule in `.claude/rules/all-ts.md`.
+The control SHALL be a `DeploymentSelectorFieldTrigger`
+(`apps/chat/src/components/DeploymentSelector/DeploymentSelectorFieldTrigger.tsx`) — the same picker
+the chat input opens, specified by `deployment-selector-form-trigger` — under a host-rendered
+`Label` from `@epam/ai-dial-ui-kit` whose `id` is passed back as `labelledById`. It SHALL NOT be a
+flat `Select` enumerating the catalog: the panel owns search, the Current Selected row, Favorites
+with star toggles, and the Browse-catalog footer, so the preference is picked the way an agent is
+picked everywhere else, and the control never materialises one option node per deployment.
 
-Its options, in order:
+`selectedId` SHALL be the stored `preference` and `onSelect` SHALL be `setPreference` directly, so
+both a deployment id and a mode sentinel round-trip through the same prop pair.
 
-1. `t(SettingsI18nKeys.DefaultAgentOptionDefault)` → value `DefaultAgentMode.DefaultAgent`
-2. `t(SettingsI18nKeys.DefaultAgentOptionLastUsed)` → value `DefaultAgentMode.LastUsedAgent`
-3. One option per entry of `useDeployments().items`, value = that deployment's `id`, carrying:
-   - `icon`: the deployment's icon resolved with `resolveCatalogIconUrl`
-     (`apps/chat/src/utils/icon-path.ts`)
-   - `label`: the deployment's display name resolved with `resolveLocalizedText`
-     (`apps/chat/src/utils/locale.ts`), so `Select`'s own field rendering and filtering work
-   - `labelNode`: `<Highlight text={name} query={searchQuery} />` from `@epam/ai-dial-ui-kit` —
-     matched text in a search result MUST be rendered through the shared `Highlight` component
-   - `rightControl`: the deployment's `displayVersion`, when the deployment has one. That is the
-     field name on the raw `DeploymentItemDto`; `version` is the *mapped* `CatalogItem` field that
-     `DeploymentSelectorPanel` renders, and this control consumes the raw DTO
+The two modes carried over from chat 1.0 SHALL be supplied through the trigger's `extraOptions`
+prop, in this order:
 
-The two mode options SHALL carry no icon and SHALL always precede the deployment options. Chat 1.0's
-`indexSeparator` divider between the mode options and the catalog is **not** reproduced —
-`SelectOption` has no divider affordance.
+1. `{ id: DefaultAgentMode.DefaultAgent, label: t(SettingsI18nKeys.DefaultAgentOptionDefault) }`
+2. `{ id: DefaultAgentMode.LastUsedAgent, label: t(SettingsI18nKeys.DefaultAgentOptionLastUsed) }`
+
+They render as icon-less rows pinned above every catalog section, so they read as modes rather than
+as agents, and the panel's own search filters them alongside the deployment rows. The row chrome,
+selection marking, and search-filtering of `extraOptions` are specified by
+`deployment-selector-form-trigger`; this requirement owns only which options are supplied and what
+they persist.
+
+Search behaviour is the panel's, not this control's: it holds no `searchQuery` state, passes no
+`searchable`/`searchPlaceholder`, and renders no `Highlight` itself.
 
 The row SHALL render only when **all three** hold:
 
@@ -237,31 +238,33 @@ user-persisted model preference" — the pin does beat the *implicit* last-used 
 
 `defaultDeploymentPinned` defaults to `false`, so no default deployment renders this row.
 
-The `Select` SHALL tolerate a `value` that matches no option — a preference naming a deployment
-since removed from the catalog — without throwing or clearing the stored preference.
+The control SHALL tolerate a `preference` that resolves to neither a mode nor a loaded deployment —
+a preference naming a deployment since removed from the catalog — without throwing or clearing the
+stored preference. The trigger's own label-resolution order applies (`extraOptions` match, then the
+resolved deployment name, then the raw id), so such a preference stays visible as its raw id rather
+than rendering blank.
 
-#### Scenario: Option list order and composition
+#### Scenario: Mode rows precede the panel's catalog sections
 
-- **GIVEN** the catalog holds three deployments
-- **WHEN** the user opens the Default agent for new chats select
-- **THEN** the list is `Default agent`, `Last used agent`, then the three deployments, each showing
-  its icon and — where present — its version
+- **WHEN** the user opens the Default agent for new chats field
+- **THEN** the panel renders `Default agent` and `Last used agent` as the first two rows, icon-less
+  and with no favourite toggle, above the Current Selected / Favorites sections
 
-#### Scenario: Searching filters and highlights
+#### Scenario: The panel's search filters the mode rows too
 
-- **WHEN** the user types a query into the select's search field
-- **THEN** the deployment options are filtered to matches and each match's name renders through
-  `Highlight` with that query
+- **WHEN** the user types a query into the opened panel's search field
+- **THEN** the mode rows are filtered by case-insensitive substring on their label alongside the
+  deployment rows, and surviving rows render their matched text through `Highlight`
 
 #### Scenario: Selecting a specific agent persists its id
 
-- **WHEN** the user selects a deployment named option whose id is `gpt-4o`
+- **WHEN** the user picks a deployment row whose id is `gpt-4o`
 - **THEN** `setPreference('gpt-4o')` is called and `localStorage` under `StorageKey.DefaultAgent`
   holds `'gpt-4o'`
 
 #### Scenario: Selecting Default agent persists the sentinel
 
-- **WHEN** the user selects the `Default agent` option
+- **WHEN** the user picks the `Default agent` row
 - **THEN** `setPreference(DefaultAgentMode.DefaultAgent)` is called and `localStorage` holds
   `'default-agent'`
 
@@ -269,8 +272,8 @@ since removed from the catalog — without throwing or clearing the stored prefe
 
 - **GIVEN** `localStorage` holds `'retired-model'` and no catalog entry has that id
 - **WHEN** the Default agent row renders
-- **THEN** the select renders without error, no option is marked selected, and the stored value is
-  left in place
+- **THEN** the trigger renders without error, displays `retired-model` as its own value, no panel
+  row is marked selected, and the stored value is left in place
 
 #### Scenario: Row is absent before deployments load
 
@@ -288,8 +291,8 @@ since removed from the catalog — without throwing or clearing the stored prefe
 
 - **GIVEN** `defaultDeploymentPinned` resolves to `true` and the catalog is populated
 - **WHEN** `PreferencesTab` renders
-- **THEN** the Default agent row is present, offering `Default agent`, `Last used agent` and the
-  catalog
+- **THEN** the Default agent row is present, and opening it offers `Default agent`, `Last used
+  agent`, the Favorites sections, and the Browse-catalog action
 
 #### Scenario: Hiding user settings still wins over a pin
 

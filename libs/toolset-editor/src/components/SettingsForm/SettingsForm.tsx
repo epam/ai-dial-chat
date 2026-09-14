@@ -92,7 +92,7 @@ export const SettingsForm: FC<SettingsFormProps> = ({
         placeholder={labels?.endpointPlaceholder ?? 'https://...'}
         caption={
           labels?.endpointCaption ??
-          'The HTTPS address where the server accepts MCP requests.'
+          'The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.'
         }
         error={errors.endpoint || undefined}
         invalid={!!errors.endpoint}

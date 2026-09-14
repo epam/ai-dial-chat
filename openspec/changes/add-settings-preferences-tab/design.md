@@ -112,10 +112,13 @@ needs rewording, and the mobile branch needs the *ungated* keyboard group. That 
 `{ languageGroup?, keyboardGroup?, mobileKeyboardGroup? }` — named for the surface, because the
 difference between them is exactly which surface they are for, not what they contain.
 
-### Decision 2 — One `PreferencesTab` component; each row is a plain `Select`, and the tab owns the visibility rules
+### Decision 2 — One `PreferencesTab` component; the finite-set rows are plain `Select`s, and the tab owns the visibility rules
 
-The tab renders up to four rows, each a ui-kit 2.0 `Select` (`@epam/ai-dial-ui-kit`) with a visible
-label via `labelProps`. Row visibility, per the "hide when single option" decision:
+The tab renders up to four rows. The three finite-set rows (Theme, Language, Keyboard shortcut) are
+each a ui-kit 2.0 `Select` (`@epam/ai-dial-ui-kit`) with a visible label via `labelProps`; the
+`Default agent for new chats` row is the deployment selector trigger instead, because its list is
+the whole catalog rather than a finite set (Decision 3). Row visibility, per the "hide when single
+option" decision:
 
 | Row | Renders when |
 | --- | --- |
@@ -128,10 +131,12 @@ With today's data that is two rows (Keyboard, Default agent for new chats). If e
 renders the shared empty state rather than a bare heading — an overlay host with
 `HideUserSettings` on can reach this.
 
-`Select` over `Radio`/`RadioGroup` for all four: a value picker from a named finite set is
-`Select`'s documented purpose, and `Default agent for new chats`'s list is unbounded (every deployment), so a
-radio group is not an option there. Using one control for all four rows keeps the tab visually
-coherent instead of mixing a radio group with a dropdown.
+`Select` over `Radio`/`RadioGroup` for the finite-set rows: a value picker from a named finite set
+is `Select`'s documented purpose. `Default agent for new chats`'s list is unbounded (every
+deployment), so neither a radio group nor a finite-set `Select` fits it — that row gets the
+deployment selector trigger (Decision 3). Both controls are field-shaped with a visible label and a
+chevron, so the tab still reads as one coherent column rather than mixing a radio group with a
+dropdown.
 
 `Select` over `Menu`: a menu's selected-state convention is a trailing check for *actions*; these
 are values, so `Select` is correct. (This is also why the rows are not simply the existing
@@ -147,35 +152,38 @@ served theme whose id is not a `ThemeId` member falls back to its own `displayNa
   shared wrapper. `DefaultAgentSelect` is the one exception, extracted because it has real logic
   (Decision 3).
 
-### Decision 3 — `Default agent for new chats` is a searchable `Select`, and the option list is built in the app
+### Decision 3 — `Default agent for new chats` reuses the deployment selector panel
 
-`DefaultAgentSelect` is its own component under `apps/chat/src/components/Settings/`. Its option
-list is `[Default agent, Last used agent, ...deployments]`, where each deployment option carries:
+`DefaultAgentSelect` is its own component under `apps/chat/src/components/Settings/`. It renders a
+`Label` plus a `DeploymentSelectorFieldTrigger`, and supplies the two chat-1.0 modes through that
+trigger's `extraOptions` prop. It builds no option list of its own: no icons, no `Highlight`, no
+`searchQuery` state, no `resolveLocalizedText` call. The panel owns all of it, so the preference is
+picked the way an agent is picked everywhere else and the control never materialises one option
+node per deployment.
 
-- `icon`: the deployment icon, resolved with the existing `resolveCatalogIconUrl` (`apps/chat/src/utils/icon-path.ts`)
-- `labelNode`: `<Highlight text={name} query={searchQuery} />` — mandatory per the search-highlight
-  rule, and the reason the component holds `searchQuery` state fed by `Select`'s
-  `onSearchQueryChange`
-- `rightControl`: the deployment's `version`, when present — the same field
-  `DeploymentSelectorPanel.tsx:289-296` renders
-- `label`: the plain name, so `Select`'s own field rendering and its internal filtering still work
+**This reverses the decision this change originally shipped**, which was a searchable `Select`
+whose option list was `[Default agent, Last used agent, ...deployments]`, each deployment option
+carrying its own `icon` / `labelNode` (`Highlight`) / `rightControl` (version) / plain `label`. That
+version is gone; the requirement in `specs/settings-preferences-tab/spec.md` describes the trigger.
 
-The two pseudo-options carry no icon and are always first. The old
-`DefaultModelSelect`'s `indexSeparator` divider after them has no `SelectOption` equivalent and is
-dropped; the two labels are self-describing enough that a rule between them is cosmetic.
+The original objection to reusing the panel was that the two modes "would have to be faked as
+catalog items — exactly the `SPECIAL_DEFAULT_MODEL_DIC` hack chat 1.0 needed, where a fake
+`DialAIEntityModel` was pushed through the model list". `extraOptions` is what removed that
+objection: the panel now takes non-deployment rows as a first-class input (`{ id, label }`, no
+`CatalogItem` shape), renders them as `menuitemradio` rows above every catalog section without icon
+or favourite toggle, and filters them by the panel's own search. No fake entity is constructed, and
+the mode ids flow through `selectedId`/`onSelect` exactly as a deployment id does. What is left of
+the original objection — that the panel carries chat-composer concerns (pinned item, Current
+Selected sectioning) — costs nothing here, because those sections simply render for this field too.
 
-Deployment names go through `resolveLocalizedText` (as `UsageTab` does at line 19) so the list
-respects the content locale.
+The old `DefaultModelSelect`'s `indexSeparator` divider between the modes and the catalog is still
+not reproduced: the panel's section headings already separate the mode rows from Current Selected
+and Favorites.
 
-- *Alternative — reuse `DeploymentSelectorPanel`.* It already has search, `Highlight`, icons,
-  versions and Favorites sections, which is most of this list. Rejected: it is built as a chat
-  composer overlay (favorites, pinned-item handling, "Currently selected" sectioning, its own
-  overlay hook `useDeploymentSelectorOverlay`), and its two pseudo-options would have to be faked as
-  catalog items — exactly the `SPECIAL_DEFAULT_MODEL_DIC` hack chat 1.0 needed, where a fake
-  `DialAIEntityModel` was pushed through the model list. A `Select` with three option shapes is
-  less code and no fake entities.
-- *Alternative — omit search.* Rejected: the catalog is large enough that the screenshot's own list
-  scrolls, and `Select`'s `searchable` is one prop.
+- *Alternative — keep the flat `Select`.* Rejected: it mapped the entire catalog into option nodes
+  on every render for a preference the user sets once, duplicated the panel's search, `Highlight`,
+  icon and version rendering in a second place, and gave this one field a picker that looks nothing
+  like the one the same user opens from the chat input.
 
 ### Decision 4 — The preference is a localStorage string with a three-case grammar, keyed by `StorageKey.DefaultAgent`
 
@@ -322,7 +330,8 @@ Three consequences worth naming:
   deployment to exist in `items`, so a stale id falls through to the operator default and then to
   last-used — the user gets a working chat, not a dead selection. The stale entry is *not* cleaned
   up from localStorage, so the row shows its "no longer available" state and the choice comes back
-  if the deployment returns. The `Select` must therefore tolerate a `value` matching no option.
+  if the deployment returns. The trigger must therefore tolerate a `selectedId` matching neither a
+  mode nor a loaded deployment; its label-resolution fallback displays the raw id.
 - **Step 2 outranking a pinned operator default** → The deliberate conflict resolution in
   Decision 5, flagged as the one place this change alters an operator-facing guarantee. If it is
   wrong for a deployment, the fix is a gate on the pin, not on the preference.

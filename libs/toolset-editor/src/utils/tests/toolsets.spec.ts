@@ -82,14 +82,18 @@ describe('getDefaultToolsetForm', () => {
 });
 
 describe('isValidEndpointUrl', () => {
-  it('accepts http(s) and sse URLs', () => {
+  it('accepts http(s) URLs', () => {
     expect(isValidEndpointUrl('https://example.com/mcp')).toBe(true);
     expect(isValidEndpointUrl('http://example.com')).toBe(true);
-    expect(isValidEndpointUrl('sse://example.com/stream')).toBe(true);
   });
 
   it('rejects an unsupported protocol', () => {
     expect(isValidEndpointUrl('ftp://example.com')).toBe(false);
+  });
+
+  /* DIAL Core rejects a stored `sse://` endpoint with "invalid URI scheme sse". */
+  it('rejects an sse URL, which the SSE transport never uses', () => {
+    expect(isValidEndpointUrl('sse://example.com/stream')).toBe(false);
   });
 
   it('rejects a URL with a trailing dot or double slash', () => {

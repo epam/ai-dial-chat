@@ -245,14 +245,53 @@ the host app's responsibility. The link that opens the popup SHALL show the host
 `labels.addLabel` (e.g. "Add locales") while `otherLocales` is empty, and switch to
 `labels.editLabel` (e.g. "Edit locales") once at least one entry exists.
 
+`availableLocaleOptions` SHALL govern whether the control exists at all. Its default is an empty
+list, and with an empty list `DeploymentLocalesField` SHALL render nothing — no summary row, no
+popup-opening link. A popup with no selectable language could never be satisfied: every row
+requires both a language and a name before Save enables, so the field would offer a control whose
+Save is permanently disabled, with the Language dropdown showing only its own "No options
+available" empty state and no way for the user to make the form valid. Hiding the control SHALL NOT
+call `onChange`, so any `otherLocales` entries the host loaded from an existing entity survive
+unmodified and are written back untouched on the next save.
+
+Within the popup, both the per-locale language and the per-locale name SHALL be marked required
+through the ui-kit `Label`'s own `required` prop (which renders the asterisk plus a visually hidden
+"(required)"), the same mechanism the primary Name field in `DeploymentCreationForm` uses — not a
+hand-rolled `aria-hidden` asterisk, which marks the field visually but leaves the requirement
+unannounced. A new row SHALL pre-select the first language not already used by another row, so a
+row is never seeded into the invalid state the required marker describes.
+
+The language control SHALL be wide enough to show a full BCP-47 tag (`EN-US`, `PT-BR`) without
+truncation. Below the `desktop` breakpoint the language and name controls SHALL stack to one column
+rather than share a row, so widening the language control does not squeeze the name field on a
+phone.
+
 #### Scenario: Summary reflects the configured additional locales
 - **WHEN** `otherLocales` contains entries for one or more locales
 - **THEN** the summary row displays each entry's locale code next to the "Locales" label, e.g.
   `Locales: [FR], [UA]`, and the link to open the popup reads `labels.editLabel`
 
 #### Scenario: Popup-opening link reads "Add locales" before any locale exists
+- **GIVEN** `availableLocaleOptions` is non-empty
 - **WHEN** `otherLocales` is empty
 - **THEN** the link that opens the popup shows `labels.addLabel` instead of `labels.editLabel`
+
+#### Scenario: The whole control is absent when no language can be picked
+- **WHEN** `DeploymentLocalesField` renders with an empty (or omitted) `availableLocaleOptions`
+- **THEN** it renders nothing at all — no summary row and no popup-opening link — rather than a
+  link onto a popup whose Save can never enable
+
+#### Scenario: Hiding the control preserves already-stored locales
+- **GIVEN** `otherLocales` holds entries loaded from an existing entity and `availableLocaleOptions`
+  is empty
+- **WHEN** the field renders and the host then saves
+- **THEN** the control is absent, `onChange` is never called, and those entries are written back
+  unchanged
+
+#### Scenario: Language and name are both marked required
+- **WHEN** a user opens the popup
+- **THEN** each row's language and name controls are labelled as required, with the requirement
+  exposed to assistive technology and not only as a visual asterisk
 
 #### Scenario: Adding a locale entry
 - **WHEN** a user opens the popup, selects a language not already used by another row, and

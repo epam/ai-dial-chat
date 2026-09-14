@@ -277,6 +277,8 @@ import { DeploymentCreationForm } from '@epam/ai-dial-builder-form';
 
 The additional-locales summary row plus its editing popup, usable on its own when a host needs the locale editor without the surrounding fields. `value`, `onChange`, and `labels` are required; `onChange` receives the full updated list when the user saves.
 
+`availableLocaleOptions` drives whether the control exists at all: with an empty list (its default) the component renders `null` — no summary, no "Add locales" link. Every row needs a language and a name before Save enables, so a popup with nothing to pick from could never be satisfied. `value` is left untouched when the control hides, so locales already stored on the deployment survive.
+
 ```tsx
 import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
 

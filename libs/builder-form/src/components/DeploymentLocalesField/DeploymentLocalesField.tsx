@@ -30,7 +30,7 @@ export interface DeploymentLocalesFieldProps {
   value: DeploymentCreationFormLocaleEntry[];
   /** Called with the full updated list when the user saves changes in the popup. */
   onChange: (entries: DeploymentCreationFormLocaleEntry[]) => void;
-  /** Selectable language options for new/existing rows. Defaults to an empty list (no locales addable). */
+  /** Selectable language options for new/existing rows. Defaults to an empty list, in which case the whole control renders nothing. */
   availableLocaleOptions?: DeploymentCreationFormLocaleOption[];
   /** Pre-translated labels for the summary row and popup. */
   labels: DeploymentCreationFormLocaleLabels;
@@ -40,8 +40,6 @@ export interface DeploymentLocalesFieldProps {
   summaryClassName?: string;
   /** Typography and color class applied to each row's heading. Defaults to `'dial-tiny-lead-text text-secondary'`, which uppercases the label itself. */
   rowLabelClassName?: string;
-  /** Color class applied to the required-field asterisk on the per-locale name field. Defaults to `'text-error'`. */
-  requiredMarkClassName?: string;
 }
 
 const createEmptyRow = (
@@ -57,7 +55,7 @@ const createEmptyRow = (
   description: '',
 });
 
-/** Summary row ("Locales: [DE]  Edit locales") plus the "Add locale" popup for editing additional name/description translations. Shows "Add locales" instead of "Edit locales" until at least one entry exists. */
+/** Summary row ("Locales: [DE]  Edit locales") plus the "Add locale" popup for editing additional name/description translations. Shows "Add locales" instead of "Edit locales" until at least one entry exists, and renders nothing at all when `availableLocaleOptions` is empty. */
 export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
   value,
   onChange,
@@ -66,7 +64,6 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
   className,
   summaryClassName = 'dial-body-text text-secondary',
   rowLabelClassName = 'dial-tiny-lead-text text-secondary',
-  requiredMarkClassName = 'text-error',
 }) => {
   const {
     summaryLabel,
@@ -151,6 +148,15 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
     (entry) => !entry.language || !entry.name,
   );
 
+  /*
+   * With no selectable language there is nothing the popup could ever produce:
+   * every row would be missing its required language, so Save would stay
+   * permanently disabled with no way for the user to satisfy it. Render no
+   * control at all rather than an unusable one. `value` is left untouched —
+   * `onChange` never fires from here, so already-stored locales survive.
+   */
+  if (availableLocaleOptions.length === 0) return null;
+
   return (
     <div className={mergeClasses('flex items-center gap-2', className)}>
       {value.length > 0 && (
@@ -220,11 +226,12 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
                   aria-label={`${localeRowLabel} ${index + 1}`}
                   className="flex flex-col gap-5"
                 >
-                  <div className="flex items-start gap-5">
+                  <div className="flex flex-col gap-5 desktop:flex-row desktop:items-start">
                     <Select
                       id={`${entry.id}-language`}
-                      labelProps={{ label: languageLabel }}
-                      className="shrink-0 basis-20"
+                      labelProps={{ label: languageLabel, required: true }}
+                      /* Full width when stacked; on one row, wide enough for a full BCP-47 tag ("PT-BR") plus the chevron. */
+                      className="desktop:shrink-0 desktop:basis-40"
                       options={availableLocaleOptions.map((option) => ({
                         value: option.code,
                         label: option.label,
@@ -246,16 +253,7 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
                       onChange={(next) =>
                         handleRowChange(entry.id, { name: next ?? '' })
                       }
-                      labelProps={{
-                        label: (
-                          <>
-                            {nameLabel}
-                            <span aria-hidden className={requiredMarkClassName}>
-                              *
-                            </span>
-                          </>
-                        ),
-                      }}
+                      labelProps={{ label: nameLabel, required: true }}
                       placeholder={namePlaceholder}
                     />
                   </div>
