@@ -48,9 +48,6 @@ export const CreateButton: FC<CreateButtonProps> = ({
       <ButtonDropdown
         appearance={ButtonAppearance.Solid}
         label={label}
-        iconBefore={
-          <IconPlus size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
-        }
         variant={ButtonVariant.Primary}
         items={options}
       />
