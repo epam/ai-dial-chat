@@ -438,3 +438,33 @@ This object is public, including before authentication, and SHALL be the same fo
 
 - **WHEN** no valid custom variable object is configured
 - **THEN** client-config succeeds with `config.customVariables: {}`
+
+---
+
+### Requirement: client-config response includes the welcome-screen description
+
+`GET /api/v1/client-config` SHALL include a `welcomeScreenDescription` field of type `string | null` in the `config` object of its response, sourced from the `welcomeScreen.description` registry key (env var `WELCOME_SCREEN_DESCRIPTION`). The field SHALL be `null` when the variable is not configured or resolves to a blank string.
+
+`welcomeScreenDescription` SHALL be returned as plain text — the service SHALL NOT interpret it as markup and SHALL NOT strip or escape its characters beyond trimming surrounding whitespace, matching the `announcementTitle` treatment.
+
+The `ClientConfigResponseDto` response DTO SHALL declare this field with Swagger metadata so the generated `@epam/chat-api-client` exposes it.
+
+#### Scenario: Description configured
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `WELCOME_SCREEN_DESCRIPTION` is set to `Your secure, all-in-one AI assistant.`
+- **THEN** the response is `200 OK` with `config.welcomeScreenDescription="Your secure, all-in-one AI assistant."`
+
+#### Scenario: Description not configured
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `WELCOME_SCREEN_DESCRIPTION` is not set
+- **THEN** the response is `200 OK` with `config.welcomeScreenDescription=null`
+
+#### Scenario: Blank value resolves to null
+
+- **WHEN** `WELCOME_SCREEN_DESCRIPTION` is set to an empty string or to whitespace only
+- **THEN** `config.welcomeScreenDescription` is `null` rather than an empty or whitespace string
+
+#### Scenario: Value is not treated as markup
+
+- **WHEN** `WELCOME_SCREEN_DESCRIPTION` is set to `Explore <b>everything</b> DIAL offers`
+- **THEN** the returned `config.welcomeScreenDescription` is the literal string `Explore <b>everything</b> DIAL offers`, unmodified

@@ -32,6 +32,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       announcementDescription: null,
       announcements: [],
       enabledUiFeatures,
+      welcomeScreenDescription: null,
       footerHtmlMessage: '',
       customVisualizers: [],
       publicationFilterSources: ['title', 'role', 'dial_roles'],

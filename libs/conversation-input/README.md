@@ -42,6 +42,7 @@ import { ConversationInput } from '@epam/ai-dial-conversation-input';
   message={draft}
   placeholder="Type a message"
   welcomeText={welcomeText}
+  descriptionText={descriptionText}
   onSend={handleSend}
   onUploadAttachment={uploadAttachment}
   onAttachmentsChange={setDraftAttachments}

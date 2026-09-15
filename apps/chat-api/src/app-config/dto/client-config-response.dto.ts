@@ -159,6 +159,18 @@ export class ClientConfigDto {
   })
   announcements!: AnnouncementItemDto[];
 
+  @ApiPropertyOptional({
+    description:
+      'Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.',
+    example:
+      'Your secure, all-in-one AI assistant for web search, document analysis, research, brainstorming, and more.',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  welcomeScreenDescription!: string | null;
+
   @ApiProperty({
     description:
       'Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.',

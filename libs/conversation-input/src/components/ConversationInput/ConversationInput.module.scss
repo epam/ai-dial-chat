@@ -1,3 +1,7 @@
 .welcome {
   color: var(--ci-welcome-color, var(--text-primary, #161b2d));
 }
+
+.description {
+  color: var(--ci-description-color, var(--text-secondary, #57647a));
+}

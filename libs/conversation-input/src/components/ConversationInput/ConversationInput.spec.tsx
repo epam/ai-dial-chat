@@ -55,6 +55,23 @@ describe('ConversationInput', () => {
     expect(screen.queryByRole('heading')).toBeNull();
   });
 
+  it('renders description text below the welcome heading', () => {
+    render(
+      <ConversationInput
+        welcomeText="Afternoon, Nivesh"
+        descriptionText="Your secure, all-in-one AI assistant."
+      />,
+    );
+    expect(
+      screen.getByText('Your secure, all-in-one AI assistant.'),
+    ).toBeTruthy();
+  });
+
+  it('hides description text when welcomeText is absent', () => {
+    render(<ConversationInput descriptionText="Your secure AI assistant." />);
+    expect(screen.queryByText('Your secure AI assistant.')).toBeNull();
+  });
+
   it('should not call onSend when Shift+Enter is pressed', () => {
     const handleSend = vi.fn();
     render(<ConversationInput onSend={handleSend} />);

@@ -158,6 +158,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'ANNOUNCEMENTS',
   },
   {
+    key: 'welcomeScreen.description',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Rendered as text, never as markup. Null/blank hides it. Sourced from WELCOME_SCREEN_DESCRIPTION.',
+    owner: 'chat-team',
+    envVar: 'WELCOME_SCREEN_DESCRIPTION',
+  },
+  {
     key: 'footer.html',
     type: 'config',
     valueType: 'string',

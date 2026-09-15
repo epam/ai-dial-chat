@@ -45,6 +45,7 @@ import {
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
@@ -179,6 +180,9 @@ const NewConversationComposer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const {
+    config: { welcomeScreenDescription },
+  } = useAppConfig();
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
@@ -199,6 +203,17 @@ const NewConversationComposer: FC<Props> = ({
           }
         : undefined,
     [selectedDeployment, language],
+  );
+
+  const composerStyles: ConversationInputStyles = useMemo(
+    () => ({
+      ...inputStyles,
+      typography: {
+        welcomeClassName: 'font-light text-4xl',
+        ...inputStyles?.typography,
+      },
+    }),
+    [inputStyles],
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -472,11 +487,12 @@ const NewConversationComposer: FC<Props> = ({
             },
             firstName || undefined,
           )}
+          descriptionText={welcomeScreenDescription ?? undefined}
           placeholder={placeholder}
           removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
           retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
           uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
-          styles={inputStyles}
+          styles={composerStyles}
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments
           }
