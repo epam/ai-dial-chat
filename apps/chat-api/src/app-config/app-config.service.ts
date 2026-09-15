@@ -195,6 +195,7 @@ export class AppConfigService {
     let announcementTitle: string | null = null;
     let announcementDescription: string | null = null;
     let announcements: AnnouncementItemDto[] = [];
+    let welcomeScreenDescription: string | null = null;
     let footerHtmlMessage = '';
     let customVisualizers: CustomVisualizerDto[] = [];
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
@@ -244,6 +245,9 @@ export class AppConfigService {
         announcementDescription = raw ? sanitizeAnnouncementHtml(raw) : null;
       } else if (def.key === 'announcement.items') {
         announcements = this.normalizeAnnouncements(resolved);
+      } else if (def.key === 'welcomeScreen.description') {
+        /* Plain text by contract: never sanitized, never parsed as markup. */
+        welcomeScreenDescription = toNullableText(resolved);
       } else if (def.key === 'footer.html') {
         footerHtmlMessage =
           typeof resolved === 'string'
@@ -309,6 +313,7 @@ export class AppConfigService {
         announcementTitle,
         announcementDescription,
         announcements,
+        welcomeScreenDescription,
         footerHtmlMessage,
         enabledUiFeatures,
         customVisualizers,

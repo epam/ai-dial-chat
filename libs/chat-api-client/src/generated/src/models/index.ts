@@ -876,6 +876,12 @@ export interface ClientConfigDto {
    */
   announcements: Array<AnnouncementItemDto>;
   /**
+   * Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  welcomeScreenDescription?: string | null;
+  /**
    * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
    * @type {string}
    * @memberof ClientConfigDto
