@@ -1,8 +1,18 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiExtraModels,
+  ApiProperty,
+  ApiPropertyOptional,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { AnnouncementItemDto } from './announcement-item.dto';
+import { ApplicationVisualizerDto } from './application-visualizer.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
 
+/* ApplicationVisualizerDto is reachable only through an additionalProperties
+ * $ref, which Swagger does not follow when collecting schemas, so the model
+ * has to be registered explicitly or the reference dangles. */
+@ApiExtraModels(ApplicationVisualizerDto)
 export class ClientConfigDto {
   @ApiProperty({
     description:
@@ -173,6 +183,14 @@ export class ClientConfigDto {
     type: [CustomVisualizerDto],
   })
   customVisualizers!: CustomVisualizerDto[];
+
+  @ApiProperty({
+    description:
+      "Registry of application id → grouped visualizer mappings, keyed by a message's effective deployment id. Sourced from APPLICATION_VISUALIZERS. Every attachment an entry claims is delivered to one iframe together; an entry takes precedence over customVisualizers for the attachments it claims. The origin of each entry URL must also appear in ALLOWED_IFRAME_ORIGINS or the browser blocks the iframe. Each entry's passAuthInfo and passExplicitToken are accepted for configuration parity and are not consumed — auth is server-side and the browser holds no access token. Empty when unset — the feature is dark by default.",
+    type: 'object',
+    additionalProperties: { $ref: getSchemaPath(ApplicationVisualizerDto) },
+  })
+  applicationVisualizers!: Record<string, ApplicationVisualizerDto>;
 
   @ApiProperty({
     description:

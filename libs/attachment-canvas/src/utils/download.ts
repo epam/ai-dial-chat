@@ -44,6 +44,7 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
      */
     case AttachmentContentType.MarkdownTable:
     case AttachmentContentType.Visualizer:
+    case AttachmentContentType.GroupedVisualizer:
     case AttachmentContentType.McpApp:
       return false;
     case AttachmentContentType.Unsupported:

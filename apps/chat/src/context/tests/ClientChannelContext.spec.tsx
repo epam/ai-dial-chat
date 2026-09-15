@@ -421,7 +421,25 @@ describe('ClientChannelProvider', () => {
       },
     );
 
-    it('unsubscribes and clears pending events when navigating off a streaming-capable route', async () => {
+    it('unsubscribes when navigating off a streaming-capable route with nothing pending', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const { Wrapper, navigate } = makeNavigableWrapper(ROUTES.Conversations);
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      navigate('/files');
+
+      await waitFor(() => expect(result.current.channelId).toBeNull());
+      expect(mockUnsubscribe).toHaveBeenCalledWith('channel-1');
+      expect(result.current.pendingEvents).toHaveLength(0);
+    });
+
+    it('keeps the channel and the pending events when navigating off a streaming-capable route with an unresolved signin event', async () => {
       mockUseFeatureFlag.mockReturnValue(true);
       const { stream, push } = makeControllableStream();
       mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
@@ -441,10 +459,46 @@ describe('ClientChannelProvider', () => {
       await waitFor(() => expect(result.current.pendingEvents).toHaveLength(1));
 
       navigate('/files');
+      await act(async () => {
+        await Promise.resolve();
+      });
 
-      await waitFor(() => expect(result.current.channelId).toBeNull());
+      expect(mockUnsubscribe).not.toHaveBeenCalled();
+      expect(result.current.channelId).toBe('channel-1');
+      expect(result.current.pendingEvents).toHaveLength(1);
+    });
+
+    it('tears the pinned channel down once the last event is resolved off-route', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream, push } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const { Wrapper, navigate } = makeNavigableWrapper(ROUTES.Conversations);
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      const frame =
+        'data: {"id":"evt-1","method":"toolset/signin","params":{"toolsetId":"toolsets/b/my-toolset"}}\n\n';
+      await act(async () => {
+        push(frame);
+        await Promise.resolve();
+      });
+      await waitFor(() => expect(result.current.pendingEvents).toHaveLength(1));
+
+      navigate('/files');
+      await act(async () => {
+        await result.current.reportEvent('evt-1', 'denied');
+      });
+
+      expect(mockReport).toHaveBeenCalledWith('channel-1', {
+        id: 'evt-1',
+        result: 'denied',
+      });
       expect(mockUnsubscribe).toHaveBeenCalledWith('channel-1');
       expect(result.current.pendingEvents).toHaveLength(0);
+      expect(result.current.channelId).toBeNull();
     });
 
     it('reconnects when navigating back to a streaming-capable route', async () => {
@@ -635,6 +689,125 @@ describe('ClientChannelProvider', () => {
 
         expect(mockUnsubscribe).not.toHaveBeenCalled();
         expect(result.current.channel.channelId).toBe('ch-1');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('does not disconnect while a signin event is still unresolved', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream, push } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(() => useHarness(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        await act(async () => {
+          push(
+            'data: {"id":"evt-1","method":"toolset/signin","params":{"toolsetId":"toolsets/b/my-toolset"}}\n\n',
+          );
+          await Promise.resolve();
+        });
+        expect(result.current.channel.pendingEvents).toHaveLength(1);
+
+        /* Core ends the completion while it waits for the report, so the
+         * generation settles with the event still on screen. */
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          result.current.channel.notifyGenerationSettled();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(5000);
+        });
+
+        expect(mockUnsubscribe).not.toHaveBeenCalled();
+        expect(result.current.channel.channelId).toBe('ch-1');
+        expect(result.current.channel.pendingEvents).toHaveLength(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('cancels a scheduled disconnect when a signin event arrives inside the grace window', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream, push } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(() => useHarness(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          result.current.channel.notifyGenerationSettled();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(500);
+          push(
+            'data: {"id":"evt-1","method":"toolset/signin","params":{"toolsetId":"toolsets/b/my-toolset"}}\n\n',
+          );
+          await Promise.resolve();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+
+        expect(mockUnsubscribe).not.toHaveBeenCalled();
+        expect(result.current.channel.channelId).toBe('ch-1');
+        expect(result.current.channel.pendingEvents).toHaveLength(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('resumes the idle countdown once the last event is resolved', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream, push } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(() => useHarness(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        await act(async () => {
+          push(
+            'data: {"id":"evt-1","method":"toolset/signin","params":{"toolsetId":"toolsets/b/my-toolset"}}\n\n',
+          );
+          await Promise.resolve();
+        });
+
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          result.current.channel.notifyGenerationSettled();
+        });
+
+        await act(async () => {
+          await result.current.channel.reportEvent('evt-1', 'denied');
+        });
+        expect(mockUnsubscribe).not.toHaveBeenCalled();
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+
+        expect(mockUnsubscribe).toHaveBeenCalledWith('ch-1');
+        expect(result.current.channel.channelId).toBeNull();
       } finally {
         vi.useRealTimers();
       }

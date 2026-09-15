@@ -76,6 +76,7 @@ describe('AppConfigService', () => {
       expect(result.config.announcementHtml).toBeNull();
       expect(result.config.footerHtmlMessage).toBe('');
       expect(result.config.customVisualizers).toEqual([]);
+      expect(result.config.applicationVisualizers).toEqual({});
       expect(result.config.publicationFilterSources).toEqual([
         'title',
         'role',
@@ -109,6 +110,31 @@ describe('AppConfigService', () => {
       const result = await service.getClientConfig(ctx);
 
       expect(result.config.customVisualizers).toEqual([entry]);
+    });
+
+    it('surfaces the resolved applicationVisualizers registry verbatim', async () => {
+      const registry = {
+        'app-1': {
+          title: 'my-viz',
+          url: 'https://viz.example.com',
+          passAuthInfo: true,
+        },
+      };
+      const { service } = makeService(async (key: string) =>
+        key === 'applicationVisualizers' ? registry : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.applicationVisualizers).toEqual(registry);
+    });
+
+    it('falls back to an empty applicationVisualizers registry when the resolved value is an array', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'applicationVisualizers' ? [] : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.applicationVisualizers).toEqual({});
     });
 
     it('returns resolved values when providers succeed', async () => {

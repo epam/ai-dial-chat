@@ -19,6 +19,60 @@ export const buildFrameSrcDirective = (
   allowedIframeOrigins: string[],
 ): string[] => ["'self'", ...allowedIframeOrigins];
 
+/** Returns the origin of `url`, or `undefined` when it cannot be parsed. */
+export const extractOrigin = (url: string): string | undefined => {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Returns whether `url`'s origin is covered by `allowedIframeOrigins`, which
+ * `frame-src` is built from — either by an exact origin entry or by a
+ * leading-wildcard-label entry (`scheme://*.host[:port]`). `'self'` is not
+ * considered, so a same-origin URL reads as not covered; callers that only
+ * warn should say so. An unparseable `url` returns `false`.
+ */
+export const isOriginAllowedForIframe = (
+  url: string,
+  allowedIframeOrigins: string[],
+): boolean => {
+  const origin = extractOrigin(url);
+  if (origin == null) {
+    return false;
+  }
+  const target = new URL(origin);
+
+  return allowedIframeOrigins.some((entry) => {
+    const trimmed = entry.trim();
+    if (trimmed === '') {
+      return false;
+    }
+    /* A wildcard entry only ever carries the single leading label form the
+     * env validator enforces, so stripping `*.` yields a parseable origin
+     * whose host is the suffix the pattern accepts. */
+    const isWildcard = trimmed.includes('*.');
+    const candidate = extractOrigin(trimmed.replace('*.', ''));
+    if (candidate == null) {
+      return false;
+    }
+    if (!isWildcard) {
+      return candidate === origin;
+    }
+    const pattern = new URL(candidate);
+    /* A strict subdomain only: CSP's `*.example.com` does not cover the bare
+     * apex, so treating it as covered would suppress the warning in a case the
+     * browser blocks. */
+    return (
+      target.protocol === pattern.protocol &&
+      target.port === pattern.port &&
+      target.hostname.endsWith(`.${pattern.hostname}`)
+    );
+  });
+};
+
 /**
  * Builds the CSP `frame-ancestors` directive controlling which origins may
  * embed this app in an iframe. Defaults to a full deny (`'none'`) when no

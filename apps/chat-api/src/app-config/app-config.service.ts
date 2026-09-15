@@ -14,6 +14,7 @@ import type {
   AnnouncementItemDto,
   AnnouncementLinkDto,
 } from './dto/announcement-item.dto';
+import type { ApplicationVisualizerDto } from './dto/application-visualizer.dto';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import type { CustomVisualizerDto } from './dto/custom-visualizer.dto';
 import { FeatureKey } from './feature-flags/feature-key.enum';
@@ -37,6 +38,14 @@ const toNullableText = (value: unknown): string | null => {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 };
+
+/* The provider already validated every entry, so this only has to reject the
+ * shapes that are not a registry at all — an array included, since
+ * `typeof [] === 'object'`. */
+const isApplicationVisualizerRegistry = (
+  value: unknown,
+): value is Record<string, ApplicationVisualizerDto> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const MAX_ANNOUNCEMENTS = 10;
 
@@ -197,6 +206,7 @@ export class AppConfigService {
     let announcements: AnnouncementItemDto[] = [];
     let footerHtmlMessage = '';
     let customVisualizers: CustomVisualizerDto[] = [];
+    let applicationVisualizers: Record<string, ApplicationVisualizerDto> = {};
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
 
     for (const def of clientDefinitions) {
@@ -283,6 +293,10 @@ export class AppConfigService {
         }
       } else if (def.key === 'customVisualizers') {
         customVisualizers = Array.isArray(resolved) ? resolved : [];
+      } else if (def.key === 'applicationVisualizers') {
+        applicationVisualizers = isApplicationVisualizerRegistry(resolved)
+          ? resolved
+          : {};
       } else if (def.key === 'publish.publicationFilterSources') {
         publicationFilterSources = Array.isArray(resolved)
           ? resolved
@@ -312,6 +326,7 @@ export class AppConfigService {
         footerHtmlMessage,
         enabledUiFeatures,
         customVisualizers,
+        applicationVisualizers,
         publicationFilterSources,
       },
       metadata: {

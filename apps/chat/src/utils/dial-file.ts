@@ -63,3 +63,35 @@ export const resolveDialUrl = (
   }
   return undefined;
 };
+
+/**
+ * Returns an absolute downloadable URL for an attachment, or `undefined` when
+ * it has none. Used for URLs handed to a cross-origin iframe: everything else
+ * in the app fetches same-origin, where {@link resolveDialUrl}'s
+ * host-relative path is correct, but a relative path posted into an iframe
+ * would resolve against that iframe's own origin instead.
+ */
+export const resolveAbsoluteDialUrl = (
+  attachment: DisplayAttachment,
+): string | undefined => {
+  const url = resolveDialUrl(attachment);
+  if (url != null) {
+    return new URL(url, window.location.origin).toString();
+  }
+  /* A non-DIAL `url` is already an absolute external URL — DIAL Core sends
+   * those verbatim — so it needs no resolution, only validation. */
+  if (attachment.url != null && isExternalHttpUrl(attachment.url)) {
+    return attachment.url;
+  }
+  return undefined;
+};
+
+/** Returns whether `url` parses as an absolute `http(s)` URL. */
+const isExternalHttpUrl = (url: string): boolean => {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+};

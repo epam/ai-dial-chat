@@ -35,17 +35,23 @@ import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
-import type { VisualizerCanvasContent } from '../../models/attachment-canvas';
+import type {
+  GroupedVisualizerCanvasContent,
+  VisualizerCanvasContent,
+} from '../../models/attachment-canvas';
+import { AttachmentContentType } from '../../types/attachment-canvas';
 import styles from './VisualizerCanvasRenderer.module.scss';
 
 /** Props for the `VisualizerCanvasRenderer` component. */
 export interface VisualizerCanvasRendererProps {
-  /** Visualizer content to render. */
-  content: VisualizerCanvasContent;
+  /** Visualizer content to render. A single-attachment payload is delivered with `SEND_VISUALIZE_DATA`, a grouped one with `SEND_GROUPED_VISUALIZE_DATA`. */
+  content: VisualizerCanvasContent | GroupedVisualizerCanvasContent;
   /** Text shown alongside the spinner while the handshake/data delivery is pending. Omitted by default (spinner only). */
   loadingLabel?: string;
   /** Message shown when the visualizer fails to receive its data. Defaults to `'Failed to load visualizer'`. */
   errorLabel?: string;
+  /** `title` attribute set on the connector-created iframe, naming it for assistive tech. Defaults to the content's `visualizerName` with surrounding whitespace removed; no attribute is set when that is empty. */
+  frameTitle?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: VisualizerCanvasRendererColors;
 }
@@ -71,6 +77,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
   content,
   loadingLabel,
   errorLabel = 'Failed to load visualizer',
+  frameTitle,
   colors,
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -112,16 +119,28 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
         return;
       }
 
-      const { mimeType, layout, data } = latestPayloadRef.current;
-      const visualizerData: CustomVisualizerData = {
-        layout,
-        ...(typeof data === 'object' && data !== null ? data : {}),
-      };
+      const payload = latestPayloadRef.current;
 
-      await connector.send(VisualizerConnectorRequests.sendVisualizeData, {
-        mimeType,
-        visualizerData,
-      });
+      if (payload.type === AttachmentContentType.GroupedVisualizer) {
+        await connector.send(
+          VisualizerConnectorRequests.sendGroupedVisualizeData,
+          {
+            attachments: payload.attachments,
+            layout: payload.layout,
+          },
+        );
+      } else {
+        const { mimeType, layout, data } = payload;
+        const visualizerData: CustomVisualizerData = {
+          layout,
+          ...(typeof data === 'object' && data !== null ? data : {}),
+        };
+
+        await connector.send(VisualizerConnectorRequests.sendVisualizeData, {
+          mimeType,
+          visualizerData,
+        });
+      }
       if (isActive) {
         setStatus(RendererStatus.Ready);
       }
@@ -138,6 +157,23 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
       connector.destroy();
     };
   }, [url, visualizerName, requestTimeout]);
+
+  /*
+   * The connector owns the iframe element, so the accessible name has to be
+   * applied to the DOM node it created — an unnamed iframe is announced as an
+   * anonymous frame. Kept in its own effect so renaming the frame never tears
+   * the connector down and refetches: `visualizerName` is an opaque protocol
+   * namespace and may be whitespace, in which case there is no name to give.
+   */
+  useEffect(() => {
+    const accessibleName = frameTitle ?? visualizerName.trim();
+    if (accessibleName === '') {
+      return;
+    }
+    hostRef.current
+      ?.querySelector('iframe')
+      ?.setAttribute('title', accessibleName);
+  }, [frameTitle, visualizerName, url, requestTimeout]);
 
   return (
     <div
