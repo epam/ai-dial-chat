@@ -371,18 +371,92 @@ describe('useConversationHandlers', () => {
       expect(result.current.rateMessage).not.toHaveBeenCalled();
     });
 
-    it('saves without calling rateMessage when toggling the rating off', async () => {
+    it('calls rateApi.rateMessage with rate null and saves when clearing an active Like', async () => {
+      const conversationWithLike = makeConversation({
+        messages: [
+          {
+            role: 'assistant' as never,
+            content: 'hi',
+            timestamp: 't',
+            responseId: 'r1',
+            rating: MessageRating.Like,
+          } as never,
+        ],
+      });
       const { result } = renderHook(() =>
-        useHarness({ conversation: conversationWithResponse }),
+        useHarness({ conversation: conversationWithLike }),
       );
 
       const ok = await act(() =>
         result.current.handlers.handleRateMessage(0, null),
       );
 
-      expect(result.current.rateMessage).not.toHaveBeenCalled();
+      expect(result.current.rateMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rateMessageDto: expect.objectContaining({ rate: null }),
+        }),
+      );
       expect(result.current.saveConversation).toHaveBeenCalledOnce();
+      expect(result.current.conversation?.messages[0].rating).toBeUndefined();
       expect(ok).toBe(true);
+    });
+
+    it('calls rateApi.rateMessage with rate null and saves when clearing an active Dislike', async () => {
+      const conversationWithDislike = makeConversation({
+        messages: [
+          {
+            role: 'assistant' as never,
+            content: 'hi',
+            timestamp: 't',
+            responseId: 'r1',
+            rating: MessageRating.Dislike,
+          } as never,
+        ],
+      });
+      const { result } = renderHook(() =>
+        useHarness({ conversation: conversationWithDislike }),
+      );
+
+      const ok = await act(() =>
+        result.current.handlers.handleRateMessage(0, null),
+      );
+
+      expect(result.current.rateMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rateMessageDto: expect.objectContaining({ rate: null }),
+        }),
+      );
+      expect(result.current.saveConversation).toHaveBeenCalledOnce();
+      expect(result.current.conversation?.messages[0].rating).toBeUndefined();
+      expect(ok).toBe(true);
+    });
+
+    it('reverts the rating and does not save when the clear API call fails', async () => {
+      const conversationWithLike = makeConversation({
+        messages: [
+          {
+            role: 'assistant' as never,
+            content: 'hi',
+            timestamp: 't',
+            responseId: 'r1',
+            rating: MessageRating.Like,
+          } as never,
+        ],
+      });
+      const { result } = renderHook(() =>
+        useHarness({ conversation: conversationWithLike }),
+      );
+      result.current.rateMessage.mockRejectedValueOnce(new Error('fail'));
+
+      const ok = await act(() =>
+        result.current.handlers.handleRateMessage(0, null),
+      );
+
+      expect(ok).toBe(false);
+      expect(result.current.saveConversation).not.toHaveBeenCalled();
+      expect(result.current.conversation?.messages[0].rating).toBe(
+        MessageRating.Like,
+      );
     });
   });
 

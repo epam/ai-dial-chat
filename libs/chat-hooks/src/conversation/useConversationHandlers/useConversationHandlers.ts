@@ -379,36 +379,26 @@ export const useConversationHandlers = ({
           },
         });
 
-      if (rating != null) {
-        const responseId = msg.responseId;
-        if (!responseId) {
-          revert();
-          return false;
-        }
-        try {
-          await rateApi.rateMessage({
-            rateMessageDto: {
-              conversationId: conversation.id,
-              responseId,
-              modelId: conversation.model.id,
-              rate: rating,
-              ...(comment ? { comment } : {}),
-            },
-          });
-          await persist();
-          return true;
-        } catch {
-          revert();
-          return false;
-        }
-      } else {
-        try {
-          await persist();
-          return true;
-        } catch {
-          revert();
-          return false;
-        }
+      const responseId = msg.responseId;
+      if (!responseId) {
+        revert();
+        return false;
+      }
+      try {
+        await rateApi.rateMessage({
+          rateMessageDto: {
+            conversationId: conversation.id,
+            responseId,
+            modelId: conversation.model.id,
+            rate: rating,
+            ...(comment ? { comment } : {}),
+          },
+        });
+        await persist();
+        return true;
+      } catch {
+        revert();
+        return false;
       }
     },
     [

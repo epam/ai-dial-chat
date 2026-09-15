@@ -4175,7 +4175,7 @@
     },
     "/api/v1/rate": {
       "post": {
-        "description": "Forwards a like/dislike rating for an assistant message to DIAL Core. Uses the authenticated session's access token as a Bearer credential.",
+        "description": "Forwards a like/dislike rating, or the clearing of a previously sent rating, for an assistant message to DIAL Core. Uses the authenticated session's access token as a Bearer credential.",
         "operationId": "rateMessage",
         "parameters": [],
         "requestBody": {
@@ -11073,8 +11073,9 @@
           },
           "rate": {
             "type": "number",
-            "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
-            "enum": [1, -1]
+            "description": "Rating value — 1 (like/thumbs-up), -1 (dislike/thumbs-down), or null to clear a previously sent rating. DIAL Core's `/v1/{modelId}/rate` only accepts a boolean `rate`: this value is mapped to `true` for 1 and to `false` for both -1 and null, since DIAL Core has no separate state for \"cleared\".",
+            "enum": [1, -1, null],
+            "nullable": true
           },
           "comment": {
             "type": "string",
