@@ -105,17 +105,19 @@ The following legacy client-side authentication options are no longer
 supported:
 
 - `signInInSameWindow`
-- `signInOptions.autoSignIn`
-- `signInOptions.signInProvider`
 - `signInOptions.logInHint`
 - `signInOptions.signInInNewWindow`
 - `signInOptions.validationUserEmail`
 - `signInOptions.explicitToken`
 
-If the host application relied on automatic provider selection, a login hint,
-or an explicit token, that flow cannot currently be migrated one-to-one. The
-user now completes the new chat's standard login flow in an external tab or
-window.
+If the host application relied on a login hint, a user-validation email, or an
+explicit token, that flow cannot currently be migrated one-to-one. The user
+completes the new chat's standard login flow instead — externally by default,
+or inside the iframe for a provider mapped to same-window login.
+
+`signInOptions.autoSignIn` and `signInOptions.signInProvider` do have a
+successor: `auth.autoSignInProvider`, described in
+[Start login automatically](#start-login-automatically).
 
 `signInOptions.explicitToken` has no replacement because the new chat
 authenticates through a BFF that keeps the OIDC session in an encrypted
@@ -260,7 +262,7 @@ overlay.destroy();
 | `newConversationsFolderId`            | Removed because the new chat does not have conversation folders.    |
 | `enabledFeaturesData`                 | Not supported.                                                      |
 | `messageButtons`                      | Not supported.                                                      |
-| `signInOptions`, `signInInSameWindow` | Removed; see the authentication section.                            |
+| `signInOptions`, `signInInSameWindow` | Removed as an object; `autoSignIn`/`signInProvider` live on as `auth.autoSignInProvider`. See the authentication section. |
 
 `setOverlayOptions()` now accepts only fields that can be changed dynamically:
 `theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
@@ -768,6 +770,51 @@ constructed, so `voice-input` must be present in the constructor's
 recording button but leaves the iframe without microphone permission, and
 recording fails. The flag itself does not provide an ASR model or replace the
 backend configuration required for voice input.
+
+### Start login automatically
+
+A host embedding the chat inside an already-authenticated portal can have the
+overlay start login on its own, with no **Log in** click, by naming the
+provider:
+
+```ts
+const overlay = new ChatOverlay('#chat-root', {
+  domain: 'https://chat.example.com',
+  auth: {
+    providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+    autoSignInProvider: 'keycloak',
+  },
+});
+```
+
+This replaces the legacy `signInOptions.autoSignIn` + `signInProvider` pair.
+There is no separate boolean: the field's presence enables the behaviour and
+its value names the provider, so the option cannot be half-specified the way
+the legacy pair could.
+
+Three conditions must hold, and the overlay falls back to the ordinary login
+gate — logging one console warning — whenever one does not:
+
+1. **The provider is mapped to `SameWindow`.** Only that mode navigates the
+   iframe itself. `External` opens a separate window through `window.open`,
+   which a browser blocks when no user gesture triggered it, so an automatic
+   `External` attempt would wait on a window that never opened. A provider
+   omitted from `providerUiModes` resolves to `External` and is therefore
+   skipped too.
+2. **The backend registers the provider.** The id must appear in
+   `GET /api/v1/auth/providers`, so a typo never navigates the iframe to an
+   unknown-provider endpoint.
+3. **No attempt for the same URL was started in the last 60 seconds.** The app
+   records each automatic attempt in `sessionStorage`; a provider that returns
+   the user still unauthenticated — expired IdP session, a consent screen, a
+   refused silent authentication — would otherwise loop the iframe. After the
+   suppression the user sees the normal gate and can log in manually.
+
+Like the legacy option, this is worth enabling when the user already holds a
+session with the provider: the value is the silent round-trip through the IdP,
+not rendering a login form inside the frame. It does not make a provider
+frameable — a provider that refuses framing (Azure sends
+`X-Frame-Options: deny`) must stay on `External` and keep the button.
 
 ### Server baseline
 

@@ -4,6 +4,7 @@ import * as UserContextModule from '../../../context/auth/UserContext';
 import * as OverlayContextModule from '../../../context/overlay/OverlayContext';
 import * as authApi from '../../../server-api/auth.api';
 import { AuthStatus } from '../../../types/auth-status';
+import { OVERLAY_AUTO_SIGN_IN_ATTEMPT_STORAGE_KEY } from '../../../utils/overlay-auto-sign-in';
 import { useOverlayProviderLogin } from '../useOverlayProviderLogin';
 
 vi.mock('../../../context/auth/UserContext');
@@ -19,11 +20,13 @@ describe('useOverlayProviderLogin', () => {
 
   const createOverlayContext = (
     authProviderUiModes: Record<string, string> | undefined,
+    authAutoSignInProvider?: string,
   ): OverlayContextModule.OverlayContextType => ({
     registerActiveConversationBridge: vi.fn(),
     registerConversationListBridge: vi.fn(),
     pendingModelId: null,
     authProviderUiModes,
+    authAutoSignInProvider,
     clearPendingModelId: vi.fn(),
     notifyConversationLoaded: vi.fn(),
     notifyConversationsUpdated: vi.fn(),
@@ -67,6 +70,7 @@ describe('useOverlayProviderLogin', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    window.sessionStorage.clear();
   });
 
   const keepProviderLoadPending = () => {
@@ -186,5 +190,167 @@ describe('useOverlayProviderLogin', () => {
     const url = openSpy.mock.calls[0][0] as string;
     expect(url).toContain('/provider%2Fwith%20space?callbackUrl=');
     expect(url).not.toMatch(/token|session|cookie/i);
+  });
+
+  describe('automatic sign-in', () => {
+    const LOGIN_URL =
+      '/api/v1/auth/login/keycloak?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation';
+
+    beforeEach(() => {
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    });
+
+    it('navigates automatically for a same-window provider', async () => {
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext({ keycloak: 'sameWindow' }, 'keycloak'),
+      );
+
+      renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(assignSpy).toHaveBeenCalledWith(LOGIN_URL);
+      });
+      expect(openSpy).not.toHaveBeenCalled();
+    });
+
+    it('navigates once across re-renders', async () => {
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext({ keycloak: 'sameWindow' }, 'keycloak'),
+      );
+      const { rerender } = renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(assignSpy).toHaveBeenCalledOnce();
+      });
+      rerender();
+      rerender();
+
+      expect(assignSpy).toHaveBeenCalledOnce();
+    });
+
+    it('does not navigate without an auto-sign-in provider', async () => {
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext({ keycloak: 'sameWindow' }),
+      );
+      const { result } = renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(result.current.isLoadingProviders).toBe(false);
+      });
+
+      expect(assignSpy).not.toHaveBeenCalled();
+      expect(openSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not navigate for an external-mode provider', async () => {
+      vi.spyOn(authApi, 'getProviders').mockResolvedValue([
+        { id: 'azure-ad', label: 'Entra' },
+      ]);
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext({ 'azure-ad': 'external' }, 'azure-ad'),
+      );
+      const { result } = renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(result.current.isLoadingProviders).toBe(false);
+      });
+
+      expect(assignSpy).not.toHaveBeenCalled();
+      expect(openSpy).not.toHaveBeenCalled();
+      expect(console.warn).toHaveBeenCalledOnce();
+    });
+
+    it('does not navigate for a provider missing from the mode map', async () => {
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext({ 'azure-ad': 'external' }, 'keycloak'),
+      );
+      const { result } = renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(result.current.isLoadingProviders).toBe(false);
+      });
+
+      expect(assignSpy).not.toHaveBeenCalled();
+      expect(console.warn).toHaveBeenCalledOnce();
+    });
+
+    it('does not navigate when the mode map is absent entirely', () => {
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext(undefined, 'keycloak'),
+      );
+
+      renderHook(() => useOverlayProviderLogin());
+
+      expect(assignSpy).not.toHaveBeenCalled();
+      expect(authApi.getProviders).not.toHaveBeenCalled();
+      expect(console.warn).toHaveBeenCalledOnce();
+    });
+
+    it('does not navigate for a provider the backend does not register', async () => {
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext(
+          { 'not-registered': 'sameWindow' },
+          'not-registered',
+        ),
+      );
+      const { result } = renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(result.current.isLoadingProviders).toBe(false);
+      });
+
+      expect(assignSpy).not.toHaveBeenCalled();
+      expect(console.warn).toHaveBeenCalledOnce();
+    });
+
+    it('does not navigate when provider discovery fails', async () => {
+      vi.mocked(authApi.getProviders).mockRejectedValue(new Error('network'));
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext({ keycloak: 'sameWindow' }, 'keycloak'),
+      );
+      const { result } = renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(result.current.hasProviderError).toBe(true);
+      });
+
+      expect(assignSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not navigate again while a recent attempt is recorded', async () => {
+      window.sessionStorage.setItem(
+        OVERLAY_AUTO_SIGN_IN_ATTEMPT_STORAGE_KEY,
+        JSON.stringify({
+          href: 'http://localhost:4207/conversation',
+          createdAt: Date.now(),
+        }),
+      );
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext({ keycloak: 'sameWindow' }, 'keycloak'),
+      );
+      const { result } = renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(result.current.isLoadingProviders).toBe(false);
+      });
+
+      expect(assignSpy).not.toHaveBeenCalled();
+      expect(console.warn).toHaveBeenCalledOnce();
+    });
+
+    it('records the attempt before navigating', async () => {
+      mockUseOptionalOverlay.mockReturnValue(
+        createOverlayContext({ keycloak: 'sameWindow' }, 'keycloak'),
+      );
+
+      renderHook(() => useOverlayProviderLogin());
+
+      await waitFor(() => {
+        expect(assignSpy).toHaveBeenCalledWith(LOGIN_URL);
+      });
+      expect(
+        window.sessionStorage.getItem(OVERLAY_AUTO_SIGN_IN_ATTEMPT_STORAGE_KEY),
+      ).toContain('http://localhost:4207/conversation');
+    });
   });
 });

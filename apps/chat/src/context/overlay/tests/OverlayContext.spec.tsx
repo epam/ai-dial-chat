@@ -253,6 +253,80 @@ describe('OverlayContext', () => {
       });
     });
 
+    it('accepts a missing auto-sign-in provider and exposes undefined', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-no-auto-sign-in',
+        payload: { hostDomain: 'https://partner.example.com' },
+      });
+
+      expect(result.current.authAutoSignInProvider).toBeUndefined();
+      await waitFor(() => {
+        expect(
+          postMessageSpy.mock.calls.some(
+            ([message]) =>
+              (message as { requestId?: string }).requestId ===
+              'req-no-auto-sign-in',
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it('stores a valid auto-sign-in provider id', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-auto-sign-in',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            authAutoSignInProvider: 'keycloak',
+          },
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.authAutoSignInProvider).toBe('keycloak');
+      });
+    });
+
+    it.each([
+      ['a non-string value', 42],
+      ['a whitespace-only value', '   '],
+    ])(
+      'treats %s for the auto-sign-in provider as absent',
+      async (_, value) => {
+        const { result } = renderHook(() => useOverlay(), { wrapper });
+        const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+        act(() => {
+          dispatchFromHost({
+            type: OverlayRequestType.SetOverlayOptions,
+            requestId: 'req-invalid-auto-sign-in',
+            payload: {
+              hostDomain: 'https://partner.example.com',
+              authAutoSignInProvider: value,
+            },
+          });
+        });
+
+        expect(result.current.authAutoSignInProvider).toBeUndefined();
+        await waitFor(() => {
+          expect(
+            postMessageSpy.mock.calls.some(
+              ([message]) =>
+                (message as { requestId?: string }).requestId ===
+                'req-invalid-auto-sign-in',
+            ),
+          ).toBe(true);
+        });
+      },
+    );
+
     it('rejects an auth provider mode map from an untrusted origin', () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
 

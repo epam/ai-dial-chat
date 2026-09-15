@@ -364,6 +364,10 @@ export class ChatOverlay {
     ) {
       payload.authProviderUiModes = authProviderUiModes;
     }
+    const autoSignInProvider = this.options.auth?.autoSignInProvider?.trim();
+    if (autoSignInProvider) {
+      payload.authAutoSignInProvider = autoSignInProvider;
+    }
     return this.send<SetOverlayOptionsResponse>(
       OverlayRequestType.SetOverlayOptions,
       payload,
