@@ -660,7 +660,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 42 flags.
+The new chat supports 44 flags.
 
 Enabled by default:
 
@@ -729,6 +729,8 @@ hide-user-menu
 hide-user-settings
 hide-keyboard-shortcuts
 hide-navigation-menu
+show-all-starters
+hide-footer-version
 ```
 
 `hide-navigation-menu` removes the mobile navigation menu in full â the
@@ -761,6 +763,20 @@ disabling the shortcut. `hide-user-settings` also hides this entry, on both
 surfaces; use `hide-keyboard-shortcuts` when the language selector should
 stay.
 
+`show-all-starters` changes how a deployment's conversation starters are laid
+out on the empty-chat screen. By default the row keeps as many starters as the
+measured width allows — at most four — and collapses the rest into a "…"
+dropdown; in a narrow embed that usually means one visible starter and a menu.
+With the key on, every starter is rendered as its own row and the dropdown is
+gone. It does not change which starters the deployment exposes, only their
+layout.
+
+`hide-footer-version` removes the application version label from the footer
+(the `v0.45.0` text in its trailing corner). The label is diagnostic chrome
+rather than operator copy, so the operator's `footer` capability flag does not
+govern it — an embed that shows the host's own product version reaches for this
+key instead. Any footer HTML the operator configured keeps rendering.
+
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is
 constructed, so `voice-input` must be present in the constructor's
@@ -778,8 +794,8 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 ```
 
 This is also a complete replacement set, not an addition to the defaults. If
-the variable is absent or empty, the built-in baseline of 23 default-on flags
-out of the 39 supported is used. Entries the server does not recognize — including
+the variable is absent or empty, the built-in baseline of 26 default-on flags
+out of the 44 supported is used. Entries the server does not recognize — including
 the renamed and retired legacy strings listed above — are logged and dropped;
 if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.
