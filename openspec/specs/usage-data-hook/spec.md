@@ -42,8 +42,6 @@ notifications on fetch failure" below).
 - **THEN** the page header renders immediately and the cards region renders a loading state until
   `useUsageData`'s `isLoading` becomes `false`
 
----
-
 ### Requirement: useUsageData hook fetches the usage endpoint on mount
 The system SHALL provide a `useUsageData` hook in
 `libs/chat-hooks/src/usage/useUsageData/useUsageData.ts` (exported from `@epam/ai-dial-chat-hooks`)
@@ -70,6 +68,14 @@ disabled hook would otherwise report). The Usage tab component SHALL call
 `useUsageData(getUserUsage, useFeatureFlag('settingsPageEnabled'))` (or receive the resolved flag
 value as a prop from `SettingsPage`), so the fetch only runs when `SettingsPageEnabled` is `true`.
 
+The hook SHALL accept a `refreshToken: number` third parameter, defaulting to `0`. Changing it SHALL
+re-run the fetch effect, subject to the same `enabled` gate and the same `cancelled` flag. The hook
+SHALL NOT own a timer, read a clock, parse a timestamp, or know what a reset boundary is — the
+caller decides when to change the token. While a token-triggered re-fetch is in flight the hook
+SHALL retain the previously resolved `usage` value rather than clearing it, so the consumer can keep
+rendering the last known figures; `isLoading` SHALL reflect the in-flight request so a consumer may
+choose to suppress a full-page loading state for a refresh.
+
 The hook SHALL return:
 
 ```ts
@@ -80,11 +86,12 @@ interface UseUsageDataResult {
 }
 ```
 
-`usage` is typed `UserLimitStatsResponseDto` (generated model, unchanged from PR #8365:
+`usage` is typed `UserLimitStatsResponseDto` (generated model:
 `deployments: Record<string, DeploymentLimitsResponseDto>` plus aggregate `LimitStatsDto` fields
 such as `hourRequestStats`, `dayRequestStats`, `minuteTokenStats`, `dayTokenStats`,
-`weekTokenStats`, `dayCostStats`, `monthCostStats`, each `{ total: number; used: number }`).
-`usageError` reflects the `getUserUsage()` promise's rejection, if any.
+`weekTokenStats`, `dayCostStats`, `monthCostStats`, each
+`{ total: number; used: number; resetsAt?: string }`). `usageError` reflects the `getUserUsage()`
+promise's rejection, if any.
 
 #### Scenario: Fetch succeeds
 - **WHEN** `useUsageData` is invoked and `GET /api/v1/user/usage` resolves successfully
@@ -101,6 +108,22 @@ such as `hourRequestStats`, `dayRequestStats`, `minuteTokenStats`, `dayTokenStat
 - **THEN** the hook does not call `setState` after unmount (no React warning), via its internal
   `cancelled` flag
 
+#### Scenario: Changing the refresh token re-fetches
+- **WHEN** `refreshToken` changes from `0` to `1` while `enabled` is `true`
+- **THEN** `getUserUsage()` is called again and `usage` is replaced by the new response
+
+#### Scenario: Refresh keeps the previous data on screen
+- **WHEN** a token-triggered re-fetch is in flight
+- **THEN** `usage` still holds the previously resolved response until the new one resolves
+
+#### Scenario: Refresh token is ignored while disabled
+- **WHEN** `enabled` is `false` and `refreshToken` changes
+- **THEN** `getUserUsage()` is not called
+
+#### Scenario: Hook owns no timer
+- **WHEN** the hook's source is inspected
+- **THEN** it contains no `setTimeout`, `setInterval`, `Date.now()`, or `resetsAt` reference
+
 #### Scenario: Consumer triggers the hook only when the Usage tab is active
 - **WHEN** the Settings page renders with the `Usage` tab active
 - **THEN** `useUsageData` is invoked by the `Usage` tab component (not by `SettingsPage` itself),
@@ -116,8 +139,6 @@ such as `hourRequestStats`, `dayRequestStats`, `minuteTokenStats`, `dayTokenStat
 - **WHEN** `useUsageData`'s `enabled` argument transitions from `false` to `true` between renders
 - **THEN** the hook's effect runs and calls `getUserUsage()`, matching the behavior of
   `useUsageData(getUserUsage, true)` on initial mount
-
----
 
 ### Requirement: Library isolation between apps/chat and libs
 `useUsageData` SHALL live in `libs/chat-hooks` and SHALL NOT import `apps/chat/src/server-api/*`,
@@ -141,8 +162,6 @@ wrapper or app context/hook/feature-flag/env/routing/storage/analytics module.
 - **WHEN** `npm exec nx lint chat`, `npm exec nx lint chat-hooks`, and `npm exec nx lint usage-dashboard` run
 - **THEN** `@nx/enforce-module-boundaries` reports no violations introduced by `useUsageData`, the
   `Usage` tab component, or the transform utilities in `libs/usage-dashboard`
-
----
 
 ### Requirement: Deduplicated error notification on fetch failure
 The system SHALL show a user-visible, localized error notification via the existing

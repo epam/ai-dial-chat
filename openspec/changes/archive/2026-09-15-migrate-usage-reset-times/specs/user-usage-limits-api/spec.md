@@ -1,10 +1,4 @@
-# user-usage-limits-api Specification
-
-## Purpose
-
-The authenticated aggregate user-limits and user-usage endpoints (rate-limit and calendar-period usage statistics across every deployment visible to the caller), and the frontend server-api wrappers over the generated client methods.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Authenticated aggregate user limits endpoint
 
@@ -82,6 +76,8 @@ The top-level `*CostStats` fields represent the caller's global cost budget and 
 - **WHEN** DIAL Core responds with `500`, `502`, or times out
 - **THEN** the BFF returns the mapped status via `mapDialHttpStatus` / `handleDialFetchError`, matching the existing `deployment-limits-api` error-mapping behavior
 
+---
+
 ### Requirement: Authenticated user usage endpoint
 
 The BFF SHALL expose `GET /api/v1/user/usage` that returns the same `UserLimitStatsResponseDto` shape as `GET /api/v1/user/limits`, restricted to deployments the caller actually used within the current reported periods.
@@ -121,20 +117,3 @@ The endpoint's `@ApiOperation` description SHALL describe the restriction in cal
 
 - **WHEN** DIAL Core returns a day/week/month stat carrying only `total` and `used`
 - **THEN** the BFF returns `200` and omits `resetsAt` for that stat rather than synthesizing one
-
-### Requirement: Frontend server-api access to user limits and usage
-
-`apps/chat/src/server-api/` SHALL expose thin wrapper functions `getUserLimits()` and `getUserUsage()` over the regenerated `@epam/chat-api-client` generated methods for the two endpoints above, following the existing `deployment-limits.ts` pattern (a one-line function returning the generated client's typed promise, no business logic in the wrapper).
-
-- MUST use the generated client (`@epam/chat-api-client`) exclusively — no raw `fetch` calls in `base.ts` or elsewhere for these endpoints
-- The wrapper functions MAY be unused by any UI component in this change; they exist so a future feature can consume the new endpoints without a new access pattern
-
-#### Scenario: Wrapper delegates to generated client
-
-- **WHEN** `getUserLimits()` is called from `apps/chat/src/server-api/`
-- **THEN** it SHALL invoke the generated client's `getUserLimits` operation and return its typed response with no additional transformation
-
-#### Scenario: Existing single-deployment usage display is unaffected
-
-- **WHEN** `UsageLimitsControl` renders the currently selected deployment's usage via `useDeploymentUsageLimits`
-- **THEN** it SHALL continue to call the existing `getDeploymentLimits` wrapper and `GET /api/v1/deployments/:deployment/limits` endpoint, unchanged by this capability

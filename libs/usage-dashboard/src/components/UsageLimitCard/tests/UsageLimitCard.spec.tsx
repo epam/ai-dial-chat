@@ -48,7 +48,7 @@ const labels: UsageLimitCardGroupLabels = {
 
 const baseData: UsageLimitCardData = {
   title: 'Today',
-  periodDescription: 'Last 24 hours',
+  periodDescription: 'Today',
   used: 0.4,
   total: 4,
   usedLabel: '$0.40',
@@ -153,9 +153,7 @@ describe('UsageLimitCard', () => {
   it('exposes the card as an accessible group named with the title and period description', () => {
     renderCard();
 
-    expect(
-      screen.getByRole('group', { name: 'Today, Last 24 hours' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Today, Today' })).toBeTruthy();
   });
 
   it('keeps the same accessible name and value text under an RTL ancestor', () => {
@@ -167,5 +165,90 @@ describe('UsageLimitCard', () => {
 
     expect(screen.getByRole('progressbar', { name: 'Today' })).toBeTruthy();
     expect(screen.getByText('$0.40')).toBeTruthy();
+  });
+
+  describe('reset line', () => {
+    const RESETS_AT = '2026-09-16T00:00:00Z';
+    const RESET_LABEL = 'Resets Sep 16, 2026, 2:00 AM GMT+2';
+    /* The spoken form names the zone in full, which is what it adds over the visible line. */
+    const SPOKEN_LABEL =
+      'Usage resets Sep 16, 2026, 2:00 AM Central European Summer Time';
+    const resetFields = {
+      resetLabel: RESET_LABEL,
+      resetIsoValue: RESETS_AT,
+      resetAriaLabel: SPOKEN_LABEL,
+    };
+
+    it('renders the reset label in a <time> carrying the original UTC instant', () => {
+      renderCard(resetFields);
+
+      const resetLine = screen.getByText(RESET_LABEL);
+      expect(resetLine.tagName).toBe('TIME');
+      expect(resetLine.getAttribute('dateTime')).toBe(RESETS_AT);
+    });
+
+    it('carries the spoken form on a visually-hidden sibling, not on the <time>', () => {
+      renderCard(resetFields);
+
+      /* `aria-label` is not reliably supported on a bare `<time>`. */
+      const resetLine = screen.getByText(RESET_LABEL);
+      expect(resetLine.hasAttribute('aria-label')).toBe(false);
+      expect(resetLine.getAttribute('aria-hidden')).toBe('true');
+
+      const spoken = screen.getByText(SPOKEN_LABEL);
+      expect(spoken.className).toContain('sr-only');
+    });
+
+    it('leaves the <time> exposed when no spoken form is supplied', () => {
+      renderCard({
+        resetLabel: RESET_LABEL,
+        resetIsoValue: RESETS_AT,
+      });
+
+      expect(screen.getByText(RESET_LABEL).hasAttribute('aria-hidden')).toBe(
+        false,
+      );
+    });
+
+    it('renders no reset line when the reset label is absent', () => {
+      renderCard();
+
+      expect(screen.queryByText(/^Resets /)).toBeNull();
+    });
+
+    it('renders the reset line on an unlimited card too', () => {
+      renderCard({
+        isUnlimited: true,
+        totalLabel: undefined,
+        remainingLabel: undefined,
+        usedPercent: undefined,
+        progressAriaLabel: '$0.40 used, unlimited',
+        ...resetFields,
+      });
+
+      expect(screen.queryByRole('progressbar')).toBeNull();
+      expect(screen.getByText(RESET_LABEL).getAttribute('dateTime')).toBe(
+        RESETS_AT,
+      );
+    });
+
+    it('leaves the badge, progress bar, and aria-valuetext unchanged', () => {
+      renderCard(resetFields);
+
+      expect(screen.getByText('Within limits')).toBeTruthy();
+      const progressBar = screen.getByRole('progressbar', { name: 'Today' });
+      expect(progressBar.getAttribute('aria-valuetext')).toBe(
+        '$0.40 of $4.00, 10% used',
+      );
+      expect(progressBar.getAttribute('aria-valuenow')).toBe('10');
+    });
+
+    it('wraps rather than forcing horizontal overflow', () => {
+      renderCard(resetFields);
+
+      const resetLine = screen.getByText(RESET_LABEL);
+      expect(resetLine.className).toContain('break-words');
+      expect(resetLine.className).not.toContain('whitespace-nowrap');
+    });
   });
 });

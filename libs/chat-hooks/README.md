@@ -321,14 +321,25 @@ a deprecation of the root entry or a breaking change to it.
 
 ### useUsageData
 
-Fetches a user's rolling cost and token usage stats from DIAL Core. The hook accepts the fetch function as a parameter — the host supplies an already-configured API call; the hook owns only the request lifecycle (in-flight state, cancellation on unmount, `enabled` guard).
+Fetches a user's calendar-period cost and token usage stats from DIAL Core — the current UTC day, week, and month. The hook accepts the fetch function as a parameter — the host supplies an already-configured API call; the hook owns only the request lifecycle (in-flight state, cancellation on unmount, `enabled` guard, and re-fetch on a caller-driven token).
 
 ```tsx
 import { useUsageData } from '@epam/ai-dial-chat-hooks';
 import { getUserUsage } from './server-api/user-limits'; // host-owned configured call
 
-const { usage, isLoading, usageError } = useUsageData(getUserUsage, isEnabled);
+const [refreshToken, setRefreshToken] = useState(0);
+
+const { usage, isLoading, usageError } = useUsageData(
+  getUserUsage,
+  isEnabled,
+  refreshToken,
+);
+
+// Ask for fresh data — for example once a displayed reset boundary elapses:
+setRefreshToken((token) => token + 1);
 ```
+
+**Refresh semantics.** Changing `refreshToken` re-runs the fetch, subject to the same `enabled` gate and the same unmount cancellation. The hook owns no timer and reads no clock — the caller decides when to change the token, so a consumer that wants to refresh on a reset boundary schedules that itself. While a token-triggered re-fetch is in flight the previously resolved `usage` is retained rather than cleared, so the consumer can keep rendering the last known figures; `isLoading` still reflects the in-flight request, which lets a consumer distinguish the initial load (`isLoading && usage == null`) from a refresh and suppress a full-page spinner for the latter. If a refresh rejects, `usageError` is set and the last successful `usage` stays in place.
 
 #### API
 
@@ -338,13 +349,14 @@ const { usage, isLoading, usageError } = useUsageData(getUserUsage, isEnabled);
 | -------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | `getUserUsage` | `() => Promise<UserLimitStatsResponseDto>` | Host-configured fetch function — the hook never constructs or imports a client itself.         |
 | `enabled`      | `boolean`                                  | When `false`, the fetch is skipped and `isLoading` is immediately `false`. Defaults to `true`. |
+| `refreshToken` | `number`                                   | Caller-driven re-fetch trigger: changing it re-runs the fetch. Defaults to `0`.                |
 
 **Returns** (`UseUsageDataResult`):
 
 | Name         | Type                                     | Description                                      |
 | ------------ | ---------------------------------------- | ------------------------------------------------ |
-| `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` while loading. |
-| `isLoading`  | `boolean`                                | `true` while the fetch is in flight.             |
+| `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` until the first response resolves. Retained across a `refreshToken`-triggered re-fetch. |
+| `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.        |
 
 ### useConversationScroll

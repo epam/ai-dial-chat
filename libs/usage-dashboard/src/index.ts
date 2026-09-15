@@ -15,6 +15,10 @@ export {
   USAGE_DATA_I18N_KEYS,
   mapUsageDataToDashboard,
 } from './utils/map-usage-data-to-dashboard';
+export type {
+  FormatResetTime,
+  ResetTimeDisplayLike,
+} from './utils/map-usage-data-to-dashboard';
 export {
   USAGE_MODEL_LIMITS_I18N_KEYS,
   mapOverallCostLimitsToPeriodStatuses,

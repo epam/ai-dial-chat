@@ -719,7 +719,7 @@
     },
     "/api/v1/user/limits": {
       "get": {
-        "description": "Returns rate-limit and rolling-usage statistics for every model deployment visible to the caller, plus the caller's global cost-budget figures. Proxies GET /v1/user/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "description": "Returns rate-limit and calendar-period usage statistics for every model deployment visible to the caller, plus the caller's global cost-budget figures. The day, week, and month stats cover the current UTC day, week, and month; each may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
         "operationId": "getUserLimits",
         "parameters": [],
         "responses": {
@@ -754,7 +754,7 @@
     },
     "/api/v1/user/usage": {
       "get": {
-        "description": "Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the trailing 30 days. Proxies GET /v1/user/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "description": "Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the currently reported calendar periods (the current UTC day, week, and month). Each day, week, and month stat may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
         "operationId": "getUserUsage",
         "parameters": [],
         "responses": {
@@ -781,7 +781,7 @@
             "description": "DIAL Core is unavailable or timed out"
           }
         },
-        "summary": "Get usage limits for deployments used in the trailing 30 days",
+        "summary": "Get usage limits for deployments used in the current calendar periods",
         "tags": [
           "user"
         ]
@@ -7672,6 +7672,11 @@
           "used": {
             "type": "number",
             "example": 10
+          },
+          "resetsAt": {
+            "type": "string",
+            "example": "2026-09-16T00:00:00Z",
+            "description": "Optional ISO-8601 instant with an explicit UTC designator marking the exclusive end of this stat's current calendar accumulation period — at that instant the period rolls over and DIAL Core begins reporting against a fresh window. Its presence establishes that the day, week, and month stats are calendar periods anchored to UTC boundaries (UTC midnight, UTC week start, UTC month start), not trailing windows. DIAL Core may omit it on a given stat, and its absence is not an error. The BFF forwards the value verbatim and never parses, reformats, converts, clamps, drops, or synthesizes it."
           }
         },
         "required": [
@@ -8216,10 +8221,10 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/DeploymentLimitsResponseDto"
             },
-            "description": "Per-deployment rate-limit and rolling usage stats, keyed by deployment name. Models only — applications, toolsets, and routes never appear here. On GET /v1/user/limits every deployment visible to the caller is present, including ones never used (reported against zero usage). On GET /v1/user/usage only deployments used in the trailing 30 days are present; absence means zero usage, not \"unknown\"."
+            "description": "Per-deployment rate-limit and calendar-period usage stats, keyed by deployment name. Models only — applications, toolsets, and routes never appear here. On GET /v1/user/limits every deployment visible to the caller is present, including ones never used (reported against zero usage). On GET /v1/user/usage only deployments the caller used within the currently reported calendar periods are present; absence means zero usage, not \"unknown\"."
           },
           "minuteCostStats": {
-            "description": "The caller's global cost budget for the trailing minute and spend against it. Unlike the identically-named field nested inside a `deployments` entry (that is per-deployment attributed spend with an unlimited `total`), this is the caller's actual money budget. A `total` at or above 9007199254740992 (2^53) represents the upstream \"unlimited\" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio.",
+            "description": "The caller's global cost budget for the current UTC minute and spend against it. Unlike the identically-named field nested inside a `deployments` entry (that is per-deployment attributed spend whose `total` is the unlimited sentinel in every payload observed to date; consumers detect the sentinel rather than assume it), this is the caller's actual money budget. A `total` at or above 9007199254740992 (2^53) represents the upstream \"unlimited\" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/LimitStatsDto"
@@ -8227,7 +8232,7 @@
             ]
           },
           "dayCostStats": {
-            "description": "The caller's global cost budget for the trailing 24 hours and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
+            "description": "The caller's global cost budget for the current UTC day and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/LimitStatsDto"
@@ -8235,7 +8240,7 @@
             ]
           },
           "weekCostStats": {
-            "description": "The caller's global cost budget for the trailing 7 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
+            "description": "The caller's global cost budget for the current UTC week and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/LimitStatsDto"
@@ -8243,7 +8248,7 @@
             ]
           },
           "monthCostStats": {
-            "description": "The caller's global cost budget for the trailing 30 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
+            "description": "The caller's global cost budget for the current UTC month and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/LimitStatsDto"

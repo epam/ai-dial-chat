@@ -43,9 +43,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 const labels: ModelLimitsLabels = {
   headingLabel: 'Model tokens limits',
   itemColumnLabel: 'Item',
-  last24HoursColumnLabel: 'Last 24 hours',
-  last7DaysColumnLabel: 'Last 7 days',
-  last30DaysColumnLabel: 'Last 30 days',
+  dayColumnLabel: 'Today',
+  weekColumnLabel: 'This week',
+  monthColumnLabel: 'This month',
   statusColumnLabel: 'Status',
   tokensLabel: 'Tokens',
   costLabel: 'Cost',
@@ -61,9 +61,9 @@ const labels: ModelLimitsLabels = {
 };
 
 const periodStatuses: ModelLimitPeriodStatuses = {
-  last24Hours: { status: ModelLimitStatus.WithinLimits },
-  last7Days: { status: ModelLimitStatus.WithinLimits },
-  last30Days: { status: ModelLimitStatus.WithinLimits },
+  day: { status: ModelLimitStatus.WithinLimits },
+  week: { status: ModelLimitStatus.WithinLimits },
+  month: { status: ModelLimitStatus.WithinLimits },
 };
 
 const buildFiniteTokensCell = (
@@ -98,15 +98,12 @@ const baseRow: ModelLimitRow = {
   id: 'gpt-4o',
   name: 'GPT-4o',
   version: '2024-08-06',
-  last24Hours: buildPeriodCell(
-    buildFiniteTokensCell('4K', '10K', 40),
-    '$3.20 spent',
-  ),
-  last7Days: buildPeriodCell(
+  day: buildPeriodCell(buildFiniteTokensCell('4K', '10K', 40), '$3.20 spent'),
+  week: buildPeriodCell(
     buildFiniteTokensCell('21K', '70K', 30),
     '$18.60 spent',
   ),
-  last30Days: buildPeriodCell(
+  month: buildPeriodCell(
     buildFiniteTokensCell('65K', '300K', 22),
     '$55.10 spent',
   ),
@@ -156,13 +153,7 @@ describe('ModelLimitsSection', () => {
 
     expect(
       screen.getAllByRole('columnheader').map((header) => header.textContent),
-    ).toEqual([
-      'Item',
-      'Last 24 hours',
-      'Last 7 days',
-      'Last 30 days',
-      'Status',
-    ]);
+    ).toEqual(['Item', 'Today', 'This week', 'This month', 'Status']);
     expect(screen.queryByText('Requests')).toBeNull();
     expect(screen.queryByText('Last minute')).toBeNull();
     expect(screen.queryByText('Last hour')).toBeNull();
@@ -175,9 +166,9 @@ describe('ModelLimitsSection', () => {
     const cells = within(dataRow).getAllByRole('cell');
     expect(cells).toHaveLength(5);
     expect(cells[0].textContent).toContain('GPT-4o');
-    expect(cells[1].textContent).toContain('Last 24 hours');
-    expect(cells[2].textContent).toContain('Last 7 days');
-    expect(cells[3].textContent).toContain('Last 30 days');
+    expect(cells[1].textContent).toContain('Today');
+    expect(cells[2].textContent).toContain('This week');
+    expect(cells[3].textContent).toContain('This month');
     expect(cells[4].textContent).toContain('Status');
   });
 
@@ -189,8 +180,7 @@ describe('ModelLimitsSection', () => {
     expect(dataRow.classList).not.toContain('desktop:items-start');
     expect(dataRow.classList).not.toContain('text-center');
     expect(
-      screen.getByRole('progressbar', { name: 'Last 24 hours Tokens' })
-        .classList,
+      screen.getByRole('progressbar', { name: 'Today Tokens' }).classList,
     ).toContain('w-full');
   });
 
@@ -206,21 +196,21 @@ describe('ModelLimitsSection', () => {
       expect(label.classList).toContain('sr-only');
     });
     expect(
-      screen.getByRole('progressbar', { name: 'Last 24 hours Tokens' }),
+      screen.getByRole('progressbar', { name: 'Today Tokens' }),
     ).toBeTruthy();
     expect(
-      screen.getByRole('progressbar', { name: 'Last 7 days Tokens' }),
+      screen.getByRole('progressbar', { name: 'This week Tokens' }),
     ).toBeTruthy();
     expect(
-      screen.getByRole('progressbar', { name: 'Last 30 days Tokens' }),
+      screen.getByRole('progressbar', { name: 'This month Tokens' }),
     ).toBeTruthy();
     expect(screen.getByText('$3.20 spent')).toBeTruthy();
     expect(screen.getByText('$18.60 spent')).toBeTruthy();
     expect(screen.getByText('$55.10 spent')).toBeTruthy();
     [
-      ['Last 24 hours Tokens', '4K', '$3.20 spent'],
-      ['Last 7 days Tokens', '21K', '$18.60 spent'],
-      ['Last 30 days Tokens', '65K', '$55.10 spent'],
+      ['Today Tokens', '4K', '$3.20 spent'],
+      ['This week Tokens', '21K', '$18.60 spent'],
+      ['This month Tokens', '65K', '$55.10 spent'],
     ].forEach(([name, tokens, cost]) => {
       const valueRow = screen.getByRole('group', { name });
       expect(within(valueRow).getByText(tokens)).toBeTruthy();
@@ -236,8 +226,8 @@ describe('ModelLimitsSection', () => {
       rows: [
         {
           ...baseRow,
-          last24Hours: {
-            ...baseRow.last24Hours,
+          day: {
+            ...baseRow.day,
             cost: {
               kind: ModelLimitMetricKind.Unavailable,
               ariaLabel: 'Not available',
@@ -247,17 +237,15 @@ describe('ModelLimitsSection', () => {
       ],
     });
 
-    const last24HoursCell = screen.getAllByRole('cell')[1];
-    expect(within(last24HoursCell).getByText('Not available')).toBeTruthy();
-    expect(within(last24HoursCell).getByText(/Cost:/).classList).toContain(
-      'sr-only',
-    );
-    const valueRow = within(last24HoursCell).getByRole('group', {
-      name: 'Last 24 hours Tokens',
+    const dayCell = screen.getAllByRole('cell')[1];
+    expect(within(dayCell).getByText('Not available')).toBeTruthy();
+    expect(within(dayCell).getByText(/Cost:/).classList).toContain('sr-only');
+    const valueRow = within(dayCell).getByRole('group', {
+      name: 'Today Tokens',
     });
     expect(within(valueRow).getByText('4K')).toBeTruthy();
     expect(within(valueRow).queryByText('Not available')).toBeNull();
-    expect(last24HoursCell.textContent).not.toContain('No limit');
+    expect(dayCell.textContent).not.toContain('No limit');
   });
 
   it('renders unlimited and unavailable token states without progress bars', () => {
@@ -265,8 +253,8 @@ describe('ModelLimitsSection', () => {
       rows: [
         {
           ...baseRow,
-          last7Days: {
-            ...baseRow.last7Days,
+          week: {
+            ...baseRow.week,
             tokens: {
               kind: ModelLimitMetricKind.Unlimited,
               usedLabel: '21K',
@@ -274,8 +262,8 @@ describe('ModelLimitsSection', () => {
               ariaLabel: '21,000 tokens used, unlimited',
             },
           },
-          last30Days: {
-            ...baseRow.last30Days,
+          month: {
+            ...baseRow.month,
             tokens: {
               kind: ModelLimitMetricKind.Unavailable,
               ariaLabel: 'Not available',
@@ -286,27 +274,27 @@ describe('ModelLimitsSection', () => {
     });
 
     expect(
-      screen.queryByRole('progressbar', { name: 'Last 7 days Tokens' }),
+      screen.queryByRole('progressbar', { name: 'This week Tokens' }),
     ).toBeNull();
     expect(
-      screen.queryByRole('progressbar', { name: 'Last 30 days Tokens' }),
+      screen.queryByRole('progressbar', { name: 'This month Tokens' }),
     ).toBeNull();
     expect(screen.getAllByText('Not available')).toHaveLength(1);
     expect(screen.getAllByText('Follows cost limit')).toHaveLength(1);
 
     const cells = within(screen.getAllByRole('row')[1]).getAllByRole('cell');
-    const last7DaysValueRow = within(cells[2]).getByRole('group', {
-      name: 'Last 7 days Tokens',
+    const weekValueRow = within(cells[2]).getByRole('group', {
+      name: 'This week Tokens',
     });
-    expect(within(last7DaysValueRow).getByText('21K')).toBeTruthy();
-    expect(within(last7DaysValueRow).queryByText('$18.60 spent')).toBeNull();
+    expect(within(weekValueRow).getByText('21K')).toBeTruthy();
+    expect(within(weekValueRow).queryByText('$18.60 spent')).toBeNull();
     expect(within(cells[2]).getByText('$18.60 spent')).toBeTruthy();
 
-    const last30DaysValueRow = within(cells[3]).getByRole('group', {
-      name: 'Last 30 days Tokens',
+    const monthValueRow = within(cells[3]).getByRole('group', {
+      name: 'This month Tokens',
     });
-    expect(within(last30DaysValueRow).getByText('Not available')).toBeTruthy();
-    expect(within(last30DaysValueRow).queryByText('$55.10 spent')).toBeNull();
+    expect(within(monthValueRow).getByText('Not available')).toBeTruthy();
+    expect(within(monthValueRow).queryByText('$55.10 spent')).toBeNull();
     expect(within(cells[3]).getByText('$55.10 spent')).toBeTruthy();
   });
 
@@ -315,8 +303,8 @@ describe('ModelLimitsSection', () => {
       rows: [
         {
           ...baseRow,
-          last24Hours: {
-            ...baseRow.last24Hours,
+          day: {
+            ...baseRow.day,
             tokens: buildFiniteTokensCell(
               '15K',
               '10K',
@@ -329,7 +317,7 @@ describe('ModelLimitsSection', () => {
     });
 
     const progress = screen.getByRole('progressbar', {
-      name: 'Last 24 hours Tokens',
+      name: 'Today Tokens',
     });
     expect(progress.getAttribute('aria-valuenow')).toBe('100');
     expect(progress.getAttribute('aria-valuetext')).toBe(
@@ -402,9 +390,9 @@ describe('ModelLimitsSection', () => {
     expect(screen.getAllByRole('table')).toHaveLength(1);
     expect(screen.getAllByRole('rowgroup')).toHaveLength(1);
     expect(screen.getAllByRole('cell')).toHaveLength(5);
-    expect(screen.getAllByText('Last 24 hours')).toHaveLength(2);
-    expect(screen.getAllByText('Last 7 days')).toHaveLength(2);
-    expect(screen.getAllByText('Last 30 days')).toHaveLength(2);
+    expect(screen.getAllByText('Today')).toHaveLength(2);
+    expect(screen.getAllByText('This week')).toHaveLength(2);
+    expect(screen.getAllByText('This month')).toHaveLength(2);
   });
 
   it('renders accessible overall Cost indicators for affected period headers', () => {
@@ -414,15 +402,15 @@ describe('ModelLimitsSection', () => {
 
     renderSection({
       periodStatuses: {
-        last24Hours: {
+        day: {
           status: ModelLimitStatus.LimitReached,
           tooltipLabel: reachedTooltip,
         },
-        last7Days: {
+        week: {
           status: ModelLimitStatus.RunningLow,
           tooltipLabel: warningTooltip,
         },
-        last30Days: { status: ModelLimitStatus.WithinLimits },
+        month: { status: ModelLimitStatus.WithinLimits },
       },
     });
 
@@ -437,6 +425,93 @@ describe('ModelLimitsSection', () => {
       expect(indicator.getAttribute('tabindex')).toBe('0');
       expect(indicator.classList).toContain('size-11');
       expect(indicator.classList).toContain('desktop:size-4');
+    });
+  });
+
+  describe('period header reset line', () => {
+    const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
+    const DAY_RESET_LABEL = 'Resets Sep 16, 2026, 2:00 AM GMT+2';
+    /* The spoken form names the zone in full, which is what it adds over the visible line. */
+    const DAY_SPOKEN_LABEL =
+      'Usage resets Sep 16, 2026, 2:00 AM Central European Summer Time';
+
+    const withDayReset: ModelLimitPeriodStatuses = {
+      ...periodStatuses,
+      day: {
+        status: ModelLimitStatus.WithinLimits,
+        resetLabel: DAY_RESET_LABEL,
+        resetIsoValue: DAY_RESETS_AT,
+        resetAriaLabel: DAY_SPOKEN_LABEL,
+      },
+    };
+
+    it('renders the reset label beneath its column label in a <time>', () => {
+      renderSection({ periodStatuses: withDayReset });
+
+      const header = screen.getByRole('columnheader', { name: /Today/ });
+      expect(header.textContent).toContain('Today');
+      expect(header.textContent).toContain(DAY_RESET_LABEL);
+
+      /* Desktop header plus the mobile per-period block both carry the line. */
+      const [resetLine] = screen.getAllByText(DAY_RESET_LABEL);
+      expect(resetLine.tagName).toBe('TIME');
+      expect(resetLine.getAttribute('dateTime')).toBe(DAY_RESETS_AT);
+    });
+
+    it('carries the spoken form on a visually-hidden sibling, not on the <time>', () => {
+      renderSection({ periodStatuses: withDayReset });
+
+      for (const resetLine of screen.getAllByText(DAY_RESET_LABEL)) {
+        expect(resetLine.hasAttribute('aria-label')).toBe(false);
+        expect(resetLine.getAttribute('aria-hidden')).toBe('true');
+      }
+
+      for (const spoken of screen.getAllByText(DAY_SPOKEN_LABEL)) {
+        expect(spoken.className).toContain('sr-only');
+      }
+    });
+
+    it('renders no reset line for a period status without one', () => {
+      renderSection({ periodStatuses: withDayReset });
+
+      const weekHeader = screen.getByRole('columnheader', {
+        name: /This week/,
+      });
+      expect(weekHeader.textContent).not.toContain('Resets');
+    });
+
+    it('renders nothing when no period carries a reset label', () => {
+      renderSection();
+
+      expect(screen.queryByText(/^Resets /)).toBeNull();
+    });
+
+    it('keeps the period status indicator in place alongside the reset line', () => {
+      const reachedTooltip = 'Overall cost limit for today is reached.';
+      renderSection({
+        periodStatuses: {
+          ...withDayReset,
+          day: {
+            ...withDayReset.day,
+            status: ModelLimitStatus.LimitReached,
+            tooltipLabel: reachedTooltip,
+          },
+        },
+      });
+
+      expect(screen.getAllByRole('img', { name: reachedTooltip })).toHaveLength(
+        2,
+      );
+      expect(screen.getAllByText(DAY_RESET_LABEL).length).toBeGreaterThan(0);
+    });
+
+    it('wraps the reset line rather than forcing horizontal overflow', () => {
+      renderSection({ periodStatuses: withDayReset });
+
+      for (const resetLine of screen.getAllByText(DAY_RESET_LABEL)) {
+        expect(resetLine.className).toContain('break-words');
+        expect(resetLine.className).not.toContain('whitespace-nowrap');
+      }
     });
   });
 });
