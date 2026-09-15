@@ -5426,11 +5426,11 @@ export interface RateMessageDto {
    */
   modelId: string;
   /**
-   * Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.
+   * Rating value — 1 (like/thumbs-up), -1 (dislike/thumbs-down), or null to clear a previously sent rating. DIAL Core's `/v1/{modelId}/rate` only accepts a boolean `rate`: this value is mapped to `true` for 1 and to `false` for both -1 and null, since DIAL Core has no separate state for "cleared".
    * @type {number}
    * @memberof RateMessageDto
    */
-  rate: RateMessageDtoRateEnum;
+  rate: RateMessageDtoRateEnum | null;
   /**
    * Optional free-text comment from the user
    * @type {string}
