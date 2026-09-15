@@ -172,7 +172,7 @@ File-listing entries with `nodeType: 'folder'` SHALL be excluded from the count.
 ### Requirement: i18n, RTL, accessibility, and caching contract for the skill details panel
 
 - **i18n keys**: the existing `catalog.details.skill.section` (`'Skill'`, now the Details section title), `catalog.details.skill.author` (`'Author'`), `catalog.details.skill.updated` (`'Last updated'`), `catalog.details.skill.fileCount` (`'Files'`); `catalog.details.skill.specificationSection` (`'Specification'`), `catalog.details.skill.whenToUse` (`'When to use'`), `catalog.details.skill.allowedTools` (`'Allowed tools'`), `catalog.details.skill.bundledResources` (`'Bundled resources'`), `catalog.details.contentFileSelectorAriaLabel` (`'Select file'`), `catalog.details.contentFileCount` (`'{{count}} files'`), `catalog.details.contentFileLoading` (`'Loading file'`), and `catalog.details.contentFileError` (`'Failed to load this file.'`); plus, from this revision, `catalog.details.contentFileUnsupported`, whose English value SHALL be the existing `attachmentCanvas.unsupportedLabel` string (`'Preview is not supported for this file'`) rather than a newly-authored duplicate. All declared in `apps/chat/src/constants/translation-keys.ts` and `en.json`. Before adding any key, its English value SHALL be checked against `en.json` for an existing equivalent, per the duplicate-value rule. The lib receives resolved strings only — `libs/catalog` SHALL NOT call `useTranslation`.
-- **App-level adapter contract**: `libs/catalog` receives the manifest body as an already-resolved `string` on `CatalogItemTabData.promptContent.content`, its summary on `promptContent.description`, the selector's options as a resolved hierarchy of `{ type, id, name }` (folders additionally carrying nested `items`) on `promptContent.files`, and the Specification and Details rows as resolved label/value pairs on `overview`. For supporting files it receives a host-rendered `ReactNode` through `renderContentFilePreview(fileId, fileName)`. Bucket names, the `SKILL.md` filename, the distinction between an opaque Core listing id and the endpoint's file-relative `filePath`, the skills endpoint, raw bytes, MIME handling, attachment creation, app contexts, `useSkillFilePreviewSync`, and `AttachmentCanvasBody` all stay in `apps/chat`. The lib SHALL NOT gain a skill branch or an attachment-canvas dependency: it knows only that `files` is a tree and that the host can render a picked opaque id/basename pair.
+- **App-level adapter contract**: `libs/catalog` receives the manifest body as an already-resolved `string` on `CatalogItemTabData.promptContent.content`, its summary on `promptContent.description`, the selector's options as a resolved hierarchy of `{ type, id, name }` (folders additionally carrying nested `items`) on `promptContent.files`, and the Specification and Details rows as resolved label/value pairs on `overview`. For supporting files it receives a host-rendered `ReactNode` through `renderContentFilePreview(fileId, fileName)`. Bucket names, the `SKILL.md` filename, the distinction between an opaque Core listing id and the endpoint's file-relative `filePath`, the skills endpoint, raw bytes, MIME handling, attachment creation, app contexts, preview lifecycle coordination, and `AttachmentCanvasBody` all stay in `apps/chat`. The lib SHALL NOT gain a skill branch or an attachment-canvas dependency: it knows only that `files` is a tree and that the host can render a picked opaque id/basename pair.
 - **RTL / direction impact**: the picker row SHALL use logical Tailwind utilities only. The Overview tab gains no new directional layout. The preview area introduces no new directional layout beyond what `catalog-content-file-preview` already specifies.
 - **Accessibility**: the panel's existing `role="status"` loading indicator covers the fetch and, from this revision, a picked file's preview load. Folder headings SHALL be exposed as headings for their row groups rather than as styled text alone. The preview area's own accessibility contract (accessible file name, no focusable editing control, image `alt` text) is specified by `catalog-content-file-preview`.
 - **Caching**: no new cache. Details are re-fetched each time the panel opens for a skill, and the manifest is re-parsed on each fetch; the parse is synchronous and bounded by `SKILL_MANIFEST_MAX_BYTES`. A picked file's preview is likewise re-requested each time it is picked — reselecting the base file is the one path that costs no request, unchanged from before this revision.
@@ -281,9 +281,9 @@ A failed file listing SHALL yield an empty tree (`files: []` or the field omitte
 
 `CatalogView` SHALL supply `onLoadContentFile`. The catalog library SHALL pass the picked file node's opaque `id` to that callback unchanged. At the application edge, `CatalogView` SHALL convert a Core-prefixed listing id in either `{skillPath}/files/{relativeFilePath}` or `files/{relativeFilePath}` form into the `{relativeFilePath}` accepted by `downloadSkillFile`; an already-relative id SHALL remain unchanged. It SHALL then call the existing wrapper with the opened skill's `{ bucket, path }` and that normalized download path, and read the response through `readSkillManifest` so the same size cap applies to every file, regardless of nesting depth. A normalized path equal to `SKILL_MANIFEST_FILE` SHALL be returned frontmatter-stripped via `parseSkillManifest`; every other file SHALL be returned as written. No new endpoint, generated-client method, or `base.ts` helper is introduced.
 
-`CatalogView` SHALL additionally supply `renderContentFilePreview`, per the host-renderer contract in `catalog-content-file-preview`. For a picked supporting file it SHALL render an app-owned `SkillDetailsFilePreview` that applies the same opaque-id-to-relative-download-path conversion, downloads the file's raw bytes through `downloadSkillFile`, applies the shared `SKILL_MANIFEST_MAX_BYTES` guard, and feeds `{ bytes, mimeType? }` into the same `useSkillFilePreviewSync` and `SkillFilePreview` used by Skill Builder. `SkillFilePreview` SHALL render the shared `AttachmentCanvasBody`, so Markdown, JSON, code/plain text, HTML, PDF, image, audio, visualizer, unsupported, loading, and error states use the identical renderer, labels, theme, and accessibility behavior in both surfaces.
+`CatalogView` SHALL additionally supply `renderContentFilePreview`, per the host-renderer contract in `catalog-content-file-preview`. For a picked supporting file it SHALL render an app-owned `SkillDetailsFilePreview` that applies the same opaque-id-to-relative-download-path conversion, downloads the file's raw bytes through `downloadSkillFile`, applies the shared `SKILL_MANIFEST_MAX_BYTES` guard, and converts `{ bytes, mimeType? }` with the shared `skillFileToAttachment` helper before resolving the preview through `useOpenAttachmentCanvas`. It SHALL render the result through the same `SkillFilePreview` used by Skill Builder. `SkillFilePreview` SHALL render the shared `AttachmentCanvasBody`, so Markdown, JSON, code/plain text, HTML, PDF, image, audio, visualizer, unsupported, loading, and error states use the identical renderer, labels, theme, and accessibility behavior in both surfaces.
 
-The reusable `SkillFilePreview` component SHALL live under `apps/chat/src/components/SkillFilePreview/`, and `useSkillFilePreviewSync` under `apps/chat/src/hooks/attachment/`; both Skill Builder and skill details SHALL import those shared app-level modules. `libs/catalog` SHALL NOT import `@epam/ai-dial-attachment-canvas`, app contexts, the skills API, or the generated client. It receives only the opaque-id/basename render callback result.
+The reusable `SkillFilePreview` component SHALL live under `apps/chat/src/components/SkillFilePreview/`; both Skill Builder and skill details SHALL import it. `useSkillFilePreviewSync`, under `apps/chat/src/hooks/attachment/`, SHALL remain the Skill Builder selection adapter. Skill details SHALL instead own isolated preview state through an `AttachmentCanvasProvider` keyed by the selected opaque file id. `libs/catalog` SHALL NOT import `@epam/ai-dial-attachment-canvas`, app contexts, the skills API, or the generated client. It receives only the opaque-id/basename render callback result.
 
 When Core returns `Content-Type: application/octet-stream`, the details loader SHALL omit that generic MIME value so `skillFileToAttachment` performs the same extension inference as Skill Builder's ZIP-loaded files. A specific MIME type such as `image/png` SHALL be preserved. A `403` response SHALL resolve to the attachment canvas's forbidden state; other non-OK responses, network failures, and oversized files SHALL resolve to its load-error state.
 
@@ -342,7 +342,7 @@ When Core returns `Content-Type: application/octet-stream`, the details loader S
 #### Scenario: A picked Markdown supporting file previews as markdown
 
 - **WHEN** the user picks a supporting file named `notes.md`
-- **THEN** the file is opened through the shared Skill Builder synchronization and `AttachmentCanvasBody` renders its Markdown content
+- **THEN** the shared attachment resolvers open the file in the details preview's isolated canvas state and `AttachmentCanvasBody` renders its Markdown content
 
 #### Scenario: A picked source file previews as syntax-highlighted text
 
@@ -368,6 +368,42 @@ When Core returns `Content-Type: application/octet-stream`, the details loader S
 
 - **WHEN** a supporting file's declared or actual size exceeds `SKILL_MANIFEST_MAX_BYTES`
 - **THEN** its bytes are never decoded or turned into a `Blob`, and the shared attachment body renders the same load-error state as Skill Builder
+
+---
+
+### Requirement: Skill details preview state is isolated and follows the selected file
+
+On both the Catalog page and the conversation route's "View details" panel, selecting a supporting file SHALL render its preview inside the details Content tab. Opening, updating, failing, or disposing that preview SHALL NOT open, close, or replace the page's global attachment canvas or invoke the page-level panel-coordination callback.
+
+Each selected opaque file id SHALL own its loading, content, error, and canvas state. Changing the selection SHALL immediately discard the previous file's displayed content; neither a pending download nor a pending content-resolution result from an older selection SHALL replace the current preview. Files with identical basenames in different folders SHALL remain distinct.
+
+Closing the details panel SHALL remove the inline preview. Pending work from that preview SHALL NOT reopen the details panel or the global attachment canvas.
+
+#### Scenario: Preview stays inside skill details
+
+- **WHEN** a user picks a supporting file in skill details on the Catalog page or through conversation "View details"
+- **THEN** the file renders in the Content tab and the global attachment canvas and other page panels retain their existing state
+
+#### Scenario: Closing details while a preview is displayed or loading
+
+- **WHEN** the user clicks the details panel's close button while a supporting-file preview is displayed or still resolving
+- **THEN** the details panel and its inline preview close and remain closed when pending work completes
+- **AND** no global attachment canvas opens
+
+#### Scenario: Switching between files with the same basename
+
+- **WHEN** the user previews `agents/README.md` and then selects `assets/README.md`
+- **THEN** the first file's content disappears immediately and only the second file's content is shown when its load resolves
+
+#### Scenario: A superseded download or content resolution finishes last
+
+- **WHEN** the user selects file A, then file B, and A's download or attachment-content resolution completes after B is selected
+- **THEN** A's content and error state do not replace B's preview or affect the global attachment canvas
+
+#### Scenario: Download errors stay inline
+
+- **WHEN** a supporting-file download fails with a forbidden or generic error
+- **THEN** the corresponding existing attachment error state renders inside skill details without opening the global attachment canvas
 
 ---
 

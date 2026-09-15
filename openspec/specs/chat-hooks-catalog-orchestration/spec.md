@@ -139,8 +139,10 @@ canvas, read theme/i18n, or replace `Catalog`'s separate content-preview loader.
 #### Scenario: App bridges successful content
 
 - **WHEN** the hook returns content for the selected file
-- **THEN** the app adapter may pass it to `useSkillFilePreviewSync` and open the
-  existing attachment canvas without the hook importing that app protocol
+- **THEN** the skill-details app adapter converts it with `skillFileToAttachment`,
+  resolves it through `useOpenAttachmentCanvas` within its isolated preview provider,
+  and renders it through `SkillFilePreview` without the hook importing that app protocol
+- **AND** the page's global attachment canvas is unaffected
 
 ### Requirement: Public exports remain host-agnostic
 

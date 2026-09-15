@@ -21,9 +21,8 @@ interface UseSkillFilePreviewSyncParams {
 }
 
 /**
- * Reconciles the shared attachment canvas with a skill file-tree selection.
- * It is shared by Skill Builder and read-only skill details so both surfaces
- * resolve every supporting file through exactly the same preview pipeline.
+ * Reconciles the shared attachment canvas with Skill Builder's file-tree
+ * selection. Read-only skill details use their own isolated canvas state.
  */
 export const useSkillFilePreviewSync = ({
   selectedPath,
