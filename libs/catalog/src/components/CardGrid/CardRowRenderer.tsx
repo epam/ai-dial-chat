@@ -28,6 +28,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
   selectedItemId,
   credentialsBadgeLoggedOutLabel,
   isReadonly,
+  featuredChipStyle,
 }) => {
   const start = rowIndex * columnCount;
   const rowItems = items.slice(start, start + columnCount);
@@ -61,6 +62,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
                 className="h-full"
                 credentialsBadgeLoggedOutLabel={credentialsBadgeLoggedOutLabel}
                 isReadonly={isReadonly}
+                styles={{ colors: { featuredChipStyle } }}
               />
             )}
           </div>

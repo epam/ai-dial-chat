@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { CatalogItem } from './catalog-item';
 
 /** Typography class overrides for `Card` content. */
@@ -32,6 +33,8 @@ export interface CardColors {
   checkIcon?: string;
   /** Top border color of the footer row (folder path / star button). Fallback: `--stroke-tertiary`. */
   footerBorder?: string;
+  /** Featured chip style override, merged over its default per-entity-type colors for every entity type, e.g. `{ backgroundColor, color, border }`. */
+  featuredChipStyle?: CSSProperties;
 }
 
 /** Grouped style overrides for `Card`. */

@@ -532,6 +532,7 @@ export const Catalog: FC<CatalogProps> = ({
               selectedItemId={selectedItemId}
               isReadonly={isReadonly}
               isFullWidth={isFullWidth}
+              featuredChipStyle={catalogStyles?.colors?.featuredChipStyle}
             />
           </div>
 
@@ -616,6 +617,9 @@ export const Catalog: FC<CatalogProps> = ({
           onLogout={handleLogout}
           texts={detailsTexts}
           limitsFooterNote={detailsLimitsFooterNote}
+          styles={{
+            colors: { featuredChipStyle: catalogStyles?.colors?.featuredChipStyle },
+          }}
         />
       )}
     </section>

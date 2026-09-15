@@ -20,7 +20,7 @@ import type { UserLimitStatsResponseDto } from '../models/index';
  */
 export class UserApi extends runtime.BaseAPI {
   /**
-   * Returns rate-limit and rolling-usage statistics for every model deployment visible to the caller, plus the caller\'s global cost-budget figures. Proxies GET /v1/user/limits using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
+   * Returns rate-limit and calendar-period usage statistics for every model deployment visible to the caller, plus the caller\'s global cost-budget figures. The day, week, and month stats cover the current UTC day, week, and month; each may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/limits using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
    * Get aggregate usage limits for every visible deployment
    */
   async getUserLimitsRaw(
@@ -46,7 +46,7 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns rate-limit and rolling-usage statistics for every model deployment visible to the caller, plus the caller\'s global cost-budget figures. Proxies GET /v1/user/limits using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
+   * Returns rate-limit and calendar-period usage statistics for every model deployment visible to the caller, plus the caller\'s global cost-budget figures. The day, week, and month stats cover the current UTC day, week, and month; each may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/limits using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
    * Get aggregate usage limits for every visible deployment
    */
   async getUserLimits(
@@ -57,8 +57,8 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the trailing 30 days. Proxies GET /v1/user/usage using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
-   * Get usage limits for deployments used in the trailing 30 days
+   * Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the currently reported calendar periods (the current UTC day, week, and month). Each day, week, and month stat may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/usage using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
+   * Get usage limits for deployments used in the current calendar periods
    */
   async getUserUsageRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
@@ -83,8 +83,8 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the trailing 30 days. Proxies GET /v1/user/usage using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
-   * Get usage limits for deployments used in the trailing 30 days
+   * Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the currently reported calendar periods (the current UTC day, week, and month). Each day, week, and month stat may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/usage using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
+   * Get usage limits for deployments used in the current calendar periods
    */
   async getUserUsage(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
