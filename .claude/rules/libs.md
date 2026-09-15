@@ -146,6 +146,32 @@ syntax-highlighter engines in on-demand chunks while declaring both as
 dependencies, and `tools/attachment-canvas-consumer-fixture` proves the boundary
 holds.
 
+### A meta-only optional peer declares nothing
+
+`peerDependenciesMeta` annotates `peerDependencies` and nothing else. A key with
+no matching peer entry is metadata npm ignores outright, so the manifest reads
+as a deliberate "this one is optional" while putting the package on no install
+list at all — and the lib imports it regardless. That is how `chat-hooks`
+shipped `@mcp-ui/client` in its meta block alone while its MCP entry point
+imported it.
+
+Pick a real role: declare the peer (marked optional when an entry point can do
+without it), or move it to `dependencies`. `npm run validate:docs` fails on a
+meta-only orphan.
+
+### Test tooling never reaches the manifest a host installs
+
+`dependencies` and `peerDependencies` are the consuming application's install
+list. A runner named in either is installed into every host or warned about on
+every install, which is how `chat-shared` came to publish `vitest: "~4.1.0"` as
+a **required** peer — an embedding host was told it had to add a test runner to
+render a chat column.
+
+Vitest, Testing Library, Playwright, jsdom and their `@types/*` belong in
+`devDependencies`, which is never published to a consumer's tree. The same goes
+for anything else only the workspace runs: linters, generators, build plugins.
+`npm run validate:docs` fails on a test tool in either shipped field.
+
 ## Every `exports` target must be a file the build emits
 
 Nothing in this workspace resolves a lib through its own `exports` map. Every
