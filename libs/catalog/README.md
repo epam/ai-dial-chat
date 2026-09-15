@@ -231,6 +231,12 @@ import { Card } from '@epam/ai-dial-catalog';
 
 The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details.
 
+The "Featured" chip's colors follow the item's entity type by default. Override
+it for every entity type with `styles.colors.featuredChipStyle` (merged over
+the chip's own style, e.g. `{ backgroundColor, color, border }`); `Catalog`
+forwards its own `styles.colors.featuredChipStyle` to both the browse-grid card
+and the details-panel header.
+
 ### ListView
 
 Table view powered by ag-grid with column sorting and row selection. `type` and
@@ -497,9 +503,9 @@ Override it through `DetailsPanel`'s `styles.colors.variableText`:
 />
 ```
 
-Note that `Catalog` forwards only `detailsTexts` to the panel, not styles, so
-every `ItemDetailsColors` field — this one included — is reachable only when a
-host renders `DetailsPanel` itself.
+Note that `Catalog` forwards only `detailsTexts` and `styles.colors.featuredChipStyle`
+to the panel — every other `ItemDetailsColors` field, this one included, is
+reachable only when a host renders `DetailsPanel` itself.
 
 ```tsx
 const promptItem: CatalogItem = {

@@ -123,12 +123,23 @@ describe('mapSkillToCatalogItem', () => {
     expect(item.isStarred).toBe(false);
   });
 
-  it('leaves description and version empty rather than fabricating them', () => {
+  it('leaves version and topics empty rather than fabricating them', () => {
     const item = mapPersonal();
 
-    expect(item.description).toBe('');
     expect(item.version).toBe('');
     expect(item.topics).toEqual([]);
+  });
+
+  it('forwards the listing description to the catalog item', () => {
+    const item = mapPersonal({ description: 'Summarizes documents' });
+
+    expect(item.description).toBe('Summarizes documents');
+  });
+
+  it('maps an absent listing description to an empty string', () => {
+    const item = mapPersonal({ description: undefined });
+
+    expect(item.description).toBe('');
   });
 
   it('prefixes a nested folder path with the Personal label', () => {

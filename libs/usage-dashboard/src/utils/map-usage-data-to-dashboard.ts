@@ -9,6 +9,27 @@ import { UsageLimitStatus } from '../models/usage-limit-card-props';
 /** A translate function compatible with i18next's `TFunction`. */
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
+/**
+ * One reset time, already parsed and formatted by the host. Declared
+ * structurally here so the library never imports an application type; the host
+ * passes a value that satisfies this shape.
+ */
+export interface ResetTimeDisplayLike {
+  /** Exclusive end of the period as an epoch ms value, for the host's boundary scheduling. */
+  resetsAtMs: number;
+  /** Machine-readable instant for a `<time dateTime>` attribute. */
+  isoValue: string;
+  /** Visible reset line. */
+  label: string;
+  /** Accessible expansion of the reset line. */
+  ariaLabel: string;
+}
+
+/** Formats a raw `resetsAt` into display strings, or returns `undefined` when it cannot be formatted. */
+export type FormatResetTime = (
+  resetsAt: string | undefined,
+) => ResetTimeDisplayLike | undefined;
+
 /** Upstream sentinel (`Long.MAX_VALUE` exceeds this): a `total` at or above it means "unlimited". */
 const UNLIMITED_TOTAL_THRESHOLD = 2 ** 53;
 
@@ -30,14 +51,36 @@ const getStatus = (usedPercent: number): UsageLimitStatus => {
   return UsageLimitStatus.Default;
 };
 
+/*
+ * Spread into a card so that an unformattable reset time leaves all three
+ * fields absent rather than present-and-undefined.
+ */
+const buildResetFields = (
+  reset: ResetTimeDisplayLike | undefined,
+): Pick<
+  UsageLimitCardData,
+  'resetLabel' | 'resetIsoValue' | 'resetAriaLabel'
+> => {
+  if (!reset) {
+    return {};
+  }
+  return {
+    resetLabel: reset.label,
+    resetIsoValue: reset.isoValue,
+    resetAriaLabel: reset.ariaLabel,
+  };
+};
+
 const mapStatsToCardData = (
   stats: LimitStatsDto,
   title: string,
   periodDescription: string,
   t: Translate,
+  reset: ResetTimeDisplayLike | undefined,
 ): UsageLimitCardData => {
   const used = Math.max(0, stats.used);
   const usedLabel = formatCost(used);
+  const resetFields = buildResetFields(reset);
 
   if (stats.total >= UNLIMITED_TOTAL_THRESHOLD) {
     return {
@@ -51,6 +94,7 @@ const mapStatsToCardData = (
       progressAriaLabel: t(USAGE_DATA_I18N_KEYS.unlimitedProgressAriaLabel, {
         used: usedLabel,
       }),
+      ...resetFields,
     };
   }
 
@@ -74,6 +118,7 @@ const mapStatsToCardData = (
       total: totalLabel,
       percent: Math.round(uncappedUsedPercent),
     }),
+    ...resetFields,
   };
 };
 
@@ -83,17 +128,17 @@ const mapStatsToCardData = (
  * values are the default key paths used by AI DIAL Chat.
  */
 export const USAGE_DATA_I18N_KEYS = {
-  /** Title for the "today" card (e.g. `'Daily'`). */
+  /** Title for the current-UTC-day card (e.g. `'Today'`). */
   todayTitle: 'usage.todayTitle',
-  /** Period description for the "today" card (e.g. `'Today'`). */
+  /** Accessible period description for the current-UTC-day card. */
   todayPeriodDescription: 'usage.todayPeriodDescription',
-  /** Title for the "this week" card. */
+  /** Title for the current-UTC-week card (e.g. `'This week'`). */
   thisWeekTitle: 'usage.thisWeekTitle',
-  /** Period description for the "this week" card. */
+  /** Accessible period description for the current-UTC-week card. */
   thisWeekPeriodDescription: 'usage.thisWeekPeriodDescription',
-  /** Title for the "this month" card. */
+  /** Title for the current-UTC-month card (e.g. `'This month'`). */
   thisMonthTitle: 'usage.thisMonthTitle',
-  /** Period description for the "this month" card. */
+  /** Accessible period description for the current-UTC-month card. */
   thisMonthPeriodDescription: 'usage.thisMonthPeriodDescription',
   /** Aria label when there is no limit. Receives `{ used: string }`. */
   unlimitedProgressAriaLabel: 'usage.unlimitedProgressAriaLabel',
@@ -104,11 +149,13 @@ export const USAGE_DATA_I18N_KEYS = {
 /**
  * Maps a `UserLimitStatsResponseDto` into `UsageLimitCardGroup`'s `cards` prop,
  * in Today / This week / This month order. A period is omitted entirely when
- * the response carries no usable stat for it.
+ * the response carries no usable stat for it. Each card's reset trio comes from
+ * `formatResetTime`, and is absent when that callback returns `undefined`.
  */
 export const mapUsageDataToDashboard = (
   usage: UserLimitStatsResponseDto | undefined,
   t: Translate,
+  formatResetTime: FormatResetTime,
 ): UsageLimitCardData[] => {
   const periods: {
     stats: LimitStatsDto | undefined;
@@ -117,24 +164,32 @@ export const mapUsageDataToDashboard = (
   }[] = [
     {
       stats: usage?.dayCostStats,
-      titleKey: USAGE_DATA_I18N_KEYS.todayPeriodDescription,
+      titleKey: USAGE_DATA_I18N_KEYS.todayTitle,
       periodDescriptionKey: USAGE_DATA_I18N_KEYS.todayPeriodDescription,
     },
     {
       stats: usage?.weekCostStats,
-      titleKey: USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription,
+      titleKey: USAGE_DATA_I18N_KEYS.thisWeekTitle,
       periodDescriptionKey: USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription,
     },
     {
       stats: usage?.monthCostStats,
-      titleKey: USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription,
+      titleKey: USAGE_DATA_I18N_KEYS.thisMonthTitle,
       periodDescriptionKey: USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription,
     },
   ];
 
   return periods.flatMap(({ stats, titleKey, periodDescriptionKey }) =>
     isUsableStats(stats)
-      ? [mapStatsToCardData(stats, t(titleKey), t(periodDescriptionKey), t)]
+      ? [
+          mapStatsToCardData(
+            stats,
+            t(titleKey),
+            t(periodDescriptionKey),
+            t,
+            formatResetTime(stats.resetsAt),
+          ),
+        ]
       : [],
   );
 };

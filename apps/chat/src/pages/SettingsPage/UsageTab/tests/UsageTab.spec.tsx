@@ -6,8 +6,8 @@ import type {
   ModelLimitRow,
   ModelLimitsLabels,
 } from '@epam/ai-dial-usage-dashboard';
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageI18nKeys } from '../../../../constants/translation-keys';
 import { useFeatureFlag } from '../../../../context/AppConfigContext';
 import { useDeployments } from '../../../../context/DeploymentsContext';
@@ -16,8 +16,22 @@ import { createDeploymentsContextValue } from '../../../../context/tests/deploym
 import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import UsageTab from '../UsageTab';
 
-const { modelLimitsSectionSpy } = vi.hoisted(() => ({
+const { modelLimitsSectionSpy, cardGroupSpy } = vi.hoisted(() => ({
   modelLimitsSectionSpy: vi.fn(),
+  cardGroupSpy: vi.fn(),
+}));
+
+/*
+ * Overrides the global test-setup mock, which returns the bare key. Reset
+ * labels are only distinguishable once `{{dateTime}}` is interpolated, and
+ * every other key in this file still resolves to its own name.
+ */
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, unknown>) =>
+      params?.dateTime != null ? `${key}|${params.dateTime}` : key,
+    i18n: { language: 'en', changeLanguage: vi.fn() },
+  }),
 }));
 
 vi.mock(
@@ -47,13 +61,23 @@ vi.mock('@epam/ai-dial-usage-dashboard', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-usage-dashboard')>();
   return {
     ...actual,
-    UsageLimitCardGroup: ({ cards }: { cards: { title: string }[] }) => (
-      <div>
-        {cards.map((card) => (
-          <span key={card.title}>{card.title}</span>
-        ))}
-      </div>
-    ),
+    UsageLimitCardGroup: ({
+      cards,
+    }: {
+      cards: { title: string; resetLabel?: string }[];
+    }) => {
+      cardGroupSpy({ cards });
+      return (
+        <div>
+          {cards.map((card) => (
+            <span key={card.title}>
+              {card.title}
+              {card.resetLabel != null && <em>{card.resetLabel}</em>}
+            </span>
+          ))}
+        </div>
+      );
+    },
     ModelLimitsSection: ({
       rows,
       labels,
@@ -111,13 +135,9 @@ describe('UsageTab', () => {
     expect(
       screen.getByRole('img', { name: UsageI18nKeys.Loading }),
     ).toBeTruthy();
-    expect(screen.queryByText(UsageI18nKeys.TodayPeriodDescription)).toBeNull();
-    expect(
-      screen.queryByText(UsageI18nKeys.ThisWeekPeriodDescription),
-    ).toBeNull();
-    expect(
-      screen.queryByText(UsageI18nKeys.ThisMonthPeriodDescription),
-    ).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.ThisWeekTitle)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.ThisMonthTitle)).toBeNull();
   });
 
   it('renders a visible loader, but no dashboard content, while deployments are loading', () => {
@@ -138,7 +158,7 @@ describe('UsageTab', () => {
     expect(
       screen.getByRole('img', { name: UsageI18nKeys.Loading }),
     ).toBeTruthy();
-    expect(screen.queryByText(UsageI18nKeys.TodayPeriodDescription)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
     expect(screen.queryByText(UsageI18nKeys.ModelLimitsEmptyState)).toBeNull();
   });
 
@@ -159,13 +179,9 @@ describe('UsageTab', () => {
     expect(
       screen.getByRole('heading', { name: UsageI18nKeys.PageTitle }),
     ).toBeTruthy();
-    expect(screen.getByText(UsageI18nKeys.TodayPeriodDescription)).toBeTruthy();
-    expect(
-      screen.getByText(UsageI18nKeys.ThisWeekPeriodDescription),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(UsageI18nKeys.ThisMonthPeriodDescription),
-    ).toBeTruthy();
+    expect(screen.getByText(UsageI18nKeys.TodayTitle)).toBeTruthy();
+    expect(screen.getByText(UsageI18nKeys.ThisWeekTitle)).toBeTruthy();
+    expect(screen.getByText(UsageI18nKeys.ThisMonthTitle)).toBeTruthy();
     expect(showNotification).not.toHaveBeenCalled();
   });
 
@@ -178,13 +194,9 @@ describe('UsageTab', () => {
 
     render(<UsageTab />);
 
-    expect(screen.getByText(UsageI18nKeys.TodayPeriodDescription)).toBeTruthy();
-    expect(
-      screen.queryByText(UsageI18nKeys.ThisWeekPeriodDescription),
-    ).toBeNull();
-    expect(
-      screen.queryByText(UsageI18nKeys.ThisMonthPeriodDescription),
-    ).toBeNull();
+    expect(screen.getByText(UsageI18nKeys.TodayTitle)).toBeTruthy();
+    expect(screen.queryByText(UsageI18nKeys.ThisWeekTitle)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.ThisMonthTitle)).toBeNull();
   });
 
   it('shows an error notification and no cards when the fetch fails', () => {
@@ -196,7 +208,7 @@ describe('UsageTab', () => {
 
     render(<UsageTab />);
 
-    expect(screen.queryByText(UsageI18nKeys.TodayPeriodDescription)).toBeNull();
+    expect(screen.queryByText(UsageI18nKeys.TodayTitle)).toBeNull();
     expect(showNotification).toHaveBeenCalledOnce();
     expect(showNotification).toHaveBeenCalledWith(
       expect.objectContaining({ variant: NotificationVariant.Error }),
@@ -258,22 +270,22 @@ describe('UsageTab', () => {
         labels: ModelLimitsLabels;
         periodStatuses: ModelLimitPeriodStatuses;
       };
-      expect(rows[0].last24Hours.tokens.usedLabel).toBe('1');
-      expect(rows[0].last7Days.tokens.kind).toBe('unavailable');
-      expect(rows[0].last30Days.tokens.kind).toBe('unavailable');
+      expect(rows[0].day.tokens.usedLabel).toBe('1');
+      expect(rows[0].week.tokens.kind).toBe('unavailable');
+      expect(rows[0].month.tokens.kind).toBe('unavailable');
       expect(labels).toEqual(
         expect.objectContaining({
-          last24HoursColumnLabel: UsageI18nKeys.TodayPeriodDescription,
-          last7DaysColumnLabel: UsageI18nKeys.ThisWeekPeriodDescription,
-          last30DaysColumnLabel: UsageI18nKeys.ThisMonthPeriodDescription,
+          dayColumnLabel: UsageI18nKeys.TodayPeriodDescription,
+          weekColumnLabel: UsageI18nKeys.ThisWeekPeriodDescription,
+          monthColumnLabel: UsageI18nKeys.ThisMonthPeriodDescription,
           tokensLabel: UsageI18nKeys.TokensColumnLabel,
           costLabel: UsageI18nKeys.CostColumnLabel,
         }),
       );
       expect(periodStatuses).toEqual({
-        last24Hours: { status: 'unavailable', tooltipLabel: undefined },
-        last7Days: { status: 'unavailable', tooltipLabel: undefined },
-        last30Days: { status: 'unavailable', tooltipLabel: undefined },
+        day: { status: 'unavailable', tooltipLabel: undefined },
+        week: { status: 'unavailable', tooltipLabel: undefined },
+        month: { status: 'unavailable', tooltipLabel: undefined },
       });
       expect(modelLimitsSectionSpy.mock.lastCall?.[0]).not.toHaveProperty(
         'period',
@@ -300,9 +312,9 @@ describe('UsageTab', () => {
       const { periodStatuses } = modelLimitsSectionSpy.mock.lastCall?.[0] as {
         periodStatuses: ModelLimitPeriodStatuses;
       };
-      expect(periodStatuses.last24Hours.status).toBe('limit-reached');
-      expect(periodStatuses.last7Days.status).toBe('running-low');
-      expect(periodStatuses.last30Days.status).toBe('within-limits');
+      expect(periodStatuses.day.status).toBe('limit-reached');
+      expect(periodStatuses.week.status).toBe('running-low');
+      expect(periodStatuses.month.status).toBe('within-limits');
     });
 
     it('shows an empty state instead of an empty table when `usage.deployments` is empty', () => {
@@ -363,6 +375,220 @@ describe('UsageTab', () => {
       ).toBeTruthy();
       // Still exactly one notification — the model-limits section does not add its own.
       expect(showNotification).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('boundary re-fetch', () => {
+    /* Reset boundaries as captured from a real GET /api/v1/user/usage payload. */
+    const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
+    const MONTH_RESETS_AT = '2026-10-01T00:00:00Z';
+    /* A moment shortly before the day boundary above. */
+    const NOW = Date.parse('2026-09-15T21:00:00Z');
+
+    const usageWithReset = (resetsAt: string, used = 1) => ({
+      deployments: {},
+      dayCostStats: { used, total: 10, resetsAt },
+    });
+
+    /* Every distinct refreshToken the hook was handed, in order. */
+    const refreshTokens = () => [
+      ...new Set(mockUseUsageData.mock.calls.map((call) => call[2])),
+    ];
+
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: false });
+      vi.setSystemTime(NOW);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('re-fetches exactly once when the boundary elapses', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: usageWithReset(DAY_RESETS_AT),
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      expect(refreshTokens()).toEqual([0]);
+
+      act(() => {
+        vi.advanceTimersByTime(Date.parse(DAY_RESETS_AT) - NOW + 10_000);
+      });
+
+      expect(refreshTokens()).toEqual([0, 1]);
+    });
+
+    it('does not fire immediately for a boundary beyond the setTimeout ceiling', () => {
+      /*
+       * `setTimeout`'s ceiling is ~24.8 days, so the clamp is only reachable
+       * from near the start of a long month — 1 Sep to 1 Oct is 30 days.
+       */
+      const monthStart = Date.parse('2026-09-01T00:00:00Z');
+      vi.setSystemTime(monthStart);
+      expect(Date.parse(MONTH_RESETS_AT) - monthStart).toBeGreaterThan(
+        2 ** 31 - 1,
+      );
+
+      mockUseUsageData.mockReturnValue({
+        usage: {
+          deployments: {},
+          monthCostStats: { used: 1, total: 10, resetsAt: MONTH_RESETS_AT },
+        },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      act(() => {
+        vi.advanceTimersByTime(2 ** 31 - 1);
+      });
+
+      /* The clamped wake re-arms rather than re-fetching. */
+      expect(refreshTokens()).toEqual([0]);
+
+      act(() => {
+        vi.advanceTimersByTime(
+          Date.parse(MONTH_RESETS_AT) - monthStart - (2 ** 31 - 1) + 10_000,
+        );
+      });
+
+      expect(refreshTokens()).toEqual([0, 1]);
+    });
+
+    it('re-fetches on visibilitychange after a missed boundary', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: usageWithReset(DAY_RESETS_AT),
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+      expect(refreshTokens()).toEqual([0]);
+
+      /* Jump past the boundary without letting the timer run, as a suspended device would. */
+      vi.setSystemTime(Date.parse(DAY_RESETS_AT) + 60_000);
+
+      act(() => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+
+      expect(refreshTokens()).toEqual([0, 1]);
+    });
+
+    it('arms no timer when no card carries a future boundary', () => {
+      mockUseUsageData.mockReturnValue({
+        /* Already past at NOW. */
+        usage: usageWithReset('2026-09-01T00:00:00Z'),
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      expect(vi.getTimerCount()).toBe(0);
+
+      act(() => {
+        vi.advanceTimersByTime(2 ** 31 - 1);
+      });
+
+      expect(refreshTokens()).toEqual([0]);
+    });
+
+    it('does not re-show the full-tab spinner while a refresh is in flight', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: usageWithReset(DAY_RESETS_AT, 7),
+        /* A refresh is in flight, but previous figures are still present. */
+        isLoading: true,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      expect(
+        screen.queryByRole('img', { name: UsageI18nKeys.Loading }),
+      ).toBeNull();
+      expect(screen.getByText(UsageI18nKeys.TodayTitle)).toBeTruthy();
+    });
+
+    it('keeps the rendered figures and raises the notification when a refresh fails', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: usageWithReset(DAY_RESETS_AT, 7),
+        isLoading: false,
+        usageError: new Error('refresh failed'),
+      });
+
+      render(<UsageTab />);
+
+      expect(screen.getByText(UsageI18nKeys.TodayTitle)).toBeTruthy();
+      const [{ cards }] = cardGroupSpy.mock.calls.at(-1) as [
+        { cards: { used: number }[] },
+      ];
+      expect(cards[0].used).toBe(7);
+      expect(showNotification).toHaveBeenCalledOnce();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: NotificationVariant.Error }),
+      );
+    });
+  });
+
+  describe('reset-time localization', () => {
+    const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
+    const OriginalDateTimeFormat = Intl.DateTimeFormat;
+
+    /*
+     * Only the zero-argument zone-resolution call is stubbed; the real
+     * formatter still does the formatting, in the zone under test.
+     */
+    const mockResolvedZone = (timeZone: string) => {
+      vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(function (
+        locales?: string | string[],
+        options?: Intl.DateTimeFormatOptions,
+      ) {
+        if (locales === undefined && options === undefined) {
+          return { resolvedOptions: () => ({ timeZone }) };
+        }
+        return new OriginalDateTimeFormat(locales, options);
+      } as unknown as typeof Intl.DateTimeFormat);
+    };
+
+    const resetLabelInZone = (timeZone: string): string => {
+      mockResolvedZone(timeZone);
+      mockUseUsageData.mockReturnValue({
+        usage: {
+          deployments: {},
+          dayCostStats: { used: 1, total: 10, resetsAt: DAY_RESETS_AT },
+        },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      const { unmount } = render(<UsageTab />);
+      const [{ cards }] = cardGroupSpy.mock.calls.at(-1) as [
+        { cards: { resetLabel?: string; resetIsoValue?: string }[] },
+      ];
+      const { resetLabel, resetIsoValue } = cards[0];
+
+      expect(resetIsoValue).toBe(DAY_RESETS_AT);
+      unmount();
+      vi.restoreAllMocks();
+
+      return resetLabel ?? '';
+    };
+
+    it('renders the same UTC boundary differently in two timezones, each with its own designator', () => {
+      const warsawLabel = resetLabelInZone('Europe/Warsaw');
+      const tokyoLabel = resetLabelInZone('Asia/Tokyo');
+
+      expect(warsawLabel).toContain('2:00');
+      expect(warsawLabel).toContain('GMT+2');
+      expect(tokyoLabel).toContain('9:00');
+      expect(tokyoLabel).toContain('GMT+9');
+      expect(warsawLabel).not.toBe(tokyoLabel);
     });
   });
 });

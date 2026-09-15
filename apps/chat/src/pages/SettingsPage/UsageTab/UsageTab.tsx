@@ -7,7 +7,15 @@ import {
   ModelLimitsSection,
   UsageLimitCardGroup,
 } from '@epam/ai-dial-usage-dashboard';
-import { memo, useEffect, useMemo, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { UsageI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
@@ -16,6 +24,21 @@ import { useLanguage } from '../../../hooks/language/useLanguage';
 import { getUserUsage } from '../../../server-api/user-limits';
 import { resolveCatalogIconUrl } from '../../../utils/icon-path';
 import { resolveLocalizedText } from '../../../utils/locale';
+import { formatUsageResetTime } from '../../../utils/usage-reset-time';
+
+/*
+ * Small grace period so DIAL Core has rolled the window over before the
+ * refresh request is sent.
+ */
+const RESET_SETTLE_MS = 5_000;
+
+/*
+ * `setTimeout`'s 32-bit ceiling. A month boundary can exceed it, and an
+ * unclamped delay overflows and fires immediately — which would produce a
+ * re-fetch storm rather than a single refresh. When clamped, the timer re-arms
+ * on wake instead of re-fetching.
+ */
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
 const UsageTab: FC = () => {
   const { t } = useTranslation() as {
@@ -23,14 +46,23 @@ const UsageTab: FC = () => {
   };
   const { language: activeLocale } = useLanguage();
   const { showErrorNotification } = useNotification();
+  const [refreshToken, setRefreshToken] = useState(0);
   const {
     usage,
     isLoading: isUsageLoading,
     usageError,
-  } = useUsageData(getUserUsage);
+  } = useUsageData(getUserUsage, true, refreshToken);
   const { items: deploymentItems, isLoading: isDeploymentsLoading } =
     useDeployments();
-  const isLoading = isUsageLoading || isDeploymentsLoading;
+  /*
+   * Keyed on the initial load only: a boundary-triggered refresh must not
+   * replace the whole tab with a spinner, which would flash the figures away.
+   */
+  const isLoading = (isUsageLoading && usage == null) || isDeploymentsLoading;
+
+  const requestRefresh = useCallback(() => {
+    setRefreshToken((token) => token + 1);
+  }, []);
 
   useEffect(() => {
     if (usageError == null) return;
@@ -53,15 +85,113 @@ const UsageTab: FC = () => {
     [t],
   );
 
-  const cards = useMemo(() => mapUsageDataToDashboard(usage, t), [usage, t]);
+  /*
+   * Kept `useCallback`-stable: it is passed into mappers that sit behind
+   * `useMemo`, so an unstable identity would recompute both on every render.
+   */
+  const formatResetTime = useCallback(
+    (resetsAt: string | undefined) =>
+      formatUsageResetTime(resetsAt, activeLocale, t),
+    [activeLocale, t],
+  );
+
+  const cards = useMemo(
+    () => mapUsageDataToDashboard(usage, t, formatResetTime),
+    [usage, t, formatResetTime],
+  );
+
+  /*
+   * Every parsed reset boundary among the displayed cards, ascending, read
+   * from each card's `resetIsoValue`. `UsageLimitCardData` carries only the
+   * three preformatted display strings by design, so the epoch value is parsed
+   * here at the application edge rather than threaded through the library.
+   *
+   * This stays pure — the clock is only read inside the effects below, which
+   * is what decides whether a boundary is still in the future.
+   */
+  const resetBoundariesMs = useMemo(
+    () =>
+      cards
+        .map((card) =>
+          card.resetIsoValue != null ? Date.parse(card.resetIsoValue) : NaN,
+        )
+        .filter((ms) => !Number.isNaN(ms))
+        .sort((first, second) => first - second),
+    [cards],
+  );
+
+  /*
+   * The future boundary the timer is currently armed for, so a wake-up check
+   * can tell an elapsed boundary from one that was already past when the
+   * response arrived — the latter arms nothing and must not trigger a refresh.
+   */
+  const armedBoundaryRef = useRef<number | undefined>(undefined);
+
+  /*
+   * Arms one timer for the earliest future boundary. On fire it bumps
+   * `refreshToken`, which re-runs the hook's fetch — nothing here zeroes a
+   * `used`, restores a `total`, or synthesizes any post-reset state. Figures
+   * are only ever replaced by a resolved `getUserUsage()` response.
+   */
+  useEffect(() => {
+    const earliestResetMs = resetBoundariesMs.find((ms) => ms > Date.now());
+    armedBoundaryRef.current = earliestResetMs;
+
+    if (earliestResetMs == null) return;
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const arm = () => {
+      const remaining = earliestResetMs - Date.now() + RESET_SETTLE_MS;
+      if (remaining <= 0) {
+        requestRefresh();
+        return;
+      }
+
+      const isClamped = remaining > MAX_TIMEOUT_MS;
+      timeoutId = setTimeout(
+        isClamped ? arm : requestRefresh,
+        isClamped ? MAX_TIMEOUT_MS : remaining,
+      );
+    };
+
+    arm();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [resetBoundariesMs, requestRefresh]);
+
+  /*
+   * A suspended device may have fired the timer late or not at all, so
+   * re-check on wake. The armed boundary is cleared once used, so one elapsed
+   * boundary triggers exactly one refresh.
+   */
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+
+      const boundary = armedBoundaryRef.current;
+      if (boundary != null && Date.now() >= boundary) {
+        armedBoundaryRef.current = undefined;
+        requestRefresh();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [requestRefresh]);
 
   const modelLimitsLabels = useMemo(
     () => ({
       headingLabel: t(UsageI18nKeys.ModelLimitsHeading),
       itemColumnLabel: t(UsageI18nKeys.ItemColumnLabel),
-      last24HoursColumnLabel: t(UsageI18nKeys.TodayPeriodDescription),
-      last7DaysColumnLabel: t(UsageI18nKeys.ThisWeekPeriodDescription),
-      last30DaysColumnLabel: t(UsageI18nKeys.ThisMonthPeriodDescription),
+      dayColumnLabel: t(UsageI18nKeys.TodayPeriodDescription),
+      weekColumnLabel: t(UsageI18nKeys.ThisWeekPeriodDescription),
+      monthColumnLabel: t(UsageI18nKeys.ThisMonthPeriodDescription),
       statusColumnLabel: t(UsageI18nKeys.StatusColumnLabel),
       tokensLabel: t(UsageI18nKeys.TokensColumnLabel),
       costLabel: t(UsageI18nKeys.CostColumnLabel),
@@ -91,8 +221,14 @@ const UsageTab: FC = () => {
     [usage, deploymentItems, activeLocale, t],
   );
   const modelLimitPeriodStatuses = useMemo(
-    () => mapOverallCostLimitsToPeriodStatuses(usage, activeLocale, t),
-    [usage, activeLocale, t],
+    () =>
+      mapOverallCostLimitsToPeriodStatuses(
+        usage,
+        activeLocale,
+        t,
+        formatResetTime,
+      ),
+    [usage, activeLocale, t, formatResetTime],
   );
 
   return (

@@ -650,6 +650,89 @@ describe('DeploymentsListingService', () => {
 
       expect(result.deployments[0].features?.chatCompletion).toBe(true);
     });
+
+    it('maps features.skillsSupported true for a model with skills_supported support', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, features: { skills_supported: true } }],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.skillsSupported).toBe(true);
+    });
+
+    it('maps features.skillsSupported true for an application with skills_supported support', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, features: { skills_supported: true } }],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.skillsSupported).toBe(true);
+    });
+
+    it('omits features.skillsSupported when skills_supported is absent or non-boolean', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockModel, features: { system_prompt: true } },
+          { ...mockApplication, features: { skills_supported: 'yes' } },
+        ],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.skillsSupported).toBeUndefined();
+      expect(result.deployments[1].features?.skillsSupported).toBeUndefined();
+    });
+
+    it('maps differing skills_supported values without changing list caching', async () => {
+      const { service, sdkClient, cacheManager } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockModel, features: { skills_supported: true } },
+          { ...mockApplication, features: { tools: true } },
+        ],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments).toHaveLength(2);
+      expect(result.deployments[0].features?.skillsSupported).toBe(true);
+      expect(result.deployments[1].features?.skillsSupported).toBeUndefined();
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'deployments:list:user1',
+        expect.any(Array),
+        30_000,
+      );
+    });
+
     it('maps features.mcp true for an MCP-capable application', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({

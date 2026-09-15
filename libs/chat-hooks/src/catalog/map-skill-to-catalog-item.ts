@@ -65,8 +65,12 @@ export const mapSkillToCatalogItem = (
     id: skill.url,
     type: CatalogEntityType.Skill,
     name: skill.name,
-    /* Skill metadata carries no description — the manifest does, and it is read lazily. */
-    description: '',
+    /*
+     * Listing-sourced description (Core PR #1970); folders and older Cores
+     * carry none, and the details fetch's manifest frontmatter stays
+     * authoritative once it lands.
+     */
+    description: skill.description ?? '',
     /* Skills are unversioned — the metadata exposes no version field. */
     version: '',
     lastUsed: formatLastUsed(skill.updatedAt),

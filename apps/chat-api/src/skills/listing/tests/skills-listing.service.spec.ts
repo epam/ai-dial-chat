@@ -109,6 +109,66 @@ describe('SkillsListingService', () => {
       });
     });
 
+    it('forwards the nested attributes.description onto the item', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          items: [
+            {
+              ...skillItem,
+              attributes: { name: 'docs-helper', description: 'test test' },
+            },
+          ],
+        },
+      });
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items[0].description).toBe('test test');
+    });
+
+    it('omits the description when the item carries no attributes', async () => {
+      const { service } = makeService();
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+      const item = result.items.find(
+        (i: { name: string }) => i.name === 'docs-helper',
+      );
+
+      expect(item?.description).toBeUndefined();
+    });
+
+    it('ignores a non-string attributes.description', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          items: [{ ...skillItem, attributes: { description: 42 } }],
+        },
+      });
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items[0].description).toBeUndefined();
+    });
+
+    it('never maps a description onto a folder entry', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          items: [
+            { ...folderItem, attributes: { description: 'folder text' } },
+          ],
+        },
+      });
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items[0].description).toBeUndefined();
+    });
+
     it('round-trips the pagination token', async () => {
       const { service, sdkClient } = makeService();
       const result = await service.listSkills(
@@ -270,6 +330,30 @@ describe('SkillsListingService', () => {
         expect.objectContaining({
           body: { resourceTypes: ['SKILL'], with: 'me' },
         }),
+      );
+    });
+
+    it('forwards the nested attributes.description through the catalog listing', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          items: [
+            {
+              ...skillItem,
+              attributes: {
+                name: 'docs-helper',
+                description: 'shn-skill for extracting data from pdf files',
+              },
+            },
+          ],
+        },
+      });
+
+      const result = await service.listCatalogSkills('my-bucket', 'token');
+
+      expect(result.skills[0].description).toBe(
+        'shn-skill for extracting data from pdf files',
       );
     });
 

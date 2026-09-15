@@ -5,7 +5,7 @@ import type {
   PublishHistoryEntry,
   PublishPanelLabels,
 } from '@epam/ai-dial-publish-panel';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type {
   CredentialsLevel,
   ToolsetAuthenticationType,
@@ -434,6 +434,8 @@ export interface ItemDetailsColors {
   credentialsCardTitleText?: string;
   /** Description text color of the credentials status card. Fallback: `--text-secondary`. */
   credentialsCardDescriptionText?: string;
+  /** Featured chip style override in the header, merged over its default per-entity-type colors, e.g. `{ backgroundColor, color, border }`. */
+  featuredChipStyle?: CSSProperties;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */

@@ -1,0 +1,566 @@
+{
+  "deployments": {
+    "gpt-5.2-2025-12-11": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 2195
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 4293
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 8535
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0048335
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0089705
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0178885
+      }
+    },
+    "anthropic.claude-sonnet-5": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 754
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 2525
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.00742
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.02477
+      }
+    },
+    "gemini-2.5-pro-google-search": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 6043
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 12851
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 24335
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 3
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 3
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.01828
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.03732
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.07784
+      }
+    },
+    "gpt-4.1-2025-04-14": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 19371
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 324243
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 363011
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 6
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 6
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.03996
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 1.06209
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 1.142248
+      }
+    },
+    "gemini-3.5-flash-lite": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 49278
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 49278
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 49278
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 2
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 7
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0915195
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0915195
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0915195
+      }
+    },
+    "gpt-5.2-2025-12-11-web-search": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 23494
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 46826
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 93541
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 3
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 3
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.04264575
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.085008
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.1704465
+      }
+    },
+    "gpt-4.1-mini-2025-04-14": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 32722
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 96997
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 96997
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 37
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0275356
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0807364
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0807364
+      }
+    },
+    "anthropic.claude-sonnet-4-20250514-v1:0": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 38301
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 75801
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 150564
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 2
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 2
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.117699
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.233487
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.463416
+      }
+    },
+    "us.anthropic.claude-opus-4-1-20250805-v1:0": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 122
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 212
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 417
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.00861
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.01482
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.029115
+      }
+    },
+    "gpt-4o": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 10520
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 10520
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.03104
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.03104
+      }
+    },
+    "anthropic.claude-opus-5": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 191
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 561
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.004595
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.013485
+      }
+    },
+    "gpt-5.6-terra-2026-07-09": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 29202
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 58408
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 116807
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 6
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 6
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.060434
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.120946
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.241774
+      }
+    },
+    "gemini-3.5-flash": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 5784
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 5784
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 5784
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0148935
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0148935
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0148935
+      }
+    }
+  },
+  "minuteCostStats": {
+    "total": 9223372036854776000,
+    "used": 0
+  },
+  "dayCostStats": {
+    "total": 110,
+    "used": 0.42641085
+  },
+  "weekCostStats": {
+    "total": 9223372036854776000,
+    "used": 1.7928459
+  },
+  "monthCostStats": {
+    "total": 500,
+    "used": 2.3991724
+  }
+}

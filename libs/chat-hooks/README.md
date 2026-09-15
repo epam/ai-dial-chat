@@ -321,14 +321,25 @@ a deprecation of the root entry or a breaking change to it.
 
 ### useUsageData
 
-Fetches a user's rolling cost and token usage stats from DIAL Core. The hook accepts the fetch function as a parameter — the host supplies an already-configured API call; the hook owns only the request lifecycle (in-flight state, cancellation on unmount, `enabled` guard).
+Fetches a user's calendar-period cost and token usage stats from DIAL Core — the current UTC day, week, and month. The hook accepts the fetch function as a parameter — the host supplies an already-configured API call; the hook owns only the request lifecycle (in-flight state, cancellation on unmount, `enabled` guard, and re-fetch on a caller-driven token).
 
 ```tsx
 import { useUsageData } from '@epam/ai-dial-chat-hooks';
 import { getUserUsage } from './server-api/user-limits'; // host-owned configured call
 
-const { usage, isLoading, usageError } = useUsageData(getUserUsage, isEnabled);
+const [refreshToken, setRefreshToken] = useState(0);
+
+const { usage, isLoading, usageError } = useUsageData(
+  getUserUsage,
+  isEnabled,
+  refreshToken,
+);
+
+// Ask for fresh data — for example once a displayed reset boundary elapses:
+setRefreshToken((token) => token + 1);
 ```
+
+**Refresh semantics.** Changing `refreshToken` re-runs the fetch, subject to the same `enabled` gate and the same unmount cancellation. The hook owns no timer and reads no clock — the caller decides when to change the token, so a consumer that wants to refresh on a reset boundary schedules that itself. While a token-triggered re-fetch is in flight the previously resolved `usage` is retained rather than cleared, so the consumer can keep rendering the last known figures; `isLoading` still reflects the in-flight request, which lets a consumer distinguish the initial load (`isLoading && usage == null`) from a refresh and suppress a full-page spinner for the latter. If a refresh rejects, `usageError` is set and the last successful `usage` stays in place.
 
 #### API
 
@@ -338,13 +349,14 @@ const { usage, isLoading, usageError } = useUsageData(getUserUsage, isEnabled);
 | -------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | `getUserUsage` | `() => Promise<UserLimitStatsResponseDto>` | Host-configured fetch function — the hook never constructs or imports a client itself.         |
 | `enabled`      | `boolean`                                  | When `false`, the fetch is skipped and `isLoading` is immediately `false`. Defaults to `true`. |
+| `refreshToken` | `number`                                   | Caller-driven re-fetch trigger: changing it re-runs the fetch. Defaults to `0`.                |
 
 **Returns** (`UseUsageDataResult`):
 
 | Name         | Type                                     | Description                                      |
 | ------------ | ---------------------------------------- | ------------------------------------------------ |
-| `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` while loading. |
-| `isLoading`  | `boolean`                                | `true` while the fetch is in flight.             |
+| `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` until the first response resolves. Retained across a `refreshToken`-triggered re-fetch. |
+| `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.        |
 
 ### useConversationScroll
@@ -2263,12 +2275,19 @@ if (shouldWatchForDisplayNameUpdate(conversation)) {
 
 ### toOverlayMessages
 
-Maps chat messages to the DIAL Chat Overlay protocol's message shape.
+Maps chat messages to the DIAL Chat Overlay protocol's message shape. Each
+message is projected to `id`/`role`/`content`, plus `stages` when the message
+carries agent execution stages in `custom_content.stages`. Stage attachments
+are dropped, and `StageStatus` is translated to the protocol's own
+`OverlayStageStatus` so the chat's model does not cross the boundary.
 
 ```ts
 import { toOverlayMessages } from '@epam/ai-dial-chat-hooks';
 
 const overlayMessages = toOverlayMessages(conversation.messages);
+// [{ id: '0', role: 'user', content: 'Hi' },
+//  { id: '1', role: 'assistant', content: 'Done',
+//    stages: [{ index: 0, name: 'Render canvas', status: 'completed' }] }]
 ```
 
 ## Catalog Mapping Utilities
@@ -2418,7 +2437,7 @@ const item = mapPromptToCatalogItem(promptDto, {
 
 ### mapSkillToCatalogItem / buildSkillOverview / buildSkillContentTree / resolveSkillManifestFileId / resolveSkillFileDownloadPath / readSkillFileBytes / readSkillManifest
 
-Maps a skill's DIAL Core metadata into a catalog `CatalogItem`; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`.
+Maps a skill's DIAL Core metadata into a catalog `CatalogItem` — the item's `description` carries the listing entry's `description` (an empty string when the listing has none), so the catalog card and details header show it before any manifest fetch; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`.
 
 ```ts
 import {
@@ -2610,7 +2629,7 @@ file loads) is delegated to `useSkillItemDetails` below — `CatalogDetailsApi`
 extends that hook's `SkillDetailsApi` port with the deployment and prompt
 methods.
 
-### useSkillItemDetails / fetchSkillDescription
+### useSkillItemDetails
 
 The skill-scoped half of the details pipeline, for hosts that only surface
 skill details and therefore have no deployment/prompt ports to inject.
@@ -2618,10 +2637,7 @@ skill details and therefore have no deployment/prompt ports to inject.
 supplying the four unused adapter methods the full pipeline requires.
 
 ```ts
-import {
-  fetchSkillDescription,
-  useSkillItemDetails,
-} from '@epam/ai-dial-chat-hooks';
+import { useSkillItemDetails } from '@epam/ai-dial-chat-hooks';
 
 const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
   useSkillItemDetails({
@@ -2632,10 +2648,6 @@ const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
 
 // Fetch full details for a skill catalog item (returns undefined on failure)
 const details = await onFetchSkillDetails(skillCatalogItem);
-
-// One-shot manifest description for a listing tooltip. Returns null on an
-// unparseable id, an unreadable manifest, or a failed request — never throws.
-const description = await fetchSkillDescription(api, skill.url);
 ```
 
 **Options** (`UseSkillItemDetailsOptions`): `api`
@@ -2645,10 +2657,6 @@ const description = await fetchSkillDescription(api, skill.url);
 **Returns** (`UseSkillItemDetailsResult`): `onFetchSkillDetails`,
 `onLoadContentFile`, and `onLoadSkillDetailsFile`, with the same shapes as
 the `useCatalogItemDetails` returns above.
-
-`fetchSkillDescription(api, skillId)` reuses the same manifest-download path
-as the full pipeline and resolves every failure to `null` so a listing
-tooltip can treat "no description" and "could not fetch" identically.
 
 ### useSkillDetailsPanelData
 

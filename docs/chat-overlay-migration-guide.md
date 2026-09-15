@@ -468,11 +468,20 @@ interface OverlayChatMessage {
   id: string;
   role: string;
   content: string;
+  stages?: OverlayMessageStage[];
 }
 ```
 
+`stages` is the one part of `custom_content` the protocol projects: a message
+that carries agent execution stages exposes them as `OverlayMessageStage[]`,
+with `index`, `name`, `status` (`null` while running, otherwise
+`OverlayStageStatus.Completed`/`Failed`), and the optional `content` and
+`tag`. Stage attachments are not projected. There is no per-stage event yet:
+subscribe to `GPT_END_GENERATING` and call `getMessages()` to inspect what an
+agent did.
+
 Everything else the legacy `Message` carried is gone from the protocol:
-`custom_content` (attachments, stages, state, form schema and value),
+the rest of `custom_content` (attachments, state, form schema and value),
 `custom_fields.annotations`, `like`, `errorMessage`, `model`, `settings`,
 `responseId`, and `templateMapping`. A host that rendered attachments or read
 a like state from overlay messages has no replacement. `id` is new — the

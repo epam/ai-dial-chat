@@ -34,6 +34,7 @@ export const UsageLimitCard: FC<UsageLimitCardProps> = ({
     secondaryAmountClassName = 'dial-small-text',
     badgeClassName = 'dial-caption-lead-semi-text',
     usedPercentLabelClassName = 'dial-small-text',
+    resetLabelClassName = 'dial-tiny-text',
   } = typography ?? {};
 
   const cssVars = buildCssVars({
@@ -157,6 +158,30 @@ export const UsageLimitCard: FC<UsageLimitCardProps> = ({
               </span>
             </div>
           </>
+        )}
+
+        {/* Rendered for an unlimited card too — an unconfigured limit still
+            accumulates spend against a period that rolls over. */}
+        {data.resetLabel != null && (
+          <span className="contents">
+            {/* `aria-label` is not reliably supported on a bare `<time>`, so the
+                spoken form — which names the timezone in full rather than as an
+                offset — is carried by a visually-hidden sibling instead. */}
+            <time
+              dateTime={data.resetIsoValue}
+              aria-hidden={data.resetAriaLabel != null || undefined}
+              className={mergeClasses(
+                'block break-words',
+                resetLabelClassName,
+                styles.secondaryAmount,
+              )}
+            >
+              {data.resetLabel}
+            </time>
+            {data.resetAriaLabel != null && (
+              <span className="sr-only">{data.resetAriaLabel}</span>
+            )}
+          </span>
         )}
       </div>
     </div>

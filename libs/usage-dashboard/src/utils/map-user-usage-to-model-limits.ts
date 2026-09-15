@@ -17,6 +17,7 @@ import {
   ModelLimitMetricKind,
   ModelLimitStatus,
 } from '../models/model-limits-props';
+import type { FormatResetTime } from './map-usage-data-to-dashboard';
 
 /** A translate function compatible with i18next's `TFunction`. */
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -88,33 +89,30 @@ interface PeriodFieldMapping {
 }
 
 const PERIOD_FIELD_MAPPINGS = {
-  last24Hours: {
+  day: {
     cost: 'dayCostStats',
     tokens: 'dayTokenStats',
   },
-  last7Days: {
+  week: {
     cost: 'weekCostStats',
     tokens: 'weekTokenStats',
   },
-  last30Days: {
+  month: {
     cost: 'monthCostStats',
     tokens: 'monthTokenStats',
   },
-} satisfies Record<
-  'last24Hours' | 'last7Days' | 'last30Days',
-  PeriodFieldMapping
->;
+} satisfies Record<'day' | 'week' | 'month', PeriodFieldMapping>;
 
 const OVERALL_COST_PERIODS = {
-  last24Hours: {
+  day: {
     field: 'dayCostStats',
     labelKey: USAGE_MODEL_LIMITS_I18N_KEYS.todayPeriodDescription,
   },
-  last7Days: {
+  week: {
     field: 'weekCostStats',
     labelKey: USAGE_MODEL_LIMITS_I18N_KEYS.thisWeekPeriodDescription,
   },
-  last30Days: {
+  month: {
     field: 'monthCostStats',
     labelKey: USAGE_MODEL_LIMITS_I18N_KEYS.thisMonthPeriodDescription,
   },
@@ -167,8 +165,16 @@ const buildOverallCostPeriodStatus = (
   period: (typeof OVERALL_COST_PERIODS)[keyof ModelLimitPeriodStatuses],
   activeLocale: string,
   t: Translate,
+  formatResetTime: FormatResetTime,
 ): ModelLimitPeriodStatus => {
-  const status = getOverallCostStatus(usage?.[period.field]);
+  /*
+   * The header's reset time comes from the same top-level stat that drives its
+   * status. A per-deployment `resetsAt` is never read here, and a top-level
+   * value is never reconciled against a differing per-deployment one.
+   */
+  const overallStats = usage?.[period.field];
+  const status = getOverallCostStatus(overallStats);
+  const reset = formatResetTime(overallStats?.resetsAt);
   const periodLabel = t(period.labelKey).toLocaleLowerCase(activeLocale);
   const tooltipLabel =
     status === ModelLimitStatus.LimitReached
@@ -181,32 +187,53 @@ const buildOverallCostPeriodStatus = (
           })
         : undefined;
 
-  return { status, tooltipLabel };
+  return {
+    status,
+    tooltipLabel,
+    ...(reset
+      ? {
+          resetLabel: reset.label,
+          resetIsoValue: reset.isoValue,
+          resetAriaLabel: reset.ariaLabel,
+        }
+      : {}),
+  };
 };
 
-/** Maps the same top-level Cost budgets used by the aggregate cards into table-header state. */
+/** Never produces a reset time — used where only the period statuses are needed. */
+const noResetTime: FormatResetTime = () => undefined;
+
+/**
+ * Maps the same top-level Cost budgets used by the aggregate cards into table-header state.
+ *
+ * @param formatResetTime - Formats each period's top-level `resetsAt` into the header's reset trio. Omit it to produce statuses with no reset fields.
+ */
 export const mapOverallCostLimitsToPeriodStatuses = (
   usage: UserLimitStatsResponseDto | undefined,
   activeLocale: string,
   t: Translate,
+  formatResetTime: FormatResetTime = noResetTime,
 ): ModelLimitPeriodStatuses => ({
-  last24Hours: buildOverallCostPeriodStatus(
+  day: buildOverallCostPeriodStatus(
     usage,
-    OVERALL_COST_PERIODS.last24Hours,
+    OVERALL_COST_PERIODS.day,
     activeLocale,
     t,
+    formatResetTime,
   ),
-  last7Days: buildOverallCostPeriodStatus(
+  week: buildOverallCostPeriodStatus(
     usage,
-    OVERALL_COST_PERIODS.last7Days,
+    OVERALL_COST_PERIODS.week,
     activeLocale,
     t,
+    formatResetTime,
   ),
-  last30Days: buildOverallCostPeriodStatus(
+  month: buildOverallCostPeriodStatus(
     usage,
-    OVERALL_COST_PERIODS.last30Days,
+    OVERALL_COST_PERIODS.month,
     activeLocale,
     t,
+    formatResetTime,
   ),
 });
 
@@ -268,9 +295,12 @@ const buildFiniteMetricCell = (
 };
 
 /*
- * Classifies the Cost stat. Per the upstream contract, a well-formed per-deployment cost entry is
- * always the unlimited sentinel (attributed spend against no per-deployment cap) — this never
- * produces a `Finite` cell or a finite cost status, regardless of the reported `total`.
+ * Classifies the Cost stat with the same sentinel test the Tokens path uses, rather than assuming
+ * the sentinel. DIAL Core's role model configures cost limits only at the role level
+ * (`Role.costLimit`); per-deployment `Role.limits` entries carry token and request windows with no
+ * cost field, so every payload observed to date reports the sentinel here and this detection is
+ * behaviour-preserving in practice. A genuinely finite `total` produces a `Finite` cell whose
+ * status `getRowStatus` folds in like any other finite metric.
  */
 const buildCostMetricCell = (
   stats: LimitStatsDto | undefined,
@@ -281,15 +311,32 @@ const buildCostMetricCell = (
   }
 
   const used = Math.max(0, stats.used);
-  const amountLabel = formatCost(used);
   const usedLabel = t(USAGE_MODEL_LIMITS_I18N_KEYS.spentLabel, {
-    amount: amountLabel,
+    amount: formatCost(used),
   });
 
+  if (stats.total >= UNLIMITED_TOTAL_THRESHOLD) {
+    return {
+      kind: ModelLimitMetricKind.Unlimited,
+      usedLabel,
+      ariaLabel: usedLabel,
+    };
+  }
+
+  const total = Math.max(stats.total, 0);
+  const usedPercent = total > 0 ? (used / total) * 100 : 100;
+
   return {
-    kind: ModelLimitMetricKind.Unlimited,
+    kind: ModelLimitMetricKind.Finite,
     usedLabel,
-    ariaLabel: usedLabel,
+    totalLabel: formatCost(total),
+    usedPercent,
+    status: getMetricStatus(usedPercent),
+    ariaLabel: t(USAGE_MODEL_LIMITS_I18N_KEYS.progressAriaLabel, {
+      used: formatCost(used),
+      total: formatCost(total),
+      percent: Math.round(usedPercent),
+    }),
   };
 };
 
@@ -307,17 +354,30 @@ const buildPeriodCell = (
   cost: buildCostMetricCell(deploymentStats[fields.cost], t),
 });
 
-/** Reduces the three rolling-period Tokens cells to the row's most severe status. */
-const getRowStatus = (
-  tokenCells: ModelLimitMetricCell[],
-  overallCostStatuses: ModelLimitStatus[],
-): ModelLimitStatus => {
-  const tokenStatuses = tokenCells
+const getFiniteCellStatuses = (
+  cells: ModelLimitMetricCell[],
+): (ModelLimitStatus | undefined)[] =>
+  cells
     .filter((cell) => cell.kind === ModelLimitMetricKind.Finite)
     .map((cell) => cell.status);
-  const finiteStatuses = [...tokenStatuses, ...overallCostStatuses].filter(
-    (status) => status != null && isFiniteLimitStatus(status),
-  );
+
+/**
+ * Reduces the three calendar-period Tokens and Cost cells to the row's most severe status.
+ *
+ * A finite per-deployment Cost cell contributes exactly like a finite Tokens cell. The
+ * `NoLimit` fallback stays keyed on the Tokens cells and the overall Cost statuses, so a row
+ * whose Tokens are all unavailable is not promoted to `NoLimit` by its sentinel Cost cells.
+ */
+const getRowStatus = (
+  tokenCells: ModelLimitMetricCell[],
+  costCells: ModelLimitMetricCell[],
+  overallCostStatuses: ModelLimitStatus[],
+): ModelLimitStatus => {
+  const finiteStatuses = [
+    ...getFiniteCellStatuses(tokenCells),
+    ...getFiniteCellStatuses(costCells),
+    ...overallCostStatuses,
+  ].filter((status) => status != null && isFiniteLimitStatus(status));
 
   if (finiteStatuses.includes(ModelLimitStatus.LimitReached)) {
     return ModelLimitStatus.LimitReached;
@@ -384,22 +444,22 @@ export const mapUserUsageToModelLimits = (
       const deploymentStats = deployments[id];
       const avatarSrc = resolveIconUrl(item?.iconUrl);
 
-      const last24Hours = buildPeriodCell(
+      const day = buildPeriodCell(
         deploymentStats,
-        PERIOD_FIELD_MAPPINGS.last24Hours,
-        periodStatuses.last24Hours.status,
+        PERIOD_FIELD_MAPPINGS.day,
+        periodStatuses.day.status,
         t,
       );
-      const last7Days = buildPeriodCell(
+      const week = buildPeriodCell(
         deploymentStats,
-        PERIOD_FIELD_MAPPINGS.last7Days,
-        periodStatuses.last7Days.status,
+        PERIOD_FIELD_MAPPINGS.week,
+        periodStatuses.week.status,
         t,
       );
-      const last30Days = buildPeriodCell(
+      const month = buildPeriodCell(
         deploymentStats,
-        PERIOD_FIELD_MAPPINGS.last30Days,
-        periodStatuses.last30Days.status,
+        PERIOD_FIELD_MAPPINGS.month,
+        periodStatuses.month.status,
         t,
       );
 
@@ -413,15 +473,16 @@ export const mapUserUsageToModelLimits = (
           name,
           version: item?.displayVersion,
           avatarSrc,
-          last24Hours,
-          last7Days,
-          last30Days,
+          day,
+          week,
+          month,
           status: getRowStatus(
-            [last24Hours.tokens, last7Days.tokens, last30Days.tokens],
+            [day.tokens, week.tokens, month.tokens],
+            [day.cost, week.cost, month.cost],
             [
-              periodStatuses.last24Hours.status,
-              periodStatuses.last7Days.status,
-              periodStatuses.last30Days.status,
+              periodStatuses.day.status,
+              periodStatuses.week.status,
+              periodStatuses.month.status,
             ],
           ),
         },

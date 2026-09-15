@@ -1,4 +1,4 @@
-import { FC, ReactNode } from 'react';
+import { CSSProperties, FC, ReactNode } from 'react';
 import type { EntityHeaderItem } from '../../models/entity';
 import { mergeClasses } from '../../utils/merge-class';
 import { DeploymentIcon } from '../DeploymentIcon/DeploymentIcon';
@@ -32,6 +32,8 @@ export interface EntityHeaderProps {
   footer?: ReactNode;
   /** CSS class for the featured chip. */
   featuredChipClassName?: string;
+  /** Style override for the featured chip, merged over its default per-entity-type colors, e.g. `{ backgroundColor, color, border }`. */
+  featuredChipStyle?: CSSProperties;
   /** Arbitrary badge rendered before the featured chip, in the same top-end corner. Omitted (the default) renders nothing in that slot. */
   statusBadge?: ReactNode;
 }
@@ -45,6 +47,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   typeClassName = 'dial-caption-lead-semi-text',
   iconBadgeClassName = 'rounded-[14px]',
   featuredChipClassName,
+  featuredChipStyle,
   featuredLabel = 'Featured',
   hasFeaturedTag = true,
   iconSize = 48,
@@ -77,6 +80,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
                   type={item.type}
                   label={featuredLabel}
                   className={featuredChipClassName}
+                  style={featuredChipStyle}
                 />
               )}
             </div>

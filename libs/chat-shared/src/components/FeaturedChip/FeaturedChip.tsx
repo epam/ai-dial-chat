@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { CSSProperties, FC } from 'react';
 import {
   ENTITY_TYPE_BG_COLOR,
   ENTITY_TYPE_COLOR,
@@ -12,8 +12,10 @@ export interface FeaturedChipProps {
   label: string;
   /** Additional CSS class for typography overrides. */
   className?: string;
-  /** Entity category — resolves the label's color via ENTITY_TYPE_COLOR. */
+  /** Entity category — resolves the label's default color via ENTITY_TYPE_COLOR when `style` doesn't set one. */
   type: CatalogEntityType;
+  /** Style overrides merged over the chip's default per-entity-type colors, e.g. `{ backgroundColor, color, border }`. */
+  style?: CSSProperties;
 }
 
 /** Featured badge rendered on a catalog card when `item.isFeatured` is true. */
@@ -21,6 +23,7 @@ export const FeaturedChip: FC<FeaturedChipProps> = ({
   label,
   className,
   type,
+  style,
 }) => {
   const bgColor = ENTITY_TYPE_BG_COLOR[type];
   const color = ENTITY_TYPE_COLOR[type];
@@ -32,7 +35,7 @@ export const FeaturedChip: FC<FeaturedChipProps> = ({
         'flex items-center justify-center',
         className ?? 'dial-caption-lead-semi-text',
       )}
-      style={{ backgroundColor: bgColor, color: color }}
+      style={{ backgroundColor: bgColor, color: color, ...style }}
     >
       {label}
     </div>

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { CatalogItem } from './catalog-item';
 
 /** Text overrides for `CardGrid` empty state. */
@@ -40,6 +41,8 @@ export interface CardGridProps {
   skeletonColor?: string;
   /** Background color of a skeleton placeholder card. Fallback: `--bg-layer-raised`. */
   skeletonCardBackground?: string;
+  /** Featured chip style override, merged over its default per-entity-type colors for every card, e.g. `{ backgroundColor, color, border }`. */
+  featuredChipStyle?: CSSProperties;
   /** Renders every card read-only: no favorite star, no footer divider, and no "Featured" tag. Default: false. */
   isReadonly?: boolean;
   /**

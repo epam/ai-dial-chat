@@ -124,6 +124,12 @@ interface Props {
    */
   onInlineStartRemove?: () => void;
   /**
+   * Whether the selected skill (rendered via `inlineStartSlot`) is
+   * unsupported by the current deployment — folded into the input's
+   * send-disabled state, matching `ConversationView`'s own fold.
+   */
+  isSkillUnsupported?: boolean;
+  /**
    * Host-injected slash-command menu (e.g. the Skills selector), passed
    * through to `ConversationInput`.
    */
@@ -161,6 +167,7 @@ const NewConversationComposer: FC<Props> = ({
   menuOverlays,
   inlineStartSlot,
   onInlineStartRemove,
+  isSkillUnsupported = false,
   commandMenu,
   inputStyles,
   onCreateConversation,
@@ -477,7 +484,7 @@ const NewConversationComposer: FC<Props> = ({
           onDeploymentChange={onDeploymentChange}
           isInputDisabled={isInputDisabled}
           isModelSelectorDisabled={isModelSelectorDisabled}
-          isSendDisabled={isDisabledSendEnabled}
+          isSendDisabled={isDisabledSendEnabled || isSkillUnsupported}
           modelSelectorLabels={modelSelectorLabels}
           addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
           sendLabel={t(ChatI18nKeys.SendMessage)}

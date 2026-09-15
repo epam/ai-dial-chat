@@ -6,6 +6,7 @@ import {
   OverlayFeature,
   OverlayRequestErrorCode,
   OverlayRequestType,
+  OverlayStageStatus,
   isOverlayMessageEvent,
   isOverlayMessageRequest,
   isOverlayMessageResponse,
@@ -18,6 +19,12 @@ describe('OverlayAuthUiMode', () => {
       'external',
       'sameWindow',
     ]);
+  });
+});
+
+describe('OverlayStageStatus', () => {
+  it('contains exactly the settled stage outcomes', () => {
+    expect(Object.values(OverlayStageStatus)).toEqual(['completed', 'failed']);
   });
 });
 

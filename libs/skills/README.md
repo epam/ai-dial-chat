@@ -9,11 +9,14 @@ skills/favorites data), and hands every interaction back through callbacks —
 it never fetches, navigates, or modifies the composer itself.
 
 `useSkillSelectorOverlay` owns the selection flow's state — the favorites
-overlay, the browse-modal and details-panel open state, the per-session
-description cache, and the single selected skill — while the host injects the
-listing data, the favorites state, the description fetch, labels, the browse
-modal's picker content, and the app-owned details-panel component. The
-send-time semantics of a selected skill stay app-owned.
+overlay, the browse-modal and details-panel open state, and the single
+selected skill — while the host injects the listing data (descriptions
+included), the favorites state, labels, the browse modal's picker content,
+the app-owned details-panel component, and the current deployment's
+skills-support flag (a plain boolean — the lib knows nothing about
+deployments). While that flag is `false` the skill entry points are hidden,
+but an already-selected chip stays and renders in `ChatSkill`'s error state.
+The send-time semantics of a selected skill stay app-owned.
 
 `SkillDetailsSidePanel` composes `@epam/ai-dial-catalog`'s exported
 `DetailsPanel` into a right-anchored skill details panel. It adds no chrome of
@@ -58,30 +61,31 @@ import { ChatSkill } from '@epam/ai-dial-skills';
 <ChatSkill
   name="my-skill"
   path="skills/public/my-skill"
-  description={resolvedDescription}
-  isDescriptionLoading={isFetchingDescription}
-  onTooltipOpen={(path) => resolveDescription(path)}
+  description={skill.description}
   onViewDetails={(path) => openDetailsPanel(path)}
-  onRemove={clearSelection}
 />;
 ```
 
 Renders one used skill: a ui-kit `GhostButton` whose visible (and accessible)
 label is `/` followed by `name`, wrapped in the ui-kit `InteractiveTooltip`
-(`asChild`, uncontrolled, 550px max panel width, kit-default Right placement).
-The tooltip's content is the shared `SkillInfoTooltipContent` — the description
-paragraph (spinner while `isDescriptionLoading` is `true`, omitted when empty)
-above the "View details" link button — so the panel matches the favorite rows
-exactly. Activating the button body does nothing beyond opening the tooltip; on
-a touch-only device the tooltip renders nothing and the button stays
-presentation-only.
+(`asChild`, uncontrolled, 550px max panel width, top placement flipping with
+direction). The tooltip's content is the shared `SkillInfoTooltipContent` —
+the description paragraph (omitted when empty) above the "View details" link
+button — so the panel matches the favorite rows exactly. Activating the
+button body does nothing beyond opening the tooltip; on a touch-only device
+the tooltip renders nothing and the button stays presentation-only. The
+component carries no remove control of its own — removal is the host input's
+Backspace-at-start gesture.
 
-`onTooltipOpen` fires with the skill's `path` each time the tooltip opens
-(hover or focus) — the host's lazy-description trigger wherever the component
-renders. `onViewDetails` receives the `path` when the tooltip's "View details"
-button is clicked. The × remove control renders only when `onRemove` is
-supplied, with its accessible name from `removeLabel` (which defaults to
-"Remove {name}"); pass a function that builds a localized label.
+`description` is the listing's value, rendered directly with no fetch.
+`onViewDetails` receives the `path` when the tooltip's "View details" button
+is clicked.
+
+While `isUnsupported` is set the chip renders in an error state: the `/{name}`
+label carries `unsupportedLabelClassName` (default `text-error`), the chip
+carries `unsupportedClassName` (default `bg-error`), and the tooltip's content
+is the unsupported-model message alone (`labels.unsupportedTooltipLabel`) — no
+description paragraph and no "View details" button.
 
 ### `FavoriteSkillsPanel`
 
@@ -95,7 +99,6 @@ import type { FavoriteSkillItem } from '@epam/ai-dial-skills';
   onToggleFavorite={(id) => unfavoriteSkill(id)}
   onBrowse={openBrowseModal}
   onViewDetails={(item: FavoriteSkillItem) => openDetailsPanel(item.id)}
-  onItemTooltipOpen={(id) => resolveDescription(id)}
   labels={{ myCollectionLabel: t('input.addMenu.skills.myCollection') }}
 />;
 ```
@@ -111,18 +114,14 @@ stays the focus and click target). The tooltip is uncontrolled: the kit opens
 it on hover or keyboard focus and keeps it open while the pointer is on the
 row or the panel — including while it travels between them; on a touch-only
 device it renders nothing and the row still selects on tap. Its content is the
-skill's `description` (rendered only when non-empty — the host resolves it
-lazily and may never) above a link-style "View details" button whose label
-comes from `labels.viewDetailsLabel`. While `isDescriptionLoading` is `true`,
-a spinner renders in the description's place; the "View details" button is
-reachable in every description state. The panel content itself is rendered by
-the shared `SkillInfoTooltipContent` component (below), so a `ChatSkill`
-element shows the exact same panel.
+skill's `description` — the listing's value, rendered only when non-empty —
+above a link-style "View details" button whose label comes from
+`labels.viewDetailsLabel`; the "View details" button is reachable whether or
+not a description renders. The panel content itself is rendered by the shared
+`SkillInfoTooltipContent` component (below), so a `ChatSkill` element shows
+the exact same panel.
 
-`onItemTooltipOpen` fires with the skill's id each time a row's tooltip opens
-(hover or focus); the host uses it to fetch the skill's manifest description
-once per session. `onViewDetails` fires when the tooltip's "View details"
-button is clicked.
+`onViewDetails` fires when the tooltip's "View details" button is clicked.
 
 Clicking a row's star plays a short exit animation first, so
 `onToggleFavorite` fires ~180 ms after the click rather than synchronously.
@@ -142,11 +141,15 @@ import { SkillInfoTooltipContent } from '@epam/ai-dial-skills';
 
 The inner content of a skill's interactive tooltip, shared by
 `FavoriteSkillsPanel`'s rows and `ChatSkill`: the skill's `description`
-paragraph (a `Spinner` while `isDescriptionLoading` is `true`, omitted
-entirely when the description is empty or unresolved) above a link-style
-"View details" button (`IconEye` on its inline-start, label from
-`viewDetailsLabel`). The "View details" button is reachable in every
-description state — loading, resolved, or absent.
+paragraph (the listing's value, omitted entirely when empty) above a
+link-style "View details" button (`IconEye` on its inline-start, label from
+`viewDetailsLabel`). The "View details" button is reachable whether or not a
+description renders.
+
+While `unsupportedMessage` is set, the content is that message alone — no
+description paragraph and no "View details" button. That state is why
+`onViewDetails` is optional: the unsupported branch renders no button, so
+the callback goes unused there.
 
 ### `SkillDetailsSidePanel`
 
@@ -216,22 +219,24 @@ const SkillDetailsPanel = lazy(() => import('./SkillDetailsPanel'));
 
 const {
   skillMenuOverlay,
+  commandMenu,
   skillCatalogModal,
   skillDetailsPanel,
   selectedSkillElement,
   selectedSkillPath,
   selectedSkills,
+  isSkillUnsupported,
   selectSkill,
   removeSelectedSkill,
   renderHistorySkills,
 }: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
   isEnabled: isSkillUsageEnabled,
+  isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   skills,
   sharedWithMe,
   publicSkills,
   favoriteIds,
   onToggleFavorite: (id) => unfavoriteSkill(id),
-  fetchSkillDescription: (skillId) => fetchManifestDescription(skillId),
   labels: {
     addMenuLabel: 'Skills',
     backLabel: 'Back',
@@ -245,9 +250,14 @@ const {
 ```
 
 Owns the Skills Add-menu flow's state. `skillMenuOverlay` is the entry for
-the `menuOverlays` prop of `ConversationInput`/`Input` (`undefined` while
-`isEnabled` is `false`, so the host omits the menu item entirely); the hook
-renders `FavoriteSkillsPanel` as its overlay content, forwarding
+the `menuOverlays` prop of `ConversationInput`/`Input`; `commandMenu` is the
+`/`-prefix command-menu config for the input's `commandMenu` prop — the same
+favorites panel in search mode over the typed query, with
+`labels.emptyQueryHintLabel` as its empty-query hint. Both entries are
+`undefined` while `isEnabled` is `false` or `isSkillsSupported` is `false`
+(the current deployment does not support skills), so the host omits the
+menu item and the slash dropdown entirely; the hook renders
+`FavoriteSkillsPanel` as both entries' content, forwarding
 `labels.panelLabels`. `skillCatalogModal` renders the lib's `SkillCatalogModal`
 shell with `labels.catalogModalTitleLabel` as its title and
 `renderCatalogContent` as its body — both elements the host renders at a
@@ -257,9 +267,16 @@ is fine); the open state of the modal and the panel, and the wiring of "View
 details" and "Use in chat" back to selection, are the hook's.
 `selectedSkillElement` is the selected skill as a `ChatSkill` element for the
 conversation input's `inlineStartSlot` — at most one, replaced on every
-selection, with the shared tooltip (and the same lazy description fetch as
+selection, with the shared tooltip (the listing-sourced description, same as
 the rows) and no remove control of its own (removal is the input's
 Backspace-at-position-0 gesture, wired through `removeSelectedSkill`).
+`isSkillUnsupported` is `true` while a skill is selected and
+`isSkillsSupported` is `false` (always `false` while `isEnabled` is `false`):
+the selected chip renders in `ChatSkill`'s error state — the error-state
+tooltip message comes from `labels.unsupportedTooltipLabel`, which has an
+English default — and hosts fold the flag into their send-disabled
+condition, while the chip, its removal gesture, and the details panel stay
+available.
 `selectedSkillPath` is the selected skill's resource URL
 (`skills/{bucket}/{path}`) — the value the host sends as the `{ url }` entry
 of the outgoing message's `custom_content.skills` (`null` while nothing is
@@ -270,19 +287,18 @@ resource URL. `selectedSkills` is that send-time payload ready-made —
 `renderHistorySkills` renders a history message's
 `custom_content.skills` entries as `ChatSkill` elements beside the
 message bubble's first text line, with the text word-flowing after them
-(user and assistant messages alike): each entry's name is resolved from
-the injected listing pools matched on its url (falling back to the url's
-last non-empty segment), its description shares the session cache and
-first-open fetch below, and "View details" opens the same details panel;
+(user and assistant messages alike): each entry's name and description are
+resolved from the injected listing pools matched on its url (the name falling
+back to the url's last non-empty segment, the description omitted when no
+pool carries the url), and "View details" opens the same details panel;
 it returns `null` while `isEnabled` is `false` or the array is empty. The
 chip renders beside the bubble's first text line, so pass
 `historyChipLabelClassName` with the label class the bubbles' body text
 uses, keeping the chip's height matched to that line.
 
-Row descriptions are resolved lazily: the first time a row's tooltip opens,
-`fetchSkillDescription` runs for that skill, and the result (including a
-`null` for "no description") is cached for the session; a fetch already in
-flight is never re-triggered.
+Row and chip descriptions come from the listing entries the host injects —
+no per-skill fetch happens anywhere in the flow, and opening a tooltip
+triggers zero requests.
 
 ## Utilities
 
@@ -294,17 +310,13 @@ import type { FavoriteSkillItem } from '@epam/ai-dial-skills';
 
 const favorites: FavoriteSkillItem[] = listedSkills
   .filter((skill) => favoriteIds.has(skill.url))
-  .map((skill) =>
-    buildFavoriteSkillItem(skill, descriptions, pendingDescriptionIds),
-  );
+  .map((skill) => buildFavoriteSkillItem(skill));
 ```
 
-Builds a `FavoriteSkillItem` from a listing entry and the host's resolved
-description cache. The entry needs only `{ url, name }` — the host's skill
-listing DTO satisfies it directly. A cached `null` (no description or a
-failed fetch) and a not-yet-fetched id both produce no description
-paragraph; ids in the pending set mark the row as loading, so its tooltip
-shows a spinner.
+Builds a `FavoriteSkillItem` from a listing entry, mapping its `description`
+straight through. The entry needs only `{ url, name }` — the host's skill
+listing DTO satisfies it directly, and an entry that carries no `description`
+produces no description paragraph.
 
 ## Types
 
