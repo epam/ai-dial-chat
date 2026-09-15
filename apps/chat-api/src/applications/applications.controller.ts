@@ -110,8 +110,9 @@ export class ApplicationsController {
     description:
       'Updates the General-step fields (name, description, iconUrl, topics) of an ' +
       'existing application for the authenticated session user, by proxying DIAL Core. ' +
-      'Settings-step configuration (application_properties, version) is preserved untouched. ' +
-      'Invalidates the applications and deployments list caches on success.',
+      'Settings-step configuration (application_properties) is preserved untouched unless ' +
+      'the request supplies applicationProperties, in which case it fully replaces the ' +
+      'stored value. Invalidates the applications and deployments list caches on success.',
   })
   @ApiBody({ type: UpdateApplicationBodyDto })
   @ApiResponse({

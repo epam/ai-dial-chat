@@ -244,6 +244,37 @@ describe('ApplicationsController (integration)', () => {
       expect(service.updateApplication).not.toHaveBeenCalled();
     });
 
+    it('forwards applicationProperties to the service unchanged', async () => {
+      const bodyWithProperties = {
+        ...validBody,
+        applicationProperties: {
+          orchestrator: { system_prompt: { type: 'custom' } },
+          tool_sets: [],
+        },
+      };
+
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(bodyWithProperties)
+        .expect(200);
+
+      expect(service.updateApplication).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-app',
+        bodyWithProperties,
+      );
+    });
+
+    it('returns 400 when applicationProperties is not an object', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send({ ...validBody, applicationProperties: 'not-an-object' })
+        .expect(400);
+
+      expect(service.updateApplication).not.toHaveBeenCalled();
+    });
+
     it('returns 401 when service throws UnauthorizedException', async () => {
       service.updateApplication.mockRejectedValue(new UnauthorizedException());
       await request(app.getHttpServer())

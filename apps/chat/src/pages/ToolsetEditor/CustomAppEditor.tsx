@@ -133,16 +133,15 @@ const CustomAppEditor: FC = () => {
    */
   useEffect(() => {
     if (!loadedDto) return;
-    const appProps = (loadedDto.applicationDetails?.applicationProperties ??
-      {}) as Record<string, unknown>;
+    const customAppFeatures = loadedDto.applicationDetails?.customAppFeatures;
     const deployment = customAppId
       ? findDeploymentByIdOrReference(deployments, customAppId)
       : undefined;
 
     setSettingsForm({
       completionUrl: loadedDto.applicationDetails?.endpoint ?? '',
-      featuresData: appProps.features
-        ? JSON.stringify(appProps.features, null, '\t')
+      featuresData: customAppFeatures
+        ? JSON.stringify(customAppFeatures, null, '\t')
         : '',
       inputAttachmentTypes:
         loadedDto.applicationDetails?.inputAttachmentTypes ??

@@ -87,34 +87,73 @@ declare a `@Throttle` rate limit, and SHALL document every response status via
 ### Requirement: Update application endpoint
 
 The backend SHALL expose `PATCH /api/v1/applications/:applicationName` that updates the
-General-step fields (`name`, `description`, `iconUrl`, `topics`) of an existing
-Quick App for the authenticated session user. The `applicationName` path parameter SHALL
+General-step fields (`name`, `description`, `iconUrl`, `topics`) and, optionally, the
+Settings-step configuration (`applicationProperties`) of an existing Quick App or plain custom
+application for the authenticated session user. The `applicationName` path parameter SHALL
 be validated the same way as the delete endpoint's `GetApplicationDto`. The request body
-SHALL be validated via `UpdateApplicationBodyDto`. That DTO SHALL exclude `type` and
-`applicationProperties`, so this endpoint can never mutate a Quick App's schema type or its
-orchestrator/tool-set configuration. It SHALL accept, in addition to the General-step fields:
-`version` (the human-readable `displayVersion`, a General-step field for plain custom apps),
-`endpoint`, `features`, `inputAttachmentTypes`, and `maxInputAttachments` — the deployment-level
-fields the custom-app editor owns — plus `locales`/`primaryLocale`. It SHALL NOT define an
-`intro` field.
+SHALL be validated via `UpdateApplicationBodyDto`. That DTO SHALL exclude `type`, so this
+endpoint can never mutate an application's schema type. It SHALL accept, in addition to the
+General-step fields: `version` (the human-readable `displayVersion`, a General-step field for
+plain custom apps), `endpoint`, `features`, `inputAttachmentTypes`, `maxInputAttachments`, an
+optional `applicationProperties: Record<string, unknown>` — validated with `@IsObject()
+@IsOptional()`, identical to the create DTO's field — plus `locales`/`primaryLocale`. It SHALL
+NOT define an `intro` field.
 
 The service SHALL resolve the existing DIAL Core application resource (bucket + path) the same
 way `deleteApplication` does, fetch the current stored application via DIAL Core
-(`getCustomApplication`), spread it, and overwrite only the supplied fields —
-`application_type_schema_id` and `application_properties` (including orchestrator/tool set
-settings) are never in the body and therefore always carried through untouched, and
-`displayVersion` is carried through unless the body supplies `version`. `displayName` SHALL be
-replaced outright on every update; the remaining optional fields SHALL be written only when
-present in the body. The merged result SHALL be persisted via `saveCustomApplication` at the
+(`getCustomApplication`), spread it, and overwrite only the supplied fields.
+`application_type_schema_id` is never in the body and therefore always carried through
+untouched, and `displayVersion` is carried through unless the body supplies `version`.
+`displayName` SHALL be replaced outright on every update; the remaining optional fields SHALL
+be written only when present in the body.
+
+**`applicationProperties` replacement semantics:**
+- When the request body omits `applicationProperties`, or supplies it as `null`, the stored
+  `application_properties` SHALL be carried through unchanged — `@IsOptional()` already treats
+  `null` and `undefined` as equivalent for this field's validation, and the service SHALL apply
+  the same `!= null` check before touching `application_properties`, so a request that never
+  sends the field (every existing caller, and every General-step-only save) behaves exactly as
+  it did before this field existed.
+- When the request body supplies `applicationProperties` as an object (including `{}`), it
+  SHALL fully replace the stored `application_properties` — this is a full-object replacement,
+  not a deep merge with the previously stored value. An empty array on any key inside the
+  supplied object (e.g. `skills: []`, `tool_sets: []`, `contexts: []`) SHALL be persisted as an
+  empty array, not dropped or treated as "no change" — this is how a caller explicitly clears a
+  previously configured selection.
+- Unlike `createApplication`, the supplied `applicationProperties` SHALL be persisted
+  **verbatim**, with no hoisting of `endpoint`, `features`, `inputAttachmentTypes`, or
+  `maxInputAttachments` out of it. A Quick App's own `application_properties` may itself carry a
+  schema-specific key with one of these names (for example a `features` key holding
+  `{ timestamp: true }`); hoisting would silently move that key to the corresponding top-level
+  DIAL Core field, destroying it. This DTO's own separate top-level `endpoint`/`features`/
+  `inputAttachmentTypes`/`maxInputAttachments` fields (handled above) are the only way to set
+  those top-level DIAL Core fields — they are applied independently of whatever
+  `applicationProperties` contains, with no precedence rule to reconcile between the two, since
+  nothing is ever extracted from `applicationProperties`.
+- A request body whose `applicationProperties` is present but not an object (e.g. a string or
+  array) SHALL be rejected by DTO validation with a 400, and no DIAL Core call SHALL be made.
+- This endpoint's `displayName`/locale replacement behavior (see "Additional-locale
+  translations on create and update" below) is unchanged by this field: a request that supplies
+  `applicationProperties` without `locales` still flattens an existing locale map to a plain
+  string built from `name`, exactly as any other update does. Preserving other-locale
+  translations on a configuration-only save is the calling frontend's responsibility (resend
+  the existing `locales`/`primaryLocale`), not behavior this endpoint takes on.
+
+The merged result SHALL be persisted via `saveCustomApplication` at the
 same resource path, and the endpoint SHALL respond `200` with
 `{ id: "applications/{bucket}/{path}" }`, where `path` is the encoded resource path used for
 the DIAL Core call.
 
 On success, the per-user applications list cache and the deployments list cache SHALL both be
-invalidated, mirroring `deleteApplication`'s cache invalidation. Because the DIAL Core write has
-already succeeded at that point, a failure of the invalidation step SHALL be logged and
-swallowed rather than turning a successful update into an error response. DIAL Core error
-statuses SHALL be mapped to typed HTTP responses.
+invalidated, mirroring `deleteApplication`'s cache invalidation. The affected
+`deployments:details:<userSub>:<applicationName>` entry (see the `deployment-details-api`
+spec's `GET .../details` cache) SHALL also be invalidated, using the same `applicationName`
+string this endpoint was called with — without this, re-opening an editor against the same id
+right after a save could load the pre-update `application_properties` from the still-live
+60-second details cache and silently resave it, reverting the just-made change. Because the
+DIAL Core write has already succeeded at that point, a failure of any invalidation step SHALL be
+logged and swallowed rather than turning a successful update into an error response. DIAL Core
+error statuses SHALL be mapped to typed HTTP responses.
 
 The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`,
 rate-limited via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
@@ -123,21 +162,62 @@ create/delete), and documented via `@nestjs/swagger` (`@ApiOperation` with
 matches `deleteApplication`: any authenticated user may update their own application, no
 additional role restriction.
 
-#### Scenario: Successful update
+#### Scenario: Successful update of General-step fields only
 - **WHEN** an authenticated user PATCHes `/api/v1/applications/applications%2Fusers%2Fu-123%2Fmy-app__1.0.0`
   with updated `name`, `description`, `iconUrl`, and `topics` for an application
-  they own
+  they own, omitting `applicationProperties`
 - **THEN** the service fetches the existing stored application, merges in only the
   supplied fields, persists it at the same resource path, invalidates the
   applications and deployments list caches, and responds `200 OK` with an
   `UpdatedApplicationDto` carrying the application identifier
 
-#### Scenario: Settings-step configuration is preserved
-- **WHEN** the update request omits `applicationProperties`/orchestrator or tool set data
-  (the update endpoint does not accept those fields at all)
+#### Scenario: Settings-step configuration is preserved when applicationProperties is omitted
+- **WHEN** the update request omits `applicationProperties`
 - **THEN** the existing `application_properties` and `application_type_schema_id` already
   stored for that application are carried through unchanged in the merged body sent to DIAL
   Core
+
+#### Scenario: Settings-step configuration is preserved when applicationProperties is null
+- **WHEN** the update request explicitly supplies `applicationProperties: null`
+- **THEN** the endpoint accepts the request (validation does not reject `null`) and the
+  existing `application_properties` is carried through unchanged, identically to an omitted
+  field
+
+#### Scenario: Successful update replaces the Settings-step configuration
+- **WHEN** an authenticated user PATCHes the same application with `name: "My App"` and
+  `applicationProperties: { orchestrator: { system_prompt: { type: 'custom', variables: {},
+  content: 'v2' } }, contexts: [], tool_sets: [], skills: ['weather'] }`
+- **THEN** the merged body sent to DIAL Core's `saveCustomApplication` carries that exact
+  `application_properties` value in place of whatever was previously stored, while
+  `application_type_schema_id` and `displayVersion` (when `version` is not also supplied) are
+  carried through unchanged
+
+#### Scenario: Empty arrays inside applicationProperties clear a previous selection
+- **WHEN** an application's stored `application_properties.tool_sets` currently holds entries
+  and an update supplies `applicationProperties: { tool_sets: [] }`
+- **THEN** the merged body's `application_properties.tool_sets` is an empty array, not the
+  previously stored entries and not an omitted key
+
+#### Scenario: A Quick App's own features key is not hoisted or lost
+- **WHEN** an update supplies `applicationProperties: { endpoint: 'https://x.example/chat',
+  features: { timestamp: true }, tool_sets: [] }` and no top-level `endpoint`/`features` fields
+- **THEN** the merged body's `application_properties` is exactly `{ endpoint:
+  'https://x.example/chat', features: { timestamp: true }, tool_sets: [] }`, and the merged
+  body's top-level `endpoint`/`features` are absent (carried through unchanged from whatever was
+  previously stored, since the request supplied neither top-level field)
+
+#### Scenario: A top-level field and the same-named key inside applicationProperties are independent
+- **WHEN** an update supplies both a top-level `endpoint: 'https://a.example'` and
+  `applicationProperties: { endpoint: 'https://b.example' }`
+- **THEN** the merged body's top-level `endpoint` is `'https://a.example'`, and
+  `application_properties.endpoint` is separately `'https://b.example'` — neither value is
+  derived from or overrides the other
+
+#### Scenario: A config-only save still flattens an existing locale map
+- **WHEN** an update supplies `name` and `applicationProperties` but omits `locales`, for an
+  application whose stored `displayName` is currently a locale map
+- **THEN** the merged body's `displayName` is the plain string from `name`, replacing the
+  existing locale map — unchanged from this endpoint's pre-existing locale behavior
 
 #### Scenario: The stored version is kept unless the body supplies one
 - **WHEN** the update request omits `version`
@@ -147,16 +227,30 @@ additional role restriction.
 #### Scenario: Deployment-level fields are written only when supplied
 - **WHEN** the update request omits `endpoint`, `features`, `inputAttachmentTypes`, or
   `maxInputAttachments`
-- **THEN** each omitted field keeps the value already stored on the application
+- **THEN** each omitted field keeps the value already stored on the application, regardless of
+  whether `applicationProperties` was supplied (nothing is ever extracted from it)
+
+#### Scenario: A successful update invalidates the deployment details cache
+- **WHEN** an update succeeds for an application whose `deployments:details:<userSub>:<id>`
+  entry is currently cached (e.g. from a `GET .../details` call made just before opening the
+  editor)
+- **THEN** that cache entry is invalidated before the response is returned, so an immediate
+  subsequent `GET .../details` call for the same id re-fetches from DIAL Core instead of
+  returning the pre-update snapshot
 
 #### Scenario: A cache-invalidation failure does not fail the update
-- **WHEN** the DIAL Core save succeeds but clearing the applications or deployments list cache
-  throws
+- **WHEN** the DIAL Core save succeeds but clearing the applications list, deployments list, or
+  deployment details cache throws
 - **THEN** the endpoint still responds `200`, and the cache failure is only logged
 
 #### Scenario: Invalid update body
 - **WHEN** the request body fails DTO validation (for example, `name` contains disallowed
   characters, or the body includes an unknown `intro` property)
+- **THEN** the endpoint responds with a 400 and does not call DIAL Core
+
+#### Scenario: A non-object applicationProperties is rejected
+- **WHEN** the request body supplies `applicationProperties` as a string or an array instead of
+  a plain object
 - **THEN** the endpoint responds with a 400 and does not call DIAL Core
 
 #### Scenario: Invalid application name
@@ -181,11 +275,11 @@ additional role restriction.
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. `502`/`503`)
 
 #### Scenario: OpenAPI contract regenerated
-- **WHEN** `UpdateApplicationBodyDto` and the `updateApplication` operation no longer
-  include `intro`
+- **WHEN** `UpdateApplicationBodyDto` gains `applicationProperties`
 - **THEN** `npm run openapi` regenerates the spec, `npm run openapi:check` passes, and the
   generated `@epam/ai-dial-chat-api-client` exposes `ApplicationsApi.updateApplication(...)`
-  with an `UpdateApplicationBodyDto` type that has no `intro` field
+  with an `UpdateApplicationBodyDto` type that includes an optional
+  `applicationProperties?: Record<string, unknown>` field and still has no `intro` field
 
 ### Requirement: Delete application endpoint
 

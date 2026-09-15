@@ -28,13 +28,51 @@ describe('UpdateApplicationBodyDto', () => {
     expect(errors.some((e) => e.property === 'name')).toBe(true);
   });
 
-  it('rejects unknown fields such as type or applicationProperties', async () => {
+  it('rejects unknown fields such as type', async () => {
     const errors = await validateDto({
       ...BASE_BODY,
       type: 'https://mydial.epam.com/custom_application_schemas/quickapps2',
-      applicationProperties: { tool_sets: [] },
     });
     expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('passes with a valid applicationProperties object', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      applicationProperties: {
+        orchestrator: { system_prompt: { type: 'custom' } },
+        tool_sets: [],
+      },
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('passes with applicationProperties set to null, treated as not supplied', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      applicationProperties: null,
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a non-object applicationProperties (string)', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      applicationProperties: 'not-an-object',
+    });
+    expect(errors.some((e) => e.property === 'applicationProperties')).toBe(
+      true,
+    );
+  });
+
+  it('rejects a non-object applicationProperties (array)', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      applicationProperties: [1, 2, 3],
+    });
+    expect(errors.some((e) => e.property === 'applicationProperties')).toBe(
+      true,
+    );
   });
 
   it('passes with version, endpoint, features, inputAttachmentTypes, and maxInputAttachments', async () => {
