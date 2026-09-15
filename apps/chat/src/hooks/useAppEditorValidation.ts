@@ -29,11 +29,10 @@ export const useAppEditorValidation = () => {
       [AppsEditorQuery.Id]: id = '',
       [AppsEditorQuery.Schema]: type = '',
       [AppsEditorQuery.PublicationUrl]: publicationUrl,
-      [AppsEditorQuery.IsCreating]: isCreating,
     },
   } = router;
 
-  const isEditing = !!id?.toString() && !isCreating;
+  const isEditing = !!id?.toString();
 
   const dispatch = useAppDispatch();
 
@@ -88,22 +87,29 @@ export const useAppEditorValidation = () => {
     const applicationId = application?.id;
     const isAppPublic =
       applicationId && isEntityIdPublic({ id: applicationId });
+    // applicationData may still hold the previous session's app while a new
+    // create/edit navigation for a different id is in flight - only compare
+    // against it once it actually matches the URL's id
+    const matchingApplicationData =
+      applicationData?.reference === id.toString()
+        ? applicationData
+        : undefined;
 
     if (
-      (application || applicationData) &&
+      (application || matchingApplicationData) &&
       decodeURIComponent(type.toString()) !==
         cleanSchemaId(
           getApplicationType(
-            (application ?? applicationData) as DialAIEntityModel,
+            (application ?? matchingApplicationData) as DialAIEntityModel,
           ),
         )
     ) {
       // if slug is not equal to application type
       console.error('application', application);
-      console.error('applicationData', applicationData);
+      console.error('applicationData', matchingApplicationData);
       console.error(
         'NotFound',
-        `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId(${application ? 'application' : 'applicationData'}): ${cleanSchemaId(getApplicationType((application ?? applicationData) as DialAIEntityModel))}`,
+        `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId(${application ? 'application' : 'applicationData'}): ${cleanSchemaId(getApplicationType((application ?? matchingApplicationData) as DialAIEntityModel))}`,
       );
       void router.push(Routes.NotFound);
       return;

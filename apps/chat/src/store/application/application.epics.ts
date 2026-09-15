@@ -1171,8 +1171,6 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         query[AppsEditorQuery.Id] = app.reference;
       }
 
-      delete query[AppsEditorQuery.IsCreating];
-
       void router.push({ pathname, query }, undefined, { shallow: true });
 
       return EMPTY;
