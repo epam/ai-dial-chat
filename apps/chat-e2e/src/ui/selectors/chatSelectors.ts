@@ -144,6 +144,7 @@ export const ChatSelectors = {
   stageContentCopyButton: 'copy',
   stageContentDownloadButton: 'download',
   stageLoader: '.animate-spin',
+  textBlock: '.prose',
   loadingCursor: '[data-qa="loading-cursor"]',
   regenerate: '[data-qa="regenerate"]',
   iconAnimation: '.animate-bounce',

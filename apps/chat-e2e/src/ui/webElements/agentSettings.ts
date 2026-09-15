@@ -5,6 +5,7 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { Tags } from '@/src/ui/domData';
 import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
 import { PromptList } from '@/src/ui/webElements/promptList';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
@@ -38,6 +39,21 @@ export class AgentSettings extends BaseElement {
   public responseFormatHelpIcon =
     this.responseFormatContainer.getChildElementBySelector(
       IconSelectors.helpIcon,
+    );
+
+  public compactModeContainer = this.getChildElementBySelector(
+    ChatSettingsModalSelectors.compactModeContainer,
+  );
+  public compactModeToggle = this.compactModeContainer
+    .getChildElementBySelector(
+      ChatSettingsModalSelectors.compactModeToggleSwitch,
+    )
+    .getChildElementBySelector(Tags.label);
+  public compactModeHelpIcon =
+    this.compactModeContainer.getChildElementBySelector(IconSelectors.helpIcon);
+  public compactModeDescription =
+    this.compactModeContainer.getChildElementBySelector(
+      ChatSettingsModalSelectors.compactModeDescription,
     );
 
   private temperatureSlider!: TemperatureSlider;
