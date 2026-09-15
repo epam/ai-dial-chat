@@ -8,6 +8,7 @@ import {
 
 import classNames from 'classnames';
 
+import { useAgentSkillsValidation } from '@/src/hooks/useAgentSkillsValidation';
 import { useIsPublicationReview } from '@/src/hooks/useIsPublicationReview';
 import { useReviewBucket } from '@/src/hooks/useReviewBucket';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -119,6 +120,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
 
   const { control, setValue, getValues } = useFormContext<QuickApp2FormType>();
   const { errors } = useFormState<QuickApp2FormType>({ control });
+
+  useAgentSkillsValidation();
 
   const modelId = useWatch({ control, name: 'model' });
   const pendingAttachmentType = useWatch({
@@ -487,6 +490,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         name={t(MarketplaceI18nKeys.AgentSkills)}
         description={t(MarketplaceI18nKeys.AgentSkillsDescription)}
         dataQa="agent-skills-section"
+        isError={isSectionError(['agentSkills'])}
       >
         <AgentSkillsField />
       </FormCollapsibleSection>

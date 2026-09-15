@@ -73,7 +73,11 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { formErrors } from '@/src/constants/form-errors';
-import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
+import {
+  ChatI18nKeys,
+  CommonI18nKeys,
+  MarketplaceI18nKeys,
+} from '@/src/constants/i18n';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -300,6 +304,7 @@ export const QuickApp2Schema = zodValidation
       .optional(),
     availableModelIds: zodValidation.array(zodValidation.string()).optional(),
     agentSkills: zodValidation.array(zodValidation.string()),
+    invalidAgentSkills: zodValidation.array(zodValidation.string()),
     timestamp: zodValidation.boolean(),
     fileTools: zodValidation.boolean(),
     processLargeFiles: zodValidation.boolean(),
@@ -328,6 +333,20 @@ export const QuickApp2Schema = zodValidation
         });
       }
     }
+    if (
+      data.invalidAgentSkills.some((skillId) =>
+        data.agentSkills.includes(skillId),
+      )
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['agentSkills'],
+        message: translate(MarketplaceI18nKeys.AgentSkillsHaveErrors, {
+          ns: Translation.Marketplace,
+        }),
+      });
+    }
+
     const modelExists =
       !data.availableModelIds || data.availableModelIds.includes(data.model);
 
@@ -625,6 +644,7 @@ const getQuickApp2FormData = (
     agentSkills: (appProperties?.skills ?? [])
       .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
       .map((s) => ApiUtils.decodeApiUrl(s.url)),
+    invalidAgentSkills: [],
     timestamp,
     fileTools,
     processLargeFiles,
