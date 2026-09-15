@@ -4,6 +4,12 @@ import type { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { MeterProvider } from '@opentelemetry/sdk-metrics';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildMetricReaders } from '../otel-sdk';
+import {
+  initializeRuntimeMetrics,
+  SseSubscriptionKind,
+  trackGeneration,
+  trackSseSubscription,
+} from '../runtime-metrics';
 
 /*
  * `PrometheusExporter`'s own `port` option treats `0` as "not provided" (`config.port ||
@@ -24,6 +30,9 @@ const getFreePort = (): Promise<number> =>
 describe('Prometheus scrape endpoint', () => {
   let exporter: PrometheusExporter;
   let port: number;
+  let stopRuntimeMetrics: (() => void) | undefined;
+  let finishSubscription: (() => void) | undefined;
+  let finishGeneration: (() => void) | undefined;
 
   beforeAll(async () => {
     port = await getFreePort();
@@ -39,13 +48,21 @@ describe('Prometheus scrape endpoint', () => {
     await exporter.startServer();
 
     const meter = metrics.getMeter('prometheus-endpoint-test');
+    stopRuntimeMetrics = initializeRuntimeMetrics(meter);
+    finishSubscription = trackSseSubscription(
+      SseSubscriptionKind.ClientChannel,
+    );
+    finishGeneration = trackGeneration();
     meter
       .createHistogram('http.server.request.duration', { unit: 's' })
       .record(0.1, { 'http.request.method': 'GET' });
   });
 
   afterAll(async () => {
-    await exporter.shutdown();
+    finishSubscription?.();
+    finishGeneration?.();
+    stopRuntimeMetrics?.();
+    await exporter?.shutdown();
     /*
      * Deregister the global MeterProvider this spec installed — see `http-metrics.spec.ts` for
      * why every OTel-global-mutating spec cleans up after itself.
@@ -67,5 +84,36 @@ describe('Prometheus scrape endpoint', () => {
 
     const body = await response.text();
     expect(body).toContain('http_server_request_duration');
+  });
+
+  it('exports runtime gauge names and fixed labels through the actual Prometheus exporter', async () => {
+    const response = await fetch(`http://127.0.0.1:${port}/metrics`);
+    const body = await response.text();
+
+    expect(body).toContain('# TYPE dial_chat_process_memory gauge');
+    expect(body).toContain('# UNIT dial_chat_process_memory B');
+    for (const kind of [
+      'rss',
+      'heap_used',
+      'heap_total',
+      'external',
+      'array_buffers',
+    ]) {
+      expect(body).toMatch(
+        new RegExp(
+          `dial_chat_process_memory\\{[^\\n]*kind="${kind}"[^\\n]*\\} \\d+`,
+        ),
+      );
+    }
+    expect(body).toMatch(
+      /dial_chat_sse_active\{[^\n]*kind="client_channel"[^\n]*\} 1/,
+    );
+    expect(body).toMatch(
+      /dial_chat_sse_active\{[^\n]*kind="conversation_watch"[^\n]*\} 0/,
+    );
+    expect(body).toMatch(
+      /dial_chat_sse_active\{[^\n]*kind="generation_attach"[^\n]*\} 0/,
+    );
+    expect(body).toMatch(/dial_chat_generations_active\{[^\n]*\} 1/);
   });
 });
