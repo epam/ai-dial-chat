@@ -166,8 +166,8 @@ describe('AppsEditor', () => {
     await userEvent.click(
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
-    act(() => {
-      latestSettingsStepProps.onSaveSuccess?.(false);
+    await act(async () => {
+      await latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -190,8 +190,8 @@ describe('AppsEditor', () => {
     await userEvent.click(
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
-    act(() => {
-      latestSettingsStepProps.onSaveSuccess?.(false);
+    await act(async () => {
+      await latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -312,8 +312,8 @@ describe('AppsEditor', () => {
     await userEvent.click(
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
-    act(() => {
-      latestSettingsStepProps.onSaveSuccess?.(false);
+    await act(async () => {
+      await latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -337,8 +337,8 @@ describe('AppsEditor', () => {
       await userEvent.click(
         screen.getByRole('button', { name: BasicI18nKeys.Preview }),
       );
-      act(() => {
-        latestSettingsStepProps.onSaveSuccess?.(false);
+      await act(async () => {
+        await latestSettingsStepProps.onSaveSuccess?.(false);
       });
 
       expect(refetchDeployments).toHaveBeenCalledOnce();
