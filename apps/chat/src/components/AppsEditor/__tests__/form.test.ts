@@ -9,6 +9,7 @@ import { getPendingAttachmentTypeError } from '@/src/constants/validation-helper
 import {
   AppsEditorFormType,
   AppsEditorSchemaTypes,
+  QuickApp2Schema,
   getApplicationPayload,
   getValidationSchema,
 } from '../form';
@@ -118,6 +119,75 @@ describe('Custom app schema - attachment type that is not added yet', () => {
 
   it('reports no error when nothing is being typed', () => {
     expect(getAttachmentTypesErrors('')).toEqual([]);
+  });
+});
+
+const SKILL_ID = 'prompts/bucket/Skill_1';
+const OTHER_SKILL_ID = 'prompts/bucket/Skill_2';
+
+const buildQuickApp2Data = (
+  agentSkills: string[],
+  invalidAgentSkills: string[],
+) => ({
+  type: AppsEditorSchemaTypes.QuickApp2,
+  instructions: 'Do the thing',
+  temperature: 0.5,
+  documentRelativeUrl: [],
+  model: MODEL_ID,
+  agentsAndToolsets: [],
+  codeInterpreter: false,
+  inputAttachmentTypes: [],
+  pendingInputAttachmentType: '',
+  isJsonView: false,
+  agentsAndToolsetsJson: '[]',
+  chatMessageInputDisabled: false,
+  autoSubmit: false,
+  starters: [],
+  agentSkills,
+  invalidAgentSkills,
+  timestamp: false,
+  fileTools: false,
+  processLargeFiles: false,
+  addAttachment: false,
+  webFetch: false,
+});
+
+const getAgentSkillsErrors = (
+  agentSkills: string[],
+  invalidAgentSkills: string[],
+) => {
+  const result = QuickApp2Schema.safeParse(
+    buildQuickApp2Data(agentSkills, invalidAgentSkills),
+  );
+
+  return result.success
+    ? []
+    : result.error.issues
+        .filter((issue) => issue.path[0] === 'agentSkills')
+        .map((issue) => issue.message);
+};
+
+describe('Quick App 2.0 schema - Agent Skills validation', () => {
+  it('reports an error when a selected skill is invalid', () => {
+    expect(getAgentSkillsErrors([SKILL_ID], [SKILL_ID])).toHaveLength(1);
+  });
+
+  it('reports no error when all selected skills are valid', () => {
+    expect(getAgentSkillsErrors([SKILL_ID], [])).toEqual([]);
+  });
+
+  it('reports no error when there are no skills at all', () => {
+    expect(getAgentSkillsErrors([], [])).toEqual([]);
+  });
+
+  it('ignores an invalid skill that is no longer selected', () => {
+    expect(getAgentSkillsErrors([SKILL_ID], [OTHER_SKILL_ID])).toEqual([]);
+  });
+
+  it('reports an error when only one of several skills is invalid', () => {
+    expect(
+      getAgentSkillsErrors([SKILL_ID, OTHER_SKILL_ID], [OTHER_SKILL_ID]),
+    ).toHaveLength(1);
   });
 });
 

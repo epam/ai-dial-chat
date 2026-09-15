@@ -365,6 +365,9 @@ const selectQuickAppUpdatedPrompt = (state: RootState) =>
 const selectSkillValidation = (state: RootState, promptId: string) =>
   rootSelector(state).skillValidationByPromptId[promptId];
 
+const selectSkillValidationMap = (state: RootState) =>
+  rootSelector(state).skillValidationByPromptId;
+
 export const PromptsSelectors = {
   selectPrompts,
   selectSearchTerm,
@@ -408,4 +411,5 @@ export const PromptsSelectors = {
   selectMoveToPromptId,
   selectQuickAppUpdatedPrompt,
   selectSkillValidation,
+  selectSkillValidationMap,
 };
