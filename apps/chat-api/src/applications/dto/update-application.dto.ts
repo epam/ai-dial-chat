@@ -24,10 +24,13 @@ import {
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
 
 /*
- * General-step update body. `applicationProperties` and `type` are
- * intentionally excluded so this endpoint can never mutate a Quick App's
- * orchestrator/tool-set configuration.  `version` is included here for
- * custom (plain-endpoint) apps where version is a General-step field.
+ * General-step (and, optionally, Settings-step) update body. `type` is
+ * intentionally excluded so this endpoint can never mutate an application's
+ * schema type. `applicationProperties` is optional: omitted (or `null`), the
+ * stored Settings-step configuration is left untouched; supplied, it fully
+ * replaces the stored value — see `ApplicationsService.updateApplication` for
+ * the replacement/hoist rules. `version` is included here for custom
+ * (plain-endpoint) apps where version is a General-step field.
  */
 export class UpdateApplicationBodyDto {
   @ApiProperty({ example: 'My App' })
@@ -96,6 +99,22 @@ export class UpdateApplicationBodyDto {
   @Min(0)
   @IsOptional()
   maxInputAttachments?: number;
+
+  @ApiPropertyOptional({
+    example: {
+      orchestrator: {
+        system_prompt: { type: 'custom', variables: {}, content: '' },
+      },
+      contexts: [],
+      tool_sets: [],
+    },
+    description:
+      'When supplied, fully replaces the stored Settings-step configuration ' +
+      '(application_properties). Omit, or send null, to leave it unchanged.',
+  })
+  @IsObject()
+  @IsOptional()
+  applicationProperties?: Record<string, unknown> | null;
 
   /*
    * Additional (non-primary) locale translations for `name`/`description`.

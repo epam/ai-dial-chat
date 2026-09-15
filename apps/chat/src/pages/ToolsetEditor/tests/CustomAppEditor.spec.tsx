@@ -1,3 +1,4 @@
+import type { DeploymentDetailsDto } from '@epam/ai-dial-chat-api-client';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -8,6 +9,7 @@ import {
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { getDeploymentDetails } from '../../../server-api/deployments';
 import { ROUTES } from '../../../types/routes';
 import CustomAppEditorPage from '../CustomAppEditor';
 
@@ -58,9 +60,9 @@ vi.mock('../../../server-api/deployments', () => ({
 
 const mockShowNotification = vi.fn();
 
-const renderPage = () =>
+const renderPage = (initialEntry: string = ROUTES.CustomAppEditor) =>
   render(
-    <MemoryRouter initialEntries={[ROUTES.CustomAppEditor]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route
           path={ROUTES.CustomAppEditor}
@@ -162,6 +164,30 @@ describe('CustomAppEditor', () => {
     expect(
       screen.getByText(CustomAppI18nKeys.CompletionUrlInvalid),
     ).toBeTruthy();
+  });
+
+  it('reads the Features textarea value from customAppFeatures, leaving an unrelated applicationProperties key untouched', async () => {
+    vi.mocked(getDeploymentDetails).mockResolvedValue({
+      id: 'applications/bucket/my-app__1.0.0',
+      type: 'application',
+      applicationDetails: {
+        applicationProperties: { someUnrelatedKey: 'value' },
+        customAppFeatures: { rate: true },
+        endpoint: 'https://api.example.com/chat',
+      },
+    } as DeploymentDetailsDto);
+
+    renderPage(
+      `${ROUTES.CustomAppEditor}?id=${encodeURIComponent('applications/bucket/my-app__1.0.0')}`,
+    );
+
+    await user.type(await screen.findByLabelText('general-name'), 'My app');
+    await goToSettingsStep(user);
+
+    const featuresData = screen.getByLabelText(
+      CustomAppI18nKeys.FeaturesDataLabel,
+    ) as HTMLTextAreaElement;
+    expect(featuresData.value).toBe(JSON.stringify({ rate: true }, null, '\t'));
   });
 
   it('clears the features data error once the value becomes valid', async () => {
