@@ -1,11 +1,17 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { Controller, Get, INestApplication, Module } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  INestApplication,
+  Logger,
+  Module,
+} from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createHelmetOptions,
   CspMode,
@@ -88,6 +94,7 @@ describe('static assets serving', () => {
     await app.close();
     await rm(staticRoot, { recursive: true, force: true });
     await rm(overlaySandboxRoot, { recursive: true, force: true });
+    vi.restoreAllMocks();
   });
 
   it('resolves the built React app from source modules', () => {
@@ -275,6 +282,7 @@ describe('static assets serving', () => {
   });
 
   it('retains existing enforcement while reporting the candidate policy', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn');
     await app.close();
     app = await createStaticTestApp(
       staticRoot,
@@ -297,6 +305,7 @@ describe('static assets serving', () => {
     expect(response.headers['reporting-endpoints']).toBe(
       'csp="https://reports.example.com/csp"',
     );
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it('limits WASM to chat HTML and the bundled PDF worker', async () => {
@@ -318,10 +327,106 @@ describe('static assets serving', () => {
     }
   });
 
-  it('rejects a stale frontend build without the nonce marker', async () => {
+  it('rejects a stale frontend build without the nonce marker in enforce mode', async () => {
     await writeFile(join(staticRoot, 'index.html'), '<html>stale build</html>');
     await expect(
-      createFrontendMiddleware({ frontendRootPath: staticRoot }),
+      createFrontendMiddleware({
+        frontendRootPath: staticRoot,
+        cspMode: CspMode.Enforce,
+      }),
     ).rejects.toThrow('CSP nonce marker missing');
+  });
+
+  it('rejects a stale enabled overlay sandbox in enforce mode', async () => {
+    await writeFile(
+      join(overlaySandboxRoot, 'index.html'),
+      '<html>stale sandbox</html>',
+    );
+    await expect(
+      createFrontendMiddleware({
+        frontendRootPath: staticRoot,
+        overlaySandboxRootPath: overlaySandboxRoot,
+        overlaySandboxEnabled: true,
+        cspMode: CspMode.Enforce,
+      }),
+    ).rejects.toThrow('CSP nonce marker missing');
+  });
+
+  it.each([false, true])(
+    'serves a legacy build with a startup warning in report-only mode (sandbox: %s)',
+    async (sandbox) => {
+      const legacyHtml =
+        '<!doctype html><html><head><style>body{color:blue}</style></head><body>legacy build</body></html>';
+      const rootPath = sandbox ? overlaySandboxRoot : staticRoot;
+      const route = sandbox ? OVERLAY_SANDBOX_ROUTE : '';
+      await writeFile(join(rootPath, 'index.html'), legacyHtml);
+      await app.close();
+      const warn = vi
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+      app = await createStaticTestApp(
+        staticRoot,
+        overlaySandboxRoot,
+        sandbox,
+        CspMode.ReportOnly,
+        'https://reports.example.com/csp',
+      );
+
+      for (const path of [
+        `${route}/`,
+        `${route}/index.html`,
+        `${route}/case/direct`,
+      ]) {
+        const response = await request(app.getHttpServer())
+          .get(path)
+          .expect(200);
+        expect(response.text).toBe(legacyHtml);
+        expect(response.headers['cache-control']).toBe('no-store');
+        expect(response.headers['content-security-policy']).toContain(
+          "style-src-attr 'unsafe-inline'",
+        );
+        expect(response.headers['content-security-policy']).toContain(
+          "script-src-attr 'none'",
+        );
+        const scriptDirective = response.headers['content-security-policy']
+          .split(';')
+          .find((directive: string) => directive.startsWith('script-src '));
+        expect(scriptDirective).toBe(
+          sandbox
+            ? "script-src 'self'"
+            : "script-src 'self' 'wasm-unsafe-eval'",
+        );
+        const candidate =
+          response.headers['content-security-policy-report-only'];
+        expect(candidate).not.toContain("'unsafe-inline'");
+        expect(candidate).not.toContain("'unsafe-eval'");
+        expect(candidate).toContain(
+          'report-uri https://reports.example.com/csp',
+        );
+      }
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `CSP nonce marker missing in ${join(rootPath, 'index.html')}`,
+        ),
+      );
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('CSP_MODE=enforce'),
+      );
+    },
+  );
+
+  it('allows a legacy build with a warning when CSP mode is omitted', async () => {
+    await writeFile(
+      join(staticRoot, 'index.html'),
+      '<html>legacy build</html>',
+    );
+    const warn = vi
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined);
+    await expect(
+      createFrontendMiddleware({ frontendRootPath: staticRoot }),
+    ).resolves.toBeTypeOf('function');
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });

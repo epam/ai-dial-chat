@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto';
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { join, posix } from 'path';
+import { Logger } from '@nestjs/common';
 import express, { type RequestHandler, Router } from 'express';
 import helmet from 'helmet';
 import {
@@ -81,6 +82,7 @@ export const createFrontendMiddleware = async ({
   reportUri,
   apiPrefix = 'api',
 }: FrontendMiddlewareOptions = {}): Promise<RequestHandler> => {
+  const logger = new Logger('FrontendMiddleware');
   const router = Router();
   const reportingUrl = reportUri ? new URL(reportUri).href : undefined;
   const policy = (options: Parameters<typeof createHelmetOptions>[2]) => {
@@ -100,15 +102,20 @@ export const createFrontendMiddleware = async ({
   ): Promise<Router> => {
     const staticRouter = Router();
     const indexPath = join(rootPath, 'index.html');
-    /* API-only development is supported without a frontend build. An existing
-     * build must contain the marker so a stale frontend cannot silently bypass
-     * nonce integration when deployed with the new backend. */
+    /* API-only development is supported without a frontend build. Legacy builds
+     * remain usable during report-only rollout, but cannot enable enforcement
+     * until their templates and runtime styles support the nonce. */
     const template = existsSync(indexPath)
       ? await readFile(indexPath, 'utf8')
       : null;
     if (template != null && !template.includes(CSP_NONCE_PLACEHOLDER)) {
-      throw new Error(
-        `Rebuild the frontend: CSP nonce marker missing in ${indexPath}`,
+      if (cspMode !== CspMode.ReportOnly) {
+        throw new Error(
+          `Rebuild the frontend: CSP nonce marker missing in ${indexPath}`,
+        );
+      }
+      logger.warn(
+        `CSP nonce marker missing in ${indexPath}. Serving the legacy frontend in report-only mode with the existing enforced policy. Rebuild the frontend before enabling CSP_MODE=enforce; approved inline styles may produce violation reports until then.`,
       );
     }
 
