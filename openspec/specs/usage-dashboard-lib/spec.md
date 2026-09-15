@@ -43,8 +43,6 @@ utilities that need i18n strings SHALL accept a caller-supplied `Translate` call
 - **THEN** no file imports `apps/chat/src/server-api/*` or `react-i18next`/`i18next`; generated-client
   imports are limited to the transform utilities described in the `## Utilities` section
 
----
-
 ### Requirement: UsageLimitCardGroup and UsageLimitCard public API
 
 The library SHALL export from `src/index.ts`: the components `UsageLimitCardGroup` and
@@ -56,10 +54,17 @@ The library SHALL export from `src/index.ts`: the components `UsageLimitCardGrou
 `UsageLimitCardData` SHALL carry only normalized, already-formatted data: `title`,
 `periodDescription`, `used: number`, `total: number`, `usedLabel: string`, `totalLabel?: string`,
 `remainingLabel?: string`, `isUnlimited?: boolean`, `usedPercent?: number` (not pre-clamped — may
-exceed 100), `status: UsageLimitStatus`, and `progressAriaLabel: string`. The library SHALL treat
-`used`/`total` as opaque numeric values used only to drive the `ProgressBar`'s
+exceed 100), `status: UsageLimitStatus`, `progressAriaLabel: string`, and the optional preformatted
+reset-time trio `resetLabel?: string`, `resetIsoValue?: string`, `resetAriaLabel?: string`. The
+library SHALL treat `used`/`total` as opaque numeric values used only to drive the `ProgressBar`'s
 `value`/`max`/`aria-valuenow` and SHALL NOT recompute percentages, currency formatting, or the
 unlimited-sentinel check from them.
+
+The reset-time fields SHALL be preformatted strings produced by the host. `resetLabel` is the
+visible text, `resetIsoValue` is the machine-readable instant for a `<time dateTime>` attribute, and
+`resetAriaLabel` is the spoken form, which names the timezone in full rather than as an offset. The
+library SHALL NOT parse, format, or timezone-shift them, SHALL NOT import `Intl`, and SHALL NOT accept a locale, timezone, or raw `resetsAt` value.
+When `resetLabel` is absent the card SHALL render exactly as it did before reset times existed.
 
 `UsageLimitCardGroupProps` SHALL accept a required `cards: UsageLimitCardData[]` (in display
 order), a required `labels: UsageLimitCardGroupLabels`, and an optional
@@ -86,7 +91,21 @@ the same optional `styles`.
 - **THEN** it renders the same title/badge/amount/progress/caption content as one card inside
   `UsageLimitCardGroup`
 
----
+#### Scenario: Reset line renders below the caption row
+- **WHEN** `UsageLimitCardData` carries `resetLabel` and `resetIsoValue`
+- **THEN** the card renders `resetLabel` below its existing caption row inside a `<time>` element
+  whose `dateTime` attribute is `resetIsoValue`, and the positions of the existing title, badge,
+  amount, progress bar, and captions are unchanged
+
+#### Scenario: Card without a reset label is unchanged
+- **WHEN** `resetLabel` is absent
+- **THEN** no `<time>` element and no reset line are rendered, and the card is visually identical
+  to its pre-change output
+
+#### Scenario: Unlimited card still renders its reset line
+- **WHEN** `isUnlimited` is `true` and `resetLabel` is present
+- **THEN** the card renders the unlimited treatment (used amount and badge only, no ratio) together
+  with the reset line
 
 ### Requirement: Status-driven visual treatment
 
@@ -137,8 +156,6 @@ screen-reader user is not misled about the real figure.
 - **THEN** the rendered progress-bar fill visually stops at 100% width, the visible used-percent
   label reads `100%`, and only the accessible `aria-valuetext` reads the real, uncapped `137%`
 
----
-
 ### Requirement: Accessibility
 
 Each card's progress element SHALL be exposed with an accessible name (from `data.title`) and
@@ -159,8 +176,6 @@ text SHALL resolve to at least 7:1 against its paired background fallback (WCAG 
 #### Scenario: Badge text is readable, not color-only
 - **WHEN** a card renders any status badge
 - **THEN** the badge's accessible text content equals the corresponding `labels.*BadgeLabel` string
-
----
 
 ### Requirement: Responsive and RTL layout
 
@@ -183,16 +198,15 @@ language state to determine direction — direction is inherited from the ancest
 - **WHEN** `UsageLimitCardGroup` is rendered at the desktop breakpoint with three cards
 - **THEN** the three cards render in three equal-width columns side by side
 
----
-
 ### Requirement: ModelLimitsSection public API
 
 The library SHALL export `ModelLimitsSection`; the string enums `ModelLimitStatus`
 (`WithinLimits`, `RunningLow`, `LimitReached`, `NoLimit`, `Unavailable`) and
 `ModelLimitMetricKind` (`Finite`, `Unlimited`, `Unavailable`); and the types
-`ModelLimitMetricCell`, `ModelLimitPeriodCell`, `ModelLimitRow`, `ModelLimitsLabels`,
-`ModelLimitsColors`, `ModelLimitsTypography`, `ModelLimitsStyles`, and
-`ModelLimitsSectionProps`. `ModelLimitsPeriod` SHALL no longer be exported.
+`ModelLimitMetricCell`, `ModelLimitPeriodCell`, `ModelLimitPeriodStatus`,
+`ModelLimitPeriodStatuses`, `ModelLimitRow`, `ModelLimitsLabels`, `ModelLimitsColors`,
+`ModelLimitsTypography`, `ModelLimitsStyles`, and `ModelLimitsSectionProps`. `ModelLimitsPeriod`
+SHALL no longer be exported.
 
 `ModelLimitMetricCell` SHALL retain its normalized `kind`, preformatted labels, optional uncapped
 finite `usedPercent`/`status`, and required `ariaLabel`. The library SHALL not recompute percentage,
@@ -200,23 +214,39 @@ status, formatting, unlimited classification, or supporting-label selection. It 
 host-provided `supportingLabel` for an unlimited metric, such as `Follows cost limit`.
 
 `ModelLimitPeriodCell` SHALL contain `tokens: ModelLimitMetricCell` and
-`cost: ModelLimitMetricCell`. `ModelLimitRow` SHALL contain identity fields,
-`last24Hours: ModelLimitPeriodCell`, `last7Days: ModelLimitPeriodCell`,
-`last30Days: ModelLimitPeriodCell`, and host-derived `status: ModelLimitStatus`.
+`cost: ModelLimitMetricCell`.
 
-`ModelLimitsLabels` SHALL contain heading, Item/Last 24 hours/Last 7 days/Last 30 days/Status column,
-accessible Tokens/Cost context, model type, metric state, status badge, and
-empty-state strings. It SHALL NOT require period-selector or Requests labels.
+**BREAKING — period property rename.** The three fixed periods SHALL be named for the calendar
+windows they represent, not for trailing durations. `ModelLimitRow` SHALL contain identity fields,
+`day: ModelLimitPeriodCell`, `week: ModelLimitPeriodCell`, `month: ModelLimitPeriodCell`, and
+host-derived `status: ModelLimitStatus`. `ModelLimitPeriodStatuses` SHALL contain `day`, `week`, and
+`month`. The former names `last24Hours`, `last7Days`, and `last30Days` SHALL NOT be exported or
+accepted.
+
+`ModelLimitPeriodStatus` SHALL contain the host-derived `status: ModelLimitStatus`, an optional
+`tooltipLabel`, and the optional preformatted reset trio `resetLabel?: string`,
+`resetIsoValue?: string`, `resetAriaLabel?: string`, carrying the same host-formatted-strings-only
+contract as `UsageLimitCardData`.
+
+`ModelLimitsLabels` SHALL contain heading, Item/day/week/month/Status column labels
+(`dayColumnLabel`, `weekColumnLabel`, `monthColumnLabel`), accessible Tokens/Cost context, model
+type, metric state, status badge, and empty-state strings. It SHALL NOT require period-selector or
+Requests labels.
 
 `ModelLimitsSectionProps` SHALL accept `rows`, `labels`, optional `styles`, and optional
 `emptyStateIconSize`, plus normalized overall Cost statuses/tooltips for the three fixed headers; it
-SHALL NOT accept `period` or `onPeriodChange`. The library SHALL not derive header status or tooltip
-copy from row data.
+SHALL NOT accept `period` or `onPeriodChange`. The library SHALL not derive header status, tooltip
+copy, or reset text from row data.
 
 #### Scenario: Fixed comparison exports are available
 - **WHEN** a consumer imports from `@epam/ai-dial-usage-dashboard`
 - **THEN** the fixed comparison component/types are importable, including `ModelLimitPeriodCell`,
   and `ModelLimitsPeriod` is absent from the supported public contract
+
+#### Scenario: Period properties use calendar names
+- **WHEN** a consumer constructs a `ModelLimitRow` or `ModelLimitPeriodStatuses`
+- **THEN** the compiler requires `day`, `week`, and `month`, and rejects `last24Hours`,
+  `last7Days`, and `last30Days`
 
 #### Scenario: Multiple rows render in supplied order
 - **WHEN** `ModelLimitsSection` receives multiple rows
@@ -227,25 +257,34 @@ copy from row data.
 - **THEN** the heading and count `0` remain visible and the body shows `emptyStateLabel`, with no
   selector or blank table body
 
----
+#### Scenario: Period header renders its reset line
+- **WHEN** a `ModelLimitPeriodStatus` carries `resetLabel`
+- **THEN** that period's column header renders the column label and, beneath it, `resetLabel` inside
+  a `<time>` element whose `dateTime` is `resetIsoValue`
+
+#### Scenario: Period header without a reset label is unchanged
+- **WHEN** a `ModelLimitPeriodStatus` carries no `resetLabel`
+- **THEN** the header renders the column label and its status indicator exactly as before
 
 ### Requirement: Fixed period comparison columns
 
-`ModelLimitsSection` SHALL render exactly the fixed columns Item, Last 24 hours, Last 7 days, Last
-30 days, and Status. It SHALL not render a period selector, Last minute/Last hour option, standalone
-Cost/Tokens/Requests columns, or Requests content. Every period column SHALL render both the Tokens
-and attributed Cost supplied for that period without visible Tokens or Cost subheaders.
+`ModelLimitsSection` SHALL render exactly the fixed columns Item, the calendar day period, the
+calendar week period, the calendar month period, and Status, labelled from
+`labels.dayColumnLabel`, `labels.weekColumnLabel`, and `labels.monthColumnLabel`. It SHALL not
+render a period selector, a minute/hour option, standalone Cost/Tokens/Requests columns, or Requests
+content. Every period column SHALL render both the Tokens and attributed Cost supplied for that
+period without visible Tokens or Cost subheaders.
+
+Column labels SHALL NOT describe the periods as trailing or rolling windows.
 
 #### Scenario: Header contains only requested columns
 - **WHEN** rows are present
-- **THEN** the desktop header order is Item, Last 24 hours, Last 7 days, Last 30 days, Status and no
-  period selector or Requests header is rendered
+- **THEN** the desktop header order is Item, day, week, month, Status and no period selector or
+  Requests header is rendered
 
 #### Scenario: Periods remain visible simultaneously
 - **WHEN** a row is rendered
 - **THEN** all three period cells exist at once and no user action is required to compare them
-
----
 
 ### Requirement: Model limits heading reflects the rendered row count
 
@@ -256,8 +295,6 @@ visible next to the "Model limits" title.
 #### Scenario: Heading reflects row count
 - **WHEN** `ModelLimitsSection` is rendered with 5 rows
 - **THEN** the heading contains `labels.headingLabel` followed by a separately styled count `5`
-
----
 
 ### Requirement: Per-metric cell rendering by kind
 
@@ -297,8 +334,6 @@ of the row's overall Status and other periods.
 - **WHEN** a finite token metric has `usedPercent: 137`
 - **THEN** visual progress is capped at 100 while `aria-valuetext` retains the host's real value
 
----
-
 ### Requirement: Overall row status
 
 The library SHALL render the host-provided `row.status`: `WithinLimits`, `RunningLow`, and
@@ -314,8 +349,6 @@ aggregate period metrics to derive Status.
 - **WHEN** `row.status` is `NoLimit` or `Unavailable`
 - **THEN** the corresponding localized label renders as plain text and the two states remain
   textually distinguishable
-
----
 
 ### Requirement: Model identity rendering reuses `DeploymentIcon`
 
@@ -334,13 +367,11 @@ dependency to render model identity.
 - **THEN** the full `name` text remains available to assistive technology (e.g. via the element's
   accessible name or a tooltip), not only the visually truncated text
 
----
-
 ### Requirement: Model limits table responsive and RTL layout
 
 `ModelLimitsSection` SHALL use mobile-first styles, only the repository `mobile:`/`desktop:`
 breakpoints, and logical directional properties/classes. At desktop widths it SHALL render one
-aligned five-column grid: Item, Last 24 hours, Last 7 days, Last 30 days, and Status. Each period
+aligned five-column grid: Item, Today, This week, This month, and Status. Each period
 column SHALL group its Tokens and Cost content without vertical column borders. Every desktop row's
 grid items SHALL be centered along the vertical axis while preserving their horizontal text/content
 alignment. Token progress tracks SHALL retain the available period-cell width, and the attributed
@@ -369,8 +400,6 @@ direction-agnostic and SHALL NOT be mirrored.
 - **THEN** directional spacing/alignment follows the document direction without language checks,
   physical-direction utilities, or duplicated markup
 
----
-
 ### Requirement: Model limits accessibility
 
 The section SHALL expose a programmatically named table containing the row count and SHALL preserve
@@ -384,23 +413,23 @@ complete host-provided tooltip as an accessible name, and provide at least a 44�
 target where it is shown on mobile.
 
 #### Scenario: Overall Cost status is explained from the period header
-- **WHEN** Last 24 hours overall Cost status is `LimitReached`
+- **WHEN** the day overall Cost status is `LimitReached`
 - **THEN** its header renders an error indicator whose accessible tooltip explains that the overall
-  Last 24 hours Cost limit is reached and models cannot be used until it resets
+  day Cost limit is reached and models cannot be used until the period resets
 
 #### Scenario: Table name includes rendered row count
 - **WHEN** the section has 7 rows
 - **THEN** its accessible table name includes the Model tokens limits label and count `7`
 
 #### Scenario: Period progress has unambiguous context
-- **WHEN** assistive technology reaches a model's Last 7 days token progress bar
-- **THEN** its accessible name identifies Last 7 days and Tokens and its value text provides full
+- **WHEN** assistive technology reaches a model's week token progress bar
+- **THEN** its accessible name identifies the week period and Tokens and its value text provides full
   used/total information
 
 #### Scenario: Mobile retains one semantic table
 - **WHEN** CSS stacks a row at mobile width
-- **THEN** the same semantic table/row/cell nodes remain available and reading order is Item, Last
-  24 hours, Last 7 days, Last 30 days, Status
+- **THEN** the same semantic table/row/cell nodes remain available and reading order is Item,
+  Today, This week, This month, Status
 
 ---
 
@@ -413,16 +442,19 @@ that hosts the Usage tab can share the DTO-interpretation logic without duplicat
 
 ### Requirement: mapUsageDataToDashboard utility
 
-The library SHALL export `mapUsageDataToDashboard(usage, t)` and the companion const
+The library SHALL export `mapUsageDataToDashboard(usage, t, formatResetTime)` and the companion const
 `USAGE_DATA_I18N_KEYS` from `libs/usage-dashboard/src/utils/map-usage-data-to-dashboard.ts`.
 
-`mapUsageDataToDashboard` SHALL accept `usage: UserLimitStatsResponseDto | undefined` and a
-caller-supplied `t: (key: string, options?) => string` translate callback, and SHALL return a
+`mapUsageDataToDashboard` SHALL accept `usage: UserLimitStatsResponseDto | undefined`, a
+caller-supplied `t: (key: string, options?) => string` translate callback, and a caller-supplied
+`formatResetTime: FormatResetTime` callback, and SHALL return a
 `UsageLimitCardData[]` array mapping `dayCostStats` / `weekCostStats` / `monthCostStats` to Today /
 This week / This month cards in that fixed order. A period SHALL be omitted from the result when the
 response carries no usable stat for it. All DTO interpretation — the unlimited-sentinel check
 (`total >= 2**53`), status-threshold derivation (`RUNNING_LOW_THRESHOLD_PERCENT = 75`), and
-`formatCost` currency formatting — SHALL happen inside this utility.
+`formatCost` currency formatting — SHALL happen inside this utility. Reset-time interpretation
+SHALL NOT: each card's `resetLabel` / `resetIsoValue` / `resetAriaLabel` come from
+`formatResetTime`, and all three are absent when it returns `undefined`.
 
 `USAGE_DATA_I18N_KEYS` SHALL be a `const` object whose values are the default i18n key strings the
 utility passes to `t`, so consuming apps know which keys to include in their translation bundle.
@@ -435,8 +467,6 @@ utility passes to `t`, so consuming apps know which keys to include in their tra
 #### Scenario: Missing period omitted
 - **WHEN** `usage` has only `dayCostStats`
 - **THEN** the returned array contains exactly one entry for Today
-
----
 
 ### Requirement: mapUserUsageToModelLimits utility
 
@@ -466,23 +496,61 @@ least one displayed period SHALL be included.
 - **WHEN** `mapUserUsageToModelLimits` processes a deployment with a raw `iconUrl`
 - **THEN** `resolveIconUrl` is called with that raw value and its return is used as `avatarSrc`
 
----
-
 ### Requirement: mapOverallCostLimitsToPeriodStatuses utility
 
-The library SHALL export `mapOverallCostLimitsToPeriodStatuses(usage, activeLocale, t)` from
+The library SHALL export `mapOverallCostLimitsToPeriodStatuses(usage, activeLocale, t, formatResetTime?)` from
 `libs/usage-dashboard/src/utils/map-user-usage-to-model-limits.ts`.
 
 The function SHALL accept `usage: UserLimitStatsResponseDto | undefined`, `activeLocale: string`,
-and `t`, and SHALL return a `ModelLimitPeriodStatuses` object mapping the top-level
+`t`, and an optional `formatResetTime: FormatResetTime`, and SHALL return a
+`ModelLimitPeriodStatuses` object keyed `day` / `week` / `month`, mapping the top-level
 `dayCostStats` / `weekCostStats` / `monthCostStats` fields to the three fixed period headers of
-`ModelLimitsSection`, with `status` and optional `tooltipLabel` for each period.
+`ModelLimitsSection`, with `status`, optional `tooltipLabel`, and — when `formatResetTime` is
+supplied — the preformatted reset trio for each period. Omitting `formatResetTime` SHALL produce
+statuses with no reset fields.
 
 #### Scenario: Limit-reached period header status
 - **WHEN** `dayCostStats` has `used >= total`
-- **THEN** `last24Hours.status` is `ModelLimitStatus.LimitReached` and `tooltipLabel` is a
+- **THEN** `day.status` is `ModelLimitStatus.LimitReached` and `tooltipLabel` is a
   non-empty string from `t`
 
 #### Scenario: Absent usage produces unavailable statuses
 - **WHEN** `usage` is `undefined`
 - **THEN** all three period statuses are `ModelLimitStatus.Unavailable` with no tooltip
+
+### Requirement: Reset-time rendering is responsive, RTL-safe, and accessible
+
+Every reset line the library renders SHALL satisfy the library's existing responsive, RTL, and
+accessibility rules — on a `UsageLimitCard` and in a `ModelLimitsSection` period header alike.
+
+- It SHALL use only logical or direction-agnostic spacing utilities; no `ml-*`/`mr-*`, `pl-*`/`pr-*`,
+  `left-*`/`right-*`, or `text-left`/`text-right` class SHALL be introduced for it.
+- It SHALL contain no icon, and therefore no directional icon mirroring is required.
+- It SHALL wrap rather than force horizontal overflow at mobile width, and SHALL NOT introduce a new
+  breakpoint.
+- It SHALL render inside a `<time>` element carrying `dateTime={resetIsoValue}`.
+- When `resetAriaLabel` is supplied, that text SHALL render on a visually-hidden sibling and the
+  visible `<time>` SHALL be marked `aria-hidden`. It SHALL NOT be applied as `aria-label` on the
+  `<time>` itself, which has no implicit ARIA role and therefore does not reliably support one.
+  When the field is absent, the visible text is the line's accessible name.
+- It SHALL NOT alter the card's `progressAriaLabel` or the period header's existing status-indicator
+  `aria-label`.
+
+#### Scenario: No horizontal overflow on mobile with a long reset label
+- **WHEN** the group and section render at mobile width with a long formatted reset label
+- **THEN** the label wraps within its container and no horizontal scrollbar appears
+
+#### Scenario: Layout mirrors under RTL
+- **WHEN** an ancestor sets `dir="rtl"`
+- **THEN** the reset line mirrors with the rest of the card or header, with no element pinned to a
+  physical side by a class introduced for it
+
+#### Scenario: Reset time is machine-readable
+- **WHEN** a reset line renders
+- **THEN** its `<time>` element exposes the original UTC instant via `dateTime`, independent of the
+  localized visible text
+
+#### Scenario: Reset line does not displace existing accessible names
+- **WHEN** a card with a reset line renders
+- **THEN** the progress bar's `aria-valuetext` and the badge text are unchanged from a card without
+  one

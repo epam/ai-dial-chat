@@ -4070,6 +4070,12 @@ export interface LimitStatsDto {
    * @memberof LimitStatsDto
    */
   used: number;
+  /**
+   * Optional ISO-8601 instant with an explicit UTC designator marking the exclusive end of this stat's current calendar accumulation period — at that instant the period rolls over and DIAL Core begins reporting against a fresh window. Its presence establishes that the day, week, and month stats are calendar periods anchored to UTC boundaries (UTC midnight, UTC week start, UTC month start), not trailing windows. DIAL Core may omit it on a given stat, and its absence is not an error. The BFF forwards the value verbatim and never parses, reformats, converts, clamps, drops, or synthesizes it.
+   * @type {string}
+   * @memberof LimitStatsDto
+   */
+  resetsAt?: string;
 }
 /**
  *
@@ -7569,31 +7575,31 @@ export interface UserConfigDto {
  */
 export interface UserLimitStatsResponseDto {
   /**
-   * Per-deployment rate-limit and rolling usage stats, keyed by deployment name. Models only — applications, toolsets, and routes never appear here. On GET /v1/user/limits every deployment visible to the caller is present, including ones never used (reported against zero usage). On GET /v1/user/usage only deployments used in the trailing 30 days are present; absence means zero usage, not "unknown".
+   * Per-deployment rate-limit and calendar-period usage stats, keyed by deployment name. Models only — applications, toolsets, and routes never appear here. On GET /v1/user/limits every deployment visible to the caller is present, including ones never used (reported against zero usage). On GET /v1/user/usage only deployments the caller used within the currently reported calendar periods are present; absence means zero usage, not "unknown".
    * @type {{ [key: string]: DeploymentLimitsResponseDto; }}
    * @memberof UserLimitStatsResponseDto
    */
   deployments?: { [key: string]: DeploymentLimitsResponseDto };
   /**
-   * The caller's global cost budget for the trailing minute and spend against it. Unlike the identically-named field nested inside a `deployments` entry (that is per-deployment attributed spend with an unlimited `total`), this is the caller's actual money budget. A `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio.
+   * The caller's global cost budget for the current UTC minute and spend against it. Unlike the identically-named field nested inside a `deployments` entry (that is per-deployment attributed spend whose `total` is the unlimited sentinel in every payload observed to date; consumers detect the sentinel rather than assume it), this is the caller's actual money budget. A `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio.
    * @type {LimitStatsDto}
    * @memberof UserLimitStatsResponseDto
    */
   minuteCostStats?: LimitStatsDto;
   /**
-   * The caller's global cost budget for the trailing 24 hours and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * The caller's global cost budget for the current UTC day and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
    * @type {LimitStatsDto}
    * @memberof UserLimitStatsResponseDto
    */
   dayCostStats?: LimitStatsDto;
   /**
-   * The caller's global cost budget for the trailing 7 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * The caller's global cost budget for the current UTC week and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
    * @type {LimitStatsDto}
    * @memberof UserLimitStatsResponseDto
    */
   weekCostStats?: LimitStatsDto;
   /**
-   * The caller's global cost budget for the trailing 30 days and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
+   * The caller's global cost budget for the current UTC month and spend against it. See minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.
    * @type {LimitStatsDto}
    * @memberof UserLimitStatsResponseDto
    */

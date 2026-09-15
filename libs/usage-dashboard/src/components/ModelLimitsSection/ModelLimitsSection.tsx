@@ -19,12 +19,14 @@ interface PeriodHeaderProps {
   label: string;
   periodStatus: ModelLimitPeriodStatus;
   className: string;
+  resetLabelClassName: string;
 }
 
 const PeriodHeader: FC<PeriodHeaderProps> = ({
   label,
   periodStatus,
   className,
+  resetLabelClassName,
 }) => (
   <span
     role="columnheader"
@@ -34,12 +36,34 @@ const PeriodHeader: FC<PeriodHeaderProps> = ({
       styles.columnHeader,
     )}
   >
-    <span className="min-w-0 truncate">{label}</span>
+    <span className="flex min-w-0 flex-col">
+      <span className="min-w-0 truncate">{label}</span>
+      {periodStatus.resetLabel != null && (
+        <>
+          {/* See UsageLimitCard: the spoken form rides an sr-only sibling
+              because `aria-label` is not reliably supported on a `<time>`. */}
+          <time
+            dateTime={periodStatus.resetIsoValue}
+            aria-hidden={periodStatus.resetAriaLabel != null || undefined}
+            className={mergeClasses(
+              'block break-words',
+              resetLabelClassName,
+              styles.secondaryValue,
+            )}
+          >
+            {periodStatus.resetLabel}
+          </time>
+          {periodStatus.resetAriaLabel != null && (
+            <span className="sr-only">{periodStatus.resetAriaLabel}</span>
+          )}
+        </>
+      )}
+    </span>
     <PeriodStatusIndicator periodStatus={periodStatus} />
   </span>
 );
 
-/** "Model limits" section: a fixed table comparing Cost and Tokens across three rolling periods. */
+/** "Model limits" section: a fixed table comparing Cost and Tokens across the current UTC day, week, and month. */
 export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
   rows,
   labels,
@@ -52,6 +76,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
     headingClassName = 'dial-body-semi-text',
     headingCountClassName = 'dial-tiny-semi-text',
     columnHeaderClassName = 'dial-caption-lead-semi-text',
+    resetLabelClassName = 'dial-tiny-text',
   } = typography;
 
   const cssVars = buildCssVars({
@@ -138,19 +163,22 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
                 {labels.itemColumnLabel}
               </span>
               <PeriodHeader
-                label={labels.last24HoursColumnLabel}
-                periodStatus={periodStatuses.last24Hours}
+                label={labels.dayColumnLabel}
+                periodStatus={periodStatuses.day}
                 className={columnHeaderClassName}
+                resetLabelClassName={resetLabelClassName}
               />
               <PeriodHeader
-                label={labels.last7DaysColumnLabel}
-                periodStatus={periodStatuses.last7Days}
+                label={labels.weekColumnLabel}
+                periodStatus={periodStatuses.week}
                 className={columnHeaderClassName}
+                resetLabelClassName={resetLabelClassName}
               />
               <PeriodHeader
-                label={labels.last30DaysColumnLabel}
-                periodStatus={periodStatuses.last30Days}
+                label={labels.monthColumnLabel}
+                periodStatus={periodStatuses.month}
                 className={columnHeaderClassName}
+                resetLabelClassName={resetLabelClassName}
               />
               <span
                 role="columnheader"

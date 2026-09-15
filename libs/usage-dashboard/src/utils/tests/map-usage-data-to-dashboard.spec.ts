@@ -1,6 +1,7 @@
 import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
 import { UsageLimitStatus } from '../../models/usage-limit-card-props';
+import type { FormatResetTime } from '../map-usage-data-to-dashboard';
 import {
   USAGE_DATA_I18N_KEYS,
   mapUsageDataToDashboard,
@@ -16,16 +17,51 @@ const t: Translate = (key, params) => {
     return `${params?.used} of ${params?.total}, ${params?.percent}% used`;
   }
   if (key === USAGE_DATA_I18N_KEYS.todayTitle) return 'Today';
-  if (key === USAGE_DATA_I18N_KEYS.todayPeriodDescription)
-    return 'Last 24 hours';
+  if (key === USAGE_DATA_I18N_KEYS.todayPeriodDescription) return 'Today';
   if (key === USAGE_DATA_I18N_KEYS.thisWeekTitle) return 'This week';
   if (key === USAGE_DATA_I18N_KEYS.thisWeekPeriodDescription)
-    return 'Last 7 days';
+    return 'This week';
   if (key === USAGE_DATA_I18N_KEYS.thisMonthTitle) return 'This month';
   if (key === USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription)
-    return 'Last 30 days';
+    return 'This month';
   return key;
 };
+
+/* The default for cases that are not about reset times. */
+const noReset: FormatResetTime = () => undefined;
+
+/*
+ * Reset values and top-level cost figures reproduced from the real
+ * GET /api/v1/user/usage capture in
+ * openspec/changes/migrate-usage-reset-times/fixtures/ — a payload that mixes a
+ * finite day and month budget with a sentinel week budget, and carries
+ * `resetsAt` on all three.
+ */
+const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
+const WEEK_RESETS_AT = '2026-09-21T00:00:00Z';
+const MONTH_RESETS_AT = '2026-10-01T00:00:00Z';
+const UNLIMITED_SENTINEL = 9223372036854776000;
+
+const CAPTURED_STATS = {
+  dayCostStats: { total: 110, used: 0.42641085, resetsAt: DAY_RESETS_AT },
+  weekCostStats: {
+    total: UNLIMITED_SENTINEL,
+    used: 1.7928459,
+    resetsAt: WEEK_RESETS_AT,
+  },
+  monthCostStats: { total: 500, used: 2.3991724, resetsAt: MONTH_RESETS_AT },
+};
+
+/* Echoes the input so each card's trio is traceable to its own stat. */
+const formatReset: FormatResetTime = (resetsAt) =>
+  resetsAt == null
+    ? undefined
+    : {
+        resetsAtMs: Date.parse(resetsAt),
+        isoValue: resetsAt,
+        label: `Resets ${resetsAt}`,
+        ariaLabel: `Usage resets ${resetsAt}`,
+      };
 
 const withStats = (
   fields: Partial<
@@ -44,16 +80,16 @@ describe('mapUsageDataToDashboard', () => {
       monthCostStats: { used: 41, total: 120 },
     });
 
-    const result = mapUsageDataToDashboard(usage, t);
+    const result = mapUsageDataToDashboard(usage, t, noReset);
 
     expect(result.map((card) => card.title)).toEqual([
-      'Last 24 hours',
-      'Last 7 days',
-      'Last 30 days',
+      'Today',
+      'This week',
+      'This month',
     ]);
     expect(result[0]).toEqual({
-      title: 'Last 24 hours',
-      periodDescription: 'Last 24 hours',
+      title: 'Today',
+      periodDescription: 'Today',
       used: 3.6,
       total: 4,
       usedLabel: '$3.6',
@@ -69,15 +105,17 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: 1, total: 10 } }),
       t,
+      noReset,
     );
 
-    expect(result.map((card) => card.title)).toEqual(['Last 24 hours']);
+    expect(result.map((card) => card.title)).toEqual(['Today']);
   });
 
   it('rounds accumulated costs and remaining amounts to cents', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: 0.788438, total: 100 } }),
       t,
+      noReset,
     );
 
     expect(result[0].usedLabel).toBe('$0.79');
@@ -86,13 +124,13 @@ describe('mapUsageDataToDashboard', () => {
   });
 
   it('returns an empty array when no period has a usable stat', () => {
-    const result = mapUsageDataToDashboard(withStats({}), t);
+    const result = mapUsageDataToDashboard(withStats({}), t, noReset);
 
     expect(result).toEqual([]);
   });
 
   it('returns an empty array when usage is undefined', () => {
-    const result = mapUsageDataToDashboard(undefined, t);
+    const result = mapUsageDataToDashboard(undefined, t, noReset);
 
     expect(result).toEqual([]);
   });
@@ -101,6 +139,7 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: -5, total: 100 } }),
       t,
+      noReset,
     );
 
     expect(result[0].used).toBe(0);
@@ -113,6 +152,7 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: NaN, total: 100 } }),
       t,
+      noReset,
     );
 
     expect(result).toEqual([]);
@@ -122,11 +162,12 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: 12.5, total: 2 ** 53 } }),
       t,
+      noReset,
     );
 
     expect(result[0]).toEqual({
-      title: 'Last 24 hours',
-      periodDescription: 'Last 24 hours',
+      title: 'Today',
+      periodDescription: 'Today',
       used: 12.5,
       total: 2 ** 53,
       usedLabel: '$12.5',
@@ -140,6 +181,7 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: 0, total: 2 ** 60 } }),
       t,
+      noReset,
     );
 
     expect(result[0].isUnlimited).toBe(true);
@@ -149,6 +191,7 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: 5.48, total: 4 } }),
       t,
+      noReset,
     );
 
     expect(result[0].usedPercent).toBe(137);
@@ -160,6 +203,7 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: 75, total: 100 } }),
       t,
+      noReset,
     );
 
     expect(result[0].usedPercent).toBe(75);
@@ -170,6 +214,7 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: 74.9, total: 100 } }),
       t,
+      noReset,
     );
 
     expect(result[0].status).toBe(UsageLimitStatus.Default);
@@ -179,8 +224,101 @@ describe('mapUsageDataToDashboard', () => {
     const result = mapUsageDataToDashboard(
       withStats({ dayCostStats: { used: 100, total: 100 } }),
       t,
+      noReset,
     );
 
     expect(result[0].status).toBe(UsageLimitStatus.LimitReached);
+  });
+
+  describe('reset times', () => {
+    it("populates each card's reset trio from its own stat", () => {
+      const result = mapUsageDataToDashboard(
+        withStats(CAPTURED_STATS),
+        t,
+        formatReset,
+      );
+
+      expect(
+        result.map(({ resetLabel, resetIsoValue, resetAriaLabel }) => ({
+          resetLabel,
+          resetIsoValue,
+          resetAriaLabel,
+        })),
+      ).toEqual([
+        {
+          resetLabel: `Resets ${DAY_RESETS_AT}`,
+          resetIsoValue: DAY_RESETS_AT,
+          resetAriaLabel: `Usage resets ${DAY_RESETS_AT}`,
+        },
+        {
+          resetLabel: `Resets ${WEEK_RESETS_AT}`,
+          resetIsoValue: WEEK_RESETS_AT,
+          resetAriaLabel: `Usage resets ${WEEK_RESETS_AT}`,
+        },
+        {
+          resetLabel: `Resets ${MONTH_RESETS_AT}`,
+          resetIsoValue: MONTH_RESETS_AT,
+          resetAriaLabel: `Usage resets ${MONTH_RESETS_AT}`,
+        },
+      ]);
+    });
+
+    it('leaves all three fields absent when the formatter returns undefined', () => {
+      const result = mapUsageDataToDashboard(
+        withStats(CAPTURED_STATS),
+        t,
+        noReset,
+      );
+
+      for (const card of result) {
+        expect(card).not.toHaveProperty('resetLabel');
+        expect(card).not.toHaveProperty('resetIsoValue');
+        expect(card).not.toHaveProperty('resetAriaLabel');
+      }
+    });
+
+    it('leaves the fields absent for a stat that carries no resetsAt', () => {
+      const result = mapUsageDataToDashboard(
+        withStats({ dayCostStats: { total: 110, used: 0.43 } }),
+        t,
+        formatReset,
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).not.toHaveProperty('resetLabel');
+      expect(result[0].usedLabel).toBe('$0.43');
+    });
+
+    it('carries the reset trio on an unlimited card too', () => {
+      const result = mapUsageDataToDashboard(
+        withStats({ weekCostStats: CAPTURED_STATS.weekCostStats }),
+        t,
+        formatReset,
+      );
+
+      expect(result[0].isUnlimited).toBe(true);
+      expect(result[0].totalLabel).toBeUndefined();
+      expect(result[0].resetLabel).toBe(`Resets ${WEEK_RESETS_AT}`);
+      expect(result[0].resetIsoValue).toBe(WEEK_RESETS_AT);
+    });
+
+    it('titles the cards with the calendar names', () => {
+      const result = mapUsageDataToDashboard(
+        withStats(CAPTURED_STATS),
+        t,
+        formatReset,
+      );
+
+      expect(result.map((card) => card.title)).toEqual([
+        'Today',
+        'This week',
+        'This month',
+      ]);
+      expect(result.map((card) => card.periodDescription)).toEqual([
+        'Today',
+        'This week',
+        'This month',
+      ]);
+    });
   });
 });

@@ -40,22 +40,39 @@ export interface ModelLimitMetricCell {
   ariaLabel: string;
 }
 
-/** Normalized overall Cost status and optional explanatory tooltip for one period header. */
+/** Normalized overall Cost status, optional explanatory tooltip, and optional reset time for one period header. */
 export interface ModelLimitPeriodStatus {
   /** Host-derived status of the matching overall Cost limit. */
   status: ModelLimitStatus;
   /** Complete tooltip/accessibility text for warning and error indicators. */
   tooltipLabel?: string;
+  /*
+   * The reset-time trio is host-preformatted. The library renders these
+   * strings verbatim and never parses, formats, or timezone-shifts them — it
+   * imports no `Intl`, and accepts no locale, timezone, or raw timestamp. All
+   * three are absent together when the host could not format a reset time, in
+   * which case the header renders exactly as it did before reset times
+   * existed.
+   */
+  /** Visible reset line, e.g. `'Resets Sep 16, 2026, 2:00 AM GMT+2'`. */
+  resetLabel?: string;
+  /** Machine-readable instant for the reset line's `<time dateTime>` attribute, e.g. `'2026-09-16T00:00:00Z'`. */
+  resetIsoValue?: string;
+  /** Accessible expansion of the reset line, applied as its `aria-label` when supplied. */
+  resetAriaLabel?: string;
 }
 
-/** Overall Cost statuses aligned with the three fixed comparison periods. */
+/** Overall Cost statuses aligned with the three fixed calendar-period columns. */
 export interface ModelLimitPeriodStatuses {
-  last24Hours: ModelLimitPeriodStatus;
-  last7Days: ModelLimitPeriodStatus;
-  last30Days: ModelLimitPeriodStatus;
+  /** Overall Cost status for the current UTC day. */
+  day: ModelLimitPeriodStatus;
+  /** Overall Cost status for the current UTC week. */
+  week: ModelLimitPeriodStatus;
+  /** Overall Cost status for the current UTC month. */
+  month: ModelLimitPeriodStatus;
 }
 
-/** Preformatted Cost and Tokens values for one rolling-period column. */
+/** Preformatted Cost and Tokens values for one calendar-period column. */
 export interface ModelLimitPeriodCell {
   /** Tokens usage and limit for the period. */
   tokens: ModelLimitMetricCell;
@@ -63,7 +80,7 @@ export interface ModelLimitPeriodCell {
   cost: ModelLimitMetricCell;
 }
 
-/** One row of the Model tokens limits table: model identity, three rolling-period comparisons, and overall status. */
+/** One row of the Model tokens limits table: model identity, three calendar-period comparisons, and overall status. */
 export interface ModelLimitRow {
   /** Stable identifier for the row, e.g. the deployment ID. */
   id: string;
@@ -73,12 +90,12 @@ export interface ModelLimitRow {
   version?: string;
   /** Image URL for the model's avatar. When absent, an initials-based fallback derived from `name` is shown. */
   avatarSrc?: string;
-  /** Cost and Tokens metrics for the rolling 24-hour period. */
-  last24Hours: ModelLimitPeriodCell;
-  /** Cost and Tokens metrics for the rolling 7-day period. */
-  last7Days: ModelLimitPeriodCell;
-  /** Cost and Tokens metrics for the rolling 30-day period. */
-  last30Days: ModelLimitPeriodCell;
+  /** Cost and Tokens metrics for the current UTC day. */
+  day: ModelLimitPeriodCell;
+  /** Cost and Tokens metrics for the current UTC week. */
+  week: ModelLimitPeriodCell;
+  /** Cost and Tokens metrics for the current UTC month. */
+  month: ModelLimitPeriodCell;
   /** Host-derived overall status across all model-token and overall Cost limit periods. */
   status: ModelLimitStatus;
 }
@@ -89,12 +106,12 @@ export interface ModelLimitsLabels {
   headingLabel: string;
   /** Column header text for the Item (identity) column. */
   itemColumnLabel: string;
-  /** Column header text for the rolling 24-hour period. */
-  last24HoursColumnLabel: string;
-  /** Column header text for the rolling 7-day period. */
-  last7DaysColumnLabel: string;
-  /** Column header text for the rolling 30-day period. */
-  last30DaysColumnLabel: string;
+  /** Column header text for the current UTC day. */
+  dayColumnLabel: string;
+  /** Column header text for the current UTC week. */
+  weekColumnLabel: string;
+  /** Column header text for the current UTC month. */
+  monthColumnLabel: string;
   /** Column header text for the Status column. */
   statusColumnLabel: string;
   /** Non-visual accessible label for Tokens values inside every period cell. */
@@ -179,6 +196,8 @@ export interface ModelLimitsTypography {
   headingCountClassName?: string;
   /** CSS class for column headers. Defaults to `'dial-caption-lead-semi-text'`. */
   columnHeaderClassName?: string;
+  /** CSS class for a period header's reset-time line. Defaults to `'dial-tiny-text'`. */
+  resetLabelClassName?: string;
   /** CSS class for the model name. Defaults to `'dial-small-semi-text'`. */
   nameClassName?: string;
   /** CSS class for the model entity type. Defaults to `'dial-caption-lead-semi-text'`. */

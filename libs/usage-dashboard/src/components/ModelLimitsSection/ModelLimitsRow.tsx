@@ -79,6 +79,7 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
     versionClassName = 'dial-small-text',
     valueClassName = 'dial-small-text',
     badgeClassName = 'dial-caption-lead-semi-text',
+    resetLabelClassName = 'dial-tiny-text',
   } = typography;
 
   const hasStatusBadge =
@@ -146,25 +147,28 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
       </div>
 
       <PeriodCell
-        cell={row.last24Hours}
-        periodLabel={labels.last24HoursColumnLabel}
-        periodStatus={periodStatuses.last24Hours}
+        cell={row.day}
+        periodLabel={labels.dayColumnLabel}
+        periodStatus={periodStatuses.day}
         labels={labels}
         typography={typography}
+        resetLabelClassName={resetLabelClassName}
       />
       <PeriodCell
-        cell={row.last7Days}
-        periodLabel={labels.last7DaysColumnLabel}
-        periodStatus={periodStatuses.last7Days}
+        cell={row.week}
+        periodLabel={labels.weekColumnLabel}
+        periodStatus={periodStatuses.week}
         labels={labels}
         typography={typography}
+        resetLabelClassName={resetLabelClassName}
       />
       <PeriodCell
-        cell={row.last30Days}
-        periodLabel={labels.last30DaysColumnLabel}
-        periodStatus={periodStatuses.last30Days}
+        cell={row.month}
+        periodLabel={labels.monthColumnLabel}
+        periodStatus={periodStatuses.month}
         labels={labels}
         typography={typography}
+        resetLabelClassName={resetLabelClassName}
       />
 
       <div

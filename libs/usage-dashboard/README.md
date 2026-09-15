@@ -3,16 +3,54 @@
 ## Overview
 
 Provides `UsageLimitCardGroup` and `UsageLimitCard`, presentational cards for a caller's aggregate
-cost-budget usage over a rolling period (e.g. today, this week, this month), and
-`ModelLimitsSection`, a presentational per-model comparison table with fixed Last 24 hours, Last 7
-days, and Last 30 days columns. Each period groups Tokens usage/progress with a compact attributed
-Cost line, and a final Status reflects the host-derived result across model-token and overall Cost
-limits in all periods. Overall Cost warning/reached indicators and their tooltips are supplied for
-the matching period headers. All components are fully host-agnostic: they take already-normalized,
+cost-budget usage over a calendar period (the current UTC day, week, and month), and
+`ModelLimitsSection`, a presentational per-model comparison table with fixed Today / This week /
+This month columns. Each period groups Tokens usage/progress with a compact attributed Cost line, and a final
+Status reflects the host-derived result across model-token and overall Cost limits in all periods.
+Overall Cost warning/reached indicators, their tooltips, and an optional preformatted reset-time
+line are supplied for the matching period headers. All components are fully host-agnostic: they take already-normalized,
 preformatted amounts, status enums, and localized labels via props — they never interpret raw API
 data, format currency, detect the unlimited sentinel, or compute percentages themselves.
 `UsageLimitCardGroup` renders each card as its own independent, equally-sized box: stacked on mobile,
 side by side on desktop. `UsageLimitCard` is also exported standalone for a single-card use case.
+
+### BREAKING — period properties renamed to calendar names
+
+The three fixed periods are DIAL Core **calendar** windows anchored to UTC boundaries (UTC midnight,
+UTC week start, UTC month start), not trailing windows of 24 hours, 7 days, or 30 days. The property
+names were renamed accordingly; the old names are no longer exported or accepted.
+
+| Type | Old property | New property |
+| --- | --- | --- |
+| `ModelLimitRow` | `last24Hours` | `day` |
+| `ModelLimitRow` | `last7Days` | `week` |
+| `ModelLimitRow` | `last30Days` | `month` |
+| `ModelLimitPeriodStatuses` | `last24Hours` | `day` |
+| `ModelLimitPeriodStatuses` | `last7Days` | `week` |
+| `ModelLimitPeriodStatuses` | `last30Days` | `month` |
+| `ModelLimitsLabels` | `last24HoursColumnLabel` | `dayColumnLabel` |
+| `ModelLimitsLabels` | `last7DaysColumnLabel` | `weekColumnLabel` |
+| `ModelLimitsLabels` | `last30DaysColumnLabel` | `monthColumnLabel` |
+
+Column-label **values** should change with them — pass `Today` / `This week` / `This month` rather
+than `Last 24 hours` / `Last 7 days` / `Last 30 days`.
+
+`mapUsageDataToDashboard` also gained a required third parameter, `formatResetTime`; see
+[Utilities](#utilities).
+
+### Reset times
+
+`UsageLimitCardData` and `ModelLimitPeriodStatus` each accept an optional trio of host-preformatted
+reset-time strings — `resetLabel` (visible text), `resetIsoValue` (the machine-readable instant for
+the rendered `<time dateTime>`), and `resetAriaLabel` (the spoken form, which should name the
+timezone in full rather than as an offset). When `resetAriaLabel` is supplied the library renders it
+on a visually-hidden sibling and marks the visible `<time>` `aria-hidden`, because `aria-label` is
+not reliably supported on a bare `<time>`; with no `resetAriaLabel` the visible line is its own
+accessible name. The library renders every string verbatim: it imports no `Intl`, accepts no locale, timezone, or raw timestamp, and never parses
+or reformats a value. All three are absent together when the host could not format a reset time, in
+which case the card or header renders exactly as it did before reset times existed. A card renders
+its reset line even when `isUnlimited` is `true` — an unconfigured limit still accumulates spend
+against a period that rolls over.
 
 ## Installation
 
@@ -50,7 +88,7 @@ import {
   cards={[
     {
       title: 'Today',
-      periodDescription: 'Last 24 hours',
+      periodDescription: 'Today',
       used: 3.6,
       total: 4,
       usedLabel: '$3.60',
@@ -62,7 +100,7 @@ import {
     },
     {
       title: 'This month',
-      periodDescription: 'Last 30 days',
+      periodDescription: 'This month',
       used: 41,
       total: 120,
       usedLabel: '$41.00',
@@ -71,6 +109,10 @@ import {
       usedPercent: 34,
       status: UsageLimitStatus.Default,
       progressAriaLabel: '$41.00 of $120.00, 34% used',
+      resetLabel: 'Resets Oct 1, 2026, 2:00 AM GMT+2',
+      resetIsoValue: '2026-10-01T00:00:00Z',
+      resetAriaLabel:
+        'Usage resets Oct 1, 2026, 2:00 AM Central European Summer Time',
     },
   ]}
   labels={{
@@ -108,7 +150,7 @@ import {
 <UsageLimitCard
   data={{
     title: 'Today',
-    periodDescription: 'Last 24 hours',
+    periodDescription: 'Today',
     used: 0.4,
     total: 4,
     usedLabel: '$0.40',
@@ -133,7 +175,7 @@ import {
 ### ModelLimitsSection
 
 Renders a "Model tokens limits" heading with the rendered row count and one fixed comparison table per
-model: Item, Last 24 hours, Last 7 days, Last 30 days, and Status. Every period cell contains Tokens
+model: Item, Today, This week, This month, and Status. Every period cell contains Tokens
 followed by an attributed Cost amount supplied by the host. Cost has no visible sublabel,
 per-model limit, or progress bar; `costLabel` supplies screen-reader context. Overall Cost statuses
 can add warning/reached icons with accessible tooltips to the period headers. Desktop row content is
@@ -148,13 +190,17 @@ import {
 
 <ModelLimitsSection
   periodStatuses={{
-    last24Hours: {
+    day: {
       status: ModelLimitStatus.LimitReached,
       tooltipLabel:
-        "Overall last 24 hours cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.",
+        "Overall cost limit for today is reached. Models can't be used until the period resets, regardless of remaining token limits.",
+      resetLabel: 'Resets Sep 16, 2026, 2:00 AM GMT+2',
+      resetIsoValue: '2026-09-16T00:00:00Z',
+      resetAriaLabel:
+        'Usage resets Sep 16, 2026, 2:00 AM Central European Summer Time',
     },
-    last7Days: { status: ModelLimitStatus.WithinLimits },
-    last30Days: { status: ModelLimitStatus.WithinLimits },
+    week: { status: ModelLimitStatus.WithinLimits },
+    month: { status: ModelLimitStatus.WithinLimits },
   }}
   rows={[
     {
@@ -162,7 +208,7 @@ import {
       name: 'GPT-4o',
       version: '2024-08-06',
       avatarSrc: 'https://example.com/gpt-4o.png',
-      last24Hours: {
+      day: {
         tokens: {
           kind: ModelLimitMetricKind.Finite,
           usedLabel: '4K',
@@ -177,7 +223,7 @@ import {
           ariaLabel: '$3.20 spent',
         },
       },
-      last7Days: {
+      week: {
         tokens: {
           kind: ModelLimitMetricKind.Finite,
           usedLabel: '52K',
@@ -192,7 +238,7 @@ import {
           ariaLabel: '$18.60 spent',
         },
       },
-      last30Days: {
+      month: {
         tokens: {
           kind: ModelLimitMetricKind.Finite,
           usedLabel: '240K',
@@ -213,9 +259,9 @@ import {
   labels={{
     headingLabel: 'Model tokens limits',
     itemColumnLabel: 'Item',
-    last24HoursColumnLabel: 'Last 24 hours',
-    last7DaysColumnLabel: 'Last 7 days',
-    last30DaysColumnLabel: 'Last 30 days',
+    dayColumnLabel: 'Today',
+    weekColumnLabel: 'This week',
+    monthColumnLabel: 'This month',
     statusColumnLabel: 'Status',
     tokensLabel: 'Tokens',
     costLabel: 'Cost',
@@ -251,6 +297,8 @@ Three pure transform functions map raw `UserLimitStatsResponseDto` data (from `@
 
 Maps a `UserLimitStatsResponseDto` into the `cards` array for `UsageLimitCardGroup`, in Today / This week / This month order. A period is omitted when the response carries no usable stat for it.
 
+Requires a host-owned `formatResetTime(resetsAt)` callback, so that all `Date`/`Intl` work stays at the application edge. It receives each period's raw `resetsAt` and returns a `ResetTimeDisplayLike`, or `undefined` when the value is absent, unparseable, or `Intl` is unavailable — in which case the card carries no reset fields.
+
 ```tsx
 import {
   mapUsageDataToDashboard,
@@ -260,9 +308,17 @@ import {
 import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
 
 // In your component:
-const cards = mapUsageDataToDashboard(usage, t);
+const formatResetTime = useCallback(
+  (resetsAt: string | undefined) => formatMyResetTime(resetsAt, activeLocale, t),
+  [activeLocale, t],
+);
+
+const cards = mapUsageDataToDashboard(usage, t, formatResetTime);
 // <UsageLimitCardGroup cards={cards} labels={labels} />
 ```
+
+Keep `formatResetTime` referentially stable (for example with `useCallback`) — it is a dependency of
+the `useMemo` the mapper usually sits behind, so an unstable identity recomputes on every render.
 
 `USAGE_DATA_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`. Include those keys in your translation bundle.
 
@@ -272,6 +328,8 @@ Maps `usage.deployments` into the `rows` array for `ModelLimitsSection`, joined 
 
 - `resolveIconUrl(iconUrl)` — resolves a deployment's raw `iconUrl` to the URL the avatar should load (typically the app's own icon-proxy endpoint).
 - `resolveDisplayName(name, locale)` — resolves a localized-text map or plain string to the display name for the active locale.
+
+Cost and Tokens cells use the same `total >= 2 ** 53` sentinel test. A sentinel Cost `total` produces an `Unlimited` cell showing attributed spend with no cap; a genuinely finite one produces a `Finite` cell whose status folds into the row's overall Status alongside finite Tokens statuses.
 
 ```tsx
 import {
@@ -295,7 +353,9 @@ const rows = mapUserUsageToModelLimits(
 
 ### mapOverallCostLimitsToPeriodStatuses
 
-Maps the top-level Cost budget fields from `UserLimitStatsResponseDto` (the same source `mapUsageDataToDashboard` uses for the aggregate cards) into the `periodStatuses` prop for `ModelLimitsSection`. Produces an `{ status, tooltipLabel? }` entry for each of the three fixed periods.
+Maps the top-level Cost budget fields from `UserLimitStatsResponseDto` (the same source `mapUsageDataToDashboard` uses for the aggregate cards) into the `periodStatuses` prop for `ModelLimitsSection`. Produces a `{ status, tooltipLabel? }` entry keyed `day`, `week`, and `month`.
+
+Pass the same `formatResetTime` callback used for the aggregate cards as an optional fourth argument to add each header's reset trio, read from the same top-level `*CostStats` stat that drives that header's status. A per-deployment `resetsAt` is never read for a header, and a top-level value is never reconciled against a differing per-deployment one. Omit the argument to produce statuses with no reset fields.
 
 ```tsx
 import { mapOverallCostLimitsToPeriodStatuses } from '@epam/ai-dial-usage-dashboard';
@@ -304,6 +364,7 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
   usage,
   activeLocale,
   t,
+  formatResetTime,
 );
 // <ModelLimitsSection periodStatuses={periodStatuses} ... />
 ```
@@ -311,7 +372,7 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
 ## Types
 
 - `UsageLimitStatus` — `Default | RunningLow | LimitReached`
-- `UsageLimitCardData` — `{ title, periodDescription, used, total, usedLabel, totalLabel?, remainingLabel?, isUnlimited?, usedPercent?, status, progressAriaLabel }`
+- `UsageLimitCardData` — `{ title, periodDescription, used, total, usedLabel, totalLabel?, remainingLabel?, isUnlimited?, usedPercent?, status, progressAriaLabel, resetLabel?, resetIsoValue?, resetAriaLabel? }`
 - `UsageLimitCardGroupLabels` — `{ defaultBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, usedOfTotalLabel, remainingCaptionLabel, usedPercentLabel }`
 - `UsageLimitCardGroupProps` — `{ cards, labels, styles? }`
 - `UsageLimitCardProps` — `{ data, labels, styles? }`
@@ -322,11 +383,13 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
 - `ModelLimitMetricKind` — `Finite | Unlimited | Unavailable`
 - `ModelLimitMetricCell` — `{ kind, usedLabel?, totalLabel?, usedPercent?, status?, supportingLabel?, ariaLabel }`
 - `ModelLimitPeriodCell` — `{ tokens: ModelLimitMetricCell, cost: ModelLimitMetricCell }`
-- `ModelLimitPeriodStatus` — `{ status, tooltipLabel? }`
-- `ModelLimitPeriodStatuses` — `{ last24Hours, last7Days, last30Days }`
-- `ModelLimitRow` — `{ id, name, version?, avatarSrc?, last24Hours, last7Days, last30Days, status }`
-- `ModelLimitsLabels` — `{ headingLabel, itemColumnLabel, last24HoursColumnLabel, last7DaysColumnLabel, last30DaysColumnLabel, statusColumnLabel, tokensLabel, costLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel, emptyStateLabel }`
+- `ModelLimitPeriodStatus` — `{ status, tooltipLabel?, resetLabel?, resetIsoValue?, resetAriaLabel? }`
+- `ModelLimitPeriodStatuses` — `{ day, week, month }`
+- `ModelLimitRow` — `{ id, name, version?, avatarSrc?, day, week, month, status }`
+- `ModelLimitsLabels` — `{ headingLabel, itemColumnLabel, dayColumnLabel, weekColumnLabel, monthColumnLabel, statusColumnLabel, tokensLabel, costLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel, emptyStateLabel }`
 - `ModelLimitsSectionProps` — `{ rows, labels, periodStatuses, styles?, emptyStateIconSize? }`
 - `ModelLimitsStyles` — `{ colors?, typography? }`
 - `ModelLimitsColors` — CSS-custom-property color overrides
 - `ModelLimitsTypography` — typography class overrides
+- `ResetTimeDisplayLike` — `{ resetsAtMs, isoValue, label, ariaLabel }`, the structural shape `formatResetTime` returns
+- `FormatResetTime` — `(resetsAt: string | undefined) => ResetTimeDisplayLike | undefined`

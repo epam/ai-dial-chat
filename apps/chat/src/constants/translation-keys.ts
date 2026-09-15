@@ -1368,6 +1368,8 @@ export enum UsageI18nKeys {
   UsedPercentLabel = 'usage.usedPercentLabel',
   UnlimitedProgressAriaLabel = 'usage.unlimitedProgressAriaLabel',
   ProgressAriaLabel = 'usage.progressAriaLabel',
+  ResetsAtLabel = 'usage.resetsAtLabel',
+  ResetsAtAriaLabel = 'usage.resetsAtAriaLabel',
   FullLoadError = 'usage.fullLoadError',
   Loading = 'usage.loading',
   ModelLimitsHeading = 'usage.modelLimitsHeading',
