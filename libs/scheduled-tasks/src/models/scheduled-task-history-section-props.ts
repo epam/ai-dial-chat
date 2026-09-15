@@ -23,7 +23,7 @@ export interface ScheduledTaskHistorySectionLabels {
 }
 
 /** Status-icon and unread-dot color overrides forwarded to the run list. */
-export interface ScheduledTaskHistorySectionColors {
+interface ScheduledTaskHistorySectionColors {
   /** Success status icon color. Fallback: `--text-success`. */
   successIconColor?: string;
   /** Error status icon color. Fallback: `--text-error`. */

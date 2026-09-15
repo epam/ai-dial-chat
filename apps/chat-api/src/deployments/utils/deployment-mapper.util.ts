@@ -202,6 +202,7 @@ export const mapDeploymentFeatures = (
     ),
     chatCompletion: getBoolean(raw, 'chat_completion'),
     responsesApi: getBoolean(raw, 'responses_api'),
+    skillsSupported: getBoolean(raw, 'skills_supported'),
     maxTokensSupported: getBoolean(raw, 'max_tokens_supported'),
     maxCompletionTokensSupported: getBoolean(
       raw,
@@ -293,6 +294,9 @@ export const mapToDeploymentItem = (
             }),
             ...(raw.features?.chat_completion === true && {
               chatCompletion: true,
+            }),
+            ...(raw.features?.skills_supported === true && {
+              skillsSupported: true,
             }),
           }
         : undefined,

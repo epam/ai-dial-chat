@@ -45,7 +45,7 @@ export interface OoxmlSurfaceOffset {
 }
 
 /** The scroll-layout options this renderer passes to a `@silurus/ooxml` scroll viewer. */
-export interface OoxmlScrollLayout {
+interface OoxmlScrollLayout {
   /** Vertical space between pages/slides. Defaults to `OOXML_SCROLL_GAP_DEFAULT`. */
   gap?: number;
   /** Space above the first page/slide. Defaults to `gap`. */
@@ -143,7 +143,7 @@ const ADJACENT_TOLERANCE_PX = 1;
 const SINGLE_SURFACE_INDEX = 0;
 
 /** `@silurus/ooxml`'s default `gap`, and its default for every padding option. */
-export const OOXML_SCROLL_GAP_DEFAULT = 16;
+const OOXML_SCROLL_GAP_DEFAULT = 16;
 
 /** Creates a canvas-backed text measurer, or `undefined` when no 2D context is available. */
 export const createOoxmlTextMeasurer = (): OoxmlTextMeasurer | undefined => {

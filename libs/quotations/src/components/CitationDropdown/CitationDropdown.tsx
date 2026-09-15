@@ -1,7 +1,7 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Tooltip } from '@epam/ai-dial-ui-kit';
-import { FC, memo, ReactNode, useCallback, useMemo } from 'react';
+import { FC, ReactNode, useCallback, useMemo } from 'react';
 import { useCitationCardContext } from '../../context/CitationCardContext';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 import {
@@ -113,5 +113,3 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
     </Tooltip>
   );
 };
-
-export default memo(CitationDropdown);

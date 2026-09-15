@@ -56,7 +56,7 @@ export interface ChatSettingsFieldsProps {
 }
 
 /** Color overrides for `ChatSettingsFields`, applied as CSS custom properties with app theme fallbacks. */
-export interface ChatSettingsFieldsColors {
+interface ChatSettingsFieldsColors {
   /** Field label text color. Fallback: `--text-primary`. */
   labelText?: string;
 }

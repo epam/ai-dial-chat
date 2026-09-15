@@ -1,7 +1,5 @@
 import type { EnvironmentVariables } from '../config/environment.config';
 
-export type ConfigValueType = boolean | string | number | unknown;
-
 export interface ConfigDefinition {
   key: string;
   type: 'feature' | 'config';

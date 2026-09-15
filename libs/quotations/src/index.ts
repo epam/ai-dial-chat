@@ -1,6 +1,7 @@
 // Components
 export { CitationCard } from './components/CitationCard/CitationCard';
 export type {
+  CitationCardColors,
   CitationCardLabels,
   CitationCardProps,
   CitationCardTypography,

@@ -25,7 +25,7 @@ export class CompositeConfigProvider {
 
   get providers(): ConfigProvider[] {
     /*
-     * Slot 1: ManagedConfigProvider (disabled stub — activate when an implementation is provided)
+     * Slot 1: ManagedConfigProvider (future)
      * Slot 2: OpenFeatureProviderAdapter (future)
      */
     return [this.envProvider, this.staticProvider];

@@ -431,30 +431,30 @@ plus the Nx project graph. `apps/chat` consumes them as workspace packages —
 every `package.json` under `libs/` is still `private: true`, so nothing is
 published to npm today. Each library has its own README with its public API.
 
-| Package                                  | Path                                                             | Purpose                                                                      |
-| ---------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `@epam/ai-dial-chat-shared`              | [`libs/chat-shared`](libs/chat-shared)                           | Shared domain models, utilities, and UI primitives consumed by every lib     |
-| `@epam/ai-dial-chat-api-client`          | [`libs/chat-api-client`](libs/chat-api-client)                   | Generated OpenAPI client for the chat API (consumed only by app adapters)    |
-| `@epam/ai-dial-chat-overlay`             | [`libs/chat-overlay`](libs/chat-overlay)                         | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol |
-| `@epam/ai-dial-catalog`                  | [`libs/catalog`](libs/catalog)                                   | Catalog for browsing models, applications, tools, prompts, and skills        |
-| `@epam/ai-dial-conversation-input`       | [`libs/conversation-input`](libs/conversation-input)             | Message composer — model selection, attachments, voice input, edit mode      |
-| `@epam/ai-dial-conversation-messages`    | [`libs/conversation-messages`](libs/conversation-messages)       | Message bubbles with actions and source citations                            |
-| `@epam/ai-dial-conversation-panel`       | [`libs/conversation-panel`](libs/conversation-panel)             | Virtualized conversation-history sidebar with grouping, tabs, and search     |
-| `@epam/ai-dial-conversation-stages`      | [`libs/conversation-stages`](libs/conversation-stages)           | Agent processing stages shown during response streaming                      |
-| `@epam/ai-dial-sidebar`                  | [`libs/sidebar`](libs/sidebar)                                   | Resizable sidebar shell — header, search, empty state                        |
-| `@epam/ai-dial-source-panel`             | [`libs/source-panel`](libs/source-panel)                         | Conversation sources — uploaded files and generated citations                |
-| `@epam/ai-dial-quotations`               | [`libs/quotations`](libs/quotations)                             | Citation and annotation components, hooks, and utilities                     |
-| `@epam/ai-dial-attachment-canvas`        | [`libs/attachment-canvas`](libs/attachment-canvas)               | Viewer for attachment content — images, PDFs, JSON, markdown, code, text     |
-| `@epam/ai-dial-attachment-input`         | [`libs/attachment-input`](libs/attachment-input)                 | File input with upload validation, drag-and-drop, progress                   |
-| `@epam/ai-dial-mcp-apps`                 | [`libs/mcp-apps`](libs/mcp-apps)                                 | Host-agnostic MCP Apps message-matching/caching logic and inline preview     |
-| `@epam/ai-dial-starter-buttons`          | [`libs/starter-buttons`](libs/starter-buttons)                   | Starter prompts that overflow into a dropdown when space runs out            |
-| `@epam/ai-dial-share`                    | [`libs/share`](libs/share)                                       | Share popover UI and share-link types                                        |
-| `@epam/ai-dial-publish-panel`            | [`libs/publish-panel`](libs/publish-panel)                       | Publish-to-folder UI and state flow                                          |
-| `@epam/ai-dial-prompt-editor`            | [`libs/prompt-editor`](libs/prompt-editor)                       | Host-agnostic prompt authoring form with an inline folder picker             |
-| `@epam/ai-dial-prompts`                  | [`libs/prompts`](libs/prompts)                                   | Favorite-prompts panel and the prompt-parameters popup for the composer      |
-| `@epam/ai-dial-skill-editor`             | [`libs/skill-editor`](libs/skill-editor)                         | Skill authoring form with a file tree and conflict handling                  |
-| `@epam/ai-dial-builder-form`             | [`libs/builder-form`](libs/builder-form)                         | Builder/editor form shells, editor layout, and shared deployment-creation field set |
-| `@epam/ai-dial-scheduled-tasks`          | [`libs/scheduled-tasks`](libs/scheduled-tasks)                   | Scheduled Tasks surfaces — cards, create form, detail view, run history      |
+| Package                               | Path                                                       | Purpose                                                                             |
+| ------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `@epam/ai-dial-chat-shared`           | [`libs/chat-shared`](libs/chat-shared)                     | Shared domain models, utilities, and UI primitives consumed by every lib            |
+| `@epam/ai-dial-chat-api-client`       | [`libs/chat-api-client`](libs/chat-api-client)             | Generated OpenAPI client for the chat API (consumed only by app adapters)           |
+| `@epam/ai-dial-chat-overlay`          | [`libs/chat-overlay`](libs/chat-overlay)                   | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol        |
+| `@epam/ai-dial-catalog`               | [`libs/catalog`](libs/catalog)                             | Catalog for browsing models, applications, tools, prompts, and skills               |
+| `@epam/ai-dial-conversation-input`    | [`libs/conversation-input`](libs/conversation-input)       | Message composer — model selection, attachments, voice input, edit mode             |
+| `@epam/ai-dial-conversation-messages` | [`libs/conversation-messages`](libs/conversation-messages) | Message bubbles with actions and source citations                                   |
+| `@epam/ai-dial-conversation-panel`    | [`libs/conversation-panel`](libs/conversation-panel)       | Virtualized conversation-history sidebar with grouping, tabs, and search            |
+| `@epam/ai-dial-conversation-stages`   | [`libs/conversation-stages`](libs/conversation-stages)     | Agent processing stages shown during response streaming                             |
+| `@epam/ai-dial-sidebar`               | [`libs/sidebar`](libs/sidebar)                             | Resizable sidebar shell — header, search, empty state                               |
+| `@epam/ai-dial-source-panel`          | [`libs/source-panel`](libs/source-panel)                   | Conversation sources — uploaded files and generated citations                       |
+| `@epam/ai-dial-quotations`            | [`libs/quotations`](libs/quotations)                       | Citation and annotation components, hooks, and utilities                            |
+| `@epam/ai-dial-attachment-canvas`     | [`libs/attachment-canvas`](libs/attachment-canvas)         | Viewer for attachment content — images, PDFs, JSON, markdown, code, text            |
+| `@epam/ai-dial-attachment-input`      | [`libs/attachment-input`](libs/attachment-input)           | File input with upload validation, drag-and-drop, progress                          |
+| `@epam/ai-dial-mcp-apps`              | [`libs/mcp-apps`](libs/mcp-apps)                           | Host-agnostic MCP Apps message-matching/caching logic and inline preview            |
+| `@epam/ai-dial-starter-buttons`       | [`libs/starter-buttons`](libs/starter-buttons)             | Starter prompts that overflow into a dropdown when space runs out                   |
+| `@epam/ai-dial-share`                 | [`libs/share`](libs/share)                                 | Share popover UI and share-link types                                               |
+| `@epam/ai-dial-publish-panel`         | [`libs/publish-panel`](libs/publish-panel)                 | Publish-to-folder UI and state flow                                                 |
+| `@epam/ai-dial-prompt-editor`         | [`libs/prompt-editor`](libs/prompt-editor)                 | Host-agnostic prompt authoring form with an inline folder picker                    |
+| `@epam/ai-dial-prompts`               | [`libs/prompts`](libs/prompts)                             | Favorite-prompts panel and the prompt-parameters popup for the composer             |
+| `@epam/ai-dial-skill-editor`          | [`libs/skill-editor`](libs/skill-editor)                   | Skill authoring form with a file tree and conflict handling                         |
+| `@epam/ai-dial-builder-form`          | [`libs/builder-form`](libs/builder-form)                   | Builder/editor form shells, editor layout, and shared deployment-creation field set |
+| `@epam/ai-dial-scheduled-tasks`       | [`libs/scheduled-tasks`](libs/scheduled-tasks)             | Scheduled Tasks surfaces — cards, create form, detail view, run history             |
 
 > `libs/ai-dial-kit/` is a leftover build-output directory from a removed
 > library — it has no `package.json`, no sources, and no importers. Do not add

@@ -3,9 +3,7 @@
 ## Purpose
 
 `GET /api/v1/deployments/{deployment}/details` and the shape of its response DTO.
-
 ## Requirements
-
 ### Requirement: GET /api/v1/deployments/{deployment}/details endpoint
 
 The system SHALL expose `GET /api/v1/deployments/{deployment}/details` on the existing `DeploymentsController` (`apps/chat-api/src/deployments/deployments.controller.ts`), following the same encoded `:deployment` path-param convention already used by `:deployment/configuration` and `:deployment/limits`. The decoded value may contain structural `/` separators for DIAL resource identifiers. The endpoint fetches full per-entity data for one deployment id and returns it as `DeploymentDetailsDto`.
@@ -27,7 +25,7 @@ The endpoint:
 - SHALL respond 503 when DIAL Core is unreachable or times out.
 - SHALL apply `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/deployments`.
 - SHALL cache the mapped `DeploymentDetailsDto` under key `deployments:details:<userSub>:<deployment>` for 60 000 ms, so entries and in-flight request deduplication are isolated by authenticated user and deployment.
-- SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset create, update, delete, login, or logout before the next details fetch is treated as fresh.
+- SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset create, update, delete, login, or logout, and after a successful application update (`ApplicationsService.updateApplication`, using the same `applicationName` string as the cache key), before the next details fetch is treated as fresh.
 - SHALL ensure an in-flight `getDeploymentDetails` fetch that was dispatched before an invalidation for the same key never repopulates the cache with its (pre-invalidation) result, and is never joined by a request made after that invalidation — see the dedicated requirement below.
 - SHALL set response header `Cache-Control: private, no-store`; client and intermediary caches MUST NOT reuse the response, while the user-scoped BFF cache remains active.
 - SHALL preserve OpenAPI `operationId: getDeploymentDetails`, path parameter `deployment: string`, response `DeploymentDetailsDto`, and normal generated `DeploymentsApi.getDeploymentDetails({ deployment })` usage; no `Raw` generated call is required because frontend callers do not consume the response header.
@@ -90,6 +88,11 @@ The endpoint:
 - **WHEN** a toolset create, update, delete, login, or logout succeeds for a user and toolset
 - **THEN** the affected `deployments:details:<userSub>:<deployment>` entry is deleted before a subsequent details request can reuse it
 
+#### Scenario: Application update invalidates cached details
+
+- **WHEN** `PATCH /api/v1/applications/:applicationName` succeeds for an application whose `deployments:details:<userSub>:<applicationName>` entry is currently cached
+- **THEN** that cache entry is deleted before a subsequent `GET .../details` request for the same id can reuse it, so the request re-fetches the just-updated `application_properties` from DIAL Core instead of returning the pre-update snapshot
+
 #### Scenario: A request in flight when a logout invalidates its key does not resurrect stale data
 
 - **WHEN** a `getDeploymentDetails` request for a toolset is still awaiting DIAL Core when a login/logout for that same toolset invalidates its cache key, and a second `getDeploymentDetails` request for the same key arrives after that invalidation
@@ -147,7 +150,22 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `defaultMaxTokens?: number` — from `defaults.max_tokens`
   - `createdAt?: number`
 - `applicationDetails?: ApplicationDetailsDto` — present only when `type === 'application'`:
-  - `applicationProperties?: Record<string, unknown>` — non-secret custom properties only (function-level secrets excluded per the allowlist)
+  - `applicationProperties?: Record<string, unknown>` — a **verbatim passthrough** of DIAL
+    Core's stored `application_properties` object for this application (non-secret custom
+    properties only — function-level secrets are excluded per the allowlist). It SHALL NOT be
+    merged with, or have any key overwritten by, the top-level DIAL Core `features` JSON — a
+    stored `application_properties.features` key (for example a Quick App's own
+    `features.timestamp` flag) round-trips unchanged. The top-level DIAL Core `features` JSON is
+    exposed separately as `customAppFeatures` (below), never mixed into this field.
+  - `customAppFeatures?: Record<string, unknown>` — the raw top-level DIAL Core `features` JSON
+    read from `getCustomApplication`, distinct from both `applicationProperties.features` (a
+    schema-specific key some applications store, now passed through untouched) and from
+    `features` (the allow-listed `DeploymentFeaturesDetailsDto` capability flags below, sourced
+    from `getApplication`/list-shaped data). Present only for applications resolvable via
+    `applications/{bucket}/{path}` (the same set `endpoint` is already scoped to), and only when
+    DIAL Core's custom-application response carries a `features` key; this is the field the
+    plain Custom App editor's Features textarea reads and writes through `updateApplication`'s
+    `features` DTO field.
   - `functionRuntime?: string` — from `function.runtime`
   - `functionStatus?: string` — from `function.status`
   - `routes?: string[]` — route names (`Object.keys(raw.routes)`), not the route definitions themselves
@@ -164,7 +182,7 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `owner?: string`
   - `features?: DeploymentFeaturesDetailsDto`
   - `createdAt?: number`
-- `DeploymentFeaturesDetailsDto` — shared feature-flag shape reused by all three detail types (DIAL Core's runtime `features` payload extends one common schema): `rate`, `mcp`, `tokenize`, `truncatePrompt`, `hasConfigurationSchema` (named to avoid an OpenAPI-generator collision with the generated client's own `Configuration` runtime class — the raw field is `configuration`), `systemPrompt`, `tools`, `seed`, `urlAttachments`, `folderAttachments`, `allowResume`, `accessibleByPerRequestKey`, `contentParts`, `temperature`, `cache`, `autoCaching`, `parallelToolCalls`, `assistantAttachmentsInRequest`, `chatCompletion`, `responsesApi`, `maxTokensSupported`, `maxCompletionTokensSupported`, `customTemperatureSupported`, `reasoningEfforts?: string[]` — all read defensively off the raw untyped payload (`mapDeploymentFeatures` in `deployments/utils/deployment-mapper.util.ts`) since the SDK's typed `DeploymentFeatures` shape declares fewer flags than DIAL Core actually returns.
+- `DeploymentFeaturesDetailsDto` — shared feature-flag shape reused by all three detail types (DIAL Core's runtime `features` payload extends one common schema): `rate`, `mcp`, `tokenize`, `truncatePrompt`, `hasConfigurationSchema` (named to avoid an OpenAPI-generator collision with the generated client's own `Configuration` runtime class — the raw field is `configuration`), `systemPrompt`, `tools`, `seed`, `urlAttachments`, `folderAttachments`, `allowResume`, `accessibleByPerRequestKey`, `contentParts`, `temperature`, `cache`, `autoCaching`, `parallelToolCalls`, `assistantAttachmentsInRequest`, `chatCompletion`, `responsesApi`, `skillsSupported` (from DIAL Core's `skills_supported`, PR #1976 — whether the deployment accepts custom skills), `maxTokensSupported`, `maxCompletionTokensSupported`, `customTemperatureSupported`, `reasoningEfforts?: string[]` — all read defensively off the raw untyped payload (`mapDeploymentFeatures` in `deployments/utils/deployment-mapper.util.ts`) since the SDK's typed `DeploymentFeatures` shape declares fewer flags than DIAL Core actually returns. `skillsSupported` follows the same defensive boolean rule as its neighbors: absent or non-boolean source values map to `undefined`, never throw.
 
 No `any` types are allowed in the success response shape.
 
@@ -187,3 +205,31 @@ No `any` types are allowed in the success response shape.
 
 - **WHEN** a toolset's `auth_settings` includes `client_id`, `redirect_uri`, `token_endpoint_auth_method`, `code_challenge`, and `code_challenge_method`
 - **THEN** all five values appear in `toolsetDetails.authSettings` under their camelCase names
+
+#### Scenario: skills_supported maps to features.skillsSupported in details
+
+- **WHEN** a deployment's raw `features` payload includes `skills_supported: true`
+- **THEN** the detail type's `features.skillsSupported` is `true` in the response
+
+#### Scenario: Absent or non-boolean skills_supported omits the field in details
+
+- **WHEN** a deployment's raw `features` payload has no `skills_supported` field, or a non-boolean value there
+- **THEN** the detail type's `features.skillsSupported` is `undefined` and the request still succeeds
+
+#### Scenario: A Quick App's own features key is not overwritten by the top-level DIAL Core features
+- **WHEN** a Quick App's stored `application_properties` includes `{ features: { timestamp: true }, orchestrator: {...} }` and DIAL Core's custom-application response also carries an unrelated top-level `features` JSON
+- **THEN** the response's `applicationDetails.applicationProperties.features` is `{ timestamp: true }`, unchanged from what is stored, and the top-level DIAL Core `features` JSON appears only in `applicationDetails.customAppFeatures`
+
+#### Scenario: The plain Custom App editor reads the relocated features field
+- **WHEN** a plain custom application (no Quick Apps schema) has a top-level DIAL Core `features` JSON and an empty or absent `application_properties`
+- **THEN** the response's `applicationDetails.customAppFeatures` carries that JSON and
+  `applicationDetails.applicationProperties` is `undefined` (or omits `features` entirely) —
+  matching what `CustomAppEditor.tsx`'s Features textarea now reads
+
+#### Scenario: An application's own application_properties round-trips through read, edit, and save unchanged
+- **WHEN** a Quick App's `applicationDetails.applicationProperties` is read via `GET
+  .../details`, sent back unmodified as the `applicationProperties` body of a `PATCH
+  .../applications/:applicationName` update, and then read again via `GET .../details`
+- **THEN** the second read's `applicationDetails.applicationProperties` is identical to the
+  first, including any `features` key it carries
+

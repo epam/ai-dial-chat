@@ -69,8 +69,6 @@ export interface ScheduledTasksStyles {
   colors?: ScheduledTasksColors;
   /** Typography class overrides. */
   typography?: ScheduledTasksTypography;
-  /** Size (px) of the empty-state icon. Defaults to `48`. */
-  emptyStateIconSize?: number;
 }
 
 /** Props for the {@link ScheduledTasks} component. */

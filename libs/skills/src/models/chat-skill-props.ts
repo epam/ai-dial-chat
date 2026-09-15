@@ -2,6 +2,12 @@
 export interface ChatSkillLabels {
   /** Label for the tooltip's "View details" action. Defaults to `'View details'`. */
   viewDetailsLabel?: string;
+  /**
+   * Message shown alone in the tooltip while `isUnsupported` is set, stating
+   * that the selected model does not support skills and that the user should
+   * remove the skill or select a different model to proceed.
+   */
+  unsupportedTooltipLabel?: string;
 }
 
 /** Props for the ChatSkill component. */
@@ -13,23 +19,30 @@ export interface ChatSkillProps {
    * callback so the host never has to re-derive it.
    */
   path: string;
-  /** The skill's description, shown in the tooltip. Omitted when empty. */
+  /** The skill's listing-sourced description, shown in the tooltip. Omitted when empty. */
   description?: string;
   /**
-   * Whether the description is still being resolved by the host. While
-   * `true` the tooltip shows a spinner in the description's place.
+   * Whether the current model/application does not support skills. While
+   * `true` the `/{name}` label carries `unsupportedLabelClassName`, the chip
+   * carries `unsupportedClassName`, and the tooltip shows the
+   * unsupported-model message alone — no description paragraph and no
+   * "View details" button.
    */
-  isDescriptionLoading?: boolean;
+  isUnsupported?: boolean;
   /** CSS class applied to the `/name` label. Defaults to `'dial-body-paragraph-text'`. */
   labelClassName?: string;
+  /**
+   * Color class applied to the `/{name}` label in addition to
+   * `labelClassName` while `isUnsupported` is set. Defaults to `'text-error'`.
+   */
+  unsupportedLabelClassName?: string;
+  /**
+   * Class applied to the chip in addition to its layout classes while
+   * `isUnsupported` is set. Defaults to `'bg-error'`.
+   */
+  unsupportedClassName?: string;
   /** Called with the skill's path when the tooltip's "View details" button is clicked. */
   onViewDetails: (path: string) => void;
-  /**
-   * Called with the skill's path each time the tooltip opens (hover or
-   * focus) — the host's lazy-description trigger, wherever the component
-   * renders.
-   */
-  onTooltipOpen?: (path: string) => void;
   /** Localizable string overrides. */
   labels?: ChatSkillLabels;
 }

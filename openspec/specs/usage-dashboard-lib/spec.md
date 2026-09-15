@@ -233,8 +233,8 @@ contract as `UsageLimitCardData`.
 type, metric state, status badge, and empty-state strings. It SHALL NOT require period-selector or
 Requests labels.
 
-`ModelLimitsSectionProps` SHALL accept `rows`, `labels`, optional `styles`, and optional
-`emptyStateIconSize`, plus normalized overall Cost statuses/tooltips for the three fixed headers; it
+`ModelLimitsSectionProps` SHALL accept `rows`, `labels`, and optional `styles`,
+plus normalized overall Cost statuses/tooltips for the three fixed headers; it
 SHALL NOT accept `period` or `onPeriodChange`. The library SHALL not derive header status, tooltip
 copy, or reset text from row data.
 

@@ -203,12 +203,6 @@ export enum CatalogI18nKeys {
   DetailsApiResponseSchema = 'catalog.details.api.responseSchema',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
-  DetailsModelProvider = 'catalog.details.modelSpecification.provider',
-  DetailsModelVendor = 'catalog.details.modelSpecification.vendor',
-  DetailsModelLicense = 'catalog.details.modelSpecification.license',
-  DetailsModelKnowledgeCutoffDate = 'catalog.details.modelSpecification.knowledgeCutoffDate',
-  DetailsModelParameters = 'catalog.details.modelSpecification.parameters',
-  DetailsModelInputModalities = 'catalog.details.modelSpecification.inputModalities',
   DetailsTabLimits = 'catalog.details.tabLimits',
   DetailsLimitsTokenGroupLabel = 'catalog.details.limits.tokenGroup',
   DetailsLimitsTokensPerDay = 'catalog.details.limits.tokensPerDay',
@@ -320,9 +314,7 @@ export enum CatalogI18nKeys {
   DetailsRevokeShareErrorTitle = 'catalog.details.revokeShare.errorTitle',
   DetailsRevokeShareError = 'catalog.details.revokeShare.error',
   ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
-  ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
   ConnectToolsetDescription = 'catalog.details.connect.toolsetDescription',
-  ConnectApplicationDescription = 'catalog.details.connect.applicationDescription',
 }
 
 export enum DeploymentSelectorI18nKeys {
@@ -359,6 +351,7 @@ export enum SkillSelectorI18nKeys {
   EmptyQueryHint = 'skillSelector.emptyQueryHint',
   ModalTitle = 'skillSelector.modalTitle',
   NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
+  UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
 }
 
@@ -370,7 +363,6 @@ export enum NotFoundI18nKeys {
 }
 
 export enum ScheduledTasksI18nKeys {
-  NavLabel = 'scheduledTasks.page.navLabel',
   PageTitle = 'scheduledTasks.page.title',
   PageSubtitle = 'scheduledTasks.page.subtitle',
   CreateButtonLabel = 'scheduledTasks.toolbar.createButtonLabel',
@@ -556,7 +548,6 @@ export enum DialFileManagerI18nKeys {
   RenameNameEmpty = 'dialFileManager.renameNameEmpty',
   RenameDuplicateName = 'dialFileManager.renameDuplicateName',
   RenameReservedName = 'dialFileManager.renameReservedName',
-  RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
   RenameHiddenItemWarning = 'dialFileManager.renameHiddenItemWarning',
   NameConsecutiveDots = 'dialFileManager.nameConsecutiveDots',
@@ -595,7 +586,6 @@ export enum DialFileManagerI18nKeys {
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
-  PageNavLabel = 'dialFileManager.page.navLabel',
   UnshareAction = 'dialFileManager.unshareAction',
   UnsharingLabel = 'dialFileManager.unsharingLabel',
   RemoveAccessAction = 'dialFileManager.removeAccessAction',
@@ -1052,7 +1042,6 @@ export enum SkillArchiveImportI18nKeys {
   DialogFormats = 'skillArchiveImport.dialog.formats',
   StatusUploading = 'skillArchiveImport.status.uploading',
   StatusSuccess = 'skillArchiveImport.status.success',
-  StatusError = 'skillArchiveImport.status.error',
   ErrorTitle = 'skillArchiveImport.error.title',
   ErrorValidation = 'skillArchiveImport.error.validation',
   ErrorUnsupportedFilename = 'skillArchiveImport.error.unsupportedFilename',
@@ -1148,8 +1137,6 @@ export enum ToolsetSigninI18nKeys {
   DialogDescription = 'toolsetSignin.dialogDescription',
   RowDecline = 'toolsetSignin.rowDecline',
   DeclineAll = 'toolsetSignin.declineAll',
-  FallbackName = 'toolsetSignin.fallbackName',
-  FallbackNameExternalService = 'toolsetSignin.fallbackNameExternalService',
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
@@ -1227,8 +1214,6 @@ export enum CustomAppI18nKeys {
   DescriptionPlaceholder = 'customApp.general.descriptionPlaceholder',
   // Settings form fields
   CompletionUrlLabel = 'customApp.settings.completionUrlLabel',
-  CompletionUrlDescription = 'customApp.settings.completionUrlDescription',
-  CompletionUrlPlaceholder = 'customApp.settings.completionUrlPlaceholder',
   CompletionUrlRequired = 'customApp.settings.completionUrlRequired',
   CompletionUrlInvalid = 'customApp.settings.completionUrlInvalid',
   FeaturesDataLabel = 'customApp.settings.featuresDataLabel',
@@ -1237,12 +1222,10 @@ export enum CustomAppI18nKeys {
   FeaturesDataInvalid = 'customApp.settings.featuresDataInvalid',
   AttachmentTypesLabel = 'customApp.settings.attachmentTypesLabel',
   AttachmentTypesDescription = 'customApp.settings.attachmentTypesDescription',
-  AttachmentTypesPlaceholder = 'customApp.settings.attachmentTypesPlaceholder',
   EnterAttachmentTypes = 'customApp.settings.enterAttachmentTypes',
   InvalidMimeType = 'customApp.settings.invalidMimeType',
   MaxAttachmentsLabel = 'customApp.settings.maxAttachmentsLabel',
   MaxAttachmentsDescription = 'customApp.settings.maxAttachmentsDescription',
-  MaxAttachmentsInvalid = 'customApp.settings.maxAttachmentsInvalid',
   EnterMaxAttachments = 'customApp.settings.enterMaxAttachments',
   TypeChatCompletionURL = 'customApp.settings.typeChatCompletionUrl',
   ErrorCreateFailed = 'customApp.error.createFailed',

@@ -7,13 +7,8 @@ export interface FavoriteSkillItem {
   id: string;
   /** Display name. */
   name: string;
-  /** Short description shown in a tooltip on hover. Omitted when empty. */
+  /** Listing-sourced description shown in a tooltip on hover. Omitted when empty. */
   description?: string;
-  /**
-   * Whether the description is still being resolved by the host. While
-   * `true` the tooltip shows a spinner in the description's place.
-   */
-  isDescriptionLoading?: boolean;
 }
 
 /**
@@ -25,21 +20,19 @@ export interface SkillListingEntry {
   url: string;
   /** Display name. */
   name: string;
+  /** Listing-sourced description (Core PR #1970). Absent on folders and older Cores. */
+  description?: string;
 }
 
 /**
- * Builds a {@link FavoriteSkillItem} from a listing entry and the host's
- * resolved description cache. A cached `null` (no description or a failed
- * fetch) and a not-yet-fetched id both yield no description paragraph; ids
- * in `pendingIds` are marked as loading so the row's tooltip shows a spinner.
+ * Builds a {@link FavoriteSkillItem} from a listing entry, mapping its
+ * description straight through — the listing is the description's only
+ * source, so an entry that carries none yields no description paragraph.
  */
 export const buildFavoriteSkillItem = (
   skill: SkillListingEntry,
-  descriptions: ReadonlyMap<string, string | null>,
-  pendingIds: ReadonlySet<string>,
 ): FavoriteSkillItem => ({
   id: skill.url,
   name: skill.name,
-  description: descriptions.get(skill.url) ?? undefined,
-  isDescriptionLoading: pendingIds.has(skill.url),
+  description: skill.description,
 });

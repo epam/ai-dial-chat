@@ -130,14 +130,6 @@
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
       },
-      "modelSpecification": {
-        "provider": "Provider",
-        "vendor": "Vendor",
-        "license": "License",
-        "knowledgeCutoffDate": "Knowledge cutoff date",
-        "parameters": "Parameters",
-        "inputModalities": "Input modalities"
-      },
       "limits": {
         "tokenGroup": "Token limits",
         "tokensPerDay": "Last 24 hours",
@@ -241,9 +233,7 @@
       },
       "connect": {
         "toolsetTitle": "Connect toolset",
-        "applicationTitle": "Connect Application",
-        "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows",
-        "applicationDescription": "Copy endpoint URL to easily integrate application into your workflows"
+        "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows"
       },
       "prompt": {
         "section": "Prompt",
@@ -327,6 +317,7 @@
     "emptyQueryHint": "Type to filter",
     "modalTitle": "Use skill",
     "noMatchingSkillsLabel": "No matching skills",
+    "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
     "viewDetailsLabel": "View details"
   },
   "notFound": {
@@ -880,7 +871,6 @@
     "renameNameEmpty": "Name cannot be empty",
     "renameDuplicateName": "An item with this name already exists",
     "renameReservedName": "This name is reserved",
-    "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
     "renameHiddenItemWarning": "A dot at the start of the name will make the item hidden",
     "nameConsecutiveDots": "Name cannot contain consecutive dots",
@@ -1163,8 +1153,6 @@
     "dialogDescription": "One or more tools or services need you to sign in before the conversation can continue.",
     "rowDecline": "Decline",
     "declineAll": "Decline all",
-    "fallbackName": "Toolset",
-    "fallbackNameExternalService": "External service",
     "apiKeyLabel": "API key",
     "apiKeyPlaceholder": "Enter API key",
     "errorLoginFailed": "Failed to log in. Please try again.",
@@ -1204,8 +1192,6 @@
   "customApp": {
     "settings": {
       "completionUrlLabel": "Chat completion URL",
-      "completionUrlDescription": "The URL of the chat completion endpoint for this custom app.",
-      "completionUrlPlaceholder": "https://example.com/openai/deployments/gpt-4o/chat/completions",
       "completionUrlRequired": "Chat completion URL is required",
       "completionUrlInvalid": "Enter a valid absolute URL",
       "featuresDataLabel": "Features data",
@@ -1213,10 +1199,8 @@
       "featuresDataPlaceholder": "{\n\t\"rate_endpoint\": \"http://application1/rate\",\n\t\"configuration_endpoint\": \"http://application1/configuration\"\n}",
       "attachmentTypesLabel": "Attachment types",
       "attachmentTypesDescription": "Input the MIME type and press 'Enter' to add.",
-      "attachmentTypesPlaceholder": "Enter one or more attachment types",
       "maxAttachmentsLabel": "Max. input attachments",
       "maxAttachmentsDescription": "Maximum number of input attachments allowed.",
-      "maxAttachmentsInvalid": "Enter a number greater than or equal to 0",
       "enterAttachmentTypes": "Enter one or more attachment types",
       "enterMaxAttachments": "Enter the maximum number of attachments",
       "typeChatCompletionUrl": "Type chat completion URL",
@@ -1348,8 +1332,7 @@
     },
     "status": {
       "uploading": "Uploading skill…",
-      "success": "Skill uploaded successfully.",
-      "error": "Skill upload failed."
+      "success": "Skill uploaded successfully."
     },
     "error": {
       "title": "Skill import failed",

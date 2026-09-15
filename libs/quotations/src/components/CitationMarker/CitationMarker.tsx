@@ -1,5 +1,5 @@
 import { ElementSize, NeutralButton } from '@epam/ai-dial-ui-kit';
-import { FC, memo, ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
 
 /** User-visible strings for `CitationMarker`. */
 export interface CitationMarkerLabels {
@@ -53,5 +53,3 @@ export const CitationMarker: FC<CitationMarkerProps> = ({
     />
   );
 };
-
-export default memo(CitationMarker);

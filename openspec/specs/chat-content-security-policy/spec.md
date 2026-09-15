@@ -11,11 +11,13 @@ execution contexts that retain WebAssembly permission for document previews.
 ### Requirement: Nonce-backed frontend HTML
 
 The server SHALL issue a fresh cryptographic nonce for every frontend HTML response,
-including deep links and direct index requests. The document and its CSP SHALL use
-the same nonce. HTML SHALL NOT be cached or returned as a conditional 304.
+including deep links and direct index requests. Nonce-aware documents and their CSP
+SHALL use the same nonce. Legacy templates without the marker SHALL be served
+unchanged only in report-only mode. HTML SHALL NOT be cached or returned as a
+conditional 304.
 
 #### Scenario: Repeated and conditional navigation
-- **WHEN** two requests fetch the same HTML, including an If-None-Match request
+- **WHEN** two requests fetch the same nonce-aware HTML, including an If-None-Match request
 - **THEN** both return complete HTML with different nonces matching their headers
 - **AND** both carry `Cache-Control: no-store`
 
@@ -46,6 +48,19 @@ strict policy. Enforce mode SHALL enforce the candidate. A configured, validated
 #### Scenario: Enforcement enabled
 - **WHEN** enforce mode is active
 - **THEN** the enforced policy does not contain `'unsafe-inline'` or `'unsafe-eval'`
+
+#### Scenario: Legacy frontend during rollout
+- **WHEN** report-only mode is active, explicitly or by default, and chat or an
+  enabled overlay sandbox has HTML without the nonce marker
+- **THEN** the server starts and logs one warning per legacy template requesting
+  a frontend rebuild before enforcement
+- **AND** it serves the unchanged HTML with the prior enforced policy and the
+  strict report-only candidate, retaining inline JavaScript and eval restrictions
+
+#### Scenario: Legacy frontend with enforcement requested
+- **WHEN** enforce mode is active and chat or an enabled overlay sandbox has HTML
+  without the nonce marker
+- **THEN** startup fails with a rebuild error without downgrading the CSP mode
 
 ### Requirement: WebAssembly permission follows its execution context
 

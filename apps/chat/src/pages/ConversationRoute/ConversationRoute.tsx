@@ -127,15 +127,34 @@ const ConversationRoute: FC = () => {
     [renderPromptsOverlay, t],
   );
   const {
+    items,
+    selectedItemId,
+    setSelectedItemId,
+    restoreSelectedItemId,
+    restoreDefaultSelection,
+    selectedDeploymentConfiguration,
+    isLoading,
+    error,
+  } = useDeployments();
+
+  const selectedDeployment = useMemo(
+    () => findDeploymentByIdOrReference(items, selectedItemId),
+    [items, selectedItemId],
+  );
+
+  const {
     skillMenuOverlay,
     commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
     selectedSkillElement,
     selectedSkills,
+    isSkillUnsupported,
     selectSkill,
     removeSelectedSkill,
-  } = useSkillSelectorOverlay();
+  } = useSkillSelectorOverlay({
+    isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
+  });
   /*
    * The first message's skills payload comes from the overlay hook. On a
    * successful create this route navigates away and unmounts (clearing the
@@ -156,16 +175,6 @@ const ConversationRoute: FC = () => {
   }, [promptsMenuOverlays, skillMenuOverlay]);
   const { showErrorNotification } = useNotification();
   const overlay = useOptionalOverlay();
-  const {
-    items,
-    selectedItemId,
-    setSelectedItemId,
-    restoreSelectedItemId,
-    restoreDefaultSelection,
-    selectedDeploymentConfiguration,
-    isLoading,
-    error,
-  } = useDeployments();
   // TODO: remove in next release
   const {
     isActive: isIsolatedView,
@@ -297,13 +306,7 @@ const ConversationRoute: FC = () => {
     },
   );
 
-  const selectedDeployment = useMemo(
-    () => findDeploymentByIdOrReference(items, selectedItemId),
-    [items, selectedItemId],
-  );
-
-  const deploymentItems: DeploymentItem[] = useMemo(
-    () =>
+  const deploymentItems: DeploymentItem[] = useMemo(    () =>
       items.map(
         ({
           id,
@@ -508,6 +511,7 @@ const ConversationRoute: FC = () => {
         menuOverlays={menuOverlays}
         inlineStartSlot={selectedSkillElement}
         onInlineStartRemove={removeSelectedSkill}
+        isSkillUnsupported={isSkillUnsupported}
         commandMenu={commandMenu}
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}

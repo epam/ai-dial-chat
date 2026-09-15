@@ -70,7 +70,7 @@ import '@epam/ai-dial-usage-dashboard/styles.css';
 
 ## Peer Dependencies
 
-- `react` ^19.2.7
+- `react` ^19.2.8
 - `@epam/ai-dial-chat-shared` \*
 - `@epam/ai-dial-ui-kit`
 
@@ -287,7 +287,7 @@ though the cell keeps its metric kind. All three periods are always present; the
 selector state.
 
 The heading and row count remain visible when `rows` is empty; the table body switches to
-`labels.emptyStateLabel`. Pass `emptyStateIconSize` (default `48`) to resize the empty-state icon.
+`labels.emptyStateLabel`.
 
 ## Utilities
 
@@ -387,7 +387,7 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
 - `ModelLimitPeriodStatuses` — `{ day, week, month }`
 - `ModelLimitRow` — `{ id, name, version?, avatarSrc?, day, week, month, status }`
 - `ModelLimitsLabels` — `{ headingLabel, itemColumnLabel, dayColumnLabel, weekColumnLabel, monthColumnLabel, statusColumnLabel, tokensLabel, costLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel, emptyStateLabel }`
-- `ModelLimitsSectionProps` — `{ rows, labels, periodStatuses, styles?, emptyStateIconSize? }`
+- `ModelLimitsSectionProps` — `{ rows, labels, periodStatuses, styles? }`
 - `ModelLimitsStyles` — `{ colors?, typography? }`
 - `ModelLimitsColors` — CSS-custom-property color overrides
 - `ModelLimitsTypography` — typography class overrides

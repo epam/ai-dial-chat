@@ -298,11 +298,17 @@ export interface ApplicationDetailsDto {
    */
   displayName?: string;
   /**
-   * Non-secret custom application properties reported by DIAL Core
+   * Non-secret custom application properties reported by DIAL Core — a verbatim passthrough of the stored application_properties object, never merged with customAppFeatures or features.
    * @type {{ [key: string]: unknown }}
    * @memberof ApplicationDetailsDto
    */
   applicationProperties?: { [key: string]: unknown };
+  /**
+   * The raw top-level DIAL Core "features" JSON read from getCustomApplication — what the plain Custom App editor's Features textarea reads and writes through updateApplication's features field. Distinct from applicationProperties.features (a schema-specific key some applications, e.g. Quick Apps, store as part of their own config) and from features (allow-listed capability flags below).
+   * @type {{ [key: string]: unknown }}
+   * @memberof ApplicationDetailsDto
+   */
+  customAppFeatures?: { [key: string]: unknown };
   /**
    * Runtime environment for the function
    * @type {string}
@@ -2426,6 +2432,12 @@ export interface DeploymentFeaturesDetailsDto {
    */
   responsesApi?: boolean;
   /**
+   * Supports custom skills in chat requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDetailsDto
+   */
+  skillsSupported?: boolean;
+  /**
    * Supports the max_tokens parameter
    * @type {boolean}
    * @memberof DeploymentFeaturesDetailsDto
@@ -2492,6 +2504,12 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   chatCompletion?: boolean;
+  /**
+   * Whether the deployment supports custom skills in chat requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  skillsSupported?: boolean;
 }
 /**
  *
@@ -6245,6 +6263,12 @@ export interface SkillMetadataItemDto {
    */
   updatedAt?: number;
   /**
+   * Manifest-derived description (item only, Core attributes.description)
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  description?: string;
+  /**
    * Whether the skill belongs to the requestor
    * @type {boolean}
    * @memberof SkillMetadataItemDto
@@ -7196,6 +7220,12 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   maxInputAttachments?: number;
+  /**
+   * When supplied, fully replaces the stored Settings-step configuration (application_properties). Omit, or send null, to leave it unchanged.
+   * @type {object}
+   * @memberof UpdateApplicationBodyDto
+   */
+  applicationProperties?: object;
   /**
    *
    * @type {Array<LocaleTextEntryDto>}

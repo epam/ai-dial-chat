@@ -271,6 +271,29 @@ const ConversationView: FC<Props> = ({
         : undefined,
     [onInsertText, renderPromptsOverlay, t],
   );
+  const { language } = useLanguage();
+  const {
+    items,
+    selectedItemId,
+    setSelectedItemId,
+    selectedDeploymentConfiguration,
+    isLoading,
+    error,
+    toolsets,
+  } = useDeployments();
+  const activeDeploymentId = fixedModel?.id ?? selectedItemId;
+
+  const selectedDeployment = useMemo(() => {
+    const deployment = findDeploymentByIdOrReference(items, activeDeploymentId);
+    return deployment
+      ? {
+          ...deployment,
+          displayName: resolveLocalizedText(deployment.displayName, language),
+          description: resolveLocalizedText(deployment.description, language),
+        }
+      : undefined;
+  }, [items, activeDeploymentId, language]);
+
   const {
     skillMenuOverlay,
     commandMenu,
@@ -279,10 +302,13 @@ const ConversationView: FC<Props> = ({
     selectedSkillElement,
     selectedSkillPath,
     selectedSkills,
+    isSkillUnsupported,
     selectSkill,
     removeSelectedSkill,
     renderHistorySkills,
-  } = useSkillSelectorOverlay();
+  } = useSkillSelectorOverlay({
+    isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
+  });
   const isSkillUsageEnabled = useFeatureFlag('skillUsageEnabled');
   /*
    * The skills an edit send writes. While the flag is on, the shared
@@ -308,7 +334,6 @@ const ConversationView: FC<Props> = ({
     ];
     return entries.length > 0 ? entries : undefined;
   }, [promptsMenuOverlays, skillMenuOverlay]);
-  const { language } = useLanguage();
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
@@ -379,27 +404,6 @@ const ConversationView: FC<Props> = ({
   );
 
   const isEditActive = !!editingMessageIndexes?.size;
-  const {
-    items,
-    selectedItemId,
-    setSelectedItemId,
-    selectedDeploymentConfiguration,
-    isLoading,
-    error,
-    toolsets,
-  } = useDeployments();
-  const activeDeploymentId = fixedModel?.id ?? selectedItemId;
-
-  const selectedDeployment = useMemo(() => {
-    const deployment = findDeploymentByIdOrReference(items, activeDeploymentId);
-    return deployment
-      ? {
-          ...deployment,
-          displayName: resolveLocalizedText(deployment.displayName, language),
-          description: resolveLocalizedText(deployment.description, language),
-        }
-      : undefined;
-  }, [items, activeDeploymentId, language]);
 
   const mcpAppTools = useMcpAppTools(
     mcpAppsApiClient,
@@ -1057,7 +1061,7 @@ const ConversationView: FC<Props> = ({
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
                 isModelSelectorDisabled={isModelFixed}
-                isSendDisabled={isDisabledSendEnabled}
+                isSendDisabled={isDisabledSendEnabled || isSkillUnsupported}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}

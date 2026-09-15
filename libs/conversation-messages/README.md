@@ -172,6 +172,7 @@ import type {
   AssistantMessageBubbleLabels,
   MessageActionsProps,
   MessageActionLabels,
+  MessageActionColors,
   MessageActionTooltips,
   MessageActionAriaLabels,
 } from '@epam/ai-dial-conversation-messages';

@@ -17,7 +17,7 @@ import {
   Search,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconCalendarTime, IconPlus } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import {
   FC,
   useCallback,
@@ -93,11 +93,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   banner,
   styles: scheduledTasksStyles,
 }) => {
-  const {
-    colors,
-    typography,
-    emptyStateIconSize = 48,
-  } = scheduledTasksStyles ?? {};
+  const { colors, typography } = scheduledTasksStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const subtitleClassName = typography?.subtitleClassName ?? 'dial-body-text';
   const cssVars = buildCssVars({
@@ -232,18 +228,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           </p>
         );
       }
-      return (
-        <PanelEmptyState
-          icon={
-            <IconCalendarTime
-              aria-hidden
-              size={emptyStateIconSize}
-              stroke={1}
-            />
-          }
-          label={labels.emptyStateLabel}
-        />
-      );
+      return <PanelEmptyState label={labels.emptyStateLabel} />;
     }
 
     return (

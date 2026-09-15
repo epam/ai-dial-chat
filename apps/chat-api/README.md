@@ -593,13 +593,23 @@ policy, so this mode does **not** close an unsafe-inline finding. Enforce mode
 removes that allowance and blocks inline style attributes, inline JavaScript,
 inline event handlers, and JavaScript `eval()`.
 
-Chat and overlay sandbox HTML receive a fresh 32-byte cryptographic nonce for
+Nonce-aware chat and overlay sandbox HTML receive a fresh 32-byte cryptographic nonce for
 approved style elements. Their templates are cached in server memory, but HTML
 responses use `Cache-Control: no-store` and do not return ETags or conditional
-304s. Build frontend and backend together: an existing frontend build without
-the nonce marker is rejected at startup. Reverse proxies must preserve these
+304s. In `enforce` mode, an existing frontend build without the nonce marker is
+rejected at startup. Reverse proxies must preserve these
 headers and must not cache or rewrite the nonce-bearing HTML. Static assets keep
 their normal caching behavior.
+
+For a legacy frontend without `__DIAL_CSP_NONCE__`, use `CSP_MODE=report-only`
+(the default). The backend starts, logs one warning per legacy template, and serves
+that HTML unchanged with the existing enforced policy and the strict report-only
+candidate. Inline CSS remains permitted by the enforced policy; missing nonces
+can produce reports for legitimate styles. Inline JavaScript and JavaScript
+`eval()` remain blocked. This also applies to the enabled overlay sandbox.
+Rebuild the affected frontend with the nonce integration before switching to
+`enforce`. The compatibility behavior requires an updated backend image; setting
+the variable on an older backend with an unconditional marker check cannot fix it.
 
 Set optional `CSP_REPORT_URI` to your reporting service's HTTPS URL to enable
 both `report-uri` and the Reporting API (`report-to` / `Reporting-Endpoints`).

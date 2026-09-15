@@ -1,5 +1,5 @@
 /** Localized field labels used by the {@link ScheduledTaskDetailsSection} component. */
-export interface ScheduledTaskDetailsSectionLabels {
+interface ScheduledTaskDetailsSectionLabels {
   /** Label for the description field. */
   descriptionLabel: string;
   /** Label for the model/agent field. */

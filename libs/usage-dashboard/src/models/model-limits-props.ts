@@ -230,6 +230,4 @@ export interface ModelLimitsSectionProps {
   periodStatuses: ModelLimitPeriodStatuses;
   /** Style overrides applied as CSS custom properties and typography class overrides. */
   styles?: ModelLimitsStyles;
-  /** Size (px) of the empty-state icon, shown when `rows` is empty. Defaults to `48`. */
-  emptyStateIconSize?: number;
 }

@@ -5,7 +5,7 @@
 export const CARD_HEIGHT = 248;
 
 /** Vertical gap between card rows, matching the `gap-5` grid spacing (20 px). */
-export const CARD_ROW_GAP = 20;
+const CARD_ROW_GAP = 20;
 
 /** Total height allocated per virtual row. */
 export const CARD_ROW_HEIGHT = CARD_HEIGHT + CARD_ROW_GAP;

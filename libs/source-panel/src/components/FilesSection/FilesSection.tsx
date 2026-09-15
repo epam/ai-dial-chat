@@ -4,7 +4,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { memo, type FC } from 'react';
 
 /** Props for the FilesSection component. */
-export interface FilesSectionProps {
+interface FilesSectionProps {
   /** List of attachments to display. Renders nothing when empty. */
   attachments: DisplayAttachment[];
   /** Heading text rendered above the attachment grid. */

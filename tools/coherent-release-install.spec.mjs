@@ -1,12 +1,12 @@
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import os from 'node:os';
+import { cpSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import test, { after, before } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   cleanupDir,
+  createTmpRoot,
   createFixtureDir,
   createFixtureDependencyResolver,
   execNpmSync,
@@ -29,9 +29,7 @@ let dependencyResolver;
 let reactVersion;
 let reactTypesVersion;
 before(() => {
-  tmpRoot = mkdtempSync(
-    path.join(os.tmpdir(), 'ai-dial-chat-coherent-release-'),
-  );
+  tmpRoot = createTmpRoot('ai-dial-chat-coherent-release-');
   dependencyResolver = createFixtureDependencyResolver({
     workspaceRoot,
     tmpRoot,
@@ -126,12 +124,20 @@ const assertCoherentTarballs = (dependencies) => {
     const tarball = spec.startsWith('file:///')
       ? fileURLToPath(spec)
       : spec.slice(5);
+    /*
+     * Name the archive relative to its own directory. Handed an absolute
+     * Windows path, GNU tar reads the drive letter as a remote host and dies
+     * with "Cannot connect to C: resolve failed"; --force-local would fix that
+     * but bsdtar on macOS does not accept it.
+     */
     manifests.set(
       name,
       JSON.parse(
-        execFileSync('tar', ['-xOf', tarball, 'package/package.json'], {
-          encoding: 'utf8',
-        }),
+        execFileSync(
+          'tar',
+          ['-xOf', path.basename(tarball), 'package/package.json'],
+          { cwd: path.dirname(tarball), encoding: 'utf8' },
+        ),
       ),
     );
   }

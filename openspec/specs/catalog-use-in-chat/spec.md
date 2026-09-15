@@ -3,9 +3,7 @@
 ## Purpose
 
 The "Use in chat" action that selects a deployment and starts a new conversation, and the item kinds for which it is unavailable.
-
 ## Requirements
-
 ### Requirement: Use in chat selects a deployment and starts a new conversation
 
 When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type Model or Application, the system SHALL set that item's `id` as the selected deployment via `DeploymentsContext.setSelectedItemId` and navigate to `ROUTES.Root` (`/`). The navigation SHALL also carry the chosen id as router state (`{ deploymentId: string }`), so `ConversationRoute` treats the arrival as an explicit selection via `restoreSelectedItemId` instead of calling `restoreDefaultSelection`. Without it the new-chat route resets the selection to the operator default on mount (and the persisted preference has not yet propagated), discarding the pick.
@@ -137,12 +135,19 @@ When the user clicks "Use in chat" in the catalog details panel header for a cat
 
 The skill details panel's header SHALL offer "Use in chat" as the primary action for a Skill while the flag is enabled; while it shows, the Download action SHALL render in the Manage menu instead of the primary slot. While the flag is disabled, the Skill header SHALL behave exactly as before this change — Download as the primary action, no "Use in chat".
 
-**Deferred condition (documented, not implemented):** the button should eventually render only when the default model — the deployment the chat will open with — supports skills. The backend exposes no way to know that yet (the skill-usage contract is undesigned), so the visibility rule is unconditional within the flag for now; when the capability signal exists, this requirement's visibility clause gains that condition.
+The button's visibility SHALL NOT consult the selected deployment's skills support: it renders for every Skill while the flag is enabled, regardless of which model the chat will open with. When the chat opens with a deployment whose `features.skillsSupported` is not `true`, the attached skill renders in the `ChatSkill` error state with sending disabled (see the `skill-input-attachment` capability's error-state requirement) — the visible error state, not a hidden button, communicates the mismatch. This resolves the previously deferred model-support condition: hiding the button was rejected because the catalog does not reliably know the chat route's live deployment selection, and the error state covers both this arrival path and later model switches with one mechanism.
 
 #### Scenario: Use in chat on a Skill adds it to the chat input
 
 - **WHEN** `features.skillUsageEnabled` is enabled and the user clicks "Use in chat" on a Skill in the catalog details panel
 - **THEN** the app navigates to `/` and the conversation input shows a chip for that skill in the accent-active control color
+- **AND** the selected deployment is unchanged from before the click
+
+#### Scenario: Use in chat on a Skill with an unsupported selected model
+
+- **WHEN** `features.skillUsageEnabled` is enabled, the chat route's currently selected deployment has `features.skillsSupported` not `true`, and the user clicks "Use in chat" on a Skill
+- **THEN** the app navigates to `/` and the conversation input shows the skill's `ChatSkill` chip in the error state with its unsupported-model tooltip
+- **AND** sending is disabled until the user removes the skill or switches to a deployment that supports skills
 - **AND** the selected deployment is unchanged from before the click
 
 #### Scenario: Skill router state is one-shot
@@ -164,3 +169,4 @@ The skill details panel's header SHALL offer "Use in chat" as the primary action
 
 - **WHEN** the user clicks "Use in chat" on a skill
 - **THEN** `setSelectedItemId` is not called and no user-config update request is dispatched
+

@@ -409,7 +409,7 @@ export const rewriteAttachmentUrls = (
 });
 
 /** Best-effort display name for a fileId that failed to resolve to a `{bucket, path}` pair. */
-export const fileIdDisplayName = (fileId: string): string =>
+const fileIdDisplayName = (fileId: string): string =>
   fileId.split('/').pop() || fileId;
 
 /** One attachment reference planned for upload, with its collision-free destination already allocated. */

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DeploymentsService } from '../../deployments/deployments.service';
+import { DeploymentsDetailsService } from '../../deployments/details/deployments-details.service';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
@@ -45,17 +46,37 @@ function makeDeps() {
     invalidateListCache: vi.fn().mockResolvedValue(undefined),
   } as unknown as DeploymentsService;
 
-  return { dialClient, cacheManager, deploymentsService };
+  const deploymentsDetailsService = {
+    invalidateDetailsCache: vi.fn().mockResolvedValue(undefined),
+  } as unknown as DeploymentsDetailsService;
+
+  return {
+    dialClient,
+    cacheManager,
+    deploymentsService,
+    deploymentsDetailsService,
+  };
 }
 
 function makeService() {
-  const { dialClient, cacheManager, deploymentsService } = makeDeps();
+  const {
+    dialClient,
+    cacheManager,
+    deploymentsService,
+    deploymentsDetailsService,
+  } = makeDeps();
   const service = new ApplicationsService(
     dialClient,
     cacheManager as never,
     deploymentsService,
+    deploymentsDetailsService,
   );
-  return { service, cacheManager, deploymentsService };
+  return {
+    service,
+    cacheManager,
+    deploymentsService,
+    deploymentsDetailsService,
+  };
 }
 
 describe('ApplicationsService', () => {
@@ -87,7 +108,8 @@ describe('ApplicationsService', () => {
     });
 
     it('returns cached list without calling upstream on cache hit', async () => {
-      const { dialClient, deploymentsService } = makeDeps();
+      const { dialClient, deploymentsService, deploymentsDetailsService } =
+        makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
@@ -96,6 +118,7 @@ describe('ApplicationsService', () => {
         dialClient,
         cacheManager as never,
         deploymentsService,
+        deploymentsDetailsService,
       );
       const spy = vi
         .spyOn(service['dialClient'].client, 'getApplications')
@@ -107,7 +130,8 @@ describe('ApplicationsService', () => {
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { dialClient, deploymentsService } = makeDeps();
+      const { dialClient, deploymentsService, deploymentsDetailsService } =
+        makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -120,6 +144,7 @@ describe('ApplicationsService', () => {
         dialClient,
         cacheManager as never,
         deploymentsService,
+        deploymentsDetailsService,
       );
       vi.spyOn(
         service['dialClient'].client,
@@ -457,7 +482,12 @@ describe('ApplicationsService', () => {
     };
 
     it('merges General-step fields, persists at the same path, and invalidates caches', async () => {
-      const { service, cacheManager, deploymentsService } = makeService();
+      const {
+        service,
+        cacheManager,
+        deploymentsService,
+        deploymentsDetailsService,
+      } = makeService();
       const { getCustomApplicationSpy, saveCustomApplicationSpy } =
         mockUpdateApplicationSdk(service);
 
@@ -495,6 +525,9 @@ describe('ApplicationsService', () => {
       expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
         'user1',
       );
+      expect(
+        deploymentsDetailsService.invalidateDetailsCache,
+      ).toHaveBeenCalledWith('user1', id);
     });
 
     it('preserves application_properties, application_type_schema_id, and displayVersion when omitted from the body', async () => {
@@ -508,6 +541,108 @@ describe('ApplicationsService', () => {
         application_properties: existingApp.application_properties,
         application_type_schema_id: existingApp.application_type_schema_id,
         displayVersion: existingApp.displayVersion,
+      });
+    });
+
+    it('preserves application_properties when applicationProperties is explicitly null', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        applicationProperties: null,
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        application_properties: existingApp.application_properties,
+      });
+    });
+
+    it('fully replaces application_properties when applicationProperties is supplied', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+      const newProperties = {
+        orchestrator: { system_prompt: { type: 'custom', content: 'v2' } },
+        contexts: [],
+        tool_sets: [],
+        skills: ['weather'],
+      };
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        applicationProperties: newProperties,
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        application_properties: newProperties,
+        application_type_schema_id: existingApp.application_type_schema_id,
+        displayVersion: existingApp.displayVersion,
+      });
+    });
+
+    it('preserves empty arrays inside applicationProperties as a deliberate clear', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        applicationProperties: { tool_sets: [] },
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        application_properties: { tool_sets: [] },
+      });
+    });
+
+    it("does NOT hoist endpoint/features/inputAttachmentTypes/maxInputAttachments out of applicationProperties (regression: this used to strip a Quick App's own features key)", async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        applicationProperties: {
+          endpoint: 'https://x.example/chat',
+          features: { timestamp: true },
+          inputAttachmentTypes: ['image/png'],
+          maxInputAttachments: 3,
+          tool_sets: [],
+        },
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        application_properties: {
+          endpoint: 'https://x.example/chat',
+          features: { timestamp: true },
+          inputAttachmentTypes: ['image/png'],
+          maxInputAttachments: 3,
+          tool_sets: [],
+        },
+      });
+      // None of the four keys were lifted to the top level of the DIAL Core body.
+      expect(sentBody).not.toHaveProperty('endpoint');
+      expect(sentBody).not.toHaveProperty('features');
+      expect(sentBody).not.toHaveProperty('inputAttachmentTypes');
+      expect(sentBody).not.toHaveProperty('maxInputAttachments');
+    });
+
+    it('a top-level field and the same-named key inside applicationProperties are independent (no hoist/precedence to reconcile)', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        endpoint: 'https://a.example',
+        applicationProperties: { endpoint: 'https://b.example' },
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        endpoint: 'https://a.example',
+        application_properties: { endpoint: 'https://b.example' },
       });
     });
 
@@ -595,7 +730,12 @@ describe('ApplicationsService', () => {
     });
 
     it('does not invalidate cache when the update fails', async () => {
-      const { service, cacheManager, deploymentsService } = makeService();
+      const {
+        service,
+        cacheManager,
+        deploymentsService,
+        deploymentsDetailsService,
+      } = makeService();
       mockUpdateApplicationSdk(service, undefined, errResponse(409));
 
       await expect(
@@ -603,6 +743,9 @@ describe('ApplicationsService', () => {
       ).rejects.toThrow();
       expect(cacheManager.del).not.toHaveBeenCalled();
       expect(deploymentsService.invalidateListCache).not.toHaveBeenCalled();
+      expect(
+        deploymentsDetailsService.invalidateDetailsCache,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -702,5 +845,185 @@ describe('ApplicationsService', () => {
       ).rejects.toThrow();
       expect(cacheManager.del).not.toHaveBeenCalled();
     });
+  });
+});
+
+/*
+ * Regression coverage for two bugs found in review of the initial
+ * applicationProperties/update-cache change: (1) hoistApplicationFields was
+ * being applied on update too, silently stripping a Quick App's own
+ * application_properties.features key (e.g. `timestamp`); (2) updateApplication
+ * never invalidated the GET .../details cache, so re-opening Edit right after a
+ * save could load (and then resave) a stale, pre-update configuration. These use
+ * a real DeploymentsDetailsService wired to the same in-memory cache Map as
+ * ApplicationsService, instead of a mock, so the cache-invalidation contract
+ * between the two services is actually exercised end to end.
+ */
+describe('updateApplication + GET .../details cache interaction (regression)', () => {
+  const id = 'applications/bucket/quick-app__1.0.0';
+
+  function makeIntegrationDeps() {
+    const store = new Map<string, unknown>();
+    const cacheManager = {
+      get: vi.fn((key: string) => Promise.resolve(store.get(key))),
+      set: vi.fn((key: string, value: unknown) => {
+        store.set(key, value);
+        return Promise.resolve();
+      }),
+      del: vi.fn((key: string) => {
+        store.delete(key);
+        return Promise.resolve();
+      }),
+    };
+
+    const sdkClient = {
+      getApplication: vi.fn(),
+      getCustomApplication: vi.fn(),
+      saveCustomApplication: vi.fn(),
+      getUserBucket: vi.fn(),
+    };
+    const dialClient = {
+      client: sdkClient,
+      baseUrl: 'http://dial-core',
+      dialApiVersion: '2024-10-21',
+    } as unknown as DialClientService;
+
+    const deploymentsService = {
+      invalidateListCache: vi.fn().mockResolvedValue(undefined),
+    } as unknown as DeploymentsService;
+
+    const deploymentsDetailsService = new DeploymentsDetailsService(
+      dialClient,
+      cacheManager as never,
+    );
+    const applicationsService = new ApplicationsService(
+      dialClient,
+      cacheManager as never,
+      deploymentsService,
+      deploymentsDetailsService,
+    );
+
+    return { sdkClient, applicationsService, deploymentsDetailsService };
+  }
+
+  it("a Quick App's own application_properties.features survives a read → save → read round trip", async () => {
+    const { sdkClient, applicationsService, deploymentsDetailsService } =
+      makeIntegrationDeps();
+
+    const initialProperties = {
+      features: { timestamp: true },
+      orchestrator: { system_prompt: { type: 'custom' } },
+    };
+    const updatedProperties = {
+      features: { timestamp: false },
+      orchestrator: { system_prompt: { type: 'custom' } },
+      skills: ['weather'],
+    };
+
+    // 1. Initial read.
+    sdkClient.getApplication.mockResolvedValueOnce(
+      okResponse({ id, application_properties: initialProperties }),
+    );
+    sdkClient.getCustomApplication.mockResolvedValueOnce(okResponse({}));
+    const before = await deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      id,
+      'token',
+    );
+    expect(before.applicationDetails?.applicationProperties).toEqual(
+      initialProperties,
+    );
+
+    // 2. Save: applicationProperties still carries its own `features` key.
+    sdkClient.getCustomApplication.mockResolvedValueOnce(
+      okResponse({
+        displayName: 'Quick App',
+        displayVersion: '1.0.0',
+        application_type_schema_id: 'https://mydial.epam.com/schema/quickapps2',
+        application_properties: initialProperties,
+      }),
+    );
+    sdkClient.saveCustomApplication.mockResolvedValueOnce(okResponse({}));
+    await applicationsService.updateApplication('user1', 'token', id, {
+      name: 'Quick App',
+      applicationProperties: updatedProperties,
+    });
+
+    const [, , { body: sentBody }] =
+      sdkClient.saveCustomApplication.mock.calls[0];
+    expect(sentBody.application_properties).toEqual(updatedProperties);
+    // The hoist bug used to lift `features` to the top level, stripping it
+    // from application_properties before it reached DIAL Core.
+    expect(sentBody).not.toHaveProperty('features');
+
+    // 3. Re-read: must reflect the saved Quick App features, not the original.
+    sdkClient.getApplication.mockResolvedValueOnce(
+      okResponse({ id, application_properties: updatedProperties }),
+    );
+    sdkClient.getCustomApplication.mockResolvedValueOnce(okResponse({}));
+    const after = await deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      id,
+      'token',
+    );
+    expect(after.applicationDetails?.applicationProperties).toEqual(
+      updatedProperties,
+    );
+    expect(sdkClient.getApplication).toHaveBeenCalledTimes(2);
+  });
+
+  it('an immediate re-read after save does not return the details cache entry populated before the save', async () => {
+    const { sdkClient, applicationsService, deploymentsDetailsService } =
+      makeIntegrationDeps();
+
+    const staleProperties = { tool_sets: ['old-toolset'] };
+    const freshProperties = { tool_sets: ['new-toolset'] };
+
+    // 1. Pre-populate the details cache (e.g. the Edit form's initial load).
+    sdkClient.getApplication.mockResolvedValueOnce(
+      okResponse({ id, application_properties: staleProperties }),
+    );
+    sdkClient.getCustomApplication.mockResolvedValueOnce(okResponse({}));
+    const cached = await deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      id,
+      'token',
+    );
+    expect(cached.applicationDetails?.applicationProperties).toEqual(
+      staleProperties,
+    );
+
+    // 2. Save a change to the configuration.
+    sdkClient.getCustomApplication.mockResolvedValueOnce(
+      okResponse({
+        displayName: 'Quick App',
+        displayVersion: '1.0.0',
+        application_properties: staleProperties,
+      }),
+    );
+    sdkClient.saveCustomApplication.mockResolvedValueOnce(okResponse({}));
+    await applicationsService.updateApplication('user1', 'token', id, {
+      name: 'Quick App',
+      applicationProperties: freshProperties,
+    });
+
+    // 3. Immediately re-open Edit: must NOT return the 60 s-cached, pre-save
+    // snapshot populated in step 1.
+    sdkClient.getApplication.mockResolvedValueOnce(
+      okResponse({ id, application_properties: freshProperties }),
+    );
+    sdkClient.getCustomApplication.mockResolvedValueOnce(okResponse({}));
+    const fresh = await deploymentsDetailsService.getDeploymentDetails(
+      'user1',
+      id,
+      'token',
+    );
+
+    expect(fresh.applicationDetails?.applicationProperties).toEqual(
+      freshProperties,
+    );
+    // A cache hit would have returned `cached`'s value without a second
+    // getApplication call — this proves the cache was actually invalidated.
+    expect(sdkClient.getApplication).toHaveBeenCalledTimes(2);
   });
 });

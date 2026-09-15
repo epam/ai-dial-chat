@@ -179,6 +179,11 @@ export class DeploymentFeaturesDetailsDto {
   @ApiPropertyOptional({ description: 'Supports the responses API' })
   responsesApi?: boolean;
 
+  @ApiPropertyOptional({
+    description: 'Supports custom skills in chat requests',
+  })
+  skillsSupported?: boolean;
+
   @ApiPropertyOptional({ description: 'Supports the max_tokens parameter' })
   maxTokensSupported?: boolean;
 
@@ -350,9 +355,23 @@ export class ApplicationDetailsDto {
     type: 'object',
     additionalProperties: true,
     description:
-      'Non-secret custom application properties reported by DIAL Core',
+      'Non-secret custom application properties reported by DIAL Core — a verbatim ' +
+      'passthrough of the stored application_properties object, never merged with ' +
+      'customAppFeatures or features.',
   })
   applicationProperties?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    description:
+      'The raw top-level DIAL Core "features" JSON read from getCustomApplication — ' +
+      "what the plain Custom App editor's Features textarea reads and writes through " +
+      "updateApplication's features field. Distinct from applicationProperties.features " +
+      '(a schema-specific key some applications, e.g. Quick Apps, store as part of their ' +
+      'own config) and from features (allow-listed capability flags below).',
+  })
+  customAppFeatures?: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Runtime environment for the function' })
   functionRuntime?: string;

@@ -226,6 +226,32 @@ export interface OverlayRequestError {
   message: string;
 }
 
+/** Settled outcome of an agent execution stage carried over the protocol. */
+export enum OverlayStageStatus {
+  /** The stage completed successfully. */
+  Completed = 'completed',
+  /** The stage encountered an error. */
+  Failed = 'failed',
+}
+
+/**
+ * One agent execution stage (a tool call, retrieval step, or reasoning step)
+ * projected into the protocol. A host reads these to react to what an agent
+ * did — e.g. refreshing its own view when a particular tool has run.
+ */
+export interface OverlayMessageStage {
+  /** Zero-based ordering key, stable across updates to the same stage. */
+  index: number;
+  /** Human-readable stage label, e.g. `'Lookup available terms'`. */
+  name: string;
+  /** `null` while the stage is still running; a settled value once it finishes. */
+  status: OverlayStageStatus | null;
+  /** Text content accumulated for this stage, when the agent produced any. */
+  content?: string;
+  /** Short source/category label shown beside the name, e.g. `'MCP'`. */
+  tag?: string;
+}
+
 /** Minimal message shape carried in overlay protocol payloads. */
 export interface OverlayChatMessage {
   /** Message id. */
@@ -234,6 +260,12 @@ export interface OverlayChatMessage {
   role: string;
   /** Message text content. */
   content: string;
+  /**
+   * Agent execution stages attached to this message, omitted when it has
+   * none. Stage attachments are not carried — the protocol projects labels,
+   * status, and text only.
+   */
+  stages?: OverlayMessageStage[];
 }
 
 /** Host-agnostic conversation projection for the overlay protocol. */
