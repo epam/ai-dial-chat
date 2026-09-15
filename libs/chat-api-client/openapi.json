@@ -7420,6 +7420,10 @@
           "chatCompletion": {
             "type": "boolean",
             "description": "Whether the deployment supports chat completion requests"
+          },
+          "skillsSupported": {
+            "type": "boolean",
+            "description": "Whether the deployment supports custom skills in chat requests"
           }
         },
         "required": [
@@ -7861,6 +7865,10 @@
           "responsesApi": {
             "type": "boolean",
             "description": "Supports the responses API"
+          },
+          "skillsSupported": {
+            "type": "boolean",
+            "description": "Supports custom skills in chat requests"
           },
           "maxTokensSupported": {
             "type": "boolean",
@@ -12120,6 +12128,10 @@
           "updatedAt": {
             "type": "number",
             "description": "Unix timestamp ms (item only)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Manifest-derived description (item only, Core attributes.description)"
           },
           "isMy": {
             "type": "boolean",

@@ -512,6 +512,61 @@ describe('DeploymentsDetailsService', () => {
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
     });
 
+    it('maps skills_supported to features.skillsSupported in details', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/my-app',
+          features: { skills_supported: true },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app',
+        'token',
+      );
+
+      expect(result.applicationDetails?.features?.skillsSupported).toBe(true);
+    });
+
+    it('omits features.skillsSupported in details when skills_supported is absent or non-boolean', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication
+        .mockResolvedValueOnce(
+          okResponse({
+            id: 'applications/my-app',
+            features: { tools: true },
+          }),
+        )
+        .mockResolvedValueOnce(
+          okResponse({
+            id: 'applications/my-app-2',
+            features: { skills_supported: 'yes' },
+          }),
+        );
+
+      /* Distinct deployment ids so the second call does not hit the
+       * details cache and actually exercises the non-boolean branch. */
+      const withoutFlag = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app',
+        'token',
+      );
+      const nonBooleanFlag = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app-2',
+        'token',
+      );
+
+      expect(
+        withoutFlag.applicationDetails?.features?.skillsSupported,
+      ).toBeUndefined();
+      expect(
+        nonBooleanFlag.applicationDetails?.features?.skillsSupported,
+      ).toBeUndefined();
+    });
+
     it("does not overwrite a Quick App's own application_properties.features with the top-level DIAL Core features JSON", async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getApplication.mockResolvedValue(

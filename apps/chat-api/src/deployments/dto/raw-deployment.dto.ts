@@ -5,6 +5,7 @@ export interface RawDeploymentFeaturesDto {
   mcp?: boolean;
   responses_api?: boolean;
   chat_completion?: boolean;
+  skills_supported?: boolean;
 }
 
 export interface RawDeploymentDto {

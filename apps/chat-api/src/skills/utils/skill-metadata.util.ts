@@ -41,6 +41,16 @@ export const mapToSkillMetadataItem = (
       ? `skills/${item.bucket}/${path}`
       : (item.url ?? `skills/${item.bucket}/${path}`);
 
+  const attributes =
+    'attributes' in item
+      ? (item.attributes as Record<string, unknown> | undefined)
+      : undefined;
+  const description =
+    nodeType === SkillNodeType.Item &&
+    typeof attributes?.description === 'string'
+      ? attributes.description
+      : undefined;
+
   return {
     name: item.name,
     path: nodeType === SkillNodeType.Folder ? `${path}/` : path,
@@ -59,5 +69,6 @@ export const mapToSkillMetadataItem = (
     author: 'author' in item ? item.author : undefined,
     createdAt: 'createdAt' in item ? item.createdAt : undefined,
     updatedAt: 'updatedAt' in item ? item.updatedAt : undefined,
+    description,
   };
 };

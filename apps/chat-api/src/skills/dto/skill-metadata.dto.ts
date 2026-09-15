@@ -47,6 +47,12 @@ export class SkillMetadataItemDto {
   updatedAt?: number;
 
   @ApiPropertyOptional({
+    description:
+      'Manifest-derived description (item only, Core attributes.description)',
+  })
+  description?: string;
+
+  @ApiPropertyOptional({
     description: 'Whether the skill belongs to the requestor',
   })
   isMy?: boolean;

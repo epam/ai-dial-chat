@@ -2432,6 +2432,12 @@ export interface DeploymentFeaturesDetailsDto {
    */
   responsesApi?: boolean;
   /**
+   * Supports custom skills in chat requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDetailsDto
+   */
+  skillsSupported?: boolean;
+  /**
    * Supports the max_tokens parameter
    * @type {boolean}
    * @memberof DeploymentFeaturesDetailsDto
@@ -2498,6 +2504,12 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   chatCompletion?: boolean;
+  /**
+   * Whether the deployment supports custom skills in chat requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  skillsSupported?: boolean;
 }
 /**
  *
@@ -6244,6 +6256,12 @@ export interface SkillMetadataItemDto {
    * @memberof SkillMetadataItemDto
    */
   updatedAt?: number;
+  /**
+   * Manifest-derived description (item only, Core attributes.description)
+   * @type {string}
+   * @memberof SkillMetadataItemDto
+   */
+  description?: string;
   /**
    * Whether the skill belongs to the requestor
    * @type {boolean}

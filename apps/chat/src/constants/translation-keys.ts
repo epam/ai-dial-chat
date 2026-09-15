@@ -351,6 +351,7 @@ export enum SkillSelectorI18nKeys {
   EmptyQueryHint = 'skillSelector.emptyQueryHint',
   ModalTitle = 'skillSelector.modalTitle',
   NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
+  UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
 }
 

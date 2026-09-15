@@ -317,6 +317,7 @@
     "emptyQueryHint": "Type to filter",
     "modalTitle": "Use skill",
     "noMatchingSkillsLabel": "No matching skills",
+    "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
     "viewDetailsLabel": "View details"
   },
   "notFound": {
