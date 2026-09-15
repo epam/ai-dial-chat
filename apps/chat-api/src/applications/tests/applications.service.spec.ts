@@ -315,6 +315,7 @@ describe('ApplicationsService', () => {
               'https://mydial.epam.com/custom_application_schemas/quickapps2',
             description: 'A description',
             iconUrl: 'https://example.com/icon.svg',
+            features: { skills_supported: true },
           },
         }),
       );
@@ -449,6 +450,45 @@ describe('ApplicationsService', () => {
         service.createApplication('user1', 't', body),
       ).rejects.toThrow();
       expect(cacheManager.del).not.toHaveBeenCalled();
+    });
+
+    it('forces features.skills_supported to true for a Quick App with no applicationProperties.features', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', body);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({ skills_supported: true });
+    });
+
+    it('merges skills_supported alongside caller-supplied features for a Quick App', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        applicationProperties: { features: { timestamp: true } },
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({
+        timestamp: true,
+        skills_supported: true,
+      });
+    });
+
+    it('does not add skills_supported for a non-Quick-App create', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        name: 'My App',
+        type: 'https://mydial.epam.com/schema',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('features');
     });
   });
 
@@ -747,6 +787,33 @@ describe('ApplicationsService', () => {
         deploymentsDetailsService.invalidateDetailsCache,
       ).not.toHaveBeenCalled();
     });
+
+    it('forces features.skills_supported to true when updating an existing Quick App, even when features is omitted', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({
+          ...existingApp,
+          application_type_schema_id:
+            'https://mydial.epam.com/schema/quickapps2',
+        }),
+      );
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({ skills_supported: true });
+    });
+
+    it('does not add skills_supported when updating a non-Quick-App', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('features');
+    });
   });
 
   describe('deleteApplication', () => {
@@ -953,8 +1020,13 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       sdkClient.saveCustomApplication.mock.calls[0];
     expect(sentBody.application_properties).toEqual(updatedProperties);
     // The hoist bug used to lift `features` to the top level, stripping it
-    // from application_properties before it reached DIAL Core.
-    expect(sentBody).not.toHaveProperty('features');
+    // from application_properties before it reached DIAL Core. The top-level
+    // `features` seen here comes only from the Quick-App skills_supported
+    // force-set, not from a hoist of application_properties.features.
+    expect(sentBody.features).toEqual({ skills_supported: true });
+    expect(sentBody.application_properties.features).toEqual({
+      timestamp: false,
+    });
 
     // 3. Re-read: must reflect the saved Quick App features, not the original.
     sdkClient.getApplication.mockResolvedValueOnce(
