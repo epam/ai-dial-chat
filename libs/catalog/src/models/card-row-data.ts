@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { CatalogItem } from './catalog-item';
 
 /** Row data passed to each virtual row renderer in the card grid. */
@@ -26,4 +27,6 @@ export interface CardRowData {
   credentialsBadgeLoggedOutLabel: string;
   /** Renders every card read-only: no favorite star, no footer divider, and no "Featured" tag. */
   isReadonly?: boolean;
+  /** Featured chip style override, merged over its default per-entity-type colors for every card, e.g. `{ backgroundColor, color, border }`. */
+  featuredChipStyle?: CSSProperties;
 }

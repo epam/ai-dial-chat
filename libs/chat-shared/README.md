@@ -465,12 +465,21 @@ import { CatalogEntityType, EntityTypeLabel } from '@epam/ai-dial-chat-shared';
 
 ### FeaturedChip
 
-Featured badge whose text and background colors follow the entity type.
+Featured badge whose text and background colors follow the entity type by
+default. Pass `style` to override any of the chip's own style properties
+(e.g. `backgroundColor`, `color`, `border`) — it is merged on top of the
+per-entity-type default, so it always wins.
 
 ```tsx
 import { CatalogEntityType, FeaturedChip } from '@epam/ai-dial-chat-shared';
 
 <FeaturedChip type={CatalogEntityType.Agent} label="Featured" />;
+
+<FeaturedChip
+  type={CatalogEntityType.Agent}
+  label="Featured"
+  style={{ backgroundColor: 'var(--bg-control-accent)', color: 'var(--text-control-permanent)' }}
+/>;
 ```
 
 ### EntityHeader
@@ -478,7 +487,8 @@ import { CatalogEntityType, FeaturedChip } from '@epam/ai-dial-chat-shared';
 Entity identity block: deployment icon, type label, name, version, and an
 optional featured chip. `item` needs only the `EntityHeaderItem` fields, so any
 richer catalog model can be passed directly. `statusBadge` renders an
-arbitrary badge in the same corner, ahead of the featured chip.
+arbitrary badge in the same corner, ahead of the featured chip. `featuredChipStyle`
+forwards to the featured chip's own `style` override (see `FeaturedChip` above).
 
 ```tsx
 import { EntityHeader } from '@epam/ai-dial-chat-shared';

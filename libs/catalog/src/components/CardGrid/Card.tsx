@@ -140,6 +140,7 @@ export const Card: FC<CardProps> = ({
             label={featuredLabel}
             type={item.type}
             className={featuredChipClassName}
+            style={cardStyles?.colors?.featuredChipStyle}
           />
         </div>
       )}
