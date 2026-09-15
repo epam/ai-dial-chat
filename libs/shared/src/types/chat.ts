@@ -267,6 +267,11 @@ export enum ConversationResponseFormat {
   Markdown = 'Markdown',
 }
 
+export enum CompactModeState {
+  On = 'On',
+  Off = 'Off',
+}
+
 export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
   prompt: string;

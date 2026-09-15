@@ -107,6 +107,7 @@ export const SettingsTooltip = {
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
   responseFormatInfo: '[data-qa="response-format"]',
+  compactModeInfo: '[data-qa="compact-mode-info"]',
 };
 
 export const TooltipSelector = {
@@ -226,6 +227,9 @@ export const ChatSettingsModalSelectors = {
   temperatureSlider: '[data-qa="temp-slider"]',
   slider: '.temperature-slider',
   responseFormatContainer: '[data-qa="response-format-container"]',
+  compactModeContainer: '[data-qa="compact-mode-container"]',
+  compactModeToggleSwitch: '[data-qa="toggle-switch"]',
+  compactModeDescription: '.grow',
 };
 
 // Dots pagination of the SliderGrid (entity grid pages).
