@@ -96,6 +96,38 @@ await overlay.setOverlayOptions({
 });
 ```
 
+#### Message shape and agent stages
+
+`getMessages()` and `sendMessage()` return `OverlayChatMessage` — a narrow
+projection of the app's own message, not the chat's internal entity:
+
+```ts
+import {
+  type OverlayChatMessage,
+  OverlayStageStatus,
+} from '@epam/ai-dial-chat-overlay';
+
+const { messages } = await overlay.getMessages();
+
+const last: OverlayChatMessage | undefined = messages.at(-1);
+const ranCanvasTool = last?.stages?.some(
+  (stage) =>
+    stage.name === 'Render canvas' &&
+    stage.status === OverlayStageStatus.Completed,
+);
+```
+
+`stages` carries the agent execution stages (tool calls, retrieval steps,
+reasoning steps) of a message that has any, and is absent otherwise — a host
+reads it to react to what an agent actually did, for example refreshing its own
+view after a specific tool has run. Each stage carries `index`, `name`,
+`status` (`null` while still running, otherwise an `OverlayStageStatus`), and
+the optional `content` and `tag`. Stage attachments are not projected.
+
+Stages are read on demand, not pushed: subscribe to
+`OverlayEventType.GptEndGenerating` and call `getMessages()` from the handler
+to inspect the finished response.
+
 #### Conversation-list methods
 
 ```ts

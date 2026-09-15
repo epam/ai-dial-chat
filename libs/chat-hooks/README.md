@@ -2263,12 +2263,19 @@ if (shouldWatchForDisplayNameUpdate(conversation)) {
 
 ### toOverlayMessages
 
-Maps chat messages to the DIAL Chat Overlay protocol's message shape.
+Maps chat messages to the DIAL Chat Overlay protocol's message shape. Each
+message is projected to `id`/`role`/`content`, plus `stages` when the message
+carries agent execution stages in `custom_content.stages`. Stage attachments
+are dropped, and `StageStatus` is translated to the protocol's own
+`OverlayStageStatus` so the chat's model does not cross the boundary.
 
 ```ts
 import { toOverlayMessages } from '@epam/ai-dial-chat-hooks';
 
 const overlayMessages = toOverlayMessages(conversation.messages);
+// [{ id: '0', role: 'user', content: 'Hi' },
+//  { id: '1', role: 'assistant', content: 'Done',
+//    stages: [{ index: 0, name: 'Render canvas', status: 'completed' }] }]
 ```
 
 ## Catalog Mapping Utilities
