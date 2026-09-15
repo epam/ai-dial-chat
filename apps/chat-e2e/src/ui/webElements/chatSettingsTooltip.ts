@@ -22,6 +22,9 @@ export class ChatSettingsTooltip extends BaseElement {
   public responseFormatInfo = this.getChildElementBySelector(
     SettingsTooltip.responseFormatInfo,
   );
+  public compactModeInfo = this.getChildElementBySelector(
+    SettingsTooltip.compactModeInfo,
+  );
 
   public async getApplicationInfo() {
     return this.applicationInfo.getElementInnerContent();
