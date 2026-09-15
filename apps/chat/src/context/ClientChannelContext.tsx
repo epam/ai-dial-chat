@@ -184,6 +184,23 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     }
   }, []);
 
+  /*
+   * An unresolved signin event is the one thing that pins the channel open:
+   * DIAL Core is blocked waiting for its report, and `reportEvent` needs this
+   * channel id to deliver it. The signin-interrupt contract also says the
+   * global dialog is dismissible only by resolving every listed event, and the
+   * dialog renders exactly this pending-event list — so tearing the channel
+   * down (which clears the list) would dismiss it by itself. Both the idle
+   * timer and the route-leave teardown therefore stand down while this holds.
+   */
+  const hasPendingEvents = useCallback(() => eventsMapRef.current.size > 0, []);
+
+  /** The channel is wanted while the flag/route condition holds, and also while any signin event is still unresolved. */
+  const isChannelWanted = useCallback(
+    () => isActiveRef.current || hasPendingEvents(),
+    [hasPendingEvents],
+  );
+
   const readStream = useCallback(
     async (body: ReadableStream<Uint8Array>, signal: AbortSignal) => {
       const reader = body.getReader();
@@ -217,7 +234,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const connectRef = useRef<() => Promise<void>>(async () => undefined);
 
   const scheduleReconnect = useCallback(() => {
-    if (isStoppedRef.current || !isActiveRef.current) return;
+    if (isStoppedRef.current || !isChannelWanted()) return;
     if (attemptRef.current >= RECONNECT_DELAYS_MS.length) return;
 
     const delay = RECONNECT_DELAYS_MS[attemptRef.current];
@@ -226,10 +243,10 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     retryTimeoutRef.current = setTimeout(() => {
       void connectRef.current();
     }, delay);
-  }, [clearRetryTimeout]);
+  }, [clearRetryTimeout, isChannelWanted]);
 
   const connect = useCallback(async () => {
-    if (isStoppedRef.current || !isActiveRef.current) return;
+    if (isStoppedRef.current || !isChannelWanted()) return;
     if (abortControllerRef.current) return; // already connecting/connected
 
     const controller = new AbortController();
@@ -258,7 +275,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
         scheduleReconnect();
       }
     }
-  }, [readStream, resolveChannelWaiters, scheduleReconnect]);
+  }, [isChannelWanted, readStream, resolveChannelWaiters, scheduleReconnect]);
 
   useEffect(() => {
     connectRef.current = connect;
@@ -309,14 +326,43 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     syncPendingEvents,
   ]);
 
-  const notifyGenerationSettled = useCallback(() => {
-    if (hasActiveGeneration()) return;
+  const scheduleIdleDisconnect = useCallback(() => {
     clearIdleDisconnectTimeout();
     idleDisconnectTimeoutRef.current = setTimeout(() => {
       idleDisconnectTimeoutRef.current = null;
+      /*
+       * Re-checked at fire time: a generation may have started, or a signin
+       * event arrived, inside the grace window.
+       */
+      if (hasActiveGeneration() || hasPendingEvents()) return;
       disconnect();
     }, IDLE_DISCONNECT_DELAY_MS);
-  }, [hasActiveGeneration, clearIdleDisconnectTimeout, disconnect]);
+  }, [
+    clearIdleDisconnectTimeout,
+    disconnect,
+    hasActiveGeneration,
+    hasPendingEvents,
+  ]);
+
+  const notifyGenerationSettled = useCallback(() => {
+    if (hasActiveGeneration()) return;
+    if (hasPendingEvents()) {
+      /*
+       * The generation that carried the signin event has settled — Core ends
+       * the completion while it waits for the report — but the event it left
+       * behind still needs this channel, so no disconnect is scheduled and any
+       * timer armed before the event arrived is dropped.
+       */
+      clearIdleDisconnectTimeout();
+      return;
+    }
+    scheduleIdleDisconnect();
+  }, [
+    clearIdleDisconnectTimeout,
+    hasActiveGeneration,
+    hasPendingEvents,
+    scheduleIdleDisconnect,
+  ]);
 
   // See client-channel-protocol spec for the full rationale.
   const waitForChannel = useCallback(
@@ -345,22 +391,47 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     [ensureConnected],
   );
 
+  const disconnectRef = useRef(disconnect);
+  useEffect(() => {
+    disconnectRef.current = disconnect;
+  }, [disconnect]);
+
+  /*
+   * Route/flag lifecycle. The teardown lives in the effect body rather than in
+   * a cleanup so that a re-run caused by the route (or flag) changing can
+   * honour the pending-event pin — a cleanup cannot tell a dependency change
+   * apart from an unmount, and would tear the channel down (clearing the
+   * dialog's events) on every route change. Unmount is handled by its own
+   * effect below, which always disconnects.
+   */
   useEffect(() => {
     isStoppedRef.current = false;
     if (!isActive) {
+      /*
+       * Leaving a streaming-capable route with signin events still unresolved
+       * keeps the subscription: the dialog is application-level, outlives the
+       * route that spawned it, and its report calls still need this channel.
+       * The flag going off is different — the whole mechanism is disabled, so
+       * the pending events go with it.
+       */
+      if (isEnabled && hasPendingEvents()) return;
       disconnect();
-      return undefined;
+      return;
     }
 
     attemptRef.current = 0;
     void connect();
-
-    return () => {
-      isStoppedRef.current = true;
-      disconnect();
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isActive]);
+  }, [isActive, isEnabled]);
+
+  /* Unmounting ends the session's use of the channel outright — pin or not. */
+  useEffect(
+    () => () => {
+      isStoppedRef.current = true;
+      disconnectRef.current();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!isActive) return undefined;
@@ -387,8 +458,26 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
       await reportClientChannel(currentChannelId, { id: eventId, result });
       resolvedIdsRef.current.add(eventId);
       removeEvent(eventId);
+
+      if (hasPendingEvents()) return;
+      /*
+       * Last event resolved — resume the lifecycle that was held off while the
+       * dialog was open: tear down at once if the route no longer wants a
+       * channel, otherwise fall back to the idle grace period.
+       */
+      if (!isActiveRef.current) {
+        disconnect();
+      } else if (!hasActiveGeneration()) {
+        scheduleIdleDisconnect();
+      }
     },
-    [removeEvent],
+    [
+      disconnect,
+      hasActiveGeneration,
+      hasPendingEvents,
+      removeEvent,
+      scheduleIdleDisconnect,
+    ],
   );
 
   const value = useMemo(
