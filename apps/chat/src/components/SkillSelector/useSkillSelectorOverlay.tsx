@@ -82,9 +82,7 @@ export const useSkillSelectorOverlay = ({
       backLabel: t(NavigationI18nKeys.Back),
       catalogModalTitleLabel: t(SkillSelectorI18nKeys.ModalTitle),
       emptyQueryHintLabel: t(SkillSelectorI18nKeys.EmptyQueryHint),
-      unsupportedTooltipLabel: t(
-        SkillSelectorI18nKeys.UnsupportedTooltipLabel,
-      ),
+      unsupportedTooltipLabel: t(SkillSelectorI18nKeys.UnsupportedTooltipLabel),
       panelLabels: {
         myCollectionLabel: t(PromptSelectorI18nKeys.MyCollectionLabel),
         emptyHintLabel: t(SkillSelectorI18nKeys.EmptyHint),

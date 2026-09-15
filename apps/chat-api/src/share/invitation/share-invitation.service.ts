@@ -57,7 +57,7 @@ export class ShareInvitationService {
 
   constructor(
     private readonly dialClient: DialClientService,
-    private readonly configService: ConfigService<EnvironmentVariables>,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
     private readonly deploymentsService: DeploymentsService,
     private readonly toolsetsService: ToolsetsService,
     private readonly skillsLookupService: SkillsLookupService,

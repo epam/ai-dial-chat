@@ -306,7 +306,8 @@ const ConversationRoute: FC = () => {
     },
   );
 
-  const deploymentItems: DeploymentItem[] = useMemo(    () =>
+  const deploymentItems: DeploymentItem[] = useMemo(
+    () =>
       items.map(
         ({
           id,
