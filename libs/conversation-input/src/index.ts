@@ -1,3 +1,4 @@
+export { CONVERSATION_INPUT_CLASS } from './constants/public-class-names';
 export { BottomSheetShell } from './components/BottomSheetShell/BottomSheetShell';
 export type { BottomSheetShellProps } from './components/BottomSheetShell/BottomSheetShell';
 export { ConversationInput } from './components/ConversationInput/ConversationInput';

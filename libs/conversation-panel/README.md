@@ -22,6 +22,32 @@ Import the stylesheet once in the consuming app:
 import '@epam/ai-dial-conversation-panel/styles.css';
 ```
 
+### Tailwind setup (required)
+
+This package's layout, spacing, and sizing are Tailwind utility classes in its
+compiled JSX — not rules in its stylesheet. Your own Tailwind build has to
+produce them, so add the design-token preset and scan this package:
+
+```js
+// your tailwind.config.js
+module.exports = {
+  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
+  content: [
+    './src/**/*.{html,js,ts,jsx,tsx}',
+    './node_modules/@epam/ai-dial-conversation-panel/dist/**/*.js',
+    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
+  ],
+};
+```
+
+The preset is required, not optional: this package's JSX uses semantic token
+utilities (`bg-layer-raised`, `text-secondary`, `stroke-secondary`, …) whose
+class names exist only in that theme.
+
+**Omitting either piece fails silently** — no build error, no warning, correct
+DOM, missing layout. Tailwind CSS 3 in the host is a hard requirement; a
+non-Tailwind host is unsupported.
+
 ## Peer Dependencies
 
 - `react`
@@ -109,6 +135,55 @@ button in the host app.
 `styles.searchWrapperClassName` remains for anything else the search wrapper
 needs; a `rounded-*` utility passed there still wins over `--cp-search-radius`,
 since a host's utilities are emitted after this package's stylesheet.
+
+## Public class names
+
+The panel's controls carry stable `dial-cp-*` classes in addition to their
+internal classes. Target those instead of DOM-order selectors or hashed
+CSS-module names. The names are exported so you never hardcode them:
+
+```tsx
+import { CONVERSATION_PANEL_CLASS } from '@epam/ai-dial-conversation-panel';
+
+CONVERSATION_PANEL_CLASS.search; // 'dial-cp-search'
+```
+
+| Class                     | Element                                             |
+| ------------------------- | --------------------------------------------------- |
+| `dial-cp-new-chat-button` | The new-chat button                                 |
+| `dial-cp-search`          | The `role="search"` wrapper around the search field |
+
+The panel renders inside `SidebarPanel`, so `dial-sb-aside` and
+`dial-sb-header` from `@epam/ai-dial-sidebar` are available on the surrounding
+chrome.
+
+These classes carry no declarations of their own, so they change nothing until
+you style them.
+
+### Replacing fragile selectors
+
+| Instead of                                                            | Use                         |
+| --------------------------------------------------------------------- | --------------------------- |
+| `[role='complementary'] > div:nth-child(2) > div:first-child > button` | `.dial-cp-new-chat-button`  |
+| `[role='search'] .dial-kit-input`                                     | `.dial-cp-search .dial-kit-input` |
+
+`dial-kit-input` is itself a public class of `@epam/ai-dial-ui-kit`, so
+descending to it from `dial-cp-search` is supported — what was fragile was the
+`role='search'` half.
+
+### Stability
+
+A `dial-cp-*` class is public API: renaming it, removing it, or moving it to a
+different element is a breaking change, announced in the release notes and
+recorded here with its replacement. The element itself stays free — its Tailwind
+utilities, its CSS-module class, and its position in the DOM may all change.
+
+Your own overrides are responsible for direction: the class names are
+direction-agnostic and identical under `dir="rtl"`, so use CSS logical
+properties (`padding-inline-start`, `inset-inline-end`) rather than physical ones.
+
+The full convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 ## Enums
 

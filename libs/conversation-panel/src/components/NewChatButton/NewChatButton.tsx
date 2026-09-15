@@ -2,6 +2,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
+import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type { NewChatButtonColors } from '../../models/panel-props';
 import styles from './NewChatButton.module.scss';
 
@@ -34,6 +35,7 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
           className={mergeClasses(
             'flex h-[36px] w-full cursor-pointer items-center justify-center gap-2 px-3 py-1 shadow-chat-button hover:shadow-xs focus-visible:shadow-xs active:shadow-xs',
             styles.button,
+            CONVERSATION_PANEL_CLASS.newChatButton,
           )}
         >
           <IconPlus

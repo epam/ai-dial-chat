@@ -267,6 +267,238 @@ className={mergeClasses(styles.wrapper, 'flex w-full gap-2', className)}
 
 ---
 
+## Public class names
+
+CSS-module locals are hashed at build time, Tailwind utilities change whenever the
+layout changes, and DOM order is not a contract. A host embedding these libs therefore
+has nothing stable to target — so selected elements additionally carry a **public class
+name** that exists purely as a styling hook.
+
+### Grammar
+
+```
+dial-<lib-prefix>-<element>[-<state>]
+```
+
+- `<lib-prefix>` is the lib's **existing CSS-custom-property prefix**, so the class
+  contract and the theming contract read the same:
+
+  | Lib                     | CSS var prefix | Class prefix |
+  | ----------------------- | -------------- | ------------ |
+  | `sidebar`               | `--sb-*`       | `dial-sb-`   |
+  | `conversation-panel`    | `--cp-*`       | `dial-cp-`   |
+  | `conversation-messages` | `--cm-*`       | `dial-cm-`   |
+  | `conversation-input`    | `--ci-*`       | `dial-ci-`   |
+  | `attachment-input`      | `--ai-*`       | `dial-ai-`   |
+
+- `<element>` and `<state>` are lower-case kebab-case. **No BEM** — no `__`, no `--`.
+- A state is an **additive** class applied alongside the base class, never a replacement:
+
+  ```
+  dial-ai-attachment-tile                    ← always
+  dial-ai-attachment-tile dial-ai-attachment-tile-selected   ← when selected
+  ```
+
+Flat kebab-case matches `@epam/ai-dial-ui-kit`, whose public classes already spell state
+as a suffix (`dial-kit-input`, `dial-kit-input-error`, `dial-kit-input-small`,
+`dial-kit-grid-selection-visible`). A `--` segment also reads as a CSS custom property
+at a glance, and these libs are dense with real ones.
+
+### The names live in one constants file per lib
+
+```ts
+// libs/attachment-input/src/constants/public-class-names.ts
+/*
+ * Public, host-addressable class names — part of this package's public API.
+ * Read the Public class names section of openspec/lib-styling-guide.md before
+ * renaming one or moving it to a different element.
+ */
+export const ATTACHMENT_INPUT_CLASS = {
+  tray: 'dial-ai-attachment-tray',
+  tile: 'dial-ai-attachment-tile',
+  tileSelected: 'dial-ai-attachment-tile-selected',
+} as const;
+```
+
+Re-export the record from the lib's `src/index.ts` so a host can import the names
+instead of hardcoding them.
+
+Use `as const`, not an enum. `AGENTS.md` asks for string enums for finite sets of
+statuses, modes, variants, or lifecycle states — this is none of those. It is a keyed
+lookup table that is never compared, never switched on, and never held in a variable,
+and a host needs the literal type to interpolate into a selector.
+
+Every component reads the name from the record. A public class name **must not** appear
+as a string literal in a component file — that is the same silent failure as
+[§3 Never apply a module class as a raw string](#3-never-apply-a-module-class-as-a-raw-string),
+where a typo looks correct in review and in the DOM.
+
+### Rules
+
+1. **Emitted unconditionally.** No prop, flag, context value, or host configuration
+   enables a public class. Append it inside the element's existing `mergeClasses` call,
+   after the CSS-module class and Tailwind utilities, before any caller `className`:
+
+   ```tsx
+   className={mergeClasses(
+     styles.tile,
+     ATTACHMENT_TILE_BASE_CLASS,
+     ATTACHMENT_INPUT_CLASS.tile,
+     isSelected && ATTACHMENT_INPUT_CLASS.tileSelected,
+     className,
+   )}
+   ```
+
+2. **No declarations, ever.** Never write a rule for a `dial-<prefix>-*` class in a
+   `.module.scss`. The published `styles.css` must contain no `.dial-*` selector — the
+   class changes nothing by itself, which is what makes adding it safe. Specificity and
+   `!important` are the host's problem, exactly as they already are for `dial-kit-*`.
+
+3. **ARIA attributes are not styling hooks.** Never ask a host to select by `role` or
+   `aria-label`, and never freeze label text so a host's selector keeps working. Labels
+   are localisable — `AttachmentTray`'s `aria-label` defaults to `'Attached files'` but
+   is overridable through `labels.ariaLabel`, so a host that selects by it breaks its
+   own styling the moment the app translates. Where a host previously had only an ARIA
+   selector, put a public class on that same element.
+
+4. **Direction-agnostic.** No class name encodes a physical direction — no `-left`, no
+   `-right` — and the emitted set is identical under `dir="ltr"` and `dir="rtl"`. The
+   host is responsible for using CSS logical properties in its own overrides.
+
+### Stability promise
+
+Once published, a `dial-*` class is public API of its package:
+
+- Renaming it, removing it, or **moving it to a different element** is a breaking
+  change — a host's selector targets the element, not just the name.
+- Announce any such change through the package's release notes and record it in the
+  lib's `README.md` with its replacement, in the same change.
+- Adding a class is non-breaking.
+
+The element itself stays free: its Tailwind utilities, its CSS-module class, and its
+position in the DOM can all change. That is the entire point.
+
+Note on enforcement: every `libs/*/package.json` is pinned at `0.0.1` with
+`private: true`, and the published version is stamped by the `epam/ai-dial-ci` release
+pipeline, so no in-repo version bump can carry this promise. It rests on the guard tests
+and the README instead.
+
+### Guard tests are mandatory
+
+A lost public class fails exactly like the four failure modes in
+[Dead-style checks](#dead-style-checks): the build passes, types pass, lint passes, and
+a host's stylesheet silently stops applying. So every public class needs at least one
+co-located test in the lib's `tests/` folder.
+
+Two rules for those tests:
+
+- **Locate by role, label, or text — then assert the class.** Querying *by* the public
+  class would pass even if the class landed on the wrong element.
+- **Resolve the expected value from the exported record**, never from a duplicated
+  literal, so the test cannot drift from the component.
+
+```tsx
+// ✅ correct — find the element by what it is, then assert the hook
+expect(screen.getByRole('list', { name: 'Attached files' })).toHaveClass(
+  ATTACHMENT_INPUT_CLASS.tray,
+);
+
+// ❌ wrong — passes even if the class is on the wrong node
+expect(document.querySelector('.dial-ai-attachment-tray')).toBeInTheDocument();
+```
+
+Cover the non-happy states too, which is where a naive implementation breaks: error and
+loading tiles, an empty list that renders nothing at all, and skeleton or
+empty/error menu rows.
+
+---
+
+## Host Tailwind setup
+
+**Tailwind CSS 3 in the host is mandatory.** A host that does not build its CSS
+with Tailwind cannot use these libs.
+
+The reason is the split at the top of this guide: layout, spacing, sizing, and
+border radius are Tailwind utility classes in JSX, and `.module.scss` carries
+only CSS custom properties. So a lib's published `./styles.css` is the
+CSS-module output **and nothing else** — it contains no utility layer:
+
+```sh
+# only hashed module selectors and their var() declarations
+grep -c '84px' libs/attachment-input/dist/index.css   # → 0
+```
+
+…while [`attachment-group.ts`](../libs/attachment-input/src/constants/attachment-group.ts)
+sizes every attachment tile with `size-[84px]`. The host's Tailwind pass is what
+turns that class into a rule.
+
+### The three required pieces
+
+```js
+// host tailwind.config.js
+module.exports = {
+  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
+  content: [
+    './src/**/*.{html,js,ts,jsx,tsx}',
+    './node_modules/@epam/ai-dial-conversation-input/dist/**/*.js',
+    './node_modules/@epam/ai-dial-attachment-input/dist/**/*.js',
+    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
+    // …one entry per consumed @epam/ai-dial-* package
+  ],
+};
+```
+
+```ts
+// host entry point — once per consumed package
+import '@epam/ai-dial-conversation-input/styles.css';
+import '@epam/ai-dial-attachment-input/styles.css';
+```
+
+1. **The preset** carries the semantic design-token scale. Library JSX uses
+   roughly 130 of those utilities — `text-secondary`, `text-primary`,
+   `bg-layer-raised`, `bg-layer-sunken`, `text-error`, `stroke-secondary`,
+   `bg-control-accent-alpha` and more — and those class names exist **only** in
+   this theme. Without the preset a host's Tailwind scans the libs, finds
+   `bg-layer-raised`, and emits nothing, because its theme has no such colour.
+2. **The `content` globs** must cover the published lib code. Tailwind can only
+   emit a utility it has seen in scanned source, and the libs' utilities live in
+   their compiled JSX, not in their stylesheets.
+3. **The `styles.css` import** brings the CSS-module rules and the three-tier
+   CSS variables. Layout comes from step 2; colours come from here.
+
+### It fails silently
+
+A missing `content` glob produces **no build error and no console warning**. The
+components mount, the DOM is correct, the accessible names are right — and the
+layout is simply absent. The two symptoms reported from the field:
+
+- attachment tiles collapse instead of rendering as 84 px squares
+  (`size-[84px]` never emitted), and
+- tile action buttons stay invisible on hover and on keyboard focus
+  (`group-hover/attachment-tile:opacity-100` never emitted).
+
+This repository's own [`tailwind.config.js`](../tailwind.config.js) is the
+worked example: it already applies the pattern to `@epam/ai-dial-ui-kit` and
+`@epam/ai-dial-react-file-manager`.
+
+### Where the preset lives
+
+`libs/chat-shared/tailwind-preset.cjs`, published as
+`@epam/ai-dial-chat-shared/tailwind-preset`. `chat-shared` is already a peer
+dependency of every UI lib, so a host that installs any of them already has it.
+
+The repo-root `tailwind.config.js` re-exports the preset and adds only this
+repository's own `content` globs, so the theme has a single owner. Every app and
+lib config extends the root config (`presets: [require('../../tailwind.config.js')]`)
+and inherits the preset transitively — do not copy tokens into a project config.
+
+The file is `.cjs` deliberately: `chat-shared` is an ESM package
+(`"type": "module"`) and Tailwind configs are CommonJS loaded by tooling outside
+the bundler. It holds no imports, so `chat-shared` stays a `type:shared` lib
+that imports nothing.
+
+---
+
 ## Consuming in another project
 
 ### With this app's theme (CSS vars already defined)

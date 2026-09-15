@@ -2,6 +2,7 @@ import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useModelSelector } from '../useModelSelector';
 
 const mockDeployments = [
@@ -182,11 +183,28 @@ describe('useModelSelector — menuItems', () => {
       { initialProps: { selectedDeploymentId: 'gpt-4o' } },
     );
 
-    expect(result.current.menuItems[1].className).toBeUndefined();
+    /*
+     * Every row carries the public `modelMenuItem` class; only the selected one
+     * additionally carries `modelMenuItemSelected`.
+     */
+    expect(result.current.menuItems[0].className).toContain(
+      CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+    );
+    expect(result.current.menuItems[1].className).toContain(
+      CONVERSATION_INPUT_CLASS.modelMenuItem,
+    );
+    expect(result.current.menuItems[1].className).not.toContain(
+      CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+    );
 
     rerender({ selectedDeploymentId: 'claude-3' });
 
-    expect(result.current.menuItems[0].className).toBeUndefined();
+    expect(result.current.menuItems[1].className).toContain(
+      CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+    );
+    expect(result.current.menuItems[0].className).not.toContain(
+      CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+    );
   });
 
   it('item onClick calls onDeploymentChange with item id', () => {

@@ -18,7 +18,7 @@ Core principle: the chat application is assembled from a set of **independently 
 | Goal                 | Description                                                                            |
 | -------------------- | -------------------------------------------------------------------------------------- |
 | **Composable**       | Chat is built from discrete, reusable `@epam/*` packages                               |
-| **Styleable**        | Every package accepts colors and typography via a three-tier CSS variable contract     |
+| **Styleable**        | Every package accepts colors and typography via a three-tier CSS variable contract, and exposes stable `dial-*` class names for host-side overrides |
 | **Theme-compatible** | DIAL Theme system supported — same service and JSON shape as the legacy chat           |
 | **Auth-agnostic**    | Authentication lives in the app layer only, never inside libraries                     |
 | **Embeddable**       | The whole application can be hosted in a third-party page through the overlay protocol |
@@ -580,6 +580,16 @@ CSS variable naming: `--{lib-prefix}-{property}` (e.g. `--ci-*` for conversation
 
 Typography is never hardcoded in a lib: components accept an `<element>ClassName` prop defaulting to a `dial-*-text` class from `@epam/ai-dial-ui-kit`.
 
+#### Public class names — the host-addressable tier
+
+Because CSS-module locals are hashed and Tailwind utilities move with the layout, a host embedding these libs had nothing stable to target. Selected elements therefore additionally carry a **public class** that exists purely as a styling hook and carries no declarations of its own: `dial-{lib-prefix}-{element}[-{state}]`, reusing the same prefix as the lib's CSS variables (`dial-sb-aside`, `dial-cp-search`, `dial-cm-user-bubble`, `dial-ci-action-row`, `dial-ai-attachment-tile`). Each lib defines its names in `src/constants/public-class-names.ts` and exports the record (`SIDEBAR_CLASS`, `CONVERSATION_INPUT_CLASS`, …) so hosts import rather than hardcode them. ARIA attributes are explicitly **not** styling hooks. Introduced for [#8707](https://github.com/epam/ai-dial-chat/issues/8707).
+
+#### The host owns the Tailwind pass
+
+A lib's published `styles.css` is its CSS-module output only — it contains no utility layer. So a consuming host **must** build with Tailwind CSS 3, apply the design-token preset published as `@epam/ai-dial-chat-shared/tailwind-preset` (the theme itself lives in `libs/chat-shared/tailwind-preset.cjs`, which the repo-root `tailwind.config.js` re-exports so the tokens have one owner), and add each consumed package's `dist` to its own `content` globs. Omitting either fails silently — correct DOM, missing layout. A non-Tailwind host is unsupported.
+
+The complete rules for both tiers — naming grammar, guard-test requirements, and the host setup — are in [`openspec/lib-styling-guide.md`](../openspec/lib-styling-guide.md).
+
 ### Apps — Tailwind CSS first
 
 `apps/chat` uses Tailwind utility classes, referencing theme tokens through the semantic names in `tailwind.config.js` (`bg-layer-base`, `text-primary`, `bg-control-accent`, …). A handful of components additionally use an SCSS module where a value cannot be expressed as a utility — currently `Header`, `DeploymentSelectorPanel`, `MobileNavBottomSheet`, `UsageLimitsControl`, and `NotFound`. Prefer Tailwind; reach for a module only when there is no class for the value.
@@ -663,6 +673,8 @@ The intended direction, enforced in review:
 | 17  | Module boundaries enforced by lint tags                                                                          | ❓ Open — wildcard constraint today                                                                                                                                                                                                                                                                                                                                   |
 | 18  | User preferences persist in `localStorage`, not the server user-config file                                      | ✅ Accepted — theme, language, keyboard shortcut and "Default agent for new chats" are all per-browser; they do not follow the user across devices                                                                                                                                                                                                                    |
 | 19  | `DEFAULT_DEPLOYMENT_PINNED` both **offers** the "Default agent for new chats" control and is **outranked** by it | ✅ Accepted — the row renders only while an agent is pinned (the pin is what makes its "Default agent" option mean anything), and an explicitly chosen agent then beats the pin. The pin still beats the _implicit_ last-used preference, which is what its description refers to. Both halves live in `resolveInitialSelection` + `PreferencesTab`'s visibility rule |
+| 20  | Host styling hooks: stable public `dial-{lib-prefix}-{element}` classes, emitted unconditionally and carrying no declarations | ✅ Accepted — hashed CSS-module locals, DOM order and ARIA attributes were the only handles a host had, and all three change without notice ([#8707](https://github.com/epam/ai-dial-chat/issues/8707)). Rejected a `styles.classNames` prop API: `styles` already means theming tokens, and portalled or deeply nested elements are unreachable by a prop |
+| 21  | Design-token Tailwind preset published as `@epam/ai-dial-chat-shared/tailwind-preset`                            | ✅ Accepted — lib JSX uses ~130 semantic token utilities that exist only in this theme, and the repo-root config it used to live in is exported by no package, so a host could not satisfy the `content`-glob requirement. The root config now re-exports it, keeping one owner |
 
 ---
 

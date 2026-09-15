@@ -1,3 +1,4 @@
+export { SIDEBAR_CLASS } from './constants/public-class-names';
 export { SidebarPanel } from './components/SidebarPanel/SidebarPanel';
 export { PanelEmpty } from './components/PanelEmptyState/PanelEmpty';
 export { PanelNoResults } from './components/PanelEmptyState/PanelNoResults';

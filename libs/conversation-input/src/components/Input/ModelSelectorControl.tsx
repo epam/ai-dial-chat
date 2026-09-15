@@ -12,6 +12,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, ReactNode, useState } from 'react';
+import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useModelSelector } from '../../hooks/useModelSelector';
 import type { ModelSelectorLabels } from '../../models/Input';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
@@ -110,6 +111,7 @@ export const ModelSelectorControl: FC<Props> = ({
             className={mergeClasses(
               'w-[50px]',
               styles.modelSelectorButton,
+              CONVERSATION_INPUT_CLASS.modelSelectorButton,
               disabledIconClassName,
             )}
           />
@@ -121,6 +123,7 @@ export const ModelSelectorControl: FC<Props> = ({
             closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
             onClose={() => setIsModelSheetOpen(false)}
             style={style}
+            className={CONVERSATION_INPUT_CLASS.modelMenu}
           >
             {modelPickerOverlay(() => setIsModelSheetOpen(false))}
           </BottomSheetShell>
@@ -162,7 +165,10 @@ export const ModelSelectorControl: FC<Props> = ({
         renderOverlay={() =>
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
-        listClassName="!w-[368px] !bg-layer-raised"
+        listClassName={mergeClasses(
+          '!w-[368px] !bg-layer-raised',
+          CONVERSATION_INPUT_CLASS.modelMenu,
+        )}
       >
         <Tooltip tooltip={chipTooltip}>
           <button
@@ -172,6 +178,7 @@ export const ModelSelectorControl: FC<Props> = ({
             className={mergeClasses(
               'flex min-w-0 items-center gap-1.5 rounded-full py-1.5 pe-2 ps-1.5',
               styles.modelSelectorButton,
+              CONVERSATION_INPUT_CLASS.modelSelectorButton,
               disabledIconClassName,
               isDisabled && styles.modelSelectorButtonDisabled,
             )}
@@ -224,7 +231,10 @@ export const ModelSelectorControl: FC<Props> = ({
            it — unlike the kit's own `Select`, which scrolls the options
            inside a header that stays put. */
         maxDropdownHeight={SELECT_LIST_MAX_HEIGHT_PX}
-        listClassName="!w-[240px]"
+        listClassName={mergeClasses(
+          '!w-[240px]',
+          CONVERSATION_INPUT_CLASS.modelMenu,
+        )}
         disabled={isDisabled}
         onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
       >
@@ -236,6 +246,7 @@ export const ModelSelectorControl: FC<Props> = ({
             className={mergeClasses(
               'flex items-center gap-1 rounded-full p-1.5',
               styles.modelSelectorButton,
+              CONVERSATION_INPUT_CLASS.modelSelectorButton,
               isDisabled && styles.modelSelectorButtonDisabled,
             )}
           >

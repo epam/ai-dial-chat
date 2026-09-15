@@ -22,6 +22,32 @@ Import the stylesheet once in the consuming app:
 import '@epam/ai-dial-conversation-messages/styles.css';
 ```
 
+### Tailwind setup (required)
+
+This package's layout, spacing, and sizing are Tailwind utility classes in its
+compiled JSX — not rules in its stylesheet. Your own Tailwind build has to
+produce them, so add the design-token preset and scan this package:
+
+```js
+// your tailwind.config.js
+module.exports = {
+  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
+  content: [
+    './src/**/*.{html,js,ts,jsx,tsx}',
+    './node_modules/@epam/ai-dial-conversation-messages/dist/**/*.js',
+    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
+  ],
+};
+```
+
+The preset is required, not optional: this package's JSX uses semantic token
+utilities (`bg-layer-raised`, `text-secondary`, `stroke-secondary`, …) whose
+class names exist only in that theme.
+
+**Omitting either piece fails silently** — no build error, no warning, correct
+DOM, missing layout. Tailwind CSS 3 in the host is a hard requirement; a
+non-Tailwind host is unsupported.
+
 ## Peer Dependencies
 
 - `react`
@@ -146,6 +172,62 @@ import { MessageActions } from '@epam/ai-dial-conversation-messages';
   isDisabled={isStreaming}
 />;
 ```
+
+## Public class names
+
+The bubbles carry stable `dial-cm-*` classes in addition to their internal
+classes. Target those instead of hashed CSS-module names or ARIA attributes.
+The names are exported so you never hardcode them:
+
+```tsx
+import { CONVERSATION_MESSAGES_CLASS } from '@epam/ai-dial-conversation-messages';
+
+CONVERSATION_MESSAGES_CLASS.userBubble; // 'dial-cm-user-bubble'
+```
+
+| Class                       | Element                                           |
+| --------------------------- | ------------------------------------------------- |
+| `dial-cm-user-bubble`       | The user message's bubble                         |
+| `dial-cm-assistant-content` | The assistant message's streamed content region   |
+
+`dial-cm-user-bubble` is emitted only when the bubble renders — a message with
+neither text nor `beforeContent` has no bubble at all. It is additive to
+`styles.bubbleClassName`, which keeps working exactly as before.
+
+These classes carry no declarations of their own, so they change nothing until
+you style them.
+
+### Replacing fragile selectors
+
+| Instead of                     | Use                                |
+| ------------------------------ | ---------------------------------- |
+| `[class*='userBubble']`        | `.dial-cm-user-bubble`             |
+| `[aria-live='polite']`         | `.dial-cm-assistant-content`       |
+| `[aria-live='polite'] pre`     | `.dial-cm-assistant-content pre`   |
+
+`aria-live` is an accessibility contract, not a styling one — using it as a
+selector pressures this package to keep an ARIA attribute frozen on a
+particular element. Use the class.
+
+**Fenced code blocks have no class of their own.** They are rendered by
+`MarkdownCodeBlock` from `@epam/ai-dial-chat-shared`, which is outside this
+package, so style them by descending from the content region:
+`.dial-cm-assistant-content pre`.
+
+### Stability
+
+A `dial-cm-*` class is public API: renaming it, removing it, or moving it to a
+different element is a breaking change, announced in the release notes and
+recorded here with its replacement. The element itself stays free — its Tailwind
+utilities, its CSS-module class, and its position in the DOM may all change.
+
+Your own overrides are responsible for direction: the class names are
+direction-agnostic and identical under `dir="rtl"`, so use CSS logical
+properties (`border-start-start-radius`, `margin-inline-end`) rather than
+physical ones.
+
+The full convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 ## Enums
 
