@@ -876,6 +876,12 @@ export interface ClientConfigDto {
    */
   announcements: Array<AnnouncementItemDto>;
   /**
+   * Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  welcomeScreenDescription?: string | null;
+  /**
    * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
    * @type {string}
    * @memberof ClientConfigDto
@@ -887,6 +893,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   customVisualizers: Array<CustomVisualizerDto>;
+  /**
+   * Public client-owned variables from CUSTOM_CLIENT_VARIABLES. Arbitrary JSON object; empty when unset or invalid. The BFF does not interpret its keys. Never put secrets here.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ClientConfigDto
+   */
+  customVariables: { [key: string]: unknown };
   /**
    * Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.
    * @type {Array<string>}
@@ -5414,11 +5426,11 @@ export interface RateMessageDto {
    */
   modelId: string;
   /**
-   * Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.
+   * Rating value — 1 (like/thumbs-up), -1 (dislike/thumbs-down), or null to clear a previously sent rating. DIAL Core's `/v1/{modelId}/rate` only accepts a boolean `rate`: this value is mapped to `true` for 1 and to `false` for both -1 and null, since DIAL Core has no separate state for "cleared".
    * @type {number}
    * @memberof RateMessageDto
    */
-  rate: RateMessageDtoRateEnum;
+  rate: RateMessageDtoRateEnum | null;
   /**
    * Optional free-text comment from the user
    * @type {string}

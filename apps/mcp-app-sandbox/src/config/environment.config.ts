@@ -6,7 +6,7 @@ export class EnvironmentVariables {
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
-  PORT?: number = 3100;
+  PORT = 3100;
 
   /**
    * Comma-separated list of allowed host origins (e.g.

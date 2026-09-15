@@ -79,13 +79,15 @@ which covers:
 
 - Deployment config: `IS_IFRAME` → `OVERLAY_ENABLED`, the origin allowlist, and
   the cookie settings a cross-site iframe needs
-- Authentication: removed `signInOptions`, and the per-provider
-  `auth.providerUiModes` map that opts a provider into same-window login
+- Authentication: the `signInOptions` object is gone — its `autoSignIn` /
+  `signInProvider` pair lives on as `auth.autoSignInProvider`, next to the
+  per-provider `auth.providerUiModes` map that opts a provider into
+  same-window login
 - The `INIT_READY` → `READY` → `READY_TO_INTERACT` handshake, request queuing,
   and the four `OverlayRequestErrorCode` values
 - Changed method signatures, response payloads, and the narrowed
   `OverlayChatMessage` / `OverlayConversation` shapes
-- All 39 `OverlayFeature` flags: legacy → new names, flags that became
+- All 44 `OverlayFeature` flags: legacy → new names, flags that became
   unconditional, flags with no successor yet, and the default-on baseline
 - `ChatOverlayManager` options and the widget chrome it now owns
 

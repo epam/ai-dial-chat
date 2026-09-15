@@ -29,6 +29,7 @@ describe('app-config API', () => {
         enabledUiFeatures: null,
         footerHtmlMessage: '',
         customVisualizers: [],
+        customVariables: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
       },
     });

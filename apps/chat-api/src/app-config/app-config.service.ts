@@ -195,8 +195,10 @@ export class AppConfigService {
     let announcementTitle: string | null = null;
     let announcementDescription: string | null = null;
     let announcements: AnnouncementItemDto[] = [];
+    let welcomeScreenDescription: string | null = null;
     let footerHtmlMessage = '';
     let customVisualizers: CustomVisualizerDto[] = [];
+    let customVariables: Record<string, unknown> = {};
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
 
     for (const def of clientDefinitions) {
@@ -244,6 +246,9 @@ export class AppConfigService {
         announcementDescription = raw ? sanitizeAnnouncementHtml(raw) : null;
       } else if (def.key === 'announcement.items') {
         announcements = this.normalizeAnnouncements(resolved);
+      } else if (def.key === 'welcomeScreen.description') {
+        /* Plain text by contract: never sanitized, never parsed as markup. */
+        welcomeScreenDescription = toNullableText(resolved);
       } else if (def.key === 'footer.html') {
         footerHtmlMessage =
           typeof resolved === 'string'
@@ -281,6 +286,13 @@ export class AppConfigService {
             );
           }
         }
+      } else if (def.key === 'customVariables') {
+        customVariables =
+          resolved !== null &&
+          typeof resolved === 'object' &&
+          !Array.isArray(resolved)
+            ? (resolved as Record<string, unknown>)
+            : {};
       } else if (def.key === 'customVisualizers') {
         customVisualizers = Array.isArray(resolved) ? resolved : [];
       } else if (def.key === 'publish.publicationFilterSources') {
@@ -309,9 +321,11 @@ export class AppConfigService {
         announcementTitle,
         announcementDescription,
         announcements,
+        welcomeScreenDescription,
         footerHtmlMessage,
         enabledUiFeatures,
         customVisualizers,
+        customVariables,
         publicationFilterSources,
       },
       metadata: {

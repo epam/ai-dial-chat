@@ -340,8 +340,8 @@ export class DeploymentsDetailsService {
     const rawRecord = raw as unknown as Record<string, unknown>;
 
     /* For applications with an `applications/{bucket}/{path}` ID, fetch the
-     * full config via getCustomApplication to get endpoint —
-     * getApplication (model listing) does not expose that field. */
+     * full config via getCustomApplication for endpoint and stored properties.
+     * getApplication is list-shaped and may omit or return empty properties. */
     let customAppRaw: Record<string, unknown> | undefined;
     const appParts = deployment.startsWith('applications/')
       ? deployment.slice('applications/'.length).split('/')
@@ -364,9 +364,11 @@ export class DeploymentsDetailsService {
       type: DeploymentItemType.Application,
       applicationDetails: {
         displayName: resolveLocalizedValue(raw.display_name),
-        applicationProperties: isRecord(raw.application_properties)
-          ? raw.application_properties
-          : undefined,
+        applicationProperties: isRecord(customAppRaw?.application_properties)
+          ? customAppRaw.application_properties
+          : isRecord(raw.application_properties)
+            ? raw.application_properties
+            : undefined,
         /* The Custom App editor's Features textarea reads/writes the
          * top-level DIAL Core `features` JSON (via updateApplication's
          * `features` field) — distinct from application_properties.features,

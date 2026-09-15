@@ -6,7 +6,7 @@ import {
   buildJobTitleHeaders,
 } from '../common/utils/header-value';
 import { DialClientService } from '../dial/dial-client.service';
-import type { RateMessageDto } from './dto/rate-message.dto';
+import { MessageRating, type RateMessageDto } from './dto/rate-message.dto';
 
 @Injectable()
 export class RateService {
@@ -26,15 +26,13 @@ export class RateService {
     );
 
     try {
-      const body: Record<string, unknown> = {
-        rate: dto.rate,
-        modelId: dto.modelId,
-        conversationId: dto.conversationId,
+      // DIAL Core's RateRequest only accepts { responseId, rate: boolean } — no
+      // modelId/conversationId/comment. modelId already selects the URL path segment
+      // above and conversationId already drives the X-CONVERSATION-ID header below.
+      const body = {
         responseId: dto.responseId,
+        rate: dto.rate === MessageRating.Like,
       };
-      if (dto.comment != null) {
-        body['comment'] = dto.comment;
-      }
 
       const response = await this.dialClient.fetchCore(url, {
         method: 'POST',

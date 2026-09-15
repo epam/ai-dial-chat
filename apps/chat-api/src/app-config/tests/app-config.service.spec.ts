@@ -42,6 +42,31 @@ describe('AppConfigService', () => {
   });
 
   describe('getClientConfig', () => {
+    it('keeps client-owned variables in their own namespace without overriding built-in config', async () => {
+      const custom = {
+        defaultDeploymentId: 'custom-only',
+        asrEnabled: true,
+        nested: { values: [null, false, 3] },
+      };
+      const { service } = makeService(async (key) =>
+        key === 'customVariables' ? custom : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.customVariables).toEqual(custom);
+      expect(result.config.defaultDeploymentId).toBeNull();
+      expect(result.features['asrEnabled']).toBe(false);
+    });
+    it.each([undefined, null, [], 'invalid', 4])(
+      'returns empty custom variables for missing or invalid provider value %j',
+      async (value) => {
+        const { service } = makeService(async (key) =>
+          key === 'customVariables' ? value : undefined,
+        );
+        expect(
+          (await service.getClientConfig(ctx)).config.customVariables,
+        ).toEqual({});
+      },
+    );
     it('filters server-only keys and only returns client-visible config', async () => {
       const { service } = makeService(async () => undefined);
       const result = await service.getClientConfig(ctx);

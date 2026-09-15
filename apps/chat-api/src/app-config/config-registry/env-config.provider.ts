@@ -112,6 +112,29 @@ export class EnvConfigProvider implements ConfigProvider {
       return this.parseAnnouncements(raw);
     }
 
+    if (key === 'customVariables') {
+      const raw = this.configService.get('CUSTOM_CLIENT_VARIABLES', {
+        infer: true,
+      });
+      if (!raw?.trim()) return undefined;
+      try {
+        const parsed: unknown = JSON.parse(raw);
+        if (
+          parsed !== null &&
+          typeof parsed === 'object' &&
+          !Array.isArray(parsed)
+        ) {
+          return parsed;
+        }
+      } catch {
+        /* Do not include the payload or parser message in logs. */
+      }
+      this.logger.warn(
+        'CUSTOM_CLIENT_VARIABLES must be a JSON object; using an empty object',
+      );
+      return undefined;
+    }
+
     if (!definition.envVar) {
       return undefined;
     }

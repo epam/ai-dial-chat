@@ -166,6 +166,19 @@ export enum OverlayFeature {
   HideKeyboardShortcuts = 'hide-keyboard-shortcuts',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
+  /**
+   * Renders every conversation starter, each on its own row, instead of
+   * fitting as many as the measured width allows on one line and collapsing
+   * the rest into a "…" dropdown. Intended for narrow embeds, where the row
+   * has space for a single starter and hides the remainder behind the menu.
+   */
+  ShowAllStarters = 'show-all-starters',
+  /**
+   * Hides the application version label in the footer. The label is
+   * diagnostic chrome an embedding host usually owns itself, and it is not
+   * gated by the operator's `footer` capability flag.
+   */
+  HideFooterVersion = 'hide-footer-version',
 }
 
 /**
@@ -323,6 +336,15 @@ export interface ChatOverlayOptions {
   /** Per-provider authentication UI behavior configured by the embedding host. */
   auth?: {
     providerUiModes?: Record<string, OverlayAuthUiMode>;
+    /**
+     * Provider id whose login the embedded app starts on its own, with no user
+     * interaction, while the session is unauthenticated. Presence enables the
+     * behavior — there is no separate boolean — and the same provider must be
+     * mapped to `OverlayAuthUiMode.SameWindow` in `providerUiModes`, because
+     * only that path navigates the iframe itself. Supersedes the legacy
+     * `signInOptions.autoSignIn` + `signInProvider` pair.
+     */
+    autoSignInProvider?: string;
   };
 }
 
@@ -343,6 +365,8 @@ export interface SetOverlayOptionsPayload {
   enabledFeatures?: string[];
   /** Opaque per-provider authentication UI modes supplied by the host. */
   authProviderUiModes?: Record<string, string>;
+  /** Opaque wire form of `ChatOverlayOptions.auth.autoSignInProvider`. */
+  authAutoSignInProvider?: string;
 }
 
 /** Payload of a `SEND_MESSAGE` request. */

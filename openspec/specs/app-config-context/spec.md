@@ -310,3 +310,26 @@ The returned array reference SHALL remain stable across renders as long as the u
 
 - **WHEN** a consumer re-renders without the underlying config changing
 - **THEN** `useAppConfig().config.announcements` returns the same array reference as the previous render
+
+---
+
+### Requirement: AppConfigContext exposes the welcome-screen description
+
+`AppConfigState.config` SHALL include a `welcomeScreenDescription: string | null` field. The initial (loading) value SHALL be `null`. On a successful `GET /api/v1/client-config` response, it SHALL be populated from the response's `config.welcomeScreenDescription` field. On error, or when the backend omits the field, it SHALL retain the `null` default.
+
+The context SHALL NOT transform this value — it surfaces what the backend returned. The start screen renders it as plain text below the greeting heading (see the `start-view-greeting` capability).
+
+#### Scenario: welcomeScreenDescription is null before config loads
+
+- **WHEN** `AppConfigProvider` has mounted but the API call has not resolved
+- **THEN** `useAppConfig().config.welcomeScreenDescription` returns `null`
+
+#### Scenario: welcomeScreenDescription is populated from a successful response
+
+- **WHEN** the API call resolves with `config.welcomeScreenDescription: "Your secure, all-in-one AI assistant."`
+- **THEN** `useAppConfig().config.welcomeScreenDescription` returns `"Your secure, all-in-one AI assistant."`
+
+#### Scenario: welcomeScreenDescription stays null when the backend omits it or the call fails
+
+- **WHEN** the response omits `config.welcomeScreenDescription`, or the API call rejects
+- **THEN** `useAppConfig().config.welcomeScreenDescription` returns `null`

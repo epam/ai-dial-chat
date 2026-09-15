@@ -36,6 +36,6 @@ sequenceDiagram
     CORE-->>BFF: Completion continues streaming
     BFF-->>SPA: Completion continues streaming
 
-    Note over SPA,CORE: On logout, tab close, or the feature flag<br/>flipping off, the SPA unsubscribes the channel.
+    Note over SPA,CORE: The SPA unsubscribes the channel on logout, tab close,<br/>the feature flag flipping off, leaving a streaming-capable route,<br/>or 1s after the last generation settles. While the sign-in dialog<br/>still lists an unresolved event, the channel stays open instead —<br/>the report needs it, and clearing it would dismiss the dialog.
     SPA->>BFF: POST /api/v1/client-channel/unsubscribe
     BFF->>CORE: POST /v1/ops/client-channel/unsubscribe
