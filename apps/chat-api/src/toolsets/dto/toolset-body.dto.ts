@@ -35,11 +35,14 @@ export enum ToolsetAuthType {
 }
 
 /*
- * http(s) or sse URL — allowlist regex so endpoint/URL strings that hit a
- * proxied request or a log line cannot carry unexpected characters.
+ * http(s) URL — allowlist regex so endpoint/URL strings that hit a proxied
+ * request or a log line cannot carry unexpected characters. DIAL Core
+ * validates the scheme of the endpoint it stores and accepts only http/https
+ * ("invalid URI scheme <x>" otherwise); the SSE transport is an ordinary
+ * http(s) endpoint chosen through `transport`, not through the URL scheme.
  */
-const ENDPOINT_URL_PATTERN = /^(https?|sse):\/\/[^\s]+$/;
-const ENDPOINT_URL_MESSAGE = 'Must be a valid http(s) or sse URL';
+const ENDPOINT_URL_PATTERN = /^https?:\/\/[^\s]+$/;
+const ENDPOINT_URL_MESSAGE = 'Must be a valid http(s) URL';
 
 const VERSION_PATTERN = /^[\w.+-]{1,64}$/;
 const VERSION_MESSAGE =

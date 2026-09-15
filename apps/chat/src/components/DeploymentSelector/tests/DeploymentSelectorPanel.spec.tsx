@@ -329,3 +329,71 @@ describe('DeploymentSelectorPanel — focus on open', () => {
     expect(search.matches(':focus')).toBe(false);
   });
 });
+
+describe('DeploymentSelectorPanel — extra options', () => {
+  const modes = [
+    { id: 'default-agent', label: 'Default agent' },
+    { id: 'last-used-agent', label: 'Last used agent' },
+  ];
+
+  it('renders the extra rows above the catalog sections', () => {
+    renderPanel([makeItem('model-1', CatalogEntityType.Model)], {
+      extraOptions: modes,
+    });
+
+    const rows = screen
+      .getAllByRole('menuitemradio')
+      .map((row) => row.textContent);
+
+    expect(rows[0]).toContain('Default agent');
+    expect(rows[1]).toContain('Last used agent');
+    expect(rows[2]).toContain('model-1');
+  });
+
+  it('marks the chosen extra row as the selected one', () => {
+    renderPanel([], { extraOptions: modes, selectedId: 'last-used-agent' });
+
+    expect(
+      screen
+        .getByRole('menuitemradio', { name: 'Last used agent' })
+        .getAttribute('aria-checked'),
+    ).toBe('true');
+  });
+
+  it('reports the extra row id and closes when one is picked', async () => {
+    const onSelect = vi.fn();
+    const onClose = vi.fn();
+    renderPanel([], { extraOptions: modes, onSelect, onClose });
+
+    await userEvent.click(
+      screen.getByRole('menuitemradio', { name: 'Default agent' }),
+    );
+
+    expect(onSelect).toHaveBeenCalledWith('default-agent');
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('filters the extra rows by the search query', async () => {
+    renderPanel([], { extraOptions: modes });
+
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Search models, agents…' }),
+      'Last',
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('menuitemradio', { name: /Default agent/ }),
+      ).toBeNull(),
+    );
+    expect(
+      screen.getByRole('menuitemradio', { name: /Last used agent/ }),
+    ).toBeTruthy();
+  });
+
+  it('gives an extra row no favourite toggle', () => {
+    renderPanel([], { extraOptions: modes });
+
+    expect(screen.queryByRole('button', { name: /favorites/i })).toBeNull();
+  });
+});

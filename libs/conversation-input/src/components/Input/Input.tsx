@@ -831,9 +831,7 @@ export const Input: FC<InputProps> = ({
                     aria-label={micLabel}
                     tooltipProps={{ tooltip: micLabel }}
                     className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
-                    onClick={() =>
-                      startRecording(VoiceRecordingMode.Dictation)
-                    }
+                    onClick={() => startRecording(VoiceRecordingMode.Dictation)}
                     disabled={isInputDisabled || isStreaming}
                   />
                 )}

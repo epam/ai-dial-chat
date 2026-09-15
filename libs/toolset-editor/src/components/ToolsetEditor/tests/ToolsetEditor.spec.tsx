@@ -369,7 +369,7 @@ describe('ToolsetEditor', () => {
 
     expect(saveButton.disabled).toBe(true);
     expect(screen.getByRole('alert').textContent).toContain(
-      'Enter a valid http(s) or sse URL',
+      'Enter a valid http(s) URL',
     );
 
     await user.click(

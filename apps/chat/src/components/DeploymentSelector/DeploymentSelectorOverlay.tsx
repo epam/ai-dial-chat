@@ -6,12 +6,16 @@ import {
   DeploymentSelectorI18nKeys,
   FavoritesI18nKeys,
 } from '../../constants/translation-keys';
-import type { DeploymentSelectorLabels } from './DeploymentSelectorPanel';
+import type {
+  DeploymentSelectorExtraOption,
+  DeploymentSelectorLabels,
+} from './DeploymentSelectorPanel';
 
 const DeploymentSelectorPanel = lazy(() => import('./DeploymentSelectorPanel'));
 
 interface Props {
   favorites: CatalogItem[];
+  extraOptions?: DeploymentSelectorExtraOption[];
   pinnedItem?: CatalogItem;
   selectedId?: string | null;
   selectedItem?: CatalogItem;
@@ -23,6 +27,7 @@ interface Props {
 
 const DeploymentSelectorOverlay: FC<Props> = ({
   favorites,
+  extraOptions,
   pinnedItem,
   selectedId,
   selectedItem,
@@ -51,6 +56,7 @@ const DeploymentSelectorOverlay: FC<Props> = ({
     <Suspense fallback={null}>
       <DeploymentSelectorPanel
         favorites={favorites}
+        extraOptions={extraOptions}
         pinnedItem={pinnedItem}
         selectedId={selectedId}
         selectedItem={selectedItem}

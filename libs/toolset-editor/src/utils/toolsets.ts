@@ -53,8 +53,15 @@ export const getDefaultToolsetForm = (
   auth: getDefaultAuthFormData(),
 });
 
+/*
+ * DIAL Core validates the stored endpoint's URI scheme and accepts only
+ * http/https — anything else fails the save with "invalid URI scheme <x>".
+ * The SSE transport is an ordinary http(s) endpoint selected through the
+ * separate `transport` field, so a `sse://` URL is rejected here (as an
+ * inline field error) instead of being forwarded for Core to refuse.
+ */
 const isValidEndpointUrlCandidate = (trimmed: string): boolean => {
-  if (!/^(https?|sse):\/\//.test(trimmed)) return false;
+  if (!/^https?:\/\//.test(trimmed)) return false;
   if (trimmed.endsWith('.') || trimmed.endsWith('//')) return false;
   try {
     return Boolean(new URL(trimmed));
@@ -63,12 +70,12 @@ const isValidEndpointUrlCandidate = (trimmed: string): boolean => {
   }
 };
 
-/** Validates a toolset endpoint URL (http(s) or sse, parseable, no trailing `.`/`//`). */
+/** Validates a toolset endpoint URL (http(s), parseable, no trailing `.`/`//`). */
 export const isValidEndpointUrl = (value: string): boolean =>
   isValidEndpointUrlCandidate(value.trim());
 
 const repairSingleSlashUrlScheme = (value: string): string =>
-  value.replace(/^(https?|sse):\/([^/])/, '$1://$2');
+  value.replace(/^(https?):\/([^/])/, '$1://$2');
 
 /**
  * Normalizes an endpoint URL as returned by the backend: repairs a

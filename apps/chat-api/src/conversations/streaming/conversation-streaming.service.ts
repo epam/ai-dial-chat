@@ -423,7 +423,7 @@ export class ConversationStreamingService {
     messageIndex: number | undefined,
     model: string,
     customContent: MessageCustomContentDto | undefined,
-    sessionId: string,
+    ownerKey: string,
     onReadyToStream: () => void,
     sub: string,
     clientChannelId?: string,
@@ -435,7 +435,7 @@ export class ConversationStreamingService {
     );
 
     const abortController = this.generationService.register(
-      sessionId,
+      ownerKey,
       conversationPath,
       generationId,
     );
@@ -453,7 +453,7 @@ export class ConversationStreamingService {
     } catch (err) {
       generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
       this.generationService.error(
-        sessionId,
+        ownerKey,
         conversationPath,
         generationId,
         err instanceof Error ? err.message : undefined,
@@ -483,7 +483,7 @@ export class ConversationStreamingService {
        * (e.g. regenerate) would be rejected with a 409 until stale eviction.
        */
       this.generationService.error(
-        sessionId,
+        ownerKey,
         conversationPath,
         generationId,
         err instanceof Error ? err.message : undefined,
@@ -564,7 +564,7 @@ export class ConversationStreamingService {
       ...startConversation.messages[assistantMessageIndex],
     };
     this.generationService.seedAssembledMessage(
-      sessionId,
+      ownerKey,
       conversationPath,
       generationId,
       assembledMessage,
@@ -574,7 +574,7 @@ export class ConversationStreamingService {
       message: ConversationMessageDto,
     ) => {
       this.generationService.applyChunk(
-        sessionId,
+        ownerKey,
         conversationPath,
         generationId,
         rawChunk,
@@ -608,13 +608,13 @@ export class ConversationStreamingService {
       }
       if (status === GenerationStatus.Done) {
         this.generationService.complete(
-          sessionId,
+          ownerKey,
           conversationPath,
           generationId,
         );
       } else {
         this.generationService.error(
-          sessionId,
+          ownerKey,
           conversationPath,
           generationId,
           partialMessage.streamErrorMessage,
@@ -701,7 +701,7 @@ export class ConversationStreamingService {
           break;
         case 'aborted': {
           const wasStopped =
-            this.generationService.getStatus(sessionId, conversationPath) ===
+            this.generationService.getStatus(ownerKey, conversationPath) ===
             GenerationStatus.Stopped;
           const partialMsg = {
             ...relayResult.assembledMessage,
@@ -752,10 +752,10 @@ export class ConversationStreamingService {
       if (!relayCompletedNormally) {
         abortController.abort();
         const wasStopped =
-          this.generationService.getStatus(sessionId, conversationPath) ===
+          this.generationService.getStatus(ownerKey, conversationPath) ===
           GenerationStatus.Stopped;
         const currentAssembledMessage =
-          this.generationService.attach(sessionId, conversationPath)
+          this.generationService.attach(ownerKey, conversationPath)
             ?.assembledMessage ?? assembledMessage;
         const partialMsg = {
           ...currentAssembledMessage,

@@ -19,6 +19,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { DeploymentSelectorI18nKeys } from '../../constants/translation-keys';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import type { DeploymentSelectorExtraOption } from './DeploymentSelectorPanel';
 import { useDeploymentSelectorFieldOverlay } from './useDeploymentSelectorFieldOverlay';
 
 interface Props {
@@ -36,6 +37,13 @@ interface Props {
   isInvalid?: boolean;
   /** Additional class names applied to the trigger button. */
   className?: string;
+  /**
+   * Non-deployment rows pinned above the panel's catalog sections, e.g. the
+   * mode sentinels of the default-agent preference. Their ids flow through
+   * `onSelect` and `selectedId` exactly like a deployment id does, and the
+   * field resolves its own label from them.
+   */
+  extraOptions?: DeploymentSelectorExtraOption[];
 }
 
 /**
@@ -54,6 +62,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
   isDisabled = false,
   isInvalid = false,
   className,
+  extraOptions,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -64,10 +73,14 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const { renderOverlay, catalogModal, isLoading, error, resolvedLabel } =
-    useDeploymentSelectorFieldOverlay(selectedId, (id) => {
-      onSelect(id);
-      setIsOpen(false);
-    });
+    useDeploymentSelectorFieldOverlay(
+      selectedId,
+      (id) => {
+        onSelect(id);
+        setIsOpen(false);
+      },
+      extraOptions,
+    );
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -228,7 +241,17 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
         outsideClosable
         disabled={isDisabled}
         renderOverlay={() => renderOverlay(() => setIsOpen(false))}
-        listClassName="!bg-layer-raised"
+        /*
+         * `matchReferenceWidth` only sets a `min-width` on the overlay, so a
+         * long agent name still stretches the panel far past the field it
+         * belongs to. Capping it at the field's own width — the kit publishes
+         * it as `--reference-width` on the floating element — makes the panel
+         * read as this field's popup, the way a Select's list does. The
+         * `max()` floor keeps the panel's own 360px minimum honoured on a
+         * field narrower than that, and `!` is required because the kit writes
+         * its available-width cap as an inline style.
+         */
+        listClassName="!bg-layer-raised !max-w-[max(var(--reference-width),360px)]"
         className="w-full"
       >
         {/*

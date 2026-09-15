@@ -386,12 +386,16 @@ const ToolsetEditorPage: FC = () => {
           keyHeaderPlaceholder: t(ToolsetEditorI18nKeys.KeyHeaderPlaceholder),
           apiKeyLabel: t(ApiI18nKeys.ApiKey),
           apiKeyPlaceholder: t(ToolsetEditorI18nKeys.ApiKeyPlaceholder),
+          showApiKeyLabel: t(ToolsetEditorI18nKeys.ShowApiKeyLabel),
+          hideApiKeyLabel: t(ToolsetEditorI18nKeys.HideApiKeyLabel),
           clientIdLabel: t(ToolsetEditorI18nKeys.ClientIdLabel),
           clientIdPlaceholder: t(ToolsetEditorI18nKeys.ClientIdPlaceholder),
           clientSecretLabel: t(ToolsetEditorI18nKeys.ClientSecretLabel),
           clientSecretPlaceholder: t(
             ToolsetEditorI18nKeys.ClientSecretPlaceholder,
           ),
+          showClientSecretLabel: t(ToolsetEditorI18nKeys.ShowClientSecretLabel),
+          hideClientSecretLabel: t(ToolsetEditorI18nKeys.HideClientSecretLabel),
           authorizationEndpointLabel: t(
             ToolsetEditorI18nKeys.AuthorizationEndpointLabel,
           ),

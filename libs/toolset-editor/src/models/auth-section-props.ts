@@ -33,6 +33,10 @@ export interface AuthSectionLabels {
   apiKeyLabel?: string;
   /** Placeholder for the API key value field. Defaults to `'Enter API key'`. */
   apiKeyPlaceholder?: string;
+  /** Accessible name of the API key reveal toggle while the value is masked. Defaults to `'Show API key'`. */
+  showApiKeyLabel?: string;
+  /** Accessible name of the API key reveal toggle while the value is visible. Defaults to `'Hide API key'`. */
+  hideApiKeyLabel?: string;
   /** Label for the OAuth client id field. Defaults to `'Client ID'`. */
   clientIdLabel?: string;
   /** Placeholder for the OAuth client id field. Defaults to `'Enter client ID'`. */
@@ -41,6 +45,10 @@ export interface AuthSectionLabels {
   clientSecretLabel?: string;
   /** Placeholder for the OAuth client secret field. Defaults to `'Enter client secret'`. */
   clientSecretPlaceholder?: string;
+  /** Accessible name of the client secret reveal toggle while the value is masked. Defaults to `'Show client secret'`. */
+  showClientSecretLabel?: string;
+  /** Accessible name of the client secret reveal toggle while the value is visible. Defaults to `'Hide client secret'`. */
+  hideClientSecretLabel?: string;
   /** Label for the OAuth authorization endpoint field. Defaults to `'Authorization endpoint'`. */
   authorizationEndpointLabel?: string;
   /** Placeholder for the OAuth authorization endpoint field. Defaults to `'Enter authorization endpoint'`. */

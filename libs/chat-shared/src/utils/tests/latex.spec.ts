@@ -316,6 +316,39 @@ y$ which spans lines`;
       expect(preprocessLaTeX(content)).toBe(expected);
     });
 
+    it('converts a formula that opens on a digit and an arithmetic operator', () => {
+      const content =
+        '- **Subcritical** if $1 - \\frac{3}{p} - \\frac{2}{q} < 0 \\iff \\frac{2}{q} + \\frac{3}{p} < 1$';
+      const expected =
+        '- **Subcritical** if $$1 - \\frac{3}{p} - \\frac{2}{q} < 0 \\iff \\frac{2}{q} + \\frac{3}{p} < 1$$';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
+    it('converts a digit-first formula whose only math marker is a control sequence', () => {
+      const content = 'The angle is $2 \\pi r$ around';
+      const expected = 'The angle is $$2 \\pi r$$ around';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
+    it('converts a digit-first formula marked only by a superscript', () => {
+      const content = 'It grows like $2 n^2$ overall';
+      const expected = 'It grows like $$2 n^2$$ overall';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
+    it('still escapes a price when the span holds no LaTeX markup', () => {
+      const content = 'Price $100 then equation $x + y = z$ then another $50';
+      const expected =
+        'Price \\$100 then equation $$x + y = z$$ then another \\$50';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
+    it('escapes an amount followed by prose even when a later formula is on the line', () => {
+      const content = 'It costs $50 and the ratio $x^2$ holds';
+      const expected = 'It costs \\$50 and the ratio $$x^2$$ holds';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
     it('escapes an amount trailed by a long whitespace run in linear time', () => {
       const tabs = '\t'.repeat(200_000);
       expect(preprocessLaTeX(`$0${tabs}x`)).toBe(`\\$0${tabs}x`);

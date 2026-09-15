@@ -2443,7 +2443,7 @@
             "description": "Conversation not found"
           },
           "409": {
-            "description": "Another generation is already active for this conversation"
+            "description": "Another generation is already active for this conversation and principal"
           },
           "502": {
             "description": "DIAL Core error"
@@ -2480,7 +2480,7 @@
             "description": "Not authenticated"
           },
           "404": {
-            "description": "No active generation found for the given path and generationId"
+            "description": "No active generation found for this principal for the given path and generationId"
           }
         },
         "summary": "Stop an active generation",
@@ -2491,7 +2491,7 @@
     },
     "/api/v1/conversations/completions/attach": {
       "post": {
-        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Session-scoped — only the session that could stop the generation can attach to it.",
+        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.",
         "operationId": "attachToGeneration",
         "parameters": [],
         "requestBody": {
@@ -2515,7 +2515,7 @@
             "description": "Not authenticated"
           },
           "404": {
-            "description": "No active generation found for the given path in this session — including one that already finished"
+            "description": "No active generation found for the given path for this principal — including one that already finished"
           }
         },
         "summary": "Attach to an active generation and replay it live",

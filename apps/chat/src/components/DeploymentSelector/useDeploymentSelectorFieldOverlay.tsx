@@ -12,6 +12,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
+import type { DeploymentSelectorExtraOption } from './DeploymentSelectorPanel';
 
 const DeploymentSelectorOverlay = lazy(
   () => import('./DeploymentSelectorOverlay'),
@@ -32,10 +33,11 @@ interface UseDeploymentSelectorFieldOverlayResult {
   /** Non-null if the deployments fetch failed. */
   error: Error | null;
   /**
-   * Display label for `selectedId`: the resolved deployment's name, or the
-   * raw `selectedId` itself when it can't be resolved against the loaded
-   * deployment list (e.g. a deleted/renamed deployment referenced by an
-   * existing Scheduled Task) — never silently blank.
+   * Display label for `selectedId`: the matching `extraOptions` row's label,
+   * the resolved deployment's name, or the raw `selectedId` itself when it
+   * can't be resolved against the loaded deployment list (e.g. a deleted or
+   * renamed deployment referenced by an existing Scheduled Task) — never
+   * silently blank.
    */
   resolvedLabel: string | null;
 }
@@ -50,6 +52,7 @@ interface UseDeploymentSelectorFieldOverlayResult {
 export function useDeploymentSelectorFieldOverlay(
   selectedId: string | null,
   onSelect: (id: string) => void,
+  extraOptions?: DeploymentSelectorExtraOption[],
 ): UseDeploymentSelectorFieldOverlayResult {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
@@ -91,14 +94,17 @@ export function useDeploymentSelectorFieldOverlay(
 
   const resolvedLabel = useMemo(() => {
     if (selectedId == null) return null;
+    const extra = extraOptions?.find((option) => option.id === selectedId);
+    if (extra) return extra.label;
     return selectedCatalogItem?.name ?? selectedId;
-  }, [selectedId, selectedCatalogItem]);
+  }, [selectedId, selectedCatalogItem, extraOptions]);
 
   const renderOverlay = useCallback(
     (onClose: () => void): ReactNode => (
       <Suspense fallback={null}>
         <DeploymentSelectorOverlay
           favorites={favoriteCatalogItems}
+          extraOptions={extraOptions}
           selectedId={selectedId}
           selectedItem={selectedCatalogItem}
           onSelect={onSelect}
@@ -110,6 +116,7 @@ export function useDeploymentSelectorFieldOverlay(
     ),
     [
       favoriteCatalogItems,
+      extraOptions,
       selectedId,
       selectedCatalogItem,
       onSelect,

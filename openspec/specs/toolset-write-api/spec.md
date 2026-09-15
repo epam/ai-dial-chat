@@ -13,10 +13,13 @@ body that still includes an `intro` property SHALL be rejected with a 400 (the g
 be present but MAY be an empty string — an empty string is accepted so the toolset editor can
 create a draft toolset right after its General step, before the endpoint is collected on the
 Settings step; when non-empty, `endpoint` SHALL still be validated as a well-formed
-`http(s)://` or `sse://` URL. The `authSettings` field SHALL be required to be present in the
-request body — an entirely omitted `authSettings` SHALL fail DTO validation and SHALL NOT
-reach the DIAL Core call, regardless of whether its nested `authenticationType` is itself
-valid.
+`http(s)://` URL. DIAL Core validates the URI scheme of the endpoint it stores and accepts
+only `http`/`https`, answering anything else with a 400 `invalid URI scheme <x>`; the SSE
+transport is an ordinary `http(s)://` endpoint selected through `transport`, so an `sse://`
+endpoint SHALL be rejected by the DTO rather than forwarded to DIAL Core. The `authSettings`
+field SHALL be required to be present in the request body — an entirely omitted
+`authSettings` SHALL fail DTO validation and SHALL NOT reach the DIAL Core call, regardless
+of whether its nested `authenticationType` is itself valid.
 
 #### Scenario: Successful create with a draft (empty) endpoint
 - **WHEN** an authenticated user POSTs a toolset body with `endpoint` set to an empty string
@@ -46,6 +49,16 @@ valid.
 #### Scenario: Invalid create body
 - **WHEN** the request body fails DTO validation
 - **THEN** the endpoint responds with a 400 and does not call DIAL Core
+
+#### Scenario: Endpoint using the sse:// scheme
+- **WHEN** an authenticated user POSTs a toolset body with `endpoint` set to
+  `sse://mcp-test.example.com/events`, whether or not `transport` is `SSE`
+- **THEN** the endpoint responds with a 400 naming `endpoint` and does not call DIAL Core
+
+#### Scenario: SSE transport over an https endpoint
+- **WHEN** an authenticated user POSTs a toolset body with `transport` set to `SSE` and
+  `endpoint` set to an `https://` URL
+- **THEN** the body passes DTO validation and is forwarded to DIAL Core
 
 #### Scenario: DIAL Core create error
 - **WHEN** DIAL Core returns an error status during create

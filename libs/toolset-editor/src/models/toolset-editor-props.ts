@@ -20,7 +20,7 @@ export interface ToolsetEditorValidationLabels {
   versionInvalid?: string;
   /** Message for a missing endpoint. Defaults to `'Endpoint is required'`. */
   endpointRequired?: string;
-  /** Message for a malformed endpoint. Defaults to `'Enter a valid http(s) or sse URL'`. */
+  /** Message for a malformed endpoint. Defaults to `'Enter a valid http(s) URL'`. */
   endpointInvalid?: string;
   /** Message for a missing API key parameter name. Defaults to `'Key name is required'`. */
   keyHeaderRequired?: string;

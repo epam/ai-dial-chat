@@ -47,6 +47,29 @@ describe('ToolsetBodyDto — endpoint', () => {
     const errors = await validateDto({ ...BASE_BODY, endpoint: 'ftp://nope' });
     expect(errors.some((e) => e.property === 'endpoint')).toBe(true);
   });
+
+  /*
+   * DIAL Core answers a stored `sse://` endpoint with 400 "invalid URI scheme
+   * sse", so the SSE transport still takes an http(s) endpoint and the BFF
+   * rejects the scheme here rather than forwarding it.
+   */
+  it('rejects an sse endpoint even when the transport is SSE', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      endpoint: 'sse://mcp-test.example.com/events',
+      transport: ToolsetTransport.Sse,
+    });
+    expect(errors.some((e) => e.property === 'endpoint')).toBe(true);
+  });
+
+  it('accepts an https endpoint when the transport is SSE', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      endpoint: 'https://mcp-test.example.com/events',
+      transport: ToolsetTransport.Sse,
+    });
+    expect(errors).toHaveLength(0);
+  });
 });
 
 describe('ToolsetBodyDto — locales', () => {

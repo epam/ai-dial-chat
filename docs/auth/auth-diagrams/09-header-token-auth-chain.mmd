@@ -2,6 +2,8 @@
 %% AuthStrategy that supports the request. Header wins over cookie when both are
 %% present; a supporting strategy that fails throws immediately (no fallback).
 %% CsrfGuard skips its Origin/X-CSRF-Token checks only for header-authenticated requests.
+%% A header-authenticated caller gets no sid/csrf; per-caller server state (generation
+%% ownership) derives from providerId + sub instead — see generation-principal-ownership.
 
 flowchart TD
     REQ["Incoming request"] --> PUB{"@Public() route?"}
@@ -9,8 +11,8 @@ flowchart TD
     PUB -- no --> HDR{"Authorization header present<br/>AND AUTH_HEADER_TOKEN_ENABLED?"}
 
     HDR -- yes --> HTS["HeaderTokenStrategy.authenticate()<br/>verify JWT via provider JWKS<br/>(jose.jwtVerify)"]
-    HTS -- valid --> SETH["req.user, req.authSource = Header"]
-    HTS -- invalid/expired/untrusted issuer --> ERR401["401 Unauthorized<br/>(AUTH_HEADER_TOKEN_* code)<br/>— no fallback to cookie"]
+    HTS -- valid, non-empty sub --> SETH["req.user (sub, providerId — no sid/csrf)<br/>req.authSource = Header"]
+    HTS -- invalid/expired/untrusted issuer/no sub --> ERR401["401 Unauthorized<br/>(AUTH_HEADER_TOKEN_* code)<br/>— no fallback to cookie"]
 
     HDR -- no --> CK{"Session cookie present?"}
     CK -- yes --> CSS["CookieSessionStrategy.authenticate()<br/>decrypt, refresh if near-expiry,<br/>resolve bucket if empty"]

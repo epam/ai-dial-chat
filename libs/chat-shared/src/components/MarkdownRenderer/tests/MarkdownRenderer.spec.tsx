@@ -644,6 +644,29 @@ describe('MarkdownRenderer', () => {
     expect(screen.getByText(/and then/)).toBeTruthy();
   });
 
+  /* Issue #8753, retest: `$1 - \frac{3}{p} …$` reads as a price for exactly one character,
+   * so its opening delimiter was escaped, its partner was stranded, and the whole formula
+   * reached the reader as source. */
+  it('typesets a digit-first formula that continues into LaTeX markup', async () => {
+    render(
+      <MarkdownRenderer
+        content={
+          'Subcritical if $1 - \\frac{3}{p} - \\frac{2}{q} < 0 \\iff \\frac{2}{q} + \\frac{3}{p} < 1$'
+        }
+      />,
+    );
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: MathML has no role under jsdom
+      expect(document.querySelector('math')).toBeTruthy();
+    });
+
+    /* No delimiter survives into the rendered text: an unpaired `$` is what printed the
+       formula as source. KaTeX's own hidden `<annotation>` still holds the TeX, so the
+       assertion is on the delimiters rather than on `\frac`. */
+    expect(screen.queryByText(/\$/)).toBeNull();
+  });
+
   /* `\(...\)`/`\[...\]` (the LLM-style delimiters preprocessLaTeX deliberately leaves untouched,
    * see latex.spec.ts) only render as math once micromark-extension-math is aliased to
    * micromark-extension-llm-math in the consuming app's bundler config. Vitest's SSR module
