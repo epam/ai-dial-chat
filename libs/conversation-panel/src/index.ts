@@ -1,3 +1,4 @@
+export { CONVERSATION_PANEL_CLASS } from './constants/public-class-names';
 export { ConversationPanel } from './components/ConversationPanel/ConversationPanel';
 export { ImportExportQueue } from './components/ImportExportQueue/ImportExportQueue';
 export { RenameConversationPopup } from './components/RenameConversationPopup/RenameConversationPopup';

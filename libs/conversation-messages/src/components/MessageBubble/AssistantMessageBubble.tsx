@@ -10,6 +10,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
+import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import { useInlineStartIndent } from '../../hooks/useInlineStartIndent/useInlineStartIndent';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { MessageActions } from '../MessageActions/MessageActions';
@@ -131,6 +132,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               className={mergeClasses(
                 textClass,
                 'relative min-w-0 max-w-full text-start',
+                CONVERSATION_MESSAGES_CLASS.assistantContent,
                 /*
                  * `text-indent` inherits, so the indent targets the markdown
                  * container's first block child (a leading list indents its

@@ -14,6 +14,7 @@ import {
 import { IconCheck } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useEffect, useState } from 'react';
 import { List, type RowComponentProps } from 'react-window';
+import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { buildDeploymentIcon, filterDeployments } from '../../utils/deployment';
 import type { BottomSheetShellColors } from '../BottomSheetShell/BottomSheetShell';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
@@ -202,7 +203,10 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
       onClose={onClose}
       style={style}
       titleClassName={titleClassName}
-      className="max-h-[80dvh]"
+      className={mergeClasses(
+        'max-h-[80dvh]',
+        CONVERSATION_INPUT_CLASS.modelMenu,
+      )}
       colors={colors?.shell}
     >
       <div className="contents" style={cssVars}>

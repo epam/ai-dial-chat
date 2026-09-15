@@ -2,6 +2,7 @@ import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import { ConversationItem } from '../../../models/panel-props';
 import { ConversationPanel } from '../ConversationPanel';
 
@@ -450,5 +451,37 @@ describe('ConversationPanel', () => {
     );
     expect(screen.queryByRole('listitem')).toBeNull();
     expect(screen.getAllByText('No conversations yet')).toBeTruthy();
+  });
+});
+
+/*
+ * The public classes are host styling hooks, so these tests never find an
+ * element *by* the class — that would still pass with the class on the wrong
+ * node. They locate by role or text first, then assert the hook is present.
+ *
+ * This lives in the main spec rather than its own file so it reuses the ui-kit,
+ * chat-shared, sidebar and react-window mocks defined above.
+ */
+describe('ConversationPanel — public class names', () => {
+  it('marks the new-chat button, and only it', () => {
+    const { container } = render(
+      <ConversationPanel {...BASE_PROPS} conversations={items} />,
+    );
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting a public dial-cp-* styling hook on a button with no distinguishing accessible name of its own
+    const buttons = container.querySelectorAll(
+      `.${CONVERSATION_PANEL_CLASS.newChatButton}`,
+    );
+
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].textContent).toContain('New chat');
+  });
+
+  it('marks the search region found by its role', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+
+    expect(screen.getByRole('search').classList).toContain(
+      CONVERSATION_PANEL_CLASS.search,
+    );
   });
 });

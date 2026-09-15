@@ -22,6 +22,32 @@ Import the stylesheet once in the consuming app:
 import '@epam/ai-dial-conversation-input/styles.css';
 ```
 
+### Tailwind setup (required)
+
+This package's layout, spacing, and sizing are Tailwind utility classes in its
+compiled JSX — not rules in its stylesheet. Your own Tailwind build has to
+produce them, so add the design-token preset and scan this package:
+
+```js
+// your tailwind.config.js
+module.exports = {
+  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
+  content: [
+    './src/**/*.{html,js,ts,jsx,tsx}',
+    './node_modules/@epam/ai-dial-conversation-input/dist/**/*.js',
+    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
+  ],
+};
+```
+
+The preset is required, not optional: this package's JSX uses semantic token
+utilities (`bg-layer-raised`, `text-secondary`, `stroke-secondary`, …) whose
+class names exist only in that theme.
+
+**Omitting either piece fails silently** — no build error, no warning, correct
+DOM, missing layout. Tailwind CSS 3 in the host is a hard requirement; a
+non-Tailwind host is unsupported.
+
 ## Peer Dependencies
 
 - `react`
@@ -180,6 +206,87 @@ import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
   {sheetContent}
 </BottomSheetShell>;
 ```
+
+## Public class names
+
+Every composer element a host is likely to restyle carries a stable
+`dial-ci-*` class in addition to its internal classes. Target those instead of
+hashed CSS-module names, DOM order, or ARIA attributes — all three change
+without notice. The names are exported so you never hardcode them:
+
+```tsx
+import { CONVERSATION_INPUT_CLASS } from '@epam/ai-dial-conversation-input';
+
+CONVERSATION_INPUT_CLASS.actionRow; // 'dial-ci-action-row'
+```
+
+| Class                           | Element                                                             |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `dial-ci-wrapper`               | The composer's outer bordered container                             |
+| `dial-ci-action-row`            | The row holding the textarea, add button, tool chips, and actions   |
+| `dial-ci-textarea-wrap`         | The textarea cell inside the action row                             |
+| `dial-ci-add-cluster`           | The add-attachment button wrapper                                   |
+| `dial-ci-footer-actions`        | The trailing cluster: model selector, mic, and send/stop buttons    |
+| `dial-ci-model-selector-button` | The model selector trigger button, in every presentation            |
+
+`dial-ci-action-row` is absent when `hideActionBar` is set, and
+`dial-ci-add-cluster` is absent when `hideAddButton` is set.
+
+The model-selector menu carries its own set:
+
+| Class                              | Element                                           |
+| ---------------------------------- | ------------------------------------------------- |
+| `dial-ci-model-menu`               | The menu root, in all three presentations         |
+| `dial-ci-model-menu-search`        | The sticky search header inside the menu          |
+| `dial-ci-model-menu-item`          | Every deployment row                              |
+| `dial-ci-model-menu-item-selected` | The selected row, **additive** to the row class   |
+
+`dial-ci-model-menu` lands on three different presentations, so scope your rule
+if you need to distinguish them: the desktop dropdown (a Floating UI portal), a
+host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
+`role="dialog"`). The portal renders outside the composer's DOM subtree, which
+is why the menu needs a class of its own rather than a descendant selector from
+`dial-ci-wrapper`.
+
+The selected row's **check mark has no class here**: it is drawn by
+`@epam/ai-dial-ui-kit` from the menu item's `mark`, so nothing in this package
+owns that element. Style it by descending from the row:
+`.dial-ci-model-menu-item-selected svg`.
+
+`dial-ci-model-menu-item` is emitted for deployment rows only — not for
+loading skeletons, nor for the single disabled row shown in the empty and error
+states. On mobile only the sheet root is marked; its rows are rendered by a
+separate virtualized list and carry no row class.
+
+These classes carry no declarations of their own, so they change nothing until
+you style them, and they are additive to `className` and `inputClassName` —
+those props keep working exactly as before.
+
+### Replacing fragile selectors
+
+| Instead of                            | Use                              |
+| ------------------------------------- | -------------------------------- |
+| `> div:has(textarea)`                             | `.dial-ci-action-row`               |
+| `div.ms-auto`                                     | `.dial-ci-footer-actions`           |
+| `button[class*='modelSelectorButton']`            | `.dial-ci-model-selector-button`    |
+| `div[role='menu']:has([class*='searchHeader_'])`  | `.dial-ci-model-menu`               |
+| `[class*='searchHeader_']`                        | `.dial-ci-model-menu-search`        |
+| `[class*='selectedItem_']`                        | `.dial-ci-model-menu-item-selected` |
+
+### Stability
+
+A `dial-ci-*` class is public API: renaming it, removing it, or moving it to a
+different element is a breaking change, announced in the release notes and
+recorded here with its replacement. The element itself stays free — its Tailwind
+utilities, its CSS-module class, and its position in the DOM may all change.
+
+Your own overrides are responsible for direction: the class names are
+direction-agnostic and identical under `dir="rtl"`, so use CSS logical
+properties (`margin-inline-start`, `inset-inline-end`) rather than physical ones.
+
+The full convention — naming grammar, why not BEM, and the rules these classes
+follow — is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 ## Enums
 
