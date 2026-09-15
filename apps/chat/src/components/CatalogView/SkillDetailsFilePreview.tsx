@@ -1,19 +1,19 @@
 import {
+  AttachmentCanvasProvider,
   createForbiddenCanvasContent,
   createLoadErrorCanvasContent,
   useAttachmentCanvas,
+  useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import {
   type SkillFileContent,
   SkillPreviewErrorKind,
+  skillFileToAttachment,
   useSkillFilePreview,
 } from '@epam/ai-dial-chat-hooks';
-import {
-  SkillFileNodeKind,
-  type SkillFileTreeNode,
-} from '@epam/ai-dial-skill-editor';
-import { type FC, useEffect, useMemo, useRef, useState } from 'react';
-import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
+import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
+import { type FC, useEffect } from 'react';
+import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { SkillFilePreview } from '../SkillFilePreview/SkillFilePreview';
 
 interface Props {
@@ -25,39 +25,21 @@ interface Props {
   onLoadFile: (fileId: string) => Promise<SkillFileContent>;
 }
 
-/**
- * Loads one read-only skill file lazily, then feeds it into the exact same
- * attachment-canvas synchronization and body renderer used by Skill Builder.
- */
-export const SkillDetailsFilePreview: FC<Props> = ({
-  fileId,
-  fileName,
-  onLoadFile,
-}) => {
-  const node = useMemo<SkillFileTreeNode>(
-    () => ({ path: fileId, name: fileName, kind: SkillFileNodeKind.File }),
-    [fileId, fileName],
-  );
-  const filesContentRef = useRef<Map<string, SkillFileContent>>(new Map());
-  const [files, setFiles] = useState<SkillFileTreeNode[]>([node]);
+const FilePreviewContent: FC<Props> = ({ fileId, fileName, onLoadFile }) => {
   const { openCanvas } = useAttachmentCanvas();
+  const { resolvers, options } = useAttachmentCanvasResolvers();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, {
+    customVisualizers: options.customVisualizers,
+    themeId: options.themeId,
+  });
   const { content, error } = useSkillFilePreview({ fileId, onLoadFile });
 
-  /* Clear the content cache and reset the file list whenever the selection changes. */
-  useEffect(() => {
-    filesContentRef.current = new Map();
-    setFiles([node]);
-  }, [node]);
-
-  /* Bridge resolved content into the attachment-canvas sync protocol. */
   useEffect(() => {
     if (content == null) return;
-    filesContentRef.current.set(fileId, content);
-    /* A new array wakes the shared sync hook after the ref is populated. */
-    setFiles([node]);
-  }, [content, fileId, node]);
+    const node = { path: fileId, name: fileName, kind: SkillFileNodeKind.File };
+    void openAttachmentCanvas(skillFileToAttachment(node, content), fileId);
+  }, [content, fileId, fileName, openAttachmentCanvas]);
 
-  /* Map classified errors to the canvas overlay. */
   useEffect(() => {
     if (error == null) return;
     openCanvas(
@@ -69,11 +51,16 @@ export const SkillDetailsFilePreview: FC<Props> = ({
     );
   }, [error, fileName, fileId, openCanvas]);
 
-  useSkillFilePreviewSync({
-    selectedPath: fileId,
-    files,
-    filesContentRef,
-  });
-
   return <SkillFilePreview path={fileId} />;
 };
+
+/**
+ * Keeps the inline preview independent of the page's attachment panel. Each
+ * selection owns its loading and canvas state, so late results cannot replace
+ * another file's preview or reopen the page panel after details are closed.
+ */
+export const SkillDetailsFilePreview: FC<Props> = (props) => (
+  <AttachmentCanvasProvider key={props.fileId}>
+    <FilePreviewContent {...props} />
+  </AttachmentCanvasProvider>
+);

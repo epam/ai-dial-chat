@@ -259,7 +259,7 @@ A `url` that does not start with `blob:` SHALL NOT be revoked under any circumst
 - **Loading announcement**: the existing `role="status"`/`aria-live` region this capability's picker already specifies for a loading file SHALL be reused for a preview load — no second live region is introduced.
 - **No focusable editing control**: none of the four preview renderers SHALL render a focusable control other than whatever the surrounding Content tab already provides (the file selector's own trigger). A `text` preview's download control SHALL be hidden.
 - **RTL**: none of the four preview renderers SHALL introduce a physical-direction layout rule; each already inherits document direction through the components it reuses.
-- **Responsive**: the preview area SHALL render within the Content tab's existing scrollable container at a 360px viewport width and at the 769px desktop boundary without causing the panel to overflow horizontally; long text/code lines SHALL wrap or scroll internally rather than widening the panel; an image SHALL be capped to the container's width.
+- **Responsive**: the preview area SHALL render within the Content tab's existing scrollable container at a 360px viewport width and at the 1280px desktop boundary without causing the panel to overflow horizontally; long text/code lines SHALL wrap or scroll internally rather than widening the panel; an image SHALL be capped to the container's width. The details panel SHALL remain full-width for mobile/tablet viewports up to 1279px and 540px wide for desktop viewports of 1280px and above, in both LTR and RTL. Loading a preview or its lazy-loaded renderer styles SHALL NOT change those dimensions, including when PDF viewer styles declare global width utilities.
 
 #### Scenario: No hardcoded English beyond the new default
 
@@ -275,3 +275,14 @@ A `url` that does not start with `blob:` SHALL NOT be revoked under any circumst
 
 - **WHEN** a `text` preview containing a very long, unbroken line renders in a viewport 360px wide
 - **THEN** no part of the panel extends beyond the viewport's edges
+
+#### Scenario: Loading PDF styles preserves desktop panel width
+
+- **WHEN** a supporting-file preview loads PDF viewer styles after the details panel has opened at a 1280px or 1920px viewport width
+- **THEN** the panel remains 540px wide and anchored to the inline-end edge, in both LTR and RTL
+- **AND** it does not expand to the viewport width
+
+#### Scenario: Loading PDF styles preserves mobile and tablet sizing
+
+- **WHEN** PDF viewer styles load while the details panel is displayed at a 360px or 900px viewport width
+- **THEN** the panel remains full-width within the viewport, in both LTR and RTL
