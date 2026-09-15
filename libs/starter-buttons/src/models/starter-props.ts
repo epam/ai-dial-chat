@@ -24,6 +24,13 @@ export interface StarterButtonsProps {
   onSelect: (starter: StarterOption) => void;
   /** When `true`, renders a mobile-optimised layout. */
   isMobile?: boolean;
+  /**
+   * When `true` (the default), only as many starters as the measured
+   * container width allows stay on one row and the rest collapse into an
+   * overflow dropdown. When `false`, every starter is rendered, each on its
+   * own row, and no overflow menu appears.
+   */
+  isCollapsible?: boolean;
   /** Localized labels used within the component. */
   labels: StarterButtonsLabels;
   /** Optional style overrides. */

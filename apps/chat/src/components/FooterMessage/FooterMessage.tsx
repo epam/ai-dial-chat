@@ -1,10 +1,12 @@
 import { formatAppVersion, sanitizeFooterHtml } from '@epam/ai-dial-chat-hooks';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FooterMessageI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { UserConfigStatus } from '../../types/user-config-status';
 
 const FooterMessage: FC = () => {
@@ -14,6 +16,7 @@ const FooterMessage: FC = () => {
     config: { footerHtmlMessage, appVersion },
   } = useAppConfig();
   const isFooterEnabled = useFeatureFlag('footer');
+  const isVersionHidden = useUiFeature(OverlayFeature.HideFooterVersion);
 
   const sanitizedHtml = useMemo(
     () =>
@@ -30,8 +33,9 @@ const FooterMessage: FC = () => {
   const isReady = status === UserConfigStatus.Ready;
   const isMessageVisible = isReady && isFooterEnabled && !!sanitizedHtml;
   /* Deliberately not gated by the `footer` flag: the version is diagnostic
-   * chrome, not operator marketing copy. */
-  const isVersionVisible = isReady && !!version;
+   * chrome, not operator marketing copy. An embedding host hides it with the
+   * `hide-footer-version` UI feature instead. */
+  const isVersionVisible = isReady && !!version && !isVersionHidden;
 
   if (!isMessageVisible && !isVersionVisible) {
     return null;

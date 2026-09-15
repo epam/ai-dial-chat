@@ -166,6 +166,19 @@ export enum OverlayFeature {
   HideKeyboardShortcuts = 'hide-keyboard-shortcuts',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
+  /**
+   * Renders every conversation starter, each on its own row, instead of
+   * fitting as many as the measured width allows on one line and collapsing
+   * the rest into a "…" dropdown. Intended for narrow embeds, where the row
+   * has space for a single starter and hides the remainder behind the menu.
+   */
+  ShowAllStarters = 'show-all-starters',
+  /**
+   * Hides the application version label in the footer. The label is
+   * diagnostic chrome an embedding host usually owns itself, and it is not
+   * gated by the operator's `footer` capability flag.
+   */
+  HideFooterVersion = 'hide-footer-version',
 }
 
 /**

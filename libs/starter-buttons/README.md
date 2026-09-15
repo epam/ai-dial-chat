@@ -56,6 +56,23 @@ const starter: StarterOption = {
 };
 ```
 
+The overflow behaviour is opt-out. Pass `isCollapsible={false}` and every
+starter is rendered, each on its own row, with no overflow menu — the layout a
+narrow embed wants, where the measured row fits a single starter and hides the
+rest behind the "…" button:
+
+```tsx
+<StarterButtons
+  starters={deployment.starters}
+  isCollapsible={false}
+  labels={{
+    list: 'Conversation starters',
+    overflow: 'More starter prompts',
+  }}
+  onSelect={handleStarterSelect}
+/>;
+```
+
 ## Types
 
 ```tsx
