@@ -6,13 +6,13 @@ import type { FC } from 'react';
 import styles from './ToolsChips.module.scss';
 
 /** Typography overrides for the `ToolsChips` component. */
-export interface ToolsChipsTypography {
+interface ToolsChipsTypography {
   /** Typography utility class applied to the chip text. Defaults to `'dial-small-paragraph-text'`. */
   fontClassName?: string;
 }
 
 /** Color overrides for the `ToolsChips` component, applied as CSS custom properties. */
-export interface ToolsChipsColors {
+interface ToolsChipsColors {
   /** Chip background color while the tool is off. Defaults to `--bg-layer-base`. */
   chipBg?: string;
   /** Chip border color while the tool is off. Defaults to `--stroke-secondary`. */

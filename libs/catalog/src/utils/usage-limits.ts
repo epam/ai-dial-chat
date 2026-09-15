@@ -29,14 +29,14 @@ export const getValueLabel = ({
   valueLabel ??
   `${numberFormatter.format(used)} / ${numberFormatter.format(total)}`;
 
-export const hasProgress = ({ total }: UsageLimitProgressRow) =>
+const hasProgress = ({ total }: UsageLimitProgressRow) =>
   Number.isFinite(total) && total > 0;
 
 export const isCapped = (row: UsageLimitProgressRow) =>
   row.isUnlimited !== true && hasProgress(row);
 
 /** Fraction of the limit consumed so far, clamped to `[0, Infinity)`; `0` when `total` isn't usable. */
-export const getUsageRatio = (row: UsageLimitProgressRow): number =>
+const getUsageRatio = (row: UsageLimitProgressRow): number =>
   hasProgress(row) ? Math.max(row.used, 0) / row.total : 0;
 
 export const getProgressStatus = (

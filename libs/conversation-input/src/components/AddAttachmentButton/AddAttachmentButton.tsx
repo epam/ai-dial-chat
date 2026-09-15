@@ -38,7 +38,7 @@ import { ToolsBottomSheet } from '../ToolsBottomSheet/ToolsBottomSheet';
 import styles from './AddAttachmentButton.module.scss';
 
 /** A single item injected into the attachment menu by the host app. */
-export interface ExtraMenuItem {
+interface ExtraMenuItem {
   /** Unique key for the item. */
   key: string;
   /** Display label. */
@@ -99,7 +99,7 @@ interface AddAttachmentButtonProps {
 }
 
 /** Color overrides for `AddAttachmentButton`, applied as CSS custom properties with app theme fallbacks. */
-export interface AddAttachmentButtonColors {
+interface AddAttachmentButtonColors {
   /** Icon color for each tool row in the Tools submenu. Fallback: `--text-secondary`. */
   toolIcon?: string;
   /** Chevron icon color on the mobile "Tools"/"Chat settings" rows. Fallback: `--text-secondary`. */

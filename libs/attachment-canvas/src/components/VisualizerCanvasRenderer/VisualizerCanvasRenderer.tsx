@@ -51,7 +51,7 @@ export interface VisualizerCanvasRendererProps {
 }
 
 /** Color overrides for `VisualizerCanvasRenderer`, applied as CSS custom properties. */
-export interface VisualizerCanvasRendererColors {
+interface VisualizerCanvasRendererColors {
   /** Background of the loading overlay. Defaults to `--bg-layer-sunken`. */
   loadingBackground?: string;
   /** Loading/error message text color. Defaults to `--text-primary`. */

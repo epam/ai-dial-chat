@@ -80,10 +80,12 @@ import type {
   SharePopoverProps,
   SharePopoverLabels,
   SharePopoverStyles,
+  SharePopoverColors,
   SharePopoverTypography,
   QrCodeProps,
   QrCodeLabels,
   QrCodeStyles,
+  QrCodeColors,
   ShareLinkData,
 } from '@epam/ai-dial-share';
 ```

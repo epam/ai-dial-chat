@@ -69,20 +69,17 @@ import { SidebarPanel, SidebarOrientation } from '@epam/ai-dial-sidebar';
 
 ### PanelEmpty
 
-Empty-state block shown when a panel has no items at all. Icon defaults to
-`IconMessageCircle` at `48` px.
+Empty-state block shown when a panel has no items at all.
 
 ```tsx
 import { PanelEmpty } from '@epam/ai-dial-sidebar';
-import { IconFolderOff } from '@tabler/icons-react';
 
-<PanelEmpty label="No conversations" icon={IconFolderOff} iconSize={40} />;
+<PanelEmpty label="No conversations" />;
 ```
 
 ### PanelNoResults
 
-No-results state shown when a search or filter produces no matches. Icon defaults
-to `IconFileSad` at `32` px.
+No-results state shown when a search or filter produces no matches.
 
 ```tsx
 import { PanelNoResults } from '@epam/ai-dial-sidebar';

@@ -21,7 +21,7 @@ import type { QuotationSource } from '../../models/quotation-source';
 import styles from './SourcesSection.module.scss';
 
 /** Props for the `SourcesSection` component. */
-export interface SourcesSectionProps {
+interface SourcesSectionProps {
   /** Heading text for the sources section. */
   title: ReactNode;
   /** List of sources to display. */

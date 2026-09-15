@@ -20,6 +20,7 @@ export type {
 } from './components/MessageBubble/StatusMessageBubble';
 export type {
   MessageActionsProps,
+  MessageActionColors,
   MessageActionLabels,
   MessageActionTooltips,
   MessageActionAriaLabels,

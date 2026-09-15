@@ -2,7 +2,7 @@ import type { DragEvent } from 'react';
 import { useCallback, useRef, useState } from 'react';
 
 /** React drag-event handlers to spread onto a drop-zone element. */
-export interface SkillFileDropZoneHandlers {
+interface SkillFileDropZoneHandlers {
   /** Attach to the drop-zone element's `onDragEnter`. */
   onDragEnter: (event: DragEvent<HTMLElement>) => void;
   /** Attach to the drop-zone element's `onDragLeave`. */

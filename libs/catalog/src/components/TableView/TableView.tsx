@@ -68,7 +68,7 @@ export interface TableViewRow {
 }
 
 /** Color overrides for `TableView`, applied as CSS custom properties. */
-export interface TableViewColors {
+interface TableViewColors {
   /** Section heading text color. Fallback: `--text-secondary`. */
   sectionHeading?: string;
   /** Background color of alternating (even-indexed) rows. Fallback: `--bg-layer-sunken`. */

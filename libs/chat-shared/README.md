@@ -430,7 +430,7 @@ Generic empty-state placeholder used inside panels.
 ```tsx
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 
-<PanelEmptyState icon={<IconMessage />} label="No conversations" />;
+<PanelEmptyState label="No conversations" />;
 ```
 
 ### ItemHeader

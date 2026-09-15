@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { CatalogItemLimits } from './item-details-data';
 
 /** Color overrides for `LimitsTab`, applied as CSS custom properties. */
-export interface LimitsTabColors {
+interface LimitsTabColors {
   /** Group heading text color. Fallback: `--text-secondary`. */
   sectionHeading?: string;
   /** Row label text color, and the secondary half of a value/note line. Fallback: `--text-secondary`. */

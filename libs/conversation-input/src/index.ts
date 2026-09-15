@@ -24,7 +24,10 @@ export type {
   ToolsChipLabels,
 } from './models/Input';
 
-export type { BottomSheetItem } from './components/BottomSheet/BottomSheet';
+export type {
+  BottomSheetColors,
+  BottomSheetItem,
+} from './components/BottomSheet/BottomSheet';
 export {
   ChatSettingsModal,
   type ChatSettingsModalProps,

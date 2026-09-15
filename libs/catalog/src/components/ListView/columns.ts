@@ -38,7 +38,7 @@ const defaultColumnVisibility: Required<ListViewColumnVisibility> = {
  * tab, applying `columnVisibility` overrides on top of the built-in
  * defaults. Used by `CATALOG_COLUMNS` to compute each column's `ColDef.hide`.
  */
-export const resolveColumnVisibility = (
+const resolveColumnVisibility = (
   type: CatalogEntityType,
   columnVisibility?: ListViewColumnVisibility,
 ): Record<ListViewColumnKey, boolean> => {

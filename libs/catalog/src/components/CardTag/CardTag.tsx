@@ -3,7 +3,7 @@ import { FC } from 'react';
 import styles from './CardTag.module.scss';
 
 /** Color overrides for `CardTag`, applied as CSS custom properties. */
-export interface CardTagColors {
+interface CardTagColors {
   /** Tag background color. Fallback: `--bg-layer-sunken`. */
   background?: string;
   /** Tag text color. Fallback: `--text-secondary`. */

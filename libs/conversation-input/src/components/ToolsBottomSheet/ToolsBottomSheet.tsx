@@ -37,7 +37,7 @@ export interface ToolsBottomSheetProps {
 }
 
 /** Color overrides for `ToolsBottomSheet`, applied as CSS custom properties with app theme fallbacks. */
-export interface ToolsBottomSheetColors {
+interface ToolsBottomSheetColors {
   /** Icon color for each tool row. Fallback: `--text-secondary`. */
   iconText?: string;
   /** Checkmark icon color for a selected tool row. Fallback: `--text-accent`. */

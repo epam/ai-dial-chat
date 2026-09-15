@@ -54,7 +54,10 @@ export type {
 } from './models/publish-access-rules-styles';
 
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
-export type { PublishHistoryListProps } from './components/PublishHistoryList/PublishHistoryList';
+export type {
+  PublishHistoryListColors,
+  PublishHistoryListProps,
+} from './components/PublishHistoryList/PublishHistoryList';
 
 export { PublishFoldersTree } from './components/PublishFoldersTree/PublishFoldersTree';
 export type {
@@ -75,12 +78,14 @@ export type {
 
 export { PublishFooter } from './components/PublishPanel/PublishFooter';
 export type {
+  PublishFooterColors,
   PublishFooterProps,
   PublishFooterLabels,
 } from './components/PublishPanel/PublishFooter';
 
 export { StandalonePublishPanel } from './components/PublishPanel/StandalonePublishPanel';
 export type {
+  StandalonePublishPanelColors,
   StandalonePublishPanelProps,
   StandalonePublishPanelLabels,
 } from './components/PublishPanel/StandalonePublishPanel';

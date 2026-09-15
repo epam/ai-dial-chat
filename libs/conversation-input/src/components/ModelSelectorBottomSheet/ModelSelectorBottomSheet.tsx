@@ -21,7 +21,7 @@ import { ModelSelectorSkeletonRows } from '../ModelSelectorSkeleton/ModelSelecto
 import styles from './ModelSelectorBottomSheet.module.scss';
 
 /** Color overrides for the `ModelSelectorBottomSheet` component, applied as CSS custom properties. */
-export interface ModelSelectorBottomSheetColors {
+interface ModelSelectorBottomSheetColors {
   /** Divider color between the search field and the deployment list. Defaults to `--stroke-secondary`. */
   divider?: string;
   /** Item label and state-label text color. Defaults to `--text-primary`/`--text-secondary`. */
