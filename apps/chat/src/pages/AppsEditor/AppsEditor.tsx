@@ -22,6 +22,7 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { updateApplication } from '../../server-api/applications';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import {
   EntityOperation,
@@ -273,6 +274,38 @@ const AppsEditor: FC = () => {
       clearSaveTimeout();
       if (isPreviewing) return;
 
+      /*
+       * Quick Apps have no chat-side UI to set `features.skills_supported`,
+       * and the embedded Settings-step editor's own save (which is what
+       * actually persists to DIAL Core here — this host never calls
+       * `updateApplication` itself for a Settings-step save) has no reason
+       * to know about it either. Re-asserting it with a follow-up PATCH,
+       * carrying the same General-step values already on record, is the
+       * frontend half of the `applications-write-api` spec's "Quick Apps
+       * always get features.skills_supported: true" hack — the backend
+       * force-sets the flag on every update regardless of body content, so
+       * this call's only purpose is to trigger that, and it must complete
+       * before the save is treated as successful.
+       */
+      if (appIdForSettings) {
+        const generalValues = generalFormRef.current?.getValues();
+        try {
+          await updateApplication(appIdForSettings, {
+            name: generalValues?.name ?? appDisplayName ?? '',
+            description: generalValues?.description,
+            iconUrl: generalValues?.iconUrl,
+            topics: generalValues?.topics,
+            locales: generalValues?.locales,
+            primaryLocale: generalValues?.primaryLocale,
+          });
+        } catch {
+          setIsSaving(false);
+          setPendingSaveAction(null);
+          setSaveError(t(AppsEditorI18nKeys.ErrorSaveFailed));
+          return;
+        }
+      }
+
       if (hasChanges) {
         setPreviewResetKey((prev) => prev + 1);
       }
@@ -313,6 +346,8 @@ const AppsEditor: FC = () => {
     [
       clearSaveTimeout,
       isPreviewing,
+      appIdForSettings,
+      t,
       pendingSaveAction,
       refetchDeployments,
       notifyOperationSuccess,
