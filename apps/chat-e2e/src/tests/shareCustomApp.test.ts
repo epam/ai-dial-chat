@@ -58,6 +58,7 @@ dialSharedWithMeTest(
       additionalShareUserMarketplace,
       additionalShareUserEntityDetailsModal,
       additionalShareUserEntityDetailsModalAssertion,
+      modelApiHelper,
       additionalShareUserPage,
       additionalShareUserMarketplaceHeader,
       additionalShareUserMarketplaceEntitiesSection,
@@ -189,14 +190,13 @@ dialSharedWithMeTest(
       await additionalShareUserEntityDetailsModalAssertion.assertEntityAuthor(
         UserUtil.getE2EUser(testInfo.parallelIndex),
       );
-      //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3218
-      // const configApp = await modelApiHelper.getAgentByNameAndVersion({
-      //   name: appData.name,
-      //   version: appData.version,
-      // });
-      // await additionalShareUserEntityDetailsModalAssertion.assertEntityReleaseDate(
-      //   configApp.createdAt!,
-      // );
+      const configApp = await modelApiHelper.getAgentByNameAndVersion({
+        name: appData.name,
+        version: appData.version,
+      });
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityReleaseDate(
+        configApp.createdAt!,
+      );
       await additionalShareUserEntityDetailsModalAssertion.assertEntityVersion(
         appData.version!,
       );
@@ -334,13 +334,12 @@ dialSharedWithMeTest(
           confirmationDialog,
           'visible',
         );
-        //TODO: unblock when fixed https://github.com/epam/ai-dial-chat/issues/6073
-        // await confirmationDialogAssertion.assertConfirmationDialogTitle(
-        //   ExpectedConstants.removeAccessTitle,
-        // );
-        // await confirmationDialogAssertion.assertConfirmationMessage(
-        //   ExpectedConstants.removeAccessForAllMessage(appData.name),
-        // );
+        await confirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.removeAccessTitle,
+        );
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.removeAccessForAllMessage(appData.name),
+        );
       },
     );
 

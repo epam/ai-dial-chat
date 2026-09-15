@@ -364,8 +364,7 @@ dialAdminTest(
             expectedEndpoint: toolsetEntity.endpoint,
             expectedTransportProtocol: ToolsetTransportType.HTTP,
             expectedAuthenticationType: ToolsetAuthTypes.OAUTH,
-            //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5202
-            // expectedAllowedTools: toolsetEntity.allowedTools,
+            expectedAllowedTools: toolsetEntity.allowedTools,
           },
         );
         await adminPublishedToolsetReviewModalControlsAssertion.assertButtonsState(
