@@ -6985,6 +6985,12 @@
               "$ref": "#/components/schemas/CustomVisualizerDto"
             }
           },
+          "customVariables": {
+            "type": "object",
+            "description": "Public client-owned variables from CUSTOM_CLIENT_VARIABLES. Arbitrary JSON object; empty when unset or invalid. The BFF does not interpret its keys. Never put secrets here.",
+            "additionalProperties": true,
+            "default": {}
+          },
           "publicationFilterSources": {
             "description": "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
             "example": [
@@ -7009,6 +7015,7 @@
           "announcements",
           "footerHtmlMessage",
           "customVisualizers",
+          "customVariables",
           "publicationFilterSources"
         ]
       },

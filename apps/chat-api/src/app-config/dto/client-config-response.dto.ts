@@ -176,6 +176,15 @@ export class ClientConfigDto {
 
   @ApiProperty({
     description:
+      'Public client-owned variables from CUSTOM_CLIENT_VARIABLES. Arbitrary JSON object; empty when unset or invalid. The BFF does not interpret its keys. Never put secrets here.',
+    type: 'object',
+    additionalProperties: true,
+    default: {},
+  })
+  customVariables!: Record<string, unknown>;
+
+  @ApiProperty({
+    description:
       "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
     type: [String],
     example: ['title', 'role', 'dial_roles'],
