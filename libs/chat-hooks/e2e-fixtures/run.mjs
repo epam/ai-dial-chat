@@ -20,8 +20,7 @@
  *   npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke
  */
 
-import { existsSync, mkdtempSync, readFileSync } from 'fs';
-import os from 'os';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -30,6 +29,7 @@ import {
   cleanupDir,
   createFixtureDependencyResolver,
   createFixtureDir,
+  createTmpRoot,
   FIXTURE_PACKAGE_VERSION,
   formatExecError,
   npmInstallFixture,
@@ -61,9 +61,7 @@ const workspaceRoot = path.resolve(chatHooksRoot, '..', '..');
  * a git-ignored folder) silently breaks the isolation this harness exists
  * to test.
  */
-const tmpRoot = mkdtempSync(
-  path.join(os.tmpdir(), 'ai-dial-chat-hooks-e2e-fixtures-'),
-);
+const tmpRoot = createTmpRoot('ai-dial-chat-hooks-e2e-fixtures-');
 const keepFixtures = process.env.KEEP_FIXTURES === '1';
 
 const workspaceLock = JSON.parse(

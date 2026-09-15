@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import os from 'node:os';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import test, { after } from 'node:test';
 import {
@@ -8,11 +7,9 @@ import {
   measureBuild,
   writeAppShellHtml,
 } from './application-mode.mjs';
-import { cleanupDir } from './harness.mjs';
+import { cleanupDir, createTmpRoot } from './harness.mjs';
 const keepFixtures = process.env.KEEP_FIXTURES === '1';
-const tmpRoot = mkdtempSync(
-  path.join(os.tmpdir(), 'ai-dial-chat-application-mode-unit-'),
-);
+const tmpRoot = createTmpRoot('ai-dial-chat-application-mode-unit-');
 after(() => {
   if (!keepFixtures) cleanupDir(tmpRoot);
 });

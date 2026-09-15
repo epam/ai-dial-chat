@@ -1,9 +1,13 @@
 #!/usr/bin/env node
-import { mkdtempSync, readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { cleanupDir, createFixtureDependencyResolver } from './harness.mjs';
+import {
+  cleanupDir,
+  createFixtureDependencyResolver,
+  createTmpRoot,
+} from './harness.mjs';
 import {
   assertApplicationBudget,
   buildPackedFixture,
@@ -17,9 +21,7 @@ const MAX_PACKED_VS_SOURCE_RATIO = 1.2;
 const here = path.dirname(fileURLToPath(import.meta.url));
 const chatHooksRoot = path.resolve(here, '..');
 const workspaceRoot = path.resolve(chatHooksRoot, '..', '..');
-const tmpRoot = mkdtempSync(
-  path.join(os.tmpdir(), 'ai-dial-chat-application-mode-fixtures-'),
-);
+const tmpRoot = createTmpRoot('ai-dial-chat-application-mode-fixtures-');
 const keepFixtures = process.env.KEEP_FIXTURES === '1';
 const workspaceLock = JSON.parse(
   readFileSync(path.join(workspaceRoot, 'package-lock.json'), 'utf8'),

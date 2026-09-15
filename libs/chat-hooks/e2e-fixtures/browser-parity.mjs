@@ -1,12 +1,15 @@
 import { collectStartupResponses } from './startup-requests.mjs';
 import { createServer } from 'http';
-import { mkdtempSync, readFileSync, writeFileSync } from 'fs';
-import os from 'os';
+import { readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import { gzipSync } from 'zlib';
 import { fileURLToPath } from 'url';
 import { chromium } from 'playwright';
-import { cleanupDir, createFixtureDependencyResolver } from './harness.mjs';
+import {
+  cleanupDir,
+  createFixtureDependencyResolver,
+  createTmpRoot,
+} from './harness.mjs';
 import {
   assertApplicationBudget,
   matchesForbiddenOrigin,
@@ -348,9 +351,7 @@ const ratioOf = (packedBytes, sourceBytes) =>
 const here = path.dirname(fileURLToPath(import.meta.url));
 const chatHooksRoot = path.resolve(here, '..');
 const workspaceRoot = path.resolve(chatHooksRoot, '..', '..');
-const tmpRoot = mkdtempSync(
-  path.join(os.tmpdir(), 'ai-dial-chat-browser-parity-fixtures-'),
-);
+const tmpRoot = createTmpRoot('ai-dial-chat-browser-parity-fixtures-');
 const keepFixtures = process.env.KEEP_FIXTURES === '1';
 const workspaceLock = JSON.parse(
   readFileSync(path.join(workspaceRoot, 'package-lock.json'), 'utf8'),
