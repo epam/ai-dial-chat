@@ -611,6 +611,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  AGENT_BUILDER_DEFAULT_MODEL?: string;
+
+  @IsOptional()
+  @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
 
   @IsOptional()

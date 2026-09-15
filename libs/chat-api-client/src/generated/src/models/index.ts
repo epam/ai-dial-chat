@@ -804,6 +804,12 @@ export interface ClientConfigDto {
    */
   defaultDeploymentId?: string | null;
   /**
+   * Agent Builder default model ID from AGENT_BUILDER_DEFAULT_MODEL. Defaults to gpt-4o.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  agentBuilderDefaultModelId?: string;
+  /**
    * Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.
    * @type {string}
    * @memberof ClientConfigDto

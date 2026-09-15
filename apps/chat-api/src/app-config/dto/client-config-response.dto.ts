@@ -41,6 +41,17 @@ export class ClientConfigDto {
 
   @ApiPropertyOptional({
     description:
+      'Agent Builder default model ID from AGENT_BUILDER_DEFAULT_MODEL. Defaults to gpt-4o.',
+    type: String,
+    example: 'gpt-4o',
+    default: 'gpt-4o',
+  })
+  @IsOptional()
+  @IsString()
+  agentBuilderDefaultModelId!: string;
+
+  @ApiPropertyOptional({
+    description:
       'Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.',
     example: 'https://dial.example.com',
     nullable: true,

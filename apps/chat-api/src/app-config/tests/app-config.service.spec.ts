@@ -42,6 +42,14 @@ describe('AppConfigService', () => {
   });
 
   describe('getClientConfig', () => {
+    it('exposes the configured Agent Builder model independently of the chat default', async () => {
+      const { service } = makeService(async (key) =>
+        key === 'agentBuilder.defaultModelId' ? 'builder-model' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.agentBuilderDefaultModelId).toBe('builder-model');
+      expect(result.config.defaultDeploymentId).toBeNull();
+    });
     it('filters server-only keys and only returns client-visible config', async () => {
       const { service } = makeService(async () => undefined);
       const result = await service.getClientConfig(ctx);
@@ -64,6 +72,7 @@ describe('AppConfigService', () => {
       expect(result.config.asrModelId).toBeNull();
       expect(result.config.transcribeSizeLimitBytes).toBe(5 * 1024 * 1024);
       expect(result.config.defaultDeploymentId).toBeNull();
+      expect(result.config.agentBuilderDefaultModelId).toBe('gpt-4o');
       expect(result.config.dialCoreExternalUrl).toBeNull();
       expect(result.config.fileManagerTabs).toEqual([
         'my_files',

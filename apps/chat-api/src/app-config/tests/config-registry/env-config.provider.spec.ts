@@ -16,6 +16,14 @@ function makeProvider(envOverrides: Partial<EnvironmentVariables> = {}) {
 }
 
 describe('EnvConfigProvider', () => {
+  it('reads the Agent Builder model from its BFF environment variable', async () => {
+    const { provider } = makeProvider({
+      AGENT_BUILDER_DEFAULT_MODEL: 'builder-model',
+    });
+    expect(await provider.resolve('agentBuilder.defaultModelId', ctx)).toBe(
+      'builder-model',
+    );
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });

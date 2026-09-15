@@ -183,6 +183,7 @@ export class AppConfigService {
     let asrModelId: string | null = null;
     let transcribeSizeLimitBytes = 5 * 1024 * 1024;
     let defaultDeploymentId: string | null = null;
+    let agentBuilderDefaultModelId = 'gpt-4o';
     let dialCoreExternalUrl: string | null = null;
     let mcpAppSandboxUrl: string | null = null;
     let mcpAppTheme: 'light' | 'dark' | null = null;
@@ -214,6 +215,9 @@ export class AppConfigService {
       } else if (def.key === 'asr.transcribeSizeLimitBytes') {
         transcribeSizeLimitBytes =
           typeof resolved === 'number' ? resolved : 5 * 1024 * 1024;
+      } else if (def.key === 'agentBuilder.defaultModelId') {
+        agentBuilderDefaultModelId =
+          typeof resolved === 'string' ? resolved : 'gpt-4o';
       } else if (def.key === 'deployments.defaultDeploymentId') {
         defaultDeploymentId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'dialCore.externalUrl') {
@@ -298,6 +302,7 @@ export class AppConfigService {
         asrModelId,
         transcribeSizeLimitBytes,
         defaultDeploymentId,
+        agentBuilderDefaultModelId,
         dialCoreExternalUrl,
         mcpAppSandboxUrl,
         mcpAppTheme,

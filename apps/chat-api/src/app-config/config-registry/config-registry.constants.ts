@@ -26,6 +26,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'TRANSCRIBE_SIZE_LIMIT_BYTES',
   },
   {
+    key: 'agentBuilder.defaultModelId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: 'gpt-4o',
+    critical: false,
+    description:
+      'Default model for Agent Builder when no saved or explicit selection exists.',
+    owner: 'chat-team',
+    envVar: 'AGENT_BUILDER_DEFAULT_MODEL',
+  },
+  {
     key: 'deployments.defaultDeploymentId',
     type: 'config',
     valueType: 'string',

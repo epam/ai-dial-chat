@@ -6881,6 +6881,12 @@
             "example": "gpt-4o",
             "nullable": true
           },
+          "agentBuilderDefaultModelId": {
+            "type": "string",
+            "description": "Agent Builder default model ID from AGENT_BUILDER_DEFAULT_MODEL. Defaults to gpt-4o.",
+            "example": "gpt-4o",
+            "default": "gpt-4o"
+          },
           "dialCoreExternalUrl": {
             "type": "string",
             "description": "Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.",
