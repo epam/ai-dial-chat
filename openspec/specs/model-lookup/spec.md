@@ -2,7 +2,13 @@
 
 ## Purpose
 
-The authenticated model lookup endpoint, its path-parameter validation, and the frontend server-api helper.
+The authenticated model lookup endpoint and its path-parameter validation.
+
+`apps/chat` has no caller for this endpoint today — the frontend reads model
+metadata through the deployments endpoints (`deploymentsApi`) instead. The
+endpoint is still served and still covered by the requirements below; the
+`apps/chat/src/server-api/models.ts` helper that used to front it was removed
+once it had zero call sites.
 
 ## Requirements
 
@@ -90,20 +96,3 @@ Any character outside the allowlist SHALL cause the BFF to return `400 Bad Reque
 
 - **WHEN** the path param contains `../`, `%2F`, whitespace, or other disallowed characters
 - **THEN** the BFF returns `400 Bad Request` without calling DIAL Core
-
----
-
-### Requirement: Frontend server-api helper for model lookup
-
-`apps/chat/src/server-api/models.ts` SHALL export a typed async function `getModel` that:
-
-- Accepts `modelName: string`
-- Calls `GET /api/v1/models/${modelName}` using the existing `get<DialModel>` helper from `server-api/base.ts`
-- Returns `Promise<DialModel>`
-
-No direct `fetch` calls are permitted in this helper.
-
-#### Scenario: Helper returns typed single model
-
-- **WHEN** `getModel('gpt-4o')` is called
-- **THEN** the return type is `Promise<DialModel>` and TypeScript infers all `DialModel` fields

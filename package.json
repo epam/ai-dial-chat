@@ -122,12 +122,12 @@
     "webpack": "5.110.3"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.2.0-dev.11",
-    "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.38",
+    "@epam/ai-dial-react-file-manager": "0.2.0",
+    "@epam/ai-dial-react-pdf-highlighter": "0.2.0",
     "@epam/ai-dial-shared": "0.48.0",
-    "@epam/ai-dial-ui-kit": "^0.14.0-dev.51",
+    "@epam/ai-dial-ui-kit": "^0.14.2",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
-    "@epam/pdf-highlighter-kit": "^0.0.18",
+    "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "^0.55.1",

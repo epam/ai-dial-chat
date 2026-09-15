@@ -21,9 +21,17 @@
 //   5. A shipped version spec with no upper bound — it accepts the next
 //      breaking major, so `@epam/ai-dial-ui-kit: "*"` in 11 libs and
 //      `@epam/pdf-highlighter-kit: ">=0.0.14"` constrained nothing at all.
-//   6. Broken relative links — every link to a file that no longer exists
+//   6. One external package declared at two different ranges — the host
+//      installs one copy either way, so `@epam/ai-dial-ui-kit` sat at
+//      `^0.14.0-dev.15`, `-dev.30` and `-dev.37` at once, each lib pinning
+//      whatever the kit was when it was scaffolded.
+//   7. A README citing a range its manifest no longer declares — that number is
+//      what a host copies, and `chat-hooks` advertised
+//      `@epam/pdf-highlighter-kit ^0.0.18` and `react-file-manager ^0.2.0-dev.10`
+//      after both manifests had moved on.
+//   8. Broken relative links — every link to a file that no longer exists
 //      (`docs/environment-variables-migration-guide.md` after its removal).
-//   7. Phantom exports — a name a lib README imports from its own package that
+//   9. Phantom exports — a name a lib README imports from its own package that
 //      the package does not export (`EntityBadge`, `StageType`, `QrPlaceholder`,
 //      `ConversationGroupProps`).
 //
@@ -129,11 +137,17 @@ const checkLibPackageMetadata = () => {
     if (!pkg.description?.trim()) {
       fail(path, 'missing "description" (see .claude/rules/libs.md)');
     } else if (pkg.description.trim() === pkg.name) {
-      fail(path, '"description" repeats the package name instead of describing it');
+      fail(
+        path,
+        '"description" repeats the package name instead of describing it',
+      );
     }
 
     if (pkg.license !== REQUIRED_LICENSE) {
-      fail(path, `"license" must be "${REQUIRED_LICENSE}", found "${pkg.license ?? '(none)'}"`);
+      fail(
+        path,
+        `"license" must be "${REQUIRED_LICENSE}", found "${pkg.license ?? '(none)'}"`,
+      );
     }
   }
 };
@@ -312,7 +326,106 @@ const checkNoUnboundedVersions = () => {
   }
 };
 
-/* ── 6. Relative markdown links resolve ── */
+/* ── 6. One external package, one version range across every lib ── */
+
+/*
+ * A host ends up with one copy of a third-party package however many libs name
+ * it, so two libs naming it at different ranges either agree by luck or push
+ * the host back to a "resolutions" pin — the same defect as a split role
+ * (check 4), written in version specs instead. `@epam/ai-dial-ui-kit` was
+ * declared at `^0.14.0-dev.15`, `^0.14.0-dev.30` and `^0.14.0-dev.37`
+ * simultaneously, and `react` at `^19.0.0`, `^19.2.6` and `^19.2.7`: in both
+ * cases the range was whatever the newest lib happened to be scaffolded
+ * against, not a statement about what the lib needs.
+ *
+ * A sibling under `libs/` is exempt for the same reason as check 5 — its spec
+ * is a placeholder `tools/publish-lib.mjs` rewrites to the release version.
+ */
+const checkConsistentExternalRanges = () => {
+  const workspacePackages = new Set(
+    projectDirs('libs')
+      .map((dir) => readJson(`${dir}/package.json`)?.name)
+      .filter(Boolean),
+  );
+
+  /* package name -> range -> the libs declaring it at that range */
+  const declarations = new Map();
+
+  for (const dir of projectDirs('libs')) {
+    const pkg = readJson(`${dir}/package.json`);
+    if (!pkg?.name || !isPublishable(pkg)) continue;
+
+    for (const field of ['dependencies', 'peerDependencies']) {
+      for (const [name, range] of Object.entries(pkg[field] ?? {})) {
+        if (workspacePackages.has(name)) continue;
+
+        const byRange = declarations.get(name) ?? new Map();
+        byRange.set(range, [...(byRange.get(range) ?? []), dir]);
+        declarations.set(name, byRange);
+      }
+    }
+  }
+
+  for (const [name, byRange] of declarations) {
+    if (byRange.size < 2) continue;
+
+    const spread = [...byRange]
+      .map(([range, dirs]) => `"${range}" in ${dirs.join(', ')}`)
+      .join('; ');
+
+    fail(
+      'libs/*/package.json',
+      `"${name}" is declared at ${byRange.size} different ranges — ${spread}. ` +
+        'A host installs one copy whatever the libs ask for, so pick the single ' +
+        'range every lib is built against (see .claude/rules/libs.md)',
+    );
+  }
+};
+
+/* ── 7. A lib README cites the ranges its own manifest declares ── */
+
+/*
+ * The range printed in a README is the number a host copies into its manifest,
+ * so a stale one is worse than none at all. Only a version written next to the
+ * package name — `\`pkg\` ^1.2.3`, `\`pkg\` (\`^1.2.3\`)`, or `"pkg": "^1.2.3"`
+ * in an install snippet — is checked. Prose that names no package ("requires
+ * UI Kit ^0.14.2 or later") is left to the author, and a bare package name with
+ * no version cited is fine: nothing to drift.
+ */
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/* A dotted version, so prose like `\`pkg\` 2 components` is not read as one. */
+const CITED_VERSION = String.raw`["\`]?([~^><=]*\d+(?:\.\d+)+[\w.\-+]*)["\`]?`;
+
+const checkReadmeVersionCitations = (src, file, libDir) => {
+  const pkg = readJson(`${libDir}/package.json`);
+  if (!pkg?.name) return;
+
+  const declared = { ...pkg.dependencies, ...pkg.peerDependencies };
+
+  for (const [name, range] of Object.entries(declared)) {
+    const cited = new RegExp(
+      String.raw`["\`]` +
+        escapeRegExp(name) +
+        String.raw`["\`]\s*:?\s*\(?\s*` +
+        CITED_VERSION,
+      'g',
+    );
+
+    for (const match of src.matchAll(cited)) {
+      if (match[1] === range) continue;
+
+      fail(
+        file,
+        `line ${lineAt(src, match.index)}: cites "${name}" as ${match[1]}, but ` +
+          `${libDir}/package.json declares ${range} — a README must quote the ` +
+          'manifest range verbatim (see .claude/rules/libs.md)',
+      );
+    }
+  }
+};
+
+/* ── 8. Relative markdown links resolve ── */
 
 const isPlaceholderLink = (target) =>
   LINK_PLACEHOLDERS.some((pattern) => pattern.test(target));
@@ -335,7 +448,7 @@ const checkLinks = (src, file) => {
 
 const lineAt = (src, index) => src.slice(0, index).split(/\r?\n/).length;
 
-/* ── 7. A lib README only imports names its package actually exports ── */
+/* ── 9. A lib README only imports names its package actually exports ── */
 
 /*
  * Resolves the names reachable through a lib's public entry point: named
@@ -359,7 +472,13 @@ const publicExports = (libDir) => {
     for (const m of source.matchAll(/export\s+(?:type\s+)?\{([^}]*)\}/g)) {
       for (const part of m[1].split(',')) {
         const name = part.replace(/\btype\b/g, '').trim();
-        if (name) names.add(name.split(/\s+as\s+/).pop().trim());
+        if (name)
+          names.add(
+            name
+              .split(/\s+as\s+/)
+              .pop()
+              .trim(),
+          );
       }
     }
   };
@@ -417,7 +536,10 @@ const checkReadmeImports = (src, file, libDir) => {
 
   for (const match of src.matchAll(importRe)) {
     for (const part of match[1].split(',')) {
-      const name = part.replace(/\btype\b/g, '').trim().split(/\s+as\s+/)[0];
+      const name = part
+        .replace(/\btype\b/g, '')
+        .trim()
+        .split(/\s+as\s+/)[0];
       if (!name || exported.has(name)) continue;
 
       fail(
@@ -439,6 +561,7 @@ if (!explicitFiles) {
   checkLibStylesExport();
   checkDependencyRoleConsistency();
   checkNoUnboundedVersions();
+  checkConsistentExternalRanges();
 }
 
 for (const file of files) {
@@ -456,11 +579,14 @@ for (const file of files) {
     .join('/');
   if (libDir.startsWith('libs/') && file.endsWith('README.md')) {
     checkReadmeImports(src, file, libDir);
+    checkReadmeVersionCitations(src, file, libDir);
   }
 }
 
 if (errors.length > 0) {
-  console.error(`\nDocumentation validation failed (${errors.length} problem(s)):\n`);
+  console.error(
+    `\nDocumentation validation failed (${errors.length} problem(s)):\n`,
+  );
   for (const error of errors) console.error(`  ${error}`);
   console.error(
     '\nSee the Docs section of AGENTS.md and .claude/rules/docs.md for the rules behind these checks.\n',
@@ -468,7 +594,9 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Documentation validation passed (${files.length} markdown files).`);
 console.log(
-  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, relative links, README imports vs public exports.',
+  `Documentation validation passed (${files.length} markdown files).`,
+);
+console.log(
+  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, one range per external package, README version citations, relative links, README imports vs public exports.',
 );

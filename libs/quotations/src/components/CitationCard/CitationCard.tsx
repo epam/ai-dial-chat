@@ -13,7 +13,7 @@ import {
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { FC, memo, ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 import styles from './CitationCard.module.scss';
 
@@ -240,5 +240,3 @@ export const CitationCard: FC<CitationCardProps> = ({
     </div>
   );
 };
-
-export default memo(CitationCard);

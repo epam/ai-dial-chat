@@ -12,8 +12,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import os from 'node:os';
+import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import test, { after } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -23,15 +22,13 @@ import {
   matchesForbiddenOrigin,
   measureBuild,
 } from './application-mode.mjs';
-import { cleanupDir, createFixtureDir } from './harness.mjs';
+import { cleanupDir, createFixtureDir, createTmpRoot } from './harness.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const chatHooksRoot = path.resolve(here, '..');
 const workspaceRoot = path.resolve(chatHooksRoot, '..', '..');
 const keepFixtures = process.env.KEEP_FIXTURES === '1';
-const tmpRoot = mkdtempSync(
-  path.join(os.tmpdir(), 'ai-dial-chat-module-origin-'),
-);
+const tmpRoot = createTmpRoot('ai-dial-chat-module-origin-');
 
 after(() => {
   if (!keepFixtures) cleanupDir(tmpRoot);

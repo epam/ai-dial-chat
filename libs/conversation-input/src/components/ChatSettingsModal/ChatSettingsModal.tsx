@@ -1,7 +1,7 @@
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import { ResponseFormat } from '@epam/ai-dial-chat-shared';
 import { Popup, Tooltip, PrimaryButton, PopupSize } from '@epam/ai-dial-ui-kit';
-import { memo, type FC } from 'react';
+import { type FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
 import { ChatSettingsFields } from '../ChatSettingsFields/ChatSettingsFields';
@@ -141,5 +141,3 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
     </Popup>
   );
 };
-
-export default memo(ChatSettingsModal);

@@ -15,13 +15,30 @@ import { execFileSync } from 'child_process';
 import {
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'fs';
+import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
+
+/*
+ * npm resolves a `file:` dependency spec without percent-decoding it, while
+ * `pathToFileURL` — which is how every fixture below names a packed tarball —
+ * encodes `~` as `%7E`. On Windows `os.tmpdir()` is an 8.3 short path
+ * (`C:\Users\PALINA~1\AppData\Local\Temp`) whenever the profile name is long
+ * enough, so a fixture rooted straight at it installs nothing: npm opens the
+ * literal `PALINA%7E1` and fails with ENOENT. Only the `native` variant of
+ * `realpathSync` expands a short name — the JS one resolves symlinks and
+ * junctions but leaves `PALINA~1` as it found it — so the spec ends up with
+ * nothing for npm to decode. Every fixture takes its temp root from here.
+ */
+export const createTmpRoot = (prefix) =>
+  mkdtempSync(path.join(realpathSync.native(os.tmpdir()), prefix));
 
 /*
  * Invoking npm through its JavaScript CLI keeps version ranges such as

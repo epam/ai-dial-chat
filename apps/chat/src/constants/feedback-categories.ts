@@ -22,5 +22,3 @@ export const FEEDBACK_CATEGORIES = [
     i18nKey: RateI18nKeys.FeedbackCategoryShouldHaveSearchedTheWeb,
   },
 ] as const;
-
-export type FeedbackCategory = (typeof FEEDBACK_CATEGORIES)[number]['value'];

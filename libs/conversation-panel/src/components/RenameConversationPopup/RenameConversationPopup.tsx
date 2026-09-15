@@ -25,12 +25,6 @@ import {
 } from 'react';
 import type { RenameConversationPopupProps } from '../../models/rename-conversation-popup';
 
-export type {
-  RenameConversationPopupLabels,
-  RenameConversationPopupProps,
-  RenameConversationPopupStyles,
-} from '../../models/rename-conversation-popup';
-
 /** Popup dialog for renaming a conversation, with validation and AI-generation affordance. */
 export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
   ({

@@ -1,42 +1,36 @@
 import { NoDataContent } from '@epam/ai-dial-ui-kit';
-import { memo, type FC, type ReactNode } from 'react';
+import { memo, type FC } from 'react';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import styles from './PanelEmptyState.module.scss';
 
 /** CSS custom-property overrides for the `PanelEmptyState` component. */
 export interface PanelEmptyStateColors {
-  /** Icon color. */
-  icon?: string;
   /** Label text color. */
   label?: string;
 }
 
 /** Props for `PanelEmptyState`. */
 export interface PanelEmptyStateProps {
-  /** Icon element rendered above the label. */
-  icon?: ReactNode;
-  /** Primary message shown beneath the icon. */
+  /** Primary message of the empty state. */
   label: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: PanelEmptyStateColors;
   /** CSS class applied to the label text. Defaults to `'dial-tiny-text'`. */
   labelClassName?: string;
-  /** CSS class applied to the icon+label container. */
+  /** CSS class applied to the empty-state container. */
   containerClassName?: string;
 }
 
 /** Centered empty-state block for use inside a sidebar panel body. */
 export const PanelEmptyState: FC<PanelEmptyStateProps> = memo(
   ({
-    icon,
     label,
     colors,
     labelClassName = 'dial-tiny-text',
     containerClassName,
   }) => {
     const cssVars = buildCssVars({
-      '--pes-icon-color': colors?.icon,
       '--pes-label-color': colors?.label,
     });
 
@@ -44,7 +38,6 @@ export const PanelEmptyState: FC<PanelEmptyStateProps> = memo(
       <div style={cssVars}>
         <NoDataContent
           title={label}
-          icon={icon && <span className={styles.icon}>{icon}</span>}
           titleClassName={mergeClasses(styles.label, labelClassName)}
           className={containerClassName}
         />

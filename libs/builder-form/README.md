@@ -33,9 +33,9 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 ## Peer Dependencies
 
-- `react` `^19.0.0`
+- `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.14.0-dev.15`
+- `@epam/ai-dial-ui-kit` `^0.14.2`
 
 ## Components
 
@@ -367,8 +367,10 @@ import type {
   EditorLayoutProps,
   EditorLayoutLabels,
   EditorLayoutStyles,
+  EditorLayoutColors,
   EditorSectionProps,
   EditorSectionStyles,
+  EditorSectionColors,
   AddAvatarProps,
   AddAvatarColors,
   AddAvatarStyles,

@@ -13,10 +13,8 @@ import {
   type Ref,
 } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  RenameConversationPopup,
-  type RenameConversationPopupLabels,
-} from '../RenameConversationPopup';
+import type { RenameConversationPopupLabels } from '../../../models/rename-conversation-popup';
+import { RenameConversationPopup } from '../RenameConversationPopup';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,

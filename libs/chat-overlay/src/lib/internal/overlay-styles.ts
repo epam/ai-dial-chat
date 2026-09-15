@@ -20,7 +20,7 @@ export enum OverlayClassName {
  * channel, so these are the supported way for a host to retheme the loader
  * palette without an `!important` fight against the injected source order.
  */
-export enum OverlayCssVariable {
+enum OverlayCssVariable {
   /** Loader backdrop. Defaults to `#ffffff`. */
   LoaderBackground = '--dial-overlay-loader-background',
   /** Loader foreground, inherited by the spinner's `currentColor` stroke. Defaults to `#2764d9`. */

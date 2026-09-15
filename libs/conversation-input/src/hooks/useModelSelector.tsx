@@ -42,7 +42,7 @@ export interface UseModelSelectorOptions {
 }
 
 /** Color overrides for the model-selector menu, applied as CSS custom properties. */
-export interface ModelSelectorColors {
+interface ModelSelectorColors {
   /** Sticky search header background. Fallback: `--bg-layer-raised`. */
   searchHeaderBackground?: string;
 }

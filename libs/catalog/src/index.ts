@@ -126,7 +126,10 @@ export { Filter } from './components/Filter/Filter';
 export type { FilterColors, FilterProps } from './components/Filter/Filter';
 
 export { TopicTag } from './components/TopicTag/TopicTag';
-export type { TopicTagProps } from './components/TopicTag/TopicTag';
+export type {
+  TopicTagColors,
+  TopicTagProps,
+} from './components/TopicTag/TopicTag';
 
 export { InfoCard } from './components/InfoCard/InfoCard';
 export type { InfoCardProps } from './components/InfoCard/InfoCard';

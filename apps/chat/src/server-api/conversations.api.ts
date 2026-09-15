@@ -63,15 +63,6 @@ export const deleteConversation = (conversationPath: string) =>
 export const markConversationViewed = (conversationPath: string) =>
   conversationsApi.markConversationViewed({ path: conversationPath });
 
-export const getConversationMetadata = (
-  conversationPath: string,
-  options?: { permissions?: boolean },
-) =>
-  conversationsApi.getConversationMetadata({
-    path: conversationPath,
-    permissions: options?.permissions,
-  });
-
 export const listConversations = (
   params?: {
     limit?: number;
@@ -98,11 +89,6 @@ export const generateConversationTitle = (conversationPath: string) =>
 
 export const duplicateConversation = (conversationPath: string) =>
   conversationsApi.duplicateConversation({ path: conversationPath });
-
-export const deleteConversations = (ids: string[]) =>
-  conversationsApi.deleteConversations({
-    deleteConversationsBodyDto: { ids },
-  });
 
 export const deleteAllConversations = () =>
   conversationsApi.deleteAllConversations({

@@ -12,10 +12,12 @@ export type {
   BuilderFormHeaderTypography,
 } from './models/builder-form-header-props';
 export type {
+  EditorSectionColors,
   EditorSectionProps,
   EditorSectionStyles,
 } from './models/editor-section-props';
 export type {
+  EditorLayoutColors,
   EditorLayoutProps,
   EditorLayoutLabels,
   EditorLayoutStyles,

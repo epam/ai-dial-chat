@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test, { after, before } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { cleanupDir, createFixtureDependencyResolver } from './harness.mjs';
+import {
+  cleanupDir,
+  createFixtureDependencyResolver,
+  createTmpRoot,
+} from './harness.mjs';
 import {
   buildProbePackedFixture,
   buildProbeSourceFixture,
@@ -21,9 +25,7 @@ let dependencyResolver;
 let reactVersion;
 const report = {};
 before(() => {
-  tmpRoot = mkdtempSync(
-    path.join(os.tmpdir(), 'ai-dial-chat-cold-load-probes-'),
-  );
+  tmpRoot = createTmpRoot('ai-dial-chat-cold-load-probes-');
   dependencyResolver = createFixtureDependencyResolver({
     workspaceRoot,
     tmpRoot,

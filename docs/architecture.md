@@ -115,8 +115,6 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 
 Conversation-history reuse is split across three acyclic layers. `chat-shared` owns the canonical `FilterTab`, the transfer-job contracts (job, status, subject, determinate progress, and the `ConversationTransferErrorCode` taxonomy), and conversation-name utilities. `chat-hooks` owns headless resource-state and conversation-panel controller hooks, with host-specific routing, labels, feature policy, and configured clients injected by `apps/chat`. `conversation-panel` owns the virtualized panel plus the labels-driven `ImportExportQueue` — with its per-row UI kit `Spinner` and `getTransferFileIcon` mapping — and the `RenameConversationPopup` presentation component, and consumes `FilterTab` and the transfer-job contracts from `chat-shared` directly rather than re-exporting them.
 
-`libs/ai-dial-kit/` is a leftover build-output directory from a removed library — no `package.json`, no sources, no importers. Do not add to it.
-
 ### Library isolation
 
 Libraries must stay free of host and external-system knowledge: no REST paths, generated clients, app contexts, auth/session/cookies, environment variables, feature flags, routing, analytics, storage keys, or third-party SDK setup. Applications adapt those concerns and pass data, resolved values, and behaviour into libs through props, typed callbacks, or narrow interfaces.

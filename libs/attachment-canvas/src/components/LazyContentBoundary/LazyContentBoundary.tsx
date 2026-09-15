@@ -3,7 +3,7 @@ import { Button, Spinner } from '@epam/ai-dial-ui-kit';
 import { Component, Suspense, type FC, type ReactNode } from 'react';
 
 /** User-visible strings for {@link LazyContentBoundary}. All fields have English defaults. */
-export interface LazyContentBoundaryLabels {
+interface LazyContentBoundaryLabels {
   /** Accessible status text announced while the lazy content loads. Defaults to `'Loading…'`. */
   loadingLabel?: string;
   /** Message shown when the lazy content fails to load. Defaults to `'Failed to load content'`. */

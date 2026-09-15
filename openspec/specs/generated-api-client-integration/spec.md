@@ -4,7 +4,7 @@
 Defines how frontend domain modules consume the generated `@epam/chat-api-client` OpenAPI client — factory-created, same-origin, cookie-forwarding API instances with CSRF/unauthorized/telemetry middleware — instead of hand-rolled `fetch` calls, keeping app-side API wrappers thin adapters over generated methods.
 ## Requirements
 ### Requirement: Client configuration factory
-`apps/chat/src/server-api/api-client.ts` SHALL export a `createApiConfiguration()` factory function that returns a `Configuration` instance configured with `basePath: ''`, `credentials: 'include'`, and the CSRF, unauthorized, and telemetry middlewares. It SHALL also export pre-built module-level singleton instances: `modelsApi`, `deploymentsApi`, `conversationsApi`.
+`apps/chat/src/server-api/api-client.ts` SHALL export a `createApiConfiguration()` factory function that returns a `Configuration` instance configured with `basePath: ''`, `credentials: 'include'`, and the CSRF, unauthorized, and telemetry middlewares. It SHALL also export pre-built module-level singleton instances: `deploymentsApi`, `conversationsApi`.
 
 #### Scenario: Same-origin requests
 - **WHEN** a generated API class is instantiated via the factory
@@ -79,19 +79,6 @@ The telemetry middleware SHALL record the HTTP method, URL, response status, and
 
 ---
 
-### Requirement: Models domain module uses generated client
-`apps/chat/src/server-api/models.ts` SHALL delegate to `ModelsApi` from `@epam/chat-api-client` instead of calling `get()` from `base.ts`. The exported function signatures (`getModels`, `getModel`) SHALL remain identical.
-
-#### Scenario: List models
-- **WHEN** `getModels()` is called
-- **THEN** it SHALL return a `DialModelListResponse`-compatible value via `ModelsApi.listModels()`
-
-#### Scenario: Get single model
-- **WHEN** `getModel(modelName)` is called
-- **THEN** it SHALL return a `DialModel`-compatible value via `ModelsApi.getModel({ modelName })`
-
----
-
 ### Requirement: Deployments domain module uses generated client
 `apps/chat/src/server-api/deployments.ts` SHALL delegate to `DeploymentsApi` from `@epam/chat-api-client`. The exported function signatures (`getDeployments`, `getDeployment`) SHALL remain identical.
 
@@ -152,7 +139,7 @@ The telemetry middleware SHALL record the HTTP method, URL, response status, and
 - **THEN** `apps/chat` SHALL show an explicit dependency on `libs/chat-api-client`
 
 ### Requirement: Skills domain module uses generated client
-`apps/chat/src/server-api/api-client.ts` SHALL export a `skillsApi` singleton, built from `SkillsApi` in `@epam/chat-api-client` using the shared `createApiConfiguration()` factory, alongside the existing `modelsApi`/`deploymentsApi`/`conversationsApi`/`filesApi` singletons.
+`apps/chat/src/server-api/api-client.ts` SHALL export a `skillsApi` singleton, built from `SkillsApi` in `@epam/chat-api-client` using the shared `createApiConfiguration()` factory, alongside the existing `deploymentsApi`/`conversationsApi`/`filesApi` singletons.
 
 `apps/chat/src/server-api/skills.api.ts` SHALL provide thin wrapper functions for all 10 skill operations, delegating to `skillsApi`, following the exact pattern `apps/chat/src/server-api/files.api.ts` already establishes for its own domain.
 

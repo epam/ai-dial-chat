@@ -3,7 +3,6 @@ import {
   mergeClasses,
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
-import { IconChartBar } from '@tabler/icons-react';
 import { FC } from 'react';
 import {
   ModelLimitPeriodStatus,
@@ -45,7 +44,6 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
   labels,
   periodStatuses,
   styles: stylesProp,
-  emptyStateIconSize = 48,
 }) => {
   const { colors, typography = {} } = stylesProp ?? {};
   const {
@@ -107,16 +105,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
       >
         {rows.length === 0 ? (
           <div className="flex items-center justify-center px-6 py-10">
-            <PanelEmptyState
-              icon={
-                <IconChartBar
-                  aria-hidden
-                  size={emptyStateIconSize}
-                  stroke={1}
-                />
-              }
-              label={labels.emptyStateLabel}
-            />
+            <PanelEmptyState label={labels.emptyStateLabel} />
           </div>
         ) : (
           <>

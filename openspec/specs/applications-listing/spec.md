@@ -139,7 +139,7 @@ export const getApplications = (): Promise<ApplicationsResponseDto> =>
   applicationsApi.listApplications();
 ```
 
-`applicationsApi` SHALL be instantiated from the generated client in `api-client.ts` following the same pattern as `modelsApi` and `deploymentsApi`.
+`applicationsApi` SHALL be instantiated from the generated client in `api-client.ts` following the same pattern as `deploymentsApi` and `conversationsApi`.
 
 #### Scenario: Wrapper delegates to generated client
 - **WHEN** `getApplications()` is called
