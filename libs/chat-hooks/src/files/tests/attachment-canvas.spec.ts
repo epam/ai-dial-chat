@@ -656,6 +656,109 @@ describe('annotationToPdfCanvasContent', () => {
       5,
     );
   });
+
+  it('sets page and highlight from a pdf_region lt/wh selector', () => {
+    const annotation: Annotation = {
+      index: 0,
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: {
+          type: 'pdf_region',
+          page: 1,
+          bbox: { lt: [58.752, 383.328], wh: [492.048, 29.304] },
+        },
+      },
+    };
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBe(1);
+    expect(result?.highlights).toHaveLength(1);
+    expect(result?.highlights?.[0].bboxes).toEqual([
+      {
+        page: 1,
+        x1: 58.752,
+        y1: 383.328,
+        x2: 550.8,
+        y2: 383.328 + 29.304,
+      },
+    ]);
+    expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
+  });
+
+  it('highlights both a pdf_bbox and a pdf_region annotation sharing a source, selecting the clicked one', () => {
+    const bboxAnnotation: Annotation = {
+      index: 0,
+      target: { selector: { type: 'html_tag', tag: 'cit', id: 'shared' } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: { type: 'pdf_bbox', page: 2, x1: 0, y1: 0, x2: 10, y2: 10 },
+      },
+    };
+    const regionAnnotation: Annotation = {
+      index: 1,
+      target: { selector: { type: 'html_tag', tag: 'cit', id: 'shared' } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: {
+          type: 'pdf_region',
+          page: 5,
+          bbox: { left: 0, top: 0, width: 10, height: 10 },
+        },
+      },
+    };
+    const groups = groupAnnotations([bboxAnnotation, regionAnnotation]);
+
+    const result = annotationToPdfCanvasContent(
+      regionAnnotation,
+      groups,
+      resolvers,
+    );
+    expect(result?.page).toBe(5);
+    expect(result?.highlights).toHaveLength(2);
+    expect(result?.selectedHighlightId).toBe(
+      result?.highlights?.find((h) => h.bboxes[0].page === 5)?.id,
+    );
+  });
+
+  it('sets page to undefined and produces no highlight for a malformed pdf_region selector', () => {
+    const annotation: Annotation = {
+      index: 0,
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: {
+          type: 'pdf_region',
+          page: 1,
+          bbox: { lt: [1], wh: [2, 3] },
+        },
+      },
+    };
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBeUndefined();
+    expect(result?.highlights).toEqual([]);
+  });
 });
 
 describe('annotationToOoxmlCanvasContent', () => {

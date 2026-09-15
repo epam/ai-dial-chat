@@ -3246,7 +3246,8 @@ Also exports `resolveImageCanvasContent`, `resolveTextCanvasContent`, `resolveCo
 PDF citation previews use `annotationToPdfCanvasContent(annotation, groups, resolvers)`.
 Pass the exact annotation object selected in the citation popup. The mapper finds
 its group by membership (cit groups can share a URL), filters highlights to that
-annotation's PDF, and sets `page` from its first valid `pdf_bbox` body selector.
+annotation's PDF, and sets `page` from its first valid `pdf_bbox`/`pdf_region`
+body selector.
 Missing/invalid pages leave `page` unset; nonexistent highlight IDs are omitted.
 
 Office (DOCX/PPTX/XLSX) citation previews use
