@@ -2630,12 +2630,23 @@ const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
         }
       });
 
+      const areAllSelectedConversationsAlreadyLoaded =
+        selectedConversationsIds.length > 0 &&
+        ConversationsSelectors.selectAreSelectedConversationsLoaded(
+          state$.value,
+        ) &&
+        selectedConversationsIds.every(
+          (id) =>
+            ConversationsSelectors.selectConversation(state$.value, id)
+              ?.status === UploadStatus.LOADED,
+        );
+
       return concat(
         ...actions,
         of(
           ConversationsActions.uploadConversationsByIds({
             conversationIds: selectedConversationsIds,
-            showLoader: true,
+            showLoader: !areAllSelectedConversationsAlreadyLoaded,
           }),
         ),
       );

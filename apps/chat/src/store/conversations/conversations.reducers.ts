@@ -211,8 +211,15 @@ export const conversationsSlice = createSlice({
         suspendHideSidebar?: boolean;
       }>,
     ) => {
-      state.selectedConversationsIds = uniq(payload.conversationIds);
-      state.areSelectedConversationsLoaded = false;
+      const newSelectedConversationsIds = uniq(payload.conversationIds);
+      const isSameSelection =
+        xor(state.selectedConversationsIds, newSelectedConversationsIds)
+          .length === 0;
+
+      state.selectedConversationsIds = newSelectedConversationsIds;
+      if (!isSameSelection) {
+        state.areSelectedConversationsLoaded = false;
+      }
     },
     unselectConversations: (
       state,
