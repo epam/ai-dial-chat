@@ -352,7 +352,7 @@ export class AppConfigService {
   /**
    * Resolves the version string shown to clients. The `app.version` key reads
    * `CHAT_VERSION`, so a CI/CD pipeline can stamp the deployed build; the
-   * package.json fallback for a missing or blank value lives in
+   * workspace-root package.json fallback for a missing or blank value lives in
    * `resolveAppVersion`, shared with `GET /health`.
    */
   private async resolveConfiguredVersion(

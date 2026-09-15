@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import packageJson from '../../../package.json';
+import { PACKAGE_VERSION } from '../../common/utils/app-version';
 import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
@@ -8,8 +8,6 @@ import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants
 import { FeatureKey } from '../feature-flags/feature-key.enum';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
-
-const PACKAGE_VERSION: string = packageJson.version;
 
 // getClientConfig resolves exactly one definition per client-visible config key.
 const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
