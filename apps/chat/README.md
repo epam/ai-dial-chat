@@ -29,6 +29,8 @@ configuration.
 
 Deploy this build together with the backend. See the backend's
 [CSP rollout and reporting settings](../chat-api/README.md#content-security-policy).
+Legacy builds without the nonce marker can run with `CSP_MODE=report-only` and a
+startup warning; rebuild with nonce support before enabling `enforce`.
 The Vite development server does not enforce the production policy; validate
 using built assets served by the backend before enabling enforcement.
 
