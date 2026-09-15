@@ -1,110 +1,149 @@
 import {
+  AttachmentCanvasProvider,
   AttachmentContentType,
-  AttachmentErrorType,
+  useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { render, screen, waitFor } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import type { SkillFileContent } from '@epam/ai-dial-chat-hooks';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SkillDetailsFilePreview } from '../SkillDetailsFilePreview';
 
-const { openCanvas, useSkillFilePreviewSync } = vi.hoisted(() => ({
-  openCanvas: vi.fn(),
-  useSkillFilePreviewSync: vi.fn(),
-}));
+const { onBeforeOpen, resolveTextContent, options } = vi.hoisted(() => {
+  const onBeforeOpen = vi.fn();
+  return {
+    onBeforeOpen,
+    resolveTextContent: vi.fn(),
+    options: { customVisualizers: [], onBeforeOpen },
+  };
+});
 
-vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>()),
-  useAttachmentCanvas: () => ({ openCanvas }),
-}));
-
-vi.mock('../../../hooks/attachment/useSkillFilePreviewSync', () => ({
-  useSkillFilePreviewSync,
-}));
+vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', () => {
+  const resolvers = { resolveCodeContent: resolveTextContent };
+  return { useAttachmentCanvasResolvers: () => ({ resolvers, options }) };
+});
 
 vi.mock('../../SkillFilePreview/SkillFilePreview', () => ({
-  SkillFilePreview: ({ path }: { path: string }) => (
-    <div>{`Shared attachment preview: ${path}`}</div>
-  ),
+  SkillFilePreview: () => {
+    const { content, isLoading, attachmentId } = useAttachmentCanvas();
+    return (
+      <div aria-label="File preview">
+        {isLoading ? 'Loading' : JSON.stringify({ attachmentId, content })}
+      </div>
+    );
+  },
 }));
+
+const PageCanvas = () => {
+  const { isOpen } = useAttachmentCanvas();
+  return <div>{isOpen ? 'Page canvas open' : 'Page canvas closed'}</div>;
+};
+const fileContent = (text: string): SkillFileContent => ({
+  bytes: new TextEncoder().encode(text),
+  mimeType: 'text/plain',
+});
+const readFile = (file: File): Promise<string> =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsText(file);
+  });
+
+const deferred = <T,>() => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+};
 
 describe('SkillDetailsFilePreview', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resolveTextContent.mockImplementation(async ({ file }: { file: File }) => ({
+      type: AttachmentContentType.PlainText,
+      text: await readFile(file),
+    }));
   });
 
   const renderPreview = (
-    overrides: Partial<ComponentProps<typeof SkillDetailsFilePreview>> = {},
+    onLoadFile = vi.fn().mockResolvedValue(fileContent('first contents')),
   ) => {
-    const props: ComponentProps<typeof SkillDetailsFilePreview> = {
-      fileId: 'skill/files/openai.yaml',
-      fileName: 'openai.yaml',
-      onLoadFile: vi.fn().mockResolvedValue({
-        bytes: new TextEncoder().encode('name: example'),
-      }),
-      ...overrides,
-    };
-    return { props, ...render(<SkillDetailsFilePreview {...props} />) };
+    const view = (fileId: string, visible = true) => (
+      <AttachmentCanvasProvider>
+        <PageCanvas />
+        {visible && (
+          <SkillDetailsFilePreview
+            fileId={fileId}
+            fileName="notes.txt"
+            onLoadFile={onLoadFile}
+          />
+        )}
+      </AttachmentCanvasProvider>
+    );
+    return { ...render(view('first/notes.txt')), view };
   };
 
-  it('feeds downloaded bytes into the shared Skill Builder sync and renderer', async () => {
-    const { props } = renderPreview();
+  it('renders inline without opening or coordinating the page canvas', async () => {
+    const { rerender, view } = renderPreview();
+    await screen.findByText(/first contents/);
+    expect(screen.getByText('Page canvas closed')).toBeTruthy();
+    expect(onBeforeOpen).not.toHaveBeenCalled();
+    rerender(view('first/notes.txt', false));
+    expect(screen.queryByLabelText('File preview')).toBeNull();
+    expect(screen.getByText('Page canvas closed')).toBeTruthy();
+  });
 
-    expect(
-      screen.getByText('Shared attachment preview: skill/files/openai.yaml'),
-    ).toBeTruthy();
-    await waitFor(() => expect(props.onLoadFile).toHaveBeenCalledOnce());
-    await waitFor(() => {
-      const latestCall = useSkillFilePreviewSync.mock.calls.at(-1)?.[0];
-      expect(latestCall?.files).toEqual([
-        {
-          path: 'skill/files/openai.yaml',
-          name: 'openai.yaml',
-          kind: 'file',
-        },
-      ]);
-      const content = latestCall?.filesContentRef.current.get(
-        'skill/files/openai.yaml',
+  it('does not assign the previous contents to a new file with the same basename', async () => {
+    const next = deferred<SkillFileContent>();
+    const loader = vi
+      .fn()
+      .mockResolvedValueOnce(fileContent('first contents'))
+      .mockReturnValueOnce(next.promise);
+    const { rerender, view } = renderPreview(loader);
+    await screen.findByText(/first contents/);
+    rerender(view('second/notes.txt'));
+    expect(screen.queryByText(/first contents/)).toBeNull();
+    await act(async () => next.resolve(fileContent('second contents')));
+    await screen.findByText(/second contents/);
+    expect(screen.getByLabelText('File preview').textContent).toContain(
+      'second/notes.txt',
+    );
+  });
+
+  it('ignores an old preview resolution after another file is selected', async () => {
+    const oldPreview = deferred<{
+      type: AttachmentContentType.PlainText;
+      text: string;
+    }>();
+    resolveTextContent.mockReturnValueOnce(oldPreview.promise);
+    const { rerender, view } = renderPreview(
+      vi.fn().mockResolvedValue(fileContent('new contents')),
+    );
+    await waitFor(() => expect(resolveTextContent).toHaveBeenCalledOnce());
+    rerender(view('second/notes.txt'));
+    await screen.findByText(/new contents/);
+    await act(async () =>
+      oldPreview.resolve({
+        type: AttachmentContentType.PlainText,
+        text: 'stale contents',
+      }),
+    );
+    expect(screen.queryByText(/stale contents/)).toBeNull();
+    expect(screen.getByText('Page canvas closed')).toBeTruthy();
+  });
+
+  it.each([403, 500])(
+    'keeps download errors inline (status %s)',
+    async (status) => {
+      renderPreview(
+        vi
+          .fn()
+          .mockRejectedValue(Object.assign(new Error('Failed'), { status })),
       );
-      expect(content).toBeDefined();
-      expect(new TextDecoder().decode(content?.bytes)).toBe('name: example');
-    });
-  });
-
-  it('maps a forbidden download to the attachment-canvas forbidden state', async () => {
-    renderPreview({
-      onLoadFile: vi
-        .fn()
-        .mockRejectedValue(
-          Object.assign(new Error('Forbidden'), { status: 403 }),
-        ),
-    });
-
-    await waitFor(() =>
-      expect(openCanvas).toHaveBeenCalledWith(
-        {
-          type: AttachmentContentType.Error,
-          errorType: AttachmentErrorType.Forbidden,
-        },
-        'openai.yaml',
-        'skill/files/openai.yaml',
-      ),
-    );
-  });
-
-  it('maps other download failures to the attachment-canvas load-error state', async () => {
-    renderPreview({
-      onLoadFile: vi.fn().mockRejectedValue(new Error('Failed')),
-    });
-
-    await waitFor(() =>
-      expect(openCanvas).toHaveBeenCalledWith(
-        {
-          type: AttachmentContentType.Error,
-          errorType: AttachmentErrorType.LoadFailed,
-        },
-        'openai.yaml',
-        'skill/files/openai.yaml',
-      ),
-    );
-  });
+      await screen.findByText(
+        new RegExp(status === 403 ? 'forbidden' : 'load_failed'),
+      );
+      expect(screen.getByText('Page canvas closed')).toBeTruthy();
+    },
+  );
 });
