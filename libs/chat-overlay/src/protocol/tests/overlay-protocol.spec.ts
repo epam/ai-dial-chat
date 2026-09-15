@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type {
+  ChatOverlayOptions,
+  SetOverlayOptionsPayload,
+} from '../overlay-protocol';
 import {
   DEPRECATED_OVERLAY_FEATURE_ALIASES,
   OverlayAuthUiMode,
@@ -19,6 +23,44 @@ describe('OverlayAuthUiMode', () => {
       'external',
       'sameWindow',
     ]);
+  });
+});
+
+describe('auto sign-in fields', () => {
+  it('leaves auth.autoSignInProvider optional on ChatOverlayOptions', () => {
+    const withoutAutoSignIn: ChatOverlayOptions = {
+      domain: 'https://chat.example.com',
+      auth: {
+        providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+      },
+    };
+
+    expect(withoutAutoSignIn.auth?.autoSignInProvider).toBeUndefined();
+  });
+
+  it('accepts a provider id alongside providerUiModes', () => {
+    const withAutoSignIn: ChatOverlayOptions = {
+      domain: 'https://chat.example.com',
+      auth: {
+        providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+        autoSignInProvider: 'keycloak',
+      },
+    };
+
+    expect(withAutoSignIn.auth?.autoSignInProvider).toBe('keycloak');
+  });
+
+  it('leaves authAutoSignInProvider optional on SetOverlayOptionsPayload', () => {
+    const withoutField: SetOverlayOptionsPayload = {
+      hostDomain: 'https://portal.example.com',
+    };
+    const withField: SetOverlayOptionsPayload = {
+      hostDomain: 'https://portal.example.com',
+      authAutoSignInProvider: 'keycloak',
+    };
+
+    expect(withoutField.authAutoSignInProvider).toBeUndefined();
+    expect(withField.authAutoSignInProvider).toBe('keycloak');
   });
 });
 

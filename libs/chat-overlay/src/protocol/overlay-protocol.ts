@@ -336,6 +336,15 @@ export interface ChatOverlayOptions {
   /** Per-provider authentication UI behavior configured by the embedding host. */
   auth?: {
     providerUiModes?: Record<string, OverlayAuthUiMode>;
+    /**
+     * Provider id whose login the embedded app starts on its own, with no user
+     * interaction, while the session is unauthenticated. Presence enables the
+     * behavior — there is no separate boolean — and the same provider must be
+     * mapped to `OverlayAuthUiMode.SameWindow` in `providerUiModes`, because
+     * only that path navigates the iframe itself. Supersedes the legacy
+     * `signInOptions.autoSignIn` + `signInProvider` pair.
+     */
+    autoSignInProvider?: string;
   };
 }
 
@@ -356,6 +365,8 @@ export interface SetOverlayOptionsPayload {
   enabledFeatures?: string[];
   /** Opaque per-provider authentication UI modes supplied by the host. */
   authProviderUiModes?: Record<string, string>;
+  /** Opaque wire form of `ChatOverlayOptions.auth.autoSignInProvider`. */
+  authAutoSignInProvider?: string;
 }
 
 /** Payload of a `SEND_MESSAGE` request. */

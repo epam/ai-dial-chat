@@ -439,6 +439,63 @@ describe('ChatOverlay', () => {
     ).toBe(false);
   });
 
+  it('includes the auto-sign-in provider in the initial handshake', () => {
+    const { iframe } = setup({
+      auth: {
+        providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+        autoSignInProvider: 'keycloak',
+      },
+    });
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+
+    const sentMessage = postMessageSpy.mock
+      .calls[0][0] as OverlayMessageRequest<{
+      authProviderUiModes?: Record<string, string>;
+      authAutoSignInProvider?: string;
+    }>;
+    expect(sentMessage.payload?.authAutoSignInProvider).toBe('keycloak');
+    expect(sentMessage.payload?.authProviderUiModes).toEqual({
+      keycloak: 'sameWindow',
+    });
+  });
+
+  it('omits the auto-sign-in provider when no auth option is given', () => {
+    const { iframe } = setup();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+
+    const sentMessage = postMessageSpy.mock.calls[0][0] as
+      OverlayMessageRequest | undefined;
+    expect(
+      Object.hasOwn(sentMessage?.payload as object, 'authAutoSignInProvider'),
+    ).toBe(false);
+  });
+
+  it('omits a whitespace-only auto-sign-in provider', () => {
+    const { iframe } = setup({ auth: { autoSignInProvider: '   ' } });
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+
+    const sentMessage = postMessageSpy.mock.calls[0][0] as
+      OverlayMessageRequest | undefined;
+    expect(
+      Object.hasOwn(sentMessage?.payload as object, 'authAutoSignInProvider'),
+    ).toBe(false);
+  });
+
   it('includes enabledFeatures from constructor options in the initial handshake send', () => {
     const { iframe } = setup({
       enabledFeatures: [OverlayFeature.VoiceInput, OverlayFeature.Header],
@@ -534,6 +591,60 @@ describe('ChatOverlay', () => {
     expect(sentMessage.payload?.authProviderUiModes).toEqual({
       entra: 'external',
     });
+  });
+
+  it('adds the auto-sign-in provider through setOverlayOptions', async () => {
+    const { overlay, iframe } = setup();
+    advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+    await overlay.ready();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    void overlay
+      .setOverlayOptions({
+        auth: {
+          providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+          autoSignInProvider: 'keycloak',
+        },
+      })
+      .catch(() => undefined);
+
+    const sentMessage = postMessageSpy.mock
+      .calls[0][0] as OverlayMessageRequest<{
+      authAutoSignInProvider?: string;
+    }>;
+    expect(sentMessage.payload?.authAutoSignInProvider).toBe('keycloak');
+  });
+
+  it('drops the auto-sign-in provider when a later auth update omits it', async () => {
+    const { overlay, iframe } = setup({
+      auth: {
+        providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+        autoSignInProvider: 'keycloak',
+      },
+    });
+    advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+    await overlay.ready();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    void overlay
+      .setOverlayOptions({
+        auth: {
+          providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+        },
+      })
+      .catch(() => undefined);
+
+    const sentMessage = postMessageSpy.mock.calls[0][0] as
+      OverlayMessageRequest | undefined;
+    expect(
+      Object.hasOwn(sentMessage?.payload as object, 'authAutoSignInProvider'),
+    ).toBe(false);
   });
 
   it('preserves auth provider UI modes when an update omits auth', async () => {
