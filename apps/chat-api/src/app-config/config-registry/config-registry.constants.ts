@@ -26,6 +26,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'TRANSCRIBE_SIZE_LIMIT_BYTES',
   },
   {
+    key: 'customVariables',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: {},
+    critical: false,
+    description:
+      'Public, client-owned configuration values. Keys have no BFF-defined semantics.',
+    owner: 'chat-team',
+    envVar: 'CUSTOM_CLIENT_VARIABLES',
+  },
+  {
     key: 'deployments.defaultDeploymentId',
     type: 'config',
     valueType: 'string',

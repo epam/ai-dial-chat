@@ -423,6 +423,22 @@ Every rejected entry SHALL be dropped and logged with a warning naming the entry
 - **WHEN** `ANNOUNCEMENTS` contains more entries than the supported maximum
 - **THEN** `config.announcements` contains only the first N entries in configured order and a warning names the dropped ones
 
+### Requirement: Custom client variables remain isolated from built-in settings
+
+The client-config response SHALL include `config.customVariables`, an arbitrary JSON object from the `customVariables` registry key. It SHALL default to `{}` when no object is resolved. It SHALL NOT be spread into built-in config, features, or metadata. Its keys are owned and validated by consuming clients, with no client-specific BFF variables or defaults. The DTO and generated OpenAPI client SHALL expose this generic map.
+
+This object is public, including before authentication, and SHALL be the same for every allowed appId; it is not a tenant-specific or secret store. Operators SHALL supply only public settings. Environment changes take effect after a BFF restart without a frontend rebuild.
+
+#### Scenario: Client keys do not override built-in configuration
+
+- **WHEN** custom variables contain keys also named like built-in config or feature flags
+- **THEN** those keys remain under `config.customVariables` and leave built-in values unchanged
+
+#### Scenario: Custom variables are unconfigured
+
+- **WHEN** no valid custom variable object is configured
+- **THEN** client-config succeeds with `config.customVariables: {}`
+
 ---
 
 ### Requirement: client-config response includes the welcome-screen description

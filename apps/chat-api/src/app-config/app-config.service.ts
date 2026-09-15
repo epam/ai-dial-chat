@@ -198,6 +198,7 @@ export class AppConfigService {
     let welcomeScreenDescription: string | null = null;
     let footerHtmlMessage = '';
     let customVisualizers: CustomVisualizerDto[] = [];
+    let customVariables: Record<string, unknown> = {};
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
 
     for (const def of clientDefinitions) {
@@ -285,6 +286,13 @@ export class AppConfigService {
             );
           }
         }
+      } else if (def.key === 'customVariables') {
+        customVariables =
+          resolved !== null &&
+          typeof resolved === 'object' &&
+          !Array.isArray(resolved)
+            ? (resolved as Record<string, unknown>)
+            : {};
       } else if (def.key === 'customVisualizers') {
         customVisualizers = Array.isArray(resolved) ? resolved : [];
       } else if (def.key === 'publish.publicationFilterSources') {
@@ -317,6 +325,7 @@ export class AppConfigService {
         footerHtmlMessage,
         enabledUiFeatures,
         customVisualizers,
+        customVariables,
         publicationFilterSources,
       },
       metadata: {

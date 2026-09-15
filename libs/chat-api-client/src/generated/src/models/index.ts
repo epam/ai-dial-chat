@@ -894,6 +894,12 @@ export interface ClientConfigDto {
    */
   customVisualizers: Array<CustomVisualizerDto>;
   /**
+   * Public client-owned variables from CUSTOM_CLIENT_VARIABLES. Arbitrary JSON object; empty when unset or invalid. The BFF does not interpret its keys. Never put secrets here.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ClientConfigDto
+   */
+  customVariables: { [key: string]: unknown };
+  /**
    * Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.
    * @type {Array<string>}
    * @memberof ClientConfigDto

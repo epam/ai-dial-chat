@@ -611,6 +611,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  CUSTOM_CLIENT_VARIABLES?: string;
+
+  @IsOptional()
+  @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
 
   @IsOptional()

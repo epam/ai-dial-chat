@@ -73,7 +73,7 @@
         ],
         "options": {
           "cwd": "{workspaceRoot}",
-          "command": "cross-env SWC_NODE_PROJECT=apps/chat-api/tsconfig.app.json node -r @swc-node/register apps/chat-api/src/openapi-spec.ts"
+          "command": "cross-env SWC_NODE_PROJECT=apps/chat-api/tsconfig.app.json node -r @swc-node/register apps/chat-api/src/openapi-spec.ts && npm exec prettier -- --write libs/chat-api-client/openapi.json"
         }
       },
       "openapi-sdk": {
@@ -86,7 +86,7 @@
         ],
         "options": {
           "cwd": "{workspaceRoot}",
-          "command": "cross-env HTTP_PROXY= HTTPS_PROXY= http_proxy= https_proxy= npm exec openapi-generator-cli -- generate -i libs/chat-api-client/openapi.json -g typescript-fetch --reserved-words-mappings function=function -o libs/chat-api-client/src/generated --additional-properties=supportsES6=true,withoutRuntimeChecks=true,npmName=@epam/chat-api-client,npmVersion=0.0.1 && node tools/openapi/postprocess-client.mjs && npm exec prettier -- --write \"libs/chat-api-client/src/generated/src/**/*.ts\" && node tools/openapi/check-client.mjs"
+          "command": "cross-env HTTP_PROXY= HTTPS_PROXY= http_proxy= https_proxy= npm exec openapi-generator-cli -- generate -i libs/chat-api-client/openapi.json -g typescript-fetch --reserved-words-mappings function=function -o libs/chat-api-client/src/generated --additional-properties=supportsES6=true,withoutRuntimeChecks=true,npmName=@epam/chat-api-client,npmVersion=0.0.1 && node tools/openapi/postprocess-client.mjs && npm exec prettier -- --write \"libs/chat-api-client/src/generated/src/**/*.ts\" libs/chat-api-client/src/generated/README.md && node tools/openapi/check-client.mjs"
         }
       },
       "openapi": {
