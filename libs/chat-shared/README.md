@@ -176,6 +176,26 @@ const annotations = normalizeRawAnnotations(
 
 **`end` convention differs by selector kind.** `TextCharacterRangeSelector.end` is inclusive. `DocxRangeSelector.end` and `PptxRangeSelector.end` are already **exclusive** on the wire — confirmed against captured DIAL Core responses, not assumed — so consumers must not add 1 before slicing. `ExcelRcRangeSelector.end` is a distinct concept: a 1-based `{ row, col }` address naming the range's last (inclusive) cell, `null`-or-omitted meaning a single cell. `DocxRangeSelector.story` is typed as an opaque `string` — only `'body'` is confirmed upstream, no closed enum exists.
 
+### Visualizer registries
+
+Two operator-configured registries describe third-party visualizer iframes. Both are resolved by the host application and passed into `@epam/ai-dial-attachment-canvas` as data; this package owns only their types.
+
+```tsx
+import type {
+  ApplicationVisualizer,
+  ApplicationVisualizerRegistry,
+  CustomVisualizer,
+  GroupedAttachmentItem,
+  GroupedAttachmentsData,
+} from '@epam/ai-dial-chat-shared';
+```
+
+- `CustomVisualizer` — one MIME → visualizer mapping. `contentType` is **required** and accepts a comma-separated MIME list. One attachment per iframe.
+- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together.
+- `GroupedAttachmentsData` / `GroupedAttachmentItem` — the grouped payload the host builds from the claimed attachments. Each item's `url` is absolute, resolved by the host before sending.
+
+In both types, `title` is the postMessage protocol namespace rather than a display label: the iframe-side application must be constructed with the identical string as its `appName`, so it must never be localised. `passAuthInfo` and `passExplicitToken` are accepted for configuration parity and are inert — auth is server-side and the browser holds no access token.
+
 ### ConversationTransfer
 
 Types for the queued export/import job model. Consumed by `@epam/ai-dial-conversation-panel`'s `ImportExportQueue` component.

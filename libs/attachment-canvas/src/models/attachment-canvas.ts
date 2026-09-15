@@ -1,6 +1,7 @@
 import type {
   CodeBlockTheme,
   CustomVisualizerDataLayout,
+  GroupedAttachmentItem,
 } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
@@ -196,6 +197,22 @@ export interface VisualizerCanvasContent {
   requestTimeout?: number;
 }
 
+/** Content payload for an application-scoped grouped visualizer: every attachment a message's visualizer claims, rendered together inside one sandboxed iframe. */
+export interface GroupedVisualizerCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.GroupedVisualizer;
+  /** Iframe `src`, resolved from the matching registry entry's `url`. */
+  url: string;
+  /** One item per claimed attachment, in the message's attachment order. Each `url` is absolute, resolved by the host. */
+  attachments: GroupedAttachmentItem[];
+  /** Presentation layout hints (`themeId`, `width`, `height`, `mobileHeight`) shared by every item. */
+  layout: CustomVisualizerDataLayout;
+  /** postMessage protocol namespace — MUST equal the registry entry's `title`, or the iframe never receives data. */
+  visualizerName: string;
+  /** Milliseconds to wait for a `send()` request's response before rejecting. From the registry entry; does NOT bound the handshake. */
+  requestTimeout?: number;
+}
+
 /** Display mode an MCP App can ask the host to switch to via `ui/request-display-mode` — the MCP UI protocol's `inline`/`fullscreen`/`pip` union. */
 export type McpAppDisplayMode = NonNullable<McpUiHostContext['displayMode']>;
 
@@ -256,6 +273,7 @@ export type AttachmentCanvasContent =
   | CodeCanvasContent
   | HtmlCanvasContent
   | VisualizerCanvasContent
+  | GroupedVisualizerCanvasContent
   | McpAppCanvasContent
   | UnsupportedCanvasContent
   | ErrorCanvasContent;

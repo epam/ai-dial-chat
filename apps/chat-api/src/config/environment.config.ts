@@ -867,6 +867,10 @@ export class EnvironmentVariables {
   CUSTOM_VISUALIZERS?: string;
 
   @IsOptional()
+  @IsString()
+  APPLICATION_VISUALIZERS?: string;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)

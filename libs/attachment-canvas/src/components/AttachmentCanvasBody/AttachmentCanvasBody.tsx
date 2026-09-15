@@ -218,6 +218,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Pdf:
       case AttachmentContentType.Ooxml:
       case AttachmentContentType.Visualizer:
+      case AttachmentContentType.GroupedVisualizer:
       case AttachmentContentType.McpApp:
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
@@ -424,6 +425,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           />
         );
       case AttachmentContentType.Visualizer:
+      case AttachmentContentType.GroupedVisualizer:
         return (
           <VisualizerCanvasRenderer
             content={content}

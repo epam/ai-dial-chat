@@ -689,6 +689,7 @@ describe('CatalogView', () => {
         announcements: [],
         footerHtmlMessage: '',
         customVisualizers: [],
+        applicationVisualizers: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
       },
     });
