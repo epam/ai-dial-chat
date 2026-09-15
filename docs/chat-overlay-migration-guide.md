@@ -810,6 +810,41 @@ gate — logging one console warning — whenever one does not:
    refused silent authentication — would otherwise loop the iframe. After the
    suppression the user sees the normal gate and can log in manually.
 
+#### Migrating a legacy `signInOptions` block
+
+A host that passed the provider in from its own configuration — the common
+legacy shape — moves both fields into `auth`:
+
+```diff
+- signInOptions: {
+-   autoSignIn: true,
+-   signInProvider: hostSettings.dialSignInProvider,
+- },
++ auth: {
++   providerUiModes: {
++     [hostSettings.dialSignInProvider]: OverlayAuthUiMode.SameWindow,
++   },
++   autoSignInProvider: hostSettings.dialSignInProvider,
++ },
+```
+
+The provider is named twice on purpose: `autoSignInProvider` asks for the
+automatic start, and the `providerUiModes` entry is the host's assertion that
+this provider's login page renders inside an iframe. A legacy block without
+`signInInNewWindow` was already relying on that same in-iframe navigation, so
+the mapping records what the integration was doing all along.
+
+Two things to check while migrating:
+
+- **The id must be one the backend registers.** `GET /api/v1/auth/providers`
+  is the list; a value that is not in it is skipped with a warning instead of
+  navigating. Confirm the id your host configuration supplies still matches
+  after the move, because the legacy value came from the old chat's own
+  provider registry.
+- **An empty configuration value stays safe.** An absent, empty, or
+  whitespace-only id disables the automatic start and leaves the login gate,
+  which is how the legacy pair behaved when `signInProvider` was unset.
+
 Like the legacy option, this is worth enabling when the user already holds a
 session with the provider: the value is the silent round-trip through the IdP,
 not rendering a login form inside the frame. It does not make a provider
