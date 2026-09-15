@@ -26,9 +26,9 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.14.0-dev.30",
+    "@epam/ai-dial-ui-kit": "^0.14.2",
     "@epam/ai-dial-react-file-manager": "^0.2.0",
-    "react": "^19.0.0"
+    "react": "^19.2.8"
   },
   "nx": {
     "tags": [

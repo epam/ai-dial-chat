@@ -40,7 +40,7 @@ prefer the existing feature subpaths for narrow imports.
 
 ## Peer Dependencies
 
-`react` (`^19.2.6`) is the only mandatory peer, required by every entry point below. Every
+`react` (`^19.2.8`) is the only mandatory peer, required by every entry point below. Every
 feature peer is **optional** (`package.json#peerDependenciesMeta` marks all of them
 `optional: true`) — `npm install` succeeds with none of them present. Which ones you actually
 need to install depends on which subpath(s) you import; see the matrix below. Importing a
@@ -50,7 +50,7 @@ a peer" further down for what that failure looks like and how to fix it.
 
 Full peer set (the root `.` entry needs all of them; a subpath needs only its own row below):
 
-- `react` ^19.2.6
+- `react` ^19.2.8
 - `@epam/ai-dial-attachment-canvas` \*
 - `@epam/ai-dial-attachment-input` \*
 - `@epam/ai-dial-builder-form` \*
@@ -60,15 +60,15 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.2.0-dev.10
+- `@epam/ai-dial-react-file-manager` ^0.2.0
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.14.0-dev.15
+- `@epam/ai-dial-ui-kit` ^0.14.2
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
-- `@epam/pdf-highlighter-kit` ^0.0.18
+- `@epam/pdf-highlighter-kit` ^0.0.19
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,

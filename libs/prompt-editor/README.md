@@ -18,7 +18,7 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 
 ## Installation
 
-Requires UI Kit ^0.14.0-dev.30 or later with the public `/editors` entry.
+Requires UI Kit ^0.14.2 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -38,8 +38,8 @@ import '@epam/ai-dial-prompt-editor/styles.css';
 
 ## Peer Dependencies
 
-- `react` `^19.0.0`
-- `@epam/ai-dial-ui-kit` `^0.14.0-dev.30`
+- `react` `^19.2.8`
+- `@epam/ai-dial-ui-kit` `^0.14.2`
 - `@epam/ai-dial-chat-shared` `*`
 
 Installed for you as dependencies: `@epam/ai-dial-builder-form`,

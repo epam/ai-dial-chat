@@ -18,7 +18,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.6`) and `@epam/ai-dial-ui-kit` (`^0.14.0-dev.15`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.14.2`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -32,9 +32,9 @@ entry's own imports.
 
 Peers:
 
-- `react` ^19.2.6
-- `@epam/ai-dial-ui-kit` ^0.14.0-dev.15
-- `@epam/ai-dial-react-file-manager` ^0.2.0-dev.10 \*
+- `react` ^19.2.8
+- `@epam/ai-dial-ui-kit` ^0.14.2
+- `@epam/ai-dial-react-file-manager` ^0.2.0 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
