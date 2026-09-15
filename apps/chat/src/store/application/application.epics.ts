@@ -29,6 +29,7 @@ import { combineEpics, ofType } from 'redux-observable';
 import {
   fitApplicationNameToStorageLimits,
   isApplicationType,
+  isQuickApp2Editor,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
@@ -1022,7 +1023,8 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
           state$.value,
         );
       const hasCustomEditor =
-        !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
+        !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl] &&
+        !isQuickApp2Editor(cleanSchemaId(schema?.$id ?? ''));
 
       const query = parse(window.location.search.slice(1));
       const publicationUrl = query[AppsEditorQuery.PublicationUrl]?.toString();
