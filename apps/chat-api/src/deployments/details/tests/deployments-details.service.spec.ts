@@ -512,6 +512,61 @@ describe('DeploymentsDetailsService', () => {
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
     });
 
+    it("does not overwrite a Quick App's own application_properties.features with the top-level DIAL Core features JSON", async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/bucket/quick-app__1.0.0',
+          application_properties: {
+            features: { timestamp: true },
+            orchestrator: { system_prompt: { type: 'custom' } },
+          },
+        }),
+      );
+      sdkClient.getCustomApplication.mockResolvedValue(
+        okResponse({
+          endpoint: 'https://quickapps.example/chat',
+          features: { rate: true, unrelatedTopLevelFlag: 'value' },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/bucket/quick-app__1.0.0',
+        'token',
+      );
+
+      expect(result.applicationDetails?.applicationProperties).toEqual({
+        features: { timestamp: true },
+        orchestrator: { system_prompt: { type: 'custom' } },
+      });
+      expect(result.applicationDetails?.customAppFeatures).toEqual({
+        rate: true,
+        unrelatedTopLevelFlag: 'value',
+      });
+    });
+
+    it('populates customAppFeatures from the top-level DIAL Core features JSON for a plain custom app with no application_properties', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({ id: 'applications/bucket/plain-app__1.0.0' }),
+      );
+      sdkClient.getCustomApplication.mockResolvedValue(
+        okResponse({ features: { system_prompt: true } }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/bucket/plain-app__1.0.0',
+        'token',
+      );
+
+      expect(result.applicationDetails?.applicationProperties).toBeUndefined();
+      expect(result.applicationDetails?.customAppFeatures).toEqual({
+        system_prompt: true,
+      });
+    });
+
     it('maps catalog_properties for an application, ignoring unknown/non-string keys', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getApplication.mockResolvedValue(

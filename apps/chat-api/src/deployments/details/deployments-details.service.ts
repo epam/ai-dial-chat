@@ -364,21 +364,19 @@ export class DeploymentsDetailsService {
       type: DeploymentItemType.Application,
       applicationDetails: {
         displayName: resolveLocalizedValue(raw.display_name),
-        applicationProperties: (() => {
-          const base = isRecord(raw.application_properties)
-            ? raw.application_properties
-            : {};
-          /* Include raw features from the custom-app config so the editor
-           * textarea can display them. DIAL Core expands stored features with
-           * all defaults, so the user may see more keys than they originally
-           * entered — this is the most accurate representation available. */
-          const storedFeatures = customAppRaw?.features as unknown;
-          const merged =
-            storedFeatures != null
-              ? { ...base, features: storedFeatures }
-              : base;
-          return Object.keys(merged).length > 0 ? merged : undefined;
-        })(),
+        applicationProperties: isRecord(raw.application_properties)
+          ? raw.application_properties
+          : undefined,
+        /* The Custom App editor's Features textarea reads/writes the
+         * top-level DIAL Core `features` JSON (via updateApplication's
+         * `features` field) — distinct from application_properties.features,
+         * a schema-specific key some applications (e.g. Quick Apps) store as
+         * part of their own config. DIAL Core expands stored features with
+         * all defaults, so the user may see more keys than they originally
+         * entered — this is the most accurate representation available. */
+        customAppFeatures: isRecord(customAppRaw?.features)
+          ? customAppRaw.features
+          : undefined,
         functionRuntime: raw.function?.runtime,
         functionStatus: raw.function?.status,
         routes: raw.routes ? Object.keys(raw.routes) : undefined,
