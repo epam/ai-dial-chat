@@ -88,7 +88,29 @@ reaches npm.
 
 A README that annotates a peer with a version must quote the manifest's range
 verbatim — that is the number a host copies. `npm run validate:docs` fails on
-an unbounded spec.
+an unbounded spec, and on a README citing a range its manifest no longer
+declares (`chat-hooks` advertised `@epam/pdf-highlighter-kit ^0.0.18` and
+`react-file-manager ^0.2.0-dev.10` after both manifests had moved on).
+
+### One external package, one range
+
+A host installs a single copy of a third-party package however many libs name
+it, so two libs naming it at different ranges either agree by luck or push the
+host back to the `resolutions` pin the section below is about. This is the same
+defect as a split role, written in version specs.
+
+It reached the main line as scaffolding drift: each new lib pinned
+`@epam/ai-dial-ui-kit` at whatever the kit was that week, leaving
+`^0.14.0-dev.15`, `^0.14.0-dev.30` and `^0.14.0-dev.37` declared at once, and
+`react` at `^19.0.0`, `^19.2.6` and `^19.2.7`. None of those was a statement
+about what the lib needed.
+
+Declare the one range the workspace is built against — for a kit entry gated
+behind a feature (`/editors`, `/grid`), that is the release containing it, not
+the dev prerelease it first appeared in. Prefer a published release over a
+`-dev.N` prerelease: a caret on a prerelease lets a host resolve to another
+prerelease. `npm run validate:docs` fails on a package declared at two ranges;
+siblings under `libs/` are exempt, their spec being a placeholder.
 
 ### One package, one role
 
