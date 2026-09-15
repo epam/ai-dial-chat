@@ -11,6 +11,7 @@ import {
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
+import { isQuickAppSchema } from '../common/utils/application-schema';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   composeLocalizedFields,
@@ -168,6 +169,22 @@ export class ApplicationsService {
       if (endpoint != null) dialBody.endpoint = endpoint;
       if (features != null)
         dialBody.features = features as (typeof dialBody)['features'];
+      /*
+       * Quick App creation has no `skills_supported` UI control in chat (unlike
+       * the Admin app, which exposes one), so a chat-created Quick App would
+       * otherwise never get the flag set and silently lose skills. Rather than
+       * push this into every individual Quick App implementation or leave
+       * skills broken, the BFF force-sets it here whenever the schema is a
+       * Quick App — a deliberate coupling of generic application-write logic
+       * to Quick-App-specific business rules, accepted as the least-bad of
+       * those three options.
+       */
+      if (isQuickAppSchema(body.type)) {
+        dialBody.features = {
+          ...dialBody.features,
+          skills_supported: true,
+        } as (typeof dialBody)['features'];
+      }
       if (inputAttachmentTypes != null)
         dialBody.inputAttachmentTypes = inputAttachmentTypes;
       if (maxInputAttachments != null)
@@ -264,6 +281,19 @@ export class ApplicationsService {
         mergedBody.inputAttachmentTypes = body.inputAttachmentTypes;
       if (body.maxInputAttachments != null)
         mergedBody.maxInputAttachments = body.maxInputAttachments;
+      /*
+       * Same rationale as `createApplication` above: chat has no UI control
+       * for `skills_supported`, so every update to a Quick App re-asserts the
+       * flag, regardless of whether this request body touches `features` at
+       * all — it's a standing guarantee, not a one-time default set only on
+       * creation.
+       */
+      if (isQuickAppSchema(mergedBody.application_type_schema_id)) {
+        mergedBody.features = {
+          ...mergedBody.features,
+          skills_supported: true,
+        } as (typeof mergedBody)['features'];
+      }
 
       /*
        * `applicationProperties` fully replaces the stored
@@ -292,6 +322,7 @@ export class ApplicationsService {
           body: mergedBody,
         },
       );
+
       if (saveResponse.error) {
         return mapDialHttpStatus(
           saveResponse.response.status,
