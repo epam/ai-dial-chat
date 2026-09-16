@@ -12,6 +12,8 @@ export interface SendButtonProps {
   isDisabled?: boolean;
   /** Accessible label for the send button. */
   ariaLabel?: string;
+  /** Tooltip shown on hover over the send button. Omitted when unset. */
+  sendTooltip?: string;
 }
 
 /** Circular send button with tooltip and disabled state. */
@@ -19,12 +21,14 @@ export const SendButton: FC<SendButtonProps> = ({
   onSend,
   isDisabled = false,
   ariaLabel = 'Send message',
+  sendTooltip,
 }) => {
   return (
     <PrimaryIconButton
       aria-label={ariaLabel}
       onClick={() => onSend?.()}
       disabled={isDisabled}
+      tooltipProps={sendTooltip ? { tooltip: sendTooltip } : undefined}
       icon={
         <IconArrowNarrowRight
           size={DIAL_ICON_SIZE.LG}

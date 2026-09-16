@@ -251,7 +251,7 @@ export interface ConversationInputProps {
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
-  sendTitle?: string;
+  sendTooltip?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Accessible label for each attachment card's remove button. Defaults to `'Remove attachment'`. */
