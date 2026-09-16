@@ -1,8 +1,8 @@
+import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
-import type { AnnouncementItem } from '../../../models/announcement';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import AnnouncementBanner from '../AnnouncementBanner';
 
@@ -13,7 +13,7 @@ const { mockAppConfigState, mockDismiss, mockUseAnnouncementDismissal } =
       announcementHtml: null as string | null,
       announcementTitle: null as string | null,
       announcementDescription: null as string | null,
-      announcements: [] as AnnouncementItem[],
+      announcements: [] as AnnouncementListItem[],
       isDismissed: false,
     },
     mockDismiss: vi.fn(),
@@ -60,7 +60,7 @@ const resetState = () => {
   mockAppConfigState.isDismissed = false;
 };
 
-const makeAnnouncement = (title: string): AnnouncementItem => ({
+const makeAnnouncement = (title: string): AnnouncementListItem => ({
   title,
   description: null,
   link: { label: 'Register', href: 'https://dialx.ai' },

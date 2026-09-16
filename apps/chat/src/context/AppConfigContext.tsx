@@ -1,3 +1,4 @@
+import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
 import type { CustomVisualizer } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
@@ -10,7 +11,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { AnnouncementItem } from '../models/announcement';
 import { getClientConfig } from '../server-api/app-config.api';
 import { AuthStatus } from '../types/auth-status';
 import { UserConfigStatus } from '../types/user-config-status';
@@ -39,7 +39,7 @@ export interface AppConfigState {
     announcementHtml: string | null;
     announcementTitle: string | null;
     announcementDescription: string | null;
-    announcements: AnnouncementItem[];
+    announcements: AnnouncementListItem[];
     welcomeScreenDescription: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
