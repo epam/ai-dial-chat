@@ -9,7 +9,7 @@ import {
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import { NeutralButton } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 import { useInlineStartIndent } from '../../hooks/useInlineStartIndent/useInlineStartIndent';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { MessageActions } from '../MessageActions/MessageActions';
@@ -68,6 +68,24 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
     assistantMessageAriaLabel = 'Assistant message',
     deploymentIconFallbackLabel = 'AI',
   } = labels ?? {};
+  const tableActionLabels = useMemo(
+    () => ({
+      copyCsvLabel: tableCopyCsvLabel,
+      copyTxtLabel: tableCopyTxtLabel,
+      copyMarkdownLabel: tableCopyMarkdownLabel,
+      copiedLabel: tableCopiedLabel,
+      downloadCsvLabel: tableDownloadCsvLabel,
+      openInCanvasLabel: tableOpenInCanvasLabel,
+    }),
+    [
+      tableCopyCsvLabel,
+      tableCopyTxtLabel,
+      tableCopyMarkdownLabel,
+      tableCopiedLabel,
+      tableDownloadCsvLabel,
+      tableOpenInCanvasLabel,
+    ],
+  );
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
     : (attachments ?? []);
@@ -165,14 +183,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                   codeBlockCopyLabel={codeBlockCopyLabel}
                   codeBlockCopiedLabel={codeBlockCopiedLabel}
                   codeBlockTheme={codeBlockTheme}
-                  tableActionLabels={{
-                    copyCsvLabel: tableCopyCsvLabel,
-                    copyTxtLabel: tableCopyTxtLabel,
-                    copyMarkdownLabel: tableCopyMarkdownLabel,
-                    copiedLabel: tableCopiedLabel,
-                    downloadCsvLabel: tableDownloadCsvLabel,
-                    openInCanvasLabel: tableOpenInCanvasLabel,
-                  }}
+                  tableActionLabels={tableActionLabels}
                   tableDownloadFilename={tableDownloadFilename}
                   tableOnOpenInCanvas={tableOnOpenInCanvas}
                   tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
