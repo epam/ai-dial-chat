@@ -1,9 +1,4 @@
-# skill-file-preview Specification
-
-## Purpose
-Specifies opening, replacing, and closing an attachment-canvas preview of a Skill supporting file from the Skill Editor's file tree — for both create-mode (local uploads) and edit-mode (unpacked ZIP bytes) — via the shared `attachment-canvas` rendering pipeline, with no new BFF/DIAL Core request and no dependency on the global sidebar container or the `AttachmentsManager` feature flag.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Selecting a supporting file previews it via the shared attachment-canvas pipeline
 
@@ -117,95 +112,7 @@ The Skill Editor's inline preview exposes no Download or Close control of its ow
 - **WHEN** a user selects any supporting file in the Skill Editor
 - **THEN** no Download or Close button is rendered alongside the preview content; the ways back to the `SKILL.md` form are re-selecting it in the file tree and the editor header's Back control
 
-### Requirement: The attachment canvas context is reachable from the Skill Editor route
-
-The Skill Editor page SHALL be able to open, update, and close attachment-canvas preview state without requiring any new route-level provider — `AttachmentCanvasProvider` is already mounted globally above the router in `apps/chat/src/main.tsx`. This capability SHALL NOT depend on `OverlayFeature.AttachmentsManager` or on the global `AttachmentCanvasContainer`/sidebar being mounted on the Skill Editor route.
-
-#### Scenario: Preview works regardless of the AttachmentsManager feature flag
-- **WHEN** `OverlayFeature.AttachmentsManager` is disabled for the current user
-- **THEN** selecting a supporting file in the Skill Editor still opens its preview
-
-#### Scenario: Conversation attachment preview is unaffected
-- **WHEN** a user opens an attachment preview in a conversation, then separately visits `/skill-editor`
-- **THEN** each surface's preview behavior is unaffected by the existence of the other; no shared preview state leaks between a conversation and a Skill Editor session
-
-### Requirement: Accessibility, RTL, i18n, and cross-cutting behavior
-
-Selecting a file via keyboard (arrow keys + Enter, per `skill-editor-library`'s existing keyboard support) SHALL open its preview identically to a pointer click. The rendered preview region SHALL expose an accessible region name (via `AttachmentCanvasBody`'s existing labeling, applied by the app's content-only wrapper — see the "no Download or Close control" requirement above). Preview loading SHALL be announced via the existing `aria-live="polite"` status pattern `attachment-canvas` already uses; preview failures SHALL use the existing alert/error content type, not a new error surface. No new keyboard focus trap SHALL be introduced when a preview opens inline in the main pane. The preview body relies on `AttachmentCanvasBody`'s existing RTL handling; since the Skill Editor renders no header of its own around it, there are no app-level directional icons to mirror. All new user-visible strings SHALL use existing `attachment-canvas` i18n keys where the copy is identical, and new `skillEditor.*` keys only where it is genuinely Skill-Editor-specific — no hardcoded strings in JSX. This capability is not gated behind any `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` key; it activates for every user who can already reach `/skill-editor`. The app-level file→attachment conversion SHALL be memoized (`useMemo`/`useCallback` as appropriate) keyed on the selected path and its underlying bytes reference, so unrelated re-renders of `SkillEditor.tsx` do not re-derive or re-open the preview.
-
-#### Scenario: Keyboard selection opens the preview
-- **WHEN** a keyboard-only user moves file-tree selection to a supporting file via arrow keys and Enter
-- **THEN** the preview opens exactly as it would from a pointer click
-
-#### Scenario: Preview loading is announced
-- **WHEN** a supporting file's content is still resolving
-- **THEN** an `aria-live="polite"` region announces the loading state
-
-#### Scenario: RTL renders correctly
-- **WHEN** the Skill Editor is viewed under `dir="rtl"` with a supporting file previewed
-- **THEN** the preview and its header render mirrored via logical properties/`rtl:` variants, matching `attachment-canvas`'s existing RTL behavior
-
-### Requirement: Skill Builder's PDF preview uses the host's own PDF worker
-
-The shared `SkillFilePreview` component SHALL pass the application-owned
-`configurePdfWorker` from `apps/chat/src/utils/pdf.ts` to
-`AttachmentCanvasBody`. That component
-(`apps/chat/src/components/SkillFilePreview/SkillFilePreview.tsx`) is what the
-Skill Editor mounts in `libs/skill-editor`'s `supportingFileContent` slot.
-
-Today it passes no such prop. `PdfContent` therefore initialises its
-preparation state to `Ready`, mounts `DocumentPreview` with no gate, and
-leaves in place the `workerSrc` that `@epam/pdf-highlighter-kit` assigns at
-module-evaluation time —
-`https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs`, applied under
-an `if (!workerSrc)` guard in its `core/pdf-engine.js`. Selecting a PDF
-supporting file in Skill Builder consequently depends on outbound access to
-that CDN, or on the page-level chat attachment canvas having already run the
-app's initializer in the same page session. Since the app's initializer
-assigns `workerSrc` unconditionally and runs after the vendor module has
-evaluated, passing the prop is sufficient to take ownership of the value.
-
-The initializer SHALL stay at the application edge:
-`@epam/ai-dial-attachment-canvas` receives it only as an injected callback,
-and `apps/chat/src/utils/pdf.ts` is unchanged — its `pdfjs-dist` imports stay
-dynamic, so the package remains out of the eager bundle and is fetched only on
-the first real PDF open.
-
-Because both `apps/chat/src/utils/pdf.ts` and `PdfContent` memoise their
-preparation promises at module scope, the initializer runs at most once per
-successful resolution across Skill Builder, skill details, and the chat
-canvas combined. Its module-level identity is stable, so `PdfContent`'s
-preparation effect SHALL NOT re-run on re-render.
-
-#### Scenario: Selecting a PDF supporting file in Skill Builder configures the app's worker
-
-- **WHEN** a user selects a PDF supporting file in the Skill Editor's Files tree on a freshly loaded page
-- **THEN** the app's `configurePdfWorker` is invoked before `DocumentPreview` mounts, `GlobalWorkerOptions.workerSrc` points at the app's bundled worker asset, and the vendor's CDN URL is not relied upon
-
-#### Scenario: The preview does not depend on the chat canvas running first
-
-- **WHEN** the user goes straight to the Skill Editor after a page reload, without opening any chat attachment
-- **THEN** the PDF preview behaves identically to one opened after a chat PDF — there is no ordering dependency between the two surfaces
-
-#### Scenario: The initializer runs once across surfaces
-
-- **WHEN** a PDF is previewed in Skill Builder and then another PDF is opened in skill details or the chat canvas within the same page session
-- **THEN** `configurePdfWorker` is not invoked a second time, and the later previews mount without repeating worker preparation
-
-#### Scenario: A worker preparation failure is retryable and distinct from a content failure
-
-- **WHEN** `configurePdfWorker` rejects while a Skill Builder PDF preview is opening
-- **THEN** `PdfContent`'s own retryable preparation-error state renders rather than the canvas load-error state, and a later preview or an explicit retry invokes the initializer again
-
-#### Scenario: Every other supporting-file type is unchanged
-
-- **WHEN** a Markdown, JSON, code, HTML, image, audio, visualizer, or unsupported supporting file is selected in the Skill Editor
-- **THEN** it renders exactly as before, through the same renderers and labels, and `configurePdfWorker` is never invoked
-
-#### Scenario: Existing lifecycle guarantees still hold
-
-- **WHEN** the user switches selection between supporting files, removes the previewed file, replaces its bytes, or leaves the Skill Editor route
-- **THEN** the preview replacement, close, refresh, out-of-order-resolution, and cleanup behaviour already specified for this capability is unchanged
+## ADDED Requirements
 
 ### Requirement: Returning from a supporting-file preview
 

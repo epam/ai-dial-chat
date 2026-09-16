@@ -35,10 +35,11 @@ import styles from './PdfContent.module.scss';
  * `PdfContent` is itself only ever reached through a `lazy()` dynamic import
  * (see AttachmentCanvasBody), so importing them here — rather than eagerly
  * from the host app's entry point — keeps this ~20 KB of vendor CSS out of
- * the initial page load.
+ * the initial page load. They come in through `pdf-vendor.css`, which puts
+ * them in a named cascade layer so they cannot outrank the host's own
+ * utilities; see that file for why that matters.
  */
-import '@epam/ai-dial-react-pdf-highlighter/styles.css';
-import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
+import './pdf-vendor.css';
 
 /*
  * `pdfjs-dist`'s `GlobalWorkerOptions.workerSrc` is a global, shared by every
