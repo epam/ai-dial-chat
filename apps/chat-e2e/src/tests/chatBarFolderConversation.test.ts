@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Chronology,
   CollapsedSections,
   ExpectedConstants,
@@ -767,7 +768,14 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderConversations.editFolderName(updatedFolderName);
-        await folderConversations.getEditFolderInputActions().clickTickButton();
+        await dialHomePage.waitForExpectedResponses(
+          () =>
+            folderConversations.getEditFolderInputActions().clickTickButton(),
+          [
+            { apiMethod: 'PUT', urlPattern: API.conversationHost },
+            { apiMethod: 'POST', urlPattern: API.moveHost },
+          ],
+        );
         await expect
           .soft(
             folderConversations.getFolderByName(updatedFolderName),
