@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { AttachmentCanvasI18nKeys } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { ThemeId } from '../../types/theme-id';
+import { configurePdfWorker } from '../../utils/pdf';
 
 /** Props for the inline skill supporting-file preview. */
 interface Props {
@@ -58,6 +59,7 @@ export const SkillFilePreview: FC<Props> = ({ path }) => {
             ? CodeBlockTheme.Dark
             : CodeBlockTheme.Light
         }
+        configurePdfWorker={configurePdfWorker}
         hidePdfToolbar
       />
     </div>

@@ -393,6 +393,26 @@ export const readSkillFileBytes = async (
 };
 
 /**
+ * Reads a skill file response as raw bytes with no size ceiling, for the
+ * supporting-file **preview** path.
+ *
+ * Previews are user-initiated, one file at a time, and a realistic binary
+ * (a PDF, an image) routinely exceeds `SKILL_MANIFEST_MAX_BYTES` — a cap
+ * sized for `SKILL.md` frontmatter, not for binaries — so applying that cap
+ * here rejected virtually every real PDF before it was ever decoded. This
+ * reader therefore never returns `null`: file size is not a failure class on
+ * the preview path.
+ *
+ * `readSkillFileBytes` and `readSkillManifest` keep their
+ * `SKILL_MANIFEST_MAX_BYTES` ceiling, because they feed the manifest parse
+ * and the textual Content-tab read, where an oversized body must never be
+ * decoded into a string.
+ */
+export const readSkillFilePreviewBytes = async (
+  response: Response,
+): Promise<Uint8Array> => new Uint8Array(await response.arrayBuffer());
+
+/**
  * Reads a skill manifest response as text, or `null` when the body is larger
  * than `SKILL_MANIFEST_MAX_BYTES`. The size is checked before decoding, so an
  * oversized manifest is never turned into a string.

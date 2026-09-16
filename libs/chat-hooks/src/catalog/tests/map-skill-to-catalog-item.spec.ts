@@ -12,6 +12,7 @@ import {
   buildSkillOverview,
   mapSkillToCatalogItem,
   readSkillFileBytes,
+  readSkillFilePreviewBytes,
   readSkillManifest,
   resolveSkillFileDownloadPath,
   resolveSkillManifestFileId,
@@ -610,5 +611,29 @@ describe('readSkillManifest', () => {
     });
 
     expect(await readSkillManifest(response)).toBeNull();
+  });
+});
+
+describe('readSkillFilePreviewBytes', () => {
+  it('returns the response body as bytes when within the manifest cap', async () => {
+    const body = 'hello world';
+    const response = new Response(body, {
+      headers: { 'content-length': String(body.length) },
+    });
+
+    expect(
+      new TextDecoder().decode(await readSkillFilePreviewBytes(response)),
+    ).toBe(body);
+  });
+
+  it('reads an oversized body in full instead of returning null', async () => {
+    const oversized = 'a'.repeat(SKILL_MANIFEST_MAX_BYTES + 1);
+    const response = new Response(oversized, {
+      headers: { 'content-length': String(oversized.length) },
+    });
+
+    const bytes = await readSkillFilePreviewBytes(response);
+
+    expect(bytes.byteLength).toBe(SKILL_MANIFEST_MAX_BYTES + 1);
   });
 });
