@@ -13,6 +13,7 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
+import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
@@ -184,7 +185,7 @@ export class PublishService {
       publishedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      publishedBy: publication?.author ?? publication?.displayAuthor ?? author,
+      publishedBy: readPublicationDisplayAuthor(publication, author),
     };
   }
 
@@ -281,7 +282,7 @@ export class PublishService {
       requestedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      requestedBy: publication?.author ?? publication?.displayAuthor ?? author,
+      requestedBy: readPublicationDisplayAuthor(publication, author),
     };
   }
 
@@ -358,7 +359,7 @@ export class PublishService {
             publishedAt: publication.createdAt
               ? new Date(publication.createdAt).toISOString()
               : '',
-            publishedBy: publication.author ?? publication.displayAuthor ?? '',
+            publishedBy: readPublicationDisplayAuthor(publication, ''),
           }))
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },

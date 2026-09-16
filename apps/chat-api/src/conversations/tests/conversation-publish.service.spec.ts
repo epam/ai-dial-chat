@@ -92,6 +92,31 @@ describe('ConversationPublishService', () => {
       );
     });
 
+    /* Same round trip the catalog publish makes (GH #8727). */
+    it('reports the submitted display author, not the account Core recorded', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({ name: 'Q3 planning notes' }),
+      );
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+          displayAuthor: 'DIAL Team',
+        }),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        'bucket-123',
+        'my-conversation-abc',
+        'Organization/Data Science/Shared chats',
+        'DIAL Team',
+      );
+
+      expect(result.publishedBy).toBe('DIAL Team');
+    });
+
     it('passes the caller-supplied rules through to createPublication unchanged', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
