@@ -118,6 +118,30 @@ describe('PublishService.unpublish', () => {
     expect(new Date(result.requestedAt).toString()).not.toBe('Invalid Date');
   });
 
+  /* Same round trip as publish (GH #8727), on the removal request. */
+  it('reports the submitted display author, not the account Core recorded', async () => {
+    const { service, dialClient } = makeService();
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      okResponse({
+        createdAt: 1_700_000_000_000,
+        author: 'user@example.com',
+        displayAuthor: 'DIAL Team',
+      }),
+    );
+
+    const result = await service.unpublish(
+      'token-abc',
+      TEST_BUCKET,
+      CatalogEntityType.Toolset,
+      TOOLSET_ID,
+      'Organization/Data Science',
+      '1.2.0',
+      'DIAL Team',
+    );
+
+    expect(result.requestedBy).toBe('DIAL Team');
+  });
+
   /*
    * The whole point of `getPublishedTargetUrl`: a DELETE resource whose
    * `targetUrl` does not match the published copy removes nothing, and Core

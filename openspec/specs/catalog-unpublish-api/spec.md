@@ -52,7 +52,7 @@ Response (200):
 }
 ```
 
-`requestedAt`/`requestedBy` are read back from Core's `Publication` response (`createdAt`/`author` → `displayAuthor`), never generated locally. The field names deliberately differ from publish's `publishedAt`/`publishedBy`: this response describes a submitted request, not a completed removal.
+`requestedAt`/`requestedBy` are read back from Core's `Publication` response (`createdAt`, and `displayAuthor` before `author` via `readPublicationDisplayAuthor`), never generated locally. The field names deliberately differ from publish's `publishedAt`/`publishedBy`: this response describes a submitted request, not a completed removal.
 
 Generated-client impact: OpenAPI `operationId: unpublishCatalogEntity`; request DTO `UnpublishCatalogEntityDto`; response DTO `UnpublishResultDto`. Frontend caller: a thin wrapper in `apps/chat/src/server-api/publish.api.ts` using the normal (non-`Raw`) generated method.
 
