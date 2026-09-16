@@ -34,6 +34,7 @@ interface EditorHeaderProps<T extends string> {
   getMobileTabLabel?: (tab: T) => string;
   onSave?: () => void;
   onLogoClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
+  isSaveDisabled?: boolean;
 }
 
 export const EditorHeader = <T extends string>({
@@ -49,6 +50,7 @@ export const EditorHeader = <T extends string>({
   getMobileTabLabel = (tab: T) => tab,
   onSave,
   onLogoClick,
+  isSaveDisabled,
 }: EditorHeaderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -138,6 +140,7 @@ export const EditorHeader = <T extends string>({
         <div className="flex h-full items-center xl:me-2 xl:border-e xl:border-secondary">
           <DialLinkButton
             onClick={onSave}
+            disabled={isSaveDisabled}
             data-qa="save-and-exit"
             aria-label={saveLabel}
             iconBefore={<IconLogout size={20} stroke={1.5} />}

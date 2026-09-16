@@ -10,6 +10,7 @@ import {
   isApplicationType,
   isQuickApp2Editor,
 } from '@/src/utils/app/application';
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isTruthyQuery } from '@/src/utils/app/route';
 
@@ -33,6 +34,7 @@ import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import capitalize from 'lodash/capitalize';
 
@@ -88,12 +90,20 @@ export const AppsEditorHeader = ({
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
+  const schemaLoading = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchemaLoading,
+  );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const isExistingApp = !!appDetails;
   const isSchemaApplicationType = !isApplicationType(
     decodeURIComponent(schemaId.toString()),
   );
+  const isSchemaReady =
+    !isSchemaApplicationType ||
+    (schemaLoading === UploadStatus.LOADED &&
+      cleanSchemaId(schema?.$id ?? '') ===
+        decodeURIComponent(schemaId.toString()));
   const applicationTypeDisplayName = isSchemaApplicationType
     ? (schema?.[ApplicationTypeSchemaProperties.applicationTypeDisplayName] ??
       '')
@@ -241,6 +251,7 @@ export const AppsEditorHeader = ({
         saveLabel={saveLabel}
         onSave={handleSaveAndRedirect}
         onLogoClick={handleLogoClick}
+        isSaveDisabled={!isSchemaReady}
         dataQa="entity-editor-header"
       />
 
