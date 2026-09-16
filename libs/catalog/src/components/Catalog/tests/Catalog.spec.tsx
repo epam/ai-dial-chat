@@ -1,10 +1,14 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogSortKey } from '../../../types/sort';
+import {
+  CredentialStatus,
+  CredentialsLevel,
+} from '../../../types/toolset-auth';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { getTopicOptions } from '../../../utils/catalog-filter';
 import { buildCatalogTabs } from '../../../utils/catalog-tabs';
@@ -199,6 +203,8 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isDownloadVisible,
     onRevokeShare,
     isRevokeShareVisible,
+    onLogin,
+    onLogout,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
@@ -208,6 +214,14 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isDownloadVisible?: (item: CatalogItem) => boolean;
     onRevokeShare?: (item: CatalogItem) => void;
     isRevokeShareVisible?: (item: CatalogItem) => boolean;
+    onLogin?: (
+      item: CatalogItem,
+      params: { level: CredentialsLevel },
+    ) => Promise<void>;
+    onLogout?: (
+      item: CatalogItem,
+      params: { level: CredentialsLevel },
+    ) => Promise<void>;
   }) => (
     <div>
       <span>{item.name}</span>
@@ -218,9 +232,22 @@ vi.mock('../../Details/DetailsPanel', () => ({
       {onRevokeShare && (isRevokeShareVisible?.(item) ?? true) && (
         <button onClick={() => onRevokeShare(item)}>RevokeShareTrigger</button>
       )}
+      {onLogin && (
+        <button onClick={() => onLogin(item, { level: CredentialsLevel.User })}>
+          LoginTrigger
+        </button>
+      )}
+      {onLogout && (
+        <button
+          onClick={() => onLogout(item, { level: CredentialsLevel.User })}
+        >
+          LogoutTrigger
+        </button>
+      )}
       {shareOverlay?.(item, () => undefined)}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
       <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
+      <span>{`userStatus:${item.credentials?.userStatus ?? 'none'}`}</span>
     </div>
   ),
 }));
@@ -448,6 +475,77 @@ describe('Catalog', () => {
     expect(onFetchDetails).toHaveBeenCalledWith(
       expect.objectContaining({ id: '1' }),
     );
+  });
+
+  it('retries the post-login details refetch until it reports signed-in', async () => {
+    const item = makeItem('1', 'GitHub');
+    const signedOut = {
+      credentials: { userStatus: CredentialStatus.SignedOut },
+    };
+    const signedIn = { credentials: { userStatus: CredentialStatus.SignedIn } };
+    const onFetchDetails = vi
+      .fn()
+      .mockResolvedValueOnce(signedOut) // initial panel open
+      .mockResolvedValueOnce(signedOut) // 1st post-login attempt: still stale
+      .mockResolvedValueOnce(signedIn); // 2nd post-login attempt: caught up
+    const onLogin = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Catalog
+        items={[item]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        onLogin={onLogin}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'GitHub' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'LoginTrigger' }));
+
+    expect(onLogin).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }), {
+      level: CredentialsLevel.User,
+    });
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(3));
+    expect(screen.getByText('userStatus:SIGNED_IN')).toBeTruthy();
+  });
+
+  it('stops retrying the post-logout details refetch once it reports signed-out', async () => {
+    const item = makeItem('1', 'GitHub');
+    const signedIn = { credentials: { userStatus: CredentialStatus.SignedIn } };
+    const signedOut = {
+      credentials: { userStatus: CredentialStatus.SignedOut },
+    };
+    const onFetchDetails = vi
+      .fn()
+      .mockResolvedValueOnce(signedIn) // initial panel open
+      .mockResolvedValueOnce(signedOut); // post-logout attempt: already caught up
+    const onLogout = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Catalog
+        items={[item]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        onLogout={onLogout}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'GitHub' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'LogoutTrigger' }),
+    );
+
+    expect(onLogout).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1' }),
+      { level: CredentialsLevel.User },
+    );
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+    expect(screen.getByText('userStatus:SIGNED_OUT')).toBeTruthy();
+    // No further retries once signed-out is confirmed on the first attempt.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+    expect(onFetchDetails).toHaveBeenCalledTimes(2);
   });
 
   it('forwards onDownload and isDownloadVisible to the details panel', async () => {

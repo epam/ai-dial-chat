@@ -16,6 +16,7 @@ import {
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { buildCatalogTabs } from '../../utils/catalog-tabs';
 import { getStyles } from '../../utils/styles';
+import { isLevelSignedIn, sleep } from '../../utils/toolset-credentials';
 import { CardGrid } from '../CardGrid/CardGrid';
 import { DetailsPanel } from '../Details/DetailsPanel';
 import { Favorites } from '../Favorites/Favorites';
@@ -23,6 +24,19 @@ import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
 import { CreateButton } from './CreateButton';
+
+/**
+ * How many times the post-login/post-logout details refetch retries before
+ * giving up, and the delay between attempts. A successful login/logout call
+ * has already completed against DIAL Core by the time this runs, but DIAL
+ * Core's own credential propagation (and, separately, this app's short-lived
+ * details cache) can lag the write by a beat — so a single immediate refetch
+ * occasionally still reports the pre-change status. Retrying briefly at this
+ * layer is scoped to the auth-confirmation flow only; ordinary item selection
+ * still does a single fetch for responsiveness.
+ */
+const POST_AUTH_REFRESH_ATTEMPTS = 3;
+const POST_AUTH_REFRESH_DELAY_MS = 300;
 
 /** Root catalog component: entity browsing with tabs, search, sort, filter, favorites strip, and details panel. */
 export const Catalog: FC<CatalogProps> = ({
@@ -230,35 +244,70 @@ export const Catalog: FC<CatalogProps> = ({
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
-  const handleOpenDetails = useCallback(
-    async (item: CatalogItem) => {
-      setSelectedItem(item);
-      setFetchedDetails(undefined);
+  const fetchDetails = useCallback(
+    async (
+      item: CatalogItem,
+    ): Promise<CatalogItemDetailsFetchResult | undefined> => {
       pendingItemIdRef.current = item.id;
 
-      const fetches: Promise<void>[] = [];
+      if (!onFetchDetails) return undefined;
 
-      if (onFetchDetails) {
-        setIsDetailsLoading(true);
-        fetches.push(
-          (async () => {
-            try {
-              const details = await onFetchDetails(item);
-              if (pendingItemIdRef.current === item.id) {
-                setFetchedDetails(details);
-              }
-            } finally {
-              if (pendingItemIdRef.current === item.id) {
-                setIsDetailsLoading(false);
-              }
-            }
-          })(),
-        );
+      setIsDetailsLoading(true);
+      try {
+        const details = await onFetchDetails(item);
+        if (pendingItemIdRef.current === item.id) {
+          setFetchedDetails(details);
+        }
+        return details;
+      } finally {
+        if (pendingItemIdRef.current === item.id) {
+          setIsDetailsLoading(false);
+        }
       }
-
-      await Promise.all(fetches);
     },
     [onFetchDetails],
+  );
+
+  const handleOpenDetails = useCallback(
+    async (
+      item: CatalogItem,
+    ): Promise<CatalogItemDetailsFetchResult | undefined> => {
+      setSelectedItem(item);
+      setFetchedDetails(undefined);
+      return fetchDetails(item);
+    },
+    [fetchDetails],
+  );
+
+  /**
+   * Re-fetches details for the item already open in the panel, retrying up
+   * to `POST_AUTH_REFRESH_ATTEMPTS` times until `isExpectedState` reports
+   * true, or leaving the last attempt's result once attempts run out.
+   * Unlike `handleOpenDetails`, this never clears `fetchedDetails` between
+   * attempts, so the panel keeps showing the previous (pre-action) snapshot
+   * instead of flashing back to the unenriched base item on every retry.
+   */
+  const retryDetailsUntil = useCallback(
+    async (
+      item: CatalogItem,
+      isExpectedState: (
+        details: CatalogItemDetailsFetchResult | undefined,
+      ) => boolean,
+    ): Promise<void> => {
+      for (let attempt = 0; attempt < POST_AUTH_REFRESH_ATTEMPTS; attempt++) {
+        /* The user may close the panel (or open a different item) while a
+         * login/logout call or an inter-attempt sleep is in flight —
+         * `pendingItemIdRef` is cleared/reassigned synchronously by those
+         * actions, so bail out rather than resurrecting a closed panel. */
+        if (pendingItemIdRef.current !== item.id) return;
+        const details = await fetchDetails(item);
+        if (isExpectedState(details)) return;
+        if (attempt < POST_AUTH_REFRESH_ATTEMPTS - 1) {
+          await sleep(POST_AUTH_REFRESH_DELAY_MS);
+        }
+      }
+    },
+    [fetchDetails],
   );
 
   const appliedInitialDetailsItemIdRef = useRef<string | null>(null);
@@ -302,17 +351,24 @@ export const Catalog: FC<CatalogProps> = ({
       params: { level: CredentialsLevel; apiKey?: string },
     ) => {
       await onLogin?.(item, params);
-      await handleOpenDetails(item);
+      if (!onFetchDetails) return;
+      await retryDetailsUntil(item, (details) =>
+        isLevelSignedIn(details?.credentials, params.level),
+      );
     },
-    [onLogin, handleOpenDetails],
+    [onLogin, onFetchDetails, retryDetailsUntil],
   );
 
   const handleLogout = useCallback(
     async (item: CatalogItem, params: { level: CredentialsLevel }) => {
       await onLogout?.(item, params);
-      await handleOpenDetails(item);
+      if (!onFetchDetails) return;
+      await retryDetailsUntil(
+        item,
+        (details) => !isLevelSignedIn(details?.credentials, params.level),
+      );
     },
-    [onLogout, handleOpenDetails],
+    [onLogout, onFetchDetails, retryDetailsUntil],
   );
 
   const handleCloseDetails = useCallback(() => {
@@ -618,7 +674,9 @@ export const Catalog: FC<CatalogProps> = ({
           texts={detailsTexts}
           limitsFooterNote={detailsLimitsFooterNote}
           styles={{
-            colors: { featuredChipStyle: catalogStyles?.colors?.featuredChipStyle },
+            colors: {
+              featuredChipStyle: catalogStyles?.colors?.featuredChipStyle,
+            },
           }}
         />
       )}

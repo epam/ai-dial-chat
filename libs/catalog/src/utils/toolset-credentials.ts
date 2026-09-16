@@ -11,6 +11,21 @@ import {
 const isSignedIn = (status: CredentialStatus | undefined): boolean =>
   status === CredentialStatus.SignedIn;
 
+/** Whether the given credentials level (`USER` or `GLOBAL`) is currently signed in. */
+export const isLevelSignedIn = (
+  credentials: CatalogItemCredentials | undefined,
+  level: CredentialsLevel,
+): boolean =>
+  isSignedIn(
+    level === CredentialsLevel.User
+      ? credentials?.userStatus
+      : credentials?.globalStatus,
+  );
+
+/** Resolves after the given duration, used to space out retry attempts. */
+export const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 /** Resolves which credentials action/section the Details Panel should show for the given item credentials. */
 export const getCredentialsUiState = (
   credentials: CatalogItemCredentials,
