@@ -116,6 +116,59 @@ describe('PublishService', () => {
       expect(new Date(result.publishedAt).toString()).not.toBe('Invalid Date');
     });
 
+    /*
+     * The round trip the Author field exists for (GH #8727): Core always
+     * records its own token-derived `author`, so reading that first made the
+     * submitted display author unobservable in every response this API hands
+     * back.
+     */
+    it('reports the submitted display author, not the account Core recorded', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+          displayAuthor: 'DIAL Team',
+        }),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        undefined,
+        'DIAL Team',
+      );
+
+      expect(result.publishedBy).toBe('DIAL Team');
+    });
+
+    /* Core stores an omitted display author as `''`, not as a missing key. */
+    it('reports the recorded account when Core stored an empty display author', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+          displayAuthor: '',
+        }),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        undefined,
+        'Test User',
+      );
+
+      expect(result.publishedBy).toBe('user@example.com');
+    });
+
     it('publishes an unversioned skill using only its leaf name in the publication title and targetUrl', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
@@ -581,6 +634,35 @@ describe('PublishService', () => {
           publishedBy: 'user@example.com',
         },
       ]);
+    });
+
+    /* History is the surface a re-publish is judged from, so it must name the
+       author the publisher chose, not the account Core recorded (GH #8727). */
+    it('reports each publication submitted display author', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          {
+            targetFolder: 'public/Organization/Data Science/',
+            createdAt: 1_700_000_000_000,
+            author: 'user@example.com',
+            displayAuthor: 'DIAL Team',
+            resources: [
+              { sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0' },
+            ],
+          },
+        ]),
+      );
+
+      const result = await service.getPublishHistory(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+      );
+
+      expect(result[0].publishedBy).toBe('DIAL Team');
     });
 
     it('returns an empty version when entityId has no {name}__{version} suffix', async () => {

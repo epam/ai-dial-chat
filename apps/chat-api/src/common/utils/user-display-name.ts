@@ -51,3 +51,34 @@ export const resolveDisplayAuthor = (
   author: string | undefined,
   claims: Record<string, unknown>,
 ): string => author?.trim() || getUserDisplayName(claims);
+
+/**
+ * A publication's own record of both identities, as DIAL Core returns them:
+ * `author` is the account Core derived from the bearer token, `displayAuthor`
+ * the free text the submitter chose to show.
+ */
+interface PublicationAuthors {
+  author?: string;
+  displayAuthor?: string;
+}
+
+/**
+ * The author to *report* for a publication Core has already accepted: the
+ * submitted display author when there is one, otherwise the account Core
+ * recorded, otherwise `fallback`.
+ *
+ * The order is what makes the round trip work. `displayAuthor` is the whole
+ * point of the field a publisher can edit (GH #8727) — reading `author` first
+ * means every value this API hands back names whoever clicked Publish, since
+ * Core always records that, and the chosen author is never observable
+ * anywhere. DIAL Chat 1.0 read the pair the same way round
+ * (`publication.displayAuthor ?? publication.author`).
+ *
+ * `||` rather than `??` on purpose: Core stores an absent display author as
+ * `''`, not as a missing key, and an empty string is not an author.
+ */
+export const readPublicationDisplayAuthor = (
+  publication: PublicationAuthors | undefined,
+  fallback: string,
+): string =>
+  publication?.displayAuthor?.trim() || publication?.author?.trim() || fallback;
