@@ -87,9 +87,6 @@ export const useAppEditorValidation = () => {
     const applicationId = application?.id;
     const isAppPublic =
       applicationId && isEntityIdPublic({ id: applicationId });
-    // applicationData may still hold the previous session's app while a new
-    // create/edit navigation for a different id is in flight - only compare
-    // against it once it actually matches the URL's id
     const matchingApplicationData =
       applicationData?.reference === id.toString()
         ? applicationData
