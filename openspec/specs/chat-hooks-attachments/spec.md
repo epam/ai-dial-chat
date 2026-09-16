@@ -17,32 +17,99 @@ build the DIAL storage path for each file using a library-owned pure
 function equivalent to `apps/chat`'s `buildUploadPath`, described purely in
 terms of the DIAL bucket/path convention (no app-chosen segment).
 
-The hook SHALL accept the configured files-API instance, an
-`onNetworkErrorBatch: (fileNames: string[]) => void` callback, and a debounce
-duration in milliseconds, and SHALL return a function that uploads a single
-file and resolves to an `Attachment` (from `@epam/ai-dial-chat-shared`) or
-rejects with an error tagged `AttachmentErrorReason` (also from
-`@epam/ai-dial-chat-shared`).
+`useAttachmentUpload` SHALL accept `filesApi`, the resolved `bucket`, an
+optional `onNetworkError: (fileNames: string[]) => void` callback, and optional
+`debounceMs` (default `700`). The configured client contract SHALL be
+`Pick<FilesApi, 'uploadFile'> & Partial<Pick<FilesApi, 'listFiles'>>`;
+the hook SHALL NOT construct or configure a client itself.
 
-#### Scenario: Successful upload resolves with an Attachment
+The hook SHALL return `handleUploadAttachment(attachment: Attachment)`
+resolving to `UploadedAttachmentResult` (`{ url, name }`, exported by
+`@epam/ai-dial-chat-shared`). When an upload fails while offline, it SHALL
+reject with an error tagged `AttachmentErrorReason.Network`; other terminal
+upload errors SHALL propagate to the caller.
 
-- **WHEN** a consumer calls the returned upload function with a `File` while
+#### Scenario: Successful upload resolves with the stored URL and name
+
+- **WHEN** a consumer calls `handleUploadAttachment` with an `Attachment` while
   online
-- **THEN** the promise resolves with an `Attachment` describing the uploaded
-  file's DIAL storage location
+- **THEN** the promise resolves with `{ url, name }` describing the uploaded
+  file's DIAL storage location and actual stored filename
 
 #### Scenario: A burst of offline failures is batched into one callback
 
 - **WHEN** three uploads fail in quick succession because the browser is
   offline, within the configured debounce window
-- **THEN** `onNetworkErrorBatch` is called exactly once with all three file
+- **THEN** `onNetworkError` is called exactly once with all three file
   names, not three times
 
 #### Scenario: A failure outside the debounce window is reported separately
 
 - **WHEN** one upload fails, the debounce window elapses, and then a second
   upload fails
-- **THEN** `onNetworkErrorBatch` is called twice, once per failure
+- **THEN** `onNetworkError` is called twice, once per failure
+
+### Requirement: Attachment conflicts skip names already stored in the month folder
+
+`useAttachmentUpload` SHALL upload into `uploads/<YYYY-MM>/` using
+`uploadMode: 'create-only'`. It SHALL keep a local upload-path allocator
+scoped to the bucket and month, reserving distinct filenames for concurrent
+and repeated uploads and inserting ` (n)` before the extension when needed.
+It SHALL NOT overwrite an existing file to resolve a conflict.
+
+When `uploadFile` rejects with `response.status === 409` and a retry remains,
+the hook SHALL mark the attempted name as taken. If the injected client
+provides `listFiles`, it SHALL list the attempted upload's month folder in
+the same bucket and merge the returned item names into the allocator before
+allocating another name. Listing SHALL add to existing reservations rather
+than replace them, including reservations held by in-flight uploads.
+
+Listing SHALL occur only after a conflict. If `listFiles` is absent or its
+request fails, the hook SHALL preserve its local reservations and continue
+with suffix-based retries. There SHALL be at most five retries after the
+initial upload attempt. A sixth conflicting upload SHALL reject without
+another listing or upload attempt. Non-conflict upload errors SHALL NOT
+trigger this conflict-retry flow.
+
+#### Scenario: Stored names beyond the retry budget are skipped after remount
+
+- **WHEN** a newly mounted uploader attaches `Screenshot.png` to a month folder
+  containing `Screenshot.png` and `Screenshot (1).png` through `Screenshot (12).png`
+- **AND** the initial upload returns 409 and `listFiles` returns those names
+- **THEN** the next upload attempts `Screenshot (13).png` in create-only mode
+- **AND** a successful upload resolves with its URL and `name: 'Screenshot (13).png'`
+- **AND** the hook does not upload to each intervening occupied name
+
+#### Scenario: A successful initial upload needs no listing
+
+- **WHEN** the initial upload succeeds
+- **THEN** the hook does not call `listFiles`
+
+#### Scenario: Concurrent uploads retain distinct reservations after listing
+
+- **WHEN** two same-named uploads encounter conflicts and list the same folder
+- **THEN** merging either listing preserves the other upload's reserved name
+- **AND** the uploads retry under distinct names and resolve to distinct URLs
+
+#### Scenario: A client without listing remains supported
+
+- **WHEN** the injected client provides only `uploadFile` and an upload conflicts
+- **THEN** the hook retries with the next locally available suffixed name
+- **AND** every retry remains create-only
+
+#### Scenario: A failed listing falls back to suffix retries
+
+- **WHEN** uploading `file.pdf` returns 409 and the subsequent listing fails
+- **AND** `file (1).pdf` is locally available and its upload succeeds
+- **THEN** the hook resolves with the URL and name of `file (1).pdf`
+- **AND** the listing failure does not itself fail the attachment
+
+#### Scenario: Persistent conflicts remain bounded even with a stale listing
+
+- **WHEN** every upload attempt returns 409 and listings omit the conflicting names
+- **THEN** the hook makes at most six upload attempts and five listing requests
+- **AND** it retains names learned from conflicts despite the stale listings
+- **AND** it rejects with the final conflict after exhausting the retry budget
 
 ### Requirement: Default attachment-click dispatch hook
 
