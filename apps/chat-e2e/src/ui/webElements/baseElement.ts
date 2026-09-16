@@ -195,6 +195,14 @@ export class BaseElement {
     }, property);
   }
 
+  public async getPxProperty(property: 'marginTop' | 'paddingTop') {
+    const value = await this.rootLocator.evaluate(
+      (el, prop) => getComputedStyle(el)[prop as 'marginTop' | 'paddingTop'],
+      property,
+    );
+    return parseFloat(value);
+  }
+
   public async isElementWidthTruncated() {
     const clientWidth = await this.rootLocator.evaluate((t) => t.clientWidth);
     const scrollWidth = await this.rootLocator.evaluate((t) => t.scrollWidth);

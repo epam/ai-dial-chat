@@ -64,6 +64,9 @@ export class ChatMessages extends BaseElement {
   public messageStage = (messagesIndex: number, stageIndex: number) =>
     this.messageStages(messagesIndex).nth(stageIndex - 1);
 
+  public messageStageElement = (messagesIndex: number, stageIndex: number) =>
+    this.createElementFromLocator(this.messageStage(messagesIndex, stageIndex));
+
   public messageStageLoader = (messagesIndex: number, stageIndex: number) =>
     this.messageStage(messagesIndex, stageIndex).locator(
       ChatSelectors.stageLoader,
@@ -72,6 +75,14 @@ export class ChatMessages extends BaseElement {
   public messageStageContent = (messagesIndex: number, stageIndex: number) =>
     this.messageStage(messagesIndex, stageIndex).locator(
       `~${ChatSelectors.stageContent}`,
+    );
+
+  public messageStageContentElement = (
+    messagesIndex: number,
+    stageIndex: number,
+  ) =>
+    this.createElementFromLocator(
+      this.messageStageContent(messagesIndex, stageIndex),
     );
 
   public messageStageContentCopyButton = (
@@ -191,6 +202,45 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessageContent(message).locator(
       TableSelectors.tableContainer,
     );
+  }
+
+  public getChatMessageTableElement(message: string | number) {
+    return this.createElementFromLocator(this.getChatMessageTable(message));
+  }
+
+  public getChatMessageList(message: string | number) {
+    return this.createElementFromLocator(
+      this.getChatMessageContent(message).locator(`${Tags.ul}, ${Tags.ol}`),
+    );
+  }
+
+  public getChatMessageBlockquote(message: string | number) {
+    return this.createElementFromLocator(
+      this.getChatMessageContent(message).locator(Tags.blockquote),
+    );
+  }
+
+  public getChatMessageCodePre(message: string | number, codeContent: string) {
+    return this.createElementFromLocator(
+      this.getChatMessageContent(message)
+        .locator(Tags.pre)
+        .filter({ hasText: codeContent }),
+    );
+  }
+
+  public getChatMessageOuterWrapper(message: string | number) {
+    return this.createElementFromLocator(
+      this.getChatMessage(message).locator(Tags.div).first(),
+    );
+  }
+
+  public getChatMessageTextBlock(
+    message: string | number,
+    textContent: string,
+  ) {
+    return this.getChatMessageContent(message)
+      .locator(ChatSelectors.textBlock)
+      .filter({ hasText: textContent });
   }
 
   public getChatMessageTableControls(message: string | number) {
