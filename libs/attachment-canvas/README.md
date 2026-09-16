@@ -295,6 +295,36 @@ if (!opened) {
 when the attachment could not be previewed. `onBeforeOpen` runs for
 `Image`/`File`/`Pasted`/`Prompt` attachments, never for `Audio`.
 
+#### Guarding a late completion (`ShouldCommitCanvas`)
+
+A host that can have more than one open in flight — or that can stop owning the
+canvas while one is running — passes a third argument, consulted immediately
+before each canvas write that follows an awaited resolver:
+
+```tsx
+const generationRef = useRef(0);
+
+const open = (attachment: DisplayAttachment, key: string) => {
+  const generation = (generationRef.current += 1);
+  return openAttachmentCanvas(
+    attachment,
+    key,
+    () => generationRef.current === generation,
+  );
+};
+```
+
+Returning `false` discards the result: no canvas state is written, a resolved
+payload's object URL is released, the open resolves `false`, and a request that
+found nothing to display does not close whatever took the canvas over. The
+underlying I/O is not cancelled — only its effect on shared state is. Omit the
+argument and every request commits, which is the previous behavior.
+
+Releasing the payload mirrors what the canvas does for content it did hold, and
+it sets a resolver contract: a resolver must hand back an object URL the canvas
+may own and revoke — a fresh `URL.createObjectURL` — never one the caller still
+uses elsewhere.
+
 ### findVisualizerForMime
 
 Pure lookup used internally by `useOpenAttachmentCanvas` to match an

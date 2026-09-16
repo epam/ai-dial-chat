@@ -17,6 +17,7 @@ export type { AttachmentCanvasContextValue } from './context/AttachmentCanvasCon
 export { useOpenAttachmentCanvas } from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';
 export type {
   OpenAttachmentCanvas,
+  ShouldCommitCanvas,
   UseOpenAttachmentCanvasOptions,
   UseOpenAttachmentCanvasResolvers,
 } from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';

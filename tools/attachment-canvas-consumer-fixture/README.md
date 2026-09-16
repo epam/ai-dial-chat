@@ -2,7 +2,7 @@
 
 A minimal Vite application that proves `@epam/ai-dial-attachment-canvas`'s
 published package boundary actually holds, per
-`openspec/changes/optimize-attachment-canvas-package-loading/design.md`'s
+`openspec/changes/archive/2026-09-03-optimize-attachment-canvas-package-loading/design.md`'s
 Decision 6.
 
 ## Why this exists
@@ -40,6 +40,9 @@ and then builds against it.
    package's external dynamic imports. Finally, it verifies that the generated
    JavaScript chunk graph references the lazy PDF stylesheet, preventing an
    orphaned CSS artifact or a flash of unstyled PDF content.
+4. `test` depends on `verify`, which includes this package-boundary check in
+   the workspace's root `npm test` command. The shared PR and release workflows
+   run that command before the release job can publish packages.
 
 ## Running it
 
@@ -49,6 +52,16 @@ npm exec nx run attachment-canvas-consumer-fixture:verify
 
 This transitively builds `@epam/ai-dial-attachment-canvas` first (via Nx's
 project-to-project `dependsOn`), so it always packs the current source.
+
+The root test command runs the same verification as part of the normal CI test
+stage:
+
+```bash
+npm test
+```
+
+The library's `publish` target therefore only waits for its build, following
+the same workspace-wide publish dependency as the other publishable libraries.
 
 Peer dependencies (`react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-react-pdf-highlighter`,
 etc.) are deliberately never installed locally into this fixture — they

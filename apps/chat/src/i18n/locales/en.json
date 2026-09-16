@@ -1253,6 +1253,8 @@
   "skillEditor": {
     "title": "Create skill",
     "backAriaLabel": "Back",
+    "backToManifestAriaLabel": "Back to SKILL.md",
+    "returnedToManifestStatus": "Returned to SKILL.md",
     "filesHeading": "Files",
     "filesTreeAriaLabel": "Skill files",
     "addUploadLabel": "Upload from device",
