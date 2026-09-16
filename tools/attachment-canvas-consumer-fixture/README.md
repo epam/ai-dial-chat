@@ -34,12 +34,12 @@ and then builds against it.
    built `dist/index.html` to find the eager asset graph (the same technique
    `scripts/measure-initial-bundle.mjs` uses) and asserts that neither the
    `pdfjs-dist` engine (`GlobalWorkerOptions`) nor the
-   `react-syntax-highlighter` engine (`refractor`) appears in it — both exist
-   only in on-demand chunks, reachable only through the PDF/code dynamic
-   import boundaries this package's own lazy-loading relies on. It also
-   verifies that the generated JavaScript chunk graph references the lazy PDF
-   stylesheet, preventing an orphaned CSS artifact or a flash of unstyled PDF
-   content.
+   `react-syntax-highlighter` engine (`refractor`) appears in it. It also
+   verifies that the transitively installed DOCX, XLSX, PPTX, and chart
+   engines are emitted as on-demand consumer chunks, reachable through the
+   package's external dynamic imports. Finally, it verifies that the generated
+   JavaScript chunk graph references the lazy PDF stylesheet, preventing an
+   orphaned CSS artifact or a flash of unstyled PDF content.
 
 ## Running it
 

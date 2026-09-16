@@ -47,11 +47,12 @@ Although this library does not import `pdfjs-dist` directly,
 is declared here as well — as a dependency pinning the tested `^5.4.149` line,
 rather than relying on whatever a transitive resolution happens to produce.
 
-The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
-XLSX/CSV, and PPTX entry points are loaded independently on demand, so opening
-one format does not eagerly load the other renderers. CSV is displayed through
-the Excel-style `XlsxSheetViewer`; every field remains text, including leading
-zeroes, long identifiers, dates, and values beginning with `=`.
+The library installs `@silurus/ooxml` as a runtime dependency and leaves its
+format entry points external in the published artifact. A consuming bundler
+loads the DOCX, XLSX/CSV, and PPTX entry points independently on demand, so
+opening one format does not eagerly load the other renderers. CSV is displayed
+through the Excel-style `XlsxSheetViewer`; every field remains text, including
+leading zeroes, long identifiers, dates, and values beginning with `=`.
 
 The PDF renderer (`PdfContent`, used internally by `AttachmentCanvasBody` for
 `AttachmentContentType.Pdf`) and the syntax-highlighter engine (used by
@@ -333,7 +334,7 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK
 response) and `Forbidden` (HTTP `403`).
 
-`OoxmlFileType` selects the bundled renderer: `Docx`, `Xlsx`, `Pptx`, or
+`OoxmlFileType` selects the installed runtime renderer: `Docx`, `Xlsx`, `Pptx`, or
 `Csv`. The public name is retained for compatibility; `Csv` uses
 `@silurus/ooxml`'s `XlsxSheetViewer` delimited-text mode rather than an OOXML
 workbook parser.

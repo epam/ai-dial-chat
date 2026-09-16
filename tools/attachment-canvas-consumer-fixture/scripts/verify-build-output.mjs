@@ -6,8 +6,9 @@
  * plain `node_modules`, never the workspace's `@epam/source` alias) and
  * bundled into an ordinary app, the PDF engine (`pdfjs-dist`, via
  * `@epam/ai-dial-react-pdf-highlighter`) and the syntax-highlighter engine
- * (`react-syntax-highlighter`'s package-specific line-number class) load only
- * on demand — never as part of this app's eager entry graph.
+ * (`react-syntax-highlighter`'s package-specific line-number class), and the
+ * transitively installed OOXML format engines load only on demand — never as
+ * part of this app's eager entry graph.
  *
  * Usage: node scripts/verify-build-output.mjs
  */
@@ -51,6 +52,12 @@ const readAsset = (ref) => readFileSync(resolve(distDir, ref), 'utf-8');
 const PDF_ENGINE_TELLTALE = 'GlobalWorkerOptions'; // pdfjs-dist's own API surface
 const SYNTAX_HIGHLIGHTER_ENGINE_TELLTALE =
   'react-syntax-highlighter-line-number'; // package-specific rendered class
+const OOXML_FORMAT_CHUNK_PATTERNS = [
+  /^assets\/docx-[\w-]+\.js$/,
+  /^assets\/xlsx-[\w-]+\.js$/,
+  /^assets\/pptx-[\w-]+\.js$/,
+  /^assets\/chart-ex-[\w-]+\.js$/,
+];
 
 const eagerJsRefs = eagerRefs.filter((ref) => ref.endsWith('.js'));
 const eagerCssRefs = eagerRefs.filter((ref) => ref.endsWith('.css'));
@@ -66,6 +73,9 @@ for (const ref of eagerJsRefs) {
     fail(
       `Eager entry ${ref} bundles the react-syntax-highlighter engine (${SYNTAX_HIGHLIGHTER_ENGINE_TELLTALE}).`,
     );
+  }
+  if (OOXML_FORMAT_CHUNK_PATTERNS.some((pattern) => pattern.test(ref))) {
+    fail(`Eager entry unexpectedly includes the OOXML format chunk ${ref}.`);
   }
 }
 
@@ -101,6 +111,14 @@ if (!hasOnDemandSyntaxHighlighterEngine) {
   );
 }
 
+for (const pattern of OOXML_FORMAT_CHUNK_PATTERNS) {
+  if (!onDemandRefs.some((ref) => pattern.test(ref))) {
+    fail(
+      `No on-demand chunk matches ${pattern} — an external OOXML format import may no longer resolve through the consumer build.`,
+    );
+  }
+}
+
 const onDemandPdfCssRef = onDemandRefs.find(
   (ref) =>
     ref.endsWith('.css') &&
@@ -125,7 +143,7 @@ if (process.exitCode) {
 }
 
 console.info(
-  'OK: eager entry bundles neither engine; both load only on demand.',
+  'OK: PDF, syntax-highlighting, and OOXML engines load only on demand.',
 );
 console.info(`  eager JS:   ${eagerJsRefs.join(', ')}`);
 console.info(`  eager CSS:  ${eagerCssRefs.join(', ')}`);
