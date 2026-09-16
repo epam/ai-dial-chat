@@ -55,6 +55,94 @@ describe('SkillsLookupService', () => {
     );
   });
 
+  /*
+   * Ownership flags on the post-accept summary (GH #8839): the frontend reads
+   * `canEdit` — not `permissions` — to decide whether the catalog offers Edit,
+   * and this summary overwrites the refetched listing entry, so an unset
+   * `canEdit` here renders an edit-shared skill read-only.
+   */
+  describe('ownership flags', () => {
+    const sharedSkillMetadata = {
+      error: undefined,
+      response: { status: 200 },
+      data: {
+        bucket: 'owner-bucket',
+        name: 'docs-helper',
+        nodeType: 'ITEM',
+        parentPath: 'team-a/',
+      },
+    };
+
+    it('marks a skill invited with WRITE as editable and shared with me', async () => {
+      const { service } = makeService(sharedSkillMetadata);
+
+      const result = await service.resolveSkillItem(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token',
+        'my-bucket',
+        ['READ', 'WRITE'],
+      );
+
+      expect(result).toMatchObject({
+        isMy: false,
+        canEdit: true,
+        sharedWithMe: true,
+      });
+    });
+
+    it('marks a skill invited with READ only as read-only', async () => {
+      const { service } = makeService(sharedSkillMetadata);
+
+      const result = await service.resolveSkillItem(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token',
+        'my-bucket',
+        ['READ'],
+      );
+
+      expect(result).toMatchObject({
+        isMy: false,
+        canEdit: false,
+        sharedWithMe: true,
+      });
+    });
+
+    it('falls back to the resolved metadata permissions when the invitation carries none', async () => {
+      const { service } = makeService({
+        ...sharedSkillMetadata,
+        data: { ...sharedSkillMetadata.data, permissions: ['READ', 'WRITE'] },
+      });
+
+      const result = await service.resolveSkillItem(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token',
+        'my-bucket',
+      );
+
+      expect(result).toMatchObject({ canEdit: true, sharedWithMe: true });
+    });
+
+    it('marks a skill in the caller own bucket as owned and editable', async () => {
+      const { service } = makeService({
+        ...sharedSkillMetadata,
+        data: { ...sharedSkillMetadata.data, bucket: 'my-bucket' },
+      });
+
+      const result = await service.resolveSkillItem(
+        'skills/my-bucket/team-a/docs-helper',
+        'token',
+        'my-bucket',
+        ['READ'],
+      );
+
+      expect(result).toMatchObject({
+        isMy: true,
+        canEdit: true,
+        sharedWithMe: false,
+      });
+    });
+  });
+
   it('returns null for an itemId that is not a well-formed skill URL', async () => {
     const { service, sdkClient } = makeService(undefined);
     const result = await service.resolveSkillItem(

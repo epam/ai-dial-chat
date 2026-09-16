@@ -1096,9 +1096,45 @@ describe('ShareInvitationService', () => {
         'skills/owner-bucket/team-a/docs-helper',
         'token-abc',
         'bucket-1',
+        undefined,
       );
       expect(deploymentsService.resolveDeploymentItem).not.toHaveBeenCalled();
       expect(toolsetsService.resolveToolsetItem).not.toHaveBeenCalled();
+    });
+
+    /*
+     * The invitation's own grant is what decides whether the recipient may
+     * edit the skill, so it has to reach the lookup that builds the
+     * post-accept summary — otherwise an edit-share resolves with `canEdit`
+     * unset and the catalog renders it read-only (GH #8839).
+     */
+    it('forwards the invited skill resource permissions to resolveSkillItem', async () => {
+      const { service, skillsLookupService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [
+            {
+              url: 'skills/owner-bucket/team-a/docs-helper',
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
+        }),
+      );
+
+      await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(skillsLookupService.resolveSkillItem).toHaveBeenCalledWith(
+        'skills/owner-bucket/team-a/docs-helper',
+        'token-abc',
+        'bucket-1',
+        ['READ', 'WRITE'],
+      );
     });
 
     it('returns sharedDeployment for an applications/-prefixed itemId', async () => {
