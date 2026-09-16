@@ -13,6 +13,7 @@ import {
   groupAnnotations,
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
+import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentCanvasUrlResolvers } from '../attachment-canvas';
 import {
@@ -29,6 +30,7 @@ import {
   resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
 } from '../attachment-canvas';
+import { dialFileToAttachment } from '../dial-file-to-attachment';
 
 /*
  * Mocked without `importOriginal` — the real module transitively pulls in
@@ -193,6 +195,53 @@ const makeLocalZeroByteAttachment = (name: string): DisplayAttachment => {
     status: RequestStatus.Idle,
     file,
   } as unknown as DisplayAttachment;
+};
+
+/*
+ * Built by the real producer (`dialFileToAttachment`) so the fixture stays
+ * pinned to the attachment shape the file-manager attach flow actually emits:
+ * real content behind the `files/` url, `file` a 0-byte placeholder.
+ */
+const makeFileManagerAttachment = (
+  name: string,
+  url: string,
+  contentType: string,
+): DisplayAttachment =>
+  dialFileToAttachment(
+    {
+      id: url,
+      name,
+      path: `/${name}`,
+      folderId: 'bucket',
+      nodeType: DialFileNodeType.ITEM,
+      contentType,
+      url,
+    },
+    'bucket',
+  ) as unknown as DisplayAttachment;
+
+/*
+ * An uploaded-but-unsent composer attachment: the eager-upload flow assigns
+ * the DIAL url while keeping the real local `File` with its bytes.
+ */
+const makeUploadedAttachment = (
+  name: string,
+  url: string,
+  contentType: string,
+  content: string,
+): DisplayAttachment & { file: File } => {
+  const file = new File([content], name, { type: contentType });
+  return {
+    id: url,
+    name,
+    contentType,
+    type: contentType.startsWith('image/')
+      ? AttachmentType.Image
+      : AttachmentType.File,
+    status: RequestStatus.Idle,
+    url,
+    file,
+  } as unknown as DisplayAttachment & { file: File };
 };
 
 const makeReferenceUrlAttachment = (
@@ -1046,6 +1095,165 @@ describe('zero-byte local file handling', () => {
     expect(
       hasAttachmentTextSource(
         makeLocalZeroByteAttachment('empty.txt'),
+        resolvers,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('file-manager placeholder File handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+  });
+
+  it('resolveImageCanvasContent returns the DIAL download URL instead of an object URL over the placeholder File', () => {
+    const result = resolveImageCanvasContent(
+      makeFileManagerAttachment(
+        'image.png',
+        'files/bucket/path/image.png',
+        'image/png',
+      ),
+      resolvers,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: '/download?path=path/image.png',
+    });
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('resolvePdfCanvasContent fetches the DIAL download URL instead of object-URLing the placeholder File', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => undefined,
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(['%PDF-1.4'])),
+        }),
+    });
+
+    const result = await resolvePdfCanvasContent(
+      makeFileManagerAttachment(
+        'doc.pdf',
+        'files/bucket/path/doc.pdf',
+        'application/pdf',
+      ),
+      resolvers,
+    );
+
+    expect(countContentFetches(mockFetch)).toBe(1);
+    expect(URL.createObjectURL).toHaveBeenCalledWith(new Blob(['%PDF-1.4']));
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:mock-url',
+    });
+  });
+
+  it('resolveImageCanvasContent object-URLs the local File for an uploaded-but-unsent attachment', () => {
+    const attachment = makeUploadedAttachment(
+      'photo.png',
+      'files/bucket/path/photo.png',
+      'image/png',
+      'image-bytes',
+    );
+
+    const result = resolveImageCanvasContent(attachment, resolvers);
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: 'blob:mock-url',
+    });
+    expect(URL.createObjectURL).toHaveBeenCalledWith(attachment.file);
+  });
+
+  it('resolvePdfCanvasContent object-URLs the local File for an uploaded-but-unsent attachment without fetching', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => undefined,
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(['%PDF-1.4'])),
+        }),
+    });
+
+    const result = await resolvePdfCanvasContent(
+      makeUploadedAttachment(
+        'doc.pdf',
+        'files/bucket/path/doc.pdf',
+        'application/pdf',
+        '%PDF-1.4',
+      ),
+      resolvers,
+    );
+
+    expect(countContentFetches(mockFetch)).toBe(0);
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:mock-url',
+    });
+  });
+
+  it('resolveImageCanvasContent still object-URLs a genuine local image with no url', () => {
+    const file = new File(['image-bytes'], 'local.png', {
+      type: 'image/png',
+    });
+
+    const result = resolveImageCanvasContent(
+      {
+        id: 'local.png',
+        name: 'local.png',
+        contentType: 'image/png',
+        type: AttachmentType.Image,
+        status: RequestStatus.Idle,
+        file,
+      } as unknown as DisplayAttachment,
+      resolvers,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: 'blob:mock-url',
+    });
+    expect(URL.createObjectURL).toHaveBeenCalledWith(file);
+  });
+
+  it('resolveMarkdownCanvasContent still fetches the DIAL download URL for a placeholder File (text path is DIAL-first)', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => undefined,
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve('# From DIAL'),
+        }),
+    });
+
+    const result = await resolveMarkdownCanvasContent(
+      makeFileManagerAttachment(
+        'readme.md',
+        'files/bucket/path/readme.md',
+        'text/markdown',
+      ),
+      resolvers,
+    );
+
+    expect(countContentFetches(mockFetch)).toBe(1);
+    expect(result).toEqual({
+      type: AttachmentContentType.Markdown,
+      text: '# From DIAL',
+    });
+  });
+
+  it('hasAttachmentTextSource reports true for a placeholder File with a DIAL url', () => {
+    expect(
+      hasAttachmentTextSource(
+        makeFileManagerAttachment(
+          'readme.md',
+          'files/bucket/path/readme.md',
+          'text/markdown',
+        ),
         resolvers,
       ),
     ).toBe(true);
