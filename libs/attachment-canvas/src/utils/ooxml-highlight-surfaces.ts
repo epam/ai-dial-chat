@@ -1,4 +1,4 @@
-import type { DocxDocument, DocxTextRunInfo } from '@silurus/ooxml/docx';
+import type { DocxTextRunInfo } from '@silurus/ooxml/docx';
 import type { PptxPresentation } from '@silurus/ooxml/pptx';
 import type { XlsxViewer } from '@silurus/ooxml/xlsx';
 import type {
@@ -6,7 +6,10 @@ import type {
   OoxmlHighlight,
   OoxmlHighlightLocation,
 } from '../models/attachment-canvas';
-import { OoxmlHighlightKind } from '../types/attachment-canvas';
+import {
+  OoxmlHighlightKind,
+  OoxmlNavigationOutcome,
+} from '../types/attachment-canvas';
 import {
   createOoxmlTextMeasurer,
   docxPageSizePx,
@@ -14,12 +17,15 @@ import {
   type OoxmlHighlightRect,
   pptxSlideSizePx,
   resolveDocxRects,
+  resolveDocxScrollTarget,
   resolvePptxRects,
   resolveSurfaceOffset,
   resolveXlsxRects,
   resolveXlsxSheetIndex,
   toXlsxCellRef,
 } from './ooxml-highlight-geometry';
+
+export { OoxmlNavigationOutcome };
 
 /**
  * One rectangle to draw, tagged with the highlight it belongs to. Kept in
@@ -45,8 +51,11 @@ export interface OoxmlHighlightSurface {
   measure(
     highlights: readonly OoxmlHighlight[],
   ): Promise<TaggedHighlightRect[]>;
-  /** Brings one cited location into view, whether or not it resolves to a rectangle. */
-  navigate(location: OoxmlHighlightLocation): Promise<void>;
+  /**
+   * Brings one cited location into view, whether or not it resolves to a
+   * rectangle. See `OoxmlNavigationOutcome` for what each resolved value means.
+   */
+  navigate(location: OoxmlHighlightLocation): Promise<OoxmlNavigationOutcome>;
 }
 
 /*
@@ -101,19 +110,66 @@ const comparePaths = (
   return left.length - right.length;
 };
 
+/**
+ * The subset of `DocxDocument` the DOCX highlight surface reads, kept as a
+ * narrow structural type rather than the concrete vendor class so a test
+ * double only needs to implement what is actually used.
+ */
+interface DocxHighlightDocument {
+  /** Number of pages in the current layout. Only authoritative once `waitUntilLayoutComplete` resolves. */
+  readonly pageCount: number;
+  /** Page size in points, at scale 1. */
+  pageSize(pageIndex: number): { widthPt: number; heightPt: number };
+  /** Collects one page's text runs at the given reference width. */
+  collectPageRuns(
+    pageIndex: number,
+    opts: { width: number },
+  ): Promise<DocxTextRunInfo[]>;
+  /** Resolves once layout has finished publishing pages; rejects if layout failed. */
+  waitUntilLayoutComplete(): Promise<void>;
+}
+
+/** The subset of `DocxScrollViewer` the DOCX highlight surface reads. */
+interface DocxHighlightViewer {
+  getScale(): number;
+  scrollToPage(index: number): void;
+}
+
 /** Creates the DOCX highlight surface over an already-loaded document. */
 export const createDocxHighlightSurface = (
   container: HTMLElement,
-  docxDocument: DocxDocument,
-  viewer: { getScale(): number; scrollToPage(index: number): void },
+  docxDocument: DocxHighlightDocument,
+  viewer: DocxHighlightViewer,
   isDisposed: () => boolean,
 ): OoxmlHighlightSurface => {
   const measureText = createOoxmlTextMeasurer();
   const runsByPage = new Map<number, readonly DocxTextRunInfo[]>();
-  const pageOfLocation = new Map<OoxmlHighlightLocation, number>();
+  /*
+   * Monotonic token bumped at the start of every `navigate` call and
+   * re-checked after each suspension point, so an earlier citation's
+   * navigation that resolves after a newer one performs no scroll — see
+   * design decision D4 on fix-docx-scroll-to-citation-highlight. This
+   * replaces a `pageOfLocation` cache keyed by location object identity,
+   * which never hit in practice: callers rebuild a fresh location object on
+   * every citation click. `collectPage`'s per-page run cache below is where
+   * the real, hit-able cost is saved.
+   */
+  let navigationGeneration = 0;
 
+  /* Live page size at the viewer's current scale — used only to convert
+   * already-resolved fractions into overlay pixels (placement), never to
+   * collect runs. */
   const sizeAt = (index: number) =>
     docxPageSizePx(docxDocument.pageSize(index), viewer.getScale());
+
+  /*
+   * Fixed reference page size, derived solely from the document (`widthPt`,
+   * `heightPt` at scale 1) rather than from viewer state. Runs are collected
+   * once at this width, so `collectPageRuns` never re-runs on a scale change —
+   * see the scale-free-geometry note on `resolveDocxRects`.
+   */
+  const referenceSizeAt = (index: number) =>
+    docxPageSizePx(docxDocument.pageSize(index), 1);
 
   const collectPage = async (
     pageIndex: number,
@@ -122,7 +178,7 @@ export const createDocxHighlightSurface = (
     if (cached != null) return cached;
 
     const runs = await docxDocument.collectPageRuns(pageIndex, {
-      width: sizeAt(pageIndex).width,
+      width: referenceSizeAt(pageIndex).width,
     });
     if (isDisposed()) return [];
     runsByPage.set(pageIndex, runs);
@@ -139,6 +195,10 @@ export const createDocxHighlightSurface = (
    */
   const findPages = async (
     location: OoxmlDocxHighlightLocation,
+    /* `measure`'s call keeps the plain disposal check; `navigate` also passes
+     * its own generation mismatch so a superseded scan can stop early rather
+     * than finishing a scan whose result would be thrown away. */
+    shouldAbort: () => boolean = isDisposed,
   ): Promise<OoxmlDocxPageRuns[]> => {
     const pages: OoxmlDocxPageRuns[] = [];
 
@@ -148,7 +208,7 @@ export const createDocxHighlightSurface = (
       pageIndex += 1
     ) {
       const runs = await collectPage(pageIndex);
-      if (isDisposed()) return [];
+      if (shouldAbort()) return [];
 
       const storyRuns = runs.filter(
         (run) => run.source != null && run.source.story === location.story,
@@ -158,7 +218,7 @@ export const createDocxHighlightSurface = (
         comparePaths(run.source.path, location.path) === 0;
 
       if (storyRuns.some(isMatch)) {
-        pages.push({ pageIndex, runs });
+        pages.push({ pageIndex, runs, pageBox: referenceSizeAt(pageIndex) });
         continue;
       }
       const isPastTarget =
@@ -186,10 +246,6 @@ export const createDocxHighlightSurface = (
 
           const pages = await findPages(location);
           if (isDisposed()) return [];
-          const firstPage = pages.at(0);
-          if (firstPage != null) {
-            pageOfLocation.set(location, firstPage.pageIndex);
-          }
 
           for (const { pageIndex, rects: pageRects } of resolveDocxRects({
             location,
@@ -201,11 +257,20 @@ export const createDocxHighlightSurface = (
               sizeAt,
               hostClientWidth: host.clientWidth,
             });
+            /*
+             * Shape is scale-free (a fraction of the page box); placement is
+             * not — converting to overlay pixels needs the page's *current*
+             * size, so this multiplication is the only place in the DOCX path
+             * that still depends on `viewer.getScale()`.
+             */
+            const pageSize = sizeAt(pageIndex);
             for (const rect of pageRects) {
               rects.push({
-                ...rect,
-                left: offset.left + rect.left - host.scrollLeft,
-                top: offset.top + rect.top - host.scrollTop,
+                left:
+                  offset.left + rect.left * pageSize.width - host.scrollLeft,
+                top: offset.top + rect.top * pageSize.height - host.scrollTop,
+                width: rect.width * pageSize.width,
+                height: rect.height * pageSize.height,
                 highlightId: highlight.id,
               });
             }
@@ -215,18 +280,83 @@ export const createDocxHighlightSurface = (
       return rects;
     },
     navigate: async (location) => {
-      if (location.kind !== OoxmlHighlightKind.DocxTextRange) return;
-
-      const known = pageOfLocation.get(location);
-      if (known != null) {
-        viewer.scrollToPage(known);
-        return;
+      if (location.kind !== OoxmlHighlightKind.DocxTextRange) {
+        return OoxmlNavigationOutcome.Unresolved;
       }
-      const pages = await findPages(location);
-      if (isDisposed()) return;
-      /* Navigation happens even when the range resolves to no rectangle, so the
-       * user still lands on the cited page. */
-      viewer.scrollToPage(pages.at(0)?.pageIndex ?? 0);
+
+      navigationGeneration += 1;
+      const generation = navigationGeneration;
+      const isSuperseded = (): boolean =>
+        isDisposed() || generation !== navigationGeneration;
+
+      /*
+       * `pageCount` is only authoritative once layout has finished
+       * publishing every page; scanning against a still-growing page list
+       * is what makes a citation on a later page fall through to page one.
+       * See design decision D3.
+       */
+      try {
+        await docxDocument.waitUntilLayoutComplete();
+      } catch {
+        /* A layout failure degrades like any other unresolved location: no
+         * scroll, no error state. */
+        return OoxmlNavigationOutcome.Unresolved;
+      }
+      if (isSuperseded()) return OoxmlNavigationOutcome.Superseded;
+
+      const pages = await findPages(location, isSuperseded);
+      if (isSuperseded()) return OoxmlNavigationOutcome.Superseded;
+
+      const firstPage = pages.at(0);
+      /* No page carries this location at all: leave the viewer where it is
+       * rather than a confident jump to the wrong page. */
+      if (firstPage == null) return OoxmlNavigationOutcome.Unresolved;
+
+      const host = findScrollHost(container);
+      /* Mirrors `measure`'s own failure mode: a missing host means no
+       * navigation, not a scroll to a guessed position. */
+      if (host == null) return OoxmlNavigationOutcome.Unresolved;
+
+      const pageRects = resolveDocxRects({
+        location,
+        pages,
+        measure: measureText,
+      });
+      if (isSuperseded()) return OoxmlNavigationOutcome.Superseded;
+
+      const rect = pageRects
+        .find((page) => page.pageIndex === firstPage.pageIndex)
+        ?.rects.at(0);
+
+      if (rect == null) {
+        /* The page is known but no rectangle resolved on it — the user still
+         * lands on the cited page, unchanged from the page-level behaviour. */
+        viewer.scrollToPage(firstPage.pageIndex);
+        return OoxmlNavigationOutcome.Navigated;
+      }
+
+      const target = resolveDocxScrollTarget({
+        pageIndex: firstPage.pageIndex,
+        rect,
+        sizeAt,
+        host: {
+          clientWidth: host.clientWidth,
+          clientHeight: host.clientHeight,
+          scrollWidth: host.scrollWidth,
+          scrollHeight: host.scrollHeight,
+          scrollLeft: host.scrollLeft,
+        },
+      });
+      /* Writes the scroll host's own position directly — never
+       * `Element.scrollIntoView`, which would walk every scrollable ancestor
+       * and drag the surrounding chat page along with it. */
+      if (typeof host.scrollTo === 'function') {
+        host.scrollTo({ top: target.top, left: target.left, behavior: 'auto' });
+      } else {
+        host.scrollTop = target.top;
+        host.scrollLeft = target.left;
+      }
+      return OoxmlNavigationOutcome.Navigated;
     },
   };
 };
@@ -293,10 +423,13 @@ export const createPptxHighlightSurface = (
       return rects;
     },
     navigate: async (location) => {
-      if (location.kind !== OoxmlHighlightKind.PptxTextRange) return;
+      if (location.kind !== OoxmlHighlightKind.PptxTextRange) {
+        return OoxmlNavigationOutcome.Unresolved;
+      }
       const slideIndex = toSlideIndex(location.slide);
-      if (slideIndex == null) return;
+      if (slideIndex == null) return OoxmlNavigationOutcome.Unresolved;
       viewer.scrollToSlide(slideIndex);
+      return OoxmlNavigationOutcome.Navigated;
     },
   };
 };
@@ -349,16 +482,19 @@ export const createXlsxHighlightSurface = (
     return rects;
   },
   navigate: async (location) => {
-    if (location.kind !== OoxmlHighlightKind.XlsxCellRange) return;
+    if (location.kind !== OoxmlHighlightKind.XlsxCellRange) {
+      return OoxmlNavigationOutcome.Unresolved;
+    }
     const sheetIndex = resolveXlsxSheetIndex(location.sheet, viewer.sheetNames);
-    if (sheetIndex == null) return;
+    if (sheetIndex == null) return OoxmlNavigationOutcome.Unresolved;
 
     if (sheetIndex !== viewer.sheetIndex) {
       await viewer.goToSheet(sheetIndex);
-      if (isDisposed()) return;
+      if (isDisposed()) return OoxmlNavigationOutcome.Superseded;
     }
     await viewer.scrollToCell(toXlsxCellRef(location.start), {
       align: 'center',
     });
+    return OoxmlNavigationOutcome.Navigated;
   },
 });

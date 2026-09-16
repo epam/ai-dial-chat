@@ -4,7 +4,10 @@ import type { XlsxSelectionContext } from '@silurus/ooxml/xlsx';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
 import type { OoxmlCanvasContent } from '../../models/attachment-canvas';
-import { OoxmlFileType } from '../../types/attachment-canvas';
+import {
+  OoxmlFileType,
+  OoxmlNavigationOutcome,
+} from '../../types/attachment-canvas';
 import type {
   OoxmlHighlightSurface,
   TaggedHighlightRect,
@@ -291,6 +294,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
     if (container == null) return;
 
     let surface: OoxmlSurface | undefined;
+    let resizeObserver: ResizeObserver | undefined;
     let disposed = false;
     let pendingFrame: number | undefined;
     const isDisposed = (): boolean => disposed;
@@ -341,6 +345,33 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
       onGeometryInvalidated: scheduleRecompute,
     };
 
+    /*
+     * Observes the renderer's own container rather than the vendor's private
+     * scroll host (`findScrollHost` is an `overflow:auto` heuristic that can
+     * return `null`) or `window.resize` (which misses a panel resize that
+     * leaves the window size unchanged — the case `AttachmentCanvasProps.onResizeStop`
+     * exists for on the host side). Routing that host callback down instead
+     * was rejected too: it fires on drag *stop*, so the highlight would lag
+     * the drag, and it would make this lib depend on host panel mechanics for
+     * something it can observe itself.
+     *
+     * Established only after the viewer is constructed: `ResizeObserver`
+     * callbacks fire in registration order within one delivery, and the
+     * vendor registers its own observer during construction, so observing
+     * afterwards means its refit has already run and this recompute measures
+     * post-refit `clientWidth` and scale. Registered unconditionally rather
+     * than behind `hasHighlights` — `scheduleRecompute` already no-ops with
+     * no highlight surface assigned, and gating here would decouple the
+     * observer's lifetime from the viewer's for no benefit. No "skip the
+     * first callback" flag either: `observe()`'s initial delivery coalesces
+     * harmlessly with `loadDocument`'s own first `measure()` below.
+     */
+    const observeContainer = (): void => {
+      if (disposed) return;
+      resizeObserver = new ResizeObserver(scheduleRecompute);
+      resizeObserver.observe(container);
+    };
+
     const loadDocument = async (): Promise<void> => {
       try {
         if (hasHighlights) {
@@ -357,6 +388,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
           }
           surface = next;
           surfaceRef.current = next.highlights;
+          observeContainer();
         } else {
           const viewer = await createViewer(
             container,
@@ -369,6 +401,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
           }
           surface = { viewer };
           surfaceRef.current = undefined;
+          observeContainer();
           await viewer.load(content.url);
         }
         if (disposed) return;
@@ -397,6 +430,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
       container.removeEventListener('scroll', scheduleRecompute, true);
       if (pendingFrame != null) cancelAnimationFrame(pendingFrame);
       scheduleRecomputeRef.current = undefined;
+      resizeObserver?.disconnect();
       /* Order matters: a viewer built by `fromDocument`/`fromPresentation`
        * leaves its borrowed engine alive, so the engine is released after it. */
       surface?.viewer.destroy();
@@ -414,24 +448,45 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
     scheduleRecomputeRef.current?.();
   }, [highlights]);
 
+  /*
+   * One-shot per selection, by design: keyed only on `selectedHighlightId`
+   * (plus `isLoading`, which gates the first run until the surface exists),
+   * reading the current `highlights` array through `highlightsRef` rather
+   * than depending on it directly. `annotationToOoxmlCanvasContent` builds a
+   * fresh `highlights` array on every citation click even when the selection
+   * is unchanged, and that must not re-trigger navigation. Scroll, zoom,
+   * resize, and page-window changes are wired to `scheduleRecompute` only
+   * (see the effect above), never to this one, so once navigation completes
+   * the user can scroll, zoom, and resize freely without being pulled back.
+   */
   useEffect(() => {
+    /* Reset per selection so a second (or later) citation is announced too,
+     * instead of the live region staying silent because the first citation
+     * already flipped this flag once. */
+    setHasNavigated(false);
+
     const highlightSurface = surfaceRef.current;
     if (highlightSurface == null || isLoading) return;
 
-    const selected = highlights?.find(({ id }) => id === selectedHighlightId);
+    const selected = highlightsRef.current?.find(
+      ({ id }) => id === selectedHighlightId,
+    );
     const location = selected?.locations.at(0);
     if (location == null) return;
 
     let disposed = false;
     const navigate = async (): Promise<void> => {
+      let outcome: OoxmlNavigationOutcome;
       try {
-        await highlightSurface.navigate(location);
+        outcome = await highlightSurface.navigate(location);
       } catch {
-        /* Navigation is best-effort; a failure leaves the document on page one
-         * rather than reporting an error the file did not cause. */
+        /* Navigation is best-effort; a failure leaves the document where it
+         * is rather than reporting an error the file did not cause. */
         return;
       }
-      if (disposed) return;
+      /* A superseded or unresolved outcome announces nothing — only a
+       * completed navigation for the still-current selection does. */
+      if (disposed || outcome !== OoxmlNavigationOutcome.Navigated) return;
       setHasNavigated(true);
     };
     void navigate();
@@ -439,7 +494,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
     return () => {
       disposed = true;
     };
-  }, [highlights, selectedHighlightId, isLoading]);
+  }, [selectedHighlightId, isLoading]);
 
   return (
     <div className="relative flex h-full w-full min-w-0 flex-col overflow-hidden">
