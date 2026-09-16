@@ -114,6 +114,18 @@ describe('AppConfigController (integration)', () => {
       expect(result.body.config.transcribeSizeLimitBytes).toBe(5_242_880);
     });
 
+    /* A cached response keeps serving the previous deployment's announcements
+       and feature flags after a redeploy (issue #8827). */
+    it('forbids caching the response', async () => {
+      mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
+
+      const result = await request(app.getHttpServer())
+        .get('/v1/client-config?appId=chat-ui')
+        .expect(200);
+
+      expect(result.headers['cache-control']).toBe('private, no-store');
+    });
+
     it('returns 400 when appId is missing', async () => {
       await request(app.getHttpServer()).get('/v1/client-config').expect(400);
     });

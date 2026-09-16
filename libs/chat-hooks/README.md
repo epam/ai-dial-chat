@@ -353,11 +353,11 @@ setRefreshToken((token) => token + 1);
 
 **Returns** (`UseUsageDataResult`):
 
-| Name         | Type                                     | Description                                      |
-| ------------ | ---------------------------------------- | ------------------------------------------------ |
+| Name         | Type                                     | Description                                                                                                               |
+| ------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` until the first response resolves. Retained across a `refreshToken`-triggered re-fetch. |
 | `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
-| `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.        |
+| `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.                                                                                 |
 
 ### useConversationScroll
 
@@ -2230,10 +2230,13 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 
 Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
 
+`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
+
 The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
 ```ts
 import {
+  buildAnnouncementSignature,
   hasAnnouncementContent,
   sanitizeAnnouncementMessageHtml,
   type AnnouncementContent,
@@ -2243,9 +2246,19 @@ const content: AnnouncementContent = {
   title: 'Maintenance window',
   description: null,
   html: null,
+  items: [
+    {
+      title: 'Release 1.47',
+      description: 'Skills are now available.',
+      link: { label: 'Read more', href: 'https://example.com/1-47' },
+    },
+  ],
 };
 
 hasAnnouncementContent(content); // true
+
+buildAnnouncementSignature(content);
+// changes as soon as the title, the description, or any `items` entry does
 
 sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
 // '<p>Upgraded to <strong>1.47</strong></p>'
