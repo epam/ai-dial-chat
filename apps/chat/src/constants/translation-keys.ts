@@ -966,6 +966,8 @@ export enum PromptEditorI18nKeys {
 export enum SkillEditorI18nKeys {
   Title = 'skillEditor.title',
   BackAriaLabel = 'skillEditor.backAriaLabel',
+  BackToManifestAriaLabel = 'skillEditor.backToManifestAriaLabel',
+  ReturnedToManifestStatus = 'skillEditor.returnedToManifestStatus',
   FilesHeading = 'skillEditor.filesHeading',
   FilesTreeAriaLabel = 'skillEditor.filesTreeAriaLabel',
   AddUploadLabel = 'skillEditor.addUploadLabel',

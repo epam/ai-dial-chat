@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { SkillFilePreviewState } from '../../../types/skill-file-preview';
 import { configurePdfWorker } from '../../../utils/pdf';
 import { SkillFilePreview } from '../SkillFilePreview';
 
@@ -24,7 +25,7 @@ vi.mock('../../../context/ThemeContext', () => ({
 
 describe('SkillFilePreview', () => {
   it('forwards the app-owned PDF worker initializer to the canvas body', () => {
-    render(<SkillFilePreview path="skill/guide.pdf" />);
+    render(<SkillFilePreview state={SkillFilePreviewState.Ready} />);
 
     expect(attachmentCanvasBody).toHaveBeenCalled();
     expect(attachmentCanvasBody).toHaveBeenCalledWith(
