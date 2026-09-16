@@ -9,30 +9,11 @@ import {
 } from 'react';
 import type { AttachmentCanvasContent } from '../models/attachment-canvas';
 import { AttachmentContentType } from '../types/attachment-canvas';
+import { getRevocableObjectUrl } from '../utils/content';
 
 const EMPTY_CONTENT: AttachmentCanvasContent = {
   type: AttachmentContentType.PlainText,
   text: '',
-};
-
-/**
- * Returns `content.url` when it is an object URL created by
- * `URL.createObjectURL` (i.e. it should be revoked once no longer displayed),
- * or `undefined` otherwise (a remote/data URL, or a content type with no
- * `url` at all).
- */
-const getRevocableObjectUrl = (
-  content: AttachmentCanvasContent,
-): string | undefined => {
-  if (
-    content.type !== AttachmentContentType.Image &&
-    content.type !== AttachmentContentType.Audio &&
-    content.type !== AttachmentContentType.Pdf &&
-    content.type !== AttachmentContentType.Ooxml
-  ) {
-    return undefined;
-  }
-  return content.url.startsWith('blob:') ? content.url : undefined;
 };
 
 /** Value exposed by the attachment canvas context. */
