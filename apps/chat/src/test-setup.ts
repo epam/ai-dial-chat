@@ -75,14 +75,24 @@ vi.mock('@epam/ai-dial-react-pdf-highlighter', () => ({
   PageThumbnail: () => null,
 }));
 
+/*
+ * `t` and the returned object are module-level singletons, not recreated per
+ * call — real `react-i18next` returns a stable `t` reference across
+ * re-renders (language/namespace unchanged), and code under test may rely on
+ * that stability for memoization (e.g. `useCitationMarkdownComponents`'s
+ * `markdownComponents` memo, which must not recompute on an unrelated
+ * re-render). A fresh closure per call previously went unnoticed because
+ * nothing depended on `t`'s identity — only its output.
+ */
+const mockT = (key: string, _params?: Record<string, string>) => key;
+const mockUseTranslationResult = {
+  t: mockT,
+  i18n: {
+    language: 'en',
+    changeLanguage: vi.fn(),
+  },
+};
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string, _params?: Record<string, string>) => {
-      return key;
-    },
-    i18n: {
-      language: 'en',
-      changeLanguage: vi.fn(),
-    },
-  }),
+  useTranslation: () => mockUseTranslationResult,
 }));

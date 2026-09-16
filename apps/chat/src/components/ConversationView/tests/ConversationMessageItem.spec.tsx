@@ -633,6 +633,361 @@ describe('ConversationMessageItem — inline citations', () => {
       expect.objectContaining({ url: 'files/account/uploads/export.csv' }),
     );
   });
+
+  it('activating one occurrence of a repeated cit id opens one card and previews it exactly once with the group-identical annotation', async () => {
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content:
+        'Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>',
+      timestamp: '2026-09-11T10:00:00Z',
+      custom_content: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+            body: {
+              title: 'report.pdf',
+              selector: {
+                type: 'pdf_bbox',
+                page: 1,
+                x1: 0,
+                y1: 0,
+                x2: 0,
+                y2: 0,
+              },
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'https://example.com/report.pdf',
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: CitationsI18nKeys.MarkerAriaLabel,
+    });
+    expect(markers).toHaveLength(2);
+
+    await userEvent.click(markers[0]);
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledOnce();
+    /* `annotationToPdfCanvasContent` resolves the group via
+       `groups.find((g) => g.annotations.includes(annotation))` (F9) — a
+       cloned annotation would fail this lookup and `page` would be
+       `undefined`. */
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://example.com/report.pdf',
+        page: 1,
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('keeps two distinct cit ids independently openable when their annotations share quote text and source URL', async () => {
+    const sharedQuote = 'Dinosaurs first appeared in the Triassic';
+    const sharedUrl = 'https://example.com/report.pdf';
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content:
+        'Claim one<cit data-id="e1"></cit> Claim two<cit data-id="e2"></cit>',
+      timestamp: '2026-09-12T10:00:00Z',
+      custom_content: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+            body: {
+              title: 'report.pdf',
+              quote: sharedQuote,
+              source: {
+                type: 'attachment',
+                attachment: { type: 'application/pdf', url: sharedUrl },
+              },
+            },
+          },
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e2' } },
+            body: {
+              title: 'report.pdf',
+              quote: sharedQuote,
+              source: {
+                type: 'attachment',
+                attachment: { type: 'application/pdf', url: sharedUrl },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: CitationsI18nKeys.MarkerAriaLabel,
+    });
+    expect(markers).toHaveLength(2);
+
+    await userEvent.click(markers[0]);
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+
+    await userEvent.click(markers[1]);
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  });
+
+  it('activating repeated markers across two paragraphs opens one card each time', async () => {
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content:
+        'First paragraph cites this<cit data-id="e1"></cit>.\n\nSecond paragraph cites it again<cit data-id="e1"></cit>.',
+      timestamp: '2026-09-13T10:00:00Z',
+      custom_content: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+            body: {
+              title: 'report.pdf',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'https://example.com/report.pdf',
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: CitationsI18nKeys.MarkerAriaLabel,
+    });
+    expect(markers).toHaveLength(2);
+
+    await userEvent.click(markers[0]);
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+
+    await userEvent.click(markers[1]);
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  });
+
+  it('previews the annotation the card is showing after navigating with Next from a repeated marker', async () => {
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content:
+        'Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>',
+      timestamp: '2026-09-14T10:00:00Z',
+      custom_content: {
+        annotations: [
+          {
+            index: 0,
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+            body: {
+              title: 'report.pdf',
+              selector: {
+                type: 'pdf_bbox',
+                page: 1,
+                x1: 0,
+                y1: 0,
+                x2: 0,
+                y2: 0,
+              },
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'https://example.com/report.pdf',
+                },
+              },
+            },
+          },
+          {
+            index: 1,
+            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+            body: {
+              title: 'report.pdf',
+              selector: {
+                type: 'pdf_bbox',
+                page: 2,
+                x1: 0,
+                y1: 0,
+                x2: 0,
+                y2: 0,
+              },
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'https://example.com/report.pdf',
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: CitationsI18nKeys.MarkerAriaLabel,
+    });
+    await userEvent.click(markers[1]);
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.PopupNextCitation }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledOnce();
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://example.com/report.pdf',
+        page: 2,
+      }),
+      expect.any(String),
+    );
+  });
+
+  /*
+   * Fixture trimmed from a user-confirmed reproduction of issue #8822: the
+   * assistant response's `content`/`custom_content.annotations`, source URL
+   * replaced with a test value, execution history/model state omitted.
+   * Findings from that payload (recorded in task 4.1 of
+   * `openspec/changes/fix-repeated-citation-popup-identity/tasks.md`):
+   * source is a PDF (not the issue's original DOCX); `ff3390`/`7bba1b` each
+   * occur twice in `content` against exactly one annotation each (no
+   * `index`); `ff3390`'s annotation carries two `pdf_region` selectors. This
+   * demonstrates the repeated-occurrence identity bug (F1) this change
+   * fixes; it does not demonstrate an intra-set highlight-id collision (F6)
+   * — each PDF group here has exactly one annotation, so
+   * `annotationsToPdfHighlights` never gathers more than one entry.
+   */
+  it('reproduces issue #8822: two repeated cit ids, one multi-selector annotation each, PDF source', async () => {
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content:
+        '\n\r\n\rBased on the provided document, **David Reynolds** was an independent eye-witness to the incident. \n\nHere are the key details regarding his statement and involvement:\n* **Role:** He was a pedestrian located near the scene of the accident <cit data-id="ff3390"></cit>.\n* **Observations:** \n  * He reported hearing screeching tires and seeing a Honda vehicle spinning immediately after the initial impact <cit data-id="ff3390"></cit>.\n  * He noted that the Mustang involved had absolutely no opportunity to avoid the subsequent collision <cit data-id="7bba1b"></cit>.\n* **Conclusion:** He characterized the entire event as a rapid chain reaction <cit data-id="7bba1b"></cit>.',
+      timestamp: '2026-09-16T07:21:28.670Z',
+      custom_content: {
+        annotations: [
+          {
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: 'ff3390' },
+            },
+            body: {
+              title: 'max_artificial_claim.pdf',
+              quote:
+                'David Reynolds, a pedestrian crossing nearby, reported, "I heard the screeching tires and turned to see the Honda spinning after the first impact.',
+              selector: [
+                {
+                  type: 'pdf_region',
+                  page: 1,
+                  bbox: { lt: [68.544, 603.504], wh: [455.94, 19.8] },
+                },
+                {
+                  type: 'pdf_region',
+                  page: 1,
+                  bbox: { lt: [68.544, 614.592], wh: [299.268, 19.008] },
+                },
+              ],
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
+                  title: 'max_artificial_claim.pdf',
+                },
+              },
+            },
+          },
+          {
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: '7bba1b' },
+            },
+            body: {
+              title: 'max_artificial_claim.pdf',
+              quote:
+                'The Mustang didn’t have a chance to avoid the collision — it was like a chain reaction."',
+              selector: [
+                {
+                  type: 'pdf_region',
+                  page: 1,
+                  bbox: { lt: [68.544, 624.096], wh: [394.128, 19.8] },
+                },
+              ],
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
+                  title: 'max_artificial_claim.pdf',
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    render(
+      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: CitationsI18nKeys.MarkerAriaLabel,
+    });
+    expect(markers).toHaveLength(4);
+
+    for (const marker of markers) {
+      await userEvent.click(marker);
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      expect(mockOpenCanvas).toHaveBeenCalledOnce();
+      expect(screen.queryAllByRole('dialog')).toHaveLength(0);
+      mockOpenCanvas.mockClear();
+    }
+
+    for (const marker of markers) {
+      await userEvent.click(marker);
+      await userEvent.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.Download }),
+      );
+      expect(clickSpy).toHaveBeenCalledOnce();
+      clickSpy.mockClear();
+    }
+
+    clickSpy.mockRestore();
+  });
 });
 
 describe('ConversationMessageItem — stopped generation', () => {
