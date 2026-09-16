@@ -20,7 +20,7 @@ npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke
 It installs three representative consumers: `minimal`, `oauth`, and
 `negative-oauth`. Together they verify the complete packed-file/export map,
 minimal optional-peer isolation, the OAuth side-effect path, the complete
-audited `sideEffects` manifest (including the file-manager chunk), and the
+audited `sideEffects` manifest (including the file-manager-canvas chunk), and the
 exact missing-peer diagnostic. This keeps the network-bound PR gate focused
 while retaining coverage of the package contract's highest-risk behavior.
 
@@ -85,10 +85,10 @@ installed, for exactly this reason.
 --json`'s actual file list.
 - **Side-effect checks** — compare the audited marker files with the
   publish-transformed `sideEffects` patterns, then rebuild `./oauth` and
-  `./file-manager` from side-effect-only imports and check their emitted
+  `./file-manager-canvas` from side-effect-only imports and check their emitted
   bundles for the two real module-scope effects: a literal
   `new EventTarget()` call (the singleton in `./oauth`) and the bundled
-  `lru-cache` implementation (the two cache instances in `./file-manager`,
+  `lru-cache` implementation (the two cache instances in `./file-manager-canvas`,
   detected via its `Symbol.toStringTag` string literal — the only part of
   its own construction that survives this workspace's identifier-renaming
   production build; see `fixtures.mjs`'s `SIDE_EFFECT_CHECKS` comment).
