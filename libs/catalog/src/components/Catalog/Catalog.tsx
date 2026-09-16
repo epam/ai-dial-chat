@@ -244,12 +244,10 @@ export const Catalog: FC<CatalogProps> = ({
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
-  const handleOpenDetails = useCallback(
+  const fetchDetails = useCallback(
     async (
       item: CatalogItem,
     ): Promise<CatalogItemDetailsFetchResult | undefined> => {
-      setSelectedItem(item);
-      setFetchedDetails(undefined);
       pendingItemIdRef.current = item.id;
 
       if (!onFetchDetails) return undefined;
@@ -268,6 +266,48 @@ export const Catalog: FC<CatalogProps> = ({
       }
     },
     [onFetchDetails],
+  );
+
+  const handleOpenDetails = useCallback(
+    async (
+      item: CatalogItem,
+    ): Promise<CatalogItemDetailsFetchResult | undefined> => {
+      setSelectedItem(item);
+      setFetchedDetails(undefined);
+      return fetchDetails(item);
+    },
+    [fetchDetails],
+  );
+
+  /**
+   * Re-fetches details for the item already open in the panel, retrying up
+   * to `POST_AUTH_REFRESH_ATTEMPTS` times until `isExpectedState` reports
+   * true, or leaving the last attempt's result once attempts run out.
+   * Unlike `handleOpenDetails`, this never clears `fetchedDetails` between
+   * attempts, so the panel keeps showing the previous (pre-action) snapshot
+   * instead of flashing back to the unenriched base item on every retry.
+   */
+  const retryDetailsUntil = useCallback(
+    async (
+      item: CatalogItem,
+      isExpectedState: (
+        details: CatalogItemDetailsFetchResult | undefined,
+      ) => boolean,
+    ): Promise<void> => {
+      for (let attempt = 0; attempt < POST_AUTH_REFRESH_ATTEMPTS; attempt++) {
+        /* The user may close the panel (or open a different item) while a
+         * login/logout call or an inter-attempt sleep is in flight —
+         * `pendingItemIdRef` is cleared/reassigned synchronously by those
+         * actions, so bail out rather than resurrecting a closed panel. */
+        if (pendingItemIdRef.current !== item.id) return;
+        const details = await fetchDetails(item);
+        if (isExpectedState(details)) return;
+        if (attempt < POST_AUTH_REFRESH_ATTEMPTS - 1) {
+          await sleep(POST_AUTH_REFRESH_DELAY_MS);
+        }
+      }
+    },
+    [fetchDetails],
   );
 
   const appliedInitialDetailsItemIdRef = useRef<string | null>(null);
@@ -311,29 +351,24 @@ export const Catalog: FC<CatalogProps> = ({
       params: { level: CredentialsLevel; apiKey?: string },
     ) => {
       await onLogin?.(item, params);
-      for (let attempt = 0; attempt < POST_AUTH_REFRESH_ATTEMPTS; attempt++) {
-        const details = await handleOpenDetails(item);
-        if (isLevelSignedIn(details?.credentials, params.level)) return;
-        if (attempt < POST_AUTH_REFRESH_ATTEMPTS - 1) {
-          await sleep(POST_AUTH_REFRESH_DELAY_MS);
-        }
-      }
+      if (!onFetchDetails) return;
+      await retryDetailsUntil(item, (details) =>
+        isLevelSignedIn(details?.credentials, params.level),
+      );
     },
-    [onLogin, handleOpenDetails],
+    [onLogin, onFetchDetails, retryDetailsUntil],
   );
 
   const handleLogout = useCallback(
     async (item: CatalogItem, params: { level: CredentialsLevel }) => {
       await onLogout?.(item, params);
-      for (let attempt = 0; attempt < POST_AUTH_REFRESH_ATTEMPTS; attempt++) {
-        const details = await handleOpenDetails(item);
-        if (!isLevelSignedIn(details?.credentials, params.level)) return;
-        if (attempt < POST_AUTH_REFRESH_ATTEMPTS - 1) {
-          await sleep(POST_AUTH_REFRESH_DELAY_MS);
-        }
-      }
+      if (!onFetchDetails) return;
+      await retryDetailsUntil(
+        item,
+        (details) => !isLevelSignedIn(details?.credentials, params.level),
+      );
     },
-    [onLogout, handleOpenDetails],
+    [onLogout, onFetchDetails, retryDetailsUntil],
   );
 
   const handleCloseDetails = useCallback(() => {
