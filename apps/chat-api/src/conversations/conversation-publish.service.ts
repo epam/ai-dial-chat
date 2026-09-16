@@ -13,6 +13,7 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { PublishRuleDto } from '../publish/dto/publish-rule.dto';
@@ -155,7 +156,7 @@ export class ConversationPublishService {
       publishedAt: publication.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      publishedBy: publication.author ?? publication.displayAuthor ?? '',
+      publishedBy: readPublicationDisplayAuthor(publication, author),
     };
   }
 
@@ -272,7 +273,7 @@ export class ConversationPublishService {
       requestedAt: publication.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      requestedBy: publication.author ?? publication.displayAuthor ?? '',
+      requestedBy: readPublicationDisplayAuthor(publication, author),
     };
   }
 
@@ -337,7 +338,7 @@ export class ConversationPublishService {
             publishedAt: publication.createdAt
               ? new Date(publication.createdAt).toISOString()
               : '',
-            publishedBy: publication.author ?? publication.displayAuthor ?? '',
+            publishedBy: readPublicationDisplayAuthor(publication, ''),
           }))
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },

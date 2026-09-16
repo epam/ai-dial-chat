@@ -193,7 +193,7 @@ export interface InputProps {
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
-  sendTitle?: string;
+  sendTooltip?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */

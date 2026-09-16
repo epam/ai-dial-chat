@@ -57,7 +57,7 @@ Core call made by the service (via `DialClientService.client.createPublication`)
 
 `folderPath` is validated with `class-validator` reusing `IsValidFilePath` (blocks `..`/absolute-path escapes) exactly as `PublishCatalogEntityDto` does. `path` (the conversation path) reuses `ConversationPathDto`'s existing validation. `rules` is validated exactly as in `PublishCatalogEntityDto` (same `PublishRuleDto`, same limits). `author` is validated exactly as in `PublishCatalogEntityDto`: `@IsOptional()`, `@IsString()`, `@MaxLength(200)`, `@Matches(/^[^\p{Cc}]*$/u)`.
 
-`author` SHALL NOT affect authorization or the recorded actor. Core continues to derive the publication's `author` from the caller's bearer token, and `PublishConversationResultDto.publishedBy` SHALL continue to prefer `publication.author` over `publication.displayAuthor`.
+`author` SHALL NOT affect authorization or the recorded actor. Core continues to derive the publication's `author` from the caller's bearer token, and `PublishConversationResultDto.publishedBy` SHALL report the publication's display author, reading `publication.displayAuthor` before `publication.author` (`readPublicationDisplayAuthor`), exactly as catalog publish does.
 
 Response (201):
 ```json
