@@ -1,22 +1,24 @@
+import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
-import type { AnnouncementItem } from '../../../models/announcement';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import AnnouncementBanner from '../AnnouncementBanner';
 
-const { mockAppConfigState, mockDismiss } = vi.hoisted(() => ({
-  mockAppConfigState: {
-    status: 'ready' as UserConfigStatus,
-    announcementHtml: null as string | null,
-    announcementTitle: null as string | null,
-    announcementDescription: null as string | null,
-    announcements: [] as AnnouncementItem[],
-    isDismissed: false,
-  },
-  mockDismiss: vi.fn(),
-}));
+const { mockAppConfigState, mockDismiss, mockUseAnnouncementDismissal } =
+  vi.hoisted(() => ({
+    mockAppConfigState: {
+      status: 'ready' as UserConfigStatus,
+      announcementHtml: null as string | null,
+      announcementTitle: null as string | null,
+      announcementDescription: null as string | null,
+      announcements: [] as AnnouncementListItem[],
+      isDismissed: false,
+    },
+    mockDismiss: vi.fn(),
+    mockUseAnnouncementDismissal: vi.fn(),
+  }));
 
 vi.mock(
   '../../../context/AppConfigContext',
@@ -34,13 +36,12 @@ mockUseAppConfig.mockImplementation(() => ({
 
 vi.mock(
   '../../../hooks/useAnnouncementDismissal/useAnnouncementDismissal',
-  () => ({
-    useAnnouncementDismissal: () => ({
-      isDismissed: mockAppConfigState.isDismissed,
-      dismiss: mockDismiss,
-    }),
-  }),
+  () => ({ useAnnouncementDismissal: mockUseAnnouncementDismissal }),
 );
+mockUseAnnouncementDismissal.mockImplementation(() => ({
+  isDismissed: mockAppConfigState.isDismissed,
+  dismiss: mockDismiss,
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -59,7 +60,7 @@ const resetState = () => {
   mockAppConfigState.isDismissed = false;
 };
 
-const makeAnnouncement = (title: string): AnnouncementItem => ({
+const makeAnnouncement = (title: string): AnnouncementListItem => ({
   title,
   description: null,
   link: { label: 'Register', href: 'https://dialx.ai' },
@@ -325,6 +326,21 @@ describe('AnnouncementBanner — announcements pill', () => {
     render(<AnnouncementBanner />);
 
     expect(screen.queryByRole('button', { name: PILL_NAME })).toBeNull();
+  });
+
+  /* The popover is hidden along with the banner, so the entries behind the pill
+     have to key the dismissal too — otherwise publishing a new announcement
+     leaves the banner closed for everyone who dismissed the previous one
+     (issue #8827). */
+  it('keys dismissal on the announcements behind the pill', () => {
+    const announcements = [makeAnnouncement('Upgraded to 1.43')];
+    mockAppConfigState.announcementTitle = 'Welcome to DIAL';
+    mockAppConfigState.announcements = announcements;
+    render(<AnnouncementBanner />);
+
+    expect(mockUseAnnouncementDismissal).toHaveBeenCalledWith(
+      expect.objectContaining({ items: announcements }),
+    );
   });
 });
 

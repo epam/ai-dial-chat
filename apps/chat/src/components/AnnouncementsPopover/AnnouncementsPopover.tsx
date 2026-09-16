@@ -1,15 +1,17 @@
-import { sanitizeAnnouncementHtml } from '@epam/ai-dial-chat-hooks';
+import {
+  sanitizeAnnouncementHtml,
+  type AnnouncementListItem,
+} from '@epam/ai-dial-chat-hooks';
 import { Dropdown, LinkButton, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnnouncementsPopoverI18nKeys } from '../../constants/translation-keys';
-import type { AnnouncementItem } from '../../models/announcement';
 
 const MAX_POPOVER_HEIGHT = 420;
 
 interface Props {
-  announcements: AnnouncementItem[];
+  announcements: AnnouncementListItem[];
 }
 
 const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
