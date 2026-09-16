@@ -113,7 +113,7 @@ The OpenAPI operationId and SDK method SHALL remain `transcribeAudio`. Frontend 
 
 - **WHEN** Core rejects ASR with 429 or 503 and `Retry-After: 30`
 - **THEN** the API responds with 503 and preserves `Retry-After: 30`
-- **AND** the generated client's rejected response retains the header for retry handling
+- **AND** the app surfaces the unavailable/busy error immediately without waiting for a frontend retry
 
 #### Scenario: Empty model content
 
@@ -122,12 +122,17 @@ The OpenAPI operationId and SDK method SHALL remain `transcribeAudio`. Frontend 
 
 ### Requirement: Bounded cancellable recognition retries
 
-`withTranscriptionRetry` SHALL retry only recognition on HTTP 429/502/503/504, with at most two retries and at most 90 seconds of accumulated retry waiting. This waiting budget SHALL NOT be represented as a total request timeout. Retry-After SHALL accept seconds or an HTTP date and have a one-second minimum wait. A delay beyond the remaining budget SHALL end processing with an unavailable error rather than retry early. Without a valid header, 429/503 SHALL wait 30 then 60 seconds, and 502/504 SHALL wait 2 then 4 seconds. Upload errors and other recognition failures SHALL NOT be retried by this helper.
+`withTranscriptionRetry` SHALL immediately convert HTTP 429/503 recognition failures to an unavailable/busy error without retrying. It SHALL retry only recognition on HTTP 502/504, with at most two retries and at most 6 seconds of accumulated retry waiting. This waiting budget SHALL NOT be represented as a total request timeout. Retry-After SHALL accept seconds or an HTTP date and have a one-second minimum wait. A delay beyond the remaining budget SHALL end processing with an unavailable error rather than retry early. Without a valid header, 502/504 SHALL wait 2 then 4 seconds. Upload errors and other recognition failures SHALL NOT be retried by this helper.
 
-#### Scenario: Retry succeeds
+#### Scenario: Gateway retry succeeds
 
-- **WHEN** recognition fails temporarily then succeeds
+- **WHEN** recognition receives HTTP 502 or 504 and then succeeds within the retry budget
 - **THEN** it uses the same uploaded recording and the input inserts the result once
+
+#### Scenario: Rate limit is not retried
+
+- **WHEN** recognition receives HTTP 429 or 503
+- **THEN** the helper reports `voiceRecording.busy` immediately and starts no retry timer
 
 #### Scenario: Retry budget exhausted
 

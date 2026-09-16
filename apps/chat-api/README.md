@@ -527,14 +527,16 @@ names become the generated SDK's method names, so name them like
 
 `POST /api/v1/transcription` maps upstream 429 and 503 responses to HTTP 503 and
 forwards the upstream `Retry-After` header when present. Other upstream errors use
-the shared DIAL error mapper. The frontend retries recognition of the same file;
-the backend does not add a second retry loop.
+the shared DIAL error mapper. The frontend surfaces 429/503 immediately and
+restores the editable draft with an error message. Only gateway failures
+(502/504) retry recognition of the same file, at most twice with a six-second
+total delay budget, respecting `Retry-After`. The backend adds no retry loop.
 
 In the local Core implementation, `Service is not available` is produced by the
 upstream balancer when all upstream states have status 429. Check Core logs for
 `Upstream ... limit hit` and the ASR provider's quotas/capacity. Dictation submits one
-complete recording after Stop. Retries handle temporary unavailability but do not
-increase provider quotas. The configured deployment can be valid even when some
+complete recording after Stop. Raising a DIAL token limit does not increase the
+provider's request quota. The configured deployment can be valid even when some
 recognition requests receive this response.
 
 ## Project Structure
