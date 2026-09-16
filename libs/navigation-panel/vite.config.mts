@@ -52,6 +52,10 @@ export default defineConfig(() => ({
      * affects this lib's own production build.
      */
     alias: {
+      '@epam/ai-dial-attachment-input': path.resolve(
+        import.meta.dirname,
+        '../attachment-input/src/index.ts',
+      ),
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../chat-shared/src/index.ts',

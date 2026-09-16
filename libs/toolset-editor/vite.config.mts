@@ -19,10 +19,15 @@ export default defineConfig(() => ({
      * Resolve workspace peers from source: their published bundles import
      * `.scss` modules that are not emitted to `dist`, which vitest cannot
      * load. The editor only imports the `@epam/ai-dial-chat-hooks` root
-     * barrel, never its dependency-scoped subpaths, so a single alias
-     * suffices.
+     * barrel, never its dependency-scoped subpaths, but that barrel's own
+     * source pulls in `@epam/ai-dial-attachment-input`, so it needs an
+     * alias here too.
      */
     alias: {
+      '@epam/ai-dial-attachment-input': path.resolve(
+        import.meta.dirname,
+        '../attachment-input/src/index.ts',
+      ),
       '@epam/ai-dial-builder-form': path.resolve(
         import.meta.dirname,
         '../builder-form/src/index.ts',

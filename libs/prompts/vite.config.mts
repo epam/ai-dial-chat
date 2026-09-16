@@ -67,6 +67,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../catalog/src/index.ts',
       ),
+      '@epam/ai-dial-publish-panel': path.resolve(
+        import.meta.dirname,
+        '../publish-panel/src/index.ts',
+      ),
     },
     setupFiles: ['./src/test-setup.ts'],
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
