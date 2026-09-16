@@ -671,6 +671,8 @@ Uploads an attachment's file to DIAL Core storage against an already-configured 
 
 Uploads go to `uploads/<YYYY-MM>/` in `create-only` mode and never replace an existing file: a name already used in this session, or one the server reports as taken, gets a ` (1)`, ` (2)`, … suffix instead. The stored name comes back in the result, so a caller that displays `attachment.name` should replace it with the returned one.
 
+After a 409 conflict, clients providing `listFiles` load the month folder's existing names before allocating the next suffix. This skips files left by earlier chats or removed from the composer without exhausting the five-retry budget. Concurrent uploads keep their local name reservations. If listing is unavailable or fails, uploads fall back to bounded suffix retries; persistent conflicts still reject. Removing an attachment from the composer does not delete its stored file.
+
 ```tsx
 import { useAttachmentUpload } from '@epam/ai-dial-chat-hooks';
 
@@ -701,12 +703,12 @@ const Composer = ({
 
 **Parameters** (`UseAttachmentUploadParams`):
 
-| Name             | Type                            | Description                                                                   |
-| ---------------- | ------------------------------- | ----------------------------------------------------------------------------- |
-| `filesApi`       | `Pick<FilesApi, 'uploadFile'>`  | Already-configured generated-client instance.                                 |
-| `bucket`         | `string \| undefined`           | DIAL Core bucket the file is uploaded into.                                   |
-| `onNetworkError` | `(fileNames: string[]) => void` | Called once per debounce window with all filenames that failed while offline. |
-| `debounceMs`     | `number`                        | Debounce window for coalescing offline-failure batches. Defaults to `700`.    |
+| Name             | Type                                                                  | Description                                                                            |
+| ---------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `filesApi`       | `Pick<FilesApi, 'uploadFile'> & Partial<Pick<FilesApi, 'listFiles'>>` | Already-configured client; `listFiles` enables skipping stored names after a conflict. |
+| `bucket`         | `string \| undefined`                                                 | DIAL Core bucket the file is uploaded into.                                            |
+| `onNetworkError` | `(fileNames: string[]) => void`                                       | Called once per debounce window with all filenames that failed while offline.          |
+| `debounceMs`     | `number`                                                              | Debounce window for coalescing offline-failure batches. Defaults to `700`.             |
 
 **Returns** (`UseAttachmentUploadResult`): `{ handleUploadAttachment: (attachment: Attachment) => Promise<UploadedAttachmentResult> }` — resolves to `{ url, name }`, the uploaded file's DIAL Core URL and the name it was actually stored under; rejects with an `Error` tagged `errorReason: AttachmentErrorReason.Network` when offline.
 

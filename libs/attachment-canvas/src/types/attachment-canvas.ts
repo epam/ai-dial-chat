@@ -16,7 +16,7 @@ export enum AttachmentContentType {
   Error = 'error',
 }
 
-/** Supported document formats rendered by the bundled `@silurus/ooxml` runtime. */
+/** Supported document formats rendered by the installed `@silurus/ooxml` runtime. */
 export enum OoxmlFileType {
   Docx = 'docx',
   Xlsx = 'xlsx',

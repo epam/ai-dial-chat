@@ -25,6 +25,10 @@
         "cwd": "tools/attachment-canvas-consumer-fixture"
       },
       "dependsOn": ["build"]
+    },
+    "test": {
+      "executor": "nx:noop",
+      "dependsOn": ["verify"]
     }
   }
 }

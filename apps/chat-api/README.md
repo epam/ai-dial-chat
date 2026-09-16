@@ -886,6 +886,73 @@ operation counts directs investigation toward retained JavaScript objects; growi
 or `array_buffers` directs it toward buffers. A rising RSS alone cannot establish a JavaScript
 heap leak.
 
+### HTTP transport lifecycle metrics
+
+`apps/chat-api/src/telemetry/http-lifecycle-listener.ts` attaches a listener directly to the main
+application `http.Server`'s `'request'` event — the earliest point Node hands a request to the
+application, ahead of Express body parsers, `helmet`, CORS, and every Nest guard/pipe/interceptor.
+`main.ts` calls it as the first statement inside `bootstrap()`, before `app.enableShutdownHooks()`
+or any `app.use(...)` call, so its visibility never depends on what gets registered afterward. It
+is gated by the same metrics-exporter toggle as the runtime gauges above (`OTEL_SDK_DISABLED` /
+`OTEL_METRICS_EXPORTER=none` disables it) and is excluded from `GET /api/health` and `GET /metrics`
+via the same `telemetry/excluded-paths.ts` predicate the existing histogram and tracing use.
+
+This is a **different, coexisting** signal from `http.server.request.duration`
+(`MetricsInterceptor`, described under Metrics above): that histogram only observes requests a Nest
+handler actually settles, after guards/pipes/routing already ran. The three instruments below
+observe the complete HTTP transport lifecycle instead — including guard rejections (auth/CSRF/
+feature-flag/rate-limit), body-parser failures, and unmatched routes — so they answer "what
+happened to the raw HTTP request", not "how long did the matched handler take". Neither instrument
+family is redefined or removed to add the other.
+
+| OpenTelemetry instrument                | Prometheus series                        | Type / unit             | Attributes                                                                                                                                                                     | Recorded at                                    |
+| ---------------------------------------- | ----------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `dial.chat.http.requests.started`        | `dial_chat_http_requests_started_total`   | Counter / `{request}`    | `http.request.method` (bounded to `GET`/`HEAD`/`POST`/`PUT`/`PATCH`/`DELETE`/`OPTIONS`, else `unknown`)                                                                          | Request arrival (the raw `'request'` event)     |
+| `dial.chat.http.requests.active`         | `dial_chat_http_requests_active`          | UpDownCounter / `{request}` | Same bounded `http.request.method` set, identical for the `+1` at arrival and the `-1` at settlement                                                                          | `+1` at arrival, `-1` at settlement             |
+| `dial.chat.http.response.duration`       | `dial_chat_http_response_duration`        | Histogram / `s`          | `http.request.method`, `http.route` (matched route template, else the bounded literal `unmatched`), `http.response.status_code` (present only when headers were sent), `dial.chat.http.outcome`, `dial.chat.http.transport_kind` | Settlement — exactly once per request           |
+
+`dial.chat.http.outcome` is one of `completed` (`'finish'` fired), `aborted_before_response` (the
+connection closed/aborted before any status line was sent — `http.response.status_code` is omitted,
+never a fabricated `200`), `aborted_during_response` (the connection closed after headers were sent
+but `'finish'` never fired — e.g. a client disconnecting mid-SSE-stream), or `error` (the
+request/response emitted `'error'` before either of the above resolved). Settlement is guarded by a
+single `settled` flag shared across `res`'s `'finish'`/`'close'`/`'error'` and `req`'s
+`'aborted'`/`'error'` events, all attached with `once()`, so exactly one terminal data point is
+recorded per request regardless of which combination fires or in what order — an ordinary `'close'`
+following `'finish'` on a normal keep-alive teardown is never read as a second completion.
+
+`dial.chat.http.transport_kind` is `streaming` for exactly `/api/v1/conversations/completions`,
+`/api/v1/conversations/completions/attach`, `/api/v1/conversations/watch`, and
+`/api/v1/client-channel/subscribe`; `unmatched` when the route itself is `unmatched`; `ordinary`
+for every other matched route. A new long-lived SSE route added later without updating this fixed
+list still records correctly, just as `ordinary` instead of `streaming` — an imprecise bucket, not
+a correctness bug.
+
+`dial.chat.http.response.duration` uses fixed bucket boundaries
+`[0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 10, 30, 60]` seconds (unlike
+`http.server.request.duration`, which uses the OpenTelemetry SDK's default boundaries starting at
+0/5/10s). **Bucket-boundary compatibility policy**: once these boundaries ship, they are never
+edited in place under the same metric name — Prometheus's `histogram_quantile` cannot correctly
+aggregate `_bucket` series with different `le` boundaries across pods running old vs. new code
+during a rolling deploy. A future change to the boundaries ships under a new metric name or an
+explicit version suffix instead.
+
+No attribute on any of the three instruments is ever a raw URL, query string, or user/conversation/
+deployment identifier.
+
+**Local dashboard**: the git-ignored `bff-observability-local/dashboards/00-bff-overview-http.json`
+(regenerate with `python3 bff-observability-local/generate_dashboards.py`) covers arrival RPS, the
+in-flight gauge, completed-response rate/status distribution, a 4xx/5xx fraction scoped to
+completed responses only, ordinary-request latency percentiles, busiest/slowest/error-prone routes,
+and a separate streaming-transport-duration panel. Its dedicated availability row's Kubernetes-
+readiness and ingress/synthetic-check panels are explicit text placeholders reading "Requires
+external verification" — this repository has no `ServiceMonitor`/ingress/synthetic-check
+configuration to query, so wiring them to real platform metrics is a follow-up task for whoever
+operates the deployment, not something this dashboard does automatically. Its trace-navigation data
+link opens a `${tempo_datasource}`/`${loki_datasource}`-scoped Explore search (by `service.name` +
+`http.route` + time range), not an exact metric-to-trace link — the pinned
+`@opentelemetry/exporter-prometheus` version emits no Prometheus exemplar data.
+
 ### Local verification
 
 Run a collector (e.g. the [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) with a `debug` exporter) and point the app at it:

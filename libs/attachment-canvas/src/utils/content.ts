@@ -36,7 +36,7 @@ const RENDERER_FILE_TYPE_TO_MIME: Record<OoxmlFileType, string> = {
   [OoxmlFileType.Csv]: MIMEType.CSV,
 };
 
-/** Resolves a format supported by the bundled `@silurus/ooxml` renderer from a MIME type or file extension. */
+/** Resolves a format supported by the installed `@silurus/ooxml` renderer from a MIME type or file extension. */
 export const getOoxmlFileType = (
   name: string,
   mimeType?: string,
