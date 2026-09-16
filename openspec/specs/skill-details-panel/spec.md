@@ -281,11 +281,11 @@ A failed file listing SHALL yield an empty tree (`files: []` or the field omitte
 
 `CatalogView` SHALL supply `onLoadContentFile`. The catalog library SHALL pass the picked file node's opaque `id` to that callback unchanged. At the application edge, `CatalogView` SHALL convert a Core-prefixed listing id in either `{skillPath}/files/{relativeFilePath}` or `files/{relativeFilePath}` form into the `{relativeFilePath}` accepted by `downloadSkillFile`; an already-relative id SHALL remain unchanged. It SHALL then call the existing wrapper with the opened skill's `{ bucket, path }` and that normalized download path, and read the response through `readSkillManifest` so the same size cap applies to every file, regardless of nesting depth. A normalized path equal to `SKILL_MANIFEST_FILE` SHALL be returned frontmatter-stripped via `parseSkillManifest`; every other file SHALL be returned as written. No new endpoint, generated-client method, or `base.ts` helper is introduced.
 
-`CatalogView` SHALL additionally supply `renderContentFilePreview`, per the host-renderer contract in `catalog-content-file-preview`. For a picked supporting file it SHALL render an app-owned `SkillDetailsFilePreview` that applies the same opaque-id-to-relative-download-path conversion, downloads the file's raw bytes through `downloadSkillFile`, applies the shared `SKILL_MANIFEST_MAX_BYTES` guard, and converts `{ bytes, mimeType? }` with the shared `skillFileToAttachment` helper before resolving the preview through `useOpenAttachmentCanvas`. It SHALL render the result through the same `SkillFilePreview` used by Skill Builder. `SkillFilePreview` SHALL render the shared `AttachmentCanvasBody`, so Markdown, JSON, code/plain text, HTML, PDF, image, audio, visualizer, unsupported, loading, and error states use the identical renderer, labels, theme, and accessibility behavior in both surfaces.
+`CatalogView` SHALL additionally supply `renderContentFilePreview`, per the host-renderer contract in `catalog-content-file-preview`. For a picked supporting file it SHALL render an app-owned `SkillDetailsFilePreview` that applies the same opaque-id-to-relative-download-path conversion, downloads the file's raw bytes through `downloadSkillFile`, reads the response body in full through a size-unbounded preview reader (the `SKILL_MANIFEST_MAX_BYTES` guard SHALL NOT be applied on this path), and converts `{ bytes, mimeType? }` with the shared `skillFileToAttachment` helper before resolving the preview through `useOpenAttachmentCanvas`. It SHALL render the result through the same `SkillFilePreview` used by Skill Builder. `SkillFilePreview` SHALL render the shared `AttachmentCanvasBody`, so Markdown, JSON, code/plain text, HTML, PDF, image, audio, visualizer, unsupported, loading, and error states use the identical renderer, labels, theme, and accessibility behavior in both surfaces.
 
 The reusable `SkillFilePreview` component SHALL live under `apps/chat/src/components/SkillFilePreview/`; both Skill Builder and skill details SHALL import it. `useSkillFilePreviewSync`, under `apps/chat/src/hooks/attachment/`, SHALL remain the Skill Builder selection adapter. Skill details SHALL instead own isolated preview state through an `AttachmentCanvasProvider` keyed by the selected opaque file id. `libs/catalog` SHALL NOT import `@epam/ai-dial-attachment-canvas`, app contexts, the skills API, or the generated client. It receives only the opaque-id/basename render callback result.
 
-When Core returns `Content-Type: application/octet-stream`, the details loader SHALL omit that generic MIME value so `skillFileToAttachment` performs the same extension inference as Skill Builder's ZIP-loaded files. A specific MIME type such as `image/png` SHALL be preserved. A `403` response SHALL resolve to the attachment canvas's forbidden state; other non-OK responses, network failures, and oversized files SHALL resolve to its load-error state.
+When Core returns `Content-Type: application/octet-stream`, the details loader SHALL omit that generic MIME value so `skillFileToAttachment` performs the same extension inference as Skill Builder's ZIP-loaded files. A specific MIME type such as `image/png` SHALL be preserved. A `403` response SHALL resolve to the attachment canvas's forbidden state; other non-OK responses and network failures SHALL resolve to its load-error state. File size SHALL NOT be a failure class on this path — the preview reader has no byte ceiling, so no file resolves to the load-error state on account of its size.
 
 `SKILL_MANIFEST_FILE` SHALL never enter the supporting-file renderer. It SHALL continue to render `parseSkillManifest(...).body` through the base Content Markdown path — frontmatter-stripped instructions only — and reselecting it SHALL restore that body without a download.
 
@@ -364,12 +364,21 @@ When Core returns `Content-Type: application/octet-stream`, the details loader S
 - **WHEN** the user reselects the manifest tree node, whether its opaque id is `SKILL_MANIFEST_FILE` or a Core-prefixed path, after viewing another file
 - **THEN** the base body (the manifest's parsed instructions) is restored without mounting `SkillDetailsFilePreview` or downloading the manifest again
 
-#### Scenario: The manifest's own size guard still applies to every other file
+#### Scenario: A supporting file larger than the manifest cap still previews
 
-- **WHEN** a supporting file's declared or actual size exceeds `SKILL_MANIFEST_MAX_BYTES`
-- **THEN** its bytes are never decoded or turned into a `Blob`, and the shared attachment body renders the same load-error state as Skill Builder
+- **WHEN** the user picks a supporting file whose declared `content-length` and actual byte length both exceed `SKILL_MANIFEST_MAX_BYTES` — for example a 2 MB `guide.pdf`
+- **THEN** its bytes are read in full, `skillFileToAttachment` builds the `File`, the shared resolvers produce PDF canvas content backed by a `blob:` URL, and the load-error state is NOT rendered
 
----
+#### Scenario: A realistic PDF renders on a freshly loaded page
+
+- **WHEN** the user opens a skill's details and picks a PDF supporting file over `SKILL_MANIFEST_MAX_BYTES`, having opened no other PDF anywhere in the application since the page loaded
+- **THEN** the preview resolves to PDF canvas content and the viewer mounts with the host's own bundled worker, without any dependency on a previously opened PDF or on an external CDN
+
+#### Scenario: The manifest's own read path keeps its cap
+
+- **WHEN** a skill's `SKILL.md`, or a file read through the textual `onLoadContentFile` path, exceeds `SKILL_MANIFEST_MAX_BYTES`
+- **THEN** `readSkillManifest` still rejects it without decoding, exactly as before this change
+
 
 ### Requirement: Skill details preview state is isolated and follows the selected file
 
@@ -421,3 +430,143 @@ The `DetailsPanel` component (today internal to `libs/catalog`, with only its `D
 - **WHEN** the export lands and the Catalog page renders skill details
 - **THEN** the page's details behavior is byte-identical to before the export
 
+### Requirement: The skill supporting-file preview supplies the host's PDF worker initializer
+
+`SkillFilePreview` SHALL pass the application-owned `configurePdfWorker` from
+`apps/chat/src/utils/pdf.ts` to `AttachmentCanvasBody`
+(`apps/chat/src/components/SkillFilePreview/SkillFilePreview.tsx`), so every skill PDF
+preview — Catalog skill details and Skill Builder alike — configures
+`pdfjs-dist`'s `GlobalWorkerOptions.workerSrc` from the app's own bundled
+worker asset before the viewer mounts, exactly as the page-level canvas in
+`apps/chat/src/app/app.tsx` already does.
+
+Without that prop, `PdfContent` initialises its preparation state to `Ready`
+and mounts `DocumentPreview` immediately, leaving
+`@epam/pdf-highlighter-kit`'s module-evaluation-time default in place:
+`https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs`. Skill PDF
+rendering then depends on outbound CDN access, or on the page-level chat
+canvas having already run the initializer in the same page session. That
+dependency is the defect this requirement removes.
+
+The initializer SHALL remain application-owned:
+`@epam/ai-dial-attachment-canvas` receives it only as an injected callback and
+SHALL NOT import, construct, or default it. `apps/chat/src/utils/pdf.ts` SHALL
+NOT change — both of its `pdfjs-dist` imports stay dynamic so the package
+stays out of the eager bundle, and its module-level promise memoisation plus
+`PdfContent`'s own module-level preparation promise together mean the
+initializer runs at most once per successful resolution across every canvas in
+the application.
+
+Because `configurePdfWorker` is a module-level binding, its identity is
+stable across renders and SHALL NOT cause `PdfContent`'s preparation effect to
+re-run. `PdfContent`'s existing gate — `DocumentPreview` mounts only once the
+preparation promise resolves — SHALL be relied upon unchanged; this
+requirement adds no awaiting logic of its own.
+
+#### Scenario: The inline skill preview forwards the app's initializer
+
+- **WHEN** `SkillFilePreview` renders
+- **THEN** the `configurePdfWorker` it passes to `AttachmentCanvasBody` is the app's `configurePdfWorker` from `apps/chat/src/utils/pdf.ts`
+
+#### Scenario: The viewer does not mount before the worker is configured
+
+- **WHEN** a PDF supporting file is previewed and the host's `configurePdfWorker` has not yet resolved
+- **THEN** `DocumentPreview` is not mounted, and it mounts only after that promise resolves
+
+#### Scenario: Rendering does not depend on a previously opened PDF
+
+- **WHEN** a PDF supporting file is previewed on a freshly loaded page, with no chat attachment canvas having been opened
+- **THEN** the worker is configured from the app's bundled asset and the vendor's CDN URL is not relied upon
+
+#### Scenario: Worker preparation failure stays distinguishable from a load failure
+
+- **WHEN** `configurePdfWorker` rejects
+- **THEN** `PdfContent` renders its own retryable preparation-error state, not the canvas load-error ("Failed to load file") state, and the next preview attempt invokes the initializer again
+
+#### Scenario: Non-PDF previews are unaffected
+
+- **WHEN** a Markdown, JSON, code, HTML, image, audio, visualizer, or unsupported supporting file is previewed
+- **THEN** the preview renders exactly as before, and `configurePdfWorker` is never invoked
+
+### Requirement: The skill details PDF preview path carries integration-level regression coverage
+
+The skill details PDF preview path SHALL carry regression coverage that reaches
+the real application-to-viewer boundary.
+
+The existing `SkillDetailsFilePreview` suite mocks
+`apps/chat/src/components/SkillFilePreview/SkillFilePreview` away, so no test
+reaches the real `AttachmentCanvasBody` from a skill surface and no test feeds
+the preview loader a body over `SKILL_MANIFEST_MAX_BYTES`. Neither defect this
+change fixes is observable through that suite.
+
+Coverage SHALL therefore include at least one test that renders
+`SkillDetailsFilePreview` with the **real** `SkillFilePreview`, using a valid,
+parseable minimal PDF fixture padded past `SKILL_MANIFEST_MAX_BYTES`, and
+asserts that the canvas resolves to PDF content backed by a `blob:` URL rather
+than the load-error state, and that the `configurePdfWorker` reaching
+`PdfContent` is the application's initializer and is awaited before the viewer
+mounts.
+
+Only `@epam/ai-dial-react-pdf-highlighter`'s `DocumentPreview` MAY be stubbed —
+it requires a real worker and a canvas, which jsdom does not provide. The suite
+SHALL NOT be described as proving that pdf.js rasterises the document; that
+remains a browser-verification step.
+
+#### Scenario: An over-cap PDF resolves to PDF content, not the load error
+
+- **WHEN** the preview loader resolves bytes for a valid PDF larger than `SKILL_MANIFEST_MAX_BYTES`
+- **THEN** the rendered canvas content is the PDF type with a `blob:` URL, and the text "Failed to load file" is absent
+
+#### Scenario: The integration test would fail if the worker wiring were dropped
+
+- **WHEN** `configurePdfWorker` is removed from `SkillFilePreview`
+- **THEN** at least one test in the suite fails
+
+#### Scenario: The fixture is a real PDF, not an opaque byte blob
+
+- **WHEN** the test fixture is constructed
+- **THEN** it is a structurally valid PDF (header, page object, `xref`, `%%EOF`) padded to exceed `SKILL_MANIFEST_MAX_BYTES`, so both the size path and a real parser's input contract are exercised
+
+### Requirement: Existing preview isolation, race, and accessibility behaviour is preserved
+
+This change SHALL NOT alter any of the following, and the implementation SHALL
+be held to them:
+
+- the `AttachmentCanvasProvider key={fileId}` isolation that keeps the inline
+  preview independent of the page's attachment panel;
+- `useSkillFilePreview`'s `cancelled`-flag guard, so a superseded or unmounted
+  load never replaces the current preview;
+- `SkillFilePreview`'s `isCurrent = attachmentId === path` staleness gate;
+- blob URL creation and cleanup ownership;
+- the `403` → forbidden classification, distinct from loading and from a
+  genuine load failure;
+- the inline preview's `role="group"` with an accessible name from the file
+  name, and the existing loading announcement;
+- the inline preview's behaviour at mobile and desktop widths, including that
+  it owns its internal scrolling.
+
+No new user-visible string is introduced, so there are no new i18n keys. RTL
+impact: none — no new layout, positioning, or directional icon. The surface is
+not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. No endpoint,
+DTO, generated-client method, cache entry, rate limit, or telemetry event
+changes.
+
+#### Scenario: Switching files shows only the latest selection
+
+- **WHEN** the user picks one supporting file and then another before the first download settles
+- **THEN** only the second file's preview is displayed, and the first file's late resolution is discarded
+
+#### Scenario: Reopening details shows the correct document
+
+- **WHEN** the user closes the details panel and reopens it for the same or a different skill, then picks a PDF
+- **THEN** the picked file's document is displayed, and no pending work from the closed preview reopens the panel or the global attachment canvas
+
+#### Scenario: A forbidden file stays distinguishable from a failure
+
+- **WHEN** `downloadSkillFile` responds `403` for a picked supporting file
+- **THEN** the forbidden state renders, not the load-error state
+
+#### Scenario: The inline preview fits mobile and desktop layouts
+
+- **WHEN** skill details are opened at a mobile width and at a desktop width and a PDF is picked
+- **THEN** the preview fits its container with no horizontal page overflow and scrolls internally

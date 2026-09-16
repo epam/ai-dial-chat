@@ -15,7 +15,7 @@ import type { ParsedSkillResourceUrl } from '../skill/skill-types';
 import {
   buildSkillContentTree,
   buildSkillOverview,
-  readSkillFileBytes,
+  readSkillFilePreviewBytes,
   readSkillManifest,
   resolveSkillFileDownloadPath,
   resolveSkillManifestFileId,
@@ -203,8 +203,7 @@ export const useSkillItemDetails = ({
         );
       }
 
-      const bytes = await readSkillFileBytes(response);
-      if (bytes == null) throw new Error('File exceeds the preview size limit');
+      const bytes = await readSkillFilePreviewBytes(response);
 
       const responseMimeType =
         response.headers.get('content-type')?.split(';')[0].trim() || undefined;

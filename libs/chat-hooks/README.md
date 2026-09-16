@@ -2448,9 +2448,9 @@ const item = mapPromptToCatalogItem(promptDto, {
 });
 ```
 
-### mapSkillToCatalogItem / buildSkillOverview / buildSkillContentTree / resolveSkillManifestFileId / resolveSkillFileDownloadPath / readSkillFileBytes / readSkillManifest
+### mapSkillToCatalogItem / buildSkillOverview / buildSkillContentTree / resolveSkillManifestFileId / resolveSkillFileDownloadPath / readSkillFileBytes / readSkillFilePreviewBytes / readSkillManifest
 
-Maps a skill's DIAL Core metadata into a catalog `CatalogItem` — the item's `description` carries the listing entry's `description` (an empty string when the listing has none), so the catalog card and details header show it before any manifest fetch; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`.
+Maps a skill's DIAL Core metadata into a catalog `CatalogItem` — the item's `description` carries the listing entry's `description` (an empty string when the listing has none), so the catalog card and details header show it before any manifest fetch; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`. `readSkillFilePreviewBytes` is the unbounded counterpart used for the supporting-file preview path, where a realistic binary (a PDF, an image) routinely exceeds that manifest-sized cap; it never returns `null`, so file size is not a failure class there.
 
 ```ts
 import {
