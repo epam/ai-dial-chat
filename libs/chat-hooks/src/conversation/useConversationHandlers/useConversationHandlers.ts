@@ -235,27 +235,24 @@ export const useConversationHandlers = ({
 
       const modelId = resolveModelId();
 
-      setConversation((prev) => {
-        if (!prev) return prev;
-        const regeneratedMessage = {
-          ...prev.messages[messageIndex],
-          content: '',
-          custom_content: undefined,
-          wasStoppedByUser: undefined,
-          stoppedWithoutContent: undefined,
-          streamErrorMessage: undefined,
-          deploymentId: modelId,
-        };
-        const next = {
-          ...prev,
-          messages: [
-            ...prev.messages.slice(0, messageIndex),
-            regeneratedMessage,
-          ],
-        };
-        conversationRef.current = next;
-        return next;
-      });
+      const regeneratedMessage = {
+        ...conversation.messages[messageIndex],
+        content: '',
+        custom_content: undefined,
+        wasStoppedByUser: undefined,
+        stoppedWithoutContent: undefined,
+        streamErrorMessage: undefined,
+        deploymentId: modelId,
+      };
+      const next = {
+        ...conversation,
+        messages: [
+          ...conversation.messages.slice(0, messageIndex),
+          regeneratedMessage,
+        ],
+      };
+      conversationRef.current = next;
+      setConversation(next);
 
       setEditingMessageIndexes(
         (indexes) =>
