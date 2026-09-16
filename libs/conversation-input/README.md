@@ -107,6 +107,11 @@ adjacent buttons stay distinguishable to assistive technology. `uploadingLabel`
 (default `'Uploading'`) names the indeterminate progress bar a card shows while
 its upload is still in flight.
 
+`sendLabel` (default `'Send message'`) is the send button's accessible name.
+`sendTooltip` is a separate, optional string shown as a hover tooltip on the
+send button — useful for explaining why it's currently inactive (e.g. `'Type a
+message first'`). No tooltip renders when it is left unset.
+
 ### EditMessageInput
 
 Renders the input in edit mode for revising an existing message. `onCancel` and `onSave` are required; `onSave` receives the new text, the attachments the user kept, and any newly added ones.
