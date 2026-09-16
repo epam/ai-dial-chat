@@ -682,7 +682,7 @@ const Composer = ({
 
 ### useTranscribeAudio
 
-Uploads a complete voice recording to DIAL Core storage and recognizes it, preferring a configured ASR model and falling back to the selected deployment, retrying transient upstream failures (429/502/503/504, honoring `Retry-After`, capped at two retries and a 90-second total wait). Error text is not this library's concern: failures reject with an `AudioTranscriptionError` carrying a translation-free `AudioTranscriptionErrorReason` — the host maps it to copy at the call site, the same pattern `useAttachmentValidation` uses for rejected files.
+Uploads a complete voice recording to DIAL Core storage and recognizes it, preferring a configured ASR model and falling back to the selected deployment. HTTP 429/503 failures reject immediately with `Busy` so the host can restore the draft. Gateway failures (502/504) retry at most twice, honoring `Retry-After` within a six-second total delay budget; a longer requested delay rejects without retrying early. Error text is not this library's concern: failures reject with an `AudioTranscriptionError` carrying a translation-free `AudioTranscriptionErrorReason` — the host maps it to copy at the call site, the same pattern `useAttachmentValidation` uses for rejected files.
 
 ```tsx
 import {
@@ -751,7 +751,7 @@ const VoiceComposer = ({
 
 **Returns** (`UseTranscribeAudioResult`): `{ transcribeAudio: (file: File, signal: AbortSignal) => Promise<string> }`.
 
-`AudioTranscriptionErrorReason` is `Unavailable` (no usable ASR model or deployment configured for the current bucket), `TooLarge` (checked before upload; `AudioTranscriptionError.limitBytes` carries the limit that was exceeded), `Busy` (the upstream ASR provider stayed rate-limited or unavailable after retrying), or `Failed` (recognition failed for any other reason).
+`AudioTranscriptionErrorReason` is `Unavailable` (no usable ASR model or deployment configured for the current bucket), `TooLarge` (checked before upload; `AudioTranscriptionError.limitBytes` carries the limit that was exceeded), `Busy` (recognition is rate-limited, unavailable, or exhausted short gateway retries), or `Failed` (recognition failed for any other reason).
 
 ### useConversationExport / useConversationImport
 
