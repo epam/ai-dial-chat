@@ -1723,7 +1723,7 @@
     },
     "/api/v1/client-channel/unsubscribe": {
       "post": {
-        "description": "Closes the given client channel on DIAL Core. Treats an already-gone channel (404) as idempotent success.",
+        "description": "Closes the given client channel on DIAL Core and returns its HTTP status unchanged with an empty body, including 404 for an already-gone channel. Returns 503 if Core cannot be reached.",
         "operationId": "unsubscribeClientChannel",
         "parameters": [
           {
@@ -1740,11 +1740,35 @@
           "200": {
             "description": "Unsubscribed successfully"
           },
+          "204": {
+            "description": "DIAL Core returned no content"
+          },
           "400": {
-            "description": "Missing or invalid channel id header"
+            "description": "Missing or invalid channel id header, or Core rejected the request"
           },
           "401": {
             "description": "Not authenticated"
+          },
+          "403": {
+            "description": "DIAL Core denied access"
+          },
+          "404": {
+            "description": "DIAL Core channel does not exist"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "DIAL Core returned a server error"
+          },
+          "502": {
+            "description": "DIAL Core returned a gateway error"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable"
+          },
+          "default": {
+            "description": "HTTP status returned by DIAL Core, with an empty body"
           }
         },
         "summary": "Unsubscribe from the client channel",

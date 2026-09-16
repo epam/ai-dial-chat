@@ -450,6 +450,8 @@ DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` and `externa
 | `POST` | `/api/v1/client-channel/report`      | Report `{ id, result }` back to a blocked tool call |
 | `POST` | `/api/v1/client-channel/unsubscribe` | Close the channel                                   |
 
+`unsubscribe` forwards DIAL Core's HTTP status unchanged with an empty body, including `404` when the channel is already absent and any upstream error status. A transport failure without a Core response returns `503`. The frontend's generated client rejects non-2xx responses; provider cleanup handles that rejection without reopening the channel.
+
 #### External Services (`/api/v1/external-services`)
 
 BFF proxy for an application's external-service credentials, driving the `external-service/signin` interrupt above. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).

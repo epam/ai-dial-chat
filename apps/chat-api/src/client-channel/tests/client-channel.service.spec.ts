@@ -1,6 +1,5 @@
 import {
   BadGatewayException,
-  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -172,7 +171,9 @@ describe('ClientChannelService', () => {
         deps.dialClient.client.unsubscribeClientChannel,
       ).mockResolvedValue(okResponse());
 
-      await service.unsubscribe('token', 'channel-1');
+      await expect(service.unsubscribe('token', 'channel-1')).resolves.toBe(
+        200,
+      );
 
       expect(
         deps.dialClient.client.unsubscribeClientChannel,
@@ -183,24 +184,44 @@ describe('ClientChannelService', () => {
       });
     });
 
-    it('treats a 404 (channel already gone) as idempotent success', async () => {
+    it.each([204, 400, 401, 403, 404, 429, 500, 502, 503])(
+      'preserves Core HTTP status %i',
+      async (status) => {
+        vi.mocked(
+          deps.dialClient.client.unsubscribeClientChannel,
+        ).mockResolvedValue(
+          status < 400
+            ? ({ response: new Response(null, { status }) } as never)
+            : errResponse(status),
+        );
+
+        await expect(service.unsubscribe('token', 'channel-1')).resolves.toBe(
+          status,
+        );
+      },
+    );
+
+    it('preserves an error status even when the Core response has an empty body', async () => {
       vi.mocked(
         deps.dialClient.client.unsubscribeClientChannel,
-      ).mockResolvedValue(errResponse(404));
+      ).mockResolvedValue({
+        response: new Response(null, { status: 500 }),
+        error: '',
+      } as never);
 
-      await expect(
-        service.unsubscribe('token', 'channel-1'),
-      ).resolves.toBeUndefined();
+      await expect(service.unsubscribe('token', 'channel-1')).resolves.toBe(
+        500,
+      );
     });
 
-    it('throws for a non-404 error status', async () => {
+    it('returns an unavailable error when Core cannot be reached', async () => {
       vi.mocked(
         deps.dialClient.client.unsubscribeClientChannel,
-      ).mockResolvedValue(errResponse(401));
+      ).mockRejectedValue(new TypeError('fetch failed'));
 
       await expect(
         service.unsubscribe('token', 'channel-1'),
-      ).rejects.not.toBeInstanceOf(NotFoundException);
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
     });
   });
 });

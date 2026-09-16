@@ -60,7 +60,7 @@ The backend SHALL expose `POST /api/v1/client-channel/report` and `POST /api/v1/
 
 `POST /api/v1/client-channel/unsubscribe`:
 - Request header: `X-DIAL-CLIENT-CHANNEL-ID` (required).
-- Response: `200 {}` on success; treats Core's 404 (channel already gone) as idempotent success, mirroring the existing `logoutToolset` 404-as-success precedent.
+- Response: forwards Core's HTTP status unchanged with an empty body, including `200`/`204` on success, `404` when the channel is already gone, and Core's error statuses. The status is read from the HTTP response regardless of whether Core supplies an error body. Returns `503` when Core cannot be reached; local validation, session, and CSRF failures retain their usual responses.
 
 Generated-client impact: both endpoints SHALL be exposed through the generated `@epam/chat-api-client` (non-streaming JSON request/response) with `operationIdFactory` names `reportClientChannel` / `unsubscribeClientChannel`; the frontend calls them through thin wrappers in `apps/chat/src/server-api/client-channel.ts`, following the same pattern as `apps/chat/src/server-api/toolsets.ts`.
 
@@ -82,7 +82,15 @@ Generated-client impact: both endpoints SHALL be exposed through the generated `
 
 #### Scenario: Unsubscribe on a channel Core has already dropped
 - **WHEN** `POST /api/v1/client-channel/unsubscribe` targets a channel id Core responds to with 404
-- **THEN** the backend returns `200` to the frontend (idempotent)
+- **THEN** the backend returns `404` to the frontend with an empty body
+
+#### Scenario: Unsubscribe preserves an upstream error status
+- **WHEN** Core responds to unsubscribe with an error HTTP status, even with an empty body
+- **THEN** the backend returns that same HTTP status with an empty body instead of reporting success
+
+#### Scenario: Unsubscribe cannot reach Core
+- **WHEN** the upstream unsubscribe request fails without an HTTP response
+- **THEN** the backend returns `503`
 
 #### Scenario: CSRF token required
 - **WHEN** any of the three client-channel endpoints is called without a valid `X-CSRF-Token` header
