@@ -45,11 +45,18 @@ vi.mock('../../../components/SkillSelector/useSkillSelectorOverlay', () => ({
   }),
 }));
 
+const clientChannelMocks = vi.hoisted(() => ({
+  ensureConnected: vi.fn(),
+  waitForChannel: vi.fn(),
+}));
+
 vi.mock('../../../context/ClientChannelContext', () => ({
   useClientChannel: () => ({
     channelId: null,
-    ensureConnected: vi.fn(),
-    waitForChannel: vi.fn(),
+    pendingEvents: [],
+    reportEvent: vi.fn(),
+    ensureConnected: clientChannelMocks.ensureConnected,
+    waitForChannel: clientChannelMocks.waitForChannel,
     notifyGenerationSettled: vi.fn(),
   }),
 }));
@@ -62,13 +69,15 @@ vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
   }),
 }));
 
+const streamMocks = vi.hoisted(() => ({ startStream: vi.fn() }));
+
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
   return {
     ...actual,
     useConversationStream: () => ({
-      startStream: vi.fn(),
+      startStream: streamMocks.startStream,
       handleStop: vi.fn(),
       isStreaming: false,
       canStopStreaming: false,
@@ -181,9 +190,11 @@ vi.mock('../../../components/StarterButtons/StarterButtons', () => ({
 describe('AppPreviewChat', () => {
   const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
+  const mockDeleteConversation = vi.mocked(conversationsApi.deleteConversation);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDeleteConversation.mockResolvedValue(undefined as never);
     mockUseDeployments.mockReturnValue({
       items: [
         {
@@ -214,6 +225,40 @@ describe('AppPreviewChat', () => {
     expect(screen.getByLabelText('Input message').textContent).toBe(
       'Write a draft',
     );
+  });
+
+  it('opening AppsEditor without running a preview completion makes zero subscribe calls', () => {
+    render(<AppPreviewChat appId="applications/bucket/My App" />);
+
+    expect(clientChannelMocks.ensureConnected).not.toHaveBeenCalled();
+    expect(clientChannelMocks.waitForChannel).not.toHaveBeenCalled();
+    expect(streamMocks.startStream).not.toHaveBeenCalled();
+  });
+
+  it('a preview send (autoSubmit starter) subscribes exactly once and carries the channel id', async () => {
+    mockUseDeployments.mockReturnValue({
+      items: [
+        {
+          id: 'applications/bucket/My App',
+          displayName: 'My App',
+          type: 'application',
+          conversationStarters: {
+            introText: 'Choose how to start',
+            autoSubmit: true,
+            starters: [{ title: 'Draft', text: 'Write a draft' }],
+          },
+        },
+      ],
+    } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
+    mockCreateConversation.mockResolvedValue({
+      id: 'bucket/applications/bucket/My App__1.0__Write a draft__uuid',
+      messages: [],
+    } as never);
+
+    render(<AppPreviewChat appId="applications/bucket/My App" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Draft' }));
+
+    await waitFor(() => expect(streamMocks.startStream).toHaveBeenCalledOnce());
   });
 
   it('creates the conversation with the URL-encoded app id', async () => {

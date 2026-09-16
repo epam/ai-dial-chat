@@ -3,11 +3,13 @@ import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as ClientChannelContextModule from '../../../context/ClientChannelContext';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../../context/NotificationContext';
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { CompletionMode } from '../../../server-api/chat-stream.api';
 import * as conversationsApi from '../../../server-api/conversations.api';
 import { ROUTES } from '../../../types/routes';
 import { ConversationPage } from '../Conversation';
@@ -62,12 +64,13 @@ vi.mock('../../../context/ActiveScheduledTaskContext', () => ({
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { sub: 'user-1', bucket: 'bucket' } }),
 }));
+const clientChannelMocks = vi.hoisted(() => ({
+  ensureConnected: vi.fn(),
+  waitForChannel: vi.fn(),
+}));
+
 vi.mock('../../../context/ClientChannelContext', () => ({
-  useClientChannel: () => ({
-    channelId: 'channel-1',
-    ensureConnected: vi.fn(),
-    waitForChannel: vi.fn(),
-  }),
+  useClientChannel: vi.fn(),
 }));
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/DeploymentsContext');
@@ -134,6 +137,9 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
 });
 
 const mockGetConversation = vi.mocked(conversationsApi.getConversation);
+const mockUseClientChannel = vi.mocked(
+  ClientChannelContextModule.useClientChannel,
+);
 const mockUseConversations = vi.mocked(
   ConversationsContextModule.useConversations,
 );
@@ -168,6 +174,15 @@ beforeEach(() => {
   vi.clearAllMocks();
   routerMocks.conversationId = CONVERSATION_ID;
   handlersMocks.lastParams = undefined;
+
+  mockUseClientChannel.mockReturnValue({
+    channelId: 'channel-1',
+    pendingEvents: [],
+    reportEvent: vi.fn(),
+    ensureConnected: clientChannelMocks.ensureConnected,
+    waitForChannel: clientChannelMocks.waitForChannel,
+    notifyGenerationSettled: vi.fn(),
+  });
 
   mockUseConversations.mockReturnValue({
     conversations: [],
@@ -288,5 +303,79 @@ describe('ConversationPage — sidebar ordering on new activity', () => {
       1,
       'gpt-4o',
     );
+  });
+});
+
+describe('ConversationPage — client-channel demand', () => {
+  it('opening a conversation and reading it makes zero ensureConnected/waitForChannel calls', async () => {
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+
+    render(<ConversationPage />);
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+
+    /*
+     * Reading an already-answered conversation never starts a completion, so
+     * the page must never nudge the client channel on its own — only a
+     * completion request (the mocked `useConversationStream.startStream`
+     * above) does that, and it is never invoked here.
+     */
+    expect(clientChannelMocks.ensureConnected).not.toHaveBeenCalled();
+    expect(clientChannelMocks.waitForChannel).not.toHaveBeenCalled();
+    expect(streamMocks.startStream).not.toHaveBeenCalled();
+  });
+
+  it('the automatic first-message start after navigation calls startStream with the continuation mode', async () => {
+    const awaitingConversation: Conversation = {
+      ...makeConversation(),
+      messages: [
+        { role: 'user', content: 'hi', timestamp: 't' },
+      ] as Conversation['messages'],
+    };
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      awaitingConversation as any,
+    );
+
+    render(<ConversationPage />);
+
+    await waitFor(() => expect(streamMocks.startStream).toHaveBeenCalledOnce());
+    const [, content, , , , , mode] = streamMocks.startStream.mock.calls[0];
+    expect(content).toBe('hi');
+    expect(mode).toBe(CompletionMode.ContinueLastUser);
+  });
+
+  it('a channelId transition does not re-fetch the conversation or re-enter the loading state', async () => {
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+
+    const { rerender } = render(<ConversationPage />);
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalledOnce());
+
+    mockUseClientChannel.mockReturnValue({
+      channelId: 'channel-2',
+      pendingEvents: [],
+      reportEvent: vi.fn(),
+      ensureConnected: clientChannelMocks.ensureConnected,
+      waitForChannel: clientChannelMocks.waitForChannel,
+      notifyGenerationSettled: vi.fn(),
+    });
+    rerender(<ConversationPage />);
+
+    mockUseClientChannel.mockReturnValue({
+      channelId: null,
+      pendingEvents: [],
+      reportEvent: vi.fn(),
+      ensureConnected: clientChannelMocks.ensureConnected,
+      waitForChannel: clientChannelMocks.waitForChannel,
+      notifyGenerationSettled: vi.fn(),
+    });
+    rerender(<ConversationPage />);
+
+    expect(mockGetConversation).toHaveBeenCalledOnce();
   });
 });
