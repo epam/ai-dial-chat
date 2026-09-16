@@ -85,6 +85,62 @@ export default defineConfig(() => ({
     watch: false,
     globals: true,
     environment: 'jsdom',
+    /*
+     * Resolve workspace peers from source for tests only: their published
+     * bundles import `.scss` modules that are not emitted to `dist`, which
+     * vitest cannot load. Kept out of the shared `resolve.alias` so it never
+     * affects this lib's own production build.
+     */
+    alias: {
+      '@epam/ai-dial-chat-api-client': path.resolve(
+        import.meta.dirname,
+        '../chat-api-client/src/index.ts',
+      ),
+      '@epam/ai-dial-attachment-input': path.resolve(
+        import.meta.dirname,
+        '../attachment-input/src/index.ts',
+      ),
+      '@epam/ai-dial-builder-form': path.resolve(
+        import.meta.dirname,
+        '../builder-form/src/index.ts',
+      ),
+      '@epam/ai-dial-catalog': path.resolve(
+        import.meta.dirname,
+        '../catalog/src/index.ts',
+      ),
+      '@epam/ai-dial-chat-overlay': path.resolve(
+        import.meta.dirname,
+        '../chat-overlay/src/index.ts',
+      ),
+      '@epam/ai-dial-chat-shared': path.resolve(
+        import.meta.dirname,
+        '../chat-shared/src/index.ts',
+      ),
+      '@epam/ai-dial-publish-panel': path.resolve(
+        import.meta.dirname,
+        '../publish-panel/src/index.ts',
+      ),
+      '@epam/ai-dial-quotations': path.resolve(
+        import.meta.dirname,
+        '../quotations/src/index.ts',
+      ),
+      '@epam/ai-dial-scheduled-tasks': path.resolve(
+        import.meta.dirname,
+        '../scheduled-tasks/src/index.ts',
+      ),
+      '@epam/ai-dial-share': path.resolve(
+        import.meta.dirname,
+        '../share/src/index.ts',
+      ),
+      '@epam/ai-dial-skill-editor': path.resolve(
+        import.meta.dirname,
+        '../skill-editor/src/index.ts',
+      ),
+      '@epam/ai-dial-source-panel': path.resolve(
+        import.meta.dirname,
+        '../source-panel/src/index.ts',
+      ),
+    },
     setupFiles: ['./src/test-setup.ts'],
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
