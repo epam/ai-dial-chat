@@ -24,6 +24,10 @@ export default defineConfig(() => ({
      * them need an alias here too.
      */
     alias: {
+      '@epam/ai-dial-attachment-canvas': path.resolve(
+        import.meta.dirname,
+        '../attachment-canvas/src/index.ts',
+      ),
       '@epam/ai-dial-attachment-input': path.resolve(
         import.meta.dirname,
         '../attachment-input/src/index.ts',
@@ -51,6 +55,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../chat-shared/src/index.ts',
+      ),
+      '@epam/ai-dial-mcp-apps': path.resolve(
+        import.meta.dirname,
+        '../mcp-apps/src/index.ts',
       ),
       '@epam/ai-dial-publish-panel': path.resolve(
         import.meta.dirname,
