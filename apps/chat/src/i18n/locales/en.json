@@ -1170,7 +1170,7 @@
     "recordVoiceLabel": "Record voice",
     "transcribing": "Transcribing audio…",
     "failed": "Could not transcribe audio. Please try recording again.",
-    "busy": "Speech recognition is temporarily unavailable. Please try again later. Your draft has been kept.",
+    "busy": "Speech recognition is temporarily unavailable. Please try again later.",
     "unavailable": "Voice input is not available.",
     "tooLarge": "Audio exceeds the {{limit}} byte limit.",
     "stopRecordingLabel": "Stop recording",

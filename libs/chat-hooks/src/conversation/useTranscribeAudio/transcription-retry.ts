@@ -4,7 +4,7 @@ import {
 } from './audio-transcription-error';
 
 const MAX_RETRIES = 2;
-const MAX_TOTAL_WAIT_MS = 90_000;
+const MAX_TOTAL_WAIT_MS = 6000;
 
 const waitForRetry = (delay: number, signal: AbortSignal): Promise<void> => {
   signal.throwIfAborted();
@@ -52,13 +52,15 @@ export const withTranscriptionRetry = async (
       ) {
         throw error;
       }
-      /* Core uses a 30-second cooldown for upstream rate limits when the
-       * provider supplies no Retry-After; short retries only add more load. */
-      const fallback = [429, 503].includes(response.status) ? 30_000 : 2000;
+      /* Surface rate limits and unavailability immediately so the composer
+       * can restore the draft instead of waiting through a provider cooldown. */
+      if ([429, 503].includes(response.status)) {
+        throw new AudioTranscriptionError(AudioTranscriptionErrorReason.Busy);
+      }
       const delay = Math.max(
         1000,
         retryAfterMs(response.headers.get('retry-after')) ??
-          fallback * 2 ** attempt,
+          2000 * 2 ** attempt,
       );
       if (attempt >= MAX_RETRIES || totalWait + delay > MAX_TOTAL_WAIT_MS) {
         throw new AudioTranscriptionError(AudioTranscriptionErrorReason.Busy);
