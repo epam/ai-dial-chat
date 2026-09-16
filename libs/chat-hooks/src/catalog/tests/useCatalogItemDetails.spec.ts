@@ -9,6 +9,7 @@ import type {
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { SKILL_MANIFEST_MAX_BYTES } from '../../skill/skill-types';
 import type { DeploymentLimitsLabels } from '../map-deployment-limits-to-catalog';
 import type {
   CatalogDetailsApi,
@@ -660,9 +661,10 @@ describe('useCatalogItemDetails', () => {
       expect((err as { status: number }).status).toBe(403);
     });
 
-    it('throws when the file exceeds the preview size limit', async () => {
-      /* Create a buffer just over the 256 KiB limit */
-      const bigBytes = new Uint8Array(256 * 1024 + 1);
+    it('resolves the full bytes for a file larger than the manifest cap', async () => {
+      /* Both the declared content-length and the real body cross the cap. */
+      const bigBytes = new Uint8Array(SKILL_MANIFEST_MAX_BYTES + 1);
+      bigBytes[0] = 37; /* '%' — a byte the old capped reader never got to see */
       const bigResponse = {
         ok: true,
         status: 200,
@@ -689,11 +691,36 @@ describe('useCatalogItemDetails', () => {
         makeItem(CatalogEntityType.Skill, SKILL_ID),
       );
 
-      await expect(
-        result.current.onLoadSkillDetailsFile(
-          `skills/${SKILL_BUCKET}/${SKILL_PATH}/big-file.bin`,
-        ),
-      ).rejects.toThrow('preview size limit');
+      const file = await result.current.onLoadSkillDetailsFile(
+        `skills/${SKILL_BUCKET}/${SKILL_PATH}/big-file.pdf`,
+      );
+
+      expect(file.bytes).toBeInstanceOf(Uint8Array);
+      expect(file.bytes.byteLength).toBe(SKILL_MANIFEST_MAX_BYTES + 1);
+      expect(file.bytes[0]).toBe(37);
+    });
+
+    it('still throws with the status for a non-403 non-OK response', async () => {
+      const api = makeApi({
+        downloadSkillFile: vi
+          .fn()
+          .mockResolvedValueOnce(makeTextResponse(MANIFEST_TEXT))
+          .mockResolvedValueOnce(makeErrorResponse(500)),
+      });
+      const { result } = renderHook(() =>
+        useCatalogItemDetails(makeOptions(api)),
+      );
+
+      await result.current.onFetchDetails(
+        makeItem(CatalogEntityType.Skill, SKILL_ID),
+      );
+
+      const err: unknown = await result.current
+        .onLoadSkillDetailsFile(`skills/${SKILL_BUCKET}/${SKILL_PATH}/x.pdf`)
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(Error);
+      expect((err as { status: number }).status).toBe(500);
     });
 
     it('returns bytes and mimeType for a valid file', async () => {
