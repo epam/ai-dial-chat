@@ -30,7 +30,7 @@ The mic button and the voice bar that replaces the conversation input while a re
 
 ### Requirement: Voice bar replaces conversation input during recording
 
-The voice bar SHALL replace the textarea inside the existing input border for both dictation and attachment recording, beginning when microphone permission is requested. The draft SHALL remain in `useMessageState` while its textarea is unmounted. Existing attachment cards and any welcome heading SHALL remain present. The waveform SHALL occupy the first input content row below any attachment tray; the model/send action row SHALL be unavailable, but the voice bar's own attach-file control SHALL remain available (see Requirement: Attach a file during recording). Processing SHALL continue to withhold the textarea. An error SHALL end the active voice presentation immediately, restore and focus the textarea, and display the error alert alongside the normal input.
+The voice bar SHALL replace the textarea inside the existing input border for both dictation and attachment recording, beginning when microphone permission is requested. The draft SHALL remain in `useMessageState` while its textarea is unmounted. Existing attachment cards and any welcome heading SHALL remain present. The waveform SHALL occupy the first input content row below any attachment tray; the model/send action row SHALL be unavailable, but the voice bar's own attach-file control SHALL remain present, disabled for the recording's duration (see Requirement: Attach a file during recording). Processing SHALL continue to withhold the textarea. An error SHALL end the active voice presentation immediately, restore and focus the textarea, and display the error alert alongside the normal input.
 
 #### Scenario: Recording starts from either entry point
 
@@ -117,19 +117,14 @@ At every viewport width, the first voice-bar row SHALL contain the dot and wavef
 
 ### Requirement: Attach a file during recording
 
-The voice bar's second row SHALL render, at its inline start, the same attach-file control (`+`, including its menu) used by the normal footer's add button — not a separate reduced control. It SHALL be disabled while the recorder is anything but actively Recording, so it cannot be used to interrupt a pending transcription, and SHALL otherwise follow the same visibility rules as the footer's add button (hidden when attachments are disabled, `hideAttachFile`, or the add button is hidden entirely) and respect the input-disabled state.
+The voice bar's second row SHALL render, at its inline start, the same attach-file control (`+`, including its menu) used by the normal footer's add button — not a separate reduced control. It SHALL be disabled for the entire duration of an active recording session (Recording and Processing), so a prompt, skill or file cannot be selected while the textarea is unmounted and the draft cannot yet reflect the choice, and SHALL otherwise follow the same visibility rules as the footer's add button (hidden when attachments are disabled, `hideAttachFile`, or the add button is hidden entirely) and respect the input-disabled state.
 
-#### Scenario: Attach while actively recording
+#### Scenario: Attach disabled while recording
 
-- **WHEN** the user activates the `+` control while Recording
-- **THEN** the same attach menu as the normal footer opens, any selected file is added to the attachment tray, and the voice session continues unaffected
-
-#### Scenario: Attach disabled while processing
-
-- **WHEN** the recorder is awaiting recognition (Processing)
+- **WHEN** the recorder is actively Recording or awaiting recognition (Processing)
 - **THEN** the voice bar's `+` control is rendered but disabled
 - **WHEN** recognition enters Error
-- **THEN** the voice bar is removed and the normal input controls return
+- **THEN** the voice bar is removed and the normal input controls return, and the `+` control is enabled again
 
 #### Scenario: Attach control hidden
 

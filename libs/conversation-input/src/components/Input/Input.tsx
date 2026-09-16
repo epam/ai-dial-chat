@@ -692,10 +692,7 @@ export const Input: FC<InputProps> = ({
       menuTitle={menuTitle}
       menuCloseLabel={menuCloseLabel}
       style={cssVars}
-      isDisabled={
-        isInputDisabled ||
-        (isVoiceActive && voiceState !== VoiceRecorderState.Recording)
-      }
+      isDisabled={isInputDisabled || isVoiceActive}
       chatSettings={chatSettings}
       extraMenuItems={dialFileSystemMenuItem}
       onRecordVoice={
