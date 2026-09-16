@@ -3,17 +3,31 @@ import {
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
+import { ErrorText, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AttachmentCanvasI18nKeys } from '../../constants/translation-keys';
+import {
+  AttachmentCanvasI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
+import { SkillFilePreviewState } from '../../types/skill-file-preview';
 import { ThemeId } from '../../types/theme-id';
 import { configurePdfWorker } from '../../utils/pdf';
 
 /** Props for the inline skill supporting-file preview. */
 interface Props {
-  /** Opaque path identifying the file currently selected by the host. */
-  path: string;
+  /**
+   * Presentation state for the currently selected file, owned by
+   * `useSkillFilePreviewSync` rather than inferred from the canvas's
+   * selection.
+   */
+  state: SkillFilePreviewState;
+  /**
+   * Re-attempts the failed open for the current selection. Omitted by hosts
+   * that surface their own failures as canvas content instead.
+   */
+  onRetry?: () => void;
 }
 
 /**
@@ -21,12 +35,23 @@ interface Props {
  * used by chat attachments. The host owns the surrounding file heading and
  * selection controls, so this component renders content only.
  */
-export const SkillFilePreview: FC<Props> = ({ path }) => {
+export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
-  const { isLoading, content, fileName, attachmentId } = useAttachmentCanvas();
+  const { content, fileName } = useAttachmentCanvas();
 
-  const isCurrent = attachmentId === path;
+  if (state === SkillFilePreviewState.Error) {
+    return (
+      /* `ErrorText` is itself the `role="alert"` region; wrapping it in a
+         second one would announce the failure twice. */
+      <div className="flex h-full min-h-0 min-w-0 flex-col items-center justify-center gap-3">
+        <ErrorText text={t(AttachmentCanvasI18nKeys.LoadErrorLabel)} />
+        {onRetry != null && (
+          <NeutralButton label={t(ButtonsI18nKeys.Retry)} onClick={onRetry} />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -36,7 +61,7 @@ export const SkillFilePreview: FC<Props> = ({ path }) => {
     >
       <AttachmentCanvasBody
         content={content}
-        isLoading={!isCurrent || isLoading}
+        isLoading={state === SkillFilePreviewState.Loading}
         fileName={fileName}
         labels={{
           unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),

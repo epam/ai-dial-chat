@@ -283,19 +283,27 @@ const resolveAttachmentFileId = (
 
 /**
  * Resolves a displayable Blob/object URL for an attachment's binary content: a
- * locally-picked `File`, an already-uploaded DIAL file (fetched via LRU cache),
- * an existing preview URL, or inline base64 `data` decoded into a Blob URL.
- * Returns `undefined` when none of these sources are available, or an
- * `ErrorCanvasContent` when a DIAL file fetch fails.
+ * local `File` with bytes, an already-uploaded DIAL file (fetched via LRU
+ * cache), a 0-byte local `File`, an existing preview URL, or inline base64
+ * `data` decoded into a Blob URL. A local `File` with bytes takes precedence
+ * over the DIAL download URL; a 0-byte `File` (the file-manager placeholder)
+ * does not. Returns `undefined` when none of these sources are available, or
+ * an `ErrorCanvasContent` when a DIAL file fetch fails.
  */
 const resolveAttachmentBlobUrl = async (
   attachment: DisplayAttachment,
   resolvers: AttachmentCanvasUrlResolvers,
 ): Promise<string | ErrorCanvasContent | undefined> => {
-  if ('file' in attachment) {
-    return URL.createObjectURL((attachment as Attachment).file);
+  const file =
+    'file' in attachment ? (attachment as Attachment).file : undefined;
+  const isFileEmpty = file != null && file.size === 0;
+  const dialUrl =
+    file != null && !isFileEmpty
+      ? undefined
+      : resolvers.resolveDialUrl(attachment);
+  if (file != null && dialUrl == null) {
+    return URL.createObjectURL(file);
   }
-  const dialUrl = resolvers.resolveDialUrl(attachment);
   if (dialUrl != null) {
     try {
       const blob = await fetchDialBlob(
@@ -365,22 +373,30 @@ export const hasAttachmentTextSource = (
 
 /**
  * Resolves an image canvas content payload from a DisplayAttachment without
- * fetching — returns the BFF download URL (or a local/inline blob URL)
- * directly so the browser cache can be shared with the conversation view's
- * `<img>` element. Error detection is delegated to `<img onError>` in the
- * canvas renderer. Returns `null` if no URL source is available.
+ * fetching — returns a local blob URL or the BFF download URL directly so the
+ * browser cache can be shared with the conversation view's `<img>` element.
+ * A local `File` with bytes takes precedence over the DIAL download URL; a
+ * 0-byte `File` (the file-manager placeholder) does not. Error detection is
+ * delegated to `<img onError>` in the canvas renderer. Returns `null` if no
+ * URL source is available.
  */
 export const resolveImageCanvasContent = (
   attachment: DisplayAttachment,
   resolvers: AttachmentCanvasUrlResolvers,
 ): ImageCanvasContent | null => {
-  if ('file' in attachment) {
+  const file =
+    'file' in attachment ? (attachment as Attachment).file : undefined;
+  const isFileEmpty = file != null && file.size === 0;
+  const dialUrl =
+    file != null && !isFileEmpty
+      ? undefined
+      : resolvers.resolveDialUrl(attachment);
+  if (file != null && dialUrl == null) {
     return {
       type: AttachmentContentType.Image,
-      url: URL.createObjectURL((attachment as Attachment).file),
+      url: URL.createObjectURL(file),
     };
   }
-  const dialUrl = resolvers.resolveDialUrl(attachment);
   if (dialUrl != null) {
     return { type: AttachmentContentType.Image, url: dialUrl };
   }

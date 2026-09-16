@@ -313,11 +313,12 @@ This graceful fallback is required because some backends put already-decoded pla
 
 `resolveImageCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts` is **synchronous** (`ImageCanvasContent | null`) and never issues a `fetch`. Resolution priority:
 
-1. Local `attachment.file` → `URL.createObjectURL(file)` (locally-picked, not yet uploaded).
-2. `resolveDialUrl(attachment)` → the BFF download URL is passed to `<img src>` directly. The browser's HTTP cache deduplicates it with the `<img>` already rendered in the conversation view. Load failures are detected via `<img onError>` in the renderer (see "Rendering" below).
-3. `attachment.previewUrl` — typically a `data:image/...;base64,...` URL synthesized by `message-attachment-to-display.ts` for stage attachments that carry inline base64 content and no `url`.
-4. Inline `attachment.data` decoded via `base64ToBlobUrl(data, contentType)`.
-5. `null` if no source is available ("not previewable").
+1. Local `attachment.file` **with bytes** → `URL.createObjectURL(file)` — a locally-picked file, or an uploaded-but-unsent composer attachment whose eager upload already assigned the DIAL `url` while keeping the local copy; the in-memory bytes win, so the preview needs no network.
+2. `resolveDialUrl(attachment)` → the BFF download URL is passed to `<img src>` directly; consulted whenever the local `File` is 0-byte (the file-manager placeholder, whose real content is the DIAL url) or absent. The browser's HTTP cache deduplicates it with the `<img>` already rendered in the conversation view. Load failures are detected via `<img onError>` in the renderer (see "Rendering" below).
+3. A 0-byte local `attachment.file` → `URL.createObjectURL(file)` — a genuine empty local file with no `url`; the browser's own decode failure routes through the same `onError` path.
+4. `attachment.previewUrl` — typically a `data:image/...;base64,...` URL synthesized by `message-attachment-to-display.ts` for stage attachments that carry inline base64 content and no `url`.
+5. Inline `attachment.data` decoded via `base64ToBlobUrl(data, contentType)`.
+6. `null` if no source is available ("not previewable").
 
 Because images skip `fetch()`, `resolveImageCanvasContent` never returns `ErrorCanvasContent`. Load failures surface as an inline error state in the renderer instead (see "Rendering" below).
 
@@ -337,7 +338,7 @@ Images are rendered by the `ImageContent` sub-component, defined inside `libs/at
 
 `resolvePdfCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts` is `async` and resolves `url` via the shared `resolveAttachmentBlobUrl` helper (see "Shared content resolution helpers" below). A resolved `ErrorCanvasContent` is returned as-is; a resolved string is wrapped as `{ type: AttachmentContentType.Pdf, url }`. When `resolveAttachmentBlobUrl` returns `undefined` (no local file, DIAL URL, preview URL, or inline data), `attachment.url` is set, is not a DIAL `files/` id, and is a fetchable absolute URL (`isFetchableExternalUrl`: `http:`, `https:`, or `blob:` scheme — a relative or opaque string, e.g. a bare citation/reference id, fails this check and is rejected rather than handed to the viewer as an unfetchable `url`), that raw external URL is used directly as `{ type: AttachmentContentType.Pdf, url: attachment.url }` instead of failing — the same fallback `annotationToPdfCanvasContent`/`referenceAttachmentToPdfCanvasContent` use for a citation whose source is an external PDF, since the PDF canvas viewer fetches and renders the URL itself. Otherwise `undefined` returns `null`.
 
-Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL` → (PDF only) the raw `attachment.url` when it is a non-DIAL, fetchable (`http:`/`https:`/`blob:`) external URL.
+Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` **with bytes** (`URL.createObjectURL` — a locally-picked file, or an uploaded-but-unsent composer attachment whose eager upload already assigned the DIAL `url` while keeping the local copy) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead; consulted whenever the local `File` is 0-byte — the file-manager placeholder, whose real content is the DIAL url — or absent) → a 0-byte local `attachment.file` (`URL.createObjectURL`) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL` → (PDF only) the raw `attachment.url` when it is a non-DIAL, fetchable (`http:`/`https:`/`blob:`) external URL.
 
 This covers stage attachments (e.g. from the DIAL Annotation API) that carry the PDF as inline base64 `data` with no `url` — `DocumentPreview` receives a `blob:` object URL and loads it the same way it would a remote URL. A DIAL-hosted PDF is fetched once at resolution time (to classify load/permission failures before rendering); `DocumentPreview`'s own `loadFileCb` then resolves that `blob:` URL from the in-memory blob store, so this does not add a second network round-trip.
 
@@ -559,6 +560,42 @@ A failed fetch SHALL resolve to `ErrorCanvasContent` carrying `errorType: Forbid
 
 - **WHEN** an image fails to load
 - **THEN** `resolveImageCanvasContent` still returns `ImageCanvasContent` and `ImageContent`'s `onError` swaps in the inline error message
+
+### Requirement: Attachment content resolvers prefer a resolvable DIAL download URL over a 0-byte local File
+
+Every attachment-canvas content resolver in `@epam/ai-dial-chat-hooks` that can resolve content from either a local `attachment.file` or a DIAL file id — `resolveImageCanvasContent`, `resolveAttachmentBlobUrl` (and the resolvers built on it, including `resolvePdfCanvasContent` and `resolveOoxmlCanvasContent`), `resolveAttachmentText` (and the resolvers built on it, including text/Markdown/code/JSON and `resolveVisualizerCanvasContent`), and `hasAttachmentTextSource` — SHALL apply this source precedence: a local `attachment.file` **with bytes** resolves first; when the local `File` is 0-byte or absent, the host-injected DIAL download URL (`resolvers.resolveDialUrl(attachment)`, i.e. a `files/{bucket}/{path}` id in `attachment.url` or `attachment.referenceUrl`) resolves before the 0-byte local `File`. The remaining fallback order (`attachment.previewUrl`, then inline base64 `attachment.data`, then any type-specific external-URL tail) SHALL be unchanged.
+
+Rationale: a file-manager-selected attachment carries a 0-byte placeholder `File` (synthesized by `dialFileToAttachment` to satisfy the required `Attachment.file` field) while its real content sits behind the DIAL url; local-`File`-first precedence hands the renderer an object URL over that empty placeholder (issue #8761). Conversely, the composer's eager-upload flow assigns the DIAL url before send while keeping the real local `File`, so a `File` with bytes must keep winning to preserve the instant, offline-capable in-memory preview.
+
+#### Scenario: File-manager image previews from its DIAL content
+
+- **GIVEN** an image attachment shaped like a file-manager selection: `attachment.file` is a 0-byte `File` typed `image/png` and `attachment.url` is `files/{bucket}/path/image.png`
+- **WHEN** `resolveImageCanvasContent` is called
+- **THEN** it returns `ImageCanvasContent` whose `url` is the resolved DIAL download URL, not an object URL over `attachment.file`
+
+#### Scenario: File-manager PDF content is fetched from the DIAL download URL
+
+- **GIVEN** an attachment whose `attachment.file` is a 0-byte placeholder `File` and whose `attachment.url` is a `files/{bucket}/{path}` id
+- **WHEN** `resolvePdfCanvasContent` (via `resolveAttachmentBlobUrl`) is called
+- **THEN** content is fetched from the resolved DIAL download URL (through the existing blob cache and error classification), not from `attachment.file`
+
+#### Scenario: An uploaded-but-unsent attachment previews from its local File without network
+
+- **GIVEN** an attachment whose `attachment.file` holds the real bytes and whose `attachment.url` is the DIAL id assigned by the composer's eager upload
+- **WHEN** `resolveImageCanvasContent` or `resolvePdfCanvasContent` (via `resolveAttachmentBlobUrl`) is called
+- **THEN** the content resolves from the local `File` (an object URL), and no DIAL download or metadata fetch is issued
+
+#### Scenario: A genuine local file still resolves locally, including zero-byte text
+
+- **GIVEN** an attachment with a local `attachment.file` and no `files/` id in `url` or `referenceUrl`
+- **WHEN** any content resolver or `hasAttachmentTextSource` is called
+- **THEN** behavior is unchanged from local resolution: blob/text content comes from `attachment.file`, and a zero-byte text `File` resolves to empty text rather than "no source"
+
+#### Scenario: hasAttachmentTextSource reports a DIAL-hosted attachment as a text source
+
+- **GIVEN** an attachment whose `attachment.url` is a `files/{bucket}/{path}` id (with or without a placeholder `File`)
+- **WHEN** `hasAttachmentTextSource` is called
+- **THEN** it returns `true`, so a fetched-and-rejected HTML payload is classified as "fetched and rejected" rather than "nothing to fetch"
 
 ### Requirement: `AttachmentContentType.Visualizer` variant
 

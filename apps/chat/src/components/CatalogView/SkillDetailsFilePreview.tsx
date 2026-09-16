@@ -14,6 +14,7 @@ import {
 import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
 import { type FC, useEffect } from 'react';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
+import { SkillFilePreviewState } from '../../types/skill-file-preview';
 import { SkillFilePreview } from '../SkillFilePreview/SkillFilePreview';
 
 interface Props {
@@ -26,7 +27,11 @@ interface Props {
 }
 
 const FilePreviewContent: FC<Props> = ({ fileId, fileName, onLoadFile }) => {
-  const { openCanvas } = useAttachmentCanvas();
+  const {
+    openCanvas,
+    attachmentId,
+    isLoading: isCanvasLoading,
+  } = useAttachmentCanvas();
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, {
     customVisualizers: options.customVisualizers,
@@ -51,7 +56,24 @@ const FilePreviewContent: FC<Props> = ({ fileId, fileName, onLoadFile }) => {
     );
   }, [error, fileName, fileId, openCanvas]);
 
-  return <SkillFilePreview path={fileId} />;
+  /*
+   * This path surfaces `useSkillFilePreview`'s own failures as canvas content
+   * (forbidden/load error) inside its isolated provider, so it passes no retry
+   * control. It does not use the preview's Error state: a resolver that finds
+   * nothing to display still closes the canvas here and leaves a spinner, as it
+   * did before this component took an explicit state. Giving the catalog the
+   * same recoverable failure the Skill Editor now has is out of this change's
+   * scope (`design.md` Non-Goals) and needs its own change.
+   */
+  return (
+    <SkillFilePreview
+      state={
+        attachmentId === fileId && !isCanvasLoading
+          ? SkillFilePreviewState.Ready
+          : SkillFilePreviewState.Loading
+      }
+    />
+  );
 };
 
 /**

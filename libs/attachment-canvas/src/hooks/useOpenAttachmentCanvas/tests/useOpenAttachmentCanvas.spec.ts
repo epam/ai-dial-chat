@@ -1067,3 +1067,103 @@ describe('useOpenAttachmentCanvas — panel coordination', () => {
     expect(mockOpenCanvas).not.toHaveBeenCalled();
   });
 });
+
+describe('useOpenAttachmentCanvas — commit guard', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockResolveContentUrl.mockReturnValue(undefined);
+    mockHasTextSource.mockReturnValue(true);
+  });
+
+  it('writes no canvas state when the request may no longer commit', async () => {
+    mockResolveMarkdown.mockResolvedValue({ type: 'markdown', text: '# hi' });
+    const { result } = renderOpenAttachmentCanvas();
+
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('notes.md', 'text/markdown'),
+      'scoped#notes.md',
+      () => false,
+    );
+
+    expect(opened).toBe(false);
+    expect(mockOpenCanvas).not.toHaveBeenCalled();
+  });
+
+  it('does not close a canvas it no longer owns when content is unavailable', async () => {
+    mockResolveCode.mockResolvedValue(null);
+    const { result } = renderOpenAttachmentCanvas();
+
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('script.py', 'text/plain'),
+      'scoped#script.py',
+      () => false,
+    );
+
+    expect(opened).toBe(false);
+    expect(mockCloseCanvas).not.toHaveBeenCalled();
+  });
+
+  it('still closes when the request is unavailable and may commit', async () => {
+    mockResolveCode.mockResolvedValue(null);
+    const { result } = renderOpenAttachmentCanvas();
+
+    await result.current.openAttachmentCanvas(
+      makeAttachment('script.py', 'text/plain'),
+      'scoped#script.py',
+      () => true,
+    );
+
+    expect(mockCloseCanvas).toHaveBeenCalledOnce();
+  });
+
+  it('releases a discarded payload object URL instead of leaking it', async () => {
+    const revoke = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(() => undefined);
+    mockResolvePdf.mockResolvedValue({
+      type: 'pdf',
+      url: 'blob:https://host/abc',
+    });
+    const { result } = renderOpenAttachmentCanvas();
+
+    await result.current.openAttachmentCanvas(
+      makeAttachment('guide.pdf', 'application/pdf'),
+      'scoped#guide.pdf',
+      () => false,
+    );
+
+    expect(revoke).toHaveBeenCalledWith('blob:https://host/abc');
+    revoke.mockRestore();
+  });
+
+  it('commits normally when no guard is supplied', async () => {
+    mockResolveMarkdown.mockResolvedValue({ type: 'markdown', text: '# hi' });
+    const { result } = renderOpenAttachmentCanvas();
+
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('notes.md', 'text/markdown'),
+      'scoped#notes.md',
+    );
+
+    expect(opened).toBe(true);
+    expect(mockOpenCanvas).toHaveBeenCalledOnce();
+  });
+
+  it('consults the guard at commit time, not at call time', async () => {
+    let isCurrent = true;
+    mockResolveMarkdown.mockImplementation(async () => {
+      isCurrent = false;
+      return { type: 'markdown', text: '# hi' };
+    });
+    const { result } = renderOpenAttachmentCanvas();
+
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('notes.md', 'text/markdown'),
+      'scoped#notes.md',
+      () => isCurrent,
+    );
+
+    expect(opened).toBe(false);
+    expect(mockOpenCanvas).not.toHaveBeenCalled();
+  });
+});
