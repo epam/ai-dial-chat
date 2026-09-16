@@ -39,7 +39,7 @@ jobs:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.11.0
     with:
       node-version: 24
-      maximize-build-space: true
+      maximize-build-space: false
     secrets: inherit
 
   chat_hooks_packed_smoke:
