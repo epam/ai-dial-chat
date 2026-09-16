@@ -35,6 +35,7 @@ import {
   createOpenApiConfig,
   openApiDocumentOptions,
 } from './openapi/openapi.config';
+import { attachHttpLifecycleListener } from './telemetry/http-lifecycle-listener';
 import { NestOtelLogger } from './telemetry/nestjs-otel-logger';
 import { traceparentMiddleware } from './telemetry/traceparent.middleware';
 
@@ -71,6 +72,16 @@ async function bootstrap() {
       ),
     ),
   });
+
+  /*
+   * Must run first, before `app.enableShutdownHooks()` and before any `app.use(...)` call below:
+   * attaching directly to `app.getHttpServer()`'s raw `'request'` event is what makes this
+   * instrumentation see guard rejections, body-parser failures, and unmatched routes that a Nest
+   * interceptor or an `app.use()` middleware — whose visibility depends on registration order —
+   * cannot (design.md D1). Moving this call later in `bootstrap()` would silently reopen that gap
+   * for whatever gets registered ahead of it.
+   */
+  attachHttpLifecycleListener(app.getHttpServer());
 
   app.enableShutdownHooks();
 
