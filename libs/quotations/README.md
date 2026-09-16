@@ -98,7 +98,12 @@ const card = useCitationCard();
 
 ### `useCitationCard`
 
-Manages open/close state and per-group active annotation index for citation popups within a single message, keyed by `AnnotationGroup.groupKey` (not `sourceUrl` — two groups can share a `sourceUrl`, e.g. two inline-tag citations of the same document, while having independent popup/switcher state).
+Manages open/close state and per-group active annotation index for citation popups within a single message. The hook carries two key spaces:
+
+- **Openness** (`openPopup(ownerKey)`, `closePopup(ownerKey)`, `isOpen(ownerKey)`) is keyed by **occurrence owner key** — a stable per-instance id `CitationDropdown` derives with React `useId()`, not `AnnotationGroup.groupKey` or `sourceUrl`. Two rendered occurrences resolving to the same group are therefore always independent popup owners: `openPopup` makes its key the sole owner (transferring the open card from any previous owner), and `closePopup` is **owner-scoped** — it clears state only when the given key currently owns the popup, so a dismissal from an inactive or previously active occurrence can never close the card the user just opened.
+- **The switcher index** (`setActiveIndex(groupKey, index)`, `getActiveIndex(groupKey)`) stays keyed by `AnnotationGroup.groupKey` (not `sourceUrl` — two groups can share a `sourceUrl`, e.g. two inline-tag citations of the same document), because the index indexes into `group.annotations`, which is group data.
+
+`CitationDropdown` is the only in-repo caller and applies this split automatically; a host rendering it directly needs no extra prop.
 
 ### `useAnnotations`
 

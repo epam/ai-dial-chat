@@ -1,7 +1,7 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Tooltip } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode, useCallback, useMemo } from 'react';
+import { FC, ReactNode, useCallback, useId, useMemo } from 'react';
 import { useCitationCardContext } from '../../context/CitationCardContext';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 import {
@@ -53,14 +53,15 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   markerLabelClassName,
 }) => {
   const citationCard = useCitationCardContext();
-  const isOpen = citationCard.isOpen(group.groupKey);
+  const ownerKey = useId();
+  const isOpen = citationCard.isOpen(ownerKey);
   const activeIndex = citationCard.getActiveIndex(group.groupKey);
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
-      if (!nextOpen) citationCard.closePopup();
+      if (!nextOpen) citationCard.closePopup(ownerKey);
     },
-    [citationCard],
+    [citationCard, ownerKey],
   );
 
   const handlePreview = useMemo(
@@ -68,17 +69,18 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       onPreview
         ? (annotation: Annotation) => {
             onPreview(annotation);
-            citationCard.closePopup();
+            citationCard.closePopup(ownerKey);
           }
         : undefined,
-    [onPreview, citationCard],
+    [onPreview, citationCard, ownerKey],
   );
 
   /*
-   * Stays on the 1.0 tooltip: this is a controlled popover carrying an
-   * interactive card, and it needs `bottom-end` so the 400px card aligns with
-   * the marker instead of overhanging it. The 2.0 `Tooltip` narrows `placement`
-   * to the four `TooltipPlacement` sides, which cannot express `-end` alignment.
+   * This is a controlled popover carrying an interactive card and needs
+   * `bottom-end` so the 400px card aligns with the marker instead of
+   * overhanging it. The resolved `Tooltip` export is the 2.0 component; it
+   * narrows `placement` to the four `TooltipPlacement` sides, which cannot
+   * express `-end` alignment, so no `placement` is passed here.
    */
   return (
     <Tooltip
@@ -105,7 +107,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       <CitationMarker
         sourceName={group.sourceName}
         annotationCount={group.annotations.length}
-        onOpen={() => citationCard.openPopup(group.groupKey)}
+        onOpen={() => citationCard.openPopup(ownerKey)}
         icon={icon}
         labels={markerLabels}
         labelClassName={markerLabelClassName}
