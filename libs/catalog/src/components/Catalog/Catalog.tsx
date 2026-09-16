@@ -16,6 +16,7 @@ import {
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { buildCatalogTabs } from '../../utils/catalog-tabs';
 import { getStyles } from '../../utils/styles';
+import { isLevelSignedIn, sleep } from '../../utils/toolset-credentials';
 import { CardGrid } from '../CardGrid/CardGrid';
 import { DetailsPanel } from '../Details/DetailsPanel';
 import { Favorites } from '../Favorites/Favorites';
@@ -23,6 +24,19 @@ import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
 import { CreateButton } from './CreateButton';
+
+/**
+ * How many times the post-login/post-logout details refetch retries before
+ * giving up, and the delay between attempts. A successful login/logout call
+ * has already completed against DIAL Core by the time this runs, but DIAL
+ * Core's own credential propagation (and, separately, this app's short-lived
+ * details cache) can lag the write by a beat — so a single immediate refetch
+ * occasionally still reports the pre-change status. Retrying briefly at this
+ * layer is scoped to the auth-confirmation flow only; ordinary item selection
+ * still does a single fetch for responsiveness.
+ */
+const POST_AUTH_REFRESH_ATTEMPTS = 3;
+const POST_AUTH_REFRESH_DELAY_MS = 300;
 
 /** Root catalog component: entity browsing with tabs, search, sort, filter, favorites strip, and details panel. */
 export const Catalog: FC<CatalogProps> = ({
@@ -231,32 +245,27 @@ export const Catalog: FC<CatalogProps> = ({
   const pendingItemIdRef = useRef<string | null>(null);
 
   const handleOpenDetails = useCallback(
-    async (item: CatalogItem) => {
+    async (
+      item: CatalogItem,
+    ): Promise<CatalogItemDetailsFetchResult | undefined> => {
       setSelectedItem(item);
       setFetchedDetails(undefined);
       pendingItemIdRef.current = item.id;
 
-      const fetches: Promise<void>[] = [];
+      if (!onFetchDetails) return undefined;
 
-      if (onFetchDetails) {
-        setIsDetailsLoading(true);
-        fetches.push(
-          (async () => {
-            try {
-              const details = await onFetchDetails(item);
-              if (pendingItemIdRef.current === item.id) {
-                setFetchedDetails(details);
-              }
-            } finally {
-              if (pendingItemIdRef.current === item.id) {
-                setIsDetailsLoading(false);
-              }
-            }
-          })(),
-        );
+      setIsDetailsLoading(true);
+      try {
+        const details = await onFetchDetails(item);
+        if (pendingItemIdRef.current === item.id) {
+          setFetchedDetails(details);
+        }
+        return details;
+      } finally {
+        if (pendingItemIdRef.current === item.id) {
+          setIsDetailsLoading(false);
+        }
       }
-
-      await Promise.all(fetches);
     },
     [onFetchDetails],
   );
@@ -302,7 +311,13 @@ export const Catalog: FC<CatalogProps> = ({
       params: { level: CredentialsLevel; apiKey?: string },
     ) => {
       await onLogin?.(item, params);
-      await handleOpenDetails(item);
+      for (let attempt = 0; attempt < POST_AUTH_REFRESH_ATTEMPTS; attempt++) {
+        const details = await handleOpenDetails(item);
+        if (isLevelSignedIn(details?.credentials, params.level)) return;
+        if (attempt < POST_AUTH_REFRESH_ATTEMPTS - 1) {
+          await sleep(POST_AUTH_REFRESH_DELAY_MS);
+        }
+      }
     },
     [onLogin, handleOpenDetails],
   );
@@ -310,7 +325,13 @@ export const Catalog: FC<CatalogProps> = ({
   const handleLogout = useCallback(
     async (item: CatalogItem, params: { level: CredentialsLevel }) => {
       await onLogout?.(item, params);
-      await handleOpenDetails(item);
+      for (let attempt = 0; attempt < POST_AUTH_REFRESH_ATTEMPTS; attempt++) {
+        const details = await handleOpenDetails(item);
+        if (!isLevelSignedIn(details?.credentials, params.level)) return;
+        if (attempt < POST_AUTH_REFRESH_ATTEMPTS - 1) {
+          await sleep(POST_AUTH_REFRESH_DELAY_MS);
+        }
+      }
     },
     [onLogout, handleOpenDetails],
   );
@@ -618,7 +639,9 @@ export const Catalog: FC<CatalogProps> = ({
           texts={detailsTexts}
           limitsFooterNote={detailsLimitsFooterNote}
           styles={{
-            colors: { featuredChipStyle: catalogStyles?.colors?.featuredChipStyle },
+            colors: {
+              featuredChipStyle: catalogStyles?.colors?.featuredChipStyle,
+            },
           }}
         />
       )}
