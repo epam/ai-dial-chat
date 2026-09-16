@@ -23,10 +23,12 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe('TableHeader', () => {
   it('renders action descriptors as accessible tooltip buttons', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ delay: null });
     const onClick = vi.fn();
 

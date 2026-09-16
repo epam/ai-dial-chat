@@ -47,6 +47,37 @@ await userEvent.click(screen.getByRole('button', { name: 'Send' }));
 fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
 ```
 
+## Fake timers for delayed UI (tooltips, debounce, exit animations)
+
+When a component's visible behavior depends on a `setTimeout`-driven delay —
+a tooltip's hover-open delay, a debounce, an exit/removal animation before a
+callback commits — advance a fake clock instead of waiting on the real one
+with `waitFor`/`findBy*`. Waiting on the real clock makes the test as slow as
+the delay it exists to skip, and ties pass/fail to CI machine speed.
+
+```ts
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+it('adds the currently-selected item to favorites when its star is clicked', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const user = userEvent.setup({ delay: null });
+  const onToggleFavorite = vi.fn();
+  renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
+    selectedId: 'claude-opus',
+    selectedItem,
+    onToggleFavorite,
+  });
+
+  await user.click(screen.getByRole('button', { name: 'Add to favorites' }));
+
+  await waitFor(() =>
+    expect(onToggleFavorite).toHaveBeenCalledWith('claude-opus', true),
+  );
+});
+```
+
 ## Mocking
 
 - Mock with `vi.mock()` at module level; keep mocked surfaces minimal — expose only the props/methods the test actually exercises.
