@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { OptionalSessionGuard } from '../auth/session/optional-session.guard';
@@ -21,6 +21,12 @@ export class AppConfigController {
 
   @Get()
   @Public()
+  /* The response carries role-restricted values and operator copy that changes
+     on redeploy, so it must never be reused from a browser or intermediary
+     cache: a stale hit keeps serving the previous deployment's announcements
+     and feature flags. Freshness is bounded by the service's own per-user
+     cache instead. */
+  @Header('Cache-Control', 'private, no-store')
   @UseGuards(OptionalSessionGuard)
   @ApiOperation({
     summary: 'Get client-safe application configuration and feature flags',

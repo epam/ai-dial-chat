@@ -108,10 +108,11 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-publish-panel`         | `publish-panel`         | Publish-to-folder UI and state flow                                                                                                                                                                                                                                                                                                                                                                                            |
 | `@epam/ai-dial-prompt-editor`         | `prompt-editor`         | Host-agnostic prompt authoring form with an inline folder picker                                                                                                                                                                                                                                                                                                                                                               |
 | `@epam/ai-dial-prompts`               | `prompts`               | Favorite-prompts panel and the prompt-parameters popup for the composer                                                                                                                                                                                                                                                                                                                                                        |
+| `@epam/ai-dial-skills`                | `skills`                | Skill selection for the composer — favorites overlay, slash-command menu, browse-modal shell, and the selected/history skill chips                                                                                                                                                                                                                                                                                             |
 | `@epam/ai-dial-skill-editor`          | `skill-editor`          | Skill authoring form with a file tree and conflict handling                                                                                                                                                                                                                                                                                                                                                                    |
 | `@epam/ai-dial-builder-form`          | `builder-form`          | Presentational builder form shells, editor layouts and shared deployment field sets for composing and editing DIAL entities                                                                                                                                                                                                                                                                                                    |
 | `@epam/ai-dial-scheduled-tasks`       | `scheduled-tasks`       | Scheduled Tasks page shell — header, toolbar, empty state                                                                                                                                                                                                                                                                                                                                                                      |
-| `@epam/ai-dial-usage-dashboard`       | `usage-dashboard`       | Aggregate daily/monthly cost-limit cards for the Settings Usage tab                                                                                                                                                                                                                                                                                                                                                            |
+| `@epam/ai-dial-usage-dashboard`       | `usage-dashboard`       | Aggregate calendar-period (UTC day/week/month) cost-limit cards and the per-model limits table for the Settings Usage tab, including each period's host-formatted reset time                                                                                                                                                                                                                                                   |
 
 Conversation-history reuse is split across three acyclic layers. `chat-shared` owns the canonical `FilterTab`, the transfer-job contracts (job, status, subject, determinate progress, and the `ConversationTransferErrorCode` taxonomy), and conversation-name utilities. `chat-hooks` owns headless resource-state and conversation-panel controller hooks, with host-specific routing, labels, feature policy, and configured clients injected by `apps/chat`. `conversation-panel` owns the virtualized panel plus the labels-driven `ImportExportQueue` — with its per-row UI kit `Spinner` and `getTransferFileIcon` mapping — and the `RenameConversationPopup` presentation component, and consumes `FilterTab` and the transfer-job contracts from `chat-shared` directly rather than re-exporting them.
 
@@ -158,7 +159,13 @@ vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list declared
 in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum
 member plus one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
 `Preferences` is the tab selected on arrival, so `GET /api/v1/user/usage` is not requested until
-the user opens `Usage`.
+the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
+boundaries, and DIAL Core reports each one's exclusive end as an optional `resetsAt` instant.
+`UsageTab` formats those at the application edge (`utils/usage-reset-time.ts` — the only place
+`Date`/`Intl` touch a reset time) and passes preformatted strings into
+`@epam/ai-dial-usage-dashboard`, which never sees a raw timestamp, a locale, or a timezone. The tab
+also arms a timer for the earliest displayed boundary and re-fetches when it elapses, so post-reset
+figures always come from a fresh DIAL Core response — nothing is ever zeroed locally.
 `PreferencesTab` hosts the language, keyboard-shortcut and "Default agent for new chats"
 preferences. A theme row is implemented but **commented out**, parked for an
 upcoming theming feature — which is why `useThemeOptions` and the
@@ -424,14 +431,14 @@ Because generation survives a closed tab, reopening the conversation needs a way
 
 #### Models & Deployments
 
-| Method | Path                                       | Description                                                                                      |
-| ------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `GET`  | `/api/v1/models`                           | List available models (cached)                                                                   |
-| `GET`  | `/api/deployments`                         | List available deployments                                                                       |
-| `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached)                                         |
-| `GET`  | `/api/v1/deployments/{deployment}/limits`  | Rate-limit and rolling usage stats for one deployment                                            |
-| `GET`  | `/api/v1/user/limits`                      | Rate-limit and rolling usage stats for every visible deployment, plus global cost-budget figures |
-| `GET`  | `/api/v1/user/usage`                       | Same shape as `/api/v1/user/limits`, restricted to deployments used in the trailing 30 days      |
+| Method | Path                                       | Description                                                                                              |
+| ------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/v1/models`                           | List available models (cached)                                                                           |
+| `GET`  | `/api/deployments`                         | List available deployments                                                                               |
+| `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached)                                                 |
+| `GET`  | `/api/v1/deployments/{deployment}/limits`  | Rate-limit and calendar-period usage stats for one deployment                                            |
+| `GET`  | `/api/v1/user/limits`                      | Rate-limit and calendar-period usage stats for every visible deployment, plus global cost-budget figures |
+| `GET`  | `/api/v1/user/usage`                       | Same shape as `/api/v1/user/limits`, restricted to deployments used in the current UTC day/week/month    |
 
 #### Client Channel (`/api/v1/client-channel`)
 
@@ -578,6 +585,32 @@ Typography is never hardcoded in a lib: components accept an `<element>ClassName
 `apps/chat` uses Tailwind utility classes, referencing theme tokens through the semantic names in `tailwind.config.js` (`bg-layer-base`, `text-primary`, `bg-control-accent`, …). A handful of components additionally use an SCSS module where a value cannot be expressed as a utility — currently `Header`, `DeploymentSelectorPanel`, `MobileNavBottomSheet`, `UsageLimitsControl`, and `NotFound`. Prefer Tailwind; reach for a module only when there is no class for the value.
 
 Both apps and libs use logical direction utilities (`ms-*`, `pe-*`, `text-start`, `border-s-*`) so RTL locales flip automatically.
+
+### Third-party stylesheets — named cascade layer
+
+A vendor stylesheet a library pulls in for a lazily loaded engine is loaded
+inside a **named cascade layer**, never unlayered. `libs/attachment-canvas`'s
+`PdfContent` is the case that forced this: it imports
+`components/PdfContent/pdf-vendor.css`, which pulls both PDF vendor sheets in
+with `@import … layer(pdf-vendor)`.
+
+The reason is ordering. A lazily loaded stylesheet is injected **after** the
+app's own, and `@epam/ai-dial-react-pdf-highlighter`'s published sheet is a full
+Tailwind build — Preflight plus base utilities (`.hidden`, `.flex`, `.px-4`)
+that `apps/chat` also owns. A media-query variant carries no extra specificity,
+so an unlayered `.hidden { display: none }` arriving late beats the app's
+`@media (min-width:1280px) { .desktop\:block { display: block } }` and collapses
+layout the app owns, for the rest of the session. Unlayered author styles
+outrank every layered rule regardless of document order, so the layer restores
+app precedence while the vendor's own non-competing rules still apply.
+
+The layer does not change the lazy boundary: the wrapper is still imported from
+the lazily loaded module, so nothing is requested until a PDF opens.
+`libs/attachment-canvas/tests/package-boundary/pdf-vendor-style-containment.spec.ts`
+asserts both halves against the emitted CSS — the whole vendor payload inside
+one `@layer pdf-vendor`, and none of it in the package's base stylesheet.
+Nothing in `lint`, `typecheck`, or a jsdom test evaluates the cascade, so that
+build assertion is the only automated guard.
 
 ---
 

@@ -422,3 +422,49 @@ Every rejected entry SHALL be dropped and logged with a warning naming the entry
 
 - **WHEN** `ANNOUNCEMENTS` contains more entries than the supported maximum
 - **THEN** `config.announcements` contains only the first N entries in configured order and a warning names the dropped ones
+
+### Requirement: Custom client variables remain isolated from built-in settings
+
+The client-config response SHALL include `config.customVariables`, an arbitrary JSON object from the `customVariables` registry key. It SHALL default to `{}` when no object is resolved. It SHALL NOT be spread into built-in config, features, or metadata. Its keys are owned and validated by consuming clients, with no client-specific BFF variables or defaults. The DTO and generated OpenAPI client SHALL expose this generic map.
+
+This object is public, including before authentication, and SHALL be the same for every allowed appId; it is not a tenant-specific or secret store. Operators SHALL supply only public settings. Environment changes take effect after a BFF restart without a frontend rebuild.
+
+#### Scenario: Client keys do not override built-in configuration
+
+- **WHEN** custom variables contain keys also named like built-in config or feature flags
+- **THEN** those keys remain under `config.customVariables` and leave built-in values unchanged
+
+#### Scenario: Custom variables are unconfigured
+
+- **WHEN** no valid custom variable object is configured
+- **THEN** client-config succeeds with `config.customVariables: {}`
+
+---
+
+### Requirement: client-config response includes the welcome-screen description
+
+`GET /api/v1/client-config` SHALL include a `welcomeScreenDescription` field of type `string | null` in the `config` object of its response, sourced from the `welcomeScreen.description` registry key (env var `WELCOME_SCREEN_DESCRIPTION`). The field SHALL be `null` when the variable is not configured or resolves to a blank string.
+
+`welcomeScreenDescription` SHALL be returned as plain text — the service SHALL NOT interpret it as markup and SHALL NOT strip or escape its characters beyond trimming surrounding whitespace, matching the `announcementTitle` treatment.
+
+The `ClientConfigResponseDto` response DTO SHALL declare this field with Swagger metadata so the generated `@epam/chat-api-client` exposes it.
+
+#### Scenario: Description configured
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `WELCOME_SCREEN_DESCRIPTION` is set to `Your secure, all-in-one AI assistant.`
+- **THEN** the response is `200 OK` with `config.welcomeScreenDescription="Your secure, all-in-one AI assistant."`
+
+#### Scenario: Description not configured
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `WELCOME_SCREEN_DESCRIPTION` is not set
+- **THEN** the response is `200 OK` with `config.welcomeScreenDescription=null`
+
+#### Scenario: Blank value resolves to null
+
+- **WHEN** `WELCOME_SCREEN_DESCRIPTION` is set to an empty string or to whitespace only
+- **THEN** `config.welcomeScreenDescription` is `null` rather than an empty or whitespace string
+
+#### Scenario: Value is not treated as markup
+
+- **WHEN** `WELCOME_SCREEN_DESCRIPTION` is set to `Explore <b>everything</b> DIAL offers`
+- **THEN** the returned `config.welcomeScreenDescription` is the literal string `Explore <b>everything</b> DIAL offers`, unmodified

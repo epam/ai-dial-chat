@@ -1,4 +1,5 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
+import { OverlayStageStatus } from '@epam/ai-dial-chat-overlay';
+import { type Conversation, StageStatus } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -44,6 +45,7 @@ const makeOverlay = (): OverlayContextType & {
   registerConversationListBridge: vi.fn(),
   pendingModelId: null,
   authProviderUiModes: undefined,
+  authAutoSignInProvider: undefined,
   clearPendingModelId: vi.fn(),
   notifyConversationLoaded: vi.fn(),
   notifyConversationsUpdated: vi.fn(),
@@ -142,6 +144,47 @@ describe('useActiveConversationBridge', () => {
     expect(bridge.getMessages()).toEqual({
       messages: [{ id: '0', role: 'user', content: 'Hi' }],
     });
+  });
+
+  it('getMessages exposes the agent stages attached to a message', () => {
+    const overlay = makeOverlay();
+    mockUseOptionalOverlay.mockReturnValue(overlay);
+    const conversation = makeConversation({
+      messages: [
+        { role: 'user', content: 'Hi', timestamp: new Date().toISOString() },
+        {
+          role: 'assistant',
+          content: 'Done',
+          timestamp: new Date().toISOString(),
+          custom_content: {
+            stages: [
+              {
+                index: 0,
+                name: 'Reload canvas',
+                status: StageStatus.Completed,
+              },
+            ],
+          },
+        },
+      ] as Conversation['messages'],
+    });
+    const conversationRef = { current: conversation };
+
+    renderHook(() =>
+      useActiveConversationBridge({
+        conversation,
+        conversationId: 'bucket/gpt-4o__Hello__uuid',
+        conversationRef,
+        setConversation: vi.fn(),
+        handleSend: vi.fn(),
+        setOverlayInputContent: vi.fn(),
+      }),
+    );
+
+    const bridge = getRegisteredBridge(overlay);
+    expect(bridge.getMessages().messages[1].stages).toEqual([
+      { index: 0, name: 'Reload canvas', status: OverlayStageStatus.Completed },
+    ]);
   });
 
   it('makes freshly loaded conversation history available before any user action', () => {

@@ -10,6 +10,7 @@
     "rootDir": "."
   },
   "include": [
+    "package.json",
     "vitest.config.ts",
     "vitest.config.mts",
     "src/**/*.spec.ts",

@@ -229,6 +229,58 @@ additional role restriction.
   `maxInputAttachments`
 - **THEN** each omitted field keeps the value already stored on the application, regardless of
   whether `applicationProperties` was supplied (nothing is ever extracted from it)
+- **EXCEPT** `features.skills_supported` on a Quick App: see "Quick Apps always get
+  `features.skills_supported: true`" below — that one sub-field is actively re-asserted on every
+  Quick App update rather than merely carried through.
+
+### Requirement: Quick Apps always get features.skills_supported: true
+
+When a user creates a Quick App from the Admin application, Admin's own UI lets them set the
+`skills_supported` feature flag. Chat has no equivalent UI control for this flag, so a Quick App
+created or updated from chat would otherwise never get it set, and would silently lose skills.
+Three options were considered: add this default to every individual Quick App implementation
+(rejected — duplicative, many places to keep in sync), leave skills broken for chat-created Quick
+Apps (rejected outright), or force it in the one place all chat-originated application writes
+already pass through, `ApplicationsService` in `apps/chat-api`. The third option was chosen as the
+least-bad: it is a deliberate, narrow coupling of generic application-write logic to a
+QuickApp-specific business rule that does not otherwise belong in this service, accepted because
+the alternatives were worse.
+
+Both `createApplication` and `updateApplication` SHALL determine whether the schema is a Quick
+App via the shared `isQuickAppSchema` helper (`apps/chat-api/src/common/utils/application-schema.ts` —
+`body.type` on create, `mergedBody.application_type_schema_id` on update), and, when it matches,
+SHALL force the DIAL Core save body's top-level `features.skills_supported` to `true`, merged
+with any other `features` keys already present on the body (caller-supplied or hoisted on
+create; carried-through or caller-supplied on update). This override is unconditional: on
+update, it is applied even when the request body supplies no `features` at all, since the intent
+is a standing guarantee re-asserted on every save, not a one-time default applied only at
+creation. It overrides any `skills_supported` value the caller may have supplied.
+
+For a Quick App, the Settings-step save that actually matters most (setting orchestrator/
+contexts/tool_sets) is persisted entirely by the embedded Settings-step editor (loaded from
+`schema.editorUrl`), not by a direct call to this endpoint — see the `app-editor-flow` spec's
+"A Settings-step save reasserts features.skills_supported via a follow-up updateApplication
+call" requirement for how the frontend closes that gap by calling this endpoint again,
+specifically to re-trigger the force-merge described here, after the embedded editor's own save
+completes.
+
+#### Scenario: A Quick App create forces skills_supported to true
+- **WHEN** an authenticated user POSTs an application create body whose `type` matches
+  `isQuickAppSchema`, with no `features` supplied
+- **THEN** the DIAL Core save body's top-level `features.skills_supported` is `true`
+
+#### Scenario: A Quick App update forces skills_supported to true even when features is omitted
+- **WHEN** an authenticated user PATCHes an existing Quick App (whose stored
+  `application_type_schema_id` matches `isQuickAppSchema`), omitting `features` from the request
+  body entirely
+- **THEN** the merged body sent to DIAL Core's `saveCustomApplication` carries top-level
+  `features.skills_supported: true`, regardless of what was previously stored
+
+#### Scenario: A non-Quick-App is unaffected
+- **WHEN** a create or update targets an application whose schema `type`/
+  `application_type_schema_id` does not match `isQuickAppSchema`
+- **THEN** `features.skills_supported` is never forced, and `features` behaves exactly as
+  described elsewhere in this spec (hoisted/carried-through/caller-supplied only)
 
 #### Scenario: A successful update invalidates the deployment details cache
 - **WHEN** an update succeeds for an application whose `deployments:details:<userSub>:<id>`

@@ -37,13 +37,22 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
     },
   } = useAppConfig();
 
+  /* `items` is part of the content, not decoration: the popover lives inside
+     the banner and is hidden along with it, so a new entry in the list has to
+     bring a dismissed banner back the same way a new title does. */
   const content = useMemo<AnnouncementContent>(
     () => ({
       title: announcementTitle,
       description: announcementDescription,
       html: announcementHtml,
+      items: announcements,
     }),
-    [announcementTitle, announcementDescription, announcementHtml],
+    [
+      announcementTitle,
+      announcementDescription,
+      announcementHtml,
+      announcements,
+    ],
   );
 
   const { isDismissed, dismiss } = useAnnouncementDismissal(content);

@@ -12,7 +12,7 @@ export enum UsageLimitStatus {
 export interface UsageLimitCardData {
   /** Card title, e.g. `'Today'` / `'This week'` / `'This month'`. */
   title: string;
-  /** Accessible description of the rolling window, e.g. `'Last 24 hours'`, appended to the card's accessible group name. */
+  /** Accessible description of the calendar period, e.g. `'Today'`, appended to the card's accessible group name. */
   periodDescription: string;
   /** Raw used amount, already clamped to `>= 0` by the host. Used only to drive `progressAriaLabel`/text — the library never recomputes it. */
   used: number;
@@ -32,6 +32,19 @@ export interface UsageLimitCardData {
   status: UsageLimitStatus;
   /** Accessible value text for the progress bar (`aria-valuetext`), e.g. `'$3.60 of $4.00, 90% used'`. */
   progressAriaLabel: string;
+  /*
+   * The reset-time trio is host-preformatted. The library renders these
+   * strings verbatim and never parses, formats, or timezone-shifts them — it
+   * imports no `Intl`, and accepts no locale, timezone, or raw timestamp. All
+   * three are absent together when the host could not format a reset time, in
+   * which case the card renders exactly as it did before reset times existed.
+   */
+  /** Visible reset line, e.g. `'Resets Sep 16, 2026, 2:00 AM GMT+2'`. */
+  resetLabel?: string;
+  /** Machine-readable instant for the reset line's `<time dateTime>` attribute, e.g. `'2026-09-16T00:00:00Z'`. */
+  resetIsoValue?: string;
+  /** Accessible expansion of the reset line, applied as its `aria-label` when supplied. */
+  resetAriaLabel?: string;
 }
 
 /** Localized strings shared by every card in a `UsageLimitCardGroup`/`UsageLimitCard`, independent of any single card's data. */
@@ -106,6 +119,8 @@ export interface UsageLimitCardGroupTypography {
   badgeClassName?: string;
   /** CSS class for the trailing used-percent label. Defaults to `'dial-small-text'`. */
   usedPercentLabelClassName?: string;
+  /** CSS class for the reset-time line. Defaults to `'dial-tiny-text'`. */
+  resetLabelClassName?: string;
 }
 
 /** Style overrides accepted by `UsageLimitCardGroup` and `UsageLimitCard`. */

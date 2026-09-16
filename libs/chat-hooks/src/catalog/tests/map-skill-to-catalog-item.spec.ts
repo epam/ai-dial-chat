@@ -12,6 +12,7 @@ import {
   buildSkillOverview,
   mapSkillToCatalogItem,
   readSkillFileBytes,
+  readSkillFilePreviewBytes,
   readSkillManifest,
   resolveSkillFileDownloadPath,
   resolveSkillManifestFileId,
@@ -123,12 +124,23 @@ describe('mapSkillToCatalogItem', () => {
     expect(item.isStarred).toBe(false);
   });
 
-  it('leaves description and version empty rather than fabricating them', () => {
+  it('leaves version and topics empty rather than fabricating them', () => {
     const item = mapPersonal();
 
-    expect(item.description).toBe('');
     expect(item.version).toBe('');
     expect(item.topics).toEqual([]);
+  });
+
+  it('forwards the listing description to the catalog item', () => {
+    const item = mapPersonal({ description: 'Summarizes documents' });
+
+    expect(item.description).toBe('Summarizes documents');
+  });
+
+  it('maps an absent listing description to an empty string', () => {
+    const item = mapPersonal({ description: undefined });
+
+    expect(item.description).toBe('');
   });
 
   it('prefixes a nested folder path with the Personal label', () => {
@@ -599,5 +611,29 @@ describe('readSkillManifest', () => {
     });
 
     expect(await readSkillManifest(response)).toBeNull();
+  });
+});
+
+describe('readSkillFilePreviewBytes', () => {
+  it('returns the response body as bytes when within the manifest cap', async () => {
+    const body = 'hello world';
+    const response = new Response(body, {
+      headers: { 'content-length': String(body.length) },
+    });
+
+    expect(
+      new TextDecoder().decode(await readSkillFilePreviewBytes(response)),
+    ).toBe(body);
+  });
+
+  it('reads an oversized body in full instead of returning null', async () => {
+    const oversized = 'a'.repeat(SKILL_MANIFEST_MAX_BYTES + 1);
+    const response = new Response(oversized, {
+      headers: { 'content-length': String(oversized.length) },
+    });
+
+    const bytes = await readSkillFilePreviewBytes(response);
+
+    expect(bytes.byteLength).toBe(SKILL_MANIFEST_MAX_BYTES + 1);
   });
 });

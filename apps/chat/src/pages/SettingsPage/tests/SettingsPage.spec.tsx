@@ -157,6 +157,9 @@ describe('SettingsPage', () => {
 
     expect(useUsageDataModule.useUsageData).toHaveBeenCalledWith(
       expect.any(Function),
+      true,
+      /* The initial refresh token; the Usage tab bumps it on a reset boundary. */
+      0,
     );
   });
 });

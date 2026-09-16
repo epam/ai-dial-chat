@@ -351,6 +351,7 @@ export enum SkillSelectorI18nKeys {
   EmptyQueryHint = 'skillSelector.emptyQueryHint',
   ModalTitle = 'skillSelector.modalTitle',
   NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
+  UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
 }
 
@@ -968,6 +969,8 @@ export enum PromptEditorI18nKeys {
 export enum SkillEditorI18nKeys {
   Title = 'skillEditor.title',
   BackAriaLabel = 'skillEditor.backAriaLabel',
+  BackToManifestAriaLabel = 'skillEditor.backToManifestAriaLabel',
+  ReturnedToManifestStatus = 'skillEditor.returnedToManifestStatus',
   FilesHeading = 'skillEditor.filesHeading',
   FilesTreeAriaLabel = 'skillEditor.filesTreeAriaLabel',
   AddUploadLabel = 'skillEditor.addUploadLabel',
@@ -1353,6 +1356,8 @@ export enum UsageI18nKeys {
   UsedPercentLabel = 'usage.usedPercentLabel',
   UnlimitedProgressAriaLabel = 'usage.unlimitedProgressAriaLabel',
   ProgressAriaLabel = 'usage.progressAriaLabel',
+  ResetsAtLabel = 'usage.resetsAtLabel',
+  ResetsAtAriaLabel = 'usage.resetsAtAriaLabel',
   FullLoadError = 'usage.fullLoadError',
   Loading = 'usage.loading',
   ModelLimitsHeading = 'usage.modelLimitsHeading',

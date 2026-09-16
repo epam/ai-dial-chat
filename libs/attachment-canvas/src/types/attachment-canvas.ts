@@ -42,3 +42,21 @@ export enum AttachmentErrorType {
   /** The file request failed with HTTP `403` — the user lacks permission to access it. */
   Forbidden = 'forbidden',
 }
+
+/**
+ * Outcome of one `OoxmlHighlightSurface.navigate` call.
+ *
+ * Declared here rather than alongside `OoxmlHighlightSurface` in
+ * `utils/ooxml-highlight-surfaces.ts` so `OoxmlContent.tsx` can compare
+ * against it as a real value without a static import pulling that
+ * dynamically-loaded module into the eager entry closure — see
+ * `tests/package-boundary/bundle-budgets.spec.ts`.
+ */
+export enum OoxmlNavigationOutcome {
+  /** A scroll (or page/slide/sheet change) was applied for this location. */
+  Navigated = 'navigated',
+  /** A newer `navigate` call started before this one could apply its scroll, or the surface was disposed meanwhile. */
+  Superseded = 'superseded',
+  /** The location could not be resolved to a page, slide, sheet, or cell at all. */
+  Unresolved = 'unresolved',
+}

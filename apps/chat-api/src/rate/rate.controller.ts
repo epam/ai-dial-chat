@@ -18,8 +18,9 @@ export class RateController {
   @ApiOperation({
     summary: 'Rate an assistant message',
     description:
-      'Forwards a like/dislike rating for an assistant message to DIAL Core. ' +
-      "Uses the authenticated session's access token as a Bearer credential.",
+      'Forwards a like/dislike rating, or the clearing of a previously sent rating, ' +
+      "for an assistant message to DIAL Core. Uses the authenticated session's " +
+      'access token as a Bearer credential.',
   })
   @ApiResponse({
     status: 204,

@@ -37,6 +37,22 @@ or a configured API client singleton.
 - **THEN** the conversation is deleted via the injected `conversationsApi`
   and `onConversationDeleted` is called
 
+### Requirement: handleRegenerateMessage assigns the conversation ref synchronously
+`handleRegenerateMessage` SHALL compute the truncated/cleared message list
+and assign it to `state.conversationRef.current` synchronously, before
+calling `setConversation` and `startStream` — not inside a `setConversation`
+functional updater. `startStream` reads `state.conversationRef.current`
+synchronously to seed its resume/buffer state; a functional updater's
+assignment is deferred by React to the next render, so `startStream` would
+otherwise observe the stale pre-regenerate message and briefly re-display
+the old answer over the cleared placeholder until the stream completes.
+
+#### Scenario: startStream observes the cleared message, not the stale one
+- **WHEN** `handleRegenerateMessage(messageIndex)` is called
+- **THEN** `state.conversationRef.current` already holds the truncated
+  conversation with the cleared assistant message by the time `startStream`
+  is invoked, synchronously within the same call
+
 ### Requirement: handleConfirmDelete reads the conversation ref, not a state updater
 `handleConfirmDelete` SHALL compute the post-delete message list from
 `state.conversationRef.current` (a synchronous snapshot read outside

@@ -93,6 +93,7 @@ export const useVoiceRecorder = ({
     if (sessionRef.current) return;
     const session: RecordingSession = { controller: new AbortController() };
     sessionRef.current = session;
+    setErrorMessage(null);
     setState(VoiceRecorderState.Recording);
     const { signal } = session.controller;
     /* Freeze the provider for the session; transcript delivery uses the latest
@@ -152,6 +153,7 @@ export const useVoiceRecorder = ({
     const fail = (error: unknown) => {
       if (signal.aborted) return;
       session.controller.abort();
+      sessionRef.current = null;
       setErrorMessage(
         error instanceof Error
           ? error.message

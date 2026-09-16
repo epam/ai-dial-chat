@@ -1,7 +1,7 @@
+import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AnnouncementItem } from '../../../models/announcement';
 import AnnouncementsPopover from '../AnnouncementsPopover';
 
 vi.mock('react-i18next', () => ({
@@ -12,8 +12,8 @@ vi.mock('react-i18next', () => ({
 }));
 
 const makeAnnouncement = (
-  overrides?: Partial<AnnouncementItem>,
-): AnnouncementItem => ({
+  overrides?: Partial<AnnouncementListItem>,
+): AnnouncementListItem => ({
   title: 'We have upgraded to DIAL 1.43',
   description: "Check what's new:",
   link: { label: 'Changelog', href: 'https://dialx.ai/changelog' },
@@ -22,7 +22,7 @@ const makeAnnouncement = (
 
 const PILL_NAME = /announcementsPopover\.pillLabel/;
 
-const openPopover = async (announcements: AnnouncementItem[]) => {
+const openPopover = async (announcements: AnnouncementListItem[]) => {
   render(<AnnouncementsPopover announcements={announcements} />);
   await userEvent.click(screen.getByRole('button', { name: PILL_NAME }));
 };

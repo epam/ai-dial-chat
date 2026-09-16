@@ -1,7 +1,4 @@
-import {
-  FavoriteEntityType,
-  fetchSkillDescription as fetchSkillManifestDescription,
-} from '@epam/ai-dial-chat-hooks';
+import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   useSkillSelectorOverlay as useHostAgnosticSkillSelectorOverlay,
@@ -21,7 +18,6 @@ import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { downloadSkillFile } from '../../server-api/skills.api';
 
 const CatalogView = lazy(async () => {
   const module = await import('../CatalogView/CatalogView');
@@ -51,22 +47,21 @@ const renderCatalogContent = (
 
 /**
  * Host wiring for the lib's skill selector overlay hook: the
- * `skillUsageEnabled` feature flag, the skills and favorites contexts, i18n
- * labels, the server-API-backed description fetch, the catalog picker
+ * `skillUsageEnabled` feature flag, the deployment's skills support signal,
+ * the skills and favorites contexts, i18n labels, the catalog picker
  * content, and the app-owned details panel component.
  */
-export const useSkillSelectorOverlay = (): UseSkillSelectorOverlayResult => {
+export const useSkillSelectorOverlay = ({
+  isSkillsSupported,
+}: {
+  /** Whether the input's current deployment supports skills (`features.skillsSupported === true`). */
+  isSkillsSupported: boolean;
+}): UseSkillSelectorOverlayResult => {
   const isEnabled = useFeatureFlag('skillUsageEnabled');
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { skills, sharedWithMe, publicSkills } = useSkills();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
-
-  const handleFetchSkillDescription = useCallback(
-    (skillId: string) =>
-      fetchSkillManifestDescription({ downloadSkillFile }, skillId),
-    [],
-  );
 
   /* Silent by design: the favorites overlay's star toggle never notifies. */
   const handleToggleFavorite = useCallback(
@@ -87,6 +82,7 @@ export const useSkillSelectorOverlay = (): UseSkillSelectorOverlayResult => {
       backLabel: t(NavigationI18nKeys.Back),
       catalogModalTitleLabel: t(SkillSelectorI18nKeys.ModalTitle),
       emptyQueryHintLabel: t(SkillSelectorI18nKeys.EmptyQueryHint),
+      unsupportedTooltipLabel: t(SkillSelectorI18nKeys.UnsupportedTooltipLabel),
       panelLabels: {
         myCollectionLabel: t(PromptSelectorI18nKeys.MyCollectionLabel),
         emptyHintLabel: t(SkillSelectorI18nKeys.EmptyHint),
@@ -110,12 +106,12 @@ export const useSkillSelectorOverlay = (): UseSkillSelectorOverlayResult => {
 
   return useHostAgnosticSkillSelectorOverlay({
     isEnabled,
+    isSkillsSupported,
     skills,
     sharedWithMe,
     publicSkills,
     favoriteIds,
     onToggleFavorite: handleToggleFavorite,
-    fetchSkillDescription: handleFetchSkillDescription,
     labels,
     historyChipLabelClassName,
     renderCatalogContent,

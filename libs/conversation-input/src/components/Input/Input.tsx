@@ -12,6 +12,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  ErrorText,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
@@ -68,6 +69,7 @@ export const Input: FC<InputProps> = ({
   retryLabel,
   uploadingLabel,
   sendLabel,
+  sendTooltip,
   stopLabel,
   micLabel = 'Dictate',
   recordVoiceLabel = 'Record voice',
@@ -344,12 +346,15 @@ export const Input: FC<InputProps> = ({
     onTranscript: handleTranscript,
     errorLabel: voiceErrorLabel,
   });
-  const isVoiceActive = voiceState !== VoiceRecorderState.Idle;
+  const isVoiceActive =
+    voiceState === VoiceRecorderState.Recording ||
+    voiceState === VoiceRecorderState.Processing;
 
   useEffect(() => {
     if (
-      voiceState === VoiceRecorderState.Idle &&
-      focusAfterTranscriptRef.current
+      voiceState === VoiceRecorderState.Error ||
+      (voiceState === VoiceRecorderState.Idle &&
+        focusAfterTranscriptRef.current)
     ) {
       focusAfterTranscriptRef.current = false;
       textareaRef.current?.focus();
@@ -687,10 +692,7 @@ export const Input: FC<InputProps> = ({
       menuTitle={menuTitle}
       menuCloseLabel={menuCloseLabel}
       style={cssVars}
-      isDisabled={
-        isInputDisabled ||
-        (isVoiceActive && voiceState !== VoiceRecorderState.Recording)
-      }
+      isDisabled={isInputDisabled || isVoiceActive}
       chatSettings={chatSettings}
       extraMenuItems={dialFileSystemMenuItem}
       onRecordVoice={
@@ -766,6 +768,9 @@ export const Input: FC<InputProps> = ({
           tabIndex={-1}
           onChange={handleFileChange}
         />
+      )}
+      {voiceError && (
+        <ErrorText text={voiceError} className="min-w-0 break-words px-1" />
       )}
       {isVoiceActive && (
         <VoiceBar
@@ -843,6 +848,7 @@ export const Input: FC<InputProps> = ({
                       onSend={handleSend}
                       isDisabled={!hasModelSelected || !canSend}
                       ariaLabel={sendLabel}
+                      sendTooltip={sendTooltip}
                     />
                   )
                 )}

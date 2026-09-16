@@ -166,6 +166,19 @@ export enum OverlayFeature {
   HideKeyboardShortcuts = 'hide-keyboard-shortcuts',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
+  /**
+   * Renders every conversation starter, each on its own row, instead of
+   * fitting as many as the measured width allows on one line and collapsing
+   * the rest into a "…" dropdown. Intended for narrow embeds, where the row
+   * has space for a single starter and hides the remainder behind the menu.
+   */
+  ShowAllStarters = 'show-all-starters',
+  /**
+   * Hides the application version label in the footer. The label is
+   * diagnostic chrome an embedding host usually owns itself, and it is not
+   * gated by the operator's `footer` capability flag.
+   */
+  HideFooterVersion = 'hide-footer-version',
 }
 
 /**
@@ -226,6 +239,32 @@ export interface OverlayRequestError {
   message: string;
 }
 
+/** Settled outcome of an agent execution stage carried over the protocol. */
+export enum OverlayStageStatus {
+  /** The stage completed successfully. */
+  Completed = 'completed',
+  /** The stage encountered an error. */
+  Failed = 'failed',
+}
+
+/**
+ * One agent execution stage (a tool call, retrieval step, or reasoning step)
+ * projected into the protocol. A host reads these to react to what an agent
+ * did — e.g. refreshing its own view when a particular tool has run.
+ */
+export interface OverlayMessageStage {
+  /** Zero-based ordering key, stable across updates to the same stage. */
+  index: number;
+  /** Human-readable stage label, e.g. `'Lookup available terms'`. */
+  name: string;
+  /** `null` while the stage is still running; a settled value once it finishes. */
+  status: OverlayStageStatus | null;
+  /** Text content accumulated for this stage, when the agent produced any. */
+  content?: string;
+  /** Short source/category label shown beside the name, e.g. `'MCP'`. */
+  tag?: string;
+}
+
 /** Minimal message shape carried in overlay protocol payloads. */
 export interface OverlayChatMessage {
   /** Message id. */
@@ -234,6 +273,12 @@ export interface OverlayChatMessage {
   role: string;
   /** Message text content. */
   content: string;
+  /**
+   * Agent execution stages attached to this message, omitted when it has
+   * none. Stage attachments are not carried — the protocol projects labels,
+   * status, and text only.
+   */
+  stages?: OverlayMessageStage[];
 }
 
 /** Host-agnostic conversation projection for the overlay protocol. */
@@ -291,6 +336,15 @@ export interface ChatOverlayOptions {
   /** Per-provider authentication UI behavior configured by the embedding host. */
   auth?: {
     providerUiModes?: Record<string, OverlayAuthUiMode>;
+    /**
+     * Provider id whose login the embedded app starts on its own, with no user
+     * interaction, while the session is unauthenticated. Presence enables the
+     * behavior — there is no separate boolean — and the same provider must be
+     * mapped to `OverlayAuthUiMode.SameWindow` in `providerUiModes`, because
+     * only that path navigates the iframe itself. Supersedes the legacy
+     * `signInOptions.autoSignIn` + `signInProvider` pair.
+     */
+    autoSignInProvider?: string;
   };
 }
 
@@ -311,6 +365,8 @@ export interface SetOverlayOptionsPayload {
   enabledFeatures?: string[];
   /** Opaque per-provider authentication UI modes supplied by the host. */
   authProviderUiModes?: Record<string, string>;
+  /** Opaque wire form of `ChatOverlayOptions.auth.autoSignInProvider`. */
+  authAutoSignInProvider?: string;
 }
 
 /** Payload of a `SEND_MESSAGE` request. */

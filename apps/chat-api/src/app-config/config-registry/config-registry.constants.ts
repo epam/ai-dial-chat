@@ -26,6 +26,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'TRANSCRIBE_SIZE_LIMIT_BYTES',
   },
   {
+    key: 'customVariables',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: {},
+    critical: false,
+    description:
+      'Public, client-owned configuration values. Keys have no BFF-defined semantics.',
+    owner: 'chat-team',
+    envVar: 'CUSTOM_CLIENT_VARIABLES',
+  },
+  {
     key: 'deployments.defaultDeploymentId',
     type: 'config',
     valueType: 'string',
@@ -144,6 +156,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'List of announcements shown in the popover behind the banner\'s "+N announcements" pill. JSON array of { title, description?, link?: { label, href } }. Entries with a blank title, or with a link whose label is blank or whose href is not http/https, are dropped with a warning. Empty (pill hidden) when ANNOUNCEMENTS is unset or malformed; boot never fails on bad config.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENTS',
+  },
+  {
+    key: 'welcomeScreen.description',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Rendered as text, never as markup. Null/blank hides it. Sourced from WELCOME_SCREEN_DESCRIPTION.',
+    owner: 'chat-team',
+    envVar: 'WELCOME_SCREEN_DESCRIPTION',
   },
   {
     key: 'footer.html',

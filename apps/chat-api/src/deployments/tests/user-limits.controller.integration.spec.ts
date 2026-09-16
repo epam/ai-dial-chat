@@ -18,6 +18,100 @@ const TEST_USER = {
   bucket: 'test-bucket',
 };
 
+/*
+ * Two payload fixtures reduced from the real `GET /api/v1/user/usage` capture in
+ * `openspec/changes/migrate-usage-reset-times/fixtures/` — one where every
+ * day/week/month stat carries `resetsAt`, one with the field stripped. The
+ * capture's own shape is preserved: `resetsAt` on the day/week/month token,
+ * cost, and request stats; never on the minute/hour stats; present on
+ * per-deployment stats as well as top-level ones; a mix of finite and sentinel
+ * top-level cost totals. The BFF is a pass-through proxy, so the only thing
+ * under test is that neither shape is altered on the way out.
+ */
+const UNLIMITED_SENTINEL = 9223372036854776000;
+
+const USAGE_WITH_RESETS_AT = {
+  deployments: {
+    'gpt-5.2-2025-12-11': {
+      minuteTokenStats: { total: UNLIMITED_SENTINEL, used: 0 },
+      dayTokenStats: {
+        total: UNLIMITED_SENTINEL,
+        used: 2195,
+        resetsAt: '2026-09-16T00:00:00Z',
+      },
+      weekTokenStats: {
+        total: UNLIMITED_SENTINEL,
+        used: 4293,
+        resetsAt: '2026-09-21T00:00:00Z',
+      },
+      monthTokenStats: {
+        total: UNLIMITED_SENTINEL,
+        used: 8535,
+        resetsAt: '2026-10-01T00:00:00Z',
+      },
+      hourRequestStats: { total: UNLIMITED_SENTINEL, used: 1 },
+      dayRequestStats: {
+        total: UNLIMITED_SENTINEL,
+        used: 1,
+        resetsAt: '2026-09-16T00:00:00Z',
+      },
+      minuteCostStats: { total: UNLIMITED_SENTINEL, used: 0 },
+      dayCostStats: {
+        total: UNLIMITED_SENTINEL,
+        used: 0.0048335,
+        resetsAt: '2026-09-16T00:00:00Z',
+      },
+      weekCostStats: {
+        total: UNLIMITED_SENTINEL,
+        used: 0.0089705,
+        resetsAt: '2026-09-21T00:00:00Z',
+      },
+      monthCostStats: {
+        total: UNLIMITED_SENTINEL,
+        used: 0.0178885,
+        resetsAt: '2026-10-01T00:00:00Z',
+      },
+    },
+  },
+  minuteCostStats: { total: UNLIMITED_SENTINEL, used: 0 },
+  dayCostStats: {
+    total: 110,
+    used: 0.42641085,
+    resetsAt: '2026-09-16T00:00:00Z',
+  },
+  weekCostStats: {
+    total: UNLIMITED_SENTINEL,
+    used: 1.7928459,
+    resetsAt: '2026-09-21T00:00:00Z',
+  },
+  monthCostStats: {
+    total: 500,
+    used: 2.3991724,
+    resetsAt: '2026-10-01T00:00:00Z',
+  },
+};
+
+const USAGE_WITHOUT_RESETS_AT = {
+  deployments: {
+    'gpt-5.2-2025-12-11': {
+      minuteTokenStats: { total: UNLIMITED_SENTINEL, used: 0 },
+      dayTokenStats: { total: UNLIMITED_SENTINEL, used: 2195 },
+      weekTokenStats: { total: UNLIMITED_SENTINEL, used: 4293 },
+      monthTokenStats: { total: UNLIMITED_SENTINEL, used: 8535 },
+      hourRequestStats: { total: UNLIMITED_SENTINEL, used: 1 },
+      dayRequestStats: { total: UNLIMITED_SENTINEL, used: 1 },
+      minuteCostStats: { total: UNLIMITED_SENTINEL, used: 0 },
+      dayCostStats: { total: UNLIMITED_SENTINEL, used: 0.0048335 },
+      weekCostStats: { total: UNLIMITED_SENTINEL, used: 0.0089705 },
+      monthCostStats: { total: UNLIMITED_SENTINEL, used: 0.0178885 },
+    },
+  },
+  minuteCostStats: { total: UNLIMITED_SENTINEL, used: 0 },
+  dayCostStats: { total: 110, used: 0.42641085 },
+  weekCostStats: { total: UNLIMITED_SENTINEL, used: 1.7928459 },
+  monthCostStats: { total: 500, used: 2.3991724 },
+};
+
 async function buildApp(service: unknown): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [UserLimitsController],
@@ -158,6 +252,41 @@ describe('UserLimitsController (integration)', () => {
       service.getUserUsage.mockRejectedValue(new ServiceUnavailableException());
 
       await request(app.getHttpServer()).get('/api/v1/user/usage').expect(503);
+    });
+
+    it('forwards resetsAt byte-identically on every stat that carries it', async () => {
+      service.getUserUsage.mockResolvedValue(USAGE_WITH_RESETS_AT);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/user/usage')
+        .expect(200);
+
+      expect(res.body).toEqual(USAGE_WITH_RESETS_AT);
+      expect(res.body.dayCostStats.resetsAt).toBe('2026-09-16T00:00:00Z');
+      expect(res.body.weekCostStats.resetsAt).toBe('2026-09-21T00:00:00Z');
+      expect(res.body.monthCostStats.resetsAt).toBe('2026-10-01T00:00:00Z');
+      expect(
+        res.body.deployments['gpt-5.2-2025-12-11'].dayTokenStats.resetsAt,
+      ).toBe('2026-09-16T00:00:00Z');
+      expect(
+        res.body.deployments['gpt-5.2-2025-12-11'].minuteCostStats,
+      ).not.toHaveProperty('resetsAt');
+    });
+
+    it('returns 200 with resetsAt simply absent when DIAL Core omits it', async () => {
+      service.getUserUsage.mockResolvedValue(USAGE_WITHOUT_RESETS_AT);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/user/usage')
+        .expect(200);
+
+      expect(res.body).toEqual(USAGE_WITHOUT_RESETS_AT);
+      expect(res.body.dayCostStats).not.toHaveProperty('resetsAt');
+      expect(res.body.weekCostStats).not.toHaveProperty('resetsAt');
+      expect(res.body.monthCostStats).not.toHaveProperty('resetsAt');
+      expect(
+        res.body.deployments['gpt-5.2-2025-12-11'].dayTokenStats,
+      ).not.toHaveProperty('resetsAt');
     });
   });
 });

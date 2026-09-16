@@ -1,0 +1,660 @@
+{
+  "deployments": {
+    "gpt-5.2-2025-12-11": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 2195,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 4293,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 8535,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0048335,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0089705,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0178885,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "anthropic.claude-sonnet-5": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 754,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 2525,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.00742,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.02477,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "gemini-2.5-pro-google-search": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 6043,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 12851,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 24335,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 3
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 3,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.01828,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.03732,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.07784,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "gpt-4.1-2025-04-14": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 19371,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 324243,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 363011,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 6
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 6,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.03996,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 1.06209,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 1.142248,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "gemini-3.5-flash-lite": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 49278,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 49278,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 49278,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 2
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 7,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0915195,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0915195,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0915195,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "gpt-5.2-2025-12-11-web-search": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 23494,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 46826,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 93541,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 3
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 3,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.04264575,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.085008,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.1704465,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "gpt-4.1-mini-2025-04-14": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 32722,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 96997,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 96997,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 37,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0275356,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0807364,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0807364,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "anthropic.claude-sonnet-4-20250514-v1:0": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 38301,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 75801,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 150564,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 2
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 2,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.117699,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.233487,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.463416,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "us.anthropic.claude-opus-4-1-20250805-v1:0": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 122,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 212,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 417,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.00861,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.01482,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.029115,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "gpt-4o": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 10520,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 10520,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.03104,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.03104,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "anthropic.claude-opus-5": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 191,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 561,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.004595,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.013485,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "gpt-5.6-terra-2026-07-09": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 29202,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 58408,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 116807,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 6
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 6,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.060434,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.120946,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.241774,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    },
+    "gemini-3.5-flash": {
+      "minuteTokenStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayTokenStats": {
+        "total": 9223372036854776000,
+        "used": 5784,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekTokenStats": {
+        "total": 9223372036854776000,
+        "used": 5784,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthTokenStats": {
+        "total": 9223372036854776000,
+        "used": 5784,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      },
+      "hourRequestStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayRequestStats": {
+        "total": 9223372036854776000,
+        "used": 1,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "minuteCostStats": {
+        "total": 9223372036854776000,
+        "used": 0
+      },
+      "dayCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0148935,
+        "resetsAt": "2026-09-16T00:00:00Z"
+      },
+      "weekCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0148935,
+        "resetsAt": "2026-09-21T00:00:00Z"
+      },
+      "monthCostStats": {
+        "total": 9223372036854776000,
+        "used": 0.0148935,
+        "resetsAt": "2026-10-01T00:00:00Z"
+      }
+    }
+  },
+  "minuteCostStats": {
+    "total": 9223372036854776000,
+    "used": 0
+  },
+  "dayCostStats": {
+    "total": 110,
+    "used": 0.42641085,
+    "resetsAt": "2026-09-16T00:00:00Z"
+  },
+  "weekCostStats": {
+    "total": 9223372036854776000,
+    "used": 1.7928459,
+    "resetsAt": "2026-09-21T00:00:00Z"
+  },
+  "monthCostStats": {
+    "total": 500,
+    "used": 2.3991724,
+    "resetsAt": "2026-10-01T00:00:00Z"
+  }
+}

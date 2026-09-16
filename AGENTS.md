@@ -57,6 +57,7 @@ Default behavior:
 - Implementation work should follow incremental slices with per-slice verification.
 - Before merge (or on explicit review requests), run the five-axis quality review.
 - Before changing anything under `libs/*`, explicitly check the library isolation rule: host/external contracts are adapted by apps, not embedded in libs.
+- Anything under `libs/*` is also governed by `.claude/rules/libs.md` (package.json metadata, `dependencies` vs `peerDependencies`, version ranges, the `exports`/`styles.css` contract, README shape, JSDoc, `buildCssVars` theming) and `.claude/rules/lib-styling.md`. Both are path-scoped, so read `libs.md` before touching a lib manifest — an embeddable lib is a normal npm package, and a host must install one package and render without a peer laundry list or a bundler alias.
 - UI work is mobile-first by default. The project's named Tailwind breakpoints (`mobile`, `desktop`) live in `tailwind.config.js`; do not introduce `small_tablet:`/`large_tablet:`/`large_desktop:` or `sm:`/`md:`/`lg:`/`xl:` prefixes. When a component must branch in JS, use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts` rather than reading `window.innerWidth`.
 
 ## Docs

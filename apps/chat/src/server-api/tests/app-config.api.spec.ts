@@ -30,6 +30,7 @@ describe('app-config API', () => {
         footerHtmlMessage: '',
         customVisualizers: [],
         applicationVisualizers: {},
+        customVariables: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
       },
     });

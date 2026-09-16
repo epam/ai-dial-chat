@@ -45,6 +45,7 @@ import {
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
@@ -124,6 +125,12 @@ interface Props {
    */
   onInlineStartRemove?: () => void;
   /**
+   * Whether the selected skill (rendered via `inlineStartSlot`) is
+   * unsupported by the current deployment — folded into the input's
+   * send-disabled state, matching `ConversationView`'s own fold.
+   */
+  isSkillUnsupported?: boolean;
+  /**
    * Host-injected slash-command menu (e.g. the Skills selector), passed
    * through to `ConversationInput`.
    */
@@ -161,6 +168,7 @@ const NewConversationComposer: FC<Props> = ({
   menuOverlays,
   inlineStartSlot,
   onInlineStartRemove,
+  isSkillUnsupported = false,
   commandMenu,
   inputStyles,
   onCreateConversation,
@@ -172,6 +180,9 @@ const NewConversationComposer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const {
+    config: { welcomeScreenDescription },
+  } = useAppConfig();
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
@@ -192,6 +203,17 @@ const NewConversationComposer: FC<Props> = ({
           }
         : undefined,
     [selectedDeployment, language],
+  );
+
+  const composerStyles: ConversationInputStyles = useMemo(
+    () => ({
+      ...inputStyles,
+      typography: {
+        welcomeClassName: 'font-light text-4xl',
+        ...inputStyles?.typography,
+      },
+    }),
+    [inputStyles],
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -465,11 +487,12 @@ const NewConversationComposer: FC<Props> = ({
             },
             firstName || undefined,
           )}
+          descriptionText={welcomeScreenDescription ?? undefined}
           placeholder={placeholder}
           removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
           retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
           uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
-          styles={inputStyles}
+          styles={composerStyles}
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments
           }
@@ -477,11 +500,11 @@ const NewConversationComposer: FC<Props> = ({
           onDeploymentChange={onDeploymentChange}
           isInputDisabled={isInputDisabled}
           isModelSelectorDisabled={isModelSelectorDisabled}
-          isSendDisabled={isDisabledSendEnabled}
+          isSendDisabled={isDisabledSendEnabled || isSkillUnsupported}
           modelSelectorLabels={modelSelectorLabels}
           addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
           sendLabel={t(ChatI18nKeys.SendMessage)}
-          sendTitle={t(ChatI18nKeys.SendMessage)}
+          sendTooltip={t(ChatI18nKeys.SendMessage)}
           stopLabel={t(ChatI18nKeys.StopStreaming)}
           isAudioMessageSupported={isAudioMessageSupported}
           isVoiceRecordingSupported={isVoiceRecordingSupported}

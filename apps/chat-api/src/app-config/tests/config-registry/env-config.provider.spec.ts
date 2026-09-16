@@ -20,6 +20,39 @@ describe('EnvConfigProvider', () => {
     vi.clearAllMocks();
   });
 
+  describe('customVariables', () => {
+    it('preserves arbitrary JSON values without interpreting client keys', async () => {
+      const variables = {
+        label: 'Example',
+        count: 3,
+        enabled: false,
+        nested: { list: [1, null, 'x'] },
+      };
+      const { provider } = makeProvider({
+        CUSTOM_CLIENT_VARIABLES: JSON.stringify(variables),
+      });
+      expect(await provider.resolve('customVariables', ctx)).toEqual(variables);
+    });
+    it.each([
+      undefined,
+      '',
+      ' ',
+      '{invalid',
+      '[]',
+      'null',
+      '42',
+      'true',
+      '"string"',
+    ])('falls back for unset or invalid JSON object %j', async (raw) => {
+      const { provider } = makeProvider({ CUSTOM_CLIENT_VARIABLES: raw });
+      expect(await provider.resolve('customVariables', ctx)).toBeUndefined();
+    });
+    it('accepts an explicitly empty object', async () => {
+      const { provider } = makeProvider({ CUSTOM_CLIENT_VARIABLES: '{}' });
+      expect(await provider.resolve('customVariables', ctx)).toEqual({});
+    });
+  });
+
   describe('asr.modelId', () => {
     it('returns the ASR model ID when ASR_MODEL is set', async () => {
       const { provider } = makeProvider({ ASR_MODEL: 'whisper-1' });

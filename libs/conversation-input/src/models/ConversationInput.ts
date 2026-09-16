@@ -24,6 +24,8 @@ import type { TranscribeAudio } from './Voice';
 export interface ConversationInputColors {
   /** Welcome heading text color. */
   welcomeText?: string;
+  /** Description text color, shown below the welcome heading. */
+  descriptionText?: string;
   /** Color overrides forwarded to the inner `Input` component. */
   input?: InputColors;
 }
@@ -32,6 +34,8 @@ export interface ConversationInputColors {
 export interface ConversationInputTypography {
   /** Tailwind (or custom) class applied to the welcome heading. Defaults to `'dial-display2-text'`. */
   welcomeClassName?: string;
+  /** Tailwind (or custom) class applied to the description text. Defaults to `'dial-body-paragraph-text'`. */
+  descriptionClassName?: string;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }
@@ -196,6 +200,8 @@ export interface ConversationInputProps {
   textInsertion?: TextInsertion;
   /** Optional welcome heading rendered above the input. */
   welcomeText?: string;
+  /** Optional description text rendered below the welcome heading. Ignored when `welcomeText` is absent. */
+  descriptionText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
   /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */
@@ -245,7 +251,7 @@ export interface ConversationInputProps {
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
-  sendTitle?: string;
+  sendTooltip?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Accessible label for each attachment card's remove button. Defaults to `'Remove attachment'`. */

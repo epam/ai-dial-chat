@@ -1,8 +1,12 @@
 import type { ProviderInfoDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayAuthUiMode } from '@epam/ai-dial-chat-overlay';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { getProviders } from '../../server-api/auth.api';
+import {
+  hasRecentOverlayAutoSignInAttempt,
+  rememberOverlayAutoSignInAttempt,
+} from '../../utils/overlay-auto-sign-in';
 import {
   OverlayExternalLoginStatus,
   useOverlayExternalLogin,
@@ -32,7 +36,9 @@ const buildProviderLoginUrl = (
  * edge while reusing the established external-login polling lifecycle.
  */
 export const useOverlayProviderLogin = (): OverlayProviderLogin => {
-  const authProviderUiModes = useOptionalOverlay()?.authProviderUiModes;
+  const overlay = useOptionalOverlay();
+  const authProviderUiModes = overlay?.authProviderUiModes;
+  const autoSignInProvider = overlay?.authAutoSignInProvider;
   const hasProviderConfiguration =
     authProviderUiModes !== undefined &&
     Object.keys(authProviderUiModes).length > 0;
@@ -42,6 +48,7 @@ export const useOverlayProviderLogin = (): OverlayProviderLogin => {
   );
   const [hasProviderError, setHasProviderError] = useState(false);
   const [loadRequest, setLoadRequest] = useState(0);
+  const hasAutoSignInRunRef = useRef(false);
   const {
     status: externalLoginStatus,
     openLogin: openExternalLogin,
@@ -123,6 +130,71 @@ export const useOverlayProviderLogin = (): OverlayProviderLogin => {
   const openLogin = useCallback(() => {
     openExternalLogin();
   }, [openExternalLogin]);
+
+  /*
+   * Starts login for the host's `auth.autoSignInProvider` with no user
+   * interaction, at most once per mount. Only the same-window mode qualifies:
+   * it navigates the iframe itself, while the external mode calls
+   * `window.open`, which a browser blocks outside a user gesture. Every
+   * suppression leaves the ordinary gate rendered, because a misconfigured
+   * host is a developer-facing problem and the gate is already a complete
+   * fallback.
+   *
+   * The ref latches one evaluation per mount, covering React's double effect
+   * invocation in development and the provider fetch settling after the first
+   * run. A missing provider id does not latch: it usually just means the
+   * handshake has not delivered `SET_OVERLAY_OPTIONS` yet.
+   */
+  useEffect(() => {
+    if (hasAutoSignInRunRef.current) return;
+
+    const providerId = autoSignInProvider?.trim();
+    if (!providerId) return;
+
+    if (!hasProviderConfiguration) {
+      hasAutoSignInRunRef.current = true;
+      console.warn(
+        `Overlay auto sign-in skipped: provider "${providerId}" is not mapped to "${OverlayAuthUiMode.SameWindow}" in auth.providerUiModes.`,
+      );
+      return;
+    }
+
+    if (isLoadingProviders || providers == null) return;
+
+    hasAutoSignInRunRef.current = true;
+
+    if (!providers.some(({ id }) => id === providerId)) {
+      console.warn(
+        `Overlay auto sign-in skipped: provider "${providerId}" is not registered by the backend.`,
+      );
+      return;
+    }
+
+    if (getProviderUiMode(providerId) !== OverlayAuthUiMode.SameWindow) {
+      console.warn(
+        `Overlay auto sign-in skipped: provider "${providerId}" is not mapped to "${OverlayAuthUiMode.SameWindow}" in auth.providerUiModes.`,
+      );
+      return;
+    }
+
+    const { href } = window.location;
+    if (hasRecentOverlayAutoSignInAttempt(href)) {
+      console.warn(
+        'Overlay auto sign-in skipped: an attempt for this URL was already started.',
+      );
+      return;
+    }
+
+    rememberOverlayAutoSignInAttempt(href);
+    openProviderLogin(providerId);
+  }, [
+    autoSignInProvider,
+    getProviderUiMode,
+    hasProviderConfiguration,
+    isLoadingProviders,
+    openProviderLogin,
+    providers,
+  ]);
 
   return {
     hasProviderConfiguration,

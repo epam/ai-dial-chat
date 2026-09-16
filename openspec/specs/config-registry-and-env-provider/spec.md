@@ -481,3 +481,18 @@ The `CONFIG_DEFINITIONS` registry SHALL include a `features.skillUsageEnabled` e
 
 - **WHEN** all `FeatureKey` enum values are compared to `CONFIG_DEFINITIONS`
 - **THEN** `FeatureKey.SkillUsageEnabled` has a matching `type='feature'` entry with the identical key string
+
+### Requirement: Client-owned variables have a generic environment entry
+
+The registry SHALL declare `customVariables` as a non-critical, client-visible JSON config entry sourced from `CUSTOM_CLIENT_VARIABLES`, defaulting to an empty object. The environment schema SHALL accept an optional string. EnvConfigProvider SHALL parse this string as JSON and accept only a non-null, non-array object. The BFF SHALL NOT register or interpret individual client-owned keys.
+
+#### Scenario: Valid custom variables
+
+- **WHEN** the environment value is a JSON object
+- **THEN** the provider returns it unchanged, preserving nested objects, arrays, strings, numbers, booleans and null values
+
+#### Scenario: Missing or invalid custom variables
+
+- **WHEN** the environment value is unset, blank, malformed JSON, an array, null or a primitive
+- **THEN** the provider resolves to undefined and the registry default is used
+- **AND** invalid nonblank values produce a diagnostic without logging the payload or parser error text

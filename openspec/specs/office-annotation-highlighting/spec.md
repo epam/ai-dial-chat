@@ -237,13 +237,19 @@ Resolution SHALL:
 - Produce one rectangle group per page when a range spans a page boundary.
 - Skip a run whose `transform` is set, since a transformed run's axis-aligned rectangle would be wrong.
 
-`collectPageRuns` SHALL be called with the same `width` the viewer renders at, so returned coordinates are already in the page's CSS pixel space and no second scaling pass is applied to them.
+**Resolved rectangle geometry SHALL be scale-free.** A rectangle SHALL be expressed as fractions of its page box — each of left, top, width, and height as a ratio of the page's width or height — and SHALL NOT be stored or returned in absolute CSS pixels at the viewer's current scale. This mirrors the representation the vendor's own highlight layer uses, where each edge is written as a percentage of the page box, and it is what makes a rectangle's shape independent of zoom. Therefore:
 
-**State ownership**: the engine instance and the resolved rectangles are owned by the `OoxmlContent` renderer, in refs and state respectively.
+- Runs SHALL be collected at a **fixed reference width** derived solely from the document — the page's scale-1 CSS width — and SHALL NOT be collected at the viewer's live render width.
+- `collectPageRuns` SHALL be called at most **once per page per document**, regardless of how many times the scale subsequently changes. A scale change SHALL NOT trigger re-collection.
+- No cache of run geometry, page size, or rectangle geometry SHALL be keyed on, or retain, a particular scale. Scale-bound rectangle geometry SHALL NOT exist to become stale.
+- Same-line merging SHALL be applied **before** normalisation, in reference-width pixels, so its vertical and adjacency tolerances keep their stated pixel meaning rather than becoming page-size-dependent.
+- The derived fractions SHALL agree with geometry measured directly at another render width within a documented sub-pixel tolerance, verified against the installed vendor build rather than assumed.
+
+**State ownership**: the engine instance and the resolved rectangles are owned by the `OoxmlContent` renderer, in refs and state respectively. Normalised per-page geometry is owned by the DOCX highlight surface.
 **i18n**: none.
 **RTL**: `run.direction` is reported per run; resolution SHALL use the run's own reported geometry rather than assuming left-to-right, and the resulting rectangles are physical canvas geometry (see the RTL requirement below).
 **Feature flag**: none.
-**Memoisation**: resolution SHALL run in an effect keyed on the locations, the scale, and the page range — not on every render.
+**Memoisation**: resolution SHALL run in an effect keyed on the locations and the page range. It SHALL NOT be keyed on the scale, since scale no longer affects resolved geometry.
 **Telemetry**: none.
 
 #### Scenario: Story matches but path differs
@@ -270,6 +276,26 @@ Resolution SHALL:
 
 - **WHEN** a range wraps across a line break
 - **THEN** two rectangles are produced, one per visual line, and they are not merged
+
+#### Scenario: Runs are collected once regardless of zooming
+
+- **WHEN** a highlighted page is measured and the viewer's scale then changes several times, with the page measured again after each change
+- **THEN** `collectPageRuns` has been called exactly once for that page, at the reference width
+
+#### Scenario: Rectangle shape does not depend on scale
+
+- **WHEN** the same location is resolved and the viewer's scale changes
+- **THEN** the resolved fractions of the page box are identical before and after, and no rectangle retains a width or height from a previous scale
+
+#### Scenario: Normalised geometry matches geometry measured at another width
+
+- **WHEN** one page's runs are collected at the reference width and again at a different render width, and both are resolved for the same location
+- **THEN** the resulting fractions of the page box agree within the documented sub-pixel tolerance
+
+#### Scenario: Merge tolerances keep their pixel meaning
+
+- **WHEN** two rectangles on one visual line are separated by a gap within the adjacency tolerance
+- **THEN** they merge for pages of any size, because merging is applied in reference-width pixels before normalisation
 
 ---
 
@@ -384,6 +410,166 @@ Resolution SHALL:
 
 ---
 
+### Requirement: Citation navigation reaches the cited passage, not merely its page
+
+Navigation SHALL bring the **selected highlight's cited passage** into the preview's visible area, not merely the page, slide, or sheet that contains it. A navigation that leaves the cited passage outside the scroll host's visible box SHALL NOT be treated as successful.
+
+For DOCX specifically, `scrollToPage` alone SHALL NOT satisfy this requirement. `DocxScrollViewer.scrollToPage(index)` aligns a page's top edge with the viewport top and accepts no intra-page offset, so a passage in the lower part of a page — routine, since a page is taller than the canvas body at most zoom levels — remains offscreen. DOCX navigation SHALL therefore:
+
+- Resolve the selected location's rectangle geometry, which is already expressed as fractions of the page box (see the DOCX resolution requirement), and combine it with the page's offset inside the scroll host's content box and the page's current pixel size to produce an **absolute scroll offset** in that content box.
+- Derive the page offset from the same single function that already encodes page stacking for the overlay, rather than reimplementing the stacking arithmetic, so a vendor layout change still breaks exactly one function and one test.
+- Clamp the computed offset to the host's scrollable range, so a passage near the document's start or end scrolls as far as it can rather than not at all.
+- Place the passage's **start** inside the visible box with a margin of leading context above it, so the first line of a cited paragraph is not flush against the viewport's top edge. When the passage is taller than the visible box, its start SHALL be what is aligned.
+- Produce the same result at any viewer scale and any scroll-host size, since every input is read live rather than captured at load.
+
+Navigation SHALL still occur when the location resolves to **no rectangle**: the user is taken to the cited page, slide, or sheet, as today. When no page can be determined at all, the viewer SHALL be left where it is; navigation SHALL NOT fall back to scrolling to page one, because a confident jump to the wrong place is worse than no jump.
+
+PPTX and XLSX navigation already addresses a location rather than a coarse container — `scrollToSlide` for a whole slide, and the sheet switch plus `scrollToCell` with `align: 'center'` for a single cell — and SHALL retain its current behaviour.
+
+**State ownership**: the per-format highlight surface owns scroll-target computation; `OoxmlContent` owns only the decision of *when* to navigate and the announcement that follows.
+**i18n**: none — no new user-visible string. The existing `attachmentCanvas.ooxmlHighlightNavigatedLabel` is reused.
+**RTL**: none. Scroll offsets are physical canvas coordinates in the same space the overlay already uses, inside a page whose own layout the vendor resolved including RTL. They SHALL NOT be converted to logical properties, for the reason stated in the physical-geometry requirement.
+**Feature flag**: none.
+**Memoisation**: none required; the computation is pure arithmetic over values already resolved for the overlay and runs once per navigation, not per frame.
+**Telemetry**: none.
+
+#### Scenario: A passage in the lower part of its page is brought into view
+
+- **WHEN** a citation is opened whose highlight sits near the bottom of a page that is taller than the preview's visible area
+- **THEN** the preview scrolls so the cited passage is inside the visible area, rather than stopping with the page's top edge at the viewport top
+
+#### Scenario: Navigation succeeds at a non-default scale
+
+- **WHEN** the viewer's scale is not 1 and a citation is opened whose highlight is outside the initial viewport
+- **THEN** the cited passage is inside the visible area, and the scroll offset reflects the page's size at the current scale
+
+#### Scenario: Navigation succeeds after the container is resized
+
+- **WHEN** the preview container's size changes and a citation is then selected
+- **THEN** the cited passage is brought into view against the new container size, not the size at load time
+
+#### Scenario: The passage's start is aligned when the passage is taller than the viewport
+
+- **WHEN** the selected highlight spans more of the page than the visible area can show
+- **THEN** the passage's first line is inside the visible area
+
+#### Scenario: An unresolvable location does not jump to page one
+
+- **WHEN** the selected location resolves to neither a rectangle nor a page
+- **THEN** the viewer stays where it is, no highlight is drawn, and no error state is shown
+
+---
+
+### Requirement: Navigation waits for layout readiness and never for a fixed delay
+
+DOCX navigation SHALL synchronise on the vendor's published layout-readiness signal before scanning for the page that carries a location. It SHALL NOT scan against a page count that may still be growing, and it SHALL NOT approximate readiness with a timeout, a fixed number of animation frames, or a poll for a stabilising page count.
+
+The reason is concrete: the DOCX page scan is bounded by `DocxDocument.pageCount`, and progressive layout resolves `DocxDocument.load()` while layout is still publishing pages. A scan over a partial page list finds no match, and the current implementation then scrolls to page one — the wrong-page symptom this requirement exists to remove. `DocxDocument.waitUntilLayoutComplete()` is the vendor's explicit synchronisation point for exactly this, and `onVisiblePageChange` reports a `layoutComplete` flag for the same reason.
+
+Requirements:
+
+- DOCX navigation SHALL await layout completion before the page scan, guarded by the renderer's existing disposal check so a completion arriving after unmount performs no work.
+- A layout that **fails** SHALL be treated as an unresolved location — no scroll, no error state — consistent with the graceful-degradation requirement.
+- Rectangle **measurement** SHALL NOT await layout completion. Measurement runs on every frame of a zoom or scroll burst and is already correct against whatever is laid out; a highlight on a not-yet-laid-out page gains its rectangle through the existing page-window invalidation. Serialising the coalesced measurement path behind layout completion is forbidden.
+- The document SHALL remain visible and scrollable while navigation waits. No additional loading indicator SHALL be introduced, and the renderer's loading state SHALL NOT be extended to cover layout completion.
+
+**State ownership**: the DOCX highlight surface owns the await; no new component state is introduced.
+**i18n**: none.
+**RTL**: none.
+**Feature flag**: none.
+**Memoisation**: none.
+**Telemetry**: none.
+
+#### Scenario: Layout completes after first paint
+
+- **WHEN** a citation on a later page is opened and the document's layout is still in progress when the viewer is constructed
+- **THEN** navigation waits for layout completion and then scrolls to the cited passage, rather than settling on page one
+
+#### Scenario: Measurement is not blocked by the layout wait
+
+- **WHEN** the user zooms or scrolls while navigation is waiting for layout completion
+- **THEN** rectangle recomputation continues to run on its coalesced frame callback and is not serialised behind the wait
+
+#### Scenario: Layout failure degrades gracefully
+
+- **WHEN** layout completion rejects
+- **THEN** no scroll occurs, no highlight is drawn, and the renderer's error state is not shown
+
+---
+
+### Requirement: The latest citation selection wins over superseded navigations
+
+Navigation SHALL be ordered last-write-wins. When a new navigation begins, every navigation already in flight SHALL be considered superseded and SHALL perform no scroll and no announcement, whatever order their asynchronous work completes in.
+
+A disposal flag held by the calling effect is **not** sufficient and SHALL NOT be relied on alone: the scroll is issued from inside the highlight surface, after awaits the effect cannot cancel, so an effect-level flag can only suppress the state update that follows a scroll that has already happened. The ordering guard SHALL therefore live in the highlight surface and SHALL be re-checked after **every** suspension point in the navigation path — layout readiness, run collection, and rectangle resolution.
+
+`navigate` SHALL report its outcome to the caller rather than returning nothing, distinguishing at minimum: navigation completed, navigation was superseded, and the location could not be resolved. The renderer SHALL announce only a completed navigation.
+
+Any cache used to short-circuit navigation SHALL NOT be able to defeat this ordering. A cache that cannot hit in practice — for example, one keyed on the identity of location objects that callers rebuild on every citation click — SHALL be removed rather than retained, since it costs memory for the lifetime of the surface and supplies no benefit.
+
+**State ownership**: the highlight surface owns the ordering token.
+**i18n**: none.
+**RTL**: none.
+**Feature flag**: none.
+**Memoisation**: none.
+**Telemetry**: none.
+
+#### Scenario: A slower earlier selection does not override a newer one
+
+- **WHEN** two citations are selected in rapid succession and the first selection's asynchronous work resolves after the second's
+- **THEN** the preview is left at the second citation's passage and the first performs no scroll
+
+#### Scenario: A superseded navigation is not announced
+
+- **WHEN** a navigation is superseded before it completes
+- **THEN** no navigation announcement is produced for it
+
+#### Scenario: Navigation reports its outcome
+
+- **WHEN** navigation completes, is superseded, or cannot resolve the location
+- **THEN** the caller can distinguish the three outcomes from `navigate`'s result
+
+---
+
+### Requirement: Automatic scrolling is confined to the preview and does not repeat
+
+Automatic navigation SHALL change the scroll position of the preview's own scroll host and nothing else. It SHALL be applied by writing that element's scroll position directly. `Element.scrollIntoView` SHALL NOT be used, because it scrolls every scrollable ancestor and would move the surrounding chat page — the user's place in the conversation SHALL be preserved.
+
+Scrolling SHALL be instantaneous rather than animated. A smooth scroll is still in flight when a subsequent citation is selected, which reopens the ordering hazard above, and an instantaneous scroll carries no motion-sensitivity concern. The live-region announcement supplies the feedback that a visible glide would otherwise convey.
+
+Navigation SHALL be **one-shot per selection**. It SHALL be triggered by exactly two things: the document becoming ready for a selected highlight, and a change of `selectedHighlightId`. It SHALL NOT be triggered by scroll, zoom, container resize, page-window change, or a new `highlights` array that carries the same selection — those signals feed rectangle recomputation only. After a navigation completes the user SHALL be able to scroll, zoom, and resize freely without being returned to the highlight.
+
+When the preview's scroll host cannot be located, navigation SHALL perform no scroll rather than scroll to a guessed position — the same failure mode overlay measurement already uses when the host is absent.
+
+**State ownership**: `OoxmlContent` owns the navigation trigger; the surface owns the scroll application.
+**i18n**: none.
+**RTL**: none — the host's horizontal scroll position is read and written in the same physical space the overlay already uses.
+**Feature flag**: none.
+**Memoisation**: the navigation effect SHALL be keyed so that a new `highlights` array with an unchanged `selectedHighlightId` does not re-trigger it.
+**Telemetry**: none.
+
+#### Scenario: The chat page does not move
+
+- **WHEN** the preview automatically scrolls to a cited passage
+- **THEN** only the preview's scroll host changes scroll position, and the surrounding page's scroll position is unchanged
+
+#### Scenario: The user is not pulled back after navigating
+
+- **WHEN** navigation completes and the user then scrolls away, zooms, or resizes the preview
+- **THEN** the preview stays where the user left it and does not scroll back to the highlight
+
+#### Scenario: A repeated highlights array does not re-navigate
+
+- **WHEN** a new `highlights` array is passed that names the same `selectedHighlightId`
+- **THEN** no new navigation is triggered
+
+#### Scenario: A missing scroll host performs no scroll
+
+- **WHEN** the viewer's scroll host cannot be located
+- **THEN** no scroll occurs and no highlight rectangles are drawn
+
+---
+
 ### Requirement: Highlights render as an overlay with exactly one selected
 
 `OoxmlContent` SHALL render resolved rectangles in an overlay positioned above the viewer's canvases and below no interactive control, and SHALL mark exactly one highlight selected.
@@ -397,7 +583,7 @@ The overlay SHALL:
 - Expose highlight colours as themeable CSS custom properties through the existing `AttachmentCanvasColors` mechanism, following `libs/*` styling rules: no hardcoded hex in the component, `buildCssVars` mapping, and one interface field per var the stylesheet reads.
 - Be removed entirely when `content.highlights` is absent or resolves to no rectangles.
 
-Navigation SHALL scroll the selected highlight's location into view on initial load and whenever `selectedHighlightId` changes: `scrollToPage` for DOCX, `scrollToSlide` for PPTX, and the sheet-switch-plus-`scrollToCell` sequence for XLSX. Navigation SHALL happen even when the location resolves to **no rectangle** — the user is still taken to the right page, slide, or sheet, which mirrors the PDF requirement that page navigation is independent of highlight geometry.
+Navigation SHALL bring the selected highlight's location into view on initial load and whenever `selectedHighlightId` changes. The per-format mechanism is: an absolute scroll offset computed from the resolved rectangle for DOCX, `scrollToSlide` for PPTX, and the sheet-switch-plus-`scrollToCell` sequence for XLSX. Navigation SHALL happen even when the location resolves to **no rectangle** — the user is still taken to the right page, slide, or sheet, which mirrors the PDF requirement that page navigation is independent of highlight geometry. The passage-level contract, layout-readiness synchronisation, ordering under rapid selection, and containment of the scroll to the preview are specified in the four navigation requirements above; this requirement owns only the overlay's rendering and the fact that a selection change navigates.
 
 **State ownership**: `OoxmlContent` owns the resolved-rectangle state and the engine/viewer refs. No new context is introduced; the canvas's own open/content state stays where it already lives.
 **i18n**: the overlay's region label — see the accessibility requirement.
@@ -424,7 +610,12 @@ Navigation SHALL scroll the selected highlight's location into view on initial l
 #### Scenario: Changing the selected highlight re-navigates
 
 - **WHEN** `selectedHighlightId` changes to a highlight on another page
-- **THEN** the viewer scrolls to that page and the selected treatment moves
+- **THEN** the viewer scrolls to that highlight's passage and the selected treatment moves
+
+#### Scenario: Switching to a citation above the current position
+
+- **WHEN** the user has navigated to a citation and then selects one that sits earlier in the document
+- **THEN** the preview scrolls backwards to the earlier passage and brings it into view
 
 #### Scenario: No highlights means no overlay
 
@@ -516,30 +707,52 @@ When highlights are **not** requested, acquisition SHALL remain the current self
 
 Rectangles SHALL be invalidated and recomputed whenever the mapping from document coordinates to CSS pixels changes.
 
-For DOCX and PPTX, the scale is the invalidation signal: the renderer SHALL subscribe to `onScaleChange` and recompute rectangles for the affected pages/slides, and SHALL observe the container so a resize-driven refit (`refitOnResize`, on by default in the current renderer) is also caught. Page-window changes SHALL be tracked through `onVisiblePageChange` / `onVisibleSlideChange` so a highlight on a page scrolled into view is resolved when it becomes visible rather than only at load.
+**Rectangle shape and page placement SHALL be treated as separate concerns.** For DOCX, shape is scale-free (see the DOCX resolution requirement), so a scale change SHALL NOT re-resolve run geometry. Placement is not scale-free: converting a page-box fraction into overlay coordinates requires the page's current pixel size, the page's offset within the scroll host, and the host's scroll position, and the page offset is derived from the host's client width. A recompute of **placement** SHALL therefore still occur on zoom, container resize, page-window change, and scroll, and SHALL be pure arithmetic over already-resolved geometry rather than a re-collection of runs.
+
+For DOCX and PPTX, the scale is one invalidation signal: the renderer SHALL subscribe to `onScaleChange` and recompute placement for the affected pages/slides. Page-window changes SHALL be tracked through `onVisiblePageChange` / `onVisibleSlideChange` so a highlight on a page scrolled into view is resolved when it becomes visible rather than only at load.
+
+**The scale callback alone is not sufficient, and container resize SHALL be its own invalidation source.** The renderer SHALL observe its viewer container's box — for example with a `ResizeObserver` — and SHALL schedule a recompute on every observed size change, whether or not a scale change accompanies it. This is required because:
+
+- A refit whose target scale clamps at the viewer's zoom minimum or maximum, or resolves to the scale already in effect, changes the container's client width while emitting no `onScaleChange`.
+- A resize that leaves the fit width unchanged changes the container box without a refit.
+- Page offsets are derived from the scroll host's client width, so an unobserved width change leaves every rectangle holding the previous horizontal centring and shifts it by half the width delta.
+
+The container observation SHALL be established **after** the viewer is constructed, so that within one observation delivery the viewer's own resize handling runs first and the recompute measures post-refit geometry. The observation SHALL be torn down with the viewer, in the same teardown that releases the viewer and engine.
 
 Page and slide offsets in the scroll host's coordinate space SHALL be derived from the vendor's own published geometry inputs — the page or slide size, the current scale, and the configured `gap` / padding — in **one** function, so the single place that encodes this relationship is testable and reviewable. That relationship is verified against the installed build but is not part of the vendor's documented public contract; the design records this explicitly as a version-coupling risk.
 
-For XLSX, invalidation is driven by `onViewportChange`, `onScaleChange`, and `onSheetChange` as specified in the XLSX requirement.
+For XLSX, invalidation is driven by `onViewportChange`, `onScaleChange`, and `onSheetChange` as specified in the XLSX requirement, in addition to the container observation above.
 
-Recomputation SHALL be coalesced through a single animation-frame callback so a continuous gesture — wheel zoom, drag-scroll — produces at most one recompute per frame.
+Recomputation SHALL be coalesced through a single animation-frame callback so a continuous gesture — wheel zoom, drag-scroll, drag-resize — produces at most one recompute per frame. A resize-driven invalidation SHALL enter the same coalescing path as a scale- or scroll-driven one, not a separate one.
+
+Recovery SHALL be automatic: after any zoom, resize, refit, reflow, or repagination, alignment SHALL be restored without the user reopening the preview, re-selecting the citation, or otherwise passing a new `highlights` array.
 
 **State ownership**: the renderer.
 **i18n**: none.
 **RTL**: none.
 **Feature flag**: none.
-**Memoisation**: coalescing is required as stated; subscriptions SHALL be established once per document, not per render.
+**Memoisation**: coalescing is required as stated; subscriptions and the container observation SHALL be established once per document, not per render.
 **Telemetry**: none.
 
 #### Scenario: Zooming keeps the highlight over its text
 
 - **WHEN** the user zooms a highlighted DOCX
-- **THEN** `onScaleChange` triggers a recompute and the rectangle still covers the cited text
+- **THEN** placement is recomputed from the already-resolved fractions and the rectangle still covers the cited text, with no re-collection of run geometry
 
 #### Scenario: Resizing the panel keeps the highlight aligned
 
 - **WHEN** the canvas panel is resized, causing a refit
 - **THEN** rectangles are recomputed and stay aligned
+
+#### Scenario: A resize that emits no scale change still recomputes
+
+- **WHEN** the container is resized and the viewer's refit produces no `onScaleChange` — because the target scale clamps at the zoom limit or equals the current scale
+- **THEN** the container observation schedules a recompute anyway, and the rectangles are re-placed against the new container width
+
+#### Scenario: Repeated zoom and resize introduce no cumulative drift
+
+- **WHEN** zoom and resize operations are interleaved repeatedly and the viewer returns to an earlier scale and container width
+- **THEN** the rectangles equal those produced at that scale and width the first time, with no accumulated offset
 
 #### Scenario: A highlight on a later page resolves when scrolled to
 
@@ -551,6 +764,21 @@ Recomputation SHALL be coalesced through a single animation-frame callback so a 
 - **WHEN** a continuous zoom gesture fires many scale changes within one frame
 - **THEN** at most one recompute runs per frame
 
+#### Scenario: A resize gesture coalesces recomputes
+
+- **WHEN** a drag-resize delivers many container size changes within one frame
+- **THEN** at most one recompute runs per frame
+
+#### Scenario: The container observation is released with the viewer
+
+- **WHEN** the previewed document is replaced or the renderer unmounts
+- **THEN** the container observation is disconnected in the same teardown that destroys the viewer and engine, and no recompute is scheduled afterwards
+
+#### Scenario: Alignment recovers without reopening the preview
+
+- **WHEN** the user zooms and resizes a highlighted DOCX repeatedly without re-clicking the citation
+- **THEN** the rectangles remain aligned throughout, with no new `highlights` array required to trigger correction
+
 ---
 
 ### Requirement: Highlight overlay is accessible
@@ -559,6 +787,7 @@ The overlay is purely visual and conveys location, which a screen-reader user ca
 
 - The overlay container SHALL be a labelled region: `role="region"` with an `aria-label` supplied by the host through the existing labels mechanism, defaulting in the library to the English string `'Cited locations'`. Individual rectangles are decorative and SHALL be `aria-hidden`, since a rectangle carries no independent meaning.
 - Bringing the cited location into view SHALL be announced through a polite live region (`role="status"`, `aria-live="polite"`), because scrolling a canvas produces no announcement of its own and the user otherwise receives no confirmation that Preview did anything. The announcement SHALL fire when navigation completes for the selected highlight, and SHALL NOT re-fire on scroll, zoom, or resize.
+- The announcement SHALL fire **once per completed navigation**, for the second and every subsequent citation as well as the first. The announced state SHALL therefore be reset when `selectedHighlightId` changes, so a later navigation is not silently swallowed by a flag that is still set from the first one. A navigation that was superseded or could not resolve its location SHALL NOT be announced.
 - The overlay SHALL NOT be focusable and SHALL NOT enter the tab order — it is not an interactive control, and adding stops between the document and the panel's real controls would harm keyboard navigation. Existing keyboard interaction with the viewer (text selection, cell selection, scrolling) SHALL be unaffected, which the `pointer-events: none` overlay guarantees.
 - While the document is loading and resolution is in flight, the existing `aria-busy` on the viewer container SHALL continue to convey that state; no separate busy signal is added.
 - A resolution failure SHALL NOT be announced, consistent with the graceful-degradation requirement that it is not reported to the user at all.
@@ -586,6 +815,11 @@ Both SHALL be threaded as optional fields on `AttachmentCanvasLabels` with Engli
 
 - **WHEN** the canvas opens and scrolls to the selected citation
 - **THEN** a polite status announces it once, and scrolling or zooming afterwards does not repeat it
+
+#### Scenario: A second citation is also announced
+
+- **WHEN** the user selects a different citation in the already-open preview and navigation completes
+- **THEN** the polite status announces that navigation too, rather than staying silent because the first one already announced
 
 #### Scenario: The overlay adds no tab stops
 
@@ -653,3 +887,49 @@ Resolution SHALL be bounded to what is displayed or navigated to: runs SHALL be 
 
 - **WHEN** a 200-page DOCX opens with one highlight on page 3
 - **THEN** run collection covers the highlighted and visible pages, not all 200
+
+---
+
+### Requirement: Highlight ids are unique within the gathered same-source list
+
+When `annotationToOoxmlCanvasContent` builds `highlights` over the annotations returned by `gatherSameSourceAnnotations`, the minted `id` of each `OoxmlHighlight` SHALL be unique within that list. The same invariant SHALL hold for the PDF sibling path, whose ids must stay comparable with the Office path's.
+
+The current minting rule, `String(annotation.index ?? positionInList)`, mixes a wire-supplied `index` with an array position and therefore admits collisions — for example an entry carrying `index: 1` alongside an entry with no `index` at position 1, or a wire payload that repeats an `index`. A collision is user-visible: `OoxmlContent` applies the selected treatment to **every** rectangle whose `highlightId` equals `selectedHighlightId`, so two passages in different parts of the document are both emphasised, while navigation resolves only the first match and scrolls to one of them.
+
+Uniqueness SHALL be achieved without weakening the existing stability contract: an `annotation.index` SHALL continue to be used as the id wherever it is unambiguous within the gathered list, so ids stay stable across reopenings and comparable with `annotationsToPdfHighlights`. Only a colliding entry SHALL be disambiguated.
+
+`selectedHighlightId` SHALL continue to name the clicked annotation's own highlight, identified by reference identity, and SHALL continue to be omitted when the clicked annotation produced no highlight — disambiguation SHALL NOT cause a different annotation's highlight to be selected.
+
+This requirement SHALL NOT reduce what is highlighted. `gatherSameSourceAnnotations` SHALL keep returning every annotation citing the same source URL, every such highlight SHALL keep rendering as a background highlight, and the selected target SHALL keep its two-channel visual distinction. Nothing is removed from the overlay to fix duplicate popup cards.
+
+One annotation carrying an array of selectors SHALL continue to resolve to several locations under a single id, all of them emphasised when that id is selected, with navigation targeting the first location. That is the existing contract for a passage that spans pieces and is not a collision.
+
+#### Scenario: Two same-source annotations never share an id
+
+- **WHEN** two annotations cite one DOCX file, the first carries `index: 1` and the second carries no `index`, and both resolve to locations
+- **THEN** the two `OoxmlHighlight` entries carry different `id` values
+
+#### Scenario: A repeated `index` on the wire is disambiguated
+
+- **WHEN** two annotations citing one file both carry `index: 0`
+- **THEN** the two highlights carry different `id` values and neither is dropped
+
+#### Scenario: Unambiguous wire indices are preserved
+
+- **WHEN** three annotations citing one file carry `index` values `0`, `1`, and `2`
+- **THEN** the highlight ids are `"0"`, `"1"`, and `"2"` — unchanged from the prior behaviour
+
+#### Scenario: Exactly one highlight is selected after disambiguation
+
+- **WHEN** ids would have collided and the user previews one of the colliding annotations
+- **THEN** `selectedHighlightId` names that annotation's own highlight, and the overlay marks the rectangles of exactly that one highlight selected
+
+#### Scenario: Background highlights are still gathered
+
+- **WHEN** four annotations cite one DOCX file and the user previews the third
+- **THEN** all four highlights are present in `highlights`, and only the third's is selected
+
+#### Scenario: A multi-selector annotation is not treated as a collision
+
+- **WHEN** one annotation carries two valid DOCX selectors and is the clicked annotation
+- **THEN** one highlight with two locations is produced, both locations are emphasised, and navigation targets the first

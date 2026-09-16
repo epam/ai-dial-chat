@@ -201,10 +201,11 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
 
   /*
    * Skills in the preview's pre-conversation composer: the same host wiring
-   * the main chat uses (flag, listing/favorites contexts, lazy description
-   * fetch, catalog picker, details panel). Once the conversation exists, the
-   * shared ConversationView below wires its own instance for the ongoing
-   * input and history display — this one serves only the composer phase.
+   * the main chat uses (flag, the app deployment's skills support, listing
+   * and favorites contexts, catalog picker, details panel). Once the
+   * conversation exists, the shared ConversationView below wires its own
+   * instance for the ongoing input and history display — this one serves
+   * only the composer phase.
    */
   const {
     skillMenuOverlay,
@@ -213,8 +214,11 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     skillDetailsPanel,
     selectedSkillElement,
     selectedSkills,
+    isSkillUnsupported,
     removeSelectedSkill,
-  } = useSkillSelectorOverlay();
+  } = useSkillSelectorOverlay({
+    isSkillsSupported: appDeployment?.features?.skillsSupported === true,
+  });
 
   const handleCreateConversation = useCallback(
     async (
@@ -424,6 +428,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             menuOverlays={skillMenuOverlay ? [skillMenuOverlay] : undefined}
             inlineStartSlot={selectedSkillElement}
             onInlineStartRemove={removeSelectedSkill}
+            isSkillUnsupported={isSkillUnsupported}
             commandMenu={commandMenu}
           >
             <StarterButtons

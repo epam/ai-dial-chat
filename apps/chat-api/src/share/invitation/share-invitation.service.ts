@@ -57,7 +57,7 @@ export class ShareInvitationService {
 
   constructor(
     private readonly dialClient: DialClientService,
-    private readonly configService: ConfigService<EnvironmentVariables>,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
     private readonly deploymentsService: DeploymentsService,
     private readonly toolsetsService: ToolsetsService,
     private readonly skillsLookupService: SkillsLookupService,
@@ -357,9 +357,11 @@ export class ShareInvitationService {
     }
 
     const resources = peekResult.data?.resources ?? [];
-    const itemId =
-      resources.find((r) => !r.url?.startsWith(FILE_RESOURCE_PREFIX))?.url ??
-      resources[0]?.url;
+    const sharedResource =
+      resources.find(
+        (r) => r.url != null && !r.url.startsWith(FILE_RESOURCE_PREFIX),
+      ) ?? resources[0];
+    const itemId = sharedResource?.url;
     if (itemId == null) {
       this.logger.error(
         `DIAL Core returned an invitation with no shared resource for invitationId=${invitationId}`,
@@ -421,6 +423,7 @@ export class ShareInvitationService {
       accessToken,
       userSub,
       bucket,
+      sharedResource?.permissions,
     );
 
     return { itemId, ...summary };
@@ -443,6 +446,7 @@ export class ShareInvitationService {
     accessToken: string,
     userSub: string,
     bucket: string,
+    grantedPermissions?: ResourceAccessType[],
   ): Promise<
     Pick<
       AcceptInvitationResponseDto,
@@ -455,6 +459,7 @@ export class ShareInvitationService {
           itemId,
           accessToken,
           bucket,
+          grantedPermissions,
         );
         return sharedSkill ? { sharedSkill } : {};
       }

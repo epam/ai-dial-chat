@@ -12,8 +12,13 @@ import {
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { updateApplication } from '../../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../../types/apps-editor';
 import AppsEditor from '../AppsEditor';
+
+vi.mock('../../../server-api/applications', () => ({
+  updateApplication: vi.fn(),
+}));
 
 let latestSettingsStepProps: {
   onUpdated?: () => void;
@@ -118,6 +123,9 @@ describe('AppsEditor', () => {
     vi.clearAllMocks();
     refetchDeployments.mockReset();
     refetchDeployments.mockResolvedValue(undefined);
+    vi.mocked(updateApplication).mockReset().mockResolvedValue({
+      id: 'applications/bucket/abc',
+    });
     latestSettingsStepProps = {};
     latestGeneralFormProps = null;
     shouldSettingsAutoReady = true;
@@ -158,8 +166,8 @@ describe('AppsEditor', () => {
     await userEvent.click(
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
-    act(() => {
-      latestSettingsStepProps.onSaveSuccess?.(false);
+    await act(async () => {
+      await latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -182,8 +190,8 @@ describe('AppsEditor', () => {
     await userEvent.click(
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
-    act(() => {
-      latestSettingsStepProps.onSaveSuccess?.(false);
+    await act(async () => {
+      await latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -304,8 +312,8 @@ describe('AppsEditor', () => {
     await userEvent.click(
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
-    act(() => {
-      latestSettingsStepProps.onSaveSuccess?.(false);
+    await act(async () => {
+      await latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -329,8 +337,8 @@ describe('AppsEditor', () => {
       await userEvent.click(
         screen.getByRole('button', { name: BasicI18nKeys.Preview }),
       );
-      act(() => {
-        latestSettingsStepProps.onSaveSuccess?.(false);
+      await act(async () => {
+        await latestSettingsStepProps.onSaveSuccess?.(false);
       });
 
       expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -590,7 +598,7 @@ describe('AppsEditor', () => {
       expect(settingsStepTriggerSave).toHaveBeenCalledWith();
     });
 
-    it('does not call update-application-style persistence on save success', async () => {
+    it('reasserts skills_supported via updateApplication before refetching deployments', async () => {
       renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
 
       act(() => {
@@ -606,37 +614,49 @@ describe('AppsEditor', () => {
         await Promise.resolve();
       });
 
+      expect(updateApplication).toHaveBeenCalledWith('existing-app', {
+        name: 'My App',
+        description: undefined,
+        iconUrl: undefined,
+        topics: undefined,
+        locales: undefined,
+        primaryLocale: undefined,
+      });
       await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
     });
   });
 
-  describe('Preview session reset on configuration change', () => {
-    it('bumps the preview reset key when a save reports hasChanges: true', async () => {
+  describe('Settings-step save reasserts skills_supported via updateApplication', () => {
+    it('awaits the reassertion call before Save & Exit navigates away', async () => {
+      const callOrder: string[] = [];
+      vi.mocked(updateApplication).mockImplementation(async () => {
+        callOrder.push('updateApplication');
+        return { id: 'applications/bucket/abc' };
+      });
+      refetchDeployments.mockImplementation(async () => {
+        callOrder.push('refetchDeployments');
+      });
       renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
-      const keyBefore = Number(
-        screen.getByText('settings-step').dataset.previewResetKey,
-      );
 
       await userEvent.click(
-        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
       );
       await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.(true);
+        latestSettingsStepProps.onSaveSuccess?.(false);
         await Promise.resolve();
       });
 
-      await waitFor(() =>
-        expect(
-          Number(screen.getByText('settings-step').dataset.previewResetKey),
-        ).toBe(keyBefore + 1),
-      );
+      await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
+      expect(callOrder).toEqual(['updateApplication', 'refetchDeployments']);
     });
 
-    it('does not bump the preview reset key when a save reports hasChanges: false', async () => {
+    it('awaits the reassertion call before entering preview mode', async () => {
+      const callOrder: string[] = [];
+      vi.mocked(updateApplication).mockImplementation(async () => {
+        callOrder.push('updateApplication');
+        return { id: 'applications/bucket/abc' };
+      });
       renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
-      const keyBefore = Number(
-        screen.getByText('settings-step').dataset.previewResetKey,
-      );
 
       await userEvent.click(
         screen.getByRole('button', { name: BasicI18nKeys.Preview }),
@@ -646,10 +666,88 @@ describe('AppsEditor', () => {
         await Promise.resolve();
       });
 
-      await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
+      await screen.findByRole('button', {
+        name: AppsEditorI18nKeys.ExitPreviewButton,
+      });
+      expect(callOrder).toEqual(['updateApplication']);
+    });
+
+    it('stops before refetching, notifying, or navigating when the reassertion call fails', async () => {
+      vi.mocked(updateApplication).mockRejectedValue(new Error('boom'));
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      await userEvent.click(
+        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
+      );
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.(false);
+        await Promise.resolve();
+      });
+
+      expect(refetchDeployments).not.toHaveBeenCalled();
+      expect(mockShowNotification).not.toHaveBeenCalled();
+      expect(screen.getByText(AppsEditorI18nKeys.ErrorSaveFailed)).toBeTruthy();
+    });
+
+    it('does not enter preview when the reassertion call fails for a Preview trigger', async () => {
+      vi.mocked(updateApplication).mockRejectedValue(new Error('boom'));
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.(false);
+        await Promise.resolve();
+      });
+
+      expect(
+        screen.queryByRole('button', {
+          name: AppsEditorI18nKeys.ExitPreviewButton,
+        }),
+      ).toBeNull();
+      expect(screen.getByText(AppsEditorI18nKeys.ErrorSaveFailed)).toBeTruthy();
+    });
+  });
+
+  it('bumps the preview reset key when a save reports hasChanges: true', async () => {
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+    const keyBefore = Number(
+      screen.getByText('settings-step').dataset.previewResetKey,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    await act(async () => {
+      latestSettingsStepProps.onSaveSuccess?.(true);
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
       expect(
         Number(screen.getByText('settings-step').dataset.previewResetKey),
-      ).toBe(keyBefore);
+      ).toBe(keyBefore + 1),
+    );
+  });
+
+  it('does not bump the preview reset key when a save reports hasChanges: false', async () => {
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+    const keyBefore = Number(
+      screen.getByText('settings-step').dataset.previewResetKey,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    await act(async () => {
+      latestSettingsStepProps.onSaveSuccess?.(false);
+      await Promise.resolve();
     });
+
+    await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
+    expect(
+      Number(screen.getByText('settings-step').dataset.previewResetKey),
+    ).toBe(keyBefore);
   });
 });

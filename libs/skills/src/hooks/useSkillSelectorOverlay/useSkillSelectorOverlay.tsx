@@ -9,7 +9,6 @@ import {
   Suspense,
   useCallback,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -28,21 +27,20 @@ import type {
 import { getSkillFallbackName } from '../../utils/skill-url';
 
 /**
- * Owns the Skills Add-menu flow: the favorites overlay with lazily resolved
- * row descriptions, the "Use skill" browse modal's open state, the skill
- * details side panel's open state, and the single selected skill rendered as
- * the input's inline `ChatSkill` element. The host injects the listing data,
- * favorites state, the description fetch, labels, and the modal/panel
- * components.
+ * Owns the Skills Add-menu flow: the favorites overlay, the "Use skill"
+ * browse modal's open state, the skill details side panel's open state, and
+ * the single selected skill rendered as the input's inline `ChatSkill`
+ * element. The host injects the listing data, favorites state, labels, the
+ * deployment-support signal, and the modal/panel components.
  */
 export const useSkillSelectorOverlay = ({
   isEnabled,
+  isSkillsSupported,
   skills,
   sharedWithMe,
   publicSkills,
   favoriteIds,
   onToggleFavorite,
-  fetchSkillDescription,
   labels,
   historyChipLabelClassName,
   renderCatalogContent,
@@ -53,32 +51,21 @@ export const useSkillSelectorOverlay = ({
     backLabel = 'Back',
     catalogModalTitleLabel = 'Use skill',
     emptyQueryHintLabel = 'Type to filter',
+    unsupportedTooltipLabel = 'Selected model does not support skills. Remove the skill or select different model to proceed.',
     panelLabels,
   } = labels ?? {};
+
+  /*
+   * The entry-point gate: both the feature flag and the deployment's own
+   * support must hold. A selected skill, its removal gesture, and the
+   * details panel survive an unsupported deployment — only the ways in are
+   * hidden — so unlike `isEnabled` this never blanks the whole result.
+   */
+  const isSkillsEnabled = isEnabled && isSkillsSupported;
 
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [detailsSkillId, setDetailsSkillId] = useState<string | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
-
-  /*
-   * Per-session cache of lazily resolved skill descriptions: `null` marks a
-   * skill whose manifest has no description (or whose fetch failed), so it
-   * never refetches this session.
-   */
-  const [skillDescriptions, setSkillDescriptions] = useState<
-    ReadonlyMap<string, string | null>
-  >(new Map());
-  /*
-   * Ids with a description fetch already in flight, so reopening before
-   * resolution does not refetch — mirrored as state so rows re-render to
-   * show the tooltip's loading spinner while their fetch runs (the state
-   * copy alone would miss a second open in the same tick, e.g. StrictMode's
-   * double-invoked mount effect).
-   */
-  const [pendingDescriptionIds, setPendingDescriptionIds] = useState<
-    ReadonlySet<string>
-  >(new Set());
-  const pendingDescriptionIdsRef = useRef(new Set<string>());
 
   const allSkills = useMemo<SkillListingEntry[]>(
     () => [...skills, ...(sharedWithMe ?? []), ...(publicSkills ?? [])],
@@ -103,14 +90,8 @@ export const useSkillSelectorOverlay = ({
     () =>
       allSkills
         .filter((skill) => favoriteIds.has(skill.url))
-        .map((skill) =>
-          buildFavoriteSkillItem(
-            skill,
-            skillDescriptions,
-            pendingDescriptionIds,
-          ),
-        ),
-    [allSkills, favoriteIds, skillDescriptions, pendingDescriptionIds],
+        .map((skill) => buildFavoriteSkillItem(skill)),
+    [allSkills, favoriteIds],
   );
 
   /*
@@ -125,6 +106,12 @@ export const useSkillSelectorOverlay = ({
         : (skillByUrl.get(selectedSkillId) ?? null),
     [skillByUrl, selectedSkillId],
   );
+
+  /*
+   * A skill selected on a deployment that does not support skills: the chip
+   * renders in its error state and hosts fold this into send-disabled.
+   */
+  const isSkillUnsupported = selectedSkill != null && !isSkillsSupported;
 
   const selectSkill = useCallback((skillId: string) => {
     setSelectedSkillId(skillId);
@@ -155,48 +142,15 @@ export const useSkillSelectorOverlay = ({
   );
 
   /*
-   * Deferred condition: DIAL Core's skill listing metadata carries no
-   * description, so the manifest is fetched on a row tooltip's first open —
-   * one `SKILL.md` download per hovered skill per session (an N+1 pattern).
-   * A planned Core change adds `description` to `ResourceItemMetadata`; when
-   * it ships, drop this fetch and its wiring — the pending state here, the
-   * `isDescriptionLoading` spinner branch in `FavoriteSkillsPanel`, and the
-   * `onItemTooltipOpen` callback — and let the listing populate the tooltip
-   * directly.
-   */
-  const handleItemTooltipOpen = useCallback(
-    (id: string) => {
-      if (
-        skillDescriptions.has(id) ||
-        pendingDescriptionIdsRef.current.has(id)
-      ) {
-        return;
-      }
-
-      pendingDescriptionIdsRef.current.add(id);
-      setPendingDescriptionIds((prev) => new Set(prev).add(id));
-      fetchSkillDescription(id).then((description) => {
-        pendingDescriptionIdsRef.current.delete(id);
-        setPendingDescriptionIds((prev) => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
-        setSkillDescriptions((prev) => new Map(prev).set(id, description));
-      });
-    },
-    [skillDescriptions, fetchSkillDescription],
-  );
-
-  /*
-   * The selected skill's inline form: the shared tooltip content and the same
-   * lazy description fetch as the favorites rows. Memoized so the element's
-   * identity stays stable across unrelated re-renders (streaming) and the
-   * input hosting it as `inlineStartSlot` is not needlessly re-rendered. The
-   * element carries no remove control — removal is the input's
-   * Backspace-at-start gesture via `removeSelectedSkill` (wired to
-   * `onInlineStartRemove`). "View details" opens the same side panel the
-   * rows' action opens.
+   * The selected skill's inline form: the shared tooltip content, with the
+   * listing-sourced description — or, while the deployment does not support
+   * skills, the error state (error-colored label, message-only tooltip).
+   * Memoized so the element's identity stays stable across unrelated
+   * re-renders (streaming) and the input hosting it as `inlineStartSlot` is
+   * not needlessly re-rendered. The element carries no remove control —
+   * removal is the input's Backspace-at-start gesture via
+   * `removeSelectedSkill` (wired to `onInlineStartRemove`). "View details"
+   * opens the same side panel the rows' action opens.
    */
   const selectedSkillElement = useMemo<ReactNode>(
     () =>
@@ -204,31 +158,26 @@ export const useSkillSelectorOverlay = ({
         <ChatSkill
           name={selectedSkill.name}
           path={selectedSkill.url}
-          description={skillDescriptions.get(selectedSkill.url) ?? undefined}
-          isDescriptionLoading={pendingDescriptionIds.has(selectedSkill.url)}
-          onTooltipOpen={handleItemTooltipOpen}
+          description={selectedSkill.description}
+          isUnsupported={isSkillUnsupported}
           onViewDetails={setDetailsSkillId}
-          labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+          labels={{
+            viewDetailsLabel: panelLabels?.viewDetailsLabel,
+            unsupportedTooltipLabel,
+          }}
         />
       ),
-    [
-      selectedSkill,
-      skillDescriptions,
-      pendingDescriptionIds,
-      handleItemTooltipOpen,
-      panelLabels,
-    ],
+    [selectedSkill, isSkillUnsupported, panelLabels, unsupportedTooltipLabel],
   );
 
   /*
    * History display: one `ChatSkill` per `custom_content.skills` entry,
-   * sharing the rows' description cache, first-open fetch, and "View details"
-   * panel. The name comes from the listing pools matched on the entry's url;
-   * a url no pool carries (e.g. a skill the viewer cannot read) falls back to
-   * its last non-empty segment, and its description fetch degrades silently
-   * per the cache's rules. The label class is host-supplied because the chip
-   * renders beside the bubble's first text line and its height should match
-   * that line.
+   * sharing the rows' "View details" panel. The name and description come
+   * from the listing pools matched on the entry's url; a url no pool carries
+   * (e.g. a skill the viewer cannot read) falls back to its last non-empty
+   * segment with no description. The label class is host-supplied because
+   * the chip renders beside the bubble's first text line and its height
+   * should match that line.
    */
   const renderHistorySkills = useCallback(
     (entries: RequestSkill[] | undefined): ReactNode => {
@@ -237,8 +186,8 @@ export const useSkillSelectorOverlay = ({
       }
 
       return entries.map((entry) => {
-        const name =
-          skillByUrl.get(entry.url)?.name ?? getSkillFallbackName(entry.url);
+        const skill = skillByUrl.get(entry.url);
+        const name = skill?.name ?? getSkillFallbackName(entry.url);
 
         return (
           <ChatSkill
@@ -246,23 +195,14 @@ export const useSkillSelectorOverlay = ({
             name={name}
             path={entry.url}
             labelClassName={historyChipLabelClassName}
-            description={skillDescriptions.get(entry.url) ?? undefined}
-            isDescriptionLoading={pendingDescriptionIds.has(entry.url)}
-            onTooltipOpen={handleItemTooltipOpen}
+            description={skill?.description}
             onViewDetails={setDetailsSkillId}
             labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
           />
         );
       });
     },
-    [
-      skillByUrl,
-      historyChipLabelClassName,
-      skillDescriptions,
-      pendingDescriptionIds,
-      handleItemTooltipOpen,
-      panelLabels,
-    ],
+    [skillByUrl, historyChipLabelClassName, panelLabels],
   );
 
   const renderOverlay = useCallback(
@@ -283,34 +223,30 @@ export const useSkillSelectorOverlay = ({
           onClose();
           setDetailsSkillId(item.id);
         }}
-        onItemTooltipOpen={handleItemTooltipOpen}
         labels={panelLabels}
       />
     ),
-    [
-      favoriteSkillItems,
-      selectSkill,
-      onToggleFavorite,
-      handleItemTooltipOpen,
-      panelLabels,
-    ],
+    [favoriteSkillItems, selectSkill, onToggleFavorite, panelLabels],
   );
 
-  const skillMenuOverlay = useMemo<MenuOverlayConfig>(
-    () => ({
-      key: 'skills',
-      title: addMenuLabel,
-      icon: (
-        <IconBlocks
-          size={BASE_ICON_SIZE}
-          aria-hidden
-          stroke={DIAL_KIT_ICON_STROKE}
-        />
-      ),
-      renderOverlay,
-      backLabel,
-    }),
-    [addMenuLabel, backLabel, renderOverlay],
+  const skillMenuOverlay = useMemo<MenuOverlayConfig | undefined>(
+    () =>
+      isSkillsEnabled
+        ? {
+            key: 'skills',
+            title: addMenuLabel,
+            icon: (
+              <IconBlocks
+                size={BASE_ICON_SIZE}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            ),
+            renderOverlay,
+            backLabel,
+          }
+        : undefined,
+    [isSkillsEnabled, addMenuLabel, backLabel, renderOverlay],
   );
 
   /*
@@ -322,7 +258,7 @@ export const useSkillSelectorOverlay = ({
    */
   const commandMenu = useMemo<CommandMenuConfig | undefined>(
     () =>
-      isEnabled
+      isSkillsEnabled
         ? {
             triggerPrefix: '/',
             menuLabel: addMenuLabel,
@@ -344,20 +280,18 @@ export const useSkillSelectorOverlay = ({
                   close({ consumeQuery: true });
                   setDetailsSkillId(item.id);
                 }}
-                onItemTooltipOpen={handleItemTooltipOpen}
                 labels={panelLabels}
               />
             ),
           }
         : undefined,
     [
-      isEnabled,
+      isSkillsEnabled,
       addMenuLabel,
       emptyQueryHintLabel,
       favoriteSkillItems,
       selectSkill,
       onToggleFavorite,
-      handleItemTooltipOpen,
       panelLabels,
     ],
   );
@@ -399,6 +333,7 @@ export const useSkillSelectorOverlay = ({
       selectedSkillElement: null,
       selectedSkillPath: null,
       selectedSkills: undefined,
+      isSkillUnsupported: false,
       selectSkill: () => undefined,
       removeSelectedSkill: () => undefined,
       renderHistorySkills: () => null,
@@ -413,6 +348,7 @@ export const useSkillSelectorOverlay = ({
     selectedSkillElement,
     selectedSkillPath,
     selectedSkills,
+    isSkillUnsupported,
     selectSkill,
     removeSelectedSkill,
     renderHistorySkills,

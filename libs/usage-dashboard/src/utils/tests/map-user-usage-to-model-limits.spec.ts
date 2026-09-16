@@ -9,6 +9,7 @@ import {
   ModelLimitMetricKind,
   ModelLimitStatus,
 } from '../../models/model-limits-props';
+import type { FormatResetTime } from '../map-usage-data-to-dashboard';
 import {
   USAGE_MODEL_LIMITS_I18N_KEYS,
   mapOverallCostLimitsToPeriodStatuses,
@@ -35,16 +36,16 @@ const t: Translate = (key, params) => {
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.spentLabel)
     return `${params?.amount} spent`;
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.todayPeriodDescription)
-    return 'Last 24 hours';
+    return 'Today';
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.thisWeekPeriodDescription)
-    return 'Last 7 days';
+    return 'This week';
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.thisMonthPeriodDescription)
-    return 'Last 30 days';
+    return 'This month';
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitRunningLowTooltip) {
-    return `Overall ${params?.period} cost limit is running low.`;
+    return `Overall cost limit for ${params?.period} is running low.`;
   }
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitReachedTooltip) {
-    return `Overall ${params?.period} cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.`;
+    return `Overall cost limit for ${params?.period} is reached. Models can't be used until the period resets, regardless of remaining token limits.`;
   }
   return key;
 };
@@ -72,6 +73,37 @@ const withUsage = (
   deployments: Record<string, DeploymentLimitsResponseDto>,
   overrides: Partial<UserLimitStatsResponseDto> = {},
 ): UserLimitStatsResponseDto => ({ deployments, ...overrides });
+
+/*
+ * Reset values and top-level cost figures reproduced from the real
+ * GET /api/v1/user/usage capture in
+ * openspec/changes/migrate-usage-reset-times/fixtures/.
+ */
+const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
+const WEEK_RESETS_AT = '2026-09-21T00:00:00Z';
+const MONTH_RESETS_AT = '2026-10-01T00:00:00Z';
+const UNLIMITED_SENTINEL = 9223372036854776000;
+
+const CAPTURED_TOP_LEVEL = {
+  dayCostStats: { total: 110, used: 0.42641085, resetsAt: DAY_RESETS_AT },
+  weekCostStats: {
+    total: UNLIMITED_SENTINEL,
+    used: 1.7928459,
+    resetsAt: WEEK_RESETS_AT,
+  },
+  monthCostStats: { total: 500, used: 2.3991724, resetsAt: MONTH_RESETS_AT },
+};
+
+/* Echoes the input so each header's trio is traceable to its own stat. */
+const formatReset: FormatResetTime = (resetsAt) =>
+  resetsAt == null
+    ? undefined
+    : {
+        resetsAtMs: Date.parse(resetsAt),
+        isoValue: resetsAt,
+        label: `Resets ${resetsAt}`,
+        ariaLabel: `Usage resets ${resetsAt}`,
+      };
 
 const mapUsage = (
   usage: UserLimitStatsResponseDto | undefined,
@@ -142,7 +174,7 @@ describe('mapUserUsageToModelLimits', () => {
     );
 
     expect(rows).toHaveLength(1);
-    expect(rows[0].last30Days.tokens.usedLabel).toBe('25');
+    expect(rows[0].month.tokens.usedLabel).toBe('25');
   });
 
   it('keeps cost-only usage while leaving token Status unavailable', () => {
@@ -154,7 +186,7 @@ describe('mapUserUsageToModelLimits', () => {
       }),
     );
 
-    expect(row.last7Days.cost.usedLabel).toBe('$1.25 spent');
+    expect(row.week.cost.usedLabel).toBe('$1.25 spent');
     expect(row.status).toBe(ModelLimitStatus.Unavailable);
   });
 
@@ -259,25 +291,25 @@ describe('mapUserUsageToModelLimits', () => {
     it('maps day Cost and Tokens to Last 24 hours', () => {
       const [row] = mapUsage(usage);
 
-      expect(row.last24Hours.tokens.usedLabel).toBe('100');
-      expect(row.last24Hours.tokens.totalLabel).toBe('1K');
-      expect(row.last24Hours.cost.usedLabel).toBe('$1 spent');
+      expect(row.day.tokens.usedLabel).toBe('100');
+      expect(row.day.tokens.totalLabel).toBe('1K');
+      expect(row.day.cost.usedLabel).toBe('$1 spent');
     });
 
     it('maps week Cost and Tokens to Last 7 days', () => {
       const [row] = mapUsage(usage);
 
-      expect(row.last7Days.tokens.usedLabel).toBe('200');
-      expect(row.last7Days.tokens.totalLabel).toBe('2K');
-      expect(row.last7Days.cost.usedLabel).toBe('$2 spent');
+      expect(row.week.tokens.usedLabel).toBe('200');
+      expect(row.week.tokens.totalLabel).toBe('2K');
+      expect(row.week.cost.usedLabel).toBe('$2 spent');
     });
 
     it('maps month Cost and Tokens to Last 30 days', () => {
       const [row] = mapUsage(usage);
 
-      expect(row.last30Days.tokens.usedLabel).toBe('300');
-      expect(row.last30Days.tokens.totalLabel).toBe('3K');
-      expect(row.last30Days.cost.usedLabel).toBe('$3 spent');
+      expect(row.month.tokens.usedLabel).toBe('300');
+      expect(row.month.tokens.totalLabel).toBe('3K');
+      expect(row.month.cost.usedLabel).toBe('$3 spent');
     });
 
     it('does not substitute a missing period value', () => {
@@ -290,9 +322,9 @@ describe('mapUserUsageToModelLimits', () => {
         }),
       );
 
-      expect(row.last7Days.tokens.kind).toBe(ModelLimitMetricKind.Unavailable);
-      expect(row.last24Hours.tokens.usedLabel).toBe('10');
-      expect(row.last30Days.tokens.usedLabel).toBe('30');
+      expect(row.week.tokens.kind).toBe(ModelLimitMetricKind.Unavailable);
+      expect(row.day.tokens.usedLabel).toBe('10');
+      expect(row.month.tokens.usedLabel).toBe('30');
     });
   });
 
@@ -304,9 +336,9 @@ describe('mapUserUsageToModelLimits', () => {
         }),
       );
 
-      expect(row.last24Hours.cost.kind).toBe(ModelLimitMetricKind.Unlimited);
-      expect(row.last24Hours.cost.usedLabel).toBe('$0.24 spent');
-      expect(row.last24Hours.cost.ariaLabel).toBe('$0.24 spent');
+      expect(row.day.cost.kind).toBe(ModelLimitMetricKind.Unlimited);
+      expect(row.day.cost.usedLabel).toBe('$0.24 spent');
+      expect(row.day.cost.ariaLabel).toBe('$0.24 spent');
     });
 
     it('classifies missing cost as unavailable', () => {
@@ -314,7 +346,7 @@ describe('mapUserUsageToModelLimits', () => {
         withUsage({ 'gpt-4o': { dayTokenStats: { used: 1, total: 10 } } }),
       );
 
-      expect(row.last24Hours.cost.kind).toBe(ModelLimitMetricKind.Unavailable);
+      expect(row.day.cost.kind).toBe(ModelLimitMetricKind.Unavailable);
     });
 
     it('keeps finite token percentages uncapped', () => {
@@ -322,9 +354,9 @@ describe('mapUserUsageToModelLimits', () => {
         withUsage({ 'gpt-4o': { dayTokenStats: { used: 1500, total: 1000 } } }),
       );
 
-      expect(row.last24Hours.tokens.kind).toBe(ModelLimitMetricKind.Finite);
-      expect(row.last24Hours.tokens.usedPercent).toBe(150);
-      expect(row.last24Hours.tokens.status).toBe(ModelLimitStatus.LimitReached);
+      expect(row.day.tokens.kind).toBe(ModelLimitMetricKind.Finite);
+      expect(row.day.tokens.usedPercent).toBe(150);
+      expect(row.day.tokens.status).toBe(ModelLimitStatus.LimitReached);
     });
 
     it('classifies unlimited and unavailable token periods distinctly', () => {
@@ -337,10 +369,8 @@ describe('mapUserUsageToModelLimits', () => {
         }),
       );
 
-      expect(row.last24Hours.tokens.kind).toBe(
-        ModelLimitMetricKind.Unavailable,
-      );
-      expect(row.last7Days.tokens.kind).toBe(ModelLimitMetricKind.Unlimited);
+      expect(row.day.tokens.kind).toBe(ModelLimitMetricKind.Unavailable);
+      expect(row.week.tokens.kind).toBe(ModelLimitMetricKind.Unlimited);
     });
 
     it('shows that unlimited model tokens follow the matching finite overall Cost limit', () => {
@@ -351,10 +381,8 @@ describe('mapUserUsageToModelLimits', () => {
         ),
       );
 
-      expect(row.last7Days.tokens.supportingLabel).toBe('Follows cost limit');
-      expect(row.last7Days.tokens.ariaLabel).toBe(
-        '10 used. Follows cost limit.',
-      );
+      expect(row.week.tokens.supportingLabel).toBe('Follows cost limit');
+      expect(row.week.tokens.ariaLabel).toBe('10 used. Follows cost limit.');
     });
 
     it('uses compact visible token values and full accessible values', () => {
@@ -362,10 +390,10 @@ describe('mapUserUsageToModelLimits', () => {
         withUsage({ 'gpt-4o': { dayTokenStats: { used: 1000, total: 2000 } } }),
       );
 
-      expect(row.last24Hours.tokens.usedLabel).toBe('1K');
-      expect(row.last24Hours.tokens.totalLabel).toBe('2K');
-      expect(row.last24Hours.tokens.ariaLabel).toBe('1,000 of 2,000, 50% used');
-      expect(row.last24Hours.tokens.usedLabel).not.toContain('$');
+      expect(row.day.tokens.usedLabel).toBe('1K');
+      expect(row.day.tokens.totalLabel).toBe('2K');
+      expect(row.day.tokens.ariaLabel).toBe('1,000 of 2,000, 50% used');
+      expect(row.day.tokens.usedLabel).not.toContain('$');
     });
   });
 
@@ -470,19 +498,141 @@ describe('mapUserUsageToModelLimits', () => {
         t,
       );
 
-      expect(statuses.last24Hours).toEqual({
+      expect(statuses.day).toEqual({
         status: ModelLimitStatus.LimitReached,
         tooltipLabel:
-          "Overall last 24 hours cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.",
+          "Overall cost limit for today is reached. Models can't be used until the period resets, regardless of remaining token limits.",
       });
-      expect(statuses.last7Days).toEqual({
+      expect(statuses.week).toEqual({
         status: ModelLimitStatus.RunningLow,
-        tooltipLabel: 'Overall last 7 days cost limit is running low.',
+        tooltipLabel: 'Overall cost limit for this week is running low.',
       });
-      expect(statuses.last30Days).toEqual({
+      expect(statuses.month).toEqual({
         status: ModelLimitStatus.WithinLimits,
         tooltipLabel: undefined,
       });
+    });
+
+    it('keys the statuses day/week/month', () => {
+      const statuses = mapOverallCostLimitsToPeriodStatuses(
+        withUsage({}, CAPTURED_TOP_LEVEL),
+        'en',
+        t,
+        formatReset,
+      );
+
+      expect(Object.keys(statuses)).toEqual(['day', 'week', 'month']);
+    });
+
+    it('sources each header reset trio from its own top-level stat', () => {
+      const statuses = mapOverallCostLimitsToPeriodStatuses(
+        withUsage({}, CAPTURED_TOP_LEVEL),
+        'en',
+        t,
+        formatReset,
+      );
+
+      expect(statuses.day.resetIsoValue).toBe(DAY_RESETS_AT);
+      expect(statuses.day.resetLabel).toBe(`Resets ${DAY_RESETS_AT}`);
+      expect(statuses.day.resetAriaLabel).toBe(`Usage resets ${DAY_RESETS_AT}`);
+      expect(statuses.week.resetIsoValue).toBe(WEEK_RESETS_AT);
+      expect(statuses.month.resetIsoValue).toBe(MONTH_RESETS_AT);
+    });
+
+    it('ignores a differing per-deployment resetsAt for the header', () => {
+      const statuses = mapOverallCostLimitsToPeriodStatuses(
+        withUsage(
+          {
+            'gpt-4o': {
+              dayCostStats: {
+                used: 0.0048335,
+                total: UNLIMITED_SENTINEL,
+                resetsAt: '2027-01-01T00:00:00Z',
+              },
+            },
+          },
+          CAPTURED_TOP_LEVEL,
+        ),
+        'en',
+        t,
+        formatReset,
+      );
+
+      expect(statuses.day.resetIsoValue).toBe(DAY_RESETS_AT);
+      expect(statuses.day.resetIsoValue).not.toBe('2027-01-01T00:00:00Z');
+    });
+
+    it('omits the reset trio when no formatter is supplied', () => {
+      const statuses = mapOverallCostLimitsToPeriodStatuses(
+        withUsage({}, CAPTURED_TOP_LEVEL),
+        'en',
+        t,
+      );
+
+      expect(statuses.day).not.toHaveProperty('resetLabel');
+      expect(statuses.day).not.toHaveProperty('resetIsoValue');
+      expect(statuses.day).not.toHaveProperty('resetAriaLabel');
+    });
+  });
+
+  describe('per-deployment Cost sentinel detection', () => {
+    it('keeps a sentinel cost cell Unlimited with the spent label', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayCostStats: { used: 0.24, total: UNLIMITED_SENTINEL },
+          },
+        }),
+      );
+
+      expect(row.day.cost.kind).toBe(ModelLimitMetricKind.Unlimited);
+      expect(row.day.cost.usedLabel).toBe('$0.24 spent');
+      expect(row.day.cost.ariaLabel).toBe('$0.24 spent');
+      expect(row.day.cost).not.toHaveProperty('usedPercent');
+      expect(row.day.cost).not.toHaveProperty('totalLabel');
+    });
+
+    it('produces a Finite cell for a genuinely finite cost total', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': { dayCostStats: { used: 8, total: 10 } },
+        }),
+      );
+
+      expect(row.day.cost.kind).toBe(ModelLimitMetricKind.Finite);
+      expect(row.day.cost.usedPercent).toBe(80);
+      expect(row.day.cost.status).toBe(ModelLimitStatus.RunningLow);
+      expect(row.day.cost.usedLabel).toBe('$8 spent');
+      expect(row.day.cost.totalLabel).toBe('$10');
+      expect(row.day.cost.ariaLabel).toBe('$8 of $10, 80% used');
+    });
+
+    it('folds a finite cost status into the row status', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayTokenStats: { used: 10, total: 1000 },
+            dayCostStats: { used: 10, total: 10 },
+          },
+        }),
+      );
+
+      expect(row.day.tokens.status).toBe(ModelLimitStatus.WithinLimits);
+      expect(row.day.cost.status).toBe(ModelLimitStatus.LimitReached);
+      expect(row.status).toBe(ModelLimitStatus.LimitReached);
+    });
+
+    it('keeps sentinel cost cells from promoting an all-unavailable row', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayCostStats: { used: 0.24, total: UNLIMITED_SENTINEL },
+          },
+        }),
+      );
+
+      expect(row.day.tokens.kind).toBe(ModelLimitMetricKind.Unavailable);
+      expect(row.status).toBe(ModelLimitStatus.Unavailable);
     });
   });
 });

@@ -611,6 +611,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  CUSTOM_CLIENT_VARIABLES?: string;
+
+  @IsOptional()
+  @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
 
   @IsOptional()
@@ -628,6 +632,10 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   FOOTER_HTML_MESSAGE?: string;
+
+  @IsOptional()
+  @IsString()
+  WELCOME_SCREEN_DESCRIPTION?: string;
 
   /* Deliberately unconstrained: this is an opaque display string, and CI
    * stamps take many shapes (0.45.0, 0.45.0-rc.3, 2026.08.10+a1b2c3d).

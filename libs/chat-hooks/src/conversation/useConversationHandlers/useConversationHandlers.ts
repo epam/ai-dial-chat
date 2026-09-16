@@ -235,27 +235,24 @@ export const useConversationHandlers = ({
 
       const modelId = resolveModelId();
 
-      setConversation((prev) => {
-        if (!prev) return prev;
-        const regeneratedMessage = {
-          ...prev.messages[messageIndex],
-          content: '',
-          custom_content: undefined,
-          wasStoppedByUser: undefined,
-          stoppedWithoutContent: undefined,
-          streamErrorMessage: undefined,
-          deploymentId: modelId,
-        };
-        const next = {
-          ...prev,
-          messages: [
-            ...prev.messages.slice(0, messageIndex),
-            regeneratedMessage,
-          ],
-        };
-        conversationRef.current = next;
-        return next;
-      });
+      const regeneratedMessage = {
+        ...conversation.messages[messageIndex],
+        content: '',
+        custom_content: undefined,
+        wasStoppedByUser: undefined,
+        stoppedWithoutContent: undefined,
+        streamErrorMessage: undefined,
+        deploymentId: modelId,
+      };
+      const next = {
+        ...conversation,
+        messages: [
+          ...conversation.messages.slice(0, messageIndex),
+          regeneratedMessage,
+        ],
+      };
+      conversationRef.current = next;
+      setConversation(next);
 
       setEditingMessageIndexes(
         (indexes) =>
@@ -379,36 +376,26 @@ export const useConversationHandlers = ({
           },
         });
 
-      if (rating != null) {
-        const responseId = msg.responseId;
-        if (!responseId) {
-          revert();
-          return false;
-        }
-        try {
-          await rateApi.rateMessage({
-            rateMessageDto: {
-              conversationId: conversation.id,
-              responseId,
-              modelId: conversation.model.id,
-              rate: rating,
-              ...(comment ? { comment } : {}),
-            },
-          });
-          await persist();
-          return true;
-        } catch {
-          revert();
-          return false;
-        }
-      } else {
-        try {
-          await persist();
-          return true;
-        } catch {
-          revert();
-          return false;
-        }
+      const responseId = msg.responseId;
+      if (!responseId) {
+        revert();
+        return false;
+      }
+      try {
+        await rateApi.rateMessage({
+          rateMessageDto: {
+            conversationId: conversation.id,
+            responseId,
+            modelId: conversation.model.id,
+            rate: rating,
+            ...(comment ? { comment } : {}),
+          },
+        });
+        await persist();
+        return true;
+      } catch {
+        revert();
+        return false;
       }
     },
     [

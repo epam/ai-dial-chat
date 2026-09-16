@@ -12,16 +12,17 @@ npm run validate:docs
 ```
 
 It verifies README coverage and H1/package identity, lib `package.json`
-metadata, that a publishable lib's `./styles.css` export matches what the build
-emits, that no package is a dependency of one lib and a required peer of
-another, that no version spec is left without an upper bound, that no external package
-is declared at two different ranges, that every version a lib README cites
-matches its own manifest, that
-`docs/host-install-matrix.md` still matches the manifests it is generated from,
-that every relative markdown link resolves, and that every name a lib README
-imports from its own package is actually exported. `npm run lint:check` covers
-none of this; the PR workflow's `validate_agent_docs` job runs it, so a failure
-here blocks the merge.
+metadata, that a publishable lib's `./styles.css` export matches what the
+build emits, that no package is a dependency of one lib and a required peer
+of another, that no version spec is left without an upper bound, that no
+external package is declared at two different ranges, that no test tool is
+declared in a shipped dependency field, that every `peerDependenciesMeta` key
+names a declared peer, that every version a lib README cites matches its own
+manifest, that `docs/host-install-matrix.md` still matches the manifests it is
+generated from, that every relative markdown link resolves, and that every
+name a lib README imports from its own package is actually exported.
+`npm run lint:check` covers none of this; the PR workflow's
+`validate_agent_docs` job runs it, so a failure here blocks the merge.
 
 ## Update the doc in the same change
 

@@ -39,7 +39,6 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   onToggleFavorite,
   onBrowse,
   onViewDetails,
-  onItemTooltipOpen,
   searchQuery,
   labels = {},
   colors,
@@ -196,13 +195,9 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
         <InteractiveTooltip
           asChild
           contentClassName="max-w-[550px]"
-          onOpenChange={(isOpen) => {
-            if (isOpen) onItemTooltipOpen?.(item.id);
-          }}
           content={
             <SkillInfoTooltipContent
               description={item.description}
-              isDescriptionLoading={item.isDescriptionLoading}
               viewDetailsLabel={viewDetailsLabel}
               onViewDetails={() => onViewDetails(item)}
             />

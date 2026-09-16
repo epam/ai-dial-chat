@@ -15,7 +15,7 @@ import type { ParsedSkillResourceUrl } from '../skill/skill-types';
 import {
   buildSkillContentTree,
   buildSkillOverview,
-  readSkillFileBytes,
+  readSkillFilePreviewBytes,
   readSkillManifest,
   resolveSkillFileDownloadPath,
   resolveSkillManifestFileId,
@@ -44,37 +44,6 @@ export interface SkillDetailsApi {
     signal?: AbortSignal,
   ): Promise<SkillFileListResponseDto>;
 }
-
-/**
- * Fetches a skill's manifest description for its listing tooltip. Returns
- * `null` when the skill id is unparseable, the manifest is unreadable, or the
- * request fails — callers treat all three as "no description", silently.
- * Dropped once DIAL Core's skill listing carries `description` (planned
- * upstream change), which also removes the per-skill download it performs.
- */
-export const fetchSkillDescription = async (
-  api: Pick<SkillDetailsApi, 'downloadSkillFile'>,
-  skillId: string,
-): Promise<string | null> => {
-  const parsed = parseSkillResourceUrl(skillId);
-  if (parsed == null) return null;
-
-  try {
-    const response = await api.downloadSkillFile(
-      parsed.bucket,
-      parsed.path,
-      SKILL_MANIFEST_FILE,
-    );
-    if (!response.ok) return null;
-
-    const manifest = await readSkillManifest(response);
-    if (manifest == null) return null;
-
-    return parseSkillManifestDocument(manifest).description ?? null;
-  } catch {
-    return null;
-  }
-};
 
 /** Options accepted by `useSkillItemDetails`. */
 export interface UseSkillItemDetailsOptions {
@@ -234,8 +203,7 @@ export const useSkillItemDetails = ({
         );
       }
 
-      const bytes = await readSkillFileBytes(response);
-      if (bytes == null) throw new Error('File exceeds the preview size limit');
+      const bytes = await readSkillFilePreviewBytes(response);
 
       const responseMimeType =
         response.headers.get('content-type')?.split(';')[0].trim() || undefined;

@@ -111,6 +111,8 @@ export interface OverlayContextType {
   pendingModelId: string | null;
   /** Trusted per-provider authentication UI modes received from the host. */
   authProviderUiModes: Record<string, string> | undefined;
+  /** Trusted provider id the host asked to sign in with automatically. */
+  authAutoSignInProvider: string | undefined;
   /** Clears `pendingModelId` once a consumer has applied it. */
   clearPendingModelId: () => void;
   /** Emits `SELECTED_CONVERSATION_LOADED`, and `READY_TO_INTERACT` the first time it is called. */
@@ -278,6 +280,17 @@ const getAuthProviderUiModes = (
   return value as Record<string, string>;
 };
 
+const getAuthAutoSignInProvider = (
+  payload: Partial<SetOverlayOptionsPayload> | null | undefined,
+): string | undefined => {
+  const value = payload?.authAutoSignInProvider;
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
 const hasSelectConversationPayload = (
   payload: unknown,
 ): payload is SelectConversationPayload => hasStringPayload(payload, 'id');
@@ -380,6 +393,9 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
   const [authProviderUiModes, setAuthProviderUiModes] = useState<
     Record<string, string> | undefined
+  >();
+  const [authAutoSignInProvider, setAuthAutoSignInProvider] = useState<
+    string | undefined
   >();
 
   const postBootstrapEvent = useCallback((type: OverlayEventType) => {
@@ -860,6 +876,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
         applyOverlayOverride(enabledFeatures);
       }
       setAuthProviderUiModes(getAuthProviderUiModes(payload));
+      setAuthAutoSignInProvider(getAuthAutoSignInProvider(payload));
 
       const responsePayload: SetOverlayOptionsResponse = { applied: true };
       postToHost({
@@ -962,6 +979,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       registerConversationListBridge,
       pendingModelId,
       authProviderUiModes,
+      authAutoSignInProvider,
       clearPendingModelId,
       notifyConversationLoaded,
       notifyConversationsUpdated,
@@ -974,6 +992,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       registerConversationListBridge,
       pendingModelId,
       authProviderUiModes,
+      authAutoSignInProvider,
       clearPendingModelId,
       notifyConversationLoaded,
       notifyConversationsUpdated,

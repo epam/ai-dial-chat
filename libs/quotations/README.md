@@ -98,7 +98,12 @@ const card = useCitationCard();
 
 ### `useCitationCard`
 
-Manages open/close state and per-group active annotation index for citation popups within a single message, keyed by `AnnotationGroup.groupKey` (not `sourceUrl` — two groups can share a `sourceUrl`, e.g. two inline-tag citations of the same document, while having independent popup/switcher state).
+Manages open/close state and per-group active annotation index for citation popups within a single message. The hook carries two key spaces:
+
+- **Openness** (`openPopup(ownerKey)`, `closePopup(ownerKey)`, `isOpen(ownerKey)`) is keyed by **occurrence owner key** — a stable per-instance id `CitationDropdown` derives with React `useId()`, not `AnnotationGroup.groupKey` or `sourceUrl`. Two rendered occurrences resolving to the same group are therefore always independent popup owners: `openPopup` makes its key the sole owner (transferring the open card from any previous owner), and `closePopup` is **owner-scoped** — it clears state only when the given key currently owns the popup, so a dismissal from an inactive or previously active occurrence can never close the card the user just opened.
+- **The switcher index** (`setActiveIndex(groupKey, index)`, `getActiveIndex(groupKey)`) stays keyed by `AnnotationGroup.groupKey` (not `sourceUrl` — two groups can share a `sourceUrl`, e.g. two inline-tag citations of the same document), because the index indexes into `group.annotations`, which is group data.
+
+`CitationDropdown` is the only in-repo caller and applies this split automatically; a host rendering it directly needs no extra prop.
 
 ### `useAnnotations`
 
@@ -154,8 +159,8 @@ are omitted so quote-only streaming deltas preserve an earlier page.
 - `groupAnnotationsByCitId(annotations)` — groups `html_tag`-selector annotations by `target.selector.id`, one group per distinct tag id (never collapsing two ids that cite the same document)
 - `resolveMessageAnnotations(message)` — resolves annotations from either internal or raw wire format and repairs persisted `html_tag` sources whose historical PDF fallback conflicts with a recognized URL extension
 - `normalizeRawAnnotations(raw, attachments)` — **moved to `@epam/ai-dial-chat-shared`**, which owns the annotation model. It normalises raw API wire-format annotations (the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape, including DOCX/XLSX/PPTX MIME inference). `@epam/ai-dial-chat-hooks` needed it while streaming and nothing else from this package, so keeping it here made a conversation-only host install the whole citation stack ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719))
-- `annotationsToPdfHighlights(annotations)` — maps annotations with positive integer pages and finite coordinates to PDF viewer highlight entries; zero-area boxes are supported
-- `getAnnotationPdfPage(annotation)` — returns the first positive integer page from its `pdf_bbox` body selectors, skipping malformed entries and invalid pages; returns `undefined` when no valid page exists
+- `annotationsToPdfHighlights(annotations)` — maps annotations with positive integer pages and finite coordinates to PDF viewer highlight entries; recognizes `pdf_bbox` selectors (`{ page, x1, y1, x2, y2 }`) and `pdf_region` selectors in either coordinate form (`bbox: { lt: [left, top], wh: [width, height] }` or the legacy `bbox: { left, top, width, height }`), converting a region to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`; zero-area boxes are supported
+- `getAnnotationPdfPage(annotation)` — returns the first positive integer page from its `pdf_bbox`/`pdf_region` body selectors, skipping malformed entries and invalid pages; returns `undefined` when no valid page exists
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree

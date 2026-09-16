@@ -25,13 +25,19 @@
 //      installs one copy either way, so `@epam/ai-dial-ui-kit` sat at
 //      `^0.14.0-dev.15`, `-dev.30` and `-dev.37` at once, each lib pinning
 //      whatever the kit was when it was scaffolded.
-//   7. A README citing a range its manifest no longer declares — that number is
+//   7. Test tooling on a host's install list — `chat-shared` published
+//      `vitest: "~4.1.0"` as a required peer, so embedding a chat column
+//      asked the host to install a test runner.
+//   8. A `peerDependenciesMeta` key with no matching peer — npm ignores it, so
+//      `@mcp-ui/client` read as a deliberate optional peer of `chat-hooks`
+//      while being declared nowhere and imported regardless.
+//   9. A README citing a range its manifest no longer declares — that number is
 //      what a host copies, and `chat-hooks` advertised
 //      `@epam/pdf-highlighter-kit ^0.0.18` and `react-file-manager ^0.2.0-dev.10`
 //      after both manifests had moved on.
-//   8. Broken relative links — every link to a file that no longer exists
+//  10. Broken relative links — every link to a file that no longer exists
 //      (`docs/environment-variables-migration-guide.md` after its removal).
-//   9. Phantom exports — a name a lib README imports from its own package that
+//  11. Phantom exports — a name a lib README imports from its own package that
 //      the package does not export (`EntityBadge`, `StageType`, `QrPlaceholder`,
 //      `ConversationGroupProps`).
 //
@@ -382,7 +388,87 @@ const checkConsistentExternalRanges = () => {
   }
 };
 
-/* ── 7. A lib README cites the ranges its own manifest declares ── */
+/* ── 7. No test tooling ships in a published lib's manifest ── */
+
+/*
+ * `dependencies` and `peerDependencies` are the host's install list: a runner
+ * named there is either installed into every consuming application or warned
+ * about on every install. `chat-shared` published `vitest: "~4.1.0"` as a
+ * required peer, so an embedding host was told it had to install a test runner
+ * to render a chat column (issue #8719).
+ *
+ * Test tooling belongs in `devDependencies`, which never reaches a consumer's
+ * tree.
+ */
+const TEST_TOOLING = [
+  /^vitest$/,
+  /^@vitest\//,
+  /^jest$/,
+  /^ts-jest$/,
+  /^jest-environment-/,
+  /^@testing-library\//,
+  /^@playwright\/test$/,
+  /^playwright(-core)?$/,
+  /^(jsdom|happy-dom)$/,
+  /^(mocha|chai|sinon|enzyme|karma)$/,
+  /^@types\/(jest|mocha|chai|sinon)$/,
+];
+
+const checkNoTestToolingInManifest = () => {
+  for (const dir of projectDirs('libs')) {
+    const manifest = `${dir}/package.json`;
+    const pkg = readJson(manifest);
+    if (!pkg?.name || !isPublishable(pkg)) continue;
+
+    for (const field of ['dependencies', 'peerDependencies']) {
+      for (const name of Object.keys(pkg[field] ?? {})) {
+        if (!TEST_TOOLING.some((pattern) => pattern.test(name))) continue;
+
+        fail(
+          manifest,
+          `"${field}" declares the test tool "${name}", which puts a runner on ` +
+            'the install list of every consuming host — move it to "devDependencies" ' +
+            '(see .claude/rules/libs.md)',
+        );
+      }
+    }
+  }
+};
+
+/* ── 8. Every peerDependenciesMeta key names a declared peer ── */
+
+/*
+ * `peerDependenciesMeta` only annotates `peerDependencies`; a key with no
+ * matching peer is metadata npm silently ignores. It reads as a deliberate
+ * "optional" while declaring nothing, so the package the lib actually imports
+ * ends up on no install list at all — `chat-hooks` marked `@mcp-ui/client`
+ * optional in the meta block without ever listing it as a peer, and its code
+ * imported it regardless (issue #8719).
+ *
+ * Either declare the peer (marking it optional when an entry point can do
+ * without it) or move it to `dependencies` — never leave a meta-only orphan.
+ */
+const checkPeerMetaMatchesPeers = () => {
+  for (const dir of projectDirs('libs')) {
+    const manifest = `${dir}/package.json`;
+    const pkg = readJson(manifest);
+    if (!pkg?.name || !isPublishable(pkg)) continue;
+
+    const peers = pkg.peerDependencies ?? {};
+    for (const name of Object.keys(pkg.peerDependenciesMeta ?? {})) {
+      if (name in peers) continue;
+
+      fail(
+        manifest,
+        `"peerDependenciesMeta.${name}" annotates a peer that "peerDependencies" ` +
+          'does not declare, so npm ignores it and nothing installs the package. ' +
+          'Declare the peer or make it a dependency (see .claude/rules/libs.md)',
+      );
+    }
+  }
+};
+
+/* ── 9. A lib README cites the ranges its own manifest declares ── */
 
 /*
  * The range printed in a README is the number a host copies into its manifest,
@@ -425,7 +511,7 @@ const checkReadmeVersionCitations = (src, file, libDir) => {
   }
 };
 
-/* ── 8. Relative markdown links resolve ── */
+/* ── 10. Relative markdown links resolve ── */
 
 const isPlaceholderLink = (target) =>
   LINK_PLACEHOLDERS.some((pattern) => pattern.test(target));
@@ -448,7 +534,7 @@ const checkLinks = (src, file) => {
 
 const lineAt = (src, index) => src.slice(0, index).split(/\r?\n/).length;
 
-/* ── 9. A lib README only imports names its package actually exports ── */
+/* ── 11. A lib README only imports names its package actually exports ── */
 
 /*
  * Resolves the names reachable through a lib's public entry point: named
@@ -562,6 +648,8 @@ if (!explicitFiles) {
   checkDependencyRoleConsistency();
   checkNoUnboundedVersions();
   checkConsistentExternalRanges();
+  checkNoTestToolingInManifest();
+  checkPeerMetaMatchesPeers();
 }
 
 for (const file of files) {
@@ -598,5 +686,5 @@ console.log(
   `Documentation validation passed (${files.length} markdown files).`,
 );
 console.log(
-  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, one range per external package, README version citations, relative links, README imports vs public exports.',
+  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, one range per external package, no test tooling in a published manifest, peer metadata matching declared peers, README version citations, relative links, README imports vs public exports.',
 );

@@ -512,6 +512,132 @@ describe('DeploymentsDetailsService', () => {
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
     });
 
+    it('maps skills_supported to features.skillsSupported in details', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/my-app',
+          features: { skills_supported: true },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app',
+        'token',
+      );
+
+      expect(result.applicationDetails?.features?.skillsSupported).toBe(true);
+    });
+
+    it('omits features.skillsSupported in details when skills_supported is absent or non-boolean', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication
+        .mockResolvedValueOnce(
+          okResponse({
+            id: 'applications/my-app',
+            features: { tools: true },
+          }),
+        )
+        .mockResolvedValueOnce(
+          okResponse({
+            id: 'applications/my-app-2',
+            features: { skills_supported: 'yes' },
+          }),
+        );
+
+      /* Distinct deployment ids so the second call does not hit the
+       * details cache and actually exercises the non-boolean branch. */
+      const withoutFlag = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app',
+        'token',
+      );
+      const nonBooleanFlag = await service.getDeploymentDetails(
+        'user1',
+        'applications/my-app-2',
+        'token',
+      );
+
+      expect(
+        withoutFlag.applicationDetails?.features?.skillsSupported,
+      ).toBeUndefined();
+      expect(
+        nonBooleanFlag.applicationDetails?.features?.skillsSupported,
+      ).toBeUndefined();
+    });
+
+    it.each([undefined, {}, { stale: true }])(
+      'reads stored Quick App properties from the full application when deployment properties are %j',
+      async (deploymentProperties) => {
+        const { service, sdkClient } = makeService();
+        const id = 'applications/bucket/quick-app__1.0.0';
+        const stored = {
+          orchestrator: {
+            deployment: { deployment_id: 'model-a' },
+            system_prompt: { type: 'custom', content: 'Saved instructions' },
+          },
+          contexts: [{ type: 'file', url: 'files/bucket/data.txt' }],
+          skills: [{ type: 'dial-skill', url: 'skills/bucket/skill' }],
+          tool_sets: [
+            { type: 'dial-mcp', deployment_id: 'toolsets/bucket/toolset' },
+          ],
+          features: { timestamp: true },
+        };
+        sdkClient.getApplication.mockResolvedValue(
+          okResponse({
+            id,
+            application_properties: deploymentProperties,
+          }),
+        );
+        sdkClient.getCustomApplication.mockResolvedValue(
+          okResponse({
+            application_properties: stored,
+            features: { rate: true },
+          }),
+        );
+        const result = await service.getDeploymentDetails('user1', id, 'token');
+        expect(result.applicationDetails?.applicationProperties).toEqual(
+          stored,
+        );
+        expect(result.applicationDetails?.customAppFeatures).toEqual({
+          rate: true,
+        });
+        expect(sdkClient.getCustomApplication).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it('preserves explicitly empty stored properties instead of reviving deployment properties', async () => {
+      const { service, sdkClient } = makeService();
+      const id = 'applications/bucket/empty-app__1.0.0';
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({ id, application_properties: { stale: true } }),
+      );
+      sdkClient.getCustomApplication.mockResolvedValue(
+        okResponse({ application_properties: {} }),
+      );
+      const result = await service.getDeploymentDetails('user1', id, 'token');
+      expect(result.applicationDetails?.applicationProperties).toEqual({});
+    });
+
+    it.each([undefined, null, [], 'invalid'])(
+      'retains deployment properties when full configuration has no object properties (%j)',
+      async (properties) => {
+        const { service, sdkClient } = makeService();
+        const id = 'applications/bucket/app__1.0.0';
+        sdkClient.getApplication.mockResolvedValue(
+          okResponse({ id, application_properties: { legacy: true } }),
+        );
+        sdkClient.getCustomApplication.mockResolvedValue(
+          okResponse({ application_properties: properties }),
+        );
+        const result = await service.getDeploymentDetails('user1', id, 'token');
+        expect(result.applicationDetails?.applicationProperties).toEqual({
+          legacy: true,
+        });
+      },
+    );
+
     it("does not overwrite a Quick App's own application_properties.features with the top-level DIAL Core features JSON", async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getApplication.mockResolvedValue(

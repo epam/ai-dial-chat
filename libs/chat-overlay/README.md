@@ -74,6 +74,8 @@ const overlay = new ChatOverlay('#chat-root', {
       entra: OverlayAuthUiMode.External,
       keycloak: OverlayAuthUiMode.SameWindow,
     },
+    /* Optional: start this provider's login with no user interaction. */
+    autoSignInProvider: 'keycloak',
   },
 });
 
@@ -81,6 +83,19 @@ const overlay = new ChatOverlay('#chat-root', {
  * supports iframe login for its specific configuration before enabling it.
  */
 ```
+
+`autoSignInProvider` names the provider whose login the embedded app starts on
+its own while the session is unauthenticated — the successor to the legacy
+`signInOptions.autoSignIn` + `signInProvider` pair. Its presence enables the
+behavior; there is no separate boolean.
+
+The provider must also be mapped to `OverlayAuthUiMode.SameWindow`, because
+only that mode navigates the iframe itself: the `External` path calls
+`window.open`, which a browser blocks without a user gesture. The app also
+skips the automatic start when the backend does not register the id, and when
+it already started one for the same URL in the last 60 seconds — a guard
+against an identity provider that returns the user still unauthenticated. Every
+skip logs one console warning and leaves the normal login gate in place.
 
 Notes:
 
@@ -95,6 +110,38 @@ await overlay.setOverlayOptions({
   enabledFeatures: [OverlayFeature.Header, OverlayFeature.ConversationsSharing],
 });
 ```
+
+#### Message shape and agent stages
+
+`getMessages()` and `sendMessage()` return `OverlayChatMessage` — a narrow
+projection of the app's own message, not the chat's internal entity:
+
+```ts
+import {
+  type OverlayChatMessage,
+  OverlayStageStatus,
+} from '@epam/ai-dial-chat-overlay';
+
+const { messages } = await overlay.getMessages();
+
+const last: OverlayChatMessage | undefined = messages.at(-1);
+const ranCanvasTool = last?.stages?.some(
+  (stage) =>
+    stage.name === 'Render canvas' &&
+    stage.status === OverlayStageStatus.Completed,
+);
+```
+
+`stages` carries the agent execution stages (tool calls, retrieval steps,
+reasoning steps) of a message that has any, and is absent otherwise — a host
+reads it to react to what an agent actually did, for example refreshing its own
+view after a specific tool has run. Each stage carries `index`, `name`,
+`status` (`null` while still running, otherwise an `OverlayStageStatus`), and
+the optional `content` and `tag`. Stage attachments are not projected.
+
+Stages are read on demand, not pushed: subscribe to
+`OverlayEventType.GptEndGenerating` and call `getMessages()` from the handler
+to inspect the finished response.
 
 #### Conversation-list methods
 
@@ -176,7 +223,7 @@ manager.destroy();
 | `theme`                 | `string?`                                                  | Theme name applied to the embedded app.                                                                                                                                     |
 | `modelId`               | `string?`                                                  | Deployment/model id to select in the embedded app.                                                                                                                          |
 | `overlayConversationId` | `string?`                                                  | Conversation id the embedded app should load and display.                                                                                                                   |
-| `auth`                  | `{ providerUiModes?: Record<string, OverlayAuthUiMode> }?` | Per-provider login UI modes; unconfigured providers default to external login.                                                                                              |
+| `auth`                  | `{ providerUiModes?: Record<string, OverlayAuthUiMode>; autoSignInProvider?: string }?` | Per-provider login UI modes; unconfigured providers default to external login. `autoSignInProvider` starts that provider's login without user interaction, and requires the same provider to be mapped to `SameWindow`. |
 
 `ChatOverlayManagerOptions` extends `ChatOverlayOptions` with `overlayId` (required), `position` (`OverlayPosition`, default `RightBottom`), `width`/`height` (default `380`/`600`), `zIndex` (default `999999`), `allowFullscreen`, and `toggleButtonAriaLabel`/`closeButtonAriaLabel`/`fullscreenButtonAriaLabel`.
 

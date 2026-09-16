@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   GhostButton,
   InteractiveTooltip,
@@ -7,18 +8,25 @@ import { useState, type FC } from 'react';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
 
-/** A used skill rendered as a `/name` ghost button with a description tooltip and a "View details" action. */
+/**
+ * A used skill rendered as a `/name` ghost button with a description tooltip
+ * and a "View details" action, or the error state while unsupported.
+ */
 export const ChatSkill: FC<ChatSkillProps> = ({
   name,
   path,
   description,
-  isDescriptionLoading,
+  isUnsupported = false,
   labelClassName = 'dial-body-paragraph-text',
+  unsupportedLabelClassName = 'text-error',
+  unsupportedClassName = 'bg-error',
   onViewDetails,
-  onTooltipOpen,
   labels = {},
 }) => {
-  const { viewDetailsLabel = 'View details' } = labels;
+  const {
+    viewDetailsLabel = 'View details',
+    unsupportedTooltipLabel = 'Selected model does not support skills. Remove the skill or select different model to proceed.',
+  } = labels;
 
   /*
    * The tooltip is uncontrolled (the kit opens it on hover/focus) and exposes
@@ -40,16 +48,18 @@ export const ChatSkill: FC<ChatSkillProps> = ({
       asChild
       placement={TooltipPlacement.Top}
       contentClassName="max-w-[550px]"
-      onOpenChange={(isOpen) => {
-        if (isOpen) onTooltipOpen?.(path);
-      }}
       content={
-        <SkillInfoTooltipContent
-          description={description}
-          isDescriptionLoading={isDescriptionLoading}
-          viewDetailsLabel={viewDetailsLabel}
-          onViewDetails={handleViewDetails}
-        />
+        isUnsupported ? (
+          <SkillInfoTooltipContent
+            unsupportedMessage={unsupportedTooltipLabel}
+          />
+        ) : (
+          <SkillInfoTooltipContent
+            description={description}
+            viewDetailsLabel={viewDetailsLabel}
+            onViewDetails={handleViewDetails}
+          />
+        )
       }
     >
       {/*
@@ -65,11 +75,22 @@ export const ChatSkill: FC<ChatSkillProps> = ({
          * `dial-body-paragraph-text` label) plus 8px of horizontal padding —
          * no vertical padding, so the total height stays at the label line's
          * height and the chip's text aligns with the input's first text line.
+         * In the error state the color classes join the layout/typography
+         * classes so the whole chip reads as the error: error-tinted
+         * background, error-colored `/{name}` label.
          */}
         <GhostButton
           label={`/${name}`}
-          textClassName={labelClassName}
-          className="h-auto px-2 py-0"
+          textClassName={
+            isUnsupported
+              ? mergeClasses(labelClassName, unsupportedLabelClassName)
+              : labelClassName
+          }
+          className={
+            isUnsupported
+              ? mergeClasses('h-auto px-2 py-0', unsupportedClassName)
+              : 'h-auto px-2 py-0'
+          }
         />
       </span>
     </InteractiveTooltip>

@@ -50,6 +50,52 @@ vi.mock('../../../hooks/attachment/useCustomVisualizers', () => ({
   useCustomVisualizers: () => [],
 }));
 
+/*
+ * Induces a preview failure without touching production code: the app's real
+ * resolvers are used, with only the code resolver forced to report "nothing
+ * resolved". The wrapper object is cached so its identity stays stable across
+ * renders, matching the module-scope `resolvers` constant it stands in for.
+ */
+let codeContentFails = false;
+let wrappedResolvers: { source: unknown; value: unknown } | null = null;
+
+vi.mock(
+  '../../../hooks/attachment/useAttachmentCanvasResolvers',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../hooks/attachment/useAttachmentCanvasResolvers')
+      >();
+    return {
+      useAttachmentCanvasResolvers: () => {
+        const real = actual.useAttachmentCanvasResolvers();
+        if (
+          wrappedResolvers == null ||
+          wrappedResolvers.source !== real.resolvers
+        ) {
+          const source = real.resolvers;
+          wrappedResolvers = {
+            source,
+            value: {
+              ...source,
+              resolveCodeContent: (
+                ...args: Parameters<typeof source.resolveCodeContent>
+              ) =>
+                codeContentFails
+                  ? Promise.resolve(null)
+                  : source.resolveCodeContent(...args),
+            },
+          };
+        }
+        return {
+          ...real,
+          resolvers: wrappedResolvers.value as typeof real.resolvers,
+        };
+      },
+    };
+  },
+);
+
 vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
     Promise.resolve({
@@ -294,5 +340,85 @@ describe('SkillEditor page — supporting file preview', () => {
     );
     expect(downloadSkill).toHaveBeenCalledOnce();
     expect(updateSkill).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * A supporting-file preview that fails to resolve. `.py` is the one editor
+ * path that can reach `openAttachmentCanvas`'s `false` branch: its extension
+ * is text-previewable but its MIME is not routed, so the code resolver is the
+ * last one consulted and a `null` from it closes the canvas outright.
+ */
+describe('SkillEditor page — a failed supporting-file preview', () => {
+  const user = userEvent.setup({ delay: null });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
+    codeContentFails = true;
+    vi.mocked(useUser).mockReturnValue({
+      user: { bucket: 'my-bucket' },
+    } as unknown as ReturnType<typeof useUser>);
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
+    refetchSkills.mockResolvedValue(undefined);
+  });
+
+  it('shows an error with a retry control instead of an indefinite spinner', async () => {
+    renderPage();
+    await uploadFile(
+      user,
+      new File(['print("hi")'], 'script.py', { type: 'text/plain' }),
+    );
+
+    await selectFile(user, 'script.py');
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('attachmentCanvas.loadErrorLabel');
+    expect(screen.getByRole('button', { name: 'buttons.retry' })).toBeTruthy();
+  });
+
+  it('re-attempts the same file and renders it when retry succeeds', async () => {
+    renderPage();
+    await uploadFile(
+      user,
+      new File(['print("hi")'], 'script.py', { type: 'text/plain' }),
+    );
+    await selectFile(user, 'script.py');
+    await screen.findByRole('alert');
+
+    codeContentFails = false;
+    await user.click(screen.getByRole('button', { name: 'buttons.retry' }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('group', { name: 'script.py' }).textContent,
+      ).toContain('print'),
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('clears the failure when a different supporting file is selected', async () => {
+    renderPage();
+    await uploadFile(
+      user,
+      new File(['print("hi")'], 'script.py', { type: 'text/plain' }),
+    );
+    await uploadFile(
+      user,
+      new File(['# Hello there'], 'notes.md', { type: 'text/markdown' }),
+    );
+    await selectFile(user, 'script.py');
+    await screen.findByRole('alert');
+
+    await selectFile(user, 'notes.md');
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('group', { name: 'notes.md' }).textContent,
+      ).toContain('Hello there'),
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });

@@ -42,6 +42,7 @@ import { ConversationInput } from '@epam/ai-dial-conversation-input';
   message={draft}
   placeholder="Type a message"
   welcomeText={welcomeText}
+  descriptionText={descriptionText}
   onSend={handleSend}
   onUploadAttachment={uploadAttachment}
   onAttachmentsChange={setDraftAttachments}
@@ -106,6 +107,11 @@ adjacent buttons stay distinguishable to assistive technology. `uploadingLabel`
 (default `'Uploading'`) names the indeterminate progress bar a card shows while
 its upload is still in flight.
 
+`sendLabel` (default `'Send message'`) is the send button's accessible name.
+`sendTooltip` is a separate, optional string shown as a hover tooltip on the
+send button — useful for explaining why it's currently inactive (e.g. `'Type a
+message first'`). No tooltip renders when it is left unset.
+
 ### EditMessageInput
 
 Renders the input in edit mode for revising an existing message. `onCancel` and `onSave` are required; `onSave` receives the new text, the attachments the user kept, and any newly added ones.
@@ -128,7 +134,7 @@ import { EditMessageInput } from '@epam/ai-dial-conversation-input';
 
 One recorder collects all audio until Stop, including pauses. No upload or recognition starts during capture. All recorder blobs, including the final event, form one file with the actual browser MIME type. Sampled silent recordings and recordings shorter than 100 ms are skipped in dictation mode.
 
-Stop finalizes the file and releases the microphone before awaiting recognition. A nonempty result is appended once to the existing draft through `onChange`, with a separating space when needed. The waveform and voice controls replace the textarea while recording or processing, and send/model controls are hidden. The draft remains in memory; no keyboard text entry is available in either voice mode. A polite status region announces the recognized text; the editable draft receives focus once a dictation session ends, including a silent or too-short capture that produced no text. Discard aborts pending work and ignores late results. Cancellation and errors preserve the original draft. No audio is added to the message attachment tray.
+Stop finalizes the file and releases the microphone before awaiting recognition. A nonempty result is appended once to the existing draft through `onChange`, with a separating space when needed. The waveform and voice controls replace the textarea while recording or processing, and send/model controls are hidden. The draft remains in memory; no keyboard text entry is available in either voice mode. A polite status region announces the recognized text; the editable draft receives focus once a dictation session ends, including a silent or too-short capture that produced no text. Discard aborts pending work and ignores late results. Cancellation and errors preserve the original draft. On failure, the voice panel closes, the editable draft receives focus, and an inline alert displays the error. A new recording can start without first dismissing the failed session and clears the previous error. No audio is added to the message attachment tray.
 
 `Record voice` appears in the add menu immediately before Chat settings and always creates one audio attachment, even when a transcription callback is supplied. `recordVoiceLabel` overrides its label. The host enables this item with `isVoiceRecordingSupported` (defaults to `isAudioMessageSupported`); attachments must also be enabled and the assistant must not be streaming. Attachment validation, upload and count limits follow the existing attachment pipeline. `isAudioMessageSupported` controls the Dictate button independently. Without a transcription callback, the microphone retains its legacy audio attachment fallback.
 

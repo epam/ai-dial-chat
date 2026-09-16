@@ -105,17 +105,19 @@ The following legacy client-side authentication options are no longer
 supported:
 
 - `signInInSameWindow`
-- `signInOptions.autoSignIn`
-- `signInOptions.signInProvider`
 - `signInOptions.logInHint`
 - `signInOptions.signInInNewWindow`
 - `signInOptions.validationUserEmail`
 - `signInOptions.explicitToken`
 
-If the host application relied on automatic provider selection, a login hint,
-or an explicit token, that flow cannot currently be migrated one-to-one. The
-user now completes the new chat's standard login flow in an external tab or
-window.
+If the host application relied on a login hint, a user-validation email, or an
+explicit token, that flow cannot currently be migrated one-to-one. The user
+completes the new chat's standard login flow instead — externally by default,
+or inside the iframe for a provider mapped to same-window login.
+
+`signInOptions.autoSignIn` and `signInOptions.signInProvider` do have a
+successor: `auth.autoSignInProvider`, described in
+[Start login automatically](#start-login-automatically).
 
 `signInOptions.explicitToken` has no replacement because the new chat
 authenticates through a BFF that keeps the OIDC session in an encrypted
@@ -260,7 +262,7 @@ overlay.destroy();
 | `newConversationsFolderId`            | Removed because the new chat does not have conversation folders.    |
 | `enabledFeaturesData`                 | Not supported.                                                      |
 | `messageButtons`                      | Not supported.                                                      |
-| `signInOptions`, `signInInSameWindow` | Removed; see the authentication section.                            |
+| `signInOptions`, `signInInSameWindow` | Removed as an object; `autoSignIn`/`signInProvider` live on as `auth.autoSignInProvider`. See the authentication section. |
 
 `setOverlayOptions()` now accepts only fields that can be changed dynamically:
 `theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
@@ -468,11 +470,20 @@ interface OverlayChatMessage {
   id: string;
   role: string;
   content: string;
+  stages?: OverlayMessageStage[];
 }
 ```
 
+`stages` is the one part of `custom_content` the protocol projects: a message
+that carries agent execution stages exposes them as `OverlayMessageStage[]`,
+with `index`, `name`, `status` (`null` while running, otherwise
+`OverlayStageStatus.Completed`/`Failed`), and the optional `content` and
+`tag`. Stage attachments are not projected. There is no per-stage event yet:
+subscribe to `GPT_END_GENERATING` and call `getMessages()` to inspect what an
+agent did.
+
 Everything else the legacy `Message` carried is gone from the protocol:
-`custom_content` (attachments, stages, state, form schema and value),
+the rest of `custom_content` (attachments, state, form schema and value),
 `custom_fields.annotations`, `like`, `errorMessage`, `model`, `settings`,
 `responseId`, and `templateMapping`. A host that rendered attachments or read
 a like state from overlay messages has no replacement. `id` is new — the
@@ -651,7 +662,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 42 flags.
+The new chat supports 44 flags.
 
 Enabled by default:
 
@@ -720,6 +731,8 @@ hide-user-menu
 hide-user-settings
 hide-keyboard-shortcuts
 hide-navigation-menu
+show-all-starters
+hide-footer-version
 ```
 
 `hide-navigation-menu` removes the mobile navigation menu in full â the
@@ -752,6 +765,20 @@ disabling the shortcut. `hide-user-settings` also hides this entry, on both
 surfaces; use `hide-keyboard-shortcuts` when the language selector should
 stay.
 
+`show-all-starters` changes how a deployment's conversation starters are laid
+out on the empty-chat screen. By default the row keeps as many starters as the
+measured width allows — at most four — and collapses the rest into a "…"
+dropdown; in a narrow embed that usually means one visible starter and a menu.
+With the key on, every starter is rendered as its own row and the dropdown is
+gone. It does not change which starters the deployment exposes, only their
+layout.
+
+`hide-footer-version` removes the application version label from the footer
+(the `v0.45.0` text in its trailing corner). The label is diagnostic chrome
+rather than operator copy, so the operator's `footer` capability flag does not
+govern it — an embed that shows the host's own product version reaches for this
+key instead. Any footer HTML the operator configured keeps rendering.
+
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is
 constructed, so `voice-input` must be present in the constructor's
@@ -759,6 +786,86 @@ constructed, so `voice-input` must be present in the constructor's
 recording button but leaves the iframe without microphone permission, and
 recording fails. The flag itself does not provide an ASR model or replace the
 backend configuration required for voice input.
+
+### Start login automatically
+
+A host embedding the chat inside an already-authenticated portal can have the
+overlay start login on its own, with no **Log in** click, by naming the
+provider:
+
+```ts
+const overlay = new ChatOverlay('#chat-root', {
+  domain: 'https://chat.example.com',
+  auth: {
+    providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+    autoSignInProvider: 'keycloak',
+  },
+});
+```
+
+This replaces the legacy `signInOptions.autoSignIn` + `signInProvider` pair.
+There is no separate boolean: the field's presence enables the behaviour and
+its value names the provider, so the option cannot be half-specified the way
+the legacy pair could.
+
+Three conditions must hold, and the overlay falls back to the ordinary login
+gate — logging one console warning — whenever one does not:
+
+1. **The provider is mapped to `SameWindow`.** Only that mode navigates the
+   iframe itself. `External` opens a separate window through `window.open`,
+   which a browser blocks when no user gesture triggered it, so an automatic
+   `External` attempt would wait on a window that never opened. A provider
+   omitted from `providerUiModes` resolves to `External` and is therefore
+   skipped too.
+2. **The backend registers the provider.** The id must appear in
+   `GET /api/v1/auth/providers`, so a typo never navigates the iframe to an
+   unknown-provider endpoint.
+3. **No attempt for the same URL was started in the last 60 seconds.** The app
+   records each automatic attempt in `sessionStorage`; a provider that returns
+   the user still unauthenticated — expired IdP session, a consent screen, a
+   refused silent authentication — would otherwise loop the iframe. After the
+   suppression the user sees the normal gate and can log in manually.
+
+#### Migrating a legacy `signInOptions` block
+
+A host that passed the provider in from its own configuration — the common
+legacy shape — moves both fields into `auth`:
+
+```diff
+- signInOptions: {
+-   autoSignIn: true,
+-   signInProvider: hostSettings.dialSignInProvider,
+- },
++ auth: {
++   providerUiModes: {
++     [hostSettings.dialSignInProvider]: OverlayAuthUiMode.SameWindow,
++   },
++   autoSignInProvider: hostSettings.dialSignInProvider,
++ },
+```
+
+The provider is named twice on purpose: `autoSignInProvider` asks for the
+automatic start, and the `providerUiModes` entry is the host's assertion that
+this provider's login page renders inside an iframe. A legacy block without
+`signInInNewWindow` was already relying on that same in-iframe navigation, so
+the mapping records what the integration was doing all along.
+
+Two things to check while migrating:
+
+- **The id must be one the backend registers.** `GET /api/v1/auth/providers`
+  is the list; a value that is not in it is skipped with a warning instead of
+  navigating. Confirm the id your host configuration supplies still matches
+  after the move, because the legacy value came from the old chat's own
+  provider registry.
+- **An empty configuration value stays safe.** An absent, empty, or
+  whitespace-only id disables the automatic start and leaves the login gate,
+  which is how the legacy pair behaved when `signInProvider` was unset.
+
+Like the legacy option, this is worth enabling when the user already holds a
+session with the provider: the value is the silent round-trip through the IdP,
+not rendering a login form inside the frame. It does not make a provider
+frameable — a provider that refuses framing (Azure sends
+`X-Frame-Options: deny`) must stay on `External` and keep the button.
 
 ### Server baseline
 
@@ -769,8 +876,8 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 ```
 
 This is also a complete replacement set, not an addition to the defaults. If
-the variable is absent or empty, the built-in baseline of 23 default-on flags
-out of the 39 supported is used. Entries the server does not recognize — including
+the variable is absent or empty, the built-in baseline of 26 default-on flags
+out of the 44 supported is used. Entries the server does not recognize — including
 the renamed and retired legacy strings listed above — are logged and dropped;
 if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.

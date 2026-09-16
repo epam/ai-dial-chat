@@ -5,6 +5,7 @@ import {
   TEXT_EXTENSIONS,
 } from '../constants/file';
 import type {
+  AttachmentCanvasContent,
   ErrorCanvasContent,
   UnsupportedCanvasContent,
 } from '../models/attachment-canvas';
@@ -157,3 +158,36 @@ export const createForbiddenCanvasContent = (
   errorType: AttachmentErrorType.Forbidden,
   ...(url != null && { url }),
 });
+
+/**
+ * Returns `content.url` when it is an object URL created by
+ * `URL.createObjectURL` (i.e. it should be revoked once no longer displayed),
+ * or `undefined` otherwise (a remote/data URL, or a content type with no
+ * `url` at all).
+ */
+export const getRevocableObjectUrl = (
+  content: AttachmentCanvasContent,
+): string | undefined => {
+  if (
+    content.type !== AttachmentContentType.Image &&
+    content.type !== AttachmentContentType.Audio &&
+    content.type !== AttachmentContentType.Pdf &&
+    content.type !== AttachmentContentType.Ooxml
+  ) {
+    return undefined;
+  }
+  return content.url.startsWith('blob:') ? content.url : undefined;
+};
+
+/**
+ * Revokes `content`'s object URL, if it has one. Call this for content that
+ * was resolved but never displayed — the canvas revokes only what it actually
+ * held, so a payload discarded before it reached the canvas would otherwise
+ * leak its blob for the lifetime of the page.
+ */
+export const releaseCanvasContent = (
+  content: AttachmentCanvasContent,
+): void => {
+  const url = getRevocableObjectUrl(content);
+  if (url != null) URL.revokeObjectURL(url);
+};
