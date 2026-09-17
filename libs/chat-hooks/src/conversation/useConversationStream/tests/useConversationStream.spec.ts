@@ -37,6 +37,7 @@ const useHookHarness = ({
   transport,
   conversationId,
   initialConversation,
+  generationOverride,
   ...rest
 }: {
   transport: ConversationStreamTransport;
@@ -46,6 +47,8 @@ const useHookHarness = ({
   channel?: ConversationStreamChannel;
   initialConversation?: Conversation;
   generationConflictMessage?: string;
+  /** Overrides the `AbortController` `startGeneration` returns, so a test can abort it directly to simulate a host-driven stop. */
+  generationOverride?: () => AbortController;
 }) => {
   const [conversation, setConversation] = useState<Conversation | null>(
     initialConversation ?? makeConversation(),
@@ -54,7 +57,7 @@ const useHookHarness = ({
   conversationRef.current = conversation;
 
   const generation = {
-    startGeneration: vi.fn(() => new AbortController()),
+    startGeneration: vi.fn(generationOverride ?? (() => new AbortController())),
     completeGeneration: vi.fn(),
   };
 
@@ -745,6 +748,165 @@ describe('useConversationStream', () => {
     expect(transport.streamCompletion).toHaveBeenCalledOnce();
     const call = vi.mocked(transport.streamCompletion).mock.calls[0];
     expect(call.at(-1)).toBe('ch-123');
+  });
+
+  describe('cancellation re-check after the channel wait', () => {
+    it('does not send once the wait resolves after the generation was stopped, and settles demand/generation state instead of leaking it', async () => {
+      /*
+       * `handleStop` never aborts the `AbortController` it started with — it
+       * only tells the backend to stop and marks the generation id in
+       * `stoppedGenerationIdsRef` — so this is the realistic "Stop while the
+       * channel wait is outstanding" race, not a directly-aborted signal.
+       */
+      let resolveWait!: (id: string | null) => void;
+      const notifyGenerationSettled = vi.fn();
+      const channel = {
+        channelId: null as string | null,
+        ensureConnected: vi.fn(),
+        waitForChannel: vi.fn(
+          () =>
+            new Promise<string | null>((resolve) => {
+              resolveWait = resolve;
+            }),
+        ),
+        notifyGenerationSettled,
+      };
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          channel,
+        }),
+      );
+      /*
+       * The harness's `generation` object is recreated every render (a
+       * fresh `vi.fn()` each time), so capture the reference `startStream`'s
+       * own closure will actually call before triggering any re-render.
+       */
+      const completeGenerationSpy =
+        result.current.generation.completeGeneration;
+
+      act(() => {
+        result.current.stream.startStream(
+          'bucket/conv',
+          'hi',
+          0,
+          'gpt-4o',
+          undefined,
+          'gen-1',
+        );
+      });
+      expect(result.current.stream.isStreaming).toBe(true);
+
+      act(() => {
+        result.current.stream.handleStop();
+      });
+
+      await act(async () => {
+        resolveWait('ch-1');
+      });
+
+      expect(transport.streamCompletion).not.toHaveBeenCalled();
+      expect(result.current.conversation?.messages).toHaveLength(0);
+      // The demand acquired for this generation is released, not leaked.
+      expect(notifyGenerationSettled).toHaveBeenCalledOnce();
+      // The generation registry entry and per-path streaming state are
+      // closed out too, so the composer isn't left stuck "generating".
+      expect(completeGenerationSpy).toHaveBeenCalledWith('conv', 'gen-1');
+      expect(result.current.stream.isStreaming).toBe(false);
+    });
+
+    it('does not send a superseded completion once its wait resolves, only the newer generation reaches the transport, and the superseded one still releases its demand', async () => {
+      const waitResolvers: Array<(id: string | null) => void> = [];
+      const notifyGenerationSettled = vi.fn();
+      const channel = {
+        channelId: null as string | null,
+        ensureConnected: vi.fn(),
+        waitForChannel: vi.fn(
+          () =>
+            new Promise<string | null>((resolve) => {
+              waitResolvers.push(resolve);
+            }),
+        ),
+        notifyGenerationSettled,
+      };
+      const { result } = renderHook(() =>
+        useHookHarness({ transport, conversationId: 'bucket/conv', channel }),
+      );
+
+      act(() => {
+        result.current.stream.startStream(
+          'bucket/conv',
+          'hi',
+          0,
+          'gpt-4o',
+          undefined,
+          'gen-1',
+        );
+      });
+      act(() => {
+        result.current.stream.startStream(
+          'bucket/conv',
+          'hi again',
+          0,
+          'gpt-4o',
+          undefined,
+          'gen-2',
+        );
+      });
+
+      expect(waitResolvers).toHaveLength(2);
+      await act(async () => {
+        waitResolvers[0]('ch-old');
+      });
+      expect(transport.streamCompletion).not.toHaveBeenCalled();
+      // gen-1's own demand is released even though it was never sent.
+      expect(notifyGenerationSettled).toHaveBeenCalledOnce();
+
+      await act(async () => {
+        waitResolvers[1]('ch-new');
+      });
+      expect(transport.streamCompletion).toHaveBeenCalledOnce();
+      const call = vi.mocked(transport.streamCompletion).mock.calls[0];
+      expect(call[5]).toBe('gen-2');
+      expect(call.at(-1)).toBe('ch-new');
+    });
+
+    it('still passes 20000ms as the CHANNEL_WAIT_TIMEOUT_MS to waitForChannel', async () => {
+      const channel = {
+        channelId: null as string | null,
+        ensureConnected: vi.fn(),
+        waitForChannel: vi.fn().mockResolvedValue(null),
+      };
+      const { result } = renderHook(() =>
+        useHookHarness({ transport, conversationId: 'bucket/conv', channel }),
+      );
+
+      await act(async () => {
+        result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
+      });
+
+      expect(channel.waitForChannel).toHaveBeenCalledWith(20000);
+    });
+
+    it('sends without a channel id when the wait resolves null', async () => {
+      const channel = {
+        channelId: null as string | null,
+        ensureConnected: vi.fn(),
+        waitForChannel: vi.fn().mockResolvedValue(null),
+      };
+      const { result } = renderHook(() =>
+        useHookHarness({ transport, conversationId: 'bucket/conv', channel }),
+      );
+
+      await act(async () => {
+        result.current.stream.startStream('bucket/conv', 'hi', 0, 'gpt-4o');
+      });
+
+      expect(transport.streamCompletion).toHaveBeenCalledOnce();
+      const call = vi.mocked(transport.streamCompletion).mock.calls[0];
+      expect(call.at(-1)).toBeUndefined();
+    });
   });
 
   it('works without an overlay notifier — no error thrown on start/stop', () => {

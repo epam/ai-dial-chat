@@ -442,6 +442,52 @@ export const useConversationStream = ({
             channel?.channelId ??
             (await channel?.waitForChannel(CHANNEL_WAIT_TIMEOUT_MS)) ??
             undefined;
+
+          /*
+           * Under demand-driven subscribe this wait now routinely suspends on
+           * a cold subscribe round trip (rather than resolving immediately, as
+           * it usually did while the channel was already up). Stop or a
+           * re-submit can therefore land while this await is outstanding.
+           * `handleStop` never calls `transport.streamCompletion`, so
+           * `stoppedGenerationIdsRef` — not `controller.signal.aborted`, which
+           * a plain Stop never sets — is what a user-initiated stop leaves
+           * behind; a re-submit is caught by `isSuperseded()` (and, since it
+           * replaces an Active entry on the same path, `startGeneration`
+           * itself aborts this generation's controller too).
+           */
+          const isStopped = stoppedGenerationIdsRef.current.has(genId);
+          if (controller.signal.aborted || isSuperseded() || isStopped) {
+            /*
+             * Nothing was ever sent, so there is no stream for onComplete/
+             * onError to settle through — perform the same settlement
+             * bookkeeping they would have (minus the reload, since no
+             * completion was made): release this generation's demand, close
+             * out the tracked generation entry, and clear per-path streaming
+             * state, so neither the client channel nor the "is generating"
+             * state is left stuck.
+             */
+            if (
+              bufferedGenerationsRef.current.get(conversationPath)
+                ?.generationId === genId
+            ) {
+              bufferedGenerationsRef.current.delete(conversationPath);
+            }
+            if (!isSuperseded()) removeStreamingPath(conversationPath);
+            if (activeGenerationIdRef.current === genId) {
+              activeGenerationIdRef.current = null;
+              activeGenerationPathRef.current = null;
+              setStoppablePath(null);
+            }
+            completeGeneration(conversationPath, genId);
+            channel?.notifyGenerationSettled?.();
+            if (isStopped) {
+              stoppedGenerationIdsRef.current.delete(genId);
+            } else if (!isSuperseded()) {
+              overlay?.notifyGenerationEnd?.();
+            }
+            return;
+          }
+
           transport.streamCompletion(
             conversationPath,
             userContent,
