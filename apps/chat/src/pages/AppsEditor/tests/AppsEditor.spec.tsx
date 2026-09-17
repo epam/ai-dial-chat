@@ -212,6 +212,45 @@ describe('AppsEditor', () => {
     });
   });
 
+  it('waits for the deployments refetch before entering preview when settings changed', async () => {
+    let resolveRefetch: () => void = () => undefined;
+    const refetchPromise = new Promise<void>((resolve) => {
+      resolveRefetch = resolve;
+    });
+    refetchDeployments.mockReturnValueOnce(refetchPromise);
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    act(() => {
+      latestSettingsStepProps.onSaveSuccess?.(true);
+    });
+
+    expect(
+      await screen.findByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', {
+        name: AppsEditorI18nKeys.ExitPreviewButton,
+      }),
+    ).toBeNull();
+
+    await act(async () => {
+      resolveRefetch();
+      await refetchPromise;
+    });
+
+    expect(
+      await screen.findByRole('button', {
+        name: AppsEditorI18nKeys.ExitPreviewButton,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
+    ).toBeNull();
+  });
+
   it('does not block or error preview entry when the deployments refetch rejects', async () => {
     refetchDeployments.mockImplementationOnce(() =>
       Promise.reject(new Error('boom')),
@@ -228,6 +267,29 @@ describe('AppsEditor', () => {
 
     expect(
       screen.getByRole('button', {
+        name: AppsEditorI18nKeys.ExitPreviewButton,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
+    ).toBeNull();
+  });
+
+  it('still enters preview once the awaited refetch settles, even when it rejects', async () => {
+    refetchDeployments.mockImplementationOnce(() =>
+      Promise.reject(new Error('boom')),
+    );
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    act(() => {
+      latestSettingsStepProps.onSaveSuccess?.(true);
+    });
+
+    expect(
+      await screen.findByRole('button', {
         name: AppsEditorI18nKeys.ExitPreviewButton,
       }),
     ).toBeTruthy();
