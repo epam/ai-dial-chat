@@ -478,6 +478,21 @@ DOCX/PPTX locations is already an exclusive upper bound — the caller
 producing it (`libs/chat-hooks`'s `annotationToOoxmlCanvasContent`) must not
 add 1 to the wire's `end`.
 
+Temporary table-row support also exposes `DocxTableRow`
+(`OoxmlDocxTableRowLocation`: `cells: string[]`, `occurrence: number`) and
+`PptxTableRow` (`OoxmlPptxTableRowLocation`: the same fields plus `slide: number`).
+Cells contain plain text in column order; `occurrence` counts matching complete
+rows from 1 in the DOCX body or within the specified 1-based PPTX slide. Matching
+is case-sensitive, normalizes whitespace and restores spaces at rendered line
+breaks. It never joins different rows or tables. A row citation highlights the
+text of every matched cell, not an inferred individual cell. DOCX waits for layout
+completion, scrolls its preview to the matched text and caches scale-independent
+geometry; PPTX navigates to the specified slide even if the row cannot be matched.
+Unmatched rows draw nothing. These descriptors support the temporary workaround
+for [#8863](https://github.com/epam/ai-dial-chat/issues/8863); remove the workaround
+after precise backend ranges replace the anchors and persisted anchors no longer
+need it. Markdown parsing stays in the annotation adapter, outside this renderer.
+
 Highlight colours go through the same `AttachmentCanvasColors` mechanism as
 every other themed surface: `ooxmlHighlightBorder` (defaults to
 `--stroke-accent`) and `ooxmlHighlightBackground` (defaults to `transparent`,

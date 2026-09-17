@@ -88,7 +88,7 @@ describe('ApplicationsService', () => {
     it('returns list from upstream on cache miss', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(okResponse({ data: [mockApp] }));
 
@@ -99,7 +99,7 @@ describe('ApplicationsService', () => {
     it('returns empty list when upstream data is missing', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(okResponse({}));
 
@@ -121,7 +121,10 @@ describe('ApplicationsService', () => {
         deploymentsDetailsService,
       );
       const spy = vi
-        .spyOn(service['dialClient'].client, 'getApplications')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getApplications',
+        )
         .mockResolvedValue(okResponse({ data: [mockApp] }));
 
       const result = await service.listApplications('user1', 'token-abc');
@@ -147,7 +150,7 @@ describe('ApplicationsService', () => {
         deploymentsDetailsService,
       );
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(okResponse({ data: [mockApp] }));
 
@@ -161,7 +164,10 @@ describe('ApplicationsService', () => {
     it('forwards Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['dialClient'].client, 'getApplications')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getApplications',
+        )
         .mockResolvedValue(okResponse({ data: [mockApp] }));
 
       await service.listApplications('user1', 'my-token');
@@ -177,7 +183,7 @@ describe('ApplicationsService', () => {
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(errResponse(401));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -188,7 +194,7 @@ describe('ApplicationsService', () => {
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(errResponse(403));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -199,7 +205,7 @@ describe('ApplicationsService', () => {
     it('throws HttpException(429) on upstream 429', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(errResponse(429));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -210,7 +216,7 @@ describe('ApplicationsService', () => {
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(errResponse(500));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -221,7 +227,7 @@ describe('ApplicationsService', () => {
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -242,10 +248,16 @@ describe('ApplicationsService', () => {
       saveResponse = okResponse({}),
     ) => {
       const getUserBucketSpy = vi
-        .spyOn(service['dialClient'].client, 'getUserBucket')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getUserBucket',
+        )
         .mockResolvedValue(bucketResponse);
       const saveCustomApplicationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveCustomApplication',
+        )
         .mockResolvedValue(saveResponse);
 
       return { getUserBucketSpy, saveCustomApplicationSpy };
@@ -435,9 +447,10 @@ describe('ApplicationsService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockRejectedValue(
-        new TypeError('fetch failed'),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         ServiceUnavailableException,
       );
@@ -512,10 +525,16 @@ describe('ApplicationsService', () => {
       saveResponse = okResponse({}),
     ) => {
       const getCustomApplicationSpy = vi
-        .spyOn(service['dialClient'].client, 'getCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getCustomApplication',
+        )
         .mockResolvedValue(getResponse);
       const saveCustomApplicationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveCustomApplication',
+        )
         .mockResolvedValue(saveResponse);
 
       return { getCustomApplicationSpy, saveCustomApplicationSpy };
@@ -760,7 +779,7 @@ describe('ApplicationsService', () => {
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getCustomApplication',
       ).mockRejectedValue(new TypeError('fetch failed'));
 
@@ -822,7 +841,10 @@ describe('ApplicationsService', () => {
     it('DELETEs the application id path and invalidates cache', async () => {
       const { service, cacheManager } = makeService();
       const deleteSpy = vi
-        .spyOn(service['dialClient'].client, 'deleteCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'deleteCustomApplication',
+        )
         .mockResolvedValue(okResponse({}));
 
       await service.deleteApplication('user1', 'token', id);
@@ -839,7 +861,7 @@ describe('ApplicationsService', () => {
     it('invalidates the deployments list cache on successful delete', async () => {
       const { service, deploymentsService } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockResolvedValue(okResponse({}));
 
@@ -852,7 +874,7 @@ describe('ApplicationsService', () => {
     it('does not invalidate the deployments list cache when delete returns error', async () => {
       const { service, deploymentsService } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockResolvedValue(errResponse(409));
 
@@ -864,11 +886,15 @@ describe('ApplicationsService', () => {
 
     it('resolves bucket via getUserBucket when applicationName has no bucket prefix', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        okResponse({ bucket: 'my-bucket' }),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(okResponse({ bucket: 'my-bucket' }));
       const deleteSpy = vi
-        .spyOn(service['dialClient'].client, 'deleteCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'deleteCustomApplication',
+        )
         .mockResolvedValue(okResponse({}));
 
       await service.deleteApplication('user1', 'token', 'my-app__1.0');
@@ -882,7 +908,7 @@ describe('ApplicationsService', () => {
     it('throws ForbiddenException when delete returns 403', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockResolvedValue(errResponse(403));
       await expect(service.deleteApplication('u', 't', id)).rejects.toThrow(
@@ -893,7 +919,7 @@ describe('ApplicationsService', () => {
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.deleteApplication('u', 't', id)).rejects.toThrow(
@@ -904,7 +930,7 @@ describe('ApplicationsService', () => {
     it('does not invalidate cache when delete returns error', async () => {
       const { service, cacheManager } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockResolvedValue(errResponse(409));
       await expect(

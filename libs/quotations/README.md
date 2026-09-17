@@ -185,8 +185,19 @@ const locations: OfficeHighlightLocation[] =
   annotationToOfficeHighlightLocations(annotation);
 ```
 
-`OfficeHighlightLocation` (`DocxOfficeHighlightLocation | PptxOfficeHighlightLocation | ExcelOfficeHighlightLocation`) is discriminated by the wire's own `type` string, not by `@epam/ai-dial-attachment-canvas`'s `OoxmlHighlightKind` — this lib cannot depend on `attachment-canvas` (a real circular dependency: `attachment-canvas` already depends on this lib for the PDF highlight path). `libs/chat-hooks`, which depends on both, maps `OfficeHighlightLocation[]` into `OoxmlHighlight[]`.
+`OfficeHighlightLocation` includes `DocxOfficeHighlightLocation`, `PptxOfficeHighlightLocation`, `ExcelOfficeHighlightLocation`, `DocxTableRowOfficeHighlightLocation`, and `PptxTableRowOfficeHighlightLocation`. It is discriminated by the wire's own `type` string, not by `@epam/ai-dial-attachment-canvas`'s `OoxmlHighlightKind` — this lib cannot depend on `attachment-canvas` (a real circular dependency: `attachment-canvas` already depends on this lib for the PDF highlight path). `libs/chat-hooks`, which depends on both, maps `OfficeHighlightLocation[]` into `OoxmlHighlight[]`.
 
 For `DocxOfficeHighlightLocation`/`PptxOfficeHighlightLocation`, `endExclusive` is the wire's `end` copied through **unchanged** — confirmed already exclusive against captured DIAL Core responses, not `end + 1`. `ExcelOfficeHighlightLocation.end` stays the inclusive last-cell address, a distinct concept unaffected by that conversion point.
+
+Temporary compatibility for [#8863](https://github.com/epam/ai-dial-chat/issues/8863)
+accepts `docx_text_anchor` and `pptx_text_anchor` only when `text` is one Markdown
+table row bounded by pipes, with at least two cells and a positive integer
+`occurrence`. It decodes backslash-escaped punctuation into plain `cells: string[]`;
+PPTX also requires a positive integer `slide`. Plain-text anchors, separator rows,
+multiline Markdown, and invalid fields are skipped. The compatibility policy counts
+`occurrence` from 1 in the DOCX body or within the specified PPTX slide; this is a
+frontend policy, not a verified general backend anchor contract. TODO: remove the
+adapter after the backend emits precise table-cell ranges and persisted anchors
+no longer need it.
 
 `gatherSameSourceAnnotations(clicked, annotations)` returns every annotation in `annotations` whose `body.source.attachment.url` equals `clicked`'s, in original order, gathering across the whole list (not one `cit`-id group, unlike `groupAnnotationsByCitId`) — keyed on URL only, since two different files can share a display title.

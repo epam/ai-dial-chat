@@ -249,7 +249,7 @@ describe('ConversationService facade', () => {
     const { service, streamingService } = makeService();
     const onReadyToStream = vi.fn();
 
-    const chunks: Uint8Array[] = [];
+    const chunks: (string | Uint8Array)[] = [];
     for await (const chunk of service.streamCompletion(
       'path',
       'token',
@@ -289,12 +289,19 @@ describe('ConversationService facade', () => {
   it('delegates watchConversation to ConversationStreamingService', async () => {
     const { service, streamingService } = makeService();
 
-    const result = await service.watchConversation('path', 'token', 'bucket');
+    const signal = new AbortController().signal;
+    const result = await service.watchConversation(
+      'path',
+      'token',
+      'bucket',
+      signal,
+    );
 
     expect(streamingService.watchConversation).toHaveBeenCalledWith(
       'path',
       'token',
       'bucket',
+      signal,
     );
     expect(result).toBe('streaming-watch');
   });

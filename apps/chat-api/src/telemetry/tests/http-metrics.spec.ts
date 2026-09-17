@@ -1,5 +1,9 @@
 import { metrics } from '@opentelemetry/api';
-import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
+import {
+  DataPointType,
+  MeterProvider,
+  MetricReader,
+} from '@opentelemetry/sdk-metrics';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type * as HttpMetricsModule from '../http-metrics';
 
@@ -53,6 +57,7 @@ describe('http-metrics', () => {
         .filter(
           (metric) => metric.descriptor.name === 'http.server.request.duration',
         )
+        .filter((metric) => metric.dataPointType === DataPointType.HISTOGRAM)
         .flatMap((metric) => metric.dataPoints),
     );
   };

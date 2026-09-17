@@ -29,9 +29,14 @@ const createTestApp = async (
   class CspTestModule {}
 
   const app = await NestFactory.create(CspTestModule, { logger: false });
+  /* The app declarations use Helmet's CJS types; Vitest resolves its ESM types. */
   app.use(
     helmet(
-      createHelmetOptions(allowedIframeOrigins, secureTransport, cspOptions),
+      createHelmetOptions(
+        allowedIframeOrigins,
+        secureTransport,
+        cspOptions,
+      ) as Parameters<typeof helmet>[0],
     ),
   );
   await app.init();

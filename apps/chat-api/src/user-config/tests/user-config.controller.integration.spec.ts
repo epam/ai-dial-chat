@@ -27,17 +27,21 @@ const makeSingleDownloadSpy = (
   service: UserConfigService,
   options: { ok: boolean; body?: string },
 ) =>
-  vi.spyOn(service['dialClient'].client, 'downloadFile').mockResolvedValue({
-    response: {
-      ok: options.ok,
-      text: async () => options.body ?? '',
-    },
-  } as never);
+  vi
+    .spyOn((service['dialClient'] as DialClientService).client, 'downloadFile')
+    .mockResolvedValue({
+      response: {
+        ok: options.ok,
+        text: async () => options.body ?? '',
+      },
+    } as never);
 
 const makeUploadSpy = (service: UserConfigService) =>
-  vi.spyOn(service['dialClient'].client, 'uploadFile').mockResolvedValue({
-    response: { status: 200, text: async () => '' },
-  } as never);
+  vi
+    .spyOn((service['dialClient'] as DialClientService).client, 'uploadFile')
+    .mockResolvedValue({
+      response: { status: 200, text: async () => '' },
+    } as never);
 
 const getUploadedConfigAt = async (
   uploadSpy: ReturnType<typeof vi.spyOn>,
@@ -52,6 +56,8 @@ const getUploadedConfigAt = async (
 
 const v3Config = (overrides?: Partial<UserConfig>): UserConfig => ({
   version: 3,
+  prompts: { installed: [] },
+  skills: { installed: [] },
   conversations: { pinnedIds: [] },
   toolsets: { installed: [] },
   deployments: { installed: [], selectedId: null },

@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
 import type { DialClientService } from '../../../dial/dial-client.service';
+import { DeploymentItemType } from '../../dto/deployment-item.dto';
 import type { DeploymentItemDto } from '../../dto/deployment-item.dto';
 import { DeploymentInterfaceType } from '../../dto/deployments-query.dto';
 import { DeploymentsListingService } from '../deployments-listing.service';
@@ -158,7 +159,7 @@ describe('DeploymentsListingService', () => {
 
     it('returns cached value without calling SDK on cache hit', async () => {
       const cached: DeploymentItemDto[] = [
-        { id: 'cached', displayName: 'Cached', type: 'model' },
+        { id: 'cached', displayName: 'Cached', type: DeploymentItemType.Model },
       ];
       const { service, sdkClient } = makeService({ cached });
       const result = await service.listDeployments(
@@ -172,7 +173,7 @@ describe('DeploymentsListingService', () => {
 
     it('bypasses cached deployments when refresh is true', async () => {
       const cached: DeploymentItemDto[] = [
-        { id: 'cached', displayName: 'Cached', type: 'model' },
+        { id: 'cached', displayName: 'Cached', type: DeploymentItemType.Model },
       ];
       const { service, sdkClient } = makeService({ cached });
       sdkClient.listDeployments.mockResolvedValue({
@@ -198,16 +199,16 @@ describe('DeploymentsListingService', () => {
         {
           id: 'chat-model',
           displayName: 'Chat',
-          type: 'model',
+          type: DeploymentItemType.Model,
           interfaces: ['chat'],
         },
         {
           id: 'embed-model',
           displayName: 'Embed',
-          type: 'model',
+          type: DeploymentItemType.Model,
           interfaces: ['embedding'],
         },
-        { id: 'no-iface', displayName: 'None', type: 'model' },
+        { id: 'no-iface', displayName: 'None', type: DeploymentItemType.Model },
       ];
       const { service } = makeService({ cached });
       const result = await service.listDeployments(
@@ -479,7 +480,7 @@ describe('DeploymentsListingService', () => {
 
     it('overlays isInstalled after cache hit', async () => {
       const cached: DeploymentItemDto[] = [
-        { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+        { id: 'gpt-4o', displayName: 'GPT-4o', type: DeploymentItemType.Model },
       ];
       const { service } = makeService({
         cached,
@@ -919,7 +920,7 @@ describe('DeploymentsListingService', () => {
         {
           id: 'applications/BUCKET_HASH/my-app',
           displayName: 'My App',
-          type: 'application',
+          type: DeploymentItemType.Application,
           isMy: false,
         },
       ];

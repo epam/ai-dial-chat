@@ -14,7 +14,7 @@ const errResponse = (status: number) =>
 
 const metaUrl = (path: string, bucket = BUCKET) => `prompts/${bucket}/${path}`;
 const metaItem = (path: string, bucket = BUCKET) => ({
-  nodeType: 'ITEM',
+  nodeType: 'ITEM' as const,
   url: metaUrl(path, bucket),
   createdAt: 1000,
   updatedAt: 2000,

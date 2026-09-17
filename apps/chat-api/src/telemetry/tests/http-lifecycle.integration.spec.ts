@@ -18,14 +18,19 @@ import {
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
 import { metrics } from '@opentelemetry/api';
-import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
+import {
+  MeterProvider,
+  MetricReader,
+  type MetricData,
+} from '@opentelemetry/sdk-metrics';
 import { IsString } from 'class-validator';
 import type { Response as ExpressResponse } from 'express';
 import helmet from 'helmet';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 class TestMetricReader extends MetricReader {
   protected async onForceFlush(): Promise<void> {
@@ -61,7 +66,7 @@ const collectDataPoints = async (name: string) => {
   return resourceMetrics.scopeMetrics
     .flatMap((scope) => scope.metrics)
     .filter((metric) => metric.descriptor.name === name)
-    .flatMap((metric) => metric.dataPoints);
+    .flatMap<MetricData['dataPoints'][number]>((metric) => metric.dataPoints);
 };
 
 /* Always rejects — stands in for auth/CSRF/feature-flag/rate-limit guards (Requirement 1's
@@ -151,7 +156,7 @@ const buildApp = async (options?: {
     providers: [RejectingGuard],
   }).compile();
 
-  const app = module.createNestApplication();
+  const app = module.createNestApplication<NestExpressApplication>();
 
   /* Attached first, before any app.use(...) call — mirroring main.ts's D1 ordering. */
   attachHttpLifecycleListener(
@@ -196,8 +201,11 @@ describe('HTTP lifecycle metrics — real Nest/Express bootstrap', () => {
     await app.close();
   });
 
-  const sumActive = (dataPoints: Array<{ value: number }>) =>
-    dataPoints.reduce((total, point) => total + point.value, 0);
+  const sumActive = (dataPoints: MetricData['dataPoints'][number][]) =>
+    dataPoints.reduce((total, point) => {
+      expect(point.value).toBeTypeOf('number');
+      return total + Number(point.value);
+    }, 0);
 
   it('observes a request rejected by a guard before it reaches any controller', async () => {
     await request(app.getHttpServer()).get('/api/v1/test/guarded').expect(403);
@@ -360,23 +368,23 @@ describe('HTTP lifecycle metrics — real Nest/Express bootstrap', () => {
     socket.on('error', () => {
       /* expected once the client tears down the connection */
     });
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await vi.waitFor(async () => {
+      const point = (
+        await collectDataPoints('dial.chat.http.response.duration')
+      ).find(
+        (candidate) =>
+          candidate.attributes['dial.chat.http.outcome'] ===
+            'aborted_during_response' &&
+          candidate.attributes['http.route'] === '/api/v1/test/sse',
+      );
+      expect(point).toBeDefined();
+      expect(point?.attributes['http.response.status_code']).toBe(200);
 
-    const point = (
-      await collectDataPoints('dial.chat.http.response.duration')
-    ).find(
-      (candidate) =>
-        candidate.attributes['dial.chat.http.outcome'] ===
-          'aborted_during_response' &&
-        candidate.attributes['http.route'] === '/api/v1/test/sse',
-    );
-    expect(point).toBeDefined();
-    expect(point?.attributes['http.response.status_code']).toBe(200);
-
-    const activePoints = await collectDataPoints(
-      'dial.chat.http.requests.active',
-    );
-    expect(sumActive(activePoints)).toBe(0);
+      const activePoints = await collectDataPoints(
+        'dial.chat.http.requests.active',
+      );
+      expect(sumActive(activePoints)).toBe(0);
+    });
   });
 
   it('records error when the transport fails after headers were already committed', async () => {

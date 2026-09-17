@@ -11,6 +11,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeploymentsController } from '../deployments.controller';
 import { DeploymentsService } from '../deployments.service';
+import { DeploymentItemType } from '../dto/deployment-item.dto';
 import type { DeploymentsResponseDto } from '../dto/deployment-item.dto';
 
 const mockResponse: DeploymentsResponseDto = {
@@ -18,10 +19,14 @@ const mockResponse: DeploymentsResponseDto = {
     {
       id: 'gpt-4o',
       displayName: 'GPT-4o',
-      type: 'model',
+      type: DeploymentItemType.Model,
       interfaces: ['chat'],
     },
-    { id: 'my-app', displayName: 'My App', type: 'application' },
+    {
+      id: 'my-app',
+      displayName: 'My App',
+      type: DeploymentItemType.Application,
+    },
   ],
 };
 
@@ -113,7 +118,7 @@ describe('DeploymentsController (integration)', () => {
           {
             id: 'my-app',
             displayName: 'My App',
-            type: 'application',
+            type: DeploymentItemType.Application,
             owner: 'users/alice@example.com',
             isMy: true,
           },
@@ -135,7 +140,7 @@ describe('DeploymentsController (integration)', () => {
           {
             id: 'applications/other-bucket/their-app',
             displayName: 'Their App',
-            type: 'application',
+            type: DeploymentItemType.Application,
             isMy: false,
             sharedWithMe: true,
           },
@@ -156,7 +161,7 @@ describe('DeploymentsController (integration)', () => {
           {
             id: 'folder1/my-app',
             displayName: 'My App',
-            type: 'application',
+            type: DeploymentItemType.Application,
             applicationFolder: 'folder1',
           },
         ],
@@ -176,7 +181,7 @@ describe('DeploymentsController (integration)', () => {
           {
             id: 'gpt-4o',
             displayName: 'GPT-4o',
-            type: 'model',
+            type: DeploymentItemType.Model,
             interfaces: ['chat'],
           },
         ],
@@ -235,7 +240,11 @@ describe('DeploymentsController (integration)', () => {
     it('returns 200 for corrected embedding value', async () => {
       const embeddingResponse: DeploymentsResponseDto = {
         deployments: [
-          { id: 'embed-model', displayName: 'Embed', type: 'model' },
+          {
+            id: 'embed-model',
+            displayName: 'Embed',
+            type: DeploymentItemType.Model,
+          },
         ],
       };
       service.listDeployments.mockResolvedValue(embeddingResponse);
@@ -422,7 +431,7 @@ describe('DeploymentsController (integration)', () => {
   describe('GET /api/v1/deployments/:deployment/details', () => {
     const mockDetails = {
       id: 'gpt-4o',
-      type: 'model',
+      type: DeploymentItemType.Model,
       modelDetails: { lifecycleStatus: 'generally-available' },
     };
 

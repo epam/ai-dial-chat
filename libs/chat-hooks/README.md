@@ -3317,6 +3317,13 @@ unresolvable selector still returns content — just with no `highlights` field 
 rather than `null`, so the document opens without a highlight instead of falling
 through to a plain attachment open.
 
+For the temporary [#8863](https://github.com/epam/ai-dial-chat/issues/8863)
+compatibility path, validated `docx_text_anchor`/`pptx_text_anchor` table rows map
+to `OoxmlHighlightKind.DocxTableRow`/`PptxTableRow`. The mapper passes plain cell
+text, the 1-based occurrence and the PPTX slide through, preserving source grouping
+and the selected highlight ID. The renderer resolves geometry from the displayed
+document; this mapper does not fetch or search document text.
+
 ```ts
 import { annotationToOoxmlCanvasContent } from '@epam/ai-dial-chat-hooks';
 

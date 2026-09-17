@@ -2,6 +2,7 @@ import {
   AttachmentContentType,
   AttachmentErrorType,
   OoxmlFileType,
+  OoxmlHighlightKind,
 } from '@epam/ai-dial-attachment-canvas';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type {
@@ -76,6 +77,8 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
     Xlsx: 'xlsx',
   },
   OoxmlHighlightKind: {
+    DocxTableRow: 'docxTableRow',
+    PptxTableRow: 'pptxTableRow',
     DocxTextRange: 'docxTextRange',
     PptxTextRange: 'pptxTextRange',
     XlsxCellRange: 'xlsxCellRange',
@@ -856,6 +859,52 @@ describe('annotationToOoxmlCanvasContent', () => {
     expect(result?.highlights).toHaveLength(1);
     expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
   });
+
+  it.each([
+    [
+      'docx_text_anchor',
+      OoxmlHighlightKind.DocxTableRow,
+      'docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    [
+      'pptx_text_anchor',
+      OoxmlHighlightKind.PptxTableRow,
+      'pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ],
+  ])(
+    'opens and selects a temporary %s table citation',
+    (type, kind, extension, mimeType) => {
+      const clicked = officeAnnotation(
+        'table',
+        [{ type, text: '| First | Escaped\\_text |', occurrence: 1, slide: 2 }],
+        {
+          url: `files/bucket/table.${extension}`,
+          mimeType,
+        },
+      );
+      const unrelated = officeAnnotation('other', docxSelector(), {
+        url: 'files/bucket/other.docx',
+      });
+      const result = annotationToOoxmlCanvasContent(
+        clicked,
+        [clicked, unrelated],
+        resolvers,
+      );
+
+      expect(result?.highlights).toHaveLength(1);
+      expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
+      expect(result?.highlights?.[0].locations).toEqual([
+        {
+          kind,
+          cells: ['First', 'Escaped_text'],
+          occurrence: 1,
+          ...(extension === 'pptx' ? { slide: 2 } : {}),
+        },
+      ]);
+    },
+  );
 
   it('returns content with the correct format for a PPTX citation and an XLSX citation', () => {
     const pptx = officeAnnotation(

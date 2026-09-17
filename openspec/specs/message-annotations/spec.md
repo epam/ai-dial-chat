@@ -81,6 +81,12 @@ All three new interfaces SHALL be exported from `libs/chat-shared/src/index.ts` 
 - **WHEN** a `body.selector` is assigned `{ type: 'some_future_selector', anything: 1 }`
 - **THEN** it satisfies `AnnotationSelector` through the open catch-all branch, exactly as before this change
 
+#### Scenario: Temporary Office table anchors survive normalization
+
+- **WHEN** `body.selector` contains `docx_text_anchor` or `pptx_text_anchor` with `text`, `occurrence`, and an optional PPTX `slide`
+- **THEN** the open selector branch preserves these fields without fabricating structural offsets
+- **AND** Office preview normalization may consume valid table rows under the temporary #8863 policy in `office-annotation-highlighting`
+
 ---
 
 ### Requirement: Office range selector offsets are exclusive on the wire for DOCX/PPTX

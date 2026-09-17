@@ -523,6 +523,19 @@ const toOoxmlHighlightLocation = (
   location: OfficeHighlightLocation,
 ): OoxmlHighlightLocation => {
   switch (location.type) {
+    case 'docx_text_anchor':
+      return {
+        kind: OoxmlHighlightKind.DocxTableRow,
+        cells: location.cells,
+        occurrence: location.occurrence,
+      };
+    case 'pptx_text_anchor':
+      return {
+        kind: OoxmlHighlightKind.PptxTableRow,
+        cells: location.cells,
+        occurrence: location.occurrence,
+        slide: location.slide,
+      };
     case 'docx_text_range':
       return {
         kind: OoxmlHighlightKind.DocxTextRange,
