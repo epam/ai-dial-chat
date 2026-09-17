@@ -16,6 +16,12 @@ Responsive starter prompt buttons that overflow into a dropdown when space is li
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-starter-buttons/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`

@@ -77,6 +77,12 @@ describe('PDF vendor stylesheet stays off the eager path', () => {
 
   it('is absent from the package base stylesheet', () => {
     expect(baseCss).not.toContain('@layer pdf-vendor');
-    expect(baseCss).not.toContain('.hidden{display:none}');
+    /*
+     * Preflight, not `.hidden`, is what marks the vendor build here: the base
+     * stylesheet carries the Tailwind utilities this package's own components
+     * reference (tools/vite-lib-tailwind-utilities.mjs), and `.hidden` is one
+     * of them. Preflight is emitted by the vendor sheet alone.
+     */
+    expect(baseCss).not.toContain('border:0 solid');
   });
 });

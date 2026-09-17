@@ -2,12 +2,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
+import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/usage-dashboard',
   plugins: [
+    createLibTailwindUtilities({ root: import.meta.dirname }),
     react(),
     dts({
       entryRoot: 'src',
