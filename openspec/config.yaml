@@ -28,7 +28,6 @@ context: |
   - react-i18next / i18next: Internationalisation
   - class-validator + class-transformer: NestJS DTO validation and serialisation
   - @nestjs/swagger: OpenAPI documentation
-  - @nestjs/throttler: Rate limiting
   - @nestjs/cache-manager + cache-manager: In-memory cache
   - helmet: Security headers
   - prettier-plugin-tailwindcss: Tailwind class ordering
@@ -191,8 +190,6 @@ rules:
     - Define accessibility requirements — keyboard navigation, ARIA roles/labels
     - State observability/telemetry requirements where the feature needs metrics or analytics
       (which events/metrics, where they are emitted)
-    - Specify rate limiting requirements for new NestJS endpoints (per-route @Throttle
-      when stricter than the global default)
     - Include cache TTL and invalidation strategy for new cached data — state the cache key
       (naming <domain>:<resource>[:<param>]), the TTL, AND the event that triggers invalidation
 

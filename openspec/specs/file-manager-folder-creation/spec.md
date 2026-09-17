@@ -26,7 +26,6 @@ Exposed in `UseDialFileManagerResult`:
 
 - **Controller**: `FilesController` (`apps/chat-api/src/files/files.controller.ts`)
 - **Handler name**: `createFolder` → operationId `createFolder`
-- **Rate limit**: `@Throttle({ default: { limit: 10, ttl: 60000 } })`
 - **Authentication**: session guard (existing)
 - **Request content-type**: `application/json`
 - **Response content-type**: `application/json`
@@ -102,7 +101,7 @@ class CreateFolderResponseDto {
 | `403` | User lacks permission on the bucket |
 | `404` | Parent folder not found (DIAL Core 404) |
 | `409` | A folder (or file) with the same name already exists at the parent path |
-| `429` | Rate limit exceeded |
+| `429` | DIAL Core rate limit exceeded |
 | `502` | DIAL Core returned an error |
 | `503` | DIAL Core unreachable or timed out |
 
@@ -187,7 +186,6 @@ Conflict check in `onCreateFolderValidate` is against the **cached** `items` —
 `onCreateFolder` does not catch BFF errors locally — failures (including `409`) propagate to `DialFileManager`, which surfaces them inline in the folder-creation dialog.
 
 ---
-
 
 ## Cache update after creation
 

@@ -115,7 +115,7 @@ This is required for correctness, not simplicity: a folder rename rewrites the `
 - **RTL / direction impact**: none — no UI is rendered by this capability.
 - **Accessibility**: none directly; loading and error presentation belong to consumers.
 - **Observability**: none beyond the shared API client's existing per-request logging. No new metrics.
-- **Caching**: no client-side cache and no TTL. State lives for the provider's lifetime and is refreshed by explicit refetch. Rate limiting is a backend concern already covered by the prompts controller's `@Throttle` settings.
+- **Caching**: no client-side cache and no TTL. State lives for the provider's lifetime and is refreshed by explicit refetch.
 
 #### Scenario: Feature disablement hides consumers without changing provider ownership
 

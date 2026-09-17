@@ -19,7 +19,6 @@ The endpoint:
 - SHALL return `200 OK` with a `UserLimitStatsResponseDto` body on success
 - MUST NOT cache the response server-side — every request MUST call DIAL Core (usage data is real-time)
 - MUST set `Cache-Control: private, no-store` on the HTTP response
-- SHALL apply per-route rate limiting of **60 req/min per IP** via `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError` (401, 500, 502, 503)
 - Controller handler name / OpenAPI operationId: **`getUserLimits`** → generated client method `getUserLimits()`
 - Lists model deployments only — applications, toolsets, and routes are never present in `deployments`, matching the upstream DIAL Core contract
@@ -95,7 +94,6 @@ The endpoint:
 - SHALL return `200 OK` with a `UserLimitStatsResponseDto` body on success, using the identical field names and semantics as `GET /api/v1/user/limits`, including the optional `resetsAt` on each day/week/month stat
 - MUST NOT cache the response server-side — every request MUST call DIAL Core
 - MUST set `Cache-Control: private, no-store` on the HTTP response
-- SHALL apply per-route rate limiting of **60 req/min per IP** via `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError` (401, 500, 502, 503)
 - Controller handler name / OpenAPI operationId: **`getUserUsage`** → generated client method `getUserUsage()`
 - A deployment absent from the `deployments` map means zero usage in the reported periods, not "unknown"

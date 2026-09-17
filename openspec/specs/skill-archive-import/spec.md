@@ -43,7 +43,7 @@ The system SHALL select between these two forms using the field's filename and, 
 
 On success the endpoint SHALL respond `201 Created` with `name`, `path`, `url`, and `etag` fields describing the newly created Skill, identical in shape for both input forms.
 
-The endpoint SHALL be rate-limited identically to the existing create endpoint (`@Throttle({ default: { limit: 5, ttl: 60000 } })`) and SHALL NOT define or use any response cache. This is unchanged for both input forms.
+The endpoint SHALL NOT define or use any response cache. This is unchanged for both input forms.
 
 **Generated-client impact**: none beyond documentation. `operationId: importSkillArchive`, the `ImportSkillArchiveRequest { file: Blob }` request shape, and the `SkillImportResponseDto` response shape in `libs/chat-api-client` are unchanged; only the OpenAPI operation's description text is updated to state both accepted input forms. `apps/chat/src/server-api/skills.api.ts`'s `importSkillArchive` wrapper requires no signature change.
 
@@ -62,10 +62,6 @@ The endpoint SHALL be rate-limited identically to the existing create endpoint (
 #### Scenario: Unauthenticated request is rejected
 - **WHEN** a request to `/api/v1/skills/import` has no valid session
 - **THEN** the response is `401 Unauthorized` and no extraction, manifest parsing, or Core call is attempted
-
-#### Scenario: Rate limit is enforced
-- **WHEN** a user exceeds 5 import requests within 60 seconds, in any mix of archive and standalone-manifest requests
-- **THEN** the 6th request within that window is rejected with `429 Too Many Requests`
 
 ### Requirement: Import is all-or-nothing — validation failure makes zero Core calls
 

@@ -50,15 +50,11 @@ The response passes through the upstream payload verbatim (all top-level keys pr
 | 401 | No valid session cookie / upstream returns 401 |
 | 403 | Caller lacks permission to access this schema |
 | 404 | Schema not found for the given `id` |
-| 429 | Rate limit exceeded (60 req/60 s per user) |
+| 429 | DIAL Core rate limit exceeded |
 | 502 | DIAL Core returned a 5xx, or any status the shared mapper has no more specific exception for |
 | 503 | DIAL Core is unreachable or timed out |
 
 Status translation is delegated to the shared `mapDialHttpStatus` / `handleDialFetchError` helpers, so this endpoint maps a given upstream status exactly the way every other `chat-api` domain does.
-
-## Rate Limiting
-
-`@Throttle({ default: { limit: 60, ttl: 60000 } })` — same as `GET /api/v1/applications`.
 
 ## Caching
 
@@ -142,7 +138,7 @@ The resolved schema SHALL be cached under `application-schemas:item:<userSub>:<s
 
 ### Requirement: Upstream failures map to typed HTTP exceptions
 
-Upstream non-OK statuses SHALL be translated by the shared `mapDialHttpStatus` helper, so `401`, `403`, and `404` surface unchanged and a `5xx` becomes `502 Bad Gateway`; a network or timeout failure SHALL be translated by `handleDialFetchError` into `503 Service Unavailable`. The route SHALL carry `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/applications`.
+Upstream non-OK statuses SHALL be translated by the shared `mapDialHttpStatus` helper, so `401`, `403`, and `404` surface unchanged and a `5xx` becomes `502 Bad Gateway`; a network or timeout failure SHALL be translated by `handleDialFetchError` into `503 Service Unavailable`.
 
 #### Scenario: Client-error statuses pass through
 
@@ -154,11 +150,6 @@ Upstream non-OK statuses SHALL be translated by the shared `mapDialHttpStatus` h
 - **WHEN** DIAL Core returns `500` or `503`
 - **THEN** the endpoint returns `502 Bad Gateway`
 - **AND** when the SDK throws a network or timeout error, the endpoint returns `503 Service Unavailable`
-
-#### Scenario: The rate limit is enforced per user
-
-- **WHEN** a user exceeds 60 requests in 60 seconds
-- **THEN** further requests are rejected with `429`
 
 ### Requirement: The endpoint is reachable through the generated client
 

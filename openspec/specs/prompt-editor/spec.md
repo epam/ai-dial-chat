@@ -198,7 +198,7 @@ The content and description fields SHALL show a character counter. Per the a11y 
 - **Memoisation**: mutation handlers are `useCallback`'d.
 - **Observability**: none beyond the shared API client's per-request logging. No new metrics.
 - **Authorization**: the editor is reachable by any authenticated user. Personal prompts use the caller's bucket; a writable shared prompt uses the owner bucket carried by its qualified resource id and relies on DIAL Core to enforce `WRITE`. Organisation prompts are always read-only and their details panel offers no Edit action regardless of returned metadata.
-- **Rate limiting / caching**: no client cache. `POST /api/v1/prompts` carries the backend's existing per-route throttle (30/min); the form disables submit while a save is in flight so a user cannot trip it by double-submitting.
+- **Caching / submission**: no client cache. The form disables submit while a save is in flight to prevent duplicate submissions.
 
 #### Scenario: Double-submit is impossible
 

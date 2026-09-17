@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 26 default-on keys and exclude the 18 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 44-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 44 keys.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 26 default-on keys and exclude the 19 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 45-key membership is the `OverlayFeature` enum itself, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 45 keys.
 
 `catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior. It no longer gates anything: `CatalogView` leaves `initialViewMode` unset, so Browse always opens in `Catalog`'s own default view (`CatalogViewMode.Grid`, the card grid). The key stays default-on so an overlay host still sending it is not warned about an unknown feature. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
@@ -137,7 +137,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 44 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 45 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -311,6 +311,29 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 - **WHEN** `isEnabled('file-manager')` is `false` and `isEnabled('input-files')` is `true`
 - **THEN** the conversation input still renders the attach-file button and can open the file-manager modal — only the standalone `/files` section is gone
+
+### Requirement: show-agent-description renders the selected agent's description on the empty chat
+
+`NewConversationComposer` SHALL render the selected deployment's `description`, resolved for the active language and rendered as markdown, after the starter-button slot on the empty-chat screen when `isEnabled('show-agent-description')` is `true`. Nothing SHALL render when the key is off, when no deployment is selected, or when the resolved description is empty or whitespace-only. The key SHALL NOT affect the operator-wide welcome-screen description, which `ConversationInput` renders under the greeting from the app config and which no UI-feature key gates. The markdown renderer SHALL be loaded on demand so a deployment with the key off does not pay for it.
+
+**Accessibility:** The description is static prose in the already-labeled welcome-screen region; links inside it keep the markdown renderer's own accent treatment and focus behavior. No live region is introduced — the text does not change in response to a user action.
+
+**i18n impact:** None — the text is deployment-authored content resolved through the existing `LocalizedText` fallback chain, not a UI string.
+
+#### Scenario: The description renders below the starters when the key is on
+
+- **WHEN** `isEnabled('show-agent-description')` is `true` and the selected deployment has a description containing a markdown link
+- **THEN** the empty-chat screen renders that description after the starter buttons, with the link as an anchor
+
+#### Scenario: Nothing renders when the key is off
+
+- **WHEN** `isEnabled('show-agent-description')` is `false` and the selected deployment has a description
+- **THEN** the empty-chat screen renders no agent description
+
+#### Scenario: An agent without a description renders nothing
+
+- **WHEN** `isEnabled('show-agent-description')` is `true` and the selected deployment's resolved description is absent or whitespace-only
+- **THEN** the empty-chat screen renders no agent description, and no empty container is left in its place
 
 ### Requirement: Isolated-view override takes precedence over every other source
 

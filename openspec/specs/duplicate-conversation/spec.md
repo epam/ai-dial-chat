@@ -25,8 +25,6 @@ The duplicated conversation SHALL keep the source conversation's stored display 
 
 The UUID is unconditional, including when the corresponding unsuffixed destination path is free. `duplicateConversation` SHALL NOT perform a destination path-existence check. A trailing UUID from the source path SHALL NOT be reused. Existing legacy source paths without a UUID remain valid inputs.
 
-Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })`.
-
 Generated-client impact:
 - OpenAPI operationId: `duplicateConversation`
 - SDK method: `ConversationsApi.duplicateConversation({ path })`

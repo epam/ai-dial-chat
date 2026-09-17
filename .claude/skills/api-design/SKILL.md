@@ -1,6 +1,6 @@
 ---
 name: api-design
-description: Design, review, or change HTTP API contracts for AI DIAL Chat. Use when adding or modifying REST endpoints, request/response DTOs, status codes, pagination, filtering, API versioning, auth requirements, rate limits, cache behavior, OpenAPI/Swagger docs, or frontend server-api clients.
+description: Design, review, or change HTTP API contracts for AI DIAL Chat. Use when adding or modifying REST endpoints, request/response DTOs, status codes, pagination, filtering, API versioning, auth requirements, cache behavior, OpenAPI/Swagger docs, or frontend server-api clients.
 ---
 
 # API Design
@@ -30,7 +30,6 @@ For every new or changed endpoint, define these before coding:
 - Success response shape and status code.
 - Error status codes and what each means: at least validation/auth/authorization/not found, plus `502` (upstream non-OK), `503` (upstream timeout/unavailable). Never `500` exposing internals.
 - Authentication and authorization requirements, including whether the endpoint is explicitly public.
-- Rate limiting. Public unauthenticated endpoints should usually tighten the global default.
 - Cache behavior when applicable: TTL, invalidation, and key naming (`<domain>:<resource>[:<param>]`).
 - Pagination for list endpoints: prefer cursor for large/append-heavy datasets; offset is acceptable for small admin-style or search flows.
 - Frontend impact: thin domain wrapper in `apps/chat/src/server-api/` that delegates to generated `@epam/chat-api-client`, shared type in `libs/chat-shared/` if needed, and i18n strings for any errors surfaced in UI.
@@ -53,7 +52,7 @@ When writing or reviewing an OpenSpec change that touches API behavior:
 - Generated-client frontend usage is required for new or changed business REST endpoints. Direct `base.ts` get/post/put/del usage is allowed only for documented generator gaps, streaming calls, or infrastructure endpoints.
 - If endpoint behavior is surfaced through a lib, tasks must keep the generated-client/server-api call in `apps/chat` and pass only resolved data, values, or callbacks into the lib.
 - Changes under `libs/chat-api-client` must come from OpenAPI generation (`npm run openapi`, `npm run openapi:sdk`, or the documented check), not manual edits.
-- Include rate-limit and cache requirements when relevant.
+- Include cache requirements when relevant.
 
 ## Avoid
 

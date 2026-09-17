@@ -22,14 +22,15 @@ On mount, the route's effect SHALL:
 user's `Default agent for new chats` preference. The full ordering is owned by `default-agent-preference`; in
 summary, `restoreDefaultSelection` SHALL resolve to:
 
-1. the preference, when it names a deployment that exists in the catalog;
+1. the stored preference, when it names a deployment that exists in the catalog;
 2. the operator default, when the preference is `DefaultAgentMode.DefaultAgent` and that deployment
    exists — **not** additionally gated on `defaultDeploymentPinned`;
-3. the operator default, when pinned (unchanged);
-4. the persisted `useUserConfig().selectedDeploymentId` (unchanged — this is the
-   `DefaultAgentMode.LastUsedAgent` path, and the default behaviour, since
-   `DefaultAgentMode.LastUsedAgent` is the preference's default value);
-5. the first catalog item (unchanged).
+3. the persisted `useUserConfig().selectedDeploymentId`, when the preference is
+   `DefaultAgentMode.LastUsedAgent` and that deployment exists;
+4. the operator default, when pinned (unchanged);
+5. the persisted `useUserConfig().selectedDeploymentId` (unchanged — the fall-through for an unset
+   preference, which is the default behaviour);
+6. the first catalog item (unchanged).
 
 `ConversationRoute` itself is **not** changed by this: it keeps calling `restoreDefaultSelection()`
 and remains unaware of the preference. Putting the resolution in `DeploymentsContext` rather than in
@@ -51,8 +52,8 @@ reaches it through a ref, so this effect does not re-fire when the preference ch
 
 #### Scenario: New chat after viewing a different conversation uses the user's own preference, not the viewed conversation's model
 
-- **WHEN** the user has `useUserConfig().selectedDeploymentId === "opus"`, the `Default agent for new chats`
-  preference at its default (`DefaultAgentMode.LastUsedAgent`), opens an existing conversation whose
+- **WHEN** the user has `useUserConfig().selectedDeploymentId === "opus"`, no stored `Default agent
+  for new chats` preference, no pinned operator default, opens an existing conversation whose
   last-used model is `"whisper"` (which calls `restoreSelectedItemId("whisper")`), and then navigates
   to `ConversationRoute` (clicks "New chat") with no router-state `deploymentId` and no pending
   overlay model

@@ -33,8 +33,6 @@ Response body (201 Created) — shape matches the `Conversation` type from `@epa
 }
 ```
 
-Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })` on the handler — stricter than the global 100 req/min default.
-
 Error codes:
 
 - `400 Bad Request` — body fails DTO validation (both `firstMessage` and `custom_content` absent/empty, `firstMessage` exceeds 50000 chars, missing `deploymentId`, empty `deploymentId`, `deploymentId` exceeds 256 chars, `deploymentId` contains disallowed characters)
@@ -279,8 +277,6 @@ Items from all three data sources are merged and sorted by `updatedAt` descendin
 
 `isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). `isUnread` is populated by `ScheduledTaskUnreadService.getViewedIds` against the user's DIAL Core bucket. See the `scheduled-task-unread-tracking` spec. Both fall back to `[]`/`isUnread: true` on error.
 
-Rate limiting: global default applies (no handler-level `@Throttle` override).
-
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
 - SDK method: `ConversationsApi.listConversations({ limit?, nextToken? })`
@@ -442,8 +438,6 @@ class RenameConversationResponseDto {
   name: string;
 }
 ```
-
-Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })` on the handler.
 
 Generated-client impact:
 - OpenAPI operationId: `renameConversation`

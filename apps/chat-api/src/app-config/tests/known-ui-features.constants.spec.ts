@@ -13,8 +13,8 @@ import {
  * them in the same change as any `OverlayFeature` addition, removal, or rename.
  */
 describe('KNOWN_UI_FEATURES', () => {
-  it('has exactly 44 members, one per OverlayFeature key', () => {
-    expect(KNOWN_UI_FEATURES.size).toBe(44);
+  it('has exactly 45 members, one per OverlayFeature key', () => {
+    expect(KNOWN_UI_FEATURES.size).toBe(45);
   });
 
   it('includes representative transferable keys', () => {
@@ -48,6 +48,10 @@ describe('KNOWN_UI_FEATURES', () => {
 
   it('includes the footer-version key', () => {
     expect(KNOWN_UI_FEATURES.has('hide-footer-version')).toBe(true);
+  });
+
+  it('includes the agent-description key', () => {
+    expect(KNOWN_UI_FEATURES.has('show-agent-description')).toBe(true);
   });
 
   it('includes both agent-selector keys', () => {

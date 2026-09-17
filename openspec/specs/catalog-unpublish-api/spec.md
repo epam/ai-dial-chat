@@ -56,8 +56,6 @@ Response (200):
 
 Generated-client impact: OpenAPI `operationId: unpublishCatalogEntity`; request DTO `UnpublishCatalogEntityDto`; response DTO `UnpublishResultDto`. Frontend caller: a thin wrapper in `apps/chat/src/server-api/publish.api.ts` using the normal (non-`Raw`) generated method.
 
-Rate limiting: `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the publish endpoint's write profile.
-
 #### Scenario: Successful unpublish request
 - **WHEN** an authenticated user submits a valid unpublish request for a folder the entity is published to
 - **THEN** the service calls Core's `createPublication` with one `DELETE` resource and returns 200 with `UnpublishResultDto`

@@ -68,9 +68,9 @@ Core, mirroring the full-replacement semantics every other General-step field al
   currently a locale map, omitting `locales` from the request body
 - **THEN** the service sends DIAL Core a plain-string `displayName`, replacing the existing map
 
-### Requirement: Endpoint is versioned, rate-limited, and documented
+### Requirement: Endpoint is versioned and documented
 The create-application endpoint SHALL be URI-versioned at `/api/v1/applications`, SHALL
-declare a `@Throttle` rate limit, and SHALL document every response status via
+document every response status via
 `@ApiResponse`. The Swagger schema for `CreateApplicationBodyDto` SHALL NOT reference an
 `intro` field.
 
@@ -155,9 +155,8 @@ DIAL Core write has already succeeded at that point, a failure of any invalidati
 logged and swallowed rather than turning a successful update into an error response. DIAL Core
 error statuses SHALL be mapped to typed HTTP responses.
 
-The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`,
-rate-limited via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
-create/delete), and documented via `@nestjs/swagger` (`@ApiOperation` with
+The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`
+and documented via `@nestjs/swagger` (`@ApiOperation` with
 `operationId: 'updateApplication'`, `@ApiResponse` for every status below). Authorization
 matches `deleteApplication`: any authenticated user may update their own application, no
 additional role restriction.
@@ -318,10 +317,6 @@ completes.
 - **WHEN** DIAL Core reports the resolved application path does not exist
 - **THEN** the endpoint responds `404 Not Found`
 
-#### Scenario: Rate limit exceeded
-- **WHEN** the caller exceeds 10 update requests within 60 seconds
-- **THEN** the endpoint responds `429 Too Many Requests`
-
 #### Scenario: DIAL Core error
 - **WHEN** DIAL Core returns an error status while fetching or saving the application
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. `502`/`503`)
@@ -350,9 +345,7 @@ and each `deployments:list:${userSub}:interface:<type>` entry), since the Catalo
 application list is read through `DeploymentsService.listDeployments`, not through the
 applications list cache. DIAL Core error statuses SHALL be mapped to typed HTTP responses.
 
-The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`, rate-limited
-via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
-`createToolset`/`deleteToolset`), documented via `@nestjs/swagger` (`@ApiOperation` with
+The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`, documented via `@nestjs/swagger` (`@ApiOperation` with
 `operationId: 'deleteApplication'`, `@ApiResponse` for every status below), and requires an
 authenticated session (no additional role restriction — any authenticated user may delete
 their own application, matching `deleteToolset`'s authorization model).
@@ -393,10 +386,6 @@ side effects. The endpoint's request/response shape, `operationId`, and generate
 #### Scenario: Application not found
 - **WHEN** DIAL Core reports the resolved application path does not exist
 - **THEN** the endpoint responds `404 Not Found`
-
-#### Scenario: Rate limit exceeded
-- **WHEN** the caller exceeds 10 delete requests within 60 seconds
-- **THEN** the endpoint responds `429 Too Many Requests`
 
 #### Scenario: DIAL Core error
 - **WHEN** DIAL Core returns an error status while deleting

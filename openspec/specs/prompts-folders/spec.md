@@ -44,8 +44,6 @@ The service:
 3. Writes sentinel resource `prompts/{sessionBucket}/{folderPath}/.folder` (empty content) to DIAL Core.
 4. Returns HTTP 201 with `PromptFolderResponseDto`: `{ "id": "<folderPath>", "name": "<name>" }`.
 
-Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })`.
-
 Error codes:
 - `400 Bad Request` — DTO validation fails (name contains `/`, or disallowed characters)
 - `401 Unauthorized` — missing or invalid session

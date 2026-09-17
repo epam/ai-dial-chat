@@ -49,7 +49,6 @@ See `openspec/specs/file-download/spec.md` for full contract. No changes to the 
 
 - **Controller**: `FilesController`
 - **Handler name**: `downloadArchive` → operationId `downloadArchive`
-- **Rate limit**: `@Throttle({ default: { limit: 5, ttl: 60000 } })`
 - **Authentication**: session guard (existing)
 - **Request content-type**: `application/json`
 - **Response content-type**: `application/zip` (streamed)
@@ -129,7 +128,7 @@ class DownloadArchiveDto {
 | `403` | User lacks permission for a requested item |
 | `404` | A requested item not found in DIAL Core |
 | `413` | `ARCHIVE_MAX_FILES` or `ARCHIVE_MAX_UNCOMPRESSED_BYTES` exceeded |
-| `429` | Rate limit exceeded |
+| `429` | DIAL Core rate limit exceeded |
 | `500` | Unexpected archive stream failure before headers sent |
 | `502` | DIAL Core returned an error |
 | `503` | DIAL Core unreachable or timed out |
@@ -296,15 +295,6 @@ const onDownloadFiles = useCallback(async (items: DialFile[]) => {
 ## Feature flag
 
 Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`.
-
----
-
-## Rate limiting
-
-| Endpoint | Limit |
-|----------|-------|
-| `GET /api/v1/files/download` | `60 req/min` (existing) |
-| `POST /api/v1/files/download-archive` | `5 req/min` (new) |
 
 ---
 

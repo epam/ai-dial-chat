@@ -185,14 +185,6 @@ Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`.
 
 ---
 
-## Rate limiting
-
-Reuses `POST /api/v1/files` limit: `@Throttle({ default: { limit: 20, ttl: 60000 } })`. With `UPLOAD_CONCURRENCY = 3`, a single user uploading a 20-file batch uses 20 slots in 60 seconds — exactly at the limit. This is acceptable; larger batches will queue on the frontend.
-
----
-
----
-
 ## Requirements
 
 ### Requirement: `useDialFileManager` owns the upload batch and bounds its concurrency

@@ -179,6 +179,13 @@ export enum OverlayFeature {
    * gated by the operator's `footer` capability flag.
    */
   HideFooterVersion = 'hide-footer-version',
+  /**
+   * Renders the selected agent's own `description` on the empty-chat screen,
+   * below the conversation starters, as markdown. Independent of the
+   * operator-wide welcome-screen description, which renders under the
+   * greeting for every agent alike.
+   */
+  ShowAgentDescription = 'show-agent-description',
 }
 
 /**

@@ -57,7 +57,7 @@ data: {"id":"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8","object":"chat.completion.chu
 data: [DONE]
 ```
 
-The existing response statuses remain `200` (SSE), `400`, `401`, `403`, `404`, `409`, `429`, `502`, and `503`; this change adds invalid timezone input as another `400` case. Authentication remains the existing session/header-token authentication with no new role requirement, and the existing per-route limit of 100 requests per 60 seconds remains unchanged.
+The existing response statuses remain `200` (SSE), `400`, `401`, `403`, `404`, `409`, `429`, `502`, and `503`; this change adds invalid timezone input as another `400` case. Authentication remains the existing session/header-token authentication with no new role requirement.
 
 #### Scenario: Valid IANA timezone is accepted
 
