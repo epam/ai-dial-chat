@@ -190,12 +190,16 @@ publishing also loads on demand. `chat-shared`'s markdown/KaTeX/syntax-highlight
 stack is isolated behind a dedicated `@epam/ai-dial-chat-shared/markdown` entry
 (root keeps re-exporting it for backward compatibility); `chat-hooks`'s
 content-type-correction helpers are isolated behind `@epam/ai-dial-chat-hooks/source-content`
-(also re-exported from `./file-manager`); `catalog`'s headless item-mapping enums
+(also re-exported from `./file-manager`), and its two optional-peer-bearing feature sets
+behind `@epam/ai-dial-chat-hooks/conversation-overlay` (the overlay protocol mapper) and
+`@epam/ai-dial-chat-hooks/file-manager-canvas` (the attachment-canvas content resolvers), so
+`./conversation` and `./file-manager` resolve neither `@epam/ai-dial-chat-overlay` nor
+`@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-quotations`; `catalog`'s headless item-mapping enums
 and pure functions are isolated behind `@epam/ai-dial-catalog/mapping`, separate
 from the publish-panel-attached UI on catalog's root. The shared, catalog and
 publishing packages declare CSS/SCSS side effects; `chat-hooks` declares its
 compiled JavaScript side-effect-free except for a single audited
-`package.json#sideEffects` array naming the `./oauth`/`./file-manager`
+`package.json#sideEffects` array naming the `./oauth`/`./file-manager-canvas`
 facades and the stable preserved modules that retain module-scope `EventTarget`/`LRUCache`
 singletons — so unused feature UI can still be removed from root-barrel
 consumers. See the
