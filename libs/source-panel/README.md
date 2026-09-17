@@ -108,13 +108,14 @@ they are hashed at build time — nor through DOM order or ARIA attributes, whic
 are structure and accessibility contracts rather than styling ones. The panel
 therefore carries a stable public class, exported as `SOURCE_PANEL_CLASS`.
 
-| Key     | Class                     | Element                                                         |
-| ------- | ------------------------- | --------------------------------------------------------------- |
-| `panel` | `dial-source-panel-panel` | The panel itself, additive to the sidebar's own `dial-sb-aside` |
+| Key     | Class                     | Element                                                        |
+| ------- | ------------------------- | -------------------------------------------------------------- |
+| `panel` | `dial-source-panel-panel` | The panel wrapper — the box that owns its width and transition |
 
-The panel is drawn by [`@epam/ai-dial-sidebar`](../sidebar/README.md), so
-`dial-sb-aside` is present too — this class is what tells a sources panel apart
-from any other sidebar panel in the same host.
+The panel is drawn by [`@epam/ai-dial-sidebar`](../sidebar/README.md), which
+puts this class on the **wrapper** around the region, not on the
+`role="complementary"` element itself — that one carries `dial-sb-aside`. Size
+or position the wrapper, and descend from it to reach the region.
 
 The class carries no declarations of its own: nothing in `styles.css` selects on
 it, so it changes nothing until a host writes a rule. Renaming it, or moving it
@@ -129,6 +130,10 @@ SOURCE_PANEL_CLASS.panel; // 'dial-source-panel-panel'
 
 ```css
 .dial-source-panel-panel {
+  inline-size: 420px;
+}
+
+.dial-source-panel-panel .dial-sb-aside {
   border-inline-end: none;
 }
 ```

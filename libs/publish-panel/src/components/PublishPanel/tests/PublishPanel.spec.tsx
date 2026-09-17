@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { PUBLISH_PANEL_CLASS } from '../../../constants/public-class-names';
 import {
   PublicationRuleFunction,
   PublishFolderNode,
@@ -406,5 +407,18 @@ describe('PublishPanel', () => {
         text.indexOf('Allow access if all match'),
       );
     });
+  });
+});
+
+describe('PublishPanel — public class names', () => {
+  it('stamps the panel body', () => {
+    const { container } = renderPanel();
+
+    /* The body carries no role of its own; it is the rendered root, so the
+       container's first element child is the element under test. */
+    // eslint-disable-next-line testing-library/no-node-access -- see above
+    expect(container.firstElementChild!.classList).toContain(
+      PUBLISH_PANEL_CLASS.panel,
+    );
   });
 });

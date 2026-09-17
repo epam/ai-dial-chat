@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
 import { FC, useId } from 'react';
+import { BUILDER_FORM_CLASS } from '../../constants/public-class-names';
 import type { EditorLayoutProps } from '../../models/editor-layout-props';
 import styles from './EditorLayout.module.scss';
 
@@ -37,7 +38,14 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
   });
 
   return (
-    <div dir={dir} className="flex min-h-0 flex-1 flex-col" style={cssVars}>
+    <div
+      dir={dir}
+      className={mergeClasses(
+        BUILDER_FORM_CLASS.layout,
+        'flex min-h-0 flex-1 flex-col',
+      )}
+      style={cssVars}
+    >
       <span
         role="status"
         aria-live="polite"

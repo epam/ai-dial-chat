@@ -1,5 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
+import { BUILDER_FORM_CLASS } from '../../constants/public-class-names';
 import type { EditorSectionProps } from '../../models/editor-section-props';
 import styles from './EditorSection.module.scss';
 
@@ -18,6 +19,7 @@ export const EditorSection: FC<EditorSectionProps> = ({
   return (
     <section
       className={mergeClasses(
+        BUILDER_FORM_CLASS.section,
         'flex flex-col gap-4 rounded border p-6',
         styles.section,
         className,

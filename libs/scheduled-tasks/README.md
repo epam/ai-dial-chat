@@ -161,3 +161,34 @@ import {
   onRunClick={(run) => navigateToConversation(run.conversationId)}
 />;
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key        | Class                            | Element                              |
+| ---------- | -------------------------------- | ------------------------------------ |
+| `card`     | `dial-scheduled-tasks-card`      | One task card                        |
+| `cardGrid` | `dial-scheduled-tasks-card-grid` | The responsive grid the cards sit in |
+
+```tsx
+import { SCHEDULED_TASKS_CLASS } from '@epam/ai-dial-scheduled-tasks';
+
+SCHEDULED_TASKS_CLASS.card; // 'dial-scheduled-tasks-card'
+```
+
+The card is a `CardShell` from [`@epam/ai-dial-ui-kit`](https://www.npmjs.com/package/@epam/ai-dial-ui-kit),
+so `dial-kit-card-shell` is on the same element — this class is what tells a
+task card apart from any other card in the same host. Its accessible name is
+the task's display name, so the role and name were never usable as a selector.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

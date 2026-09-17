@@ -10,10 +10,9 @@ import ConversationSourcesPanel from '../ConversationSourcesPanel';
  * silently — the build passes and a host's stylesheet simply stops applying —
  * so it is asserted here rather than left to review.
  *
- * The panel itself is drawn by `@epam/ai-dial-sidebar`, so the class travels as
- * `styles.className`. The stub below puts it on the rendered `aside`, which is
- * what the real `SidebarPanel` does, so the assertion covers the whole path
- * from this lib's constant to the element a host selects.
+ * The panel is drawn by `@epam/ai-dial-sidebar`, so the class travels as
+ * `styles.className` and lands on the wrapper around the `aside` — the element
+ * that owns the panel's width and transition. The stub below keeps that split.
  */
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
@@ -28,9 +27,14 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
     labels?: { ariaLabel?: string };
     styles?: { className?: string };
   }) => (
-    <aside aria-label={labels?.ariaLabel} className={styles?.className}>
-      {children}
-    </aside>
+    /* The real panel puts `styles.className` on the wrapper that owns its
+       width and transition, and `dial-sb-aside` on the `aside` inside it. The
+       stub keeps that split, or the assertion below proves nothing. */
+    <div className={styles?.className}>
+      <aside aria-label={labels?.ariaLabel} className="dial-sb-aside">
+        {children}
+      </aside>
+    </div>
   ),
 }));
 
@@ -74,31 +78,39 @@ const renderPanel = (isMobile: boolean, isOpen: boolean) =>
     />,
   );
 
+/*
+ * The wrapper carries no role of its own, so each case locates the region by
+ * role and walks up to the stamped element.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+const findPanel = () =>
+  closestWithClass(
+    screen.getByRole('complementary', { name: LABELS.ariaLabel }),
+    SOURCE_PANEL_CLASS.panel,
+  );
+
 describe('ConversationSourcesPanel — public class names', () => {
   it('stamps the panel on the desktop layout', () => {
     renderPanel(false, true);
 
-    expect(
-      screen.getByRole('complementary', { name: LABELS.ariaLabel }).classList,
-    ).toContain(SOURCE_PANEL_CLASS.panel);
+    expect(findPanel()).toBeTruthy();
   });
 
   it('keeps the class beside the mobile full-width utility', () => {
     renderPanel(true, true);
 
     /* The width utility is conditional; the public class never is. */
-    const panel = screen.getByRole('complementary', {
-      name: LABELS.ariaLabel,
-    });
-    expect(panel.classList).toContain(SOURCE_PANEL_CLASS.panel);
-    expect(panel.classList).toContain('w-full');
+    const panel = findPanel();
+    expect(panel).toBeTruthy();
+    expect(panel!.classList).toContain('w-full');
   });
 
   it('stamps the panel while it is closed', () => {
     renderPanel(false, false);
 
-    expect(
-      screen.getByRole('complementary', { name: LABELS.ariaLabel }).classList,
-    ).toContain(SOURCE_PANEL_CLASS.panel);
+    expect(findPanel()).toBeTruthy();
   });
 });

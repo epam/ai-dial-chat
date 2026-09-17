@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { SCHEDULED_TASKS_CLASS } from '../../../constants/public-class-names';
 import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
@@ -181,5 +182,20 @@ describe('ScheduledTaskCard', () => {
     expect(bottomGroup).toBeTruthy();
     expect(bottomGroup?.textContent).toContain('Every Monday 12:00');
     expect(bottomGroup?.textContent).toContain('Public');
+  });
+});
+
+describe('ScheduledTaskCard — public class names', () => {
+  it('stamps the card whether or not it is clickable', () => {
+    const { unmount } = render(<ScheduledTaskCard item={buildItem()} />);
+    expect(screen.getByRole('group').classList).toContain(
+      SCHEDULED_TASKS_CLASS.card,
+    );
+    unmount();
+
+    render(<ScheduledTaskCard item={buildItem()} onCardClick={vi.fn()} />);
+    expect(screen.getByRole('button').classList).toContain(
+      SCHEDULED_TASKS_CLASS.card,
+    );
   });
 });
