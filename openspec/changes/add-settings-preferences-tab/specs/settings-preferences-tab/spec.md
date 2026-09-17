@@ -202,8 +202,16 @@ flat `Select` enumerating the catalog: the panel owns search, the Current Select
 with star toggles, and the Browse-catalog footer, so the preference is picked the way an agent is
 picked everywhere else, and the control never materialises one option node per deployment.
 
-`selectedId` SHALL be the stored `preference` and `onSelect` SHALL be `setPreference` directly, so
-both a deployment id and a mode sentinel round-trip through the same prop pair.
+`selectedId` SHALL be the stored preference (`useDefaultAgentPreference().storedPreference`) and
+`onSelect` SHALL be `setPreference` directly, so both a deployment id and a mode sentinel round-trip
+through the same prop pair.
+
+While nothing is stored, `selectedId` SHALL be the mode that is actually in effect rather than a
+fixed default: `DefaultAgentMode.DefaultAgent` when `defaultDeploymentPinned` is on — the pin
+outranks the implicit last-used selection — and `DefaultAgentMode.LastUsedAgent` otherwise. Showing
+`Last used agent` under a pin would name a mode new chats do not follow, which is the confusion
+behind Issue #8889. Every selection the user makes is stored, so from then on the field shows the
+stored value verbatim.
 
 The two modes carried over from chat 1.0 SHALL be supplied through the trigger's `extraOptions`
 prop, in this order:

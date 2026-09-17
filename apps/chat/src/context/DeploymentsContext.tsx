@@ -154,6 +154,11 @@ const isDefaultAgentSentinel = (value: string): boolean =>
   value === DefaultAgentMode.DefaultAgent ||
   value === DefaultAgentMode.LastUsedAgent;
 
+const isDeploymentPresent = (
+  deployments: DeploymentItemDto[],
+  id: string | null,
+): boolean => id != null && deployments.some((d) => d.id === id);
+
 /*
  * `pinnedDefaultId` is the operator default only when `defaultDeploymentPinned`
  * is on; `configuredDefaultId` is that default regardless of pinning. They are
@@ -162,41 +167,48 @@ const isDefaultAgentSentinel = (value: string): boolean =>
  * or not the operator pinned it, while the pre-existing step 4 must stay gated
  * on the pin.
  *
- * `DefaultAgentMode.LastUsedAgent` has no step of its own — it is the
- * fall-through produced by skipping steps 2 and 3, landing on `userConfigId`,
- * which is what "last used" already meant before this preference existed.
+ * `defaultAgent` is the *stored* preference, `null` while the user has never
+ * picked one. The distinction is load-bearing: an explicitly chosen
+ * `DefaultAgentMode.LastUsedAgent` gets a step of its own above the pin, while
+ * a `null` preference keeps falling through to the pin, which is the
+ * precedence `DEFAULT_DEPLOYMENT_PINNED` documents. Without that step the
+ * option would be inert — the control that writes it is offered only where an
+ * agent is pinned, so the pin would always win (Issue #8889).
  */
 const resolveInitialSelection = (
   deployments: DeploymentItemDto[],
   inMemoryId: string | null,
   userConfigId: string | null,
   pinnedDefaultId: string | null,
-  defaultAgent: string,
+  defaultAgent: string | null,
   configuredDefaultId: string | null,
 ): string | null => {
-  if (inMemoryId != null && deployments.some((d) => d.id === inMemoryId)) {
+  if (isDeploymentPresent(deployments, inMemoryId)) {
     return inMemoryId;
   }
   if (
+    defaultAgent != null &&
     !isDefaultAgentSentinel(defaultAgent) &&
-    deployments.some((d) => d.id === defaultAgent)
+    isDeploymentPresent(deployments, defaultAgent)
   ) {
     return defaultAgent;
   }
   if (
     defaultAgent === DefaultAgentMode.DefaultAgent &&
-    configuredDefaultId != null &&
-    deployments.some((d) => d.id === configuredDefaultId)
+    isDeploymentPresent(deployments, configuredDefaultId)
   ) {
     return configuredDefaultId;
   }
   if (
-    pinnedDefaultId != null &&
-    deployments.some((d) => d.id === pinnedDefaultId)
+    defaultAgent === DefaultAgentMode.LastUsedAgent &&
+    isDeploymentPresent(deployments, userConfigId)
   ) {
+    return userConfigId;
+  }
+  if (isDeploymentPresent(deployments, pinnedDefaultId)) {
     return pinnedDefaultId;
   }
-  if (userConfigId != null && deployments.some((d) => d.id === userConfigId)) {
+  if (isDeploymentPresent(deployments, userConfigId)) {
     return userConfigId;
   }
   return deployments[0]?.id ?? null;
@@ -265,8 +277,11 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
    * stable identity (see the comment on `itemsRef` below). Adding the
    * preference to that callback's dependency array would re-fire
    * ConversationRoute's mount effect every time the user changes it.
+   *
+   * It is the *stored* value that resolution needs, not the display value the
+   * Preferences control shows — see `resolveInitialSelection`.
    */
-  const { preference: defaultAgent } = useDefaultAgentPreference();
+  const { storedPreference: defaultAgent } = useDefaultAgentPreference();
   const defaultAgentRef = useRef(defaultAgent);
 
   useEffect(() => {
