@@ -28,6 +28,9 @@ export class SkillsService {
     this.listingService,
   );
   listSkillFiles = this.listingService.listSkillFiles.bind(this.listingService);
+  getSkillMetadata = this.listingService.getSkillMetadata.bind(
+    this.listingService,
+  );
 
   // Download
   downloadSkill = this.downloadService.downloadSkill.bind(this.downloadService);

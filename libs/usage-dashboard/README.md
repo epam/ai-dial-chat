@@ -20,17 +20,17 @@ The three fixed periods are DIAL Core **calendar** windows anchored to UTC bound
 UTC week start, UTC month start), not trailing windows of 24 hours, 7 days, or 30 days. The property
 names were renamed accordingly; the old names are no longer exported or accepted.
 
-| Type | Old property | New property |
-| --- | --- | --- |
-| `ModelLimitRow` | `last24Hours` | `day` |
-| `ModelLimitRow` | `last7Days` | `week` |
-| `ModelLimitRow` | `last30Days` | `month` |
-| `ModelLimitPeriodStatuses` | `last24Hours` | `day` |
-| `ModelLimitPeriodStatuses` | `last7Days` | `week` |
-| `ModelLimitPeriodStatuses` | `last30Days` | `month` |
-| `ModelLimitsLabels` | `last24HoursColumnLabel` | `dayColumnLabel` |
-| `ModelLimitsLabels` | `last7DaysColumnLabel` | `weekColumnLabel` |
-| `ModelLimitsLabels` | `last30DaysColumnLabel` | `monthColumnLabel` |
+| Type                       | Old property             | New property       |
+| -------------------------- | ------------------------ | ------------------ |
+| `ModelLimitRow`            | `last24Hours`            | `day`              |
+| `ModelLimitRow`            | `last7Days`              | `week`             |
+| `ModelLimitRow`            | `last30Days`             | `month`            |
+| `ModelLimitPeriodStatuses` | `last24Hours`            | `day`              |
+| `ModelLimitPeriodStatuses` | `last7Days`              | `week`             |
+| `ModelLimitPeriodStatuses` | `last30Days`             | `month`            |
+| `ModelLimitsLabels`        | `last24HoursColumnLabel` | `dayColumnLabel`   |
+| `ModelLimitsLabels`        | `last7DaysColumnLabel`   | `weekColumnLabel`  |
+| `ModelLimitsLabels`        | `last30DaysColumnLabel`  | `monthColumnLabel` |
 
 Column-label **values** should change with them — pass `Today` / `This week` / `This month` rather
 than `Last 24 hours` / `Last 7 days` / `Last 30 days`.
@@ -309,7 +309,8 @@ import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
 
 // In your component:
 const formatResetTime = useCallback(
-  (resetsAt: string | undefined) => formatMyResetTime(resetsAt, activeLocale, t),
+  (resetsAt: string | undefined) =>
+    formatMyResetTime(resetsAt, activeLocale, t),
   [activeLocale, t],
 );
 

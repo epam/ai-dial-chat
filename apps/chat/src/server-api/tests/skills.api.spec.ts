@@ -6,6 +6,7 @@ import type {
   SkillGroupingFolderResponseDto,
   SkillImportResponseDto,
   SkillListResponseDto,
+  SkillMetadataItemDto,
   SkillOperationResultDto,
   SkillUploadResponseDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -19,6 +20,7 @@ import {
   deleteSkillGroupingFolder,
   downloadSkill,
   downloadSkillFile,
+  getSkillMetadata,
   importSkillArchive,
   listSkillFiles,
   listCatalogSkills,
@@ -146,6 +148,63 @@ describe('listSkillFiles', () => {
 
     await expect(
       listSkillFiles({ bucket: 'my-bucket', filePath: 'missing-skill/' }),
+    ).rejects.toBe(error);
+  });
+});
+
+const MOCK_METADATA_RESPONSE: SkillMetadataItemDto = {
+  name: 'docs-helper',
+  path: 'team-a/docs-helper',
+  url: 'skills/my-bucket/team-a/docs-helper',
+  bucket: 'my-bucket',
+  nodeType: 'item',
+  author: 'jane.doe@example.com',
+  updatedAt: 1752100000000,
+};
+
+describe('getSkillMetadata', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('delegates to the generated SkillsApi with bucket and path unchanged', async () => {
+    const spy = vi
+      .spyOn(skillsApi, 'getSkillMetadata')
+      .mockResolvedValue(MOCK_METADATA_RESPONSE);
+
+    const result = await getSkillMetadata('my-bucket', 'team-a/docs-helper');
+
+    expect(spy).toHaveBeenCalledWith(
+      { bucket: 'my-bucket', path: 'team-a/docs-helper' },
+      undefined,
+    );
+    expect(result).toEqual(MOCK_METADATA_RESPONSE);
+  });
+
+  it('passes an AbortSignal through to the generated client when provided', async () => {
+    const spy = vi
+      .spyOn(skillsApi, 'getSkillMetadata')
+      .mockResolvedValue(MOCK_METADATA_RESPONSE);
+    const controller = new AbortController();
+
+    await getSkillMetadata(
+      'my-bucket',
+      'team-a/docs-helper',
+      controller.signal,
+    );
+
+    expect(spy).toHaveBeenCalledWith(
+      { bucket: 'my-bucket', path: 'team-a/docs-helper' },
+      { signal: controller.signal },
+    );
+  });
+
+  it('propagates rejection from the generated client', async () => {
+    const error = new Response(null, { status: 404 });
+    vi.spyOn(skillsApi, 'getSkillMetadata').mockRejectedValue(error);
+
+    await expect(
+      getSkillMetadata('my-bucket', 'team-a/docs-helper'),
     ).rejects.toBe(error);
   });
 });
