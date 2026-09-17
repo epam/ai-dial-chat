@@ -35,6 +35,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       welcomeScreenDescription: null,
       footerHtmlMessage: '',
       customVisualizers: [],
+      applicationVisualizers: {},
       publicationFilterSources: ['title', 'role', 'dial_roles'],
     },
   } satisfies AppConfigState);

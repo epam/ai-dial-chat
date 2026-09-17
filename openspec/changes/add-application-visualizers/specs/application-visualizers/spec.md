@@ -95,10 +95,14 @@ accepted but inert.
 
 ### Requirement: Application id lookup and attachment partitioning
 
-`libs/chat-shared` SHALL export a pure helper that, given an application id and the
-registry, returns the matching `ApplicationVisualizer` or `undefined`, and a pure helper
-that partitions a `DisplayAttachment[]` into the attachments an entry claims and those
-it does not.
+The system SHALL export two pure helpers from
+`libs/attachment-canvas/src/utils/visualizer.ts` — the module that already owns
+`findVisualizerForMime` — one that, given an application id and the registry, returns
+the matching `ApplicationVisualizer` or `undefined`, and one that partitions a
+`DisplayAttachment[]` into the attachments an entry claims and those it does not. Both
+SHALL be re-exported from the lib's public entry. The
+`ApplicationVisualizer` type itself lives in `libs/chat-shared` alongside
+`CustomVisualizer`; only the logic lives here.
 
 Lookup rules:
 
@@ -108,8 +112,11 @@ Lookup rules:
   trimmed, empty parts discarded, and compared **case-insensitively** against each
   attachment's own `contentType`. Matching attachments are claimed.
 - When the matched entry omits `contentType`, every attachment that has a resolvable
-  URL SHALL be claimed. An attachment carrying only inline `data` and no URL SHALL NOT
-  be claimed.
+  URL SHALL be claimed.
+- A resolvable URL is required in **both** branches: an attachment carrying only
+  inline `data` and no `url` SHALL NOT be claimed even when its MIME type is listed,
+  because the grouped payload addresses each attachment by absolute URL
+  (`AttachmentItem.url` is required) and has no channel for inline data.
 - Attachments that are not claimed SHALL be returned unchanged in declaration order, so
   the host can render them as ordinary attachment tiles.
 
@@ -126,6 +133,12 @@ Neither helper reads configuration, resolves URLs, or performs I/O.
 - **WHEN** the entry omits `contentType` and the message carries an `image/png` attachment with a `url` and a `text/plain` attachment carrying only `data`
 - **THEN** the `image/png` attachment is claimed
 - **AND** the `text/plain` attachment is not claimed
+
+#### Scenario: A listed MIME type without a URL is still not claimed
+
+- **WHEN** the entry declares `contentType: "application/x-my-viz"` and the matching attachment carries only inline `data` with no `url`
+- **THEN** the attachment is not claimed
+- **AND** it renders as an ordinary attachment
 
 #### Scenario: Comma-separated contentType matches every listed MIME
 
@@ -189,10 +202,23 @@ interface AttachmentItem {
 }
 ```
 
-Each claimed attachment SHALL contribute one `AttachmentItem` whose `url` is the
-**absolute** URL resolved by the app's existing attachment URL adapter and whose
-`mimeType` is the attachment's own `contentType`. `AttachmentItem` order SHALL follow
-the attachments' order on the message.
+Each claimed attachment SHALL contribute one `AttachmentItem` whose `url` is an
+**absolute** URL and whose `mimeType` is the attachment's own `contentType`.
+`AttachmentItem` order SHALL follow the attachments' order on the message.
+
+The URL MUST be absolute, not host-relative: the payload is posted into a
+cross-origin iframe, where a relative path resolves against the visualizer's own
+origin. Producing one is host knowledge, so the payload builder receives a
+`resolveAbsoluteUrl(attachment)` callback rather than constructing URLs itself; the
+app composes it from its existing DIAL-file resolver plus the page origin, and passes
+an already-absolute external URL through unchanged.
+
+A claimed attachment the callback returns `undefined` for SHALL NOT appear in the
+payload, and the host SHALL return it to the ordinary attachment tray — an attachment
+that is in neither the payload nor the tray would vanish from the message. The builder
+therefore reports which claimed attachments it used, and the host derives the tray
+list from the full attachment list minus those. When the callback resolves none of
+them, no inline surface renders and every attachment stays a tile.
 
 The top-level `layout` SHALL carry `width`, `height`, and `mobileHeight` from the
 registry entry plus the active `themeId`. As with `SEND_VISUALIZE_DATA`,
@@ -212,7 +238,20 @@ during streaming.
 #### Scenario: URLs are absolute
 
 - **WHEN** a claimed attachment's stored URL is a DIAL-relative resource path
-- **THEN** the `AttachmentItem.url` sent to the iframe is the absolute URL produced by the app's attachment URL adapter
+- **THEN** the `AttachmentItem.url` sent to the iframe is absolute, carrying the page's own scheme and host rather than a host-relative path
+
+#### Scenario: A claimed attachment with no resolvable URL returns to the tray
+
+- **WHEN** an entry claims two attachments and the host can resolve an absolute URL for only one of them
+- **THEN** the payload carries just the resolved attachment
+- **AND** the unresolved one renders as an ordinary attachment tile
+- **AND** the inline surface still renders
+
+#### Scenario: No claimed attachment resolves
+
+- **WHEN** the host can resolve an absolute URL for none of the claimed attachments
+- **THEN** no inline surface renders
+- **AND** every attachment renders as an ordinary tile
 
 #### Scenario: Layout carries theme and sizing, never identity
 
@@ -275,15 +314,17 @@ registry entry and the partition claims at least one attachment. No new slot is 
 
 The host SHALL resolve the frame height before passing it in: `mobileHeight` when the
 `useIsMobile` breakpoint hook reports a mobile viewport and the entry declares it,
-otherwise `height`. The lib MUST NOT read a breakpoint.
+otherwise `height`, falling back to a host-owned default of `400` when the entry
+declares neither. The lib MUST NOT read a breakpoint.
 
 **i18n keys:** the expand button reuses the existing
 `attachmentCanvas.expandAppLabel` (`AttachmentCanvasI18nKeys.ExpandAppLabel`), and the
 placeholder shown while the visualizer is open in the canvas reuses
 `attachmentCanvas.openedInCanvasLabel` (`AttachmentCanvasI18nKeys.OpenedInCanvasLabel`).
-New keys are added only for the visualizer's own loading and error text:
-`attachmentCanvas.visualizerLoadingLabel` and
-`attachmentCanvas.visualizerLoadErrorLabel`.
+Three new keys are added: `attachmentCanvas.visualizerLoadingLabel` and
+`attachmentCanvas.visualizerLoadErrorLabel` for the visualizer's own status text,
+and `attachmentCanvas.visualizerActionsAriaLabel` naming the header's actions group
+(aria-labels are translated in apps and defaulted in libs, per the house rule).
 
 **Feature flag:** none. The surface is reachable only when an operator populates
 `APPLICATION_VISUALIZERS`; it is not gated behind `ENABLED_FEATURES` or any role list.

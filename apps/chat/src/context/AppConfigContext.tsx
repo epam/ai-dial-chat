@@ -1,5 +1,8 @@
 import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
-import type { CustomVisualizer } from '@epam/ai-dial-chat-shared';
+import type {
+  ApplicationVisualizerRegistry,
+  CustomVisualizer,
+} from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   FC,
@@ -43,6 +46,7 @@ export interface AppConfigState {
     welcomeScreenDescription: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
+    applicationVisualizers: ApplicationVisualizerRegistry;
     publicationFilterSources: string[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
@@ -71,6 +75,7 @@ const INITIAL_STATE: AppConfigState = {
     welcomeScreenDescription: null,
     footerHtmlMessage: '',
     customVisualizers: [],
+    applicationVisualizers: {},
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
   },
 };
@@ -120,6 +125,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               response.config?.welcomeScreenDescription ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
             customVisualizers: response.config?.customVisualizers ?? [],
+            applicationVisualizers:
+              response.config?.applicationVisualizers ?? {},
             publicationFilterSources:
               response.config?.publicationFilterSources ??
               DEFAULT_PUBLICATION_FILTER_SOURCES,

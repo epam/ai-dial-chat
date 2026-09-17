@@ -356,6 +356,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'CUSTOM_VISUALIZERS',
   },
   {
+    key: 'applicationVisualizers',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: {},
+    critical: false,
+    description:
+      'Registry of application id → grouped visualizer mappings, keyed by the effective deployment id of a message. Every attachment the entry claims is delivered to one iframe together via SEND_GROUPED_VISUALIZE_DATA, rendered inline in the message with an expand-to-canvas control. An entry may declare a comma-separated contentType to claim only those MIME types; when it is omitted, every attachment carrying a URL is claimed, and unclaimed attachments render as ordinary tiles. Takes precedence over CUSTOM_VISUALIZERS for the attachments it claims. The origin of each entry URL must also be listed in ALLOWED_IFRAME_ORIGINS, which is the sole source of CSP frame-src; otherwise the browser blocks the iframe. Empty (feature dark) when APPLICATION_VISUALIZERS is unset. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails on malformed config.',
+    owner: 'chat-team',
+    envVar: 'APPLICATION_VISUALIZERS',
+  },
+  {
     key: 'publish.publicationFilterSources',
     type: 'config',
     valueType: 'json',

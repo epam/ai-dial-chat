@@ -690,6 +690,7 @@ describe('CatalogView', () => {
         welcomeScreenDescription: null,
         footerHtmlMessage: '',
         customVisualizers: [],
+        applicationVisualizers: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
       },
     });
