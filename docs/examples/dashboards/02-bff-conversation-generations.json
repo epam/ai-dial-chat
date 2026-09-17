@@ -3,7 +3,7 @@
     {
       "name": "DS_PROMETHEUS",
       "label": "Application Prometheus",
-      "description": "Choose the source containing dial_chat_generations_active and custom HTTP/generation metrics.",
+      "description": "Choose the Prometheus data source that scrapes the BFF /metrics listener and contains dial_chat_generations_active with otel_scope_name=\"dial-chat-api\". An OTLP data source may use different metric names or labels.",
       "type": "datasource",
       "pluginId": "prometheus",
       "pluginName": "Prometheus"
@@ -267,7 +267,7 @@
           "refId": "A",
           "editorMode": "code",
           "expr": "dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}",
-          "legendFormat": "{{namespace}} / {{pod}}",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}}",
           "range": true,
           "instant": false,
           "format": "time_series"
@@ -446,7 +446,7 @@
     },
     {
       "title": "Rejected / error / aborted relay fractions",
-      "description": "Aborted includes different abort causes and must not be called user cancellation. Rejected is an upstream non-OK response or missing body.",
+      "description": "Aborted includes different abort causes and must not be called user cancellation. Rejected is an upstream non-OK response or missing body. Error includes failures opening the upstream request as well as stream/protocol failures.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -516,7 +516,7 @@
           "refId": "B",
           "editorMode": "code",
           "expr": "((sum(rate(generation_requests_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",generation_api=~\"$generation_api\",outcome=\"error\"}[$__rate_interval]))) or (0 * (sum(rate(generation_requests_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",generation_api=~\"$generation_api\"}[$__rate_interval]))))) / (sum(rate(generation_requests_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",generation_api=~\"$generation_api\"}[$__rate_interval])) > 0)",
-          "legendFormat": "Stream error",
+          "legendFormat": "Error (request / stream / protocol)",
           "range": true,
           "instant": false,
           "format": "time_series"

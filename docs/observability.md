@@ -73,6 +73,11 @@ Prometheus data source containing the backend metrics, and import it. Repeat for
 you need. Grafana documents this flow in [Import dashboards](https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/import-dashboards/).
 Maintain these examples by editing the version-controlled JSON directly.
 
+These examples target the series emitted by the BFF's Prometheus `/metrics` listener. When a
+deployment has both a scrape data source and an OTLP data source, choose the source containing
+those series and their scope labels. An OTLP pipeline can store different metric names or labels,
+even when its backend supports PromQL.
+
 Configure the dashboard variables before interpreting the panels:
 
 | Variable                             | Configuration and scope                                                                                                                                                                                                                                      |
@@ -91,9 +96,37 @@ or unavailable pods. The examples assume the application's emitted scope label
 resource's `service.name`. Scope and package versions are not a reliable deployed release tag.
 If a collector changes these labels, adjust the JSON selectors and variable queries together.
 
+Panels showing individual replicas preserve `cluster`, `namespace`, `job`, `pod`, and `instance`
+in their grouping and legends. This keeps identically named pods in different clusters or scrape
+targets distinct when selecting multiple values. Aggregated route, outcome, and API panels still
+combine the selected workload. Select one collection path to avoid counting duplicate ingestion.
+The scrape-health textbox takes one exact job name; its query uses equality and the Prometheus
+data source's string escaping so job names containing slashes or dots remain valid.
+For job names containing quotes, verify the interpolated query in Query Inspector: Grafana's
+legacy formatter requires an appropriate special-character setting or a custom escaped matcher.
+
 The runtime memory panel uses bytes and leaves stacking disabled. Its five series overlap and
 must remain separate. Multi-value variables use regex selectors; preserve that behavior when
 adapting the queries. See [Prometheus template variables](https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/).
+
+### If every panel shows No samples
+
+In Explore, select the intended data source and run these queries without dashboard variables:
+
+```promql
+dial_chat_generations_active
+```
+
+```promql
+dial_chat_generations_active{otel_scope_name="dial-chat-api"}
+```
+
+This runtime gauge is emitted even when there are no generations. If the first query is empty,
+verify the data source, selected time range, collection health, and metric name. If only the
+second query is empty, inspect the actual scope labels. Once both return data, use the same
+source in the dashboard and narrow its topology filters. For an OTLP-only deployment, adapt the
+queries to the names and labels stored by its collector. Leave missing data visible during this
+check; replacing it with zero would hide collection or configuration failures.
 
 ## Metric contracts
 

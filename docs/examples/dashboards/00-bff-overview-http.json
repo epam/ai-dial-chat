@@ -3,7 +3,7 @@
     {
       "name": "DS_PROMETHEUS",
       "label": "Application Prometheus",
-      "description": "Choose the source containing dial_chat_generations_active and custom HTTP/generation metrics.",
+      "description": "Choose the Prometheus data source that scrapes the BFF /metrics listener and contains dial_chat_generations_active with otel_scope_name=\"dial-chat-api\". An OTLP data source may use different metric names or labels.",
       "type": "datasource",
       "pluginId": "prometheus",
       "pluginName": "Prometheus"
@@ -339,8 +339,8 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "sum by (namespace, pod)(rate(dial_chat_http_requests_started_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_request_method=~\"$http_method\"}[$__rate_interval]))",
-          "legendFormat": "{{namespace}} / {{pod}}",
+          "expr": "sum by (cluster, namespace, job, pod, instance)(rate(dial_chat_http_requests_started_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_request_method=~\"$http_method\"}[$__rate_interval]))",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}}",
           "range": true,
           "instant": false,
           "format": "time_series"
@@ -417,8 +417,8 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "sum by (namespace, pod) (dial_chat_http_requests_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_request_method=~\"$http_method\"})",
-          "legendFormat": "{{namespace}} / {{pod}}",
+          "expr": "sum by (cluster, namespace, job, pod, instance) (dial_chat_http_requests_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_request_method=~\"$http_method\"})",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}}",
           "range": true,
           "instant": false,
           "format": "time_series"
@@ -1309,7 +1309,7 @@
     },
     {
       "title": "Configured Prometheus target scrape health (up)",
-      "description": "Configure the separate Scrape-health job variable with the exact BFF job. This panel ignores Route/Method and the metric Job selector. No matching up series means unknown/not configured, not healthy. Value 1 means scrape success only, not application or ingress availability.",
+      "description": "Configure the separate Scrape-health job variable with the exact BFF job. This panel ignores Route/Method and the metric Job selector. No matching up series means unknown/not configured, not healthy. Value 1 means scrape success only, not application or ingress availability. On Grafana versions using legacy interpolation, job names containing quotes need verified custom string escaping.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -1364,8 +1364,8 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "up{cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"${scrape_job:regex}\",pod=~\"$pod\"}",
-          "legendFormat": "{{namespace}} / {{pod}} / {{instance}}",
+          "expr": "up{cluster=~\"$cluster\",namespace=~\"$namespace\",job=\"$scrape_job\",pod=~\"$pod\"}",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}}",
           "range": true,
           "instant": false,
           "format": "time_series"

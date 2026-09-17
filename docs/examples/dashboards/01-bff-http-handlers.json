@@ -3,7 +3,7 @@
     {
       "name": "DS_PROMETHEUS",
       "label": "Application Prometheus",
-      "description": "Choose the source containing dial_chat_generations_active and custom HTTP/generation metrics.",
+      "description": "Choose the Prometheus data source that scrapes the BFF /metrics listener and contains dial_chat_generations_active with otel_scope_name=\"dial-chat-api\". An OTLP data source may use different metric names or labels.",
       "type": "datasource",
       "pluginId": "prometheus",
       "pluginName": "Prometheus"
@@ -294,8 +294,8 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "sum by (namespace, pod)(rate(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\"}[$__rate_interval]))",
-          "legendFormat": "{{namespace}} / {{pod}}",
+          "expr": "sum by (cluster, namespace, job, pod, instance)(rate(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\"}[$__rate_interval]))",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}}",
           "range": true,
           "instant": false,
           "format": "time_series"
@@ -854,8 +854,8 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "(sum by (namespace, pod)(rate(http_server_request_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_route!~\".*/conversations/(completions(/attach)?|watch)|.*/client-channel/subscribe|.*/chat/completions\",http_response_status_code=~\"2..\"}[$__rate_interval]))) / (sum by (namespace, pod)(rate(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_route!~\".*/conversations/(completions(/attach)?|watch)|.*/client-channel/subscribe|.*/chat/completions\",http_response_status_code=~\"2..\"}[$__rate_interval])) > 0)",
-          "legendFormat": "{{namespace}} / {{pod}}",
+          "expr": "(sum by (cluster, namespace, job, pod, instance)(rate(http_server_request_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_route!~\".*/conversations/(completions(/attach)?|watch)|.*/client-channel/subscribe|.*/chat/completions\",http_response_status_code=~\"2..\"}[$__rate_interval]))) / (sum by (cluster, namespace, job, pod, instance)(rate(http_server_request_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route=~\"$route\",http_request_method=~\"$method\",http_route!~\".*/conversations/(completions(/attach)?|watch)|.*/client-channel/subscribe|.*/chat/completions\",http_response_status_code=~\"2..\"}[$__rate_interval])) > 0)",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}}",
           "range": true,
           "instant": false,
           "format": "time_series"

@@ -3,7 +3,7 @@
     {
       "name": "DS_PROMETHEUS",
       "label": "Application Prometheus",
-      "description": "Choose the source containing dial_chat_generations_active and custom HTTP/generation metrics.",
+      "description": "Choose the Prometheus data source that scrapes the BFF /metrics listener and contains dial_chat_generations_active with otel_scope_name=\"dial-chat-api\". An OTLP data source may use different metric names or labels.",
       "type": "datasource",
       "pluginId": "prometheus",
       "pluginName": "Prometheus"
@@ -552,7 +552,7 @@
           "refId": "A",
           "editorMode": "code",
           "expr": "dial_chat_sse_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}",
-          "legendFormat": "{{namespace}} / {{pod}} / {{kind}}",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}} / {{kind}}",
           "range": true,
           "instant": false,
           "format": "time_series"
