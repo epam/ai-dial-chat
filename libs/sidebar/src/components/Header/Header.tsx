@@ -28,7 +28,7 @@ export const Header: FC<HeaderProps> = memo(
   }) => (
     <div
       className={mergeClasses(
-        'flex h-12 items-center pl-6 pr-3',
+        'flex h-12 items-center ps-6 pe-3',
         className,
         styles.header,
       )}

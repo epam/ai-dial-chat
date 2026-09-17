@@ -54,6 +54,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
             selected={activeTab === value}
             onClick={() => onChange(value)}
             className={mergeClasses(
+              /* !px-2 overrides Tag's internal px-3 to tighten tab spacing */
               'flex-1 min-w-max justify-center rounded-full !px-2',
               tabClassName,
             )}
