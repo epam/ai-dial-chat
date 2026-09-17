@@ -207,7 +207,9 @@ const hasComponentSource = (directory) => {
         hasComponentSource(`${directory}/${entry.name}`)
       );
     }
-    return extname(entry.name) === '.tsx' && !/.(spec|test).tsx$/.test(entry.name);
+    return (
+      extname(entry.name) === '.tsx' && !/\.(spec|test)\.tsx$/.test(entry.name)
+    );
   });
 };
 

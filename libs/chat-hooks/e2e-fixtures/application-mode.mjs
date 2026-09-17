@@ -501,6 +501,15 @@ export const buildSourceFixture = ({ workspaceRoot, tmpRoot }) => {
   );
   const libSrc = (projectRoot, entryFile) =>
     path.join(workspaceRoot, projectRoot, 'src', entryFile);
+  /*
+   * Stylesheets resolve to the built artifact in both modes, because that is
+   * what `exports["./styles.css"]` names and therefore what a host imports;
+   * only the JavaScript differs between source and packed. A lib's src holds
+   * CSS modules and, since the build began appending Tailwind utilities, no
+   * whole-stylesheet source file at all.
+   */
+  const libDist = (projectRoot, artifact) =>
+    path.join(workspaceRoot, projectRoot, 'dist', artifact);
   const requireFromWorkspace = createRequire(
     path.join(workspaceRoot, 'package.json'),
   );
@@ -546,21 +555,20 @@ export const buildSourceFixture = ({ workspaceRoot, tmpRoot }) => {
       'libs/chat-shared',
       'entry-points/markdown.ts',
     ),
-    // Both hosts use the documented stylesheet artifact; JavaScript varies source vs packed.
-    '@epam/ai-dial-chat-shared/styles.css': path.join(
-      workspaceRoot,
-      'libs/chat-shared/dist/index.css',
+    '@epam/ai-dial-chat-shared/styles.css': libDist(
+      'libs/chat-shared',
+      'index.css',
     ),
     '@epam/ai-dial-chat-shared': libSrc('libs/chat-shared', 'index.ts'),
     '@epam/ai-dial-catalog/mapping': libSrc(
       'libs/catalog',
       'entry-points/mapping.ts',
     ),
-    '@epam/ai-dial-catalog/styles.css': libSrc('libs/catalog', 'styles.css'),
+    '@epam/ai-dial-catalog/styles.css': libDist('libs/catalog', 'index.css'),
     '@epam/ai-dial-catalog': libSrc('libs/catalog', 'index.ts'),
-    '@epam/ai-dial-publish-panel/styles.css': libSrc(
+    '@epam/ai-dial-publish-panel/styles.css': libDist(
       'libs/publish-panel',
-      'styles.css',
+      'index.css',
     ),
     '@epam/ai-dial-publish-panel': libSrc('libs/publish-panel', 'index.ts'),
   };
