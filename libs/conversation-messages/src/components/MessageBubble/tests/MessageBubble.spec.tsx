@@ -28,20 +28,10 @@ const ATTACHMENT: DisplayAttachment = {
 
 const TABLE_MARKDOWN = '| A | B |\n| - | - |\n| 1 | 2 |';
 
-const TABLE_ACTION_LABELS = {
-  copyCsvLabel: 'Copy as CSV',
-  copyTxtLabel: 'Copy as TXT',
-  copyMarkdownLabel: 'Copy as Markdown',
-  copiedLabel: 'Copied!',
-  downloadCsvLabel: 'Download as CSV',
-};
-
 const ASSISTANT_TABLE_LABELS = {
-  tableCopyCsvLabel: TABLE_ACTION_LABELS.copyCsvLabel,
-  tableCopyTxtLabel: TABLE_ACTION_LABELS.copyTxtLabel,
-  tableCopyMarkdownLabel: TABLE_ACTION_LABELS.copyMarkdownLabel,
-  tableCopiedLabel: TABLE_ACTION_LABELS.copiedLabel,
-  tableDownloadCsvLabel: TABLE_ACTION_LABELS.downloadCsvLabel,
+  tableCopyLabel: 'Copy',
+  tableCopiedLabel: 'Copied!',
+  tableDownloadCsvLabel: 'Download as CSV',
 };
 
 const findMessageParagraph = (message: string) =>
@@ -458,11 +448,7 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Copy as CSV' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Copy as TXT' })).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Copy as Markdown' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Download as CSV' }),
     ).toBeTruthy();

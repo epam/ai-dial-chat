@@ -225,9 +225,9 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
             {children}
           </table>
         </div>
-        {actionLabels?.copiedLabel && (
+        {actionLabels?.copyLabel && (
           <span aria-live="polite" className="sr-only" role="status">
-            {isCopied ? actionLabels.copiedLabel : ''}
+            {isCopied ? (actionLabels.copiedLabel ?? '') : ''}
           </span>
         )}
       </div>
