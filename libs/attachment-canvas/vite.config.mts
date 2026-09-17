@@ -2,6 +2,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import dts from 'vite-plugin-dts';
+import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
 import { isExternalPeerImport } from './src/utils/vite-external-matcher';
 
@@ -41,6 +42,7 @@ export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/attachment-canvas',
   plugins: [
+    createLibTailwindUtilities({ root: import.meta.dirname }),
     react(),
     dts({
       entryRoot: 'src',

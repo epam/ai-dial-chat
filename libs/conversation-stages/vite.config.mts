@@ -1,12 +1,14 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/conversation-stages',
   plugins: [
+    createLibTailwindUtilities({ root: import.meta.dirname }),
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),

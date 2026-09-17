@@ -18,6 +18,12 @@ Everything that requires host context — the current theme/locale, the configur
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-mcp-apps/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`

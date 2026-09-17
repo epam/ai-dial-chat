@@ -42,6 +42,12 @@ only — `ToolsetAuthTypes`, `WithLogin`, `ToolsetCredentialsLevel` and
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-toolset-editor/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` `^19.2.8`
