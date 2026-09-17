@@ -311,10 +311,29 @@ const AppsEditor: FC = () => {
       }
 
       if (pendingSaveAction === 'preview') {
-        /* Fire-and-forget: nothing should block before showing the preview
-         * pane. `DeploymentsContext` is a shared reactive source, so once
-         * the refetch resolves, any reader re-renders on its own. */
-        void refetchDeployments().catch(() => undefined);
+        if (hasChanges) {
+          /*
+           * The preview pane remounts (via `previewResetKey`) and reads
+           * `items` straight from `DeploymentsContext` on its very first
+           * render. Firing-and-forgetting the refetch here left that first
+           * render showing the stale pre-save item (e.g. an old starter
+           * list) for as long as the refetch took, then snapping to the
+           * fresh one — waiting for it keeps the reveal in sync with the
+           * data instead.
+           */
+          try {
+            await refetchDeployments();
+          } catch (error) {
+            console.error(
+              'Failed to refetch deployments before preview:',
+              error,
+            );
+          }
+        } else {
+          /* Nothing changed — the cached list is already accurate, so this
+           * refresh is best-effort and must not delay opening the preview. */
+          void refetchDeployments().catch(() => undefined);
+        }
         setIsSaving(false);
         setIsPreviewing(true);
       } else {

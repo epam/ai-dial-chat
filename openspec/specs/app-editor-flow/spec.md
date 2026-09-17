@@ -207,14 +207,24 @@ The additional-locale field labels the General step renders come from the `edito
 - **WHEN** the user completes the General step and the Settings step renders
 - **THEN** `GeneralForm` remains mounted but hidden, so its current values are still readable through `generalFormRef.current.getValues()`
 
-#### Scenario: Preview on Settings step uses freshly saved deployment settings
+#### Scenario: Preview on Settings step uses freshly saved deployment settings, no meaningful change
 
-- **WHEN** the user is on the Settings step and clicks the header's "Preview" button
+- **WHEN** the user is on the Settings step and clicks the header's "Preview" button, and the resulting save reports `hasChanges: false`
 - **THEN** `isSaving` becomes true, `pendingSaveAction` is set to `preview`, and `settingsStepRef.current.triggerSave()` is called
 - **AND** when the iframe posts back a `SAVE_SUCCESS` message, `AppsEditor` awaits the
   `updateApplication` reassertion call described below, then calls `refetchDeployments()`
   fire-and-forget and `isPreviewing` becomes true immediately without waiting for the refetch
 - **AND** the preview chat input derives attachment availability and limits from the refreshed deployment's `inputAttachmentTypes` and `maxInputAttachments`
+
+#### Scenario: Preview on Settings step awaits a fresh deployment list when settings changed
+
+- **WHEN** the user is on the Settings step and clicks the header's "Preview" button, and the resulting save reports `hasChanges: true`
+- **THEN** `isSaving` becomes true, `pendingSaveAction` is set to `preview`, and `settingsStepRef.current.triggerSave()` is called
+- **AND** when the iframe posts back a `SAVE_SUCCESS` message, `AppsEditor` awaits the
+  `updateApplication` reassertion call described below, then **awaits** `refetchDeployments()`
+  before `isPreviewing` becomes true — `isSaving` stays true (the saving overlay stays visible)
+  for that whole wait, so the remounted preview pane's first render already reads a fresh list
+- **AND** a rejected refetch is logged and does not block `isPreviewing` becoming true afterward
 
 #### Scenario: Settings updates refresh deployment metadata before preview
 
@@ -267,7 +277,8 @@ preview — and SHALL surface the failure the same way `SAVE_ERROR` from the ifr
 #### Scenario: Reassertion call runs before Preview's side effects
 
 - **WHEN** the iframe posts `SAVE_SUCCESS` for a Preview trigger
-- **THEN** the reassertion `updateApplication` call is awaited before the fire-and-forget `refetchDeployments()` and before `isPreviewing` becomes true
+- **THEN** the reassertion `updateApplication` call is awaited before `refetchDeployments()` and before `isPreviewing` becomes true
+- **AND** `refetchDeployments()` itself is awaited too when the save reported `hasChanges: true`; it remains fire-and-forget when the save reported `hasChanges: false`
 
 #### Scenario: A failed reassertion call blocks the rest of the success path
 

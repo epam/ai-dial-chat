@@ -71,7 +71,7 @@ Clicking the preview button SHALL trigger the same save flow as the existing Sav
 - **THEN** `AppsEditor` ignores it (no navigation, no error notification, no state change) because no save was requested while previewing
 
 ### Requirement: Saving overlay while a save (or preview-save) is in flight
-`AppsEditor` SHALL render a blocking overlay over its main content area (General form / Settings step, whichever is visible) whenever `isSaving` is `true` — covering both the normal Save action and the Preview action's underlying save sequence, since both leave the UI otherwise unchanged until the embedded editor's `SaveSuccess`/`SaveError` postMessage arrives. For a **preview** save, `isSaving` SHALL clear as soon as that postMessage arrives and SHALL NOT wait on the follow-up `refetchDeployments()` call, which is fire-and-forget. For a **Save & Exit**, the overlay SHALL stay up until the awaited `refetchDeployments()` settles, so the user is not dropped onto the catalog before it reflects the app they just saved; a refetch that rejects is logged and still clears the overlay and navigates. The content wrapper `AppsEditor` renders the General form / Settings step inside MUST carry an explicit fill class (`size-full`), since `SettingsStep`'s root uses `size-full` and needs an ancestor chain of defined heights — an unstyled wrapper collapses the iframe to its browser-default height instead of filling the available space.
+`AppsEditor` SHALL render a blocking overlay over its main content area (General form / Settings step, whichever is visible) whenever `isSaving` is `true` — covering both the normal Save action and the Preview action's underlying save sequence, since both leave the UI otherwise unchanged until the embedded editor's `SaveSuccess`/`SaveError` postMessage arrives. For a **preview** save that reports no real configuration change (`hasChanges: false`), `isSaving` SHALL clear as soon as that postMessage arrives and SHALL NOT wait on the follow-up `refetchDeployments()` call, which remains fire-and-forget. For a **preview** save that reports `hasChanges: true`, `isSaving` SHALL instead stay `true` — keeping the overlay up — until that `refetchDeployments()` call settles, so the preview pane is never revealed with a deployment list that predates the just-saved change; a refetch that rejects is logged and still clears the overlay and enters preview. For a **Save & Exit**, the overlay SHALL stay up until the awaited `refetchDeployments()` settles regardless of `hasChanges`, so the user is not dropped onto the catalog before it reflects the app they just saved; a refetch that rejects is logged and still clears the overlay and navigates. The content wrapper `AppsEditor` renders the General form / Settings step inside MUST carry an explicit fill class (`size-full`), since `SettingsStep`'s root uses `size-full` and needs an ancestor chain of defined heights — an unstyled wrapper collapses the iframe to its browser-default height instead of filling the available space.
 
 The overlay backdrop SHALL use the semi-transparent `bg-backdrop` background (not an opaque `bg-layer-*` color) so the iframe/form content stays dimly visible underneath, matching the processing-overlay pattern already used in `DialFileManagerShell`. The spinner and label SHALL be rendered inside a small opaque card (`bg-layer-sunken`, rounded, `shadow-lg`) centered within the backdrop, so the "Saving in progress…" text keeps sufficient contrast regardless of what layer/theme is showing through the translucent backdrop. The overlay SHALL show a `Spinner` and the i18n label `AppsEditorI18nKeys.SavingOverlayLabel` (`appsEditor.savingOverlay`, "Saving in progress…"), announced via `aria-label` + `aria-live="polite"` on the outer backdrop container. The content underneath SHALL be made `inert` while the overlay is shown, so it is excluded from the tab order and the accessibility tree instead of merely being visually covered.
 
@@ -81,10 +81,15 @@ The overlay backdrop SHALL use the semi-transparent `bg-backdrop` background (no
 - **AND** the underlying General form / Settings step content is `inert` (not focusable, not in the accessibility tree)
 - **AND** the settings iframe continues to fill its full height underneath the backdrop (no layout collapse)
 
-#### Scenario: Overlay hidden as soon as SaveSuccess arrives, without waiting for the deployments refetch
-- **WHEN** the settings iframe posts `AppsEditorEvent.SaveSuccess` for a preview request
+#### Scenario: Overlay hidden as soon as SaveSuccess arrives when nothing changed
+- **WHEN** the settings iframe posts `AppsEditorEvent.SaveSuccess` for a preview request that reports `hasChanges: false`
 - **THEN** `AppsEditor` switches to the preview chat pane and hides the overlay immediately
 - **AND** this happens whether or not the background `refetchDeployments()` call has resolved yet
+
+#### Scenario: Overlay stays up until the refetch settles when settings changed
+- **WHEN** the settings iframe posts `AppsEditorEvent.SaveSuccess` for a preview request that reports `hasChanges: true`
+- **THEN** `AppsEditor` awaits `refetchDeployments()` before switching to the preview chat pane and hiding the overlay
+- **AND** a rejected refetch is logged and still lets `AppsEditor` switch to the preview chat pane afterward
 
 #### Scenario: Overlay also shown for the normal Save action
 - **WHEN** the user clicks the normal Save button (General or Settings step) and the resulting save has not yet completed
@@ -126,7 +131,7 @@ The preview pane SHALL use the same conversation-creation, streaming, and intera
 - **THEN** the feature behaves exactly as it does in a normal chat, since the same underlying hooks and endpoints are used
 
 ### Requirement: Preview chat renders Quick Apps conversation starters
-When a **preview** save succeeds, `AppsEditor` SHALL trigger `refetchDeployments()` as a fire-and-forget background call and SHALL NOT await it — switching to preview mode happens immediately once `SaveSuccess` arrives, using whatever deployment list is already in context. When a **Save & Exit** succeeds, `AppsEditor` SHALL await the same call before navigating to `returnUrl`, so the catalog the user lands on already reflects the save. `refetchDeployments()` owns bypassing the deployments cache; a failed refetch SHALL be swallowed (logged at most) and SHALL NOT surface an error or block/retry preview entry or navigation.
+When a **preview** save succeeds reporting `hasChanges: false`, `AppsEditor` SHALL trigger `refetchDeployments()` as a fire-and-forget background call and SHALL NOT await it — switching to preview mode happens immediately once `SaveSuccess` arrives, using whatever deployment list is already in context, since nothing about it can be stale. When a **preview** save succeeds reporting `hasChanges: true`, `AppsEditor` SHALL instead await `refetchDeployments()` before switching to preview mode, so the remounted preview pane's very first render already reads a deployment list that reflects the just-saved change. When a **Save & Exit** succeeds, `AppsEditor` SHALL await the same call before navigating to `returnUrl`, so the catalog the user lands on already reflects the save. `refetchDeployments()` owns bypassing the deployments cache; a refetch that rejects SHALL be swallowed (logged at most) and SHALL NOT surface an error or block/retry preview entry or navigation.
 
 An intermediate `UpdatedSuccess` message from the embedded editor SHALL also refresh the deployment list, but with the cache-bypass disabled — a definitive save always follows and corrects anything briefly stale. Because `DeploymentsContext` is a shared, reactive data source, once the background refetch resolves, any component reading it (including `AppPreviewChat`, described below) re-renders with the updated list on its own — `AppsEditor` does not need to re-trigger or coordinate that update.
 
@@ -157,18 +162,38 @@ Selecting a starter with submit enabled SHALL create or append to the preview co
 
 **RTL / UI impact:** Starter layout is delegated to `StarterButtons`; intro text is plain centered text and inherits page direction.
 
+### Requirement: Preview shows a loading spinner until the fixed app resolves
+
+`AppPreviewChat` never becomes the globally selected deployment in `DeploymentsContext`, so nothing there fetches per-entity details for it. `AppPreviewChat` SHALL therefore call `getDeploymentDetails(appId)` itself, directly, on mount and whenever `appId` changes — in parallel with (not sequenced after) `useDeployments().items` resolving the same app from the full deployments list. Its result SHALL be used only as an early source for `features.skillsSupported` (via `modelDetails.features` / `applicationDetails.features`), feeding the preview composer's `useSkillSelectorOverlay({ isSkillsSupported })`; a rejected or still-pending call SHALL NOT surface an error and SHALL leave that flag `false` until either it or the list resolves.
+
+Before either the deployments list or this direct fetch has resolved the app, `AppPreviewChat` SHALL render a centered `Spinner` in place of the pre-conversation composer, so the composer never renders with an unresolved skills-support flag that would otherwise flip a moment later. The spinner SHALL clear as soon as *either* source resolves the app (the list's `findDeploymentByIdOrReference` match, or the direct fetch settling) — whichever comes first — even if the other is still in flight or ultimately fails.
+
+#### Scenario: Spinner shown before either source has resolved the app
+- **WHEN** `AppPreviewChat` mounts, `useDeployments().items` does not yet contain `appId`, and the direct `getDeploymentDetails(appId)` call has not yet settled
+- **THEN** a centered `Spinner` (role `status`, inner `role="img"` labeled "Loading") renders instead of the composer
+- **AND** no starter buttons, intro text, or skill-selector state are shown yet
+
+#### Scenario: Spinner clears as soon as either source resolves
+- **WHEN** the direct `getDeploymentDetails(appId)` call resolves (or, symmetrically, the deployments list resolves the app) while the other source is still pending
+- **THEN** the spinner is replaced by the pre-conversation composer immediately, without waiting for the still-pending source
+- **AND** the still-pending source, once it settles, only refines features/starters behind the scenes and does not reintroduce the spinner
+
+#### Scenario: No spinner when the deployments list already resolves the app
+- **WHEN** `useDeployments().items` already contains `appId` at mount (e.g. the list was already loaded before this `AppPreviewChat` instance mounted)
+- **THEN** the composer renders immediately, regardless of whether the direct `getDeploymentDetails(appId)` call has settled
+
 **Memoisation:** Quick Apps starter settings SHALL be memoized from the resolved app deployment's `conversationStarters`; starter selection handlers SHALL be wrapped in `useCallback`.
 
 **Accessibility:** Starter controls SHALL remain real buttons via `StarterButtons`; intro text is static descriptive copy and does not need a live region.
 
-#### Scenario: Preview shows saved Quick Apps starters without page reload
-- **WHEN** the user changes conversation starters in the Settings iframe, clicks Preview, and the iframe posts `AppsEditorEvent.SaveSuccess`
-- **THEN** `AppsEditor` enters preview mode immediately, without waiting for `refetchDeployments()` to resolve
-- **AND** once the background refetch resolves, the preview chat shows the saved starter buttons and intro text below the input without a full browser reload — until then it may still show the previous starters/intro
+#### Scenario: Preview shows saved Quick Apps starters without an intervening stale flash
+- **WHEN** the user changes conversation starters in the Settings iframe, clicks Preview, and the iframe posts `AppsEditorEvent.SaveSuccess` reporting `hasChanges: true`
+- **THEN** `AppsEditor` awaits `refetchDeployments()` before entering preview mode, so the preview pane (which remounts via `previewResetKey`) reads the full deployments list only after it already reflects the just-saved starters
+- **AND** the preview chat shows the saved starter buttons and intro text below the input on its very first render, without a full browser reload and without first flashing the previous starters/intro
 
-#### Scenario: Preview entry is not delayed by a slow or failed deployments refetch
-- **WHEN** the user clicks Preview and the iframe posts `AppsEditorEvent.SaveSuccess`, and `refetchDeployments()` is slow to resolve or rejects
-- **THEN** `AppsEditor` still switches to the preview chat pane immediately and hides the saving overlay
+#### Scenario: Preview entry is not delayed when the save reported no real change
+- **WHEN** the user clicks Preview without changing anything, the iframe posts `AppsEditorEvent.SaveSuccess` reporting `hasChanges: false`, and `refetchDeployments()` is slow to resolve or rejects
+- **THEN** `AppsEditor` still switches to the preview chat pane immediately and hides the saving overlay, since the already-cached deployments list is not stale
 - **AND** no error is shown to the user for the failed/slow refetch
 
 #### Scenario: Preview non-submit starter populates input
