@@ -102,6 +102,9 @@ dialTest(
             ),
           [{ apiMethod: 'PUT', urlPattern: API.fileHost() }],
         );
+        await dialHomePage.waitForFolderListingToSettle(
+          DateUtil.getCurrentYearMonth(),
+        );
       },
     );
 
