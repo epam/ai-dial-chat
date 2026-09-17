@@ -138,7 +138,7 @@ export class ClientChannelApi extends runtime.BaseAPI {
   }
 
   /**
-   * Closes the given client channel on DIAL Core. Treats an already-gone channel (404) as idempotent success.
+   * Closes the given client channel on DIAL Core and returns its HTTP status unchanged with an empty body, including 404 for an already-gone channel. Returns 503 if Core cannot be reached.
    * Unsubscribe from the client channel
    */
   async unsubscribeClientChannelRaw(
@@ -178,7 +178,7 @@ export class ClientChannelApi extends runtime.BaseAPI {
   }
 
   /**
-   * Closes the given client channel on DIAL Core. Treats an already-gone channel (404) as idempotent success.
+   * Closes the given client channel on DIAL Core and returns its HTTP status unchanged with an empty body, including 404 for an already-gone channel. Returns 503 if Core cannot be reached.
    * Unsubscribe from the client channel
    */
   async unsubscribeClientChannel(

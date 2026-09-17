@@ -190,12 +190,16 @@ publishing also loads on demand. `chat-shared`'s markdown/KaTeX/syntax-highlight
 stack is isolated behind a dedicated `@epam/ai-dial-chat-shared/markdown` entry
 (root keeps re-exporting it for backward compatibility); `chat-hooks`'s
 content-type-correction helpers are isolated behind `@epam/ai-dial-chat-hooks/source-content`
-(also re-exported from `./file-manager`); `catalog`'s headless item-mapping enums
+(also re-exported from `./file-manager`), and its two optional-peer-bearing feature sets
+behind `@epam/ai-dial-chat-hooks/conversation-overlay` (the overlay protocol mapper) and
+`@epam/ai-dial-chat-hooks/file-manager-canvas` (the attachment-canvas content resolvers), so
+`./conversation` and `./file-manager` resolve neither `@epam/ai-dial-chat-overlay` nor
+`@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-quotations`; `catalog`'s headless item-mapping enums
 and pure functions are isolated behind `@epam/ai-dial-catalog/mapping`, separate
 from the publish-panel-attached UI on catalog's root. The shared, catalog and
 publishing packages declare CSS/SCSS side effects; `chat-hooks` declares its
 compiled JavaScript side-effect-free except for a single audited
-`package.json#sideEffects` array naming the `./oauth`/`./file-manager`
+`package.json#sideEffects` array naming the `./oauth`/`./file-manager-canvas`
 facades and the stable preserved modules that retain module-scope `EventTarget`/`LRUCache`
 singletons — so unused feature UI can still be removed from root-barrel
 consumers. See the
@@ -227,7 +231,7 @@ Current implementation uses **React Context** with no external state library. Th
 | `ActiveScheduledTaskContext`  | Scheduled task currently being viewed or edited                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `UserConfigContext`           | Per-user preferences persisted through `/api/v1/user-config`                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services)                                               |
+| `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services)                                               |
 
 Context pattern (reference: `ThemeContext.tsx`):
 
@@ -281,7 +285,7 @@ see [PDF citation metadata](../apps/chat-api/README.md#pdf-citation-metadata).
 - Supports `AbortSignal` for cancellation
 - Ignores comment lines (those starting with `:`), as every SSE reader in the repo must
 
-Every `chat-api` SSE response (`conversations/completions`, `conversations/watch`, `client-channel/subscribe`) is opened through `startSseResponse` (`apps/chat-api/src/common/utils/sse.ts`), which sets the event-stream headers, flushes them, and immediately writes a `: init` comment. Firefox does not hand a streamed response to the `fetch()` caller until the first body byte arrives, and these endpoints flush headers long before their first real event exists — without the comment, Firefox leaves the request pending, so the client-channel id never resolves and `useConversationStream` blocks on `waitForChannel` before it even sends the completion request.
+Every `chat-api` SSE response (`conversations/completions`, `conversations/watch`, `client-channel/subscribe`) is opened through `startSseResponse` (`apps/chat-api/src/common/utils/sse.ts`), which sets the event-stream headers, flushes them, and immediately writes a `: init` comment. Firefox does not hand a streamed response to the `fetch()` caller until the first body byte arrives, and these endpoints flush headers long before their first real event exists — without the comment, Firefox leaves the request pending, so the client-channel id never resolves and `useConversationStream` blocks on `waitForChannel` before it even sends the completion request — this is now the ordinary cold-start path for the first completion after mount or after an idle disconnect, not an edge case, since the subscription is opened by that same completion rather than in advance.
 
 ### Internationalisation
 
@@ -314,10 +318,11 @@ Configured at startup:
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
   — off by default (`OTEL_SDK_DISABLED=true`); when enabled, adds a `traceparent` response header
   on traced routes and an optional dedicated Prometheus scrape listener (default `:9464/metrics`,
-  independent of the main application port). Metrics include process memory, outstanding SSE
-  operations, and generation registry size, collected in the serving process; see
-  [backend observability](../apps/chat-api/README.md#observability) and
-  [runtime memory diagnostics](../apps/chat-api/README.md#runtime-memory-diagnostics).
+  independent of the main application port). Metrics cover HTTP transport outcomes, Nest handler
+  observations, generation relays, and process-local memory/SSE/registry gauges. HTTP lifecycle
+  observation uses a raw server request listener; it does not guarantee timing before all
+  synchronous Express work. See [Observability](observability.md) for signal boundaries,
+  configuration, and Grafana dashboard examples.
 
 NestJS conventions (domain structure, thin controllers, Swagger decorators, Logger, ConfigService, DTO validation) are defined in `apps/chat-api/AGENTS.md` — read it before implementing anything in `apps/chat-api/**`.
 
@@ -449,6 +454,8 @@ DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` and `externa
 | `POST` | `/api/v1/client-channel/subscribe`   | Open the SSE relay, get/resume a channel id         |
 | `POST` | `/api/v1/client-channel/report`      | Report `{ id, result }` back to a blocked tool call |
 | `POST` | `/api/v1/client-channel/unsubscribe` | Close the channel                                   |
+
+`unsubscribe` forwards DIAL Core's HTTP status unchanged with an empty body, including `404` when the channel is already absent and any upstream error status. A transport failure without a Core response returns `503`. The frontend's generated client rejects non-2xx responses; provider cleanup handles that rejection without reopening the channel.
 
 #### External Services (`/api/v1/external-services`)
 
@@ -699,6 +706,7 @@ The intended direction, enforced in review:
 - [Theme Customization](theme-customization.md) — theme configuration, tokens, and legacy theme migration
 - [Technical Requirements](technical-requirements.md)
 - [Responses API Integration](responses-api-integration.md)
+- [Observability](observability.md) — telemetry configuration, metric contracts, and Grafana dashboard examples
 - [Host Install Matrix](host-install-matrix.md) — what an embedding host installs per set of libs
 - [Chat API environment variables](../apps/chat-api/README.md#environment-variables) — the full variable reference
 - [Auth subsystem](./auth/)

@@ -20,7 +20,7 @@ import {
 import { ALL_OPTIONAL_PEERS } from './fixtures.mjs';
 export const APPLICATION_ENTRY_SOURCE = `import { createElement, createContext, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager';
+import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager-canvas';
 import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { useConversationSources } from '@epam/ai-dial-chat-hooks/conversation-sources';
 import { resolveExternalSourceContentType } from '@epam/ai-dial-chat-hooks/source-content';
@@ -517,6 +517,10 @@ export const buildSourceFixture = ({ workspaceRoot, tmpRoot }) => {
     ),
     'react-dom/client': requireFromWorkspace.resolve('react-dom/client'),
     react: requireFromWorkspace.resolve('react'),
+    '@epam/ai-dial-chat-hooks/file-manager-canvas': libSrc(
+      'libs/chat-hooks',
+      'entry-points/file-manager-canvas.ts',
+    ),
     '@epam/ai-dial-chat-hooks/file-manager': libSrc(
       'libs/chat-hooks',
       'entry-points/file-manager.ts',

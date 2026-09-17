@@ -8,6 +8,7 @@ import type {
   OoxmlCanvasContent,
   OoxmlHighlight,
   OoxmlHighlightLocation,
+  GroupedVisualizerCanvasContent,
   PdfCanvasContent,
   PlainTextCanvasContent,
   VisualizerCanvasContent,
@@ -21,10 +22,13 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import type {
   Annotation,
+  ApplicationVisualizer,
   Attachment,
   AttachmentResource,
   CustomVisualizer,
+  CustomVisualizerDataLayout,
   DisplayAttachment,
+  GroupedAttachmentItem,
 } from '@epam/ai-dial-chat-shared';
 import {
   base64ToBlob,
@@ -772,5 +776,63 @@ export const resolveVisualizerCanvasContent = async (
     },
     visualizerName: entry.title,
     requestTimeout: entry.requestTimeout,
+  };
+};
+
+/** Outcome of building a grouped visualizer payload. */
+export interface GroupedVisualizerResolution {
+  /** The grouped payload, or `null` when no claimed attachment resolved to a URL. */
+  content: GroupedVisualizerCanvasContent | null;
+  /** The claimed attachments that reached `content.attachments`, in the input's order. The caller returns the rest to the ordinary attachment tray. */
+  resolved: DisplayAttachment[];
+}
+
+/**
+ * Builds the grouped payload for an application-scoped visualizer from the
+ * attachments its entry claims, reporting which of them `resolveAbsoluteUrl`
+ * could produce a URL for. Unlike the single-attachment resolver this fetches
+ * nothing: the grouped protocol hands the visualizer URLs and lets it read
+ * them itself, so the URLs must be absolute — a host-relative path would
+ * resolve against the iframe's own origin. Producing one is host knowledge,
+ * which is why it arrives as a callback rather than being built here.
+ */
+export const resolveGroupedVisualizerCanvasContent = (
+  attachments: DisplayAttachment[],
+  resolveAbsoluteUrl: (attachment: DisplayAttachment) => string | undefined,
+  entry: ApplicationVisualizer,
+  themeId: string,
+): GroupedVisualizerResolution => {
+  const layout: CustomVisualizerDataLayout = {
+    width: entry.width,
+    height: entry.height,
+    mobileHeight: entry.mobileHeight,
+    themeId,
+  };
+
+  const items: GroupedAttachmentItem[] = [];
+  const resolved: DisplayAttachment[] = [];
+  attachments.forEach((attachment) => {
+    const url = resolveAbsoluteUrl(attachment);
+    if (url == null) return;
+    resolved.push(attachment);
+    items.push({
+      url,
+      mimeType: attachment.contentType,
+      visualizerData: { layout },
+    });
+  });
+
+  if (items.length === 0) return { content: null, resolved: [] };
+
+  return {
+    content: {
+      type: AttachmentContentType.GroupedVisualizer,
+      url: entry.url,
+      attachments: items,
+      layout,
+      visualizerName: entry.title,
+      requestTimeout: entry.requestTimeout,
+    },
+    resolved,
   };
 };

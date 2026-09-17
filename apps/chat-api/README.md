@@ -210,6 +210,7 @@ setting is read at Core startup, so restart DIAL Core after changing it.
 | `ANNOUNCEMENT_DESCRIPTION`              | —                              | Supporting copy shown after the banner title. Sanitized server-side (allowlist: `a b strong em br span`); non-hash anchors are forced to `target="_blank" rel="noopener noreferrer"`. Text that overruns the banner width is silently truncated with an ellipsis, so keep it short. Blank, or markup that sanitizes away entirely, is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `ANNOUNCEMENTS`                         | `[]`                           | JSON array feeding the `+N announcements` popover: `[{ "title": "…", "description": "…", "link": { "label": "…", "href": "https://…" } }]`. `description` and `link` are optional; an entry with no link renders without a call to action. Max 10 entries. Validation is drop-and-log and never fatal — an entry is dropped if its title is blank, or if its link is present but has a blank label or an `href` that is not an absolute `http`/`https` URL (relative paths are rejected). Malformed JSON resolves to `[]`. Rejected entries appear only in the server log.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `CUSTOM_VISUALIZERS`                    | `[]`                           | JSON array of MIME → visualizer iframe mappings: `[{ "title": "my-viz", "url": "https://viz.example.com", "contentType": "application/x-my-viz,application/x-my-viz-v2" }]`. An attachment whose MIME type matches an entry opens in the Attachment Canvas rendered by that visualizer's iframe instead of the default preview; `contentType` accepts a comma-separated MIME list. `title` is the postMessage namespace and MUST equal the `appName` passed to `ChatVisualizerConnector` inside the visualizer app — a mismatch loads the iframe but never sends it data. Registering a URL grants that origin in-app iframe privileges (downloads, popups, modals, clipboard, fullscreen), so list only vetted visualizers. Registering it here does **not** by itself let the browser load it: CSP `frame-src` is built from `ALLOWED_IFRAME_ORIGINS` alone, so each visualizer URL's origin must also be listed there or the iframe is blocked and the canvas never renders. Mind the coupling — that same list also feeds `frame-ancestors`, so adding a visualizer origin additionally permits that origin to embed this app. Unset means the feature is dark. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config. |
+| `APPLICATION_VISUALIZERS`               | `{}`                           | JSON **object** (not an array) keyed by application id — the effective deployment id of a message: `{"my-app":{"title":"my-viz","url":"https://viz.example.com","contentType":"application/x-my-viz","height":600,"mobileHeight":400}}`. Every attachment an entry claims is delivered to one iframe together via `SEND_GROUPED_VISUALIZE_DATA`, rendered inline in the message with an expand-to-canvas control, rather than one iframe per attachment. Unlike `CUSTOM_VISUALIZERS`, `contentType` is **optional**: when set it claims only those MIME types and the message's other attachments stay ordinary tiles; when omitted it claims every attachment that carries a URL. An entry **takes precedence over `CUSTOM_VISUALIZERS`** for the attachments it claims. The same `ALLOWED_IFRAME_ORIGINS` requirement and `title`/`appName` contract as `CUSTOM_VISUALIZERS` apply. `passAuthInfo` and `passExplicitToken` are accepted for parity with legacy Chat 0.x and are inert — auth is server-side and the browser holds no access token. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails. |
 
 #### Outbound DIAL Core client identity
 
@@ -731,6 +732,10 @@ container without enabling development-only features such as Swagger.
 
 ## Observability
 
+See the [Observability guide](../../docs/observability.md) for the current metric contracts,
+signal boundaries, troubleshooting, and [Grafana dashboard examples](../../docs/examples/dashboards/).
+This README owns the full telemetry environment-variable reference below.
+
 `apps/chat-api` ships OpenTelemetry-based distributed tracing, log export, and Prometheus-
 compatible metrics, entirely **off by default**. With no `OTEL_*` environment variable set, the
 application behaves byte-identically to a build without OpenTelemetry: no exporters, no
@@ -758,14 +763,15 @@ processors, no additional listening port, and no outbound network calls for tele
   enabled, the same call is additionally exported through the OpenTelemetry Logs API with a
   mapped severity and, when a trace is active, correlated `trace_id`/`span_id`.
   OpenTelemetry SDK-internal diagnostics are never routed back through this bridge.
-- **Metrics**: `apps/chat-api/src/telemetry/http-metrics.ts` exposes a single
-  `http.server.request.duration` histogram (seconds), attributed by HTTP method, matched route
-  template (never the raw URL — unmatched routes use the bounded literal `unmatched`), and
-  response status code. `MetricsInterceptor` records exactly one data point per request, except
-  `GET /api/health` (still logged, never recorded) — see `telemetry/excluded-paths.ts`, the same
-  exclusion list `otel-sdk.ts` uses for tracing.
-  Runtime gauges report the serving Node.js process's memory, active SSE operations, and
-  generation registry size; see [Runtime memory diagnostics](#runtime-memory-diagnostics).
+- **Metrics**: `MetricsInterceptor` records handler observations on
+  `http.server.request.duration`, attributed by method, matched route template, and status.
+  It runs after guards and does not represent every incoming request or the full downstream
+  response lifetime. Separate HTTP lifecycle instruments record observed arrivals, in-flight
+  requests, and terminal transport outcomes. Generation instruments cover upstream relay
+  outcomes and timing. Runtime gauges report the serving Node.js process's memory, outstanding
+  SSE operations, and generation registry size. See the
+  [metric contracts](../../docs/observability.md#metric-contracts) and
+  [Runtime memory diagnostics](#runtime-memory-diagnostics).
 - **Prometheus endpoint**: when the `prometheus` metrics exporter is selected, a dedicated,
   unauthenticated HTTP listener starts (default `127.0.0.1:9464`, path `/metrics`), entirely
   independent of the main application port — no new business-API route, no interaction with
@@ -807,7 +813,8 @@ validator schema only covers application-owned configuration; these are read in
 | `OTEL_TRACES_SAMPLER` / `OTEL_TRACES_SAMPLER_ARG`                                           | `NodeSDK`, natively                                  | `parentbased_always_on`    | We do not override the sampler in code.                                                                                                                                                    |
 
 **Not supported**: `OTEL_EXPORTER_OTLP_PROTOCOL` (and per-signal variants) is not read — the
-protocol is fixed to `http/protobuf` in code via the `*-otlp-http` exporter packages.
+protocol is fixed to `http/json` by the selected `*-otlp-http` exporter packages
+(`Content-Type: application/json`).
 
 ### Runtime memory diagnostics
 
@@ -888,70 +895,27 @@ heap leak.
 
 ### HTTP transport lifecycle metrics
 
-`apps/chat-api/src/telemetry/http-lifecycle-listener.ts` attaches a listener directly to the main
-application `http.Server`'s `'request'` event — the earliest point Node hands a request to the
-application, ahead of Express body parsers, `helmet`, CORS, and every Nest guard/pipe/interceptor.
-`main.ts` calls it as the first statement inside `bootstrap()`, before `app.enableShutdownHooks()`
-or any `app.use(...)` call, so its visibility never depends on what gets registered afterward. It
-is gated by the same metrics-exporter toggle as the runtime gauges above (`OTEL_SDK_DISABLED` /
-`OTEL_METRICS_EXPORTER=none` disables it) and is excluded from `GET /api/health` and `GET /metrics`
-via the same `telemetry/excluded-paths.ts` predicate the existing histogram and tracing use.
+The main HTTP server has a request listener for observed arrivals, in-flight requests, and
+terminal response duration. A shared settlement guard records the first observed terminal event
+and releases that request's active contribution. Route, transport kind, outcome, and the status
+code (only if headers were sent) are recorded at settlement. These signals coexist with the
+Nest handler histogram; transport completion does not establish generation or persistence success.
 
-This is a **different, coexisting** signal from `http.server.request.duration`
-(`MetricsInterceptor`, described under Metrics above): that histogram only observes requests a Nest
-handler actually settles, after guards/pipes/routing already ran. The three instruments below
-observe the complete HTTP transport lifecycle instead — including guard rejections (auth/CSRF/
-feature-flag/rate-limit), body-parser failures, and unmatched routes — so they answer "what
-happened to the raw HTTP request", not "how long did the matched handler take". Neither instrument
-family is redefined or removed to add the other.
+The listener is registered with `server.on('request', ...)` after Nest has created the Express
+server. Its start time therefore does **not** guarantee coverage before all synchronous Express
+middleware or routing work. The exact raw URLs `/api/health` and `/metrics` are excluded; query
+strings and custom prefixes are not normalized by this listener's exclusion check.
 
-| OpenTelemetry instrument                | Prometheus series                        | Type / unit             | Attributes                                                                                                                                                                     | Recorded at                                    |
-| ---------------------------------------- | ----------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `dial.chat.http.requests.started`        | `dial_chat_http_requests_started_total`   | Counter / `{request}`    | `http.request.method` (bounded to `GET`/`HEAD`/`POST`/`PUT`/`PATCH`/`DELETE`/`OPTIONS`, else `unknown`)                                                                          | Request arrival (the raw `'request'` event)     |
-| `dial.chat.http.requests.active`         | `dial_chat_http_requests_active`          | UpDownCounter / `{request}` | Same bounded `http.request.method` set, identical for the `+1` at arrival and the `-1` at settlement                                                                          | `+1` at arrival, `-1` at settlement             |
-| `dial.chat.http.response.duration`       | `dial_chat_http_response_duration`        | Histogram / `s`          | `http.request.method`, `http.route` (matched route template, else the bounded literal `unmatched`), `http.response.status_code` (present only when headers were sent), `dial.chat.http.outcome`, `dial.chat.http.transport_kind` | Settlement — exactly once per request           |
+See [HTTP transport lifecycle](../../docs/observability.md#http-transport-lifecycle) for the
+instrument names, attributes, outcomes, streaming-route classification, fixed histogram buckets,
+and timing limitations. The [Overview / HTTP dashboard](../../docs/examples/dashboards/00-bff-overview-http.json)
+uses these instruments and keeps ordinary-response latency separate from streaming duration.
 
-`dial.chat.http.outcome` is one of `completed` (`'finish'` fired), `aborted_before_response` (the
-connection closed/aborted before any status line was sent — `http.response.status_code` is omitted,
-never a fabricated `200`), `aborted_during_response` (the connection closed after headers were sent
-but `'finish'` never fired — e.g. a client disconnecting mid-SSE-stream), or `error` (the
-request/response emitted `'error'` before either of the above resolved). Settlement is guarded by a
-single `settled` flag shared across `res`'s `'finish'`/`'close'`/`'error'` and `req`'s
-`'aborted'`/`'error'` events, all attached with `once()`, so exactly one terminal data point is
-recorded per request regardless of which combination fires or in what order — an ordinary `'close'`
-following `'finish'` on a normal keep-alive teardown is never read as a second completion.
-
-`dial.chat.http.transport_kind` is `streaming` for exactly `/api/v1/conversations/completions`,
-`/api/v1/conversations/completions/attach`, `/api/v1/conversations/watch`, and
-`/api/v1/client-channel/subscribe`; `unmatched` when the route itself is `unmatched`; `ordinary`
-for every other matched route. A new long-lived SSE route added later without updating this fixed
-list still records correctly, just as `ordinary` instead of `streaming` — an imprecise bucket, not
-a correctness bug.
-
-`dial.chat.http.response.duration` uses fixed bucket boundaries
-`[0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 10, 30, 60]` seconds (unlike
-`http.server.request.duration`, which uses the OpenTelemetry SDK's default boundaries starting at
-0/5/10s). **Bucket-boundary compatibility policy**: once these boundaries ship, they are never
-edited in place under the same metric name — Prometheus's `histogram_quantile` cannot correctly
-aggregate `_bucket` series with different `le` boundaries across pods running old vs. new code
-during a rolling deploy. A future change to the boundaries ships under a new metric name or an
-explicit version suffix instead.
-
-No attribute on any of the three instruments is ever a raw URL, query string, or user/conversation/
-deployment identifier.
-
-**Local dashboard**: the git-ignored `bff-observability-local/dashboards/00-bff-overview-http.json`
-(regenerate with `python3 bff-observability-local/generate_dashboards.py`) covers arrival RPS, the
-in-flight gauge, completed-response rate/status distribution, a 4xx/5xx fraction scoped to
-completed responses only, ordinary-request latency percentiles, busiest/slowest/error-prone routes,
-and a separate streaming-transport-duration panel. Its dedicated availability row's Kubernetes-
-readiness and ingress/synthetic-check panels are explicit text placeholders reading "Requires
-external verification" — this repository has no `ServiceMonitor`/ingress/synthetic-check
-configuration to query, so wiring them to real platform metrics is a follow-up task for whoever
-operates the deployment, not something this dashboard does automatically. Its trace-navigation data
-link opens a `${tempo_datasource}`/`${loki_datasource}`-scoped Explore search (by `service.name` +
-`http.route` + time range), not an exact metric-to-trace link — the pinned
-`@opentelemetry/exporter-prometheus` version emits no Prometheus exemplar data.
+The dashboard's `up` panel requires an explicit Prometheus scrape job and reports target scrape
+health. Kubernetes readiness, ingress traffic, and synthetic availability require external
+platform telemetry. Optional Tempo links search the configured service over the dashboard's time
+range; they do not filter by route or identify an exact request. See
+[Import the dashboard examples](../../docs/observability.md#import-the-dashboard-examples).
 
 ### Local verification
 
