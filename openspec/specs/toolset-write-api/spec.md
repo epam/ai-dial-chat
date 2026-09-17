@@ -122,6 +122,22 @@ The backend SHALL expose `POST /api/v1/toolsets/:toolsetName/login` and
 revocation. The login endpoint SHALL accept the credentials level and either an API key or
 an OAuth `code` + `redirectUri`, validated via a DTO.
 
+Both endpoints SHALL accept valid bucketless platform deployment IDs, including platform
+toolsets and applications configured as toolsets, as well as bucket-qualified toolset
+references. The service SHALL derive the upstream `url` from the validated `toolsetName`
+route parameter rather than the request body's `url`. Platform IDs SHALL NOT acquire an
+invented bucket or resource prefix. Valid percent-encoded names SHALL be decoded once for
+Core's credential API; bucket-qualified toolsets SHALL retain their bucket and nested path.
+An incomplete `toolsets/` resource reference SHALL still be rejected with `400 Bad Request`
+before credentials are sent upstream. This authentication behavior SHALL NOT relax the
+validation used by resource CRUD operations.
+
+The endpoints SHALL proxy `POST /v1/ops/toolset/signin` and
+`POST /v1/ops/toolset/signout`, respectively, with the caller's session access token and
+return `200` with `{ "success": true }` on success. Supporting bucketless IDs SHALL preserve
+the existing request and response DTOs and generated `loginToolset` / `logoutToolset`
+operations.
+
 #### Scenario: API key login
 - **WHEN** an authenticated user submits an API key login for a toolset
 - **THEN** the service proxies the credential submission to DIAL Core and returns the result
@@ -133,6 +149,44 @@ an OAuth `code` + `redirectUri`, validated via a DTO.
 #### Scenario: Logout
 - **WHEN** an authenticated user requests logout for a toolset
 - **THEN** the service proxies the credential revocation to DIAL Core
+
+#### Scenario: Platform toolset login without a bucket
+- **WHEN** an authenticated user submits valid API-key or OAuth credentials to
+  `POST /api/v1/toolsets/NS_toolset_1097_test/login`
+- **THEN** the service submits them to Core with `url: "NS_toolset_1097_test"`, without
+  requiring or adding a bucket
+
+#### Scenario: Platform application configured as a toolset
+- **WHEN** an authenticated user logs in or out through these endpoints using the
+  bucketless ID `NS_application_1097_test` of an application configured as a toolset
+- **THEN** the service uses that ID as the upstream `url` without adding a `toolsets/`
+  or `applications/` prefix
+
+#### Scenario: Logout before login uses the platform ID
+- **WHEN** a login flow first revokes existing credentials for `NS_toolset_1097_test`,
+  or the user explicitly logs out of that toolset
+- **THEN** the logout request reaches Core with `url: "NS_toolset_1097_test"` and is not
+  rejected solely because the ID has no bucket
+
+#### Scenario: Route identifier takes precedence over body URL
+- **WHEN** a valid login or logout request targets `NS_toolset_1097_test` but its body
+  contains `url: "different-resource"`
+- **THEN** the service sends Core `url: "NS_toolset_1097_test"`
+
+#### Scenario: Percent-encoded platform name
+- **WHEN** the validated route parameter is `Platform%20toolset`
+- **THEN** the upstream credential request contains `url: "Platform toolset"`
+
+#### Scenario: Bucket-qualified nested paths retain their identity
+- **WHEN** the validated route parameter is
+  `toolsets/test-bucket/folder/My%20toolset__0.0.1`
+- **THEN** the upstream credential request contains
+  `url: "toolsets/test-bucket/folder/My toolset__0.0.1"`
+- **AND** a literal percent encoded as `%25` is decoded once without double-encoding
+
+#### Scenario: Incomplete resource reference remains invalid
+- **WHEN** a login or logout request targets `toolsets/bucket` or `toolsets//name`
+- **THEN** the endpoint returns `400 Bad Request` without submitting credentials to Core
 
 ### Requirement: Secrets are never returned or logged
 The write API SHALL NOT return credential secrets (such as API key or client secret) in
@@ -161,4 +215,3 @@ handler names suitable for the generated client (e.g. `createToolset`, `updateTo
 #### Scenario: Authentication required
 - **WHEN** a request to a write endpoint has no valid session cookie
 - **THEN** the endpoint responds with 401
-

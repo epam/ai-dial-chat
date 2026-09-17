@@ -63,13 +63,94 @@ function makeWriteService() {
 
 const mutationSdkOk = okResponse({});
 
+const authResourceIds = [
+  ['NS_toolset_1097_test', 'NS_toolset_1097_test'],
+  ['NS_application_1097_test', 'NS_application_1097_test'],
+  ['Platform%20toolset', 'Platform toolset'],
+  [
+    'toolsets/test-bucket/folder/My%20toolset__0.0.1',
+    'toolsets/test-bucket/folder/My toolset__0.0.1',
+  ],
+  [
+    'toolsets/test-bucket/100%25%20toolset__0.0.1',
+    'toolsets/test-bucket/100% toolset__0.0.1',
+  ],
+];
+
 describe('ToolsetsAuthService', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
+  it.each(['toolsets/bucket', 'toolsets//name'])(
+    'rejects an incomplete bucket-qualified resource %s before sending credentials',
+    async (toolsetName) => {
+      const { service } = makeWriteService();
+      const body = {
+        url: toolsetName,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthType.ApiKey,
+        apiKey: 'secret',
+      };
+
+      await expect(
+        service.loginToolset('user1', 'token', toolsetName, body),
+      ).rejects.toThrow('Toolset id must include bucket and path');
+      await expect(
+        service.logoutToolset(
+          'user1',
+          'token',
+          'test-bucket',
+          toolsetName,
+          body,
+        ),
+      ).rejects.toThrow('Toolset id must include bucket and path');
+      expect(service['dialClient'].client.toolsetSignin).not.toHaveBeenCalled();
+      expect(
+        service['dialClient'].client.toolSetSignout,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
   describe('loginToolset', () => {
     const id = 'toolsets/test-bucket/My%20toolset__0.0.1';
+
+    it.each(authResourceIds)(
+      'signs in %s with API key and OAuth credentials using its own identity',
+      async (toolsetName, expectedUrl) => {
+        for (const credentials of [
+          { authenticationType: ToolsetAuthType.ApiKey, apiKey: 'secret' },
+          {
+            authenticationType: ToolsetAuthType.OAuth,
+            code: 'auth-code',
+            redirectUri: 'https://chat.example.com/auth/toolset-signin',
+          },
+        ]) {
+          const { service, cacheManager } = makeWriteService();
+          const signinSpy = vi
+            .spyOn(service['dialClient'].client, 'toolsetSignin')
+            .mockResolvedValue(mutationSdkOk);
+
+          await service.loginToolset('user1', 'token', toolsetName, {
+            url: 'different-resource',
+            credentialsLevel: ToolsetCredentialsLevel.User,
+            ...credentials,
+          });
+
+          expect(signinSpy).toHaveBeenCalledWith({
+            headers: { Authorization: 'Bearer token' },
+            body: {
+              url: expectedUrl,
+              credentialsLevel: ToolsetCredentialsLevel.User,
+              ...credentials,
+            },
+          });
+          expect(cacheManager.del).toHaveBeenCalledWith(
+            `toolsets:single:user1:${toolsetName}`,
+          );
+        }
+      },
+    );
 
     it('posts API key credentials to the signin endpoint', async () => {
       const { service } = makeWriteService();
@@ -230,6 +311,74 @@ describe('ToolsetsAuthService', () => {
 
   describe('logoutToolset', () => {
     const id = 'toolsets/test-bucket/My%20toolset__0.0.1';
+
+    it.each(authResourceIds)(
+      'signs out %s using its own identity',
+      async (toolsetName, expectedUrl) => {
+        const { service, cacheManager } = makeWriteService();
+        const signoutSpy = vi
+          .spyOn(service['dialClient'].client, 'toolSetSignout')
+          .mockResolvedValue(mutationSdkOk);
+
+        await service.logoutToolset(
+          'user1',
+          'token',
+          'test-bucket',
+          toolsetName,
+          {
+            url: 'different-resource',
+            credentialsLevel: ToolsetCredentialsLevel.User,
+            authenticationType: ToolsetAuthType.OAuth,
+          },
+        );
+
+        expect(signoutSpy).toHaveBeenCalledWith({
+          headers: { Authorization: 'Bearer token' },
+          body: {
+            url: expectedUrl,
+            credentialsLevel: ToolsetCredentialsLevel.User,
+            authenticationType: ToolsetAuthType.OAuth,
+          },
+        });
+        expect(cacheManager.del).toHaveBeenCalledWith(
+          `toolsets:single:user1:${toolsetName}`,
+        );
+      },
+    );
+
+    it('looks up the authentication type for a platform toolset without a bucket', async () => {
+      const { service } = makeWriteService();
+      const toolsetName = 'NS_toolset_1097_test';
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse({
+          id: toolsetName,
+          auth_settings: { authentication_type: 'API_KEY' },
+        }),
+      );
+      const signoutSpy = vi
+        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.logoutToolset(
+        'user1',
+        'token',
+        'test-bucket',
+        toolsetName,
+        {
+          url: toolsetName,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+        },
+      );
+
+      expect(signoutSpy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token' },
+        body: {
+          url: toolsetName,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+          authenticationType: ToolsetAuthType.ApiKey,
+        },
+      });
+    });
 
     it('posts to the signout endpoint and invalidates caches', async () => {
       const { service, cacheManager } = makeWriteService();
