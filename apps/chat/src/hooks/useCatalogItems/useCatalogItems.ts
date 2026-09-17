@@ -29,7 +29,11 @@ import { CatalogI18nKeys } from '../../constants/translation-keys';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
 import { getPrompt, getPublicPrompt } from '../../server-api/prompts.api';
-import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
+import {
+  downloadSkillFile,
+  getSkillMetadata,
+  listSkillFiles,
+} from '../../server-api/skills.api';
 import { CATALOG_TAB_ORDER } from '../../types/catalog';
 import { buildSkillOverviewLabels } from '../../utils/catalog';
 import {
@@ -172,6 +176,7 @@ export const useCatalogItems = ({
       getPublicPrompt,
       downloadSkillFile,
       listSkillFiles,
+      getSkillMetadata,
     }),
     [],
   );

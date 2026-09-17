@@ -43,6 +43,16 @@ export interface SkillDetailsApi {
     },
     signal?: AbortSignal,
   ): Promise<SkillFileListResponseDto>;
+  /**
+   * Fetches a single skill's own authoritative metadata (`author`,
+   * `updatedAt`, and the rest of `SkillMetadataItemDto`) — not the catalog
+   * listing entry, which may be sparse for a shared skill.
+   */
+  getSkillMetadata(
+    bucket: string,
+    path: string,
+    signal?: AbortSignal,
+  ): Promise<SkillMetadataItemDto>;
 }
 
 /** Options accepted by `useSkillItemDetails`. */
@@ -81,10 +91,11 @@ export interface UseSkillItemDetailsResult {
 
 /**
  * Headless hook that encapsulates skill detail fetching: manifest download and
- * parse, package file listing, overview construction, and in-package file
- * loads. `useCatalogItemDetails` delegates its skill branch here; hosts that
- * only surface skill details consume this hook directly, without the
- * deployment and prompt ports the full catalog pipeline requires.
+ * parse, package file listing, authoritative metadata fetching, overview
+ * construction, and in-package file loads. `useCatalogItemDetails` delegates
+ * its skill branch here; hosts that only surface skill details consume this
+ * hook directly, without the deployment and prompt ports the full catalog
+ * pipeline requires.
  */
 export const useSkillItemDetails = ({
   api,
@@ -104,11 +115,12 @@ export const useSkillItemDetails = ({
       const { bucket, path } = parsed;
       openSkillRef.current = parsed;
 
-      const [manifest, files] = await Promise.allSettled([
+      const [manifest, files, metadata] = await Promise.allSettled([
         api
           .downloadSkillFile(bucket, path, SKILL_MANIFEST_FILE)
           .then(readSkillManifest),
         api.listSkillFiles({ bucket, path, filePath: '', recursive: true }),
+        api.getSkillMetadata(bucket, path),
       ]);
 
       const parsedManifest =
@@ -116,7 +128,15 @@ export const useSkillItemDetails = ({
           ? parseSkillManifestDocument(manifest.value)
           : undefined;
 
-      const skill = skills.find((candidate) => candidate.url === item.id);
+      /*
+       * Authoritative when the metadata request fulfilled (D7): the listing
+       * entry is only the fallback for a rejection, never a gap-filler for a
+       * fulfilled response missing a field.
+       */
+      const skill =
+        metadata.status === 'fulfilled'
+          ? metadata.value
+          : skills.find((candidate) => candidate.url === item.id);
 
       const overview =
         files.status === 'fulfilled'
