@@ -1,6 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
+import { USAGE_DASHBOARD_CLASS } from '../../constants/public-class-names';
 import {
   UsageLimitCardProps,
   UsageLimitStatus,
@@ -62,6 +63,7 @@ export const UsageLimitCard: FC<UsageLimitCardProps> = ({
   return (
     <div
       className={mergeClasses(
+        USAGE_DASHBOARD_CLASS.card,
         'flex min-w-0 flex-col gap-4 rounded-xl px-6 py-5 shadow-md',
         styles.card,
       )}

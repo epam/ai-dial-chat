@@ -9,9 +9,11 @@ import {
   ToolsetAuthTypes,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { TOOLSET_EDITOR_CLASS } from '../../constants/public-class-names';
 import type { ToolsetEditorProps } from '../../models/toolset-editor-props';
 import type {
   ToolsetAuthFormData,
@@ -372,7 +374,10 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
       leftContent={
         <EditorSection
           title={labels?.layout?.metadataSectionTitle ?? 'Metadata'}
-          className="border-0 p-4 desktop:p-6"
+          className={mergeClasses(
+            TOOLSET_EDITOR_CLASS.metadataSection,
+            'border-0 p-4 desktop:p-6',
+          )}
         >
           <GeneralForm
             form={form}
@@ -391,7 +396,10 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
       rightContent={
         <EditorSection
           title={labels?.layout?.setupSectionTitle ?? 'Setup'}
-          className="border-0 p-4 desktop:p-6"
+          className={mergeClasses(
+            TOOLSET_EDITOR_CLASS.setupSection,
+            'border-0 p-4 desktop:p-6',
+          )}
         >
           <SettingsForm
             form={form}

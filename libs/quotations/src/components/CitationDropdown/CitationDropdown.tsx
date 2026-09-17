@@ -2,6 +2,7 @@ import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Tooltip } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useCallback, useId, useMemo } from 'react';
+import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 import { useCitationCardContext } from '../../context/CitationCardContext';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 import {
@@ -88,6 +89,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       onOpenChange={handleOpenChange}
       triggerClassName="ms-1 inline-flex align-middle"
       contentClassName={mergeClasses(
+        QUOTATIONS_CLASS.citationDropdown,
         '!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none',
         styles.content,
       )}

@@ -394,3 +394,32 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
 - `ModelLimitsTypography` — typography class overrides
 - `ResetTimeDisplayLike` — `{ resetsAtMs, isoValue, label, ariaLabel }`, the structural shape `formatResetTime` returns
 - `FormatResetTime` — `(resetsAt: string | undefined) => ResetTimeDisplayLike | undefined`
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key         | Class                             | Element                                                           |
+| ----------- | --------------------------------- | ----------------------------------------------------------------- |
+| `card`      | `dial-usage-dashboard-card`       | One usage-limit card, which carries the themed CSS variables      |
+| `cardGroup` | `dial-usage-dashboard-card-group` | The responsive grid a `UsageLimitCardGroup` lays its cards out in |
+
+```tsx
+import { USAGE_DASHBOARD_CLASS } from '@epam/ai-dial-usage-dashboard';
+
+USAGE_DASHBOARD_CLASS.card; // 'dial-usage-dashboard-card'
+```
+
+A card's accessible name is built from its title and its period description,
+both localisable, so it was never usable as a selector.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

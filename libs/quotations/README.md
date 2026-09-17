@@ -201,3 +201,29 @@ adapter after the backend emits precise table-cell ranges and persisted anchors
 no longer need it.
 
 `gatherSameSourceAnnotations(clicked, annotations)` returns every annotation in `annotations` whose `body.source.attachment.url` equals `clicked`'s, in original order, gathering across the whole list (not one `cit`-id group, unlike `groupAnnotationsByCitId`) — keyed on URL only, since two different files can share a display title.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key                | Class                               | Element                                                                 |
+| ------------------ | ----------------------------------- | ----------------------------------------------------------------------- |
+| `citationCard`     | `dial-quotations-citation-card`     | The card's `role="dialog"` root, which carries the themed CSS variables |
+| `citationDropdown` | `dial-quotations-citation-dropdown` | The floating panel a `CitationDropdown` reveals, holding the card       |
+
+```tsx
+import { QUOTATIONS_CLASS } from '@epam/ai-dial-quotations';
+
+QUOTATIONS_CLASS.citationCard; // 'dial-quotations-citation-card'
+```
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.
