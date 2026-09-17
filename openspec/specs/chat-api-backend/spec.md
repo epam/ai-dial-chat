@@ -1,7 +1,10 @@
 ## Purpose
 
-Define the Chat API application's bootstrap, security, validation, health, rate-limiting,
+Define the Chat API application's bootstrap, security, validation, health,
 shared in-memory cache, and theme-service requirements.
+
+The BFF does not enforce global or per-route request-rate limits. Upstream rate-limit
+responses follow the error mapping defined by each domain.
 
 ## Requirements
 
@@ -76,7 +79,7 @@ The application SHALL validate required environment variables at bootstrap using
 
 ### Requirement: Health check endpoint
 
-The application SHALL expose `GET /api/health` returning HTTP 200 with a JSON body containing at minimum `{ "status": "ok" }`. This endpoint SHALL be exempt from rate limiting and authentication.
+The application SHALL expose `GET /api/health` returning HTTP 200 with a JSON body containing at minimum `{ "status": "ok" }`. This endpoint SHALL be exempt from authentication.
 
 The response body SHALL additionally include a `buildId` string field: a stable identifier for the currently served frontend deployment, derived by hashing the built frontend's `index.html` once when the application process starts (no dedicated deploy-time environment variable required). `buildId` SHALL change whenever a new deployment replaces the served frontend static assets, and SHALL stay constant across repeated calls against the same running process. Because every pod serving the same deployed image bundles an identical `index.html`, all pods behind a load balancer report the same `buildId` for a given deployment. This field is the mechanism the frontend uses to detect that a newer build has been deployed while a tab is open (see the `frontend-new-version-reload` capability).
 
@@ -145,17 +148,6 @@ reverse-tabnabbing protection.
 - **WHEN** any Chat page is served through the API application
 - **THEN** its `Cross-Origin-Opener-Policy` response header is
   `same-origin-allow-popups`
-
----
-
-### Requirement: Rate limiting on public endpoints
-
-The application SHALL configure `@nestjs/throttler` globally. Theme endpoints (`/api/themes`, `/api/themes/icon`) SHALL be subject to the default throttle limit. Requests exceeding the limit SHALL return HTTP 429.
-
-#### Scenario: Excessive requests return 429
-
-- **WHEN** a client exceeds the configured request rate for a theme endpoint
-- **THEN** the endpoint returns HTTP 429 Too Many Requests
 
 ---
 

@@ -255,7 +255,7 @@ Failures SHALL resolve `undefined` exactly as the existing deployment path does,
 - **RTL / direction impact**: the Content tab and folder breadcrumb use logical properties only; no new physical-direction class and no mirrored icon are introduced by the app adapter.
 - **Accessibility**: the Content tab's copy control keeps a stable `aria-label` with a separate `role="status" aria-live="polite"` confirmation region; the Prompts tab participates in the existing `Tabs` keyboard model unchanged.
 - **Observability**: none beyond the shared API client's per-request logging.
-- **Rate limiting / caching**: no new client cache. Backend throttles already apply per the prompts controller.
+- **Caching**: no new client cache.
 - **Authorization**: every prompt endpoint is session-authenticated. Personal operations default to the caller's bucket; qualified shared reads/updates pass the owner bucket and rely on DIAL Core permissions. The frontend renders Edit from normalized `canEdit`, while organisation prompts are forced read-only at both the BFF and mapper boundaries.
 
 #### Scenario: Prompt mapping does not invalidate the details fetch

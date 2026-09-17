@@ -51,8 +51,6 @@ The backend SHALL expose `PATCH /api/v1/conversations/viewed` in `apps/chat-api/
 
 Authorization: any authenticated user may mark their own bucket's conversation ids as viewed; the conversation is scoped to the caller's `bucket` from `SessionUser` — no cross-user access is possible since the file lives in the caller's own bucket.
 
-Rate limiting: global default applies (no handler-level `@Throttle` override — this is a lightweight idempotent write, not resource creation).
-
 Generated-client impact:
 - OpenAPI operationId: `markConversationViewed`
 - SDK method: `ConversationsApi.markConversationViewed({ path })`

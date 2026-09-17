@@ -22,7 +22,6 @@ The endpoint:
 - MUST proxy to `GET <DIAL_CORE_URL>/openai/models` forwarding `Authorization: Bearer <session.at>` as the upstream auth header
 - MUST NOT forward the `DIAL_API_KEY` to the client or use it as the upstream credential on this route
 - SHALL return `200 OK` with body `{ "data": DialModel[] }` mirroring the DIAL Core response shape
-- SHALL apply per-route rate limiting of **60 req/min per IP** (tighter than the global 100 req/min default) via `@Throttle`
 - SHALL cache the upstream response server-side for **30 seconds** using cache key `models:list:<user.sub>`; a cache hit MUST NOT re-call DIAL Core
 - MUST set `Cache-Control: private, max-age=30` on the HTTP response so browsers and shared proxies do not cache the user-specific list
 
@@ -60,11 +59,6 @@ The endpoint:
 
 - **WHEN** DIAL Core responds with a 5xx error (e.g. `500`, `502`)
 - **THEN** the BFF returns `502 Bad Gateway`
-
-#### Scenario: Rate limit exceeded
-
-- **WHEN** a caller sends more than 60 requests per minute to this endpoint
-- **THEN** the BFF returns `429 Too Many Requests`
 
 #### Scenario: Cache hit avoids upstream call
 

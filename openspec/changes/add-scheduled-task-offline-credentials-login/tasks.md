@@ -104,11 +104,11 @@
       offline-credentials.controller.ts`: `@Controller({ path:
       'offline-credentials', version: '1' })`, `@UseGuards(FeatureGuard)`,
       `@RequireFeature(FeatureKey.ScheduledTasksEnabled)`. `GET` handler
-      (`operationId: getOfflineCredentials`, `@Throttle 60/60000`,
+      (`operationId: getOfflineCredentials`,
       `@Header('Cache-Control', 'private, no-store')`) reading `req.user as
       SessionUser`'s `at`. `POST 'signin'` handler (`operationId:
-      signInOfflineCredentials`, `@HttpCode(200)`, `@Throttle 10/60000`).
-      Annotate every status (200/400/401/403/429/502/503) with
+      signInOfflineCredentials`, `@HttpCode(200)`).
+      Annotate every status (200/400/401/403/429/502/503, with 429 coming from DIAL Core) with
       `@ApiResponse` per `apps/chat-api/AGENTS.md` §3.
       **Discrepancy vs design.md's controller sketch**: design.md's Decision
       2 code snippet shows `@UseGuards(FeatureGuard)`/`@RequireFeature(...)`
@@ -142,14 +142,7 @@
 - [x] 2.8 Write `apps/chat-api/src/offline-credentials/tests/
       offline-credentials.controller.spec.ts` (supertest): happy path
       200/200, 400 (bad body / disallowed redirectUri), 401, 403 (flag off),
-      429 (rate-limit boundary), 502, 503 — per
-      `apps/chat-api/AGENTS.md` §11.
-      429 (rate-limit boundary) is not exercised in this integration spec,
-      matching `ExternalServicesController`'s own controller spec
-      (`external-services.controller.spec.ts`), which also omits it — the
-      isolated `TestingModule` doesn't wire the global `ThrottlerGuard`
-      from `AppModule`, so rate-limit behavior isn't observable at this
-      test's scope in the established pattern either.
+      502, 503 — per `apps/chat-api/AGENTS.md` §11.
 - [x] 2.9 Write `apps/chat-api/src/offline-credentials/tests/
       offline-credentials.service.spec.ts` and `.../
       offline-credentials.mapper.spec.ts` with `DialClientService` mocked —

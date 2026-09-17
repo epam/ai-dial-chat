@@ -18,7 +18,6 @@ The endpoint:
 - MUST NOT forward the `DIAL_API_KEY` to the client or use it as the upstream credential on this route
 - SHALL return `200 OK` with a `DeploymentLimitsResponseDto` body on success
 - SHALL return `404 Not Found` when DIAL Core responds with `404` (limits not configured or deployment not found)
-- SHALL apply per-route rate limiting of **60 req/min per IP** via `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - MUST NOT cache the response server-side — every request MUST call DIAL Core (usage data is real-time)
 - MUST set `Cache-Control: private, no-store` on the HTTP response
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError` (401, 403, 404, 429, 502, 503)
@@ -68,11 +67,6 @@ Each stats field SHALL be typed as `LimitStatsDto` with `{ total: number; used: 
 
 - **WHEN** DIAL Core does not respond within the configured timeout
 - **THEN** the BFF returns `503 Service Unavailable`
-
-#### Scenario: Rate limit exceeded
-
-- **WHEN** a caller sends more than 60 requests per minute to this endpoint
-- **THEN** the BFF returns `429 Too Many Requests`
 
 #### Scenario: No server-side cache on repeated calls
 

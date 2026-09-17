@@ -425,7 +425,7 @@ The dispatcher fires one upload every `60000 / MAX_UPLOADS_PER_MINUTE` ms (600 m
 
 The rate limiter is implemented via `runAtRate` from `libs/conversation-input/src/utils/concurrency.ts`. The constant `MAX_UPLOADS_PER_MINUTE` is defined in `libs/conversation-input/src/constants/upload.ts`.
 
-This rate matches the backend throttle on `POST /api/v1/files` exactly — 100 requests per 60 seconds, see the `file-upload` capability — so a normal batch never trips it. A `429` that does reach the client SHALL surface as `RequestStatus.Error` on the affected attachment card, consistent with other upload failures.
+This is client-side upload pacing; the BFF does not enforce a matching request-rate limit. A `429` that does reach the client SHALL surface as `RequestStatus.Error` on the affected attachment card, consistent with other upload failures.
 
 Attachments that fail `validateAttachment` are marked `RequestStatus.Error` synchronously before the dispatcher starts.
 

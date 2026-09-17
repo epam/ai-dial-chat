@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`POST /api/v1/files/delete`: its DTOs, service behavior, cache invalidation, and rate limiting.
+`POST /api/v1/files/delete`: its DTOs, service behavior, and cache invalidation.
 
 ## Requirements
 
@@ -58,12 +58,10 @@ Folder = 'folder'
 ```typescript
 @Post('delete')
 @HttpCode(200)
-@Throttle({ default: { limit: 10, ttl: 60000 } })
 @ApiOperation({ summary: 'Delete files and folders' })
 @ApiResponse({ status: 200, type: DeleteFilesResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid request body' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
-@ApiResponse({ status: 429, description: 'Rate limit exceeded' })
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable or timed out' })
 async deleteFiles(
@@ -98,10 +96,6 @@ async deleteFiles(
 #### Cache key and invalidation
 
 This endpoint does not manage server-side cache. Cache TTL/invalidation is frontend-only (per the hook design).
-
-#### Rate limiting
-
-`@Throttle({ default: { limit: 10, ttl: 60000 } })` — 10 calls per 60 s per authenticated user.
 
 #### Concrete example
 
@@ -152,7 +146,6 @@ HTTP 400
 
 ---
 
-
 #### Scenario: Delete a single file
 
 - **GIVEN** a valid session and `items = [{ bucket, path: "report.pdf", nodeType: "item" }]`
@@ -194,14 +187,6 @@ HTTP 400
 - **GIVEN** DIAL Core times out
 - **WHEN** delete is called
 - **THEN** `503 Service Unavailable`
-
-#### Scenario: Rate limit exceeded
-
-- **GIVEN** user has sent 10 delete requests in the last 60 s
-- **WHEN** an 11th request arrives
-- **THEN** `429 Too Many Requests`
-
----
 
 ## Tests
 

@@ -147,9 +147,9 @@ to any toolset returned to the client.
 - **WHEN** a login request is processed
 - **THEN** the API does not write the API key, client secret, or code to logs
 
-### Requirement: Endpoints are versioned, rate-limited, and documented
-All new write endpoints SHALL be URI-versioned at `/api/v1/toolsets`, SHALL declare
-`@Throttle` rate limits, and SHALL document every response status via `@ApiResponse`, with
+### Requirement: Endpoints are versioned and documented
+All new write endpoints SHALL be URI-versioned at `/api/v1/toolsets` and SHALL
+document every response status via `@ApiResponse`, with
 handler names suitable for the generated client (e.g. `createToolset`, `updateToolset`,
 `deleteToolset`, `loginToolset`, `logoutToolset`).
 

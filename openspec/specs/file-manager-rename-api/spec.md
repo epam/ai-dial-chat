@@ -14,8 +14,6 @@ The BFF SHALL expose `POST /api/v1/files/rename` that accepts a batch of file/fo
 
 **Authorization**: session cookie → `req.user.at` (bearer token forwarded to DIAL Core). Same as all other files endpoints.
 
-**Rate limit**: `@Throttle({ default: { limit: 10, ttl: 60000 } })` — 10 requests/minute per user (same as delete; folder rename fans out many Core calls).
-
 #### Request DTO
 
 **`RenameItemNodeType`** (string enum, `apps/chat-api/src/files/dto/rename-files.dto.ts`):
@@ -62,12 +60,10 @@ Folder = 'folder'
 ```typescript
 @Post('rename')
 @HttpCode(200)
-@Throttle({ default: { limit: 10, ttl: 60000 } })
 @ApiOperation({ summary: 'Rename files and folders' })
 @ApiResponse({ status: 200, type: RenameFilesResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid request body' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
-@ApiResponse({ status: 429, description: 'Rate limit exceeded' })
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable or timed out' })
 async renameFiles(

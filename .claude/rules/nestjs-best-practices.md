@@ -14,8 +14,8 @@ alwaysApply: false
   routes resolve to `/api/v1/<resource>`. Infrastructure endpoints (health, metrics) are
   exempt — use plain `@Controller('health')`.
 - **Controllers are thin**: `@ApiTags` + `@Controller({ path, version })`, `@ApiOperation` +
-  `@ApiResponse` for **every** status code, `@Throttle` per public endpoint, delegate to a
-  service. Reference: `apps/chat-api/src/themes/theme.controller.ts`.
+  `@ApiResponse` for **every** status code, delegate to a service.
+  Reference: `apps/chat-api/src/themes/theme.controller.ts`.
 - **OpenAPI is part of endpoint implementation**: handler names become generated SDK method
   names through `operationIdFactory`, so use names like `listModels`/`getCurrentUser`.
   Success `@ApiResponse` entries need `type`, `schema`, or `content`; path/query params need
@@ -44,7 +44,7 @@ alwaysApply: false
   log tokens, refresh tokens, cookie payloads, or full bodies for auth/payment endpoints.
 - **Tests co-locate**: `*.spec.ts` next to the source. Use `@nestjs/testing` for units
   and `supertest` for e2e. Cover happy path + every thrown exception + validation
-  rejection (incl. path traversal) + rate-limit boundary.
+  rejection (incl. path traversal).
 
 ## Verification after each slice
 

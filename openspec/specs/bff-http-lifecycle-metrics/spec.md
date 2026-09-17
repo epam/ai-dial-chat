@@ -14,7 +14,7 @@ instrumentation SHALL NOT alter request parsing, authentication, CORS, exception
 response bodies, or routing behavior.
 
 #### Scenario: Guard rejection is observed
-- **WHEN** a request is rejected by an authentication, CSRF, feature-flag, or rate-limiting guard
+- **WHEN** a request is rejected by an authentication, CSRF, or feature-flag guard
   before reaching any controller
 - **THEN** `dial.chat.http.requests.started` is incremented for that request
 - **AND** `dial.chat.http.response.duration` records exactly one terminal data point for it

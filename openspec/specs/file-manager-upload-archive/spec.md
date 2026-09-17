@@ -16,8 +16,6 @@ The file-count limit SHALL be enforced before extraction/upload starts. `FilesUp
 
 **Authorization**: session cookie → `req.user.at`, identical to `POST /api/v1/files`. Core enforces WRITE permission on the destination per entry, surfaced as a per-entry `"Forbidden"` result (matching how `/copy`/`/move` surface per-item Core-side authorization failures).
 
-**Rate limit**: `@Throttle({ default: { limit: 5, ttl: 60000 } })` — matching `/download-archive`'s stricter limit (archive operations are heavier than single-file operations).
-
 **Caching**: no NestJS cache read/write. Frontend-side folder-listing cache for the parent destination folder is invalidated by the hook on completion so the archive-named child folder appears in the refreshed listing.
 
 #### Request
@@ -48,7 +46,6 @@ Multipart fields: `file` (the ZIP, binary), `bucket` (string), `destinationPath`
 ```typescript
 @Post('upload-archive')
 @HttpCode(200)
-@Throttle({ default: { limit: 5, ttl: 60000 } })
 @UseInterceptors(FileInterceptor('file'))
 @ApiConsumes('multipart/form-data')
 @ApiBody({
@@ -68,7 +65,6 @@ Multipart fields: `file` (the ZIP, binary), `bucket` (string), `destinationPath`
 @ApiResponse({ status: 401, description: 'Not authenticated' })
 @ApiResponse({ status: 413, description: 'Archive exceeds ARCHIVE_UPLOAD_MAX_BYTES' })
 @ApiResponse({ status: 422, description: 'Archive exceeds ARCHIVE_UPLOAD_MAX_FILES or ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES' })
-@ApiResponse({ status: 429, description: 'Rate limit exceeded' })
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable, timed out, or ARCHIVE_UPLOAD_TIMEOUT_MS exceeded' })
 uploadArchive(
