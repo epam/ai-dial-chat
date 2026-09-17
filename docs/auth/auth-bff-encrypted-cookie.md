@@ -193,7 +193,7 @@ _Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-to
 
 **This is a separate flow from application OIDC login (5.1) and does not touch the session cookie.** The user is already authenticated to Chat; this flow lets DIAL Core ask that already-authenticated user to (re)supply credentials mid-completion, via a generic client-channel RPC mechanism, for either of two distinct resource kinds:
 
-- **Toolsets** — a `toolset/signin` event, handled by `apps/chat-api/src/toolsets/` (`POST /api/v1/toolsets/{name}/login|logout`).
+- **Toolsets** — a `toolset/signin` event, handled by `apps/chat-api/src/toolsets/` (`POST /api/v1/toolsets/{name}/login|logout`). These authentication endpoints accept both bucket-qualified toolset references and bucketless platform deployment IDs, including applications configured as toolsets. The BFF derives the upstream `url` from the route parameter and percent-decodes it for Core's credential API without adding a bucket or resource prefix to platform IDs.
 - **Application external services** — an `external-service/signin` event (`params.url` identifying an `applications/{bucket}/{app}/external_services/{serviceId}` resource), handled by `apps/chat-api/src/external-services/` (`GET /api/v1/external-services/{appId}/{serviceId}`, `POST .../signin`, `POST .../signout`), proxying DIAL Core's `GET /v1/applications/{appId}/external-services/{id}` and `POST /v1/ops/external-service/signin|signout`.
 
 Both kinds share the exact same channel plumbing:
