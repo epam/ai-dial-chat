@@ -495,7 +495,10 @@ import { CatalogEntityType, FeaturedChip } from '@epam/ai-dial-chat-shared';
 <FeaturedChip
   type={CatalogEntityType.Agent}
   label="Featured"
-  style={{ backgroundColor: 'var(--bg-control-accent)', color: 'var(--text-control-permanent)' }}
+  style={{
+    backgroundColor: 'var(--bg-control-accent)',
+    color: 'var(--text-control-permanent)',
+  }}
 />;
 ```
 

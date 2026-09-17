@@ -302,7 +302,8 @@ describe('Input while dictating', () => {
      */
     const slotObserveCallCount = () =>
       observe.mock.calls.filter(
-        ([target]) => (target as HTMLElement).textContent === 'Web search skill',
+        ([target]) =>
+          (target as HTMLElement).textContent === 'Web search skill',
       ).length;
 
     expect(screen.getByText('Web search skill')).toBeTruthy();

@@ -14,6 +14,7 @@ import { getDeploymentDetails } from '../../../server-api/deployments';
 import { getPrompt, getPublicPrompt } from '../../../server-api/prompts.api';
 import {
   downloadSkillFile,
+  getSkillMetadata,
   listSkillFiles,
 } from '../../../server-api/skills.api';
 import { useCatalogItems } from '../useCatalogItems';
@@ -34,6 +35,7 @@ vi.mock('../../../server-api/prompts.api', () => ({
 vi.mock('../../../server-api/skills.api', () => ({
   downloadSkillFile: vi.fn(),
   listSkillFiles: vi.fn(),
+  getSkillMetadata: vi.fn(),
 }));
 
 /* Matches the global `react-i18next` mock (`t(key) => key`) used by every other spec in this app. */
@@ -682,6 +684,28 @@ describe('useCatalogItems', () => {
         expect(details?.promptContent?.content).toContain(
           'Revenue skill manifest',
         );
+      });
+
+      it('calls the metadata wrapper with the bucket and path parsed from the resource URL', async () => {
+        mockSkillDetailRequests('Revenue skill manifest');
+
+        const { result } = renderHook(() =>
+          useCatalogItems(makeParams({ skills: [personalSkill] })),
+        );
+        await result.current.onFetchDetails(getSkillItem(result));
+
+        expect(getSkillMetadata).toHaveBeenCalledWith(
+          'my-bucket',
+          'analysis/revenue-skill',
+        );
+      });
+
+      it('issues no per-skill metadata request while the catalog is loading', () => {
+        renderHook(() =>
+          useCatalogItems(makeParams({ skills: [personalSkill] })),
+        );
+
+        expect(getSkillMetadata).not.toHaveBeenCalled();
       });
 
       it('keeps the file overview when the manifest read fails', async () => {
