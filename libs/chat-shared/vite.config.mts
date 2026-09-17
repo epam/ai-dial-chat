@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
 import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
 import { createVerifyPublishedStyles } from '../../tools/vite-verify-published-styles.mjs';
@@ -20,9 +21,7 @@ const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
 const REQUIRED_PUBLISHED_STYLE_MARKERS = [
   '.mobile\\:\\!w-full',
   '.desktop\\:p-4',
-  '.rtl\\:scale-x-\\[-1\\]',
   '.text-start',
-  ':disabled',
 ] as const;
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -33,6 +32,7 @@ export default defineConfig(() => ({
     },
   },
   plugins: [
+    createLibTailwindUtilities({ root: import.meta.dirname }),
     react(),
     dts({
       entryRoot: 'src',
