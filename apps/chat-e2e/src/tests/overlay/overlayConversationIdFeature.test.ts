@@ -14,9 +14,7 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
-const conversationName = GeneratorUtil.randomString(7).concat(
-  'overlayConversationName',
-);
+const conversationName = 'overlayConversationName';
 const expectedPlaybackConversationName =
   ExpectedConstants.playbackConversation.concat(conversationName);
 const expectedConversationId = `conversations/public/${PseudoModel.playback}__${expectedPlaybackConversationName}__${ExpectedConstants.defaultEntityVersion}`;
