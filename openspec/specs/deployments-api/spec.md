@@ -19,7 +19,6 @@ The endpoint:
 - SHALL respond 200 with `{ deployments: DeploymentItemDto[] }` on success.
 - SHALL respond 502 when DIAL Core returns a non-2xx response.
 - SHALL respond 503 when DIAL Core is unreachable or times out.
-- SHALL apply `@Throttle({ default: { limit: 60, ttl: 60000 } })`.
 - SHALL cache the unfiltered DIAL Core response under key `deployments:list:<userSub>` for 30 000 ms and filtered DIAL Core responses under key `deployments:list:<userSub>:interface:<type[,type]>` for 30 000 ms.
 - SHALL, when a filtered cache entry is absent but the unfiltered cache entry is present, apply `interface_type` filtering in-process after cache retrieval without calling DIAL Core.
 - SHALL bypass server-side deployments cache entirely when `refresh=true`, call DIAL Core, and replace the relevant cache entry with the fresh mapped response.
@@ -73,11 +72,6 @@ The endpoint:
 
 - **WHEN** `GET /api/v1/deployments` is called without a valid session cookie
 - **THEN** the endpoint responds 401
-
-#### Scenario: Rate limit exceeded
-
-- **WHEN** the request rate exceeds 60 per minute for the client IP
-- **THEN** the endpoint responds 429
 
 #### Scenario: DIAL Core unreachable
 

@@ -1,4 +1,8 @@
-import type { CustomVisualizer } from '@epam/ai-dial-chat-shared';
+import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
+import type {
+  ApplicationVisualizerRegistry,
+  CustomVisualizer,
+} from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   FC,
@@ -10,7 +14,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { AnnouncementItem } from '../models/announcement';
 import { getClientConfig } from '../server-api/app-config.api';
 import { AuthStatus } from '../types/auth-status';
 import { UserConfigStatus } from '../types/user-config-status';
@@ -39,10 +42,11 @@ export interface AppConfigState {
     announcementHtml: string | null;
     announcementTitle: string | null;
     announcementDescription: string | null;
-    announcements: AnnouncementItem[];
+    announcements: AnnouncementListItem[];
     welcomeScreenDescription: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
+    applicationVisualizers: ApplicationVisualizerRegistry;
     publicationFilterSources: string[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
@@ -71,6 +75,7 @@ const INITIAL_STATE: AppConfigState = {
     welcomeScreenDescription: null,
     footerHtmlMessage: '',
     customVisualizers: [],
+    applicationVisualizers: {},
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
   },
 };
@@ -120,6 +125,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               response.config?.welcomeScreenDescription ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
             customVisualizers: response.config?.customVisualizers ?? [],
+            applicationVisualizers:
+              response.config?.applicationVisualizers ?? {},
             publicationFilterSources:
               response.config?.publicationFilterSources ??
               DEFAULT_PUBLICATION_FILTER_SOURCES,

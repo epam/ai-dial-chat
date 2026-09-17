@@ -33,13 +33,9 @@ the `scheduledTasksEnabled` feature flag before returning a response.
   feature flag enabled
 - **THEN** the endpoint returns `403`
 
-#### Scenario: Rate limit exceeded
-- **WHEN** a caller exceeds 60 requests per 60 seconds to this endpoint
-- **THEN** the endpoint returns `429`
-
 #### Scenario: Upstream error
 - **WHEN** DIAL Core returns a non-OK response
-- **THEN** the endpoint returns `502`
+- **THEN** the endpoint applies the shared `mapDialHttpStatus` mapping, including `429` for an upstream rate-limit response and `502` for upstream server errors
 
 #### Scenario: Upstream unreachable
 - **WHEN** DIAL Core is unreachable or times out
@@ -85,13 +81,9 @@ DIAL Core's `POST /v1/user/offline-credentials/signin` via
   feature flag enabled
 - **THEN** the endpoint returns `403`
 
-#### Scenario: Rate limit exceeded
-- **WHEN** a caller exceeds 10 requests per 60 seconds to this endpoint
-- **THEN** the endpoint returns `429`
-
 #### Scenario: Upstream error
 - **WHEN** DIAL Core returns a non-OK response (`response.error`)
-- **THEN** the endpoint returns `502` with the upstream message when available
+- **THEN** the endpoint applies the shared `mapDialHttpStatus` mapping, including `429` for an upstream rate-limit response and `502` for upstream server errors, with the upstream message when the mapper permits it
 
 #### Scenario: Upstream unreachable
 - **WHEN** DIAL Core is unreachable or times out

@@ -12,7 +12,6 @@ The system SHALL expose `GET /api/v1/files/list` accepting `bucket` (required), 
 
 The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket (or any explicitly specified bucket the user has access to via DIAL Core permissions). It is NOT used for shared-with-me or public/organization listings — those are served by the new `GET /api/v1/files/shared` and `GET /api/v1/files/public` endpoints defined in the `file-manager-shared-list` spec. No `source`, `tab`, or `sharedWithMe`/`publishedWithMe` query parameters are added to this endpoint.
 
-- **Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })` (same as download; listing is read-only metadata).
 - **HTTP method / route**: `GET /api/v1/files/list`
 - **operationId**: `listFiles` → generated SDK method `filesApi.listFiles(...)`.
 - **Request content-type**: none (query params only).

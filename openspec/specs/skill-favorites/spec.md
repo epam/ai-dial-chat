@@ -37,7 +37,6 @@ A new endpoint SHALL be added to `apps/chat-api/src/user-config/user-config.cont
 
 - **Method / path**: `PATCH /api/v1/user-config/skills`
 - **Authorization**: session-authenticated (a valid session cookie); operates only on the caller's own config document; no role requirement.
-- **Rate limiting**: inherits the global throttler default; no stricter per-route `@Throttle` is needed, since the call is user-initiated one-per-click.
 - **Request body** (`UpdateInstalledSkillDto`, in `apps/chat-api/src/user-config/dto/update-installed-skill.dto.ts`): a `class-validator`-validated class with `id: string` (`@IsString`, `@MinLength(1)`, `@MaxLength(2048)`, and an allowlist `@Matches` accepting `skills/{bucket}/{path}` — the same shape `parseSkillResourceUrl` accepts, so the value can never reach a path or a log line unvalidated) and `isInstalled: boolean` (`@IsBoolean`). Both fields carry `@ApiProperty` with a description and example.
 - **Success response**: `204 No Content`, no body.
 - **Error responses**: `400` missing or invalid body, `401` not authenticated, plus the upstream-failure statuses the service already maps.

@@ -11,6 +11,20 @@ import DefaultAgentSelect from '../DefaultAgentSelect';
 type TriggerProps = ComponentProps<typeof DeploymentSelectorFieldTrigger>;
 
 /*
+ * The field shows the mode that is actually in effect while nothing is stored,
+ * and the pin is what decides which mode that is — so the flag has to be
+ * steerable per test.
+ */
+const appConfigMock = vi.hoisted(() => ({ defaultDeploymentPinned: true }));
+
+vi.mock('../../../../context/AppConfigContext', () => ({
+  useFeatureFlag: (key: string) =>
+    key === 'defaultDeploymentPinned'
+      ? appConfigMock.defaultDeploymentPinned
+      : false,
+}));
+
+/*
  * The real trigger opens a floating panel over live deployment/favorites
  * context. Stubbing it to a flat list keeps these tests on this component's
  * own contract: the mode rows it contributes, the value it hands down, what a
@@ -42,6 +56,7 @@ vi.mock('../../../DeploymentSelector/DeploymentSelectorFieldTrigger', () => ({
 describe('DefaultAgentSelect', () => {
   beforeEach(() => {
     localStorage.clear();
+    appConfigMock.defaultDeploymentPinned = true;
   });
 
   afterEach(() => {
@@ -89,12 +104,54 @@ describe('DefaultAgentSelect', () => {
     );
   });
 
-  it('defaults to the last-used-agent mode when nothing is stored', () => {
+  /*
+   * With an agent pinned and nothing stored, the pin is what a new chat
+   * follows, so the field names the default-agent mode rather than a
+   * last-used mode that is not in effect (Issue #8889).
+   */
+  it('shows the default-agent mode when nothing is stored and an agent is pinned', () => {
+    render(<DefaultAgentSelect />);
+
+    expect(
+      screen.getByText(`selected:${DefaultAgentMode.DefaultAgent}`),
+    ).toBeTruthy();
+  });
+
+  it('shows the last-used-agent mode when nothing is stored and no agent is pinned', () => {
+    appConfigMock.defaultDeploymentPinned = false;
+
     render(<DefaultAgentSelect />);
 
     expect(
       screen.getByText(`selected:${DefaultAgentMode.LastUsedAgent}`),
     ).toBeTruthy();
+  });
+
+  it('hands a stored last-used-agent choice down as the selected value', () => {
+    localStorage.setItem(
+      StorageKey.DefaultAgent,
+      DefaultAgentMode.LastUsedAgent,
+    );
+
+    render(<DefaultAgentSelect />);
+
+    expect(
+      screen.getByText(`selected:${DefaultAgentMode.LastUsedAgent}`),
+    ).toBeTruthy();
+  });
+
+  it('persists the last-used-agent sentinel when Last used agent is chosen', async () => {
+    render(<DefaultAgentSelect />);
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: SettingsI18nKeys.DefaultAgentOptionLastUsed,
+      }),
+    );
+
+    expect(localStorage.getItem(StorageKey.DefaultAgent)).toBe(
+      DefaultAgentMode.LastUsedAgent,
+    );
   });
 
   it('hands a stored deployment id down as the selected value', () => {

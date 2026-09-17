@@ -60,7 +60,7 @@ If a server-side conversations list cache is introduced in the future, this requ
 - **WHEN** `discardShared` succeeds for a conversation `itemId`
 - **THEN** only `DeploymentsService.invalidateListCache` and `ToolsetsService.invalidateListCache` are called (both pre-existing calls); no conversations-specific cache invalidation call exists to make
 
-#### Scenario: Rate limit and error mapping are shared with catalog discard, unchanged
+#### Scenario: Upstream error mapping is shared with catalog discard
 
-- **WHEN** a conversation discard request exceeds 10 requests per 60 seconds, or DIAL Core is unreachable, times out, or returns a 5xx/404/401 status
-- **THEN** the same `@Throttle({ default: { limit: 10, ttl: 60000 } })` and `mapDialHttpStatus`/`handleDialFetchError` mapping already specified in `catalog-unshare` apply identically (429 / 503 / 502 / 404 / 401 respectively)
+- **WHEN** DIAL Core returns 429, is unreachable, times out, or returns a 5xx/404/401 status for a conversation discard request
+- **THEN** the `mapDialHttpStatus`/`handleDialFetchError` mapping specified in `catalog-unshare` applies identically (429 / 503 / 502 / 404 / 401 respectively)

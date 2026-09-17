@@ -29,7 +29,7 @@ export const Header: FC<HeaderProps> = memo(
   }) => (
     <div
       className={mergeClasses(
-        'flex h-12 items-center px-4',
+        'flex h-12 items-center pe-3 ps-6',
         SIDEBAR_CLASS.header,
         className,
         styles.header,

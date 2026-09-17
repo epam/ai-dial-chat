@@ -74,6 +74,8 @@ const overlay = new ChatOverlay('#chat-root', {
       entra: OverlayAuthUiMode.External,
       keycloak: OverlayAuthUiMode.SameWindow,
     },
+    /* Optional: start this provider's login with no user interaction. */
+    autoSignInProvider: 'keycloak',
   },
 });
 
@@ -81,6 +83,19 @@ const overlay = new ChatOverlay('#chat-root', {
  * supports iframe login for its specific configuration before enabling it.
  */
 ```
+
+`autoSignInProvider` names the provider whose login the embedded app starts on
+its own while the session is unauthenticated — the successor to the legacy
+`signInOptions.autoSignIn` + `signInProvider` pair. Its presence enables the
+behavior; there is no separate boolean.
+
+The provider must also be mapped to `OverlayAuthUiMode.SameWindow`, because
+only that mode navigates the iframe itself: the `External` path calls
+`window.open`, which a browser blocks without a user gesture. The app also
+skips the automatic start when the backend does not register the id, and when
+it already started one for the same URL in the last 60 seconds — a guard
+against an identity provider that returns the user still unauthenticated. Every
+skip logs one console warning and leaves the normal login gate in place.
 
 Notes:
 
@@ -196,19 +211,19 @@ manager.destroy();
 
 ## Options (`ChatOverlayOptions`)
 
-| Option                  | Type                                                       | Description                                                                                                                                                                 |
-| ----------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `domain`                | `string`                                                   | Full URL of the chat app instance to embed (origin + optional path).                                                                                                        |
-| `requestTimeout`        | `number?`                                                  | Milliseconds to wait for a request's response before rejecting. Defaults to `10000`.                                                                                        |
-| `loaderStyles`          | `Record<string, string>?`                                  | Inline CSS properties applied to the loader element, overriding the injected defaults — except `display`, which is cleared when the loader hides (see [Styling](#styling)). |
-| `loaderClass`           | `string?`                                                  | CSS class added to the loader element alongside `dial-overlay-loader`.                                                                                                      |
-| `loaderInnerHTML`       | `string?`                                                  | Custom HTML rendered inside the loader, replacing the default spinner.                                                                                                      |
-| `loaderHideEvent`       | `OverlayEventType?`                                        | Event whose receipt hides the loader. Defaults to `OverlayEventType.Ready`.                                                                                                 |
-| `enabledFeatures`       | `OverlayFeature[]?`                                        | Embed-time features to enable, e.g. `OverlayFeature.VoiceInput` for microphone access.                                                                                      |
-| `theme`                 | `string?`                                                  | Theme name applied to the embedded app.                                                                                                                                     |
-| `modelId`               | `string?`                                                  | Deployment/model id to select in the embedded app.                                                                                                                          |
-| `overlayConversationId` | `string?`                                                  | Conversation id the embedded app should load and display.                                                                                                                   |
-| `auth`                  | `{ providerUiModes?: Record<string, OverlayAuthUiMode> }?` | Per-provider login UI modes; unconfigured providers default to external login.                                                                                              |
+| Option                  | Type                                                                                    | Description                                                                                                                                                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domain`                | `string`                                                                                | Full URL of the chat app instance to embed (origin + optional path).                                                                                                                                                    |
+| `requestTimeout`        | `number?`                                                                               | Milliseconds to wait for a request's response before rejecting. Defaults to `10000`.                                                                                                                                    |
+| `loaderStyles`          | `Record<string, string>?`                                                               | Inline CSS properties applied to the loader element, overriding the injected defaults — except `display`, which is cleared when the loader hides (see [Styling](#styling)).                                             |
+| `loaderClass`           | `string?`                                                                               | CSS class added to the loader element alongside `dial-overlay-loader`.                                                                                                                                                  |
+| `loaderInnerHTML`       | `string?`                                                                               | Custom HTML rendered inside the loader, replacing the default spinner.                                                                                                                                                  |
+| `loaderHideEvent`       | `OverlayEventType?`                                                                     | Event whose receipt hides the loader. Defaults to `OverlayEventType.Ready`.                                                                                                                                             |
+| `enabledFeatures`       | `OverlayFeature[]?`                                                                     | Embed-time features to enable, e.g. `OverlayFeature.VoiceInput` for microphone access.                                                                                                                                  |
+| `theme`                 | `string?`                                                                               | Theme name applied to the embedded app.                                                                                                                                                                                 |
+| `modelId`               | `string?`                                                                               | Deployment/model id to select in the embedded app.                                                                                                                                                                      |
+| `overlayConversationId` | `string?`                                                                               | Conversation id the embedded app should load and display.                                                                                                                                                               |
+| `auth`                  | `{ providerUiModes?: Record<string, OverlayAuthUiMode>; autoSignInProvider?: string }?` | Per-provider login UI modes; unconfigured providers default to external login. `autoSignInProvider` starts that provider's login without user interaction, and requires the same provider to be mapped to `SameWindow`. |
 
 `ChatOverlayManagerOptions` extends `ChatOverlayOptions` with `overlayId` (required), `position` (`OverlayPosition`, default `RightBottom`), `width`/`height` (default `380`/`600`), `zIndex` (default `999999`), `allowFullscreen`, and `toggleButtonAriaLabel`/`closeButtonAriaLabel`/`fullscreenButtonAriaLabel`.
 

@@ -190,6 +190,56 @@ navigation (a category tree, etc.).
 />
 ```
 
+#### Custom empty state
+
+By default, the Browse section renders a `PanelEmptyState` (an icon plus
+`titles.noResultsTitle`) when the current search/filter/tab combination
+matches nothing. Pass `renderEmptyState` to replace it with any node — e.g. a
+richer illustration, description, and a scoped "Create" call to action:
+
+```tsx
+import { Catalog, type CatalogEmptyStateContext } from '@epam/ai-dial-catalog';
+
+<Catalog
+  items={catalogItems}
+  favorites={favoriteItems}
+  renderEmptyState={({
+    query,
+    activeTab,
+    hasTopicFilters,
+    isMyAppsActive,
+  }: CatalogEmptyStateContext) =>
+    query ? (
+      <NoResultsIllustration query={query} />
+    ) : (
+      <EmptyCollectionIllustration
+        activeTab={activeTab}
+        isMyAppsActive={isMyAppsActive}
+        hasTopicFilters={hasTopicFilters}
+      />
+    )
+  }
+/>;
+```
+
+`renderEmptyState` is called only once the result set that would otherwise be
+handed to the active view (Grid or List) is actually empty — never while
+`isLoading` is `true`, and never while there are items to show — and it
+replaces both views' default empty state in the one content area they share,
+so only one instance of the returned node is ever mounted regardless of the
+current view mode. The context reflects `Catalog`'s live, resolved state,
+whether each field is managed internally or via the corresponding controlled
+prop (`activeTab`, `filterTopics`, `isMyAppsActive`). Returning `null` or
+`undefined` — or omitting the prop entirely — keeps the default empty state,
+including `titles.noResultsTitle`. Like `titles.noResultsTitle`, the callback
+runs on every render while the result set stays empty (e.g. on every
+keystroke of a query that keeps matching nothing), so keep it cheap.
+
+This prop only exists on `Catalog` — `CardGrid` and `ListView` keep their own
+built-in default empty state and gain no new prop, so a host composing its
+own layout from those exported components directly does not get the custom
+empty state for free.
+
 ### CardGrid
 
 Virtualized grid view of catalog cards.

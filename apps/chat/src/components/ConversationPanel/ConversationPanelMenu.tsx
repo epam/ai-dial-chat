@@ -40,10 +40,10 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
     <Dropdown items={items} placement="bottom-end" onOpenChange={setIsOpen}>
       <GhostIconButton
         aria-label={label}
-        size={ElementSize.Small}
+        size={ElementSize.Standard}
         icon={
           <IconDotsVertical
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.LG}
             className={isOpen ? 'text-accent' : 'text-secondary'}
             stroke={DIAL_KIT_ICON_STROKE}
           />

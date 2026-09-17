@@ -16,6 +16,12 @@ Responsive starter prompt buttons that overflow into a dropdown when space is li
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-starter-buttons/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
@@ -54,6 +60,23 @@ const starter: StarterOption = {
   title: 'Summarize a document',
   'dial:widgetOptions': widgetOptions,
 };
+```
+
+The overflow behaviour is opt-out. Pass `isCollapsible={false}` and every
+starter is rendered, each on its own row, with no overflow menu — the layout a
+narrow embed wants, where the measured row fits a single starter and hides the
+rest behind the "…" button:
+
+```tsx
+<StarterButtons
+  starters={deployment.starters}
+  isCollapsible={false}
+  labels={{
+    list: 'Conversation starters',
+    overflow: 'More starter prompts',
+  }}
+  onSelect={handleStarterSelect}
+/>
 ```
 
 ## Types

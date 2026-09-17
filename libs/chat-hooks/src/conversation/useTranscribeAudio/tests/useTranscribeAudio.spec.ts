@@ -137,7 +137,7 @@ describe('useTranscribeAudio', () => {
     vi.useFakeTimers();
     transcribeAudio
       .mockRejectedValueOnce(
-        new ResponseError(new Response(null, { status: 503 })),
+        new ResponseError(new Response(null, { status: 502 })),
       )
       .mockResolvedValue({ transcript: 'Recovered' });
     const { result } = renderHook(() =>
@@ -153,7 +153,7 @@ describe('useTranscribeAudio', () => {
       new File(['audio'], 'voice.webm', { type: 'audio/webm' }),
       new AbortController().signal,
     );
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(2000);
     await expect(pending).resolves.toBe('Recovered');
     expect(uploadFile).toHaveBeenCalledOnce();
     expect(transcribeAudio).toHaveBeenCalledTimes(2);

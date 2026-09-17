@@ -249,7 +249,11 @@ export const toDialToolsetBody = (
 export const resolveToolsetLoginUrl = (toolsetName: string): string => {
   const resource = parseDialToolsetResource(toolsetName);
   if (!resource) {
-    throw new BadRequestException('Toolset id must include bucket and path');
+    /*
+     * Platform toolsets and applications use deployment IDs without a bucket.
+     * Core resolves those IDs directly through the same signin/signout API.
+     */
+    return safeDecodeURIComponent(toolsetName);
   }
   return `${TOOLSET_RESOURCE_PREFIX}${resource.bucket}/${safeDecodeURIComponent(resource.path)}`;
 };

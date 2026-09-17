@@ -24,7 +24,7 @@ export interface RateMessageRequest {
  */
 export class RateApi extends runtime.BaseAPI {
   /**
-   * Forwards a like/dislike rating for an assistant message to DIAL Core. Uses the authenticated session\'s access token as a Bearer credential.
+   * Forwards a like/dislike rating, or the clearing of a previously sent rating, for an assistant message to DIAL Core. Uses the authenticated session\'s access token as a Bearer credential.
    * Rate an assistant message
    */
   async rateMessageRaw(
@@ -61,7 +61,7 @@ export class RateApi extends runtime.BaseAPI {
   }
 
   /**
-   * Forwards a like/dislike rating for an assistant message to DIAL Core. Uses the authenticated session\'s access token as a Bearer credential.
+   * Forwards a like/dislike rating, or the clearing of a previously sent rating, for an assistant message to DIAL Core. Uses the authenticated session\'s access token as a Bearer credential.
    * Rate an assistant message
    */
   async rateMessage(

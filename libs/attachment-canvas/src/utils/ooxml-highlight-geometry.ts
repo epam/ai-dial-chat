@@ -72,14 +72,39 @@ export interface OoxmlDocxPageRuns {
   pageIndex: number;
   /** The page's runs, in layout order. */
   runs: readonly DocxTextRunInfo[];
+  /**
+   * The page's box in the same reference-width CSS pixel space the runs were
+   * collected at — the page's scale-1 size, from `docxPageSizePx`. Used to
+   * normalise resolved rectangles into fractions of the page box.
+   */
+  pageBox: OoxmlSurfaceSize;
 }
 
-/** Rectangles resolved on one page, in that page's own CSS pixel space. */
+/**
+ * A resolved DOCX highlight rectangle, expressed as fractions of its page
+ * box rather than CSS pixels — each of `left`, `top`, `width`, and `height`
+ * is a ratio (0–1, barring a range that runs off the page) of the page's
+ * width or height. Kept distinct from `OoxmlHighlightRect` (the PPTX/XLSX
+ * absolute-pixel type) so their scale-free and scale-bound contracts cannot
+ * be confused at the type level; see `resolveDocxRects`.
+ */
+export interface OoxmlDocxNormalizedRect {
+  /** Left edge as a fraction of the page's width. */
+  left: number;
+  /** Top edge as a fraction of the page's height. */
+  top: number;
+  /** Width as a fraction of the page's width. */
+  width: number;
+  /** Height as a fraction of the page's height. */
+  height: number;
+}
+
+/** Rectangles resolved on one page, as fractions of that page's box. */
 export interface OoxmlDocxPageRects {
   /** 0-based page index the rectangles belong to. */
   pageIndex: number;
   /** Rectangles covering the part of the range that falls on this page. */
-  rects: OoxmlHighlightRect[];
+  rects: OoxmlDocxNormalizedRect[];
 }
 
 /** Inputs `resolveDocxRects` needs to place one DOCX range. */
@@ -145,6 +170,16 @@ const SINGLE_SURFACE_INDEX = 0;
 /** `@silurus/ooxml`'s default `gap`, and its default for every padding option. */
 const OOXML_SCROLL_GAP_DEFAULT = 16;
 
+/*
+ * Fraction of the scroll host's visible height left as leading context above
+ * a navigated-to passage's first line, rather than flush against the
+ * viewport's top edge. A tuning constant, not a spec requirement — the spec
+ * only requires the passage be visible, so this can be retuned (e.g. toward
+ * centring) without a spec change. See design decision D7 on the
+ * fix-docx-scroll-to-citation-highlight change.
+ */
+const DOCX_NAVIGATION_LEAD_FRACTION = 0.25;
+
 /** Creates a canvas-backed text measurer, or `undefined` when no 2D context is available. */
 export const createOoxmlTextMeasurer = (): OoxmlTextMeasurer | undefined => {
   const context = document.createElement('canvas').getContext('2d');
@@ -204,6 +239,94 @@ export const resolveSurfaceOffset = ({
   const left = Math.max(paddingLeft, (hostClientWidth - width) / 2);
 
   return { left, top };
+};
+
+/** The scroll host's current geometry, as read directly off the live element. */
+export interface OoxmlScrollHostBox {
+  /** Height of the host's visible (scrollable) area, in CSS pixels. */
+  clientHeight: number;
+  /** Width of the host's visible (scrollable) area, in CSS pixels. */
+  clientWidth: number;
+  /** Total scrollable height of the host's content, in CSS pixels. */
+  scrollHeight: number;
+  /** Total scrollable width of the host's content, in CSS pixels. */
+  scrollWidth: number;
+  /** The host's current horizontal scroll position, in CSS pixels. */
+  scrollLeft: number;
+}
+
+/** Inputs `resolveDocxScrollTarget` needs to place one resolved DOCX rectangle in the scroll host. */
+export interface OoxmlDocxScrollTargetOptions {
+  /** 0-based index of the page the rectangle was resolved on. */
+  pageIndex: number;
+  /** The resolved rectangle, as a fraction of its page's box (see `OoxmlDocxNormalizedRect`). */
+  rect: OoxmlDocxNormalizedRect;
+  /** Size, in CSS pixels at the current scale, of the page/slide at an index. */
+  sizeAt: (index: number) => OoxmlSurfaceSize;
+  /** The scroll host's current geometry. */
+  host: OoxmlScrollHostBox;
+  /** Scroll-layout options passed to the viewer. */
+  layout?: OoxmlScrollLayout;
+}
+
+/**
+ * Absolute scroll position, in the scroll host's own coordinate space, that
+ * brings a resolved DOCX rectangle into view.
+ *
+ * Composes `resolveSurfaceOffset` — which already owns the page-stacking
+ * arithmetic — with the rectangle's page-box fraction and the page's live
+ * pixel size, so a vendor layout change still breaks exactly one function and
+ * one test (see the version-coupling note on `resolveSurfaceOffset`).
+ *
+ * The result is physical canvas-coordinate geometry, the same space
+ * `resolveSurfaceOffset` and the overlay already use, and it SHALL NOT be
+ * converted to logical (start/end) properties — see the physical-geometry
+ * requirement in `office-annotation-highlighting`.
+ *
+ * `top` places the rectangle's start (its top edge) `DOCX_NAVIGATION_LEAD_FRACTION`
+ * of the host's visible height below the visible top, then clamps to
+ * `[0, scrollHeight - clientHeight]` so a passage near the document's start or
+ * end scrolls as far as it can rather than not at all. `left` is left at the
+ * host's current `scrollLeft` when the rectangle already falls inside the
+ * host's horizontal viewport — which keeps a fit-width preview at
+ * `scrollLeft: 0` — and is otherwise shifted by the smallest amount that
+ * brings the rectangle's left edge into view.
+ */
+export const resolveDocxScrollTarget = ({
+  pageIndex,
+  rect,
+  sizeAt,
+  host,
+  layout,
+}: OoxmlDocxScrollTargetOptions): OoxmlSurfaceOffset => {
+  const offset = resolveSurfaceOffset({
+    index: pageIndex,
+    sizeAt,
+    hostClientWidth: host.clientWidth,
+    layout,
+  });
+  const pageSize = sizeAt(pageIndex);
+
+  const rectTop = offset.top + rect.top * pageSize.height;
+  const lead = Math.min(
+    host.clientHeight * DOCX_NAVIGATION_LEAD_FRACTION,
+    rectTop,
+  );
+  const maxTop = Math.max(0, host.scrollHeight - host.clientHeight);
+  const top = Math.min(Math.max(rectTop - lead, 0), maxTop);
+
+  const rectLeft = offset.left + rect.left * pageSize.width;
+  const rectRight = rectLeft + rect.width * pageSize.width;
+  const maxLeft = Math.max(0, host.scrollWidth - host.clientWidth);
+  let left = host.scrollLeft;
+  if (rectLeft < host.scrollLeft) {
+    left = rectLeft;
+  } else if (rectRight > host.scrollLeft + host.clientWidth) {
+    left = rectRight - host.clientWidth;
+  }
+  left = Math.min(Math.max(left, 0), maxLeft);
+
+  return { top, left };
 };
 
 /**
@@ -399,7 +522,17 @@ const resolveRangeRects = <TRun>(
 };
 
 /**
- * Rectangles covering one DOCX range, grouped per page.
+ * Rectangles covering one DOCX range, grouped per page, as fractions of each
+ * page's box.
+ *
+ * Runs arrive already measured at a fixed reference width (the page's
+ * scale-1 CSS size — see `createDocxHighlightSurface`), so their `x`/`y`/`w`/`h`
+ * and the same-line merge tolerances are all in that one reference-width pixel
+ * space. Dividing the merged pixel rectangle by the page's reference box turns
+ * it into a fraction that is the same number at every render scale — the
+ * representation `@silurus/ooxml`'s own `buildDocxHighlightLayer` percent-of-page
+ * highlight layer uses, and the only way to avoid re-collecting runs on every
+ * zoom (root cause 1 of the drift this resolver used to produce).
  *
  * Returns an empty array whenever the range cannot be resolved with confidence —
  * no matching run, a resolved text that disagrees with the selector's own
@@ -412,8 +545,10 @@ export const resolveDocxRects = ({
 }: OoxmlDocxResolveOptions): OoxmlDocxPageRects[] => {
   const spans: RunSpan<DocxTextRunInfo>[] = [];
   let resolvedText = '';
+  const pageBoxByIndex = new Map<number, OoxmlSurfaceSize>();
 
-  for (const { pageIndex, runs } of pages) {
+  for (const { pageIndex, runs, pageBox } of pages) {
+    pageBoxByIndex.set(pageIndex, pageBox);
     for (const run of runs) {
       /* A run with no `source` or no `sourceRunIndex` is synthesized — a page
        * number, a field result, a list bullet — so it is neither highlightable
@@ -466,7 +601,21 @@ export const resolveDocxRects = ({
 
   return [...grouped]
     .sort(([first], [second]) => first - second)
-    .map(([pageIndex, rects]) => ({ pageIndex, rects }));
+    .map(([pageIndex, rects]) => {
+      const pageBox = pageBoxByIndex.get(pageIndex);
+      if (pageBox == null || pageBox.width <= 0 || pageBox.height <= 0) {
+        return { pageIndex, rects: [] };
+      }
+      return {
+        pageIndex,
+        rects: rects.map((rect) => ({
+          left: rect.left / pageBox.width,
+          top: rect.top / pageBox.height,
+          width: rect.width / pageBox.width,
+          height: rect.height / pageBox.height,
+        })),
+      };
+    });
 };
 
 /*

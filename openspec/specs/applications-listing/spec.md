@@ -15,7 +15,6 @@ The endpoint SHALL:
 - Issue a single `getApplications` call and return its `data` array as-is; DIAL Core returns the full list for this endpoint, so there is no cursor to follow and the service performs no pagination loop.
 - Treat a successful upstream response with no `data` field as an empty list rather than an error.
 - Respond 200 with `ApplicationsResponseDto` on success.
-- Apply `@Throttle({ default: { limit: 60, ttl: 60000 } })` (identical to `listModels`).
 - Set response header `Cache-Control: private, max-age=30` via `@Header`.
 - Cache results server-side under key `applications:list:<userSub>` for 30 000 ms, through the shared `withCachedDialRequest` helper.
 - Not log the access token, session cookie, or any secret. Safe identifiers such as `userSub` MAY be logged at debug level.

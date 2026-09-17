@@ -18,7 +18,6 @@ The endpoint:
 - MUST NOT forward the `DIAL_API_KEY` to the client or use it as the upstream credential on this route
 - SHALL return `200 OK` with a `DialToolset` object body on success
 - SHALL return `404 Not Found` when DIAL Core responds with `404`
-- SHALL apply per-route rate limiting of **60 req/min per IP** via `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - SHALL cache the upstream response server-side for **60 seconds** using cache key `toolsets:single:<user.sub>:<toolsetName>`; a cache hit MUST NOT re-call DIAL Core
 - MUST set `Cache-Control: private, max-age=60` on the HTTP response
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError`
@@ -78,11 +77,6 @@ The endpoint:
 
 - **WHEN** DIAL Core responds with `403`
 - **THEN** the BFF returns `403 Forbidden` to the caller
-
-#### Scenario: Rate limit exceeded
-
-- **WHEN** a caller sends more than 60 requests per minute to this endpoint
-- **THEN** the BFF returns `429 Too Many Requests`
 
 #### Scenario: Cache hit avoids upstream call
 

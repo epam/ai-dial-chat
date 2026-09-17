@@ -53,22 +53,20 @@ describe('RateService', () => {
       );
     });
 
-    it('sends the correct JSON body with numeric rate for like', async () => {
+    it('sends a boolean rate: true to DIAL Core for like, with no modelId or conversationId in the body', async () => {
       fetchSpy.mockResolvedValue({ ok: true } as Response);
       const service = makeService();
 
       await service.rateMessage(validDto, ACCESS_TOKEN);
 
       const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-      expect(JSON.parse(init.body as string)).toMatchObject({
-        rate: 1,
-        modelId: validDto.modelId,
-        conversationId: validDto.conversationId,
+      expect(JSON.parse(init.body as string)).toStrictEqual({
         responseId: validDto.responseId,
+        rate: true,
       });
     });
 
-    it('sends numeric rate -1 for dislike', async () => {
+    it('sends a boolean rate: false to DIAL Core for dislike', async () => {
       fetchSpy.mockResolvedValue({ ok: true } as Response);
       const service = makeService();
       const dislikeDto: RateMessageDto = {
@@ -79,7 +77,24 @@ describe('RateService', () => {
       await service.rateMessage(dislikeDto, ACCESS_TOKEN);
 
       const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-      expect(JSON.parse(init.body as string)).toMatchObject({ rate: -1 });
+      expect(JSON.parse(init.body as string)).toStrictEqual({
+        responseId: dislikeDto.responseId,
+        rate: false,
+      });
+    });
+
+    it('sends a boolean rate: false to DIAL Core when clearing a rating', async () => {
+      fetchSpy.mockResolvedValue({ ok: true } as Response);
+      const service = makeService();
+      const clearDto: RateMessageDto = { ...validDto, rate: null };
+
+      await service.rateMessage(clearDto, ACCESS_TOKEN);
+
+      const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(JSON.parse(init.body as string)).toStrictEqual({
+        responseId: clearDto.responseId,
+        rate: false,
+      });
     });
 
     it('sends Bearer authorization header', async () => {
@@ -150,24 +165,12 @@ describe('RateService', () => {
       expect(headers).not.toHaveProperty('X-JOB-TITLE');
     });
 
-    it('includes optional comment when provided', async () => {
+    it('never forwards the comment field to DIAL Core — it is not part of RateRequest', async () => {
       fetchSpy.mockResolvedValue({ ok: true } as Response);
       const service = makeService();
       const dtoWithComment = { ...validDto, comment: 'Too short' };
 
       await service.rateMessage(dtoWithComment, ACCESS_TOKEN);
-
-      const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-      expect(JSON.parse(init.body as string)).toMatchObject({
-        comment: 'Too short',
-      });
-    });
-
-    it('omits comment field when not provided', async () => {
-      fetchSpy.mockResolvedValue({ ok: true } as Response);
-      const service = makeService();
-
-      await service.rateMessage(validDto, ACCESS_TOKEN);
 
       const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
       expect(JSON.parse(init.body as string)).not.toHaveProperty('comment');

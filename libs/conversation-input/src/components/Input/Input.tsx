@@ -12,6 +12,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  ErrorText,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
@@ -69,6 +70,7 @@ export const Input: FC<InputProps> = ({
   retryLabel,
   uploadingLabel,
   sendLabel,
+  sendTooltip,
   stopLabel,
   micLabel = 'Dictate',
   recordVoiceLabel = 'Record voice',
@@ -132,7 +134,8 @@ export const Input: FC<InputProps> = ({
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const historyNav = useInputHistoryNavigation(messageHistory);
   const hasInlineStartSlot = inlineStartSlot != null;
-  const inlineStartSlotRef = useRef<HTMLDivElement>(null);
+  const [inlineStartSlotNode, setInlineStartSlotNode] =
+    useState<HTMLDivElement | null>(null);
   const [inlineStartIndent, setInlineStartIndent] = useState(0);
 
   const cssVars = useMemo(
@@ -191,7 +194,10 @@ export const Input: FC<InputProps> = ({
     messageRevision,
   });
 
-  useTextInsertion({ insertion: textInsertion, textareaRef });
+  const { handleUndoKeyDown } = useTextInsertion({
+    insertion: textInsertion,
+    textareaRef,
+  });
 
   const { isMenuOpen, query, dismiss, handleValueChange } = useCommandMenu({
     config: commandMenu,
@@ -252,20 +258,23 @@ export const Input: FC<InputProps> = ({
   );
 
   useEffect(() => {
-    const slotElement = inlineStartSlotRef.current;
-    if (slotElement == null) return;
+    if (inlineStartSlotNode == null) return;
     /*
      * The slot's width drives the textarea's first-line `text-indent`, so it
      * is re-measured whenever the slot's content resizes (e.g. a different
-     * element of a different width), not only when the slot first mounts.
+     * element of a different width) and whenever the slot node itself
+     * (re)mounts — e.g. the slot is hidden behind `VoiceBar` while recording
+     * and reappears once recording stops, which does not change
+     * `hasInlineStartSlot` and so would never re-trigger a `useEffect` keyed
+     * on that flag alone.
      */
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry != null) setInlineStartIndent(entry.contentRect.width);
     });
-    observer.observe(slotElement);
+    observer.observe(inlineStartSlotNode);
     return () => observer.disconnect();
-  }, [hasInlineStartSlot]);
+  }, [inlineStartSlotNode]);
 
   const handleExpandPastedText = useCallback(
     (text: string) => {
@@ -345,12 +354,15 @@ export const Input: FC<InputProps> = ({
     onTranscript: handleTranscript,
     errorLabel: voiceErrorLabel,
   });
-  const isVoiceActive = voiceState !== VoiceRecorderState.Idle;
+  const isVoiceActive =
+    voiceState === VoiceRecorderState.Recording ||
+    voiceState === VoiceRecorderState.Processing;
 
   useEffect(() => {
     if (
-      voiceState === VoiceRecorderState.Idle &&
-      focusAfterTranscriptRef.current
+      voiceState === VoiceRecorderState.Error ||
+      (voiceState === VoiceRecorderState.Idle &&
+        focusAfterTranscriptRef.current)
     ) {
       focusAfterTranscriptRef.current = false;
       textareaRef.current?.focus();
@@ -476,6 +488,9 @@ export const Input: FC<InputProps> = ({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (isVoiceActive) return;
+    /* Serves the undo owed by an insertion the browser could not put on its own
+       undo stack; a no-op whenever the browser can undo the edit itself. */
+    if (handleUndoKeyDown(e)) return;
     if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         const cursorPos = e.currentTarget.selectionStart ?? 0;
@@ -642,7 +657,7 @@ export const Input: FC<InputProps> = ({
     hasInlineStartSlot || hasCommandHintConfigured ? (
       <div className="relative w-full">
         {hasInlineStartSlot && (
-          <div ref={inlineStartSlotRef} className="absolute start-0 top-0">
+          <div ref={setInlineStartSlotNode} className="absolute start-0 top-0">
             {inlineStartSlot}
           </div>
         )}
@@ -688,10 +703,7 @@ export const Input: FC<InputProps> = ({
       menuTitle={menuTitle}
       menuCloseLabel={menuCloseLabel}
       style={cssVars}
-      isDisabled={
-        isInputDisabled ||
-        (isVoiceActive && voiceState !== VoiceRecorderState.Recording)
-      }
+      isDisabled={isInputDisabled || isVoiceActive}
       chatSettings={chatSettings}
       extraMenuItems={dialFileSystemMenuItem}
       onRecordVoice={
@@ -768,6 +780,9 @@ export const Input: FC<InputProps> = ({
           tabIndex={-1}
           onChange={handleFileChange}
         />
+      )}
+      {voiceError && (
+        <ErrorText text={voiceError} className="min-w-0 break-words px-1" />
       )}
       {isVoiceActive && (
         <VoiceBar
@@ -869,6 +884,7 @@ export const Input: FC<InputProps> = ({
                       onSend={handleSend}
                       isDisabled={!hasModelSelected || !canSend}
                       ariaLabel={sendLabel}
+                      sendTooltip={sendTooltip}
                     />
                   )
                 )}

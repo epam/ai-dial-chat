@@ -10,12 +10,12 @@ sequenceDiagram
     participant BFF as NestJS BFF
     participant CORE as DIAL Core
 
+    U->>SPA: Sends a chat message
     SPA->>BFF: POST /api/v1/client-channel/subscribe
     BFF->>CORE: POST /v1/ops/client-channel/subscribe
     CORE-->>BFF: 200 text/event-stream<br/>X-DIAL-CLIENT-CHANNEL-ID: chan-1
     BFF-->>SPA: Relayed SSE stream<br/>X-DIAL-CLIENT-CHANNEL-ID: chan-1
 
-    U->>SPA: Sends a chat message
     SPA->>BFF: POST /api/v1/conversations/completions<br/>{ clientChannelId: "chan-1", ... }
     BFF->>CORE: Completion request<br/>X-DIAL-CLIENT-CHANNEL-ID: chan-1
 
@@ -36,6 +36,6 @@ sequenceDiagram
     CORE-->>BFF: Completion continues streaming
     BFF-->>SPA: Completion continues streaming
 
-    Note over SPA,CORE: The SPA unsubscribes the channel on logout, tab close,<br/>the feature flag flipping off, leaving a streaming-capable route,<br/>or 1s after the last generation settles. While the sign-in dialog<br/>still lists an unresolved event, the channel stays open instead —<br/>the report needs it, and clearing it would dismiss the dialog.
+    Note over SPA,CORE: The subscribe above is opened by this message, not by mounting<br/>or returning to a streaming-capable route, and a backgrounded/refocused<br/>tab never resubscribes it either — only a completion request does.<br/>The SPA unsubscribes the channel on logout, tab close, the feature flag<br/>flipping off, leaving a streaming-capable route, or 1s after the last<br/>generation settles. While the sign-in dialog still lists an unresolved<br/>event, the channel stays open instead — the report needs it, and<br/>clearing it would dismiss the dialog.
     SPA->>BFF: POST /api/v1/client-channel/unsubscribe
     BFF->>CORE: POST /v1/ops/client-channel/unsubscribe

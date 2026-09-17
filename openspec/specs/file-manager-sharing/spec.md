@@ -12,8 +12,6 @@ The BFF SHALL expose `POST /api/v1/files/revoke-access` that accepts a batch of 
 
 **Authorization**: session cookie → `req.user.at` (bearer token forwarded to DIAL Core), identical to `/copy` and `/move`.
 
-**Rate limit**: `@Throttle({ default: { limit: 10, ttl: 60000 } })` — matching `/copy`, `/move`, `/rename`, `/delete`.
-
 **Caching**: no NestJS cache read/write.
 
 #### Request/Response DTOs
@@ -33,14 +31,13 @@ The BFF SHALL expose `POST /api/v1/files/revoke-access` that accepts a batch of 
 ```typescript
 @Post('revoke-access')
 @HttpCode(200)
-@Throttle({ default: { limit: 10, ttl: 60000 } })
 @ApiOperation({ summary: 'Revoke all shared access to files and folders' })
 @ApiResponse({ status: 200, type: RevokeAccessResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid request body' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
 @ApiResponse({ status: 403, description: 'Caller does not own one or more resources' })
 @ApiResponse({ status: 404, description: 'A resource does not exist' })
-@ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+@ApiResponse({ status: 429, description: 'DIAL Core rate limit exceeded' })
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable or timed out' })
 async revokeAccess(
@@ -89,7 +86,7 @@ POST /api/v1/files/revoke-access
 
 The BFF SHALL expose `POST /api/v1/files/discard-shared` that accepts a batch of file/folder paths shared **with** the caller, and removes them from the caller's own shared-with-me view via DIAL Core `discardSharedResources`. This does not affect the owner's access or any other recipient's access.
 
-**Authorization**, **rate limit** (`@Throttle({ default: { limit: 10, ttl: 60000 } })`), and **caching** posture are identical to `/revoke-access` above, except authorization requires only that the resource currently appears in the caller's shared-with-me listing (enforced by Core, surfaced as 403/404 on mismatch).
+**Authorization** and **caching** posture are identical to `/revoke-access` above, except authorization requires only that the resource currently appears in the caller's shared-with-me listing (enforced by Core, surfaced as 403/404 on mismatch).
 
 #### Request/Response DTOs
 
@@ -108,14 +105,13 @@ The BFF SHALL expose `POST /api/v1/files/discard-shared` that accepts a batch of
 ```typescript
 @Post('discard-shared')
 @HttpCode(200)
-@Throttle({ default: { limit: 10, ttl: 60000 } })
 @ApiOperation({ summary: 'Discard resources shared with the caller' })
 @ApiResponse({ status: 200, type: DiscardSharedResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid request body' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
 @ApiResponse({ status: 403, description: 'Resource is not shared with the caller' })
 @ApiResponse({ status: 404, description: 'A resource does not exist' })
-@ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+@ApiResponse({ status: 429, description: 'DIAL Core rate limit exceeded' })
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable or timed out' })
 async discardShared(
@@ -150,20 +146,17 @@ async discardShared(
 
 The BFF SHALL expose `GET /api/v1/files/shared-by-me?bucket=` that lists resources the caller has shared with others, via DIAL Core `getSharedResources` called with `{ resourceTypes: ['FILE'], with: 'others', includeUserInfo: false }` — the owner-side counterpart of the existing `GET /api/v1/files/shared` (`with: 'me'`). Reuses `ListFilesResponseDto`/`ListFilesItemDto` unchanged; no new response DTO is introduced.
 
-**Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `/shared` and `/list`.
-
 **Caching**: no NestJS cache read/write (matches `/shared`).
 
 #### Controller signature
 
 ```typescript
 @Get('shared-by-me')
-@Throttle({ default: { limit: 60, ttl: 60000 } })
 @ApiOperation({ summary: 'List files and folders shared by the caller with others' })
 @ApiResponse({ status: 200, type: ListFilesResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid query parameters' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
-@ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+@ApiResponse({ status: 429, description: 'DIAL Core rate limit exceeded' })
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable or timed out' })
 async listSharedByMe(

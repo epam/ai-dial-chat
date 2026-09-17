@@ -29,29 +29,41 @@ describe('withTranscriptionRetry', () => {
   it('honors Retry-After and returns a recovered result once', async () => {
     const recognize = vi
       .fn()
-      .mockRejectedValueOnce(unavailable(503, '10'))
+      .mockRejectedValueOnce(unavailable(502, '3'))
       .mockResolvedValue('hello');
     const pending = withTranscriptionRetry(
       recognize,
       new AbortController().signal,
     );
-    await vi.advanceTimersByTimeAsync(9999);
+    await vi.advanceTimersByTimeAsync(2999);
     expect(recognize).toHaveBeenCalledOnce();
     await vi.advanceTimersByTimeAsync(1);
     await expect(pending).resolves.toBe('hello');
     expect(recognize).toHaveBeenCalledTimes(2);
   });
 
-  it('waits for the Core cooldown and caps retries at two', async () => {
-    const recognize = vi.fn().mockRejectedValue(unavailable());
+  it.each([429, 503])(
+    'reports HTTP %i immediately without retrying',
+    async (status) => {
+      const recognize = vi.fn().mockRejectedValue(unavailable(status, '30'));
+      await expect(
+        withTranscriptionRetry(recognize, new AbortController().signal),
+      ).rejects.toMatchObject({ reason: AudioTranscriptionErrorReason.Busy });
+      expect(recognize).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it('caps gateway retries at two with six seconds of total waiting', async () => {
+    const recognize = vi.fn().mockRejectedValue(unavailable(504));
     const pending = expect(
       withTranscriptionRetry(recognize, new AbortController().signal),
     ).rejects.toMatchObject({ reason: AudioTranscriptionErrorReason.Busy });
-    await vi.advanceTimersByTimeAsync(29_999);
+    await vi.advanceTimersByTimeAsync(1999);
     expect(recognize).toHaveBeenCalledOnce();
     await vi.advanceTimersByTimeAsync(1);
     expect(recognize).toHaveBeenCalledTimes(2);
-    await vi.advanceTimersByTimeAsync(60_000);
+    await vi.advanceTimersByTimeAsync(4000);
     await pending;
     expect(recognize).toHaveBeenCalledTimes(3);
     expect(vi.getTimerCount()).toBe(0);
@@ -59,7 +71,7 @@ describe('withTranscriptionRetry', () => {
 
   it('cancels the delay immediately without another request', async () => {
     const controller = new AbortController();
-    const recognize = vi.fn().mockRejectedValue(unavailable());
+    const recognize = vi.fn().mockRejectedValue(unavailable(502));
     const pending = expect(
       withTranscriptionRetry(recognize, controller.signal),
     ).rejects.toMatchObject({ name: 'AbortError' });
@@ -101,20 +113,20 @@ describe('withTranscriptionRetry', () => {
     vi.setSystemTime(new Date('2026-09-09T10:00:00Z'));
     const recognize = vi
       .fn()
-      .mockRejectedValueOnce(unavailable(429, 'Wed, 09 Sep 2026 10:00:12 GMT'))
+      .mockRejectedValueOnce(unavailable(504, 'Wed, 09 Sep 2026 10:00:04 GMT'))
       .mockResolvedValue('hello');
     const pending = withTranscriptionRetry(
       recognize,
       new AbortController().signal,
     );
-    await vi.advanceTimersByTimeAsync(11_999);
+    await vi.advanceTimersByTimeAsync(3999);
     expect(recognize).toHaveBeenCalledOnce();
     await vi.advanceTimersByTimeAsync(1);
     await expect(pending).resolves.toBe('hello');
   });
 
   it('never retries earlier than a Retry-After exceeding the wait budget', async () => {
-    const recognize = vi.fn().mockRejectedValue(unavailable(503, '120'));
+    const recognize = vi.fn().mockRejectedValue(unavailable(502, '120'));
     await expect(
       withTranscriptionRetry(recognize, new AbortController().signal),
     ).rejects.toBeInstanceOf(AudioTranscriptionError);

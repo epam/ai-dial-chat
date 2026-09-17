@@ -11,6 +11,7 @@ import {
 import { useCallback } from 'react';
 import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
 import type {
+  AttachmentCanvasContent,
   CodeCanvasContent,
   ErrorCanvasContent,
   HtmlCanvasContent,
@@ -32,6 +33,7 @@ import {
   getOoxmlFileType,
   isHtmlPreviewable,
   isTextPreviewable,
+  releaseCanvasContent,
 } from '../../utils/content';
 import { findVisualizerForMime } from '../../utils/visualizer';
 
@@ -111,11 +113,36 @@ export interface UseOpenAttachmentCanvasOptions {
   onBeforeOpen?: () => void;
 }
 
+/**
+ * Consulted immediately before each canvas write that follows an awaited
+ * resolver. Returning `false` discards the result: no canvas state is written,
+ * a resolved payload's object URL is released, and the open resolves `false`.
+ *
+ * Callers that can have more than one open in flight — or that can stop owning
+ * the canvas while one is running — use it to keep a late completion from
+ * replacing newer content or closing a canvas that is no longer theirs. It is
+ * checked at the commit boundary rather than after the fact, because this hook
+ * writes canvas state itself and a write cannot be undone without a visible
+ * intermediate state. Underlying I/O is not cancelled; only its effect is.
+ */
+export type ShouldCommitCanvas = () => boolean;
+
 /** Signature of the `openAttachmentCanvas` function `useOpenAttachmentCanvas` returns. */
 export type OpenAttachmentCanvas = (
   attachment: DisplayAttachment,
   canvasAttachmentId?: string,
+  shouldCommit?: ShouldCommitCanvas,
 ) => Promise<boolean>;
+
+/**
+ * Writes resolved content to the canvas unless the request that produced it is
+ * no longer allowed to commit. Returns whether the content was displayed.
+ */
+type CommitCanvasContent = (
+  content: AttachmentCanvasContent,
+  fileName: string | undefined,
+  canvasAttachmentId: string | undefined,
+) => boolean;
 
 /**
  * Returns the last path segment of `url` — its file name — for both absolute
@@ -160,12 +187,12 @@ export const useOpenAttachmentCanvas = (
     async (
       attachment: DisplayAttachment,
       canvasAttachmentId: string | undefined,
+      commitCanvas: CommitCanvasContent,
     ): Promise<boolean> => {
       if (attachment.url == null && attachment.referenceUrl != null) {
         const pdfContent = resolvers.resolveReferencePdfContent(attachment);
         if (pdfContent != null) {
-          openCanvas(pdfContent, attachment.name, canvasAttachmentId);
-          return true;
+          return commitCanvas(pdfContent, attachment.name, canvasAttachmentId);
         }
       }
 
@@ -182,16 +209,14 @@ export const useOpenAttachmentCanvas = (
           themeId,
         );
         if (content != null) {
-          openCanvas(content, attachment.name, canvasAttachmentId);
-          return true;
+          return commitCanvas(content, attachment.name, canvasAttachmentId);
         }
       }
 
       if (!contentType && attachment.data != null) {
         const content = await resolvers.resolveTextContent(attachment);
         if (content != null) {
-          openCanvas(content, attachment.name, canvasAttachmentId);
-          return true;
+          return commitCanvas(content, attachment.name, canvasAttachmentId);
         }
       }
 
@@ -201,7 +226,7 @@ export const useOpenAttachmentCanvas = (
           attachment,
           mimeOoxmlFileType,
         );
-        openCanvas(
+        return commitCanvas(
           content ??
             createUnsupportedCanvasContent(
               resolvers.resolveContentUrl(attachment),
@@ -209,13 +234,12 @@ export const useOpenAttachmentCanvas = (
           attachment.name,
           canvasAttachmentId,
         );
-        return true;
       }
 
       switch (contentType) {
         case MIMEType.PDF: {
           const content = await resolvers.resolvePdfContent(attachment);
-          openCanvas(
+          return commitCanvas(
             content ??
               createUnsupportedCanvasContent(
                 resolvers.resolveContentUrl(attachment),
@@ -223,11 +247,10 @@ export const useOpenAttachmentCanvas = (
             attachment.name,
             canvasAttachmentId,
           );
-          return true;
         }
         case MIMEType.Markdown: {
           const content = await resolvers.resolveMarkdownContent(attachment);
-          openCanvas(
+          return commitCanvas(
             content ??
               createUnsupportedCanvasContent(
                 resolvers.resolveContentUrl(attachment),
@@ -235,11 +258,10 @@ export const useOpenAttachmentCanvas = (
             attachment.name,
             canvasAttachmentId,
           );
-          return true;
         }
         case MIMEType.JSON: {
           const content = await resolvers.resolveJsonContent(attachment);
-          openCanvas(
+          return commitCanvas(
             content ??
               createUnsupportedCanvasContent(
                 resolvers.resolveContentUrl(attachment),
@@ -247,7 +269,6 @@ export const useOpenAttachmentCanvas = (
             attachment.name,
             canvasAttachmentId,
           );
-          return true;
         }
       }
 
@@ -261,7 +282,7 @@ export const useOpenAttachmentCanvas = (
           attachment,
           extensionOoxmlFileType,
         );
-        openCanvas(
+        return commitCanvas(
           content ??
             createUnsupportedCanvasContent(
               resolvers.resolveContentUrl(attachment),
@@ -269,7 +290,6 @@ export const useOpenAttachmentCanvas = (
           attachment.name,
           canvasAttachmentId,
         );
-        return true;
       }
 
       switch (ext) {
@@ -277,20 +297,17 @@ export const useOpenAttachmentCanvas = (
         case FileExtension.MarkdownAlt: {
           const content = await resolvers.resolveMarkdownContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name, canvasAttachmentId);
-          return true;
+          return commitCanvas(content, attachment.name, canvasAttachmentId);
         }
         case FileExtension.JSON: {
           const content = await resolvers.resolveJsonContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name, canvasAttachmentId);
-          return true;
+          return commitCanvas(content, attachment.name, canvasAttachmentId);
         }
         case FileExtension.PDF: {
           const content = await resolvers.resolvePdfContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name, canvasAttachmentId);
-          return true;
+          return commitCanvas(content, attachment.name, canvasAttachmentId);
         }
       }
 
@@ -310,31 +327,28 @@ export const useOpenAttachmentCanvas = (
         !isTextPreviewable(attachment.name) &&
         !isHtmlSource
       ) {
-        openCanvas(
+        return commitCanvas(
           createUnsupportedCanvasContent(
             resolvers.resolveContentUrl(attachment),
           ),
           attachment.name,
           canvasAttachmentId,
         );
-        return true;
       }
 
       if (isHtmlSource) {
         const content = await resolvers.resolveHtmlContent(attachment);
         if (content != null) {
-          openCanvas(content, attachment.name, canvasAttachmentId);
-          return true;
+          return commitCanvas(content, attachment.name, canvasAttachmentId);
         }
         if (!resolvers.hasTextSource(attachment)) {
           /* External HTML URL: nothing to fetch, so the iframe loads it directly. */
           if (attachment.url == null) return false;
-          openCanvas(
+          return commitCanvas(
             { type: AttachmentContentType.Html, url: attachment.url },
             attachment.name,
             canvasAttachmentId,
           );
-          return true;
         }
         /*
          * The text was fetched and then rejected — currently only by the
@@ -342,14 +356,13 @@ export const useOpenAttachmentCanvas = (
          * browser refused to frame, so it must not fall through to the
          * url-only branch above.
          */
-        openCanvas(
+        return commitCanvas(
           createUnsupportedCanvasContent(
             resolvers.resolveContentUrl(attachment),
           ),
           attachment.name,
           canvasAttachmentId,
         );
-        return true;
       }
 
       const content = await resolvers.resolveCodeContent(
@@ -357,10 +370,9 @@ export const useOpenAttachmentCanvas = (
         extensionToLanguage(ext),
       );
       if (content == null) return false;
-      openCanvas(content, attachment.name, canvasAttachmentId);
-      return true;
+      return commitCanvas(content, attachment.name, canvasAttachmentId);
     },
-    [openCanvas, customVisualizers, themeId, resolvers],
+    [customVisualizers, themeId, resolvers],
   );
 
   const openAttachmentCanvas = useCallback(
@@ -374,12 +386,28 @@ export const useOpenAttachmentCanvas = (
        * key here instead of relying on the content-derived id.
        */
       canvasAttachmentId: string | undefined = attachment.id,
+      shouldCommit?: ShouldCommitCanvas,
     ): Promise<boolean> => {
+      const canCommit = () => shouldCommit == null || shouldCommit();
+
+      const commitCanvas: CommitCanvasContent = (content, fileName, id) => {
+        if (!canCommit()) {
+          /* The canvas revokes only what it actually held, so a payload that
+             never reaches it has to be released here. */
+          releaseCanvasContent(content);
+          return false;
+        }
+        openCanvas(content, fileName, id);
+        return true;
+      };
+
       switch (attachment.type) {
         case AttachmentType.Image: {
           const content = resolvers.resolveImageContent(attachment);
           if (content == null) return false;
           onBeforeOpen?.();
+          /* Synchronous: there is no await between the caller's decision and
+             this write, so no staleness is possible. */
           openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
@@ -400,8 +428,15 @@ export const useOpenAttachmentCanvas = (
         case AttachmentType.File: {
           onBeforeOpen?.();
           openCanvasLoading(attachment.name, canvasAttachmentId);
-          const opened = await openFileCanvas(attachment, canvasAttachmentId);
-          if (!opened) closeCanvas();
+          const opened = await openFileCanvas(
+            attachment,
+            canvasAttachmentId,
+            commitCanvas,
+          );
+          /* `canCommit` is re-checked here rather than reused from the commit
+             above: closing is itself a canvas write, and a request that has
+             stopped owning the canvas must not close whatever took it over. */
+          if (!opened && canCommit()) closeCanvas();
           return opened;
         }
         case AttachmentType.Pasted:
@@ -410,11 +445,10 @@ export const useOpenAttachmentCanvas = (
           openCanvasLoading(attachment.name, canvasAttachmentId);
           const content = await resolvers.resolveTextContent(attachment);
           if (content == null) {
-            closeCanvas();
+            if (canCommit()) closeCanvas();
             return false;
           }
-          openCanvas(content, attachment.name, canvasAttachmentId);
-          return true;
+          return commitCanvas(content, attachment.name, canvasAttachmentId);
         }
         default:
           return false;

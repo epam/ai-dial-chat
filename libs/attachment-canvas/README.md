@@ -47,11 +47,12 @@ Although this library does not import `pdfjs-dist` directly,
 is declared here as well — as a dependency pinning the tested `^5.4.149` line,
 rather than relying on whatever a transitive resolution happens to produce.
 
-The library uses `@silurus/ooxml` as a bundled runtime dependency. Its DOCX,
-XLSX/CSV, and PPTX entry points are loaded independently on demand, so opening
-one format does not eagerly load the other renderers. CSV is displayed through
-the Excel-style `XlsxSheetViewer`; every field remains text, including leading
-zeroes, long identifiers, dates, and values beginning with `=`.
+The library installs `@silurus/ooxml` as a runtime dependency and leaves its
+format entry points external in the published artifact. A consuming bundler
+loads the DOCX, XLSX/CSV, and PPTX entry points independently on demand, so
+opening one format does not eagerly load the other renderers. CSV is displayed
+through the Excel-style `XlsxSheetViewer`; every field remains text, including
+leading zeroes, long identifiers, dates, and values beginning with `=`.
 
 The PDF renderer (`PdfContent`, used internally by `AttachmentCanvasBody` for
 `AttachmentContentType.Pdf`) and the syntax-highlighter engine (used by
@@ -294,6 +295,36 @@ if (!opened) {
 when the attachment could not be previewed. `onBeforeOpen` runs for
 `Image`/`File`/`Pasted`/`Prompt` attachments, never for `Audio`.
 
+#### Guarding a late completion (`ShouldCommitCanvas`)
+
+A host that can have more than one open in flight — or that can stop owning the
+canvas while one is running — passes a third argument, consulted immediately
+before each canvas write that follows an awaited resolver:
+
+```tsx
+const generationRef = useRef(0);
+
+const open = (attachment: DisplayAttachment, key: string) => {
+  const generation = (generationRef.current += 1);
+  return openAttachmentCanvas(
+    attachment,
+    key,
+    () => generationRef.current === generation,
+  );
+};
+```
+
+Returning `false` discards the result: no canvas state is written, a resolved
+payload's object URL is released, the open resolves `false`, and a request that
+found nothing to display does not close whatever took the canvas over. The
+underlying I/O is not cancelled — only its effect on shared state is. Omit the
+argument and every request commits, which is the previous behavior.
+
+Releasing the payload mirrors what the canvas does for content it did hold, and
+it sets a resolver contract: a resolver must hand back an object URL the canvas
+may own and revoke — a fresh `URL.createObjectURL` — never one the caller still
+uses elsewhere.
+
 ### findVisualizerForMime
 
 Pure lookup used internally by `useOpenAttachmentCanvas` to match an
@@ -308,32 +339,99 @@ import { findVisualizerForMime } from '@epam/ai-dial-attachment-canvas';
 const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 ```
 
+### findVisualizerForApplication / partitionAttachmentsForApplicationVisualizer
+
+The application-scoped counterparts, for the `APPLICATION_VISUALIZERS` registry
+a host resolves from its own configuration. The first looks an entry up by a
+message's effective deployment id (exact string match — deployment ids are
+opaque). The second splits a message's attachments into the ones that entry
+claims and the ones it does not: an entry with a `contentType` claims the MIME
+types in its comma-separated list, one without claims every attachment that
+carries a URL, and an attachment with no `url` is never claimed because the
+grouped payload addresses each item by absolute URL.
+
+```tsx
+import {
+  findVisualizerForApplication,
+  partitionAttachmentsForApplicationVisualizer,
+} from '@epam/ai-dial-attachment-canvas';
+
+const entry = findVisualizerForApplication(
+  effectiveDeploymentId,
+  applicationVisualizers,
+);
+const { claimed, unclaimed } = entry
+  ? partitionAttachmentsForApplicationVisualizer(attachments, entry)
+  : { claimed: [], unclaimed: attachments };
+```
+
+`partitionAttachmentsForApplicationVisualizer` returns an
+`ApplicationVisualizerPartition`. Claiming is a MIME/URL-presence decision only —
+whether the host can actually resolve an absolute URL for a claimed attachment is
+decided later, when the payload is built, so return anything that fails to resolve to
+the unclaimed side rather than dropping it.
+
+### groupedVisualizerCanvasKey
+
+The canvas-selection key identifying a message's grouped visualizer, so a host can tell
+whether that visualizer is the one currently open in the canvas — and, if so, render a
+placeholder in place of its inline frame instead of a second live iframe.
+
+```tsx
+import { groupedVisualizerCanvasKey } from '@epam/ai-dial-attachment-canvas';
+
+const canvasKey = groupedVisualizerCanvasKey(messageIndex);
+const isOpenedInCanvas = selectedAttachmentKey === canvasKey;
+```
+
+### InlineGroupedVisualizer
+
+Renders a message's grouped visualizer inline — a framed container with a
+header carrying the entry title and an expand-to-canvas button, wrapping a
+`VisualizerCanvasRenderer` at a caller-resolved height. The host builds the
+`GroupedVisualizerCanvasContent`, resolves the height from the registry entry's
+`height`/`mobileHeight`, and passes the same content object to the canvas when
+`onExpand` fires, so expanding never rebuilds the payload.
+
+```tsx
+import { InlineGroupedVisualizer } from '@epam/ai-dial-attachment-canvas';
+
+<InlineGroupedVisualizer
+  content={groupedContent}
+  height={isMobile ? (entry.mobileHeight ?? 400) : (entry.height ?? 600)}
+  onExpand={() => openCanvas(groupedContent)}
+  expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
+  errorLabel={t(AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel)}
+/>;
+```
+
 ## Content Types
 
 `AttachmentContentType` is the discriminant on every content descriptor.
 
-| Enum member                           | Content type                 | Description                                                                                                                             |
-| ------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `AttachmentContentType.PlainText`     | `PlainTextCanvasContent`     | Renders plain text                                                                                                                      |
-| `AttachmentContentType.Image`         | `ImageCanvasContent`         | Renders an image from a URL                                                                                                             |
-| `AttachmentContentType.Audio`         | `AudioCanvasContent`         | Renders an audio player                                                                                                                 |
-| `AttachmentContentType.Markdown`      | `MarkdownCanvasContent`      | Renders markdown text                                                                                                                   |
-| `AttachmentContentType.MarkdownTable` | `MarkdownTableCanvasContent` | Renders a Markdown table opened standalone (e.g. via a table's "open in canvas" action), with its own inline copy/download header       |
-| `AttachmentContentType.Json`          | `JsonCanvasContent`          | Renders a JSON tree viewer                                                                                                              |
-| `AttachmentContentType.Pdf`           | `PdfCanvasContent`           | Renders a PDF with highlight support and page-accurate navigation via an optional `page` field                                          |
-| `AttachmentContentType.Ooxml`         | `OoxmlCanvasContent`         | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
-| `AttachmentContentType.Code`          | `CodeCanvasContent`          | Renders syntax-highlighted source                                                                                                       |
-| `AttachmentContentType.Html`          | `HtmlCanvasContent`          | Renders HTML in a sandboxed frame, or its source                                                                                        |
-| `AttachmentContentType.McpApp`        | `McpAppCanvasContent`        | Mounts a sandboxed MCP App `ui://` resource through `McpAppCanvasRenderer`                                                              |
-| `AttachmentContentType.Visualizer`    | `VisualizerCanvasContent`    | Renders a registered custom visualizer                                                                                                  |
-| `AttachmentContentType.Unsupported`   | `UnsupportedCanvasContent`   | Fallback for unsupported MIME types                                                                                                     |
-| `AttachmentContentType.Error`         | `ErrorCanvasContent`         | Load failure or forbidden access                                                                                                        |
+| Enum member                               | Content type                     | Description                                                                                                                             |
+| ----------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `AttachmentContentType.PlainText`         | `PlainTextCanvasContent`         | Renders plain text                                                                                                                      |
+| `AttachmentContentType.Image`             | `ImageCanvasContent`             | Renders an image from a URL                                                                                                             |
+| `AttachmentContentType.Audio`             | `AudioCanvasContent`             | Renders an audio player                                                                                                                 |
+| `AttachmentContentType.Markdown`          | `MarkdownCanvasContent`          | Renders markdown text                                                                                                                   |
+| `AttachmentContentType.MarkdownTable`     | `MarkdownTableCanvasContent`     | Renders a Markdown table opened standalone (e.g. via a table's "open in canvas" action), with its own inline copy/download header       |
+| `AttachmentContentType.Json`              | `JsonCanvasContent`              | Renders a JSON tree viewer                                                                                                              |
+| `AttachmentContentType.Pdf`               | `PdfCanvasContent`               | Renders a PDF with highlight support and page-accurate navigation via an optional `page` field                                          |
+| `AttachmentContentType.Ooxml`             | `OoxmlCanvasContent`             | Renders DOCX, XLSX, PPTX, or CSV with `@silurus/ooxml`; the persistent XLSX `fx` bar shows the selected cell's formula or display value |
+| `AttachmentContentType.Code`              | `CodeCanvasContent`              | Renders syntax-highlighted source                                                                                                       |
+| `AttachmentContentType.Html`              | `HtmlCanvasContent`              | Renders HTML in a sandboxed frame, or its source                                                                                        |
+| `AttachmentContentType.McpApp`            | `McpAppCanvasContent`            | Mounts a sandboxed MCP App `ui://` resource through `McpAppCanvasRenderer`                                                              |
+| `AttachmentContentType.Visualizer`        | `VisualizerCanvasContent`        | Renders a registered custom visualizer                                                                                                  |
+| `AttachmentContentType.GroupedVisualizer` | `GroupedVisualizerCanvasContent` | Renders every attachment an application visualizer claims in one iframe                                                                 |
+| `AttachmentContentType.Unsupported`       | `UnsupportedCanvasContent`       | Fallback for unsupported MIME types                                                                                                     |
+| `AttachmentContentType.Error`             | `ErrorCanvasContent`             | Load failure or forbidden access                                                                                                        |
 
 `AttachmentErrorType` distinguishes the two failure kinds carried by
 `ErrorCanvasContent`: `LoadFailed` (network error or a non-`403` non-OK
 response) and `Forbidden` (HTTP `403`).
 
-`OoxmlFileType` selects the bundled renderer: `Docx`, `Xlsx`, `Pptx`, or
+`OoxmlFileType` selects the installed runtime renderer: `Docx`, `Xlsx`, `Pptx`, or
 `Csv`. The public name is retained for compatibility; `Csv` uses
 `@silurus/ooxml`'s `XlsxSheetViewer` delimited-text mode rather than an OOXML
 workbook parser.
@@ -379,6 +477,21 @@ optional `end: OoxmlCellAddress` for a same-row range). `endExclusive` on the
 DOCX/PPTX locations is already an exclusive upper bound — the caller
 producing it (`libs/chat-hooks`'s `annotationToOoxmlCanvasContent`) must not
 add 1 to the wire's `end`.
+
+Temporary table-row support also exposes `DocxTableRow`
+(`OoxmlDocxTableRowLocation`: `cells: string[]`, `occurrence: number`) and
+`PptxTableRow` (`OoxmlPptxTableRowLocation`: the same fields plus `slide: number`).
+Cells contain plain text in column order; `occurrence` counts matching complete
+rows from 1 in the DOCX body or within the specified 1-based PPTX slide. Matching
+is case-sensitive, normalizes whitespace and restores spaces at rendered line
+breaks. It never joins different rows or tables. A row citation highlights the
+text of every matched cell, not an inferred individual cell. DOCX waits for layout
+completion, scrolls its preview to the matched text and caches scale-independent
+geometry; PPTX navigates to the specified slide even if the row cannot be matched.
+Unmatched rows draw nothing. These descriptors support the temporary workaround
+for [#8863](https://github.com/epam/ai-dial-chat/issues/8863); remove the workaround
+after precise backend ranges replace the anchors and persisted anchors no longer
+need it. Markdown parsing stays in the annotation adapter, outside this renderer.
 
 Highlight colours go through the same `AttachmentCanvasColors` mechanism as
 every other themed surface: `ooxmlHighlightBorder` (defaults to

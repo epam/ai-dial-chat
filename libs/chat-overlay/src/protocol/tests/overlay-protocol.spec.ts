@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type {
+  ChatOverlayOptions,
+  SetOverlayOptionsPayload,
+} from '../overlay-protocol';
 import {
   DEPRECATED_OVERLAY_FEATURE_ALIASES,
   OverlayAuthUiMode,
@@ -19,6 +23,44 @@ describe('OverlayAuthUiMode', () => {
       'external',
       'sameWindow',
     ]);
+  });
+});
+
+describe('auto sign-in fields', () => {
+  it('leaves auth.autoSignInProvider optional on ChatOverlayOptions', () => {
+    const withoutAutoSignIn: ChatOverlayOptions = {
+      domain: 'https://chat.example.com',
+      auth: {
+        providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+      },
+    };
+
+    expect(withoutAutoSignIn.auth?.autoSignInProvider).toBeUndefined();
+  });
+
+  it('accepts a provider id alongside providerUiModes', () => {
+    const withAutoSignIn: ChatOverlayOptions = {
+      domain: 'https://chat.example.com',
+      auth: {
+        providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+        autoSignInProvider: 'keycloak',
+      },
+    };
+
+    expect(withAutoSignIn.auth?.autoSignInProvider).toBe('keycloak');
+  });
+
+  it('leaves authAutoSignInProvider optional on SetOverlayOptionsPayload', () => {
+    const withoutField: SetOverlayOptionsPayload = {
+      hostDomain: 'https://portal.example.com',
+    };
+    const withField: SetOverlayOptionsPayload = {
+      hostDomain: 'https://portal.example.com',
+      authAutoSignInProvider: 'keycloak',
+    };
+
+    expect(withoutField.authAutoSignInProvider).toBeUndefined();
+    expect(withField.authAutoSignInProvider).toBe('keycloak');
   });
 });
 
@@ -123,10 +165,10 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 42 unique members', () => {
+  it('has exactly 45 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(42);
-    expect(new Set(values).size).toBe(42);
+    expect(values).toHaveLength(45);
+    expect(new Set(values).size).toBe(45);
   });
 
   it('includes the hide-keyboard-shortcuts feature key', () => {
@@ -153,6 +195,18 @@ describe('OverlayFeature', () => {
 
   it('includes the file-manager feature key', () => {
     expect(Object.values(OverlayFeature)).toContain('file-manager');
+  });
+
+  it('includes the show-all-starters feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('show-all-starters');
+  });
+
+  it('includes the hide-footer-version feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('hide-footer-version');
+  });
+
+  it('includes the show-agent-description feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('show-agent-description');
   });
 
   it('includes the removable-tools feature key', () => {

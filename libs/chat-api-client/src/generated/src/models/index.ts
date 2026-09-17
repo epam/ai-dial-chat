@@ -490,6 +490,79 @@ export interface ApplicationSchemasResponseDto {
 /**
  *
  * @export
+ * @interface ApplicationVisualizerDto
+ */
+export interface ApplicationVisualizerDto {
+  /**
+   * The postMessage protocol namespace, NOT a display label. Every message exchanged with the iframe is prefixed "${title}/…", and the visualizer application must be constructed with this identical string as its appName. A mismatch is a silent failure — the iframe loads but never receives data. Also used as the inline frame's header text.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  title: string;
+  /**
+   * Human-readable description of the visualizer. Accepted for schema parity; not consumed by the host UI.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  description?: string;
+  /**
+   * Icon URL or identifier for the visualizer. Accepted for schema parity; not consumed by the host UI.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  icon?: string;
+  /**
+   * MIME type(s) this entry claims, as a comma-separated list (e.g. "application/vnd.plotly.v1+json, application/vnd.vega.v5+json"). Optional, unlike the required field of the same name on CustomVisualizerDto: when omitted, the entry claims every attachment of the message that carries a URL. Attachments it does not claim render as ordinary attachment tiles.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  contentType?: string;
+  /**
+   * Absolute HTTP(S) URL of the visualizer iframe.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  url: string;
+  /**
+   * Milliseconds to wait for a send() request response before rejecting. Defaults to 10000 when unset. Does not bound the initial READY_TO_INTERACT handshake.
+   * @type {number}
+   * @memberof ApplicationVisualizerDto
+   */
+  requestTimeout?: number;
+  /**
+   * Suggested initial width of the visualizer surface in pixels.
+   * @type {number}
+   * @memberof ApplicationVisualizerDto
+   */
+  width?: number;
+  /**
+   * Suggested initial height of the visualizer surface in pixels. Also used by the host to size the inline frame in the message.
+   * @type {number}
+   * @memberof ApplicationVisualizerDto
+   */
+  height?: number;
+  /**
+   * Suggested height on mobile-sized screens in pixels. Also used by the host to size the inline frame on a mobile viewport.
+   * @type {number}
+   * @memberof ApplicationVisualizerDto
+   */
+  mobileHeight?: number;
+  /**
+   * Whether the host should pass auth info to the visualizer. Accepted for schema parity; inert, because 1.0 auth is server-side and the browser holds no access token.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  passAuthInfo?: boolean;
+  /**
+   * Whether the host should pass an explicit access token. Accepted for schema parity; inert, because 1.0 auth is server-side and the browser holds no access token.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  passExplicitToken?: boolean;
+}
+/**
+ *
+ * @export
  * @interface ApplicationsResponseDto
  */
 export interface ApplicationsResponseDto {
@@ -893,6 +966,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   customVisualizers: Array<CustomVisualizerDto>;
+  /**
+   * Registry of application id → grouped visualizer mappings, keyed by a message's effective deployment id. Sourced from APPLICATION_VISUALIZERS. Every attachment an entry claims is delivered to one iframe together; an entry takes precedence over customVisualizers for the attachments it claims. The origin of each entry URL must also appear in ALLOWED_IFRAME_ORIGINS or the browser blocks the iframe. Each entry's passAuthInfo and passExplicitToken are accepted for configuration parity and are not consumed — auth is server-side and the browser holds no access token. Empty when unset — the feature is dark by default.
+   * @type {{ [key: string]: ApplicationVisualizerDto; }}
+   * @memberof ClientConfigDto
+   */
+  applicationVisualizers: { [key: string]: ApplicationVisualizerDto };
   /**
    * Public client-owned variables from CUSTOM_CLIENT_VARIABLES. Arbitrary JSON object; empty when unset or invalid. The BFF does not interpret its keys. Never put secrets here.
    * @type {{ [key: string]: unknown }}
@@ -5426,11 +5505,11 @@ export interface RateMessageDto {
    */
   modelId: string;
   /**
-   * Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.
+   * Rating value — 1 (like/thumbs-up), -1 (dislike/thumbs-down), or null to clear a previously sent rating. DIAL Core's `/v1/{modelId}/rate` only accepts a boolean `rate`: this value is mapped to `true` for 1 and to `false` for both -1 and null, since DIAL Core has no separate state for "cleared".
    * @type {number}
    * @memberof RateMessageDto
    */
-  rate: RateMessageDtoRateEnum;
+  rate: RateMessageDtoRateEnum | null;
   /**
    * Optional free-text comment from the user
    * @type {string}

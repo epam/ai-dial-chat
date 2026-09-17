@@ -524,6 +524,7 @@ vi.mock('../../../server-api/skills.api', () => ({
   downloadSkill: vi.fn(),
   downloadSkillFile: vi.fn(),
   listSkillFiles: vi.fn(),
+  getSkillMetadata: vi.fn(),
   deleteSkill: vi.fn(),
 }));
 
@@ -690,6 +691,7 @@ describe('CatalogView', () => {
         welcomeScreenDescription: null,
         footerHtmlMessage: '',
         customVisualizers: [],
+        applicationVisualizers: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
       },
     });

@@ -1723,7 +1723,7 @@
     },
     "/api/v1/client-channel/unsubscribe": {
       "post": {
-        "description": "Closes the given client channel on DIAL Core. Treats an already-gone channel (404) as idempotent success.",
+        "description": "Closes the given client channel on DIAL Core and returns its HTTP status unchanged with an empty body, including 404 for an already-gone channel. Returns 503 if Core cannot be reached.",
         "operationId": "unsubscribeClientChannel",
         "parameters": [
           {
@@ -1740,11 +1740,35 @@
           "200": {
             "description": "Unsubscribed successfully"
           },
+          "204": {
+            "description": "DIAL Core returned no content"
+          },
           "400": {
-            "description": "Missing or invalid channel id header"
+            "description": "Missing or invalid channel id header, or Core rejected the request"
           },
           "401": {
             "description": "Not authenticated"
+          },
+          "403": {
+            "description": "DIAL Core denied access"
+          },
+          "404": {
+            "description": "DIAL Core channel does not exist"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "DIAL Core returned a server error"
+          },
+          "502": {
+            "description": "DIAL Core returned a gateway error"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable"
+          },
+          "default": {
+            "description": "HTTP status returned by DIAL Core, with an empty body"
           }
         },
         "summary": "Unsubscribe from the client channel",
@@ -4175,7 +4199,7 @@
     },
     "/api/v1/rate": {
       "post": {
-        "description": "Forwards a like/dislike rating for an assistant message to DIAL Core. Uses the authenticated session's access token as a Bearer credential.",
+        "description": "Forwards a like/dislike rating, or the clearing of a previously sent rating, for an assistant message to DIAL Core. Uses the authenticated session's access token as a Bearer credential.",
         "operationId": "rateMessage",
         "parameters": [],
         "requestBody": {
@@ -5205,6 +5229,66 @@
           }
         },
         "summary": "Delete one file from a skill",
+        "tags": ["skills"]
+      }
+    },
+    "/api/v1/skills/metadata": {
+      "get": {
+        "description": "Proxies DIAL Core listSkillMetadata for a single skill resource and returns its provenance (author, timestamps, permissions) without ownership fields — GET /api/v1/skills cannot serve this because its response is items-shaped.",
+        "operationId": "getSkillMetadata",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "The skill's resource path within the bucket",
+            "schema": {
+              "example": "team-a/docs-helper",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillMetadataItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket/path, or the path resolves to a grouping folder"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Skill not found"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get one skill's own authoritative metadata",
         "tags": ["skills"]
       }
     },
@@ -6413,6 +6497,67 @@
         },
         "required": ["sub", "providerId", "claims", "bucket", "isAdmin"]
       },
+      "ApplicationVisualizerDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The postMessage protocol namespace, NOT a display label. Every message exchanged with the iframe is prefixed \"${title}/…\", and the visualizer application must be constructed with this identical string as its appName. A mismatch is a silent failure — the iframe loads but never receives data. Also used as the inline frame's header text.",
+            "example": "my-viz"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the visualizer. Accepted for schema parity; not consumed by the host UI.",
+            "example": "Renders a Plotly figure"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon URL or identifier for the visualizer. Accepted for schema parity; not consumed by the host UI.",
+            "example": "https://viz.example.com/icon.svg"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "MIME type(s) this entry claims, as a comma-separated list (e.g. \"application/vnd.plotly.v1+json, application/vnd.vega.v5+json\"). Optional, unlike the required field of the same name on CustomVisualizerDto: when omitted, the entry claims every attachment of the message that carries a URL. Attachments it does not claim render as ordinary attachment tiles.",
+            "example": "application/vnd.plotly.v1+json"
+          },
+          "url": {
+            "type": "string",
+            "description": "Absolute HTTP(S) URL of the visualizer iframe.",
+            "example": "https://viz.example.com"
+          },
+          "requestTimeout": {
+            "type": "number",
+            "description": "Milliseconds to wait for a send() request response before rejecting. Defaults to 10000 when unset. Does not bound the initial READY_TO_INTERACT handshake.",
+            "example": 15000
+          },
+          "width": {
+            "type": "number",
+            "description": "Suggested initial width of the visualizer surface in pixels.",
+            "example": 800
+          },
+          "height": {
+            "type": "number",
+            "description": "Suggested initial height of the visualizer surface in pixels. Also used by the host to size the inline frame in the message.",
+            "example": 600
+          },
+          "mobileHeight": {
+            "type": "number",
+            "description": "Suggested height on mobile-sized screens in pixels. Also used by the host to size the inline frame on a mobile viewport.",
+            "example": 400
+          },
+          "passAuthInfo": {
+            "type": "boolean",
+            "description": "Whether the host should pass auth info to the visualizer. Accepted for schema parity; inert, because 1.0 auth is server-side and the browser holds no access token.",
+            "example": false
+          },
+          "passExplicitToken": {
+            "type": "boolean",
+            "description": "Whether the host should pass an explicit access token. Accepted for schema parity; inert, because 1.0 auth is server-side and the browser holds no access token.",
+            "example": false
+          }
+        },
+        "required": ["title", "url"]
+      },
       "AnnouncementLinkDto": {
         "type": "object",
         "properties": {
@@ -6643,6 +6788,13 @@
               "$ref": "#/components/schemas/CustomVisualizerDto"
             }
           },
+          "applicationVisualizers": {
+            "type": "object",
+            "description": "Registry of application id → grouped visualizer mappings, keyed by a message's effective deployment id. Sourced from APPLICATION_VISUALIZERS. Every attachment an entry claims is delivered to one iframe together; an entry takes precedence over customVisualizers for the attachments it claims. The origin of each entry URL must also appear in ALLOWED_IFRAME_ORIGINS or the browser blocks the iframe. Each entry's passAuthInfo and passExplicitToken are accepted for configuration parity and are not consumed — auth is server-side and the browser holds no access token. Empty when unset — the feature is dark by default.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ApplicationVisualizerDto"
+            }
+          },
           "customVariables": {
             "type": "object",
             "description": "Public client-owned variables from CUSTOM_CLIENT_VARIABLES. Arbitrary JSON object; empty when unset or invalid. The BFF does not interpret its keys. Never put secrets here.",
@@ -6669,6 +6821,7 @@
           "announcements",
           "footerHtmlMessage",
           "customVisualizers",
+          "applicationVisualizers",
           "customVariables",
           "publicationFilterSources"
         ]
@@ -11073,8 +11226,9 @@
           },
           "rate": {
             "type": "number",
-            "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
-            "enum": [1, -1]
+            "description": "Rating value — 1 (like/thumbs-up), -1 (dislike/thumbs-down), or null to clear a previously sent rating. DIAL Core's `/v1/{modelId}/rate` only accepts a boolean `rate`: this value is mapped to `true` for 1 and to `false` for both -1 and null, since DIAL Core has no separate state for \"cleared\".",
+            "enum": [1, -1, null],
+            "nullable": true
           },
           "comment": {
             "type": "string",

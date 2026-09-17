@@ -21,7 +21,7 @@ Existing callers MAY continue sending `version`. When it is absent or empty, `Pu
 
 `author` SHALL be the display author recorded on the publication. `PublishController.publish` SHALL resolve the effective value as `author?.trim() || getUserDisplayName(claims)` and pass that single string to `PublishService.publish`, whose signature and its `displayAuthor: author` line on the `createPublication` body SHALL remain unchanged. A request that omits `author`, or sends it blank or whitespace-only, SHALL therefore behave exactly as it did before this change.
 
-`author` SHALL NOT affect authorization or the recorded actor. DIAL Core continues to derive the publication's `author` from the caller's bearer token and to enforce target-folder write access against it; `displayAuthor` is presentation only. `PublishResultDto.publishedBy` SHALL continue to prefer `publication.author` over `publication.displayAuthor`, so the response and publish history keep reporting the real publisher even when a different display author was submitted.
+`author` SHALL NOT affect authorization or the recorded actor. DIAL Core continues to derive the publication's `author` from the caller's bearer token and to enforce target-folder write access against it; `displayAuthor` is presentation only. `PublishResultDto.publishedBy` SHALL report the publication's display author, reading `publication.displayAuthor` before `publication.author` (`readPublicationDisplayAuthor`), so the response and publish history name the author the publisher chose. Core always records its own `author`, so reading that first would leave a submitted display author unobservable in every response this API returns.
 
 Example versioned toolset request with a custom author:
 
@@ -66,7 +66,7 @@ A successful request SHALL return 201 with the existing `PublishResultDto` shape
 }
 ```
 
-The endpoint SHALL return 400 for invalid path/body input, 401 for an unauthenticated caller, 403 when Core denies target-folder write access, 429 after the 10 requests/minute write throttle, 502 for an upstream non-OK response, and 503 when Core is unavailable. Structured Core errors SHALL continue through `mapDialHttpStatus` with the upstream message. A successful publish SHALL invalidate `publish-history:{entityType}:{entityId}`.
+The endpoint SHALL return 400 for invalid path/body input, 401 for an unauthenticated caller, 403 when Core denies target-folder write access, 429 when DIAL Core rejects the request due to its rate limit, 502 for an upstream non-OK response, and 503 when Core is unavailable. Structured Core errors SHALL continue through `mapDialHttpStatus` with the upstream message. A successful publish SHALL invalidate `publish-history:{entityType}:{entityId}`.
 
 OpenAPI operation `publishCatalogEntity` SHALL expose `PublishCatalogEntityDto.version?: string` and `PublishCatalogEntityDto.author?: string` alongside the unchanged `PublishResultDto`; frontend callers SHALL use the normal generated method through `apps/chat/src/server-api/publish.api.ts`. Because `author` is optional, the regenerated client SHALL stay source-compatible with request literals that omit it.
 
@@ -110,10 +110,11 @@ OpenAPI operation `publishCatalogEntity` SHALL expose `PublishCatalogEntityDto.v
 - **WHEN** a request sends `author: "   "`
 - **THEN** the trimmed value is empty, the controller falls back to `getUserDisplayName(claims)`, and Core never receives an empty `displayAuthor`
 
-#### Scenario: Custom author does not change the recorded publisher
+#### Scenario: Custom author is reported back as the publication author
 
 - **WHEN** a user publishes with an `author` different from their own display name and the publication is read back
-- **THEN** `PublishResultDto.publishedBy` reports Core's own `publication.author` (the authenticated identity), not the submitted display author
+- **THEN** `PublishResultDto.publishedBy` reports `publication.displayAuthor` (the submitted author), falling back to Core's own `publication.author` only when Core stored no display author
+- **AND** authorization and the actor Core records are unchanged — `displayAuthor` is presentation only
 
 #### Scenario: Over-long author is rejected before Core
 
@@ -251,8 +252,6 @@ Caching: this endpoint MAY cache the mapped Core response with key `publish-hist
 This supersedes the requirement's earlier `{ url: entityId }` call shape, which was recorded here as an unresolved open issue (task 6.8 of the `add-catalog-publish` change): Core's OpenAPI spec defines `getPublications`'s `url` as the list **scope**, not a resource filter, and passing the resource's own url there was rejected with a 400. `PublishService.getPublishHistory` now passes the list scope and filters locally, and `getPublicationsListScope`'s own doc comment records the confirmation against Core's spec. That open issue is closed, and the history scenarios below are no longer to be read as unverified.
 
 The endpoint is load-bearing beyond the publish panel: the Unpublish action's visibility derives from it, so an empty or failed result hides that action entirely (see `catalog-unpublish-flow`). Its frontend caller SHALL therefore actually issue the call rather than resolving to a frozen empty list — see `catalog-publish-flow`, which lifts that workaround.
-
-Rate limiting: default global throttle applies (read endpoint, no stricter override needed).
 
 #### Scenario: History returned for entity with prior publishes
 - **WHEN** a caller requests history for an entity that has been published before

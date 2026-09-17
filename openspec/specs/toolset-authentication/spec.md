@@ -391,6 +391,13 @@ neither `API_KEY` nor `OAUTH`, the request SHALL fail with `400 Bad Request`.
   type is `NONE`
 - **THEN** the server responds `400 Bad Request`
 
+#### Scenario: Logout without authenticationType for a bucketless platform toolset
+- **WHEN** an authenticated user requests logout for `NS_toolset_1097_test`, omits
+  `authenticationType`, and the platform toolset has stored API-key authentication
+- **THEN** the server resolves its authentication type through the toolset lookup and
+  revokes credentials with `authenticationType: API_KEY` and
+  `url: "NS_toolset_1097_test"`, without requiring a bucket
+
 #### Scenario: Explicit authenticationType is honored without a lookup
 - **WHEN** a logout request includes `authenticationType`
 - **THEN** the server uses the supplied value directly and does not perform the stored-toolset

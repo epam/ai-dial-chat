@@ -212,6 +212,26 @@ const annotations = normalizeRawAnnotations(
 
 **`end` convention differs by selector kind.** `TextCharacterRangeSelector.end` is inclusive. `DocxRangeSelector.end` and `PptxRangeSelector.end` are already **exclusive** on the wire — confirmed against captured DIAL Core responses, not assumed — so consumers must not add 1 before slicing. `ExcelRcRangeSelector.end` is a distinct concept: a 1-based `{ row, col }` address naming the range's last (inclusive) cell, `null`-or-omitted meaning a single cell. `DocxRangeSelector.story` is typed as an opaque `string` — only `'body'` is confirmed upstream, no closed enum exists.
 
+### Visualizer registries
+
+Two operator-configured registries describe third-party visualizer iframes. Both are resolved by the host application and passed into `@epam/ai-dial-attachment-canvas` as data; this package owns only their types.
+
+```tsx
+import type {
+  ApplicationVisualizer,
+  ApplicationVisualizerRegistry,
+  CustomVisualizer,
+  GroupedAttachmentItem,
+  GroupedAttachmentsData,
+} from '@epam/ai-dial-chat-shared';
+```
+
+- `CustomVisualizer` — one MIME → visualizer mapping. `contentType` is **required** and accepts a comma-separated MIME list. One attachment per iframe.
+- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together.
+- `GroupedAttachmentsData` / `GroupedAttachmentItem` — the grouped payload the host builds from the claimed attachments. Each item's `url` is absolute, resolved by the host before sending.
+
+In both types, `title` is the postMessage protocol namespace rather than a display label: the iframe-side application must be constructed with the identical string as its `appName`, so it must never be localised. `passAuthInfo` and `passExplicitToken` are accepted for configuration parity and are inert — auth is server-side and the browser holds no access token.
+
 ### ConversationTransfer
 
 Types for the queued export/import job model. Consumed by `@epam/ai-dial-conversation-panel`'s `ImportExportQueue` component.
@@ -368,18 +388,18 @@ import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
 Standalone table renderer for structured markdown tables. The table scrolls
 horizontally when it overflows its container; it is never height-bounded and
 grows to its natural height instead of scrolling vertically.
-Supplying `actionLabels` enables copy-as-CSV, copy-as-TXT,
-copy-as-Markdown, and download-as-CSV actions. Copy formats flatten rendered
-cell text, and CSV download includes a UTF-8 byte-order mark. Each action
-shows a UI-kit tooltip with its localized label, and actions are hidden while
-`isStreaming` is true.
-The built-in header container is `TableHeader` (see below); it renders
-automatically whenever `actionLabels` is supplied, and stays hidden otherwise.
+Supplying `actionLabels` enables a hover-only floating overlay in the top-right
+corner that exposes a Copy action and a Download as CSV action. Copy places the
+table on the clipboard as Markdown-sourced rich text (HTML for rich targets such
+as Word, Google Docs, or Slack; raw Markdown for plain-text targets). CSV
+download includes a UTF-8 byte-order mark. Each action shows a UI-kit tooltip
+with its localized label, and actions are hidden while `isStreaming` is true.
+The overlay is sticky — it follows the viewport when the page is scrolled.
 When `actionLabels.openInCanvasLabel` and `onOpenInCanvas` are both supplied,
-a fifth "Open in Canvas" action appears; activating it serializes the table
-with the same Markdown format `copyMarkdownLabel` uses and passes that string
-to `onOpenInCanvas`. Omitting either one hides the action — the host decides
-whether expanding a table into a canvas is meaningful for it.
+an "Open in Canvas" action appears; activating it serializes the table as
+Markdown and passes that string to `onOpenInCanvas`. Omitting either one hides
+the action — the host decides whether expanding a table into a canvas is
+meaningful for it.
 
 ```tsx
 import {
@@ -388,9 +408,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 
 const tableActionLabels: MarkdownTableActionLabels = {
-  copyCsvLabel: 'Copy as CSV',
-  copyTxtLabel: 'Copy as TXT',
-  copyMarkdownLabel: 'Copy as Markdown',
+  copyLabel: 'Copy',
   copiedLabel: 'Copied!',
   downloadCsvLabel: 'Download as CSV',
 };
@@ -420,8 +438,7 @@ const tableActionLabels: MarkdownTableActionLabels = {
 Reusable table header with optional leading content and caller-supplied
 `{ label, icon, onClick }` action descriptors. `TableHeader` renders each
 descriptor as an accessible UI-kit tooltip button; actions align to the inline
-end, so the header follows RTL direction automatically. `MarkdownTable` uses
-`TableHeader` as its built-in header whenever `actionLabels` is supplied.
+end, so the header follows RTL direction automatically.
 
 ```tsx
 import { TableHeader } from '@epam/ai-dial-chat-shared';
@@ -514,7 +531,10 @@ import { CatalogEntityType, FeaturedChip } from '@epam/ai-dial-chat-shared';
 <FeaturedChip
   type={CatalogEntityType.Agent}
   label="Featured"
-  style={{ backgroundColor: 'var(--bg-control-accent)', color: 'var(--text-control-permanent)' }}
+  style={{
+    backgroundColor: 'var(--bg-control-accent)',
+    color: 'var(--text-control-permanent)',
+  }}
 />;
 ```
 

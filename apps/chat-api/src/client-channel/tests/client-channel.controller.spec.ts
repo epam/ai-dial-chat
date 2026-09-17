@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import {
   BadGatewayException,
   INestApplication,
+  ServiceUnavailableException,
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
@@ -87,7 +88,7 @@ describe('ClientChannelController (integration)', () => {
     service = {
       subscribe: vi.fn(),
       report: vi.fn().mockResolvedValue(undefined),
-      unsubscribe: vi.fn().mockResolvedValue(undefined),
+      unsubscribe: vi.fn().mockResolvedValue(200),
     };
     app = await buildApp(service);
   });
@@ -311,6 +312,31 @@ describe('ClientChannelController (integration)', () => {
   });
 
   describe('POST /api/v1/client-channel/unsubscribe', () => {
+    it.each([200, 204, 400, 401, 403, 404, 429, 500, 502, 503])(
+      'returns Core HTTP status %i with an empty body',
+      async (status) => {
+        service.unsubscribe.mockResolvedValue(status);
+
+        const response = await request(app.getHttpServer())
+          .post('/api/v1/client-channel/unsubscribe')
+          .set('X-DIAL-CLIENT-CHANNEL-ID', 'channel-1')
+          .expect(status);
+
+        expect(response.text).toBe('');
+      },
+    );
+
+    it('returns 503 when Core cannot be reached', async () => {
+      service.unsubscribe.mockRejectedValue(
+        new ServiceUnavailableException('DIAL Core is currently unavailable'),
+      );
+
+      await request(app.getHttpServer())
+        .post('/api/v1/client-channel/unsubscribe')
+        .set('X-DIAL-CLIENT-CHANNEL-ID', 'channel-1')
+        .expect(503);
+    });
+
     it('returns 200 and forwards to the service', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/client-channel/unsubscribe')
@@ -346,7 +372,7 @@ describe('ClientChannelController — FeatureGuard wiring', () => {
         .fn()
         .mockResolvedValue({ stream: streamOf([]), channelId: 'channel-1' }),
       report: vi.fn().mockResolvedValue(undefined),
-      unsubscribe: vi.fn().mockResolvedValue(undefined),
+      unsubscribe: vi.fn().mockResolvedValue(200),
     };
 
     const module: TestingModule = await Test.createTestingModule({

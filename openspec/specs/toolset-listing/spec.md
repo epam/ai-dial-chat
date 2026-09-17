@@ -17,7 +17,6 @@ The endpoint:
 - MUST call DIAL Core using `@epam/ai-dial-typescript-sdk` method `getToolSets({ headers })` when available
 - MUST NOT forward the `DIAL_API_KEY` to the client or use it as the upstream credential on this route
 - SHALL return `200 OK` with body `{ "data": DialToolset[] }` mirroring the DIAL Core response shape
-- SHALL apply per-route rate limiting of **60 req/min per IP** via `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - SHALL cache the upstream response server-side for **30 seconds** using cache key `toolsets:list:<user.sub>`; a cache hit MUST NOT re-call DIAL Core
 - MUST set `Cache-Control: private, max-age=30` on the HTTP response
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError` (401 → 401, 403 → 403, 429 → 429, 5xx → 502, network/timeout → 503)
@@ -80,11 +79,6 @@ The endpoint:
 
 - **WHEN** DIAL Core does not respond within the configured timeout
 - **THEN** the BFF returns `503 Service Unavailable`
-
-#### Scenario: Rate limit exceeded
-
-- **WHEN** a caller sends more than 60 requests per minute to this endpoint
-- **THEN** the BFF returns `429 Too Many Requests`
 
 #### Scenario: Cache hit avoids upstream call
 

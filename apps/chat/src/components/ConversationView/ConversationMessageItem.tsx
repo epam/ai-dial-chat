@@ -1,5 +1,9 @@
 import {
   AttachmentContentType,
+  findVisualizerForApplication,
+  groupedVisualizerCanvasKey,
+  InlineGroupedVisualizer,
+  partitionAttachmentsForApplicationVisualizer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import {
@@ -10,6 +14,7 @@ import {
   messageHasStages,
   openAnnotationAttachment,
   referenceAttachmentToPdfCanvasContent,
+  resolveGroupedVisualizerCanvasContent,
   useAttachmentAction,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -79,7 +84,9 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
+import { useApplicationVisualizers } from '../../hooks/attachment/useApplicationVisualizers';
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import {
@@ -87,6 +94,7 @@ import {
   attachmentDisplayResolvers,
 } from '../../utils/attachment-display-resolvers';
 import {
+  resolveAbsoluteDialUrl,
   resolveDialFileDownloadUrl,
   resolveMarkdownUrl,
 } from '../../utils/dial-file';
@@ -103,6 +111,10 @@ const EditMessageInput = lazy(async () => {
 });
 
 const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
+
+/* Fallback inline-frame height when the registry entry declares neither
+   `height` nor `mobileHeight`. */
+const DEFAULT_VISUALIZER_HEIGHT = 400;
 
 const MESSAGE_TEXT_STYLES = {
   typography: { fontClassName: 'dial-body-text' },
@@ -294,6 +306,8 @@ const ConversationMessageItem: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
+  const applicationVisualizers = useApplicationVisualizers();
+  const isMobile = useIsMobile();
   const { openCanvas } = useAttachmentCanvas();
   const isLikesEnabled = useUiFeature(OverlayFeature.Likes);
   const isEditUserMessageHidden = useUiFeature(
@@ -448,6 +462,78 @@ const ConversationMessageItem: FC<Props> = ({
       ),
     [msg.custom_content?.attachments],
   );
+  /*
+   * An application visualizer claims some or all of this message's
+   * attachments and renders them together in one iframe. Resolved in a single
+   * memo so the entry lookup, the partition, and the payload object all share
+   * one identity per render — `VisualizerCanvasRenderer` keys its iframe on
+   * the payload's `url`/`visualizerName`/`requestTimeout`, but a fresh
+   * `content` object on every parent render would still churn its props.
+   */
+  const groupedVisualizer = useMemo(() => {
+    const entry = findVisualizerForApplication(
+      effectiveDeploymentId,
+      applicationVisualizers,
+    );
+    if (entry == null) return null;
+
+    const { claimed } = partitionAttachmentsForApplicationVisualizer(
+      nonReferenceDisplayAttachments,
+      entry,
+    );
+    if (claimed.length === 0) return null;
+
+    const { content, resolved } = resolveGroupedVisualizerCanvasContent(
+      claimed,
+      resolveAbsoluteDialUrl,
+      entry,
+      currentTheme,
+    );
+    if (content == null) return null;
+
+    /* Derived from the full list rather than the partition's `unclaimed`, so a
+     * claimed attachment the host could not resolve a URL for falls back to an
+     * ordinary tile instead of disappearing from the message entirely. */
+    const resolvedSet = new Set(resolved);
+
+    return {
+      content,
+      unclaimed: nonReferenceDisplayAttachments.filter(
+        (attachment) => !resolvedSet.has(attachment),
+      ),
+      /* The registry carries both heights; picking between them is the host's
+       * job, so the lib never reads a breakpoint. A mobile viewport prefers
+       * `mobileHeight` but falls back to `height` when the entry declares
+       * only the desktop one. */
+      height:
+        (isMobile ? (entry.mobileHeight ?? entry.height) : entry.height) ??
+        DEFAULT_VISUALIZER_HEIGHT,
+    };
+  }, [
+    effectiveDeploymentId,
+    applicationVisualizers,
+    nonReferenceDisplayAttachments,
+    currentTheme,
+    isMobile,
+  ]);
+
+  /* Claimed attachments are rendered by the visualizer, so they must not also
+   * appear as tray tiles. */
+  const bubbleAttachments =
+    groupedVisualizer?.unclaimed ?? nonReferenceDisplayAttachments;
+
+  /* Opens the canvas with the very object the inline frame was given, so
+   * expanding never rebuilds the grouped payload. */
+  const handleExpandGroupedVisualizer = useCallback(() => {
+    if (groupedVisualizer == null) return;
+    const panelTitle = groupedVisualizer.content.visualizerName.trim();
+    openCanvas(
+      groupedVisualizer.content,
+      panelTitle === '' ? undefined : panelTitle,
+      groupedVisualizerCanvasKey(index),
+    );
+  }, [groupedVisualizer, openCanvas, index]);
+
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
     if (attachment)
@@ -536,6 +622,11 @@ const ConversationMessageItem: FC<Props> = ({
   const mcpAppKey = mcpAppMatch ? mcpAppCanvasKey(index) : undefined;
   const isMcpAppOpenedInCanvas =
     mcpAppKey != null && selectedAttachmentKey === mcpAppKey;
+  const groupedVisualizerKey =
+    groupedVisualizer != null ? groupedVisualizerCanvasKey(index) : undefined;
+  const isGroupedVisualizerOpenedInCanvas =
+    groupedVisualizerKey != null &&
+    selectedAttachmentKey === groupedVisualizerKey;
   const { starters: activeStarters, onSelectStarter: handleSelectStarter } =
     getMessageStarterProps(
       msg,
@@ -602,7 +693,7 @@ const ConversationMessageItem: FC<Props> = ({
           msg.role === MessageRole.Assistant ? resolveMarkdownUrl : undefined
         }
         markdownClassNames={markdownClassNames}
-        attachments={nonReferenceDisplayAttachments}
+        attachments={bubbleAttachments}
         isStreaming={isStreaming}
         hasAlwaysVisibleActions={!isStreaming}
         actions={{
@@ -637,6 +728,7 @@ const ConversationMessageItem: FC<Props> = ({
           referenceGroups.length > 0 ||
           hasStages ||
           mcpAppMatch != null ||
+          groupedVisualizer != null ||
           msg.streamErrorMessage != null ? (
             <>
               {referenceGroups.length > 0 && (
@@ -710,6 +802,34 @@ const ConversationMessageItem: FC<Props> = ({
                   labels={{ executedLabel, stepsLabel }}
                 />
               )}
+              {groupedVisualizer != null &&
+                (isGroupedVisualizerOpenedInCanvas ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
+                  >
+                    <span className="dial-body-text text-primary">
+                      {openedInCanvasLabel}
+                    </span>
+                  </div>
+                ) : (
+                  <InlineGroupedVisualizer
+                    content={groupedVisualizer.content}
+                    height={groupedVisualizer.height}
+                    onExpand={handleExpandGroupedVisualizer}
+                    expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
+                    actionsGroupAriaLabel={t(
+                      AttachmentCanvasI18nKeys.VisualizerActionsAriaLabel,
+                    )}
+                    loadingLabel={t(
+                      AttachmentCanvasI18nKeys.VisualizerLoadingLabel,
+                    )}
+                    errorLabel={t(
+                      AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
+                    )}
+                  />
+                ))}
               {mcpAppMatch &&
                 onOpenApp &&
                 (isMcpAppOpenedInCanvas ? (
@@ -764,9 +884,7 @@ const ConversationMessageItem: FC<Props> = ({
           thinkingLabel,
           codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
           codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
-          tableCopyCsvLabel: t(ButtonsI18nKeys.CopyAsCsv),
-          tableCopyTxtLabel: t(ButtonsI18nKeys.CopyAsTxt),
-          tableCopyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+          tableCopyLabel: t(ButtonsI18nKeys.Copy),
           tableCopiedLabel: t(ButtonsI18nKeys.Copied),
           tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
           tableOpenInCanvasLabel: t(ButtonsI18nKeys.OpenInCanvas),

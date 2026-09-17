@@ -68,9 +68,9 @@ Core, mirroring the full-replacement semantics every other General-step field al
   currently a locale map, omitting `locales` from the request body
 - **THEN** the service sends DIAL Core a plain-string `displayName`, replacing the existing map
 
-### Requirement: Endpoint is versioned, rate-limited, and documented
+### Requirement: Endpoint is versioned and documented
 The create-application endpoint SHALL be URI-versioned at `/api/v1/applications`, SHALL
-declare a `@Throttle` rate limit, and SHALL document every response status via
+document every response status via
 `@ApiResponse`. The Swagger schema for `CreateApplicationBodyDto` SHALL NOT reference an
 `intro` field.
 
@@ -155,9 +155,8 @@ DIAL Core write has already succeeded at that point, a failure of any invalidati
 logged and swallowed rather than turning a successful update into an error response. DIAL Core
 error statuses SHALL be mapped to typed HTTP responses.
 
-The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`,
-rate-limited via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
-create/delete), and documented via `@nestjs/swagger` (`@ApiOperation` with
+The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`
+and documented via `@nestjs/swagger` (`@ApiOperation` with
 `operationId: 'updateApplication'`, `@ApiResponse` for every status below). Authorization
 matches `deleteApplication`: any authenticated user may update their own application, no
 additional role restriction.
@@ -229,6 +228,58 @@ additional role restriction.
   `maxInputAttachments`
 - **THEN** each omitted field keeps the value already stored on the application, regardless of
   whether `applicationProperties` was supplied (nothing is ever extracted from it)
+- **EXCEPT** `features.skills_supported` on a Quick App: see "Quick Apps always get
+  `features.skills_supported: true`" below — that one sub-field is actively re-asserted on every
+  Quick App update rather than merely carried through.
+
+### Requirement: Quick Apps always get features.skills_supported: true
+
+When a user creates a Quick App from the Admin application, Admin's own UI lets them set the
+`skills_supported` feature flag. Chat has no equivalent UI control for this flag, so a Quick App
+created or updated from chat would otherwise never get it set, and would silently lose skills.
+Three options were considered: add this default to every individual Quick App implementation
+(rejected — duplicative, many places to keep in sync), leave skills broken for chat-created Quick
+Apps (rejected outright), or force it in the one place all chat-originated application writes
+already pass through, `ApplicationsService` in `apps/chat-api`. The third option was chosen as the
+least-bad: it is a deliberate, narrow coupling of generic application-write logic to a
+QuickApp-specific business rule that does not otherwise belong in this service, accepted because
+the alternatives were worse.
+
+Both `createApplication` and `updateApplication` SHALL determine whether the schema is a Quick
+App via the shared `isQuickAppSchema` helper (`apps/chat-api/src/common/utils/application-schema.ts` —
+`body.type` on create, `mergedBody.application_type_schema_id` on update), and, when it matches,
+SHALL force the DIAL Core save body's top-level `features.skills_supported` to `true`, merged
+with any other `features` keys already present on the body (caller-supplied or hoisted on
+create; carried-through or caller-supplied on update). This override is unconditional: on
+update, it is applied even when the request body supplies no `features` at all, since the intent
+is a standing guarantee re-asserted on every save, not a one-time default applied only at
+creation. It overrides any `skills_supported` value the caller may have supplied.
+
+For a Quick App, the Settings-step save that actually matters most (setting orchestrator/
+contexts/tool_sets) is persisted entirely by the embedded Settings-step editor (loaded from
+`schema.editorUrl`), not by a direct call to this endpoint — see the `app-editor-flow` spec's
+"A Settings-step save reasserts features.skills_supported via a follow-up updateApplication
+call" requirement for how the frontend closes that gap by calling this endpoint again,
+specifically to re-trigger the force-merge described here, after the embedded editor's own save
+completes.
+
+#### Scenario: A Quick App create forces skills_supported to true
+- **WHEN** an authenticated user POSTs an application create body whose `type` matches
+  `isQuickAppSchema`, with no `features` supplied
+- **THEN** the DIAL Core save body's top-level `features.skills_supported` is `true`
+
+#### Scenario: A Quick App update forces skills_supported to true even when features is omitted
+- **WHEN** an authenticated user PATCHes an existing Quick App (whose stored
+  `application_type_schema_id` matches `isQuickAppSchema`), omitting `features` from the request
+  body entirely
+- **THEN** the merged body sent to DIAL Core's `saveCustomApplication` carries top-level
+  `features.skills_supported: true`, regardless of what was previously stored
+
+#### Scenario: A non-Quick-App is unaffected
+- **WHEN** a create or update targets an application whose schema `type`/
+  `application_type_schema_id` does not match `isQuickAppSchema`
+- **THEN** `features.skills_supported` is never forced, and `features` behaves exactly as
+  described elsewhere in this spec (hoisted/carried-through/caller-supplied only)
 
 #### Scenario: A successful update invalidates the deployment details cache
 - **WHEN** an update succeeds for an application whose `deployments:details:<userSub>:<id>`
@@ -266,10 +317,6 @@ additional role restriction.
 - **WHEN** DIAL Core reports the resolved application path does not exist
 - **THEN** the endpoint responds `404 Not Found`
 
-#### Scenario: Rate limit exceeded
-- **WHEN** the caller exceeds 10 update requests within 60 seconds
-- **THEN** the endpoint responds `429 Too Many Requests`
-
 #### Scenario: DIAL Core error
 - **WHEN** DIAL Core returns an error status while fetching or saving the application
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. `502`/`503`)
@@ -298,9 +345,7 @@ and each `deployments:list:${userSub}:interface:<type>` entry), since the Catalo
 application list is read through `DeploymentsService.listDeployments`, not through the
 applications list cache. DIAL Core error statuses SHALL be mapped to typed HTTP responses.
 
-The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`, rate-limited
-via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
-`createToolset`/`deleteToolset`), documented via `@nestjs/swagger` (`@ApiOperation` with
+The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`, documented via `@nestjs/swagger` (`@ApiOperation` with
 `operationId: 'deleteApplication'`, `@ApiResponse` for every status below), and requires an
 authenticated session (no additional role restriction — any authenticated user may delete
 their own application, matching `deleteToolset`'s authorization model).
@@ -341,10 +386,6 @@ side effects. The endpoint's request/response shape, `operationId`, and generate
 #### Scenario: Application not found
 - **WHEN** DIAL Core reports the resolved application path does not exist
 - **THEN** the endpoint responds `404 Not Found`
-
-#### Scenario: Rate limit exceeded
-- **WHEN** the caller exceeds 10 delete requests within 60 seconds
-- **THEN** the endpoint responds `429 Too Many Requests`
 
 #### Scenario: DIAL Core error
 - **WHEN** DIAL Core returns an error status while deleting

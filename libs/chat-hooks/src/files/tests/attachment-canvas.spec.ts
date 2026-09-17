@@ -2,6 +2,7 @@ import {
   AttachmentContentType,
   AttachmentErrorType,
   OoxmlFileType,
+  OoxmlHighlightKind,
 } from '@epam/ai-dial-attachment-canvas';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type {
@@ -13,6 +14,7 @@ import {
   groupAnnotations,
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
+import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentCanvasUrlResolvers } from '../attachment-canvas';
 import {
@@ -29,6 +31,7 @@ import {
   resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
 } from '../attachment-canvas';
+import { dialFileToAttachment } from '../dial-file-to-attachment';
 
 /*
  * Mocked without `importOriginal` — the real module transitively pulls in
@@ -74,6 +77,8 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
     Xlsx: 'xlsx',
   },
   OoxmlHighlightKind: {
+    DocxTableRow: 'docxTableRow',
+    PptxTableRow: 'pptxTableRow',
     DocxTextRange: 'docxTextRange',
     PptxTextRange: 'pptxTextRange',
     XlsxCellRange: 'xlsxCellRange',
@@ -193,6 +198,53 @@ const makeLocalZeroByteAttachment = (name: string): DisplayAttachment => {
     status: RequestStatus.Idle,
     file,
   } as unknown as DisplayAttachment;
+};
+
+/*
+ * Built by the real producer (`dialFileToAttachment`) so the fixture stays
+ * pinned to the attachment shape the file-manager attach flow actually emits:
+ * real content behind the `files/` url, `file` a 0-byte placeholder.
+ */
+const makeFileManagerAttachment = (
+  name: string,
+  url: string,
+  contentType: string,
+): DisplayAttachment =>
+  dialFileToAttachment(
+    {
+      id: url,
+      name,
+      path: `/${name}`,
+      folderId: 'bucket',
+      nodeType: DialFileNodeType.ITEM,
+      contentType,
+      url,
+    },
+    'bucket',
+  ) as unknown as DisplayAttachment;
+
+/*
+ * An uploaded-but-unsent composer attachment: the eager-upload flow assigns
+ * the DIAL url while keeping the real local `File` with its bytes.
+ */
+const makeUploadedAttachment = (
+  name: string,
+  url: string,
+  contentType: string,
+  content: string,
+): DisplayAttachment & { file: File } => {
+  const file = new File([content], name, { type: contentType });
+  return {
+    id: url,
+    name,
+    contentType,
+    type: contentType.startsWith('image/')
+      ? AttachmentType.Image
+      : AttachmentType.File,
+    status: RequestStatus.Idle,
+    url,
+    file,
+  } as unknown as DisplayAttachment & { file: File };
 };
 
 const makeReferenceUrlAttachment = (
@@ -656,6 +708,109 @@ describe('annotationToPdfCanvasContent', () => {
       5,
     );
   });
+
+  it('sets page and highlight from a pdf_region lt/wh selector', () => {
+    const annotation: Annotation = {
+      index: 0,
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: {
+          type: 'pdf_region',
+          page: 1,
+          bbox: { lt: [58.752, 383.328], wh: [492.048, 29.304] },
+        },
+      },
+    };
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBe(1);
+    expect(result?.highlights).toHaveLength(1);
+    expect(result?.highlights?.[0].bboxes).toEqual([
+      {
+        page: 1,
+        x1: 58.752,
+        y1: 383.328,
+        x2: 550.8,
+        y2: 383.328 + 29.304,
+      },
+    ]);
+    expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
+  });
+
+  it('highlights both a pdf_bbox and a pdf_region annotation sharing a source, selecting the clicked one', () => {
+    const bboxAnnotation: Annotation = {
+      index: 0,
+      target: { selector: { type: 'html_tag', tag: 'cit', id: 'shared' } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: { type: 'pdf_bbox', page: 2, x1: 0, y1: 0, x2: 10, y2: 10 },
+      },
+    };
+    const regionAnnotation: Annotation = {
+      index: 1,
+      target: { selector: { type: 'html_tag', tag: 'cit', id: 'shared' } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: {
+          type: 'pdf_region',
+          page: 5,
+          bbox: { left: 0, top: 0, width: 10, height: 10 },
+        },
+      },
+    };
+    const groups = groupAnnotations([bboxAnnotation, regionAnnotation]);
+
+    const result = annotationToPdfCanvasContent(
+      regionAnnotation,
+      groups,
+      resolvers,
+    );
+    expect(result?.page).toBe(5);
+    expect(result?.highlights).toHaveLength(2);
+    expect(result?.selectedHighlightId).toBe(
+      result?.highlights?.find((h) => h.bboxes[0].page === 5)?.id,
+    );
+  });
+
+  it('sets page to undefined and produces no highlight for a malformed pdf_region selector', () => {
+    const annotation: Annotation = {
+      index: 0,
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: {
+          type: 'pdf_region',
+          page: 1,
+          bbox: { lt: [1], wh: [2, 3] },
+        },
+      },
+    };
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBeUndefined();
+    expect(result?.highlights).toEqual([]);
+  });
 });
 
 describe('annotationToOoxmlCanvasContent', () => {
@@ -704,6 +859,52 @@ describe('annotationToOoxmlCanvasContent', () => {
     expect(result?.highlights).toHaveLength(1);
     expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
   });
+
+  it.each([
+    [
+      'docx_text_anchor',
+      OoxmlHighlightKind.DocxTableRow,
+      'docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    [
+      'pptx_text_anchor',
+      OoxmlHighlightKind.PptxTableRow,
+      'pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ],
+  ])(
+    'opens and selects a temporary %s table citation',
+    (type, kind, extension, mimeType) => {
+      const clicked = officeAnnotation(
+        'table',
+        [{ type, text: '| First | Escaped\\_text |', occurrence: 1, slide: 2 }],
+        {
+          url: `files/bucket/table.${extension}`,
+          mimeType,
+        },
+      );
+      const unrelated = officeAnnotation('other', docxSelector(), {
+        url: 'files/bucket/other.docx',
+      });
+      const result = annotationToOoxmlCanvasContent(
+        clicked,
+        [clicked, unrelated],
+        resolvers,
+      );
+
+      expect(result?.highlights).toHaveLength(1);
+      expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
+      expect(result?.highlights?.[0].locations).toEqual([
+        {
+          kind,
+          cells: ['First', 'Escaped_text'],
+          occurrence: 1,
+          ...(extension === 'pptx' ? { slide: 2 } : {}),
+        },
+      ]);
+    },
+  );
 
   it('returns content with the correct format for a PPTX citation and an XLSX citation', () => {
     const pptx = officeAnnotation(
@@ -943,6 +1144,165 @@ describe('zero-byte local file handling', () => {
     expect(
       hasAttachmentTextSource(
         makeLocalZeroByteAttachment('empty.txt'),
+        resolvers,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('file-manager placeholder File handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+  });
+
+  it('resolveImageCanvasContent returns the DIAL download URL instead of an object URL over the placeholder File', () => {
+    const result = resolveImageCanvasContent(
+      makeFileManagerAttachment(
+        'image.png',
+        'files/bucket/path/image.png',
+        'image/png',
+      ),
+      resolvers,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: '/download?path=path/image.png',
+    });
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('resolvePdfCanvasContent fetches the DIAL download URL instead of object-URLing the placeholder File', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => undefined,
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(['%PDF-1.4'])),
+        }),
+    });
+
+    const result = await resolvePdfCanvasContent(
+      makeFileManagerAttachment(
+        'doc.pdf',
+        'files/bucket/path/doc.pdf',
+        'application/pdf',
+      ),
+      resolvers,
+    );
+
+    expect(countContentFetches(mockFetch)).toBe(1);
+    expect(URL.createObjectURL).toHaveBeenCalledWith(new Blob(['%PDF-1.4']));
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:mock-url',
+    });
+  });
+
+  it('resolveImageCanvasContent object-URLs the local File for an uploaded-but-unsent attachment', () => {
+    const attachment = makeUploadedAttachment(
+      'photo.png',
+      'files/bucket/path/photo.png',
+      'image/png',
+      'image-bytes',
+    );
+
+    const result = resolveImageCanvasContent(attachment, resolvers);
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: 'blob:mock-url',
+    });
+    expect(URL.createObjectURL).toHaveBeenCalledWith(attachment.file);
+  });
+
+  it('resolvePdfCanvasContent object-URLs the local File for an uploaded-but-unsent attachment without fetching', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => undefined,
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(['%PDF-1.4'])),
+        }),
+    });
+
+    const result = await resolvePdfCanvasContent(
+      makeUploadedAttachment(
+        'doc.pdf',
+        'files/bucket/path/doc.pdf',
+        'application/pdf',
+        '%PDF-1.4',
+      ),
+      resolvers,
+    );
+
+    expect(countContentFetches(mockFetch)).toBe(0);
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:mock-url',
+    });
+  });
+
+  it('resolveImageCanvasContent still object-URLs a genuine local image with no url', () => {
+    const file = new File(['image-bytes'], 'local.png', {
+      type: 'image/png',
+    });
+
+    const result = resolveImageCanvasContent(
+      {
+        id: 'local.png',
+        name: 'local.png',
+        contentType: 'image/png',
+        type: AttachmentType.Image,
+        status: RequestStatus.Idle,
+        file,
+      } as unknown as DisplayAttachment,
+      resolvers,
+    );
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: 'blob:mock-url',
+    });
+    expect(URL.createObjectURL).toHaveBeenCalledWith(file);
+  });
+
+  it('resolveMarkdownCanvasContent still fetches the DIAL download URL for a placeholder File (text path is DIAL-first)', async () => {
+    const mockFetch = stubDialFetch({
+      metadata: () => undefined,
+      contentHandler: () =>
+        Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve('# From DIAL'),
+        }),
+    });
+
+    const result = await resolveMarkdownCanvasContent(
+      makeFileManagerAttachment(
+        'readme.md',
+        'files/bucket/path/readme.md',
+        'text/markdown',
+      ),
+      resolvers,
+    );
+
+    expect(countContentFetches(mockFetch)).toBe(1);
+    expect(result).toEqual({
+      type: AttachmentContentType.Markdown,
+      text: '# From DIAL',
+    });
+  });
+
+  it('hasAttachmentTextSource reports true for a placeholder File with a DIAL url', () => {
+    expect(
+      hasAttachmentTextSource(
+        makeFileManagerAttachment(
+          'readme.md',
+          'files/bucket/path/readme.md',
+          'text/markdown',
+        ),
         resolvers,
       ),
     ).toBe(true);

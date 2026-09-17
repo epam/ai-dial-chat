@@ -87,12 +87,14 @@ describe('ToolsetsMutationService', () => {
   describe('createToolset', () => {
     it('creates toolset, returns composite id, and invalidates the list cache', async () => {
       const { service, cacheManager } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        bucketSdkOk,
-      );
-      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
-        mutationSdkOk,
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'saveToolSet',
+      ).mockResolvedValue(mutationSdkOk);
 
       const result = await service.createToolset('user1', 'token', baseBody);
       expect(result).toEqual({
@@ -103,11 +105,15 @@ describe('ToolsetsMutationService', () => {
 
     it('encodes slashes inside the display name as filename characters', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        bucketSdkOk,
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       const result = await service.createToolset('user1', 'token', {
@@ -127,11 +133,15 @@ describe('ToolsetsMutationService', () => {
 
     it('maps fields to the DIAL Core PUT body shape', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        bucketSdkOk,
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', {
@@ -174,11 +184,15 @@ describe('ToolsetsMutationService', () => {
 
     it('composes displayName/description as locale maps when locales is provided', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        bucketSdkOk,
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', {
@@ -207,11 +221,15 @@ describe('ToolsetsMutationService', () => {
 
     it('maps OAuth config fields to the DIAL Core PUT body', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        bucketSdkOk,
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', {
@@ -243,11 +261,15 @@ describe('ToolsetsMutationService', () => {
 
     it('maps OAuth with-login redirect URI without requiring configured endpoints', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        bucketSdkOk,
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', {
@@ -269,11 +291,15 @@ describe('ToolsetsMutationService', () => {
 
     it('allows configured OAuth without authorization and token endpoints (DIAL Core decides if that is enough)', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        bucketSdkOk,
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', {
@@ -292,9 +318,10 @@ describe('ToolsetsMutationService', () => {
 
     it('throws UnauthorizedException when the bucket call returns 401', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        errResponse(401),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(errResponse(401));
       await expect(service.createToolset('u', 't', baseBody)).rejects.toThrow(
         UnauthorizedException,
       );
@@ -302,12 +329,14 @@ describe('ToolsetsMutationService', () => {
 
     it('does not invalidate cache when the PUT returns an error', async () => {
       const { service, cacheManager } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        bucketSdkOk,
-      );
-      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
-        errResponse(409),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'saveToolSet',
+      ).mockResolvedValue(errResponse(409));
       await expect(
         service.createToolset('user1', 't', baseBody),
       ).rejects.toThrow();
@@ -316,9 +345,10 @@ describe('ToolsetsMutationService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockRejectedValue(
-        new TypeError('fetch failed'),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.createToolset('u', 't', baseBody)).rejects.toThrow(
         ServiceUnavailableException,
       );
@@ -331,7 +361,10 @@ describe('ToolsetsMutationService', () => {
     it('PUTs to the toolset id path and invalidates list + single caches', async () => {
       const { service, cacheManager } = makeWriteService();
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       const result = await service.updateToolset(
@@ -362,7 +395,10 @@ describe('ToolsetsMutationService', () => {
     it('replaces a previously plain-string displayName with a locale map when locales is provided', async () => {
       const { service } = makeWriteService();
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.updateToolset('user1', 'token', id, {
@@ -381,7 +417,10 @@ describe('ToolsetsMutationService', () => {
     it('still produces a plain-string displayName when locales is omitted (regression guard)', async () => {
       const { service } = makeWriteService();
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.updateToolset('user1', 'token', id, baseBody);
@@ -393,7 +432,10 @@ describe('ToolsetsMutationService', () => {
     it('preserves hidden OAuth auth settings when update omits a new client secret', async () => {
       const { service } = makeWriteService();
       const customSpy = vi
-        .spyOn(service['dialClient'].client, 'getCustomToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getCustomToolSet',
+        )
         .mockResolvedValue(
           okResponse({
             authSettings: {
@@ -405,7 +447,10 @@ describe('ToolsetsMutationService', () => {
           }),
         );
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.updateToolset('user1', 'token', id, {
@@ -448,7 +493,7 @@ describe('ToolsetsMutationService', () => {
     it('preserves the full stored OAuth config when update saves OAuth with-login only', async () => {
       const { service } = makeWriteService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getCustomToolSet',
       ).mockResolvedValue(
         okResponse({
@@ -465,7 +510,10 @@ describe('ToolsetsMutationService', () => {
         }),
       );
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.updateToolset('user1', 'token', id, {
@@ -492,9 +540,10 @@ describe('ToolsetsMutationService', () => {
 
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
-        errResponse(404),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'saveToolSet',
+      ).mockResolvedValue(errResponse(404));
       await expect(
         service.updateToolset('u', 't', id, baseBody),
       ).rejects.toThrow(NotFoundException);
@@ -502,7 +551,10 @@ describe('ToolsetsMutationService', () => {
 
     it('surfaces the DIAL Core error message (plain string body) on a rejected save', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'saveToolSet',
+      ).mockResolvedValue(
         errResponse(
           400,
           "Connection failed: The specified endpoint 'https://test.com' is invalid or unreachable.",
@@ -517,7 +569,10 @@ describe('ToolsetsMutationService', () => {
 
     it('surfaces the DIAL Core error message (object body with a message field) on a rejected save', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'saveToolSet',
+      ).mockResolvedValue(
         errResponse(400, { message: 'Display name already in use' }),
       );
       await expect(
@@ -532,7 +587,10 @@ describe('ToolsetsMutationService', () => {
     it('DELETEs the toolset id path and invalidates caches', async () => {
       const { service, cacheManager } = makeWriteService();
       const deleteSpy = vi
-        .spyOn(service['dialClient'].client, 'deleteToolSet')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'deleteToolSet',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.deleteToolset('user1', 'token', id);
@@ -552,9 +610,10 @@ describe('ToolsetsMutationService', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'deleteToolSet').mockResolvedValue(
-        errResponse(403),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'deleteToolSet',
+      ).mockResolvedValue(errResponse(403));
       await expect(service.deleteToolset('u', 't', id)).rejects.toThrow(
         ForbiddenException,
       );

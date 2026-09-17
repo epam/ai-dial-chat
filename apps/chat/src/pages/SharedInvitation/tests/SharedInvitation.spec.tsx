@@ -230,4 +230,73 @@ describe('SharedInvitationPage', () => {
     expect(mergeSharedSkill).toHaveBeenCalledWith(sharedSkill);
     expect(refetchSkills).toHaveBeenCalled();
   });
+
+  it('refetches the skills listing before merging the resolved sharedSkill (acceptance order unchanged)', async () => {
+    const sharedSkill = {
+      name: 'search',
+      path: 'search',
+      url: 'skills/b/search',
+      bucket: 'b',
+      nodeType: 'item' as const,
+      author: 'jane.doe@example.com',
+      updatedAt: 1752100000000,
+    };
+    vi.mocked(acceptInvitation).mockResolvedValue({
+      itemId: 'skills/b/search',
+      sharedSkill,
+    });
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() => expect(mergeSharedSkill).toHaveBeenCalled());
+
+    const refetchOrder = refetchSkills.mock.invocationCallOrder[0];
+    const mergeOrder = mergeSharedSkill.mock.invocationCallOrder[0];
+    expect(refetchOrder).toBeLessThan(mergeOrder);
+  });
+
+  it('merges the invitation-resolved sharedSkill with full provenance even though the refetched listing carries a sparse entry (the regression this change fixes)', async () => {
+    /*
+     * `refetchSkills` in this test double never actually replaces
+     * `useSkills()`'s data — it mirrors the real `useSkillsState.refetch`,
+     * which can settle with a sparse `sharedWithMe` entry (no author/
+     * updatedAt) right after a share is accepted. `mergeSharedSkill` still
+     * receives the invitation's own fully-resolved `sharedSkill`, which is
+     * what the details panel's authoritative `getSkillMetadata` fetch no
+     * longer even depends on, but which this page must still forward
+     * unchanged regardless of what the listing refetch settled with.
+     */
+    const sparseListingEntry = {
+      name: 'search',
+      path: 'search',
+      url: 'skills/b/search',
+      bucket: 'b',
+      nodeType: 'item' as const,
+    };
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      sharedWithMe: [sparseListingEntry],
+      isLoading: false,
+      error: null,
+      refetchSkills,
+      mergeSharedSkill,
+    });
+
+    const sharedSkill = {
+      ...sparseListingEntry,
+      author: 'jane.doe@example.com',
+      updatedAt: 1752100000000,
+    };
+    vi.mocked(acceptInvitation).mockResolvedValue({
+      itemId: 'skills/b/search',
+      sharedSkill,
+    });
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(mergeSharedSkill).toHaveBeenCalledWith(sharedSkill),
+    );
+  });
 });

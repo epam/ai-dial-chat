@@ -1,6 +1,7 @@
 import type {
   CodeBlockTheme,
   CustomVisualizerDataLayout,
+  GroupedAttachmentItem,
 } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
@@ -100,6 +101,28 @@ export interface OoxmlPptxHighlightLocation {
   text: string;
 }
 
+/** A complete table row in the DOCX body, matched by cell text. */
+export interface OoxmlDocxTableRowLocation {
+  /** Location kind. */
+  kind: OoxmlHighlightKind.DocxTableRow;
+  /** Plain text of each cell, in column order. */
+  cells: string[];
+  /** 1-based matching row in document order. */
+  occurrence: number;
+}
+
+/** A complete table row on one PPTX slide, matched by cell text. */
+export interface OoxmlPptxTableRowLocation {
+  /** Location kind. */
+  kind: OoxmlHighlightKind.PptxTableRow;
+  /** Plain text of each cell, in column order. */
+  cells: string[];
+  /** 1-based matching row on the specified slide. */
+  occurrence: number;
+  /** 1-based slide number. */
+  slide: number;
+}
+
 /** A 1-based cell address, matching `@silurus/ooxml`'s own `CellAddress`. */
 export interface OoxmlCellAddress {
   /** 1-based row number. */
@@ -124,6 +147,8 @@ export interface OoxmlXlsxHighlightLocation {
 export type OoxmlHighlightLocation =
   | OoxmlDocxHighlightLocation
   | OoxmlPptxHighlightLocation
+  | OoxmlDocxTableRowLocation
+  | OoxmlPptxTableRowLocation
   | OoxmlXlsxHighlightLocation;
 
 /** One citation's highlight: the locations it resolved to, under a stable id. */
@@ -196,6 +221,22 @@ export interface VisualizerCanvasContent {
   requestTimeout?: number;
 }
 
+/** Content payload for an application-scoped grouped visualizer: every attachment a message's visualizer claims, rendered together inside one sandboxed iframe. */
+export interface GroupedVisualizerCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.GroupedVisualizer;
+  /** Iframe `src`, resolved from the matching registry entry's `url`. */
+  url: string;
+  /** One item per claimed attachment, in the message's attachment order. Each `url` is absolute, resolved by the host. */
+  attachments: GroupedAttachmentItem[];
+  /** Presentation layout hints (`themeId`, `width`, `height`, `mobileHeight`) shared by every item. */
+  layout: CustomVisualizerDataLayout;
+  /** postMessage protocol namespace — MUST equal the registry entry's `title`, or the iframe never receives data. */
+  visualizerName: string;
+  /** Milliseconds to wait for a `send()` request's response before rejecting. From the registry entry; does NOT bound the handshake. */
+  requestTimeout?: number;
+}
+
 /** Display mode an MCP App can ask the host to switch to via `ui/request-display-mode` — the MCP UI protocol's `inline`/`fullscreen`/`pip` union. */
 export type McpAppDisplayMode = NonNullable<McpUiHostContext['displayMode']>;
 
@@ -256,6 +297,7 @@ export type AttachmentCanvasContent =
   | CodeCanvasContent
   | HtmlCanvasContent
   | VisualizerCanvasContent
+  | GroupedVisualizerCanvasContent
   | McpAppCanvasContent
   | UnsupportedCanvasContent
   | ErrorCanvasContent;
@@ -418,12 +460,8 @@ export interface AttachmentCanvasLabels {
   codeContentErrorLabel?: string;
   /** Label and accessible name for the retry control shown alongside `codeContentErrorLabel`. Defaults to `'Retry'`. */
   codeContentRetryLabel?: string;
-  /** Label for copying a Markdown table as CSV. */
-  tableCopyCsvLabel?: string;
-  /** Label for copying a Markdown table as text. */
-  tableCopyTxtLabel?: string;
-  /** Label for copying a Markdown table as Markdown. */
-  tableCopyMarkdownLabel?: string;
+  /** Label for the copy action on a Markdown table (copies as Markdown format). */
+  tableCopyLabel?: string;
   /** Status announced after a Markdown table has been copied. */
   tableCopiedLabel?: string;
   /** Label for downloading a Markdown table as CSV. */
@@ -512,9 +550,7 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'codeContentLoadingLabel'
   | 'codeContentErrorLabel'
   | 'codeContentRetryLabel'
-  | 'tableCopyCsvLabel'
-  | 'tableCopyTxtLabel'
-  | 'tableCopyMarkdownLabel'
+  | 'tableCopyLabel'
   | 'tableCopiedLabel'
   | 'tableDownloadCsvLabel'
   | 'ooxmlHighlightsLabel'

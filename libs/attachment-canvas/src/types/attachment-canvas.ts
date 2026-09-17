@@ -11,12 +11,13 @@ export enum AttachmentContentType {
   Code = 'code',
   Html = 'html',
   Visualizer = 'visualizer',
+  GroupedVisualizer = 'grouped_visualizer',
   McpApp = 'mcp_app',
   Unsupported = 'unsupported',
   Error = 'error',
 }
 
-/** Supported document formats rendered by the bundled `@silurus/ooxml` runtime. */
+/** Supported document formats rendered by the installed `@silurus/ooxml` runtime. */
 export enum OoxmlFileType {
   Docx = 'docx',
   Xlsx = 'xlsx',
@@ -30,6 +31,10 @@ export enum OoxmlHighlightKind {
   DocxTextRange = 'docxTextRange',
   /** A character range inside a single PPTX shape on one slide. */
   PptxTextRange = 'pptxTextRange',
+  /** A complete DOCX table row identified by its cell text. */
+  DocxTableRow = 'docxTableRow',
+  /** A complete PPTX table row identified by its cell text on one slide. */
+  PptxTableRow = 'pptxTableRow',
   /** One cell, or a contiguous same-row cell range, on a named XLSX sheet. */
   XlsxCellRange = 'xlsxCellRange',
 }
@@ -40,4 +45,22 @@ export enum AttachmentErrorType {
   LoadFailed = 'load_failed',
   /** The file request failed with HTTP `403` — the user lacks permission to access it. */
   Forbidden = 'forbidden',
+}
+
+/**
+ * Outcome of one `OoxmlHighlightSurface.navigate` call.
+ *
+ * Declared here rather than alongside `OoxmlHighlightSurface` in
+ * `utils/ooxml-highlight-surfaces.ts` so `OoxmlContent.tsx` can compare
+ * against it as a real value without a static import pulling that
+ * dynamically-loaded module into the eager entry closure — see
+ * `tests/package-boundary/bundle-budgets.spec.ts`.
+ */
+export enum OoxmlNavigationOutcome {
+  /** A scroll (or page/slide/sheet change) was applied for this location. */
+  Navigated = 'navigated',
+  /** A newer `navigate` call started before this one could apply its scroll, or the surface was disposed meanwhile. */
+  Superseded = 'superseded',
+  /** The location could not be resolved to a page, slide, sheet, or cell at all. */
+  Unresolved = 'unresolved',
 }

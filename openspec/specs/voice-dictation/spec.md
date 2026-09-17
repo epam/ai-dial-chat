@@ -18,7 +18,7 @@ The app SHALL record one complete microphone session and SHALL begin upload and 
 
 ### Requirement: Editable dictation with preserved draft
 
-The app SHALL append the nonempty transcription once to the latest draft without sending the message or attaching audio. Existing text and attachments SHALL survive. The waveform and voice controls SHALL replace the textarea while recording or processing in both modes, including pending microphone permission. Keyboard text entry and sending SHALL be unavailable; the original draft SHALL survive. After recognition, the draft SHALL become editable and receive focus. The result SHALL be announced through a polite status region.
+The app SHALL append the nonempty transcription once to the latest draft without sending the message or attaching audio. Existing text and attachments SHALL survive. The waveform and voice controls SHALL replace the textarea while recording or processing in both modes, including pending microphone permission. Keyboard text entry and sending SHALL be unavailable; the original draft SHALL survive. After recognition succeeds or fails, the draft SHALL become editable and receive focus. A successful result SHALL be announced through a polite status region; a failure SHALL be shown as an alert alongside the restored input.
 
 #### Scenario: Dictating into an existing draft
 - **WHEN** the draft contains text and recognition succeeds after Stop
@@ -51,7 +51,7 @@ The library SHALL accept an optional file-and-AbortSignal-to-text callback witho
 
 ### Requirement: Cancellation and resource cleanup
 
-Discard and unmount SHALL stop media resources, abort pending recognition and ignore stale results. Stop or cancellation during pending microphone permission SHALL release the acquired stream when permission resolves without starting recognition. Errors SHALL release capture resources and preserve the draft.
+Discard and unmount SHALL stop media resources, abort pending recognition and ignore stale results. Stop or cancellation during pending microphone permission SHALL release the acquired stream when permission resolves without starting recognition. Errors SHALL release capture resources, end the active voice session, preserve and restore the draft, and keep the error visible alongside the normal input. A new recording SHALL be startable without first dismissing the previous error.
 
 #### Scenario: Cancel while recognition is pending
 - **WHEN** the user cancels processing and its request later succeeds
@@ -59,14 +59,19 @@ Discard and unmount SHALL stop media resources, abort pending recognition and ig
 
 #### Scenario: Capture fails
 - **WHEN** microphone capture or recognition fails
-- **THEN** an error is announced and discard returns to the unchanged draft
+- **THEN** the normal input returns immediately with the unchanged draft and focus
+- **AND** the error is announced without requiring the user to discard the failed session
 
 ### Requirement: Bounded temporary failure recovery
 
-The app SHALL retry recognition of the same uploaded file for temporary HTTP 429/502/503/504 failures with at most two retries and 90 seconds of total retry waiting per recording. The ASR endpoint SHALL return HTTP 503 for upstream 429/503 and preserve Retry-After when supplied. The app SHALL honor that delay or stop with an unavailable error if it exceeds the remaining waiting budget.
+The app SHALL surface recognition HTTP 429/503 failures immediately as an unavailable/busy error so the normal input is restored without waiting through a provider cooldown. It SHALL retry recognition of the same uploaded file only for temporary HTTP 502/504 failures, with at most two retries and 6 seconds of accumulated retry waiting per recording. The ASR endpoint SHALL continue to return HTTP 503 for upstream 429/503 and preserve Retry-After when supplied. For 502/504, the app SHALL honor a valid Retry-After delay with a one-second minimum, otherwise wait 2 seconds before the first retry and 4 seconds before the second; a delay beyond the remaining budget SHALL end processing with an unavailable error.
 
-#### Scenario: Temporary failure then success
-- **WHEN** recognition receives a temporary failure followed by success
+#### Scenario: Rate limit or upstream unavailability
+- **WHEN** recognition receives HTTP 429 or 503
+- **THEN** no frontend retry delay starts and the input immediately displays the unavailable/busy error
+
+#### Scenario: Gateway failure then success
+- **WHEN** recognition receives HTTP 502 or 504 followed by success within the retry budget
 - **THEN** the app reuses the uploaded file and inserts its text once
 
 #### Scenario: Cancellation during a retry delay

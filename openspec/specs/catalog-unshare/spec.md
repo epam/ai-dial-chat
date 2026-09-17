@@ -83,7 +83,6 @@ The endpoint SHALL:
 - Resolve the DIAL Core `resourceTypes` filter used by the pre-discard "was this shared with me" check (`ShareManagementService.isSharedWithCaller`, `apps/chat-api/src/share/management/share-management.service.ts`) via `RESOURCE_KIND_BY_PREFIX` (`apps/chat-api/src/share/utils/share-resource.util.ts`), which SHALL include a `['skills/', 'SKILL']` entry and a `['prompts/', 'PROMPT']` entry alongside the existing `applications/` → `APPLICATION`, `toolsets/` → `TOOL_SET`, and `conversations/` → `CONVERSATION` entries.
 - On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, mirroring the existing invalidation call in `ShareInvitationService.acceptInvitation`. This invalidation runs unconditionally regardless of `itemId` type; conversations, skills, and prompts have no equivalent server-side list cache today, so for those `itemId` types this invalidation is a harmless no-op.
 - Respond `200 OK` with `DiscardSharedCatalogItemResponseDto { success: true }` on success.
-- Apply `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the file-manager `discard-shared` endpoint's stricter-than-share-creation posture.
 - Map upstream failures via the fetch-shaped `mapDialHttpStatus`/`handleDialFetchError` pair (consistent with the share domain's other methods): DIAL Core 400 → 400, 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
 - Not cache the mutation response itself.
 - Log structured success/failure messages (e.g. `Discard shared resource started`, `Discard shared resource completed: success=true`, `DIAL Core returned <status> for share.discardShared`) without the access token, invitation links, full resource path, or any other user data beyond a safe operation identifier.
@@ -131,11 +130,6 @@ Note: the backend/generated DTOs are named `DiscardSharedCatalogItemDto`/`Discar
 
 - **WHEN** DIAL Core returns a not-found status for the given `itemId`
 - **THEN** the endpoint responds `404 Not Found`
-
-#### Scenario: Rate limit exceeded
-
-- **WHEN** the calling session exceeds 10 requests per 60 seconds to this endpoint
-- **THEN** the endpoint responds `429 Too Many Requests`
 
 #### Scenario: DIAL Core upstream error
 

@@ -226,6 +226,13 @@ export const resolveSkillFileDownloadPath = (
  * authored it, when it last changed, and its file inventory. Grouping folders
  * in the file listing are excluded from both the count and the rows. Sizes are
  * not shown — the skill metadata carries no content-length field.
+ *
+ * `skill` is the authoritative `getSkillMetadata` response when that request
+ * fulfilled; the caller falls back to the catalog listing entry only when it
+ * rejected (`useSkillItemDetails`'s `onFetchSkillDetails`). Either way, this
+ * function never fills a gap in one source from the other — an absent
+ * `author` omits the row and an absent `updatedAt` leaves the updated row's
+ * value empty, exactly as `skill` carries it.
  */
 export const buildSkillOverview = (
   skill: SkillMetadataItemDto | undefined,
@@ -391,6 +398,26 @@ export const readSkillFileBytes = async (
 
   return new Uint8Array(buffer);
 };
+
+/**
+ * Reads a skill file response as raw bytes with no size ceiling, for the
+ * supporting-file **preview** path.
+ *
+ * Previews are user-initiated, one file at a time, and a realistic binary
+ * (a PDF, an image) routinely exceeds `SKILL_MANIFEST_MAX_BYTES` — a cap
+ * sized for `SKILL.md` frontmatter, not for binaries — so applying that cap
+ * here rejected virtually every real PDF before it was ever decoded. This
+ * reader therefore never returns `null`: file size is not a failure class on
+ * the preview path.
+ *
+ * `readSkillFileBytes` and `readSkillManifest` keep their
+ * `SKILL_MANIFEST_MAX_BYTES` ceiling, because they feed the manifest parse
+ * and the textual Content-tab read, where an oversized body must never be
+ * decoded into a string.
+ */
+export const readSkillFilePreviewBytes = async (
+  response: Response,
+): Promise<Uint8Array> => new Uint8Array(await response.arrayBuffer());
 
 /**
  * Reads a skill manifest response as text, or `null` when the body is larger

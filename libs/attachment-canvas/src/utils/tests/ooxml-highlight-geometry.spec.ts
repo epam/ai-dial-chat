@@ -10,9 +10,12 @@ import { OoxmlHighlightKind } from '../../types/attachment-canvas';
 import {
   docxPageSizePx,
   mergeSameLineRects,
+  type OoxmlDocxNormalizedRect,
   type OoxmlHighlightRect,
+  type OoxmlScrollHostBox,
   pptxSlideSizePx,
   resolveDocxRects,
+  resolveDocxScrollTarget,
   resolvePptxRects,
   resolveSurfaceOffset,
   resolveXlsxRects,
@@ -138,6 +141,169 @@ describe('resolveSurfaceOffset', () => {
   });
 });
 
+describe('resolveDocxScrollTarget', () => {
+  /* US-Letter page at scale 1: 612pt x 792pt -> 816 x 1056 CSS px. */
+  const pageSizeAt = (scale: number) => (_index: number) => ({
+    width: 816 * scale,
+    height: 1056 * scale,
+  });
+
+  const docxRect = (
+    overrides: Partial<OoxmlDocxNormalizedRect> = {},
+  ): OoxmlDocxNormalizedRect => ({
+    left: 0.1,
+    top: 0.1,
+    width: 0.3,
+    height: 0.03,
+    ...overrides,
+  });
+
+  const hostBox = (
+    overrides: Partial<OoxmlScrollHostBox> = {},
+  ): OoxmlScrollHostBox => ({
+    clientWidth: 900,
+    clientHeight: 600,
+    scrollWidth: 900,
+    scrollHeight: 3200,
+    scrollLeft: 0,
+    ...overrides,
+  });
+
+  it('places a mid-page rectangle with leading context above it', () => {
+    const target = resolveDocxScrollTarget({
+      pageIndex: 0,
+      rect: docxRect({ top: 0.5 }),
+      sizeAt: pageSizeAt(1),
+      host: hostBox(),
+      layout: { gap: 16 },
+    });
+
+    const offset = resolveSurfaceOffset({
+      index: 0,
+      sizeAt: pageSizeAt(1),
+      hostClientWidth: 900,
+      layout: { gap: 16 },
+    });
+    const rectTop = offset.top + 0.5 * 1056;
+    expect(target.top).toBe(rectTop - 600 * 0.25);
+  });
+
+  it('scales proportionally at a non-default scale', () => {
+    const targetAt1 = resolveDocxScrollTarget({
+      pageIndex: 0,
+      rect: docxRect({ top: 0.5 }),
+      sizeAt: pageSizeAt(1),
+      host: hostBox(),
+      layout: { gap: 16 },
+    });
+    const targetAt2 = resolveDocxScrollTarget({
+      pageIndex: 0,
+      rect: docxRect({ top: 0.5 }),
+      sizeAt: pageSizeAt(2),
+      host: hostBox({ scrollHeight: 6400 }),
+      layout: { gap: 16 },
+    });
+
+    /* Same fraction of a page twice the size lands roughly twice as far down,
+     * modulo the constant gap and lead margin which do not scale. */
+    expect(targetAt2.top).toBeGreaterThan(targetAt1.top * 1.5);
+  });
+
+  it('accounts for gap and preceding page heights on a later page', () => {
+    const target = resolveDocxScrollTarget({
+      pageIndex: 3,
+      rect: docxRect({ top: 0.5 }),
+      sizeAt: pageSizeAt(1),
+      host: hostBox({ scrollHeight: 5000 }),
+      layout: { gap: 16 },
+    });
+
+    const offset = resolveSurfaceOffset({
+      index: 3,
+      sizeAt: pageSizeAt(1),
+      hostClientWidth: 900,
+      layout: { gap: 16 },
+    });
+    const rectTop = offset.top + 0.5 * 1056;
+    expect(target.top).toBe(rectTop - 600 * 0.25);
+    expect(offset.top).toBe(16 + 3 * 16 + 3 * 1056);
+  });
+
+  it('clamps to zero when the lead margin would push the target negative', () => {
+    const target = resolveDocxScrollTarget({
+      pageIndex: 0,
+      rect: docxRect({ top: 0.01 }),
+      sizeAt: pageSizeAt(1),
+      host: hostBox(),
+      layout: { gap: 16 },
+    });
+
+    expect(target.top).toBe(0);
+  });
+
+  it('clamps to the host max scroll when the target would exceed it', () => {
+    const target = resolveDocxScrollTarget({
+      pageIndex: 0,
+      rect: docxRect({ top: 0.99 }),
+      sizeAt: pageSizeAt(1),
+      host: hostBox({ scrollHeight: 1100, clientHeight: 600 }),
+      layout: { gap: 16 },
+    });
+
+    expect(target.top).toBe(1100 - 600);
+  });
+
+  it('aligns the passage start when the passage is taller than the viewport', () => {
+    const target = resolveDocxScrollTarget({
+      pageIndex: 0,
+      rect: docxRect({ top: 0.4, height: 0.8 }),
+      sizeAt: pageSizeAt(1),
+      host: hostBox({ clientHeight: 400, scrollHeight: 3200 }),
+      layout: { gap: 16 },
+    });
+
+    const offset = resolveSurfaceOffset({
+      index: 0,
+      sizeAt: pageSizeAt(1),
+      hostClientWidth: 900,
+      layout: { gap: 16 },
+    });
+    const rectTop = offset.top + 0.4 * 1056;
+    expect(target.top).toBe(rectTop - 400 * 0.25);
+  });
+
+  it('leaves horizontal position unchanged when the rectangle is already in view', () => {
+    const target = resolveDocxScrollTarget({
+      pageIndex: 0,
+      rect: docxRect({ left: 0.1, width: 0.2 }),
+      sizeAt: pageSizeAt(1),
+      host: hostBox({ scrollLeft: 0 }),
+      layout: { gap: 16 },
+    });
+
+    expect(target.left).toBe(0);
+  });
+
+  it('shifts horizontal position just enough to reveal a rectangle left of view', () => {
+    const target = resolveDocxScrollTarget({
+      pageIndex: 0,
+      rect: docxRect({ left: 0.01, width: 0.1 }),
+      sizeAt: pageSizeAt(1),
+      host: hostBox({ scrollLeft: 200, clientWidth: 300 }),
+      layout: { gap: 16, paddingLeft: 8 },
+    });
+
+    const offset = resolveSurfaceOffset({
+      index: 0,
+      sizeAt: pageSizeAt(1),
+      hostClientWidth: 300,
+      layout: { gap: 16, paddingLeft: 8 },
+    });
+    const rectLeft = offset.left + 0.01 * 816;
+    expect(target.left).toBe(rectLeft);
+  });
+});
+
 describe('docxPageSizePx / pptxSlideSizePx', () => {
   it('converts points to CSS pixels at the given scale', () => {
     expect(docxPageSizePx({ widthPt: 612, heightPt: 792 }, 1.5)).toEqual({
@@ -175,28 +341,52 @@ describe('mergeSameLineRects', () => {
   });
 });
 
+/*
+ * The reference page box every DOCX test resolves against: the scale-1 CSS
+ * size of a 612pt × 792pt page (`612 * 4/3`, `792 * 4/3`) — the same box
+ * `createDocxHighlightSurface` derives from the document and collects runs
+ * at. `resolveDocxRects` divides by this box, so every expected value below
+ * is written as `<pixels> / PAGE_BOX.<dimension>` rather than a decimal
+ * literal, to keep the fraction visibly tied to the pixel geometry it comes
+ * from.
+ */
+const PAGE_BOX = { width: (612 * 4) / 3, height: (792 * 4) / 3 };
+
+const docxPage = (
+  pageIndex: number,
+  runs: DocxTextRunInfo[],
+  pageBox = PAGE_BOX,
+) => ({ pageIndex, runs, pageBox });
+
 describe('resolveDocxRects', () => {
   it('contributes only runs whose path matches element-wise', () => {
     const rects = resolveDocxRects({
       location: docxLocation(),
       pages: [
-        {
-          pageIndex: 0,
-          runs: [
-            docxRun({ text: 'Hello', x: 0 }),
-            docxRun({
-              text: 'Other',
-              x: 200,
-              source: { story: 'body', storyInstance: 'main', path: [4, 0] },
-            }),
-          ],
-        },
+        docxPage(0, [
+          docxRun({ text: 'Hello', x: 0 }),
+          docxRun({
+            text: 'Other',
+            x: 200,
+            source: { story: 'body', storyInstance: 'main', path: [4, 0] },
+          }),
+        ]),
       ],
       measure,
     });
 
     expect(rects).toEqual([
-      { pageIndex: 0, rects: [{ left: 0, top: 100, width: 50, height: 12 }] },
+      {
+        pageIndex: 0,
+        rects: [
+          {
+            left: 0 / PAGE_BOX.width,
+            top: 100 / PAGE_BOX.height,
+            width: 50 / PAGE_BOX.width,
+            height: 12 / PAGE_BOX.height,
+          },
+        ],
+      },
     ]);
   });
 
@@ -204,13 +394,10 @@ describe('resolveDocxRects', () => {
     const rects = resolveDocxRects({
       location: docxLocation(),
       pages: [
-        {
-          pageIndex: 0,
-          runs: [
-            docxRun({ text: 'Page 1', x: 500, source: undefined }),
-            docxRun({ text: 'Hello', x: 0 }),
-          ],
-        },
+        docxPage(0, [
+          docxRun({ text: 'Page 1', x: 500, source: undefined }),
+          docxRun({ text: 'Hello', x: 0 }),
+        ]),
       ],
       measure,
     });
@@ -218,7 +405,17 @@ describe('resolveDocxRects', () => {
     /* The header run neither draws nor shifts the offsets: `Hello` still starts
      * at character 0. */
     expect(rects).toEqual([
-      { pageIndex: 0, rects: [{ left: 0, top: 100, width: 50, height: 12 }] },
+      {
+        pageIndex: 0,
+        rects: [
+          {
+            left: 0 / PAGE_BOX.width,
+            top: 100 / PAGE_BOX.height,
+            width: 50 / PAGE_BOX.width,
+            height: 12 / PAGE_BOX.height,
+          },
+        ],
+      },
     ]);
   });
 
@@ -226,10 +423,9 @@ describe('resolveDocxRects', () => {
     const rects = resolveDocxRects({
       location: docxLocation(),
       pages: [
-        {
-          pageIndex: 0,
-          runs: [docxRun({ text: 'Hello', x: 0, sourceRunIndex: undefined })],
-        },
+        docxPage(0, [
+          docxRun({ text: 'Hello', x: 0, sourceRunIndex: undefined }),
+        ]),
       ],
       measure,
     });
@@ -245,35 +441,37 @@ describe('resolveDocxRects', () => {
         endExclusive: 3,
         text: 'iii',
       }),
-      pages: [{ pageIndex: 0, runs: [docxRun({ text, x: 0, w: 73 })] }],
+      pages: [docxPage(0, [docxRun({ text, x: 0, w: 73 })])],
       measure,
     });
 
     const [{ rects: pageRects }] = rects;
     /* Measured: three `i` glyphs are 3px. Interpolated on character count it
      * would be three tenths of the run's 73px box, i.e. 21.9px. */
-    expect(pageRects[0].width).toBe(3);
-    expect(pageRects[0].width).not.toBeCloseTo(21.9);
+    expect(pageRects[0].width).toBeCloseTo(3 / PAGE_BOX.width, 6);
+    expect(pageRects[0].width).not.toBeCloseTo(21.9 / PAGE_BOX.width, 6);
   });
 
   it('merges three consecutive runs on one visual line into one rectangle', () => {
     const rects = resolveDocxRects({
       location: docxLocation({ endExclusive: 9, text: 'abcdefghi' }),
       pages: [
-        {
-          pageIndex: 0,
-          runs: [
-            docxRun({ text: 'abc', x: 0, w: 30 }),
-            docxRun({ text: 'def', x: 30, w: 30 }),
-            docxRun({ text: 'ghi', x: 60, w: 30 }),
-          ],
-        },
+        docxPage(0, [
+          docxRun({ text: 'abc', x: 0, w: 30 }),
+          docxRun({ text: 'def', x: 30, w: 30 }),
+          docxRun({ text: 'ghi', x: 60, w: 30 }),
+        ]),
       ],
       measure,
     });
 
     expect(rects[0].rects).toEqual([
-      { left: 0, top: 100, width: 90, height: 12 },
+      {
+        left: 0 / PAGE_BOX.width,
+        top: 100 / PAGE_BOX.height,
+        width: 90 / PAGE_BOX.width,
+        height: 12 / PAGE_BOX.height,
+      },
     ]);
   });
 
@@ -281,20 +479,27 @@ describe('resolveDocxRects', () => {
     const rects = resolveDocxRects({
       location: docxLocation({ endExclusive: 6, text: 'abcdef' }),
       pages: [
-        {
-          pageIndex: 0,
-          runs: [
-            docxRun({ text: 'abc', x: 0, y: 100, w: 30 }),
-            docxRun({ text: 'def', x: 0, y: 120, w: 30 }),
-          ],
-        },
+        docxPage(0, [
+          docxRun({ text: 'abc', x: 0, y: 100, w: 30 }),
+          docxRun({ text: 'def', x: 0, y: 120, w: 30 }),
+        ]),
       ],
       measure,
     });
 
     expect(rects[0].rects).toEqual([
-      { left: 0, top: 100, width: 30, height: 12 },
-      { left: 0, top: 120, width: 30, height: 12 },
+      {
+        left: 0 / PAGE_BOX.width,
+        top: 100 / PAGE_BOX.height,
+        width: 30 / PAGE_BOX.width,
+        height: 12 / PAGE_BOX.height,
+      },
+      {
+        left: 0 / PAGE_BOX.width,
+        top: 120 / PAGE_BOX.height,
+        width: 30 / PAGE_BOX.width,
+        height: 12 / PAGE_BOX.height,
+      },
     ]);
   });
 
@@ -302,33 +507,37 @@ describe('resolveDocxRects', () => {
     const rects = resolveDocxRects({
       location: docxLocation({ endExclusive: 6, text: 'abcdef' }),
       pages: [
-        { pageIndex: 3, runs: [docxRun({ text: 'abc', x: 0, w: 30 })] },
-        { pageIndex: 4, runs: [docxRun({ text: 'def', x: 0, w: 30 })] },
+        docxPage(3, [docxRun({ text: 'abc', x: 0, w: 30 })]),
+        docxPage(4, [docxRun({ text: 'def', x: 0, w: 30 })]),
       ],
       measure,
     });
 
     expect(rects.map(({ pageIndex }) => pageIndex)).toEqual([3, 4]);
     expect(rects).toHaveLength(2);
+    expect(rects[0].rects[0].width).toBeCloseTo(30 / PAGE_BOX.width, 6);
+    expect(rects[1].rects[0].width).toBeCloseTo(30 / PAGE_BOX.width, 6);
   });
 
   it('skips a transformed run while still counting its characters', () => {
     const rects = resolveDocxRects({
       location: docxLocation({ endExclusive: 6, text: 'abcdef' }),
       pages: [
-        {
-          pageIndex: 0,
-          runs: [
-            docxRun({ text: 'abc', x: 0, w: 30, transform: 'rotate(3deg)' }),
-            docxRun({ text: 'def', x: 30, w: 30 }),
-          ],
-        },
+        docxPage(0, [
+          docxRun({ text: 'abc', x: 0, w: 30, transform: 'rotate(3deg)' }),
+          docxRun({ text: 'def', x: 30, w: 30 }),
+        ]),
       ],
       measure,
     });
 
     expect(rects[0].rects).toEqual([
-      { left: 30, top: 100, width: 30, height: 12 },
+      {
+        left: 30 / PAGE_BOX.width,
+        top: 100 / PAGE_BOX.height,
+        width: 30 / PAGE_BOX.width,
+        height: 12 / PAGE_BOX.height,
+      },
     ]);
   });
 
@@ -336,30 +545,32 @@ describe('resolveDocxRects', () => {
     const rects = resolveDocxRects({
       location: docxLocation(),
       pages: [
-        {
-          pageIndex: 0,
-          runs: [
-            docxRun({
-              text: 'Hello',
-              x: 0,
-              y: 100,
-              highlightBounds: { x: 7, y: 98, width: 55, height: 16 },
-            }),
-          ],
-        },
+        docxPage(0, [
+          docxRun({
+            text: 'Hello',
+            x: 0,
+            y: 100,
+            highlightBounds: { x: 7, y: 98, width: 55, height: 16 },
+          }),
+        ]),
       ],
       measure,
     });
 
     expect(rects[0].rects).toEqual([
-      { left: 7, top: 98, width: 55, height: 16 },
+      {
+        left: 7 / PAGE_BOX.width,
+        top: 98 / PAGE_BOX.height,
+        width: 55 / PAGE_BOX.width,
+        height: 16 / PAGE_BOX.height,
+      },
     ]);
   });
 
   it('draws nothing when the resolved text disagrees with the selector text', () => {
     const rects = resolveDocxRects({
       location: docxLocation({ text: 'Goodbye' }),
-      pages: [{ pageIndex: 0, runs: [docxRun({ text: 'Hello', x: 0 })] }],
+      pages: [docxPage(0, [docxRun({ text: 'Hello', x: 0 })])],
       measure,
     });
 
@@ -370,7 +581,7 @@ describe('resolveDocxRects', () => {
     expect(() =>
       resolveDocxRects({
         location: docxLocation({ start: 0, endExclusive: 99, text: 'Hello' }),
-        pages: [{ pageIndex: 0, runs: [docxRun({ text: 'Hello', x: 0 })] }],
+        pages: [docxPage(0, [docxRun({ text: 'Hello', x: 0 })])],
         measure,
       }),
     ).not.toThrow();
@@ -378,24 +589,99 @@ describe('resolveDocxRects', () => {
     expect(
       resolveDocxRects({
         location: docxLocation({ start: 0, endExclusive: 99, text: 'Hello' }),
-        pages: [{ pageIndex: 0, runs: [docxRun({ text: 'Hello', x: 0 })] }],
+        pages: [docxPage(0, [docxRun({ text: 'Hello', x: 0 })])],
         measure,
       }),
     ).toEqual([]);
   });
 
-  it('uses run coordinates as returned, applying no second scale pass', () => {
+  it('expresses geometry as a scale-free fraction of the page box, not raw run coordinates', () => {
+    /*
+     * This is the representation the fix moved to (design Decision 2), and it
+     * replaces the earlier "uses run coordinates as returned, applying no
+     * second scale pass" invariant, which pinned the absolute-pixel
+     * representation this change removes. It is rewritten rather than
+     * deleted so the change in contract is reviewed explicitly, per design
+     * Decision 8.
+     */
     const rects = resolveDocxRects({
       location: docxLocation(),
-      pages: [
-        { pageIndex: 0, runs: [docxRun({ text: 'Hello', x: 240, y: 480 })] },
-      ],
+      pages: [docxPage(0, [docxRun({ text: 'Hello', x: 240, y: 480 })])],
       measure,
     });
 
     expect(rects[0].rects).toEqual([
-      { left: 240, top: 480, width: 50, height: 12 },
+      {
+        left: 240 / PAGE_BOX.width,
+        top: 480 / PAGE_BOX.height,
+        width: 50 / PAGE_BOX.width,
+        height: 12 / PAGE_BOX.height,
+      },
     ]);
+    /* Same box in a different reference width would produce a different
+     * pixel rectangle but an identical fraction — see the linearity test
+     * below. */
+    expect(rects[0].rects[0].left).toBeGreaterThan(0);
+    expect(rects[0].rects[0].left).toBeLessThan(1);
+  });
+
+  it('produces a fraction agreeing with geometry collected at a different render width within a documented ~1px tolerance', () => {
+    /*
+     * Bounds design Decision 2's central assumption — that `collectPageRuns`'
+     * `width` is a pure linear scale factor — by modelling the vendor's own
+     * subpixel font-hinting: coordinates at a second render width are rounded
+     * to the nearest tenth of a pixel rather than scaled exactly, the way
+     * real glyph metrics snap to device pixels. Tolerance is ~1.2px on the
+     * reference page (0.0015 of its 816px width), matching the "roughly a
+     * pixel" ceiling the design records before falling back to alternative 5.
+     */
+    const TOLERANCE_FRACTION = 0.0015;
+    const OTHER_WIDTH = 1200;
+    const OTHER_HEIGHT = (OTHER_WIDTH / PAGE_BOX.width) * PAGE_BOX.height;
+    const roundToTenth = (value: number): number => Math.round(value * 10) / 10;
+
+    const runAtWidth = (width: number, isRounded: boolean) => {
+      const scale = width / PAGE_BOX.width;
+      const coord = (value: number): number =>
+        isRounded ? roundToTenth(value * scale) : value * scale;
+      return docxRun({
+        text: 'Hello',
+        x: coord(0),
+        y: coord(100),
+        w: coord(50),
+        h: coord(12),
+      });
+    };
+
+    const referenceRect = resolveDocxRects({
+      location: docxLocation(),
+      pages: [docxPage(0, [runAtWidth(PAGE_BOX.width, false)])],
+      measure,
+    })[0].rects[0];
+
+    const otherWidthRect = resolveDocxRects({
+      location: docxLocation(),
+      pages: [
+        docxPage(0, [runAtWidth(OTHER_WIDTH, true)], {
+          width: OTHER_WIDTH,
+          height: OTHER_HEIGHT,
+        }),
+      ],
+      measure,
+    })[0].rects[0];
+
+    expect(
+      Math.abs(referenceRect.left - otherWidthRect.left),
+    ).toBeLessThanOrEqual(TOLERANCE_FRACTION);
+    expect(
+      Math.abs(referenceRect.top - otherWidthRect.top),
+    ).toBeLessThanOrEqual(TOLERANCE_FRACTION);
+    expect(
+      Math.abs(referenceRect.width - otherWidthRect.width),
+    ).toBeLessThanOrEqual(TOLERANCE_FRACTION);
+    expect(
+      Math.abs(referenceRect.height - otherWidthRect.height),
+    ).toBeLessThanOrEqual(TOLERANCE_FRACTION);
   });
 });
 

@@ -203,13 +203,14 @@ setting is read at Core startup, so restart DIAL Core after changing it.
 | `SCHEDULER_APP_ID`                      | —                              | DIAL Core application id of the DIAL Scheduler routed deployment, used to build the `/v1/deployments/applications/{id}/route/v1/schedules` upstream path for the `/api/v1/scheduled-tasks*` endpoints. Required only when `features.scheduledTasksEnabled` is used; if unset, those endpoints fail fast with `503`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `SCHEDULER_SERVICE_ID`                  | —                              | Upstream `service_id` sent to DIAL Scheduler on schedule create/update. Required only when `features.scheduledTasksEnabled` is used; if unset, create/update fail fast with `503` (list/get are unaffected).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `SCHEDULER_SERVICE_TIMEOUT_MS`          | `10000`                        | Timeout for DIAL Scheduler proxy requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `WELCOME_SCREEN_DESCRIPTION`            | —                              | Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Unset or blank hides it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `WELCOME_SCREEN_DESCRIPTION`            | —                              | Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Unset or blank hides it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `FOOTER_HTML_MESSAGE`                   | —                              | Operator-authored HTML shown in the footer of the chat input area (desktop) and mobile user panel. Supports `%%VERSION%%` token replaced server-side with the resolved chat version (`CHAT_VERSION` when set, otherwise the app's `package.json` version). Sanitized server-side (allowlist: `a span strong u em br p`). Unset or empty hides the footer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `CHAT_VERSION`                          | app `package.json` version     | Version string shown in the footer's corner version label, substituted for the `%%VERSION%%` footer token, and reported as `version` by `GET /api/health`. Set from CI/CD to surface the deployed build. Blank or unset falls back to the app's `package.json` version, so a version label is always shown. Exposed to clients as `config.appVersion`; not role-gated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `ANNOUNCEMENT_TITLE`                    | —                              | Bold heading of the top-of-app announcement banner. Plain text — never interpreted as markup, so `<b>` renders literally. Set this or `ANNOUNCEMENT_DESCRIPTION` to render the banner; leaving both unset hides it. Blank is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `ANNOUNCEMENT_DESCRIPTION`              | —                              | Supporting copy shown after the banner title. Sanitized server-side (allowlist: `a b strong em br span`); non-hash anchors are forced to `target="_blank" rel="noopener noreferrer"`. Text that overruns the banner width is silently truncated with an ellipsis, so keep it short. Blank, or markup that sanitizes away entirely, is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `ANNOUNCEMENTS`                         | `[]`                           | JSON array feeding the `+N announcements` popover: `[{ "title": "…", "description": "…", "link": { "label": "…", "href": "https://…" } }]`. `description` and `link` are optional; an entry with no link renders without a call to action. Max 10 entries. Validation is drop-and-log and never fatal — an entry is dropped if its title is blank, or if its link is present but has a blank label or an `href` that is not an absolute `http`/`https` URL (relative paths are rejected). Malformed JSON resolves to `[]`. Rejected entries appear only in the server log.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `CUSTOM_VISUALIZERS`                    | `[]`                           | JSON array of MIME → visualizer iframe mappings: `[{ "title": "my-viz", "url": "https://viz.example.com", "contentType": "application/x-my-viz,application/x-my-viz-v2" }]`. An attachment whose MIME type matches an entry opens in the Attachment Canvas rendered by that visualizer's iframe instead of the default preview; `contentType` accepts a comma-separated MIME list. `title` is the postMessage namespace and MUST equal the `appName` passed to `ChatVisualizerConnector` inside the visualizer app — a mismatch loads the iframe but never sends it data. Registering a URL grants that origin in-app iframe privileges (downloads, popups, modals, clipboard, fullscreen), so list only vetted visualizers. Registering it here does **not** by itself let the browser load it: CSP `frame-src` is built from `ALLOWED_IFRAME_ORIGINS` alone, so each visualizer URL's origin must also be listed there or the iframe is blocked and the canvas never renders. Mind the coupling — that same list also feeds `frame-ancestors`, so adding a visualizer origin additionally permits that origin to embed this app. Unset means the feature is dark. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config. |
+| `APPLICATION_VISUALIZERS`               | `{}`                           | JSON **object** (not an array) keyed by application id — the effective deployment id of a message: `{"my-app":{"title":"my-viz","url":"https://viz.example.com","contentType":"application/x-my-viz","height":600,"mobileHeight":400}}`. Every attachment an entry claims is delivered to one iframe together via `SEND_GROUPED_VISUALIZE_DATA`, rendered inline in the message with an expand-to-canvas control, rather than one iframe per attachment. Unlike `CUSTOM_VISUALIZERS`, `contentType` is **optional**: when set it claims only those MIME types and the message's other attachments stay ordinary tiles; when omitted it claims every attachment that carries a URL. An entry **takes precedence over `CUSTOM_VISUALIZERS`** for the attachments it claims. The same `ALLOWED_IFRAME_ORIGINS` requirement and `title`/`appName` contract as `CUSTOM_VISUALIZERS` apply. `passAuthInfo` and `passExplicitToken` are accepted for parity with legacy Chat 0.x and are inert — auth is server-side and the browser holds no access token. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails.                                                                                                               |
 
 #### Outbound DIAL Core client identity
 
@@ -226,7 +227,9 @@ removed, and an empty normalized value becomes `unknown`. The header is intended
 only for operational diagnostics and client-version attribution. It contains no
 user, tenant, authentication, conversation, or other runtime request data.
 
-Banner dismissal is content-keyed and persists in the browser's `localStorage`: a user who closes the banner keeps it hidden across restarts, and it reappears automatically for everyone once an operator changes the title or the description — no version counter or manual reset. Note that dismissing the banner also hides the announcements popover, since the pill lives inside the banner.
+Banner dismissal is content-keyed and persists in the browser's `localStorage`: a user who closes the banner keeps it hidden across restarts, and it reappears automatically for everyone once an operator changes any of the content it renders — the title, the description, or an `ANNOUNCEMENTS` entry (its title, description or link) — with no version counter or manual reset. Note that dismissing the banner also hides the announcements popover, since the pill lives inside the banner; that is why editing the popover list alone is enough to bring the banner back.
+
+The dismissal is keyed on content only, so redeploying with the same copy does not re-show the banner, and users who never dismissed the previous announcement are unaffected. Deployments that leave `ANNOUNCEMENTS` empty keep the signatures their users already stored, so adding the popover list to the key does not re-show the banner on its own.
 
 | Variable                    | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -504,7 +507,7 @@ maps each backend domain to its base path.
 | `applications`        | `applications/`        | Application CRUD                                                |
 | `application-schemas` | `application-schemas/` | Quick App / custom application schemas                          |
 | `toolsets`            | `toolsets/`            | Toolsets and their credential state                             |
-| `skills`              | `skills/`              | Skill CRUD and skill file transfer                              |
+| `skills`              | `skills/`              | Skill CRUD, metadata lookup, and skill file transfer            |
 | `prompts`             | `prompts/`             | Prompt CRUD and folders                                         |
 | `files`               | `files/`               | File upload/download, archive upload, ZIP streaming             |
 | `share`               | `share/`               | Share links and recipient management                            |
@@ -527,14 +530,16 @@ names become the generated SDK's method names, so name them like
 
 `POST /api/v1/transcription` maps upstream 429 and 503 responses to HTTP 503 and
 forwards the upstream `Retry-After` header when present. Other upstream errors use
-the shared DIAL error mapper. The frontend retries recognition of the same file;
-the backend does not add a second retry loop.
+the shared DIAL error mapper. The frontend surfaces 429/503 immediately and
+restores the editable draft with an error message. Only gateway failures
+(502/504) retry recognition of the same file, at most twice with a six-second
+total delay budget, respecting `Retry-After`. The backend adds no retry loop.
 
 In the local Core implementation, `Service is not available` is produced by the
 upstream balancer when all upstream states have status 429. Check Core logs for
 `Upstream ... limit hit` and the ASR provider's quotas/capacity. Dictation submits one
-complete recording after Stop. Retries handle temporary unavailability but do not
-increase provider quotas. The configured deployment can be valid even when some
+complete recording after Stop. Raising a DIAL token limit does not increase the
+provider's request quota. The configured deployment can be valid even when some
 recognition requests receive this response.
 
 ## Project Structure
@@ -727,6 +732,10 @@ container without enabling development-only features such as Swagger.
 
 ## Observability
 
+See the [Observability guide](../../docs/observability.md) for the current metric contracts,
+signal boundaries, troubleshooting, and [Grafana dashboard examples](../../docs/examples/dashboards/).
+This README owns the full telemetry environment-variable reference below.
+
 `apps/chat-api` ships OpenTelemetry-based distributed tracing, log export, and Prometheus-
 compatible metrics, entirely **off by default**. With no `OTEL_*` environment variable set, the
 application behaves byte-identically to a build without OpenTelemetry: no exporters, no
@@ -754,14 +763,15 @@ processors, no additional listening port, and no outbound network calls for tele
   enabled, the same call is additionally exported through the OpenTelemetry Logs API with a
   mapped severity and, when a trace is active, correlated `trace_id`/`span_id`.
   OpenTelemetry SDK-internal diagnostics are never routed back through this bridge.
-- **Metrics**: `apps/chat-api/src/telemetry/http-metrics.ts` exposes a single
-  `http.server.request.duration` histogram (seconds), attributed by HTTP method, matched route
-  template (never the raw URL — unmatched routes use the bounded literal `unmatched`), and
-  response status code. `MetricsInterceptor` records exactly one data point per request, except
-  `GET /api/health` (still logged, never recorded) — see `telemetry/excluded-paths.ts`, the same
-  exclusion list `otel-sdk.ts` uses for tracing.
-  Runtime gauges report the serving Node.js process's memory, active SSE operations, and
-  generation registry size; see [Runtime memory diagnostics](#runtime-memory-diagnostics).
+- **Metrics**: `MetricsInterceptor` records handler observations on
+  `http.server.request.duration`, attributed by method, matched route template, and status.
+  It runs after guards and does not represent every incoming request or the full downstream
+  response lifetime. Separate HTTP lifecycle instruments record observed arrivals, in-flight
+  requests, and terminal transport outcomes. Generation instruments cover upstream relay
+  outcomes and timing. Runtime gauges report the serving Node.js process's memory, outstanding
+  SSE operations, and generation registry size. See the
+  [metric contracts](../../docs/observability.md#metric-contracts) and
+  [Runtime memory diagnostics](#runtime-memory-diagnostics).
 - **Prometheus endpoint**: when the `prometheus` metrics exporter is selected, a dedicated,
   unauthenticated HTTP listener starts (default `127.0.0.1:9464`, path `/metrics`), entirely
   independent of the main application port — no new business-API route, no interaction with
@@ -803,7 +813,8 @@ validator schema only covers application-owned configuration; these are read in
 | `OTEL_TRACES_SAMPLER` / `OTEL_TRACES_SAMPLER_ARG`                                           | `NodeSDK`, natively                                  | `parentbased_always_on`    | We do not override the sampler in code.                                                                                                                                                    |
 
 **Not supported**: `OTEL_EXPORTER_OTLP_PROTOCOL` (and per-signal variants) is not read — the
-protocol is fixed to `http/protobuf` in code via the `*-otlp-http` exporter packages.
+protocol is fixed to `http/json` by the selected `*-otlp-http` exporter packages
+(`Content-Type: application/json`).
 
 ### Runtime memory diagnostics
 
@@ -881,6 +892,30 @@ Use legends `{{pod}} {{kind}}` and `{{pod}}`, respectively. Growing `heap_used` 
 operation counts directs investigation toward retained JavaScript objects; growing `external`
 or `array_buffers` directs it toward buffers. A rising RSS alone cannot establish a JavaScript
 heap leak.
+
+### HTTP transport lifecycle metrics
+
+The main HTTP server has a request listener for observed arrivals, in-flight requests, and
+terminal response duration. A shared settlement guard records the first observed terminal event
+and releases that request's active contribution. Route, transport kind, outcome, and the status
+code (only if headers were sent) are recorded at settlement. These signals coexist with the
+Nest handler histogram; transport completion does not establish generation or persistence success.
+
+The listener is registered with `server.on('request', ...)` after Nest has created the Express
+server. Its start time therefore does **not** guarantee coverage before all synchronous Express
+middleware or routing work. The exact raw URLs `/api/health` and `/metrics` are excluded; query
+strings and custom prefixes are not normalized by this listener's exclusion check.
+
+See [HTTP transport lifecycle](../../docs/observability.md#http-transport-lifecycle) for the
+instrument names, attributes, outcomes, streaming-route classification, fixed histogram buckets,
+and timing limitations. The [Overview / HTTP dashboard](../../docs/examples/dashboards/00-bff-overview-http.json)
+uses these instruments and keeps ordinary-response latency separate from streaming duration.
+
+The dashboard's `up` panel requires an explicit Prometheus scrape job and reports target scrape
+health. Kubernetes readiness, ingress traffic, and synthetic availability require external
+platform telemetry. Optional Tempo links search the configured service over the dashboard's time
+range; they do not filter by route or identify an exact request. See
+[Import the dashboard examples](../../docs/observability.md#import-the-dashboard-examples).
 
 ### Local verification
 

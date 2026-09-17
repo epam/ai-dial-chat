@@ -103,8 +103,7 @@ and they are not interchangeable. `message` sets the value: the textarea resyncs
 to it whenever the string changes, or whenever `messageRevision` changes if the
 string is the same — so anything the user had typed is gone. `textInsertion` puts
 its `text` in at the caret each time its `revision` changes and leaves the rest of
-the draft alone; the edit is made through the browser's editing pipeline, so the
-native undo shortcut reverts it. Use `message` to seed or reset the composer, and
+the draft alone, and `Ctrl`/`Cmd`+`Z` undoes it. Use `message` to seed or reset the composer, and
 `textInsertion` for anything the user triggers while a draft may already exist —
 a prompt picked from a library, a snippet, a slash-command expansion.
 
@@ -126,12 +125,25 @@ The `revision` is what performs the insert, so bumping it re-inserts the same
 string. The value present on mount is never inserted — only a later change to
 `revision` is.
 
+The insert itself lands one microtask after the render that requests it, and
+leaves the caret after the inserted text. That deferral is what keeps it
+undoable and keeps the caret in the composer: performed during the render
+instead, the edit is rewritten by React's controlled-value handling — which
+clears the browser's undo history — and the menu the text was picked in
+reclaims focus as it closes. A test driving this channel has to let the
+microtask queue drain before asserting.
+
 `removeLabel` and `retryLabel` are the accessible names of the remove and
 retry buttons on each attachment card in the tray. They default to English
 (`'Remove attachment'` / `'Retry upload'`); pass translated strings so the two
 adjacent buttons stay distinguishable to assistive technology. `uploadingLabel`
 (default `'Uploading'`) names the indeterminate progress bar a card shows while
 its upload is still in flight.
+
+`sendLabel` (default `'Send message'`) is the send button's accessible name.
+`sendTooltip` is a separate, optional string shown as a hover tooltip on the
+send button — useful for explaining why it's currently inactive (e.g. `'Type a
+message first'`). No tooltip renders when it is left unset.
 
 ### EditMessageInput
 
@@ -155,7 +167,7 @@ import { EditMessageInput } from '@epam/ai-dial-conversation-input';
 
 One recorder collects all audio until Stop, including pauses. No upload or recognition starts during capture. All recorder blobs, including the final event, form one file with the actual browser MIME type. Sampled silent recordings and recordings shorter than 100 ms are skipped in dictation mode.
 
-Stop finalizes the file and releases the microphone before awaiting recognition. A nonempty result is appended once to the existing draft through `onChange`, with a separating space when needed. The waveform and voice controls replace the textarea while recording or processing, and send/model controls are hidden. The draft remains in memory; no keyboard text entry is available in either voice mode. A polite status region announces the recognized text; the editable draft receives focus once a dictation session ends, including a silent or too-short capture that produced no text. Discard aborts pending work and ignores late results. Cancellation and errors preserve the original draft. No audio is added to the message attachment tray.
+Stop finalizes the file and releases the microphone before awaiting recognition. A nonempty result is appended once to the existing draft through `onChange`, with a separating space when needed. The waveform and voice controls replace the textarea while recording or processing, and send/model controls are hidden. The draft remains in memory; no keyboard text entry is available in either voice mode. A polite status region announces the recognized text; the editable draft receives focus once a dictation session ends, including a silent or too-short capture that produced no text. Discard aborts pending work and ignores late results. Cancellation and errors preserve the original draft. On failure, the voice panel closes, the editable draft receives focus, and an inline alert displays the error. A new recording can start without first dismissing the failed session and clears the previous error. No audio is added to the message attachment tray.
 
 `Record voice` appears in the add menu immediately before Chat settings and always creates one audio attachment, even when a transcription callback is supplied. `recordVoiceLabel` overrides its label. The host enables this item with `isVoiceRecordingSupported` (defaults to `isAudioMessageSupported`); attachments must also be enabled and the assistant must not be streaming. Attachment validation, upload and count limits follow the existing attachment pipeline. `isAudioMessageSupported` controls the Dictate button independently. Without a transcription callback, the microphone retains its legacy audio attachment fallback.
 

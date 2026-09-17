@@ -15,7 +15,6 @@ The backend SHALL expose a versioned endpoint:
 | Method | `POST` |
 | Path | `/api/v1/conversations/watch` |
 | Auth | `SessionGuard` (same as all `/api/v1/conversations/*` routes) |
-| Rate limit | `@Throttle({ default: { limit: 20, ttl: 60000 } })` |
 | Content-Type response | `text/event-stream` |
 
 **Request body (`WatchConversationBodyDto`):**

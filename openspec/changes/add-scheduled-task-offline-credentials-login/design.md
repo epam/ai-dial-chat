@@ -35,7 +35,7 @@ for the new `offline-credentials` domain.
   (`getOfflineCredentials`, `offlineCredentialsSignIn`,
   `OfflineCredentialsStatus`, `OfflineCredentialsSignInRequest`) and any
   compile-time impact from the SDK's new `DIAL_NATIVE` auth-type member.
-- Add a session-validated, feature-gated, rate-limited BFF domain proxying
+- Add a session-validated, feature-gated BFF domain proxying
   DIAL Core's offline-credentials status/sign-in endpoints.
 - Add a route-level status check on the four Scheduled Task routes that
   shows a login-required modal when appropriate, without blocking existing
@@ -156,24 +156,16 @@ Response: { "success": true }
 @RequireFeature(FeatureKey.ScheduledTasksEnabled)
 export class OfflineCredentialsController {
   @Get()
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({ operationId: 'getOfflineCredentials', ... })
   getOfflineCredentials(@Req() req: Request): Promise<GetOfflineCredentialsResponseDto> { ... }
 
   @Post('signin')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ operationId: 'signInOfflineCredentials', ... })
   signIn(@Req() req: Request, @Body() body: OfflineCredentialsSigninBodyDto): Promise<OfflineCredentialsAuthResultDto> { ... }
 }
 ```
-
-Rate limits are copied verbatim from `ExternalServicesController`
-(`apps/chat-api/src/external-services/external-services.controller.ts:37,90`):
-60/min for the read, 10/min for the sign-in mutation — no evidence in this
-investigation calls for different limits, since both are single-user,
-low-frequency operations of the same shape.
 
 Reused, not reinvented: `FeatureGuard`/`RequireFeature(FeatureKey
 .ScheduledTasksEnabled)` (same guard `ScheduledTasksController` already
@@ -193,8 +185,8 @@ helpers, `apps/chat-api/src/common/dial/dial-error.mapper.ts`):
 | Invalid `redirectUri` (fails allowlist)              | 400         | `BadRequestException` (via `ValidationPipe`) |
 | No session cookie                                    | 401         | `UnauthorizedException` |
 | `scheduledTasksEnabled` flag off for caller           | 403         | `ForbiddenException` (via `FeatureGuard`) |
-| Rate limit exceeded                                  | 429         | Nest `ThrottlerGuard` |
-| DIAL Core 4xx/5xx (`response.error`)                 | 502         | `BadGatewayException` |
+| DIAL Core rate limit exceeded                       | 429         | `HttpException` via `mapDialHttpStatus` |
+| Other DIAL Core errors (`response.error`)            | Mapped status | Shared `mapDialHttpStatus` mapping |
 | DIAL Core sign-in resolves to `false`                | 502         | `BadGatewayException` ("Core reported failure" — mirrors `ExternalServicesService.signIn`'s identical `!response.data` branch) |
 | DIAL Core unreachable/timeout (`handleDialFetchError`)| 503         | `ServiceUnavailableException` |
 
@@ -245,7 +237,7 @@ ActiveScheduledTaskContext.tsx`) is already scoped rather than global, and
 is preferred over a global `AppConfigContext`-level check because:
 
 - Offline-credentials status is irrelevant outside Scheduled Tasks; checking
-  it globally would burn one BFF call + rate-limit budget per navigation for
+  it globally would burn one BFF call per navigation for
   users who never open that section.
 - Scoping to the route subtree makes "excluded from the OAuth callback
   route" trivial — the callback routes (`ROUTES.ToolsetSignIn`,
@@ -558,8 +550,8 @@ is updated to list the new diagram.
   could complete offline-credentials login once and then have the same
   status re-fetched on every subsequent Scheduled Tasks visit — an
   intentional trade-off (Decision 3) favoring correctness (always-fresh
-  status, `no-store`) over minimizing request count, since the read is
-  cheap and rate-limited generously (60/min).
+  status, `no-store`) over minimizing request count, since the status read is
+  lightweight.
 
 ## Migration Plan
 

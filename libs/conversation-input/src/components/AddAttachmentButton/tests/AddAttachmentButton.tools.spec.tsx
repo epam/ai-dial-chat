@@ -1,4 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AddAttachmentButton } from '../AddAttachmentButton';
@@ -90,11 +96,20 @@ describe('AddAttachmentButton — tools submenu', () => {
         />,
       );
 
-      await user.click(screen.getByRole('button', { name: 'Add' }));
+      await user.tab();
+      await user.keyboard('{Enter}');
       const toolsTrigger = await screen.findByRole('menuitem', {
         name: 'Tools',
       });
-      toolsTrigger.focus();
+      await waitFor(() =>
+        expect(
+          screen
+            .getByRole('menuitem', { name: 'Attach file' })
+            .matches(':focus'),
+        ).toBe(true),
+      );
+      await user.keyboard('{ArrowDown}');
+      expect(toolsTrigger.matches(':focus')).toBe(true);
       await user.keyboard(key);
 
       expect(
@@ -161,16 +176,25 @@ describe('AddAttachmentButton — tools submenu', () => {
         />,
       );
 
-      await user.click(screen.getByRole('button', { name: 'Add' }));
+      await user.tab();
+      await user.keyboard('{Enter}');
       const toolsTrigger = await screen.findByRole('menuitem', {
         name: 'Tools',
       });
-      toolsTrigger.focus();
+      await waitFor(() =>
+        expect(
+          screen
+            .getByRole('menuitem', { name: 'Attach file' })
+            .matches(':focus'),
+        ).toBe(true),
+      );
+      await user.keyboard('{ArrowDown}');
+      expect(toolsTrigger.matches(':focus')).toBe(true);
       await user.keyboard('{Enter}');
       const toolItem = await screen.findByRole('menuitemcheckbox', {
         name: 'Deep Research',
       });
-      toolItem.focus();
+      act(() => toolItem.focus());
 
       await user.keyboard('{Escape}');
 

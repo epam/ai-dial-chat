@@ -1109,7 +1109,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         aria-label={dialogAriaLabel}
         style={cssVars}
         className={mergeClasses(
-          'fixed inset-y-0 end-0 z-50 flex w-full flex-col overflow-hidden',
+          'fixed inset-y-0 end-0 z-50 flex flex-col overflow-hidden mobile:w-full',
           'desktop:rounded-ts-xl desktop:rounded-bs-xl desktop:w-[540px] desktop:border-s',
           'transition-transform duration-300',
           styles.panel,

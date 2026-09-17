@@ -132,6 +132,143 @@ describe('useAttachmentUpload', () => {
     expect(uploadFile).toHaveBeenCalledTimes(6);
   });
 
+  it('skips all stored names after remounting and can attach the file again', async () => {
+    const storedNames = new Set([
+      'Screenshot.png',
+      ...Array.from({ length: 12 }, (_, i) => `Screenshot (${i + 1}).png`),
+    ]);
+    const listFiles = vi.fn().mockImplementation(async () => ({
+      items: [...storedNames].map((name) => ({ name })),
+    }));
+    uploadFile.mockImplementation(async ({ path, file }) => {
+      if (storedNames.has(file.name)) {
+        throw { response: { status: 409 } };
+      }
+      storedNames.add(file.name);
+      return { url: `files/user-bucket/${path}` };
+    });
+    const renderUploader = () =>
+      renderHook(() =>
+        useAttachmentUpload({
+          filesApi: { ...fakeFilesApi, listFiles },
+          bucket: 'user-bucket',
+        }),
+      );
+    const { result: firstResult, unmount } = renderUploader();
+
+    await expect(
+      firstResult.current.handleUploadAttachment(
+        makeAttachment('Screenshot.png'),
+      ),
+    ).resolves.toMatchObject({ name: 'Screenshot (13).png' });
+    unmount();
+
+    const { result: nextResult } = renderUploader();
+    await expect(
+      nextResult.current.handleUploadAttachment(
+        makeAttachment('Screenshot.png'),
+      ),
+    ).resolves.toMatchObject({ name: 'Screenshot (14).png' });
+    await expect(
+      nextResult.current.handleUploadAttachment(
+        makeAttachment('Screenshot.png'),
+      ),
+    ).resolves.toMatchObject({ name: 'Screenshot (15).png' });
+    expect(uploadFile).toHaveBeenCalledTimes(5);
+    expect(listFiles).toHaveBeenCalledTimes(2);
+    expect(listFiles).toHaveBeenCalledWith({
+      bucket: 'user-bucket',
+      path: expect.stringMatching(/^uploads\/\d{4}-\d{2}$/),
+    });
+    expect(storedNames.size).toBe(16);
+    for (const [request] of uploadFile.mock.calls) {
+      expect(request.uploadMode).toBe('create-only');
+    }
+  });
+
+  it('does not list files when the initial upload succeeds', async () => {
+    uploadFile.mockResolvedValue({ url: 'files/user-bucket/file.pdf' });
+    const listFiles = vi.fn();
+    const { result } = renderHook(() =>
+      useAttachmentUpload({
+        filesApi: { ...fakeFilesApi, listFiles },
+        bucket: 'user-bucket',
+      }),
+    );
+
+    await result.current.handleUploadAttachment(makeAttachment());
+
+    expect(listFiles).not.toHaveBeenCalled();
+  });
+
+  it('preserves distinct reservations for concurrent uploads after listing', async () => {
+    const storedNames = new Set(['file.pdf', 'file (1).pdf']);
+    const listFiles = vi.fn().mockResolvedValue({
+      items: [...storedNames].map((name) => ({ name })),
+    });
+    uploadFile.mockImplementation(async ({ path, file }) => {
+      if (storedNames.has(file.name)) {
+        throw { response: { status: 409 } };
+      }
+      storedNames.add(file.name);
+      return { url: `files/user-bucket/${path}` };
+    });
+    const { result } = renderHook(() =>
+      useAttachmentUpload({
+        filesApi: { ...fakeFilesApi, listFiles },
+        bucket: 'user-bucket',
+      }),
+    );
+
+    const uploaded = await Promise.all([
+      result.current.handleUploadAttachment(makeAttachment()),
+      result.current.handleUploadAttachment(makeAttachment()),
+    ]);
+
+    expect(uploaded.map(({ name }) => name)).toEqual([
+      'file (2).pdf',
+      'file (3).pdf',
+    ]);
+    expect(uploaded[0].url).not.toBe(uploaded[1].url);
+    expect(storedNames.size).toBe(4);
+  });
+
+  it('bounds retries even when the listing is stale and conflicts persist', async () => {
+    uploadFile.mockRejectedValue({ response: { status: 409 } });
+    const listFiles = vi.fn().mockResolvedValue({ items: [] });
+    const { result } = renderHook(() =>
+      useAttachmentUpload({
+        filesApi: { ...fakeFilesApi, listFiles },
+        bucket: 'user-bucket',
+      }),
+    );
+
+    await expect(
+      result.current.handleUploadAttachment(makeAttachment()),
+    ).rejects.toMatchObject({ response: { status: 409 } });
+    expect(uploadFile).toHaveBeenCalledTimes(6);
+    expect(listFiles).toHaveBeenCalledTimes(5);
+  });
+
+  it('keeps retrying with a suffix if listing the folder fails', async () => {
+    uploadFile
+      .mockRejectedValueOnce({ response: { status: 409 } })
+      .mockResolvedValue({ url: 'files/user-bucket/file.pdf' });
+    const listFiles = vi.fn().mockRejectedValue(new Error('listing failed'));
+    const { result } = renderHook(() =>
+      useAttachmentUpload({
+        filesApi: { ...fakeFilesApi, listFiles },
+        bucket: 'user-bucket',
+      }),
+    );
+
+    await expect(
+      result.current.handleUploadAttachment(makeAttachment()),
+    ).resolves.toMatchObject({ name: 'file (1).pdf' });
+    expect(listFiles).toHaveBeenCalledOnce();
+    expect(uploadFile).toHaveBeenCalledTimes(2);
+  });
+
   it('reuses the name of a failed upload for the next attempt', async () => {
     uploadFile.mockRejectedValueOnce(new Error('server error'));
     const { result } = renderHook(() =>

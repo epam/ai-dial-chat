@@ -198,7 +198,8 @@ The additional-locale field labels the General step renders come from the `edito
 
 - **WHEN** the user is on the Settings step and clicks the header's "Save & Exit" button
 - **THEN** `isSaving` becomes true and `settingsStepRef.current.triggerSave()` is called
-- **AND** when the iframe posts back a `SAVE_SUCCESS` message, `refetchDeployments()` is awaited
+- **AND** when the iframe posts back a `SAVE_SUCCESS` message, `AppsEditor` awaits the
+  `updateApplication` reassertion call described below, then `refetchDeployments()`
 - **AND** the page navigates to `returnUrl`
 
 #### Scenario: The General form stays mounted after advancing to Settings
@@ -206,12 +207,24 @@ The additional-locale field labels the General step renders come from the `edito
 - **WHEN** the user completes the General step and the Settings step renders
 - **THEN** `GeneralForm` remains mounted but hidden, so its current values are still readable through `generalFormRef.current.getValues()`
 
-#### Scenario: Preview on Settings step uses freshly saved deployment settings
+#### Scenario: Preview on Settings step uses freshly saved deployment settings, no meaningful change
 
-- **WHEN** the user is on the Settings step and clicks the header's "Preview" button
+- **WHEN** the user is on the Settings step and clicks the header's "Preview" button, and the resulting save reports `hasChanges: false`
 - **THEN** `isSaving` becomes true, `pendingSaveAction` is set to `preview`, and `settingsStepRef.current.triggerSave()` is called
-- **AND** when the iframe posts back a `SAVE_SUCCESS` message, `refetchDeployments()` is called fire-and-forget and `isPreviewing` becomes true immediately without waiting for the refetch
+- **AND** when the iframe posts back a `SAVE_SUCCESS` message, `AppsEditor` awaits the
+  `updateApplication` reassertion call described below, then calls `refetchDeployments()`
+  fire-and-forget and `isPreviewing` becomes true immediately without waiting for the refetch
 - **AND** the preview chat input derives attachment availability and limits from the refreshed deployment's `inputAttachmentTypes` and `maxInputAttachments`
+
+#### Scenario: Preview on Settings step awaits a fresh deployment list when settings changed
+
+- **WHEN** the user is on the Settings step and clicks the header's "Preview" button, and the resulting save reports `hasChanges: true`
+- **THEN** `isSaving` becomes true, `pendingSaveAction` is set to `preview`, and `settingsStepRef.current.triggerSave()` is called
+- **AND** when the iframe posts back a `SAVE_SUCCESS` message, `AppsEditor` awaits the
+  `updateApplication` reassertion call described below, then **awaits** `refetchDeployments()`
+  before `isPreviewing` becomes true — `isSaving` stays true (the saving overlay stays visible)
+  for that whole wait, so the remounted preview pane's first render already reads a fresh list
+- **AND** a rejected refetch is logged and does not block `isPreviewing` becoming true afterward
 
 #### Scenario: Settings updates refresh deployment metadata before preview
 
@@ -225,6 +238,61 @@ The additional-locale field labels the General step renders come from the `edito
 - **AND** the page does NOT navigate away
 
 ---
+
+### Requirement: A Settings-step save reasserts features.skills_supported via a follow-up updateApplication call
+
+The embedded Settings-step editor (loaded from `schema.editorUrl`) persists a Settings-step
+save entirely on its own — `AppsEditor` never calls the backend `updateApplication` endpoint
+itself for that save, it only posts `TriggerSave` to the iframe and reacts to the `SAVE_SUCCESS`/
+`SAVE_ERROR` postMessage the iframe posts back. That embedded editor is a separate application,
+not owned by this repository, and has no reason to know about the chat-side `skills_supported`
+hack described in the `applications-write-api` spec's "Quick Apps always get
+features.skills_supported: true" requirement — its own save may leave the flag unset or
+overwrite it back to its prior value.
+
+To close that gap without needing to change the embedded editor's protocol, `AppsEditor`'s
+`handleSaveSuccess` SHALL, immediately after receiving a `SAVE_SUCCESS` message (for both a
+Save & Exit and a Preview trigger, since both perform a real save through the iframe) and
+before any of its existing success side effects (`refetchDeployments`, `notifyOperationSuccess`,
+navigation, entering preview), call the frontend `updateApplication` API for `appIdForSettings`
+with the current General-step values (`name`, `description`, `iconUrl`, `topics`, `locales`,
+`primaryLocale`, read via `generalFormRef.current.getValues()`) and **await** its result. This
+call's only purpose is to re-trigger the backend's unconditional `skills_supported` force-merge
+on every update — the General-step values are sent unchanged (a no-op for those fields) so this
+call otherwise has no visible effect for a non-Quick-App schema, where the backend's
+`isQuickAppSchema` check makes the force-merge itself a no-op too.
+
+`AppsEditor` SHALL wait for this call to settle before proceeding: on success, the existing
+success-path side effects run as before; on failure, `AppsEditor` SHALL stop before running any
+of them — no `refetchDeployments`, no `notifyOperationSuccess`, no navigation, no entering
+preview — and SHALL surface the failure the same way `SAVE_ERROR` from the iframe is surfaced
+(`isSaving` becomes false, `pendingSaveAction` is cleared, `saveError` is set to the generic
+"save failed" message, rendered via `Notification`). The page stays on the Settings step.
+
+#### Scenario: Reassertion call runs before Save & Exit's side effects
+
+- **WHEN** the iframe posts `SAVE_SUCCESS` for a Save & Exit trigger
+- **THEN** `updateApplication(appIdForSettings, { name, description, iconUrl, topics, locales, primaryLocale })` is called and awaited before `refetchDeployments()`, `notifyOperationSuccess`, and navigation to `returnUrl`
+
+#### Scenario: Reassertion call runs before Preview's side effects
+
+- **WHEN** the iframe posts `SAVE_SUCCESS` for a Preview trigger
+- **THEN** the reassertion `updateApplication` call is awaited before `refetchDeployments()` and before `isPreviewing` becomes true
+- **AND** `refetchDeployments()` itself is awaited too when the save reported `hasChanges: true`; it remains fire-and-forget when the save reported `hasChanges: false`
+
+#### Scenario: A failed reassertion call blocks the rest of the success path
+
+- **WHEN** the reassertion `updateApplication` call rejects
+- **THEN** `isSaving` becomes false, `saveError` is set to the generic save-failed message, `pendingSaveAction` is cleared, and no `refetchDeployments`, `notifyOperationSuccess`, navigation, or `isPreviewing` transition occurs
+
+#### Scenario: A successful reassertion call does not alter General-step data
+
+- **WHEN** the reassertion call succeeds
+- **THEN** the `name`/`description`/`iconUrl`/`topics`/`locales`/`primaryLocale` values it sent are identical to what `generalFormRef.current.getValues()` already held, so the update is a no-op for every field except the backend's forced `features.skills_supported`
+
+---
+
+
 
 ### Requirement: Shared editor header component
 

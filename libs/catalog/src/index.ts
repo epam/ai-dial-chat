@@ -1,5 +1,3 @@
-import './styles.css';
-
 // Headless catalog enums and catalog-item-mapping functions — see
 // `./entry-points/mapping.ts`; import `@epam/ai-dial-catalog/mapping`
 // directly to avoid resolving the catalog/publish-panel UI.
@@ -21,7 +19,11 @@ export {
 } from './types/catalog-content-type';
 
 // Models
-export type { CatalogProps, CatalogTitles } from './models/catalog-props';
+export type {
+  CatalogEmptyStateContext,
+  CatalogProps,
+  CatalogTitles,
+} from './models/catalog-props';
 export type {
   CatalogColors,
   CatalogStyles,

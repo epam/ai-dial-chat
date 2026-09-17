@@ -7,6 +7,7 @@ import {
   DeploymentSelectorI18nKeys,
   SettingsI18nKeys,
 } from '../../../constants/translation-keys';
+import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useDefaultAgentPreference } from '../../../hooks/default-agent/useDefaultAgentPreference';
 import { DefaultAgentMode } from '../../../types/default-agent';
 
@@ -18,11 +19,23 @@ import { DefaultAgentMode } from '../../../types/default-agent';
  * from chat 1.0 ("Default agent", "Last used agent") ride along as icon-less
  * rows pinned above the catalog sections, so they read as modes rather than
  * as agents.
+ *
+ * Until the user picks something the field shows the mode that is actually in
+ * effect rather than a fixed default: with an agent pinned that is "Default
+ * agent", because the pin outranks the implicit last-used selection. Showing
+ * "Last used agent" there would name a mode the new chat does not follow —
+ * the confusion behind Issue #8889.
  */
 const DefaultAgentSelect: FC = () => {
   const { t } = useTranslation();
-  const { preference, setPreference } = useDefaultAgentPreference();
+  const { storedPreference, setPreference } = useDefaultAgentPreference();
+  const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
   const labelId = useId();
+
+  const effectiveMode = isDefaultDeploymentPinned
+    ? DefaultAgentMode.DefaultAgent
+    : DefaultAgentMode.LastUsedAgent;
+  const selectedId = storedPreference ?? effectiveMode;
 
   const modeOptions = useMemo<DeploymentSelectorExtraOption[]>(
     () => [
@@ -42,7 +55,7 @@ const DefaultAgentSelect: FC = () => {
     <div className="flex flex-col gap-1">
       <Label id={labelId} label={t(SettingsI18nKeys.DefaultAgent)} />
       <DeploymentSelectorFieldTrigger
-        selectedId={preference}
+        selectedId={selectedId}
         onSelect={setPreference}
         placeholder={t(DeploymentSelectorI18nKeys.AriaLabel)}
         labelledById={labelId}

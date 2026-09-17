@@ -115,6 +115,54 @@ describe('Input while dictating', () => {
     expect(stopTrack).toHaveBeenCalledOnce();
   });
 
+  it.each([false, true])(
+    'restores the draft and focus after failure and allows a new recording (mobile=%s)',
+    async (mobile) => {
+      mockUseIsMobile.mockReturnValue(mobile);
+      const onChange = vi.fn();
+      const onTranscribeAudio = vi
+        .fn()
+        .mockRejectedValueOnce(
+          new Error('Speech recognition is temporarily unavailable.'),
+        )
+        .mockResolvedValue('Recovered');
+      render(
+        <Input
+          message="Draft"
+          isAudioMessageSupported
+          onChange={onChange}
+          onTranscribeAudio={onTranscribeAudio}
+        />,
+      );
+      fireEvent.click(screen.getByLabelText('Dictate'));
+      await act(async () => vi.advanceTimersByTimeAsync(1000));
+      fireEvent.click(screen.getByLabelText('Stop recording'));
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        'Speech recognition is temporarily unavailable.',
+      );
+      expect(screen.queryByLabelText('Discard recording')).toBeNull();
+      expect(screen.getByRole('textbox')).toHaveProperty('value', 'Draft');
+      expect(screen.getByRole('textbox')).toHaveProperty('readOnly', false);
+      // eslint-disable-next-line testing-library/no-node-access -- Focus has no role query.
+      expect(screen.getByRole('textbox')).toBe(document.activeElement);
+      expect(onChange).not.toHaveBeenCalled();
+      expect(stopTrack).toHaveBeenCalledOnce();
+
+      fireEvent.click(screen.getByLabelText('Dictate'));
+      await act(async () => vi.advanceTimersByTimeAsync(1000));
+      expect(screen.queryByRole('alert')).toBeNull();
+      fireEvent.click(screen.getByLabelText('Stop recording'));
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+      expect(screen.getByRole('textbox')).toHaveProperty(
+        'value',
+        'Draft Recovered',
+      );
+      expect(onChange).toHaveBeenCalledExactlyOnceWith('Draft Recovered');
+    },
+  );
+
   it('keeps the original draft when recognition is cancelled', async () => {
     let resolve!: (text: string) => void;
     const onTranscribeAudio = vi.fn().mockImplementationOnce(
@@ -214,5 +262,70 @@ describe('Input while dictating', () => {
     fireEvent.click(screen.getByLabelText('Add'));
     await act(async () => vi.advanceTimersByTimeAsync(0));
     expect(screen.queryByText('Record voice')).toBeNull();
+  });
+
+  it('re-measures the inline-start slot indent once it remounts after Stop', async () => {
+    let resizeCallback: ResizeObserverCallback | undefined;
+    const observe = vi.fn((target: Element) => {
+      resizeCallback?.(
+        [{ contentRect: { width: 80 } } as unknown as ResizeObserverEntry],
+        {} as ResizeObserver,
+      );
+      void target;
+    });
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resizeCallback = callback;
+        }
+        observe = observe;
+        disconnect = vi.fn();
+      },
+    );
+    const onTranscribeAudio = vi.fn().mockResolvedValue('');
+
+    const { container } = render(
+      <Input
+        isAudioMessageSupported
+        onTranscribeAudio={onTranscribeAudio}
+        inlineStartSlot={<span>Web search skill</span>}
+      />,
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- CSS custom property lives on the root element's style, which has no ARIA query.
+    const wrapper = container.firstChild as HTMLElement;
+    /*
+     * `ResizeObserver` is stubbed globally, so unrelated components in the
+     * tree (tooltips, popovers) may construct their own instances and add
+     * unrelated `observe` calls. Only calls whose target is the slot itself
+     * confirm the behavior under test.
+     */
+    const slotObserveCallCount = () =>
+      observe.mock.calls.filter(
+        ([target]) =>
+          (target as HTMLElement).textContent === 'Web search skill',
+      ).length;
+
+    expect(screen.getByText('Web search skill')).toBeTruthy();
+    expect(slotObserveCallCount()).toBe(1);
+    expect(wrapper.style.getPropertyValue('--ci-first-line-indent')).toBe(
+      'calc(80px + 4px)',
+    );
+
+    /* Attaching the skill mid-recording is exactly this: the slot toggles
+     * on while the textarea (and its slot wrapper) is unmounted behind the
+     * voice bar, so the width can only be (re-)measured once it remounts. */
+    fireEvent.click(screen.getByLabelText('Dictate'));
+    await act(async () => vi.advanceTimersByTimeAsync(0));
+    expect(screen.queryByText('Web search skill')).toBeNull();
+
+    fireEvent.click(screen.getByLabelText('Stop recording'));
+    await act(async () => vi.advanceTimersByTimeAsync(0));
+
+    expect(screen.getByText('Web search skill')).toBeTruthy();
+    expect(slotObserveCallCount()).toBe(2);
+    expect(wrapper.style.getPropertyValue('--ci-first-line-indent')).toBe(
+      'calc(80px + 4px)',
+    );
   });
 });

@@ -97,7 +97,6 @@ Server-side normalization in `apps/chat-api/src/conversations/utils/apply-chunk-
 
 **Endpoint impact**: none. No new route, no changed HTTP method, path, status code, authorization, rate limit, or cache behaviour. The affected requests are the existing conversation create/save and fetch operations under `/api/v1/conversations`.
 **Generated-client impact**: no new `operationId` and no new SDK method. The regenerated `AnnotationSelectorDto` model gains the optional fields; existing frontend callers are unchanged and continue to use the same generated methods.
-**Rate limiting**: unchanged — no new endpoint, so no new `@Throttle`.
 **Cache**: unchanged — annotations are not separately cached.
 **i18n**: none — backend DTO.
 **RTL**: none — backend DTO.

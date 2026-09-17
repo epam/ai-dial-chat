@@ -1,15 +1,12 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { MarkdownTableCopyFormat } from '../../table-serialization';
 import {
   useMarkdownTableActions,
   type MarkdownTableHeaderAction,
 } from '../useMarkdownTableActions';
 
 const ACTION_LABELS = {
-  copyCsvLabel: 'Copy as CSV',
-  copyTxtLabel: 'Copy as TXT',
-  copyMarkdownLabel: 'Copy as Markdown',
+  copyLabel: 'Copy',
   copiedLabel: 'Copied!',
   downloadCsvLabel: 'Download as CSV',
   openInCanvasLabel: 'Open in canvas',
@@ -20,7 +17,7 @@ describe('useMarkdownTableActions', () => {
     const { result } = renderHook(() =>
       useMarkdownTableActions({
         actionLabels: undefined,
-        copiedFormat: undefined,
+        isCopied: false,
         onCopy: vi.fn(),
         onDownloadCsv: vi.fn(),
       }),
@@ -33,7 +30,7 @@ describe('useMarkdownTableActions', () => {
     const { result } = renderHook(() =>
       useMarkdownTableActions({
         actionLabels: ACTION_LABELS,
-        copiedFormat: undefined,
+        isCopied: false,
         onCopy: vi.fn(),
         onDownloadCsv: vi.fn(),
       }),
@@ -41,19 +38,14 @@ describe('useMarkdownTableActions', () => {
 
     expect(
       result.current.map((action: MarkdownTableHeaderAction) => action.label),
-    ).toEqual([
-      ACTION_LABELS.copyCsvLabel,
-      ACTION_LABELS.copyTxtLabel,
-      ACTION_LABELS.copyMarkdownLabel,
-      ACTION_LABELS.downloadCsvLabel,
-    ]);
+    ).toEqual([ACTION_LABELS.copyLabel, ACTION_LABELS.downloadCsvLabel]);
   });
 
   it('includes the open-in-canvas action when both the label and handler are supplied', () => {
     const { result } = renderHook(() =>
       useMarkdownTableActions({
         actionLabels: ACTION_LABELS,
-        copiedFormat: undefined,
+        isCopied: false,
         onCopy: vi.fn(),
         onDownloadCsv: vi.fn(),
         onOpenInCanvas: vi.fn(),
@@ -65,11 +57,11 @@ describe('useMarkdownTableActions', () => {
     ).toContain(ACTION_LABELS.openInCanvasLabel);
   });
 
-  it('omits an action whose label is not supplied', () => {
+  it('omits the copy action when copyLabel is not supplied', () => {
     const { result } = renderHook(() =>
       useMarkdownTableActions({
-        actionLabels: { ...ACTION_LABELS, copyTxtLabel: undefined },
-        copiedFormat: undefined,
+        actionLabels: { ...ACTION_LABELS, copyLabel: undefined },
+        isCopied: false,
         onCopy: vi.fn(),
         onDownloadCsv: vi.fn(),
       }),
@@ -77,27 +69,27 @@ describe('useMarkdownTableActions', () => {
 
     expect(
       result.current.map((action: MarkdownTableHeaderAction) => action.label),
-    ).not.toContain(ACTION_LABELS.copyTxtLabel);
+    ).not.toContain(ACTION_LABELS.copyLabel);
   });
 
-  it('calls onCopy with the matching format when a copy action is activated', () => {
+  it('calls onCopy when the copy action is activated', () => {
     const onCopy = vi.fn();
     const { result } = renderHook(() =>
       useMarkdownTableActions({
         actionLabels: ACTION_LABELS,
-        copiedFormat: undefined,
+        isCopied: false,
         onCopy,
         onDownloadCsv: vi.fn(),
       }),
     );
 
-    const csvAction = result.current.find(
+    const copyAction = result.current.find(
       (action: MarkdownTableHeaderAction) =>
-        action.label === ACTION_LABELS.copyCsvLabel,
+        action.label === ACTION_LABELS.copyLabel,
     );
-    csvAction?.onClick();
+    copyAction?.onClick();
 
-    expect(onCopy).toHaveBeenCalledWith(MarkdownTableCopyFormat.Csv);
+    expect(onCopy).toHaveBeenCalledOnce();
   });
 
   it('calls onDownloadCsv when the download action is activated', () => {
@@ -105,7 +97,7 @@ describe('useMarkdownTableActions', () => {
     const { result } = renderHook(() =>
       useMarkdownTableActions({
         actionLabels: ACTION_LABELS,
-        copiedFormat: undefined,
+        isCopied: false,
         onCopy: vi.fn(),
         onDownloadCsv,
       }),

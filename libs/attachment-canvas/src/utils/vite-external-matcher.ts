@@ -5,8 +5,9 @@
  * package), and either way the import stays external so consumers get one
  * shared copy rather than a second one inlined here.
  */
-export const EXTERNAL_PEER_NAMES = [
+export const EXTERNAL_PACKAGE_NAMES = [
   'react',
+  '@silurus/ooxml',
   '@epam/ai-dial-chat-shared',
   '@epam/ai-dial-shared',
   '@epam/ai-dial-sidebar',
@@ -24,16 +25,16 @@ export const EXTERNAL_PEER_NAMES = [
 ] as const;
 
 /**
- * Returns true when `id` is a bare peer package name, or is prefixed by
- * `<peerName>/` (a deep subpath of that peer), for any name in
- * {@link EXTERNAL_PEER_NAMES} — except when `id` ends in `.css`, since a
+ * Returns true when `id` is a bare runtime package name, or is prefixed by
+ * `<packageName>/` (a deep subpath of that package), for any name in
+ * {@link EXTERNAL_PACKAGE_NAMES} — except when `id` ends in `.css`, since a
  * vendor stylesheet subpath must stay locally resolved (via `resolve.alias`)
  * so Vite can process and extract it, rather than being left as an
  * unresolvable raw `import "…css"` statement in the output JS.
  */
-export const isExternalPeerImport = (id: string): boolean => {
+export const isExternalPackageImport = (id: string): boolean => {
   if (id.endsWith('.css')) return false;
-  return EXTERNAL_PEER_NAMES.some(
+  return EXTERNAL_PACKAGE_NAMES.some(
     (name) => id === name || id.startsWith(`${name}/`),
   );
 };

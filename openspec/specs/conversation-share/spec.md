@@ -50,7 +50,7 @@ The container SHALL:
 
 No new backend endpoint is introduced. `ShareConversationPopoverContainer` SHALL call the existing `getShareLink(itemId, access)` utility (`apps/chat/src/utils/share-link.ts`), which POSTs to `POST /api/v1/share` via `createShareLink` (`apps/chat/src/server-api/share.api.ts`), passing the conversation's DIAL Core resource path as `itemId` and `access: [ShareLinkAccess.View]`.
 
-The backend `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`) `@ApiOperation.description` SHALL be updated to state it creates a share link "for a DIAL Core resource (catalog entity or conversation)", replacing the catalog-only wording. `CreateShareLinkDto`, response DTOs, and the `@Throttle({ limit: 20, ttl: 60000 })` rate limit are unchanged. Conversation-specific related-resource resolution is defined below; non-conversation resources continue to be proxied directly without an additional lookup.
+The backend `POST /api/v1/share` (`apps/chat-api/src/share/share.controller.ts`) `@ApiOperation.description` SHALL be updated to state it creates a share link "for a DIAL Core resource (catalog entity or conversation)", replacing the catalog-only wording. `CreateShareLinkDto` and response DTOs are unchanged. Conversation-specific related-resource resolution is defined below; non-conversation resources continue to be proxied directly without an additional lookup.
 
 #### Scenario: Conversation itemId is accepted by the existing endpoint
 
@@ -75,7 +75,7 @@ The service SHALL collect unique DIAL prompt resource URLs from `application_pro
 
 The application resource SHALL remain the first item in `shareResource.resources`, followed by each unique related prompt resource. Every related prompt SHALL receive the same resolved permissions as the application (`READ` for view access, `READ` and `WRITE` for edit access).
 
-A referenced prompt whose bucket (`getResourceBucket`, segment `[1]` of a `prompts/{bucket}/...` url) is neither the application's own bucket nor the public/organization bucket (`PUBLIC_BUCKET`, `apps/chat-api/src/conversations/constants/conversation.constants.ts`) SHALL be silently omitted rather than failing the share — DIAL Core rejects a single share request mixing more than one owning bucket, and the caller cannot grant access to a prompt in another user's private bucket.
+A referenced prompt whose bucket (`getResourceBucket`, segment `[1]` of a `prompts/{bucket}/...` url) is not the application's own bucket SHALL be silently omitted rather than failing the share. This covers two distinct cases: a prompt in another user's private bucket — DIAL Core rejects a single share request mixing more than one owning bucket, and the caller cannot grant access to a resource it doesn't own — and a prompt in the public/organization bucket (`PUBLIC_BUCKET`, `apps/chat-api/src/conversations/constants/conversation.constants.ts`), which is dropped for a different reason: `public` is DIAL Core's globally-readable bucket, already accessible to every authenticated user without a grant, and is not an owned resource `shareResource` can create an ACL entry for. Including a public-bucket resource in the request makes DIAL Core reject the whole batch with `"Incorrect resource link provided prompts/public/..."`.
 
 The application pre-read is best-effort: it MUST NOT block sharing the application itself. If the read throws, returns an upstream error, or returns no data (an empty body, or a plain custom application with no `application_properties`), the failure SHALL be logged as a warning and the share SHALL proceed with the application resource alone — no related prompts, no failure. Before this related-resource lookup existed, an `applications/...` itemId could be shared as long as `shareResource` succeeded; the pre-read never gates that baseline path. The attached prompts are an enhancement on top of it, not a precondition.
 
@@ -97,11 +97,11 @@ The application pre-read is best-effort: it MUST NOT block sharing the applicati
 - **WHEN** a share link is created for `applications/owner-bucket/my-app__1.0`
 - **THEN** `prompts/other-user-bucket/theirs` is omitted from `shareResource.resources` and the share still succeeds
 
-#### Scenario: Public-bucket prompt is kept
+#### Scenario: Public-bucket prompt is excluded
 
 - **GIVEN** a quick app references `prompts/public/shared` via a `dial-prompt` skill
 - **WHEN** a share link is created for `applications/owner-bucket/my-app__1.0`
-- **THEN** `prompts/public/shared` is included in `shareResource.resources`
+- **THEN** `prompts/public/shared` is omitted from `shareResource.resources` and the share still succeeds
 
 #### Scenario: Application pre-read failure degrades to app-only sharing without blocking
 
@@ -153,11 +153,13 @@ If the conversation read throws, returns an upstream error, or returns no conver
 - **WHEN** DIAL Core rejects or fails the conversation read performed before sharing
 - **THEN** link creation fails through the existing DIAL error mapper and `shareResource` is not called
 
-### Requirement: Related file resources outside the conversation's own bucket are dropped, except the public/organization bucket
+### Requirement: Related file resources outside the conversation's own bucket are dropped
 
 A conversation duplicated from someone else's shared conversation keeps referencing the original owner's files in its messages — duplication copies the conversation into the caller's own bucket, but never copies the attachments it references. DIAL Core's `shareResource` rejects any single request whose `resources` mix more than one owning bucket, answering 400 with `"You're not allowed to share resources of different owners in a single request"`. The caller also does not own a file left behind in another user's bucket, so it is not theirs to grant access to regardless.
 
-`ShareInvitationService.getRelatedResourceUrls` SHALL filter the collected related file resource URLs to only those whose bucket (`getResourceBucket`, `apps/chat-api/src/publish/publish-target.util.ts` — segment `[1]` of a `files/{bucket}/...` url) matches either the conversation's own resolved bucket, or the public/organization bucket (`PUBLIC_BUCKET`, `apps/chat-api/src/conversations/constants/conversation.constants.ts`). A related file in some other user's private bucket is silently omitted rather than causing the whole share request to fail; a related file in the public bucket has no exclusive owner to conflict with the conversation's owner, so it is kept.
+A related file in the public/organization bucket (`PUBLIC_BUCKET`, `apps/chat-api/src/conversations/constants/conversation.constants.ts`) is dropped too, for a different reason: `public` is DIAL Core's globally-readable bucket, already accessible to every authenticated user without a grant, and is not an owned resource `shareResource` can create an ACL entry for. Including a public-bucket resource in the request makes DIAL Core reject the whole batch with `"Incorrect resource link provided files/public/..."`, even though the file itself is reachable and opens fine from within the conversation.
+
+`ShareInvitationService.getRelatedResourceUrls` SHALL filter the collected related file resource URLs to only those whose bucket (`getResourceBucket`, `apps/chat-api/src/publish/publish-target.util.ts` — segment `[1]` of a `files/{bucket}/...` url) matches the conversation's own resolved bucket. A related file in any other bucket — another user's private bucket, or the public bucket — is silently omitted rather than causing the whole share request to fail.
 
 #### Scenario: A file left in the original owner's bucket is excluded
 
@@ -173,11 +175,12 @@ A conversation duplicated from someone else's shared conversation keeps referenc
 - **WHEN** a share link is created
 - **THEN** `shareResource.resources` includes that file alongside the conversation, as before
 
-#### Scenario: Files in the public/organization bucket are still shared
+#### Scenario: Files in the public/organization bucket are excluded
 
 - **GIVEN** an owned conversation references `files/public/template.pdf`
 - **WHEN** a share link is created
-- **THEN** `shareResource.resources` includes `files/public/template.pdf` alongside the conversation
+- **THEN** `shareResource.resources` contains only the conversation itself — `files/public/template.pdf` is not included
+- **AND** the request to DIAL Core succeeds
 
 ### Requirement: Accepting a conversation share invitation redirects into the conversation, not the catalog
 

@@ -35,9 +35,8 @@ every current and future traced route is covered without additional per-endpoint
 - **THEN** the response keeps that mapped status code and message
 - **AND** its JSON body includes the same `traceparent` as the response header
 
-#### Scenario: Validation, auth, and rate-limit failures also gain traceparent
-- **WHEN** a request fails `ValidationPipe` validation, an auth/CSRF guard, or the global
-  rate limiter
+#### Scenario: Validation and auth failures also gain traceparent
+- **WHEN** a request fails `ValidationPipe` validation or an auth/CSRF guard
 - **THEN** the resulting JSON error body includes `traceparent` under the same validity rule as
   any other traced error response
 

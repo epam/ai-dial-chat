@@ -42,27 +42,59 @@ A skill has no description at all in its metadata, so an `About` tab for a skill
 
 ### Requirement: A skill's details resolve from its manifest and its file listing in parallel
 
-The Skill branch of `CatalogView`'s `onFetchDetails` SHALL parse `{ bucket, path }` from `item.id` with `parseSkillResourceUrl` and issue two requests through `Promise.allSettled`:
+The Skill branch of `CatalogView`'s `onFetchDetails` SHALL parse `{ bucket, path }` from `item.id` with `parseSkillResourceUrl` and issue three requests through `Promise.allSettled`:
 
 1. `downloadSkillFile(bucket, path, 'SKILL.md')` — the manifest filename the backend already treats as required for every skill. The returned `Response` body SHALL be read as text and rejected without decoding when it exceeds `SKILL_MANIFEST_MAX_BYTES` (initially 256 KB).
 2. `listSkillFiles(bucket, path, { recursive: true })` — the skill's own file inventory.
+3. `getSkillMetadata(bucket, path)` — the skill resource's own authoritative metadata (`GET /api/v1/skills/metadata`; see the `skills-bff-api` delta). This request SHALL be issued on **every** details open, including reopening the same skill and opening it after a full page reload, so provenance never depends on data a prior invitation acceptance happened to leave in memory.
 
-Both wrappers are the existing ones in `apps/chat/src/server-api/skills.api.ts`, which call the generated `SkillsApi`. `downloadSkillFile` uses the generated `Raw` method (it returns the native `Response`, preserving stream semantics); `listSkillFiles` uses the normal generated method. No new `base.ts` helper and no direct `fetch` is introduced.
+All three wrappers are the existing ones in `apps/chat/src/server-api/skills.api.ts`, which call the generated `SkillsApi`. `downloadSkillFile` uses the generated `Raw` method (it returns the native `Response`, preserving stream semantics); `listSkillFiles` and `getSkillMetadata` use the normal generated methods. No new `base.ts` helper and no direct `fetch` is introduced.
 
 A manifest that reads successfully SHALL then be passed through `parseSkillManifest`, whose output feeds three parts of the result: `promptContent.content` from the body, `promptContent.description` from the frontmatter `description`, and the Overview's Specification section from `about`.
 
 A file listing that resolves SHALL feed two parts of the result: the Overview's Details section (the file count) and the Content tab's picker options.
 
+A metadata response that resolves SHALL be the authoritative source for the Overview's Author and Last updated rows. The catalog listing entry (`skills.find((candidate) => candidate.url === item.id)`) MAY still seed the panel's first paint and SHALL remain the fallback when the metadata request rejects, but SHALL NOT be the sole source of provenance. Ownership and editability SHALL continue to come from the listing entry and its namespace — the metadata response carries no ownership fields and SHALL NOT be consulted for them.
+
 The branch SHALL return early, before any deployment path: a skill MUST NOT trigger `getDeploymentDetails` or `getDeploymentLimits`, since neither endpoint accepts a skill resource URL.
 
 `mapSkillDetails` and the `{ type: 'SKILL' }` member of `EntitySpecificDetails` SHALL be removed. `EntitySpecificDetails` is produced only by `mapDeploymentDetailsDtoToEntityDetails`, which a skill never reaches, so both were unreachable; `SkillAboutDetails` and `SkillEntityDetails` SHALL move to `apps/chat/src/types/skill.ts` and become the manifest parser's output types.
 
+Both skill-details surfaces SHALL follow this one contract through the shared `useSkillItemDetails` hook — the Catalog page (via `useCatalogItemDetails`) and the chat-route panel (via `useSkillDetailsPanelData`) — with no duplicate detail-fetching logic in either.
+
+Catalog loading SHALL NOT gain any per-skill metadata request: `GET /api/v1/skills/catalog` stays a single aggregate request, and `getSkillMetadata` is issued only when a details panel opens.
+
 An unparseable `item.id` SHALL resolve `undefined` without issuing any request.
 
-#### Scenario: Both requests succeed
+#### Scenario: All three requests succeed
 
-- **WHEN** a user opens a skill's details panel, the manifest read resolves text with frontmatter, and the file listing resolves three files
-- **THEN** `onFetchDetails` resolves `promptContent` carrying the body, the frontmatter description, and three picker options, plus an `overview` with a Specification section and a Details section
+- **WHEN** a user opens a skill's details panel, the manifest read resolves text with frontmatter, the file listing resolves three files, and the metadata request resolves with an author and an update timestamp
+- **THEN** `onFetchDetails` resolves `promptContent` carrying the body, the frontmatter description, and three picker options, plus an `overview` with a Specification section and a Details section whose Author and Last updated rows come from the metadata response
+
+#### Scenario: Shared skill opened after a full page reload
+
+- **WHEN** a skill shared with the user is opened in a fresh session, and `GET /api/v1/skills/catalog` returned that skill without `author` or `updatedAt`
+- **THEN** the metadata request supplies both and the Overview renders populated Author and Last updated rows, with no reliance on invitation-merged state
+
+#### Scenario: Reopening requests fresh metadata
+
+- **WHEN** the user closes a skill's details panel and opens the same skill again
+- **THEN** a new `getSkillMetadata` request is issued for that skill
+
+#### Scenario: Rerenders do not loop
+
+- **WHEN** the open panel rerenders because a favorite was toggled or the skills listing was refreshed, without the opened skill changing
+- **THEN** no additional `getSkillMetadata` request is issued
+
+#### Scenario: Catalog loading issues no per-skill requests
+
+- **WHEN** the catalog loads its skills
+- **THEN** `getSkillMetadata` is not called for any listed skill
+
+#### Scenario: Both detail surfaces behave identically
+
+- **WHEN** the same shared skill's details are opened from the Catalog page and from the chat route's skill panel
+- **THEN** both issue the metadata request and render the same Author and Last updated values
 
 #### Scenario: Skill fetch never reaches the deployment endpoints
 
@@ -83,13 +115,16 @@ An unparseable `item.id` SHALL resolve `undefined` without issuing any request.
 
 ### Requirement: Manifest and file-listing failures degrade independently
 
-Each of the two results SHALL be optional in the returned `CatalogItemTabData`:
+Each of the three results SHALL be independent in the returned `CatalogItemTabData`:
 
 - A missing, oversized, or failed `SKILL.md` read SHALL omit `promptContent` entirely — and with it the picker, which lives on `promptContent` — and still return the `overview` built from the file listing. The `Content` tab is still present (per the content-first requirement) and renders the panel's existing empty state.
-- A failed file listing SHALL omit `overview` and leave `promptContent.files` empty — so no picker renders — while still returning the manifest body and, when the frontmatter resolved, its description.
-- Both failing SHALL resolve `undefined`, leaving the panel's existing error/empty handling in place.
+- A failed file listing SHALL omit `overview` and leave `promptContent.files` empty — so no picker renders — while still returning the manifest body and, when the frontmatter resolved, its description. A successful metadata response SHALL NOT resurrect an `overview` the file listing could not build, because the file-count row has no source.
+- A failed metadata request SHALL NOT discard successfully loaded content: `promptContent` and `overview` still render from whatever resolved, and only the Author and Last updated rows fall back to the catalog listing entry.
+- All three failing SHALL resolve `undefined`, leaving the panel's existing error/empty handling in place.
 
-A manifest that downloads but fails to parse is **not** a failure of either half: the raw text SHALL still be returned as `promptContent.content`, with no `description` and no Specification section. Parse failure SHALL NOT be escalated to fetch failure and SHALL NOT surface a notification.
+"Metadata unavailable" and "authoritative metadata that legitimately omits a field" SHALL be distinguishable and behave differently. A **rejected** metadata request falls back to the listing entry. A **fulfilled** metadata response is authoritative: an absent `author` omits the author row, and an absent `updatedAt` leaves the updated row's value empty — the listing entry SHALL NOT be consulted to fill either gap.
+
+A manifest that downloads but fails to parse is **not** a failure of any of the three: the raw text SHALL still be returned as `promptContent.content`, with no `description` and no Specification section. Parse failure SHALL NOT be escalated to fetch failure and SHALL NOT surface a notification. A metadata rejection likewise SHALL NOT surface a notification.
 
 `onFetchDetails` SHALL NOT throw out of the callback in any of these cases.
 
@@ -108,14 +143,29 @@ A manifest that downloads but fails to parse is **not** a failure of either half
 - **WHEN** `listSkillFiles` rejects and the manifest read resolves
 - **THEN** the panel renders the Content tab with the manifest body and no file picker
 
+#### Scenario: Metadata request fails while content loads
+
+- **WHEN** `getSkillMetadata` rejects but the manifest and file listing both resolve
+- **THEN** the Content tab, the Specification section, and the file count all render, the Author and Last updated rows fall back to the catalog listing entry, no notification appears, and nothing throws
+
+#### Scenario: Metadata succeeds while the file listing fails
+
+- **WHEN** `getSkillMetadata` resolves and `listSkillFiles` rejects
+- **THEN** `overview` is still omitted and the panel renders the manifest body only
+
+#### Scenario: Authoritative metadata with no author
+
+- **WHEN** `getSkillMetadata` resolves successfully with no `author`, while the catalog listing entry for the same skill carries one
+- **THEN** the author row is omitted rather than filled from the listing entry
+
 #### Scenario: Malformed frontmatter
 
 - **WHEN** the manifest downloads but its frontmatter fails to parse
 - **THEN** the Content tab renders the whole file as its body, no summary line is shown, the Overview has no Specification section, and no notification appears
 
-#### Scenario: Both fail
+#### Scenario: All three fail
 
-- **WHEN** both requests reject
+- **WHEN** the manifest read, the file listing, and the metadata request all reject
 - **THEN** `onFetchDetails` resolves `undefined` and the panel falls back to its existing behaviour without throwing
 
 ---
@@ -134,18 +184,27 @@ The `overview` returned for a skill SHALL be up to two `CatalogItemOverview` sec
 
 **Details** — title `catalog.details.skill.section`, with specs in order:
 
-1. `catalog.details.skill.author` → `skill.author`, included only when the metadata carries one.
-2. `catalog.details.skill.updated` → `formatCalendarDate(skill.updatedAt)` (an absolute calendar date, e.g. `'22/7/2026'` — not the relative `formatLastUsed` phrasing used for catalog list rows).
+1. `catalog.details.skill.author` → the skill's `author`, included only when the resolved metadata carries one.
+2. `catalog.details.skill.updated` → `formatCalendarDate(updatedAt)` (an absolute calendar date, e.g. `'22/7/2026'` — not the relative `formatLastUsed` phrasing used for catalog list rows). The row is always present; its value is an empty string when no timestamp resolved.
 3. `catalog.details.skill.fileCount` → the number of `nodeType: 'item'` entries returned by the file listing.
+
+`author` and `updatedAt` SHALL come from the `getSkillMetadata` response when that request fulfilled, and from the catalog listing entry only when it rejected. Neither value SHALL be invented or derived from any other source: not from `SKILL.md` or another supporting file's own file-level `author`/`updatedAt`, not from the current user, not from the share sender, and not from the current time. No placeholder text is rendered in place of a missing value.
 
 Per-file rows SHALL NOT appear in the Overview. The files are enumerated by the Content tab's picker, where selecting one shows it; repeating them as inert `{ label, value }` rows would be the same list twice, once without an action.
 
 File-listing entries with `nodeType: 'folder'` SHALL be excluded from the count. Sizes are not shown: `SkillMetadataItemDto` exposes no content-length field.
 
+No new i18n keys are introduced: `catalog.details.skill.author` and `catalog.details.skill.updated` already exist. RTL/direction impact: none — the Overview rows already use logical properties and their layout, ordering, and icons are unchanged. Accessibility impact: none — the rows keep their existing markup and labelling; no new interactive control, ARIA role, or keyboard affordance is added.
+
 #### Scenario: Skill with frontmatter and two files
 
-- **WHEN** the frontmatter carries `when_to_use` and `allowed_tools`, the metadata carries an author, and the file listing returns two files and one folder
+- **WHEN** the frontmatter carries `when_to_use` and `allowed_tools`, the metadata response carries an author, and the file listing returns two files and one folder
 - **THEN** the Overview shows a Specification section with a when-to-use row and an allowed-tools row, followed by a Details section with the author row, the updated row, and a file count of `2`
+
+#### Scenario: Provenance comes from the metadata response, not the listing
+
+- **WHEN** the catalog listing entry for a shared skill carries no `author` or `updatedAt`, and `getSkillMetadata` resolves with both
+- **THEN** the Details section renders both values from the metadata response
 
 #### Scenario: Overview carries no file rows
 
@@ -159,8 +218,13 @@ File-listing entries with `nodeType: 'folder'` SHALL be excluded from the count.
 
 #### Scenario: Skill with no author
 
-- **WHEN** the metadata carries no `author`
+- **WHEN** the resolved metadata carries no `author`
 - **THEN** the author row is omitted rather than rendered with an empty or placeholder value
+
+#### Scenario: `SKILL.md`'s own file metadata is never substituted
+
+- **WHEN** the file listing's `SKILL.md` entry carries its own `author` and `updatedAt`
+- **THEN** neither value reaches the Details section
 
 #### Scenario: Skill prompt is not duplicated
 
@@ -172,7 +236,7 @@ File-listing entries with `nodeType: 'folder'` SHALL be excluded from the count.
 ### Requirement: i18n, RTL, accessibility, and caching contract for the skill details panel
 
 - **i18n keys**: the existing `catalog.details.skill.section` (`'Skill'`, now the Details section title), `catalog.details.skill.author` (`'Author'`), `catalog.details.skill.updated` (`'Last updated'`), `catalog.details.skill.fileCount` (`'Files'`); `catalog.details.skill.specificationSection` (`'Specification'`), `catalog.details.skill.whenToUse` (`'When to use'`), `catalog.details.skill.allowedTools` (`'Allowed tools'`), `catalog.details.skill.bundledResources` (`'Bundled resources'`), `catalog.details.contentFileSelectorAriaLabel` (`'Select file'`), `catalog.details.contentFileCount` (`'{{count}} files'`), `catalog.details.contentFileLoading` (`'Loading file'`), and `catalog.details.contentFileError` (`'Failed to load this file.'`); plus, from this revision, `catalog.details.contentFileUnsupported`, whose English value SHALL be the existing `attachmentCanvas.unsupportedLabel` string (`'Preview is not supported for this file'`) rather than a newly-authored duplicate. All declared in `apps/chat/src/constants/translation-keys.ts` and `en.json`. Before adding any key, its English value SHALL be checked against `en.json` for an existing equivalent, per the duplicate-value rule. The lib receives resolved strings only — `libs/catalog` SHALL NOT call `useTranslation`.
-- **App-level adapter contract**: `libs/catalog` receives the manifest body as an already-resolved `string` on `CatalogItemTabData.promptContent.content`, its summary on `promptContent.description`, the selector's options as a resolved hierarchy of `{ type, id, name }` (folders additionally carrying nested `items`) on `promptContent.files`, and the Specification and Details rows as resolved label/value pairs on `overview`. For supporting files it receives a host-rendered `ReactNode` through `renderContentFilePreview(fileId, fileName)`. Bucket names, the `SKILL.md` filename, the distinction between an opaque Core listing id and the endpoint's file-relative `filePath`, the skills endpoint, raw bytes, MIME handling, attachment creation, app contexts, `useSkillFilePreviewSync`, and `AttachmentCanvasBody` all stay in `apps/chat`. The lib SHALL NOT gain a skill branch or an attachment-canvas dependency: it knows only that `files` is a tree and that the host can render a picked opaque id/basename pair.
+- **App-level adapter contract**: `libs/catalog` receives the manifest body as an already-resolved `string` on `CatalogItemTabData.promptContent.content`, its summary on `promptContent.description`, the selector's options as a resolved hierarchy of `{ type, id, name }` (folders additionally carrying nested `items`) on `promptContent.files`, and the Specification and Details rows as resolved label/value pairs on `overview`. For supporting files it receives a host-rendered `ReactNode` through `renderContentFilePreview(fileId, fileName)`. Bucket names, the `SKILL.md` filename, the distinction between an opaque Core listing id and the endpoint's file-relative `filePath`, the skills endpoint, raw bytes, MIME handling, attachment creation, app contexts, preview lifecycle coordination, and `AttachmentCanvasBody` all stay in `apps/chat`. The lib SHALL NOT gain a skill branch or an attachment-canvas dependency: it knows only that `files` is a tree and that the host can render a picked opaque id/basename pair.
 - **RTL / direction impact**: the picker row SHALL use logical Tailwind utilities only. The Overview tab gains no new directional layout. The preview area introduces no new directional layout beyond what `catalog-content-file-preview` already specifies.
 - **Accessibility**: the panel's existing `role="status"` loading indicator covers the fetch and, from this revision, a picked file's preview load. Folder headings SHALL be exposed as headings for their row groups rather than as styled text alone. The preview area's own accessibility contract (accessible file name, no focusable editing control, image `alt` text) is specified by `catalog-content-file-preview`.
 - **Caching**: no new cache. Details are re-fetched each time the panel opens for a skill, and the manifest is re-parsed on each fetch; the parse is synchronous and bounded by `SKILL_MANIFEST_MAX_BYTES`. A picked file's preview is likewise re-requested each time it is picked — reselecting the base file is the one path that costs no request, unchanged from before this revision.
@@ -281,11 +345,11 @@ A failed file listing SHALL yield an empty tree (`files: []` or the field omitte
 
 `CatalogView` SHALL supply `onLoadContentFile`. The catalog library SHALL pass the picked file node's opaque `id` to that callback unchanged. At the application edge, `CatalogView` SHALL convert a Core-prefixed listing id in either `{skillPath}/files/{relativeFilePath}` or `files/{relativeFilePath}` form into the `{relativeFilePath}` accepted by `downloadSkillFile`; an already-relative id SHALL remain unchanged. It SHALL then call the existing wrapper with the opened skill's `{ bucket, path }` and that normalized download path, and read the response through `readSkillManifest` so the same size cap applies to every file, regardless of nesting depth. A normalized path equal to `SKILL_MANIFEST_FILE` SHALL be returned frontmatter-stripped via `parseSkillManifest`; every other file SHALL be returned as written. No new endpoint, generated-client method, or `base.ts` helper is introduced.
 
-`CatalogView` SHALL additionally supply `renderContentFilePreview`, per the host-renderer contract in `catalog-content-file-preview`. For a picked supporting file it SHALL render an app-owned `SkillDetailsFilePreview` that applies the same opaque-id-to-relative-download-path conversion, downloads the file's raw bytes through `downloadSkillFile`, applies the shared `SKILL_MANIFEST_MAX_BYTES` guard, and feeds `{ bytes, mimeType? }` into the same `useSkillFilePreviewSync` and `SkillFilePreview` used by Skill Builder. `SkillFilePreview` SHALL render the shared `AttachmentCanvasBody`, so Markdown, JSON, code/plain text, HTML, PDF, image, audio, visualizer, unsupported, loading, and error states use the identical renderer, labels, theme, and accessibility behavior in both surfaces.
+`CatalogView` SHALL additionally supply `renderContentFilePreview`, per the host-renderer contract in `catalog-content-file-preview`. For a picked supporting file it SHALL render an app-owned `SkillDetailsFilePreview` that applies the same opaque-id-to-relative-download-path conversion, downloads the file's raw bytes through `downloadSkillFile`, reads the response body in full through a size-unbounded preview reader (the `SKILL_MANIFEST_MAX_BYTES` guard SHALL NOT be applied on this path), and converts `{ bytes, mimeType? }` with the shared `skillFileToAttachment` helper before resolving the preview through `useOpenAttachmentCanvas`. It SHALL render the result through the same `SkillFilePreview` used by Skill Builder. `SkillFilePreview` SHALL render the shared `AttachmentCanvasBody`, so Markdown, JSON, code/plain text, HTML, PDF, image, audio, visualizer, unsupported, loading, and error states use the identical renderer, labels, theme, and accessibility behavior in both surfaces.
 
-The reusable `SkillFilePreview` component SHALL live under `apps/chat/src/components/SkillFilePreview/`, and `useSkillFilePreviewSync` under `apps/chat/src/hooks/attachment/`; both Skill Builder and skill details SHALL import those shared app-level modules. `libs/catalog` SHALL NOT import `@epam/ai-dial-attachment-canvas`, app contexts, the skills API, or the generated client. It receives only the opaque-id/basename render callback result.
+The reusable `SkillFilePreview` component SHALL live under `apps/chat/src/components/SkillFilePreview/`; both Skill Builder and skill details SHALL import it. `useSkillFilePreviewSync`, under `apps/chat/src/hooks/attachment/`, SHALL remain the Skill Builder selection adapter. Skill details SHALL instead own isolated preview state through an `AttachmentCanvasProvider` keyed by the selected opaque file id. `libs/catalog` SHALL NOT import `@epam/ai-dial-attachment-canvas`, app contexts, the skills API, or the generated client. It receives only the opaque-id/basename render callback result.
 
-When Core returns `Content-Type: application/octet-stream`, the details loader SHALL omit that generic MIME value so `skillFileToAttachment` performs the same extension inference as Skill Builder's ZIP-loaded files. A specific MIME type such as `image/png` SHALL be preserved. A `403` response SHALL resolve to the attachment canvas's forbidden state; other non-OK responses, network failures, and oversized files SHALL resolve to its load-error state.
+When Core returns `Content-Type: application/octet-stream`, the details loader SHALL omit that generic MIME value so `skillFileToAttachment` performs the same extension inference as Skill Builder's ZIP-loaded files. A specific MIME type such as `image/png` SHALL be preserved. A `403` response SHALL resolve to the attachment canvas's forbidden state; other non-OK responses and network failures SHALL resolve to its load-error state. File size SHALL NOT be a failure class on this path — the preview reader has no byte ceiling, so no file resolves to the load-error state on account of its size.
 
 `SKILL_MANIFEST_FILE` SHALL never enter the supporting-file renderer. It SHALL continue to render `parseSkillManifest(...).body` through the base Content Markdown path — frontmatter-stripped instructions only — and reselecting it SHALL restore that body without a download.
 
@@ -342,7 +406,7 @@ When Core returns `Content-Type: application/octet-stream`, the details loader S
 #### Scenario: A picked Markdown supporting file previews as markdown
 
 - **WHEN** the user picks a supporting file named `notes.md`
-- **THEN** the file is opened through the shared Skill Builder synchronization and `AttachmentCanvasBody` renders its Markdown content
+- **THEN** the shared attachment resolvers open the file in the details preview's isolated canvas state and `AttachmentCanvasBody` renders its Markdown content
 
 #### Scenario: A picked source file previews as syntax-highlighted text
 
@@ -364,10 +428,55 @@ When Core returns `Content-Type: application/octet-stream`, the details loader S
 - **WHEN** the user reselects the manifest tree node, whether its opaque id is `SKILL_MANIFEST_FILE` or a Core-prefixed path, after viewing another file
 - **THEN** the base body (the manifest's parsed instructions) is restored without mounting `SkillDetailsFilePreview` or downloading the manifest again
 
-#### Scenario: The manifest's own size guard still applies to every other file
+#### Scenario: A supporting file larger than the manifest cap still previews
 
-- **WHEN** a supporting file's declared or actual size exceeds `SKILL_MANIFEST_MAX_BYTES`
-- **THEN** its bytes are never decoded or turned into a `Blob`, and the shared attachment body renders the same load-error state as Skill Builder
+- **WHEN** the user picks a supporting file whose declared `content-length` and actual byte length both exceed `SKILL_MANIFEST_MAX_BYTES` — for example a 2 MB `guide.pdf`
+- **THEN** its bytes are read in full, `skillFileToAttachment` builds the `File`, the shared resolvers produce PDF canvas content backed by a `blob:` URL, and the load-error state is NOT rendered
+
+#### Scenario: A realistic PDF renders on a freshly loaded page
+
+- **WHEN** the user opens a skill's details and picks a PDF supporting file over `SKILL_MANIFEST_MAX_BYTES`, having opened no other PDF anywhere in the application since the page loaded
+- **THEN** the preview resolves to PDF canvas content and the viewer mounts with the host's own bundled worker, without any dependency on a previously opened PDF or on an external CDN
+
+#### Scenario: The manifest's own read path keeps its cap
+
+- **WHEN** a skill's `SKILL.md`, or a file read through the textual `onLoadContentFile` path, exceeds `SKILL_MANIFEST_MAX_BYTES`
+- **THEN** `readSkillManifest` still rejects it without decoding, exactly as before this change
+
+
+### Requirement: Skill details preview state is isolated and follows the selected file
+
+On both the Catalog page and the conversation route's "View details" panel, selecting a supporting file SHALL render its preview inside the details Content tab. Opening, updating, failing, or disposing that preview SHALL NOT open, close, or replace the page's global attachment canvas or invoke the page-level panel-coordination callback.
+
+Each selected opaque file id SHALL own its loading, content, error, and canvas state. Changing the selection SHALL immediately discard the previous file's displayed content; neither a pending download nor a pending content-resolution result from an older selection SHALL replace the current preview. Files with identical basenames in different folders SHALL remain distinct.
+
+Closing the details panel SHALL remove the inline preview. Pending work from that preview SHALL NOT reopen the details panel or the global attachment canvas.
+
+#### Scenario: Preview stays inside skill details
+
+- **WHEN** a user picks a supporting file in skill details on the Catalog page or through conversation "View details"
+- **THEN** the file renders in the Content tab and the global attachment canvas and other page panels retain their existing state
+
+#### Scenario: Closing details while a preview is displayed or loading
+
+- **WHEN** the user clicks the details panel's close button while a supporting-file preview is displayed or still resolving
+- **THEN** the details panel and its inline preview close and remain closed when pending work completes
+- **AND** no global attachment canvas opens
+
+#### Scenario: Switching between files with the same basename
+
+- **WHEN** the user previews `agents/README.md` and then selects `assets/README.md`
+- **THEN** the first file's content disappears immediately and only the second file's content is shown when its load resolves
+
+#### Scenario: A superseded download or content resolution finishes last
+
+- **WHEN** the user selects file A, then file B, and A's download or attachment-content resolution completes after B is selected
+- **THEN** A's content and error state do not replace B's preview or affect the global attachment canvas
+
+#### Scenario: Download errors stay inline
+
+- **WHEN** a supporting-file download fails with a forbidden or generic error
+- **THEN** the corresponding existing attachment error state renders inside skill details without opening the global attachment canvas
 
 ---
 
@@ -385,3 +494,143 @@ The `DetailsPanel` component (today internal to `libs/catalog`, with only its `D
 - **WHEN** the export lands and the Catalog page renders skill details
 - **THEN** the page's details behavior is byte-identical to before the export
 
+### Requirement: The skill supporting-file preview supplies the host's PDF worker initializer
+
+`SkillFilePreview` SHALL pass the application-owned `configurePdfWorker` from
+`apps/chat/src/utils/pdf.ts` to `AttachmentCanvasBody`
+(`apps/chat/src/components/SkillFilePreview/SkillFilePreview.tsx`), so every skill PDF
+preview — Catalog skill details and Skill Builder alike — configures
+`pdfjs-dist`'s `GlobalWorkerOptions.workerSrc` from the app's own bundled
+worker asset before the viewer mounts, exactly as the page-level canvas in
+`apps/chat/src/app/app.tsx` already does.
+
+Without that prop, `PdfContent` initialises its preparation state to `Ready`
+and mounts `DocumentPreview` immediately, leaving
+`@epam/pdf-highlighter-kit`'s module-evaluation-time default in place:
+`https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs`. Skill PDF
+rendering then depends on outbound CDN access, or on the page-level chat
+canvas having already run the initializer in the same page session. That
+dependency is the defect this requirement removes.
+
+The initializer SHALL remain application-owned:
+`@epam/ai-dial-attachment-canvas` receives it only as an injected callback and
+SHALL NOT import, construct, or default it. `apps/chat/src/utils/pdf.ts` SHALL
+NOT change — both of its `pdfjs-dist` imports stay dynamic so the package
+stays out of the eager bundle, and its module-level promise memoisation plus
+`PdfContent`'s own module-level preparation promise together mean the
+initializer runs at most once per successful resolution across every canvas in
+the application.
+
+Because `configurePdfWorker` is a module-level binding, its identity is
+stable across renders and SHALL NOT cause `PdfContent`'s preparation effect to
+re-run. `PdfContent`'s existing gate — `DocumentPreview` mounts only once the
+preparation promise resolves — SHALL be relied upon unchanged; this
+requirement adds no awaiting logic of its own.
+
+#### Scenario: The inline skill preview forwards the app's initializer
+
+- **WHEN** `SkillFilePreview` renders
+- **THEN** the `configurePdfWorker` it passes to `AttachmentCanvasBody` is the app's `configurePdfWorker` from `apps/chat/src/utils/pdf.ts`
+
+#### Scenario: The viewer does not mount before the worker is configured
+
+- **WHEN** a PDF supporting file is previewed and the host's `configurePdfWorker` has not yet resolved
+- **THEN** `DocumentPreview` is not mounted, and it mounts only after that promise resolves
+
+#### Scenario: Rendering does not depend on a previously opened PDF
+
+- **WHEN** a PDF supporting file is previewed on a freshly loaded page, with no chat attachment canvas having been opened
+- **THEN** the worker is configured from the app's bundled asset and the vendor's CDN URL is not relied upon
+
+#### Scenario: Worker preparation failure stays distinguishable from a load failure
+
+- **WHEN** `configurePdfWorker` rejects
+- **THEN** `PdfContent` renders its own retryable preparation-error state, not the canvas load-error ("Failed to load file") state, and the next preview attempt invokes the initializer again
+
+#### Scenario: Non-PDF previews are unaffected
+
+- **WHEN** a Markdown, JSON, code, HTML, image, audio, visualizer, or unsupported supporting file is previewed
+- **THEN** the preview renders exactly as before, and `configurePdfWorker` is never invoked
+
+### Requirement: The skill details PDF preview path carries integration-level regression coverage
+
+The skill details PDF preview path SHALL carry regression coverage that reaches
+the real application-to-viewer boundary.
+
+The existing `SkillDetailsFilePreview` suite mocks
+`apps/chat/src/components/SkillFilePreview/SkillFilePreview` away, so no test
+reaches the real `AttachmentCanvasBody` from a skill surface and no test feeds
+the preview loader a body over `SKILL_MANIFEST_MAX_BYTES`. Neither defect this
+change fixes is observable through that suite.
+
+Coverage SHALL therefore include at least one test that renders
+`SkillDetailsFilePreview` with the **real** `SkillFilePreview`, using a valid,
+parseable minimal PDF fixture padded past `SKILL_MANIFEST_MAX_BYTES`, and
+asserts that the canvas resolves to PDF content backed by a `blob:` URL rather
+than the load-error state, and that the `configurePdfWorker` reaching
+`PdfContent` is the application's initializer and is awaited before the viewer
+mounts.
+
+Only `@epam/ai-dial-react-pdf-highlighter`'s `DocumentPreview` MAY be stubbed —
+it requires a real worker and a canvas, which jsdom does not provide. The suite
+SHALL NOT be described as proving that pdf.js rasterises the document; that
+remains a browser-verification step.
+
+#### Scenario: An over-cap PDF resolves to PDF content, not the load error
+
+- **WHEN** the preview loader resolves bytes for a valid PDF larger than `SKILL_MANIFEST_MAX_BYTES`
+- **THEN** the rendered canvas content is the PDF type with a `blob:` URL, and the text "Failed to load file" is absent
+
+#### Scenario: The integration test would fail if the worker wiring were dropped
+
+- **WHEN** `configurePdfWorker` is removed from `SkillFilePreview`
+- **THEN** at least one test in the suite fails
+
+#### Scenario: The fixture is a real PDF, not an opaque byte blob
+
+- **WHEN** the test fixture is constructed
+- **THEN** it is a structurally valid PDF (header, page object, `xref`, `%%EOF`) padded to exceed `SKILL_MANIFEST_MAX_BYTES`, so both the size path and a real parser's input contract are exercised
+
+### Requirement: Existing preview isolation, race, and accessibility behaviour is preserved
+
+This change SHALL NOT alter any of the following, and the implementation SHALL
+be held to them:
+
+- the `AttachmentCanvasProvider key={fileId}` isolation that keeps the inline
+  preview independent of the page's attachment panel;
+- `useSkillFilePreview`'s `cancelled`-flag guard, so a superseded or unmounted
+  load never replaces the current preview;
+- `SkillFilePreview`'s `isCurrent = attachmentId === path` staleness gate;
+- blob URL creation and cleanup ownership;
+- the `403` → forbidden classification, distinct from loading and from a
+  genuine load failure;
+- the inline preview's `role="group"` with an accessible name from the file
+  name, and the existing loading announcement;
+- the inline preview's behaviour at mobile and desktop widths, including that
+  it owns its internal scrolling.
+
+No new user-visible string is introduced, so there are no new i18n keys. RTL
+impact: none — no new layout, positioning, or directional icon. The surface is
+not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. No endpoint,
+DTO, generated-client method, cache entry, rate limit, or telemetry event
+changes.
+
+#### Scenario: Switching files shows only the latest selection
+
+- **WHEN** the user picks one supporting file and then another before the first download settles
+- **THEN** only the second file's preview is displayed, and the first file's late resolution is discarded
+
+#### Scenario: Reopening details shows the correct document
+
+- **WHEN** the user closes the details panel and reopens it for the same or a different skill, then picks a PDF
+- **THEN** the picked file's document is displayed, and no pending work from the closed preview reopens the panel or the global attachment canvas
+
+#### Scenario: A forbidden file stays distinguishable from a failure
+
+- **WHEN** `downloadSkillFile` responds `403` for a picked supporting file
+- **THEN** the forbidden state renders, not the load-error state
+
+#### Scenario: The inline preview fits mobile and desktop layouts
+
+- **WHEN** skill details are opened at a mobile width and at a desktop width and a PDF is picked
+- **THEN** the preview fits its container with no horizontal page overflow and scrolls internally

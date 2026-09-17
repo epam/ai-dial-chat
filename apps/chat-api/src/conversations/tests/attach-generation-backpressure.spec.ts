@@ -3,6 +3,7 @@ import type { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
@@ -59,7 +60,7 @@ const makeController = (): {
 } => {
   const generationService = new ConversationGenerationService({
     get: () => undefined,
-  } as unknown as ConfigService);
+  } as unknown as ConfigService<EnvironmentVariables>);
   const controller = new ConversationController(
     {} as unknown as ConversationService,
     generationService,

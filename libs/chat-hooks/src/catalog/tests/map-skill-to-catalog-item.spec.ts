@@ -12,6 +12,7 @@ import {
   buildSkillOverview,
   mapSkillToCatalogItem,
   readSkillFileBytes,
+  readSkillFilePreviewBytes,
   readSkillManifest,
   resolveSkillFileDownloadPath,
   resolveSkillManifestFileId,
@@ -299,6 +300,34 @@ describe('buildSkillOverview', () => {
       label: 'Author',
       value: 'ada',
     });
+  });
+
+  it('renders an always-present Updated row with an empty value when no timestamp resolved', () => {
+    const overview = buildSkillOverview(
+      makeSkill({ updatedAt: undefined }),
+      [],
+      undefined,
+      overviewLabels,
+    );
+
+    expect(
+      detailsOf(overview)?.specs.find((spec) => spec.label === 'Updated'),
+    ).toEqual({ label: 'Updated', value: '' });
+  });
+
+  it('renders the Updated row as a formatted calendar date when the metadata carries a timestamp', () => {
+    const overview = buildSkillOverview(
+      makeSkill({ updatedAt: 1752100000000 }),
+      [],
+      undefined,
+      overviewLabels,
+    );
+
+    const updated = detailsOf(overview)?.specs.find(
+      (spec) => spec.label === 'Updated',
+    )?.value;
+    expect(updated).toBeTruthy();
+    expect(updated).not.toBe('');
   });
 
   it('counts only files, excluding grouping folders', () => {
@@ -610,5 +639,29 @@ describe('readSkillManifest', () => {
     });
 
     expect(await readSkillManifest(response)).toBeNull();
+  });
+});
+
+describe('readSkillFilePreviewBytes', () => {
+  it('returns the response body as bytes when within the manifest cap', async () => {
+    const body = 'hello world';
+    const response = new Response(body, {
+      headers: { 'content-length': String(body.length) },
+    });
+
+    expect(
+      new TextDecoder().decode(await readSkillFilePreviewBytes(response)),
+    ).toBe(body);
+  });
+
+  it('reads an oversized body in full instead of returning null', async () => {
+    const oversized = 'a'.repeat(SKILL_MANIFEST_MAX_BYTES + 1);
+    const response = new Response(oversized, {
+      headers: { 'content-length': String(oversized.length) },
+    });
+
+    const bytes = await readSkillFilePreviewBytes(response);
+
+    expect(bytes.byteLength).toBe(SKILL_MANIFEST_MAX_BYTES + 1);
   });
 });

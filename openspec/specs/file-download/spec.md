@@ -11,7 +11,6 @@ The system SHALL expose `GET /api/v1/files/download` accepting `bucket` and `pat
 
 The handler SHALL forward an explicit allowlist of safe response headers from the DIAL Core response: `content-type`, `content-disposition`, `content-length`. All other headers SHALL be stripped. The endpoint SHALL not buffer the response body — it SHALL pipe the DIAL Core `fetch` response body stream directly to the NestJS `Response` object.
 
-- **Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })`.
 - **HTTP method**: `GET`
 - **Route**: `/api/v1/files/download` (query-param shape chosen over path params; see design.md Decision 3)
 - **operationId**: `downloadFile` → generated SDK method `filesApi.downloadFile(...)` / `filesApi.downloadFileRaw(...)`.

@@ -1,7 +1,11 @@
 import { Logger } from '@nestjs/common';
 import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { metrics } from '@opentelemetry/api';
-import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
+import {
+  DataPointType,
+  MeterProvider,
+  MetricReader,
+} from '@opentelemetry/sdk-metrics';
 import { of, throwError } from 'rxjs';
 import {
   afterAll,
@@ -67,6 +71,7 @@ describe('MetricsInterceptor', () => {
         .filter(
           (metric) => metric.descriptor.name === 'http.server.request.duration',
         )
+        .filter((metric) => metric.dataPointType === DataPointType.HISTOGRAM)
         .flatMap((metric) => metric.dataPoints),
     );
     return dataPoints.find(

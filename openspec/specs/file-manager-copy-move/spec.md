@@ -14,8 +14,6 @@ The BFF SHALL expose `POST /api/v1/files/copy` that accepts a batch of file/fold
 
 **Authorization**: session cookie → `req.user.at` (bearer token forwarded to DIAL Core), identical to `/rename` and `/delete`. No additional role is required beyond an authenticated session with WRITE permission on the destination (enforced by DIAL Core, surfaced as a per-item `"Forbidden"` result).
 
-**Rate limit**: `@Throttle({ default: { limit: 10, ttl: 60000 } })` — 10 requests/minute per user, same as `/rename` and `/delete`.
-
 **Caching**: this endpoint does not read from or write to the NestJS in-memory cache. Frontend-side folder-listing caches (per-`useDialFileManager` instance, not shared/global) are invalidated by the hook on completion — see `file-manager-copy-move` frontend requirements below.
 
 #### Request DTO
@@ -61,12 +59,10 @@ Folder = 'folder'
 ```typescript
 @Post('copy')
 @HttpCode(200)
-@Throttle({ default: { limit: 10, ttl: 60000 } })
 @ApiOperation({ summary: 'Copy files and folders' })
 @ApiResponse({ status: 200, type: CopyFilesResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid request body' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
-@ApiResponse({ status: 429, description: 'Rate limit exceeded' })
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable or timed out' })
 async copyFiles(
@@ -199,7 +195,7 @@ When `nodeType === "folder"`, the BFF SHALL recursively list all files under the
 
 The BFF SHALL expose `POST /api/v1/files/move`, distinct from `POST /api/v1/files/rename`, that accepts a batch of file/folder items and relocates each across folders via DIAL Core `moveResource`, returning a per-item result array. `/move` and `/rename` share the same underlying DIAL Core operation (`moveResource`) but are separate endpoints so the existing `/rename` contract (same-folder inline rename) is not altered by this change. `FilesBatchOperationsService` owns this logic (same ownership and shared dispatch helper as copy/delete/rename above).
 
-**Authorization**, **rate limit** (`@Throttle({ default: { limit: 10, ttl: 60000 } })`), and **caching** posture are identical to `/copy` above.
+**Authorization** and **caching** posture are identical to `/copy` above.
 
 #### Request/Response DTOs
 
@@ -210,12 +206,10 @@ The BFF SHALL expose `POST /api/v1/files/move`, distinct from `POST /api/v1/file
 ```typescript
 @Post('move')
 @HttpCode(200)
-@Throttle({ default: { limit: 10, ttl: 60000 } })
 @ApiOperation({ summary: 'Move files and folders across folders' })
 @ApiResponse({ status: 200, type: MoveFilesResponseDto })
 @ApiResponse({ status: 400, description: 'Invalid request body' })
 @ApiResponse({ status: 401, description: 'Not authenticated' })
-@ApiResponse({ status: 429, description: 'Rate limit exceeded' })
 @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
 @ApiResponse({ status: 503, description: 'DIAL Core unreachable or timed out' })
 async moveFiles(
