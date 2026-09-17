@@ -193,7 +193,10 @@ export const Input: FC<InputProps> = ({
     messageRevision,
   });
 
-  useTextInsertion({ insertion: textInsertion, textareaRef });
+  const { handleUndoKeyDown } = useTextInsertion({
+    insertion: textInsertion,
+    textareaRef,
+  });
 
   const { isMenuOpen, query, dismiss, handleValueChange } = useCommandMenu({
     config: commandMenu,
@@ -484,6 +487,9 @@ export const Input: FC<InputProps> = ({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (isVoiceActive) return;
+    /* Serves the undo owed by an insertion the browser could not put on its own
+       undo stack; a no-op whenever the browser can undo the edit itself. */
+    if (handleUndoKeyDown(e)) return;
     if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         const cursorPos = e.currentTarget.selectionStart ?? 0;

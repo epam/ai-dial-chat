@@ -172,7 +172,11 @@ upcoming theming feature — which is why `useThemeOptions` and the
 `settings.theme*` i18n keys exist with no live caller. The "Default agent for
 new chats" row renders only while `DEFAULT_DEPLOYMENT_PINNED` is on, since the
 pin is what gives its "Default agent" option something to refer to; in a default
-deployment (flag off) only the keyboard-shortcut row is visible. The language row renders
+deployment (flag off) only the keyboard-shortcut row is visible. All three of
+the row's choices — a named agent, "Default agent", "Last used agent" — outrank
+the pin in `resolveInitialSelection`; only an **unstored** preference still
+yields to it, which is why the row shows "Default agent" until the user picks
+something. The language row renders
 only once more than one locale is registered, which is not the case in a default
 build.
 
@@ -695,7 +699,7 @@ The intended direction, enforced in review:
 | 16  | Embedding: iframe + `postMessage` via `@epam/ai-dial-chat-overlay`                                               | ✅ Accepted                                                                                                                                                                                                                                                                                                                                                           |
 | 17  | Module boundaries enforced by lint tags                                                                          | ❓ Open — wildcard constraint today                                                                                                                                                                                                                                                                                                                                   |
 | 18  | User preferences persist in `localStorage`, not the server user-config file                                      | ✅ Accepted — theme, language, keyboard shortcut and "Default agent for new chats" are all per-browser; they do not follow the user across devices                                                                                                                                                                                                                    |
-| 19  | `DEFAULT_DEPLOYMENT_PINNED` both **offers** the "Default agent for new chats" control and is **outranked** by it | ✅ Accepted — the row renders only while an agent is pinned (the pin is what makes its "Default agent" option mean anything), and an explicitly chosen agent then beats the pin. The pin still beats the _implicit_ last-used preference, which is what its description refers to. Both halves live in `resolveInitialSelection` + `PreferencesTab`'s visibility rule |
+| 19  | `DEFAULT_DEPLOYMENT_PINNED` both **offers** the "Default agent for new chats" control and is **outranked** by it | ✅ Accepted — the row renders only while an agent is pinned (the pin is what makes its "Default agent" option mean anything), and every choice stored through it then beats the pin, "Last used agent" included. The pin still beats the _implicit_ last-used selection — an unstored preference — which is what its description refers to. Both halves live in `resolveInitialSelection` + `PreferencesTab`'s visibility rule |
 
 ---
 
