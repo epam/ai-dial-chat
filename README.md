@@ -481,6 +481,7 @@ the backend's OpenAPI document, and apps consume it through
 - [Technical Requirements](docs/technical-requirements.md) - Product and technical requirements
 - [Chat App Documentation](apps/chat/README.md) - Frontend details
 - [Chat API Documentation](apps/chat-api/README.md) - Backend details
+- [Observability](docs/observability.md) - OpenTelemetry configuration, metric contracts, and importable Grafana dashboard examples
 - [Chat Overlay Sandbox](apps/chat-overlay-sandbox/README.md) - Host page for exercising the overlay API
 - [Theme Customization](docs/theme-customization.md) - Configuring a theme and porting one from the legacy chat
 - [Responses API Integration](docs/responses-api-integration.md) - How the app consumes the DIAL Responses API
