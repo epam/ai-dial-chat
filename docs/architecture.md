@@ -318,10 +318,11 @@ Configured at startup:
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)
   — off by default (`OTEL_SDK_DISABLED=true`); when enabled, adds a `traceparent` response header
   on traced routes and an optional dedicated Prometheus scrape listener (default `:9464/metrics`,
-  independent of the main application port). Metrics include process memory, outstanding SSE
-  operations, and generation registry size, collected in the serving process; see
-  [backend observability](../apps/chat-api/README.md#observability) and
-  [runtime memory diagnostics](../apps/chat-api/README.md#runtime-memory-diagnostics).
+  independent of the main application port). Metrics cover HTTP transport outcomes, Nest handler
+  observations, generation relays, and process-local memory/SSE/registry gauges. HTTP lifecycle
+  observation uses a raw server request listener; it does not guarantee timing before all
+  synchronous Express work. See [Observability](observability.md) for signal boundaries,
+  configuration, and Grafana dashboard examples.
 
 NestJS conventions (domain structure, thin controllers, Swagger decorators, Logger, ConfigService, DTO validation) are defined in `apps/chat-api/AGENTS.md` — read it before implementing anything in `apps/chat-api/**`.
 
@@ -705,6 +706,7 @@ The intended direction, enforced in review:
 - [Theme Customization](theme-customization.md) — theme configuration, tokens, and legacy theme migration
 - [Technical Requirements](technical-requirements.md)
 - [Responses API Integration](responses-api-integration.md)
+- [Observability](observability.md) — telemetry configuration, metric contracts, and Grafana dashboard examples
 - [Host Install Matrix](host-install-matrix.md) — what an embedding host installs per set of libs
 - [Chat API environment variables](../apps/chat-api/README.md#environment-variables) — the full variable reference
 - [Auth subsystem](./auth/)
