@@ -1,0 +1,1295 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Application Prometheus",
+      "description": "Choose the source containing dial_chat_generations_active and custom HTTP/generation metrics (e.g. prometheus-app).",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "id": null,
+  "uid": null,
+  "title": "DIAL BFF - Auth and Sessions",
+  "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. These counters measure the BFF's own decisions, not users or sessions: the BFF is stateless and has no server-side active-session count. One browser session produces many authorization decisions. Login starts count issued redirects, not successful sign-ins, and the time a user spends on the identity provider is outside every duration here. Only login, callback, and refresh carry a provider attribute; the Identity provider filter does not apply to the authorization and logout panels. Public routes make no authorization decision and are not counted.",
+  "tags": ["dial-chat", "bff", "observability"],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "style": "dark",
+  "timezone": "utc",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "30s",
+  "timepicker": {
+    "refresh_intervals": ["30s", "1m", "5m"]
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "${DS_PROMETHEUS}",
+          "value": "${DS_PROMETHEUS}"
+        }
+      },
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\"}, cluster)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\"}, cluster)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\"}, namespace)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\"}, namespace)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "job",
+        "label": "Scrape job",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\"}, job)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\"}, job)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "pod",
+        "label": "Pod",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\"}, pod)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\"}, pod)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "auth_provider",
+        "label": "Identity provider",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_auth_login_started_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}, dial_chat_auth_provider)",
+        "query": {
+          "query": "label_values(dial_chat_auth_login_started_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}, dial_chat_auth_provider)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Scope and interpretation",
+      "type": "text",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. These counters measure the BFF's own decisions, not users or sessions: the BFF is stateless and has no server-side active-session count. One browser session produces many authorization decisions. Login starts count issued redirects, not successful sign-ins, and the time a user spends on the identity provider is outside every duration here. Only login, callback, and refresh carry a provider attribute; the Identity provider filter does not apply to the authorization and logout panels. Public routes make no authorization decision and are not counted."
+      }
+    },
+    {
+      "title": "Login redirects / second by provider",
+      "description": "Redirects the BFF issued to an identity provider. Not successful sign-ins: the user may abandon the IdP page, and one person can start several. A request for an unconfigured provider is a 404 and is not counted here.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (dial_chat_auth_provider)(rate(dial_chat_auth_login_started_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval]))",
+          "legendFormat": "{{dial_chat_auth_provider}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 2
+    },
+    {
+      "title": "Callback outcomes / second",
+      "description": "Terminal outcome of callbacks the BFF processed. validation_rejected is a refused callback (IdP error, missing or mismatched state, expired transaction cookie, unknown provider); exchange_failed is a failed code exchange with the IdP; internal_error is a BFF-side fault. Keep them apart: an IdP outage and a wave of stale callback links look nothing alike.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (dial_chat_auth_outcome)(rate(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval]))",
+          "legendFormat": "{{dial_chat_auth_outcome}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 3
+    },
+    {
+      "title": "Callback success fraction (of processed callbacks)",
+      "description": "Denominator is callbacks that reached this BFF, not login starts. A user who never returned from the IdP is absent from both sides. No callbacks gives no value.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "max": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "((sum(rate(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\"}[$__rate_interval]))) or (0 * (sum(rate(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval]))))) / (sum(rate(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval])) > 0)",
+          "legendFormat": "Success among processed callbacks",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 4
+    },
+    {
+      "title": "Callback processing latency - mean, p50, p95",
+      "description": "Successful callbacks only, so failed exchanges cannot distort it. Covers the BFF's own work: code exchange, optional userinfo lookup, bucket fetch, session encryption. Excludes the user's time on the IdP. Quantiles aggregate buckets and are hidden above the last finite 60s bucket.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(sum(rate(dial_chat_auth_callback_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\"}[$__rate_interval]))) / (sum(rate(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\"}[$__rate_interval])) > 0)",
+          "legendFormat": "mean",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "(histogram_quantile(0.50, sum by (le) (rate(dial_chat_auth_callback_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\"}[$__rate_interval])))) and ((sum(rate(dial_chat_auth_callback_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\",le=~\"60([.]0+)?\"}[$__rate_interval]))) / (sum(rate(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\"}[$__rate_interval])) > 0) >= 0.50)",
+          "legendFormat": "p50",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "C",
+          "editorMode": "code",
+          "expr": "(histogram_quantile(0.95, sum by (le) (rate(dial_chat_auth_callback_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\"}[$__rate_interval])))) and ((sum(rate(dial_chat_auth_callback_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\",le=~\"60([.]0+)?\"}[$__rate_interval]))) / (sum(rate(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"success\"}[$__rate_interval])) > 0) >= 0.95)",
+          "legendFormat": "p95",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 5
+    },
+    {
+      "title": "Callbacks per login start (approximate funnel)",
+      "description": "Approximate only. The two events are minutes apart and can land in different windows or on different pods; extra tabs, retried callbacks, and abandoned logins all move this ratio. Do not read it as a login success rate.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 23
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(sum by (dial_chat_auth_provider)(rate(dial_chat_auth_callback_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval]))) / (sum by (dial_chat_auth_provider)(rate(dial_chat_auth_login_started_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval])) > 0)",
+          "legendFormat": "{{dial_chat_auth_provider}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 6
+    },
+    {
+      "title": "Refresh exchanges / second by outcome",
+      "description": "Real token exchanges only. race_absorbed is a lost refresh-token rotation race with a still-valid access token: the session survived, so it is neither a success nor a logout. invalid_grant is an unrecoverable session; upstream_error is any other exchange failure.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (dial_chat_auth_outcome)(rate(dial_chat_auth_refresh_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval]))",
+          "legendFormat": "{{dial_chat_auth_outcome}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 7
+    },
+    {
+      "title": "Refresh exchange latency - mean, p95",
+      "description": "Refreshed exchanges only. This latency sits inside the request that triggered the refresh, so it is part of that request's HTTP duration. Failures are excluded to keep fast rejections from flattering it.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(sum(rate(dial_chat_auth_refresh_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"refreshed\"}[$__rate_interval]))) / (sum(rate(dial_chat_auth_refresh_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"refreshed\"}[$__rate_interval])) > 0)",
+          "legendFormat": "mean",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "(histogram_quantile(0.95, sum by (le) (rate(dial_chat_auth_refresh_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"refreshed\"}[$__rate_interval])))) and ((sum(rate(dial_chat_auth_refresh_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"refreshed\",le=~\"60([.]0+)?\"}[$__rate_interval]))) / (sum(rate(dial_chat_auth_refresh_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\",dial_chat_auth_outcome=\"refreshed\"}[$__rate_interval])) > 0) >= 0.95)",
+          "legendFormat": "p95",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 8
+    },
+    {
+      "title": "Coalesced refresh callers / second",
+      "description": "Callers that joined a refresh already running for the same session on the same pod. The mutex is per pod, so concurrent requests on different replicas each perform their own exchange and appear as exchanges, not coalesced callers.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (dial_chat_auth_provider)(rate(dial_chat_auth_refresh_coalesced_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval]))",
+          "legendFormat": "{{dial_chat_auth_provider}} joined in flight",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "sum by (dial_chat_auth_provider)(rate(dial_chat_auth_refresh_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_provider=~\"$auth_provider\"}[$__rate_interval]))",
+          "legendFormat": "{{dial_chat_auth_provider}} exchanges performed",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 9
+    },
+    {
+      "title": "Authorization decisions / second by source and outcome",
+      "description": "One decision per guarded request, by credential source. Not a count of users or sessions: one session drives many decisions. Public routes are not counted. Source none means no strategy claimed the request.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 41
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (dial_chat_auth_source, dial_chat_auth_outcome)(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval]))",
+          "legendFormat": "{{dial_chat_auth_source}} / {{dial_chat_auth_outcome}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10
+    },
+    {
+      "title": "Authorization rejection fraction by source",
+      "description": "Per-source rejection share. Expected rejections exist in normal operation: an expired cookie on a returning tab, or an unauthenticated first request. A change in the mix matters more than the level.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 41
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "max": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "((sum(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_source=\"cookie\",dial_chat_auth_outcome=\"rejected\"}[$__rate_interval]))) or (0 * (sum(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_source=\"cookie\"}[$__rate_interval]))))) / (sum(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_source=\"cookie\"}[$__rate_interval])) > 0)",
+          "legendFormat": "Cookie rejections",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "((sum(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_source=\"header\",dial_chat_auth_outcome=\"rejected\"}[$__rate_interval]))) or (0 * (sum(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_source=\"header\"}[$__rate_interval]))))) / (sum(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_source=\"header\"}[$__rate_interval])) > 0)",
+          "legendFormat": "Header rejections",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 11
+    },
+    {
+      "title": "Authorization rejection reasons / second",
+      "description": "Bounded reasons derived from the codes the strategies already return. bucket_unavailable is the exception: the credential was valid and DIAL Core failed, so it is an upstream problem, not a rejected caller. Top ten at each timestamp.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (dial_chat_auth_source, dial_chat_auth_reason)(rate(dial_chat_auth_authorization_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_outcome=\"rejected\"}[$__rate_interval])))",
+          "legendFormat": "{{dial_chat_auth_source}} / {{dial_chat_auth_reason}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 12
+    },
+    {
+      "title": "Logout operations / second",
+      "description": "What the BFF did locally, paired with its separate best-effort revocation. cookie_cleared does not confirm a federated logout at the identity provider; header_noop had no session to clear; origin_rejected was refused by the CSRF origin check and never reached revocation.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (dial_chat_auth_result, dial_chat_auth_revocation)(rate(dial_chat_auth_logout_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval]))",
+          "legendFormat": "{{dial_chat_auth_result}} / {{dial_chat_auth_revocation}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 13
+    },
+    {
+      "title": "Revocation failure fraction (of attempted revocations)",
+      "description": "Denominator excludes not_attempted, which is the common case: no revocation endpoint advertised, no refresh token stored, or an unreadable cookie. Revocation is best effort and never fails the logout, so this tracks IdP reachability, not user impact.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 59
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "max": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "((sum(rate(dial_chat_auth_logout_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_revocation!=\"not_attempted\",dial_chat_auth_revocation=\"failed\"}[$__rate_interval]))) or (0 * (sum(rate(dial_chat_auth_logout_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_revocation!=\"not_attempted\"}[$__rate_interval]))))) / (sum(rate(dial_chat_auth_logout_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_auth_revocation!=\"not_attempted\"}[$__rate_interval])) > 0)",
+          "legendFormat": "Failed among attempted revocations",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 14
+    }
+  ]
+}

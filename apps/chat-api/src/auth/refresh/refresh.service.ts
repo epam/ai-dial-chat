@@ -1,4 +1,13 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  AUTH_OUTCOME_ATTRIBUTE,
+  AUTH_PROVIDER_ATTRIBUTE,
+  AuthRefreshOutcome,
+  authRefreshCoalesced,
+  authRefreshDuration,
+  elapsedSeconds,
+  resolveAuthProvider,
+} from '../auth-metrics';
 import { ProviderRegistryService } from '../providers/provider-registry.service';
 import type { SessionPayload } from '../session/session.types';
 
@@ -13,6 +22,15 @@ export class RefreshService {
   refresh(payload: SessionPayload): Promise<SessionPayload> {
     const existing = this.inFlight.get(payload.sid);
     if (existing) {
+      /*
+       * This caller performs no token exchange of its own, so it contributes no duration
+       * observation — counting it here keeps `authRefreshDuration`'s count equal to the
+       * number of exchanges actually made against the identity provider, while the work
+       * the mutex saved stays visible.
+       */
+      authRefreshCoalesced.add(1, {
+        [AUTH_PROVIDER_ATTRIBUTE]: resolveAuthProvider(payload.providerId),
+      });
       return existing;
     }
 
@@ -25,7 +43,26 @@ export class RefreshService {
   }
 
   private async doRefresh(payload: SessionPayload): Promise<SessionPayload> {
-    const { client } = this.registry.getProvider(payload.providerId);
+    const startedAt = process.hrtime.bigint();
+    /*
+     * One terminal observation per real exchange. `record` is called on every exit path,
+     * including the two failure branches, so an identity-provider outage and a genuinely
+     * dead session stay distinguishable instead of both reading as "refresh missing".
+     */
+    const record = (outcome: AuthRefreshOutcome): void => {
+      authRefreshDuration.record(elapsedSeconds(startedAt), {
+        [AUTH_PROVIDER_ATTRIBUTE]: resolveAuthProvider(payload.providerId),
+        [AUTH_OUTCOME_ATTRIBUTE]: outcome,
+      });
+    };
+
+    let client: ReturnType<ProviderRegistryService['getProvider']>['client'];
+    try {
+      ({ client } = this.registry.getProvider(payload.providerId));
+    } catch (err) {
+      record(AuthRefreshOutcome.UpstreamError);
+      throw err;
+    }
 
     let tokenSet: Awaited<ReturnType<typeof client.refresh>>;
     try {
@@ -48,19 +85,24 @@ export class RefreshService {
           this.logger.log(
             `Absorbed a lost refresh-token race for sid ${payload.sid}; access token is still valid`,
           );
+          record(AuthRefreshOutcome.RaceAbsorbed);
           return payload;
         }
+        record(AuthRefreshOutcome.InvalidGrant);
         throw new UnauthorizedException('Refresh token expired or revoked');
       }
       this.logger.error(
         'Token refresh failed',
         err instanceof Error ? err.stack : String(err),
       );
+      record(AuthRefreshOutcome.UpstreamError);
       throw new UnauthorizedException('Token refresh failed');
     }
 
     const now = Math.floor(Date.now() / 1000);
     const newRt = tokenSet.refresh_token;
+
+    record(AuthRefreshOutcome.Refreshed);
 
     return {
       ...payload,

@@ -768,8 +768,12 @@ processors, no additional listening port, and no outbound network calls for tele
   It runs after guards and does not represent every incoming request or the full downstream
   response lifetime. Separate HTTP lifecycle instruments record observed arrivals, in-flight
   requests, and terminal transport outcomes. Generation instruments cover upstream relay
-  outcomes and timing. Runtime gauges report the serving Node.js process's memory, outstanding
-  SSE operations, and generation registry size. See the
+  outcomes and timing. Auth instruments cover login redirects issued, OIDC callback processing,
+  real refresh-token exchanges and the callers that coalesced onto them, `SessionGuard`
+  authorization decisions with bounded rejection reasons, and logout results — none of them is
+  an active-session count, since the BFF holds no session state. Runtime gauges report the
+  serving Node.js process's memory, outstanding SSE operations, and generation registry size.
+  See the
   [metric contracts](../../docs/observability.md#metric-contracts) and
   [Runtime memory diagnostics](#runtime-memory-diagnostics).
 - **Prometheus endpoint**: when the `prometheus` metrics exporter is selected, a dedicated,

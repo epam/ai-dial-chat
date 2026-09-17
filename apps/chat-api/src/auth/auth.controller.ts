@@ -30,6 +30,21 @@ import {
   ProviderInfoDto,
   UserProfileDto,
 } from '../openapi/openapi-response.dto';
+import {
+  AUTH_OUTCOME_ATTRIBUTE,
+  AUTH_PROVIDER_ATTRIBUTE,
+  AUTH_RESULT_ATTRIBUTE,
+  AUTH_REVOCATION_ATTRIBUTE,
+  AuthCallbackOutcome,
+  AuthLogoutResult,
+  AuthLogoutRevocation,
+  authCallbackDuration,
+  authLoginStarted,
+  authLogout,
+  classifyCallbackFailure,
+  elapsedSeconds,
+  resolveAuthProvider,
+} from './auth-metrics';
 import { AuthSource } from './auth-source.enum';
 import { BucketService } from './bucket/bucket.service';
 import {
@@ -181,6 +196,15 @@ export class AuthController {
       ...getCookieOptions(this.config),
       maxAge: 600 * 1000,
     });
+    /*
+     * Counted only once the redirect is actually issued, so this is "the BFF started a
+     * login" and not "someone requested the login route". A request for an unconfigured
+     * provider throws out of `getProvider` above and is visible in the HTTP metrics as a
+     * 404 instead of inflating this counter.
+     */
+    authLoginStarted.add(1, {
+      [AUTH_PROVIDER_ATTRIBUTE]: resolveAuthProvider(params.providerId),
+    });
     res.redirect(authUrl);
   }
 
@@ -204,6 +228,33 @@ export class AuthController {
     @Query() query: AuthCallbackQueryDto,
     @Req() req: Request,
     @Res() res: Response,
+  ): Promise<void> {
+    const startedAt = process.hrtime.bigint();
+    const provider = resolveAuthProvider(params.providerId);
+    let outcome = AuthCallbackOutcome.Success;
+    try {
+      await this.processCallback(params, query, req, res);
+    } catch (err) {
+      outcome = classifyCallbackFailure(err);
+      throw err;
+    } finally {
+      authCallbackDuration.record(elapsedSeconds(startedAt), {
+        [AUTH_PROVIDER_ATTRIBUTE]: provider,
+        [AUTH_OUTCOME_ATTRIBUTE]: outcome,
+      });
+    }
+  }
+
+  /*
+   * The measured body of `callback()`. Kept as a separate method so the one terminal
+   * duration observation is recorded on every exit path — including the exceptions the
+   * validation steps throw — without threading a timer through the flow.
+   */
+  private async processCallback(
+    params: ProviderIdParamDto,
+    query: AuthCallbackQueryDto,
+    req: Request,
+    res: Response,
   ): Promise<void> {
     this.logger.debug(`callback() start providerId=${params.providerId}`);
     if (query.error) {
@@ -458,6 +509,10 @@ export class AuthController {
      * cookie/redirect flow below, which assumes a browser caller.
      */
     if (req.headers['authorization']) {
+      authLogout.add(1, {
+        [AUTH_RESULT_ATTRIBUTE]: AuthLogoutResult.HeaderNoop,
+        [AUTH_REVOCATION_ATTRIBUTE]: AuthLogoutRevocation.NotAttempted,
+      });
       res.status(200).send();
       return;
     }
@@ -474,6 +529,10 @@ export class AuthController {
       this.logger.debug(
         `logout() blocked: origin check failed candidate=${candidate ?? 'none'}`,
       );
+      authLogout.add(1, {
+        [AUTH_RESULT_ATTRIBUTE]: AuthLogoutResult.OriginRejected,
+        [AUTH_REVOCATION_ATTRIBUTE]: AuthLogoutRevocation.NotAttempted,
+      });
       throw new ForbiddenException('Origin check failed');
     }
 
@@ -491,49 +550,65 @@ export class AuthController {
     );
 
     let endSessionUrl: string | undefined;
+    /*
+     * The cookie is already cleared at this point, so the local result is settled; only
+     * the best-effort revocation outcome is still open. Recorded in `finally` so an
+     * unexpected failure below (an unconfigured provider on a still-valid cookie, say)
+     * cannot leave this logout uncounted.
+     */
+    let revocation = AuthLogoutRevocation.NotAttempted;
 
-    if (sessionToken) {
-      let payload: SessionPayload | undefined;
-      try {
-        payload = await this.session.decrypt(sessionToken);
-      } catch {
-        // Expired or tampered cookie — proceed to plain redirect.
-      }
+    try {
+      if (sessionToken) {
+        let payload: SessionPayload | undefined;
+        try {
+          payload = await this.session.decrypt(sessionToken);
+        } catch {
+          // Expired or tampered cookie — proceed to plain redirect.
+        }
 
-      if (payload) {
-        const { client, config: providerConfig } = this.registry.getProvider(
-          payload.providerId,
-        );
-
-        // Best-effort revocation — do not block logout on failure.
-        const revocationEndpoint =
-          client.issuer.metadata['revocation_endpoint'];
-        if (revocationEndpoint && payload.rt) {
-          this.logger.debug(
-            `logout() revoking token for sub=${payload.sub} providerId=${payload.providerId}`,
+        if (payload) {
+          const { client, config: providerConfig } = this.registry.getProvider(
+            payload.providerId,
           );
-          try {
-            await client.revoke(payload.rt);
-            this.logger.debug('logout() token revocation succeeded');
-          } catch (err) {
-            this.logger.warn('Token revocation failed (non-fatal)', err);
+
+          // Best-effort revocation — do not block logout on failure.
+          const revocationEndpoint =
+            client.issuer.metadata['revocation_endpoint'];
+          if (revocationEndpoint && payload.rt) {
+            this.logger.debug(
+              `logout() revoking token for sub=${payload.sub} providerId=${payload.providerId}`,
+            );
+            try {
+              await client.revoke(payload.rt);
+              revocation = AuthLogoutRevocation.Success;
+              this.logger.debug('logout() token revocation succeeded');
+            } catch (err) {
+              revocation = AuthLogoutRevocation.Failed;
+              this.logger.warn('Token revocation failed (non-fatal)', err);
+            }
+          }
+
+          const endSession = client.issuer.metadata['end_session_endpoint'];
+          if (endSession) {
+            endSessionUrl = client.endSessionUrl({
+              post_logout_redirect_uri: providerConfig.postLogoutRedirectUri,
+              ...(payload.it ? { id_token_hint: payload.it } : {}),
+            });
           }
         }
-
-        const endSession = client.issuer.metadata['end_session_endpoint'];
-        if (endSession) {
-          endSessionUrl = client.endSessionUrl({
-            post_logout_redirect_uri: providerConfig.postLogoutRedirectUri,
-            ...(payload.it ? { id_token_hint: payload.it } : {}),
-          });
-        }
       }
-    }
 
-    this.logger.debug(
-      `logout() done, redirecting to endSessionUrl=${endSessionUrl ?? '/'}`,
-    );
-    res.redirect(endSessionUrl ?? '/');
+      this.logger.debug(
+        `logout() done, redirecting to endSessionUrl=${endSessionUrl ?? '/'}`,
+      );
+      res.redirect(endSessionUrl ?? '/');
+    } finally {
+      authLogout.add(1, {
+        [AUTH_RESULT_ATTRIBUTE]: AuthLogoutResult.CookieCleared,
+        [AUTH_REVOCATION_ATTRIBUTE]: revocation,
+      });
+    }
   }
 
   @Get('me')

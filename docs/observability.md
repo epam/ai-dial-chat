@@ -67,6 +67,7 @@ integrations.
 | [02 — Conversation generations](examples/dashboards/02-bff-conversation-generations.json) | Recorded generation outcomes, upstream relay duration, and time to first visible text delta.                                                                                                                 |
 | [03 — Routing and streaming](examples/dashboards/03-bff-routing-streaming.json)           | Capability resolution, selected generation API, and unrecognized Responses stream events.                                                                                                                    |
 | [04 — Runtime diagnostics](examples/dashboards/04-runtime-diagnostics.json)               | Process memory, outstanding SSE operations, and retained generation registry entries, in three separate time-series panels.                                                                                  |
+| [05 — Auth and sessions](examples/dashboards/05-bff-auth-sessions.json)                   | Login redirects issued, OIDC callback outcomes and processing latency, refresh-token exchanges and coalesced callers, authorization decisions with bounded rejection reasons, and logout results.            |
 
 In Grafana, open **Dashboards → New → Import**, upload or paste a JSON file, select the
 Prometheus data source containing the backend metrics, and import it. Repeat for the examples
@@ -87,6 +88,7 @@ Configure the dashboard variables before interpreting the panels:
 | `http_route`, `http_method`          | HTTP filters where present. In dashboard 00, route applies to terminal measurements only: arrival and active instruments have no route label. Method values come from the arrival counter, independently of the route selection.                             |
 | `route`, `method`                    | Dashboard 01's filters for the legacy handler histogram; its method choices are scoped to the selected route.                                                                                                                                                |
 | `generation_api`                     | Generation API filter where present. Capability-resolution failures have no API label and are intentionally queried separately.                                                                                                                              |
+| `auth_provider`                      | Dashboard 05's identity-provider filter. Its values come from the login counter, so the list is empty until the first login redirect. Only the login, callback, and refresh instruments carry that attribute; the authorization and logout panels ignore it. |
 | `scrape_job`                         | Dashboard 00's explicit Prometheus job for scrape health. Replace `__configure_bff_scrape_job__` with the exact backend scrape job. The `up` query uses this value instead of the application-metric `job` selection, and ignores HTTP route/method filters. |
 | `tempo_datasource`, `trace_service`  | Optional Tempo data source and actual OpenTelemetry `service.name` for dashboard 00's trace link. The default service name is `@epam/chat-api`; use the deployment's `OTEL_SERVICE_NAME` override when configured.                                           |
 
@@ -242,6 +244,102 @@ by a sanitized event type, truncated to 64 characters, without event payloads. T
 does not impose a finite bound on the number of distinct event-type values. See the
 [Responses adapter](../apps/chat-api/src/conversations/generation/responses.adapter.ts) and
 [Responses integration](responses-api-integration.md).
+
+### Authorization and session decisions
+
+| OpenTelemetry instrument           | Prometheus family                                     | Type / unit                          | Application labels                                                         |
+| ---------------------------------- | ----------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------- |
+| `dial.chat.auth.login.started`     | `dial_chat_auth_login_started_total`                  | Counter / operations (`{operation}`) | `dial_chat_auth_provider`                                                  |
+| `dial.chat.auth.callback.duration` | `dial_chat_auth_callback_duration_{bucket,sum,count}` | Histogram / seconds (`s`)            | `dial_chat_auth_provider`, `dial_chat_auth_outcome`                        |
+| `dial.chat.auth.refresh.duration`  | `dial_chat_auth_refresh_duration_{bucket,sum,count}`  | Histogram / seconds (`s`)            | `dial_chat_auth_provider`, `dial_chat_auth_outcome`                        |
+| `dial.chat.auth.refresh.coalesced` | `dial_chat_auth_refresh_coalesced_total`              | Counter / requests (`{request}`)     | `dial_chat_auth_provider`                                                  |
+| `dial.chat.auth.authorization`     | `dial_chat_auth_authorization_total`                  | Counter / requests (`{request}`)     | `dial_chat_auth_source`, `dial_chat_auth_outcome`, `dial_chat_auth_reason` |
+| `dial.chat.auth.logout`            | `dial_chat_auth_logout_total`                         | Counter / operations (`{operation}`) | `dial_chat_auth_result`, `dial_chat_auth_revocation`                       |
+
+Instrument definitions, bounded label enums, and the failure classifiers live in
+[auth metrics](../apps/chat-api/src/auth/auth-metrics.ts). Recording happens in the
+[auth controller](../apps/chat-api/src/auth/auth.controller.ts) (login, callback, logout), the
+[refresh service](../apps/chat-api/src/auth/refresh/refresh.service.ts), and the
+[session guard](../apps/chat-api/src/auth/session/session.guard.ts).
+
+`dial_chat_auth_provider` is restricted to the provider ids this build can construct
+(`AuthProviderId`); any other value, including one supplied in a URL path, is recorded as
+`unknown`. No subject, session id, CSRF token, access or refresh token, redirect URL, or
+exception message is an auth metric label.
+
+The BFF holds no server-side session state, so none of these instruments is an active-session
+gauge and none of them counts users. One browser session produces many authorization decisions
+and, over its lifetime, several refresh exchanges.
+
+`dial_chat_auth_login_started_total` increments when the redirect to the identity provider is
+actually issued. It is not a count of successful sign-ins: the user may abandon the provider's
+pages, and one person can start several logins. A request for an unconfigured provider fails
+before the redirect and is visible only in the HTTP metrics, as a 404.
+
+The callback histogram measures the BFF's own callback processing — code exchange, the optional
+Keycloak userinfo lookup, the bucket fetch, session encryption, and the redirect. The time the
+user spent on the identity provider is outside it, because the BFF only observes the redirect
+back. Both histograms use explicit boundaries in seconds:
+
+```text
+0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 10, 30, 60
+```
+
+The largest finite boundary matches the transport histogram's, so the same `le=~"60([.]0+)?"`
+guard applies. That boundary contract is likewise stable under these names.
+
+| `dial_chat_auth_outcome` (callback) | Meaning                                                                                                                                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `success`                           | A session cookie was issued and the browser was redirected to the application.                                                                                                                           |
+| `validation_rejected`               | Refused before the code exchange: a provider-reported error, missing code or state, a missing/expired/unreadable transaction cookie, a state, provider, or issuer mismatch, or an unconfigured provider. |
+| `exchange_failed`                   | The authorization-code exchange with the identity provider failed.                                                                                                                                       |
+| `internal_error`                    | Any other failure after validation passed — a backend fault, not a rejected request.                                                                                                                     |
+
+Comparing callbacks with login starts is an approximate funnel only. The two events are minutes
+apart, can fall in different query windows or land on different replicas, and extra tabs,
+retried callbacks, and abandoned logins all move the ratio. It is not a login success rate.
+
+The refresh histogram observes **real token exchanges**, one observation each. A request that
+joined an exchange already in flight for the same session on the same pod is counted by
+`dial_chat_auth_refresh_coalesced_total` instead and contributes no duration, so the histogram's
+count stays equal to the number of exchanges actually performed. That mutex is per pod:
+concurrent requests on different replicas each perform their own exchange.
+
+| `dial_chat_auth_outcome` (refresh) | Meaning                                                                                                                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `refreshed`                        | The identity provider returned a new token set.                                                                                                                                       |
+| `race_absorbed`                    | `invalid_grant` arrived while the access token was still valid — a lost refresh-token rotation race, absorbed without forcing a logout. Neither a refresh success nor a session loss. |
+| `invalid_grant`                    | `invalid_grant` with an already-expired access token: the session cannot be recovered.                                                                                                |
+| `upstream_error`                   | Any other failure of the exchange, including an unresolvable provider.                                                                                                                |
+
+`dial_chat_auth_authorization_total` counts one `SessionGuard` decision per guarded request.
+Routes marked `@Public()` make no authorization decision and are deliberately not counted, so
+this counter is not a request counter. `dial_chat_auth_source` is the matching strategy's own
+credential source, `cookie` or `header`, or `none` when no strategy claimed the request.
+`OptionalSessionGuard` makes no counted decision.
+
+Rejection reasons are derived from the `AuthErrorCode` the strategies already return:
+`token_expired`, `token_invalid`, `untrusted_issuer`, `provider_not_found`, and `malformed` for
+header bearer tokens, `no_credentials` when nothing was supplied, and `session_invalid` for a
+session cookie that could not be decrypted or whose refresh failed unrecoverably.
+`bucket_unavailable` is different in kind: the credential was valid and DIAL Core was
+unreachable, so it is an upstream failure rather than a rejected caller. `internal_error` marks
+an unexpected strategy failure. Accepted decisions carry the reason `accepted`. Some rejections
+are expected in normal operation — an expired cookie on a returning tab, or an unauthenticated
+first request — so a change in the reason mix is more informative than the rejection level.
+
+`dial_chat_auth_logout_total` records what the BFF did locally and, separately, the outcome of
+its best-effort refresh-token revocation. `cookie_cleared` means the session cookie was cleared;
+it does not confirm a federated logout at the identity provider, which the redirect to the
+end-session endpoint cannot establish either. `header_noop` is a header-authenticated caller with
+no session to clear, and `origin_rejected` is a logout refused by the origin check. Revocation is
+`success`, `failed`, or `not_attempted` — the last covering no advertised revocation endpoint, no
+stored refresh token, an unreadable cookie, and every refused logout. A failed revocation never
+fails the logout, so it tracks provider reachability rather than user impact.
+
+Login, callback, refresh, and logout operations happen on routes that are `@Public()`, so their
+HTTP responses are counted by the transport instruments while their authorization counterpart
+does not exist. Do not reconcile the two families as one population.
 
 ### Process memory and outstanding work
 
