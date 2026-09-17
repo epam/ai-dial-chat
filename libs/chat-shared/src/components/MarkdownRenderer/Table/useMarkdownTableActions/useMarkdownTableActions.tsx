@@ -40,13 +40,15 @@ export const useMarkdownTableActions = ({
   onCopy,
   onDownloadCsv,
   onOpenInCanvas,
-}: UseMarkdownTableActionsParams): MarkdownTableHeaderAction[] =>
-  useMemo(() => {
-    if (actionLabels == null) return [];
+}: UseMarkdownTableActionsParams): MarkdownTableHeaderAction[] => {
+  const copyLabel = actionLabels?.copyLabel;
+  const downloadCsvLabel = actionLabels?.downloadCsvLabel;
+  const openInCanvasLabel = actionLabels?.openInCanvasLabel;
 
+  return useMemo(() => {
     const actions: MarkdownTableHeaderAction[] = [];
 
-    if (actionLabels.copyLabel != null) {
+    if (copyLabel != null) {
       const copyIcon = isCopied ? (
         <IconCheck
           className={styles.copiedIcon}
@@ -56,16 +58,12 @@ export const useMarkdownTableActions = ({
       ) : (
         <IconCopy size={DIAL_ICON_SIZE.SM} stroke={DIAL_KIT_ICON_STROKE} />
       );
-      actions.push({
-        label: actionLabels.copyLabel,
-        icon: copyIcon,
-        onClick: onCopy,
-      });
+      actions.push({ label: copyLabel, icon: copyIcon, onClick: onCopy });
     }
 
-    if (actionLabels.downloadCsvLabel != null) {
+    if (downloadCsvLabel != null) {
       actions.push({
-        label: actionLabels.downloadCsvLabel,
+        label: downloadCsvLabel,
         icon: (
           <IconDownload
             size={DIAL_ICON_SIZE.SM}
@@ -76,9 +74,9 @@ export const useMarkdownTableActions = ({
       });
     }
 
-    if (actionLabels.openInCanvasLabel != null && onOpenInCanvas != null) {
+    if (openInCanvasLabel != null && onOpenInCanvas != null) {
       actions.push({
-        label: actionLabels.openInCanvasLabel,
+        label: openInCanvasLabel,
         icon: (
           <IconLayoutSidebarRight
             size={DIAL_ICON_SIZE.SM}
@@ -90,4 +88,13 @@ export const useMarkdownTableActions = ({
     }
 
     return actions;
-  }, [actionLabels, isCopied, onCopy, onDownloadCsv, onOpenInCanvas]);
+  }, [
+    copyLabel,
+    downloadCsvLabel,
+    openInCanvasLabel,
+    isCopied,
+    onCopy,
+    onDownloadCsv,
+    onOpenInCanvas,
+  ]);
+};
