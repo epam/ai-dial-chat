@@ -2,6 +2,7 @@ import { StageStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { CONVERSATION_STAGES_CLASS } from '../../../constants/public-class-names';
 import { CollapsedGroup } from '../CollapsedGroup';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -193,5 +194,52 @@ describe('CollapsedGroup — labels', () => {
       />,
     );
     expect(screen.getByText(/Ran 2 stages/)).toBeTruthy();
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('conversation-stages — public class names', () => {
+  /*
+   * A lost public class fails silently: the build passes and a host's
+   * stylesheet simply stops applying, so each class is asserted here. The
+   * panel root carries no role, so the stage row is located by text first.
+   */
+  it('stamps the panel root behind a collapsed group', () => {
+    render(
+      <CollapsedGroup
+        stages={[completed(0, 'Step 1'), completed(1, 'Step 2')]}
+        isStreaming={false}
+      />,
+    );
+
+    expect(
+      closestWithClass(
+        screen.getByText('Step 1'),
+        CONVERSATION_STAGES_CLASS.panel,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('stamps the group root and its summary toggle', () => {
+    render(
+      <CollapsedGroup
+        stages={[completed(0, 'Step 1'), completed(1, 'Step 2')]}
+        isStreaming={false}
+      />,
+    );
+
+    const toggle = screen.getAllByRole('button')[0];
+    expect(toggle.classList).toContain(CONVERSATION_STAGES_CLASS.groupToggle);
+    expect(
+      closestWithClass(toggle, CONVERSATION_STAGES_CLASS.group),
+    ).toBeTruthy();
   });
 });

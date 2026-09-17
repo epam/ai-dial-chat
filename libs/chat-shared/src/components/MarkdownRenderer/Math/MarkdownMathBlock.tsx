@@ -1,4 +1,5 @@
 import { type FC, type ReactNode, memo } from 'react';
+import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { useHorizontalOverflow } from '../../../hooks/useHorizontalOverflow';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownMathBlock.module.scss';
@@ -37,6 +38,7 @@ export const MarkdownMathBlock: FC<MarkdownMathBlockProps> = memo(
            spurious vertical scrollbar once the horizontal one claims height; tall
            formulas grow the container instead, so pinning it clips nothing. */
         className={mergeClasses(
+          CHAT_SHARED_CLASS.mathBlock,
           'w-full min-w-0 max-w-full overflow-x-auto overflow-y-hidden',
           styles.scrollContainer,
           className,

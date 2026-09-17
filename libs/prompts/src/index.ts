@@ -11,3 +11,4 @@ export type {
   PromptParametersPopupLabels,
   PromptParametersPopupProps,
 } from './models/prompt-parameters-popup-props';
+export { PROMPTS_CLASS } from './constants/public-class-names';

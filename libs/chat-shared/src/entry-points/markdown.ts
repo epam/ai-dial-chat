@@ -13,3 +13,4 @@ export * from '../components/MarkdownRenderer/Table/MarkdownTable';
 export * from '../components/MarkdownWithPlaceholders/MarkdownWithPlaceholders';
 export * from '../hooks/useCodeCopy';
 export * from '../hooks/useCollapsedText';
+export { CHAT_SHARED_CLASS } from '../constants/public-class-names';

@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
 import { lazy, type FC, memo, type ReactNode, Suspense } from 'react';
+import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { useCodeCopy } from '../../../hooks/useCodeCopy';
 import { CodeBlockTheme } from '../../../types/code-editor';
 import { buildCssVars } from '../../../utils/build-css-vars';
@@ -128,6 +129,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
       <div
         style={cssVars}
         className={mergeClasses(
+          CHAT_SHARED_CLASS.codeBlock,
           'my-4 max-w-full rounded-xl border [overflow:clip]',
           styles.container,
           isLightTheme && styles.containerLight,
@@ -136,6 +138,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
       >
         <div
           className={mergeClasses(
+            CHAT_SHARED_CLASS.codeBlockHeader,
             'sticky top-0 z-10 flex min-h-10 items-center justify-between px-4',
             titleSlot != null ? 'py-0' : 'py-2',
             styles.header,

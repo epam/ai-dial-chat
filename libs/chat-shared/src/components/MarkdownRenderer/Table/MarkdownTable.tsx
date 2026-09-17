@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { useHorizontalOverflow } from '../../../hooks/useHorizontalOverflow';
 import { buildCssVars } from '../../../utils/build-css-vars';
 import { copyMarkdownAsRichText } from '../../../utils/copy-to-clipboard';
@@ -174,6 +175,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       <div
         style={cssVars}
         className={mergeClasses(
+          CHAT_SHARED_CLASS.table,
           'group/table relative w-full min-w-0 max-w-full rounded-xl border [overflow:clip]',
           styles.tableContainer,
           classNames.tableWrapper,
@@ -198,6 +200,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
         <div
           ref={scrollContainerRef}
           className={mergeClasses(
+            CHAT_SHARED_CLASS.tableScroll,
             'w-full min-w-0 max-w-full overflow-x-auto',
             styles.scrollContainer,
             classNames.tableScrollContainer,

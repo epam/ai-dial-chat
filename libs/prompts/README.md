@@ -118,3 +118,28 @@ import type {
   PromptParametersPopupProps,
 } from '@epam/ai-dial-prompts';
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key              | Class                          | Element                                                                 |
+| ---------------- | ------------------------------ | ----------------------------------------------------------------------- |
+| `favoritesPanel` | `dial-prompts-favorites-panel` | The `FavoritePromptsPanel` root, which carries the themed CSS variables |
+
+```tsx
+import { PROMPTS_CLASS } from '@epam/ai-dial-prompts';
+
+PROMPTS_CLASS.favoritesPanel; // 'dial-prompts-favorites-panel'
+```
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

@@ -16,6 +16,7 @@ import {
   IconChevronRight,
 } from '@tabler/icons-react';
 import { FC, useEffect, useRef, useState } from 'react';
+import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import type { CollapsedGroupProps } from '../../models/collapsed-group';
 import {
   calculateStagesDurationSeconds,
@@ -219,10 +220,17 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('flex w-full flex-col gap-1', className)}
+      className={mergeClasses(
+        CONVERSATION_STAGES_CLASS.group,
+        'flex w-full flex-col gap-1',
+        className,
+      )}
     >
       <LinkButton
-        className={styles.toggleButton}
+        className={mergeClasses(
+          CONVERSATION_STAGES_CLASS.groupToggle,
+          styles.toggleButton,
+        )}
         textClassName="min-w-0"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
