@@ -10,7 +10,7 @@ The previous application table exposed the desired CSV/TXT/Markdown copy and CSV
 
 - Restore useful table copy and CSV download behavior for assistant messages.
 - Preserve one semantic table and avoid manual split-table width synchronization.
-- Activate vertical scrolling and the existing sticky header.
+- Surface actions as a non-intrusive hover overlay that does not occupy permanent space.
 - Keep all host-owned localization outside `libs/chat-shared`.
 - Meet current accessibility, RTL, UI-kit, and icon-stroke conventions.
 
@@ -23,11 +23,11 @@ The previous application table exposed the desired CSV/TXT/Markdown copy and CSV
 
 ## Decisions
 
-### D1 — Keep one semantic table
+### D1 — Keep one semantic table, no vertical scroll bound
 
-Keep the existing single `<table>` and add a bounded vertical scroll container so the already-present sticky header operates normally. This preserves table semantics, removes the old two-table DOM and width/scroll synchronization, and avoids duplicating the header for assistive technology.
+Keep the existing single `<table>` with no vertical height bound — the table grows to its full natural height alongside the rest of the message. This preserves table semantics and avoids adding a nested scroll container that would conflict with the page scroll. The sticky-header cells remain present in the DOM but are inert when the page does not scroll past them.
 
-Alternative considered: port the old split header/body tables. That would require manual column-width measurement, `ResizeObserver`, scroll synchronization, and an aria-hidden duplicate table. It is more complex and less semantic.
+Alternative considered: add a bounded vertical scroll container so the sticky header activates. That would create an unwanted nested scroll area for tall tables, which harms keyboard and assistive-technology navigation.
 
 ### D2 — Enable actions by supplied labels, not globally
 
@@ -44,26 +44,24 @@ Proposed public shape:
 ```ts
 enum MarkdownTableCopyFormat {
   Csv = 'csv',
-  Txt = 'txt',
   Markdown = 'markdown',
 }
 
 interface MarkdownTableActionLabels {
-  copyCsvLabel: string;
-  copyTxtLabel: string;
-  copyMarkdownLabel: string;
+  copyLabel: string;
   copiedLabel: string;
   downloadCsvLabel: string;
+  openInCanvasLabel?: string;
 }
 ```
 
-`MarkdownTable` also accepts an optional `downloadFilename`, defaulting to `table.csv`. `AssistantMessageBubbleLabels` forwards `tableActionLabels`, `tableDownloadFilename`, and `tableScrollRegionAriaLabel` to `MDMessageViewer`.
+`MarkdownTable` also accepts an optional `downloadFilename`, defaulting to `table.csv`, and an optional `onOpenInCanvas(markdown: string)` callback. `AssistantMessageBubbleLabels` forwards `tableActionLabels`, `tableDownloadFilename`, and `tableScrollRegionAriaLabel` to `MDMessageViewer`.
 
 ### D4 — Serialize from the rendered table
 
 Use the existing table element reference to collect header and body rows, trim each cell's text content, and serialize the rows. This matches the old behavior and keeps a single source of truth: what the user sees is what is copied.
 
-CSV quotes non-empty values and doubles embedded quotes. TXT joins cells with tabs. Markdown emits a pipe table and a left-aligned separator. Rich inline formatting is intentionally flattened. Markdown column alignment is not preserved because the current renderer does not render source alignment into header cells.
+CSV quotes non-empty values and doubles embedded quotes. Markdown emits a pipe table and a left-aligned separator. TXT format was dropped — it was rarely useful and the UX was simplified to a single Copy action that writes `text/html` + `text/plain` to the clipboard. Rich inline formatting is intentionally flattened. Markdown column alignment is not preserved because the current renderer does not render source alignment into header cells.
 
 Alternative considered: serialize the original Markdown source. That would require threading source markdown through the component map and would copy content that may no longer match the rendered table after sanitization.
 
@@ -85,7 +83,7 @@ Use the 2.0 `GhostIconButton`, `Tooltip`, `DIAL_KIT_ICON_STROKE`, Tabler icons w
 
 ### D8 — Localization and operational scope
 
-The application adds `buttons.copyAsCsv`, `buttons.copyAsTxt`, and `buttons.downloadAsCsv`, and uses existing `buttons.copyAsMarkdown`, `buttons.copied`, plus `chat.scrollableTable`. There is no HTTP endpoint, generated-client impact, rate limit, cache, analytics event, or feature flag.
+The application uses existing `buttons.copy`, `buttons.copied`, and newly added `buttons.downloadAsCsv`, `buttons.openInCanvas`, `chat.scrollableTable`, and `chat.markdownTableTitle`. The old per-format keys `buttons.copyAsCsv` and `buttons.copyAsTxt` were removed. There is no HTTP endpoint, generated-client impact, rate limit, cache, analytics event, or feature flag.
 
 ### D9 — Keep the reusable header outside `chat-shared`
 

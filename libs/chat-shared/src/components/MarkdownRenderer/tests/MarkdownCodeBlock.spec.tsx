@@ -242,7 +242,7 @@ describe('MarkdownCodeBlock', () => {
     expect(block.className).toContain('my-4');
     expect(block.className).toContain('max-w-full');
     expect(header.className).toContain('min-h-10');
-    expect(header.className).not.toContain('sticky');
+    expect(header.className).toContain('sticky');
   });
 
   it('renders the code value', () => {
@@ -320,7 +320,7 @@ describe('MarkdownCodeBlock', () => {
     );
 
     // eslint-disable-next-line testing-library/no-node-access -- header has no accessible role; padding-class check only
-    const header = document.querySelector('.border-b') as HTMLElement;
+    const header = document.querySelector('.sticky') as HTMLElement;
     expect(header.className).toContain('py-0');
     expect(header.className).not.toContain('py-2');
   });
@@ -329,7 +329,7 @@ describe('MarkdownCodeBlock', () => {
     render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
     // eslint-disable-next-line testing-library/no-node-access -- header has no accessible role; padding-class check only
-    const header = document.querySelector('.border-b') as HTMLElement;
+    const header = document.querySelector('.sticky') as HTMLElement;
     expect(header.className).toContain('py-2');
   });
 

@@ -25,9 +25,7 @@ const EMPTY_TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |`;
 
 const TABLE_ACTION_LABELS = {
-  copyCsvLabel: 'Copy as CSV',
-  copyTxtLabel: 'Copy as TXT',
-  copyMarkdownLabel: 'Copy as Markdown',
+  copyLabel: 'Copy',
   copiedLabel: 'Copied!',
   downloadCsvLabel: 'Download as CSV',
 };
@@ -94,7 +92,7 @@ describe('MarkdownRenderer', () => {
     expect(table.className).toContain('min-w-full');
     expect(tableWrapper?.className).toContain('max-w-full');
     expect(tableWrapper?.className).toContain('min-w-0');
-    expect(tableWrapper?.className).toContain('overflow-hidden');
+    expect(tableWrapper?.className).toContain('[overflow:clip]');
     expect(tableWrapper?.className).toContain('rounded-xl');
     expect(tableWrapper?.className).toContain('border');
     expect(scrollContainer?.className).toContain('overflow-x-auto');
@@ -109,11 +107,7 @@ describe('MarkdownRenderer', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Copy as CSV' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Copy as TXT' })).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Copy as Markdown' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Download as CSV' }),
     ).toBeTruthy();

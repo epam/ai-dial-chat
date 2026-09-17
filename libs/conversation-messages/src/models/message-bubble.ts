@@ -78,12 +78,8 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
   codeBlockCopyLabel?: string;
   /** aria-label for the code block copy button after copying. */
   codeBlockCopiedLabel?: string;
-  /** Label for copying a Markdown table as CSV. */
-  tableCopyCsvLabel?: string;
-  /** Label for copying a Markdown table as text. */
-  tableCopyTxtLabel?: string;
-  /** Label for copying a Markdown table as Markdown. */
-  tableCopyMarkdownLabel?: string;
+  /** Label for the copy action on a Markdown table (copies as Markdown format). */
+  tableCopyLabel?: string;
   /** Status announced after a Markdown table has been copied. */
   tableCopiedLabel?: string;
   /** Label for downloading a Markdown table as CSV. */

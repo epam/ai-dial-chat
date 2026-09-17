@@ -128,7 +128,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
       <div
         style={cssVars}
         className={mergeClasses(
-          'my-4 max-w-full overflow-hidden rounded-xl border',
+          'my-4 max-w-full rounded-xl border [overflow:clip]',
           styles.container,
           isLightTheme && styles.containerLight,
           containerClassName,
@@ -136,7 +136,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
       >
         <div
           className={mergeClasses(
-            'flex min-h-10 items-center justify-between border-b px-4',
+            'sticky top-0 z-10 flex min-h-10 items-center justify-between px-4',
             titleSlot != null ? 'py-0' : 'py-2',
             styles.header,
             headerClassName,

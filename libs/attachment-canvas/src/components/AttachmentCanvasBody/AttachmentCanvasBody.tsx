@@ -123,9 +123,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
-    tableCopyCsvLabel,
-    tableCopyTxtLabel,
-    tableCopyMarkdownLabel,
+    tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
     ooxmlHighlightsLabel,
@@ -296,9 +294,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
               tableScrollContainer: 'max-h-full',
             }}
             tableActionLabels={{
-              copyCsvLabel: tableCopyCsvLabel,
-              copyTxtLabel: tableCopyTxtLabel,
-              copyMarkdownLabel: tableCopyMarkdownLabel,
+              copyLabel: tableCopyLabel,
               copiedLabel: tableCopiedLabel,
               downloadCsvLabel: tableDownloadCsvLabel,
             }}
@@ -496,9 +492,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     PdfContent,
     pdfRetryKey,
     handleRetryPdf,
-    tableCopyCsvLabel,
-    tableCopyTxtLabel,
-    tableCopyMarkdownLabel,
+    tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
     ooxmlHighlightsLabel,

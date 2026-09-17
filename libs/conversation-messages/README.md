@@ -54,14 +54,13 @@ import {
 
 Renders an assistant message as markdown. Set `isStreaming` while the response is still arriving so newly appended text reveals smoothly. Use `markdownComponents` to inject custom renderers (for example citation markers from `@epam/ai-dial-quotations`), `markdownClassNames` to pick the markdown type scale (`COMPACT_MARKDOWN_CLASS_NAMES` from `@epam/ai-dial-chat-shared` drops the body copy one step for narrow viewports), `markdownUrlTransform` to rewrite markdown `href`/`src` values (for example mapping DIAL `files/{bucket}/{path}` ids to host download URLs), `afterContent` to place a stages panel between the text and the actions bar, and `beforeContent` to render host-supplied content overlaid at the inline-start of the first markdown block's first line, which indents past the measured slot width so the text word-flows after it (e.g. a used-skill chip); while there is no text — the streaming placeholder case — the slot renders in flow above it, and an assistant message with no text at all renders the slot on its own line.
 
-Assistant tables receive the matching copy/download controls when their table
-action labels (`tableCopyCsvLabel`, `tableCopyTxtLabel`,
-`tableCopyMarkdownLabel`, `tableCopiedLabel`, and `tableDownloadCsvLabel`) are
+Assistant tables receive copy/download controls when their table action labels
+(`tableCopyLabel`, `tableCopiedLabel`, and `tableDownloadCsvLabel`) are
 supplied; each control has a UI-kit tooltip with its localized label. The bubble forwards
 `labels.tableDownloadFilename` and `labels.tableScrollRegionAriaLabel` to the
-markdown viewer, and hides the table action bar while `isStreaming` is true.
+markdown viewer, and hides the table actions while `isStreaming` is true.
 Set `tableOnOpenInCanvas` together with `labels.tableOpenInCanvasLabel` to add
-a fifth "Open in Canvas" action that receives the table serialized as Markdown
+an "Open in Canvas" action that receives the table serialized as Markdown
 when activated — omitting either one hides the action.
 
 ```tsx
@@ -82,9 +81,7 @@ import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
   labels={{
     codeBlockCopyLabel: 'Copy code',
     codeBlockCopiedLabel: 'Copied!',
-    tableCopyCsvLabel: 'Copy as CSV',
-    tableCopyTxtLabel: 'Copy as TXT',
-    tableCopyMarkdownLabel: 'Copy as Markdown',
+    tableCopyLabel: 'Copy',
     tableCopiedLabel: 'Copied!',
     tableDownloadCsvLabel: 'Download as CSV',
     tableOpenInCanvasLabel: 'Open in canvas',
