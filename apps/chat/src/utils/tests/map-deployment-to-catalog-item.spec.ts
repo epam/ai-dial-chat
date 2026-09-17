@@ -57,6 +57,17 @@ describe('mapDeploymentToCatalogItem', () => {
 });
 
 describe('mapToolsetToCatalogItem', () => {
+  it('translates the Organization label for a toolset with a plain ID', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    const result = mapToolsetToCatalogItem(
+      { id: 'salesforce', toolset: 'salesforce' },
+      { t },
+    );
+
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderPublic]);
+  });
+
   it('omits the translated Personal label (falls through to the raw segments) when t is not supplied', () => {
     const result = mapToolsetToCatalogItem({
       id: 'toolsets/bucket/folder/salesforce',
