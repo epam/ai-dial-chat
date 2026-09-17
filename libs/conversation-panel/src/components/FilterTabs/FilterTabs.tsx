@@ -54,8 +54,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
             selected={activeTab === value}
             onClick={() => onChange(value)}
             className={mergeClasses(
-              /* The filter row splits its width evenly and keeps the pill silhouette. */
-              'flex-1 justify-center rounded-full',
+              'flex-1 min-w-max justify-center rounded-full !px-2',
               tabClassName,
             )}
           />
