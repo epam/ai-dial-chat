@@ -1,13 +1,13 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { copyToClipboard } from '../../../../utils/copy-to-clipboard';
+import { copyMarkdownAsRichText } from '../../../../utils/copy-to-clipboard';
 import { downloadTextFile } from '../../../../utils/file-download';
 import { MarkdownTable } from '../MarkdownTable';
 import styles from '../MarkdownTable.module.scss';
 
 vi.mock('../../../../utils/copy-to-clipboard', () => ({
-  copyToClipboard: vi.fn(),
+  copyMarkdownAsRichText: vi.fn(),
 }));
 
 vi.mock('../../../../utils/file-download', async (importOriginal) => {
@@ -73,9 +73,7 @@ const renderTable = (
   );
 
 const actionLabels = {
-  copyCsvLabel: 'Copy as CSV',
-  copyTxtLabel: 'Copy as TXT',
-  copyMarkdownLabel: 'Copy as Markdown',
+  copyLabel: 'Copy',
   copiedLabel: 'Copied!',
   downloadCsvLabel: 'Download as CSV',
 };
@@ -115,8 +113,8 @@ const makeScrollable = (hasContentBeyondEnd: boolean) => {
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', ResizeObserverMock);
   vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
-  vi.mocked(copyToClipboard).mockReset();
-  vi.mocked(copyToClipboard).mockResolvedValue(true);
+  vi.mocked(copyMarkdownAsRichText).mockReset();
+  vi.mocked(copyMarkdownAsRichText).mockResolvedValue(true);
   vi.mocked(downloadTextFile).mockReset();
 });
 
@@ -135,11 +133,7 @@ describe('MarkdownTable', () => {
   it('renders the table actions when action labels are supplied', () => {
     renderTable({ actionLabels });
 
-    expect(screen.getByRole('button', { name: 'Copy as CSV' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Copy as TXT' })).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Copy as Markdown' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Download as CSV' }),
     ).toBeTruthy();
@@ -149,12 +143,7 @@ describe('MarkdownTable', () => {
     const user = userEvent.setup({ delay: null });
     renderTable({ actionLabels });
 
-    for (const label of [
-      'Copy as CSV',
-      'Copy as TXT',
-      'Copy as Markdown',
-      'Download as CSV',
-    ]) {
+    for (const label of ['Copy', 'Download as CSV']) {
       const button = screen.getByRole('button', { name: label });
       await user.hover(button);
 
@@ -172,18 +161,12 @@ describe('MarkdownTable', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('copies the rendered table as CSV, TXT, and Markdown', async () => {
+  it('copies the rendered table as Markdown', async () => {
     const user = userEvent.setup({ delay: null });
     renderTable({ actionLabels });
 
-    await user.click(screen.getByRole('button', { name: 'Copy as CSV' }));
-    expect(copyToClipboard).toHaveBeenCalledWith('"Name","Value"\n"Alpha","1"');
-
-    await user.click(screen.getByRole('button', { name: 'Copy as TXT' }));
-    expect(copyToClipboard).toHaveBeenCalledWith('Name\tValue\nAlpha\t1');
-
-    await user.click(screen.getByRole('button', { name: 'Copy as Markdown' }));
-    expect(copyToClipboard).toHaveBeenCalledWith(
+    await user.click(screen.getByRole('button', { name: 'Copy' }));
+    expect(copyMarkdownAsRichText).toHaveBeenCalledWith(
       '| Name | Value |\n| :-- | :-- |\n| Alpha | 1 |',
     );
   });
@@ -196,21 +179,21 @@ describe('MarkdownTable', () => {
     expect(status.getAttribute('aria-live')).toBe('polite');
     expect(status.textContent).toBe('');
 
-    await user.click(screen.getByRole('button', { name: 'Copy as CSV' }));
+    await user.click(screen.getByRole('button', { name: 'Copy' }));
 
     await waitFor(() => expect(status.textContent).toBe('Copied!'));
-    expect(screen.getByRole('button', { name: 'Copy as CSV' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Copied!' })).toBeNull();
   });
 
   it('does not announce copying when the clipboard utility reports failure', async () => {
     const user = userEvent.setup({ delay: null });
-    vi.mocked(copyToClipboard).mockResolvedValue(false);
+    vi.mocked(copyMarkdownAsRichText).mockResolvedValue(false);
     renderTable({ actionLabels });
 
-    await user.click(screen.getByRole('button', { name: 'Copy as CSV' }));
+    await user.click(screen.getByRole('button', { name: 'Copy' }));
 
-    expect(copyToClipboard).toHaveBeenCalledOnce();
+    expect(copyMarkdownAsRichText).toHaveBeenCalledOnce();
     expect(screen.getByRole('status').textContent).toBe('');
   });
 
@@ -335,18 +318,13 @@ describe('MarkdownTable', () => {
     expect(region.className).toContain(styles.tableScrollFadeEnd);
 
     const actionsWrapper = screen.getByRole('button', {
-      name: 'Copy as CSV',
+      name: 'Copy',
     }).parentElement; // eslint-disable-line testing-library/no-node-access -- the actions wrapper has no semantic role; layout classes must be asserted directly
-    expect(actionsWrapper?.className).toContain('ms-auto');
+    expect(actionsWrapper?.className).toContain('end-2');
     expect(actionsWrapper?.className).not.toContain('left-');
     expect(actionsWrapper?.className).not.toContain('right-');
 
-    [
-      'Copy as CSV',
-      'Copy as TXT',
-      'Copy as Markdown',
-      'Download as CSV',
-    ].forEach((name) => {
+    ['Copy', 'Download as CSV'].forEach((name) => {
       // eslint-disable-next-line testing-library/no-node-access -- the decorative icon is hidden from assistive technology, so only its class can be asserted
       const icon = screen.getByRole('button', { name }).querySelector('svg');
       expect(icon?.getAttribute('class')).not.toContain('rtl:scale-x-[-1]');

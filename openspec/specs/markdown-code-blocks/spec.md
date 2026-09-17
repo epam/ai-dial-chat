@@ -10,7 +10,7 @@ Fenced code blocks in rendered markdown: language detection, the copy action, th
 
 The system SHALL render fenced code blocks (produced by react-markdown from ` ```lang … ``` ` and ` ``` … ``` ` markdown) using `MarkdownCodeBlock`, a dedicated component that owns its full container. The container MUST include:
 - A visible frame (rounded border, background).
-- A compact sticky header with the language label (start) and a copy icon button (end).
+- A compact sticky header with the language label (start) and action icon buttons (end). The header MUST share the same background as the code body. There MUST be no divider between the header and the code body.
 - A scrollable body with `max-h-[60vh] overflow-auto`.
 - `dir="ltr"` on the scrollable body to preserve code direction on RTL pages.
 
@@ -148,7 +148,7 @@ Code content MUST be rendered with `whitespace-pre` so that indentation and line
 
 ### Requirement: Support light and dark themes
 
-`MarkdownCodeBlock` MUST NOT hardcode a background color that is incompatible with either light or dark theme. The container and header MUST use `bg-black/20` (alpha-transparent overlay) so the component composes correctly over any message bubble background in both themes.
+`MarkdownCodeBlock` MUST NOT hardcode a background color that is incompatible with either light or dark theme. The container and header MUST use the `--bg-layer-raised` CSS custom property (with a hardcoded `#fcfcfc` fallback) so the component composes correctly over any message bubble background in both themes. The header and code body MUST share the same background token so no visual seam is visible between them.
 
 #### Scenario: Code block in light theme
 

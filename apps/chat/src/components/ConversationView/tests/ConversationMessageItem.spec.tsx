@@ -1165,21 +1165,13 @@ describe('ConversationMessageItem — Markdown table actions', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsCsv }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsTxt }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: ButtonsI18nKeys.CopyAsMarkdown }),
+      screen.getByRole('button', { name: ButtonsI18nKeys.Copy }),
     ).toBeTruthy();
     expect(
       screen.getByRole('button', { name: ButtonsI18nKeys.DownloadAsCsv }),
     ).toBeTruthy();
     expect(capturedLabels).toMatchObject({
-      tableCopyCsvLabel: ButtonsI18nKeys.CopyAsCsv,
-      tableCopyTxtLabel: ButtonsI18nKeys.CopyAsTxt,
-      tableCopyMarkdownLabel: ButtonsI18nKeys.CopyAsMarkdown,
+      tableCopyLabel: ButtonsI18nKeys.Copy,
       tableCopiedLabel: ButtonsI18nKeys.Copied,
       tableDownloadCsvLabel: ButtonsI18nKeys.DownloadAsCsv,
       tableOpenInCanvasLabel: ButtonsI18nKeys.OpenInCanvas,

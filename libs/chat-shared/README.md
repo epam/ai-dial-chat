@@ -352,18 +352,18 @@ import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
 Standalone table renderer for structured markdown tables. The table scrolls
 horizontally when it overflows its container; it is never height-bounded and
 grows to its natural height instead of scrolling vertically.
-Supplying `actionLabels` enables copy-as-CSV, copy-as-TXT,
-copy-as-Markdown, and download-as-CSV actions. Copy formats flatten rendered
-cell text, and CSV download includes a UTF-8 byte-order mark. Each action
-shows a UI-kit tooltip with its localized label, and actions are hidden while
-`isStreaming` is true.
-The built-in header container is `TableHeader` (see below); it renders
-automatically whenever `actionLabels` is supplied, and stays hidden otherwise.
+Supplying `actionLabels` enables a hover-only floating overlay in the top-right
+corner that exposes a Copy action and a Download as CSV action. Copy places the
+table on the clipboard as Markdown-sourced rich text (HTML for rich targets such
+as Word, Google Docs, or Slack; raw Markdown for plain-text targets). CSV
+download includes a UTF-8 byte-order mark. Each action shows a UI-kit tooltip
+with its localized label, and actions are hidden while `isStreaming` is true.
+The overlay is sticky — it follows the viewport when the page is scrolled.
 When `actionLabels.openInCanvasLabel` and `onOpenInCanvas` are both supplied,
-a fifth "Open in Canvas" action appears; activating it serializes the table
-with the same Markdown format `copyMarkdownLabel` uses and passes that string
-to `onOpenInCanvas`. Omitting either one hides the action — the host decides
-whether expanding a table into a canvas is meaningful for it.
+an "Open in Canvas" action appears; activating it serializes the table as
+Markdown and passes that string to `onOpenInCanvas`. Omitting either one hides
+the action — the host decides whether expanding a table into a canvas is
+meaningful for it.
 
 ```tsx
 import {
@@ -372,9 +372,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 
 const tableActionLabels: MarkdownTableActionLabels = {
-  copyCsvLabel: 'Copy as CSV',
-  copyTxtLabel: 'Copy as TXT',
-  copyMarkdownLabel: 'Copy as Markdown',
+  copyLabel: 'Copy',
   copiedLabel: 'Copied!',
   downloadCsvLabel: 'Download as CSV',
 };
@@ -404,8 +402,7 @@ const tableActionLabels: MarkdownTableActionLabels = {
 Reusable table header with optional leading content and caller-supplied
 `{ label, icon, onClick }` action descriptors. `TableHeader` renders each
 descriptor as an accessible UI-kit tooltip button; actions align to the inline
-end, so the header follows RTL direction automatically. `MarkdownTable` uses
-`TableHeader` as its built-in header whenever `actionLabels` is supplied.
+end, so the header follows RTL direction automatically.
 
 ```tsx
 import { TableHeader } from '@epam/ai-dial-chat-shared';
