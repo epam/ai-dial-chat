@@ -39,7 +39,7 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
     get: vi.fn((key: string) =>
       key === 'AUTH_CALLBACK_BASE_URL' ? callbackBaseUrl : undefined,
     ),
-  } as unknown as ConfigService<EnvironmentVariables>;
+  } as unknown as ConfigService<EnvironmentVariables, true>;
 
   const deploymentsService = {
     invalidateListCache: vi.fn().mockResolvedValue(undefined),
@@ -79,7 +79,10 @@ describe('ShareInvitationService', () => {
   describe('createShareLink', () => {
     it('maps a successful DIAL Core response to ShareLinkResponseDto', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'shareResource',
+      ).mockResolvedValue(
         okResponse({ invitationLink: '/v1/invitations/abc123' }),
       );
 
@@ -97,7 +100,10 @@ describe('ShareInvitationService', () => {
 
     it('builds the frontend invitation URL from an absolute DIAL Core link', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'shareResource',
+      ).mockResolvedValue(
         okResponse({ invitationLink: 'https://dial-core/invite/abc' }),
       );
 
@@ -112,7 +118,10 @@ describe('ShareInvitationService', () => {
     it('forwards the Authorization header and requested permissions to DIAL Core', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['dialClient'].client, 'shareResource')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'shareResource',
+        )
         .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
 
       await service.createShareLink('my-token', 'my-bucket', {
@@ -138,7 +147,10 @@ describe('ShareInvitationService', () => {
     it('percent-encodes a resource id containing spaces before sending it to DIAL Core', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['dialClient'].client, 'shareResource')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'shareResource',
+        )
         .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
 
       await service.createShareLink('my-token', 'my-bucket', {
@@ -162,7 +174,10 @@ describe('ShareInvitationService', () => {
 
     it('routes conversation itemIds to the conversation accept-invitation path', async () => {
       const { service, dialClient } = makeService();
-      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'shareResource',
+      ).mockResolvedValue(
         okResponse({ invitationLink: '/v1/invitations/conv-abc' }),
       );
 
@@ -419,7 +434,10 @@ describe('ShareInvitationService', () => {
     it('creates a share link for a skills/{bucket}/{path} itemId', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['dialClient'].client, 'shareResource')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'shareResource',
+        )
         .mockResolvedValue(
           okResponse({ invitationLink: '/v1/invitations/skill-abc' }),
         );
@@ -447,7 +465,10 @@ describe('ShareInvitationService', () => {
     it('creates a share link for a full prompts/{bucket}/{path} itemId, unmodified', async () => {
       const { service, dialClient } = makeService();
       const spy = vi
-        .spyOn(service['dialClient'].client, 'shareResource')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'shareResource',
+        )
         .mockResolvedValue(okResponse({ invitationLink: '/invite/p1' }));
 
       const result = await service.createShareLink('token-abc', 'my-bucket', {
@@ -475,7 +496,10 @@ describe('ShareInvitationService', () => {
     it('leaves any itemId untouched, with no per-kind qualification', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['dialClient'].client, 'shareResource')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'shareResource',
+        )
         .mockResolvedValue(okResponse({ invitationLink: '/invite/abc' }));
 
       await service.createShareLink('token-abc', 'my-bucket', {
@@ -499,9 +523,10 @@ describe('ShareInvitationService', () => {
 
     it('throws BadGatewayException when DIAL Core returns an empty invitation link', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
-        okResponse({}),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'shareResource',
+      ).mockResolvedValue(okResponse({}));
 
       await expect(
         service.createShareLink('token', 'my-bucket', {
@@ -513,9 +538,10 @@ describe('ShareInvitationService', () => {
 
     it('throws BadGatewayException on upstream 502', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
-        errResponse(502),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'shareResource',
+      ).mockResolvedValue(errResponse(502));
 
       await expect(
         service.createShareLink('token', 'my-bucket', {
@@ -527,9 +553,10 @@ describe('ShareInvitationService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'shareResource').mockRejectedValue(
-        new TypeError('fetch failed'),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'shareResource',
+      ).mockRejectedValue(new TypeError('fetch failed'));
 
       await expect(
         service.createShareLink('token', 'my-bucket', {
@@ -919,7 +946,10 @@ describe('ShareInvitationService', () => {
     it('peeks the invitation for its itemId, then accepts it via DIAL Core', async () => {
       const { service, deploymentsService, toolsetsService } = makeService();
       const spy = vi
-        .spyOn(service['dialClient'].client, 'getInvitation')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getInvitation',
+        )
         .mockResolvedValue(
           okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
         );
@@ -949,9 +979,10 @@ describe('ShareInvitationService', () => {
 
     it('throws BadGatewayException when DIAL Core returns no shared resource', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
-        okResponse({ id: 'abc123', resources: [] }),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(okResponse({ id: 'abc123', resources: [] }));
 
       await expect(
         service.acceptInvitation('token', 'abc123', 'user-sub-1', 'bucket-1'),
@@ -960,9 +991,10 @@ describe('ShareInvitationService', () => {
 
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
-        errResponse(404),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(errResponse(404));
 
       await expect(
         service.acceptInvitation('token', 'missing', 'user-sub-1', 'bucket-1'),
@@ -971,9 +1003,10 @@ describe('ShareInvitationService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockRejectedValue(
-        new TypeError('fetch failed'),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockRejectedValue(new TypeError('fetch failed'));
 
       await expect(
         service.acceptInvitation('token', 'abc123', 'user-sub-1', 'bucket-1'),
@@ -982,7 +1015,10 @@ describe('ShareInvitationService', () => {
 
     it('treats a 400 "already belong to you" accept error as success instead of throwing', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation')
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      )
         .mockResolvedValueOnce(
           okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
         )
@@ -1003,7 +1039,10 @@ describe('ShareInvitationService', () => {
 
     it('still throws BadRequestException for a 400 accept error unrelated to already owning the resource', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation')
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      )
         .mockResolvedValueOnce(
           okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
         )
@@ -1019,7 +1058,10 @@ describe('ShareInvitationService', () => {
 
     it('returns sharedToolset for a toolsets/-prefixed itemId, without calling resolveDeploymentItem', async () => {
       const { service, deploymentsService, toolsetsService } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(
         okResponse({
           id: 'abc123',
           resources: [{ url: 'toolsets/b/search__0.0.1' }],
@@ -1056,7 +1098,10 @@ describe('ShareInvitationService', () => {
         toolsetsService,
         skillsLookupService,
       } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(
         okResponse({
           id: 'abc123',
           resources: [{ url: 'skills/owner-bucket/team-a/docs-helper' }],
@@ -1102,7 +1147,10 @@ describe('ShareInvitationService', () => {
      */
     it('forwards the invited skill resource permissions to resolveSkillItem', async () => {
       const { service, skillsLookupService } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(
         okResponse({
           id: 'abc123',
           resources: [
@@ -1131,7 +1179,10 @@ describe('ShareInvitationService', () => {
 
     it('returns sharedDeployment for an applications/-prefixed itemId', async () => {
       const { service, deploymentsService } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(
         okResponse({
           id: 'abc123',
           resources: [{ url: 'applications/b/my-app__1.0' }],
@@ -1165,7 +1216,10 @@ describe('ShareInvitationService', () => {
 
     it('falls back to resolveToolsetItem for an ambiguous id when resolveDeploymentItem finds nothing', async () => {
       const { service, deploymentsService, toolsetsService } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(
         okResponse({
           id: 'abc123',
           resources: [{ url: 'root-toolset-copy' }],
@@ -1194,7 +1248,10 @@ describe('ShareInvitationService', () => {
 
     it('omits both sharedDeployment and sharedToolset when nothing resolves', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(
         okResponse({ id: 'abc123', resources: [{ url: 'unknown-id' }] }),
       );
 
@@ -1210,7 +1267,10 @@ describe('ShareInvitationService', () => {
 
     it('still succeeds with only itemId when summary resolution throws', async () => {
       const { service, deploymentsService } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(
         okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
       );
       vi.mocked(deploymentsService.resolveDeploymentItem).mockRejectedValue(

@@ -8,6 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { useContainer } from 'class-validator';
+import type { Request, Response } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
@@ -59,7 +60,7 @@ async function buildApp(
     },
   );
   if (!authenticated) {
-    app.use((req: Express.Request, res: Express.Response, next: () => void) =>
+    app.use((req: Request, res: Response, next: () => void) =>
       req.user ? next() : res.status(401).json({ message: 'Unauthorized' }),
     );
   }

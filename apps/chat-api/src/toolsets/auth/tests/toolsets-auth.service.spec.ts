@@ -105,9 +105,11 @@ describe('ToolsetsAuthService', () => {
           body,
         ),
       ).rejects.toThrow('Toolset id must include bucket and path');
-      expect(service['dialClient'].client.toolsetSignin).not.toHaveBeenCalled();
       expect(
-        service['dialClient'].client.toolSetSignout,
+        (service['dialClient'] as DialClientService).client.toolsetSignin,
+      ).not.toHaveBeenCalled();
+      expect(
+        (service['dialClient'] as DialClientService).client.toolSetSignout,
       ).not.toHaveBeenCalled();
     },
   );
@@ -128,7 +130,10 @@ describe('ToolsetsAuthService', () => {
         ]) {
           const { service, cacheManager } = makeWriteService();
           const signinSpy = vi
-            .spyOn(service['dialClient'].client, 'toolsetSignin')
+            .spyOn(
+              (service['dialClient'] as DialClientService).client,
+              'toolsetSignin',
+            )
             .mockResolvedValue(mutationSdkOk);
 
           await service.loginToolset('user1', 'token', toolsetName, {
@@ -155,7 +160,10 @@ describe('ToolsetsAuthService', () => {
     it('posts API key credentials to the signin endpoint', async () => {
       const { service } = makeWriteService();
       const signinSpy = vi
-        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolsetSignin',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
@@ -189,7 +197,10 @@ describe('ToolsetsAuthService', () => {
       for (const consent of [true, false] as const) {
         const { service } = makeWriteService();
         const signinSpy = vi
-          .spyOn(service['dialClient'].client, 'toolsetSignin')
+          .spyOn(
+            (service['dialClient'] as DialClientService).client,
+            'toolsetSignin',
+          )
           .mockResolvedValue(mutationSdkOk);
 
         await service.loginToolset('user1', 'token', id, {
@@ -211,7 +222,10 @@ describe('ToolsetsAuthService', () => {
     it('leaves offline usage consent unset when the caller did not ask', async () => {
       const { service } = makeWriteService();
       const signinSpy = vi
-        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolsetSignin',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
@@ -231,7 +245,10 @@ describe('ToolsetsAuthService', () => {
     it('posts OAuth code + redirectUri to the signin endpoint', async () => {
       const { service } = makeWriteService();
       const signinSpy = vi
-        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolsetSignin',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
@@ -255,9 +272,10 @@ describe('ToolsetsAuthService', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['dialClient'].client, 'toolsetSignin').mockResolvedValue(
-        errResponse(401),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'toolsetSignin',
+      ).mockResolvedValue(errResponse(401));
       await expect(
         service.loginToolset('u', 't', id, {
           url: id,
@@ -271,7 +289,10 @@ describe('ToolsetsAuthService', () => {
     it('derives url from the toolsetName path param, ignoring a mismatched body.url', async () => {
       const { service } = makeWriteService();
       const signinSpy = vi
-        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolsetSignin',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
@@ -291,7 +312,10 @@ describe('ToolsetsAuthService', () => {
     it('sends the raw (percent-decoded) resource reference as url', async () => {
       const { service } = makeWriteService();
       const signinSpy = vi
-        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolsetSignin',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
@@ -317,7 +341,10 @@ describe('ToolsetsAuthService', () => {
       async (toolsetName, expectedUrl) => {
         const { service, cacheManager } = makeWriteService();
         const signoutSpy = vi
-          .spyOn(service['dialClient'].client, 'toolSetSignout')
+          .spyOn(
+            (service['dialClient'] as DialClientService).client,
+            'toolSetSignout',
+          )
           .mockResolvedValue(mutationSdkOk);
 
         await service.logoutToolset(
@@ -349,14 +376,20 @@ describe('ToolsetsAuthService', () => {
     it('looks up the authentication type for a platform toolset without a bucket', async () => {
       const { service } = makeWriteService();
       const toolsetName = 'NS_toolset_1097_test';
-      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getToolset',
+      ).mockResolvedValue(
         okResponse({
           id: toolsetName,
           auth_settings: { authentication_type: 'API_KEY' },
         }),
       );
       const signoutSpy = vi
-        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolSetSignout',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.logoutToolset(
@@ -383,7 +416,10 @@ describe('ToolsetsAuthService', () => {
     it('posts to the signout endpoint and invalidates caches', async () => {
       const { service, cacheManager } = makeWriteService();
       const signoutSpy = vi
-        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolSetSignout',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.logoutToolset('user1', 'token', 'test-bucket', id, {
@@ -412,7 +448,10 @@ describe('ToolsetsAuthService', () => {
     it('maps the App credentials level to the DIAL Core APPLICATION value', async () => {
       const { service } = makeWriteService();
       const signoutSpy = vi
-        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolSetSignout',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.logoutToolset('user1', 'token', 'test-bucket', id, {
@@ -433,7 +472,7 @@ describe('ToolsetsAuthService', () => {
     it('treats an upstream 404 as an already-signed-out no-op instead of an error', async () => {
       const { service, cacheManager } = makeWriteService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'toolSetSignout',
       ).mockResolvedValue(errResponse(404));
 
@@ -451,7 +490,7 @@ describe('ToolsetsAuthService', () => {
     it('still throws for a non-404 upstream error', async () => {
       const { service } = makeWriteService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'toolSetSignout',
       ).mockResolvedValue(errResponse(401));
 
@@ -467,7 +506,7 @@ describe('ToolsetsAuthService', () => {
     it('resolves the authentication type from the stored toolset when the body omits it', async () => {
       const { service, cacheManager } = makeWriteService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getCustomToolSet',
       ).mockResolvedValue(
         okResponse({
@@ -476,7 +515,10 @@ describe('ToolsetsAuthService', () => {
         }),
       );
       const signoutSpy = vi
-        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolSetSignout',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.logoutToolset('user1', 'token', 'test-bucket', id, {
@@ -499,7 +541,7 @@ describe('ToolsetsAuthService', () => {
     it('rejects when the body omits authenticationType and the stored toolset has none supported', async () => {
       const { service } = makeWriteService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getCustomToolSet',
       ).mockResolvedValue(
         okResponse({
@@ -519,7 +561,10 @@ describe('ToolsetsAuthService', () => {
     it('derives url from the toolsetName path param, ignoring a mismatched body.url', async () => {
       const { service } = makeWriteService();
       const signoutSpy = vi
-        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'toolSetSignout',
+        )
         .mockResolvedValue(mutationSdkOk);
 
       await service.logoutToolset('user1', 'token', 'test-bucket', id, {

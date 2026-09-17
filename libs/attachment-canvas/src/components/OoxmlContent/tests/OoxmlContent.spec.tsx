@@ -812,6 +812,59 @@ describe('OoxmlContent highlights', () => {
     expect(mockFromDocument).not.toHaveBeenCalled();
   });
 
+  it('waits for layout, highlights a table row on a later page and scrolls only its preview', async () => {
+    const layout = deferDocxLayoutCompletion();
+    const cells = ['Latency budget', 'Platform', 'Raise capacity review'];
+    mockCollectPageRuns.mockImplementation((pageIndex: number) =>
+      Promise.resolve(
+        pageIndex === 2
+          ? cells.map((text, column) => ({
+              ...run([29, 1, column, 0]),
+              text,
+              x: column * 100,
+              y: 600,
+            }))
+          : [run([pageIndex])],
+      ),
+    );
+    renderHighlighted(
+      [
+        {
+          id: 'table',
+          locations: [
+            { kind: OoxmlHighlightKind.DocxTableRow, cells, occurrence: 1 },
+          ],
+        },
+      ],
+      'table',
+    );
+    await waitFor(() => expect(mockFromDocument).toHaveBeenCalledOnce());
+    expect(mockDocxScrollTo).not.toHaveBeenCalled();
+
+    docxDocumentState.pageCount = 3;
+    docxScrollHostState.scrollHeight = 4000;
+    await act(async () => {
+      layout.resolve();
+    });
+    await waitFor(() => expect(getRects()).toHaveLength(3));
+    await waitFor(() =>
+      expect(mockDocxScrollTo).toHaveBeenCalledWith({
+        left: 0,
+        top: 2610,
+        behavior: 'auto',
+      }),
+    );
+    expect(mockScrollToPage).not.toHaveBeenCalled();
+    expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+
+    const collected = mockCollectPageRuns.mock.calls.length;
+    await changeDocxScale(0.5);
+    await waitFor(() =>
+      expect(parseFloat((getRects()[0] as HTMLElement).style.width)).toBe(25),
+    );
+    expect(mockCollectPageRuns).toHaveBeenCalledTimes(collected);
+  });
+
   it('destroys the viewer before the engine it borrowed', async () => {
     const view = renderHighlighted([highlight('a', [3, 1])], 'a');
     await waitFor(() => expect(mockFromDocument).toHaveBeenCalledOnce());
@@ -819,6 +872,32 @@ describe('OoxmlContent highlights', () => {
     view.unmount();
 
     expect(teardownOrder).toEqual(['viewer', 'engine']);
+  });
+
+  it('keeps an unmatched table anchor viewable without a guessed scroll or highlight', async () => {
+    renderHighlighted(
+      [
+        {
+          id: 'stale-table',
+          locations: [
+            {
+              kind: OoxmlHighlightKind.DocxTableRow,
+              cells: ['Missing', 'Row'],
+              occurrence: 1,
+            },
+          ],
+        },
+      ],
+      'stale-table',
+    );
+    await waitFor(() => expect(mockCollectPageRuns).toHaveBeenCalled());
+    await flushPendingFrame();
+    expect(mockDocxScrollTo).not.toHaveBeenCalled();
+    expect(mockScrollToPage).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('region', { name: 'Cited locations' }),
+    ).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('discards a run collection that resolves after unmount', async () => {
@@ -1589,6 +1668,53 @@ describe('OoxmlContent PPTX highlights', () => {
 
     await waitFor(() => expect(mockCollectSlideRuns).toHaveBeenCalled());
     expect(mockCollectSlideRuns.mock.calls[0][0]).toBe(0);
+  });
+
+  it('highlights the cited table row and navigates to its second slide', async () => {
+    const cells = [
+      'Latency budget',
+      'Platform',
+      'Escalate to Architecture Council',
+    ];
+    mockCollectSlideRuns.mockImplementation((slideIndex: number) =>
+      Promise.resolve(
+        slideIndex === 1
+          ? cells.map((text, column) => ({
+              ...pptxRun('3'),
+              text,
+              tableCell: { row: 1, column },
+              inShapeX: column * 100,
+            }))
+          : [],
+      ),
+    );
+    renderPptxHighlighted(
+      [
+        {
+          id: 'table',
+          locations: [
+            {
+              kind: OoxmlHighlightKind.PptxTableRow,
+              cells,
+              occurrence: 1,
+              slide: 2,
+            },
+          ],
+        },
+      ],
+      'table',
+    );
+
+    await waitFor(() => expect(mockScrollToSlide).toHaveBeenCalledWith(1));
+    await waitFor(() =>
+      expect(
+        // eslint-disable-next-line testing-library/no-node-access -- decorative highlight boxes have no individual role
+        screen.getByRole('region', { name: 'Cited locations' }).children,
+      ).toHaveLength(3),
+    );
+    expect(
+      mockCollectSlideRuns.mock.calls.every(([index]) => index === 1),
+    ).toBe(true);
   });
 
   it('destroys the viewer before the presentation it borrowed', async () => {

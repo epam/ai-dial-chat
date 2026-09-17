@@ -30,6 +30,8 @@ import { SkillsController } from '../skills.controller';
 import { SkillsService } from '../skills.service';
 
 const TEST_USER = {
+  providerId: 'keycloak',
+  claims: {},
   sub: 'user-123',
   at: 'test-access-token',
   bucket: 'test-bucket',

@@ -51,7 +51,12 @@ interface OoxmlHighlight {
 }
 ```
 
-`OoxmlHighlightKind` SHALL be a string enum (`DocxTextRange = 'docxTextRange'`, `PptxTextRange = 'pptxTextRange'`, `XlsxCellRange = 'xlsxCellRange'`), following the repository's enum-over-union rule, and SHALL be a value export from the library's public entry point so the host can name its members.
+`OoxmlHighlightKind` SHALL be a string enum (`DocxTextRange = 'docxTextRange'`, `PptxTextRange = 'pptxTextRange'`, `XlsxCellRange = 'xlsxCellRange'`, plus temporary `DocxTableRow = 'docxTableRow'` and `PptxTableRow = 'pptxTableRow'`), following the repository's enum-over-union rule, and SHALL be a value export from the library's public entry point so the host can name its members.
+
+The temporary table-row descriptors SHALL be exported as `OoxmlDocxTableRowLocation`
+(`kind`, plain-text `cells: string[]`, `occurrence: number`) and
+`OoxmlPptxTableRowLocation` (the same fields plus `slide: number`). Their matching
+policy is defined by the temporary table-anchor requirement below.
 
 The library SHALL receive DOCX/PPTX offsets already in their exclusive-upper-bound form, named `endExclusive` rather than `end` so the boundary convention is unambiguous at the type level. `libs/quotations` cannot depend on this library's types (see the `message-annotations` capability's normalisation requirement and its scope note) — `libs/chat-hooks`, which depends on both, is the layer that assigns `OoxmlHighlightKind` and produces these descriptors.
 
@@ -86,7 +91,7 @@ Every type reachable through `OoxmlCanvasContent` SHALL be exported from `libs/a
 
 `libs/quotations/src/utils/annotation.ts` SHALL export `annotationToOfficeHighlightLocations`, a normaliser that converts an `Annotation` into `OfficeHighlightLocation[]` (`libs/quotations/src/models/office-highlight.ts`), and SHALL export the three named type guards required by the "Office range selector discriminators are confirmed by a captured fixture" requirement of the `message-annotations` capability.
 
-`OfficeHighlightLocation` SHALL be owned by `libs/quotations`, discriminated by a `type` field carrying the wire's own confirmed literal (`'docx_text_range'`, `'pptx_text_range'`, `'excel_rc_range'`) — **not** `@epam/ai-dial-attachment-canvas`'s `OoxmlHighlightKind`. `libs/quotations` SHALL NOT import from `libs/attachment-canvas`: that lib already depends on `libs/quotations` for the PDF highlight path (`annotationsToPdfHighlights`), and a dependency in the other direction would be circular. `libs/chat-hooks`, which depends on both libs, SHALL be the layer that maps `OfficeHighlightLocation[]` into `OoxmlHighlight[]`/`OoxmlHighlightLocation[]`, assigning the `OoxmlHighlightKind` enum value per location (see the "`annotationToOoxmlCanvasContent` maps a citation to canvas content" requirement below).
+`OfficeHighlightLocation` SHALL be owned by `libs/quotations`, discriminated by a `type` field carrying the wire's own confirmed literal (`'docx_text_range'`, `'pptx_text_range'`, `'excel_rc_range'`, and the temporary `'docx_text_anchor'`/`'pptx_text_anchor'` table forms) — **not** `@epam/ai-dial-attachment-canvas`'s `OoxmlHighlightKind`. `libs/quotations` SHALL NOT import from `libs/attachment-canvas`: that lib already depends on `libs/quotations` for the PDF highlight path (`annotationsToPdfHighlights`), and a dependency in the other direction would be circular. `libs/chat-hooks`, which depends on both libs, SHALL be the layer that maps `OfficeHighlightLocation[]` into `OoxmlHighlight[]`/`OoxmlHighlightLocation[]`, assigning the `OoxmlHighlightKind` enum value per location (see the "`annotationToOoxmlCanvasContent` maps a citation to canvas content" requirement below).
 
 Normalisation SHALL:
 
@@ -624,13 +629,72 @@ Navigation SHALL bring the selected highlight's location into view on initial lo
 
 ---
 
-### Requirement: Unresolvable locations degrade gracefully and never search by quote
+### Requirement: Temporary table-anchor compatibility for issue #8863
+
+`libs/quotations` SHALL recognize `docx_text_anchor` and `pptx_text_anchor` only
+when `text` contains one Markdown table row bounded by pipes, with at least two
+cells, and `occurrence` is a positive safe integer. PPTX SHALL additionally require
+a positive safe integer `slide`. Backslash-escaped ASCII punctuation SHALL be
+decoded without treating an escaped pipe as a cell separator. Empty rows,
+Markdown separator rows, multiline input and plain-text anchors SHALL yield no
+location. `body.quote` SHALL NOT substitute for `selector.text`.
+
+The normalized `OfficeHighlightLocation` union SHALL include
+`DocxTableRowOfficeHighlightLocation` and `PptxTableRowOfficeHighlightLocation`,
+retaining the anchor's `type` and exposing plain `cells`, `occurrence`, and PPTX
+`slide`. `libs/chat-hooks` SHALL map them to the corresponding table-row canvas
+descriptors. Existing source identity, selection and URL resolver contracts apply.
+
+This temporary frontend policy SHALL count complete matching rows from 1, across
+the DOCX body or within the specified PPTX slide. The supplied payloads confirm
+`occurrence: 1`; broader backend occurrence semantics are not verified. Matching
+SHALL be case-sensitive and compare every cell after whitespace normalization,
+restoring spaces at rendered line breaks. It SHALL respect row, column, table,
+DOCX story and PPTX shape boundaries and SHALL NOT combine unrelated cells.
+
+The renderer SHALL highlight the text of all cells in the selected matching row.
+It SHALL NOT infer a narrower target cell from a full-row selector. DOCX SHALL
+wait for layout completion, navigate to the first resolved text rectangle inside
+its own preview, and cache scale-independent geometry per row descriptor for the
+loaded document. PPTX SHALL resolve text only on the specified slide and preserve
+slide navigation if text cannot be matched. Failed matches SHALL render no
+highlight; existing structural ranges SHALL NOT fall back to this matcher.
+
+TODO(#8863): Remove the compatibility adapter and table-row resolution after the
+backend emits precise table-cell ranges and persisted anchors no longer need the
+workaround. Tracking: https://github.com/epam/ai-dial-chat/issues/8863.
+
+**State ownership**: geometry caches belong to the loaded DOCX highlight surface.
+**Adapter contract**: wire/Markdown normalization stays in `quotations`; the canvas
+receives only plain cell text and document location data.
+**i18n / feature flags / telemetry**: none added.
+**RTL / accessibility**: existing physical document geometry and navigation
+announcements apply; overlay styling and interaction are unchanged.
+
+#### Scenario: DOCX row on a later page
+
+- **WHEN** a DOCX anchor contains `| Latency budget | Platform | Raise capacity review when p95 latency exceeds 900 ms twice in one week. |` with `occurrence: 1`
+- **THEN** its first matching body table row is highlighted cell by cell and the preview scrolls to it after layout completes
+
+#### Scenario: PPTX escaped text and line wrapping
+
+- **WHEN** a PPTX row anchor names slide 2 and its cell contains Markdown-escaped underscores and text split across rendered lines
+- **THEN** decoded text is matched within that slide's table row, its text boxes are highlighted, and the preview navigates to slide 2
+
+#### Scenario: Missing occurrence or stale text
+
+- **WHEN** an anchor is malformed, its requested occurrence does not exist, or any cell differs from the displayed row
+- **THEN** no guessed or partial row is highlighted and the document remains viewable
+
+---
+
+### Requirement: Unresolvable structural locations degrade gracefully and never search by quote
 
 When a selector is missing, of an unsupported family, structurally ambiguous, malformed, out of range, or cannot be resolved to geometry, the document SHALL open normally with no highlight, and the failure SHALL NOT surface as the renderer's error state — that state is reserved for a parse/render failure, and showing it here would tell the user the file is broken when it is not.
 
 Resolved DOCX and PPTX text SHALL be validated before a highlight is shown: the resolved text sliced by `[start, endExclusive)` SHALL equal the location's `text`. On a mismatch, no highlight SHALL be drawn for that location. Navigation to the page or slide MAY still occur, since the location's page reference is independent of its text.
 
-The implementation SHALL NOT fall back to searching the document for the selector's `text` or the annotation's `quote`. `findText` is available on every viewer, but a quote occurring more than once gives no deterministic way to choose the right occurrence, so a quote-search fallback would silently point the user at the wrong passage. Such a fallback is permitted only behind a deterministic, independently testable matching policy, and no such policy is defined by this change.
+The implementation SHALL NOT fall back from a structural range to searching the document for the selector's `text` or the annotation's `quote`. Explicit table anchors use only the deterministic, independently tested temporary matching policy above; the viewer's unrestricted `findText` search SHALL NOT be used as a fallback.
 
 **State ownership**: none beyond the renderer's existing loading/error state, which is unchanged.
 **i18n**: none — no new message is shown, because no failure is reported to the user.

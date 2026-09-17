@@ -6,6 +6,7 @@ import {
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialSdkError } from '../../../common/dial/dial-error.mapper';
 import type { DialClientService } from '../../../dial/dial-client.service';
+import type { ConversationResponseDto } from '../../../openapi/openapi-response.dto';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ConversationLifecycleService } from '../conversation-lifecycle.service';
 
@@ -16,7 +17,7 @@ vi.mock('../../../common/dial/dial-error.mapper', () => ({
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-const TEST_CONVERSATION = {
+const TEST_CONVERSATION: ConversationResponseDto = {
   id: 'test-bucket/gpt-4o__Test__11111111-1111-1111-1111-111111111111',
   folderId: 'test-bucket',
   name: 'Test',
@@ -76,23 +77,18 @@ describe('ConversationLifecycleService', () => {
       persistenceService,
     );
     vi.mocked(handleDialSdkError).mockReset();
-    vi.spyOn(
-      service['dialClient'].client,
-      'saveConversation',
-    ).mockResolvedValue({
+    vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
-    vi.spyOn(service['dialClient'].client, 'getConversation').mockRejectedValue(
-      {
-        error: { status: 404 },
-      } as never,
-    );
+    vi.spyOn(mockDialClient.client, 'getConversation').mockRejectedValue({
+      error: { status: 404 },
+    } as never);
     /*
      * Default: no path collision on duplicate (metadata lookup returns 404).
      * Individual duplicateConversation tests override this when needed.
      */
     vi.spyOn(
-      service['dialClient'].client,
+      mockDialClient.client,
       'getConversationMetadata',
     ).mockResolvedValue({
       data: null,
@@ -104,7 +100,7 @@ describe('ConversationLifecycleService', () => {
   describe('createConversation', () => {
     it('saves the conversation using the expected Core resource name', async () => {
       const saveConversationSpy = vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'saveConversation',
       );
 
@@ -126,7 +122,7 @@ describe('ConversationLifecycleService', () => {
 
     it('does not double-encode percent-encoded deployment ID segments', async () => {
       const saveConversationSpy = vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'saveConversation',
       );
       const deploymentId = 'applications/catalog/Team%2FApp%20One__0.0.1';
@@ -246,13 +242,10 @@ describe('ConversationLifecycleService', () => {
 
     it('always appends a UUID suffix to the conversation path', async () => {
       const getMetadataSpy = vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       );
-      const saveSpy = vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      );
+      const saveSpy = vi.spyOn(mockDialClient.client, 'saveConversation');
 
       const result = await service.createConversation(
         'What is AI?',
@@ -283,16 +276,14 @@ describe('ConversationLifecycleService', () => {
     const mockGetConversation = (
       conversation: typeof TEST_CONVERSATION = SHARED_CONVERSATION,
     ) =>
-      vi
-        .spyOn(service['dialClient'].client, 'getConversation')
-        .mockResolvedValue({
-          data: { ...conversation },
-        } as never);
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: { ...conversation },
+      } as never);
 
     it('decodes the encoded filename so the title is not mangled (no "New20 chat")', async () => {
       mockGetConversation();
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.duplicateConversation(
@@ -314,7 +305,7 @@ describe('ConversationLifecycleService', () => {
     it('preserves the source display name without adding a numeric suffix', async () => {
       mockGetConversation();
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.duplicateConversation(
@@ -339,7 +330,7 @@ describe('ConversationLifecycleService', () => {
         name: 'New chat 1',
       });
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.duplicateConversation(
@@ -368,7 +359,7 @@ describe('ConversationLifecycleService', () => {
         llmNamingDone: true,
       });
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.duplicateConversation(
@@ -394,7 +385,7 @@ describe('ConversationLifecycleService', () => {
     it('rewrites the duplicate id/folderId to the session bucket', async () => {
       mockGetConversation();
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.duplicateConversation(
@@ -417,14 +408,14 @@ describe('ConversationLifecycleService', () => {
 
     it('appends a UUID segment when the destination path already exists', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockResolvedValue({
         data: { name: 'gpt-4o__New chat' },
       } as never);
       mockGetConversation();
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.duplicateConversation(
@@ -449,13 +440,13 @@ describe('ConversationLifecycleService', () => {
         name: 'hello',
       });
       const metadataSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversationMetadata')
+        .spyOn(mockDialClient.client, 'getConversationMetadata')
         .mockResolvedValue({
           error: { status: 404 },
           response: new Response(null, { status: 404 }),
         } as never);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.duplicateConversation(
@@ -482,14 +473,11 @@ describe('ConversationLifecycleService', () => {
 
     it('does not call fetchAllUserTitles during duplicate', async () => {
       mockGetConversation();
-      vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
         data: {},
       } as never);
       const metadataSpy = vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       );
 
@@ -512,10 +500,7 @@ describe('ConversationLifecycleService', () => {
 
     it('does not invoke ConversationNamingService during duplicate', async () => {
       mockGetConversation();
-      vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
         data: {},
       } as never);
 
@@ -532,10 +517,7 @@ describe('ConversationLifecycleService', () => {
 
     it('returns the encoded path of the new conversation', async () => {
       mockGetConversation();
-      vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
         data: {},
       } as never);
 
@@ -551,10 +533,7 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('preserves temperature and responseFormat from the source conversation', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: {
           ...SHARED_CONVERSATION,
           temperature: 0.7,
@@ -562,7 +541,7 @@ describe('ConversationLifecycleService', () => {
         },
       } as never);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.duplicateConversation(
@@ -584,7 +563,7 @@ describe('ConversationLifecycleService', () => {
 
     beforeEach(() => {
       deleteConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'deleteConversation')
+        .spyOn(mockDialClient.client, 'deleteConversation')
         .mockResolvedValue({ data: {}, error: null } as never);
     });
 
@@ -713,10 +692,10 @@ describe('ConversationLifecycleService', () => {
 
     beforeEach(() => {
       deleteConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'deleteConversation')
+        .spyOn(mockDialClient.client, 'deleteConversation')
         .mockResolvedValue({ data: {}, error: null } as never);
       getMetadataSpy = vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       );
     });
@@ -821,7 +800,7 @@ describe('ConversationLifecycleService', () => {
 
     it('does not double-encode delete paths', async () => {
       const deleteSpy = vi
-        .spyOn(service['dialClient'].client, 'deleteConversation')
+        .spyOn(mockDialClient.client, 'deleteConversation')
         .mockResolvedValue({ data: {} } as never);
 
       await service.deleteConversation(
@@ -838,9 +817,9 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('renames at the same path without moving the resource', async () => {
-      const moveSpy = vi.spyOn(service['dialClient'].client, 'moveResource');
+      const moveSpy = vi.spyOn(mockDialClient.client, 'moveResource');
       const getSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
+        .spyOn(mockDialClient.client, 'getConversation')
         .mockResolvedValue({
           data: {
             ...TEST_CONVERSATION,
@@ -849,7 +828,7 @@ describe('ConversationLifecycleService', () => {
           },
         } as never);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       const result = await service.renameConversation(
@@ -879,10 +858,7 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('throws NotFoundException when the conversation to rename does not exist', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: null,
         error: { status: 404 },
       } as never);
@@ -902,12 +878,12 @@ describe('ConversationLifecycleService', () => {
 
     it('preserves nested deployment paths when duplicating', async () => {
       const getSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
+        .spyOn(mockDialClient.client, 'getConversation')
         .mockResolvedValue({
           data: { ...TEST_CONVERSATION, name: 'hello' },
         } as never);
       const saveSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       const result = await service.duplicateConversation(
@@ -949,10 +925,7 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('deleteConversation throws NotFoundException when DIAL Core reports 404 with no status on the error body', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'deleteConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'deleteConversation').mockResolvedValue({
         error: { message: 'Not found' },
         response: new Response(null, { status: 404 }),
       } as never);
@@ -967,10 +940,7 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('duplicateConversation throws ForbiddenException for a 403 upstream response on the source read', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         error: { message: 'Forbidden' },
         response: new Response(null, { status: 403 }),
       } as never);
@@ -985,16 +955,10 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('renameConversation throws ConflictException for a 409 upstream response on the save call', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
-      vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
         error: { message: 'Conflict' },
         response: new Response(null, { status: 409 }),
       } as never);
@@ -1010,10 +974,7 @@ describe('ConversationLifecycleService', () => {
     });
 
     it('createConversation throws NotFoundException for a 404 upstream response on the save call', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
         error: { message: 'Not found' },
         response: new Response(null, { status: 404 }),
       } as never);

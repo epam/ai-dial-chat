@@ -101,6 +101,28 @@ export interface OoxmlPptxHighlightLocation {
   text: string;
 }
 
+/** A complete table row in the DOCX body, matched by cell text. */
+export interface OoxmlDocxTableRowLocation {
+  /** Location kind. */
+  kind: OoxmlHighlightKind.DocxTableRow;
+  /** Plain text of each cell, in column order. */
+  cells: string[];
+  /** 1-based matching row in document order. */
+  occurrence: number;
+}
+
+/** A complete table row on one PPTX slide, matched by cell text. */
+export interface OoxmlPptxTableRowLocation {
+  /** Location kind. */
+  kind: OoxmlHighlightKind.PptxTableRow;
+  /** Plain text of each cell, in column order. */
+  cells: string[];
+  /** 1-based matching row on the specified slide. */
+  occurrence: number;
+  /** 1-based slide number. */
+  slide: number;
+}
+
 /** A 1-based cell address, matching `@silurus/ooxml`'s own `CellAddress`. */
 export interface OoxmlCellAddress {
   /** 1-based row number. */
@@ -125,6 +147,8 @@ export interface OoxmlXlsxHighlightLocation {
 export type OoxmlHighlightLocation =
   | OoxmlDocxHighlightLocation
   | OoxmlPptxHighlightLocation
+  | OoxmlDocxTableRowLocation
+  | OoxmlPptxTableRowLocation
   | OoxmlXlsxHighlightLocation;
 
 /** One citation's highlight: the locations it resolved to, under a stable id. */

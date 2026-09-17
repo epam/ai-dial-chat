@@ -1,6 +1,10 @@
 import { ConflictException, Logger } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
+import {
+  DataPointType,
+  MeterProvider,
+  MetricReader,
+} from '@opentelemetry/sdk-metrics';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { initializeRuntimeMetrics } from '../../telemetry/runtime-metrics';
@@ -398,6 +402,7 @@ describe('ConversationGenerationService', () => {
             (metric) =>
               metric.descriptor.name === 'dial.chat.generations.active',
           )
+          .filter((metric) => metric.dataPointType === DataPointType.GAUGE)
           .flatMap((metric) => metric.dataPoints),
       );
       expect(dataPoints).toHaveLength(1);

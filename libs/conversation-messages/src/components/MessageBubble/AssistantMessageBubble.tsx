@@ -73,7 +73,12 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
       downloadCsvLabel: tableDownloadCsvLabel,
       openInCanvasLabel: tableOpenInCanvasLabel,
     }),
-    [tableCopyLabel, tableCopiedLabel, tableDownloadCsvLabel, tableOpenInCanvasLabel],
+    [
+      tableCopyLabel,
+      tableCopiedLabel,
+      tableDownloadCsvLabel,
+      tableOpenInCanvasLabel,
+    ],
   );
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
