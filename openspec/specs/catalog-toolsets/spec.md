@@ -77,12 +77,12 @@ The toolset mapper SHALL convert each `DialToolsetDto` to a `CatalogItem` with:
 - `version` from `displayVersion`, falling back to empty string
 - `updatedAt` and `lastUsed` from `updatedAt`
 - `topics` from `descriptionKeywords`, falling back to an empty array
-- `folder` from a `toolsets/{bucket}/{path}` id/toolset path when available
+- `folder` from the localized ownership/root label and any decoded nested path, following the [deployment-catalog-item-mapping](../deployment-catalog-item-mapping/spec.md) rules; configured toolsets with plain IDs SHALL show the Organization label when neither owned nor shared
 - `details.tools.tools` from `allowedTools`, when present
 - `isMyApp` from `isMy`
 - favorite/starred state from user-config installed ids
 
-The mapper MUST live in `apps/chat` and MUST NOT be added to `libs/catalog`.
+The app-owned wrapper in `apps/chat` SHALL resolve translations and icon URLs and delegate the DTO mapping to `libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts`, following [chat-hooks-domain-utilities](../chat-hooks-domain-utilities/spec.md). `libs/catalog` SHALL consume resolved `CatalogItem` values without interpreting DIAL identifiers or ownership metadata.
 
 #### Scenario: Catalog renders toolset items
 

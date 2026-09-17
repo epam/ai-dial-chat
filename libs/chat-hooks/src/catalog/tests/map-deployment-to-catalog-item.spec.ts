@@ -196,6 +196,56 @@ describe('mapDeploymentToCatalogItem', () => {
     expect(result.folder).toEqual(['Public', 'team']);
   });
 
+  it.each(['quickapps-files-demo-ah-copy', 'quickapps-files-demo-nt-copy'])(
+    'shows the organization folder for the configured application %s',
+    (id) => {
+      const result = mapItem(
+        {
+          id,
+          displayName: id,
+          type: 'application',
+          applicationFolder: undefined,
+        },
+        { folderLabels: { ...folderLabels, public: 'Organization' } },
+      );
+
+      expect(result.folder).toEqual(['Organization']);
+      expect(result.isMyApp).toBe(false);
+      expect(result.sharedWithMe).toBe(false);
+      expect(result.isEditable).toBe(false);
+    },
+  );
+
+  it('uses the public label for an application with an empty folder and false ownership flags', () => {
+    const result = mapItem({
+      id: 'configured-app',
+      displayName: 'Configured app',
+      type: 'application',
+      applicationFolder: '',
+      isMy: false,
+      sharedWithMe: false,
+    });
+
+    expect(result.folder).toEqual(['Public']);
+  });
+
+  it('keeps an owned application without folder metadata under Personal', () => {
+    expect(mapItem(baseDeployment).folder).toEqual(['Personal']);
+  });
+
+  it.each(['model', 'toolset'] as const)(
+    'does not infer an organization folder for deployment type %s',
+    (type) => {
+      const result = mapItem({
+        id: 'deployment-without-folder',
+        displayName: 'Deployment without folder',
+        type,
+      });
+
+      expect(result.folder).toEqual([]);
+    },
+  );
+
   it('never exposes the raw bucket ID for a shared application with a nested storage path', () => {
     const result = mapItem({
       ...baseDeployment,
@@ -341,11 +391,65 @@ describe('mapToolsetToCatalogItem', () => {
     expect(result.sharedWithMe).toBe(false);
   });
 
-  it('keeps root-level toolsets without a folder', () => {
+  it('keeps root-level toolsets without a folder when labels are not supplied', () => {
     const result = mapItem({ id: 'salesforce', toolset: 'salesforce' });
 
     expect(result.folder).toEqual([]);
     expect(result.name).toBe('salesforce');
+  });
+
+  it.each(['salesforce', ''])(
+    'shows Organization for a configured toolset with toolset name "%s"',
+    (toolset) => {
+      const result = mapItem(
+        { id: 'salesforce', toolset },
+        { folderLabels: { ...folderLabels, public: 'Organization' } },
+      );
+
+      expect(result.folder).toEqual(['Organization']);
+      expect(result.isMyApp).toBe(false);
+      expect(result.sharedWithMe).toBe(false);
+      expect(result.isEditable).toBe(false);
+    },
+  );
+
+  it('keeps an owned toolset with a plain ID under Personal', () => {
+    const result = mapItem(
+      { id: 'salesforce', toolset: 'salesforce', isMy: true },
+      { folderLabels },
+    );
+
+    expect(result.folder).toEqual(['Personal']);
+  });
+
+  it('keeps a shared toolset with a plain ID under Shared', () => {
+    const result = mapItem(
+      { id: 'salesforce', toolset: 'salesforce', sharedWithMe: true },
+      { folderLabels },
+    );
+
+    expect(result.folder).toEqual(['Shared']);
+  });
+
+  it.each([
+    { id: 'toolsets/public/salesforce', folder: ['Public'] },
+    {
+      id: 'toolsets/public/QA%20team/salesforce',
+      folder: ['Public', 'QA team'],
+    },
+  ])('keeps the public folder path for $id', ({ id, folder }) => {
+    const result = mapItem({ id, toolset: id }, { folderLabels });
+
+    expect(result.folder).toEqual(folder);
+  });
+
+  it('does not infer Organization for an unclassified resource path', () => {
+    const result = mapItem(
+      { id: 'owner-bucket/salesforce', toolset: 'owner-bucket/salesforce' },
+      { folderLabels },
+    );
+
+    expect(result.folder).toEqual([]);
   });
 
   it('places a toolset owned by the current user under the Personal folder', () => {
