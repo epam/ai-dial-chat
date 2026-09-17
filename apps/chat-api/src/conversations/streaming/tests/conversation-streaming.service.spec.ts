@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import type { FeatureFlagsService } from '../../../app-config/feature-flags/feature-flags.service';
 import { FeatureKey } from '../../../app-config/feature-flags/feature-key.enum';
 import type { DeploymentsService } from '../../../deployments/deployments.service';
+import { DeploymentItemType } from '../../../deployments/dto/deployment-item.dto';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import {
   ConversationGenerationService,
@@ -160,7 +161,7 @@ describe('ConversationStreamingService', () => {
     mockDeploymentsService = {
       getDeploymentDetails: vi.fn().mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { chatCompletion: true } },
       }),
     } as unknown as DeploymentsService;
@@ -185,17 +186,12 @@ describe('ConversationStreamingService', () => {
       new ResponsesAdapter(mockDialClient),
       mockFeatureFlagsService,
     );
-    vi.spyOn(
-      service['dialClient'].client,
-      'saveConversation',
-    ).mockResolvedValue({
+    vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
-    vi.spyOn(service['dialClient'].client, 'getConversation').mockRejectedValue(
-      {
-        error: { status: 404 },
-      } as never,
-    );
+    vi.spyOn(mockDialClient.client, 'getConversation').mockRejectedValue({
+      error: { status: 404 },
+    } as never);
   });
 
   describe('streamCompletion', () => {
@@ -222,10 +218,7 @@ describe('ConversationStreamingService', () => {
       timezone?: string,
       jobTitle?: string,
     ) => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: conversationData,
       } as never);
       const res = makeMockRes();
@@ -237,7 +230,7 @@ describe('ConversationStreamingService', () => {
         },
       });
       const sendSpy = vi
-        .spyOn(service['dialClient'].client, 'sendChatCompletionRequest')
+        .spyOn(mockDialClient.client, 'sendChatCompletionRequest')
         .mockResolvedValue({
           response: new Response(mockStream, {
             status: 200,
@@ -493,13 +486,13 @@ describe('ConversationStreamingService', () => {
           },
         ],
       };
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({ data: conversation } as never);
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: conversation,
+      } as never);
       const sendSpy = vi
-        .spyOn(service['dialClient'].client, 'sendChatCompletionRequest')
+        .spyOn(mockDialClient.client, 'sendChatCompletionRequest')
         .mockImplementation(async () => ({
+          data: {},
           response: new Response(textToStream(['data: [DONE]\n\n']), {
             status: 200,
           }),
@@ -584,7 +577,7 @@ describe('ConversationStreamingService', () => {
     it('uses Responses API when the server-resolved deployment supports it', async () => {
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: {
           features: { responsesApi: true, temperature: true },
         },
@@ -643,7 +636,7 @@ describe('ConversationStreamingService', () => {
     it('forwards the job title as X-JOB-TITLE for the Responses API', async () => {
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { responsesApi: true } },
       });
       const createResponseSpy = vi
@@ -689,7 +682,7 @@ describe('ConversationStreamingService', () => {
     it('resolves the feature flag via FeatureFlagsService.isEnabled with the fixed server context', async () => {
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { responsesApi: true } },
       });
 
@@ -717,7 +710,7 @@ describe('ConversationStreamingService', () => {
       vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(false);
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { responsesApi: true, temperature: true } },
       });
       const createResponseSpy = vi.spyOn(
@@ -751,7 +744,7 @@ describe('ConversationStreamingService', () => {
       vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(true);
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { responsesApi: false } },
       });
       const createResponseSpy = vi.spyOn(
@@ -792,7 +785,7 @@ describe('ConversationStreamingService', () => {
       vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(false);
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { responsesApi: true } },
       });
       const createResponseSpy = vi.spyOn(
@@ -827,7 +820,7 @@ describe('ConversationStreamingService', () => {
     it('omits temperature from the Chat Completions request when the deployment does not support it', async () => {
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { temperature: false } },
       });
 
@@ -856,7 +849,7 @@ describe('ConversationStreamingService', () => {
     it('includes temperature in the Chat Completions request when the deployment supports it', async () => {
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { temperature: true } },
       });
 
@@ -917,7 +910,7 @@ describe('ConversationStreamingService', () => {
       vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(false);
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { responsesApi: true } },
       });
       const addSpy = vi.spyOn(generationRequestsTotal, 'add');
@@ -946,7 +939,7 @@ describe('ConversationStreamingService', () => {
       vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(true);
       vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
         id: 'gpt-4o',
-        type: 'model',
+        type: DeploymentItemType.Model,
         modelDetails: { features: { responsesApi: true } },
       });
       const createResponseSpy = vi
@@ -1224,17 +1217,14 @@ describe('ConversationStreamingService', () => {
     });
 
     it('saves partial message with streamErrorMessage when DIAL Core returns non-ok response', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
       const saveConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: new Response(null, {
@@ -1269,14 +1259,11 @@ describe('ConversationStreamingService', () => {
     });
 
     it('saves partial message with streamErrorMessage for an in-band DIAL error chunk (no choices)', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
       const saveConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
 
       const encoder = new TextEncoder();
@@ -1297,7 +1284,7 @@ describe('ConversationStreamingService', () => {
         },
       });
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: new Response(mockStream, {
@@ -1333,20 +1320,17 @@ describe('ConversationStreamingService', () => {
     });
 
     it('writes SSE chunks to res and saves conversation on completion', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
       const saveConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
       const firstChunk =
         'data: {"id":"resp-1","choices":[{"delta":{"content":"Hello"}}]}\n\n';
       const doneChunk = 'data: [DONE]\n\n';
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: new Response(textToStream([firstChunk, doneChunk]), {
@@ -1382,16 +1366,10 @@ describe('ConversationStreamingService', () => {
     });
 
     it('finalizes the generation on [DONE] even when the upstream keeps the connection open', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
-      vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
         data: {},
       } as never);
 
@@ -1412,7 +1390,7 @@ describe('ConversationStreamingService', () => {
         },
       });
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: new Response(neverClosingStream, {
@@ -1449,14 +1427,11 @@ describe('ConversationStreamingService', () => {
     });
 
     it('stops and saves a pending tool-call stream without waiting for another upstream event', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
       const saveConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
       const generationAbortController = new AbortController();
       vi.mocked(mockGenerationService.register).mockReturnValue(
@@ -1479,7 +1454,7 @@ describe('ConversationStreamingService', () => {
         cancel,
       });
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: new Response(pendingToolCallStream, { status: 200 }),
@@ -1520,14 +1495,11 @@ describe('ConversationStreamingService', () => {
     });
 
     it('finalizes as an error and releases the registry entry when the consumer is abandoned for a reason other than a relay terminal outcome (defensive backstop)', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
       const saveConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveConversation')
+        .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
       const generationAbortController = new AbortController();
       vi.mocked(mockGenerationService.register).mockReturnValue(
@@ -1548,7 +1520,7 @@ describe('ConversationStreamingService', () => {
         cancel,
       });
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: new Response(neverEndingStream, { status: 200 }),
@@ -1601,18 +1573,14 @@ describe('ConversationStreamingService', () => {
     });
 
     it("reaches Done and finalizes exactly once when the consumer drains to the relay's natural terminal outcome — the same unconditional-drain path the controller now uses after the downstream response has detached (e.g. a client disconnect)", async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
       vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      ).mockResolvedValue({ data: {} } as never);
-      vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: new Response(

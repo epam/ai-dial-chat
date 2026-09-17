@@ -49,7 +49,10 @@ const createStaticTestApp = async (
   reportUri?: string,
 ): Promise<INestApplication> => {
   const app = await NestFactory.create(StaticTestModule, { logger: false });
-  app.use(helmet(createHelmetOptions([], false)));
+  /* The app declarations use Helmet's CJS types; Vitest resolves its ESM types. */
+  app.use(
+    helmet(createHelmetOptions([], false) as Parameters<typeof helmet>[0]),
+  );
   app.use(
     await createFrontendMiddleware({
       frontendRootPath,

@@ -3,6 +3,7 @@ import type { PptxPresentation } from '@silurus/ooxml/pptx';
 import type { XlsxViewer } from '@silurus/ooxml/xlsx';
 import type {
   OoxmlDocxHighlightLocation,
+  OoxmlDocxTableRowLocation,
   OoxmlHighlight,
   OoxmlHighlightLocation,
 } from '../models/attachment-canvas';
@@ -14,6 +15,7 @@ import {
   createOoxmlTextMeasurer,
   docxPageSizePx,
   type OoxmlDocxPageRuns,
+  type OoxmlDocxPageRects,
   type OoxmlHighlightRect,
   pptxSlideSizePx,
   resolveDocxRects,
@@ -24,6 +26,10 @@ import {
   resolveXlsxSheetIndex,
   toXlsxCellRef,
 } from './ooxml-highlight-geometry';
+import {
+  resolveDocxTableRowRects,
+  resolvePptxTableRowRects,
+} from './ooxml-table-row-highlight';
 
 export { OoxmlNavigationOutcome };
 
@@ -144,6 +150,7 @@ export const createDocxHighlightSurface = (
 ): OoxmlHighlightSurface => {
   const measureText = createOoxmlTextMeasurer();
   const runsByPage = new Map<number, readonly DocxTextRunInfo[]>();
+  const tableRowRects = new Map<string, OoxmlDocxPageRects[]>();
   /*
    * Monotonic token bumped at the start of every `navigate` call and
    * re-checked after each suspension point, so an earlier citation's
@@ -234,6 +241,43 @@ export const createDocxHighlightSurface = (
     return pages;
   };
 
+  const resolveLocation = async (
+    location: OoxmlDocxHighlightLocation | OoxmlDocxTableRowLocation,
+    shouldAbort: () => boolean = isDisposed,
+  ): Promise<{ firstPageIndex?: number; pageRects: OoxmlDocxPageRects[] }> => {
+    if (location.kind === OoxmlHighlightKind.DocxTextRange) {
+      const pages = await findPages(location, shouldAbort);
+      return {
+        firstPageIndex: pages.at(0)?.pageIndex,
+        pageRects: resolveDocxRects({ location, pages, measure: measureText }),
+      };
+    }
+
+    const key = JSON.stringify([location.cells, location.occurrence]);
+    let pageRects = tableRowRects.get(key);
+    if (pageRects == null) {
+      try {
+        await docxDocument.waitUntilLayoutComplete();
+      } catch {
+        return { pageRects: [] };
+      }
+      if (shouldAbort()) return { pageRects: [] };
+      const pages: OoxmlDocxPageRuns[] = [];
+      for (
+        let pageIndex = 0;
+        pageIndex < docxDocument.pageCount;
+        pageIndex += 1
+      ) {
+        const runs = await collectPage(pageIndex);
+        if (shouldAbort()) return { pageRects: [] };
+        pages.push({ pageIndex, runs, pageBox: referenceSizeAt(pageIndex) });
+      }
+      pageRects = resolveDocxTableRowRects(location, pages);
+      tableRowRects.set(key, pageRects);
+    }
+    return { firstPageIndex: pageRects.at(0)?.pageIndex, pageRects };
+  };
+
   return {
     measure: async (highlights) => {
       const host = findScrollHost(container);
@@ -242,16 +286,16 @@ export const createDocxHighlightSurface = (
       const rects: TaggedHighlightRect[] = [];
       for (const highlight of highlights) {
         for (const location of highlight.locations) {
-          if (location.kind !== OoxmlHighlightKind.DocxTextRange) continue;
+          if (
+            location.kind !== OoxmlHighlightKind.DocxTextRange &&
+            location.kind !== OoxmlHighlightKind.DocxTableRow
+          )
+            continue;
 
-          const pages = await findPages(location);
+          const resolved = await resolveLocation(location);
           if (isDisposed()) return [];
 
-          for (const { pageIndex, rects: pageRects } of resolveDocxRects({
-            location,
-            pages,
-            measure: measureText,
-          })) {
+          for (const { pageIndex, rects: pageRects } of resolved.pageRects) {
             const offset = resolveSurfaceOffset({
               index: pageIndex,
               sizeAt,
@@ -280,7 +324,10 @@ export const createDocxHighlightSurface = (
       return rects;
     },
     navigate: async (location) => {
-      if (location.kind !== OoxmlHighlightKind.DocxTextRange) {
+      if (
+        location.kind !== OoxmlHighlightKind.DocxTextRange &&
+        location.kind !== OoxmlHighlightKind.DocxTableRow
+      ) {
         return OoxmlNavigationOutcome.Unresolved;
       }
 
@@ -304,39 +351,34 @@ export const createDocxHighlightSurface = (
       }
       if (isSuperseded()) return OoxmlNavigationOutcome.Superseded;
 
-      const pages = await findPages(location, isSuperseded);
+      const { firstPageIndex, pageRects } = await resolveLocation(
+        location,
+        isSuperseded,
+      );
       if (isSuperseded()) return OoxmlNavigationOutcome.Superseded;
 
-      const firstPage = pages.at(0);
       /* No page carries this location at all: leave the viewer where it is
        * rather than a confident jump to the wrong page. */
-      if (firstPage == null) return OoxmlNavigationOutcome.Unresolved;
+      if (firstPageIndex == null) return OoxmlNavigationOutcome.Unresolved;
 
       const host = findScrollHost(container);
       /* Mirrors `measure`'s own failure mode: a missing host means no
        * navigation, not a scroll to a guessed position. */
       if (host == null) return OoxmlNavigationOutcome.Unresolved;
 
-      const pageRects = resolveDocxRects({
-        location,
-        pages,
-        measure: measureText,
-      });
-      if (isSuperseded()) return OoxmlNavigationOutcome.Superseded;
-
       const rect = pageRects
-        .find((page) => page.pageIndex === firstPage.pageIndex)
+        .find((page) => page.pageIndex === firstPageIndex)
         ?.rects.at(0);
 
       if (rect == null) {
         /* The page is known but no rectangle resolved on it — the user still
          * lands on the cited page, unchanged from the page-level behaviour. */
-        viewer.scrollToPage(firstPage.pageIndex);
+        viewer.scrollToPage(firstPageIndex);
         return OoxmlNavigationOutcome.Navigated;
       }
 
       const target = resolveDocxScrollTarget({
-        pageIndex: firstPage.pageIndex,
+        pageIndex: firstPageIndex,
         rect,
         sizeAt,
         host: {
@@ -390,7 +432,11 @@ export const createPptxHighlightSurface = (
       const rects: TaggedHighlightRect[] = [];
       for (const highlight of highlights) {
         for (const location of highlight.locations) {
-          if (location.kind !== OoxmlHighlightKind.PptxTextRange) continue;
+          if (
+            location.kind !== OoxmlHighlightKind.PptxTextRange &&
+            location.kind !== OoxmlHighlightKind.PptxTableRow
+          )
+            continue;
 
           const slideIndex = toSlideIndex(location.slide);
           if (slideIndex == null) continue;
@@ -406,11 +452,11 @@ export const createPptxHighlightSurface = (
             sizeAt,
             hostClientWidth: host.clientWidth,
           });
-          for (const rect of resolvePptxRects({
-            location,
-            runs,
-            measure: measureText,
-          })) {
+          const locationRects =
+            location.kind === OoxmlHighlightKind.PptxTableRow
+              ? resolvePptxTableRowRects(location, runs)
+              : resolvePptxRects({ location, runs, measure: measureText });
+          for (const rect of locationRects) {
             rects.push({
               ...rect,
               left: offset.left + rect.left - host.scrollLeft,
@@ -423,7 +469,10 @@ export const createPptxHighlightSurface = (
       return rects;
     },
     navigate: async (location) => {
-      if (location.kind !== OoxmlHighlightKind.PptxTextRange) {
+      if (
+        location.kind !== OoxmlHighlightKind.PptxTextRange &&
+        location.kind !== OoxmlHighlightKind.PptxTableRow
+      ) {
         return OoxmlNavigationOutcome.Unresolved;
       }
       const slideIndex = toSlideIndex(location.slide);

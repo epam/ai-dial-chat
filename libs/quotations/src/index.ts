@@ -50,9 +50,11 @@ export {
 } from './utils/annotation';
 export type {
   DocxOfficeHighlightLocation,
+  DocxTableRowOfficeHighlightLocation,
   ExcelOfficeHighlightLocation,
   OfficeHighlightLocation,
   PptxOfficeHighlightLocation,
+  PptxTableRowOfficeHighlightLocation,
 } from './models/office-highlight';
 
 export {

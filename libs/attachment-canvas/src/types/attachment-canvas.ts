@@ -31,6 +31,10 @@ export enum OoxmlHighlightKind {
   DocxTextRange = 'docxTextRange',
   /** A character range inside a single PPTX shape on one slide. */
   PptxTextRange = 'pptxTextRange',
+  /** A complete DOCX table row identified by its cell text. */
+  DocxTableRow = 'docxTableRow',
+  /** A complete PPTX table row identified by its cell text on one slide. */
+  PptxTableRow = 'pptxTableRow',
   /** One cell, or a contiguous same-row cell range, on a named XLSX sheet. */
   XlsxCellRange = 'xlsxCellRange',
 }

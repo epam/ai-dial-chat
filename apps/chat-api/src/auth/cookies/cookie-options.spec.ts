@@ -57,7 +57,9 @@ describe('clearLegacyCookies', () => {
   it('does nothing when AUTH_LEGACY_COOKIE_NAMES is unset', () => {
     const config = makeConfig();
     const res = makeRes();
-    const req = { cookies: { 'next-auth.session-token': 'value' } } as Request;
+    const req = {
+      cookies: { 'next-auth.session-token': 'value' },
+    } as unknown as Request;
 
     clearLegacyCookies(req, res, config);
 
@@ -74,7 +76,7 @@ describe('clearLegacyCookies', () => {
     const res = makeRes();
     const req = {
       cookies: { '__Secure-next-auth.session-token': 'stale' },
-    } as Request;
+    } as unknown as Request;
 
     clearLegacyCookies(req, res, config);
 
@@ -91,7 +93,7 @@ describe('clearLegacyCookies', () => {
       AUTH_LEGACY_COOKIE_NAMES: ['__Secure-next-auth.session-token'],
     });
     const res = makeRes();
-    const req = {} as Request;
+    const req = {} as unknown as Request;
 
     clearLegacyCookies(req, res, config);
 

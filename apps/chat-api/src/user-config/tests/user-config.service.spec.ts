@@ -29,7 +29,7 @@ const makeDownloadSpy = (
 ) => {
   let callIndex = 0;
   return vi
-    .spyOn(service['dialClient'].client, 'downloadFile')
+    .spyOn((service['dialClient'] as DialClientService).client, 'downloadFile')
     .mockImplementation(async (_bucket: unknown, path: unknown) => {
       const pathStr = path as string;
       // Find a matching response by path, or use the current call index
@@ -57,29 +57,35 @@ const makeSingleDownloadSpy = (
   service: UserConfigService,
   options: { ok: boolean; body?: string },
 ) =>
-  vi.spyOn(service['dialClient'].client, 'downloadFile').mockResolvedValue({
-    response: {
-      ok: options.ok,
-      text: async () => options.body ?? '',
-    },
-  } as never);
+  vi
+    .spyOn((service['dialClient'] as DialClientService).client, 'downloadFile')
+    .mockResolvedValue({
+      response: {
+        ok: options.ok,
+        text: async () => options.body ?? '',
+      },
+    } as never);
 
 const makeUploadSpy = (
   service: UserConfigService,
   options: { error?: unknown; status?: number } = {},
 ) =>
-  vi.spyOn(service['dialClient'].client, 'uploadFile').mockResolvedValue({
-    error: options.error,
-    response: {
-      status: options.status ?? 200,
-      text: async () => (options.error ? 'error body' : ''),
-    },
-  } as never);
+  vi
+    .spyOn((service['dialClient'] as DialClientService).client, 'uploadFile')
+    .mockResolvedValue({
+      error: options.error,
+      response: {
+        status: options.status ?? 200,
+        text: async () => (options.error ? 'error body' : ''),
+      },
+    } as never);
 
 const makeDeleteSpy = (service: UserConfigService) =>
-  vi.spyOn(service['dialClient'].client, 'deleteFile').mockResolvedValue({
-    response: { ok: true },
-  } as never);
+  vi
+    .spyOn((service['dialClient'] as DialClientService).client, 'deleteFile')
+    .mockResolvedValue({
+      response: { ok: true },
+    } as never);
 
 const getUploadedConfig = async (uploadSpy: ReturnType<typeof vi.spyOn>) => {
   const formData = (uploadSpy.mock.calls[0] as unknown[])[2] as {
@@ -298,7 +304,10 @@ describe('UserConfigService', () => {
 
   describe('readConfig', () => {
     it('returns the default config when both paths return non-ok', async () => {
-      vi.spyOn(service['dialClient'].client, 'downloadFile').mockResolvedValue({
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'downloadFile',
+      ).mockResolvedValue({
         response: { ok: false, text: async () => '' },
       } as never);
       makeDeleteSpy(service);
@@ -357,9 +366,10 @@ describe('UserConfigService', () => {
     });
 
     it('returns default config when downloadFile throws', async () => {
-      vi.spyOn(service['dialClient'].client, 'downloadFile').mockRejectedValue(
-        new Error('network'),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'downloadFile',
+      ).mockRejectedValue(new Error('network'));
       const result = await service.readConfig('token', 'bucket');
       expect(result).toEqual(DEFAULT_USER_CONFIG);
     });
@@ -691,9 +701,10 @@ describe('UserConfigService', () => {
           { path: 'clientdata/installed_deployments.json', ok: false },
         ]);
         const uploadSpy = makeUploadSpy(service);
-        vi.spyOn(service['dialClient'].client, 'deleteFile').mockRejectedValue(
-          new Error('delete failed'),
-        );
+        vi.spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'deleteFile',
+        ).mockRejectedValue(new Error('delete failed'));
 
         /*
          * ts-a is already in base, legacy file also has ts-a → no new IDs merged,
@@ -723,7 +734,10 @@ describe('UserConfigService', () => {
           { path: 'clientdata/installed_deployments.json', ok: false },
         ]);
         const uploadSpy = makeUploadSpy(service);
-        vi.spyOn(service['dialClient'].client, 'deleteFile').mockResolvedValue({
+        vi.spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'deleteFile',
+        ).mockResolvedValue({
           error: 'Forbidden',
           response: { status: 403, ok: false },
         } as never);
@@ -765,7 +779,7 @@ describe('UserConfigService', () => {
   describe('writeConfig', () => {
     it('uploads the config as multipart FormData', async () => {
       const uploadSpy = makeUploadSpy(service);
-      const config = v2Config({ conversations: { pinnedIds: ['id-1'] } });
+      const config = v6Config({ conversations: { pinnedIds: ['id-1'] } });
       await service.writeConfig(config, 'token', 'bucket');
       expect(uploadSpy).toHaveBeenCalledWith(
         'bucket',
@@ -788,9 +802,10 @@ describe('UserConfigService', () => {
     });
 
     it('re-throws when uploadFile itself throws', async () => {
-      vi.spyOn(service['dialClient'].client, 'uploadFile').mockRejectedValue(
-        new Error('network'),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'uploadFile',
+      ).mockRejectedValue(new Error('network'));
       await expect(
         service.writeConfig(DEFAULT_USER_CONFIG, 'token', 'bucket'),
       ).rejects.toThrow('network');
@@ -976,7 +991,9 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v2Config({ deployments: { installed: ['dep-xyz'] } }),
+          v2Config({
+            deployments: { installed: ['dep-xyz'], selectedId: null },
+          }),
         ),
       });
       const uploadSpy = makeUploadSpy(service);

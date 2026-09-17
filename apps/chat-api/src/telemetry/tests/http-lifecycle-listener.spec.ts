@@ -1,7 +1,11 @@
 import http from 'http';
 import type { AddressInfo } from 'net';
 import { metrics } from '@opentelemetry/api';
-import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
+import {
+  MeterProvider,
+  MetricReader,
+  type MetricData,
+} from '@opentelemetry/sdk-metrics';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type * as HttpLifecycleListenerModule from '../http-lifecycle-listener';
 
@@ -80,11 +84,14 @@ describe('http-lifecycle-listener — mechanism against a bare http.Server (no N
     return resourceMetrics.scopeMetrics
       .flatMap((scope) => scope.metrics)
       .filter((metric) => metric.descriptor.name === name)
-      .flatMap((metric) => metric.dataPoints);
+      .flatMap<MetricData['dataPoints'][number]>((metric) => metric.dataPoints);
   };
 
-  const sumActive = (dataPoints: Array<{ value: number }>) =>
-    dataPoints.reduce((total, point) => total + point.value, 0);
+  const sumActive = (dataPoints: MetricData['dataPoints'][number][]) =>
+    dataPoints.reduce((total, point) => {
+      expect(point.value).toBeTypeOf('number');
+      return total + Number(point.value);
+    }, 0);
 
   it('records exactly one completed terminal data point for a normal response, with net-zero in-flight and no leaked listeners', async () => {
     let capturedRes: http.ServerResponse | undefined;

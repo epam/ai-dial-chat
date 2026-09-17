@@ -157,7 +157,7 @@ describe('HeaderTokenStrategy', () => {
       const token = await makeToken(privateKey, kid);
       const req = makeReq({ authorization: `Bearer ${token}` });
 
-      const user = await strategy.authenticate(req, {} as never);
+      const user = await strategy.authenticate(req);
 
       expect(user).toMatchObject({
         sub: 'user-1',
@@ -173,7 +173,7 @@ describe('HeaderTokenStrategy', () => {
       const token = await makeToken(privateKey, kid, { sub: 'subject-42' });
       const req = makeReq({ authorization: `Bearer ${token}` });
 
-      const user = await strategy.authenticate(req, {} as never);
+      const user = await strategy.authenticate(req);
 
       expect(user?.sub).toBe('subject-42');
     });
@@ -195,7 +195,7 @@ describe('HeaderTokenStrategy', () => {
 
       let error: unknown;
       try {
-        await strategy.authenticate(req, {} as never);
+        await strategy.authenticate(req);
       } catch (caught) {
         error = caught;
       }
@@ -216,7 +216,7 @@ describe('HeaderTokenStrategy', () => {
 
       let error: unknown;
       try {
-        await strategy.authenticate(req, {} as never);
+        await strategy.authenticate(req);
       } catch (caught) {
         error = caught;
       }
@@ -235,7 +235,7 @@ describe('HeaderTokenStrategy', () => {
 
       let error: unknown;
       try {
-        await strategy.authenticate(req, {} as never);
+        await strategy.authenticate(req);
       } catch (caught) {
         error = caught;
       }
@@ -256,7 +256,7 @@ describe('HeaderTokenStrategy', () => {
 
       let error: unknown;
       try {
-        await strategy.authenticate(req, {} as never);
+        await strategy.authenticate(req);
       } catch (caught) {
         error = caught;
       }
@@ -273,9 +273,7 @@ describe('HeaderTokenStrategy', () => {
       const token = await makeToken(privateKey, kid);
       const req = makeReq({ authorization: `Bearer ${token}` });
 
-      await expect(
-        strategy.authenticate(req, {} as never),
-      ).rejects.toMatchObject({
+      await expect(strategy.authenticate(req)).rejects.toMatchObject({
         response: expect.objectContaining({
           code: AuthErrorCode.HeaderProviderNotFound,
         }),
@@ -292,7 +290,7 @@ describe('HeaderTokenStrategy', () => {
       const token = await makeToken(privateKey, kid, { iss: azureIssuer });
       const req = makeReq({ authorization: `Bearer ${token}` });
 
-      const user = await strategy.authenticate(req, {} as never);
+      const user = await strategy.authenticate(req);
 
       expect(user).toMatchObject({ providerId: 'azure-ad' });
       expect(registry.findByIssuer).toHaveBeenCalledWith(azureIssuer);
@@ -309,7 +307,7 @@ describe('HeaderTokenStrategy', () => {
 
         let error: unknown;
         try {
-          await strategy.authenticate(req, {} as never);
+          await strategy.authenticate(req);
         } catch (caught) {
           error = caught;
         }
@@ -327,7 +325,7 @@ describe('HeaderTokenStrategy', () => {
 
       let error: unknown;
       try {
-        await strategy.authenticate(req, {} as never);
+        await strategy.authenticate(req);
       } catch (caught) {
         error = caught;
       }
@@ -347,11 +345,9 @@ describe('HeaderTokenStrategy', () => {
 
       await strategy.authenticate(
         makeReq({ authorization: `Bearer ${token}` }),
-        {} as never,
       );
       await strategy.authenticate(
         makeReq({ authorization: `Bearer ${token}` }),
-        {} as never,
       );
 
       expect(vi.mocked(createRemoteJWKSet)).toHaveBeenCalledTimes(1);
@@ -363,7 +359,6 @@ describe('HeaderTokenStrategy', () => {
       const token = await makeToken(privateKey, kid);
       await strategy.authenticate(
         makeReq({ authorization: `Bearer ${token}` }),
-        {} as never,
       );
 
       expect(bucketService.getUserBucket).toHaveBeenCalledWith(token);
@@ -379,7 +374,6 @@ describe('HeaderTokenStrategy', () => {
       const token = await makeToken(privateKey, kid);
       const user = await strategy.authenticate(
         makeReq({ authorization: `Bearer ${token}` }),
-        {} as never,
       );
 
       expect(bucketService.getUserBucket).not.toHaveBeenCalled();
@@ -393,10 +387,7 @@ describe('HeaderTokenStrategy', () => {
       const token = await makeToken(privateKey, kid);
 
       await expect(
-        strategy.authenticate(
-          makeReq({ authorization: `Bearer ${token}` }),
-          {} as never,
-        ),
+        strategy.authenticate(makeReq({ authorization: `Bearer ${token}` })),
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });

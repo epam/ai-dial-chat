@@ -64,19 +64,14 @@ describe('ConversationListingService', () => {
       persistenceService,
     );
     vi.mocked(handleDialSdkError).mockReset();
-    vi.spyOn(
-      service['dialClient'].client,
-      'saveConversation',
-    ).mockResolvedValue({
+    vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
-    vi.spyOn(service['dialClient'].client, 'getConversation').mockRejectedValue(
-      {
-        error: { status: 404 },
-      } as never,
-    );
+    vi.spyOn(mockDialClient.client, 'getConversation').mockRejectedValue({
+      error: { status: 404 },
+    } as never);
     vi.spyOn(
-      service['dialClient'].client,
+      mockDialClient.client,
       'getConversationMetadata',
     ).mockResolvedValue({
       data: null,
@@ -99,7 +94,7 @@ describe('ConversationListingService', () => {
       publicItems: MetadataItem[] = [],
     ) => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -107,22 +102,16 @@ describe('ConversationListingService', () => {
         }
         return Promise.resolve({ data: { items: publicItems } }) as never;
       });
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
     };
 
     it('passes pagination through SDK params.query', async () => {
       const getMetadataSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversationMetadata')
+        .spyOn(mockDialClient.client, 'getConversationMetadata')
         .mockResolvedValue({ data: { items: [] } } as never);
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
 
@@ -338,7 +327,7 @@ describe('ConversationListingService', () => {
       }));
       mockMetadata(items);
       const getConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
+        .spyOn(mockDialClient.client, 'getConversation')
         .mockResolvedValue({
           data: { name: 'Stored display title' },
         } as never);
@@ -358,7 +347,7 @@ describe('ConversationListingService', () => {
         }));
       mockMetadata(buildItems('test-bucket', 25), buildItems('public', 25));
       const getConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
+        .spyOn(mockDialClient.client, 'getConversation')
         .mockResolvedValue({
           data: { name: 'Stored display title' },
         } as never);
@@ -392,7 +381,7 @@ describe('ConversationListingService', () => {
         ],
       );
       const getConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
+        .spyOn(mockDialClient.client, 'getConversation')
         .mockResolvedValue({
           data: { name: 'Renamed by the author', llmNamingDone: true },
         } as never);
@@ -413,10 +402,7 @@ describe('ConversationListingService', () => {
 
     it("reads a shared conversation's stored display name from the owner's bucket", async () => {
       mockMetadata([]);
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: {
           resources: [
             {
@@ -428,7 +414,7 @@ describe('ConversationListingService', () => {
         },
       } as never);
       const getConversationSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversation')
+        .spyOn(mockDialClient.client, 'getConversation')
         .mockResolvedValue({
           data: { name: 'Renamed by the owner', llmNamingDone: true },
         } as never);
@@ -458,10 +444,9 @@ describe('ConversationListingService', () => {
           },
         ],
       );
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversation',
-      ).mockRejectedValue({ error: { status: 403 } } as never);
+      vi.spyOn(mockDialClient.client, 'getConversation').mockRejectedValue({
+        error: { status: 403 },
+      } as never);
 
       const result = await service.listConversations(
         'test-token',
@@ -719,10 +704,7 @@ describe('ConversationListingService', () => {
           updatedAt: 3000,
         },
       ]);
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: {
           resources: [
             { url: 'conversations/other-bucket/shared-conv', nodeType: 'FILE' },
@@ -797,10 +779,7 @@ describe('ConversationListingService', () => {
 
     it('tags a shared item created by a scheduled task using its own resource id', async () => {
       mockMetadata([]);
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: {
           resources: [
             {
@@ -929,7 +908,7 @@ describe('ConversationListingService', () => {
     it('calls getSharedResources with resourceTypes CONVERSATION and with me', async () => {
       mockMetadata([]);
       const spy = vi
-        .spyOn(service['dialClient'].client, 'getSharedResources')
+        .spyOn(mockDialClient.client, 'getSharedResources')
         .mockResolvedValue({
           data: { resources: [] },
         } as never);
@@ -946,7 +925,7 @@ describe('ConversationListingService', () => {
 
     it('returns user and public items when getSharedResources fails', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -967,10 +946,9 @@ describe('ConversationListingService', () => {
           },
         }) as never;
       });
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockRejectedValue(new Error('share service unreachable'));
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockRejectedValue(
+        new Error('share service unreachable'),
+      );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
       const result = await service.listConversations(
@@ -1017,7 +995,7 @@ describe('ConversationListingService', () => {
 
     it('returns only user items when public bucket request fails', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -1047,7 +1025,7 @@ describe('ConversationListingService', () => {
 
     it('encodes a compound nextToken when both user and public buckets have more results', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -1059,10 +1037,7 @@ describe('ConversationListingService', () => {
           data: { items: [], nextToken: 'pub-cursor' },
         }) as never;
       });
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
@@ -1086,14 +1061,11 @@ describe('ConversationListingService', () => {
 
     it('passes decoded user and public cursors as separate token params', async () => {
       const spy = vi
-        .spyOn(service['dialClient'].client, 'getConversationMetadata')
+        .spyOn(mockDialClient.client, 'getConversationMetadata')
         .mockImplementation(
           () => Promise.resolve({ data: { items: [] } }) as never,
         );
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
@@ -1128,14 +1100,11 @@ describe('ConversationListingService', () => {
 
     it('treats a legacy (non-compound) nextToken as a user-bucket cursor', async () => {
       const spy = vi
-        .spyOn(service['dialClient'].client, 'getConversationMetadata')
+        .spyOn(mockDialClient.client, 'getConversationMetadata')
         .mockImplementation(
           () => Promise.resolve({ data: { items: [] } }) as never,
         );
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
@@ -1176,7 +1145,7 @@ describe('ConversationListingService', () => {
 
     it('encodes a compound nextToken with only u when only user bucket has a cursor', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -1186,10 +1155,7 @@ describe('ConversationListingService', () => {
         }
         return Promise.resolve({ data: { items: [] } }) as never;
       });
-      vi.spyOn(
-        service['dialClient'].client,
-        'getSharedResources',
-      ).mockResolvedValue({
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
@@ -1213,7 +1179,7 @@ describe('ConversationListingService', () => {
 
     it('still throws NotFoundException for a 404 on the user bucket', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -1268,7 +1234,7 @@ describe('ConversationListingService', () => {
 
     it('preserves sharedWithMe from user bucket items', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -1298,7 +1264,7 @@ describe('ConversationListingService', () => {
 
     it('calls handleDialSdkError when the user bucket returns a response-level error', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -1328,7 +1294,7 @@ describe('ConversationListingService', () => {
 
     it('returns only user items when public bucket returns a response-level error', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockImplementation((bucket: string) => {
         if (bucket === 'test-bucket') {
@@ -1363,7 +1329,7 @@ describe('ConversationListingService', () => {
 
     it('does not double-encode metadata paths', async () => {
       const metadataSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversationMetadata')
+        .spyOn(mockDialClient.client, 'getConversationMetadata')
         .mockResolvedValue({ data: {} } as never);
 
       await service.getConversationMetadata(
@@ -1392,7 +1358,7 @@ describe('ConversationListingService', () => {
 
     it('getConversationMetadata throws NotFoundException for a 404 upstream response', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'getConversationMetadata',
       ).mockResolvedValue({
         error: { message: 'Not found' },

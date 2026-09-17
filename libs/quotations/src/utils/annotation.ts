@@ -17,6 +17,7 @@ import type {
   InputHighlightData,
 } from '@epam/pdf-highlighter-kit';
 import type { OfficeHighlightLocation } from '../models/office-highlight';
+import { normalizeOfficeTableAnchor } from './office-table-anchor';
 
 const CITATION_HIGHLIGHT_STYLE: HighlightStyle = {
   backgroundColor: 'transparent',
@@ -361,7 +362,7 @@ const normalizeExcelSelector = (
 /**
  * Converts an annotation's `body.selector` (scalar or array) to validated
  * `OfficeHighlightLocation` entries, skipping any selector that is not a
- * recognised Office range or that fails validation — never throwing.
+ * recognised Office range or temporary table-row anchor, or that fails validation.
  */
 export const annotationToOfficeHighlightLocations = (
   annotation: Annotation,
@@ -385,6 +386,7 @@ export const annotationToOfficeHighlightLocations = (
       const location = normalizeExcelSelector(s);
       return location ? [location] : [];
     }
-    return [];
+    const tableRow = normalizeOfficeTableAnchor(s);
+    return tableRow ? [tableRow] : [];
   });
 };

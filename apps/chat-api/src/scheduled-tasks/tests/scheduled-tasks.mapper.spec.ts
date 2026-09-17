@@ -496,6 +496,7 @@ describe('fromUpstreamSchedule', () => {
     it('maps a schedule with a future next run to isActive true', () => {
       const upstream: UpstreamScheduleResponse = {
         id: 'sched_901',
+        trigger: {},
         display_name: 'Daily summary',
         trigger_type: 'cron',
         next_run_time: '2026-07-28T12:00:00.000Z',
@@ -507,6 +508,7 @@ describe('fromUpstreamSchedule', () => {
     it('maps a paused recurring schedule (no next run) to isActive false', () => {
       const upstream: UpstreamScheduleResponse = {
         id: 'sched_902',
+        trigger: {},
         display_name: 'Paused digest',
         trigger_type: 'cron',
         next_run_time: undefined,
@@ -516,10 +518,11 @@ describe('fromUpstreamSchedule', () => {
     });
 
     it('leaves isActive undefined without throwing when trigger and trigger_type are both absent', () => {
-      const upstream: UpstreamScheduleResponse = {
+      /* Deliberately malformed upstream response: validate the runtime fallback. */
+      const upstream = {
         id: 'sched_903',
         display_name: 'Unknown shape',
-      };
+      } as UpstreamScheduleResponse;
 
       expect(() => fromUpstreamSchedule(upstream)).not.toThrow();
       expect(fromUpstreamSchedule(upstream).isActive).toBeUndefined();
@@ -563,6 +566,7 @@ describe('fromUpstreamSchedule', () => {
     it('maps a soft-deleted schedule with a null next_run_time without treating deletion as evidence of anything else', () => {
       const upstream: UpstreamScheduleResponse = {
         id: 'sched_913',
+        trigger: {},
         display_name: 'Soft-deleted with no next run',
         trigger_type: 'cron',
         is_deleted: true,

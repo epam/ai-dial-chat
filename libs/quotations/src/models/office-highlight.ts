@@ -41,6 +41,28 @@ export interface PptxOfficeHighlightLocation {
   text: string;
 }
 
+/** Temporary table-row location decoded from a DOCX text anchor. */
+export interface DocxTableRowOfficeHighlightLocation {
+  /** Wire selector type. */
+  type: 'docx_text_anchor';
+  /** Plain text of each cell, in column order. */
+  cells: string[];
+  /** 1-based matching row in the document body. */
+  occurrence: number;
+}
+
+/** Temporary table-row location decoded from a PPTX text anchor. */
+export interface PptxTableRowOfficeHighlightLocation {
+  /** Wire selector type. */
+  type: 'pptx_text_anchor';
+  /** Plain text of each cell, in column order. */
+  cells: string[];
+  /** 1-based matching row on the specified slide. */
+  occurrence: number;
+  /** 1-based slide number. */
+  slide: number;
+}
+
 /** A validated, normalised XLSX cell or same-row cell-range location. */
 export interface ExcelOfficeHighlightLocation {
   /** Discriminates this location within `OfficeHighlightLocation`. Mirrors the wire selector's `type`. */
@@ -65,4 +87,6 @@ export interface ExcelOfficeHighlightLocation {
 export type OfficeHighlightLocation =
   | DocxOfficeHighlightLocation
   | PptxOfficeHighlightLocation
+  | DocxTableRowOfficeHighlightLocation
+  | PptxTableRowOfficeHighlightLocation
   | ExcelOfficeHighlightLocation;

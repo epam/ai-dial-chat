@@ -160,7 +160,11 @@ const uploadFile = async (
   const input = document.querySelector('input[type="file"]');
   fireEvent.change(input as Element, { target: { files: [file] } });
   await waitFor(() => expect(screen.getAllByText(file.name)[0]).toBeTruthy());
-  await user.click(screen.getByRole('button', { name: 'buttons.add' }));
+  const addButton = screen.getByRole('button', {
+    name: 'buttons.add',
+  }) as HTMLButtonElement;
+  await waitFor(() => expect(addButton.disabled).toBe(false));
+  await user.click(addButton);
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 };
 
