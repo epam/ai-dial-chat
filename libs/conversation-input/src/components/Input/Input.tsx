@@ -133,7 +133,8 @@ export const Input: FC<InputProps> = ({
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const historyNav = useInputHistoryNavigation(messageHistory);
   const hasInlineStartSlot = inlineStartSlot != null;
-  const inlineStartSlotRef = useRef<HTMLDivElement>(null);
+  const [inlineStartSlotNode, setInlineStartSlotNode] =
+    useState<HTMLDivElement | null>(null);
   const [inlineStartIndent, setInlineStartIndent] = useState(0);
 
   const cssVars = useMemo(
@@ -253,20 +254,23 @@ export const Input: FC<InputProps> = ({
   );
 
   useEffect(() => {
-    const slotElement = inlineStartSlotRef.current;
-    if (slotElement == null) return;
+    if (inlineStartSlotNode == null) return;
     /*
      * The slot's width drives the textarea's first-line `text-indent`, so it
      * is re-measured whenever the slot's content resizes (e.g. a different
-     * element of a different width), not only when the slot first mounts.
+     * element of a different width) and whenever the slot node itself
+     * (re)mounts — e.g. the slot is hidden behind `VoiceBar` while recording
+     * and reappears once recording stops, which does not change
+     * `hasInlineStartSlot` and so would never re-trigger a `useEffect` keyed
+     * on that flag alone.
      */
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry != null) setInlineStartIndent(entry.contentRect.width);
     });
-    observer.observe(slotElement);
+    observer.observe(inlineStartSlotNode);
     return () => observer.disconnect();
-  }, [hasInlineStartSlot]);
+  }, [inlineStartSlotNode]);
 
   const handleExpandPastedText = useCallback(
     (text: string) => {
@@ -646,7 +650,7 @@ export const Input: FC<InputProps> = ({
     hasInlineStartSlot || hasCommandHintConfigured ? (
       <div className="relative w-full">
         {hasInlineStartSlot && (
-          <div ref={inlineStartSlotRef} className="absolute start-0 top-0">
+          <div ref={setInlineStartSlotNode} className="absolute start-0 top-0">
             {inlineStartSlot}
           </div>
         )}
