@@ -1,5 +1,3 @@
-import './styles.css';
-
 // Headless catalog enums and catalog-item-mapping functions — see
 // `./entry-points/mapping.ts`; import `@epam/ai-dial-catalog/mapping`
 // directly to avoid resolving the catalog/publish-panel UI.

@@ -190,6 +190,29 @@ const hasStylesheet = (directory) => {
   });
 };
 
+/*
+ * A lib also emits dist/index.css when it has no stylesheet of its own: the
+ * build appends the Tailwind utilities its components reference, so that
+ * `import '@epam/<pkg>/styles.css'` carries their layout into a host that does
+ * not compile Tailwind over node_modules (see tools/vite-lib-tailwind-utilities.mjs).
+ */
+const hasComponentSource = (directory) => {
+  if (!existsSync(directory)) return false;
+
+  return readdirSync(directory, { withFileTypes: true }).some((entry) => {
+    if (entry.isDirectory()) {
+      return (
+        !IGNORED_DIRECTORIES.has(entry.name) &&
+        entry.name !== 'tests' &&
+        hasComponentSource(`${directory}/${entry.name}`)
+      );
+    }
+    return (
+      extname(entry.name) === '.tsx' && !/\.(spec|test)\.tsx$/.test(entry.name)
+    );
+  });
+};
+
 const checkLibStylesExport = () => {
   for (const dir of projectDirs('libs')) {
     const path = `${dir}/package.json`;
@@ -198,17 +221,18 @@ const checkLibStylesExport = () => {
 
     const exports = pkg.exports ?? {};
     const cssKeys = Object.keys(exports).filter((key) => key.endsWith('.css'));
-    const shipsStyles = hasStylesheet(`${dir}/src`);
+    const shipsStyles =
+      hasStylesheet(`${dir}/src`) || hasComponentSource(`${dir}/src`);
 
     if (!shipsStyles) {
       /*
-       * Vite emits no stylesheet for a lib without one, so any CSS export it
-       * declares points at a file that will not be there.
+       * A lib with neither a stylesheet nor a component emits no CSS at all,
+       * so any CSS export it declares points at a file that will not be there.
        */
       for (const key of cssKeys) {
         fail(
           path,
-          `exports "${key}" but no .css/.scss exists under src/ — the build emits no stylesheet for this lib`,
+          `exports "${key}" but src/ holds neither a stylesheet nor a component — the build emits no stylesheet for this lib`,
         );
       }
       continue;
@@ -217,7 +241,7 @@ const checkLibStylesExport = () => {
     if (cssKeys.length === 0) {
       fail(
         path,
-        `ships stylesheets under src/ but declares no "${STYLES_EXPORT_KEY}" export — hosts cannot import its CSS (see .claude/rules/libs.md)`,
+        `emits a stylesheet but declares no "${STYLES_EXPORT_KEY}" export — hosts cannot import its CSS (see .claude/rules/libs.md)`,
       );
       continue;
     }
