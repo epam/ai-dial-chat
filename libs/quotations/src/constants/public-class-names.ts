@@ -13,4 +13,11 @@ export const QUOTATIONS_CLASS = {
   citationCard: 'dial-quotations-citation-card',
   /** The floating panel a `CitationDropdown` reveals, which holds the card. */
   citationDropdown: 'dial-quotations-citation-dropdown',
+  /**
+   * The marker pill that opens a citation, additive to the
+   * `dial-kit-base-button` that `@epam/ai-dial-ui-kit` draws. The pill caps its
+   * own width and ellipsises a long source name, so a host widening it should
+   * override `max-inline-size` here rather than unset the truncation.
+   */
+  citationMarker: 'dial-quotations-citation-marker',
 } as const;

@@ -1,5 +1,7 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ElementSize, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
+import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 
 /** User-visible strings for `CitationMarker`. */
 export interface CitationMarkerLabels {
@@ -46,7 +48,7 @@ export const CitationMarker: FC<CitationMarkerProps> = ({
      * width; a flex item's `min-width: auto` would otherwise hold it open.
      * The full name remains in the card header and in `aria-label`.
      */
-    className="max-w-[240px]"
+    className={mergeClasses(QUOTATIONS_CLASS.citationMarker, 'max-w-[240px]')}
     textClassName="min-w-0 truncate"
     iconBefore={icon}
     label={

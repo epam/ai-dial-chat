@@ -213,11 +213,26 @@ elements therefore carry a stable public class.
 | ------------------ | ----------------------------------- | ----------------------------------------------------------------------- |
 | `citationCard`     | `dial-quotations-citation-card`     | The card's `role="dialog"` root, which carries the themed CSS variables |
 | `citationDropdown` | `dial-quotations-citation-dropdown` | The floating panel a `CitationDropdown` reveals, holding the card       |
+| `citationMarker`   | `dial-quotations-citation-marker`   | The marker pill that opens a citation                                   |
 
 ```tsx
 import { QUOTATIONS_CLASS } from '@epam/ai-dial-quotations';
 
 QUOTATIONS_CLASS.citationCard; // 'dial-quotations-citation-card'
+```
+
+The marker is a `NeutralButton` from
+[`@epam/ai-dial-ui-kit`](https://www.npmjs.com/package/@epam/ai-dial-ui-kit), so
+`dial-kit-base-button` is on the same element — this class is what tells a
+citation marker apart from any other pill in the same host. It caps its own
+width and ellipsises a long source name, which is server-supplied and routinely
+a folder path plus a page number, so widen it by overriding `max-inline-size`
+rather than by unsetting the truncation:
+
+```css
+.dial-quotations-citation-marker {
+  max-inline-size: 320px;
+}
 ```
 
 The classes carry no declarations of their own: nothing in `styles.css`

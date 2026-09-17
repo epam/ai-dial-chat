@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { QUOTATIONS_CLASS } from '../../../constants/public-class-names';
 import { CitationMarker } from '../CitationMarker';
 
 const defaultLabels = {
@@ -21,6 +22,14 @@ const renderMarker = (
       {...props}
     />,
   );
+
+/*
+ * The kit button's text box carries the truncation but has no role or text of
+ * its own, so a test can only reach it from the label inside it.
+ */
+const parentOf = (element: Element): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  element.parentElement;
 
 describe('CitationMarker', () => {
   it('uses the single label when annotationCount is 1', () => {
@@ -60,7 +69,13 @@ describe('CitationMarker', () => {
     });
 
     expect(screen.getByRole('button').className).toContain('max-w-[240px]');
-    const labelWrapper = screen.getByText(longName).parentElement;
+
+    /*
+     * The truncation lives on the text box the kit button wraps the label in,
+     * which has no role or text of its own — the label inside it is the only
+     * thing a query can reach, so the assertion walks up one level.
+     */
+    const labelWrapper = parentOf(screen.getByText(longName));
     expect(labelWrapper?.className).toContain('truncate');
     expect(labelWrapper?.className).toContain('min-w-0');
   });
@@ -69,6 +84,24 @@ describe('CitationMarker', () => {
     renderMarker();
     expect(screen.getByRole('button').getAttribute('aria-label')).toBe(
       'Citation from Wikipedia',
+    );
+  });
+});
+
+describe('CitationMarker — public class names', () => {
+  it('stamps the marker pill', () => {
+    renderMarker();
+
+    expect(screen.getByRole('button').classList).toContain(
+      QUOTATIONS_CLASS.citationMarker,
+    );
+  });
+
+  it('keeps the class on the overflow variant', () => {
+    renderMarker({ annotationCount: 3 });
+
+    expect(screen.getByRole('button').classList).toContain(
+      QUOTATIONS_CLASS.citationMarker,
     );
   });
 });
