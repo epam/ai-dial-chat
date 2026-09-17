@@ -29,3 +29,42 @@ jobs:
       maximize-build-space: true
       draft-stable-releases: true
     secrets: inherit
+
+  # Builds & pushes apps/mcp-app-sandbox as its own image, alongside (not inside) the
+  # `release` job above. Independent job so it builds in parallel; recalculates the
+  # version/tags itself since node_release.yml's calculate_version job only builds one
+  # image per call and doesn't expose its outputs to sibling top-level jobs.
+  release_mcp_app_sandbox_image:
+    name: Build & push mcp-app-sandbox image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+      - name: Calculate version
+        id: semantic_versioning
+        uses: epam/ai-dial-ci/actions/semantic_versioning@4.11.0
+        with:
+          promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we check it on the step
+      - if: ${{ hashFiles('apps/mcp-app-sandbox/Dockerfile') != '' }}
+        uses: epam/ai-dial-ci/actions/build_docker@4.11.0
+        with:
+          ghcr-username: ${{ github.actor }}
+          ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
+          image-names: |
+            ${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.IMAGE_NAME }}
+          image-tags: |
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && steps.semantic_versioning.outputs.next-version || 'development' }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && steps.semantic_versioning.outputs.is-latest == 'true' }}
+          push-enabled: true
+          dockerfile-path: apps/mcp-app-sandbox/Dockerfile
+        env:
+          IMAGE_NAME: ${{ github.repository }}-mcp-app-sandbox
