@@ -31,6 +31,7 @@ import {
   collectConversationResourceUrls,
   getInvitationRoutePath,
   isAlreadyOwnedError,
+  toPublicItemId,
   toShareResourceUrl,
 } from '../utils/share-resource.util';
 
@@ -424,7 +425,11 @@ export class ShareInvitationService {
       sharedResource?.permissions,
     );
 
-    return { itemId, ...summary };
+    /*
+     * The frontend matches this against its own catalog item ids, which for
+     * prompts are the decoded form — see `toPublicItemId`.
+     */
+    return { itemId: toPublicItemId(itemId), ...summary };
   }
 
   /**

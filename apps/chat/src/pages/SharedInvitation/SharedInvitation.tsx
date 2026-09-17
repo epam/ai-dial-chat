@@ -6,6 +6,7 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ShareI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { acceptInvitation } from '../../server-api/share.api';
 import { CatalogQuery } from '../../types/catalog';
@@ -40,6 +41,13 @@ const SharedInvitationPage: FC<Props> = ({
   const { refetchDeployments, refetchToolsets, mergeSharedItem } =
     useDeployments();
   const { refetchSkills, mergeSharedSkill } = useSkills();
+  /*
+   * A shared prompt has no list-item summary to merge (the backend cannot
+   * summarise one), so the refetch below is the only way the just-granted
+   * prompt reaches the catalog list — and the details panel only opens for
+   * an item that list already contains.
+   */
+  const { refetchPrompts } = usePrompts();
   const { invitationId } = useParams<{ invitationId: string }>();
   const hasStartedRef = useRef(false);
 
@@ -66,6 +74,7 @@ const SharedInvitationPage: FC<Props> = ({
           refetchDeployments(),
           refetchToolsets(),
           refetchSkills(),
+          refetchPrompts(),
         ]);
         const sharedItem = sharedDeployment ?? sharedToolset;
         if (sharedItem) mergeSharedItem(sharedItem);
@@ -95,6 +104,7 @@ const SharedInvitationPage: FC<Props> = ({
     mergeSharedItem,
     refetchSkills,
     mergeSharedSkill,
+    refetchPrompts,
   ]);
 
   return <RouteFallback />;

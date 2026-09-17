@@ -1265,6 +1265,30 @@ describe('ShareInvitationService', () => {
       expect(result).toEqual({ itemId: 'unknown-id' });
     });
 
+    it('decodes a prompt itemId back to the catalog id form the frontend matches on', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getInvitation',
+      ).mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'prompts/owner-bucket/Work/tone%20of%20voice' }],
+        }),
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+        'bucket-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'prompts/owner-bucket/Work/tone of voice',
+      });
+    });
+
     it('still succeeds with only itemId when summary resolution throws', async () => {
       const { service, deploymentsService } = makeService();
       vi.spyOn(
