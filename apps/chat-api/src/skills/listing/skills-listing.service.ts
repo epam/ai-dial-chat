@@ -1,4 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
@@ -13,6 +19,7 @@ import type {
   SkillListResponseDto,
   SkillMetadataItemDto,
 } from '../dto/skill-metadata.dto';
+import { SkillNodeType } from '../dto/skill-node-type';
 import { getSkillTransferTimeoutMs } from '../utils/skill-config.util';
 import {
   type DialMetadataBase,
@@ -95,6 +102,66 @@ export class SkillsListingService {
       return this.mapListing(bucket, path, data as DialSkillItem);
     } catch (err) {
       return handleDialSdkError(err, 'skills.listSkills', this.logger);
+    }
+  }
+
+  /**
+   * Resolves one skill's own authoritative metadata for
+   * `GET /api/v1/skills/metadata` (design.md D1/D2). Unlike
+   * `SkillsLookupService.resolveSkillItem`, this path never folds in
+   * invitation-granted permissions and never returns `null` on a miss — a
+   * caller here always wants "the metadata" or a typed error, never a
+   * degrade-to-fallback signal. Ownership fields (`isMy`/`canEdit`/
+   * `sharedWithMe`) are stripped from the result so fetching provenance can
+   * never be mistaken for an ownership grant.
+   */
+  async getSkillMetadata(
+    bucket: string,
+    path: string,
+    accessToken: string,
+  ): Promise<SkillMetadataItemDto> {
+    try {
+      const { data, error, response } =
+        await this.dialClient.client.listSkillMetadata(
+          bucket,
+          encodeDialResourcePath(path),
+          {
+            headers: getBearerAuthHeaders(accessToken),
+            signal: AbortSignal.timeout(
+              getSkillTransferTimeoutMs(this.configService),
+            ),
+          },
+        );
+
+      if (error != null || data == null) {
+        return handleDialSdkError(
+          error,
+          'skills.getSkillMetadata',
+          this.logger,
+          response,
+        );
+      }
+
+      const item = mapToSkillMetadataItem(data as DialMetadataBase);
+      if (item == null) {
+        throw new NotFoundException('Skill not found');
+      }
+      if (item.nodeType === SkillNodeType.Folder) {
+        throw new BadRequestException(
+          'Path resolves to a grouping folder, not a skill',
+        );
+      }
+
+      const {
+        isMy: _isMy,
+        canEdit: _canEdit,
+        sharedWithMe: _sharedWithMe,
+        ...provenance
+      } = item;
+      return provenance;
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      return handleDialSdkError(err, 'skills.getSkillMetadata', this.logger);
     }
   }
 

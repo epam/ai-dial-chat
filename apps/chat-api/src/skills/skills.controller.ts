@@ -39,6 +39,7 @@ import {
   SkillCatalogListResponseDto,
   SkillFileListResponseDto,
   SkillListResponseDto,
+  SkillMetadataItemDto,
 } from './dto/skill-metadata.dto';
 import {
   DeleteSkillDto,
@@ -159,6 +160,41 @@ export class SkillsController {
       { token: query.token, limit: query.limit, recursive: query.recursive },
       at,
     );
+  }
+
+  @Get('metadata')
+  @ApiOperation({
+    operationId: 'getSkillMetadata',
+    summary: "Get one skill's own authoritative metadata",
+    description:
+      'Proxies DIAL Core listSkillMetadata for a single skill resource and returns its provenance (author, timestamps, permissions) without ownership fields — GET /api/v1/skills cannot serve this because its response is items-shaped.',
+  })
+  @ApiResponse({ status: 200, type: SkillMetadataItemDto })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid bucket/path, or the path resolves to a grouping folder',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Skill not found' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  getSkillMetadata(
+    @Query() query: SkillResourceQueryDto,
+    @Req() req: Request,
+  ): Promise<SkillMetadataItemDto> {
+    const { at } = req.user as SessionUser;
+    return this.skillsService.getSkillMetadata(query.bucket, query.path, at);
   }
 
   @Get('download')

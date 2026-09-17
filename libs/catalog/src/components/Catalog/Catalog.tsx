@@ -244,24 +244,34 @@ export const Catalog: FC<CatalogProps> = ({
   >(undefined);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
+  /*
+   * Identifies each in-flight `onFetchDetails` call by a monotonically
+   * increasing token, so state is applied only while the captured token is
+   * still current. `pendingItemIdRef` alone cannot tell two requests for the
+   * *same* item apart: closing the panel clears it and reopening the same
+   * item re-assigns the same id, so a still-pending earlier response would
+   * pass an id-only guard and overwrite the newer request's result.
+   */
+  const pendingRequestIdRef = useRef(0);
 
   const fetchDetails = useCallback(
     async (
       item: CatalogItem,
     ): Promise<CatalogItemDetailsFetchResult | undefined> => {
       pendingItemIdRef.current = item.id;
+      const requestId = ++pendingRequestIdRef.current;
 
       if (!onFetchDetails) return undefined;
 
       setIsDetailsLoading(true);
       try {
         const details = await onFetchDetails(item);
-        if (pendingItemIdRef.current === item.id) {
+        if (pendingRequestIdRef.current === requestId) {
           setFetchedDetails(details);
         }
         return details;
       } finally {
-        if (pendingItemIdRef.current === item.id) {
+        if (pendingRequestIdRef.current === requestId) {
           setIsDetailsLoading(false);
         }
       }
@@ -375,6 +385,8 @@ export const Catalog: FC<CatalogProps> = ({
   const handleCloseDetails = useCallback(() => {
     setIsDetailsOpen(false);
     pendingItemIdRef.current = null;
+    /* Invalidates the in-flight request's token, so a response arriving after close cannot resurrect the closed panel. */
+    pendingRequestIdRef.current += 1;
     setTimeout(() => {
       setSelectedItem(null);
       setFetchedDetails(undefined);

@@ -9,7 +9,11 @@ import {
 } from '../../constants/translation-keys';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
-import { downloadSkillFile, listSkillFiles } from '../../server-api/skills.api';
+import {
+  downloadSkillFile,
+  getSkillMetadata,
+  listSkillFiles,
+} from '../../server-api/skills.api';
 import { buildSkillOverviewLabels } from '../../utils/catalog';
 import { buildDeploymentFolderLabels } from '../../utils/map-deployment-to-catalog-item';
 import { SkillDetailsFilePreview } from '../CatalogView/SkillDetailsFilePreview';
@@ -46,7 +50,7 @@ const SkillDetailsPanelContainer: FC<Props> = ({ skillId, onClose }) => {
   const { favoriteIds } = useFavoriteApplications();
 
   const skillDetailsApi = useMemo(
-    () => ({ downloadSkillFile, listSkillFiles }),
+    () => ({ downloadSkillFile, listSkillFiles, getSkillMetadata }),
     [],
   );
 

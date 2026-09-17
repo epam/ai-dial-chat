@@ -104,6 +104,16 @@ const MODEL_LIMITS: DeploymentLimitsResponseDto = {
   dayTokenStats: { total: 10_000, used: 5_000 },
 };
 
+const SKILL_METADATA: SkillMetadataItemDto = {
+  name: 'my-skill',
+  path: SKILL_PATH,
+  url: SKILL_ID,
+  bucket: SKILL_BUCKET,
+  nodeType: 'item' as never,
+  author: 'jane.doe@example.com',
+  updatedAt: 1752100000000,
+};
+
 const FILE_LIST: SkillFileListResponseDto = {
   bucket: SKILL_BUCKET,
   path: SKILL_PATH,
@@ -165,6 +175,7 @@ const makeApi = (
   getPublicPrompt: vi.fn().mockResolvedValue(PROMPT_DTO),
   downloadSkillFile: vi.fn().mockResolvedValue(makeTextResponse(MANIFEST_TEXT)),
   listSkillFiles: vi.fn().mockResolvedValue(FILE_LIST),
+  getSkillMetadata: vi.fn().mockResolvedValue(SKILL_METADATA),
   ...overrides,
 });
 
@@ -267,6 +278,19 @@ describe('useCatalogItemDetails', () => {
       );
 
       expect(details).toBeUndefined();
+    });
+
+    it('never calls getSkillMetadata for a prompt item', async () => {
+      const api = makeApi();
+      const { result } = renderHook(() =>
+        useCatalogItemDetails(makeOptions(api)),
+      );
+
+      await result.current.onFetchDetails(
+        makeItem(CatalogEntityType.Prompt, 'prompts/public/my-prompt'),
+      );
+
+      expect(api.getSkillMetadata).not.toHaveBeenCalled();
     });
   });
 
@@ -385,6 +409,22 @@ describe('useCatalogItemDetails', () => {
 
       expect(details?.promptContent?.description).toBe('My skill');
     });
+
+    it('issues the metadata request through the injected port', async () => {
+      const api = makeApi();
+      const { result } = renderHook(() =>
+        useCatalogItemDetails(makeOptions(api)),
+      );
+
+      await result.current.onFetchDetails(
+        makeItem(CatalogEntityType.Skill, SKILL_ID),
+      );
+
+      expect(api.getSkillMetadata).toHaveBeenCalledWith(
+        SKILL_BUCKET,
+        SKILL_PATH,
+      );
+    });
   });
 
   /* ── onFetchDetails — Deployment (MODEL) ─────────────────────────────── */
@@ -404,6 +444,21 @@ describe('useCatalogItemDetails', () => {
 
       expect(api.getDeploymentDetails).toHaveBeenCalledWith('gpt-4o');
       expect(api.getDeploymentLimits).toHaveBeenCalledWith('gpt-4o');
+    });
+
+    it('never calls getSkillMetadata for a deployment item', async () => {
+      const api = makeApi({
+        getDeploymentDetails: vi.fn().mockResolvedValue(MODEL_DTO),
+      });
+      const { result } = renderHook(() =>
+        useCatalogItemDetails(makeOptions(api)),
+      );
+
+      await result.current.onFetchDetails(
+        makeItem(CatalogEntityType.Model, 'gpt-4o'),
+      );
+
+      expect(api.getSkillMetadata).not.toHaveBeenCalled();
     });
 
     it('returns the mapped limits in the result', async () => {

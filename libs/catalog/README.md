@@ -198,10 +198,7 @@ matches nothing. Pass `renderEmptyState` to replace it with any node — e.g. a
 richer illustration, description, and a scoped "Create" call to action:
 
 ```tsx
-import {
-  Catalog,
-  type CatalogEmptyStateContext,
-} from '@epam/ai-dial-catalog';
+import { Catalog, type CatalogEmptyStateContext } from '@epam/ai-dial-catalog';
 
 <Catalog
   items={catalogItems}

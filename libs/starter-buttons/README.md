@@ -76,7 +76,7 @@ rest behind the "…" button:
     overflow: 'More starter prompts',
   }}
   onSelect={handleStarterSelect}
-/>;
+/>
 ```
 
 ## Types

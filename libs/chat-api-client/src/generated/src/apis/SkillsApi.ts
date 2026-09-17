@@ -21,6 +21,7 @@ import type {
   SkillGroupingFolderResponseDto,
   SkillImportResponseDto,
   SkillListResponseDto,
+  SkillMetadataItemDto,
   SkillOperationResultDto,
   SkillUploadResponseDto,
 } from '../models/index';
@@ -66,6 +67,11 @@ export interface DownloadSkillFileRequest {
   bucket: string;
   path: string;
   filePath: string;
+}
+
+export interface GetSkillMetadataRequest {
+  bucket: string;
+  path: string;
 }
 
 export interface ImportSkillArchiveRequest {
@@ -633,6 +639,70 @@ export class SkillsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Blob> {
     const response = await this.downloadSkillFileRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Proxies DIAL Core listSkillMetadata for a single skill resource and returns its provenance (author, timestamps, permissions) without ownership fields — GET /api/v1/skills cannot serve this because its response is items-shaped.
+   * Get one skill\'s own authoritative metadata
+   */
+  async getSkillMetadataRaw(
+    requestParameters: GetSkillMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<SkillMetadataItemDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling getSkillMetadata().',
+      );
+    }
+
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling getSkillMetadata().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/skills/metadata`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<SkillMetadataItemDto>(response);
+  }
+
+  /**
+   * Proxies DIAL Core listSkillMetadata for a single skill resource and returns its provenance (author, timestamps, permissions) without ownership fields — GET /api/v1/skills cannot serve this because its response is items-shaped.
+   * Get one skill\'s own authoritative metadata
+   */
+  async getSkillMetadata(
+    requestParameters: GetSkillMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<SkillMetadataItemDto> {
+    const response = await this.getSkillMetadataRaw(
       requestParameters,
       initOverrides,
     );
