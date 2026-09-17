@@ -14,7 +14,6 @@ import {
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { EnvironmentVariables } from '../../config/environment.config';
-import { PUBLIC_BUCKET } from '../../conversations/constants/conversation.constants';
 import { resolveConversationLocation } from '../../conversations/utils/conversation.utils';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -150,10 +149,9 @@ export class ShareInvitationService {
     }
 
     /* See openspec/specs/conversation-share/spec.md — "Related file resources outside the conversation's own bucket are dropped". */
-    return collectConversationResourceUrls(result.data).filter((url) => {
-      const fileBucket = getResourceBucket(url);
-      return fileBucket === bucket || fileBucket === PUBLIC_BUCKET;
-    });
+    return collectConversationResourceUrls(result.data).filter(
+      (url) => getResourceBucket(url) === bucket,
+    );
   }
 
   /*
@@ -177,8 +175,8 @@ export class ShareInvitationService {
    * Same cross-bucket rule as conversations: DIAL Core rejects a single share
    * request mixing more than one owning bucket, and the caller cannot grant
    * access to a prompt in another user's private bucket, so a referenced
-   * prompt whose bucket is neither the app's own nor the public/organization
-   * bucket is silently dropped rather than failing the whole share.
+   * prompt whose bucket is not the app's own is silently dropped rather than
+   * failing the whole share. See openspec/specs/conversation-share/spec.md.
    */
   private async getApplicationRelatedResourceUrls(
     accessToken: string,
@@ -225,7 +223,7 @@ export class ShareInvitationService {
        */
       const promptBucket = safeDecodeURIComponent(getResourceBucket(url));
       const appBucket = safeDecodeURIComponent(resource.bucket);
-      return promptBucket === appBucket || promptBucket === PUBLIC_BUCKET;
+      return promptBucket === appBucket;
     });
   }
 
