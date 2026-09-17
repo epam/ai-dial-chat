@@ -1,4 +1,7 @@
-import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ConversationResponseDto,
+  DeploymentDetailsDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
@@ -23,6 +26,7 @@ import {
 import {
   ConfirmationPopupVariant,
   ConfirmationPopup,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import {
@@ -63,6 +67,7 @@ import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { getDeploymentDetails } from '../../server-api/deployments';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -97,7 +102,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   const { showErrorNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
-  const { items } = useDeployments();
+  const { items, isLoading: isDeploymentsLoading } = useDeployments();
 
   /*
    * `appId` is the application id (e.g. "applications/<bucket>/My App__1.0")
@@ -124,6 +129,53 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     () => getQuickAppConversationStarters(appDeployment?.conversationStarters),
     [appDeployment?.conversationStarters],
   );
+
+  /*
+   * The preview's fixed agent never goes through DeploymentsContext's own
+   * selection (it isn't the globally selected deployment), so nothing there
+   * fetches its details. Fetched here directly, in parallel with the full
+   * deployments list (`items` above), so skills-support gating below doesn't
+   * have to wait for that list to resolve `appId`.
+   */
+  const [appDeploymentDetails, setAppDeploymentDetails] =
+    useState<DeploymentDetailsDto | null>(null);
+  const [isAppDetailsLoading, setIsAppDetailsLoading] = useState(true);
+  useEffect(() => {
+    let isCancelled = false;
+    setAppDeploymentDetails(null);
+    setIsAppDetailsLoading(true);
+    getDeploymentDetails(appId)
+      .then((details) => {
+        if (!isCancelled) setAppDeploymentDetails(details);
+      })
+      .catch(() => {
+        // Best-effort early fallback — appDeployment (from the full list) still resolves normally.
+      })
+      .finally(() => {
+        if (!isCancelled) setIsAppDetailsLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [appId]);
+  const appDeploymentDetailsEntity =
+    appDeploymentDetails?.modelDetails ??
+    appDeploymentDetails?.applicationDetails;
+  const isAppSkillsSupported =
+    appDeployment?.features?.skillsSupported === true ||
+    (!appDeployment &&
+      appDeploymentDetailsEntity?.features?.skillsSupported === true);
+  /*
+   * Neither source has resolved this app yet: showing the composer now would
+   * flash starters/skill-support in as soon as whichever request lands, so a
+   * spinner covers the gap instead. Whichever of the list or the direct
+   * details fetch resolves first clears it — the other one filling in later
+   * only refines features/starters behind the scenes.
+   */
+  const isAppInfoLoading =
+    !appDeployment &&
+    !appDeploymentDetails &&
+    (isDeploymentsLoading || isAppDetailsLoading);
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -217,7 +269,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     isSkillUnsupported,
     removeSelectedSkill,
   } = useSkillSelectorOverlay({
-    isSkillsSupported: appDeployment?.features?.skillsSupported === true,
+    isSkillsSupported: isAppSkillsSupported,
   });
 
   const handleCreateConversation = useCallback(
@@ -406,6 +458,18 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     },
     [handleRateMessage],
   );
+
+  if (isAppInfoLoading) {
+    return (
+      <div
+        role="region"
+        aria-label={t(AppsEditorI18nKeys.PreviewChatAriaLabel)}
+        className="flex size-full items-center justify-center"
+      >
+        <Spinner />
+      </div>
+    );
+  }
 
   if (!conversationId || !conversation) {
     return (

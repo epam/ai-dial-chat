@@ -6,6 +6,7 @@ import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as conversationsApi from '../../../server-api/conversations.api';
+import * as deploymentsServerApi from '../../../server-api/deployments';
 import AppPreviewChat from '../AppPreviewChat';
 
 vi.mock(
@@ -113,6 +114,10 @@ vi.mock('../../../server-api/conversations.api', () => ({
   saveConversation: vi.fn(),
 }));
 
+vi.mock('../../../server-api/deployments', () => ({
+  getDeploymentDetails: vi.fn(),
+}));
+
 vi.mock('../../../server-api/api-client', () => ({
   conversationsApi: {},
   filesApi: {},
@@ -191,10 +196,17 @@ describe('AppPreviewChat', () => {
   const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
   const mockDeleteConversation = vi.mocked(conversationsApi.deleteConversation);
+  const mockGetDeploymentDetails = vi.mocked(
+    deploymentsServerApi.getDeploymentDetails,
+  );
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockDeleteConversation.mockResolvedValue(undefined as never);
+    mockGetDeploymentDetails.mockResolvedValue({
+      id: 'applications/bucket/My App',
+      type: 'application',
+    } as never);
     mockUseDeployments.mockReturnValue({
       items: [
         {
@@ -209,6 +221,7 @@ describe('AppPreviewChat', () => {
           },
         },
       ],
+      isLoading: false,
     } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
   });
 
@@ -294,5 +307,41 @@ describe('AppPreviewChat', () => {
         undefined,
       );
     });
+  });
+
+  it('shows a loading spinner until the app resolves from either source', async () => {
+    mockUseDeployments.mockReturnValue({
+      items: [],
+      isLoading: true,
+    } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
+    let resolveDetails: (value: unknown) => void = () => undefined;
+    mockGetDeploymentDetails.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveDetails = resolve;
+      }) as never,
+    );
+
+    render(<AppPreviewChat appId="applications/bucket/My App" />);
+
+    expect(screen.getByRole('img', { name: 'Loading' })).toBeTruthy();
+    expect(screen.queryByLabelText('Intro text')).toBeNull();
+
+    resolveDetails({
+      id: 'applications/bucket/My App',
+      type: 'application',
+      applicationDetails: { features: { skillsSupported: true } },
+    });
+
+    await waitFor(() =>
+      expect(screen.queryByRole('img', { name: 'Loading' })).toBeNull(),
+    );
+    expect(screen.getByLabelText('Intro text')).toBeTruthy();
+  });
+
+  it('does not show a loading spinner once the deployments list already resolves the app', () => {
+    render(<AppPreviewChat appId="applications/bucket/My App" />);
+
+    expect(screen.queryByRole('img', { name: 'Loading' })).toBeNull();
+    expect(screen.getByLabelText('Intro text')).toBeTruthy();
   });
 });
