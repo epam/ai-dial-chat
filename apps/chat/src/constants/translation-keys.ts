@@ -447,6 +447,8 @@ export enum ScheduledTasksI18nKeys {
   DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',
   DetailDeleteConfirmTitle = 'scheduledTasks.detail.deleteConfirmTitle',
   DetailDeleteConfirmDescription = 'scheduledTasks.detail.deleteConfirmDescription',
+  DetailDeleteConsequenceConversationsAccessible = 'scheduledTasks.detail.deleteConsequenceConversationsAccessible',
+  DetailDeleteConsequenceCannotBeUndone = 'scheduledTasks.detail.deleteConsequenceCannotBeUndone',
   DetailDeleteConfirmingLabel = 'scheduledTasks.detail.deleteConfirmingLabel',
   DetailDeleteSuccess = 'scheduledTasks.detail.deleteSuccess',
   DetailDeleteNotFoundError = 'scheduledTasks.detail.deleteNotFoundError',

@@ -2,6 +2,9 @@ import type { CalendarValue } from '@epam/ai-dial-ui-kit';
 
 const pad = (value: number): string => String(value).padStart(2, '0');
 
+/** 24-hour `HH:mm` time-of-day, matching the `Calendar` time control's value shape. */
+export const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 /** Converts the `datetime-local`-style `values.runAt` string to a `Date` for `Calendar`'s controlled value, or `null` when empty. */
 export const runAtToCalendarValue = (runAt: string | undefined): Date | null =>
   runAt ? new Date(runAt) : null;

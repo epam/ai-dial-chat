@@ -3,6 +3,7 @@ import {
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
   ScheduledTaskRepeat,
+  TIME_OF_DAY_PATTERN,
 } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
 import {
@@ -10,8 +11,17 @@ import {
   ScheduledTasksI18nKeys,
 } from '../constants/translation-keys';
 
-/** `HH:mm` 24-hour time-of-day, matching the `Calendar` time control's value shape. */
-export const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+/**
+ * Validates a time-of-day value against the 24-hour `HH:mm` pattern; shared
+ * by the form's submit pass and the lib-owned time field's blur pass.
+ */
+export const validateScheduledTaskTime = (
+  time: string,
+  t: TFunction,
+): string | undefined =>
+  TIME_OF_DAY_PATTERN.test(time)
+    ? undefined
+    : t(ScheduledTasksI18nKeys.CreateTimeInvalid);
 
 /** Minute-of-hour, `"0"`-`"59"`, matching the Hourly repeat's Minute field. */
 export const MINUTE_PATTERN = /^([0-9]|[1-5]\d)$/;
@@ -56,11 +66,9 @@ export const validateScheduledTaskForm = (
       nextErrors.runAt = t(ScheduledTasksI18nKeys.CreateRunAtRequired);
     }
   } else {
-    if (
-      data.repeat !== ScheduledTaskRepeat.Hourly &&
-      !TIME_PATTERN.test(data.time)
-    ) {
-      nextErrors.time = t(ScheduledTasksI18nKeys.CreateTimeInvalid);
+    const timeError = validateScheduledTaskTime(data.time, t);
+    if (data.repeat !== ScheduledTaskRepeat.Hourly && timeError) {
+      nextErrors.time = timeError;
     }
     if (
       data.repeat === ScheduledTaskRepeat.Hourly &&
