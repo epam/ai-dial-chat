@@ -20,6 +20,36 @@ describe('useDefaultAgentPreference', () => {
     expect(result.current.preference).toBe(DefaultAgentMode.LastUsedAgent);
   });
 
+  /*
+   * The raw absence is what tells an explicit "Last used agent" choice from an
+   * untouched preference, and only the explicit one outranks a pinned operator
+   * default.
+   */
+  it('reports no stored preference until one is written', () => {
+    const { result } = renderHook(() => useDefaultAgentPreference());
+
+    expect(result.current.storedPreference).toBeNull();
+
+    act(() => result.current.setPreference(DefaultAgentMode.LastUsedAgent));
+
+    expect(result.current.storedPreference).toBe(
+      DefaultAgentMode.LastUsedAgent,
+    );
+  });
+
+  it('exposes a stored sentinel as the stored preference', () => {
+    localStorage.setItem(
+      StorageKey.DefaultAgent,
+      DefaultAgentMode.LastUsedAgent,
+    );
+
+    const { result } = renderHook(() => useDefaultAgentPreference());
+
+    expect(result.current.storedPreference).toBe(
+      DefaultAgentMode.LastUsedAgent,
+    );
+  });
+
   it('loads a stored deployment id on mount', () => {
     localStorage.setItem(StorageKey.DefaultAgent, 'gpt-4o');
 

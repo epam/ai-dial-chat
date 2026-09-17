@@ -1452,6 +1452,109 @@ describe('DeploymentsContext', () => {
       expect(result.current.selectedItemId).toBe(mockItem2.id);
     });
 
+    /*
+     * Issue #8889: the control that writes this preference is offered only
+     * where an agent is pinned, so an explicitly chosen "Last used agent" has
+     * to outrank the pin — otherwise picking the mode does nothing.
+     */
+    it('prefers the last used agent over a pinned operator default when the mode is chosen explicitly', async () => {
+      localStorage.setItem(
+        StorageKey.DefaultAgent,
+        DefaultAgentMode.LastUsedAgent,
+      );
+      contextMocks.isDefaultDeploymentPinned = true;
+      contextMocks.defaultDeploymentId = mockItem1.id;
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    /*
+     * The counterpart: an untouched preference is not a choice, so the pin
+     * still beats the implicit last-used selection — the precedence
+     * DEFAULT_DEPLOYMENT_PINNED documents.
+     */
+    it('keeps the pinned operator default ahead of the last used agent while nothing is stored', async () => {
+      contextMocks.isDefaultDeploymentPinned = true;
+      contextMocks.defaultDeploymentId = mockItem1.id;
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
+    });
+
+    it('falls back to the pinned operator default when LastUsedAgent is chosen but nothing was ever used', async () => {
+      localStorage.setItem(
+        StorageKey.DefaultAgent,
+        DefaultAgentMode.LastUsedAgent,
+      );
+      contextMocks.isDefaultDeploymentPinned = true;
+      contextMocks.defaultDeploymentId = mockItem2.id;
+      contextMocks.selectedDeploymentId = null;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    /*
+     * The new-chat screen resolves through restoreDefaultSelection, so the
+     * explicit mode has to survive the round trip through the refs that
+     * callback reads — not just the post-fetch resolution.
+     */
+    it('resolves a new chat to the last used agent over the pin on restoreDefaultSelection', async () => {
+      localStorage.setItem(
+        StorageKey.DefaultAgent,
+        DefaultAgentMode.LastUsedAgent,
+      );
+      contextMocks.isDefaultDeploymentPinned = true;
+      contextMocks.defaultDeploymentId = mockItem1.id;
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.restoreSelectedItemId(mockItem1.id));
+      act(() => result.current.restoreDefaultSelection());
+
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('applies a mid-session switch to LastUsedAgent on the next restoreDefaultSelection', async () => {
+      contextMocks.isDefaultDeploymentPinned = true;
+      contextMocks.defaultDeploymentId = mockItem1.id;
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderHook(
+        () => ({
+          deployments: useDeployments(),
+          defaultAgent: useDefaultAgentPreference(),
+        }),
+        { wrapper: DeploymentsProvider },
+      );
+
+      await waitFor(() =>
+        expect(result.current.deployments.isLoading).toBe(false),
+      );
+      expect(result.current.deployments.selectedItemId).toBe(mockItem1.id);
+
+      act(() =>
+        result.current.defaultAgent.setPreference(
+          DefaultAgentMode.LastUsedAgent,
+        ),
+      );
+      act(() => result.current.deployments.restoreDefaultSelection());
+
+      expect(result.current.deployments.selectedItemId).toBe(mockItem2.id);
+    });
+
     it('falls through when the preference names a deployment that no longer exists', async () => {
       localStorage.setItem(StorageKey.DefaultAgent, 'retired-model');
       contextMocks.selectedDeploymentId = mockItem2.id;
