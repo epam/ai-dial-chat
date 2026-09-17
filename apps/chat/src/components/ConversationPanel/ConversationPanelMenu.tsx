@@ -46,8 +46,8 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
             size={DIAL_ICON_SIZE.LG}
             className={isOpen ? 'text-accent' : 'text-secondary'}
             stroke={DIAL_KIT_ICON_STROKE}
-            />
-          }
+          />
+        }
         className={isOpen ? 'bg-control-accent-alpha-hover' : undefined}
       />
     </Dropdown>
