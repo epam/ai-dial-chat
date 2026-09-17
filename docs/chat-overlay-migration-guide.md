@@ -662,7 +662,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 44 flags.
+The new chat supports 45 flags.
 
 Enabled by default:
 
@@ -733,6 +733,7 @@ hide-keyboard-shortcuts
 hide-navigation-menu
 show-all-starters
 hide-footer-version
+show-agent-description
 ```
 
 `hide-navigation-menu` removes the mobile navigation menu in full â the
@@ -778,6 +779,15 @@ layout.
 rather than operator copy, so the operator's `footer` capability flag does not
 govern it — an embed that shows the host's own product version reaches for this
 key instead. Any footer HTML the operator configured keeps rendering.
+
+`show-agent-description` renders the selected agent's own `description` on the
+empty-chat screen, below the conversation starters, as markdown — links in it
+are clickable. It reads the same text the catalog shows on the agent's card, so
+an embed that pins one agent can put its scope note or disclaimer in front of
+the user before the first message. Nothing renders when the agent has no
+description. This is separate from the operator-wide welcome-screen
+description, which renders under the greeting for every agent alike and is not
+governed by this key.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is
@@ -877,7 +887,7 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 
 This is also a complete replacement set, not an addition to the defaults. If
 the variable is absent or empty, the built-in baseline of 26 default-on flags
-out of the 44 supported is used. Entries the server does not recognize — including
+out of the 45 supported is used. Entries the server does not recognize — including
 the renamed and retired legacy strings listed above — are logged and dropped;
 if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.
