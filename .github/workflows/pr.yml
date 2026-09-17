@@ -42,6 +42,24 @@ jobs:
       maximize-build-space: true
     secrets: inherit
 
+  # Validates apps/mcp-app-sandbox/Dockerfile builds, mirroring node_pr.yml's own
+  # docker_build job (build-only, no push) since that reusable workflow only builds
+  # one Dockerfile per call. Kept as its own job so it runs in parallel with run_tests.
+  docker_build_mcp_app_sandbox:
+    name: Build mcp-app-sandbox image (validation only)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we check it on the step
+      - if: ${{ hashFiles('apps/mcp-app-sandbox/Dockerfile') != '' }}
+        uses: epam/ai-dial-ci/actions/build_docker@4.11.0
+        with:
+          image-names: ghcr.io/${{ github.repository }}-mcp-app-sandbox
+          image-tags: test
+          dockerfile-path: apps/mcp-app-sandbox/Dockerfile
+
   chat_hooks_packed_smoke:
     # Checks three representative packed consumers on PRs.
     # The complete matrix is available through the test-packed target.
