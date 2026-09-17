@@ -589,9 +589,7 @@ export const Catalog: FC<CatalogProps> = ({
           )}
         >
           {customEmptyState != null ? (
-            <div className="flex size-full flex-1 items-center justify-center">
-              {customEmptyState}
-            </div>
+            customEmptyState
           ) : (
             <>
               <div
