@@ -93,11 +93,15 @@ export class ClientChannelController {
 
     let isClientAborted = false;
     let isReaderReleased = false;
+    let activeChannelId = validReconnectChannelId;
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
 
     const handleClose = () => {
       isClientAborted = true;
       abortController.abort();
+      this.logger.debug(
+        `Client-channel browser connection closed — channel: ${activeChannelId ?? 'pending'}, upstream abort signalled: ${abortController.signal.aborted}`,
+      );
       if (reader && !isReaderReleased) {
         void reader.cancel().catch(() => undefined);
       }
@@ -111,12 +115,16 @@ export class ClientChannelController {
         validReconnectChannelId,
         abortController.signal,
       );
+      activeChannelId = channelId;
       this.logger.debug(
         `[timing] subscribe request headers about to flush — channelId: ${channelId}`,
       );
 
       if (isClientAborted) {
         await stream.cancel().catch(() => undefined);
+        this.logger.debug(
+          `Client-channel late subscription cleanup finished — channel: ${channelId}`,
+        );
         return;
       }
 
@@ -130,7 +138,12 @@ export class ClientChannelController {
           if (isClientAborted) break;
 
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            this.logger.debug(
+              `Client-channel upstream reader finished — channel: ${channelId}, client aborted: ${isClientAborted}`,
+            );
+            break;
+          }
 
           const { needsDrain } = writeSseChunk(res, value);
           if (needsDrain) {
@@ -140,6 +153,9 @@ export class ClientChannelController {
               SSE_DRAIN_TIMEOUT_MS,
             );
             if (outcome === 'timeout') {
+              this.logger.debug(
+                `Client-channel SSE drain timed out — channel: ${channelId}, cancelling upstream reader`,
+              );
               isClientAborted = true;
               void reader.cancel().catch(() => undefined);
               break;
@@ -164,6 +180,9 @@ export class ClientChannelController {
     } finally {
       res.off('close', handleClose);
       finishSubscription();
+      this.logger.debug(
+        `Client-channel SSE relay cleanup finished — channel: ${activeChannelId ?? 'pending'}, client aborted: ${isClientAborted}, upstream abort signalled: ${abortController.signal.aborted}, reader released: ${isReaderReleased}, response ended: ${res.writableEnded}, response destroyed: ${res.destroyed}`,
+      );
     }
   }
 
@@ -220,8 +239,9 @@ export class ClientChannelController {
     operationId: 'unsubscribeClientChannel',
     summary: 'Unsubscribe from the client channel',
     description:
-      'Closes the given client channel on DIAL Core. Treats an already-gone ' +
-      'channel (404) as idempotent success.',
+      'Closes the given client channel on DIAL Core and returns its HTTP ' +
+      'status unchanged with an empty body, including 404 for an already-gone ' +
+      'channel. Returns 503 if Core cannot be reached.',
   })
   @ApiHeader({
     name: CHANNEL_ID_HEADER,
@@ -229,17 +249,40 @@ export class ClientChannelController {
     description: 'The active client channel id to close.',
   })
   @ApiResponse({ status: 200, description: 'Unsubscribed successfully' })
+  @ApiResponse({ status: 204, description: 'DIAL Core returned no content' })
   @ApiResponse({
     status: 400,
-    description: 'Missing or invalid channel id header',
+    description:
+      'Missing or invalid channel id header, or Core rejected the request',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: 'DIAL Core denied access' })
+  @ApiResponse({ status: 404, description: 'DIAL Core channel does not exist' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 500,
+    description: 'DIAL Core returned a server error',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned a gateway error',
+  })
+  @ApiResponse({ status: 503, description: 'DIAL Core is unavailable' })
+  @ApiResponse({
+    status: 'default',
+    description: 'HTTP status returned by DIAL Core, with an empty body',
+  })
   async unsubscribe(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Headers(CHANNEL_ID_HEADER) channelId: string | undefined,
   ): Promise<void> {
     const { at } = req.user as SessionUser;
     const validChannelId = assertValidChannelId(channelId);
-    await this.clientChannelService.unsubscribe(at, validChannelId);
+    const status = await this.clientChannelService.unsubscribe(
+      at,
+      validChannelId,
+    );
+    res.status(status);
   }
 }

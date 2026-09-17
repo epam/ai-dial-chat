@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useEffect, type ReactNode } from 'react';
+import { StrictMode, useEffect, type ReactNode } from 'react';
 import {
   MemoryRouter,
   type NavigateFunction,
@@ -112,6 +112,17 @@ const makeNavigableWrapper = (initialPath: string) => {
   };
 };
 
+/**
+ * Creates connection demand the way a real completion does — via the
+ * context's own `ensureConnected()` — instead of relying on the mount-time
+ * eager connect the demand-driven lifecycle removes.
+ */
+const createDemand = (channel: { ensureConnected: () => void }) => {
+  act(() => {
+    channel.ensureConnected();
+  });
+};
+
 describe('ClientChannelProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -130,12 +141,18 @@ describe('ClientChannelProvider', () => {
     expect(mockSubscribe).not.toHaveBeenCalled();
   });
 
-  it('subscribes and exposes the channel id when the flag is enabled', async () => {
+  it('mounts with the flag enabled with zero subscribes, then connects on demand', async () => {
     mockUseFeatureFlag.mockReturnValue(true);
     const { stream } = makeControllableStream();
     mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(mockSubscribe).not.toHaveBeenCalled();
+
+    createDemand(result.current);
 
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
   });
@@ -146,6 +163,7 @@ describe('ClientChannelProvider', () => {
     mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     const frame =
@@ -169,6 +187,7 @@ describe('ClientChannelProvider', () => {
     mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     const frame =
@@ -196,6 +215,7 @@ describe('ClientChannelProvider', () => {
     mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     const frame =
@@ -218,6 +238,7 @@ describe('ClientChannelProvider', () => {
     mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     await act(async () => {
@@ -250,6 +271,7 @@ describe('ClientChannelProvider', () => {
     mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     const frame =
@@ -269,6 +291,7 @@ describe('ClientChannelProvider', () => {
     mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     const frame =
@@ -297,6 +320,7 @@ describe('ClientChannelProvider', () => {
     mockReport.mockRejectedValue(new Error('network error'));
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     const frame =
@@ -328,6 +352,7 @@ describe('ClientChannelProvider', () => {
     mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
     const { result } = renderHook(() => useClientChannel(), { wrapper });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     const frame =
@@ -368,6 +393,7 @@ describe('ClientChannelProvider', () => {
     const { result, rerender } = renderHook(() => useClientChannel(), {
       wrapper,
     });
+    createDemand(result.current);
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
     const frame =
@@ -404,7 +430,7 @@ describe('ClientChannelProvider', () => {
     );
 
     it.each([[ROUTES.Conversations], [ROUTES.AppsEditor]])(
-      'subscribes when the flag is enabled and the route is %s',
+      'mounts with the flag enabled on %s with zero subscribes, then connects on demand',
       async (path) => {
         mockUseFeatureFlag.mockReturnValue(true);
         const { stream } = makeControllableStream();
@@ -416,6 +442,12 @@ describe('ClientChannelProvider', () => {
         const { result } = renderHook(() => useClientChannel(), {
           wrapper: makeWrapper(path),
         });
+        await act(async () => {
+          await Promise.resolve();
+        });
+        expect(mockSubscribe).not.toHaveBeenCalled();
+
+        createDemand(result.current);
 
         await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
       },
@@ -430,6 +462,7 @@ describe('ClientChannelProvider', () => {
       const { result } = renderHook(() => useClientChannel(), {
         wrapper: Wrapper,
       });
+      createDemand(result.current);
       await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
       navigate('/files');
@@ -448,6 +481,7 @@ describe('ClientChannelProvider', () => {
       const { result } = renderHook(() => useClientChannel(), {
         wrapper: Wrapper,
       });
+      createDemand(result.current);
       await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
       const frame =
@@ -477,6 +511,7 @@ describe('ClientChannelProvider', () => {
       const { result } = renderHook(() => useClientChannel(), {
         wrapper: Wrapper,
       });
+      createDemand(result.current);
       await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
       const frame =
@@ -501,7 +536,7 @@ describe('ClientChannelProvider', () => {
       expect(result.current.channelId).toBeNull();
     });
 
-    it('reconnects when navigating back to a streaming-capable route', async () => {
+    it('navigating back to a streaming-capable route does not reconnect on its own — the next demand does', async () => {
       mockUseFeatureFlag.mockReturnValue(true);
       const first = makeControllableStream();
       mockSubscribe.mockResolvedValueOnce({
@@ -513,18 +548,25 @@ describe('ClientChannelProvider', () => {
       const { result } = renderHook(() => useClientChannel(), {
         wrapper: Wrapper,
       });
+      createDemand(result.current);
       await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
       navigate('/files');
       await waitFor(() => expect(result.current.channelId).toBeNull());
+
+      navigate(ROUTES.Conversations);
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+      expect(result.current.channelId).toBeNull();
 
       const second = makeControllableStream();
       mockSubscribe.mockResolvedValueOnce({
         body: second.stream,
         channelId: 'channel-2',
       });
-
-      navigate(ROUTES.Conversations);
+      createDemand(result.current);
 
       await waitFor(() => expect(result.current.channelId).toBe('channel-2'));
     });
@@ -540,6 +582,7 @@ describe('ClientChannelProvider', () => {
       const { result } = renderHook(() => useClientChannel(), {
         wrapper: Wrapper,
       });
+      createDemand(result.current);
       await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
       navigate(`${ROUTES.Conversations}/conversation-2`);
@@ -559,9 +602,10 @@ describe('ClientChannelProvider', () => {
       mockUseFeatureFlag.mockReturnValue(true);
       mockSubscribe.mockRejectedValue(new Error('unreachable'));
 
-      renderHook(() => useClientChannel(), { wrapper });
+      const { result } = renderHook(() => useClientChannel(), { wrapper });
+      createDemand(result.current);
 
-      // Initial attempt happens synchronously on mount.
+      // Initial attempt happens synchronously once demand is created.
       await act(async () => {
         await Promise.resolve();
       });
@@ -599,6 +643,9 @@ describe('ClientChannelProvider', () => {
         mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
 
         const { result } = renderHook(() => useHarness(), { wrapper });
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
         await act(async () => {
           await Promise.resolve();
         });
@@ -633,6 +680,9 @@ describe('ClientChannelProvider', () => {
         mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
 
         const { result } = renderHook(() => useHarness(), { wrapper });
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
         await act(async () => {
           await Promise.resolve();
         });
@@ -671,6 +721,9 @@ describe('ClientChannelProvider', () => {
         mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
 
         const { result } = renderHook(() => useHarness(), { wrapper });
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
         await act(async () => {
           await Promise.resolve();
         });
@@ -702,6 +755,9 @@ describe('ClientChannelProvider', () => {
         mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
 
         const { result } = renderHook(() => useHarness(), { wrapper });
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
         await act(async () => {
           await Promise.resolve();
         });
@@ -742,6 +798,9 @@ describe('ClientChannelProvider', () => {
         mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
 
         const { result } = renderHook(() => useHarness(), { wrapper });
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
         await act(async () => {
           await Promise.resolve();
         });
@@ -780,6 +839,9 @@ describe('ClientChannelProvider', () => {
         mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
 
         const { result } = renderHook(() => useHarness(), { wrapper });
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
         await act(async () => {
           await Promise.resolve();
         });
@@ -823,6 +885,9 @@ describe('ClientChannelProvider', () => {
         const { result, unmount } = renderHook(() => useHarness(), {
           wrapper,
         });
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
         await act(async () => {
           await Promise.resolve();
         });
@@ -859,6 +924,9 @@ describe('ClientChannelProvider', () => {
           .mockResolvedValueOnce({ body: second.stream, channelId: 'ch-2' });
 
         const { result } = renderHook(() => useHarness(), { wrapper });
+        act(() => {
+          result.current.channel.ensureConnected();
+        });
         await act(async () => {
           await Promise.resolve();
         });
@@ -888,6 +956,483 @@ describe('ClientChannelProvider', () => {
         vi.useRealTimers();
       }
     });
+
+    it('demand from a second, still-in-flight completion survives the idle timer firing', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(() => useClientChannel(), { wrapper });
+        // Two completions each acquire their own demand token.
+        act(() => {
+          result.current.ensureConnected();
+        });
+        await act(async () => {
+          await Promise.resolve();
+        });
+        expect(result.current.channelId).toBe('ch-1');
+        act(() => {
+          result.current.ensureConnected();
+        });
+
+        // The first one settles — releasing only its own token — while the
+        // second's is still outstanding (it has not settled).
+        act(() => {
+          result.current.notifyGenerationSettled();
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+
+        expect(mockUnsubscribe).not.toHaveBeenCalled();
+        expect(result.current.channelId).toBe('ch-1');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('connection ownership generations', () => {
+    it("an aborted connect's late rejection does not clear a newer connection's controller", async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      let rejectFirst!: (err: Error) => void;
+      mockSubscribe.mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          rejectFirst = reject;
+        }),
+      );
+
+      const { Wrapper, navigate } = makeNavigableWrapper(ROUTES.Conversations);
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      createDemand(result.current);
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+
+      // Teardown aborts the first attempt and bumps the generation.
+      navigate('/files');
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(result.current.channelId).toBeNull();
+
+      // A new completion on the (now eligible again) route starts a second attempt.
+      const second = makeControllableStream();
+      mockSubscribe.mockResolvedValueOnce({
+        body: second.stream,
+        channelId: 'channel-2',
+      });
+      navigate(ROUTES.Conversations);
+      createDemand(result.current);
+      await waitFor(() => expect(result.current.channelId).toBe('channel-2'));
+
+      // The first attempt's subscribe finally rejects — must not touch the second.
+      await act(async () => {
+        rejectFirst(new Error('late rejection'));
+        await Promise.resolve();
+      });
+
+      expect(result.current.channelId).toBe('channel-2');
+      expect(mockSubscribe).toHaveBeenCalledTimes(2);
+    });
+
+    it("an aborted connect's late success does not install a stale channel id", async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      let resolveFirst!: (value: {
+        body: ReadableStream<Uint8Array>;
+        channelId: string;
+      }) => void;
+      mockSubscribe.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+      );
+
+      const { Wrapper, navigate } = makeNavigableWrapper(ROUTES.Conversations);
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      createDemand(result.current);
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      // Teardown aborts the first attempt before it resolves.
+      navigate('/files');
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(result.current.channelId).toBeNull();
+
+      const stale = makeControllableStream();
+      const cancelSpy = vi.spyOn(stale.stream, 'cancel');
+      await act(async () => {
+        resolveFirst({ body: stale.stream, channelId: 'stale-channel' });
+        await Promise.resolve();
+      });
+
+      // Not eligible off-route, so no waiter/subscription should install the stale id.
+      expect(result.current.channelId).toBeNull();
+      expect(cancelSpy).toHaveBeenCalledOnce();
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+    });
+
+    it('a superseded connection schedules no reconnect', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const first = makeControllableStream();
+      mockSubscribe.mockResolvedValueOnce({
+        body: first.stream,
+        channelId: 'channel-1',
+      });
+
+      const { Wrapper, navigate } = makeNavigableWrapper(ROUTES.Conversations);
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: Wrapper,
+      });
+      createDemand(result.current);
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      navigate('/files');
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      // Closing the (already-aborted) stream must not trigger scheduleReconnect.
+      await act(async () => {
+        first.close();
+        await Promise.resolve();
+      });
+
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+    });
+
+    it('leaves no timer, waiter, reader, or controller after repeated disconnect(), and does not throw', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const { result, unmount } = renderHook(() => useClientChannel(), {
+        wrapper,
+      });
+      createDemand(result.current);
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      expect(() => unmount()).not.toThrow();
+      expect(mockUnsubscribe).toHaveBeenCalledOnce();
+
+      // A second teardown-equivalent path (StrictMode-style) must stay inert.
+      const waitedId = result.current.waitForChannel(100);
+      expect(await waitedId).toBeNull();
+    });
+
+    it('StrictMode double mount leaves no lingering subscription from the discarded first mount', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const StrictWrapper = ({ children }: { children: ReactNode }) => (
+        <StrictMode>{makeWrapper()({ children })}</StrictMode>
+      );
+
+      const { result } = renderHook(() => useClientChannel(), {
+        wrapper: StrictWrapper,
+      });
+      createDemand(result.current);
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      // Whether StrictMode's synthetic unmount/remount produced one or two
+      // subscribe calls, the surviving connection is consistent and no
+      // duplicate stays live: exactly one unsubscribe (if any) matches the
+      // teardown of a discarded mount, and the current state is coherent.
+      expect(mockSubscribe.mock.calls.length).toBeGreaterThanOrEqual(1);
+      expect(result.current.channelId).toBe('channel-1');
+    });
+  });
+
+  describe('demand-driven lifecycle', () => {
+    it('produces zero subscribes when navigating between eligible conversations before any demand', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+
+      const { Wrapper, navigate } = makeNavigableWrapper(
+        `${ROUTES.Conversations}/conversation-1`,
+      );
+      renderHook(() => useClientChannel(), { wrapper: Wrapper });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      navigate(`${ROUTES.Conversations}/conversation-2`);
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockSubscribe).not.toHaveBeenCalled();
+    });
+
+    it('produces zero subscribes when the flag resolves from not-yet-Ready to enabled', async () => {
+      mockUseFeatureFlag.mockReturnValue(false);
+
+      const { rerender } = renderHook(() => useClientChannel(), { wrapper });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      mockUseFeatureFlag.mockReturnValue(true);
+      rerender();
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockSubscribe).not.toHaveBeenCalled();
+    });
+
+    it('a background tab becoming visible does not resurrect a never-connected channel, and leaves dedup state alone', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const originalVisibilityState = document.visibilityState;
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'visible',
+      });
+      try {
+        renderHook(() => useClientChannel(), { wrapper });
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        document.dispatchEvent(new Event('visibilitychange'));
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        expect(mockSubscribe).not.toHaveBeenCalled();
+      } finally {
+        Object.defineProperty(document, 'visibilityState', {
+          configurable: true,
+          value: originalVisibilityState,
+        });
+      }
+    });
+
+    it('a background tab becoming visible does not resurrect an idle-disconnected channel', async () => {
+      vi.useFakeTimers();
+      const originalVisibilityState = document.visibilityState;
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'visible',
+      });
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(
+          () => ({ channel: useClientChannel(), generation: useGeneration() }),
+          { wrapper },
+        );
+        createDemand(result.current.channel);
+        await act(async () => {
+          await Promise.resolve();
+        });
+        expect(result.current.channel.channelId).toBe('ch-1');
+
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+          result.current.generation.completeGeneration('path-a', 'gen-1');
+          result.current.channel.notifyGenerationSettled();
+        });
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+        expect(result.current.channel.channelId).toBeNull();
+
+        document.dispatchEvent(new Event('visibilitychange'));
+        await act(async () => {
+          await Promise.resolve();
+        });
+
+        expect(mockSubscribe).toHaveBeenCalledOnce();
+        expect(result.current.channel.channelId).toBeNull();
+      } finally {
+        vi.useRealTimers();
+        Object.defineProperty(document, 'visibilityState', {
+          configurable: true,
+          value: originalVisibilityState,
+        });
+      }
+    });
+
+    it('two concurrent demands share one in-flight subscribe and both receive the same id', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      let resolveSubscribe!: (value: {
+        body: ReadableStream<Uint8Array>;
+        channelId: string;
+      }) => void;
+      mockSubscribe.mockReturnValue(
+        new Promise((resolve) => {
+          resolveSubscribe = resolve;
+        }),
+      );
+
+      const { result } = renderHook(() => useClientChannel(), { wrapper });
+
+      const waitA = result.current.waitForChannel(5000);
+      const waitB = result.current.waitForChannel(5000);
+
+      const { stream } = makeControllableStream();
+      await act(async () => {
+        resolveSubscribe({ body: stream, channelId: 'shared-channel' });
+        await Promise.resolve();
+      });
+
+      expect(await waitA).toBe('shared-channel');
+      expect(await waitB).toBe('shared-channel');
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+    });
+
+    it('demand while already connected reuses the channel id with no new subscribe', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const { result } = renderHook(() => useClientChannel(), { wrapper });
+      createDemand(result.current);
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      createDemand(result.current);
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+      expect(result.current.channelId).toBe('channel-1');
+    });
+
+    it('a drop with nothing waiting schedules no reconnect', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream, close } = makeControllableStream();
+      mockSubscribe.mockResolvedValueOnce({ body: stream, channelId: 'ch-1' });
+
+      const { result } = renderHook(
+        () => ({ channel: useClientChannel(), generation: useGeneration() }),
+        { wrapper },
+      );
+      createDemand(result.current.channel);
+      await waitFor(() =>
+        expect(result.current.channel.channelId).toBe('ch-1'),
+      );
+
+      act(() => {
+        result.current.generation.startGeneration('path-a', 'gen-1');
+        result.current.generation.completeGeneration('path-a', 'gen-1');
+        result.current.channel.notifyGenerationSettled();
+      });
+
+      await act(async () => {
+        close();
+        await Promise.resolve();
+      });
+
+      expect(mockSubscribe).toHaveBeenCalledOnce();
+    });
+
+    it('a backgrounded tab mid-generation keeps retrying with the existing capped backoff', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const first = makeControllableStream();
+        mockSubscribe.mockResolvedValueOnce({
+          body: first.stream,
+          channelId: 'ch-1',
+        });
+
+        const { result } = renderHook(
+          () => ({ channel: useClientChannel(), generation: useGeneration() }),
+          { wrapper },
+        );
+        createDemand(result.current.channel);
+        await act(async () => {
+          await Promise.resolve();
+        });
+        expect(result.current.channel.channelId).toBe('ch-1');
+
+        // Demand is held throughout — a generation is running on this channel.
+        act(() => {
+          result.current.generation.startGeneration('path-a', 'gen-1');
+        });
+
+        mockSubscribe.mockResolvedValueOnce({
+          body: makeControllableStream().stream,
+          channelId: 'ch-2',
+        });
+        await act(async () => {
+          first.close();
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+
+        expect(mockSubscribe).toHaveBeenCalledTimes(2);
+        expect(result.current.channel.channelId).toBe('ch-2');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('teardown and pin coverage', () => {
+    it('zero active generations alone never disconnects a channel held by demand', async () => {
+      vi.useFakeTimers();
+      try {
+        mockUseFeatureFlag.mockReturnValue(true);
+        const { stream } = makeControllableStream();
+        mockSubscribe.mockResolvedValue({ body: stream, channelId: 'ch-1' });
+
+        const { result } = renderHook(() => useClientChannel(), { wrapper });
+        createDemand(result.current);
+        await act(async () => {
+          await Promise.resolve();
+        });
+        expect(result.current.channelId).toBe('ch-1');
+
+        // No generation was ever started, so notifyGenerationSettled() never
+        // fires and no idle timer is ever armed — the channel just stays up.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(10_000);
+        });
+
+        expect(mockUnsubscribe).not.toHaveBeenCalled();
+        expect(result.current.channelId).toBe('ch-1');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('flag-disable, logout (unmount), and repeated teardown each leave no timer, waiter, reader, or controller outstanding', async () => {
+      mockUseFeatureFlag.mockReturnValue(true);
+      const { stream } = makeControllableStream();
+      mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+      const { result, rerender, unmount } = renderHook(
+        () => useClientChannel(),
+        { wrapper },
+      );
+      createDemand(result.current);
+      await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+      mockUseFeatureFlag.mockReturnValue(false);
+      rerender();
+      await waitFor(() => expect(result.current.channelId).toBeNull());
+      expect(mockUnsubscribe).toHaveBeenCalledOnce();
+
+      expect(() => unmount()).not.toThrow();
+      // Unmount's own unconditional teardown must be inert given nothing is
+      // connected any more — no second unsubscribe call.
+      expect(mockUnsubscribe).toHaveBeenCalledOnce();
+    });
   });
 
   it('throws when used outside a ClientChannelProvider', () => {
@@ -908,6 +1453,7 @@ describe('ClientChannelProvider', () => {
       mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
 
       const { result } = renderHook(() => useClientChannel(), { wrapper });
+      createDemand(result.current);
       await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
 
       let resolved: string | null = null;

@@ -136,6 +136,21 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
   const attemptRef = useRef(0);
   const isStoppedRef = useRef(false);
   const channelWaitersRef = useRef<Set<(id: string | null) => void>>(new Set());
+  /*
+   * Bumped by `disconnect()`. Lets a stale `connect()` invocation — one whose
+   * subscribe call resolves or rejects after a teardown/reconnect has moved
+   * on — recognize it is no longer current and skip every ref write it would
+   * otherwise perform, instead of racing a newer connection.
+   */
+  const connectionGenerationRef = useRef(0);
+  /*
+   * Counted (not boolean) so two concurrent completions each hold their own
+   * token: the first to settle releases only its own token, leaving the
+   * second's demand intact. Internal only — never exposed on
+   * `ClientChannelContextValue`, so `libs/chat-hooks` learns nothing about
+   * demand.
+   */
+  const demandRef = useRef(new Set<symbol>());
 
   const resolveChannelWaiters = useCallback((id: string | null) => {
     const waiters = channelWaitersRef.current;
@@ -195,11 +210,46 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
    */
   const hasPendingEvents = useCallback(() => eventsMapRef.current.size > 0, []);
 
-  /** The channel is wanted while the flag/route condition holds, and also while any signin event is still unresolved. */
+  /** True while a completion has acquired demand — decides whether a channel *should* exist (eligibility alone only decides whether one *may*). */
+  const hasDemand = useCallback(() => demandRef.current.size > 0, []);
+
+  /** Adds a fresh opaque token to the demand registry, unconditionally — callers are expected to have already checked eligibility. */
+  const acquireDemand = useCallback((): symbol => {
+    const token = Symbol('client-channel-demand');
+    demandRef.current.add(token);
+    return token;
+  }, []);
+
+  /** Removes exactly this token, if still present. */
+  const releaseDemand = useCallback((token: symbol) => {
+    demandRef.current.delete(token);
+  }, []);
+
+  /**
+   * The channel is wanted while the flag/route condition holds AND a
+   * completion has acquired demand, and also while any signin event is still
+   * unresolved (the pending-event term is what lets a pinned channel
+   * reconnect off-route).
+   */
   const isChannelWanted = useCallback(
-    () => isActiveRef.current || hasPendingEvents(),
-    [hasPendingEvents],
+    () => (isActiveRef.current && hasDemand()) || hasPendingEvents(),
+    [hasDemand, hasPendingEvents],
   );
+
+  /*
+   * `notifyGenerationSettled()` has no way to identify which token its own
+   * generation's `ensureConnected()` call acquired — the capability is
+   * intentionally parameterless. Since every held token means the same
+   * thing ("some completion still needs this channel"), removing any single
+   * one keeps the count correct: one `ensureConnected()` call acquires
+   * exactly one token per generation, and this removes exactly one per
+   * settlement, so the registry never leaks regardless of which token is
+   * popped.
+   */
+  const releaseOneDemand = useCallback(() => {
+    const { value, done } = demandRef.current.values().next();
+    if (!done) demandRef.current.delete(value);
+  }, []);
 
   const readStream = useCallback(
     async (body: ReadableStream<Uint8Array>, signal: AbortSignal) => {
@@ -249,14 +299,27 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     if (isStoppedRef.current || !isChannelWanted()) return;
     if (abortControllerRef.current) return; // already connecting/connected
 
+    const myGeneration = connectionGenerationRef.current;
     const controller = new AbortController();
     abortControllerRef.current = controller;
+
+    /** True while this call is still the connection `disconnect()` hasn't superseded and its own attempt hasn't been aborted. */
+    const isCurrent = () =>
+      !controller.signal.aborted &&
+      myGeneration === connectionGenerationRef.current;
 
     try {
       const { body, channelId: newChannelId } = await subscribeClientChannel(
         channelIdRef.current ?? undefined,
         controller.signal,
       );
+
+      if (!isCurrent()) {
+        // A superseded/aborted attempt's late success installs nothing.
+        void body.cancel().catch(() => undefined);
+        return;
+      }
+
       attemptRef.current = 0;
       channelIdRef.current = newChannelId;
       setChannelId(newChannelId);
@@ -264,13 +327,17 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
 
       await readStream(body, controller.signal);
 
-      if (!controller.signal.aborted) {
-        abortControllerRef.current = null;
+      if (isCurrent()) {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
         scheduleReconnect();
       }
     } catch {
-      abortControllerRef.current = null;
-      if (!controller.signal.aborted) {
+      if (isCurrent()) {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
         resolveChannelWaiters(null);
         scheduleReconnect();
       }
@@ -281,7 +348,15 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     connectRef.current = connect;
   }, [connect]);
 
-  const ensureConnected = useCallback(() => {
+  /**
+   * The mechanical half of "make sure a connection is under way": clears the
+   * idle timer, forgets resolved-event dedup state, and kicks off `connect()`
+   * if nothing is already connecting/connected. Carries no demand semantics
+   * of its own — callers that need demand held call `acquireDemand()`
+   * themselves, so this can be reused (by `waitForChannel`) without
+   * double-acquiring for the same completion.
+   */
+  const beginConnectionAttempt = useCallback(() => {
     clearIdleDisconnectTimeout();
     if (isStoppedRef.current || !isActiveRef.current) return;
 
@@ -302,7 +377,15 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     void connect();
   }, [clearIdleDisconnectTimeout, clearRetryTimeout, connect]);
 
+  const ensureConnected = useCallback(() => {
+    if (!isStoppedRef.current && isActiveRef.current) {
+      acquireDemand();
+    }
+    beginConnectionAttempt();
+  }, [acquireDemand, beginConnectionAttempt]);
+
   const disconnect = useCallback(() => {
+    connectionGenerationRef.current += 1;
     clearRetryTimeout();
     clearIdleDisconnectTimeout();
     if (abortControllerRef.current) {
@@ -317,6 +400,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     setChannelId(null);
     eventsMapRef.current.clear();
     resolvedIdsRef.current.clear();
+    demandRef.current.clear();
     syncPendingEvents();
     resolveChannelWaiters(null);
   }, [
@@ -331,20 +415,23 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     idleDisconnectTimeoutRef.current = setTimeout(() => {
       idleDisconnectTimeoutRef.current = null;
       /*
-       * Re-checked at fire time: a generation may have started, or a signin
-       * event arrived, inside the grace window.
+       * Re-checked at fire time: a generation may have started, a signin
+       * event may have arrived, or a new completion may have acquired demand
+       * (before its own generation is even tracked), inside the grace window.
        */
-      if (hasActiveGeneration() || hasPendingEvents()) return;
+      if (hasActiveGeneration() || hasPendingEvents() || hasDemand()) return;
       disconnect();
     }, IDLE_DISCONNECT_DELAY_MS);
   }, [
     clearIdleDisconnectTimeout,
     disconnect,
     hasActiveGeneration,
+    hasDemand,
     hasPendingEvents,
   ]);
 
   const notifyGenerationSettled = useCallback(() => {
+    releaseOneDemand();
     if (hasActiveGeneration()) return;
     if (hasPendingEvents()) {
       /*
@@ -361,6 +448,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     clearIdleDisconnectTimeout,
     hasActiveGeneration,
     hasPendingEvents,
+    releaseOneDemand,
     scheduleIdleDisconnect,
   ]);
 
@@ -372,13 +460,24 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
         return Promise.resolve(null);
       }
 
-      ensureConnected();
+      /*
+       * Short-lived: held only for this wait's own duration and released the
+       * moment it settles, below — never by `notifyGenerationSettled()`. The
+       * long-lived demand for the completion's full lifetime is
+       * `ensureConnected()`'s (every real caller invokes it just before this).
+       * This token exists so a connect attempt this call kicks off stays
+       * "wanted" for as long as the wait itself is outstanding, independent
+       * of that.
+       */
+      const waitToken = acquireDemand();
+      beginConnectionAttempt();
 
       return new Promise<string | null>((resolve) => {
         const waiters = channelWaitersRef.current;
         const settle = (id: string | null) => {
           waiters.delete(settle);
           clearTimeout(timeoutId);
+          releaseDemand(waitToken);
           resolve(id);
         };
         waiters.add(settle);
@@ -388,7 +487,7 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
         );
       });
     },
-    [ensureConnected],
+    [acquireDemand, beginConnectionAttempt, releaseDemand],
   );
 
   const disconnectRef = useRef(disconnect);
@@ -416,11 +515,13 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
        */
       if (isEnabled && hasPendingEvents()) return;
       disconnect();
-      return;
     }
-
-    attemptRef.current = 0;
-    void connect();
+    /*
+     * No connect half: becoming eligible (route mount/return, flag turning
+     * on) records eligibility only — it creates no demand, so nothing
+     * connects here. `ensureConnected`/`waitForChannel` are the only paths
+     * that create demand, and they run at the start of every completion.
+     */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, isEnabled]);
 
@@ -432,19 +533,6 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
     },
     [],
   );
-
-  useEffect(() => {
-    if (!isActive) return undefined;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        ensureConnected();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isActive, ensureConnected]);
 
   const reportEvent = useCallback(
     async (
@@ -467,13 +555,14 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
        */
       if (!isActiveRef.current) {
         disconnect();
-      } else if (!hasActiveGeneration()) {
+      } else if (!hasActiveGeneration() && !hasDemand()) {
         scheduleIdleDisconnect();
       }
     },
     [
       disconnect,
       hasActiveGeneration,
+      hasDemand,
       hasPendingEvents,
       removeEvent,
       scheduleIdleDisconnect,

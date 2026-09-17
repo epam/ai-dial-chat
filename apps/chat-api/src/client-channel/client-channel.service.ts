@@ -127,8 +127,11 @@ export class ClientChannelService {
     }
   }
 
-  async unsubscribe(token: string, channelId: string): Promise<void> {
-    this.logger.debug(`Unsubscribing client channel: ${channelId}`);
+  async unsubscribe(token: string, channelId: string): Promise<number> {
+    const startedAt = Date.now();
+    this.logger.debug(
+      `Unsubscribing client channel: ${channelId} — calling DIAL Core now`,
+    );
 
     try {
       const response = await this.dialClient.client.unsubscribeClientChannel({
@@ -137,21 +140,15 @@ export class ClientChannelService {
           [CHANNEL_ID_HEADER]: channelId,
         },
       });
-      /*
-       * A 404 means Core already dropped the channel (e.g. it expired) —
-       * treat it as the idempotent success it represents, mirroring
-       * `ToolsetsService.logoutToolset`'s handling of an already-signed-out
-       * credential.
-       */
-      if (response.error && response.response.status !== 404) {
-        return mapDialHttpStatus(
-          response.response.status,
-          'client-channel.unsubscribe',
-          this.logger,
-        );
-      }
-      this.logger.debug(`Unsubscribed client channel: ${channelId}`);
+      const status = response.response.status;
+      this.logger.debug(
+        `Client-channel unsubscribe completed — channel: ${channelId}, DIAL Core status: ${status}, already absent: ${status === 404}, elapsed: ${Date.now() - startedAt}ms`,
+      );
+      return status;
     } catch (err) {
+      this.logger.debug(
+        `Client-channel unsubscribe failed — channel: ${channelId}, elapsed: ${Date.now() - startedAt}ms`,
+      );
       return handleDialFetchError(
         err,
         'client-channel.unsubscribe',
