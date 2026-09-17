@@ -11,6 +11,7 @@ import {
   isApplicationDeployed,
   isApplicationType,
 } from '@/src/utils/app/application';
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
 import { getValidFormFields } from '@/src/utils/app/forms';
 import { withEntityIdName } from '@/src/utils/app/marketplace-localization';
@@ -201,6 +202,14 @@ export const AppsEditor = () => {
 
   const submitHandler = useCallback(
     (data: AppsEditorFormType) => {
+      if (
+        isSchemaApplicationType &&
+        schema?.$id &&
+        cleanSchemaId(schema.$id) !== type
+      ) {
+        return;
+      }
+
       const payload = getApplicationPayload({
         data,
         allEntitiesMap: marketplaceEntities,

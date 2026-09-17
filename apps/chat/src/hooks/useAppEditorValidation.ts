@@ -87,22 +87,26 @@ export const useAppEditorValidation = () => {
     const applicationId = application?.id;
     const isAppPublic =
       applicationId && isEntityIdPublic({ id: applicationId });
+    const matchingApplicationData =
+      applicationData?.reference === id.toString()
+        ? applicationData
+        : undefined;
 
     if (
-      (application || applicationData) &&
+      (application || matchingApplicationData) &&
       decodeURIComponent(type.toString()) !==
         cleanSchemaId(
           getApplicationType(
-            (application ?? applicationData) as DialAIEntityModel,
+            (application ?? matchingApplicationData) as DialAIEntityModel,
           ),
         )
     ) {
       // if slug is not equal to application type
       console.error('application', application);
-      console.error('applicationData', applicationData);
+      console.error('applicationData', matchingApplicationData);
       console.error(
         'NotFound',
-        `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId(${application ? 'application' : 'applicationData'}): ${cleanSchemaId(getApplicationType((application ?? applicationData) as DialAIEntityModel))}`,
+        `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId(${application ? 'application' : 'applicationData'}): ${cleanSchemaId(getApplicationType((application ?? matchingApplicationData) as DialAIEntityModel))}`,
       );
       void router.push(Routes.NotFound);
       return;
