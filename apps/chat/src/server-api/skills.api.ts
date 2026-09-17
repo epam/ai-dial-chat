@@ -6,6 +6,7 @@ import type {
   SkillCatalogListResponseDto,
   SkillImportResponseDto,
   SkillListResponseDto,
+  SkillMetadataItemDto,
   SkillOperationResultDto,
   SkillUploadResponseDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -38,6 +39,19 @@ export const listSkillFiles = (
   signal?: AbortSignal,
 ): Promise<SkillFileListResponseDto> =>
   skillsApi.listSkillFiles(params, signal ? { signal } : undefined);
+
+/**
+ * Fetches one skill's own authoritative metadata (`GET /api/v1/skills/metadata`)
+ * — the resource's own `author`/`updatedAt`, not the catalog listing entry.
+ * Uses the plain (non-`Raw`) generated method: the response is JSON with no
+ * stream or header semantics to preserve.
+ */
+export const getSkillMetadata = (
+  bucket: string,
+  path: string,
+  signal?: AbortSignal,
+): Promise<SkillMetadataItemDto> =>
+  skillsApi.getSkillMetadata({ bucket, path }, signal ? { signal } : undefined);
 
 /*
  * downloadSkillRaw() is used instead of downloadSkill() for the same reason as

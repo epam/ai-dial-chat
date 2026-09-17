@@ -226,6 +226,13 @@ export const resolveSkillFileDownloadPath = (
  * authored it, when it last changed, and its file inventory. Grouping folders
  * in the file listing are excluded from both the count and the rows. Sizes are
  * not shown — the skill metadata carries no content-length field.
+ *
+ * `skill` is the authoritative `getSkillMetadata` response when that request
+ * fulfilled; the caller falls back to the catalog listing entry only when it
+ * rejected (`useSkillItemDetails`'s `onFetchSkillDetails`). Either way, this
+ * function never fills a gap in one source from the other — an absent
+ * `author` omits the row and an absent `updatedAt` leaves the updated row's
+ * value empty, exactly as `skill` carries it.
  */
 export const buildSkillOverview = (
   skill: SkillMetadataItemDto | undefined,

@@ -3,7 +3,7 @@ import type {
   CatalogItemDetailsFetchResult,
 } from '@epam/ai-dial-catalog';
 import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SkillFileContent } from '../../skill/skill-file-preview';
 import { SkillSource } from '../../skill/skill-types';
 import type { DeploymentFolderLabels } from '../map-deployment-to-catalog-item';
@@ -113,6 +113,15 @@ export const useSkillDetailsPanelData = ({
     useState<CatalogItemDetailsFetchResult | null>(null);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
 
+  /*
+   * Paired with the effect's own `isCancelled` flag: closing and reopening
+   * the same skill runs the cleanup and a new effect, but a token captured
+   * at call time additionally guards against the earlier request's response
+   * landing after the newer request started (see `Catalog.tsx`'s equivalent
+   * `pendingRequestIdRef` guard, design.md D9).
+   */
+  const requestIdRef = useRef(0);
+
   useEffect(() => {
     if (catalogItem == null) return;
 
@@ -126,9 +135,10 @@ export const useSkillDetailsPanelData = ({
     setIsDetailsLoading(true);
     setFetchedDetails(null);
     let isCancelled = false;
+    const requestId = ++requestIdRef.current;
 
     onFetchSkillDetails(catalogItem).then((details) => {
-      if (isCancelled) return;
+      if (isCancelled || requestIdRef.current !== requestId) return;
       setFetchedDetails(details ?? null);
       setIsDetailsLoading(false);
     });
