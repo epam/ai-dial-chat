@@ -261,7 +261,9 @@ describe('PublishAccessRuleEditor', () => {
       'dial_roles',
     );
     await userEvent.selectOptions(screen.getByLabelText('Function'), 'REGEX');
-    await userEvent.type(screen.getByLabelText('Pattern'), 'a'.repeat(201));
+    fireEvent.change(screen.getByLabelText('Pattern'), {
+      target: { value: 'a'.repeat(201) },
+    });
 
     expect(screen.getByRole('alert').textContent).toContain(
       'Enter a valid regular expression.',

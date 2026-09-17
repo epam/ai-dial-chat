@@ -121,6 +121,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe('MarkdownTable', () => {
@@ -140,6 +141,7 @@ describe('MarkdownTable', () => {
   });
 
   it('shows a tooltip for each table action without changing its accessible name', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ delay: null });
     renderTable({ actionLabels });
 
@@ -260,6 +262,7 @@ describe('MarkdownTable', () => {
   });
 
   it('shows a tooltip for Open in Canvas without changing its accessible name', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ delay: null });
     renderTable({
       actionLabels: actionLabelsWithOpenInCanvas,
