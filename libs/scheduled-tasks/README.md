@@ -94,9 +94,9 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control itself is a fully-composed `modelSelector` element the host renders — the lib only wraps it with the field's required label and error message. This component holds no state of its own.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Every other field, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", or "monthly"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value.
 
-`isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty, so the affordance is the only thing that separates "submitting" from "not ready".
+`isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty or the time draft is invalid, so the affordance is the only thing that separates "submitting" from "not ready".
 
 ```tsx
 import {
@@ -192,3 +192,24 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Constants
+
+### TIME_OF_DAY_PATTERN
+
+24-hour `HH:mm` time-of-day pattern matching the `Calendar` time control's value shape. The create form's blur validation uses it internally; it is exported so a host's submit-time validation and the lib's field agree on what a valid time is.
+
+```ts
+import { TIME_OF_DAY_PATTERN } from '@epam/ai-dial-scheduled-tasks';
+
+TIME_OF_DAY_PATTERN.test('09:30'); // true
+TIME_OF_DAY_PATTERN.test('9:5'); // false
+```
+
+### DESCRIPTION_MAX_LENGTH
+
+Maximum length of the create form's description field: `500` characters.
+
+```ts
+import { DESCRIPTION_MAX_LENGTH } from '@epam/ai-dial-scheduled-tasks';
+```

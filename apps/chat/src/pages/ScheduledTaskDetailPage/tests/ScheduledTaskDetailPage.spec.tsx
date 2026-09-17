@@ -6,6 +6,8 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { IconX } from '@tabler/icons-react';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { StrictMode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -230,51 +232,49 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     onClick?: () => void;
   }) => <button onClick={onClick}>{label}</button>,
-  ConfirmationPopupVariant: { Info: 'info', Danger: 'danger' },
-  ConfirmationPopup: ({
-    open,
-    header,
-    description,
-    confirmLabel,
-    cancelLabel,
-    isLoading,
-    disableConfirmButton,
-    onConfirm,
-    onCancel,
-    onClose,
-  }: {
-    open: boolean;
-    header: string;
-    description?: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-    isLoading?: boolean;
-    disableConfirmButton?: boolean;
-    onConfirm: () => void;
-    onCancel?: () => void;
-    onClose?: () => void;
-  }) =>
-    open ? (
-      <div
-        role="dialog"
-        aria-label={header}
-        tabIndex={-1}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') onClose?.();
-        }}
-      >
-        <p>{description}</p>
-        <span>dialogIsLoading:{String(isLoading)}</span>
-        <button onClick={() => onClose?.()} aria-label="Close dialog">
-          x
-        </button>
-        <button onClick={() => onCancel?.()}>{cancelLabel}</button>
-        <button onClick={onConfirm} disabled={disableConfirmButton}>
-          {confirmLabel}
-        </button>
-      </div>
-    ) : null,
 }));
+
+/*
+ * The delete dialog is a component of its own with its own spec; this mock
+ * reproduces just the surface the page's Delete action tests drive — a
+ * named dialog with confirm, cancel, close, and Escape dismissal — without
+ * depending on the kit's Popup internals.
+ */
+vi.mock(
+  '../../../components/ScheduledTaskDeleteModal/ScheduledTaskDeleteModal',
+  () => ({
+    default: ({
+      open,
+      onConfirm,
+      onClose,
+    }: {
+      open: boolean;
+      onConfirm: () => void;
+      onClose: () => void;
+    }) =>
+      open ? (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <div
+          role="dialog"
+          aria-label="scheduledTasks.detail.deleteConfirmTitle"
+          tabIndex={-1}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onClose?.();
+          }}
+        >
+          <button onClick={() => onClose?.()} aria-label="Close dialog">
+            <IconX
+              size={DIAL_ICON_SIZE.SM}
+              stroke={DIAL_KIT_ICON_STROKE}
+              aria-hidden
+            />
+          </button>
+          <button onClick={() => onClose?.()}>buttons.cancel</button>
+          <button onClick={onConfirm}>buttons.delete</button>
+        </div>
+      ) : null,
+  }),
+);
 
 const BackTargetStub = () => <div>scheduled tasks list</div>;
 const EditTargetStub = () => <div>scheduled task edit page</div>;

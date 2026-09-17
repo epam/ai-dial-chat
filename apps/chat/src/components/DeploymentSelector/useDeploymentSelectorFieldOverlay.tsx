@@ -53,6 +53,8 @@ export function useDeploymentSelectorFieldOverlay(
   selectedId: string | null,
   onSelect: (id: string) => void,
   extraOptions?: DeploymentSelectorExtraOption[],
+  /** Additional classes merged over the rendered panel root's defaults. */
+  panelClassName?: string,
 ): UseDeploymentSelectorFieldOverlayResult {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
@@ -111,6 +113,7 @@ export function useDeploymentSelectorFieldOverlay(
           onToggleFavorite={toggleFavorite}
           onClose={onClose}
           onBrowseCatalog={() => setIsCatalogOpen(true)}
+          panelClassName={panelClassName}
         />
       </Suspense>
     ),
@@ -121,6 +124,7 @@ export function useDeploymentSelectorFieldOverlay(
       selectedCatalogItem,
       onSelect,
       toggleFavorite,
+      panelClassName,
     ],
   );
 

@@ -8,10 +8,6 @@ import {
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import {
-  ConfirmationPopup,
-  ConfirmationPopupVariant,
-} from '@epam/ai-dial-ui-kit';
-import {
   memo,
   useCallback,
   useEffect,
@@ -22,6 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import ScheduledTaskDeleteModal from '../../components/ScheduledTaskDeleteModal/ScheduledTaskDeleteModal';
 import {
   getConversationRoute,
   getScheduledTaskEditRoute,
@@ -402,24 +399,11 @@ const ScheduledTaskDetailPage: FC = () => {
         onRunsLoadMore={onRunsLoadMore}
         onRunClick={handleRunClick}
       />
-      <ConfirmationPopup
+      <ScheduledTaskDeleteModal
         open={isDeleteDialogOpen}
-        header={t(ScheduledTasksI18nKeys.DetailDeleteConfirmTitle)}
-        description={t(ScheduledTasksI18nKeys.DetailDeleteConfirmDescription, {
-          taskName: task?.displayName ?? '',
-        })}
-        descriptionClassName="break-words"
-        variant={ConfirmationPopupVariant.Danger}
-        confirmLabel={
-          isDeleting
-            ? t(ScheduledTasksI18nKeys.DetailDeleteConfirmingLabel)
-            : t(ButtonsI18nKeys.Delete)
-        }
-        cancelLabel={t(ButtonsI18nKeys.Cancel)}
-        isLoading={isDeleting}
-        disableConfirmButton={isDeleting}
+        taskName={task?.displayName ?? ''}
+        isDeleting={isDeleting}
         onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteDialogClose}
         onClose={handleDeleteDialogClose}
       />
     </>
