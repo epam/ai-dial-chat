@@ -111,6 +111,7 @@ export const Catalog: FC<CatalogProps> = ({
   onMyAppsActiveChange,
   activeTab: controlledActiveTab,
   onActiveTabChange,
+  renderEmptyState,
 }) => {
   const { typography } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
@@ -450,6 +451,21 @@ export const Catalog: FC<CatalogProps> = ({
     [emptyTitle, featuredLabel, detailsTexts?.credentialsBadgeLoggedOutLabel],
   );
 
+  /*
+   * Built from the same resolved locals the rest of Catalog already renders
+   * from, so the reported context is correct whether each value is managed
+   * internally or externally controlled.
+   */
+  const isResultSetEmpty = !isLoading && tabFiltered.length === 0;
+  const customEmptyState = isResultSetEmpty
+    ? renderEmptyState?.({
+        query,
+        activeTab,
+        hasTopicFilters: filters.size > 0,
+        isMyAppsActive,
+      })
+    : undefined;
+
   if (isLoading) {
     return (
       <div className="flex size-full min-h-0 flex-1 items-center justify-center">
@@ -572,52 +588,60 @@ export const Catalog: FC<CatalogProps> = ({
             tabFiltered.length === 0 && 'px-8 py-6',
           )}
         >
-          <div
-            className={mergeClasses(
-              tabFiltered.length > 0 ? 'pb-8' : 'size-full flex-1',
-              viewMode !== CatalogViewMode.Grid && 'hidden',
-            )}
-          >
-            <CardGrid
-              items={tabFiltered}
-              query={query}
-              onToggleFavorite={onToggleFavorite}
-              isFavoriteVisible={isFavoriteVisible}
-              onItemClick={onCardClick ?? handleOpenDetails}
-              titles={cardGridTitles}
-              selectedItemId={selectedItemId}
-              isReadonly={isReadonly}
-              isFullWidth={isFullWidth}
-              featuredChipStyle={catalogStyles?.colors?.featuredChipStyle}
-            />
-          </div>
-
-          {listEverShown && (
-            <div
-              className={mergeClasses(
-                'pb-8',
-                viewMode !== CatalogViewMode.Cards && 'hidden',
-                tabFiltered.length === 0 && 'h-full',
-              )}
-            >
-              <ListView
-                type={activeTab as CatalogEntityType}
-                items={tabFiltered}
-                query={query}
-                ariaLabel={resolvedAriaLabel}
-                emptyStateTitle={emptyTitle}
-                onToggleFavorite={onToggleFavorite}
-                isFavoriteVisible={isFavoriteVisible}
-                columnVisibility={columnVisibility}
-                onItemClick={onCardClick ?? handleOpenDetails}
-                stickyHeaderTop={0}
-                selectedItemId={selectedItemId}
-                credentialsBadgeLoggedOutLabel={
-                  detailsTexts?.credentialsBadgeLoggedOutLabel
-                }
-                isReadonly={isReadonly}
-              />
+          {customEmptyState != null ? (
+            <div className="flex size-full flex-1 items-center justify-center">
+              {customEmptyState}
             </div>
+          ) : (
+            <>
+              <div
+                className={mergeClasses(
+                  tabFiltered.length > 0 ? 'pb-8' : 'size-full flex-1',
+                  viewMode !== CatalogViewMode.Grid && 'hidden',
+                )}
+              >
+                <CardGrid
+                  items={tabFiltered}
+                  query={query}
+                  onToggleFavorite={onToggleFavorite}
+                  isFavoriteVisible={isFavoriteVisible}
+                  onItemClick={onCardClick ?? handleOpenDetails}
+                  titles={cardGridTitles}
+                  selectedItemId={selectedItemId}
+                  isReadonly={isReadonly}
+                  isFullWidth={isFullWidth}
+                  featuredChipStyle={catalogStyles?.colors?.featuredChipStyle}
+                />
+              </div>
+
+              {listEverShown && (
+                <div
+                  className={mergeClasses(
+                    'pb-8',
+                    viewMode !== CatalogViewMode.Cards && 'hidden',
+                    tabFiltered.length === 0 && 'h-full',
+                  )}
+                >
+                  <ListView
+                    type={activeTab as CatalogEntityType}
+                    items={tabFiltered}
+                    query={query}
+                    ariaLabel={resolvedAriaLabel}
+                    emptyStateTitle={emptyTitle}
+                    onToggleFavorite={onToggleFavorite}
+                    isFavoriteVisible={isFavoriteVisible}
+                    columnVisibility={columnVisibility}
+                    onItemClick={onCardClick ?? handleOpenDetails}
+                    stickyHeaderTop={0}
+                    selectedItemId={selectedItemId}
+                    credentialsBadgeLoggedOutLabel={
+                      detailsTexts?.credentialsBadgeLoggedOutLabel
+                    }
+                    isReadonly={isReadonly}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

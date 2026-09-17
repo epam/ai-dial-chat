@@ -21,7 +21,11 @@ export {
 } from './types/catalog-content-type';
 
 // Models
-export type { CatalogProps, CatalogTitles } from './models/catalog-props';
+export type {
+  CatalogEmptyStateContext,
+  CatalogProps,
+  CatalogTitles,
+} from './models/catalog-props';
 export type {
   CatalogColors,
   CatalogStyles,

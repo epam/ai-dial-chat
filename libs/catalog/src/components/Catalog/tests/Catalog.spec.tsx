@@ -950,6 +950,187 @@ describe('Catalog', () => {
     expect(screen.queryByRole('tablist')).toBeNull();
   });
 
+  it('renders the default empty state (CardGrid) when renderEmptyState is not passed', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+  });
+
+  it('falls back to the default empty state (CardGrid) when renderEmptyState returns null', () => {
+    render(<Catalog items={[]} favorites={[]} renderEmptyState={() => null} />);
+
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+  });
+
+  it('falls back to the default empty state (CardGrid) when renderEmptyState returns undefined', () => {
+    render(
+      <Catalog items={[]} favorites={[]} renderEmptyState={() => undefined} />,
+    );
+
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+  });
+
+  it('renders the custom empty state instead of the default when it resolves a node', () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.getByText('Nothing here yet')).toBeTruthy();
+    expect(screen.queryByLabelText('catalog grid')).toBeNull();
+    expect(screen.queryByText('No items')).toBeNull();
+  });
+
+  it('does not invoke renderEmptyState when the result set is non-empty', () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        renderEmptyState={renderEmptyState}
+      />,
+    );
+
+    expect(renderEmptyState).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke renderEmptyState while loading, even with an empty result set', () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        isLoading
+        renderEmptyState={renderEmptyState}
+      />,
+    );
+
+    expect(renderEmptyState).not.toHaveBeenCalled();
+  });
+
+  it('renders exactly one instance of the custom empty state when switching view mode', async () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.getAllByText('Nothing here yet')).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.getAllByText('Nothing here yet')).toHaveLength(1);
+  });
+
+  it('keeps rendering toolbar and page chrome while the custom empty state is shown', () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.getByText('Nothing here yet')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Catalog' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
+    expect(screen.getByPlaceholderText('search')).toBeTruthy();
+  });
+
+  it('passes the internally-managed query, activeTab, topic filters, and My Apps state to renderEmptyState', async () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', {
+            type: CatalogEntityType.Model,
+            topics: ['Free'],
+          }),
+        ]}
+        favorites={[]}
+        renderEmptyState={renderEmptyState}
+      />,
+    );
+
+    await userEvent.type(screen.getByPlaceholderText('search'), 'Gemini');
+    await userEvent.click(screen.getByRole('button', { name: 'Free' }));
+    await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
+
+    await waitFor(() =>
+      expect(renderEmptyState).toHaveBeenLastCalledWith({
+        query: 'Gemini',
+        activeTab: CatalogEntityType.Model,
+        hasTopicFilters: true,
+        isMyAppsActive: true,
+      }),
+    );
+  });
+
+  it('passes the externally-controlled activeTab, filterTopics, and isMyAppsActive to renderEmptyState', () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+        activeTab={CatalogEntityType.Prompt}
+        filterTopics={new Set(['Paid'])}
+        isMyAppsActive
+        renderEmptyState={renderEmptyState}
+      />,
+    );
+
+    expect(renderEmptyState).toHaveBeenCalledWith({
+      query: '',
+      activeTab: CatalogEntityType.Prompt,
+      hasTopicFilters: true,
+      isMyAppsActive: true,
+    });
+  });
+
+  it('reports an empty activeTab in the context when there is no active tab', () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog items={[]} favorites={[]} renderEmptyState={renderEmptyState} />,
+    );
+
+    expect(renderEmptyState).toHaveBeenCalledWith(
+      expect.objectContaining({ activeTab: '' }),
+    );
+  });
+
+  it('stops rendering the custom empty state once the result set becomes non-empty', () => {
+    const items = [makeItem('1', 'Claude', { topics: ['Free'] })];
+    const { rerender } = render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+    expect(screen.getByText('Nothing here yet')).toBeTruthy();
+
+    rerender(
+      <Catalog
+        items={items}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.queryByText('Nothing here yet')).toBeNull();
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
   it('calls onActiveTabChange with the clicked tab id', async () => {
     const onActiveTabChange = vi.fn();
     render(
