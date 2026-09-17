@@ -171,7 +171,7 @@ const runFixture = (
 /**
  * `--suite=smoke` selects the stable PR smoke set. `--only=name1,name2`
  * restricts a local debugging run to named fixtures. Side-effect checks still
- * run, but only report on whichever of `minimal`/`oauth`/`file-manager` the
+ * run, but only report on whichever of `minimal`/`oauth`/`file-manager-canvas` the
  * selected run includes.
  */
 const suiteArg = process.argv.find((arg) => arg.startsWith('--suite='));

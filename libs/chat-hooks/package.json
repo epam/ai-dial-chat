@@ -34,6 +34,12 @@
       "import": "./dist/conversation.js",
       "default": "./dist/conversation.js"
     },
+    "./conversation-overlay": {
+      "@epam/source": "./src/entry-points/conversation-overlay.ts",
+      "types": "./dist/conversation-overlay.d.ts",
+      "import": "./dist/conversation-overlay.js",
+      "default": "./dist/conversation-overlay.js"
+    },
     "./conversation-transfer": {
       "@epam/source": "./src/entry-points/conversation-transfer.ts",
       "types": "./dist/conversation-transfer.d.ts",
@@ -51,6 +57,12 @@
       "types": "./dist/file-manager.d.ts",
       "import": "./dist/file-manager.js",
       "default": "./dist/file-manager.js"
+    },
+    "./file-manager-canvas": {
+      "@epam/source": "./src/entry-points/file-manager-canvas.ts",
+      "types": "./dist/file-manager-canvas.d.ts",
+      "import": "./dist/file-manager-canvas.js",
+      "default": "./dist/file-manager-canvas.js"
     },
     "./source-content": {
       "@epam/source": "./src/entry-points/source-content.ts",
@@ -200,7 +212,7 @@
   },
   "sideEffects": [
     "./dist/oauth.js",
-    "./dist/file-manager.js",
+    "./dist/file-manager-canvas.js",
     "./dist/shared/toolset-login-events.js",
     "./dist/files/attachment-canvas.js"
   ],
