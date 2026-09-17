@@ -57,9 +57,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
     thinkingLabel,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
-    tableCopyCsvLabel,
-    tableCopyTxtLabel,
-    tableCopyMarkdownLabel,
+    tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
     tableOpenInCanvasLabel,
@@ -70,21 +68,12 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   } = labels ?? {};
   const tableActionLabels = useMemo(
     () => ({
-      copyCsvLabel: tableCopyCsvLabel,
-      copyTxtLabel: tableCopyTxtLabel,
-      copyMarkdownLabel: tableCopyMarkdownLabel,
+      copyLabel: tableCopyLabel,
       copiedLabel: tableCopiedLabel,
       downloadCsvLabel: tableDownloadCsvLabel,
       openInCanvasLabel: tableOpenInCanvasLabel,
     }),
-    [
-      tableCopyCsvLabel,
-      tableCopyTxtLabel,
-      tableCopyMarkdownLabel,
-      tableCopiedLabel,
-      tableDownloadCsvLabel,
-      tableOpenInCanvasLabel,
-    ],
+    [tableCopyLabel, tableCopiedLabel, tableDownloadCsvLabel, tableOpenInCanvasLabel],
   );
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)

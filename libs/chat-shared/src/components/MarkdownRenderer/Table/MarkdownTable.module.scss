@@ -35,16 +35,14 @@
 }
 
 .tableHeaderCell {
+  /* min-block-size has no effect on <th> in CSS table layout; height acts as a minimum */
+  height: 3rem; /* 48px per Figma node 546-13233 */
   background: var(--cm-code-block-header-bg, var(--bg-layer-raised, #fcfcfc));
   color: var(--cm-table-header-text, var(--text-secondary, #57647a));
 }
 
 .sectionRow td {
   background: var(--cm-code-block-header-bg, var(--bg-layer-raised, #fcfcfc));
-}
-
-tbody .row:nth-child(even) td {
-  background: var(--cm-table-row-zebra-bg, var(--bg-layer-base, #f5f7fa));
 }
 
 .rowDivider {

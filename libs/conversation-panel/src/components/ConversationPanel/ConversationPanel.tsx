@@ -464,7 +464,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                 : ''}
         </span>
 
-        <div className="flex-1 overflow-hidden px-2 py-1">
+        <div className="flex-1 overflow-hidden ps-2 pe-3 py-1">
           {isLoading ? (
             <div className="flex flex-col gap-3 px-2 py-3">
               {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (

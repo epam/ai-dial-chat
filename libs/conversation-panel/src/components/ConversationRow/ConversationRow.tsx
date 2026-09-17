@@ -140,7 +140,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
    * button drops its own start padding (`ps-0`) so the two do not stack into a double indent.
    */
   const avatarWithUnreadIndicator = (
-    <span className="flex shrink-0 items-center">
+    <span className="flex shrink-0 items-center gap-0.5">
       <span className="relative flex size-3 shrink-0 items-center justify-center">
         {item.isUnread && (
           <>

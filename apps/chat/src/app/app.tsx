@@ -557,9 +557,7 @@ const App: FC = () => {
                 AttachmentCanvasI18nKeys.CodeContentErrorLabel,
               ),
               codeContentRetryLabel: t(ButtonsI18nKeys.Retry),
-              tableCopyCsvLabel: t(ButtonsI18nKeys.CopyAsCsv),
-              tableCopyTxtLabel: t(ButtonsI18nKeys.CopyAsTxt),
-              tableCopyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+              tableCopyLabel: t(ButtonsI18nKeys.Copy),
               tableCopiedLabel: t(ButtonsI18nKeys.Copied),
               tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
               ooxmlHighlightsLabel: t(

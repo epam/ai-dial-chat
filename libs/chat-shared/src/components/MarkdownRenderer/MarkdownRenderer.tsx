@@ -596,7 +596,7 @@ const buildMarkdownComponents = (
   td: ({ children, node }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal px-3 py-[7px] align-top [overflow-wrap:anywhere]',
         getTableCellAlignClass(node),
         tableStyles.rowDivider,
         cn.tableBodyCell,
