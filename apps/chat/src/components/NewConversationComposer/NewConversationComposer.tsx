@@ -30,7 +30,7 @@ import type {
   ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type { FC, ReactNode } from 'react';
-import { lazy, memo, useCallback, useMemo, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
@@ -73,6 +73,13 @@ const ConversationInput = lazy(async () => {
 
 const DialFileManagerModal = lazy(async () => {
   const module = await import('../DialFileManagerModal/DialFileManagerModal');
+  return { default: module.default };
+});
+
+/* Lazy so the markdown renderer stays out of the empty screen's own chunk —
+   `show-agent-description` is off by default. */
+const AgentDescription = lazy(async () => {
+  const module = await import('../AgentDescription/AgentDescription');
   return { default: module.default };
 });
 
@@ -359,6 +366,12 @@ const NewConversationComposer: FC<Props> = ({
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
+  const isAgentDescriptionEnabled = useUiFeature(
+    OverlayFeature.ShowAgentDescription,
+  );
+  const agentDescription = isAgentDescriptionEnabled
+    ? resolvedSelectedDeployment?.description?.trim()
+    : undefined;
   const { displayName } = useUserProfile();
   const firstName = displayName.split(' ')[0];
   const { resolvers, options } = useAttachmentCanvasResolvers();
@@ -580,6 +593,11 @@ const NewConversationComposer: FC<Props> = ({
           </p>
         )}
         {children}
+        {agentDescription && (
+          <Suspense fallback={null}>
+            <AgentDescription content={agentDescription} />
+          </Suspense>
+        )}
       </div>
       <FooterMessage />
       {isDialFileManagerOpen && (

@@ -3,7 +3,7 @@
  * imported from the browser-facing overlay package, keeping this Node-only
  * service independent of the frontend SDK.
  * The members mirror `OverlayFeature` one-to-one, in the enum's declaration
- * order; the companion test asserts exactly 44 members. Anything the frontend
+ * order; the companion test asserts exactly 45 members. Anything the frontend
  * would drop is rejected here instead, so an operator sees the warning at the
  * layer that read the env var. Keep this list in sync whenever a key is added
  * to, removed from, or renamed in `OverlayFeature`.
@@ -53,6 +53,7 @@ export const KNOWN_UI_FEATURES: ReadonlySet<string> = new Set([
   'voice-input',
   'show-all-starters',
   'hide-footer-version',
+  'show-agent-description',
 ]);
 
 /**
