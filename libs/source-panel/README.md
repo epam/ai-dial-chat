@@ -100,3 +100,38 @@ const labels: ConversationSourcesPanelLabels = {
   attachmentClickLabel: t('Download'),
 };
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. The panel
+therefore carries a stable public class, exported as `SOURCE_PANEL_CLASS`.
+
+| Key     | Class                     | Element                                                         |
+| ------- | ------------------------- | --------------------------------------------------------------- |
+| `panel` | `dial-source-panel-panel` | The panel itself, additive to the sidebar's own `dial-sb-aside` |
+
+The panel is drawn by [`@epam/ai-dial-sidebar`](../sidebar/README.md), so
+`dial-sb-aside` is present too — this class is what tells a sources panel apart
+from any other sidebar panel in the same host.
+
+The class carries no declarations of its own: nothing in `styles.css` selects on
+it, so it changes nothing until a host writes a rule. Renaming it, or moving it
+to a different element, is a breaking change. The convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+```tsx
+import { SOURCE_PANEL_CLASS } from '@epam/ai-dial-source-panel';
+
+SOURCE_PANEL_CLASS.panel; // 'dial-source-panel-panel'
+```
+
+```css
+.dial-source-panel-panel {
+  border-inline-end: none;
+}
+```
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

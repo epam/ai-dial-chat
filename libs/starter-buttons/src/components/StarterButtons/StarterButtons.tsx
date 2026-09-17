@@ -6,9 +6,11 @@ import {
   Dropdown,
   NeutralButton,
   NeutralIconButton,
+  mergeClasses,
 } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { STARTER_BUTTONS_CLASS } from '../../constants/public-class-names';
 import type { StarterButtonsProps } from '../../models/starter-props';
 
 const MAX_VISIBLE = 4;
@@ -131,15 +133,19 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
   );
 
   return (
-    <div ref={containerRef} className="mb-4 w-full">
+    <div
+      ref={containerRef}
+      className={mergeClasses(STARTER_BUTTONS_CLASS.root, 'mb-4 w-full')}
+    >
       <div
         role="list"
         aria-label={labels.list}
-        className={
+        className={mergeClasses(
+          STARTER_BUTTONS_CLASS.list,
           isCollapsible
             ? 'flex flex-wrap justify-center gap-2'
-            : 'flex flex-col items-center gap-2'
-        }
+            : 'flex flex-col items-center gap-2',
+        )}
       >
         {visibleStarters.map((starter, index) => (
           <div

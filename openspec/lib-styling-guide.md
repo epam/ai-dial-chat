@@ -280,16 +280,60 @@ name** that exists purely as a styling hook.
 dial-<lib-prefix>-<element>[-<state>]
 ```
 
-- `<lib-prefix>` is the lib's **existing CSS-custom-property prefix**, so the class
-  contract and the theming contract read the same:
+- `<lib-prefix>` is the lib's **directory name** under `libs/`, except for the five
+  libs listed as legacy below. Directory names are unique by construction, so a prefix
+  can never be claimed twice and a new lib needs no decision — and a host reading
+  `.dial-scheduled-tasks-row` in its own stylesheet can tell which package to install.
 
-  | Lib                     | CSS var prefix | Class prefix |
-  | ----------------------- | -------------- | ------------ |
-  | `sidebar`               | `--sb-*`       | `dial-sb-`   |
-  | `conversation-panel`    | `--cp-*`       | `dial-cp-`   |
-  | `conversation-messages` | `--cm-*`       | `dial-cm-`   |
-  | `conversation-input`    | `--ci-*`       | `dial-ci-`   |
-  | `attachment-input`      | `--ai-*`       | `dial-ai-`   |
+  The first version of this section derived the prefix from the lib's CSS-custom-property
+  prefix, so that the class contract and the theming contract would read the same. That
+  does not generalise past the five libs it was written for, for two measured reasons:
+
+  - **Five var prefixes are claimed by two libs each** — `--ai-` (`attachment-input`,
+    `catalog`), `--cm-` (`conversation-messages`, `chat-shared`), `--cc-`
+    (`quotations`, `attachment-canvas`), `--pp-` (`prompts`, `publish-panel`) and
+    `--sp-` (`settings-panel`, `source-panel`). Two of those collide with a contract
+    that is already written down: `attachment-input` ships `dial-ai-*`, and the
+    `dial-cm-code-block` that issue #8707 asks for belongs to `MarkdownCodeBlock`,
+    which lives in `chat-shared` rather than in `conversation-messages`.
+  - **Eleven of the twenty-two libs with stylesheets use more than one own prefix** —
+    `publish-panel` alone uses seven (`--pare-`, `--par-`, `--pft-`, `--phl-`, `--pf-`,
+    `--pp-`, `--spp-`). Their prefixes are per component, not per lib, so "the lib's var
+    prefix" names nothing.
+
+  The five short prefixes stay as they are: issue #8707 proposed them by name, and they
+  are documented in five lib READMEs. They are a **closed list** — nothing new joins it.
+
+  | Lib                     | Class prefix                | Source         |
+  | ----------------------- | --------------------------- | -------------- |
+  | `sidebar`               | `dial-sb-`                  | legacy (#8707) |
+  | `conversation-panel`    | `dial-cp-`                  | legacy (#8707) |
+  | `conversation-messages` | `dial-cm-`                  | legacy (#8707) |
+  | `conversation-input`    | `dial-ci-`                  | legacy (#8707) |
+  | `attachment-input`      | `dial-ai-`                  | legacy (#8707) |
+  | `attachment-canvas`     | `dial-attachment-canvas-`   | directory name |
+  | `builder-form`          | `dial-builder-form-`        | directory name |
+  | `catalog`               | `dial-catalog-`             | directory name |
+  | `chat-shared`           | `dial-chat-shared-`         | directory name |
+  | `conversation-stages`   | `dial-conversation-stages-` | directory name |
+  | `mcp-apps`              | `dial-mcp-apps-`            | directory name |
+  | `navigation-panel`      | `dial-navigation-panel-`    | directory name |
+  | `prompt-editor`         | `dial-prompt-editor-`       | directory name |
+  | `prompts`               | `dial-prompts-`             | directory name |
+  | `publish-panel`         | `dial-publish-panel-`       | directory name |
+  | `quotations`            | `dial-quotations-`          | directory name |
+  | `scheduled-tasks`       | `dial-scheduled-tasks-`     | directory name |
+  | `settings-panel`        | `dial-settings-panel-`      | directory name |
+  | `share`                 | `dial-share-`               | directory name |
+  | `skill-editor`          | `dial-skill-editor-`        | directory name |
+  | `skills`                | `dial-skills-`              | directory name |
+  | `source-panel`          | `dial-source-panel-`        | directory name |
+  | `starter-buttons`       | `dial-starter-buttons-`     | directory name |
+  | `toolset-editor`        | `dial-toolset-editor-`      | directory name |
+  | `usage-dashboard`       | `dial-usage-dashboard-`     | directory name |
+
+  Libs with no UI of their own — `chat-hooks`, `ai-dial-chat-hooks`, `chat-api-client`,
+  `chat-overlay`, `ai-dial-kit` — have no entry and need none: they render no element.
 
 - `<element>` and `<state>` are lower-case kebab-case. **No BEM** — no `__`, no `--`.
 - A state is an **additive** class applied alongside the base class, never a replacement:

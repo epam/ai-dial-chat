@@ -20,3 +20,4 @@ export {
   SkillFileValidationStatus,
 } from './models/skill-editor-props';
 export { SkillFileNodeKind } from './types/skill-file-node-kind';
+export { SKILL_EDITOR_CLASS } from './constants/public-class-names';

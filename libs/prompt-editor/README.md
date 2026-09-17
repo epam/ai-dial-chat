@@ -125,3 +125,36 @@ import type {
 } from '@epam/ai-dial-prompt-editor';
 import { FolderFormMode } from '@epam/ai-dial-prompt-editor';
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Two
+elements therefore carry a stable public class, exported as
+`PROMPT_EDITOR_CLASS`.
+
+| Key           | Class                             | Element                                                             |
+| ------------- | --------------------------------- | ------------------------------------------------------------------- |
+| `form`        | `dial-prompt-editor-form`         | The editor's scrolling form column, inside the shared editor layout |
+| `folderField` | `dial-prompt-editor-folder-field` | The folder picker row rendered by `PromptFolderField`               |
+
+The classes carry no declarations of their own: nothing in `styles.css` selects
+on them, so they change nothing until a host writes a rule. Renaming one, or
+moving it to a different element, is a breaking change. The convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+```tsx
+import { PROMPT_EDITOR_CLASS } from '@epam/ai-dial-prompt-editor';
+
+PROMPT_EDITOR_CLASS.form; // 'dial-prompt-editor-form'
+```
+
+```css
+.dial-prompt-editor-form {
+  max-width: 960px;
+}
+```
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.
