@@ -84,8 +84,10 @@ migration cost above.
 
 ### D2 — Matching: deployment id first, then the entry's optional `contentType`
 
-Lookup is a two-step host-side decision, implemented as a pure helper in
-`libs/chat-shared` next to `findVisualizerForMime`:
+Lookup is a two-step host-side decision, implemented as a pure helper next to
+`findVisualizerForMime` — which lives in `libs/attachment-canvas/src/utils/visualizer.ts`,
+not in `libs/chat-shared`, so the logic goes there and only the
+`ApplicationVisualizer` type sits beside `CustomVisualizer` in `chat-shared`:
 
 1. `applicationVisualizers[effectiveDeploymentId]` — exact string match, no
    normalisation. Deployment ids are opaque identifiers.
@@ -229,6 +231,77 @@ blocked by CSP with no error the operator can see in the browser.
   display-configuration layer that 1.0 deliberately removed.
 - **`SEND_MESSAGE` / `ALLOW_VISUALIZER_SEND_MESSAGES`.** Unchanged deferred item.
 
+### D8a — The iframe cannot read DIAL-hosted URLs, and that is a measured limit
+
+The grouped protocol hands the visualizer URLs and expects it to fetch them itself.
+For a DIAL-hosted attachment that URL is `/api/v1/files/download`, which needs the
+session cookie — and the iframe is a different origin. Verified against a running
+`chat-api` (`CORS_ORIGIN=http://localhost:4207`,
+`ALLOWED_IFRAME_ORIGINS=http://localhost:4300`):
+
+| Probe | Result |
+|---|---|
+| `CSP` header on the app document | `frame-src 'self' http://localhost:4300` — the iframe **loads** |
+| `OPTIONS /api/v1/files/download` with `Origin: http://localhost:4300` | `204`, `Access-Control-Allow-Origin: http://localhost:4207` — **mismatch, the browser blocks the read** |
+| Same preflight with `Origin: http://localhost:4207` | same `Access-Control-Allow-Origin` — only the app's own origin is ever echoed |
+
+`app.enableCors` takes a single origin from `CORS_ORIGIN`; `ALLOWED_IFRAME_ORIGINS`
+feeds CSP only and has no part in CORS. So the frame mounts, receives its payload, and
+then cannot read a single file out of it.
+
+**Consequence:** a grouped visualizer works only when the attachment URLs are publicly
+readable, or when the visualizer is served from the app's own origin. The
+single-attachment path avoids the whole problem by fetching host-side and sending bytes
+as `data` — a channel the grouped request does not have.
+
+**Legacy 0.x had the same wall, and did not solve it either.** Read from the source
+rather than assumed:
+
+- `MessageAttachments.tsx` built each item as `url: getMappedAttachmentUrl(a.url)`, and
+  `utils/app/attachments.ts` defines that as
+  `isAbsoluteUrl(url) ? url : ` + "`/api/${url}`" + ` — a **host-relative path**. The
+  iframe was expected to join it with the `dialHost` its `ChatVisualizerConnector` was
+  constructed with.
+- `passAuthInfo` only ever added `logInHint` (the user's email) and `providerId`.
+- `passExplicitToken` forwarded the **overlay host's** token and, per the connector
+  README, "if no overlay token is present (e.g. standalone mode), `accessToken` is
+  omitted" — so a standalone deployment forwarded no credential at all.
+
+So auth forwarding answered *who is asking*, never *may this origin read the response*.
+The preflight above is rejected before any credential is considered; a token-bearing
+fetch from `http://localhost:4300` is blocked identically. Whatever made a 0.x grouped
+visualizer work had to be arranged in the deployment — a CORS policy that admitted the
+visualizer origin, or files reachable without one — exactly as it must be here.
+
+**Where this change differs from 0.x, deliberately:** it sends an absolute URL where
+legacy sent `/api/…`. A relative path posted into a cross-origin iframe resolves
+against the *visualizer's* origin, so it is unusable unless the visualizer re-joins it
+with `dialHost`. The absolute form is self-describing — but a visualizer carried over
+from 0.x that still prefixes `dialHost` itself would double the origin. If operator
+parity for already-deployed visualizers matters more than the cleaner contract, the
+builder should emit the relative path instead and the README should say the visualizer
+must join it with its configured host.
+
+Filtering, by contrast, matches legacy exactly: `if (!a.url) return false` before any
+MIME test (a URL is required in both branches), no `contentType` means every attachment
+with a URL, and claiming nothing leaves every attachment an ordinary tile. The one
+intentional divergence is case-insensitive MIME comparison, where legacy's
+`allowedMimeTypes.includes(a.type)` was case-sensitive.
+
+That leaves two real ways out, neither in scope here and both a separate change:
+
+1. **Host-fetched bytes.** The app downloads each claimed attachment (it is same-origin,
+   so it may) and puts the content into the payload instead of a URL. No CORS, no
+   credential in the iframe. Cost: the published connector's `GroupedAttachmentsData`
+   defines `url`/`mimeType`/`visualizerData` and no byte channel, so this is a protocol
+   extension to agree with visualizer authors.
+2. **Publicly readable URLs.** State the constraint as the operator's and document which
+   attachments a grouped visualizer can render. No code.
+
+A scoped token minted per visualizer origin — the obvious third idea — solves nothing on
+its own: the request still has to pass CORS first. It would only matter combined with
+serving the files from somewhere that allows the visualizer's origin.
+
 ### D9 — Streaming and remounts
 
 The grouped payload is built from the attachments currently on the message, and
@@ -278,6 +351,13 @@ not, and the connector gives no ordering guarantee for overlapping `send()` call
    conversation content depends on it.
 
 ## Open Questions
+
+- **Should the inline surface wait for streaming to settle?** The grouped payload is
+  sent once per mount (D9), but claimed attachments are also excluded from the tray as
+  soon as they arrive. An attachment appended *after* the send is therefore in neither
+  place — invisible until the canvas is reopened. Deferring either the surface or the
+  exclusion until `isStreaming` clears would close it, at the cost of the visualizer
+  appearing only after the response finishes.
 
 - Does any current deployment rely on a grouped visualizer being the *only* thing in
   the bubble (no residual attachment tiles)? Legacy's wording implies unclaimed

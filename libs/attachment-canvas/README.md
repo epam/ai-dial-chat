@@ -339,6 +339,72 @@ import { findVisualizerForMime } from '@epam/ai-dial-attachment-canvas';
 const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 ```
 
+### findVisualizerForApplication / partitionAttachmentsForApplicationVisualizer
+
+The application-scoped counterparts, for the `APPLICATION_VISUALIZERS` registry
+a host resolves from its own configuration. The first looks an entry up by a
+message's effective deployment id (exact string match — deployment ids are
+opaque). The second splits a message's attachments into the ones that entry
+claims and the ones it does not: an entry with a `contentType` claims the MIME
+types in its comma-separated list, one without claims every attachment that
+carries a URL, and an attachment with no `url` is never claimed because the
+grouped payload addresses each item by absolute URL.
+
+```tsx
+import {
+  findVisualizerForApplication,
+  partitionAttachmentsForApplicationVisualizer,
+} from '@epam/ai-dial-attachment-canvas';
+
+const entry = findVisualizerForApplication(
+  effectiveDeploymentId,
+  applicationVisualizers,
+);
+const { claimed, unclaimed } = entry
+  ? partitionAttachmentsForApplicationVisualizer(attachments, entry)
+  : { claimed: [], unclaimed: attachments };
+```
+
+`partitionAttachmentsForApplicationVisualizer` returns an
+`ApplicationVisualizerPartition`. Claiming is a MIME/URL-presence decision only —
+whether the host can actually resolve an absolute URL for a claimed attachment is
+decided later, when the payload is built, so return anything that fails to resolve to
+the unclaimed side rather than dropping it.
+
+### groupedVisualizerCanvasKey
+
+The canvas-selection key identifying a message's grouped visualizer, so a host can tell
+whether that visualizer is the one currently open in the canvas — and, if so, render a
+placeholder in place of its inline frame instead of a second live iframe.
+
+```tsx
+import { groupedVisualizerCanvasKey } from '@epam/ai-dial-attachment-canvas';
+
+const canvasKey = groupedVisualizerCanvasKey(messageIndex);
+const isOpenedInCanvas = selectedAttachmentKey === canvasKey;
+```
+
+### InlineGroupedVisualizer
+
+Renders a message's grouped visualizer inline — a framed container with a
+header carrying the entry title and an expand-to-canvas button, wrapping a
+`VisualizerCanvasRenderer` at a caller-resolved height. The host builds the
+`GroupedVisualizerCanvasContent`, resolves the height from the registry entry's
+`height`/`mobileHeight`, and passes the same content object to the canvas when
+`onExpand` fires, so expanding never rebuilds the payload.
+
+```tsx
+import { InlineGroupedVisualizer } from '@epam/ai-dial-attachment-canvas';
+
+<InlineGroupedVisualizer
+  content={groupedContent}
+  height={isMobile ? (entry.mobileHeight ?? 400) : (entry.height ?? 600)}
+  onExpand={() => openCanvas(groupedContent)}
+  expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
+  errorLabel={t(AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel)}
+/>;
+```
+
 ## Content Types
 
 `AttachmentContentType` is the discriminant on every content descriptor.
@@ -357,6 +423,7 @@ const visualizer = findVisualizerForMime('application/pdf', customVisualizers);
 | `AttachmentContentType.Html`          | `HtmlCanvasContent`          | Renders HTML in a sandboxed frame, or its source                                                                                        |
 | `AttachmentContentType.McpApp`        | `McpAppCanvasContent`        | Mounts a sandboxed MCP App `ui://` resource through `McpAppCanvasRenderer`                                                              |
 | `AttachmentContentType.Visualizer`    | `VisualizerCanvasContent`    | Renders a registered custom visualizer                                                                                                  |
+| `AttachmentContentType.GroupedVisualizer` | `GroupedVisualizerCanvasContent` | Renders every attachment an application visualizer claims in one iframe                                                            |
 | `AttachmentContentType.Unsupported`   | `UnsupportedCanvasContent`   | Fallback for unsupported MIME types                                                                                                     |
 | `AttachmentContentType.Error`         | `ErrorCanvasContent`         | Load failure or forbidden access                                                                                                        |
 

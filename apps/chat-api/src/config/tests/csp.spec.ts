@@ -8,6 +8,8 @@ import {
   buildFrameSrcDirective,
   buildPermissionsPolicyHeader,
   createHelmetOptions,
+  extractOrigin,
+  isOriginAllowedForIframe,
 } from '../csp';
 
 @Controller('ping')
@@ -195,5 +197,93 @@ describe('Helmet security headers', () => {
       'upgrade-insecure-requests',
     );
     expect(response.headers['strict-transport-security']).toBeUndefined();
+  });
+});
+
+describe('extractOrigin', () => {
+  it('returns the origin of an absolute URL, dropping path and query', () => {
+    expect(extractOrigin('https://viz.example.com/app?x=1')).toBe(
+      'https://viz.example.com',
+    );
+  });
+
+  it('keeps an explicit non-default port', () => {
+    expect(extractOrigin('http://localhost:4207/app')).toBe(
+      'http://localhost:4207',
+    );
+  });
+
+  it('returns undefined for an unparseable value', () => {
+    expect(extractOrigin('not-a-url')).toBeUndefined();
+  });
+});
+
+describe('isOriginAllowedForIframe', () => {
+  it('matches an exact origin entry', () => {
+    expect(
+      isOriginAllowedForIframe('https://viz.example.com/app', [
+        'https://viz.example.com',
+      ]),
+    ).toBe(true);
+  });
+
+  it('does not match a different scheme, host, or port', () => {
+    const url = 'https://viz.example.com/app';
+    expect(isOriginAllowedForIframe(url, ['http://viz.example.com'])).toBe(
+      false,
+    );
+    expect(isOriginAllowedForIframe(url, ['https://other.example.com'])).toBe(
+      false,
+    );
+    expect(isOriginAllowedForIframe(url, ['https://viz.example.com:8443'])).toBe(
+      false,
+    );
+  });
+
+  it('matches a subdomain through a leading-wildcard-label entry', () => {
+    expect(
+      isOriginAllowedForIframe('https://viz.example.com', [
+        'https://*.example.com',
+      ]),
+    ).toBe(true);
+  });
+
+  it('does not match the apex through a wildcard entry, as CSP does not', () => {
+    expect(
+      isOriginAllowedForIframe('https://example.com', [
+        'https://*.example.com',
+      ]),
+    ).toBe(false);
+  });
+
+  it('does not match a wildcard entry across schemes or ports', () => {
+    expect(
+      isOriginAllowedForIframe('http://viz.example.com', [
+        'https://*.example.com',
+      ]),
+    ).toBe(false);
+    expect(
+      isOriginAllowedForIframe('https://viz.example.com:8443', [
+        'https://*.example.com',
+      ]),
+    ).toBe(false);
+  });
+
+  it('returns false for an empty allowlist, blank entries, and an unparseable URL', () => {
+    expect(isOriginAllowedForIframe('https://viz.example.com', [])).toBe(false);
+    expect(isOriginAllowedForIframe('https://viz.example.com', ['  '])).toBe(
+      false,
+    );
+    expect(
+      isOriginAllowedForIframe('not-a-url', ['https://viz.example.com']),
+    ).toBe(false);
+  });
+
+  it('tolerates surrounding whitespace on an allowlist entry', () => {
+    expect(
+      isOriginAllowedForIframe('https://viz.example.com', [
+        ' https://viz.example.com ',
+      ]),
+    ).toBe(true);
   });
 });

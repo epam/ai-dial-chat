@@ -1,6 +1,11 @@
 import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
+import {
+  MessageRole,
+  type ApplicationVisualizer,
+  type ApplicationVisualizerRegistry,
+  type Message,
+} from '@epam/ai-dial-chat-shared';
 import {
   MessageBubble,
   type MessageActionsProps,
@@ -77,6 +82,32 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'dark' }),
 }));
 
+let isMobileMock = false;
+
+vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+  useIsMobile: () => isMobileMock,
+}));
+
+let applicationVisualizersMock: ApplicationVisualizerRegistry = {};
+
+vi.mock('../../../hooks/attachment/useApplicationVisualizers', () => ({
+  useApplicationVisualizers: () => applicationVisualizersMock,
+}));
+
+/* The real connector mounts an iframe and subscribes to window messages; the
+ * handshake never settles in jsdom, so the inline frame would sit in its
+ * loading state. Only the surface around it is under test here. */
+vi.mock('@epam/ai-dial-visualizer-connector', () => ({
+  VisualizerConnector: vi.fn().mockImplementation(function (root: HTMLElement) {
+    root.appendChild(document.createElement('iframe'));
+    return {
+      ready: () => new Promise(() => undefined),
+      send: vi.fn(),
+      destroy: vi.fn(),
+    };
+  }),
+}));
+
 vi.mock('@epam/ai-dial-conversation-stages', () => ({
   StagesPanel: () => null,
 }));
@@ -136,6 +167,8 @@ const defaultProps = {
 };
 
 beforeEach(() => {
+  applicationVisualizersMock = {};
+  isMobileMock = false;
   capturedActions = undefined;
   capturedLabels = undefined;
   vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
@@ -1223,5 +1256,235 @@ describe('ConversationMessageItem — markdown file URLs', () => {
     ).toBe(
       '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fpg%2Fchart.png',
     );
+  });
+});
+
+describe('ConversationMessageItem — application visualizers', () => {
+  const ASSISTANT_WITH_ATTACHMENTS: Message = {
+    role: MessageRole.Assistant,
+    content: 'Here is the figure.',
+    timestamp: '2024-01-01T00:00:02Z',
+    custom_content: {
+      attachments: [
+        {
+          title: 'figure.viz',
+          type: 'application/x-my-viz',
+          url: 'files/bucket/figure.viz',
+        },
+        {
+          title: 'notes.pdf',
+          type: 'application/pdf',
+          url: 'files/bucket/notes.pdf',
+        },
+      ],
+    },
+  };
+
+  const registryWith = (
+    overrides?: Partial<ApplicationVisualizer>,
+  ): ApplicationVisualizerRegistry => ({
+    'app-1': {
+      title: 'my-viz',
+      url: 'https://viz.example.com',
+      contentType: 'application/x-my-viz',
+      height: 600,
+      ...overrides,
+    },
+  });
+
+  const renderItem = (props?: Record<string, unknown>) =>
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={ASSISTANT_WITH_ATTACHMENTS}
+        index={1}
+        effectiveDeploymentId="app-1"
+        openedInCanvasLabel="Opened in Canvas"
+        {...props}
+      />,
+    );
+
+  it('renders the inline visualizer when the deployment matches an entry', () => {
+    applicationVisualizersMock = registryWith();
+
+    renderItem();
+
+    expect(screen.getByText('my-viz')).toBeTruthy();
+    expect(screen.getByTitle('my-viz')).toBeTruthy();
+  });
+
+  it('renders no inline visualizer when the registry is empty', () => {
+    renderItem();
+
+    expect(screen.queryByText('my-viz')).toBeNull();
+  });
+
+  it('renders no inline visualizer when the deployment id is absent from the registry', () => {
+    applicationVisualizersMock = registryWith();
+
+    renderItem({ effectiveDeploymentId: 'other-app' });
+
+    expect(screen.queryByText('my-viz')).toBeNull();
+  });
+
+  it('keeps the unclaimed attachment in the tray and drops the claimed one', () => {
+    applicationVisualizersMock = registryWith();
+
+    renderItem();
+
+    /* The tile splits the name — `DialFileName` renders the base name as the
+     * element's text and title, with the extension alongside it. */
+    expect(screen.getByTitle('notes')).toBeTruthy();
+    expect(screen.queryByTitle('figure')).toBeNull();
+  });
+
+  it('claims every URL attachment when the entry declares no contentType', () => {
+    applicationVisualizersMock = registryWith({ contentType: undefined });
+
+    renderItem();
+
+    expect(screen.queryByTitle('notes')).toBeNull();
+    expect(screen.queryByTitle('figure')).toBeNull();
+  });
+
+  it('opens the canvas with the grouped content and its message-scoped key', async () => {
+    applicationVisualizersMock = registryWith();
+
+    renderItem();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'attachmentCanvas.expandAppLabel' }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledOnce();
+    const [content, panelTitle, canvasKey] = mockOpenCanvas.mock.calls[0];
+    expect(content).toMatchObject({
+      type: AttachmentContentType.GroupedVisualizer,
+      url: 'https://viz.example.com',
+      visualizerName: 'my-viz',
+    });
+    expect(content.attachments).toHaveLength(1);
+    expect(content.attachments[0].mimeType).toBe('application/x-my-viz');
+    /* Absolute, not the host-relative path the same resolver hands same-origin
+     * callers: a relative URL posted into the iframe would resolve against the
+     * visualizer's own origin. */
+    expect(content.attachments[0].url).toBe(
+      'http://localhost:3000/api/v1/files/download?bucket=bucket&path=figure.viz',
+    );
+    expect(content.layout).toMatchObject({ themeId: 'dark', height: 600 });
+    expect(panelTitle).toBe('my-viz');
+    expect(canvasKey).toBe('1:grouped-visualizer');
+  });
+
+  it('replaces the inline frame with the opened-in-canvas placeholder', () => {
+    applicationVisualizersMock = registryWith();
+
+    renderItem({ selectedAttachmentKey: '1:grouped-visualizer' });
+
+    expect(screen.getByText('Opened in Canvas')).toBeTruthy();
+    expect(screen.queryByTitle('my-viz')).toBeNull();
+  });
+});
+
+describe('ConversationMessageItem — application visualizer sizing and fallbacks', () => {
+  const registry = (
+    overrides?: Partial<ApplicationVisualizer>,
+  ): ApplicationVisualizerRegistry => ({
+    'app-1': {
+      title: 'my-viz',
+      url: 'https://viz.example.com',
+      contentType: 'application/x-my-viz',
+      height: 600,
+      ...overrides,
+    },
+  });
+
+  const renderWith = (
+    attachments: { title: string; type: string; url: string }[],
+    props?: Record<string, unknown>,
+  ) =>
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: 'Here it is.',
+          timestamp: '2024-01-01T00:00:02Z',
+          custom_content: { attachments },
+        }}
+        index={1}
+        effectiveDeploymentId="app-1"
+        {...props}
+      />,
+    );
+
+  it('uses mobileHeight on a mobile viewport', () => {
+    isMobileMock = true;
+    applicationVisualizersMock = registry({ mobileHeight: 320 });
+
+    const { container } = renderWith([
+      {
+        title: 'figure.viz',
+        type: 'application/x-my-viz',
+        url: 'files/bucket/figure.viz',
+      },
+    ]);
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting an inline pixel height on the unlabeled frame wrapper, which has no accessible role or text to query
+    expect(container.querySelector('[style*="height: 320px"]')).toBeTruthy();
+  });
+
+  it('falls back to height on mobile when the entry declares no mobileHeight', () => {
+    isMobileMock = true;
+    applicationVisualizersMock = registry();
+
+    const { container } = renderWith([
+      {
+        title: 'figure.viz',
+        type: 'application/x-my-viz',
+        url: 'files/bucket/figure.viz',
+      },
+    ]);
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same unlabeled frame wrapper
+    expect(container.querySelector('[style*="height: 600px"]')).toBeTruthy();
+  });
+
+  it('keeps a claimed attachment in the tray when no URL can be resolved for it', () => {
+    applicationVisualizersMock = registry();
+
+    renderWith([
+      {
+        title: 'resolvable.viz',
+        type: 'application/x-my-viz',
+        url: 'files/bucket/resolvable.viz',
+      },
+      {
+        title: 'unresolvable.viz',
+        type: 'application/x-my-viz',
+        url: 'attachments/unresolvable.viz',
+      },
+    ]);
+
+    /* The inline surface still renders for the attachment that did resolve,
+     * and the one that did not falls back to an ordinary tile rather than
+     * disappearing from the message. */
+    expect(screen.getByTitle('my-viz')).toBeTruthy();
+    expect(screen.getByTitle('unresolvable')).toBeTruthy();
+    expect(screen.queryByTitle('resolvable')).toBeNull();
+  });
+
+  it('renders no inline surface when nothing claimed resolves to a URL', () => {
+    applicationVisualizersMock = registry();
+
+    renderWith([
+      {
+        title: 'unresolvable.viz',
+        type: 'application/x-my-viz',
+        url: 'attachments/unresolvable.viz',
+      },
+    ]);
+
+    expect(screen.queryByText('my-viz')).toBeNull();
+    expect(screen.getByTitle('unresolvable')).toBeTruthy();
   });
 });

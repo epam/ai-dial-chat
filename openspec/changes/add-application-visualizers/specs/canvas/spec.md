@@ -70,11 +70,19 @@ identical to the chrome used for other content types.
   - `AttachmentContentType.GroupedVisualizer` → `.send(VisualizerConnectorRequests.sendGroupedVisualizeData, { attachments: content.attachments, layout: content.layout })` (wire value `SEND_GROUPED_VISUALIZE_DATA`).
 
   `VisualizerConnectorRequests` is imported from `@epam/ai-dial-shared` (camelCase members).
+- Set the `title` attribute of the connector-created iframe to the optional `frameTitle` prop, defaulting to `content.visualizerName` with surrounding whitespace removed and setting nothing when that is empty — an unnamed iframe is announced as an anonymous frame. Applied in its own effect so renaming the frame never tears the connector down and refetches.
 - On unmount, call `connector.destroy()` exactly once for that instance.
 - Display a loading state while `.ready()` is pending. Because `.ready()` never times out (see the `custom-visualizers` capability), a visualizer that never completes the handshake leaves the body in this loading state indefinitely — this is intended. Display an error state if the dispatched `send()` rejects (its own timeout) or if `.ready()` rejects due to `destroy()`.
 - The component SHALL keep the connector instance stable across parent re-renders that do not change `url` / `visualizerName` / `requestTimeout`, so those re-renders do not tear down the iframe. This applies to both variants: appending attachments to a grouped payload during streaming changes the content object's identity but MUST NOT remount the iframe.
 
 The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags) — all data required for the visualizer is passed in through the canvas content object.
+
+#### Scenario: the iframe carries an accessible name
+
+- **WHEN** the renderer mounts with `visualizerName: 'my-viz'` and no `frameTitle`
+- **THEN** the iframe's `title` attribute is `'my-viz'`
+- **AND** an explicit `frameTitle` takes precedence over it
+- **AND** a `visualizerName` that is only whitespace leaves the iframe untitled
 
 #### Scenario: connector is destroyed on unmount
 

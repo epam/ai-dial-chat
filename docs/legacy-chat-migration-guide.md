@@ -84,6 +84,29 @@ required once any provider is configured, and each provider can now override
 roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
 `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`. Azure B2C is newly supported.
 
+### Carried over with fields dropped
+
+`APPLICATION_VISUALIZERS` keeps its name, its JSON-object shape keyed by
+application id, and its grouped delivery: every attachment an entry claims goes
+to one iframe together, rendered inline in the message with an expand control
+that opens the same payload in the Attachment Canvas. `contentType` stays
+optional, and the attachments an entry does not claim keep rendering as ordinary
+tiles. An existing value can be copied over as-is — invalid entries are dropped
+with a log rather than failing boot.
+
+Three field groups no longer do anything, and are accepted only so a copied
+configuration still works:
+
+- `passAuthInfo` / `passExplicitToken`, with the `accessToken` they fed. 1.0
+  auth is server-side; the browser holds an encrypted session cookie and never
+  an access token, and legacy's `ALLOW_TOKEN_IN_SESSION` is itself gone.
+- `expanded` / `borderless` / `withoutTitle` — the inline attachment chrome
+  these configured has no successor, the same reason the paired
+  `ATTACHMENT_TYPES_*` variables were dropped.
+- `logInHint` / `providerId`, which only mattered for the auth forwarding above.
+
+`ALLOW_VISUALIZER_SEND_MESSAGES` was not ported (see the dropped table below).
+
 ### Dropped with no replacement
 
 | Legacy variables                                                                                                                                                                                                                                                                    | Why                                                                                                                                                           |
@@ -96,7 +119,7 @@ roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
 | `THEME_DEFAULT_ID`                                                                                                                                                                                                                                                                  | The default is light, then the user's stored choice.                                                                                                          |
 | `RECENT_MODELS_IDS`, `TOPICS`, `MAX_PROMPT_TOKENS_DEFAULT_PERCENT`, `MAX_PROMPT_TOKENS_DEFAULT_VALUE`, `ATTACHMENT_TYPES_EXPANDED`, `ATTACHMENT_TYPES_BORDERLESS`, `ATTACHMENT_TYPES_WITHOUT_TITLE`, `CODE_GENERATION_WARNING`, `CODE_EDITOR_PYTHON_VERSIONS`, `WIDGETS_SCHEMA_IDS` | The corresponding UI or behaviour has no successor yet. `FEATURED_MODEL_IDS` covers the catalog's featured list, which is not the same as recent models.      |
 | `REPORT_ISSUE_CODE`, `REQUEST_API_KEY_CODE`, `TMS_URL`, `ISSUE_URL`, `AZURE_FUNCTIONS_API_HOST`                                                                                                                                                                                     | The report-an-issue and request-API-key dialogs were not migrated.                                                                                            |
-| `QUICK_APPS_HOST`, `QUICK_APPS_MODEL`, `QUICK_APPS_SCHEMA_ID`, `EXTERNAL_APPS_SCHEMA_ID`, `CODE_APPS_ROLES`, `APPLICATION_VISUALIZERS`, `ALLOW_VISUALIZER_SEND_MESSAGES`                                                                                                            | Application authoring is configured differently; `DEV_QUICKAPPS_EDITOR_URL` is the only remaining QuickApps knob.                                             |
+| `QUICK_APPS_HOST`, `QUICK_APPS_MODEL`, `QUICK_APPS_SCHEMA_ID`, `EXTERNAL_APPS_SCHEMA_ID`, `CODE_APPS_ROLES`, `ALLOW_VISUALIZER_SEND_MESSAGES`                                                                                                                                       | Application authoring is configured differently; `DEV_QUICKAPPS_EDITOR_URL` is the only remaining QuickApps knob. `ALLOW_VISUALIZER_SEND_MESSAGES` gated the iframe → chat `SEND_MESSAGE` channel, which the host does not implement. |
 
 ### Worth setting in 1.0
 

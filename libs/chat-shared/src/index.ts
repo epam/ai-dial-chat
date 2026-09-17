@@ -12,6 +12,7 @@ export * from './models/deployment-features';
 export * from './models/import-export';
 export * from './models/tool-menu-item';
 export * from './models/custom-visualizer';
+export * from './models/application-visualizer';
 export * from './models/entity';
 export * from './types/attachment';
 export * from './types/entity-type';
