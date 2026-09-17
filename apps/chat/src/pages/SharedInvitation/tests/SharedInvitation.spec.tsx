@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { usePrompts } from '../../../context/PromptsContext';
 import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { acceptInvitation } from '../../../server-api/share.api';
@@ -34,6 +35,10 @@ vi.mock('../../../context/SkillsContext', () => ({
   useSkills: vi.fn(),
 }));
 
+vi.mock('../../../context/PromptsContext', () => ({
+  usePrompts: vi.fn(),
+}));
+
 vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
 }));
@@ -45,6 +50,7 @@ describe('SharedInvitationPage', () => {
   const mergeSharedItem = vi.fn();
   const refetchSkills = vi.fn();
   const mergeSharedSkill = vi.fn();
+  const refetchPrompts = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -55,6 +61,7 @@ describe('SharedInvitationPage', () => {
     refetchDeployments.mockResolvedValue(undefined);
     refetchToolsets.mockResolvedValue(undefined);
     refetchSkills.mockResolvedValue(undefined);
+    refetchPrompts.mockResolvedValue(undefined);
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -80,6 +87,17 @@ describe('SharedInvitationPage', () => {
       error: null,
       refetchSkills,
       mergeSharedSkill,
+    });
+    vi.mocked(usePrompts).mockReturnValue({
+      prompts: [],
+      folders: [],
+      sharedWithMe: [],
+      publicPrompts: [],
+      publicFolders: [],
+      isLoading: false,
+      error: null,
+      refetchPrompts,
+      refetchPublicPrompts: vi.fn(),
     });
   });
 
@@ -298,5 +316,21 @@ describe('SharedInvitationPage', () => {
     await waitFor(() =>
       expect(mergeSharedSkill).toHaveBeenCalledWith(sharedSkill),
     );
+  });
+
+  it('refetches prompts and redirects to the shared prompt id', async () => {
+    vi.mocked(acceptInvitation).mockResolvedValue({
+      itemId: 'prompts/owner-bucket/Work/tone of voice',
+    });
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith(
+        `${ROUTES.Catalog}?itemId=${encodeURIComponent('prompts/owner-bucket/Work/tone of voice').replace(/%20/g, '+')}`,
+        { replace: true },
+      ),
+    );
+    expect(refetchPrompts).toHaveBeenCalled();
   });
 });

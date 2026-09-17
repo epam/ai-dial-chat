@@ -50,6 +50,20 @@ vi.mock('../../../context/SkillsContext', () => ({
   }),
 }));
 
+vi.mock('../../../context/PromptsContext', () => ({
+  usePrompts: () => ({
+    prompts: [],
+    folders: [],
+    sharedWithMe: [],
+    publicPrompts: [],
+    publicFolders: [],
+    isLoading: false,
+    error: null,
+    refetchPrompts: vi.fn().mockResolvedValue(undefined),
+    refetchPublicPrompts: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
 }));
