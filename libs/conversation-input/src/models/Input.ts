@@ -146,8 +146,9 @@ export interface InputProps {
   /**
    * Text inserted at the caret each time its `revision` changes, leaving the
    * surrounding draft intact. Unlike `message`, this never replaces what the
-   * user has written, and it is made through the browser's editing pipeline so
-   * the native undo shortcut reverts it.
+   * user has written, and `Ctrl`/`Cmd`+`Z` undoes it. The insert lands one
+   * microtask after the render that requests it, and leaves the caret after
+   * the inserted text.
    */
   textInsertion?: TextInsertion;
   /** Called on every keystroke with the current textarea value. */
