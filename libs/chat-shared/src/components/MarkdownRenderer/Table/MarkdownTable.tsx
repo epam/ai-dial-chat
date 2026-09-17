@@ -1,3 +1,4 @@
+import { ElementSize, GhostIconButton, Tooltip } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type ReactNode,
@@ -9,7 +10,7 @@ import {
 } from 'react';
 import { useHorizontalOverflow } from '../../../hooks/useHorizontalOverflow';
 import { buildCssVars } from '../../../utils/build-css-vars';
-import { copyToClipboard } from '../../../utils/copy-to-clipboard';
+import { copyMarkdownAsRichText } from '../../../utils/copy-to-clipboard';
 import { downloadTextFile } from '../../../utils/file-download';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownTable.module.scss';
@@ -20,7 +21,6 @@ import {
   serializeMarkdownTableRows,
   type MarkdownTableActionLabels,
 } from './table-serialization';
-import { TableHeader } from './TableHeader';
 import { useMarkdownTableActions } from './useMarkdownTableActions/useMarkdownTableActions';
 
 export {
@@ -52,8 +52,6 @@ export interface MarkdownTableColors {
   fade?: string;
   /** Divider color between rows. Defaults to `--stroke-tertiary`. */
   rowDivider?: string;
-  /** Background of even-indexed body rows. Defaults to `--bg-layer-base`. */
-  rowZebraBackground?: string;
   /** Background of a body row on hover. Defaults to `--bg-control-accent-alpha-hover`. */
   rowHoverBackground?: string;
 }
@@ -91,9 +89,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
     onOpenInCanvas,
     scrollRegionAriaLabel = 'Scrollable table',
   }) => {
-    const [copiedFormat, setCopiedFormat] = useState<
-      MarkdownTableCopyFormat | undefined
-    >(undefined);
+    const [isCopied, setIsCopied] = useState(false);
     const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const {
       scrollContainerRef,
@@ -107,7 +103,6 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       '--cm-table-scrollbar': colors?.scrollbar,
       '--cm-table-fade': colors?.fade,
       '--cm-table-row-divider': colors?.rowDivider,
-      '--cm-table-row-zebra-bg': colors?.rowZebraBackground,
       '--cm-table-row-hover-bg': colors?.rowHoverBackground,
     });
     const isScrollable = hasContentBeyondStart || hasContentBeyondEnd;
@@ -120,25 +115,25 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       };
     }, []);
 
-    const handleCopy = useCallback(
-      (format: MarkdownTableCopyFormat) => {
-        const table = contentRef.current;
-        if (table == null) return;
+    const handleCopy = useCallback(() => {
+      const table = contentRef.current;
+      if (table == null) return;
 
-        const text = serializeMarkdownTableRows(Array.from(table.rows), format);
-        void copyToClipboard(text).then((success) => {
-          if (!success) return;
-          if (copiedTimeoutRef.current != null) {
-            clearTimeout(copiedTimeoutRef.current);
-          }
-          setCopiedFormat(format);
-          copiedTimeoutRef.current = setTimeout(() => {
-            setCopiedFormat(undefined);
-          }, COPY_RESET_DELAY_MS);
-        });
-      },
-      [contentRef],
-    );
+      const text = serializeMarkdownTableRows(
+        Array.from(table.rows),
+        MarkdownTableCopyFormat.Markdown,
+      );
+      void copyMarkdownAsRichText(text).then((success) => {
+        if (!success) return;
+        if (copiedTimeoutRef.current != null) {
+          clearTimeout(copiedTimeoutRef.current);
+        }
+        setIsCopied(true);
+        copiedTimeoutRef.current = setTimeout(() => {
+          setIsCopied(false);
+        }, COPY_RESET_DELAY_MS);
+      });
+    }, [contentRef]);
 
     const handleDownloadCsv = useCallback(() => {
       const table = contentRef.current;
@@ -168,24 +163,38 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
 
     const tableActions = useMarkdownTableActions({
       actionLabels,
-      copiedFormat,
+      isCopied,
       onCopy: handleCopy,
       onDownloadCsv: handleDownloadCsv,
       onOpenInCanvas: onOpenInCanvas != null ? handleOpenInCanvas : undefined,
     });
-    const showHeader = tableActions.length > 0 && !isStreaming;
+    const showActions = tableActions.length > 0 && !isStreaming;
 
     return (
       <div
         style={cssVars}
         className={mergeClasses(
-          'relative w-full min-w-0 max-w-full overflow-hidden rounded-xl border',
+          'group/table relative w-full min-w-0 max-w-full rounded-xl border [overflow:clip]',
           styles.tableContainer,
-          styles.tableContainerLight,
           classNames.tableWrapper,
         )}
       >
-        {showHeader && <TableHeader actions={tableActions} />}
+        {showActions && (
+          <div className="sticky top-0 z-10 h-0">
+            <div className="absolute end-2 top-2 flex items-center gap-1 rounded-lg border border-tertiary bg-layer-raised px-2 py-1 opacity-0 shadow-xs transition-opacity focus-within:opacity-100 group-hover/table:opacity-100">
+              {tableActions.map((action) => (
+                <Tooltip key={action.label} tooltip={action.label} asChild>
+                  <GhostIconButton
+                    aria-label={action.label}
+                    icon={<span aria-hidden>{action.icon}</span>}
+                    size={ElementSize.Small}
+                    onClick={action.onClick}
+                  />
+                </Tooltip>
+              ))}
+            </div>
+          </div>
+        )}
         <div
           ref={scrollContainerRef}
           className={mergeClasses(
@@ -216,9 +225,9 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
             {children}
           </table>
         </div>
-        {actionLabels?.copiedLabel && (
+        {actionLabels?.copyLabel && (
           <span aria-live="polite" className="sr-only" role="status">
-            {copiedFormat ? actionLabels.copiedLabel : ''}
+            {isCopied ? (actionLabels.copiedLabel ?? '') : ''}
           </span>
         )}
       </div>

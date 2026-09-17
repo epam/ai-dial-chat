@@ -384,8 +384,9 @@ export class EnvConfigProvider implements ConfigProvider {
 
     /* Prototype-less: an operator key of `__proto__` would otherwise mutate
      * the accumulator's prototype instead of adding an entry. */
-    const entries: Record<string, ApplicationVisualizerDto> =
-      Object.create(null) as Record<string, ApplicationVisualizerDto>;
+    const entries: Record<string, ApplicationVisualizerDto> = Object.create(
+      null,
+    ) as Record<string, ApplicationVisualizerDto>;
 
     Object.entries(parsed as Record<string, unknown>).forEach(
       ([applicationId, rawEntry]) => {

@@ -3,6 +3,7 @@ import {
   BadGatewayException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpException,
   INestApplication,
   NotFoundException,
@@ -19,7 +20,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import type { Request, Response } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SkillListResponseDto } from '../dto/skill-metadata.dto';
+import type {
+  SkillListResponseDto,
+  SkillMetadataItemDto,
+} from '../dto/skill-metadata.dto';
+import { SkillNodeType } from '../dto/skill-node-type';
 import { SkillArchiveUploadInterceptor } from '../import/skill-archive-upload.interceptor';
 import { SkillsController } from '../skills.controller';
 import { SkillsService } from '../skills.service';
@@ -34,6 +39,21 @@ const mockListResponse: SkillListResponseDto = {
   bucket: 'my-bucket',
   path: '',
   items: [],
+};
+
+const mockMetadataResponse: SkillMetadataItemDto = {
+  name: 'docs-helper',
+  path: 'team-a/docs-helper',
+  url: 'skills/my-bucket/team-a/docs-helper',
+  bucket: 'my-bucket',
+  nodeType: SkillNodeType.Item,
+  parentPath: 'team-a/',
+  permissions: ['READ'],
+  etag: '"abc123"',
+  author: 'user@example.com',
+  createdAt: 1000,
+  updatedAt: 2000,
+  description: 'Explains our docs',
 };
 
 async function buildApp(service: unknown): Promise<INestApplication> {
@@ -76,6 +96,7 @@ describe('SkillsController (integration)', () => {
     listSkills: ReturnType<typeof vi.fn>;
     listCatalogSkills: ReturnType<typeof vi.fn>;
     listSkillFiles: ReturnType<typeof vi.fn>;
+    getSkillMetadata: ReturnType<typeof vi.fn>;
     downloadSkill: ReturnType<typeof vi.fn>;
     downloadSkillFile: ReturnType<typeof vi.fn>;
     createSkill: ReturnType<typeof vi.fn>;
@@ -97,6 +118,7 @@ describe('SkillsController (integration)', () => {
         publicSkills: [],
       }),
       listSkillFiles: vi.fn().mockResolvedValue(mockListResponse),
+      getSkillMetadata: vi.fn().mockResolvedValue(mockMetadataResponse),
       downloadSkill: vi.fn(),
       downloadSkillFile: vi.fn(),
       createSkill: vi.fn(),
@@ -255,6 +277,116 @@ describe('SkillsController (integration)', () => {
           '/api/v1/skills/files?bucket=my-bucket&path=team-a/docs-helper&filePath=',
         )
         .expect(404);
+    });
+  });
+
+  describe('GET /api/v1/skills/metadata', () => {
+    it('returns 200 with the resolved metadata payload', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket&path=team-a/docs-helper')
+        .expect(200);
+
+      expect(res.body).toEqual(mockMetadataResponse);
+      expect(service.getSkillMetadata).toHaveBeenCalledWith(
+        'my-bucket',
+        'team-a/docs-helper',
+        TEST_USER.at,
+      );
+    });
+
+    it('carries no isMy, canEdit, or sharedWithMe field', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket&path=team-a/docs-helper')
+        .expect(200);
+
+      expect(res.body).not.toHaveProperty('isMy');
+      expect(res.body).not.toHaveProperty('canEdit');
+      expect(res.body).not.toHaveProperty('sharedWithMe');
+    });
+
+    it('reports READ-only permissions with no WRITE-implying field', async () => {
+      service.getSkillMetadata.mockResolvedValue({
+        ...mockMetadataResponse,
+        permissions: ['READ'],
+      });
+
+      const res = await request(app.getHttpServer())
+        .get(
+          '/api/v1/skills/metadata?bucket=owner-bucket&path=team-a/docs-helper',
+        )
+        .expect(200);
+
+      expect(res.body.permissions).toEqual(['READ']);
+      expect(res.body).not.toHaveProperty('canEdit');
+    });
+
+    it('returns 400 when bucket is missing', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?path=team-a/docs-helper')
+        .expect(400);
+      expect(service.getSkillMetadata).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for an invalid bucket name', async () => {
+      await request(app.getHttpServer())
+        .get(
+          '/api/v1/skills/metadata?bucket=invalid/bucket&path=team-a/docs-helper',
+        )
+        .expect(400);
+      expect(service.getSkillMetadata).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when path is missing', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket')
+        .expect(400);
+      expect(service.getSkillMetadata).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the service reports a grouping-folder path', async () => {
+      service.getSkillMetadata.mockRejectedValue(
+        new BadRequestException('Path resolves to a grouping folder'),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket&path=team-a')
+        .expect(400);
+    });
+
+    it('returns 401 when the service throws UnauthorizedException', async () => {
+      service.getSkillMetadata.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket&path=team-a/docs-helper')
+        .expect(401);
+    });
+
+    it('returns 403 when the service throws ForbiddenException', async () => {
+      service.getSkillMetadata.mockRejectedValue(new ForbiddenException());
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket&path=team-a/docs-helper')
+        .expect(403);
+    });
+
+    it('returns 404 when the service throws NotFoundException', async () => {
+      service.getSkillMetadata.mockRejectedValue(new NotFoundException());
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket&path=team-a/docs-helper')
+        .expect(404);
+    });
+
+    it('returns 502 when the service throws BadGatewayException', async () => {
+      service.getSkillMetadata.mockRejectedValue(new BadGatewayException());
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket&path=team-a/docs-helper')
+        .expect(502);
+    });
+
+    it('returns 503 when the service throws ServiceUnavailableException', async () => {
+      service.getSkillMetadata.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/skills/metadata?bucket=my-bucket&path=team-a/docs-helper')
+        .expect(503);
     });
   });
 

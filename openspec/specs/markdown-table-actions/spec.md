@@ -8,58 +8,70 @@ Defines how users copy and download assistant-generated Markdown tables, and how
 
 ### Requirement: Assistant table actions are opt-in and streaming-aware
 
-Markdown table actions SHALL be available only when the host supplies localized action labels for an assistant chat message. The actions SHALL NOT be gated by `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`. The available actions SHALL be copy as CSV, copy as TXT, copy as Markdown, and download as CSV. When the host additionally supplies an Open in Canvas label and callback, the table SHALL also expose Open in Canvas.
+Markdown table actions SHALL be available only when the host supplies localized action labels for an assistant chat message. The actions SHALL NOT be gated by `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`. The available actions SHALL be Copy and Download as CSV. When the host additionally supplies an Open in Canvas label and callback, the table SHALL also expose Open in Canvas.
 
 #### Scenario: Completed assistant table shows actions
 - **WHEN** a completed assistant message renders a Markdown table and the host supplies table action labels
-- **THEN** the table exposes copy-as-CSV, copy-as-TXT, copy-as-Markdown, and download-as-CSV controls
+- **THEN** the table exposes a Copy control and a Download as CSV control
 
 #### Scenario: Other Markdown renderers do not inherit actions
 - **WHEN** a Markdown table renders without table action labels, including catalog, source, scheduled-task, and attachment-canvas previews
-- **THEN** the table renders without a table action bar
+- **THEN** the table renders without table actions
 
 #### Scenario: Streaming table hides actions
 - **WHEN** the message that contains the table is still streaming
-- **THEN** the table action bar is hidden
+- **THEN** the table actions are hidden
 
 #### Scenario: Canvas action is opt-in
 - **WHEN** a completed assistant table has action labels but its host does not supply the optional Open in Canvas label and callback
-- **THEN** the table exposes its copy and download controls without an Open in Canvas control
+- **THEN** the table exposes its Copy and Download as CSV controls without an Open in Canvas control
 
-### Requirement: Table headers use a reusable, built-in component
+### Requirement: Table actions appear as a hover-only floating overlay
 
-`@epam/ai-dial-chat-shared` SHALL export a reusable `TableHeader` component that accepts leading content and caller-supplied `{ label, icon, onClick }` action descriptors, and SHALL render those descriptors as accessible UI-kit tooltip buttons. `MarkdownTable` SHALL render `TableHeader` automatically, composed from its own built-in action descriptors, whenever `actionLabels` is supplied. There is no header-renderer prop and no host-supplied action-descriptor override — every consumer gets the same built-in header.
+`MarkdownTable` SHALL render action controls as a floating overlay in the top-right corner of the table. The overlay SHALL be visible only when the user hovers over the table or when keyboard focus is inside it, and SHALL be hidden otherwise. The overlay SHALL follow the viewport when the page is scrolled (sticky positioning).
 
-#### Scenario: Assistant table uses the reusable header
-- **WHEN** a completed assistant table renders with table action labels
-- **THEN** the table header uses the reusable `TableHeader` component and renders the built-in actions
+#### Scenario: Overlay is hidden when the table is not focused
+- **WHEN** a table with action labels is rendered and neither hovered nor focused
+- **THEN** the overlay is not visible
 
-#### Scenario: Table header follows streaming behavior
-- **WHEN** a message with a table is still streaming
-- **THEN** the table header is hidden
+#### Scenario: Overlay appears on hover
+- **WHEN** a user hovers over a table with action labels
+- **THEN** the overlay becomes visible
+
+#### Scenario: Overlay is reachable by keyboard
+- **WHEN** a user tabs into the overlay's action buttons
+- **THEN** the overlay remains visible while focus is within it
+
+### Requirement: Copy produces rich text suitable for paste into document editors
+
+The Copy action SHALL write the table to the system clipboard as both `text/html` (inline-styled table markup) and `text/plain` (raw Markdown pipe table). Rich paste targets (Word, Google Docs, Slack) SHALL receive the HTML version; plain-text targets SHALL receive the Markdown version.
+
+#### Scenario: Copy pastes as a formatted table in rich targets
+- **WHEN** a user activates Copy and pastes into a rich-text editor
+- **THEN** the pasted content is a formatted table, not raw Markdown text
+
+#### Scenario: Copy pastes as Markdown in plain-text targets
+- **WHEN** a user activates Copy and pastes into a plain-text field
+- **THEN** the pasted content is the Markdown pipe-table representation
 
 ### Requirement: Table data is serialized predictably
 
-Table copy actions SHALL serialize visible header and body cell text. Cell values SHALL be trimmed plain text; inline formatting SHALL NOT be preserved. CSV SHALL use commas, quote non-empty values, and escape embedded double quotes by doubling them. TXT SHALL use tab delimiters. Markdown SHALL produce a pipe-delimited table with a left-aligned separator row.
+Table serialization SHALL use visible header and body cell text. Cell values SHALL be trimmed plain text; inline formatting SHALL NOT be preserved. CSV SHALL use commas, quote non-empty values, and escape embedded double quotes by doubling them. Markdown SHALL produce a pipe-delimited table with a left-aligned separator row.
 
 #### Scenario: CSV preserves values containing commas and quotes
 - **WHEN** a table cell contains `Draft "final", v2`
-- **THEN** the copied CSV represents that cell as `"Draft ""final"", v2"`
-
-#### Scenario: TXT uses tab-delimited rows
-- **WHEN** a table contains a header row and two body rows
-- **THEN** the copied TXT contains three lines whose visible cell values are separated by tab characters
+- **THEN** the CSV representation of that cell is `"Draft ""final"", v2"`
 
 #### Scenario: Markdown copy produces a left-aligned table
 - **WHEN** a table contains a header row and body rows
-- **THEN** the copied Markdown contains the header row, a `| :-- |` separator row, and the body rows
+- **THEN** the Markdown representation contains the header row, a `| :-- |` separator row, and the body rows
 
 ### Requirement: CSV download uses a browser download
 
-Download-as-CSV SHALL download the same serialized rows as copy-as-CSV, prefixed with a UTF-8 byte-order mark and using the `text/csv;charset=utf-8` media type. The default filename SHALL be `table.csv`; a host MAY override it. No filename-editing dialog SHALL be required.
+Download as CSV SHALL download the same serialized rows as Copy would produce for plain-text targets, prefixed with a UTF-8 byte-order mark and using the `text/csv;charset=utf-8` media type. The default filename SHALL be `table.csv`; a host MAY override it. No filename-editing dialog SHALL be required.
 
 #### Scenario: CSV download opens with correct encoding
-- **WHEN** a user activates download-as-CSV
+- **WHEN** a user activates Download as CSV
 - **THEN** the browser downloads a CSV file containing the UTF-8 byte-order mark and the serialized table rows
 
 #### Scenario: Host overrides the filename
@@ -77,12 +89,12 @@ When a host supplies both the optional Open in Canvas label and an `onOpenInCanv
 
 #### Scenario: Canvas expansion follows visible-table serialization
 - **WHEN** a visible table contains formatted cell content or a source alignment marker
-- **THEN** the Markdown passed to the host callback contains the same trimmed cell text and left-aligned table structure as copy-as-Markdown
+- **THEN** the Markdown passed to the host callback contains the same trimmed cell text and left-aligned table structure as Copy
 - **AND THEN** it does not claim to preserve source-only inline formatting or alignment
 
 #### Scenario: Streaming table cannot open in canvas
 - **WHEN** the message that contains the table is still streaming
-- **THEN** Open in Canvas is unavailable with the rest of the table header actions
+- **THEN** Open in Canvas is unavailable with the rest of the table actions
 
 ### Requirement: Table controls and scrolling are accessible
 
@@ -106,7 +118,7 @@ Each action control SHALL have a stable accessible name and a UI-kit tooltip usi
 
 ### Requirement: Table action labels are localized at the application edge
 
-The shared table component SHALL receive every user-visible string as a prop and SHALL NOT import application i18n. The application SHALL use these i18n keys: `buttons.copyAsCsv`, `buttons.copyAsTxt`, existing `buttons.copyAsMarkdown`, existing `buttons.copied`, `buttons.downloadAsCsv`, `buttons.openInCanvas`, `chat.scrollableTable`, and `chat.markdownTableTitle`.
+The shared table component SHALL receive every user-visible string as a prop and SHALL NOT import application i18n. The application SHALL use these i18n keys: `buttons.copy`, existing `buttons.copied`, `buttons.downloadAsCsv`, `buttons.openInCanvas`, `chat.scrollableTable`, and `chat.markdownTableTitle`.
 
 #### Scenario: Localized labels reach the shared component
 - **WHEN** the application renders an assistant table in a non-English locale with translated values for the required keys
@@ -123,4 +135,4 @@ Table action layout, scrolling, borders, alignment, and overflow indicators SHAL
 
 #### Scenario: Arabic table mirrors without icon distortion
 - **WHEN** the document direction is RTL
-- **THEN** the table action bar and scroll behavior follow the inline direction while CSV, TXT, Markdown, check, and download icons remain unmirrored
+- **THEN** the table action overlay and scroll behavior follow the inline direction while Copy, check, and download icons remain unmirrored

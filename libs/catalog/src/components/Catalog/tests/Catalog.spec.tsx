@@ -205,6 +205,7 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isRevokeShareVisible,
     onLogin,
     onLogout,
+    onClose,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
@@ -222,10 +223,12 @@ vi.mock('../../Details/DetailsPanel', () => ({
       item: CatalogItem,
       params: { level: CredentialsLevel },
     ) => Promise<void>;
+    onClose?: () => void;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
+      {onClose && <button onClick={onClose}>ClosePanel</button>}
       {onDownload && (isDownloadVisible?.(item) ?? true) && (
         <button onClick={() => onDownload(item)}>DownloadTrigger</button>
       )}
@@ -630,6 +633,142 @@ describe('Catalog', () => {
     resolveFetch(fetched);
     await screen.findByText(`details:${JSON.stringify(fetched)}`);
     expect(screen.getByText('isDetailsLoading:false')).toBeTruthy();
+  });
+
+  it('applies only the second response when the same item is closed and reopened while a request is pending', async () => {
+    const first = { overview: { sections: [{ title: 'First', specs: [] }] } };
+    const second = { overview: { sections: [{ title: 'Second', specs: [] }] } };
+    let resolveFirst: (value: typeof first) => void = () => undefined;
+    let resolveSecond: (value: typeof second) => void = () => undefined;
+    const onFetchDetails = vi
+      .fn()
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveFirst = resolve)),
+      )
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveSecond = resolve)),
+      );
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+
+    /* The stale first response resolves after the reopen — must not land. */
+    resolveFirst(first);
+    resolveSecond(second);
+
+    await screen.findByText(`details:${JSON.stringify(second)}`);
+    expect(screen.queryByText(`details:${JSON.stringify(first)}`)).toBeNull();
+  });
+
+  it('applies no state and keeps the panel closed when a response arrives after close', async () => {
+    let resolveFetch: (value: { overview: { sections: [] } }) => void = () =>
+      undefined;
+    const onFetchDetails = vi.fn(
+      () =>
+        new Promise<{ overview: { sections: [] } }>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
+    resolveFetch({ overview: { sections: [] } });
+
+    /* handleCloseDetails clears selectedItem/fetchedDetails/isDetailsLoading after a 300ms exit delay. */
+    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+
+    expect(screen.queryByText('Claude', { selector: 'span' })).toBeNull();
+  });
+
+  it('discards the first response when switching to a different item mid-flight', async () => {
+    const itemAResult = { overview: { sections: [{ title: 'A', specs: [] }] } };
+    const itemBResult = { overview: { sections: [{ title: 'B', specs: [] }] } };
+    let resolveA: (value: typeof itemAResult) => void = () => undefined;
+    let resolveB: (value: typeof itemBResult) => void = () => undefined;
+    const onFetchDetails = vi
+      .fn()
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveA = resolve)),
+      )
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveB = resolve)),
+      );
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude'), makeItem('2', 'Gemini')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Gemini' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+
+    /* Stale response for Claude resolves after Gemini's fetch has started. */
+    resolveA(itemAResult);
+    resolveB(itemBResult);
+
+    await screen.findByText(`details:${JSON.stringify(itemBResult)}`);
+    expect(
+      screen.queryByText(`details:${JSON.stringify(itemAResult)}`),
+    ).toBeNull();
+  });
+
+  it('bails out of the post-login retry loop when the panel closes between attempts', async () => {
+    const item = makeItem('1', 'GitHub');
+    const signedOut = {
+      credentials: { userStatus: CredentialStatus.SignedOut },
+    };
+    const onFetchDetails = vi.fn().mockResolvedValue(signedOut);
+    const onLogin = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <Catalog
+        items={[item]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        onLogin={onLogin}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'GitHub' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'LoginTrigger' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+
+    await userEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
+
+    /* Retries would otherwise continue every 300ms up to POST_AUTH_REFRESH_ATTEMPTS. */
+    await act(() => new Promise((resolve) => setTimeout(resolve, 700)));
+
+    expect(onFetchDetails).toHaveBeenCalledTimes(2);
   });
 
   it('falls back to static item.details when onFetchDetails resolves undefined', async () => {

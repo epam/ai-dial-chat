@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   ForbiddenException,
   NotFoundException,
   ServiceUnavailableException,
@@ -473,6 +474,145 @@ describe('SkillsListingService', () => {
           'token',
         ),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getSkillMetadata', () => {
+    it('resolves an item with author/updatedAt and no ownership fields', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: skillItem,
+      });
+
+      const result = await service.getSkillMetadata(
+        'my-bucket',
+        'team-a/docs-helper',
+        'token',
+      );
+
+      expect(result).toMatchObject({
+        name: 'docs-helper',
+        author: 'user@example.com',
+        createdAt: 1000,
+        updatedAt: 2000,
+        permissions: ['READ', 'WRITE'],
+      });
+      expect(result).not.toHaveProperty('isMy');
+      expect(result).not.toHaveProperty('canEdit');
+      expect(result).not.toHaveProperty('sharedWithMe');
+    });
+
+    it('resolves against another user bucket verbatim, never the caller bucket', async () => {
+      const { service, sdkClient } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: { ...skillItem, bucket: 'owner-bucket' },
+      });
+
+      const result = await service.getSkillMetadata(
+        'owner-bucket',
+        'team-a/docs-helper',
+        'token',
+      );
+
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledWith(
+        'owner-bucket',
+        'team-a/docs-helper',
+        expect.anything(),
+      );
+      expect(result.url).toBe('skills/owner-bucket/team-a/docs-helper');
+    });
+
+    it('encodes a nested path before calling the SDK', async () => {
+      const { service, sdkClient } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: skillItem,
+      });
+
+      await service.getSkillMetadata(
+        'my-bucket',
+        'team a/docs helper',
+        'token',
+      );
+
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledWith(
+        'my-bucket',
+        'team%20a/docs%20helper',
+        expect.anything(),
+      );
+    });
+
+    it('rejects a folder path with BadRequestException', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: folderItem,
+      });
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a', 'token'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('maps a Core 404 to NotFoundException', async () => {
+      const { service } = makeService({
+        error: true,
+        response: { status: 404 },
+        data: undefined,
+      });
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('maps unnormalizable metadata to NotFoundException', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: { bucket: 'my-bucket' },
+      });
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('maps a 5xx to BadGatewayException', async () => {
+      const { service } = makeService({
+        error: true,
+        response: { status: 502 },
+        data: undefined,
+      });
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('maps a network/timeout failure to ServiceUnavailableException', async () => {
+      const sdkClient = {
+        listSkillMetadata: vi
+          .fn()
+          .mockRejectedValue(
+            Object.assign(new Error('aborted'), { name: 'TimeoutError' }),
+          ),
+        listSkillFileMetadata: vi.fn(),
+      };
+      const configService = {
+        get: vi.fn().mockReturnValue(undefined),
+      } as unknown as ConfigService<EnvironmentVariables>;
+      const dialClient = {
+        client: sdkClient,
+        baseUrl: 'http://dial-core',
+      } as unknown as DialClientService;
+      const service = new SkillsListingService(dialClient, configService);
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
   });
 });

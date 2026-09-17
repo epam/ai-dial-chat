@@ -311,7 +311,7 @@ describe('ShareInvitationService', () => {
       });
     });
 
-    it('still shares a related file in the public/organization bucket', async () => {
+    it('excludes a related file in the public/organization bucket', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
         okResponse({
@@ -347,10 +347,6 @@ describe('ShareInvitationService', () => {
             },
             {
               url: 'files/owner-bucket/report.pdf',
-              permissions: ['READ'],
-            },
-            {
-              url: 'files/public/template.pdf',
               permissions: ['READ'],
             },
           ],
@@ -675,7 +671,7 @@ describe('ShareInvitationService', () => {
       });
     });
 
-    it('keeps a referenced prompt in the public/organization bucket', async () => {
+    it('excludes a referenced prompt in the public/organization bucket', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getCustomApplication').mockResolvedValue(
         okResponse({
@@ -707,10 +703,6 @@ describe('ShareInvitationService', () => {
             },
             {
               url: 'prompts/owner-bucket/mine',
-              permissions: ['READ'],
-            },
-            {
-              url: 'prompts/public/shared',
               permissions: ['READ'],
             },
           ],

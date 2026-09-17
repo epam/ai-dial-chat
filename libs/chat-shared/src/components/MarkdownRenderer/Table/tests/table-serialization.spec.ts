@@ -28,18 +28,6 @@ describe('serializeMarkdownTableRows', () => {
     );
   });
 
-  it('serializes TXT rows with tabs and trimmed cell text', () => {
-    const rows = [
-      createRow(' Name ', ' Value '),
-      createRow(' Alpha ', ' 1 '),
-      createRow(' Beta ', ' 2 '),
-    ];
-
-    expect(serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Txt)).toBe(
-      'Name\tValue\nAlpha\t1\nBeta\t2',
-    );
-  });
-
   it('serializes Markdown with a left-aligned separator row', () => {
     const rows = [
       createRow('Name', 'Value'),
@@ -57,9 +45,6 @@ describe('serializeMarkdownTableRows', () => {
 
     expect(serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Csv)).toBe(
       ',"Value"',
-    );
-    expect(serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Txt)).toBe(
-      '\tValue',
     );
   });
 });

@@ -18,6 +18,7 @@ describe('SkillsService', () => {
       listSkills: vi.fn().mockResolvedValue('listSkills-result'),
       listCatalogSkills: vi.fn().mockResolvedValue('listCatalogSkills-result'),
       listSkillFiles: vi.fn().mockResolvedValue('listSkillFiles-result'),
+      getSkillMetadata: vi.fn().mockResolvedValue('getSkillMetadata-result'),
     } as unknown as SkillsListingService;
     const downloadService = {
       downloadSkill: vi.fn().mockResolvedValue('downloadSkill-result'),
@@ -101,6 +102,17 @@ describe('SkillsService', () => {
       'token',
     );
     expect(result).toBe('listSkillFiles-result');
+  });
+
+  it('delegates getSkillMetadata to SkillsListingService', async () => {
+    const { service, listingService } = makeService();
+    const result = await service.getSkillMetadata('bucket', 'path', 'token');
+    expect(listingService.getSkillMetadata).toHaveBeenCalledWith(
+      'bucket',
+      'path',
+      'token',
+    );
+    expect(result).toBe('getSkillMetadata-result');
   });
 
   it('delegates downloadSkill to SkillsDownloadService', async () => {

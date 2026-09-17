@@ -1,6 +1,5 @@
 export enum MarkdownTableCopyFormat {
   Csv = 'csv',
-  Txt = 'txt',
   Markdown = 'markdown',
 }
 
@@ -10,9 +9,7 @@ export const DEFAULT_MARKDOWN_TABLE_DOWNLOAD_FILENAME = 'table.csv';
 export const MARKDOWN_TABLE_CSV_MIME_TYPE = 'text/csv;charset=utf-8';
 
 export interface MarkdownTableActionLabels {
-  copyCsvLabel?: string;
-  copyTxtLabel?: string;
-  copyMarkdownLabel?: string;
+  copyLabel?: string;
   copiedLabel?: string;
   downloadCsvLabel?: string;
   openInCanvasLabel?: string;
@@ -26,9 +23,6 @@ const serializeCsvRow = (row: HTMLTableRowElement): string =>
     .map((value) => (value ? `"${value.replace(/"/g, '""')}"` : ''))
     .join(',');
 
-const serializeTxtRow = (row: HTMLTableRowElement): string =>
-  getCellValues(row).join('\t');
-
 const serializeMarkdownRow = (row: HTMLTableRowElement): string =>
   `| ${getCellValues(row).join(' | ')} |`;
 
@@ -38,10 +32,6 @@ export const serializeMarkdownTableRows = (
 ): string => {
   if (format === MarkdownTableCopyFormat.Csv) {
     return rows.map(serializeCsvRow).join('\n');
-  }
-
-  if (format === MarkdownTableCopyFormat.Txt) {
-    return rows.map(serializeTxtRow).join('\n');
   }
 
   return rows

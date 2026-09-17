@@ -2676,10 +2676,10 @@ const { bytes, mimeType } = await onLoadSkillDetailsFile(fileId);
 | `onLoadContentFile`      | `(fileId: string) => Promise<string \| undefined>`                           | Loads text content for a file within the open skill package. |
 | `onLoadSkillDetailsFile` | `(fileId: string) => Promise<SkillFileContent>`                              | Downloads preview bytes; throws on HTTP error.               |
 
-The skill branch (manifest download + parse, package file listing, in-package
-file loads) is delegated to `useSkillItemDetails` below — `CatalogDetailsApi`
-extends that hook's `SkillDetailsApi` port with the deployment and prompt
-methods.
+The skill branch (manifest download + parse, package file listing,
+authoritative metadata fetch, in-package file loads) is delegated to
+`useSkillItemDetails` below — `CatalogDetailsApi` extends that hook's
+`SkillDetailsApi` port with the deployment and prompt methods.
 
 ### useSkillItemDetails
 
@@ -2693,7 +2693,7 @@ import { useSkillItemDetails } from '@epam/ai-dial-chat-hooks';
 
 const { onFetchSkillDetails, onLoadContentFile, onLoadSkillDetailsFile } =
   useSkillItemDetails({
-    api, // SkillDetailsApi — downloadSkillFile + listSkillFiles
+    api, // SkillDetailsApi — downloadSkillFile + listSkillFiles + getSkillMetadata
     skills, // SkillMetadataItemDto[] — all skills visible to the user
     skillOverviewLabels, // SkillOverviewLabels
   });
@@ -2729,7 +2729,7 @@ const {
   isStarred,
   onLoadSkillDetailsFile,
 } = useSkillDetailsPanelData({
-  api, // SkillDetailsApi — downloadSkillFile + listSkillFiles
+  api, // SkillDetailsApi — downloadSkillFile + listSkillFiles + getSkillMetadata
   skills, // SkillMetadataItemDto[] — the user's own skills
   sharedWithMe, // SkillMetadataItemDto[] | undefined
   publicSkills, // SkillMetadataItemDto[] | undefined

@@ -235,9 +235,9 @@ describe('isOriginAllowedForIframe', () => {
     expect(isOriginAllowedForIframe(url, ['https://other.example.com'])).toBe(
       false,
     );
-    expect(isOriginAllowedForIframe(url, ['https://viz.example.com:8443'])).toBe(
-      false,
-    );
+    expect(
+      isOriginAllowedForIframe(url, ['https://viz.example.com:8443']),
+    ).toBe(false);
   });
 
   it('matches a subdomain through a leading-wildcard-label entry', () => {

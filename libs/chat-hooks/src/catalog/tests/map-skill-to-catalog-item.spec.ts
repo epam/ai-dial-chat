@@ -302,6 +302,34 @@ describe('buildSkillOverview', () => {
     });
   });
 
+  it('renders an always-present Updated row with an empty value when no timestamp resolved', () => {
+    const overview = buildSkillOverview(
+      makeSkill({ updatedAt: undefined }),
+      [],
+      undefined,
+      overviewLabels,
+    );
+
+    expect(
+      detailsOf(overview)?.specs.find((spec) => spec.label === 'Updated'),
+    ).toEqual({ label: 'Updated', value: '' });
+  });
+
+  it('renders the Updated row as a formatted calendar date when the metadata carries a timestamp', () => {
+    const overview = buildSkillOverview(
+      makeSkill({ updatedAt: 1752100000000 }),
+      [],
+      undefined,
+      overviewLabels,
+    );
+
+    const updated = detailsOf(overview)?.specs.find(
+      (spec) => spec.label === 'Updated',
+    )?.value;
+    expect(updated).toBeTruthy();
+    expect(updated).not.toBe('');
+  });
+
   it('counts only files, excluding grouping folders', () => {
     const overview = buildSkillOverview(
       makeSkill(),
