@@ -27,9 +27,6 @@ generated method through `apps/chat/src/server-api`.
 **Authorization:** unchanged. The endpoint's existing access rules apply; no new role
 is required, and the registry is operator configuration containing no per-user data.
 
-**Rate limiting:** unchanged — the endpoint keeps its current `@Throttle` settings; a
-larger response body does not warrant a stricter limit.
-
 **Caching:** unchanged. The field participates in the endpoint's existing config
 resolution and caching behaviour; no new cache key or TTL is introduced, and the value
 changes only on redeploy.

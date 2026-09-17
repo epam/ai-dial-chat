@@ -145,7 +145,7 @@ required. This proposal adds that signal and the login flow.
 
 - **Global app-level context/provider instead of a route-level check.**
   Rejected: offline-credentials only matters inside Scheduled Tasks; a
-  global check would run (and rate-limit-consume) on every route for users
+  global check would run on every route for users
   who never touch Scheduled Tasks. A route-level gate/hook scoped to the four
   Scheduled Task routes is cheaper and keeps the concern local, matching how
   `apps/chat/src/context/ActiveScheduledTaskContext.tsx` is already scoped
@@ -214,7 +214,7 @@ required. This proposal adds that signal and the login flow.
 
 - `offline-credentials`: Backend BFF domain proxying DIAL Core's offline
   credentials status/sign-in endpoints (`apps/chat-api/src/offline-credentials/`),
-  session-validated, feature-gated, rate-limited, no-cache status reads.
+  session-validated, feature-gated, no-cache status reads.
 - `scheduled-tasks-offline-credentials-login`: Frontend behavior — the
   route-level status check on Scheduled Tasks routes, the login-required
   modal and its state machine, and the OAuth popup/callback integration that

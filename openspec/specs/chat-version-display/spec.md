@@ -43,8 +43,6 @@ different versions on two endpoints.
 - **Cache**: reuses the existing `app-config` response cache — key
   `app-config:client:<appId>:user:<userId>:roles:<roles>`, TTL 60 s, invalidated by TTL expiry
   and by process restart (deploy). No new cache entry and no new invalidation trigger.
-- **Rate limiting**: none added — served by the existing `GET /api/v1/app-config` route under
-  its current throttle configuration
 - **Authorization**: same as the rest of the client config — any caller that may read
   `GET /api/v1/app-config`; the value is non-sensitive build metadata
 - **Observability**: none — no new metric or log line; the version is not logged

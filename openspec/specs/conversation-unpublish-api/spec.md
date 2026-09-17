@@ -40,7 +40,7 @@ Response (200):
 
 Generated-client impact: OpenAPI `operationId: unpublishConversation`; request DTO `UnpublishConversationDto`; response DTO `UnpublishConversationResultDto`. Frontend caller: a thin wrapper in `apps/chat/src/server-api/conversation-publish.api.ts`.
 
-Rate limiting: `@Throttle` at the publish endpoint's write profile. Authorization, error mapping, and logging discipline are identical to the catalog unpublish endpoint (see `catalog-unpublish-api`): authenticated session only, Core enforces folder write access, `mapDialHttpStatus` carries Core's own message, and no request body or token is ever logged.
+Authorization, error mapping, and logging discipline are identical to the catalog unpublish endpoint (see `catalog-unpublish-api`): authenticated session only, Core enforces folder write access, `mapDialHttpStatus` carries Core's own message, and no request body or token is ever logged.
 
 Validation: `folderPath` SHALL carry `IsValidFilePath`, so `..` and absolute-path escapes are rejected before the value reaches Core. The `path` query param reuses the existing `ConversationPathDto` unchanged, which validates only `IsString` + `MinLength(1)` — it carries **no** `IsValidFilePath`, because that DTO is shared with rename, delete, duplicate, and publish. A traversal-shaped `path` therefore reaches the service, exactly as it already does on the publish endpoint; what keeps the request own-bucket is that the service builds `sourceUrl` from the session `bucket` itself and never from a client-supplied resource url. Tightening the shared DTO is out of scope for this change — it would change five other endpoints' accepted input — and is recorded as a follow-up rather than assumed to be in place.
 

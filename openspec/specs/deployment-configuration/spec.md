@@ -14,8 +14,6 @@ The decoded `deployment` parameter may be a single-segment static deployment nam
 
 Cache: results SHALL be cached in-memory for 60 seconds, keyed as `deployments:configuration:<userSub>:<deploymentName>`.
 
-Rate limiting: inherits the global throttler default (no per-route override required).
-
 #### Scenario: Configuration returned for a configurable deployment
 
 - **WHEN** an authenticated user calls `GET /api/v1/deployments/my-model/configuration` and DIAL Core returns a JSON Schema object

@@ -18,7 +18,6 @@ The endpoint SHALL:
 - Apply `CatalogFilterService.apply` to the sorted merged list using the normalized capability-only `CatalogFilter` from `CatalogFilterService.parse(dto)`.
 - Record `total` (count before filtering) and `filtered` (count after filtering) and include them in `CatalogResponseDto`.
 - Cache the **unfiltered** merged list under key `catalog:list:<userSub>` for 30 000 ms; filtering is applied after cache retrieval and filtered results are NOT cached separately.
-- Apply `@Throttle({ default: { limit: 60, ttl: 60000 } })`.
 - Set response header `Cache-Control: private, max-age=30`.
 - Not log the access token, session cookie, or any secret.
 
@@ -57,10 +56,6 @@ The endpoint SHALL:
 #### Scenario: Unauthenticated request
 - **WHEN** a request arrives with no valid session cookie
 - **THEN** the endpoint responds 401
-
-#### Scenario: Rate limit exceeded
-- **WHEN** the request rate exceeds 60 per minute for the client
-- **THEN** the endpoint responds 429
 
 #### Scenario: Catalog cache hit — filter applied to cached list
 - **WHEN** `catalog:list:<userSub>` is present in the cache
@@ -273,7 +268,6 @@ No new business logic SHALL be added to it. New consumers SHALL use `/api/v1/cat
 #### Scenario: Swagger marks endpoint as deprecated
 - **WHEN** the OpenAPI spec is generated
 - **THEN** `GET /api/deployments` appears with `deprecated: true`
-
 
 ---
 

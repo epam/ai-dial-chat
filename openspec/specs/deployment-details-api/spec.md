@@ -23,7 +23,6 @@ The endpoint:
 - SHALL respond 200 with `DeploymentDetailsDto` on success.
 - SHALL respond 502 when DIAL Core returns a non-2xx response for the detail call.
 - SHALL respond 503 when DIAL Core is unreachable or times out.
-- SHALL apply `@Throttle({ default: { limit: 60, ttl: 60000 } })`, matching `GET /api/v1/deployments`.
 - SHALL cache the mapped `DeploymentDetailsDto` under key `deployments:details:<userSub>:<deployment>` for 60 000 ms, so entries and in-flight request deduplication are isolated by authenticated user and deployment.
 - SHALL invalidate the affected `deployments:details:<userSub>:<deployment>` entry after a successful toolset create, update, delete, login, or logout, and after a successful application update (`ApplicationsService.updateApplication`, using the same `applicationName` string as the cache key), before the next details fetch is treated as fresh.
 - SHALL ensure an in-flight `getDeploymentDetails` fetch that was dispatched before an invalidation for the same key never repopulates the cache with its (pre-invalidation) result, and is never joined by a request made after that invalidation — see the dedicated requirement below.
@@ -119,11 +118,6 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
 
 - **WHEN** `GET /api/v1/deployments/{id}/details` is called without a valid session cookie
 - **THEN** the endpoint responds 401
-
-#### Scenario: Rate limit exceeded
-
-- **WHEN** the request rate exceeds 60 per minute for the client
-- **THEN** the endpoint responds 429
 
 #### Scenario: List endpoint response shape is unchanged
 

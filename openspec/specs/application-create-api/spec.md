@@ -19,7 +19,6 @@ The endpoint SHALL:
 - Create the application via the client's `saveCustomApplication(bucket, encodedPath, …)` with a mapped body (see below).
 - On success, invalidate the `applications:list:<userSub>` cache entry via `cacheManager.del` and return `{ id: "applications/{bucket}/{appPath}" }` — the **unencoded** path, matching the resource id format used elsewhere (e.g. `listApplications`).
 - Map DIAL Core non-2xx responses to the appropriate HTTP status using `mapDialHttpStatus`, and transport-level failures via `handleDialFetchError`.
-- Apply `@Throttle({ default: { limit: 10, ttl: 60000 } })`.
 - Not log the access token, session cookie, or any secret. Safe identifiers (`userSub`, app path) MAY be logged at debug level.
 - Follow `apps/chat-api/AGENTS.md` for all controller and service conventions.
 
@@ -150,8 +149,3 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 - **WHEN** DIAL Core times out or is unreachable
 - **THEN** the endpoint responds 503
-
-#### Scenario: Rate limit exceeded returns 429
-
-- **WHEN** more than 10 create requests arrive within 60 seconds for the same session
-- **THEN** subsequent requests respond 429

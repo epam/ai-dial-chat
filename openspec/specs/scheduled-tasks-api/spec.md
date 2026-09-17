@@ -16,7 +16,7 @@ The application SHALL expose seven business endpoints under `apps/chat-api/src/s
 - `POST /api/v1/scheduled-tasks/:scheduleId/pause` — `operationId: pauseScheduledTask`
 - `POST /api/v1/scheduled-tasks/:scheduleId/resume` — `operationId: resumeScheduledTask`
 
-Every route MUST be `@UseGuards(FeatureGuard)` + `@RequireFeature(FeatureKey.ScheduledTasksEnabled)`, and MUST read the session `sub`/`at` from `req.user as SessionUser` — never accept a caller-supplied user id or token. Each route MUST carry `@Throttle` and full `@ApiResponse` coverage for every status it can return (200/201/204 as applicable, 400, 401, 403, 404 for get/update/delete/pause/resume, 429, 502, 503; 409 additionally for delete/pause/resume, see below).
+Every route MUST be `@UseGuards(FeatureGuard)` + `@RequireFeature(FeatureKey.ScheduledTasksEnabled)`, and MUST read the session `sub`/`at` from `req.user as SessionUser` — never accept a caller-supplied user id or token. Each route MUST provide full `@ApiResponse` coverage for every status it can return (200/201/204 as applicable, 400, 401, 403, 404 for get/update/delete/pause/resume, 429, 502, 503; 409 additionally for delete/pause/resume, see below).
 
 Frontend impact: all seven operations are exposed on the regenerated `@epam/chat-api-client` (`ScheduledTasksApi`), consumed through `apps/chat/src/server-api/scheduled-tasks.api.ts` thin wrappers and the existing `scheduledTasksApi` singleton in `apps/chat/src/server-api/api-client.ts`, using normal (non-`Raw`) generated methods since no response requires header/status inspection beyond what the client library exposes. The create form calls `createScheduledTask` on submit; the list page calls `listScheduledTasks` on mount and refetch. `getScheduledTask` and `updateScheduledTask` are available for follow-up edit/detail flows. `pauseScheduledTask`/`resumeScheduledTask` are wired to the detail-page header's Active switch. `deleteScheduledTask` is wired to the detail-page header's Delete action and its confirmation dialog.
 
@@ -248,7 +248,7 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 ### Requirement: List scheduled task runs
 
-`GET /api/v1/scheduled-tasks/:scheduleId/runs` SHALL be added to `apps/chat-api/src/scheduled-tasks/scheduled-tasks.controller.ts` under `@Controller({ path: 'scheduled-tasks', version: '1' })`, with `operationId: listScheduledTaskRuns`. It SHALL validate `scheduleId` against the same allowlist `^[A-Za-z0-9_-]{1,128}$` via `@Matches` before use, be `@UseGuards(FeatureGuard)` + `@RequireFeature(FeatureKey.ScheduledTasksEnabled)`, read the session `sub`/`at` from `req.user as SessionUser`, carry `@Throttle`, and provide full `@ApiResponse` coverage for 200, 400, 401, 403, 404, 429, 502, and 503.
+`GET /api/v1/scheduled-tasks/:scheduleId/runs` SHALL be added to `apps/chat-api/src/scheduled-tasks/scheduled-tasks.controller.ts` under `@Controller({ path: 'scheduled-tasks', version: '1' })`, with `operationId: listScheduledTaskRuns`. It SHALL validate `scheduleId` against the same allowlist `^[A-Za-z0-9_-]{1,128}$` via `@Matches` before use, be `@UseGuards(FeatureGuard)` + `@RequireFeature(FeatureKey.ScheduledTasksEnabled)`, read the session `sub`/`at` from `req.user as SessionUser`, and provide full `@ApiResponse` coverage for 200, 400, 401, 403, 404, 429, 502, and 503.
 
 The endpoint SHALL accept `limit` (`@IsOptional() @IsInt() @Min(1) @Max(100)`, default `20`) and `offset` (`@IsOptional() @IsInt() @Min(0)`, default `0`) query parameters, validated via a `ListScheduledTaskRunsQueryDto` under the global `ValidationPipe`. It SHALL proxy `GET {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}/runs`, forwarding `limit`/`offset`, and SHALL always additionally send explicit `order_by=created_at&order_dir=desc` query parameters upstream — the BFF never relies on upstream's own default ordering, mirroring the same "always-explicit-default" decision already made for `listScheduledTasks`. This endpoint is NOT cached, since run status transitions (`in_progress` → `success`/`error`) must be observable immediately.
 
@@ -471,11 +471,6 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 - **WHEN** the upstream pause action succeeds but the BFF's follow-up `GET` for the same schedule fails
 - **THEN** the endpoint still returns `200 OK` with `isActive: false` and still invalidates the list cache, rather than returning an error or `isActive: true`
 
-#### Scenario: Rate limit exceeded
-
-- **WHEN** a user exceeds the configured pause/resume rate limit
-- **THEN** the response is `429 Too Many Requests`
-
 #### Scenario: Upstream error maps to 502/503
 
 - **WHEN** DIAL Core returns a 5xx or is unreachable while pausing
@@ -525,11 +520,6 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 - **WHEN** the upstream resume action succeeds but the BFF's follow-up `GET` for the same schedule fails
 - **THEN** the endpoint still returns `200 OK` with `isActive: true` and still invalidates the list cache, rather than returning an error or `isActive: false`
 
-#### Scenario: Rate limit exceeded
-
-- **WHEN** a user exceeds the configured pause/resume rate limit
-- **THEN** the response is `429 Too Many Requests`
-
 #### Scenario: Upstream error maps to 502/503
 
 - **WHEN** DIAL Core returns a 5xx or is unreachable while resuming
@@ -563,7 +553,7 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 
 `DELETE /api/v1/scheduled-tasks/:scheduleId` SHALL validate `scheduleId` against the existing allowlist `^[A-Za-z0-9_-]{1,128}$` (reusing `GetScheduledTaskDto`) before use, take no request body and no query parameters, and proxy `DELETE {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` using the session bearer token via a dedicated `deleteScheduledTask` method on `ScheduledTasksService` (not the `performScheduleAction`/`ScheduleAction` helper used by pause/resume, since delete uses a different HTTP verb and returns no body to re-fetch). Creator isolation SHALL be delegated entirely to the upstream endpoint's own `created_by` scoping — the BFF SHALL NOT perform its own ownership check beyond what upstream already enforces via the session's access token. The BFF SHALL NOT attempt to predict or request a hard vs. soft deletion outcome; it SHALL treat both outcomes identically as a successful deletion.
 
-On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Content` with an empty body (`@HttpCode(HttpStatus.NO_CONTENT)`), SHALL NOT attempt to parse a JSON body from the upstream response, and SHALL invalidate the caller's scheduled-tasks list cache using the existing `invalidateListCache(userSub)` epoch-bump helper before responding. The response SHALL carry cache-preventing headers consistent with the controller's other mutation endpoints (no caching of a delete response). Upstream errors SHALL map through the existing `mapDialHttpStatus`/`handleDialFetchError` mechanism without exposing the upstream's bare-JSON-string error body: a `404` (unknown schedule, another user's schedule, or an already hard-deleted schedule) maps to `404 Not Found`; a `409` (already soft-deleted) maps to `409 Conflict`; a `502` (scheduler could not unregister the job; no DB change occurred, the task remains live, and retrying is safe) maps to `502 Bad Gateway`; upstream timeout or unavailability maps to `503 Service Unavailable`. The route SHALL carry the same mutation `@Throttle({ default: { limit: 10, ttl: 60000 } })` limit used by `createScheduledTask`/`updateScheduledTask`/pause/resume, since no stricter per-route limit is justified for a single-shot, user-confirmed action.
+On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Content` with an empty body (`@HttpCode(HttpStatus.NO_CONTENT)`), SHALL NOT attempt to parse a JSON body from the upstream response, and SHALL invalidate the caller's scheduled-tasks list cache using the existing `invalidateListCache(userSub)` epoch-bump helper before responding. The response SHALL carry cache-preventing headers consistent with the controller's other mutation endpoints (no caching of a delete response). Upstream errors SHALL map through the existing `mapDialHttpStatus`/`handleDialFetchError` mechanism without exposing the upstream's bare-JSON-string error body: a `404` (unknown schedule, another user's schedule, or an already hard-deleted schedule) maps to `404 Not Found`; a `409` (already soft-deleted) maps to `409 Conflict`; a `502` (scheduler could not unregister the job; no DB change occurred, the task remains live, and retrying is safe) maps to `502 Bad Gateway`; upstream timeout or unavailability maps to `503 Service Unavailable`.
 
 #### Scenario: Valid delete request succeeds with an empty 204 body
 
@@ -609,11 +599,6 @@ On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Co
 
 - **WHEN** a delete request succeeds with `204`
 - **THEN** `invalidateListCache(userSub)` is called before the response is sent, so a subsequent `listScheduledTasks` call does not return the deleted schedule from a stale cache entry
-
-#### Scenario: Rate limit exceeded
-
-- **WHEN** the caller exceeds 10 requests per 60 seconds to this route
-- **THEN** the response is `429 Too Many Requests`
 
 #### Scenario: Delete response is never cached
 

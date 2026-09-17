@@ -25,8 +25,6 @@ class DeleteConversationsBodyDto {
 }
 ```
 
-Rate limiting: `@Throttle({ default: { limit: 5, ttl: 60000 } })` on the handler.
-
 On success the handler returns HTTP 200 with `ConversationDeletionResultDto`:
 
 ```ts
@@ -63,7 +61,6 @@ Generated-client impact:
 Error codes:
 - `400 Bad Request` — `ids` is missing, empty array, exceeds 100, or any element is not a non-empty string
 - `401 Unauthorized` — missing or invalid session
-- `429 Too Many Requests` — rate limit exceeded
 - `500 Internal Server Error` — unexpected error outside per-item handling
 
 #### Scenario: All owned IDs deleted successfully
@@ -146,12 +143,6 @@ Error codes:
 - **WHEN** `POST /api/v1/conversations/deletions` is called
 - **THEN** `userConfigService.updatePin("conversations/b/id-1", false, ...)` is called (fire-and-forget; result does not affect the HTTP response)
 
-#### Scenario: Rate limit is enforced
-
-- **GIVEN** 5 requests have already been processed within the current 60-second window
-- **WHEN** a 6th `POST /api/v1/conversations/deletions` is sent
-- **THEN** the response is 429
-
 #### Scenario: Raw DIAL Core error details are not exposed
 
 - **GIVEN** DIAL Core returns an error response with a message containing bucket/token details
@@ -176,8 +167,6 @@ class DeleteAllConversationsBodyDto {
 }
 ```
 
-Rate limiting: `@Throttle({ default: { limit: 2, ttl: 60000 } })` — more restrictive than the by-IDs endpoint because "delete all" triggers O(n) DIAL Core calls.
-
 The service SHALL:
 1. Call `client.getConversationMetadata(bucket, '', { headers, params: { query: { recursive: true, limit: 1000 } } })` and paginate until `nextToken` is exhausted.
 2. Collect all non-FOLDER item IDs.
@@ -196,7 +185,6 @@ Generated-client impact:
 Error codes:
 - `400 Bad Request` — `confirm` is missing, `false`, or not a boolean
 - `401 Unauthorized` — missing or invalid session
-- `429 Too Many Requests` — rate limit exceeded
 - `502 Bad Gateway` — DIAL Core metadata listing returned a non-OK response
 - `503 Service Unavailable` — DIAL Core unreachable during metadata listing
 - `500 Internal Server Error` — unexpected error
@@ -252,14 +240,6 @@ Error codes:
 - **GIVEN** 2 of the 3 conversations were pinned
 - **WHEN** `POST /api/v1/conversations/deletions/all` is called and all 3 are deleted
 - **THEN** `userConfigService.updatePin` is called for all 3 IDs (fire-and-forget; result does not affect the HTTP response)
-
-#### Scenario: Rate limit is enforced
-
-- **GIVEN** 2 requests have already been processed within the current 60-second window
-- **WHEN** a 3rd `POST /api/v1/conversations/deletions/all` is sent
-- **THEN** the response is 429
-
----
 
 ### Requirement: ConversationDeletionResultDto and failure DTOs carry Swagger annotations for strong generated types
 

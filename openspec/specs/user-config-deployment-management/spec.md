@@ -159,8 +159,6 @@ The handler calls `userConfigService.updateSelectedDeployment(id, at, bucket)`.
 
 **Authorization:** Requires authenticated user (existing `SessionGuard` on the controller). Same as all other user-config mutation endpoints.
 
-**Rate limiting:** Inherits the controller-level throttle. No per-route override needed (user-initiated writes are low frequency).
-
 **operationId:** `updateSelectedDeployment` (handler method name on the controller).
 
 **Generated-client impact:**

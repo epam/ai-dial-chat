@@ -14,7 +14,7 @@
 apps/chat-api/src/
 ├── main.ts                       # bootstrap: helmet, global pipes, CORS, versioning, Swagger
 ├── app/
-│   ├── app.module.ts             # root module — global ConfigModule, CacheModule, ThrottlerModule
+│   ├── app.module.ts             # root module — global ConfigModule, CacheModule
 │   ├── app.controller.ts
 │   └── app.service.ts
 ├── config/
@@ -162,9 +162,6 @@ Controllers MUST:
 - For every path/query parameter, use a DTO with Swagger metadata or explicit
   `@ApiParam`/`@ApiQuery` metadata. Parameters without Swagger types generate weak
   client request types.
-- Apply `@Throttle({ default: { limit, ttl } })` per endpoint when the global throttler
-  default (100 req/min) needs tightening. Public unauthenticated endpoints SHOULD have
-  a stricter per-route limit.
 - Use NestJS HTTP decorators — `@Get`, `@Post`, `@Query`, `@Body`, `@Param` — never read
   from the raw request unless absolutely required (e.g. streaming binary).
 - Return plain values; let NestJS serialize them. Use `@Res()` only when you must set
@@ -179,7 +176,6 @@ export class ThemeController {
   constructor(private readonly themeService: ThemeService) {}
 
   @Get('icon')
-  @Throttle({ default: { limit: 50, ttl: 60000 } })
   @ApiOperation({ summary: 'Get theme icon', description: '...' })
   @ApiResponse({ status: 200, description: 'Icon content' /* schema */ })
   @ApiResponse({ status: 400, description: 'Invalid icon name' })
@@ -343,9 +339,9 @@ parseInt(value, 10))` + `@IsNumber()`.
   (one controller + one service) may be registered directly in `AppModule`.
 - `imports`, `controllers`, `providers`, `exports` are declared explicitly. Avoid
   re-exporting globals; rely on `isGlobal: true` for truly global modules
-  (`ConfigModule`, `CacheModule`, `ThrottlerModule` — already global).
+  (`ConfigModule`, `CacheModule` — already global).
 - Use `APP_GUARD` / `APP_INTERCEPTOR` / `APP_FILTER` tokens in `AppModule` for app-wide
-  guards/interceptors (see how `ThrottlerGuard` and `MetricsInterceptor` are wired).
+  guards/interceptors (see how `MetricsInterceptor` is wired).
 
 ---
 
@@ -387,8 +383,7 @@ parseInt(value, 10))` + `@IsNumber()`.
   - Happy path (200/201 with correct body)
   - Validation failure (400 with the expected message)
   - Each thrown HTTP exception path (404 / 502 / 503 / …)
-  - Security checks: path-traversal attempts, oversized inputs, missing required fields,
-    rate-limit (one hit beyond `@Throttle` limit).
+  - Security checks: path-traversal attempts, oversized inputs, missing required fields.
 - Mock SDK methods, `fetch`, or any other outbound client — never hit live services in unit tests.
 - Test names describe observable behaviour ("returns 404 when icon is missing"), not
   implementation details ("calls fetch with url").
@@ -443,5 +438,4 @@ Do not move to the next slice while any of these is red for the project you touc
 - Catching errors with no logging and no re-throw.
 - `origin: '*'` CORS when cookies are in use.
 - Stashing tokens, secrets, or full request bodies in logs.
-- Skipping `@Throttle` on public unauthenticated endpoints.
 - Putting business logic in a controller.

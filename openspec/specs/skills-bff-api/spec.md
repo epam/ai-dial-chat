@@ -7,7 +7,6 @@ TBD - created by archiving change add-skills-bff-api. Update Purpose after archi
 
 The system SHALL expose `GET /api/v1/skills` accepting `bucket` (required), `path` (optional, default `""`), `token` (optional), `limit` (optional, 0-1000), and `recursive` (optional, default `false`) query parameters, validate all inputs, and proxy to DIAL Core `listSkillMetadata` (`GET /v2/metadata/skills/{bucket}/{path}`) under the authenticated user's session. The endpoint SHALL return `200 OK` with a `SkillListResponseDto`.
 
-- **Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })`.
 - **operationId**: `listSkills`.
 - **Response DTO**: `SkillListResponseDto { bucket, path, items: SkillMetadataItemDto[], nextToken? }`, mapping DIAL Core's `MetadataBase` (`ResourceFolderMetadata | ResourceItemMetadata | ComplexResourceItemMetadata`, discriminated by `nodeType: 'FOLDER' | 'ITEM'`) into lowercased `nodeType: 'folder' | 'item'`, mirroring `ListFilesItemDto`'s existing normalization convention (`apps/chat-api/src/files/dto/list-files.dto.ts`).
 
@@ -247,7 +246,6 @@ Example response:
 ### Requirement: List files inside a skill
 The system SHALL expose `GET /api/v1/skills/files` accepting `bucket`, `path` (the skill's own resource path), `filePath` (relative path of a subfolder inside the skill to scope the listing — empty string for the skill root), `token`, `limit`, and `recursive` query parameters, and proxy to DIAL Core `listSkillFileMetadata` (`GET /v2/metadata/skills/{bucket}/{path}/files/{filePath}`). The endpoint SHALL return `200 OK` with a `SkillFileListResponseDto` (same shape as `SkillListResponseDto`, scoped to the skill's own files).
 
-- **Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })`.
 - **operationId**: `listSkillFiles`.
 
 #### Scenario: List files at the skill root
@@ -267,7 +265,6 @@ The system SHALL NOT expose `downloadSkillGroupingFolder` as its own route. When
 
 The system SHALL NOT forward an `If-None-Match` request header on this operation — the verified DIAL Core schema declares no request header parameters for `downloadSkillFolder`, despite documenting a `304 Not Modified` response.
 
-- **Rate limit**: `@Throttle({ default: { limit: 30, ttl: 60000 } })`.
 - **operationId**: `downloadSkill`.
 - **Streaming**: `Readable.fromWeb`, `pipeline()`, response destruction on pipeline failure, upstream cancellation via `abortOnDisconnect` on client disconnect — following `apps/chat-api/src/files/files.controller.ts:409-435` (`downloadArchive`) and `:597-618` (`downloadFile`).
 
@@ -302,7 +299,6 @@ When DIAL Core responds `412 Precondition Failed` to this create request (its re
 
 Before forwarding to DIAL Core, the system SHALL validate the request per the `skills-multipart-processing` capability (`filePaths`/`files` parity, path safety, `SKILL.md` collision, duplicates, file-count/size/total-size limits against real received bytes) and SHALL NOT construct or forward a ZIP at any point.
 
-- **Rate limit**: `@Throttle({ default: { limit: 5, ttl: 60000 } })`.
 - **operationId**: `createSkill`.
 
 #### Scenario: Successful create
@@ -330,7 +326,6 @@ The system SHALL expose `PUT /api/v1/skills` (`operationId: updateSkill`) accept
 
 A DIAL Core `412 Precondition Failed` response (the supplied `If-Match` no longer matches the skill's current version) SHALL be surfaced unchanged as `412 Precondition Failed`.
 
-- **Rate limit**: `@Throttle({ default: { limit: 5, ttl: 60000 } })`.
 - **operationId**: `updateSkill`.
 
 #### Scenario: Successful update
@@ -361,7 +356,6 @@ The system SHALL NOT rely on the previous `SKILL_UPLOAD_MAX_BYTES` (a compressed
 ### Requirement: Delete a whole skill
 The system SHALL expose `DELETE /api/v1/skills` accepting `bucket`, `path`, and an optional `If-Match` header, and proxy to DIAL Core `deleteSkillFolder` (`DELETE /v2/skills/{bucket}/{path}`). The endpoint SHALL return `200 OK` with `{ success: true }`.
 
-- **Rate limit**: `@Throttle({ default: { limit: 10, ttl: 60000 } })`.
 - **operationId**: `deleteSkill`.
 
 #### Scenario: Successful whole-skill deletion
@@ -383,7 +377,6 @@ The endpoint SHALL NOT forward a `content-length` header, for the same reason gi
 
 The system SHALL trust the dynamic `Content-Type` **response header** DIAL Core returns for the streamed file, not the OpenAPI schema's `content` map key (which is documented as the literal string `application/json` for this operation regardless of the file's real type — upstream schema debt, not a real content-type constraint).
 
-- **Rate limit**: `@Throttle({ default: { limit: 30, ttl: 60000 } })`.
 - **operationId**: `downloadSkillFile`.
 
 #### Scenario: Successful file download
@@ -399,7 +392,6 @@ The system SHALL expose `PUT /api/v1/skills/files` accepting `bucket`, `path`, `
 
 `filePath` SHALL be validated against the same reserved-marker and traversal rules as whole-skill upload entries (D4 in design.md): no absolute path, no empty/`.`/`..` segments, no NUL/control characters, not `.dial-resource`/`.dial-folder`, no `files`/`v` first segment.
 
-- **Rate limit**: `@Throttle({ default: { limit: 20, ttl: 60000 } })`.
 - **operationId**: `uploadSkillFile`.
 
 #### Scenario: Successful single-file add
@@ -419,7 +411,6 @@ The system SHALL expose `DELETE /api/v1/skills/files` accepting `bucket`, `path`
 
 The system SHALL reject deletion of `SKILL.md` with `400 Bad Request` before calling DIAL Core — `SKILL.md` is required for a skill to remain valid and MUST NOT be removable via the single-file-delete path.
 
-- **Rate limit**: `@Throttle({ default: { limit: 10, ttl: 60000 } })`.
 - **operationId**: `deleteSkillFile`.
 
 #### Scenario: Successful file deletion
@@ -441,7 +432,6 @@ The system SHALL NOT accept or forward an `If-Match` header on this operation �
 
 When one or more intermediate segments of `path` do not yet exist as grouping folders, the system SHALL create every missing intermediate folder along with the requested one (implicit parent creation), and return `201 Created` with the requested folder's `ETag` — the same outcome as when every intermediate segment already existed.
 
-- **Rate limit**: `@Throttle({ default: { limit: 10, ttl: 60000 } })`.
 - **operationId**: `createSkillGroupingFolder`.
 
 #### Scenario: Successful grouping-folder creation
@@ -459,7 +449,6 @@ When one or more intermediate segments of `path` do not yet exist as grouping fo
 ### Requirement: Delete an empty grouping folder
 The system SHALL expose `DELETE /api/v1/skills/grouping-folders` accepting `bucket`, `path`, and an optional `If-Match` header, and proxy to DIAL Core `deleteSkillGroupingFolder` (`DELETE /v2/skills/{bucket}/{path}/`). The endpoint SHALL return `200 OK` with `{ success: true }`.
 
-- **Rate limit**: `@Throttle({ default: { limit: 10, ttl: 60000 } })`.
 - **operationId**: `deleteSkillGroupingFolder`.
 
 #### Scenario: Successful deletion of an empty grouping folder
@@ -484,13 +473,6 @@ Every `/api/v1/skills/**` endpoint SHALL require a valid session; a request with
 #### Scenario: Unauthenticated request to any skill endpoint
 - **WHEN** a request to any `/api/v1/skills/**` route carries no valid session cookie
 - **THEN** the system returns `401 Unauthorized` and does not forward the request to DIAL Core
-
-### Requirement: Rate limiting exceeded
-Every `/api/v1/skills/**` endpoint SHALL enforce its documented per-route `@Throttle` limit and return `429 Too Many Requests` when exceeded.
-
-#### Scenario: Rate limit exceeded on any skill endpoint
-- **WHEN** a session exceeds the documented request limit for a given skill endpoint within its window
-- **THEN** the system returns `429 Too Many Requests`
 
 ### Requirement: Upstream failures map to safe, typed statuses
 The skills domain SHALL use the shared `handleDialSdkError`/`mapDialHttpStatus` mapper (`apps/chat-api/src/common/dial/dial-error.mapper.ts`) for every DIAL Core call, including the new `405`/`412`/`422` mappings this change adds. No internal Core error payload, access token, multipart body, or file content SHALL appear in logs.
@@ -523,7 +505,7 @@ Each `SkillMetadataItemDto` SHALL expose optional `isMy`, `canEdit`, and `shared
 
 Each skill item SHALL carry `description?: string` sourced from the upstream item's `attributes.description` under the same defensive rules as the bucket listing: absent map or non-string value → omitted; folders never carry it; a namespace whose upstream payload lacks `attributes` (notably the shared-with-me path, whose `getSharedResources` coverage for `attributes` is unverified) degrades to items with no description rather than failing.
 
-Personal and organisation listings SHALL settle independently. If one rejects, the endpoint returns the other namespace and logs a warning; if both reject, it propagates the upstream error. Shared-resource failure degrades to an empty `sharedWithMe` array. The endpoint carries `@Throttle({ default: { limit: 60, ttl: 60000 } })`, returns `401` without a session, and maps upstream failures through the existing skills error mapper.
+Personal and organisation listings SHALL settle independently. If one rejects, the endpoint returns the other namespace and logs a warning; if both reject, it propagates the upstream error. Shared-resource failure degrades to an empty `sharedWithMe` array. The endpoint returns `401` without a session and maps upstream failures through the existing skills error mapper.
 
 #### Scenario: One request returns personal, shared, and public skills
 

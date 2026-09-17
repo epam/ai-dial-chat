@@ -72,8 +72,6 @@ Response (201):
 
 Generated-client impact: OpenAPI `operationId: publishConversation`; request DTO `PublishConversationDto` (including optional `rules?: PublishRuleDto[]`, reusing the same `PublishRuleDto`/`PublishRuleFunction` as `PublishCatalogEntityDto`, and optional `author?: string`); response DTO `PublishConversationResultDto` (unchanged). Frontend caller: `apps/chat/src/server-api/conversation-publish.api.ts` thin wrapper using the normal (non-`Raw`) generated method, whose `publishConversation` helper SHALL take the author as a fourth positional parameter and omit the field from the request body when it is empty after trimming. Because `author` is optional, the regenerated client SHALL stay source-compatible with request literals that omit it.
 
-Rate limiting: `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the catalog publish endpoint's write-endpoint throttle profile. Unchanged by this requirement.
-
 Authorization: caller SHALL be authenticated (existing session guard). The service SHALL resolve the bucket exclusively from the authenticated session and SHALL never accept a bucket from the request. Consequently, a path that exists only in another user's bucket is indistinguishable from a missing path and returns 404, avoiding disclosure of another user's resources. Write access to `folderPath` is enforced by DIAL Core itself when `createPublication` is called. A Core 403 SHALL map to `ForbiddenException` via `handleDialSdkError`/`mapDialHttpStatus`. This is unchanged by adding `rules` or `author`.
 
 #### Scenario: Successful publish
@@ -148,8 +146,6 @@ Response (200):
 Generated-client impact: OpenAPI `operationId: getConversationPublishHistory`; response DTO `PublishConversationResultDto[]`. Frontend caller: `apps/chat/src/server-api/conversation-publish.api.ts`, normal generated method.
 
 Caching: cache key `conversation-publish-history:{path}`, TTL 60 seconds, invalidated synchronously immediately after a successful publish **or unpublish** for the same `path` — same pattern as the catalog publish-history cache.
-
-Rate limiting: default global throttle (read endpoint, no stricter override).
 
 #### Scenario: History returned for a conversation with a prior publish
 - **WHEN** a caller requests history for a conversation path that has been published before

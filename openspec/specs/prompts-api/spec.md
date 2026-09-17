@@ -57,7 +57,7 @@ A prompt SHALL be represented by `PromptResponseDto` with its full DIAL Core res
 
 The personal and organisation metadata listings SHALL request `permissions=true`. Personal prompt editability SHALL be derived from `WRITE` when permissions are returned. Shared prompt editability SHALL be derived from the permissions returned by `getSharedResources`. Organisation prompts SHALL be forced read-only.
 
-The BFF SHALL collect personal/shared and organisation namespaces concurrently. If one namespace rejects, it SHALL log a warning and return the other with the failed namespace empty. If both reject, the endpoint SHALL propagate an upstream error. Rate limiting remains the global default.
+The BFF SHALL collect personal/shared and organisation namespaces concurrently. If one namespace rejects, it SHALL log a warning and return the other with the failed namespace empty. If both reject, the endpoint SHALL propagate an upstream error.
 
 #### Scenario: One browser request receives all namespaces
 
@@ -98,8 +98,6 @@ On success, the service:
    create-only precondition.
 4. Reads the resulting Core metadata for `createdAt` and `updatedAt`.
 5. Returns HTTP 201 with `PromptResponseDto`, whose `id` is the full resource path `prompts/{sessionBucket}/{path}`.
-
-Rate limiting: `@Throttle({ default: { limit: 30, ttl: 60000 } })`.
 
 Error codes:
 - `400 Bad Request` — DTO validation fails
@@ -218,8 +216,6 @@ The backend SHALL expose `GET /api/v1/prompts/public`. The endpoint reads prompt
 from the root of the `public` DIAL Core bucket (`prompts/public/{path}`) and returns
 `PublicPromptListResponseDto` (without `sharedWithMe`). This endpoint is read-only; no
 create/update/delete is exposed on the public namespace.
-
-Rate limiting: inherits the global default.
 
 Error codes:
 - `401 Unauthorized` — missing or invalid session
