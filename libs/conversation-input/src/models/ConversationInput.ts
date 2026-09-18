@@ -252,6 +252,8 @@ export interface ConversationInputProps {
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
   sendTooltip?: string;
+  /** Tooltip for an empty composer (no text, attachments, or inline-start slot). Defaults to sendTooltip. */
+  emptyMessageTooltip?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Accessible label for each attachment card's remove button. Defaults to `'Remove attachment'`. */

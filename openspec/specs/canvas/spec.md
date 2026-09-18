@@ -422,8 +422,8 @@ When a user clicks "Preview" in a `CitationDropdown`, `useCitationMarkdownCompon
 When `annotation.body.source.attachment.type === 'application/pdf'`:
 
 1. Find the `AnnotationGroup` that owns the clicked annotation (by `sourceUrl`).
-2. `annotationsToPdfHighlights(group.annotations)` — maps every annotation whose `body.selector` contains one or more recognised PDF selectors (`pdf_bbox`, or `pdf_region` in either coordinate form) to an `InputHighlightData`. Each annotation becomes one highlight whose `bboxes` list collects all its recognised selectors, converting a `pdf_region` to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`. The highlight `id` is `annotation.index` when present, otherwise the annotation's position in the group.
-3. `selectedHighlightId` is computed for the clicked annotation using the same ID formula, so the viewer scrolls to it on load.
+2. `annotationsToPdfHighlights(group.annotations)` — maps every annotation whose `body.selector` contains one or more recognised PDF selectors (`pdf_bbox`, or `pdf_region` in either coordinate form) to an `InputHighlightData`. Each annotation becomes one highlight whose `bboxes` list collects all its recognised selectors, converting a `pdf_region` to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`. The highlight `id` comes from `annotationHighlightId`, which identifies the annotation itself (`annotation.index` when the wire supplied one, otherwise its `cit` id plus a digest of its selectors) rather than its position in the group.
+3. `selectedHighlightId` is computed for the clicked annotation with the same helper, so the viewer scrolls to it on load — and so selecting another citation of the same document, even on the same page, changes the id and re-navigates.
 4. `fileName` is derived from the annotation's `attachment`: `attachment.title` is used when present; otherwise the last path segment of `attachment.url` is URL-decoded with `decodeURIComponent` (so `%20` → space, etc.).
 5. `openCanvas` is called directly with `PdfCanvasContent { type: Pdf, url, highlights, selectedHighlightId }` and the resolved `fileName`.
 6. Annotations whose `body.selector` carries no recognised PDF selector produce no highlight and are silently skipped.
@@ -831,7 +831,7 @@ When both coordinate forms are present on the same `bbox`, the reader SHALL pref
 
 Validation SHALL be per selector and non-throwing: the reader SHALL reject a selector whose `page` is absent, non-integer, or `< 1`, and one whose four resulting coordinates are not all finite numbers. A zero-area box SHALL remain valid (it still carries a page). Rejecting one selector SHALL NOT discard the other selectors in the same array and SHALL NOT throw for `null`, a primitive, a missing `bbox`, a non-object `bbox`, a short or non-numeric `lt`/`wh` array, or an unrecognised `type`.
 
-`annotationsToPdfHighlights` SHALL keep its current contract with the wider set of selector shapes: `body.selector` may be a single selector or an array; one annotation still yields at most one `InputHighlightData` whose `bboxes` collects every box the reader accepted from that annotation, in selector order; the highlight `id` is still `annotation.index` when present and the input position otherwise; `CITATION_HIGHLIGHT_STYLE` is unchanged; and an annotation contributing no accepted box still produces no highlight.
+`annotationsToPdfHighlights` SHALL keep its current contract with the wider set of selector shapes: `body.selector` may be a single selector or an array; one annotation still yields at most one `InputHighlightData` whose `bboxes` collects every box the reader accepted from that annotation, in selector order; the highlight `id` is derived by the shared annotation-identity helper described in the "Citation highlight ids identify the annotation, not its position in the clicked group" requirement (no longer the input position); `CITATION_HIGHLIGHT_STYLE` is unchanged; and an annotation contributing no accepted box still produces no highlight.
 
 `getAnnotationPdfPage` SHALL return the `page` of the first selector the reader accepts, and `undefined` when it accepts none.
 
@@ -883,10 +883,11 @@ The original annotations SHALL NOT be mutated and the persisted message format S
 - **WHEN** a `pdf_region` bbox carries `lt`/`wh` and `left`/`top`/`width`/`height` with conflicting values
 - **THEN** the reader uses `lt`/`wh` and ignores the named fields
 
-#### Scenario: Existing pdf_bbox annotations are unaffected
+#### Scenario: Existing pdf_bbox annotations keep their geometry and page
 
 - **WHEN** every selector on a message is `pdf_bbox`, including entries with all-zero coordinates, a missing page, or a non-integer page
-- **THEN** the highlights, highlight IDs, styling, and selected page are identical to the behavior before this change
+- **THEN** the highlight geometry, styling, and selected page are identical to the behavior before this change, and the highlight ids are whatever the annotation-identity helper produces — equal to `annotation.index` when the wire supplied one
+
 
 ### Requirement: PDF citation preview navigates to the annotation's referenced page independent of highlight geometry
 
@@ -1063,3 +1064,79 @@ The `PdfContent` and `CodeContent` dynamic-import and runtime-preparation paths 
 
 - **WHEN** the PDF or syntax-highlighting dynamic import is pending
 - **THEN** an accessible polite status announcement reflects the pending state without moving keyboard focus
+
+---
+
+### Requirement: Citation highlight ids identify the annotation, not its position in the clicked group
+
+`libs/quotations/src/utils/annotation.ts` SHALL derive every citation highlight id from the annotation's own identity, so that two different citations of the same document never collapse onto one id. `annotationHighlightId(annotation, fallbackIndex)` and `annotationsToPdfHighlights` SHALL both call one shared internal helper, so the id a highlight carries and the id computed for the clicked annotation are identical by construction.
+
+The id SHALL be resolved in this order:
+
+1. `String(annotation.index)` when the wire supplied an `index` — it is already unique within the message and keeps ids short and stable.
+2. Otherwise an identity-derived id built from the annotation's `target.selector.id` when its selector is `html_tag` (the `cit` id) **and** a digest of the annotation's `body.selector` entries (single object or array), covering the PDF shapes (`pdf_bbox`, `pdf_region`) and the Office shapes (`docx_text_range`, `pptx_text_range`, `excel_rc_range`, `docx_text_anchor`, `pptx_text_anchor`). Two annotations differing in either part SHALL receive different ids; two annotations agreeing in both describe the same cited region and MAY share one.
+3. Otherwise `String(fallbackIndex)` — the annotation's position in the input list, as today.
+
+The id SHALL be an opaque, deterministic string: derived only from the annotation's own fields, stable across re-renders of the same message, never persisted, and never sent over the wire. Callers SHALL NOT parse it or infer a page, an order, or an index from it.
+
+Highlight **scope** is unchanged by this requirement: `annotationToPdfCanvasContent` still passes only the clicked citation group's same-document annotations, and `annotationToOoxmlCanvasContent` still gathers same-source annotations across the message.
+
+**State ownership**: none — pure functions in `libs/quotations`; the canvas's open state stays with `useOpenAttachmentCanvas` / the canvas context.
+**Adapter contract**: none — no host or external knowledge enters `libs/quotations`.
+**i18n**: none — no user-visible strings.
+**RTL**: none — no UI surface; ids are opaque strings.
+**Feature flag**: none — the new formula applies unconditionally.
+**Memoisation**: none beyond existing behavior; the helper is pure and called from the existing mappers, which stay `useCallback`-wrapped at their `apps/chat` call site.
+**Accessibility**: unchanged.
+**Telemetry**: none.
+
+#### Scenario: Two `cit` citations of the same PDF page get different ids
+
+- **WHEN** a message carries two `html_tag` citations with distinct `cit` ids, both citing `files/bucket/report.pdf` with a `pdf_bbox` selector on page 4 — one near the top of the page, one near the bottom — and neither annotation carries an `index`
+- **THEN** `annotationToPdfCanvasContent` returns a different `selectedHighlightId` for each of them
+
+#### Scenario: The clicked annotation's id is present in the highlights it ships with
+
+- **WHEN** any citation is previewed and its annotation yields at least one accepted box
+- **THEN** `selectedHighlightId` equals the `id` of one of the returned `highlights`, and is `undefined` when the clicked annotation yielded no highlight
+
+#### Scenario: A wire-supplied index still wins
+
+- **WHEN** an annotation carries `index: 7`
+- **THEN** its highlight id is `'7'`, both from `annotationsToPdfHighlights` and from `annotationHighlightId`
+
+#### Scenario: Two Office ranges under one `cit` id stay distinct
+
+- **WHEN** two annotations share one `cit` id, cite the same DOCX, and carry different `docx_text_range` selectors, and neither carries an `index`
+- **THEN** `annotationToOoxmlCanvasContent` returns two highlights with different ids, and `selectedHighlightId` names the clicked one
+
+#### Scenario: The id is a stable function of the annotation
+
+- **WHEN** the same annotation object is mapped twice within one message
+- **THEN** both calls produce the same id, and no id is derived from anything outside that annotation's own fields
+
+### Requirement: Selecting another citation on the same PDF page re-navigates the preview
+
+Selecting a different citation of the same PDF while the canvas is already open SHALL bring the newly selected citation into view, including when both citations sit on the **same** page. Because `PdfContent` drives the viewer declaratively — the vendor re-issues `goToHighlight` only when `selectedHighlightId` changes and `setPage` only when `page` changes — the content the canvas is opened with SHALL differ from the previous content in `selectedHighlightId` whenever the reader selected a different citation. A same-page selection SHALL NOT rely on `page` changing.
+
+Re-opening the **same** citation SHALL remain a no-op for navigation: an unchanged `selectedHighlightId` with an unchanged `page` is the existing "nothing to navigate to" case, consistent with the OOXML path's one-shot-per-selection rule.
+
+**i18n**: none.
+**RTL**: none — vertical scrolling of the preview is direction-agnostic.
+**Feature flag**: none.
+**Accessibility**: unchanged — the viewer's own focus and keyboard behavior are untouched.
+
+#### Scenario: Switching between a top-of-page and a bottom-of-page citation scrolls
+
+- **WHEN** the reader previews a citation at the top of page 4 of a PDF whose page is taller than the preview viewport, and then previews a second citation at the bottom of that same page
+- **THEN** the canvas receives content whose `selectedHighlightId` differs from the first, so the viewer navigates to the second citation's bounding box instead of leaving the viewport where it was
+
+#### Scenario: Cross-page navigation keeps working
+
+- **WHEN** the reader switches between two citations on different pages of one PDF
+- **THEN** both `page` and `selectedHighlightId` differ and the viewer navigates to the newly selected citation
+
+#### Scenario: Re-previewing the same citation does not re-navigate
+
+- **WHEN** the reader previews the citation that is already selected in the open canvas
+- **THEN** `selectedHighlightId` and `page` are unchanged and the preview stays where the reader left it
