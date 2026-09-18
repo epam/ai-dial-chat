@@ -108,7 +108,7 @@ Both endpoints reuse the existing toolset-to-MCP-endpoint resolution already pre
 
 **`MCP_APP_THEME`** — optional admin override for the color theme delivered to all hosted MCP app Views via `hostContext.theme`. Registered as client-visible key `mcpApps.theme` → `ClientConfigResponseDto.config.mcpAppTheme` (`'light' | 'dark' | null`, defaults `null`). Both env vars follow the same `CONFIG_DEFINITIONS`/`EnvConfigProvider`/`ClientConfigResponseDto` pipeline already used by `dialCoreExternalUrl` and `customVisualizers` — no new frontend-config mechanism is introduced.
 
-**`MCP_APP_USER_AGENT`** — optional admin override for the host application identifier delivered to all hosted MCP App Views via `hostContext.userAgent`. Registered as client-visible key `mcpApps.userAgent` → `ClientConfigResponseDto.config.mcpAppUserAgent` (`string | null`, defaults `null`). When unset, the client falls back to `'ai-dial-chat'`.
+**`MCP_APP_USER_AGENT`** — optional admin override for the host application identifier delivered to all hosted MCP App Views via `hostContext.userAgent`. Registered as client-visible key `mcpApps.userAgent` → `ClientConfigResponseDto.config.mcpAppUserAgent` (`string | null`, defaults `null`). **Further revised** (see design.md D21): when unset, the client falls back to the browser's own `navigator.userAgent` rather than a fixed `'ai-dial-chat'` string — the app's own identity is now sent separately, via `hostInfo`.
 
 `EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`) SHALL add:
 

@@ -54,7 +54,8 @@ export const useMcpAppInlinePreview = (
   hostAdapter: McpAppHostAdapter,
   onRequestDisplayMode?: (mode: McpAppDisplayMode) => McpAppDisplayMode | void,
 ): McpAppInlinePreviewState => {
-  const { hostContext, sandboxUrl, fetchResourceHtml, callTool } = hostAdapter;
+  const { hostContext, hostInfo, sandboxUrl, fetchResourceHtml, callTool } =
+    hostAdapter;
   const [html, setHtml] = useState<string>();
   const [toolResult, setToolResult] = useState<CallToolResult>();
   /*
@@ -145,6 +146,7 @@ export const useMcpAppInlinePreview = (
       toolInput: toolCall?.toolInput,
       toolResult,
       hostContext,
+      hostInfo,
       onToolCall,
       onRequestDisplayMode,
     },
