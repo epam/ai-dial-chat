@@ -34,6 +34,34 @@ describe('PublishHistoryList', () => {
     expect(screen.getByText('Version 3.9.0')).toBeTruthy();
   });
 
+  it('marks an entry that carried shared credentials', () => {
+    render(
+      <PublishHistoryList
+        entries={[{ ...entries[0], publishCredentials: true }]}
+      />,
+    );
+    expect(screen.getByText('Shared credentials')).toBeTruthy();
+  });
+
+  it('uses the host-supplied shared-credentials label', () => {
+    render(
+      <PublishHistoryList
+        entries={[{ ...entries[0], publishCredentials: true }]}
+        sharedCredentialsLabel="Identifiants partagés"
+      />,
+    );
+    expect(screen.getByText('Identifiants partagés')).toBeTruthy();
+  });
+
+  it('leaves an entry without the flag unmarked', () => {
+    render(
+      <PublishHistoryList
+        entries={[{ ...entries[0], publishCredentials: false }, entries[1]]}
+      />,
+    );
+    expect(screen.queryByText('Shared credentials')).toBeNull();
+  });
+
   it('renders a relative date within the last week', () => {
     render(<PublishHistoryList entries={[entries[0]]} />);
     expect(screen.getByText(/3 days ago/)).toBeTruthy();

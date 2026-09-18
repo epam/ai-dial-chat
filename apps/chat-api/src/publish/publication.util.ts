@@ -59,6 +59,8 @@ export enum PublicationResourceAction {
 interface PublicationResourceLike {
   action?: string;
   sourceUrl?: string;
+  /** Core's own flag: this resource was published together with the publisher's credential for it. */
+  publishCredentials?: boolean;
 }
 
 /** The subset of `Publication` this module reasons about. */
@@ -128,6 +130,28 @@ export const getPublicationSourceAction = (
     ? ((publishing.action as PublicationResourceAction | undefined) ??
         PublicationResourceAction.Add)
     : PublicationResourceAction.Delete;
+};
+
+/**
+ * Whether the publication asked DIAL Core to publish `sourceUrl` together with
+ * the publisher's own credential for it, read off the same resource
+ * `getPublicationSourceAction` matches.
+ *
+ * Defaults to `false`: a publication predating the field, or one that does not
+ * reference the source at all, requested nothing. This reports what the
+ * publication *requested* — Core is the authority on whether a credential was
+ * actually copied, and this module holds no publish state of its own.
+ */
+export const getPublicationSourceCredentials = (
+  publication: PublicationLike,
+  sourceUrl: string,
+): boolean => {
+  const resource = publication.resources?.find(
+    (candidate) =>
+      isSameResourceUrl(candidate.sourceUrl, sourceUrl) &&
+      candidate.action !== PublicationResourceAction.Delete,
+  );
+  return resource?.publishCredentials === true;
 };
 
 /**

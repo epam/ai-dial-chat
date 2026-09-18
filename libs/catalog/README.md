@@ -483,14 +483,46 @@ disabled until the user picks one. Confirming calls
 removal is a request an administrator must approve, so the folder still reads
 as published afterwards.
 
-`onPublish(item, folderPath, rules, author)` receives the publication's display
-author as its fourth argument — the value the publish panel's Author field
-holds, already trimmed. Seed that field with `publishDefaultAuthor`: the
-library has no access to the signed-in user, so the host resolves its own
-display name and passes it in. An empty `author` is a valid state that never
-blocks submit; what it means is the host's decision (`apps/chat` omits the
-field from the request so the backend attributes the publication to the
-caller's own session name).
+`onPublish(item, folderPath, rules, author, publishCredentials)` receives the
+publication's display author as its fourth argument — the value the publish
+panel's Author field holds, already trimmed. Seed that field with
+`publishDefaultAuthor`: the library has no access to the signed-in user, so
+the host resolves its own display name and passes it in. An empty `author` is
+a valid state that never blocks submit; what it means is the host's decision
+(`apps/chat` omits the field from the request so the backend attributes the
+publication to the caller's own session name).
+
+The fifth argument is the credentials opt-in. The panel renders that checkbox
+only for a `Toolset` whose `credentials.authenticationType` is set and is not
+`ToolsetAuthenticationType.None`, and whose `credentials.userStatus` or
+`credentials.globalStatus` is `CredentialStatus.SignedIn` — access the
+publisher does not hold cannot be passed on. No host prop controls this; the
+decision is derived from the item the panel already has, and there is no role
+gate. For every other item the argument is always `false`. It is cleared on
+every open, including immediately after a publication that carried it.
+
+Its copy travels through the existing `publishLabels` prop as
+`credentialsLabel`, `credentialsHint`, and — for the marker
+`PublishHistoryList` puts on a past publication that carried shared
+credentials — `historySharedCredentialsLabel`.
+
+```tsx
+<DetailsPanel
+  item={toolset}
+  isOpen
+  onClose={handleClose}
+  onPublish={async (item, folderPath, rules, author, publishCredentials) => {
+    await publishEntity(item, { folderPath, rules, author, publishCredentials });
+  }}
+  publishLabels={{
+    credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
+    credentialsHint: t(CatalogI18nKeys.PublishCredentialsHint),
+    historySharedCredentialsLabel: t(
+      CatalogI18nKeys.PublishHistorySharedCredentials,
+    ),
+  }}
+/>
+```
 
 ```tsx
 <DetailsPanel

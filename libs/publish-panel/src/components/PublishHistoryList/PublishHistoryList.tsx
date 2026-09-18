@@ -22,6 +22,8 @@ export interface PublishHistoryListProps {
   versionPrefix?: string;
   /** Label for the badge on the entry matching `currentVersion`. Default: `'Current'`. */
   currentBadgeLabel?: string;
+  /** Label marking an entry whose `publishCredentials` is `true`. Default: `'Shared credentials'`. */
+  sharedCredentialsLabel?: string;
   /** Message shown when `entries` is empty. Default: `'Not published to this folder yet — this will be the first version here.'`. */
   emptyStateLabel?: string;
   /** Message shown while history is loading. Default: `'Loading history…'`. */
@@ -64,6 +66,7 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
   hasError = false,
   versionPrefix = 'Version',
   currentBadgeLabel = 'Current',
+  sharedCredentialsLabel = 'Shared credentials',
   emptyStateLabel = 'Not published to this folder yet — this will be the first version here.',
   loadingLabel = 'Loading history…',
   errorLabel = 'Failed to load publish history.',
@@ -128,6 +131,17 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
             {entry.version === currentVersion && (
               <Tag
                 label={currentBadgeLabel}
+                className={mergeClasses(
+                  'shrink-0 whitespace-nowrap',
+                  styles.currentBadge,
+                )}
+              />
+            )}
+            {/* Text, not an icon: what a publication requested has to be
+                readable, and the marker says "requested", never "applied". */}
+            {entry.publishCredentials === true && (
+              <Tag
+                label={sharedCredentialsLabel}
                 className={mergeClasses(
                   'shrink-0 whitespace-nowrap',
                   styles.currentBadge,

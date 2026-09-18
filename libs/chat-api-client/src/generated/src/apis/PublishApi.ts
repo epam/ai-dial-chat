@@ -165,7 +165,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication\'s displayed author (the catalog\'s **Hosted by** value); when it is omitted or blank the caller\'s own session display name is used, as it always was.
+   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication\'s displayed author (the catalog\'s **Hosted by** value); when it is omitted or blank the caller\'s own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher\'s own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it.
    * Publish a catalog entity to an Organization folder
    */
   async publishCatalogEntityRaw(
@@ -224,7 +224,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication\'s displayed author (the catalog\'s **Hosted by** value); when it is omitted or blank the caller\'s own session display name is used, as it always was.
+   * Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication\'s displayed author (the catalog\'s **Hosted by** value); when it is omitted or blank the caller\'s own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher\'s own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it.
    * Publish a catalog entity to an Organization folder
    */
   async publishCatalogEntity(

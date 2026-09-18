@@ -38,7 +38,11 @@ export class PublishController {
       "bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no " +
       'publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the ' +
       "publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the " +
-      "caller's own session display name is used, as it always was.",
+      "caller's own session display name is used, as it always was. The optional `publishCredentials` flag asks " +
+      "Core to copy the publisher's own credential for the entity onto the published copy, so members of the " +
+      'organization use it without authorising individually; it is forwarded unchanged and changes no ' +
+      'authorization — Core still derives the actor from the bearer token, enforces target-folder write access, ' +
+      'and holds the publication PENDING until an administrator approves it.',
   })
   @ApiBody({ type: PublishCatalogEntityDto })
   @ApiResponse({
@@ -70,7 +74,14 @@ export class PublishController {
   publish(
     @Req() req: Request,
     @Param() { entityType, entityId }: CatalogEntityParamsDto,
-    @Body() { folderPath, version, author, rules }: PublishCatalogEntityDto,
+    @Body()
+    {
+      folderPath,
+      version,
+      author,
+      rules,
+      publishCredentials,
+    }: PublishCatalogEntityDto,
   ): Promise<PublishResultDto> {
     const { at, bucket, claims } = req.user as SessionUser;
     return this.publishService.publish(
@@ -82,6 +93,7 @@ export class PublishController {
       version,
       resolveDisplayAuthor(author, claims),
       rules,
+      publishCredentials,
     );
   }
 

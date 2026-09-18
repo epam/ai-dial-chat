@@ -61,6 +61,29 @@ export const getCredentialsBadgeState = (
     : undefined;
 };
 
+/**
+ * Whether the publisher holds a credential for an authenticated toolset and
+ * may therefore offer to publish it alongside the toolset.
+ *
+ * Either level qualifies: publishing always acts on the publisher's own source
+ * item, where `globalStatus` is the owner's own credential and `userStatus`
+ * covers a personal credential configured on top of it. Access the publisher
+ * does not hold cannot be passed on.
+ */
+export const canPublishCredentials = (
+  credentials: CatalogItemCredentials | undefined,
+): boolean => {
+  if (
+    credentials?.authenticationType == null ||
+    credentials.authenticationType === ToolsetAuthenticationType.None
+  ) {
+    return false;
+  }
+  return (
+    isSignedIn(credentials.userStatus) || isSignedIn(credentials.globalStatus)
+  );
+};
+
 /** Resolves which level a direct (non-accordion) "Log out" action applies to. */
 export const getSignedInLevel = (
   credentials: CatalogItemCredentials,
