@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "1.1.0-rc.3",
+  "version": "1.1.0-rc.4",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
