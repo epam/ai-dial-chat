@@ -417,6 +417,7 @@ describe('useCatalogPublishing', () => {
           version: '1.0',
           publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
           folderPath: ['Organization', 'Data Science'],
+          publishCredentials: false,
         },
       ]);
     });

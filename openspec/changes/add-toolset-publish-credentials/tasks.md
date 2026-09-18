@@ -62,7 +62,7 @@
 
 ## 9. Documentation and full verification
 
-- [ ] 9.1 Run `npm run validate:docs` after the two README updates and fix anything it reports
-- [ ] 9.2 Confirm `docs/architecture.md` needs no change (no new lib, app, backend domain, context, route, or `ApiEndpoints` member) and record that in the PR description
+- [x] 9.1 Run `npm run validate:docs` after the two README updates and fix anything it reports
+- [x] 9.2 Confirm `docs/architecture.md` needs no change (no new lib, app, backend domain, context, route, or `ApiEndpoints` member) and record that in the PR description
 - [ ] 9.3 Run `npm run verify:full` once, and `npm run build:quiet` since the generated client changed
 - [ ] 9.4 Run the five-axis quality review (`.claude/skills/code-review-and-quality/SKILL.md`) before merge
