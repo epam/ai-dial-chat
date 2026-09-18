@@ -521,13 +521,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       jobProgressAriaLabel: (fileName) =>
         t(ConversationImportI18nKeys.JobProgressAriaLabel, { fileName }),
       jobErrorMessage: (code) => t(getImportErrorKey(code)),
-      /*
-       * `jobWarningMessage` is handed only a warning code, never the skipped
-       * names, so it needs the name-free variant — the `{{names}}` one belongs
-       * to the notification, which does have them.
-       */
-      jobWarningMessage: () =>
-        t(ConversationImportI18nKeys.JobWarningAttachmentSkipped),
+      jobWarningMessage: (_code, names) =>
+        names?.length
+          ? t(ConversationImportI18nKeys.WarningAttachmentSkipped, {
+              names: formatTransferNameList(names, t),
+            })
+          : t(ConversationImportI18nKeys.JobWarningAttachmentSkipped),
       queueProgressAriaLabel: t(
         ConversationImportI18nKeys.QueueProgressAriaLabel,
       ),

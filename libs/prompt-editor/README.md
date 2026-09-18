@@ -18,7 +18,7 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 
 ## Installation
 
-Requires UI Kit ^0.14.2 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.9 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -39,7 +39,7 @@ import '@epam/ai-dial-prompt-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.14.2`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.9`
 - `@epam/ai-dial-chat-shared` `*`
 
 Installed for you as dependencies: `@epam/ai-dial-builder-form`,
@@ -125,3 +125,36 @@ import type {
 } from '@epam/ai-dial-prompt-editor';
 import { FolderFormMode } from '@epam/ai-dial-prompt-editor';
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Two
+elements therefore carry a stable public class, exported as
+`PROMPT_EDITOR_CLASS`.
+
+| Key           | Class                             | Element                                                             |
+| ------------- | --------------------------------- | ------------------------------------------------------------------- |
+| `form`        | `dial-prompt-editor-form`         | The editor's scrolling form column, inside the shared editor layout |
+| `folderField` | `dial-prompt-editor-folder-field` | The folder picker row rendered by `PromptFolderField`               |
+
+The classes carry no declarations of their own: nothing in `styles.css` selects
+on them, so they change nothing until a host writes a rule. Renaming one, or
+moving it to a different element, is a breaking change. The convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+```tsx
+import { PROMPT_EDITOR_CLASS } from '@epam/ai-dial-prompt-editor';
+
+PROMPT_EDITOR_CLASS.form; // 'dial-prompt-editor-form'
+```
+
+```css
+.dial-prompt-editor-form {
+  max-width: 960px;
+}
+```
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

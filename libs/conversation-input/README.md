@@ -115,9 +115,25 @@ adjacent buttons stay distinguishable to assistive technology. `uploadingLabel`
 its upload is still in flight.
 
 `sendLabel` (default `'Send message'`) is the send button's accessible name.
-`sendTooltip` is a separate, optional string shown as a hover tooltip on the
-send button — useful for explaining why it's currently inactive (e.g. `'Type a
-message first'`). No tooltip renders when it is left unset.
+`sendTooltip` is an optional hover tooltip. `emptyMessageTooltip` optionally
+replaces it when the composer has no non-whitespace text, attachments, or
+inline-start slot (such as a selected skill). Other reasons for disabling send,
+such as a missing model or blocked attachment, do not select the empty hint.
+
+When `emptyMessageTooltip` is omitted, `sendTooltip` is used in every state,
+preserving existing callers. An explicit empty string suppresses the tooltip for
+an empty composer. If both props are omitted, no tooltip renders. The accessible
+label and send behavior are unaffected.
+
+```tsx
+<ConversationInput
+  sendTooltip="Send message"
+  emptyMessageTooltip="Type a message first"
+/>
+```
+
+Hosts supply localized strings through these props. The parent chat keeps its
+existing `sendTooltip` prop without opting into `emptyMessageTooltip`.
 
 ### EditMessageInput
 
@@ -193,6 +209,97 @@ import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 </BottomSheetShell>;
 ```
 
+## Public class names
+
+Every composer element a host is likely to restyle carries a stable
+`dial-ci-*` class in addition to its internal classes. Target those instead of
+hashed CSS-module names, DOM order, or ARIA attributes — all three change
+without notice. The names are exported so you never hardcode them:
+
+```tsx
+import { CONVERSATION_INPUT_CLASS } from '@epam/ai-dial-conversation-input';
+
+CONVERSATION_INPUT_CLASS.actionRow; // 'dial-ci-action-row'
+```
+
+| Class                           | Element                                                           |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `dial-ci-wrapper`               | The composer's outer bordered container                           |
+| `dial-ci-action-row`            | The row holding the textarea, add button, tool chips, and actions |
+| `dial-ci-textarea-wrap`         | The textarea cell inside the action row                           |
+| `dial-ci-add-cluster`           | The add-attachment button wrapper                                 |
+| `dial-ci-tools-chips`           | The tool chips cell inside the action row                         |
+| `dial-ci-footer-actions`        | The trailing cluster: model selector, mic, and send/stop buttons  |
+| `dial-ci-model-selector-button` | The model selector trigger button, in every presentation          |
+
+`dial-ci-action-row` is absent when `hideActionBar` is set,
+`dial-ci-add-cluster` is absent when `hideAddButton` is set, and
+`dial-ci-tools-chips` is absent unless `toolsMenuItems` yields at least one
+visible tool and `onToolToggle` is supplied.
+
+The model-selector menu carries its own set:
+
+| Class                              | Element                                         |
+| ---------------------------------- | ----------------------------------------------- |
+| `dial-ci-model-menu`               | The menu root, in all three presentations       |
+| `dial-ci-model-menu-search`        | The sticky search header inside the menu        |
+| `dial-ci-model-menu-item`          | Every deployment row                            |
+| `dial-ci-model-menu-item-selected` | The selected row, **additive** to the row class |
+
+`dial-ci-model-menu` lands on three different presentations, so scope your rule
+if you need to distinguish them: the desktop dropdown (a Floating UI portal), a
+host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
+`role="dialog"`). The portal renders outside the composer's DOM subtree, which
+is why the menu needs a class of its own rather than a descendant selector from
+`dial-ci-wrapper`.
+
+The selected row's **check mark has no class from this package**: it is drawn
+by `@epam/ai-dial-ui-kit` from the menu item's `mark`, so nothing here owns that
+element. The kit gives it `dial-kit-menuitem-check`, exported as
+`DIAL_KIT_CLASS.menuItemCheck` — target that, scoped to the row when you need to
+distinguish this menu from other kit menus:
+
+```css
+.dial-ci-model-menu-item-selected .dial-kit-menuitem-check {
+  color: var(--text-accent);
+}
+```
+
+`dial-ci-model-menu-item` is emitted for deployment rows only — not for
+loading skeletons, nor for the single disabled row shown in the empty and error
+states. On mobile only the sheet root is marked; its rows are rendered by a
+separate virtualized list and carry no row class.
+
+These classes carry no declarations of their own, so they change nothing until
+you style them, and they are additive to `className` and `inputClassName` —
+those props keep working exactly as before.
+
+### Replacing fragile selectors
+
+| Instead of                                       | Use                                 |
+| ------------------------------------------------ | ----------------------------------- |
+| `> div:has(textarea)`                            | `.dial-ci-action-row`               |
+| `div.ms-auto`                                    | `.dial-ci-footer-actions`           |
+| `button[class*='modelSelectorButton']`           | `.dial-ci-model-selector-button`    |
+| `div[role='menu']:has([class*='searchHeader_'])` | `.dial-ci-model-menu`               |
+| `[class*='searchHeader_']`                       | `.dial-ci-model-menu-search`        |
+| `[class*='selectedItem_']`                       | `.dial-ci-model-menu-item-selected` |
+
+### Stability
+
+A `dial-ci-*` class is public API: renaming it, removing it, or moving it to a
+different element is a breaking change, announced in the release notes and
+recorded here with its replacement. The element itself stays free — its Tailwind
+utilities, its CSS-module class, and its position in the DOM may all change.
+
+Your own overrides are responsible for direction: the class names are
+direction-agnostic and identical under `dir="rtl"`, so use CSS logical
+properties (`margin-inline-start`, `inset-inline-end`) rather than physical ones.
+
+The full convention — naming grammar, why not BEM, and the rules these classes
+follow — is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
 ## Enums
 
 ```tsx
@@ -201,6 +308,39 @@ import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 SendOnEnter.Enter; // Enter submits; Shift+Enter inserts a newline
 SendOnEnter.MetaEnter; // ⌘/Ctrl+Enter submits; bare Enter inserts a newline
 ```
+
+```tsx
+import { ActionRowLayout } from '@epam/ai-dial-conversation-input';
+
+ActionRowLayout.Stacked; // textarea on its own line, controls wrap below (default)
+ActionRowLayout.Inline; // add button, textarea and footer actions share one line
+```
+
+### Action row layout
+
+`actionRowLayout` chooses how `Input` and `ConversationInput` arrange the
+textarea and the controls around it. It defaults to `ActionRowLayout.Stacked`,
+which is the layout the composer has always had: the textarea takes the whole
+first line and the add button, tool chips, and footer actions wrap below it.
+
+```tsx
+<ConversationInput
+  actionRowLayout={ActionRowLayout.Inline}
+  onSend={handleSend}
+/>
+```
+
+`ActionRowLayout.Inline` puts the add button, the textarea, and the footer
+actions on one line. Tool chips are variable-width, so they move to a row of
+their own above the action row rather than competing for the line.
+
+The layout is ignored on mobile, where one line does not fit — you do not need
+to branch on viewport yourself.
+
+Neither layout uses an `order-*` utility: each renders its children in the
+order they appear on screen, so the tab order always matches the visual order.
+If you were previously reordering the row from the host with container queries,
+drop that override — it desynchronises focus order from what the user sees.
 
 ## Building
 

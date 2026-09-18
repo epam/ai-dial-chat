@@ -1,6 +1,7 @@
 import { CatalogEntityType, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SelectOption, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
@@ -492,6 +493,7 @@ export const Catalog: FC<CatalogProps> = ({
       className={mergeClasses(
         'flex size-full min-h-0 flex-1 flex-col',
         styles.root,
+        CATALOG_CLASS.root,
       )}
       style={cssVars}
     >

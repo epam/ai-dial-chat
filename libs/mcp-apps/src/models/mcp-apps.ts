@@ -133,3 +133,16 @@ export interface McpAppHostAdapter {
   /** Forwards a tool call the mounted app makes on its own (`onToolCall`) or the live re-call `resolveMcpAppToolResult` performs. */
   callTool: CallMcpAppTool;
 }
+
+/**
+ * Color overrides for `McpAppInlinePreview`, applied as CSS custom properties
+ * on the preview's root.
+ */
+export interface McpAppInlinePreviewColors {
+  /** Surface the mounted app sits on. Fallback: `--bg-layer-raised`. */
+  previewBackground?: string;
+  /** Border around the preview card. Fallback: `--stroke-tertiary`. */
+  previewBorder?: string;
+  /** Divider under the header strip. Fallback: `--stroke-tertiary`. */
+  previewHeaderBorder?: string;
+}

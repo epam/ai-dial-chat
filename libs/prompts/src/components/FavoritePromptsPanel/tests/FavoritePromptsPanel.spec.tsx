@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PROMPTS_CLASS } from '../../../constants/public-class-names';
 import type { FavoritePromptItem } from '../../../models/favorite-prompt-item';
 import { FavoritePromptsPanel } from '../FavoritePromptsPanel';
 
@@ -124,5 +125,27 @@ describe('FavoritePromptsPanel', () => {
     fireEvent.mouseEnter(screen.getByRole('button', { name: 'Summarizer' }));
 
     expect(await screen.findByText('Summarizes long text')).toBeTruthy();
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('FavoritePromptsPanel — public class names', () => {
+  it('stamps the panel root', () => {
+    renderPanel();
+
+    expect(
+      closestWithClass(
+        screen.getByText('My Collection'),
+        PROMPTS_CLASS.favoritesPanel,
+      ),
+    ).toBeTruthy();
   });
 });

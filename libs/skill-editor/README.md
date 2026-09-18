@@ -16,7 +16,7 @@ usable by any host whose skill storage differs from DIAL Core's.
 
 ## Installation
 
-Requires UI Kit ^0.14.2 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.9 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -37,8 +37,8 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.14.2`
-- `@epam/ai-dial-react-file-manager` `^0.2.0`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.9`
+- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.2`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -142,3 +142,35 @@ import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
   }}
 />
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. The root
+surface therefore carries a stable public class, exported as
+`SKILL_EDITOR_CLASS`.
+
+| Key    | Class                    | Element                                                     |
+| ------ | ------------------------ | ----------------------------------------------------------- |
+| `root` | `dial-skill-editor-root` | The editor's root surface, which is also the file drop zone |
+
+The class carries no declarations of its own: nothing in `styles.css` selects on
+it, so it changes nothing until a host writes a rule. Renaming it, or moving it
+to a different element, is a breaking change. The convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+```tsx
+import { SKILL_EDITOR_CLASS } from '@epam/ai-dial-skill-editor';
+
+SKILL_EDITOR_CLASS.root; // 'dial-skill-editor-root'
+```
+
+```css
+.dial-skill-editor-root {
+  background: var(--bg-layer-base);
+}
+```
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

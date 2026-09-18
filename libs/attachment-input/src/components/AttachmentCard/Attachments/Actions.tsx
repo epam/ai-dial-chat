@@ -12,6 +12,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { ReactNode, type FC, type MouseEvent } from 'react';
+import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import styles from './Attachment.module.scss';
 
 interface ActionProps {
@@ -49,6 +50,7 @@ const ActionButton: FC<ActionProps> = ({
         'opacity-0 focus-visible:opacity-100 group-focus-within/attachment-tile:opacity-100 group-hover/attachment-tile:opacity-100',
         styles.actionButton,
         className,
+        ATTACHMENT_INPUT_CLASS.tileAction,
       )}
       aria-label={ariaLabel}
       aria-describedby={errorTitle ? errorDescId : undefined}

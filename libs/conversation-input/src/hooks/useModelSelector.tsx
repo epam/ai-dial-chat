@@ -17,6 +17,7 @@ import {
   ModelSelectorSkeletonIcon,
   ModelSelectorSkeletonLabel,
 } from '../components/ModelSelectorSkeleton/ModelSelectorSkeleton';
+import { CONVERSATION_INPUT_CLASS } from '../constants/public-class-names';
 import type { ModelSelectorLabels } from '../models/Input';
 import {
   buildDeploymentIcon,
@@ -160,6 +161,11 @@ export const useModelSelector = ({
          trailing check and announces the row as a radio item. */
       mark: MenuItemMark.Check,
       checked: item.id === selectedDeploymentId,
+      className: mergeClasses(
+        CONVERSATION_INPUT_CLASS.modelMenuItem,
+        item.id === selectedDeploymentId &&
+          CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+      ),
       onClick: () => onDeploymentChange?.(item.id),
     }));
   }, [
@@ -181,6 +187,7 @@ export const useModelSelector = ({
           className={mergeClasses(
             'sticky top-0 z-10 pb-1 pe-2 pt-2',
             searchHeaderClassName,
+            CONVERSATION_INPUT_CLASS.modelMenuSearch,
           )}
         >
           <Search

@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { SHARE_CLASS } from '../../constants/public-class-names';
 import type { SharePopoverProps } from '../../models/share-popover-props';
 import { ShareLinkAccess, SharePopoverView } from '../../types/share';
 import {
@@ -216,6 +217,7 @@ const SharePopover: FC<SharePopoverProps> = ({
       className={mergeClasses(
         'flex w-96 flex-col gap-3 rounded-xl bg-layer-raised px-6 pb-6 pt-4 shadow-lg outline-none',
         className,
+        SHARE_CLASS.popover,
       )}
       onKeyDownCapture={handleKeyDownCapture}
     >

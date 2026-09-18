@@ -64,3 +64,4 @@ export type {
   ScheduledTaskDetailsSummaryStyles,
   ScheduledTaskDetailsSummaryTypography,
 } from './models/scheduled-task-details-summary-props';
+export { SCHEDULED_TASKS_CLASS } from './constants/public-class-names';

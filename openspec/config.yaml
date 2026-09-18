@@ -128,7 +128,7 @@ rules:
       the lib boundary and which app-level adapter, prop, callback, or resolved value carries it
     - Ask clarifying questions before finalising — especially around state ownership and
       whether the feature needs a new context or can use an existing one
-    - Include impact on i18n: does this introduce new user-visible strings?
+    - "Include impact on i18n: does this introduce new user-visible strings?"
 
   design:
     # Code-syntax conventions (Tailwind, mergeClasses, icons, props/component syntax,
@@ -203,11 +203,12 @@ rules:
     - Scope discipline — each task touches only what it requires. No drive-by cleanup or refactors
       in untouched files. Record out-of-scope findings as explicit follow-up tasks, not inline edits
     - Reference specific file paths — never vague descriptions like "update the service"
-    - Follow the file location conventions:
-        - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
-          API wrappers in apps/chat/src/server-api/ that delegate to `@epam/chat-api-client`
-        - Backend — domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
-          see apps/chat-api/AGENTS.md §1 for the full layout
+    - |-
+      Follow the file location conventions:
+      - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
+        API wrappers in apps/chat/src/server-api/ that delegate to `@epam/chat-api-client`
+      - Backend — domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
+        see apps/chat-api/AGENTS.md §1 for the full layout
     - Before writing tasks that touch apps/<app>/** or libs/<lib>/**, read the corresponding
       AGENTS.md (e.g. apps/chat-api/AGENTS.md for chat-api work) so task wording matches the
       conventions of that project
@@ -238,14 +239,15 @@ rules:
       ENABLED_FEATURES / ENABLED_FEATURES_ROLES
     - Add a docs-update task when the change alters behavior documented under docs/
       (feature flags, viewers, theming, auth, architecture)
-    - For any new or changed business HTTP endpoint, include dedicated tasks to:
-        - update Swagger DTO/response annotations in apps/chat-api so the endpoint appears in
-          `libs/chat-api-client/openapi.json` with strong types
-        - run `npm run openapi` and `npm run openapi:check`
-        - build and lint `chat-api-client`
-        - add or update the generated API singleton in `apps/chat/src/server-api/api-client.ts`
-        - implement frontend server-api wrappers using `@epam/chat-api-client`, not direct
-          `base.ts` helpers, unless the task documents a generator gap
+    - |-
+      For any new or changed business HTTP endpoint, include dedicated tasks to:
+      - update Swagger DTO/response annotations in apps/chat-api so the endpoint appears in
+        `libs/chat-api-client/openapi.json` with strong types
+      - run `npm run openapi` and `npm run openapi:check`
+      - build and lint `chat-api-client`
+      - add or update the generated API singleton in `apps/chat/src/server-api/api-client.ts`
+      - implement frontend server-api wrappers using `@epam/chat-api-client`, not direct
+        `base.ts` helpers, unless the task documents a generator gap
     - Give every implementation task an explicit Verification subsection naming the exact Vitest
       file(s) to run with `npm run test:file -- <workspace-relative-path>`. Run
       `npm run verify:changed` once after a completed vertical slice, not after each micro-edit,

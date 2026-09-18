@@ -154,3 +154,4 @@ export type {
   AppIdentityStyles,
   AppIdentityTypography,
 } from './models/app-identity-styles';
+export { CATALOG_CLASS } from './constants/public-class-names';

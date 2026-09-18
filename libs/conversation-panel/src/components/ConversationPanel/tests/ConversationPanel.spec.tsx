@@ -2,6 +2,7 @@ import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import { ConversationItem } from '../../../models/panel-props';
 import { ConversationPanel } from '../ConversationPanel';
 
@@ -48,6 +49,32 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <button onClick={onClick} aria-pressed={selected}>
       {label}
     </button>
+  ),
+  FilterChips: <T extends string>({
+    items,
+    value,
+    onChange,
+    'aria-label': ariaLabel,
+    chipClassName,
+  }: {
+    items: { value: T; label: string }[];
+    value: T;
+    onChange: (value: T) => void;
+    'aria-label'?: string;
+    chipClassName?: string;
+  }) => (
+    <div role="group" aria-label={ariaLabel}>
+      {items.map((item) => (
+        <button
+          key={item.value}
+          aria-pressed={item.value === value}
+          className={chipClassName}
+          onClick={() => onChange(item.value)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
   ),
   TagAppearance: { Outlined: 'outlined', Selectable: 'selectable' },
   EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
@@ -450,5 +477,44 @@ describe('ConversationPanel', () => {
     );
     expect(screen.queryByRole('listitem')).toBeNull();
     expect(screen.getAllByText('No conversations yet')).toBeTruthy();
+  });
+});
+
+/*
+ * The public classes are host styling hooks, so these tests never find an
+ * element *by* the class — that would still pass with the class on the wrong
+ * node. They locate by role or text first, then assert the hook is present.
+ *
+ * This lives in the main spec rather than its own file so it reuses the ui-kit,
+ * chat-shared, sidebar and react-window mocks defined above.
+ */
+describe('ConversationPanel — public class names', () => {
+  it('marks the new-chat button, and only it', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+
+    /*
+     * Located by its accessible name, which is the label the host passes —
+     * finding it by the class would pass even with the class on another node,
+     * which is the whole failure this test exists to catch.
+     */
+    expect(
+      screen.getByRole('button', { name: /New chat/ }).classList,
+    ).toContain(CONVERSATION_PANEL_CLASS.newChatButton);
+
+    expect(
+      screen
+        .getAllByRole('button')
+        .filter((button) =>
+          button.classList.contains(CONVERSATION_PANEL_CLASS.newChatButton),
+        ),
+    ).toHaveLength(1);
+  });
+
+  it('marks the search region found by its role', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+
+    expect(screen.getByRole('search').classList).toContain(
+      CONVERSATION_PANEL_CLASS.search,
+    );
   });
 });

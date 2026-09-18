@@ -114,3 +114,37 @@ Overrides the size and stroke width of the overflow menu icon.
   onSelect={onSelect}
 />
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes. The
+list's `aria-label` comes from `labels.list` and is localisable, so a host that
+selects by it breaks its own styling the moment the app is translated. Two
+elements therefore carry a stable public class, exported as
+`STARTER_BUTTONS_CLASS`.
+
+| Key    | Class                       | Element                                                    |
+| ------ | --------------------------- | ---------------------------------------------------------- |
+| `root` | `dial-starter-buttons-root` | The component's outer wrapper                              |
+| `list` | `dial-starter-buttons-list` | The `role="list"` box holding the buttons, in both layouts |
+
+The classes carry no declarations of their own: nothing in `styles.css` selects
+on them, so they change nothing until a host writes a rule. Renaming one, or
+moving it to a different element, is a breaking change. The convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+```tsx
+import { STARTER_BUTTONS_CLASS } from '@epam/ai-dial-starter-buttons';
+
+STARTER_BUTTONS_CLASS.list; // 'dial-starter-buttons-list'
+```
+
+```css
+.dial-starter-buttons-list {
+  justify-content: flex-start;
+}
+```
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

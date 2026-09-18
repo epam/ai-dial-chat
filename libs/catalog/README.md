@@ -19,7 +19,7 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.14.2 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.9 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 - `ag-grid-community@35.3.0`
 
@@ -852,3 +852,60 @@ host back to a previous `@epam/ai-dial-catalog` release:
 3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
    resolved version and integrity hash, rather than a partial mix of pre- and post-change
    versions.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. A card's
+`aria-label` is the item's own name, so it was never usable as a selector
+either. Five elements carry a stable public class:
+
+| Key            | Class                        | Element                                                              |
+| -------------- | ---------------------------- | -------------------------------------------------------------------- |
+| `root`         | `dial-catalog-root`          | The catalog's `section` root, which carries the themed CSS variables |
+| `toolbar`      | `dial-catalog-toolbar`       | The toolbar above the results: title row, search, sort, view toggle  |
+| `card`         | `dial-catalog-card`          | One grid card, in every state — featured and selected are additive   |
+| `favoriteCard` | `dial-catalog-favorite-card` | One favorites card                                                   |
+| `listView`     | `dial-catalog-list-view`     | The list view's root: the bordered row box, or its empty state       |
+
+```tsx
+import { CATALOG_CLASS } from '@epam/ai-dial-catalog';
+
+CATALOG_CLASS.card; // 'dial-catalog-card'
+```
+
+```css
+.dial-catalog-card {
+  border-radius: 12px;
+}
+
+/* Everything inside a card is reached by descending from it. */
+.dial-catalog-card .dial-kit-tag {
+  text-transform: none;
+}
+```
+
+Both card kinds are a `CardShell` from
+[`@epam/ai-dial-ui-kit`](https://www.npmjs.com/package/@epam/ai-dial-ui-kit), so
+`dial-kit-card-shell` is on the same element — these classes are what tell a
+catalog card apart from any other card in the same host.
+
+### What has no class, and why
+
+The set is the catalog's layout skeleton, not one class per component. Card
+internals — the icon, the name, the topic tags, the featured chip — are reached
+by descending from the card's class, which keeps the contract small enough to
+stay accurate as the catalog's internals change.
+
+The virtualised grid box inside `CardGrid` is left out on purpose: its height is
+recomputed every scroll frame, so a host styling it would be fighting the
+virtualizer rather than the design.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

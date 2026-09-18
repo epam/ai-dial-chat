@@ -8,6 +8,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconPlayerPause } from '@tabler/icons-react';
 import type { FC, KeyboardEvent } from 'react';
+import { SCHEDULED_TASKS_CLASS } from '../../constants/public-class-names';
 import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-props';
 import styles from './ScheduledTaskCard.module.scss';
 
@@ -86,6 +87,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
         'h-[232px]',
         onCardClick && 'cursor-pointer',
         className,
+        SCHEDULED_TASKS_CLASS.card,
       )}
       {...cardClickProps}
     >

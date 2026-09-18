@@ -1,7 +1,7 @@
 import { MessageRole, StageStatus } from '@epam/ai-dial-chat-shared';
-import type { Message, StreamChunk } from '@epam/ai-dial-chat-shared';
+import type { Message, Stage, StreamChunk } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { applyChunkToMessages } from '../apply-chunk';
+import { applyChunkToMessages, mergeStages } from '../apply-chunk';
 
 const makeAssistantMessage = (overrides?: Partial<Message>): Message => ({
   role: MessageRole.Assistant,
@@ -342,5 +342,86 @@ describe('applyChunkToMessages — stage merging', () => {
     expect(atts).toHaveLength(2);
     expect(atts?.[0].data).toBe('A');
     expect(atts?.[1].data).toBe('B');
+  });
+});
+
+describe('mergeStages', () => {
+  it('concatenates name and content for the same index', () => {
+    const result = mergeStages(
+      [{ index: 0, name: 'Look', status: null, content: 'par' }],
+      [{ index: 0, name: 'up', status: null, content: 'tial' }],
+    );
+    expect(result).toEqual([
+      { index: 0, name: 'Lookup', status: null, content: 'partial' },
+    ]);
+  });
+
+  it('appends a stage carrying an index that is not accumulated yet', () => {
+    const result = mergeStages(
+      [{ index: 0, name: 'First', status: StageStatus.Completed }],
+      [{ index: 1, name: 'Second', status: null }],
+    );
+    expect(result.map((stage) => stage.index)).toEqual([0, 1]);
+  });
+
+  it("normalizes a new stage's null name to an empty string", () => {
+    const result = mergeStages([], [
+      { index: 0, name: null, status: null },
+    ] as never);
+    expect(result[0].name).toBe('');
+  });
+
+  it('settles status and tag from the incoming delta', () => {
+    const result = mergeStages(
+      [{ index: 0, name: 'Lookup', status: null }],
+      [{ index: 0, name: '', status: StageStatus.Failed, tag: 'MCP' }],
+    );
+    expect(result[0].status).toBe(StageStatus.Failed);
+    expect(result[0].tag).toBe('MCP');
+  });
+
+  it('merges stage attachments by index and keeps existing ones when the delta has none', () => {
+    const merged = mergeStages(
+      [
+        {
+          index: 0,
+          name: 'Lookup',
+          status: null,
+          attachments: [{ index: 0, title: 're', data: 'AA' }],
+        },
+      ],
+      [
+        {
+          index: 0,
+          name: '',
+          status: null,
+          attachments: [
+            { index: 0, title: 'port.pdf', data: 'BB' },
+            { index: 1, title: 'extra.txt' },
+          ],
+        },
+      ],
+    );
+    expect(merged[0].attachments).toEqual([
+      { index: 0, title: 'report.pdf', data: 'AABB' },
+      { index: 1, title: 'extra.txt' },
+    ]);
+
+    const untouched = mergeStages(merged, [
+      { index: 0, name: '', status: StageStatus.Completed },
+    ]);
+    expect(untouched[0].attachments).toEqual(merged[0].attachments);
+  });
+
+  it('does not mutate its inputs', () => {
+    const existing: Stage[] = [{ index: 0, name: 'Lookup', status: null }];
+    const incoming: Stage[] = [
+      { index: 0, name: ' terms', status: StageStatus.Completed },
+    ];
+    mergeStages(existing, incoming);
+    expect(existing).toEqual([{ index: 0, name: 'Lookup', status: null }]);
+    expect(incoming).toEqual([
+      { index: 0, name: ' terms', status: StageStatus.Completed },
+    ]);
   });
 });

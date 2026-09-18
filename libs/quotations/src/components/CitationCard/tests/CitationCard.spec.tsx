@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { QUOTATIONS_CLASS } from '../../../constants/public-class-names';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
 import { CitationCard } from '../CitationCard';
 
@@ -159,5 +160,15 @@ describe('CitationCard', () => {
       'ReallyLongUnbrokenTitleTokenThatWouldOtherwiseOverflowTheFixedWidthCard',
     );
     expect(title.className).toContain('break-words');
+  });
+});
+
+describe('CitationCard — public class names', () => {
+  it('stamps the card root', () => {
+    render(<CitationCard {...defaultProps()} />);
+
+    expect(screen.getByRole('dialog').classList).toContain(
+      QUOTATIONS_CLASS.citationCard,
+    );
   });
 });

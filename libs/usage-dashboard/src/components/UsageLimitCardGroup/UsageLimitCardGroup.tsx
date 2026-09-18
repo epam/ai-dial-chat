@@ -1,4 +1,6 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { CSSProperties, FC } from 'react';
+import { USAGE_DASHBOARD_CLASS } from '../../constants/public-class-names';
 import { UsageLimitCardGroupProps } from '../../models/usage-limit-card-props';
 import { UsageLimitCard } from '../UsageLimitCard/UsageLimitCard';
 
@@ -14,7 +16,10 @@ export const UsageLimitCardGroup: FC<UsageLimitCardGroupProps> = ({
 
   return (
     <div
-      className="grid grid-cols-1 gap-4 desktop:grid-cols-[repeat(var(--uld-card-count),minmax(0,1fr))]"
+      className={mergeClasses(
+        'grid grid-cols-1 gap-4 desktop:grid-cols-[repeat(var(--uld-card-count),minmax(0,1fr))]',
+        USAGE_DASHBOARD_CLASS.cardGroup,
+      )}
       style={{ '--uld-card-count': cards.length } as CSSProperties}
     >
       {cards.map((card) => (

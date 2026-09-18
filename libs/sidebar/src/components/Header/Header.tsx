@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, type ReactNode } from 'react';
+import { SIDEBAR_CLASS } from '../../constants/public-class-names';
 import styles from '../SidebarPanel/SidebarPanel.module.scss';
 
 /** Props for the `Header` component. */
@@ -31,6 +32,7 @@ export const Header: FC<HeaderProps> = memo(
         'flex h-12 items-center pe-3 ps-6',
         className,
         styles.header,
+        SIDEBAR_CLASS.header,
       )}
     >
       {leftActions && (

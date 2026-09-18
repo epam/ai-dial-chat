@@ -27,6 +27,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useAttachments } from '../../hooks/useAttachments';
 import { useCommandMenu } from '../../hooks/useCommandMenu/useCommandMenu';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
@@ -37,7 +38,7 @@ import {
   VoiceRecorderState,
   VoiceRecordingMode,
 } from '../../hooks/useVoiceRecorder';
-import { SendOnEnter } from '../../models/Input';
+import { ActionRowLayout, SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { ToolsChips } from '../ToolsChips/ToolsChips';
@@ -70,6 +71,7 @@ export const Input: FC<InputProps> = ({
   uploadingLabel,
   sendLabel,
   sendTooltip,
+  emptyMessageTooltip,
   stopLabel,
   micLabel = 'Dictate',
   recordVoiceLabel = 'Record voice',
@@ -92,6 +94,7 @@ export const Input: FC<InputProps> = ({
   hideAddButton = false,
   hideAttachFile = false,
   hideActionBar = false,
+  actionRowLayout = ActionRowLayout.Stacked,
   renderFooterActions,
   isInputDisabled = false,
   isModelSelectorDisabled = false,
@@ -728,6 +731,36 @@ export const Input: FC<InputProps> = ({
     />
   );
 
+  /*
+   * One line does not fit a phone, so the inline layout is desktop-only and a
+   * host does not have to branch on viewport itself.
+   */
+  const isInlineActionRow =
+    actionRowLayout === ActionRowLayout.Inline && !isMobile;
+
+  const addClusterNode = attachButtonNode && (
+    <div className={mergeClasses('flex', CONVERSATION_INPUT_CLASS.addCluster)}>
+      {attachButtonNode}
+    </div>
+  );
+
+  const chipsNode = visibleTools.length > 0 && onToolToggle != null && (
+    <div
+      className={mergeClasses(
+        'min-w-0 flex-1',
+        CONVERSATION_INPUT_CLASS.toolsChips,
+      )}
+    >
+      <ToolsChips
+        items={visibleTools}
+        onToolToggle={onToolToggle}
+        onToolDismiss={handleToolDismiss}
+        canRemove={canRemoveTools}
+        removeLabel={toolsChipLabels?.removeLabel}
+      />
+    </div>
+  );
+
   return (
     <div
       ref={containerRef}
@@ -740,6 +773,7 @@ export const Input: FC<InputProps> = ({
         'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
         attachments.length > 6 ? 'py-4 ps-4' : 'p-4',
         className,
+        CONVERSATION_INPUT_CLASS.wrapper,
       )}
     >
       {(prefixAttachments.length > 0 || attachments.length > 0) && (
@@ -797,24 +831,43 @@ export const Input: FC<InputProps> = ({
         />
       )}
       {!isVoiceActive && hideActionBar && textareaArea}
+      {/*
+       * Tool chips are variable-width, so in the inline layout they get their
+       * own row above rather than competing with the textarea for the line.
+       */}
+      {!isVoiceActive && !hideActionBar && isInlineActionRow && chipsNode && (
+        <div className="flex">{chipsNode}</div>
+      )}
       {!isVoiceActive && !hideActionBar && (
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex w-full min-w-0 items-center self-stretch">
+        <div
+          className={mergeClasses(
+            'flex items-center gap-2',
+            isInlineActionRow ? 'flex-nowrap' : 'flex-wrap',
+            CONVERSATION_INPUT_CLASS.actionRow,
+          )}
+        >
+          {/*
+           * Both layouts render in visual order rather than reordering with
+           * `order-*`, so the tab order always matches what is on screen.
+           */}
+          {isInlineActionRow && addClusterNode}
+          <div
+            className={mergeClasses(
+              'flex min-w-0 items-center self-stretch',
+              isInlineActionRow ? 'flex-1' : 'w-full',
+              CONVERSATION_INPUT_CLASS.textareaWrap,
+            )}
+          >
             {textareaArea}
           </div>
-          {attachButtonNode && <div className="flex">{attachButtonNode}</div>}
-          {visibleTools.length > 0 && onToolToggle != null && (
-            <div className="min-w-0 flex-1">
-              <ToolsChips
-                items={visibleTools}
-                onToolToggle={onToolToggle}
-                onToolDismiss={handleToolDismiss}
-                canRemove={canRemoveTools}
-                removeLabel={toolsChipLabels?.removeLabel}
-              />
-            </div>
-          )}
-          <div className="ms-auto flex flex-shrink-0 items-center gap-2">
+          {!isInlineActionRow && addClusterNode}
+          {!isInlineActionRow && chipsNode}
+          <div
+            className={mergeClasses(
+              'ms-auto flex flex-shrink-0 items-center gap-2',
+              CONVERSATION_INPUT_CLASS.footerActions,
+            )}
+          >
             {renderFooterActions ? (
               renderFooterActions({ canSend, onSend: handleSend })
             ) : (
@@ -858,7 +911,11 @@ export const Input: FC<InputProps> = ({
                       onSend={handleSend}
                       isDisabled={!hasModelSelected || !canSend}
                       ariaLabel={sendLabel}
-                      sendTooltip={sendTooltip}
+                      sendTooltip={
+                        hasSendableContent
+                          ? sendTooltip
+                          : (emptyMessageTooltip ?? sendTooltip)
+                      }
                     />
                   )
                 )}

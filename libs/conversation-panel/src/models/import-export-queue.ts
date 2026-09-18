@@ -15,9 +15,10 @@ export interface ImportExportQueueLabels {
   jobErrorMessage: (code: ConversationTransferErrorCode | undefined) => string;
   /** Returns the accessible name for a row's in-progress spinner. */
   jobProgressAriaLabel: (fileName: string) => string;
-  /** Returns the tooltip text explaining what a warned job left out. */
+  /** Returns the tooltip and accessible text for a warning, with skipped file names when available. */
   jobWarningMessage: (
     code: ConversationTransferWarningCode | undefined,
+    names?: string[],
   ) => string;
   /** Accessible name for the collapsed queue's aggregate progress bar. */
   queueProgressAriaLabel: string;

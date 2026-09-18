@@ -159,7 +159,8 @@ are omitted so quote-only streaming deltas preserve an earlier page.
 - `groupAnnotationsByCitId(annotations)` — groups `html_tag`-selector annotations by `target.selector.id`, one group per distinct tag id (never collapsing two ids that cite the same document)
 - `resolveMessageAnnotations(message)` — resolves annotations from either internal or raw wire format and repairs persisted `html_tag` sources whose historical PDF fallback conflicts with a recognized URL extension
 - `normalizeRawAnnotations(raw, attachments)` — **moved to `@epam/ai-dial-chat-shared`**, which owns the annotation model. It normalises raw API wire-format annotations (the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape, including DOCX/XLSX/PPTX MIME inference). `@epam/ai-dial-chat-hooks` needed it while streaming and nothing else from this package, so keeping it here made a conversation-only host install the whole citation stack ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719))
-- `annotationsToPdfHighlights(annotations)` — maps annotations with positive integer pages and finite coordinates to PDF viewer highlight entries; recognizes `pdf_bbox` selectors (`{ page, x1, y1, x2, y2 }`) and `pdf_region` selectors in either coordinate form (`bbox: { lt: [left, top], wh: [width, height] }` or the legacy `bbox: { left, top, width, height }`), converting a region to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`; zero-area boxes are supported
+- `annotationsToPdfHighlights(annotations)` — maps annotations with positive integer pages and finite coordinates to PDF viewer highlight entries; recognizes `pdf_bbox` selectors (`{ page, x1, y1, x2, y2 }`) and `pdf_region` selectors in either coordinate form (`bbox: { lt: [left, top], wh: [width, height] }` or the legacy `bbox: { left, top, width, height }`), converting a region to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`; zero-area boxes are supported; each highlight's `id` comes from `annotationHighlightId`
+- `annotationHighlightId(annotation, fallbackIndex)` — returns the highlight id for one annotation, the same id `annotationsToPdfHighlights` assigns it: `annotation.index` when the wire supplied one, otherwise an id derived from the annotation's own identity (its `cit` tag id plus a digest of its selectors), falling back to `fallbackIndex` only for an annotation carrying none of those. The id is opaque — compare it, never parse it — and a position-derived id is unique only within the list it came from, which is why it is the last resort
 - `getAnnotationPdfPage(annotation)` — returns the first positive integer page from its `pdf_bbox`/`pdf_region` body selectors, skipping malformed entries and invalid pages; returns `undefined` when no valid page exists
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
@@ -201,3 +202,44 @@ adapter after the backend emits precise table-cell ranges and persisted anchors
 no longer need it.
 
 `gatherSameSourceAnnotations(clicked, annotations)` returns every annotation in `annotations` whose `body.source.attachment.url` equals `clicked`'s, in original order, gathering across the whole list (not one `cit`-id group, unlike `groupAnnotationsByCitId`) — keyed on URL only, since two different files can share a display title.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key                | Class                               | Element                                                                 |
+| ------------------ | ----------------------------------- | ----------------------------------------------------------------------- |
+| `citationCard`     | `dial-quotations-citation-card`     | The card's `role="dialog"` root, which carries the themed CSS variables |
+| `citationDropdown` | `dial-quotations-citation-dropdown` | The floating panel a `CitationDropdown` reveals, holding the card       |
+| `citationMarker`   | `dial-quotations-citation-marker`   | The marker pill that opens a citation                                   |
+
+```tsx
+import { QUOTATIONS_CLASS } from '@epam/ai-dial-quotations';
+
+QUOTATIONS_CLASS.citationCard; // 'dial-quotations-citation-card'
+```
+
+The marker is a `NeutralButton` from
+[`@epam/ai-dial-ui-kit`](https://www.npmjs.com/package/@epam/ai-dial-ui-kit), so
+`dial-kit-base-button` is on the same element — this class is what tells a
+citation marker apart from any other pill in the same host. It caps its own
+width and ellipsises a long source name, which is server-supplied and routinely
+a folder path plus a page number, so widen it by overriding `max-inline-size`
+rather than by unsetting the truncation:
+
+```css
+.dial-quotations-citation-marker {
+  max-inline-size: 320px;
+}
+```
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

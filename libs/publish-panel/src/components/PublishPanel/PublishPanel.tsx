@@ -11,6 +11,7 @@ import {
   Search,
 } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useId, useMemo, useState } from 'react';
+import { PUBLISH_PANEL_CLASS } from '../../constants/public-class-names';
 import {
   PublicationRule,
   PublishCalloutKind,
@@ -315,7 +316,10 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   );
 
   return (
-    <div className="flex flex-col gap-5" style={cssVars}>
+    <div
+      className={mergeClasses('flex flex-col gap-5', PUBLISH_PANEL_CLASS.panel)}
+      style={cssVars}
+    >
       {resource?.type != null ? (
         <ResourceSummary
           item={{

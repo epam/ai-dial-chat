@@ -57,4 +57,5 @@ export {
 } from './utils/attachment';
 
 export { ATTACHMENT_COLLAPSE_THRESHOLD } from './constants/attachment-group';
+export { ATTACHMENT_INPUT_CLASS } from './constants/public-class-names';
 export { MAX_UPLOADS_PER_MINUTE } from './constants/upload';

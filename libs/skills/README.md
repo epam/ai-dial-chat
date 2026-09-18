@@ -48,7 +48,7 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.14.2`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.9`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -338,3 +338,41 @@ import type {
   UseSkillSelectorOverlayResult,
 } from '@epam/ai-dial-skills';
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key              | Class                         | Element                                                                |
+| ---------------- | ----------------------------- | ---------------------------------------------------------------------- |
+| `favoritesPanel` | `dial-skills-favorites-panel` | The `FavoriteSkillsPanel` root, which carries the themed CSS variables |
+| `chip`           | `dial-skills-chip`            | The `/name` chip a `ChatSkill` renders inside the composer             |
+
+```tsx
+import { SKILLS_CLASS } from '@epam/ai-dial-skills';
+
+SKILLS_CLASS.chip; // 'dial-skills-chip'
+```
+
+The chip is a `GhostButton` from
+[`@epam/ai-dial-ui-kit`](https://www.npmjs.com/package/@epam/ai-dial-ui-kit), so
+`dial-kit-base-button` is on the same element. Its height is exactly its label
+line with no vertical padding, which is what aligns it with the composer's first
+text line — keep the block padding at zero when restyling it:
+
+```css
+.dial-skills-chip {
+  padding-inline: 0.75rem;
+}
+```
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

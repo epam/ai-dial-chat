@@ -87,3 +87,4 @@ export type {
   StandalonePublishPanelProps,
   StandalonePublishPanelLabels,
 } from './components/PublishPanel/StandalonePublishPanel';
+export { PUBLISH_PANEL_CLASS } from './constants/public-class-names';

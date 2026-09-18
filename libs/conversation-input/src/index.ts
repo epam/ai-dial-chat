@@ -1,3 +1,4 @@
+export { CONVERSATION_INPUT_CLASS } from './constants/public-class-names';
 export { BottomSheetShell } from './components/BottomSheetShell/BottomSheetShell';
 export type { BottomSheetShellProps } from './components/BottomSheetShell/BottomSheetShell';
 export { ConversationInput } from './components/ConversationInput/ConversationInput';
@@ -10,7 +11,7 @@ export type {
   ConversationInputTypography,
   EditMessageInputProps,
 } from './models/ConversationInput';
-export { SendOnEnter } from './models/Input';
+export { ActionRowLayout, SendOnEnter } from './models/Input';
 export type { TranscribeAudio } from './models/Voice';
 export type {
   ChatSettingsValues,

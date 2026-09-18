@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { SKILL_EDITOR_CLASS } from '../../../constants/public-class-names';
 import type {
   SkillEditorFileActions,
   SkillEditorProps,
@@ -463,5 +464,40 @@ describe('SkillEditor', () => {
         .getByRole('button', { name: 'Editing file' })
         .getAttribute('aria-expanded'),
     ).toBe('true');
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- an unlabeled container has no role or text to query, and querying by the class would pass with the class on the wrong node
+  from.closest(`.${className}`);
+
+describe('SkillEditor — public class names', () => {
+  /*
+   * The public class name is this package's styling contract, and a lost class
+   * fails silently: the build passes and a host's stylesheet simply stops
+   * applying. The root surface carries no role, so the field is located by
+   * role first and the assertion walks up to the stamped element.
+   */
+  it('stamps the root surface', () => {
+    renderEditor();
+
+    const nameField = screen.getByRole('textbox', { name: /Name/ });
+    expect(closestWithClass(nameField, SKILL_EDITOR_CLASS.root)).toBeTruthy();
+  });
+
+  it('emits the same class under RTL', () => {
+    renderEditor({ dir: 'rtl' });
+
+    const root = closestWithClass(
+      screen.getByRole('textbox', { name: /Name/ }),
+      SKILL_EDITOR_CLASS.root,
+    );
+    expect(root).toBeTruthy();
+    expect(root!.getAttribute('dir')).toBe('rtl');
   });
 });

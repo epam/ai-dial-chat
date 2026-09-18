@@ -60,12 +60,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.2.0
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.2
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.14.2
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.9
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -787,6 +787,8 @@ const VoiceComposer = ({
 
 ### useConversationExport / useConversationImport
 
+Import warning jobs retain unique skipped attachment names in `warningNames`, matching the names emitted through `onWarning`. Pass them to the host warning label to identify skipped files in persistent queue rows. Retrying a job clears its previous warning code and names.
+
 A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Each imported conversation is stored under a fresh `{deploymentId}__{title}__{uuid}` path — collision-free, and with the conversation's own `name` (sanitized to what DIAL Core accepts in a resource name, and reported back that way in `onSuccess`) as the title segment rather than the first-message title the export file embedded. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
 
 ```tsx
@@ -918,6 +920,40 @@ const ChatPage = ({
 **Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event.
 
 Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
+
+#### applyChunkToMessages / mergeStages
+
+The two chunk-merge primitives `useConversationStream` is built on, for hosts that own their own stream loop and cannot delegate it to the hook. `applyChunkToMessages` applies one SSE chunk to a message list; `mergeStages` merges stage deltas on their own, for hosts that keep a flattened `Stage[]` beside the message instead of inside `Message.custom_content.stages`.
+
+```ts
+import {
+  applyChunkToMessages,
+  mergeStages,
+} from '@epam/ai-dial-chat-hooks/conversation';
+import type { Message, Stage, StreamChunk } from '@epam/ai-dial-chat-shared';
+
+const onChunk = (
+  messages: Message[],
+  assistantIndex: number,
+  chunk: StreamChunk,
+) => {
+  /* `null` means the chunk carried nothing actionable — keep the previous state. */
+  const next = applyChunkToMessages(messages, assistantIndex, chunk);
+  if (next) setMessages(next);
+};
+
+const onStageDelta = (accumulated: Stage[], incoming: Stage[]): Stage[] =>
+  mergeStages(accumulated, incoming);
+```
+
+| Export                 | Signature                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `applyChunkToMessages` | `(messages: Message[], messageIndex: number, chunk: StreamChunk) => Message[] \| null` |
+| `mergeStages`          | `(existing: Stage[], incoming: Stage[]) => Stage[]`                                    |
+
+`applyChunkToMessages` returns `null` when the chunk carries no actionable data — no text, `form_schema`, attachments, stages, annotations, `state`, or `responseId`. A stage-only chunk with empty `content` is **not** a no-op: it returns an updated list. Both helpers merge stages by `index`, concatenating partial `name` and `content` across chunks, merging stage attachments by their own `index`, and normalizing a first chunk's `name: null` to `''`.
+
+Both are also available from the root entry (`@epam/ai-dial-chat-hooks`).
 
 ### useConversationHandlers
 
@@ -1637,6 +1673,46 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 - **`DialFileManagerVariant`** / **`DialFileManagerActionProfile`** — identify which host is driving `useDialFileManager` (`Attach | Standalone | FolderPicker`) and which action set that gates (`Attach | Browse | Full`); `deriveActionProfile(variant)` maps the former to the latter.
 
 ## Conversation & File Utilities
+
+### toStage / mapStages
+
+Normalize a REST or stream stage payload into the renderable `Stage` shape
+`CollapsedGroup` / `StagesPanel` expect. `toStage` handles one stage;
+`mapStages` handles a raw array or a message-like payload, reading
+`custom_content.stages` and falling back to a camelCasing host's
+`customContent.stages`.
+
+```ts
+import { mapStages, toStage } from '@epam/ai-dial-chat-hooks/conversation';
+import type { RawStage } from '@epam/ai-dial-chat-hooks/conversation';
+
+/* A conversation message loaded over REST — `StageDto` satisfies `RawStage`. */
+const stages = mapStages(message); // Stage[] | undefined
+
+/* Or one stage at a time. */
+const stage = toStage({
+  index: 0,
+  name: null,
+  status: null,
+} satisfies RawStage);
+// → { index: 0, name: '', status: null }
+```
+
+| Export      | Signature                                                                             |
+| ----------- | ------------------------------------------------------------------------------------- |
+| `toStage`   | `(stage: RawStage) => Stage`                                                          |
+| `mapStages` | `(source: RawStage[] \| RawStageSource \| null \| undefined) => Stage[] \| undefined` |
+
+Normalization rules: `index` defaults to `0`, `name` to `''` (the opening
+chunk sends `null`), `status` maps `'completed'` / `'failed'` to `StageStatus`
+and anything else — including `null` and an unknown string — to `null` (still
+running), and `content` / `tag` / `attachments` pass through when present
+(each attachment's missing `title` becoming `''`). `mapStages` returns
+`undefined` for a nullish or empty source rather than an empty array.
+
+`RawStage`, `RawStageAttachment`, and `RawStageSource` describe the wire shape
+before normalization — every field optional and nullable — so the generated
+`StageDto` satisfies `RawStage` with no cast.
 
 ### getModelIdFromConversationId
 

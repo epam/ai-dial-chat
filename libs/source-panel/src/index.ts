@@ -7,3 +7,4 @@ export type {
   ConversationSourcesPanelTypography,
 } from './models/conversation-sources-panel-props';
 export type { QuotationSource } from './models/quotation-source';
+export { SOURCE_PANEL_CLASS } from './constants/public-class-names';

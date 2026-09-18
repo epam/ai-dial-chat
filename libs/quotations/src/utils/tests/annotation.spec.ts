@@ -11,6 +11,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
+  annotationHighlightId,
   annotationsToPdfHighlights,
   annotationToOfficeHighlightLocations,
   getAnnotationPdfPage,
@@ -535,6 +536,113 @@ describe('annotationToOfficeHighlightLocations', () => {
       } as AnnotationSelector),
     );
     expect(result).toHaveLength(0);
+  });
+});
+
+describe('annotationHighlightId', () => {
+  /*
+   * Issue #8907: ids used to be the annotation's position inside the list the
+   * caller gathered, so every single-annotation `cit` group resolved to '0'
+   * and the canvas could not tell two citations of one document apart.
+   */
+  const citAnnotation = (
+    citId: string | undefined,
+    selector: unknown,
+    index?: number,
+  ): Annotation => ({
+    ...(index != null ? { index } : {}),
+    ...(citId != null
+      ? { target: { selector: { type: 'html_tag', tag: 'cit', id: citId } } }
+      : {}),
+    body: {
+      source: {
+        type: 'attachment',
+        attachment: { type: MIMEType.PDF, url: 'files/bucket/report.pdf' },
+      },
+      selector: selector as NonNullable<Annotation['body']>['selector'],
+    },
+  });
+
+  const docxRange = (overrides: Record<string, unknown> = {}) => ({
+    type: 'docx_text_range',
+    story: 'body',
+    path: [3, 1],
+    start: 0,
+    end: 5,
+    text: 'Hello',
+    ...overrides,
+  });
+
+  it('agrees with the id annotationsToPdfHighlights assigns to the same annotation', () => {
+    const annotation = citAnnotation('c1', bbox({ page: 4, y1: 20, y2: 30 }));
+    const [highlight] = annotationsToPdfHighlights([annotation]);
+
+    expect(annotationHighlightId(annotation, 0)).toBe(highlight.id);
+  });
+
+  it('uses the wire-supplied index when present', () => {
+    const annotation = citAnnotation('c1', bbox({ page: 4 }), 7);
+
+    expect(annotationHighlightId(annotation, 0)).toBe('7');
+    expect(annotationsToPdfHighlights([annotation])[0].id).toBe('7');
+  });
+
+  it('distinguishes two citations of the same page by their geometry', () => {
+    const top = citAnnotation('c1', bbox({ page: 4, y1: 20, y2: 30 }));
+    const bottom = citAnnotation('c2', bbox({ page: 4, y1: 700, y2: 720 }));
+
+    expect(annotationHighlightId(top, 0)).not.toBe(
+      annotationHighlightId(bottom, 0),
+    );
+  });
+
+  it('distinguishes two citations that differ only by cit id', () => {
+    const selector = bbox({ page: 4, y1: 20, y2: 30 });
+
+    expect(annotationHighlightId(citAnnotation('c1', selector), 0)).not.toBe(
+      annotationHighlightId(citAnnotation('c2', selector), 0),
+    );
+  });
+
+  it('distinguishes two Office ranges sharing one cit id', () => {
+    const first = citAnnotation('c1', docxRange({ start: 0, end: 5 }));
+    const second = citAnnotation('c1', docxRange({ start: 40, end: 60 }));
+
+    expect(annotationHighlightId(first, 0)).not.toBe(
+      annotationHighlightId(second, 1),
+    );
+  });
+
+  it('is stable across repeated calls for the same annotation', () => {
+    const annotation = citAnnotation('c1', bbox({ page: 4, y1: 20, y2: 30 }));
+
+    expect(annotationHighlightId(annotation, 0)).toBe(
+      annotationHighlightId(annotation, 9),
+    );
+  });
+
+  it('falls back to the input position for an annotation with neither an index, a cit id, nor a selector', () => {
+    const annotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: MIMEType.PDF, url: 'files/bucket/report.pdf' },
+        },
+      },
+    };
+
+    expect(annotationHighlightId(annotation, 3)).toBe('3');
+  });
+
+  it.each([
+    ['a pdf citation', bbox({ page: 4, y1: 20, y2: 30 })],
+    ['an office citation', docxRange()],
+  ])('produces a CSS-attribute-selector-safe id for %s', (_label, selector) => {
+    /* `@epam/pdf-highlighter-kit` interpolates the id into
+         `[data-term-id="<id>"]`, so a quote or bracket would break styling. */
+    expect(annotationHighlightId(citAnnotation('c1', selector), 0)).toMatch(
+      /^[A-Za-z0-9_-]+$/,
+    );
   });
 });
 

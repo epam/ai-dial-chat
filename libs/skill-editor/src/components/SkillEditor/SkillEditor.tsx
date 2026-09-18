@@ -44,6 +44,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { SKILL_EDITOR_CLASS } from '../../constants/public-class-names';
 import { useSkillFileDropZone } from '../../hooks/useSkillFileDropZone';
 import type {
   SkillEditorProps,
@@ -386,7 +387,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   return (
     <div
       dir={dir}
-      className="relative flex min-h-0 flex-1 flex-col"
+      className={mergeClasses(
+        'relative flex min-h-0 flex-1 flex-col',
+        SKILL_EDITOR_CLASS.root,
+      )}
       style={cssVars}
       {...surfaceDropZoneHandlers}
     >

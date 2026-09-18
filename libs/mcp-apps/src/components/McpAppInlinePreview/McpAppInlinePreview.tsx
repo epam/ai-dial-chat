@@ -1,5 +1,6 @@
 import { McpAppCanvasRenderer } from '@epam/ai-dial-attachment-canvas';
 import type { McpAppDisplayMode } from '@epam/ai-dial-attachment-canvas';
+import { buildCssVars } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -7,6 +8,7 @@ import {
   EllipsisTooltip,
   GhostIconButton,
   Spinner,
+  mergeClasses,
 } from '@epam/ai-dial-ui-kit';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import {
@@ -15,14 +17,17 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { FC, memo, useCallback, useEffect, useState } from 'react';
+import { MCP_APPS_CLASS } from '../../constants/public-class-names';
 import { useMcpAppInlinePreview } from '../../hooks/useMcpAppInlinePreview/useMcpAppInlinePreview';
 import {
   McpAppInlinePreviewStatus,
   type McpAppHostAdapter,
+  type McpAppInlinePreviewColors,
   type McpAppResponseCache,
   type McpAppToolCallSeed,
   type McpAppToolRef,
 } from '../../models/mcp-apps';
+import styles from './McpAppInlinePreview.module.scss';
 
 /** Props for the `McpAppInlinePreview` component. */
 export interface McpAppInlinePreviewProps {
@@ -55,6 +60,8 @@ export interface McpAppInlinePreviewProps {
   isOpenedInCanvas?: boolean;
   /** Message shown centered in the body when `isOpenedInCanvas` is `true`. */
   openedInCanvasLabel: string;
+  /** Color overrides applied as CSS custom properties on the preview's root. */
+  colors?: McpAppInlinePreviewColors;
 }
 
 /** Compact, always-visible header+frame preview of a message's matched MCP App — see `McpAppInlinePreviewProps` and the mcp-app-trigger openspec. */
@@ -71,6 +78,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   loadErrorLabel,
   isOpenedInCanvas = false,
   openedInCanvasLabel,
+  colors,
 }) => {
   /* Populated once `ui/initialize` completes; reset per `cacheKey` — see mcp-app-trigger spec.md. */
   const [appInfo, setAppInfo] = useState<Implementation | undefined>(undefined);
@@ -90,6 +98,12 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     [onExpand],
   );
 
+  const cssVars = buildCssVars({
+    '--mcpapp-preview-bg': colors?.previewBackground,
+    '--mcpapp-preview-border': colors?.previewBorder,
+    '--mcpapp-preview-header-border': colors?.previewHeaderBorder,
+  });
+
   const { status, content, reload } = useMcpAppInlinePreview(
     match,
     toolCall,
@@ -104,13 +118,26 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   }
 
   return (
-    <div className="bg-layer-2 flex w-full min-w-0 flex-col overflow-hidden rounded-xl border border-tertiary">
+    <div
+      style={cssVars}
+      className={mergeClasses(
+        styles.preview,
+        'flex w-full min-w-0 flex-col overflow-hidden rounded-xl border',
+        MCP_APPS_CLASS.preview,
+      )}
+    >
       {/*
        * Header strip styled after the code block header in chat-shared's
        * Markdown renderer: same min-height, padding, bottom border, and
        * small ghost icon button group.
        */}
-      <div className="flex min-h-10 items-center justify-between gap-2 border-b border-tertiary px-4 py-2">
+      <div
+        className={mergeClasses(
+          styles.previewHeader,
+          'flex min-h-10 items-center justify-between gap-2 border-b px-4 py-2',
+          MCP_APPS_CLASS.previewHeader,
+        )}
+      >
         <EllipsisTooltip
           text={
             appInfo != null ? (

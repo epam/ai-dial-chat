@@ -6466,7 +6466,7 @@ export interface StageDto {
    */
   index?: number;
   /**
-   * Stage title
+   * Stage title. `null` on the chunk that opens the stage, before the name streams in
    * @type {string}
    * @memberof StageDto
    */
@@ -6478,12 +6478,35 @@ export interface StageDto {
    */
   content?: string;
   /**
+   * Terminal state of the stage. Absent or `null` while the stage is still running
+   * @type {string}
+   * @memberof StageDto
+   */
+  status?: StageDtoStatusEnum | null;
+  /**
+   * Short source/category label shown beside the stage name (e.g. `MCP`)
+   * @type {string}
+   * @memberof StageDto
+   */
+  tag?: string;
+  /**
    * Files produced or referenced by this stage
    * @type {Array<StageAttachmentDto>}
    * @memberof StageDto
    */
   attachments?: Array<StageAttachmentDto>;
 }
+
+/**
+ * @export
+ */
+export const StageDtoStatusEnum = {
+  Completed: 'completed',
+  Failed: 'failed',
+} as const;
+export type StageDtoStatusEnum =
+  (typeof StageDtoStatusEnum)[keyof typeof StageDtoStatusEnum];
+
 /**
  *
  * @export
