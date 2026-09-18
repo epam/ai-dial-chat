@@ -1,35 +1,13 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import type { CSSProperties, FC } from 'react';
+import type { FC } from 'react';
 import { memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  HALLOWEEN_TREAT_COUNT,
-  HALLOWEEN_TREAT_GLYPHS,
-} from '../../constants/halloween';
 import { HalloweenBurst } from '../../types/halloween';
+import {
+  buildHalloweenGhostFlight,
+  buildHalloweenTreats,
+} from '../../utils/halloween';
 import styles from './Halloween.module.scss';
-
-interface Treat {
-  glyph: string;
-  style: CSSProperties;
-}
-
-/*
- * Randomized once per burst rather than per render: the layer re-renders on
- * every ancestor state change, and re-rolling the offsets would restart each
- * glyph's animation mid-fall.
- */
-const buildTreats = (): Treat[] =>
-  Array.from({ length: HALLOWEEN_TREAT_COUNT }, (_, index) => ({
-    glyph: HALLOWEEN_TREAT_GLYPHS[index % HALLOWEEN_TREAT_GLYPHS.length],
-    style: {
-      '--halloween-x': `${Math.round(Math.random() * 96)}%`,
-      '--halloween-delay': `${(Math.random() * 1.4).toFixed(2)}s`,
-      '--halloween-duration': `${(2.8 + Math.random() * 1.6).toFixed(2)}s`,
-      '--halloween-drift': `${Math.round(Math.random() * 120 - 60)}px`,
-      fontSize: `${(1.25 + Math.random()).toFixed(2)}rem`,
-    } as CSSProperties,
-  }));
+import HalloweenGhost from './HalloweenGhost';
 
 interface Props {
   /** Which celebration to play. */
@@ -45,9 +23,18 @@ interface Props {
  * `HalloweenProvider` raises alongside it.
  */
 const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
+  const isGhostFlight = burst === HalloweenBurst.Ghost;
+  /*
+   * Laid out once per burst. The layer re-renders on every ancestor state
+   * change, and re-rolling the paths would restart every flight mid-air.
+   */
   const treats = useMemo(
-    () => (burst === HalloweenBurst.Treats ? buildTreats() : []),
-    [burst],
+    () => (isGhostFlight ? [] : buildHalloweenTreats()),
+    [isGhostFlight],
+  );
+  const ghosts = useMemo(
+    () => (isGhostFlight ? buildHalloweenGhostFlight() : []),
+    [isGhostFlight],
   );
 
   return createPortal(
@@ -55,21 +42,21 @@ const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-[70] select-none overflow-hidden"
     >
-      {burst === HalloweenBurst.Ghost ? (
-        <span className={mergeClasses(styles.ghost, 'text-6xl')}>👻</span>
-      ) : (
-        treats.map((treat, index) => (
-          <span
-            /* Index is the identity here: the list is built once per burst and
-               never reordered, and glyphs repeat. */
-            key={index}
-            className={styles.treat}
-            style={treat.style}
-          >
-            {treat.glyph}
-          </span>
-        ))
-      )}
+      {/* Index is the identity in both lists: each is built once per burst and
+          never reordered, and glyphs and variants repeat. */}
+      {ghosts.map((ghost, index) => (
+        <span key={index} className={styles.ghost} style={ghost.style}>
+          <HalloweenGhost
+            variant={ghost.variant}
+            className={styles.ghostBody}
+          />
+        </span>
+      ))}
+      {treats.map((treat, index) => (
+        <span key={index} className={styles.treat} style={treat.style}>
+          {treat.glyph}
+        </span>
+      ))}
     </div>,
     document.body,
   );

@@ -1,5 +1,5 @@
 /*
- * Animations for the `halloween` easter egg. Every one of them is opt-in
+ * Animations for the Halloween easter egg. Every one of them is opt-in
  * chrome, so the whole file collapses to a static frame under
  * `prefers-reduced-motion: reduce` — see the block at the bottom.
  */
@@ -24,43 +24,49 @@
   }
 }
 
-@keyframes halloween-ghost-fly {
-  from {
+/*
+ * The flight path. Every offset is a custom property set per ghost by
+ * `buildHalloweenGhostFlight`, so one keyframe set draws every flock: the
+ * midpoint sits above the straight line between entry and exit, which is what
+ * turns a slide into a drift.
+ */
+@keyframes halloween-ghost-drift {
+  0% {
     opacity: 0;
-    transform: translate3d(-20vw, 0, 0) scale(0.7);
+    transform: translate3d(var(--ghost-from-x), var(--ghost-from-y), 0)
+      scale(var(--ghost-scale-from)) rotate(var(--ghost-tilt));
   }
 
-  15% {
-    opacity: 0.9;
+  14% {
+    opacity: var(--ghost-opacity);
   }
 
-  85% {
-    opacity: 0.9;
+  50% {
+    transform: translate3d(var(--ghost-mid-x), var(--ghost-mid-y), 0)
+      scale(var(--ghost-scale-mid)) rotate(calc(var(--ghost-tilt) * -1));
   }
 
-  to {
+  86% {
+    opacity: var(--ghost-opacity);
+  }
+
+  100% {
     opacity: 0;
-    transform: translate3d(120vw, -14vh, 0) scale(1.25);
+    transform: translate3d(var(--ghost-to-x), var(--ghost-to-y), 0)
+      scale(var(--ghost-scale-to)) rotate(var(--ghost-tilt));
   }
 }
 
-@keyframes halloween-ghost-fly-rtl {
-  from {
-    opacity: 0;
-    transform: translate3d(20vw, 0, 0) scale(0.7);
-  }
-
-  15% {
-    opacity: 0.9;
-  }
-
-  85% {
-    opacity: 0.9;
-  }
-
+/* Applied to the inner element so the bob composes with the drift above
+   instead of fighting it for the same `transform`. */
+@keyframes halloween-ghost-bob {
+  from,
   to {
-    opacity: 0;
-    transform: translate3d(-120vw, -14vh, 0) scale(1.25);
+    transform: translate3d(0, -0.4rem, 0);
+  }
+
+  50% {
+    transform: translate3d(0, 0.4rem, 0);
   }
 }
 
@@ -97,15 +103,25 @@
     var(--halloween-delay, 0s) both;
 }
 
+/*
+ * Physical `left`/`top` on purpose: this is the origin the per-ghost `vw`/`vh`
+ * translations are measured from, and each ghost picks its own entry side, so
+ * the flock is symmetric and must not flip with the writing direction.
+ */
 .ghost {
   position: absolute;
-  inset-block-start: 55%;
-  inset-inline-start: 0;
-  animation: halloween-ghost-fly 3.2s ease-in-out both;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: halloween-ghost-drift var(--ghost-duration, 6s)
+    cubic-bezier(0.37, 0, 0.63, 1) var(--ghost-delay, 0s) both;
 }
 
-:global([dir='rtl']) .ghost {
-  animation-name: halloween-ghost-fly-rtl;
+.ghostBody {
+  display: block;
+  animation: halloween-ghost-bob var(--ghost-bob-duration, 2.2s) ease-in-out
+    infinite;
 }
 
 .bat {
@@ -120,6 +136,7 @@
 @media (prefers-reduced-motion: reduce) {
   .treat,
   .ghost,
+  .ghostBody,
   .bat,
   .pumpkin {
     animation: none;
@@ -131,8 +148,11 @@
     opacity: 1;
   }
 
+  /* Un-animated, a ghost would sit stacked at the layer's origin; park the
+     flock at the spread-out resting spots instead. */
   .ghost {
-    inset-inline-start: 40%;
-    opacity: 0.9;
+    opacity: var(--ghost-opacity);
+    transform: translate3d(var(--ghost-rest-x), var(--ghost-rest-y), 0)
+      scale(var(--ghost-scale-from));
   }
 }

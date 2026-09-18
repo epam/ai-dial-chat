@@ -1,8 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { FC } from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HALLOWEEN_FEATURE_FLAG } from '../../constants/halloween';
+import {
+  HALLOWEEN_FEATURE_FLAG,
+  HALLOWEEN_GHOST_COUNT,
+} from '../../constants/halloween';
 import { HalloweenBurst } from '../../types/halloween';
 import { useFeatureFlag } from '../AppConfigContext';
 import { HalloweenProvider, useHalloween } from '../HalloweenContext';
@@ -16,6 +19,15 @@ const mockUseNotification = vi.mocked(useNotification);
 const showSuccessNotification = vi.fn();
 
 let lastConsumeResult: boolean | null = null;
+
+/*
+ * The flock is decorative inline SVG with no accessible name, so no Testing
+ * Library query can reach it — count the drawings inside the celebration
+ * layer directly.
+ */
+const queryGhosts = () =>
+  // eslint-disable-next-line testing-library/no-node-access
+  document.body.querySelectorAll('[aria-hidden="true"] svg');
 
 const Triggers: FC = () => {
   const { isEnabled, celebrate, consumeSecretPhrase } = useHalloween();
@@ -40,7 +52,7 @@ const Triggers: FC = () => {
         say hello
       </button>
       <button type="button" onClick={() => celebrate(HalloweenBurst.Ghost)}>
-        wake the ghost
+        wake the ghosts
       </button>
     </>
   );
@@ -95,11 +107,11 @@ describe('HalloweenContext', () => {
     it('ignores an explicit celebrate call', async () => {
       renderProvider(false);
       await userEvent.click(
-        screen.getByRole('button', { name: 'wake the ghost' }),
+        screen.getByRole('button', { name: 'wake the ghosts' }),
       );
 
       expect(showSuccessNotification).not.toHaveBeenCalled();
-      expect(screen.queryByText('👻')).toBeNull();
+      expect(queryGhosts()).toHaveLength(0);
     });
   });
 
@@ -125,30 +137,63 @@ describe('HalloweenContext', () => {
       expect(showSuccessNotification).not.toHaveBeenCalled();
     });
 
-    it('plays the ghost burst on an explicit celebrate call', async () => {
+    it('releases a whole flock of ghosts, not one', async () => {
       renderProvider(true);
       await userEvent.click(
-        screen.getByRole('button', { name: 'wake the ghost' }),
+        screen.getByRole('button', { name: 'wake the ghosts' }),
       );
 
       expect(showSuccessNotification).toHaveBeenCalledWith({
         title: 'halloween.toastTitle',
         message: 'halloween.ghostToastMessage',
       });
-      expect(await screen.findByText('👻')).not.toBeNull();
+      await waitFor(() =>
+        expect(queryGhosts()).toHaveLength(HALLOWEEN_GHOST_COUNT),
+      );
+    });
+
+    it('gives each ghost its own flight path', async () => {
+      renderProvider(true);
+      await userEvent.click(
+        screen.getByRole('button', { name: 'wake the ghosts' }),
+      );
+      await waitFor(() =>
+        expect(queryGhosts()).toHaveLength(HALLOWEEN_GHOST_COUNT),
+      );
+
+      /* Entry points, arcs and pacing are rolled per ghost; identical inline
+         styles would mean the flock moves as one body. */
+      const paths = Array.from(queryGhosts(), (ghost) =>
+        ghost.parentElement?.getAttribute('style'),
+      );
+      expect(new Set(paths).size).toBe(HALLOWEEN_GHOST_COUNT);
+    });
+
+    it('draws more than one kind of ghost', async () => {
+      renderProvider(true);
+      await userEvent.click(
+        screen.getByRole('button', { name: 'wake the ghosts' }),
+      );
+      await waitFor(() =>
+        expect(queryGhosts()).toHaveLength(HALLOWEEN_GHOST_COUNT),
+      );
+
+      const silhouettes = Array.from(queryGhosts(), (ghost) =>
+        // eslint-disable-next-line testing-library/no-node-access
+        ghost.querySelector('path')?.getAttribute('d'),
+      );
+      expect(new Set(silhouettes).size).toBeGreaterThan(1);
     });
 
     it('keeps the celebration layer out of the accessibility tree', async () => {
       renderProvider(true);
-      await userEvent.click(
-        screen.getByRole('button', { name: 'wake the ghost' }),
-      );
+      await userEvent.click(screen.getByRole('button', { name: 'say phrase' }));
 
-      const ghost = await screen.findByText('👻');
+      const [treat] = await screen.findAllByText('🍬');
       /* The `aria-hidden` wrapper is the point of the assertion, and no
          Testing Library query can reach a node *because* it is hidden. */
       // eslint-disable-next-line testing-library/no-node-access
-      expect(ghost.closest('[aria-hidden="true"]')).not.toBeNull();
+      expect(treat.closest('[aria-hidden="true"]')).not.toBeNull();
     });
   });
 });

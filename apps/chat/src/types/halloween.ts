@@ -2,6 +2,21 @@
 export enum HalloweenBurst {
   /** Candy and pumpkins fall down the viewport. Triggered by the secret phrase. */
   Treats = 'treats',
-  /** A single ghost sweeps across the viewport. Triggered by the pumpkin. */
+  /** A flock of ghosts drifts across the viewport. Triggered by the pumpkin. */
   Ghost = 'ghost',
+}
+
+/**
+ * The ghost silhouettes `HalloweenGhost` can draw. A flock mixes them so no
+ * two neighbours look alike.
+ */
+export enum HalloweenGhostVariant {
+  /** Rounded head over three wide humps — the storybook ghost. */
+  Classic = 'classic',
+  /** Narrow and tall, with four small humps and sleepy half-shut eyes. */
+  Tall = 'tall',
+  /** Squat and wide, with two humps and a surprised open mouth. */
+  Blob = 'blob',
+  /** Small and round, winking. */
+  Sprite = 'sprite',
 }

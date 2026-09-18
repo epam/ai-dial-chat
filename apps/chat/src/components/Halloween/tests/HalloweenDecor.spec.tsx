@@ -1,10 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  HALLOWEEN_DECOR_BAT_COUNT,
-  HALLOWEEN_PUMPKIN_CLICKS,
-} from '../../../constants/halloween';
+import { HALLOWEEN_DECOR_BAT_COUNT } from '../../../constants/halloween';
 import { useHalloween } from '../../../context/HalloweenContext';
 import { HalloweenBurst } from '../../../types/halloween';
 import HalloweenDecor from '../HalloweenDecor';
@@ -23,14 +20,10 @@ const mockHalloween = (isEnabled: boolean) =>
     consumeSecretPhrase: vi.fn(),
   });
 
-const clickPumpkin = async (times: number) => {
-  const pumpkin = screen.getByRole('button', {
-    name: 'halloween.pumpkinLabel',
-  });
-  for (let index = 0; index < times; index += 1) {
-    await userEvent.click(pumpkin);
-  }
-};
+const clickPumpkin = () =>
+  userEvent.click(
+    screen.getByRole('button', { name: 'halloween.pumpkinLabel' }),
+  );
 
 describe('HalloweenDecor', () => {
   beforeEach(() => {
@@ -67,22 +60,21 @@ describe('HalloweenDecor', () => {
     );
   });
 
-  it('stays quiet until the pumpkin has taken the full run of clicks', async () => {
+  it('releases the ghosts on a single click', async () => {
     mockHalloween(true);
     render(<HalloweenDecor />);
-    await clickPumpkin(HALLOWEEN_PUMPKIN_CLICKS - 1);
-
-    expect(celebrate).not.toHaveBeenCalled();
-  });
-
-  it('wakes the ghost on the last click and starts the count over', async () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
-    await clickPumpkin(HALLOWEEN_PUMPKIN_CLICKS);
+    await clickPumpkin();
 
     expect(celebrate).toHaveBeenCalledExactlyOnceWith(HalloweenBurst.Ghost);
+  });
 
-    await clickPumpkin(HALLOWEEN_PUMPKIN_CLICKS);
-    expect(celebrate).toHaveBeenCalledTimes(2);
+  it('releases a fresh flock on every further click', async () => {
+    mockHalloween(true);
+    render(<HalloweenDecor />);
+    await clickPumpkin();
+    await clickPumpkin();
+    await clickPumpkin();
+
+    expect(celebrate).toHaveBeenCalledTimes(3);
   });
 });

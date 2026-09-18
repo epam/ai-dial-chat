@@ -46,21 +46,44 @@ Both conversation inputs — `NewConversationComposer`'s `handleSend` and `Conve
 
 While the flag is on, `NewConversationComposer` SHALL render `HalloweenDecor` inside its welcome-screen region: cobwebs pinned to the region's inline-start and inline-end top corners, `HALLOWEEN_DECOR_BAT_COUNT` drifting bats, and a pumpkin button. `HalloweenDecor` SHALL additionally render nothing of its own when the flag is off, so the call site needs no second gate.
 
-`HALLOWEEN_PUMPKIN_CLICKS` clicks on the pumpkin SHALL play the ghost celebration and reset the count, so a further run of clicks plays it again. A partial run SHALL do nothing.
+A single click on the pumpkin SHALL play the ghost celebration, and every further click SHALL play a freshly laid-out one — the gesture carries no hidden click count to discover.
 
 Every celebration SHALL raise a success notification and SHALL clear itself after `HALLOWEEN_BURST_DURATION_MS`, which SHALL outlast the longest animation in `Halloween.module.scss`. Repeating the same celebration SHALL restart its animations rather than leave the layer untouched.
 
 `HalloweenDecor` and `HalloweenBurstOverlay` SHALL both be loaded on demand, so a deployment with the flag off pays for neither the components nor their stylesheet.
 
-#### Scenario: The pumpkin wakes the ghost on the last click of a run
+#### Scenario: One click releases the flock
 
-- **WHEN** the flag is on and the pumpkin has been clicked `HALLOWEEN_PUMPKIN_CLICKS - 1` times
-- **THEN** nothing has happened yet; the next click plays the ghost celebration, raises the notification, and starts the count over
+- **WHEN** the flag is on and the user clicks the pumpkin once
+- **THEN** the ghost celebration plays and the notification is raised
+
+#### Scenario: A further click releases a new flock
+
+- **WHEN** the user clicks the pumpkin again
+- **THEN** a newly laid-out flock plays, on different paths from the previous one
 
 #### Scenario: Nothing renders on the empty chat while the flag is off
 
 - **WHEN** the flag is `false`
 - **THEN** the empty-chat screen renders no cobwebs, bats, or pumpkin, and neither the decor nor the celebration layer is loaded
+
+### Requirement: The ghost celebration is a flock of individuals, not one sprite
+
+`buildHalloweenGhostFlight` SHALL lay out `HALLOWEEN_GHOST_COUNT` ghosts, each with its own entry edge, arc, size, tilt, opacity, pace and start delay, so the flock reads as individuals rather than a row moving as one body. A ghost SHALL enter from off-screen on one side at its own height, cross the viewport along an arc whose midpoint sits above the straight line between entry and exit, and leave past the opposite edge — entry and exit are always on opposite sides, so no ghost turns around mid-flight. Entry edges SHALL alternate, so ghosts cross in both directions.
+
+Each ghost SHALL be drawn as one of the `HalloweenGhostVariant` silhouettes, cycled so no two neighbours in the flock are alike, as inline SVG rather than an emoji — the variants differ in outline, face and fill, and the fills come from the repo's visual-background tokens so a retheme carries them. Its vertical bob SHALL animate on an inner element, so it composes with the flight instead of competing for the same `transform`.
+
+Offsets SHALL be expressed in `vw`/`vh` and passed as custom properties, so one keyframe set serves every flock and a flight crosses the viewport at any size. The paths are deliberately direction-agnostic — each ghost picks its own side — so the flock SHALL NOT flip under RTL.
+
+#### Scenario: Every ghost flies its own path
+
+- **WHEN** a ghost celebration is laid out
+- **THEN** it contains `HALLOWEEN_GHOST_COUNT` ghosts, no two sharing a path, entering from both sides, each starting and ending off-screen
+
+#### Scenario: The flock mixes silhouettes
+
+- **WHEN** a ghost celebration renders
+- **THEN** more than one silhouette is drawn, and no two consecutive ghosts share one
 
 ### Requirement: The easter egg is inert, accessible, and motion-safe
 
@@ -70,11 +93,11 @@ The easter egg SHALL persist nothing, read no storage, and issue no request; all
 
 **RTL:** The decoration SHALL use logical positioning so the corners and the ghost's flight direction follow the document's `dir`; the end-corner cobweb is a mirrored copy of the same drawing.
 
-**Reduced motion:** Every animation the feature adds SHALL be suppressed under `prefers-reduced-motion: reduce`, resolving to a static frame rather than to an empty screen.
+**Reduced motion:** Every animation the feature adds SHALL be suppressed under `prefers-reduced-motion: reduce`, resolving to a static frame rather than to an empty screen. Because an un-animated ghost would otherwise sit at the layer's origin with the rest of the flock stacked on top of it, each one SHALL carry a spread-out resting position used in that state.
 
 **i18n impact:** Four keys under `halloween.*` — the shared toast title, one message per celebration, and the pumpkin's accessible name.
 
 #### Scenario: A reduced-motion user still sees a celebration
 
 - **WHEN** the flag is on, the user's system asks for reduced motion, and a celebration is triggered
-- **THEN** the notification is raised and the glyphs render in a static position instead of animating, with nothing left frozen off-screen
+- **THEN** the notification is raised and the glyphs render in static, spread-out positions instead of animating, with nothing left frozen off-screen or stacked at the origin

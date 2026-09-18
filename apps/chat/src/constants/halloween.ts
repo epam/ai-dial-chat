@@ -17,20 +17,21 @@ export const HALLOWEEN_FEATURE_FLAG = 'halloweenEnabled';
  */
 export const HALLOWEEN_SECRET_PHRASE = 'trick or treat';
 
-/** Pumpkin clicks that trigger `HalloweenBurst.Ghost`. */
-export const HALLOWEEN_PUMPKIN_CLICKS = 5;
-
 /**
  * How long a burst stays mounted. Must outlast the longest animation in
- * `Halloween.module.scss` so no glyph is cut off mid-fall.
+ * `Halloween.module.scss` — the slowest ghost's drift — so nothing is cut off
+ * mid-flight.
  */
-export const HALLOWEEN_BURST_DURATION_MS = 5000;
+export const HALLOWEEN_BURST_DURATION_MS = 9000;
 
 /** Glyphs rained by `HalloweenBurst.Treats`, cycled in order. */
 export const HALLOWEEN_TREAT_GLYPHS = ['🎃', '👻', '🦇', '🍬', '🕷️'] as const;
 
 /** Falling glyphs per `HalloweenBurst.Treats`. */
 export const HALLOWEEN_TREAT_COUNT = 24;
+
+/** Ghosts released per `HalloweenBurst.Ghost`, each on its own flight path. */
+export const HALLOWEEN_GHOST_COUNT = 7;
 
 /** Bats drifting above the empty-chat composer while the flag is on. */
 export const HALLOWEEN_DECOR_BAT_COUNT = 3;

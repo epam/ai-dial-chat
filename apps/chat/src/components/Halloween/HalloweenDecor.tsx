@@ -1,36 +1,50 @@
 import { GhostIconButton } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC } from 'react';
-import { memo, useCallback, useRef } from 'react';
+import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  HALLOWEEN_DECOR_BAT_COUNT,
-  HALLOWEEN_PUMPKIN_CLICKS,
-} from '../../constants/halloween';
+import { HALLOWEEN_DECOR_BAT_COUNT } from '../../constants/halloween';
 import { HalloweenI18nKeys } from '../../constants/translation-keys';
 import { useHalloween } from '../../context/HalloweenContext';
 import { HalloweenBurst } from '../../types/halloween';
 import styles from './Halloween.module.scss';
 
-/* A corner cobweb: quarter-circle threads with radial spokes, drawn from the
-   origin so the same path serves both corners once one is mirrored. */
+/*
+ * A corner cobweb: radial spokes with the quarter-circle threads strung
+ * between them, drawn from the origin so the same paths serve both corners
+ * once one is mirrored. The spokes are drawn heavier than the threads, the way
+ * a real web reads, and a dangling spider hangs off the outermost thread.
+ */
 const Cobweb: FC = () => (
   <svg
     viewBox="0 0 64 64"
-    className="size-16 stroke-tertiary desktop:size-24"
+    className="size-32 stroke-secondary desktop:size-52"
     fill="none"
-    strokeWidth="1"
     aria-hidden="true"
     focusable="false"
   >
-    <path d="M0 0 L64 64 M0 0 L64 24 M0 0 L24 64 M0 0 L64 48 M0 0 L48 64" />
-    <path d="M14 0 A14 14 0 0 1 0 14 M28 0 A28 28 0 0 1 0 28 M44 0 A44 44 0 0 1 0 44 M62 0 A62 62 0 0 1 0 62" />
+    <path
+      d="M0 0 L64 64 M0 0 L64 18 M0 0 L18 64 M0 0 L64 40 M0 0 L40 64 M0 0 L64 4 M0 0 L4 64"
+      strokeWidth="1.1"
+    />
+    <path
+      d="M12 0 A12 12 0 0 1 0 12 M24 0 A24 24 0 0 1 0 24 M36 0 A36 36 0 0 1 0 36 M48 0 A48 48 0 0 1 0 48 M62 0 A62 62 0 0 1 0 62"
+      strokeWidth="0.8"
+    />
+    {/* Spider: a thread down from the web, then body, head and legs. */}
+    <path d="M44 31 V41" strokeWidth="0.8" />
+    <ellipse cx="44" cy="45" rx="3" ry="3.6" className="fill-secondary" />
+    <circle cx="44" cy="41.6" r="1.5" className="fill-secondary" />
+    <path
+      d="M41 43 L37 40 M41 45 L36.5 45 M41 47 L37 50 M47 43 L51 40 M47 45 L51.5 45 M47 47 L51 50"
+      strokeWidth="0.8"
+    />
   </svg>
 );
 
 /**
  * Seasonal chrome for the empty-chat screen while the `halloweenEnabled`
  * feature flag is on: cobwebs in the top corners, drifting bats, and a pumpkin
- * that answers `HALLOWEEN_PUMPKIN_CLICKS` clicks with a ghost fly-by.
+ * that releases a flock of ghosts across the viewport when clicked.
  *
  * Renders nothing when the feature is off, so the call site needs no gate of
  * its own. The cobwebs and bats sit in an `aria-hidden`, pointer-transparent
@@ -40,14 +54,11 @@ const Cobweb: FC = () => (
 const HalloweenDecor: FC = () => {
   const { t } = useTranslation();
   const { isEnabled, celebrate } = useHalloween();
-  const clicksRef = useRef(0);
 
-  const handlePumpkinClick = useCallback(() => {
-    clicksRef.current += 1;
-    if (clicksRef.current < HALLOWEEN_PUMPKIN_CLICKS) return;
-    clicksRef.current = 0;
-    celebrate(HalloweenBurst.Ghost);
-  }, [celebrate]);
+  const handlePumpkinClick = useCallback(
+    () => celebrate(HalloweenBurst.Ghost),
+    [celebrate],
+  );
 
   if (!isEnabled) {
     return null;
@@ -59,10 +70,10 @@ const HalloweenDecor: FC = () => {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 select-none overflow-hidden"
       >
-        <div className="absolute start-0 top-0 opacity-40">
+        <div className="absolute start-0 top-0 opacity-80">
           <Cobweb />
         </div>
-        <div className="absolute end-0 top-0 scale-x-[-1] opacity-40">
+        <div className="absolute end-0 top-0 scale-x-[-1] opacity-80">
           <Cobweb />
         </div>
         <div className="absolute inset-x-0 top-1/4 flex justify-center gap-16 text-2xl opacity-70">
