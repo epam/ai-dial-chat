@@ -19,6 +19,7 @@ import {
   type FC,
   type KeyboardEvent,
 } from 'react';
+import { SKILLS_CLASS } from '../../constants/public-class-names';
 import type { FavoriteSkillItem } from '../../models/favorite-skill-item';
 import type { FavoriteSkillsPanelProps } from '../../models/favorite-skills-panel-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
@@ -254,7 +255,13 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   };
 
   return (
-    <div className="flex w-full flex-col desktop:w-[280px]" style={cssVars}>
+    <div
+      className={mergeClasses(
+        SKILLS_CLASS.favoritesPanel,
+        'flex w-full flex-col desktop:w-[280px]',
+      )}
+      style={cssVars}
+    >
       <p
         className={mergeClasses(
           headerClassName,

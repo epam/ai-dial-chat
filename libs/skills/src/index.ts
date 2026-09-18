@@ -27,3 +27,4 @@ export type {
   UseSkillSelectorOverlayOptions,
   UseSkillSelectorOverlayResult,
 } from './models/skill-selector-overlay';
+export { SKILLS_CLASS } from './constants/public-class-names';

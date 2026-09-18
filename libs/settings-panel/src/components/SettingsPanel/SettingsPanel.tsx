@@ -1,5 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { useId, useRef, type FC, type KeyboardEvent } from 'react';
+import { SETTINGS_PANEL_CLASS } from '../../constants/public-class-names';
 import type {
   SettingsPanelItem,
   SettingsPanelProps,
@@ -91,7 +92,11 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
   return (
     <div
-      className={mergeClasses('flex flex-col gap-3 bg-layer-raised', className)}
+      className={mergeClasses(
+        SETTINGS_PANEL_CLASS.panel,
+        'flex flex-col gap-3 bg-layer-raised',
+        className,
+      )}
       style={cssVars}
     >
       {sectionLabel && (
@@ -113,7 +118,10 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         // a tab stop, but jsx-a11y requires an interactive role to declare
         // its own (non-reachable) focusability.
         tabIndex={-1}
-        className="flex flex-col gap-1 px-2"
+        className={mergeClasses(
+          SETTINGS_PANEL_CLASS.tabList,
+          'flex flex-col gap-1 px-2',
+        )}
       >
         {items.map((item) => {
           const isActive = item.id === activeId;
@@ -135,6 +143,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
                 if (!item.disabled && !isActive) onSelect(item.id);
               }}
               className={mergeClasses(
+                SETTINGS_PANEL_CLASS.tab,
                 'flex h-11 w-full items-center gap-2 rounded-lg px-3 text-start desktop:h-10',
                 'focus-visible:outline focus-visible:-outline-offset-1',
                 styles.row,

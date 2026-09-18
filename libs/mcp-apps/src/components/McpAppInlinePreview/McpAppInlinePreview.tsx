@@ -6,6 +6,7 @@ import {
   ElementSize,
   GhostIconButton,
   Spinner,
+  mergeClasses,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
@@ -13,6 +14,7 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { FC, memo, useCallback } from 'react';
+import { MCP_APPS_CLASS } from '../../constants/public-class-names';
 import { useMcpAppInlinePreview } from '../../hooks/useMcpAppInlinePreview/useMcpAppInlinePreview';
 import {
   McpAppInlinePreviewStatus,
@@ -100,13 +102,23 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   }
 
   return (
-    <div className="bg-layer-2 flex w-full min-w-0 flex-col overflow-hidden rounded-xl border border-tertiary">
+    <div
+      className={mergeClasses(
+        MCP_APPS_CLASS.preview,
+        'bg-layer-2 flex w-full min-w-0 flex-col overflow-hidden rounded-xl border border-tertiary',
+      )}
+    >
       {/*
        * Header strip styled after the code block header in chat-shared's
        * Markdown renderer: same min-height, padding, bottom border, and
        * small ghost icon button group.
        */}
-      <div className="flex min-h-10 items-center justify-end border-b border-tertiary px-4 py-2">
+      <div
+        className={mergeClasses(
+          MCP_APPS_CLASS.previewHeader,
+          'flex min-h-10 items-center justify-end border-b border-tertiary px-4 py-2',
+        )}
+      >
         <div
           role="toolbar"
           aria-label={actionsGroupAriaLabel}

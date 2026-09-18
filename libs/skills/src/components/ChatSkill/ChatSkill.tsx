@@ -5,6 +5,7 @@ import {
   TooltipPlacement,
 } from '@epam/ai-dial-ui-kit';
 import { useState, type FC } from 'react';
+import { SKILLS_CLASS } from '../../constants/public-class-names';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
 
@@ -86,11 +87,11 @@ export const ChatSkill: FC<ChatSkillProps> = ({
               ? mergeClasses(labelClassName, unsupportedLabelClassName)
               : labelClassName
           }
-          className={
-            isUnsupported
-              ? mergeClasses('h-auto px-2 py-0', unsupportedClassName)
-              : 'h-auto px-2 py-0'
-          }
+          className={mergeClasses(
+            SKILLS_CLASS.chip,
+            'h-auto px-2 py-0',
+            isUnsupported && unsupportedClassName,
+          )}
         />
       </span>
     </InteractiveTooltip>

@@ -27,3 +27,4 @@ export {
   resolveMcpAppToolCallSeed,
   resolveMcpAppToolResult,
 } from './utils/mcp-app';
+export { MCP_APPS_CLASS } from './constants/public-class-names';
