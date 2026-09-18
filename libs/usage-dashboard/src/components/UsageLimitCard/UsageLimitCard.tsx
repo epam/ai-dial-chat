@@ -63,9 +63,9 @@ export const UsageLimitCard: FC<UsageLimitCardProps> = ({
   return (
     <div
       className={mergeClasses(
-        USAGE_DASHBOARD_CLASS.card,
         'flex min-w-0 flex-col gap-4 rounded-xl px-6 py-5 shadow-md',
         styles.card,
+        USAGE_DASHBOARD_CLASS.card,
       )}
       style={cssVars}
       role="group"

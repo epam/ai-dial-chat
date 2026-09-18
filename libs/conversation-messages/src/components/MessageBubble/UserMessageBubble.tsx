@@ -114,8 +114,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
               styles.userBubble,
               'flex w-fit items-center justify-end rounded-es-2xl rounded-ss-2xl border px-6 py-4',
               positionRadius,
-              CONVERSATION_MESSAGES_CLASS.userBubble,
               bubbleClassName,
+              CONVERSATION_MESSAGES_CLASS.userBubble,
             )}
           >
             <div className="flex min-w-0 flex-col items-start">

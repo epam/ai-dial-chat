@@ -379,19 +379,28 @@ where a typo looks correct in review and in the DOM.
 
 ### Rules
 
-1. **Emitted unconditionally.** No prop, flag, context value, or host configuration
-   enables a public class. Append it inside the element's existing `mergeClasses` call,
-   after the CSS-module class and Tailwind utilities, before any caller `className`:
+1. **Emitted unconditionally, and always last.** No prop, flag, context value, or host
+   configuration enables a public class. Append it as the **final argument** of the
+   element's existing `mergeClasses` call — after the CSS-module class, the Tailwind
+   utilities, and any caller `className` pass-through:
 
    ```tsx
    className={mergeClasses(
      styles.tile,
      ATTACHMENT_TILE_BASE_CLASS,
+     className,
      ATTACHMENT_INPUT_CLASS.tile,
      isSelected && ATTACHMENT_INPUT_CLASS.tileSelected,
-     className,
    )}
    ```
+
+   The position is free to be fixed because a `dial-*` name is not a Tailwind utility:
+   `mergeClasses` is `twMerge(classNames(...))`, and `tailwind-merge` only resolves
+   conflicts between utilities it recognises, so it never drops a public class wherever
+   it sits. Keeping it last therefore costs nothing and buys one predictable place to
+   look for the host contract in every component — the alternative, threading it between
+   the module class and the caller's `className`, reads differently in every call and is
+   what let the class drift in the first place.
 
 2. **No declarations, ever.** Never write a rule for a `dial-<prefix>-*` class in a
    `.module.scss`. The published `styles.css` must contain no `.dial-*` selector — the

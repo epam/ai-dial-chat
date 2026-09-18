@@ -221,15 +221,15 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        CONVERSATION_STAGES_CLASS.group,
         'flex w-full flex-col gap-1',
         className,
+        CONVERSATION_STAGES_CLASS.group,
       )}
     >
       <LinkButton
         className={mergeClasses(
-          CONVERSATION_STAGES_CLASS.groupToggle,
           styles.toggleButton,
+          CONVERSATION_STAGES_CLASS.groupToggle,
         )}
         textClassName="min-w-0"
         onClick={() => setIsOpen((prev) => !prev)}

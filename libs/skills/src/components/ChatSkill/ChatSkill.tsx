@@ -88,9 +88,9 @@ export const ChatSkill: FC<ChatSkillProps> = ({
               : labelClassName
           }
           className={mergeClasses(
-            SKILLS_CLASS.chip,
             'h-auto px-2 py-0',
             isUnsupported && unsupportedClassName,
+            SKILLS_CLASS.chip,
           )}
         />
       </span>

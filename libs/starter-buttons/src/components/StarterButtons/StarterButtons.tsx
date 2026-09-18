@@ -135,16 +135,16 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
   return (
     <div
       ref={containerRef}
-      className={mergeClasses(STARTER_BUTTONS_CLASS.root, 'mb-4 w-full')}
+      className={mergeClasses('mb-4 w-full', STARTER_BUTTONS_CLASS.root)}
     >
       <div
         role="list"
         aria-label={labels.list}
         className={mergeClasses(
-          STARTER_BUTTONS_CLASS.list,
           isCollapsible
             ? 'flex flex-wrap justify-center gap-2'
             : 'flex flex-col items-center gap-2',
+          STARTER_BUTTONS_CLASS.list,
         )}
       >
         {visibleStarters.map((starter, index) => (

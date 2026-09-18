@@ -41,8 +41,8 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
     <div
       dir={dir}
       className={mergeClasses(
-        BUILDER_FORM_CLASS.layout,
         'flex min-h-0 flex-1 flex-col',
+        BUILDER_FORM_CLASS.layout,
       )}
       style={cssVars}
     >

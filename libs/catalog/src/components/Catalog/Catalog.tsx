@@ -491,9 +491,9 @@ export const Catalog: FC<CatalogProps> = ({
     <section
       aria-label={resolvedAriaLabel}
       className={mergeClasses(
-        CATALOG_CLASS.root,
         'flex size-full min-h-0 flex-1 flex-col',
         styles.root,
+        CATALOG_CLASS.root,
       )}
       style={cssVars}
     >

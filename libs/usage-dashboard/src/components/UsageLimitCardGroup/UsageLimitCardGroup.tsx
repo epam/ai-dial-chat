@@ -17,8 +17,8 @@ export const UsageLimitCardGroup: FC<UsageLimitCardGroupProps> = ({
   return (
     <div
       className={mergeClasses(
-        USAGE_DASHBOARD_CLASS.cardGroup,
         'grid grid-cols-1 gap-4 desktop:grid-cols-[repeat(var(--uld-card-count),minmax(0,1fr))]',
+        USAGE_DASHBOARD_CLASS.cardGroup,
       )}
       style={{ '--uld-card-count': cards.length } as CSSProperties}
     >

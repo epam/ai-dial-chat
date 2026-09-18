@@ -99,10 +99,10 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       tabIndex={handleClick != null ? 0 : undefined}
       aria-label={item.name}
       className={mergeClasses(
-        CATALOG_CLASS.favoriteCard,
         'box-border min-w-0 cursor-pointer flex-row items-start gap-1 text-start',
         isLeaving && styles.cardLeaving,
         isSelected && styles.selectedCard,
+        CATALOG_CLASS.favoriteCard,
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

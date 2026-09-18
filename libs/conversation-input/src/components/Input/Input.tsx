@@ -740,8 +740,8 @@ export const Input: FC<InputProps> = ({
         'flex w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border',
         'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
         attachments.length > 6 ? 'py-4 ps-4' : 'p-4',
-        CONVERSATION_INPUT_CLASS.wrapper,
         className,
+        CONVERSATION_INPUT_CLASS.wrapper,
       )}
     >
       {(prefixAttachments.length > 0 || attachments.length > 0) && (

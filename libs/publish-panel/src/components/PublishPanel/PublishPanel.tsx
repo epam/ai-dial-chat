@@ -317,7 +317,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
 
   return (
     <div
-      className={mergeClasses(PUBLISH_PANEL_CLASS.panel, 'flex flex-col gap-5')}
+      className={mergeClasses('flex flex-col gap-5', PUBLISH_PANEL_CLASS.panel)}
       style={cssVars}
     >
       {resource?.type != null ? (

@@ -89,9 +89,9 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       onOpenChange={handleOpenChange}
       triggerClassName="ms-1 inline-flex align-middle"
       contentClassName={mergeClasses(
-        QUOTATIONS_CLASS.citationDropdown,
         '!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none',
         styles.content,
+        QUOTATIONS_CLASS.citationDropdown,
       )}
       tooltip={
         <CitationCard

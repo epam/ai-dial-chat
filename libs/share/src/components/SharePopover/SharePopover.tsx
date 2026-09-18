@@ -215,9 +215,9 @@ const SharePopover: FC<SharePopoverProps> = ({
       tabIndex={-1}
       style={cssVars}
       className={mergeClasses(
-        SHARE_CLASS.popover,
         'flex w-96 flex-col gap-3 rounded-xl bg-layer-raised px-6 pb-6 pt-4 shadow-lg outline-none',
         className,
+        SHARE_CLASS.popover,
       )}
       onKeyDownCapture={handleKeyDownCapture}
     >

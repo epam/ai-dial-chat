@@ -257,8 +257,8 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   return (
     <div
       className={mergeClasses(
-        SKILLS_CLASS.favoritesPanel,
         'flex w-full flex-col desktop:w-[280px]',
+        SKILLS_CLASS.favoritesPanel,
       )}
       style={cssVars}
     >

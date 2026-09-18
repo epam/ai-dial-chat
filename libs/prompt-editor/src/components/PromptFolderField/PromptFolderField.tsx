@@ -157,8 +157,8 @@ export const PromptFolderField: FC<PromptFolderFieldProps> = ({
   return (
     <div
       className={mergeClasses(
-        PROMPT_EDITOR_CLASS.folderField,
         'flex flex-col gap-2',
+        PROMPT_EDITOR_CLASS.folderField,
       )}
     >
       <div className="flex items-end gap-2">

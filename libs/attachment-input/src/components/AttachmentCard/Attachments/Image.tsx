@@ -102,9 +102,9 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
     isClickable && 'cursor-pointer',
     styles.tile,
     isSelected && styles.selected,
+    className,
     ATTACHMENT_INPUT_CLASS.tile,
     isSelected && ATTACHMENT_INPUT_CLASS.tileSelected,
-    className,
   );
 
   return (

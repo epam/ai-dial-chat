@@ -49,8 +49,8 @@ const ActionButton: FC<ActionProps> = ({
       className={mergeClasses(
         'opacity-0 focus-visible:opacity-100 group-focus-within/attachment-tile:opacity-100 group-hover/attachment-tile:opacity-100',
         styles.actionButton,
-        ATTACHMENT_INPUT_CLASS.tileAction,
         className,
+        ATTACHMENT_INPUT_CLASS.tileAction,
       )}
       aria-label={ariaLabel}
       aria-describedby={errorTitle ? errorDescId : undefined}

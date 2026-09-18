@@ -135,9 +135,9 @@ export const CitationCard: FC<CitationCardProps> = ({
       aria-label={labels.ariaLabel}
       style={cssVars}
       className={mergeClasses(
-        QUOTATIONS_CLASS.citationCard,
         'flex w-[400px] flex-col gap-3 rounded-lg p-4 shadow-lg',
         styles.card,
+        QUOTATIONS_CLASS.citationCard,
       )}
     >
       {/* Header */}

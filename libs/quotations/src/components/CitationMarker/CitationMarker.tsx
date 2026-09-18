@@ -48,7 +48,7 @@ export const CitationMarker: FC<CitationMarkerProps> = ({
      * width; a flex item's `min-width: auto` would otherwise hold it open.
      * The full name remains in the card header and in `aria-label`.
      */
-    className={mergeClasses(QUOTATIONS_CLASS.citationMarker, 'max-w-[240px]')}
+    className={mergeClasses('max-w-[240px]', QUOTATIONS_CLASS.citationMarker)}
     textClassName="min-w-0 truncate"
     iconBefore={icon}
     label={

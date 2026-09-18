@@ -175,10 +175,10 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       <div
         style={cssVars}
         className={mergeClasses(
-          CHAT_SHARED_CLASS.table,
           'group/table relative w-full min-w-0 max-w-full rounded-xl border [overflow:clip]',
           styles.tableContainer,
           classNames.tableWrapper,
+          CHAT_SHARED_CLASS.table,
         )}
       >
         {showActions && (
@@ -200,7 +200,6 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
         <div
           ref={scrollContainerRef}
           className={mergeClasses(
-            CHAT_SHARED_CLASS.tableScroll,
             'w-full min-w-0 max-w-full overflow-x-auto',
             styles.scrollContainer,
             classNames.tableScrollContainer,
@@ -212,6 +211,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
               [styles.tableScrollFadeEnd]:
                 !hasContentBeyondStart && hasContentBeyondEnd,
             },
+            CHAT_SHARED_CLASS.tableScroll,
           )}
           onScroll={handleScroll}
           role={isScrollable ? 'region' : undefined}

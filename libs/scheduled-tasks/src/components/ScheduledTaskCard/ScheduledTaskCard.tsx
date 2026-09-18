@@ -84,10 +84,10 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       aria-label={item.displayName}
       style={cssVars}
       className={mergeClasses(
-        SCHEDULED_TASKS_CLASS.card,
         'h-[232px]',
         onCardClick && 'cursor-pointer',
         className,
+        SCHEDULED_TASKS_CLASS.card,
       )}
       {...cardClickProps}
     >

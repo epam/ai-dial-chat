@@ -156,8 +156,8 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       orientation={SidebarOrientation.Right}
       styles={{
         className: mergeClasses(
-          SOURCE_PANEL_CLASS.panel,
           isMobile && isOpen && 'w-full',
+          SOURCE_PANEL_CLASS.panel,
         ),
         bodyClassName: 'flex flex-col overflow-hidden p-0',
       }}

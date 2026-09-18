@@ -56,11 +56,11 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
         aria-label={labels.ariaLabel}
         style={{ ...cssVars, ...railCssVars }}
         className={mergeClasses(
-          NAVIGATION_PANEL_CLASS.rail,
           styles.rail,
           'relative z-10 flex h-full w-[60px] flex-col justify-between shadow-sm',
           typography?.fontClassName,
           className,
+          NAVIGATION_PANEL_CLASS.rail,
         )}
       >
         <div className="flex flex-col items-center">
@@ -93,10 +93,10 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
                     tooltipProps={{ tooltip: item.label }}
                     tabIndex={-1}
                     className={mergeClasses(
-                      NAVIGATION_PANEL_CLASS.item,
                       styles.item,
                       'rounded-xl',
                       item.isActive && styles.itemActive,
+                      NAVIGATION_PANEL_CLASS.item,
                     )}
                   />,
                 )}

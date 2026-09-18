@@ -186,8 +186,8 @@ export const useModelSelector = ({
           })}
           className={mergeClasses(
             'sticky top-0 z-10 pb-1 pe-2 pt-2',
-            CONVERSATION_INPUT_CLASS.modelMenuSearch,
             searchHeaderClassName,
+            CONVERSATION_INPUT_CLASS.modelMenuSearch,
           )}
         >
           <Search

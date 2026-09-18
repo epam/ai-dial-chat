@@ -17,8 +17,8 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
 }) => (
   <div
     className={mergeClasses(
-      SCHEDULED_TASKS_CLASS.cardGrid,
       'grid grid-cols-1 gap-5 desktop:grid-cols-3',
+      SCHEDULED_TASKS_CLASS.cardGrid,
     )}
   >
     {items.map((item) => (

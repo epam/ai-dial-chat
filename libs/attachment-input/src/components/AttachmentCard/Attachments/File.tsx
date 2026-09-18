@@ -143,8 +143,8 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
          */
         'line-clamp-2 w-full min-w-0 break-words',
         styles.nameText,
-        ATTACHMENT_INPUT_CLASS.tileName,
         !isError && cornerIconSpacing,
+        ATTACHMENT_INPUT_CLASS.tileName,
       )}
     >
       {searchQuery ? (

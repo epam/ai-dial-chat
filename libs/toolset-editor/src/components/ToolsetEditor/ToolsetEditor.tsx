@@ -375,8 +375,8 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
         <EditorSection
           title={labels?.layout?.metadataSectionTitle ?? 'Metadata'}
           className={mergeClasses(
-            TOOLSET_EDITOR_CLASS.metadataSection,
             'border-0 p-4 desktop:p-6',
+            TOOLSET_EDITOR_CLASS.metadataSection,
           )}
         >
           <GeneralForm
@@ -397,8 +397,8 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
         <EditorSection
           title={labels?.layout?.setupSectionTitle ?? 'Setup'}
           className={mergeClasses(
-            TOOLSET_EDITOR_CLASS.setupSection,
             'border-0 p-4 desktop:p-6',
+            TOOLSET_EDITOR_CLASS.setupSection,
           )}
         >
           <SettingsForm

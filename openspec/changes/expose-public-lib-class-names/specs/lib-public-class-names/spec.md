@@ -40,8 +40,10 @@ stylesheet it publishes at `./styles.css`: the classes exist solely as host-addr
 hooks and MUST NOT change any computed style by themselves.
 
 Public classes SHALL be appended through the existing `mergeClasses` call for the
-element, alongside its CSS-module class, Tailwind utilities, and any caller-supplied
-`className`. Relative ordering within the `class` attribute SHALL NOT be relied upon.
+element, as the final argument — after its CSS-module class, its Tailwind utilities, and
+any caller-supplied `className`. Relative ordering within the emitted `class` attribute
+SHALL NOT be relied upon by a host: the argument position is a source-code convention,
+not a cascade guarantee.
 
 #### Scenario: Class is present without any prop being passed
 

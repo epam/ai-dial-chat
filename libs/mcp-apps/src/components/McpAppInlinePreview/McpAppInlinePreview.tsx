@@ -117,9 +117,9 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        MCP_APPS_CLASS.preview,
         styles.preview,
         'flex w-full min-w-0 flex-col overflow-hidden rounded-xl border',
+        MCP_APPS_CLASS.preview,
       )}
     >
       {/*
@@ -129,9 +129,9 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
        */}
       <div
         className={mergeClasses(
-          MCP_APPS_CLASS.previewHeader,
           styles.previewHeader,
           'flex min-h-10 items-center justify-end border-b px-4 py-2',
+          MCP_APPS_CLASS.previewHeader,
         )}
       >
         <div

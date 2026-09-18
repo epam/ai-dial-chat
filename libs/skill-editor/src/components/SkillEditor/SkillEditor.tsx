@@ -388,8 +388,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     <div
       dir={dir}
       className={mergeClasses(
-        SKILL_EDITOR_CLASS.root,
         'relative flex min-h-0 flex-1 flex-col',
+        SKILL_EDITOR_CLASS.root,
       )}
       style={cssVars}
       {...surfaceDropZoneHandlers}

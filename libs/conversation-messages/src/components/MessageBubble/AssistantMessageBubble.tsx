@@ -144,7 +144,6 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               className={mergeClasses(
                 textClass,
                 'relative min-w-0 max-w-full text-start',
-                CONVERSATION_MESSAGES_CLASS.assistantContent,
                 /*
                  * `text-indent` inherits, so the indent targets the markdown
                  * container's first block child (a leading list indents its
@@ -157,6 +156,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                  * receive the indent.
                  */
                 beforeContent != null && text && FIRST_LINE_INDENT_CLASS_NAME,
+                CONVERSATION_MESSAGES_CLASS.assistantContent,
               )}
             >
               {beforeContent != null && text && (

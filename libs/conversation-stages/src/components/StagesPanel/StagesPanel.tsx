@@ -191,10 +191,10 @@ export const StagesPanel: FC<StagesPanelProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        CONVERSATION_STAGES_CLASS.panel,
         'w-full',
         styles.panel,
         className,
+        CONVERSATION_STAGES_CLASS.panel,
       )}
     >
       <ul role="list" className="flex w-full flex-col gap-0.5 ps-5">

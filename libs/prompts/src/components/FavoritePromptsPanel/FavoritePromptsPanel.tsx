@@ -174,8 +174,8 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
   return (
     <div
       className={mergeClasses(
-        PROMPTS_CLASS.favoritesPanel,
         'flex min-w-[240px] flex-col',
+        PROMPTS_CLASS.favoritesPanel,
       )}
       style={cssVars}
     >

@@ -214,8 +214,8 @@ export const PromptEditor: FC<PromptEditorProps> = ({
       leftContent={
         <div
           className={mergeClasses(
-            PROMPT_EDITOR_CLASS.form,
             'mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-5 px-4 py-6 desktop:px-8',
+            PROMPT_EDITOR_CLASS.form,
           )}
           style={cssVars}
         >

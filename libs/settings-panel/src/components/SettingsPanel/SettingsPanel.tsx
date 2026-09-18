@@ -93,9 +93,9 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   return (
     <div
       className={mergeClasses(
-        SETTINGS_PANEL_CLASS.panel,
         'flex flex-col gap-3 bg-layer-raised',
         className,
+        SETTINGS_PANEL_CLASS.panel,
       )}
       style={cssVars}
     >
@@ -119,8 +119,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         // its own (non-reachable) focusability.
         tabIndex={-1}
         className={mergeClasses(
-          SETTINGS_PANEL_CLASS.tabList,
           'flex flex-col gap-1 px-2',
+          SETTINGS_PANEL_CLASS.tabList,
         )}
       >
         {items.map((item) => {
@@ -143,11 +143,11 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
                 if (!item.disabled && !isActive) onSelect(item.id);
               }}
               className={mergeClasses(
-                SETTINGS_PANEL_CLASS.tab,
                 'flex h-11 w-full items-center gap-2 rounded-lg px-3 text-start desktop:h-10',
                 'focus-visible:outline focus-visible:-outline-offset-1',
                 styles.row,
                 isVisuallyActive && styles.rowActive,
+                SETTINGS_PANEL_CLASS.tab,
               )}
             >
               {item.icon}

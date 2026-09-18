@@ -31,8 +31,8 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
       aria-label={ariaLabel}
       className={mergeClasses(
         'flex w-full min-w-0 gap-2 overflow-x-auto',
-        ATTACHMENT_INPUT_CLASS.tray,
         className,
+        ATTACHMENT_INPUT_CLASS.tray,
       )}
     >
       {attachments.map((attachment) => (

@@ -190,10 +190,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           panelStyles?.headerClassName,
         ),
         className: mergeClasses(
-          ATTACHMENT_CANVAS_CLASS.panel,
           isOpen ? 'mobile:w-full mobile:max-w-full' : 'w-0',
           className,
           panelStyles?.className,
+          ATTACHMENT_CANVAS_CLASS.panel,
         ),
       }}
       rightActions={

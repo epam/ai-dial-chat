@@ -35,8 +35,8 @@ export const ListView: FC<ListViewProps> = ({
     return (
       <div
         className={mergeClasses(
-          CATALOG_CLASS.listView,
           'flex size-full flex-col items-center justify-center',
+          CATALOG_CLASS.listView,
         )}
       >
         <PanelEmptyState label={emptyStateTitle ?? 'No results'} />
@@ -108,9 +108,9 @@ export const ListView: FC<ListViewProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        CATALOG_CLASS.listView,
         'w-full rounded-xl border',
         styles.listContainer,
+        CATALOG_CLASS.listView,
       )}
     >
       <div
