@@ -239,6 +239,8 @@ A failed job additionally carries `errorCode: ConversationTransferErrorCode` —
 
 A `Warning` job delivered its file, but not everything the user asked for made it in. It carries `warningCode: ConversationTransferWarningCode` — currently the single value `AttachmentSkipped` — set only alongside `ConversationTransferJobStatus.Warning`, and translation-free in the same way.
 
+Warning jobs may also carry `warningNames?: string[]`: untranslated names of skipped attachments. Import jobs retain the same unique names emitted in their warning event so hosts can identify the skipped files after the notification disappears. Names are optional for compatibility with export jobs and older producers.
+
 ### FilterTab
 
 Canonical conversation ownership/grouping identifiers shared by the headless mapping hooks and the conversation panel. `@epam/ai-dial-conversation-panel` re-exports the same enum for compatibility.
