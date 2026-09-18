@@ -1,0 +1,49 @@
+diff --git a/apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx b/apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx
+--- a/apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx
++++ b/apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx
+@@ -523,3 +523,4 @@
+         sendLabel={t(ChatI18nKeys.SendMessage)}
+-        sendTooltip={t(ChatI18nKeys.SendDisabledTooltip)}
++        sendTooltip={t(ChatI18nKeys.SendMessage)}
++        emptyMessageTooltip={t(ChatI18nKeys.SendDisabledTooltip)}
+         placeholder={t(ChatI18nKeys.Placeholder)}
+diff --git a/apps/chat/src/components/ConversationView/ConversationView.tsx b/apps/chat/src/components/ConversationView/ConversationView.tsx
+--- a/apps/chat/src/components/ConversationView/ConversationView.tsx
++++ b/apps/chat/src/components/ConversationView/ConversationView.tsx
+@@ -1564,3 +1564,4 @@
+               sendLabel={t(ChatI18nKeys.SendMessage)}
+-              sendTooltip={t(ChatI18nKeys.SendDisabledTooltip)}
++              sendTooltip={t(ChatI18nKeys.SendMessage)}
++              emptyMessageTooltip={t(ChatI18nKeys.SendDisabledTooltip)}
+               placeholder={t(ChatI18nKeys.Placeholder)}
+diff --git a/openspec/specs/conversation-input-send-tooltip/spec.md b/openspec/specs/conversation-input-send-tooltip/spec.md
+new file mode 100644
+--- /dev/null
++++ b/openspec/specs/conversation-input-send-tooltip/spec.md
+@@ -0,0 +1,26 @@
++# conversation-input-send-tooltip Specification
++
++## Purpose
++
++Describe the send-button hover hints used by pg-chat's new-conversation and existing-conversation composers.
++
++## Requirements
++
++### Requirement: Content-sensitive send tooltip
++
++Both `ConversationRoute` and `ConversationView` SHALL pass `chat.sendMessage` as `sendTooltip` and `chat.sendDisabledTooltip` as `emptyMessageTooltip` to a compatible release of `@epam/ai-dial-conversation-input`. The library SHALL own the live content check. Empty means no non-whitespace text, attachments, or inline selected skill. Other send restrictions SHALL NOT select the empty-message hint. Existing disabled-button and send behavior SHALL remain unchanged.
++
++#### Scenario: Empty composer
++
++- **WHEN** the user hovers over send with no content or only whitespace
++- **THEN** the tooltip shows `Type a message first`
++
++#### Scenario: Populated composer
++
++- **WHEN** the user hovers over send with text, an attachment, or a selected skill
++- **THEN** the tooltip shows `Send message`, including when sending is disabled for another reason
++
++#### Scenario: Draft changes
++
++- **WHEN** the user types or clears content, or sending clears the composer
++- **THEN** the tooltip follows the current content

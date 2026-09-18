@@ -70,6 +70,7 @@ export const Input: FC<InputProps> = ({
   uploadingLabel,
   sendLabel,
   sendTooltip,
+  emptyMessageTooltip,
   stopLabel,
   micLabel = 'Dictate',
   recordVoiceLabel = 'Record voice',
@@ -858,7 +859,11 @@ export const Input: FC<InputProps> = ({
                       onSend={handleSend}
                       isDisabled={!hasModelSelected || !canSend}
                       ariaLabel={sendLabel}
-                      sendTooltip={sendTooltip}
+                      sendTooltip={
+                        hasSendableContent
+                          ? sendTooltip
+                          : (emptyMessageTooltip ?? sendTooltip)
+                      }
                     />
                   )
                 )}

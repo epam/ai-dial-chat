@@ -115,9 +115,25 @@ adjacent buttons stay distinguishable to assistive technology. `uploadingLabel`
 its upload is still in flight.
 
 `sendLabel` (default `'Send message'`) is the send button's accessible name.
-`sendTooltip` is a separate, optional string shown as a hover tooltip on the
-send button — useful for explaining why it's currently inactive (e.g. `'Type a
-message first'`). No tooltip renders when it is left unset.
+`sendTooltip` is an optional hover tooltip. `emptyMessageTooltip` optionally
+replaces it when the composer has no non-whitespace text, attachments, or
+inline-start slot (such as a selected skill). Other reasons for disabling send,
+such as a missing model or blocked attachment, do not select the empty hint.
+
+When `emptyMessageTooltip` is omitted, `sendTooltip` is used in every state,
+preserving existing callers. An explicit empty string suppresses the tooltip for
+an empty composer. If both props are omitted, no tooltip renders. The accessible
+label and send behavior are unaffected.
+
+```tsx
+<ConversationInput
+  sendTooltip="Send message"
+  emptyMessageTooltip="Type a message first"
+/>
+```
+
+Hosts supply localized strings through these props. The parent chat keeps its
+existing `sendTooltip` prop without opting into `emptyMessageTooltip`.
 
 ### EditMessageInput
 
