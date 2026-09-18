@@ -17,6 +17,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
 import type { SessionUser } from '../../auth/session/session.types';
+import { SSE_RELEASE_TIMEOUT_MS } from '../../common/utils/sse';
 import {
   ConversationGenerationService,
   GenerationStatus,
@@ -428,6 +429,10 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
     authSource: AuthSource.Cookie,
   } as unknown as ExpressRequest;
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('detaches the response once buffered output exceeds SSE_COMPLETION_MAX_BUFFERED_BYTES, while the generator keeps running to completion', async () => {
     const pendingCallbacks: Array<() => void> = [];
     const res = new Writable({
@@ -468,18 +473,43 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
       mockGenerationService as unknown as ConversationGenerationService,
     );
 
-    await controller.streamCompletion(
+    /*
+     * Only `setTimeout` is faked, so the bounded release below can be
+     * advanced without a 15s test while `setImmediate` stays real for the
+     * poll loop.
+     */
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    const stalled = res as unknown as Writable;
+    const handled = controller.streamCompletion(
       TEST_REQUEST,
       res,
       VALID_COMPLETION_BODY as unknown as SendCompletionDto,
       undefined,
     );
 
+    while (!stalled.writableEnded) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    await vi.advanceTimersByTimeAsync(SSE_RELEASE_TIMEOUT_MS);
+    await handled;
+
     expect(reachedNaturalEnd).toBe(true);
     // Fewer writes actually reached the underlying stream than were yielded
     // (plus the init comment) — proof that the response was detached instead
     // of continuing to buffer every chunk without bound.
     expect(pendingCallbacks.length).toBeLessThan(totalChunks + 1);
+
+    /*
+     * Detaching is only half the contract: the handler owns terminating a
+     * response that is slow rather than closed, so the response must reach a
+     * terminal state instead of being left open with its backlog buffered.
+     * The stalled `write` above never calls back, so `'finish'` cannot fire
+     * and the release falls through to its bounded `res.destroy()`.
+     * `completion-response-lifecycle.spec.ts` covers the rest of the state
+     * machine, including the graceful branch.
+     */
+    expect(stalled.writableEnded).toBe(true);
+    expect(stalled.destroyed).toBe(true);
   });
 });
 

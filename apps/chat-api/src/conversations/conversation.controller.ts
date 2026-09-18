@@ -22,8 +22,12 @@ import {
   type SessionUser,
 } from '../auth/session/session.types';
 import {
+  releaseSseResponse,
   SSE_DRAIN_TIMEOUT_MS,
   SSE_KEEPALIVE_PAYLOAD,
+  SSE_RELEASE_TIMEOUT_MS,
+  SseReleaseOutcome,
+  SseResponseState,
   startSseResponse,
   waitForDrain,
   writeSseChunk,
@@ -63,6 +67,10 @@ import {
 import { SendCompletionDto } from './dto/send-completion.dto';
 import { StopCompletionDto } from './dto/stop-completion.dto';
 import { WatchConversationBodyDto } from './dto/watch-conversation.dto';
+import {
+  completionResponseTerminations,
+  CompletionResponseTermination,
+} from './streaming/completion-response-metrics';
 import {
   assertValidOptionalTimezone,
   TIMEZONE_HEADER,
@@ -295,12 +303,31 @@ export class ConversationController {
      * This generation is backend-owned and independent of the originating
      * browser connection (see backend-owned-generation-persistence): closing,
      * refreshing, or navigating away from this response must not abort the
-     * generation or stop the consuming loop below. `isResponseDetached` only
-     * suppresses further writes to the now-closed `res`.
+     * generation or stop the consuming loop below. `responseState` only
+     * decides what happens to `res`.
+     *
+     * The two non-streaming states are deliberately distinct, because their
+     * cleanup obligations are opposites: a `ClientClosed` response has
+     * already been destroyed by Node and must never be touched again, while
+     * a `BackpressureDetached` one is still open and this handler owns
+     * terminating it. Treating the second as the first is what used to leave
+     * a slow client's response open with a megabyte buffered after the
+     * handler had already returned.
+     *
+     * The initial value is widened deliberately: every transition happens
+     * inside a closure (the `'close'` listener, `detachForBackpressure`),
+     * which TypeScript's control-flow analysis does not track, so without it
+     * the type would stay narrowed to `Streaming` and the cleanup's
+     * comparisons would be rejected as impossible.
      */
-    let isResponseDetached = false;
+    let responseState = SseResponseState.Streaming as SseResponseState;
     const handleClose = () => {
-      isResponseDetached = true;
+      /*
+       * Unconditional: a disconnect is the strongest fact available about the
+       * response, and it can legitimately arrive while a detached response is
+       * being released.
+       */
+      responseState = SseResponseState.ClientClosed;
     };
     res.on('close', handleClose);
 
@@ -318,16 +345,31 @@ export class ConversationController {
      * before and only the SSE transport reports it.
      */
     let hasFailedBeforeStreamOpened = false;
+    const detachForBackpressure = () => {
+      /*
+       * Only from `Streaming`: a response the client already closed stays
+       * `ClientClosed`, which owes no cleanup.
+       */
+      if (responseState === SseResponseState.Streaming) {
+        responseState = SseResponseState.BackpressureDetached;
+      }
+    };
     try {
       for await (const chunk of stream) {
-        if (isResponseDetached) continue;
+        /*
+         * `continue`, never `break`: abandoning this loop injects `.return()`
+         * into the generator, whose own cleanup aborts the generation's
+         * `AbortController`. A slow or absent client must never cancel
+         * backend-owned work.
+         */
+        if (responseState !== SseResponseState.Streaming) continue;
         try {
           writeSseChunk(res, chunk);
           if (res.writableLength > SSE_COMPLETION_MAX_BUFFERED_BYTES) {
-            isResponseDetached = true;
+            detachForBackpressure();
           }
         } catch {
-          isResponseDetached = true;
+          detachForBackpressure();
         }
       }
     } catch (err) {
@@ -335,11 +377,31 @@ export class ConversationController {
       throw err;
     } finally {
       res.off('close', handleClose);
-      const shouldEndResponse =
-        !hasFailedBeforeStreamOpened &&
-        !isResponseDetached &&
-        !res.writableEnded;
-      if (shouldEndResponse) res.end();
+      /*
+       * Reached only after the generator has returned, which it does only
+       * after awaiting its own terminal save and registry release. So
+       * nothing below can alter what was persisted or how the generation
+       * finished — it decides the fate of the HTTP response alone.
+       */
+      if (responseState === SseResponseState.BackpressureDetached) {
+        const outcome = await releaseSseResponse(res, SSE_RELEASE_TIMEOUT_MS);
+        completionResponseTerminations.add(1, {
+          reason:
+            outcome === SseReleaseOutcome.Destroyed
+              ? CompletionResponseTermination.BackpressureDestroyed
+              : CompletionResponseTermination.BackpressureEnded,
+        });
+      } else if (responseState === SseResponseState.ClientClosed) {
+        completionResponseTerminations.add(1, {
+          reason: CompletionResponseTermination.ClientClosed,
+        });
+      } else if (!hasFailedBeforeStreamOpened && !res.writableEnded) {
+        res.end();
+        responseState = SseResponseState.Completed;
+        completionResponseTerminations.add(1, {
+          reason: CompletionResponseTermination.Completed,
+        });
+      }
     }
   }
 
@@ -427,7 +489,19 @@ export class ConversationController {
       attachment.emitter.off('chunk', onChunk);
       attachment.emitter.off('terminal', onTerminal);
       res.off('close', handleClose);
-      if (!res.writableEnded) res.end();
+      /*
+       * Fire-and-forget: `cleanup` runs from synchronous emitter callbacks,
+       * so it cannot await. `releaseSseResponse` never rejects, and the
+       * `isCleanedUp` guard above is what keeps a second cleanup — a late
+       * disconnect, the terminal event, shutdown — from re-ending or
+       * re-destroying this response.
+       *
+       * `res.end()` on its own would leave a subscriber whose peer stopped
+       * reading holding everything already queued for it (up to
+       * `SSE_ATTACH_MAX_BUFFERED_BYTES`), because `'finish'` never arrives;
+       * the bounded `destroy()` inside is what reclaims it.
+       */
+      void releaseSseResponse(res, SSE_RELEASE_TIMEOUT_MS);
     };
 
     const writeEvent = (payload: unknown): void => {
