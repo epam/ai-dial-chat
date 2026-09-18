@@ -195,6 +195,8 @@ export interface InputProps {
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
   sendTooltip?: string;
+  /** Tooltip for an empty composer (no text, attachments, or inline-start slot). Defaults to sendTooltip. */
+  emptyMessageTooltip?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
