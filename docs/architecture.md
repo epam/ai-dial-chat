@@ -323,7 +323,9 @@ Configured at startup:
   — off by default (`OTEL_SDK_DISABLED=true`); when enabled, adds a `traceparent` response header
   on traced routes and an optional dedicated Prometheus scrape listener (default `:9464/metrics`,
   independent of the main application port). Metrics cover HTTP transport outcomes, Nest handler
-  observations, generation relays, and process-local memory/SSE/registry gauges. HTTP lifecycle
+  observations, generation relays, auth/session decisions (login starts, callback and refresh
+  exchanges, authorization outcomes, logout), and process-local memory/SSE/registry gauges.
+  HTTP lifecycle
   observation uses a raw server request listener; it does not guarantee timing before all
   synchronous Express work. See [Observability](observability.md) for signal boundaries,
   configuration, and Grafana dashboard examples.

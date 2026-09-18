@@ -1,6 +1,5 @@
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input';
 
@@ -66,7 +65,7 @@ describe('Input — layout', () => {
     expectTextareaOwnsItsRow();
   });
 
-  it('does not reflow when the message grows to several lines', async () => {
+  it('does not reflow when the message grows to several lines', () => {
     render(<Input />);
     expectTextareaOwnsItsRow();
 
@@ -75,7 +74,7 @@ describe('Input — layout', () => {
     const addButton = screen.getByLabelText('Add');
     const controlsRow = getParent(addButton);
 
-    await userEvent.type(textarea, 'first line{shift>}{enter}{/shift}second');
+    fireEvent.change(textarea, { target: { value: 'first line\nsecond' } });
 
     expect((textarea as HTMLTextAreaElement).value).toContain('\n');
     /* Same nodes in the same relationship — nothing moved. */

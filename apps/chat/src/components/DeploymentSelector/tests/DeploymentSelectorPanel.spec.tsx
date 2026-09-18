@@ -17,6 +17,7 @@ beforeAll(() => {
 
 afterEach(() => {
   breakpoint.isMobile = false;
+  vi.useRealTimers();
 });
 
 const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({
@@ -183,7 +184,8 @@ describe('DeploymentSelectorPanel', () => {
     });
 
     it('adds the currently-selected item to favorites when its star is clicked', async () => {
-      const user = userEvent.setup();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ delay: null });
       const onToggleFavorite = vi.fn();
       renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
         selectedId: 'claude-opus',
@@ -254,7 +256,8 @@ describe('DeploymentSelectorPanel', () => {
     });
 
     it('allows adding a non-favorite pinned default to favorites', async () => {
-      const user = userEvent.setup();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ delay: null });
       const onToggleFavorite = vi.fn();
 
       renderPanel([], {
@@ -291,7 +294,8 @@ describe('DeploymentSelectorPanel', () => {
     });
 
     it('calls onToggleFavorite with false once the exit animation finishes', async () => {
-      const user = userEvent.setup();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ delay: null });
       const onToggleFavorite = vi.fn();
       renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
         onToggleFavorite,

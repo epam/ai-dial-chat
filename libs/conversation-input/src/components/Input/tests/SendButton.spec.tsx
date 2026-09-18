@@ -1,7 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SendButton } from '../Buttons/SendButton';
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('SendButton', () => {
   it('should call onSend when clicked', () => {
@@ -17,9 +21,11 @@ describe('SendButton', () => {
   });
 
   it('should show sendTooltip as a tooltip on hover', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ delay: null });
     render(<SendButton sendTooltip="Type a message first" />);
 
-    await userEvent.hover(screen.getByRole('button', { name: 'Send message' }));
+    await user.hover(screen.getByRole('button', { name: 'Send message' }));
 
     expect(await screen.findByText('Type a message first')).toBeTruthy();
   });

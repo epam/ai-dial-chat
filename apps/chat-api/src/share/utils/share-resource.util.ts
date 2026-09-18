@@ -52,6 +52,21 @@ export const toShareResourceUrl = (itemId: string): string =>
   isPromptResourceUrl(itemId) ? encodeDialResourcePath(itemId) : itemId;
 
 /*
+ * The inverse of `toShareResourceUrl`, applied to an itemId read back out of
+ * DIAL Core (e.g. an invitation's `resources[].url`). A prompt was stored
+ * percent-encoded when the share link was created, but the frontend's
+ * catalog item ids for prompts are the decoded, human-readable form
+ * (`buildPromptId`) — so an accepted prompt invitation that redirected with
+ * the encoded form matched nothing in the catalog and silently left the
+ * details panel closed. Every other kind's id is passed through unchanged,
+ * for the same reason `toShareResourceUrl` leaves it alone.
+ */
+export const toPublicItemId = (itemId: string): string =>
+  isPromptResourceUrl(itemId)
+    ? itemId.split('/').map(safeDecodeURIComponent).join('/')
+    : itemId;
+
+/*
  * The generated share link must point at a frontend route the SPA can
  * render (which then accepts the invitation and redirects into the shared
  * resource), not at DIAL Core's own `/v1/invitations/{id}` API path. Which

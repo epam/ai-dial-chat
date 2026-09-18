@@ -7,7 +7,7 @@
  */
 export interface AcceptInvitationResponseDto {
   /**
-   * Identifier (DIAL Core resource path) of the entity the invitation grants access to.
+   * Identifier (DIAL Core resource path) of the entity the invitation grants access to. A prompt path is returned decoded, matching the id its listing endpoints report.
    * @type {string}
    * @memberof AcceptInvitationResponseDto
    */

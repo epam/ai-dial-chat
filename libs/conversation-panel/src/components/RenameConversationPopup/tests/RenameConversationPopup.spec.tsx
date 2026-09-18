@@ -271,21 +271,21 @@ describe('RenameConversationPopup', () => {
     expect(screen.getByRole('alert').textContent).toContain('Failed to rename');
   });
 
-  it('Save button is disabled when title exceeds 255 UTF-8 bytes', async () => {
+  it('Save button is disabled when title exceeds 255 UTF-8 bytes', () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
-    await user.type(getInput(), 'a'.repeat(256));
+    fireEvent.change(getInput(), { target: { value: 'a'.repeat(256) } });
     expect(getSaveButton().disabled).toBe(true);
   });
 
-  it('shows byte-length validation error when title exceeds 255 UTF-8 bytes', async () => {
+  it('shows byte-length validation error when title exceeds 255 UTF-8 bytes', () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
-    await user.type(getInput(), 'a'.repeat(256));
+    fireEvent.change(getInput(), { target: { value: 'a'.repeat(256) } });
     expect(screen.getByRole('alert').textContent).toContain(
       DEFAULT_LABELS.nameTooLongError,
     );
   });
 
-  it('byte-length error takes precedence over the error prop', async () => {
+  it('byte-length error takes precedence over the error prop', () => {
     render(
       <RenameConversationPopup
         {...DEFAULT_PROPS}
@@ -293,7 +293,7 @@ describe('RenameConversationPopup', () => {
         error="API error message"
       />,
     );
-    await user.type(getInput(), 'a'.repeat(256));
+    fireEvent.change(getInput(), { target: { value: 'a'.repeat(256) } });
     expect(screen.getByRole('alert').textContent).toContain(
       DEFAULT_LABELS.nameTooLongError,
     );

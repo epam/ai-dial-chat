@@ -319,7 +319,8 @@ describe('PromptEditor', () => {
       'promptEditor.contentPlaceholder',
     );
     await user.clear(contentField);
-    await user.type(contentField, 'Summarize in three bullets:');
+    await user.click(contentField);
+    await user.paste('Summarize in three bullets:');
     await user.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() =>

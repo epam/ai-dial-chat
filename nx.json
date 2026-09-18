@@ -72,7 +72,7 @@
       "dependsOn": ["^build", "^typecheck"]
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "options": {
         "passWithNoTests": true
       }
