@@ -16,7 +16,7 @@ usable by any host whose skill storage differs from DIAL Core's.
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.7 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.9 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -37,7 +37,7 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.7`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.9`
 - `@epam/ai-dial-react-file-manager` `^0.3.0-dev.2`
 - `@epam/ai-dial-chat-shared` `*`
 

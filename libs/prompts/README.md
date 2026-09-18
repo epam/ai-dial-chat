@@ -30,7 +30,7 @@ import '@epam/ai-dial-prompts/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.7`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.9`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
