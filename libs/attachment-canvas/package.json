@@ -23,7 +23,7 @@
     "@tabler/icons-react": "^3.44.0",
     "react-json-view-lite": "^2.5.0",
     "react-syntax-highlighter": "^16.1.1",
-    "@epam/ai-dial-react-pdf-highlighter": "0.2.0",
+    "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.1",
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.19",
