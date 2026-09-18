@@ -42,6 +42,7 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
             size={18}
             stroke={DIAL_KIT_ICON_STROKE}
             className="shrink-0"
+            aria-hidden
           />
           <span className={labelClassName}>{label}</span>
         </button>

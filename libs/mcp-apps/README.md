@@ -82,6 +82,25 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
 />;
 ```
 
+#### Colors
+
+The preview's surface and its two borders are themable through
+`McpAppInlinePreviewColors`, applied as CSS custom properties on the preview's
+root. Each falls back to this design system's token, and then to the light
+literal, so passing nothing keeps the stock look:
+
+```tsx
+import type { McpAppInlinePreviewColors } from '@epam/ai-dial-mcp-apps';
+
+const colors: McpAppInlinePreviewColors = {
+  previewBackground: 'var(--my-surface)', // --bg-layer-raised
+  previewBorder: 'var(--my-border)', // --stroke-tertiary
+  previewHeaderBorder: 'var(--my-border-soft)', // --stroke-tertiary
+};
+
+<McpAppInlinePreview {...props} colors={colors} />;
+```
+
 ## Utilities
 
 - `findMcpAppForMessage(message, mcpAppTools)` — matches a message to the MCP App tool it called, or the deployment's first discovered tool.

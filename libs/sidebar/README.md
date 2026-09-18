@@ -110,6 +110,24 @@ These classes carry no declarations of their own, so they change nothing until
 you style them, and they are additive to the `className`, `headerClassName`, and
 `styles` props, which keep working exactly as before.
 
+`dial-sb-aside` is on the region, **not** on the wrapper around it. The wrapper
+is where `styles.className` lands, which is how the libs built on this panel
+mark themselves — [`@epam/ai-dial-attachment-canvas`](../attachment-canvas/README.md)
+with `dial-attachment-canvas-panel` and
+[`@epam/ai-dial-source-panel`](../source-panel/README.md) with
+`dial-source-panel-panel`. Size or position the wrapper, and descend from it to
+reach the region:
+
+```css
+.dial-attachment-canvas-panel {
+  inline-size: 720px;
+}
+
+.dial-attachment-canvas-panel .dial-sb-aside {
+  background: var(--bg-layer-base);
+}
+```
+
 ### Replacing fragile selectors
 
 | Instead of                                 | Use               |

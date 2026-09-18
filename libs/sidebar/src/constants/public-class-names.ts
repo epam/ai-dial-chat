@@ -11,7 +11,16 @@
  * renaming one or moving it to a different element — both are breaking changes.
  */
 export const SIDEBAR_CLASS = {
-  /** The panel's `<aside role="complementary">` element. */
+  /**
+   * The panel's `<aside role="complementary">` element — the region itself,
+   * not the wrapper around it. The wrapper is where `styles.className` lands,
+   * which is how the libs built on this panel mark themselves:
+   * `@epam/ai-dial-attachment-canvas` puts `dial-attachment-canvas-panel`
+   * there and `@epam/ai-dial-source-panel` puts `dial-source-panel-panel`. A
+   * host targeting one of those panels therefore descends from its class to
+   * this one (`.dial-attachment-canvas-panel .dial-sb-aside`), and sizes or
+   * positions the wrapper rather than the region.
+   */
   aside: 'dial-sb-aside',
   /** The 48 px header bar rendered by `Header`. */
   header: 'dial-sb-header',

@@ -464,17 +464,24 @@ describe('ConversationPanel', () => {
  */
 describe('ConversationPanel — public class names', () => {
   it('marks the new-chat button, and only it', () => {
-    const { container } = render(
-      <ConversationPanel {...BASE_PROPS} conversations={items} />,
-    );
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
 
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting a public dial-cp-* styling hook on a button with no distinguishing accessible name of its own
-    const buttons = container.querySelectorAll(
-      `.${CONVERSATION_PANEL_CLASS.newChatButton}`,
-    );
+    /*
+     * Located by its accessible name, which is the label the host passes —
+     * finding it by the class would pass even with the class on another node,
+     * which is the whole failure this test exists to catch.
+     */
+    expect(
+      screen.getByRole('button', { name: /New chat/ }).classList,
+    ).toContain(CONVERSATION_PANEL_CLASS.newChatButton);
 
-    expect(buttons).toHaveLength(1);
-    expect(buttons[0].textContent).toContain('New chat');
+    expect(
+      screen
+        .getAllByRole('button')
+        .filter((button) =>
+          button.classList.contains(CONVERSATION_PANEL_CLASS.newChatButton),
+        ),
+    ).toHaveLength(1);
   });
 
   it('marks the search region found by its role', () => {

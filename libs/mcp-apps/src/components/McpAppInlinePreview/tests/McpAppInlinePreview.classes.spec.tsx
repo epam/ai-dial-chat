@@ -95,4 +95,44 @@ describe('McpAppInlinePreview — public class names', () => {
     ).toBeTruthy();
     expect(closestWithClass(toolbar, MCP_APPS_CLASS.preview)).toBeTruthy();
   });
+
+  it('forwards every colour override as a CSS custom property', async () => {
+    render(
+      <McpAppInlinePreview
+        match={match}
+        cache={cache}
+        cacheKey="message-0"
+        hostAdapter={hostAdapter}
+        onExpand={vi.fn()}
+        expandAriaLabel="Expand"
+        reloadAriaLabel="Reload"
+        loadErrorLabel="Could not load the app"
+        colors={{
+          previewBackground: 'rgb(1, 2, 3)',
+          previewBorder: 'rgb(4, 5, 6)',
+          previewHeaderBorder: 'rgb(7, 8, 9)',
+        }}
+      />,
+    );
+
+    /*
+     * Each variable is read by a rule in the component's stylesheet, so a prop
+     * whose variable never reaches the DOM is a prop that silently does
+     * nothing — the dead-style failure the styling guide calls out.
+     */
+    const root = closestWithClass(
+      await screen.findByRole('toolbar', { name: 'MCP app actions' }),
+      MCP_APPS_CLASS.preview,
+    ) as HTMLElement;
+
+    expect(root.style.getPropertyValue('--mcpapp-preview-bg')).toBe(
+      'rgb(1, 2, 3)',
+    );
+    expect(root.style.getPropertyValue('--mcpapp-preview-border')).toBe(
+      'rgb(4, 5, 6)',
+    );
+    expect(root.style.getPropertyValue('--mcpapp-preview-header-border')).toBe(
+      'rgb(7, 8, 9)',
+    );
+  });
 });

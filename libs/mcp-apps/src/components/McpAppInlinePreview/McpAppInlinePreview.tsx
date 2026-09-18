@@ -1,5 +1,6 @@
 import { McpAppCanvasRenderer } from '@epam/ai-dial-attachment-canvas';
 import type { McpAppDisplayMode } from '@epam/ai-dial-attachment-canvas';
+import { buildCssVars } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -19,10 +20,12 @@ import { useMcpAppInlinePreview } from '../../hooks/useMcpAppInlinePreview/useMc
 import {
   McpAppInlinePreviewStatus,
   type McpAppHostAdapter,
+  type McpAppInlinePreviewColors,
   type McpAppResponseCache,
   type McpAppToolCallSeed,
   type McpAppToolRef,
 } from '../../models/mcp-apps';
+import styles from './McpAppInlinePreview.module.scss';
 
 /** Props for the `McpAppInlinePreview` component. */
 export interface McpAppInlinePreviewProps {
@@ -46,6 +49,8 @@ export interface McpAppInlinePreviewProps {
   actionsGroupAriaLabel?: string;
   /** Message shown when the resource fails to load or the app fails to initialize. */
   loadErrorLabel: string;
+  /** Color overrides applied as CSS custom properties on the preview's root. */
+  colors?: McpAppInlinePreviewColors;
 }
 
 /**
@@ -70,6 +75,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   reloadAriaLabel,
   actionsGroupAriaLabel = 'MCP app actions',
   loadErrorLabel,
+  colors,
 }) => {
   /*
    * An app mounted in the compact preview can ask to go fullscreen via
@@ -88,6 +94,12 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     [onExpand],
   );
 
+  const cssVars = buildCssVars({
+    '--mcpapp-preview-bg': colors?.previewBackground,
+    '--mcpapp-preview-border': colors?.previewBorder,
+    '--mcpapp-preview-header-border': colors?.previewHeaderBorder,
+  });
+
   const { status, content, reload } = useMcpAppInlinePreview(
     match,
     toolCall,
@@ -103,9 +115,11 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
 
   return (
     <div
+      style={cssVars}
       className={mergeClasses(
         MCP_APPS_CLASS.preview,
-        'bg-layer-2 flex w-full min-w-0 flex-col overflow-hidden rounded-xl border border-tertiary',
+        styles.preview,
+        'flex w-full min-w-0 flex-col overflow-hidden rounded-xl border',
       )}
     >
       {/*
@@ -116,7 +130,8 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
       <div
         className={mergeClasses(
           MCP_APPS_CLASS.previewHeader,
-          'flex min-h-10 items-center justify-end border-b border-tertiary px-4 py-2',
+          styles.previewHeader,
+          'flex min-h-10 items-center justify-end border-b px-4 py-2',
         )}
       >
         <div
