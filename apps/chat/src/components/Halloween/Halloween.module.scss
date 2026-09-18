@@ -87,20 +87,6 @@
   }
 }
 
-@keyframes halloween-bat-drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  50% {
-    transform: translate3d(2.5rem, -0.75rem, 0) scale(1.1);
-  }
-
-  to {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
 @keyframes halloween-pumpkin-bob {
   from,
   to {
@@ -163,9 +149,19 @@
     infinite;
 }
 
-.bat {
-  animation: halloween-bat-drift var(--halloween-duration, 6s) ease-in-out
-    var(--halloween-delay, 0s) infinite;
+/*
+ * The perched spider. Creeping back is the slow default; the dash away is the
+ * fast override, so being startled reads as a scurry and the return as the
+ * spider thinking better of it.
+ */
+.cornerSpider {
+  transition: transform 1.3s cubic-bezier(0.33, 0, 0.24, 1);
+}
+
+.cornerSpiderFleeing {
+  transition-duration: 260ms;
+  transition-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1);
+  transform: translate3d(3.25rem, 2.25rem, 0) rotate(28deg);
 }
 
 .pumpkin {
@@ -177,9 +173,16 @@
   .spiderSwing,
   .ghost,
   .ghostBody,
-  .bat,
   .pumpkin {
     animation: none;
+  }
+
+  /* The dash is a transition, not an animation — hold the spider still
+     instead of teleporting it to the hiding spot. */
+  .cornerSpider,
+  .cornerSpiderFleeing {
+    transition: none;
+    transform: none;
   }
 
   /* Un-animated, the spiders would hang above the top edge; show them already

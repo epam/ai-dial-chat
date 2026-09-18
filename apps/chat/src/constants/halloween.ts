@@ -30,5 +30,8 @@ export const HALLOWEEN_SPIDER_COUNT = 9;
 /** Ghosts released per `HalloweenBurst.Ghost`, each on its own flight path. */
 export const HALLOWEEN_GHOST_COUNT = 7;
 
-/** Bats drifting above the empty-chat composer while the flag is on. */
-export const HALLOWEEN_DECOR_BAT_COUNT = 3;
+/**
+ * How long a corner spider stays in its hiding spot after the pointer
+ * startled it, before creeping back onto the web.
+ */
+export const HALLOWEEN_SPIDER_RETURN_MS = 2600;

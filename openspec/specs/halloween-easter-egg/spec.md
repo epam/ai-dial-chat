@@ -44,7 +44,9 @@ Both conversation inputs — `NewConversationComposer`'s `handleSend` and `Conve
 
 ### Requirement: The empty chat carries seasonal decoration with a pumpkin trigger
 
-While the flag is on, `NewConversationComposer` SHALL render `HalloweenDecor` inside its welcome-screen region: cobwebs pinned to the region's inline-start and inline-end top corners, `HALLOWEEN_DECOR_BAT_COUNT` drifting bats, and a pumpkin button. `HalloweenDecor` SHALL additionally render nothing of its own when the flag is off, so the call site needs no second gate.
+While the flag is on, `NewConversationComposer` SHALL render `HalloweenDecor` inside its welcome-screen region: a cobweb pinned to each of the region's inline-start and inline-end top corners with a spider perched on it, and a pumpkin button. `HalloweenDecor` SHALL additionally render nothing of its own when the flag is off, so the call site needs no second gate.
+
+The webs SHALL stay faint — they frame the screen rather than compete with it — and the faintness SHALL live on the web drawing, not on the corner wrapper, so the spiders keep their contrast.
 
 A single click on the pumpkin SHALL play the ghost celebration, and every further click SHALL play a freshly laid-out one — the gesture carries no hidden click count to discover.
 
@@ -65,7 +67,7 @@ Every celebration SHALL raise a success notification and SHALL clear itself afte
 #### Scenario: Nothing renders on the empty chat while the flag is off
 
 - **WHEN** the flag is `false`
-- **THEN** the empty-chat screen renders no cobwebs, bats, or pumpkin, and neither the decor nor the celebration layer is loaded
+- **THEN** the empty-chat screen renders no cobwebs, spiders, or pumpkin, and neither the decor nor the celebration layer is loaded
 
 ### Requirement: The ghost celebration is a flock of individuals, not one sprite
 
@@ -84,6 +86,19 @@ Offsets SHALL be expressed in `vw`/`vh` and passed as custom properties, so one 
 
 - **WHEN** a ghost celebration renders
 - **THEN** more than one silhouette is drawn, and no two consecutive ghosts share one
+
+### Requirement: A corner spider scurries away from the pointer
+
+Each corner spider SHALL dash out of the way when the pointer reaches it and SHALL creep back on its own after `HALLOWEEN_SPIDER_RETURN_MS`, without a second gesture. The dash SHALL be fast and the return slow, so being startled reads as a scurry and the return as the spider thinking better of it. Re-entering mid-dash SHALL restart the countdown rather than queue a second one, so the spider cannot be made to flicker. The two corners SHALL be independent: startling one SHALL NOT move the other.
+
+Only the spiders SHALL take pointer events back from the otherwise pointer-transparent decoration layer, so the rest of the corner stays click-through.
+
+The gesture is deliberately pointer-only and the spider stays `aria-hidden`: it accomplishes nothing, so a keyboard user is missing nothing, and making a decoration focusable inside a hidden layer would cost more than it gives. The dash is a transform transition rather than an animation, so `prefers-reduced-motion: reduce` SHALL hold the spider still rather than teleport it to the hiding spot.
+
+#### Scenario: The pointer reaches a corner spider
+
+- **WHEN** the flag is on and the pointer enters one corner spider
+- **THEN** that spider dashes to its hiding spot, the other corner's spider does not move, and after `HALLOWEEN_SPIDER_RETURN_MS` the first creeps back with no further input
 
 ### Requirement: The spider celebration abseils from the top edge
 
@@ -116,9 +131,9 @@ The pumpkin is discoverable — it sits on the empty-chat screen — while the p
 
 The easter egg SHALL persist nothing, read no storage, and issue no request; all of its state is in-memory and per-tab.
 
-**Accessibility:** The cobwebs, bats, and falling glyphs are decorative — they SHALL sit in `aria-hidden`, pointer-transparent layers, and the only announcement SHALL be the notification each celebration raises. The pumpkin SHALL be a labelled `GhostIconButton` kept outside the `aria-hidden` layer, so it stays focusable and is never an unreachable control inside a hidden subtree. The celebration layer SHALL be portaled to `document.body` so no scroll container clips it.
+**Accessibility:** The cobwebs, the corner spiders, and everything either celebration draws are decorative — they SHALL sit in `aria-hidden` layers that take no pointer events beyond the corner spiders' own hover target, and the only announcement SHALL be the notification each celebration raises. The pumpkin SHALL be a labelled `GhostIconButton` kept outside the `aria-hidden` layer, so it stays focusable and is never an unreachable control inside a hidden subtree. The celebration layer SHALL be portaled to `document.body` so no scroll container clips it.
 
-**RTL:** The decoration SHALL use logical positioning so the corners and the ghost's flight direction follow the document's `dir`; the end-corner cobweb is a mirrored copy of the same drawing.
+**RTL:** The decoration SHALL use logical positioning so the corners follow the document's `dir`. A web is drawn from its own top-left, so whichever corner it lands in decides whether it is mirrored, and each corner SHALL carry the `rtl:` counterpart that keeps its dense end in the screen corner. The mirror SHALL take the perched spider with it, so it flees outward along its own web without a second set of offsets.
 
 **Reduced motion:** Every animation the feature adds SHALL be suppressed under `prefers-reduced-motion: reduce`, resolving to a static frame rather than to an empty screen. Because an un-animated ghost would otherwise sit at the layer's origin with the rest of the flock stacked on top of it, each one SHALL carry a spread-out resting position used in that state; an un-animated spider SHALL likewise render already paid out on its thread rather than parked above the top edge.
 

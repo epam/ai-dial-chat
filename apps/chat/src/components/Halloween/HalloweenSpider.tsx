@@ -8,12 +8,14 @@ interface Props {
 
 /**
  * A single decorative spider, drawn inline so it inherits the theme's tokens
- * and needs no asset request. Hangs head-up at the bottom of its thread — see
- * `HalloweenBurstOverlay`, which owns the thread and the drop animation, and
- * marks the whole layer `aria-hidden`.
+ * and needs no asset request. Hangs head-up, which suits both places it is
+ * used: the bottom of an abseiling thread in `HalloweenBurstOverlay`, and
+ * perched on a corner cobweb in `HalloweenDecor`.
  *
- * Body and legs use control tokens rather than a literal grey, so the spider
- * keeps its contrast when the surface flips between the light and dark theme.
+ * The legs are two-segment polylines with the knee above the body, which is
+ * what reads as a spider rather than a sun; body and legs use control tokens
+ * rather than a literal grey, so it keeps its contrast when the surface flips
+ * between the light and dark theme.
  */
 const HalloweenSpider: FC<Props> = ({ className }) => (
   <svg
@@ -25,22 +27,45 @@ const HalloweenSpider: FC<Props> = ({ className }) => (
     <g
       className="stroke-primary"
       fill="none"
-      strokeWidth="1.4"
+      strokeWidth="1.3"
       strokeLinecap="round"
+      strokeLinejoin="round"
     >
-      <path d="M13 14 Q6 10 3 15" />
-      <path d="M13 17 Q5 16 1 22" />
-      <path d="M13 20 Q6 22 4 28" />
-      <path d="M14 23 Q10 28 9 32" />
-      <path d="M27 14 Q34 10 37 15" />
-      <path d="M27 17 Q35 16 39 22" />
-      <path d="M27 20 Q34 22 36 28" />
-      <path d="M26 23 Q30 28 31 32" />
+      <path d="M13.5 13 L7 7.5 L2.5 11" />
+      <path d="M13 16.5 L5.5 13.5 L0.8 17.5" />
+      <path d="M13 20 L5.5 20.5 L1.5 25" />
+      <path d="M14 23.5 L8.5 26 L6 31" />
+      <path d="M26.5 13 L33 7.5 L37.5 11" />
+      <path d="M27 16.5 L34.5 13.5 L39.2 17.5" />
+      <path d="M27 20 L34.5 20.5 L38.5 25" />
+      <path d="M26 23.5 L31.5 26 L34 31" />
     </g>
-    <ellipse cx="20" cy="19" rx="7" ry="8" className="fill-control-inverted" />
-    <circle cx="20" cy="9.5" r="4.5" className="fill-control-inverted" />
-    <circle cx="18" cy="8.5" r="1.1" className="fill-control-permanent" />
-    <circle cx="22" cy="8.5" r="1.1" className="fill-control-permanent" />
+    <ellipse
+      cx="20"
+      cy="20"
+      rx="7.5"
+      ry="8"
+      className="fill-control-inverted"
+    />
+    {/* A pale hourglass marking and a highlight, so the abdomen is not a
+        featureless blob at the size this renders. */}
+    <path
+      d="M17.5 16 L22.5 16 L18.5 20 L22.5 24 L17.5 24 L21.5 20 Z"
+      className="fill-control-permanent opacity-40"
+    />
+    <ellipse
+      cx="17.4"
+      cy="16.4"
+      rx="1.8"
+      ry="2.4"
+      transform="rotate(-25 17.4 16.4)"
+      className="fill-control-permanent opacity-25"
+    />
+    <circle cx="20" cy="10" r="4.8" className="fill-control-inverted" />
+    <circle cx="18" cy="8.8" r="1.2" className="fill-control-permanent" />
+    <circle cx="22" cy="8.8" r="1.2" className="fill-control-permanent" />
+    <circle cx="16.6" cy="10.8" r="0.7" className="fill-control-permanent" />
+    <circle cx="23.4" cy="10.8" r="0.7" className="fill-control-permanent" />
   </svg>
 );
 

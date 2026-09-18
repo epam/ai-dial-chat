@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { HALLOWEEN_DECOR_BAT_COUNT } from '../../../constants/halloween';
+import { HALLOWEEN_SPIDER_RETURN_MS } from '../../../constants/halloween';
 import { useHalloween } from '../../../context/HalloweenContext';
 import { HalloweenBurst } from '../../../types/halloween';
 import HalloweenDecor from '../HalloweenDecor';
@@ -25,6 +25,20 @@ const clickPumpkin = () =>
     screen.getByRole('button', { name: 'halloween.pumpkinLabel' }),
   );
 
+/*
+ * The decoration is inline SVG with no accessible name, so no Testing Library
+ * query can reach it — and that unreachability is the point.
+ */
+const queryDrawings = () =>
+  // eslint-disable-next-line testing-library/no-node-access
+  document.body.querySelectorAll('svg');
+
+/* The spider sits in the one element that takes pointer events back from the
+   decoration layer. */
+const queryCornerSpiders = () =>
+  // eslint-disable-next-line testing-library/no-node-access
+  document.body.querySelectorAll<HTMLElement>('.pointer-events-auto');
+
 describe('HalloweenDecor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,18 +60,50 @@ describe('HalloweenDecor', () => {
     ).not.toBeNull();
   });
 
-  it('keeps the cobwebs and bats out of the accessibility tree', () => {
+  it('hangs a web and a spider in each top corner', () => {
     mockHalloween(true);
     render(<HalloweenDecor />);
 
-    const bats = screen.getAllByText('🦇');
-    expect(bats).toHaveLength(HALLOWEEN_DECOR_BAT_COUNT);
-    /* The `aria-hidden` wrapper is the point of the assertion, and no Testing
-       Library query can reach a node *because* it is hidden. */
-    bats.forEach((bat) =>
+    /* Two webs and two spiders. */
+    expect(queryDrawings()).toHaveLength(4);
+    expect(queryCornerSpiders()).toHaveLength(2);
+  });
+
+  it('keeps the decoration out of the accessibility tree', () => {
+    mockHalloween(true);
+    render(<HalloweenDecor />);
+
+    queryDrawings().forEach((drawing) =>
       // eslint-disable-next-line testing-library/no-node-access
-      expect(bat.closest('[aria-hidden="true"]')).not.toBeNull(),
+      expect(drawing.closest('[aria-hidden="true"]')).not.toBeNull(),
     );
+  });
+
+  it('sends a corner spider scurrying when the pointer reaches it', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mockHalloween(true);
+    render(<HalloweenDecor />);
+    const [spider] = queryCornerSpiders();
+    const restingClasses = spider.className;
+
+    await userEvent.hover(spider);
+    expect(spider.className).not.toBe(restingClasses);
+
+    /* …and creeps back on its own, without a second gesture. */
+    vi.advanceTimersByTime(HALLOWEEN_SPIDER_RETURN_MS);
+    await waitFor(() => expect(spider.className).toBe(restingClasses));
+    vi.useRealTimers();
+  });
+
+  it('startles each corner spider independently', async () => {
+    mockHalloween(true);
+    render(<HalloweenDecor />);
+    const [first, second] = queryCornerSpiders();
+    const secondAtRest = second.className;
+
+    await userEvent.hover(first);
+
+    expect(second.className).toBe(secondAtRest);
   });
 
   it('releases the ghosts on a single click', async () => {
