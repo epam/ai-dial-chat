@@ -1,7 +1,10 @@
 /** Which celebration a Halloween easter-egg trigger plays. */
 export enum HalloweenBurst {
-  /** Candy and pumpkins fall down the viewport. Triggered by the secret phrase. */
-  Treats = 'treats',
+  /**
+   * Spiders abseil from the top edge, sway on their threads, and climb back
+   * up. Triggered by the secret phrase — the trick half of the bargain.
+   */
+  Spiders = 'spiders',
   /** A flock of ghosts drifts across the viewport. Triggered by the pumpkin. */
   Ghost = 'ghost',
 }

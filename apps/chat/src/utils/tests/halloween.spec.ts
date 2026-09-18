@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   HALLOWEEN_GHOST_COUNT,
-  HALLOWEEN_TREAT_COUNT,
+  HALLOWEEN_SPIDER_COUNT,
 } from '../../constants/halloween';
 import { HalloweenGhostVariant } from '../../types/halloween';
 import {
   buildHalloweenGhostFlight,
-  buildHalloweenTreats,
+  buildHalloweenSpiderDrop,
   isHalloweenSecretPhrase,
 } from '../halloween';
 
@@ -32,14 +32,39 @@ describe('isHalloweenSecretPhrase', () => {
   });
 });
 
-describe('buildHalloweenTreats', () => {
-  it('lays out the configured number of glyphs', () => {
-    expect(buildHalloweenTreats()).toHaveLength(HALLOWEEN_TREAT_COUNT);
+describe('buildHalloweenSpiderDrop', () => {
+  const readVar = (drop: { style: object }, name: string) =>
+    (drop.style as Record<string, string>)[name];
+
+  it('lays out the configured number of spiders', () => {
+    expect(buildHalloweenSpiderDrop()).toHaveLength(HALLOWEEN_SPIDER_COUNT);
   });
 
-  it('cycles through every glyph', () => {
-    const glyphs = new Set(buildHalloweenTreats().map((treat) => treat.glyph));
-    expect(glyphs.size).toBeGreaterThan(1);
+  it('gives every spider its own column, left to right', () => {
+    const columns = buildHalloweenSpiderDrop().map((drop) =>
+      Number.parseFloat(readVar(drop, '--spider-x')),
+    );
+
+    expect(new Set(columns).size).toBe(HALLOWEEN_SPIDER_COUNT);
+    columns.slice(1).forEach((column, index) => {
+      expect(column).toBeGreaterThan(columns[index]);
+    });
+    /* Inside the viewport: a thread anchored off-screen never shows. */
+    columns.forEach((column) => {
+      expect(column).toBeGreaterThanOrEqual(0);
+      expect(column).toBeLessThan(100);
+    });
+  });
+
+  it('varies thread length, size and pace between spiders', () => {
+    const drop = buildHalloweenSpiderDrop();
+
+    (
+      ['--spider-depth', '--spider-scale', '--spider-duration'] as const
+    ).forEach((name) => {
+      const values = new Set(drop.map((spider) => readVar(spider, name)));
+      expect(values.size).toBeGreaterThan(1);
+    });
   });
 });
 

@@ -4,23 +4,40 @@
  * `prefers-reduced-motion: reduce` — see the block at the bottom.
  */
 
-@keyframes halloween-fall {
+/*
+ * The abseil. The element is as tall as the thread is long and starts fully
+ * above the viewport, so translating it down by its own height pays the
+ * thread out from the top edge — the anchor never moves, which is what makes
+ * it read as a thread rather than a falling stick. It hangs through the
+ * middle of the cycle, then climbs back out the way it came.
+ */
+@keyframes halloween-spider-drop {
+  0% {
+    transform: translate3d(0, -100%, 0);
+  }
+
+  32% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  68% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(0, -100%, 0);
+  }
+}
+
+/* Pivots at the top of the thread, so the spider swings like the weight on a
+   pendulum instead of sliding sideways. */
+@keyframes halloween-spider-sway {
   from {
-    opacity: 0;
-    transform: translate3d(0, -12vh, 0) rotate(0deg);
-  }
-
-  10% {
-    opacity: 1;
-  }
-
-  90% {
-    opacity: 1;
+    transform: rotate(calc(var(--spider-sway) * -1));
   }
 
   to {
-    opacity: 0;
-    transform: translate3d(var(--halloween-drift, 0), 112vh, 0) rotate(360deg);
+    transform: rotate(var(--spider-sway));
   }
 }
 
@@ -95,12 +112,34 @@
   }
 }
 
-.treat {
+.spiderDrop {
   position: absolute;
   inset-block-start: 0;
-  inset-inline-start: var(--halloween-x, 50%);
-  animation: halloween-fall var(--halloween-duration, 3.5s) linear
-    var(--halloween-delay, 0s) both;
+  inset-inline-start: var(--spider-x, 50%);
+  height: var(--spider-depth, 40vh);
+  will-change: transform;
+  animation: halloween-spider-drop var(--spider-duration, 5s)
+    cubic-bezier(0.45, 0, 0.55, 1) var(--spider-delay, 0s) both;
+}
+
+.spiderSwing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  transform-origin: top center;
+  animation: halloween-spider-sway var(--spider-sway-duration, 2.4s) ease-in-out
+    infinite alternate;
+}
+
+.spiderThread {
+  flex: 1;
+  width: 1px;
+}
+
+.spiderBody {
+  transform: scale(var(--spider-scale, 1));
+  transform-origin: top center;
 }
 
 /*
@@ -134,7 +173,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .treat,
+  .spiderDrop,
+  .spiderSwing,
   .ghost,
   .ghostBody,
   .bat,
@@ -142,10 +182,10 @@
     animation: none;
   }
 
-  /* Without the fall, a treat would otherwise sit frozen at the very top. */
-  .treat {
-    inset-block-start: 40%;
-    opacity: 1;
+  /* Un-animated, the spiders would hang above the top edge; show them already
+     paid out, which is the state the descent was heading for anyway. */
+  .spiderDrop {
+    transform: translate3d(0, 0, 0);
   }
 
   /* Un-animated, a ghost would sit stacked at the layer's origin; park the

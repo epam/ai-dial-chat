@@ -1,13 +1,15 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { HalloweenBurst } from '../../types/halloween';
 import {
   buildHalloweenGhostFlight,
-  buildHalloweenTreats,
+  buildHalloweenSpiderDrop,
 } from '../../utils/halloween';
 import styles from './Halloween.module.scss';
 import HalloweenGhost from './HalloweenGhost';
+import HalloweenSpider from './HalloweenSpider';
 
 interface Props {
   /** Which celebration to play. */
@@ -28,8 +30,8 @@ const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
    * Laid out once per burst. The layer re-renders on every ancestor state
    * change, and re-rolling the paths would restart every flight mid-air.
    */
-  const treats = useMemo(
-    () => (isGhostFlight ? [] : buildHalloweenTreats()),
+  const spiders = useMemo(
+    () => (isGhostFlight ? [] : buildHalloweenSpiderDrop()),
     [isGhostFlight],
   );
   const ghosts = useMemo(
@@ -43,7 +45,7 @@ const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
       className="pointer-events-none fixed inset-0 z-[70] select-none overflow-hidden"
     >
       {/* Index is the identity in both lists: each is built once per burst and
-          never reordered, and glyphs and variants repeat. */}
+          never reordered, and the drawings repeat. */}
       {ghosts.map((ghost, index) => (
         <span key={index} className={styles.ghost} style={ghost.style}>
           <HalloweenGhost
@@ -52,9 +54,17 @@ const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
           />
         </span>
       ))}
-      {treats.map((treat, index) => (
-        <span key={index} className={styles.treat} style={treat.style}>
-          {treat.glyph}
+      {spiders.map((spider, index) => (
+        <span key={index} className={styles.spiderDrop} style={spider.style}>
+          <span className={styles.spiderSwing}>
+            <span
+              className={mergeClasses(
+                styles.spiderThread,
+                'bg-control-neutral-default',
+              )}
+            />
+            <HalloweenSpider className={styles.spiderBody} />
+          </span>
         </span>
       ))}
     </div>,

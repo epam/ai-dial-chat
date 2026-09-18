@@ -1498,8 +1498,8 @@
   },
   "halloween": {
     "toastTitle": "🎃 Happy Halloween!",
-    "treatsToastMessage": "No tricks here — help yourself to the candy.",
-    "ghostToastMessage": "You poked the pumpkin one time too many. Something woke up.",
+    "spidersToastMessage": "You asked for trick or treat. The house picked trick.",
+    "ghostToastMessage": "One tap and the whole haunt is awake. Now type \"{{phrase}}\" into the chat and see what comes down.",
     "pumpkinLabel": "Halloween pumpkin"
   }
 }

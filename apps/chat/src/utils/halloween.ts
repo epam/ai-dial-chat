@@ -2,8 +2,7 @@ import type { CSSProperties } from 'react';
 import {
   HALLOWEEN_GHOST_COUNT,
   HALLOWEEN_SECRET_PHRASE,
-  HALLOWEEN_TREAT_COUNT,
-  HALLOWEEN_TREAT_GLYPHS,
+  HALLOWEEN_SPIDER_COUNT,
 } from '../constants/halloween';
 import { HalloweenGhostVariant } from '../types/halloween';
 
@@ -29,29 +28,41 @@ export const isHalloweenSecretPhrase = (text: string): boolean =>
 const between = (min: number, max: number): number =>
   min + Math.random() * (max - min);
 
-/** One falling glyph of a `HalloweenBurst.Treats` celebration. */
-export interface HalloweenTreat {
-  glyph: string;
-  /** Custom properties consumed by `.treat` in `Halloween.module.scss`. */
+/** One abseiling spider of a `HalloweenBurst.Spiders` celebration. */
+export interface HalloweenSpiderDrop {
+  /** Custom properties consumed by `.spiderDrop` in `Halloween.module.scss`. */
   style: CSSProperties;
 }
 
 /**
- * Lays out one treats celebration. Called once per burst rather than per
- * render: the layer re-renders on every ancestor state change, and re-rolling
- * the offsets would restart each glyph's animation mid-fall.
+ * Lays out one drop. Each spider gets its own column, thread length, size,
+ * pace, sway and start delay, so they arrive as a scatter rather than a
+ * curtain. `--spider-depth` is both the thread's length and the distance the
+ * pair travels, which is what keeps the thread anchored to the top edge for
+ * the whole descent.
+ *
+ * Called once per burst rather than per render: the layer re-renders on every
+ * ancestor state change, and re-rolling the offsets would restart each
+ * spider's descent halfway down.
  */
-export const buildHalloweenTreats = (): HalloweenTreat[] =>
-  Array.from({ length: HALLOWEEN_TREAT_COUNT }, (_, index) => ({
-    glyph: HALLOWEEN_TREAT_GLYPHS[index % HALLOWEEN_TREAT_GLYPHS.length],
-    style: {
-      '--halloween-x': `${Math.round(between(0, 96))}%`,
-      '--halloween-delay': `${between(0, 1.4).toFixed(2)}s`,
-      '--halloween-duration': `${between(2.8, 4.4).toFixed(2)}s`,
-      '--halloween-drift': `${Math.round(between(-60, 60))}px`,
-      fontSize: `${between(1.25, 2.25).toFixed(2)}rem`,
-    } as CSSProperties,
-  }));
+export const buildHalloweenSpiderDrop = (): HalloweenSpiderDrop[] =>
+  Array.from({ length: HALLOWEEN_SPIDER_COUNT }, (_, index) => {
+    /* One spider per column, jittered inside it, so nine threads spread
+       across the viewport instead of clumping wherever chance puts them. */
+    const columnWidth = 92 / HALLOWEEN_SPIDER_COUNT;
+
+    return {
+      style: {
+        '--spider-x': `${(4 + index * columnWidth + between(0, columnWidth * 0.6)).toFixed(1)}%`,
+        '--spider-depth': `${between(18, 72).toFixed(1)}vh`,
+        '--spider-scale': between(0.6, 1.25).toFixed(2),
+        '--spider-sway': `${between(4, 11).toFixed(1)}deg`,
+        '--spider-sway-duration': `${between(1.8, 3.2).toFixed(2)}s`,
+        '--spider-duration': `${between(4.6, 6.4).toFixed(2)}s`,
+        '--spider-delay': `${between(0, 1.8).toFixed(2)}s`,
+      } as CSSProperties,
+    };
+  });
 
 const GHOST_VARIANTS = Object.values(HalloweenGhostVariant);
 

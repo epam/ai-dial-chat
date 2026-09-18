@@ -259,7 +259,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: false,
     critical: false,
     description:
-      'Client-visible switch for the Halloween easter egg in the chat app: seasonal decoration on the empty-chat screen, a pumpkin that releases a flock of drifting ghosts when clicked, and the secret phrase "trick or treat" in the conversation input, which rains candy instead of sending the message. Purely decorative — it gates no data, persists nothing, and changes no chat behavior; with the flag off the phrase is an ordinary message. Exposed to the frontend client-config endpoint (visibility: client) because it gates UI. Defaults to false so a deployment that configures nothing observes no change.',
+      'Client-visible switch for the Halloween easter egg in the chat app: seasonal decoration on the empty-chat screen, a pumpkin that releases a flock of drifting ghosts when clicked, and the secret phrase "trick or treat" in the conversation input, which drops a swarm of abseiling spiders instead of sending the message. Purely decorative — it gates no data, persists nothing, and changes no chat behavior; with the flag off the phrase is an ordinary message. Exposed to the frontend client-config endpoint (visibility: client) because it gates UI. Defaults to false so a deployment that configures nothing observes no change.',
     owner: 'chat-team',
     envVar: 'HALLOWEEN_ENABLED',
   },

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The seasonal Halloween easter egg in the chat app: what the `halloweenEnabled` feature flag turns on, the two gestures that trigger a celebration, and the guarantees that keep a decorative feature from affecting chat behaviour.
+The seasonal Halloween easter egg in the chat app: what the `halloweenEnabled` feature flag turns on, the two gestures that trigger a celebration — a click on the pumpkin for a flock of ghosts, the secret phrase for a drop of spiders — and the guarantees that keep a decorative feature from affecting chat behaviour.
 
 ## Requirements
 
@@ -35,7 +35,7 @@ Both conversation inputs — `NewConversationComposer`'s `handleSend` and `Conve
 #### Scenario: The phrase is sent from either input
 
 - **WHEN** the flag is on and the user sends exactly "trick or treat", in any casing or punctuation, from the empty-chat composer or from inside a conversation
-- **THEN** the treats celebration plays, the Halloween notification is raised, and no message is sent
+- **THEN** the spider drop plays, the Halloween notification is raised, and no message is sent
 
 #### Scenario: A message containing the phrase still sends
 
@@ -85,6 +85,33 @@ Offsets SHALL be expressed in `vw`/`vh` and passed as custom properties, so one 
 - **WHEN** a ghost celebration renders
 - **THEN** more than one silhouette is drawn, and no two consecutive ghosts share one
 
+### Requirement: The spider celebration abseils from the top edge
+
+`buildHalloweenSpiderDrop` SHALL lay out `HALLOWEEN_SPIDER_COUNT` spiders, one per column across the viewport and jittered inside it, so the drop spreads instead of clumping wherever chance puts it. Every spider SHALL get its own thread length, size, sway angle, sway pace, descent pace and start delay.
+
+Each spider SHALL descend from the viewport's top edge on a thread, hang and sway there, then climb back up the way it came, all within one animation cycle. The thread's anchor SHALL stay fixed at the top edge for the whole descent — the element is as tall as its thread and starts fully above the viewport, so translating it down by its own height pays the thread out rather than moving a rigid stick. The sway SHALL pivot at the top of the thread, so the spider swings like the weight on a pendulum rather than sliding sideways.
+
+The spider SHALL be drawn as inline SVG, not an emoji, with body and legs taking control tokens so it keeps its contrast when the surface flips between the light and dark theme.
+
+#### Scenario: Spiders spread across the viewport
+
+- **WHEN** a spider drop is laid out
+- **THEN** it contains `HALLOWEEN_SPIDER_COUNT` spiders in strictly left-to-right columns, every column inside the viewport, and thread length, size and pace differ between them
+
+#### Scenario: A spider leaves the way it came
+
+- **WHEN** a spider has finished descending and swaying
+- **THEN** it climbs back above the top edge, leaving nothing behind when the burst ends
+
+### Requirement: The ghost toast names the secret phrase
+
+The pumpkin is discoverable — it sits on the empty-chat screen — while the phrase is not, and nothing else on screen hints that one exists. The ghost celebration's notification SHALL therefore name `HALLOWEEN_SECRET_PHRASE`, interpolated into the message rather than written into the locale string, so the two cannot drift apart.
+
+#### Scenario: Clicking the pumpkin reveals the phrase
+
+- **WHEN** the flag is on and the user clicks the pumpkin
+- **THEN** the notification's message is resolved with the secret phrase as its interpolation argument
+
 ### Requirement: The easter egg is inert, accessible, and motion-safe
 
 The easter egg SHALL persist nothing, read no storage, and issue no request; all of its state is in-memory and per-tab.
@@ -93,11 +120,11 @@ The easter egg SHALL persist nothing, read no storage, and issue no request; all
 
 **RTL:** The decoration SHALL use logical positioning so the corners and the ghost's flight direction follow the document's `dir`; the end-corner cobweb is a mirrored copy of the same drawing.
 
-**Reduced motion:** Every animation the feature adds SHALL be suppressed under `prefers-reduced-motion: reduce`, resolving to a static frame rather than to an empty screen. Because an un-animated ghost would otherwise sit at the layer's origin with the rest of the flock stacked on top of it, each one SHALL carry a spread-out resting position used in that state.
+**Reduced motion:** Every animation the feature adds SHALL be suppressed under `prefers-reduced-motion: reduce`, resolving to a static frame rather than to an empty screen. Because an un-animated ghost would otherwise sit at the layer's origin with the rest of the flock stacked on top of it, each one SHALL carry a spread-out resting position used in that state; an un-animated spider SHALL likewise render already paid out on its thread rather than parked above the top edge.
 
-**i18n impact:** Four keys under `halloween.*` — the shared toast title, one message per celebration, and the pumpkin's accessible name.
+**i18n impact:** Four keys under `halloween.*` — the shared toast title, one message per celebration (the ghost one interpolating `{{phrase}}`), and the pumpkin's accessible name.
 
 #### Scenario: A reduced-motion user still sees a celebration
 
 - **WHEN** the flag is on, the user's system asks for reduced motion, and a celebration is triggered
-- **THEN** the notification is raised and the glyphs render in static, spread-out positions instead of animating, with nothing left frozen off-screen or stacked at the origin
+- **THEN** the notification is raised and the drawings render in static, spread-out, on-screen positions instead of animating, with nothing left frozen off-screen or stacked at the origin

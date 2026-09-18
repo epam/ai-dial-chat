@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import {
   HALLOWEEN_BURST_DURATION_MS,
   HALLOWEEN_FEATURE_FLAG,
+  HALLOWEEN_SECRET_PHRASE,
 } from '../constants/halloween';
 import { HalloweenI18nKeys } from '../constants/translation-keys';
 import { HalloweenBurst } from '../types/halloween';
@@ -35,7 +36,7 @@ interface HalloweenContextType {
   celebrate: (burst: HalloweenBurst) => void;
   /**
    * Whether `text` is the easter egg's secret phrase, in which case the
-   * treats burst has been started and the caller SHALL NOT send the message.
+   * spider drop has been started and the caller SHALL NOT send the message.
    * Always `false` while disabled, so a deployment without the flag sends
    * "trick or treat" as an ordinary message.
    */
@@ -101,13 +102,16 @@ export const HalloweenProvider: FC<Props> = ({ children }) => {
       if (!isEnabled) return;
       tokenRef.current += 1;
       setActive({ burst, token: tokenRef.current });
+      /* The ghost toast doubles as the only signpost to the other half of the
+         easter egg: nothing else on screen hints that a phrase exists. */
+      const isGhostFlight = burst === HalloweenBurst.Ghost;
       showSuccessNotification({
         title: t(HalloweenI18nKeys.ToastTitle),
-        message: t(
-          burst === HalloweenBurst.Ghost
-            ? HalloweenI18nKeys.GhostToastMessage
-            : HalloweenI18nKeys.TreatsToastMessage,
-        ),
+        message: isGhostFlight
+          ? t(HalloweenI18nKeys.GhostToastMessage, {
+              phrase: HALLOWEEN_SECRET_PHRASE,
+            })
+          : t(HalloweenI18nKeys.SpidersToastMessage),
       });
     },
     [isEnabled, showSuccessNotification, t],
@@ -116,7 +120,7 @@ export const HalloweenProvider: FC<Props> = ({ children }) => {
   const consumeSecretPhrase = useCallback(
     (text: string) => {
       if (!isEnabled || !isHalloweenSecretPhrase(text)) return false;
-      celebrate(HalloweenBurst.Treats);
+      celebrate(HalloweenBurst.Spiders);
       return true;
     },
     [isEnabled, celebrate],

@@ -11,7 +11,7 @@
 export const HALLOWEEN_FEATURE_FLAG = 'halloweenEnabled';
 
 /**
- * The phrase that triggers `HalloweenBurst.Treats` when typed into the
+ * The phrase that triggers `HalloweenBurst.Spiders` when typed into the
  * conversation input, already normalized the way
  * `isHalloweenSecretPhrase` normalizes its input.
  */
@@ -24,11 +24,8 @@ export const HALLOWEEN_SECRET_PHRASE = 'trick or treat';
  */
 export const HALLOWEEN_BURST_DURATION_MS = 9000;
 
-/** Glyphs rained by `HalloweenBurst.Treats`, cycled in order. */
-export const HALLOWEEN_TREAT_GLYPHS = ['🎃', '👻', '🦇', '🍬', '🕷️'] as const;
-
-/** Falling glyphs per `HalloweenBurst.Treats`. */
-export const HALLOWEEN_TREAT_COUNT = 24;
+/** Spiders dropped per `HalloweenBurst.Spiders`, each on its own thread. */
+export const HALLOWEEN_SPIDER_COUNT = 9;
 
 /** Ghosts released per `HalloweenBurst.Ghost`, each on its own flight path. */
 export const HALLOWEEN_GHOST_COUNT = 7;

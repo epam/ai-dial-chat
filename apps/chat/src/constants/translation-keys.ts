@@ -1377,7 +1377,7 @@ export enum UsageI18nKeys {
 
 export enum HalloweenI18nKeys {
   ToastTitle = 'halloween.toastTitle',
-  TreatsToastMessage = 'halloween.treatsToastMessage',
+  SpidersToastMessage = 'halloween.spidersToastMessage',
   GhostToastMessage = 'halloween.ghostToastMessage',
   PumpkinLabel = 'halloween.pumpkinLabel',
 }
