@@ -625,6 +625,50 @@ describe('annotationToPdfCanvasContent', () => {
     expect(result?.highlights?.[0].bboxes[0].page).toBe(3);
     expect(result?.selectedHighlightId).toBe(result?.highlights?.[0].id);
   });
+  /*
+   * Issue #8907: two `cit` citations of one PDF page used to produce the same
+   * `selectedHighlightId` ('0', the position inside each single-annotation
+   * group), so the canvas received value-identical content and the preview
+   * never scrolled to the newly selected citation.
+   */
+  it('gives two cit citations of the same PDF page distinct selected highlight ids', () => {
+    const citation = (id: string, page: number, y1: number): Annotation => ({
+      target: { selector: { type: 'html_tag', tag: 'cit', id } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: { type: 'pdf_bbox', page, x1: 0, y1, x2: 10, y2: y1 + 10 },
+      },
+    });
+    const top = citation('c1', 4, 20);
+    const bottom = citation('c2', 4, 700);
+    const groups = groupAnnotations([top, bottom]);
+
+    const topContent = annotationToPdfCanvasContent(top, groups, resolvers);
+    const bottomContent = annotationToPdfCanvasContent(
+      bottom,
+      groups,
+      resolvers,
+    );
+
+    expect(topContent?.page).toBe(4);
+    expect(bottomContent?.page).toBe(4);
+    expect(topContent?.selectedHighlightId).not.toBe(
+      bottomContent?.selectedHighlightId,
+    );
+    expect(topContent?.selectedHighlightId).toBe(
+      topContent?.highlights?.[0].id,
+    );
+    expect(bottomContent?.selectedHighlightId).toBe(
+      bottomContent?.highlights?.[0].id,
+    );
+  });
+
   const makeAnnotation = (index: number, page: number): Annotation => ({
     index,
     body: {
@@ -845,6 +889,26 @@ describe('annotationToOoxmlCanvasContent', () => {
     end: 5,
     text: 'Hello',
     ...overrides,
+  });
+
+  it('keeps two ranges sharing one cit id on distinct highlights', () => {
+    const first = officeAnnotation(
+      'shared',
+      docxSelector({ start: 0, end: 5 }),
+    );
+    const second = officeAnnotation(
+      'shared',
+      docxSelector({ start: 40, end: 60, text: 'later passage' }),
+    );
+    const result = annotationToOoxmlCanvasContent(
+      second,
+      [first, second],
+      resolvers,
+    );
+
+    expect(result?.highlights).toHaveLength(2);
+    expect(result?.highlights?.[0].id).not.toBe(result?.highlights?.[1].id);
+    expect(result?.selectedHighlightId).toBe(result?.highlights?.[1].id);
   });
 
   it('returns content with highlights and a selectedHighlightId present in highlights, for a DOCX citation', () => {
