@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
+import { type ReactNode, type FocusEventHandler } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   ScheduledTaskCreateFormProps,
@@ -129,24 +129,40 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     labelProps,
     value,
     onChange,
+    onBlur,
     placeholder,
+    disabled,
+    showTimezone,
   }: {
     id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
     value?: Date | string | null;
     onChange: (value: string | null) => void;
+    onBlur?: FocusEventHandler<HTMLInputElement>;
     placeholder?: string;
+    disabled?: boolean;
+    showTimezone?: boolean;
   }) => (
-    <label htmlFor={id}>
-      {labelProps?.label}
-      {labelProps?.required && ' *'}
-      <input
-        id={id}
-        placeholder={placeholder}
-        value={typeof value === 'string' ? value : (value?.toISOString() ?? '')}
-        onChange={(e) => onChange(e.target.value || null)}
-      />
-    </label>
+    /* The timezone hint renders outside the label, mirroring the kit's
+       trailing-edge adornment, so it does not pollute the input's
+       accessible name. */
+    <>
+      <label htmlFor={id}>
+        {labelProps?.label}
+        {labelProps?.required && ' *'}
+        <input
+          id={id}
+          placeholder={placeholder}
+          value={
+            typeof value === 'string' ? value : (value?.toISOString() ?? '')
+          }
+          onChange={(e) => onChange(e.target.value || null)}
+          onBlur={onBlur}
+          disabled={disabled}
+        />
+      </label>
+      {showTimezone && <span>(GMT+01:00) Europe/Berlin</span>}
+    </>
   ),
   Select: ({
     labelProps,
@@ -228,53 +244,60 @@ const baseValues: ScheduledTaskCreateFormValues = {
   prompt: '',
 };
 
+/* Full default props, overridable per test — also used directly by tests
+   that drive repeat switches through `rerender`. */
+const buildFormProps = (
+  overrides?: Partial<ScheduledTaskCreateFormProps>,
+): ScheduledTaskCreateFormProps => ({
+  labels: {
+    pageTitle: 'New task',
+    backButtonLabel: 'Back',
+    detailsSectionTitle: 'Details',
+    detailsSectionSubtitle: 'Basic info about this scheduled task',
+    configurationSectionTitle: 'Configuration',
+    configurationSectionSubtitle: 'Write custom instructions',
+    displayNameLabel: 'Name',
+    displayNameRequired: 'Name is required',
+    runAtLabel: 'Run at',
+    timeLabel: 'Time',
+    timeInvalidLabel: 'Enter a valid time',
+    repeatLabel: 'Repeat',
+    repeatOptions: [
+      { key: ScheduledTaskRepeat.OneTime, label: 'One-time' },
+      { key: ScheduledTaskRepeat.Hourly, label: 'Hourly' },
+      { key: ScheduledTaskRepeat.Daily, label: 'Daily' },
+      { key: ScheduledTaskRepeat.Weekly, label: 'Weekly' },
+      { key: ScheduledTaskRepeat.Monthly, label: 'Monthly' },
+    ],
+    dayOfWeekLabel: 'Day of week',
+    dayOfMonthLabel: 'Day of month',
+    minuteLabel: 'Minute',
+    startDateLabel: 'Start date',
+    startDatePlaceholder: 'Pick start date',
+    endDateLabel: 'End date',
+    endDatePlaceholder: 'Pick end date',
+    modelOrAgentLabel: 'Model or Agent',
+    descriptionLabel: 'Description',
+    instructionsLabel: 'Instructions',
+    cancelButtonLabel: 'Cancel',
+    createButtonLabel: 'Save',
+  },
+  values: baseValues,
+  errors: {},
+  modelSelector: <button type="button">Select Model or Agent</button>,
+  modelLabelId: 'scheduled-task-model-label',
+  onFieldChange: vi.fn(),
+  onBack: vi.fn(),
+  onCancel: vi.fn(),
+  onSubmit: vi.fn(),
+  ...overrides,
+});
+
 const renderForm = async (
   overrides?: Partial<ScheduledTaskCreateFormProps>,
 ) => {
   const view = render(
-    <ScheduledTaskCreateForm
-      labels={{
-        pageTitle: 'New task',
-        backButtonLabel: 'Back',
-        detailsSectionTitle: 'Details',
-        detailsSectionSubtitle: 'Basic info about this scheduled task',
-        configurationSectionTitle: 'Configuration',
-        configurationSectionSubtitle: 'Write custom instructions',
-        displayNameLabel: 'Name',
-        displayNameRequired: 'Name is required',
-        runAtLabel: 'Run at',
-        repeatLabel: 'Repeat',
-        repeatOptions: [
-          { key: ScheduledTaskRepeat.OneTime, label: 'One-time' },
-          { key: ScheduledTaskRepeat.Hourly, label: 'Hourly' },
-          { key: ScheduledTaskRepeat.Daily, label: 'Daily' },
-          { key: ScheduledTaskRepeat.Weekly, label: 'Weekly' },
-          { key: ScheduledTaskRepeat.Monthly, label: 'Monthly' },
-        ],
-        timeLabel: 'Time',
-        dayOfWeekLabel: 'Day of week',
-        dayOfMonthLabel: 'Day of month',
-        minuteLabel: 'Minute',
-        startDateLabel: 'Start date',
-        startDatePlaceholder: 'Pick start date',
-        endDateLabel: 'End date',
-        endDatePlaceholder: 'Pick end date',
-        modelOrAgentLabel: 'Model or Agent',
-        descriptionLabel: 'Description',
-        instructionsLabel: 'Instructions',
-        cancelButtonLabel: 'Cancel',
-        createButtonLabel: 'Save',
-      }}
-      values={baseValues}
-      errors={{}}
-      modelSelector={<button type="button">Select Model or Agent</button>}
-      modelLabelId="scheduled-task-model-label"
-      onFieldChange={vi.fn()}
-      onBack={vi.fn()}
-      onCancel={vi.fn()}
-      onSubmit={vi.fn()}
-      {...overrides}
-    />,
+    <ScheduledTaskCreateForm {...buildFormProps(overrides)} />,
   );
   await screen.findAllByRole('textbox');
   return view;
@@ -305,6 +328,122 @@ describe('ScheduledTaskCreateForm', () => {
     expect(
       screen.getByRole('button', { name: 'Custom model trigger' }),
     ).toBeTruthy();
+  });
+
+  it('renders the lib-owned time field with the required label and timezone hint', async () => {
+    await renderForm();
+
+    expect(screen.getByLabelText('Time *')).toBeTruthy();
+    expect(screen.getByText('(GMT+01:00) Europe/Berlin')).toBeTruthy();
+  });
+
+  it('reports a complete time through onFieldChange', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({ onFieldChange });
+
+    fireEvent.change(screen.getByLabelText('Time *'), {
+      target: { value: '10:30' },
+    });
+
+    expect(onFieldChange).toHaveBeenCalledWith('time', '10:30');
+  });
+
+  it('shows the blur error under the time field for an incomplete draft', async () => {
+    await renderForm();
+
+    /* The real kit input keeps an internal draft that diverges from the
+       controlled value (it only reports complete `HH:mm` through onChange).
+       Set the draft directly — a fireEvent.change would be reverted by the
+       controlled re-render before blur reads it. */
+    const timeInput = screen.getByLabelText('Time *') as HTMLInputElement;
+    timeInput.value = '9:5';
+    fireEvent.blur(timeInput);
+
+    expect(screen.getByText('Enter a valid time')).toBeTruthy();
+  });
+
+  it('clears the blur error once a complete value is entered', async () => {
+    await renderForm();
+
+    const timeInput = screen.getByLabelText('Time *') as HTMLInputElement;
+    timeInput.value = '9:5';
+    fireEvent.blur(timeInput);
+    expect(screen.getByText('Enter a valid time')).toBeTruthy();
+
+    fireEvent.change(timeInput, { target: { value: '09:30' } });
+
+    expect(screen.queryByText('Enter a valid time')).toBeNull();
+  });
+
+  it('disables Save while the time draft is invalid', async () => {
+    await renderForm({
+      values: {
+        ...baseValues,
+        displayName: 'Daily summary',
+        modelId: 'gpt-4o',
+        prompt: 'Summarize',
+      },
+    });
+    expect(getSaveButtons().every((button) => !button.disabled)).toBe(true);
+
+    const timeInput = screen.getByLabelText('Time *') as HTMLInputElement;
+    timeInput.value = '9:5';
+    fireEvent.blur(timeInput);
+    expect(getSaveButtons().every((button) => button.disabled)).toBe(true);
+
+    fireEvent.change(timeInput, { target: { value: '09:30' } });
+    expect(getSaveButtons().every((button) => !button.disabled)).toBe(true);
+  });
+
+  it('clears a stale blur error when repeat hides and re-shows the time field', async () => {
+    const validValues = {
+      ...baseValues,
+      displayName: 'Daily summary',
+      modelId: 'gpt-4o',
+      prompt: 'Summarize',
+    };
+    const view = await renderForm({ values: validValues });
+
+    const timeInput = screen.getByLabelText('Time *') as HTMLInputElement;
+    timeInput.value = '9:5';
+    fireEvent.blur(timeInput);
+    expect(getSaveButtons().every((button) => button.disabled)).toBe(true);
+
+    /* A repeat switch hides the field (the host updates values); switching
+       back re-shows it — the stale error must not survive the round trip. */
+    view.rerender(
+      <ScheduledTaskCreateForm
+        {...buildFormProps({
+          values: { ...validValues, repeat: ScheduledTaskRepeat.Hourly },
+        })}
+      />,
+    );
+    view.rerender(
+      <ScheduledTaskCreateForm {...buildFormProps({ values: validValues })} />,
+    );
+
+    expect(screen.queryByText('Enter a valid time')).toBeNull();
+    expect(getSaveButtons().every((button) => !button.disabled)).toBe(true);
+  });
+
+  it('disables Save while the shown time field is empty', async () => {
+    const validValues = {
+      ...baseValues,
+      time: '',
+      displayName: 'Daily summary',
+      modelId: 'gpt-4o',
+      prompt: 'Summarize',
+    };
+    const view = await renderForm({ values: validValues });
+    expect(getSaveButtons().every((button) => button.disabled)).toBe(true);
+
+    /* A complete entry re-enables Save (the host updates values.time). */
+    view.rerender(
+      <ScheduledTaskCreateForm
+        {...buildFormProps({ values: { ...validValues, time: '09:30' } })}
+      />,
+    );
+    expect(getSaveButtons().every((button) => !button.disabled)).toBe(true);
   });
 
   it('wraps modelSelector with the required Model or Agent label', async () => {
@@ -577,7 +716,7 @@ describe('ScheduledTaskCreateForm', () => {
     expect(screen.getByText('End date')).toBeTruthy();
   });
 
-  it('renders the Time field when repeat is daily, weekly, or monthly', async () => {
+  it('renders the lib-owned time field only for time-based repeats', async () => {
     for (const repeat of [
       ScheduledTaskRepeat.Daily,
       ScheduledTaskRepeat.Weekly,
@@ -587,7 +726,19 @@ describe('ScheduledTaskCreateForm', () => {
         values: { ...baseValues, repeat },
       });
 
-      expect(screen.getByText('Time *')).toBeTruthy();
+      expect(screen.getByLabelText('Time *')).toBeTruthy();
+      unmount();
+    }
+
+    for (const repeat of [
+      ScheduledTaskRepeat.OneTime,
+      ScheduledTaskRepeat.Hourly,
+    ]) {
+      const { unmount } = await renderForm({
+        values: { ...baseValues, repeat },
+      });
+
+      expect(screen.queryByLabelText('Time *')).toBeNull();
       unmount();
     }
   });
@@ -599,15 +750,6 @@ describe('ScheduledTaskCreateForm', () => {
 
     expect(screen.getByText('Day of week *')).toBeTruthy();
     expect(screen.queryByText('Day of month')).toBeNull();
-  });
-
-  it('calls onFieldChange when the recurring Time calendar changes', async () => {
-    const onFieldChange = vi.fn();
-    await renderForm({ onFieldChange, values: { ...baseValues, time: '' } });
-
-    await userEvent.type(screen.getByLabelText('Time *'), '1');
-
-    expect(onFieldChange).toHaveBeenCalledWith('time', '1');
   });
 
   it('calls onFieldChange when the once Run at calendar changes', async () => {
