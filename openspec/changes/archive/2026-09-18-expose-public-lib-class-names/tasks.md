@@ -191,10 +191,29 @@ Depends on slice 2 (uses the same constants record).
       change's scope — and that hosts descend from `dial-cm-assistant-content pre`.
   - Verification: `npm run verify:changed` then `npm run validate:docs`
 
-## 7. Tailwind preset and host contract
+## 7. Tailwind preset and host contract — BUILT, THEN REVERTED. NOT DELIVERED.
 
 Independent of slices 2–6. Riskiest slice — it touches the config every project
 inherits, so it lands last and is verified against unchanged CSS output.
+
+> **Status: reverted before merge.** Every task below was completed and then undone
+> by `f5c6ce8ea4` ("revert(libs): keep the Tailwind theme in the repo-root config"),
+> so none of it is in `development`. There is no `libs/chat-shared/tailwind-preset.*`,
+> no `./tailwind-preset` export, no host-setup chapter in
+> `openspec/lib-styling-guide.md`, no Tailwind-pass subsection in
+> `docs/architecture.md`, and no "Tailwind setup" section in any library README. The
+> theme is still owned solely by the repo-root `tailwind.config.js`.
+>
+> The boxes stay ticked because they record work that was genuinely done; the heading
+> and this note record that it does not ship. The consequence is deliberate and
+> stated in the revert message: a host must still run Tailwind CSS 3 and scan each
+> package's `dist`, but the token theme this repo builds against is not published, so
+> the missing-utilities half of issue #8707 is **unanswered**. The public class names,
+> the other half, are unaffected.
+>
+> Because nothing here shipped, the `lib-host-tailwind-contract` delta spec is **not**
+> synced into `openspec/specs/` on archive. It is kept in this change as the record of
+> the analysis, to be reused when the utilities question is decided.
 
 - [x] 7.1 Move the theme from the repo-root `tailwind.config.js` into
       `libs/chat-shared/tailwind-preset.js` as a CommonJS module. It must contain no
@@ -270,9 +289,13 @@ inherits, so it lands last and is verified against unchanged CSS output.
 
 ## 9. Follow-ups — do not implement in this change
 
-- [ ] 9.1 File a `epam/ai-dial-ui-kit` issue for `dial-kit-dropdown-icon`,
+- [x] 9.1 File a `epam/ai-dial-ui-kit` issue for `dial-kit-dropdown-icon`,
       `dial-kit-dropdown-icon-caret`, `dial-kit-dropdown-list`, `dial-kit-menuitem`, and
       a class on the `MenuItemMark.Check` indicator.
+      **Delivered by the kit in `0.15.0-dev.7`**, which this repo already depends on:
+      all four names ship, plus `dial-kit-menuitem-check` for the indicator, exported
+      as `DIAL_KIT_CLASS`. `libs/conversation-input/README.md` points at
+      `DIAL_KIT_CLASS.menuItemCheck` instead of the `svg` descendant it first suggested.
 - [ ] 9.2 File a design request for the composer's desktop `flex-nowrap` action row
       (issue #8707's "ideal fix"), which needs design sign-off.
 - [ ] 9.3 Fix the three `openspec/config.yaml` `rules` entries whose unquoted `": "`
@@ -282,9 +305,13 @@ inherits, so it lands last and is verified against unchanged CSS output.
 - [ ] 9.4 Extend `scripts/validate-docs.mjs` to cross-check that every `dial-*` class
       asserted in a library's tests is documented in that library's README and vice
       versa, making the contract CI-enforced rather than review-enforced.
-- [ ] 9.5 Consider a public class for `MarkdownCodeBlock` in `libs/chat-shared`
+- [x] 9.5 Consider a public class for `MarkdownCodeBlock` in `libs/chat-shared`
       (issue #8707's `dial-cm-code-block`), which sits outside the five libraries in
-      this change.
+      this change. **Done in this change** — the stamping was widened from the five
+      libraries to all 25, so `chat-shared` ships `dial-chat-shared-code-block` (plus
+      `-code-block-header`, `-math-block`, `-table`, `-table-scroll`). The name follows
+      the directory-name grammar rather than the issue's `dial-cm-code-block`, because
+      the element lives in `chat-shared`, not `conversation-messages`.
 
 ## Notes on non-applicable conventions
 
