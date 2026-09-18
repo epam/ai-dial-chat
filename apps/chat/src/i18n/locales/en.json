@@ -1226,7 +1226,7 @@
     }
   },
   "promptEditor": {
-    "createTitle": "New prompt",
+    "createTitle": "Create prompt",
     "editTitle": "Edit prompt",
     "backButtonLabel": "Back",
     "nameLabel": "Name",
