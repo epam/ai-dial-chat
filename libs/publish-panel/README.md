@@ -103,7 +103,7 @@ through. The checkbox is disabled while `isSubmitting` is `true`.
     credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
     credentialsHint: t(CatalogI18nKeys.PublishCredentialsHint),
   }}
-/>;
+/>
 ```
 
 The library knows nothing about what the flag means to any backend: deciding
@@ -223,7 +223,7 @@ import { PublishHistoryList } from '@epam/ai-dial-publish-panel';
 An entry whose `publishCredentials` is `true` is marked with a text label,
 overridable through `sharedCredentialsLabel` (default
 `'Shared credentials'`). The marker reports what that publication
-*requested* — the library never claims the credential was applied, and never
+_requested_ — the library never claims the credential was applied, and never
 displays or accepts a credential value.
 
 ```tsx
@@ -231,7 +231,7 @@ displays or accepts a credential value.
   entries={folderHistory}
   currentVersion={currentVersion}
   sharedCredentialsLabel={t(CatalogI18nKeys.PublishHistorySharedCredentials)}
-/>;
+/>
 ```
 
 ## Hooks

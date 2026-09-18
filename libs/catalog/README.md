@@ -512,7 +512,12 @@ credentials — `historySharedCredentialsLabel`.
   isOpen
   onClose={handleClose}
   onPublish={async (item, folderPath, rules, author, publishCredentials) => {
-    await publishEntity(item, { folderPath, rules, author, publishCredentials });
+    await publishEntity(item, {
+      folderPath,
+      rules,
+      author,
+      publishCredentials,
+    });
   }}
   publishLabels={{
     credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
