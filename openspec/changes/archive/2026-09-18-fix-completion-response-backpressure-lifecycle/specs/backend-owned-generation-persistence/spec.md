@@ -1,55 +1,4 @@
-# backend-owned-generation-persistence Specification
-
-## Purpose
-
-The backend owns conversation persistence across the generation lifecycle — saving the start, final, and partial (stop/error) states — so the frontend never races to save and chunks cannot land in the wrong conversation.
-
-## Requirements
-
-### Requirement: Backend persists the conversation across the generation lifecycle
-
-`ConversationStreamingService.streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`, invoked via the `ConversationService` facade) SHALL own conversation persistence for a completion. The frontend MUST NOT call `saveConversation` during streaming. The backend SHALL save at the start of generation (user message + empty assistant placeholder), on successful completion (full assembled assistant message), and on stop/error (the partial assistant message accumulated so far).
-
-A failure of the **start-state** save SHALL be logged as a warning and SHALL NOT abort the request: the stream still opens, and the terminal save that follows writes the conversation anyway. Losing the placeholder costs a resumable mid-flight view; refusing to stream because of it would cost the answer itself.
-
-The terminal save SHALL distinguish how the generation ended:
-
-| Outcome | Persisted marker | Registry status |
-|---|---|---|
-| Upstream reached `[DONE]` | assembled message, no marker | `Done` |
-| Upstream rejected the request | `streamErrorMessage` = DIAL Core text, or `''` when it gave none | `Error` |
-| The user pressed Stop | `wasStoppedByUser: true`, **no** `streamErrorMessage` | `Stopped` |
-| Aborted for any other reason (e.g. the relay itself threw before producing a result) | `streamErrorMessage: ''` | `Error` |
-| The relay itself threw | `streamErrorMessage` = the thrown error's message | `Error` |
-
-A user stop is deliberately not an error state: the frontend renders an empty stopped message with its "Stopped generating" label, which it can only do when no `streamErrorMessage` is present.
-
-The downstream HTTP connection closing (browser tab closed, page navigated away, refresh) is explicitly **not** one of the outcomes in this table — see "A closed downstream response does not alter generation persistence or outcome" below. The terminal save and registry release MUST still run exactly once per generation regardless of *why* the generator stops iterating, but the only ways the generator's consuming loop legitimately stops iterating are the relay reaching a terminal outcome (`[DONE]`/error/stop) or an unexpected exception; a closed downstream response is not, by itself, a reason for the consuming loop to stop. The generator SHALL guarantee the exactly-once terminal save/release via its own cleanup (e.g. a `finally` around its relay loop) for the exception case, since an abandoned consumer cannot itself invoke the generator's terminal logic.
-
-#### Scenario: Start state saved before streaming
-
-- **WHEN** a completion request is accepted
-- **THEN** the backend saves the conversation with the new user message and an empty assistant placeholder before opening the upstream stream
-
-#### Scenario: Final state saved on completion
-
-- **WHEN** the upstream stream emits `[DONE]`
-- **THEN** the backend writes the fully assembled assistant message at the placeholder index and saves the conversation
-
-#### Scenario: Partial state saved on error
-
-- **WHEN** the upstream stream fails before `[DONE]`
-- **THEN** the backend saves the partial assistant message with `streamErrorMessage` set — carrying the DIAL Core error text when one is available, or an empty string when no upstream text exists (empty body, non-user abort). The presence of the field (even `''`) is the terminal-error signal; the frontend localizes a generic fallback when the value is empty.
-
-#### Scenario: A user stop is not persisted as an error
-
-- **WHEN** the generation is aborted and the registry already records it as stopped by the user
-- **THEN** the partial message is saved with `wasStoppedByUser: true` and no `streamErrorMessage`, and the generation is finalized as `Stopped`
-
-#### Scenario: A failed start-state save does not abort the stream
-
-- **WHEN** the start-state `saveConversation` rejects
-- **THEN** the failure is logged as a warning and the completion request proceeds to stream normally
+## MODIFIED Requirements
 
 ### Requirement: A closed downstream response does not alter generation persistence or outcome
 
@@ -146,6 +95,8 @@ This requirement applies only to `POST /api/v1/conversations/completions`. It do
 - **WHEN** the handler releases it, including via the `res.destroy()` fallback
 - **THEN** the generation's `AbortController` is not aborted, no additional or different conversation save is performed, and the registry entry's terminal status is the one the generator already recorded
 
+## ADDED Requirements
+
 ### Requirement: Completion response terminations are counted by reason
 
 The application SHALL expose a counter `dial.chat.completion.response.terminations` (Prometheus `dial_chat_completion_response_terminations_total`) recording how each downstream completion response ended, with a single bounded `reason` attribute taking only the fixed values `completed`, `client_closed`, `backpressure_ended`, and `backpressure_destroyed`. Exactly one point SHALL be recorded per completion response that reached the streaming phase.
@@ -173,65 +124,3 @@ Ordinary completion-response delivery SHALL still NOT contribute to `dial.chat.s
 
 - **WHEN** completion response termination points are collected
 - **THEN** their attributes contain only the four fixed `reason` values and no user, conversation, deployment, or pod identifier
-
-### Requirement: Generation finalizes on `[DONE]`, not on socket close
-
-The streaming read loop SHALL treat the `[DONE]` SSE payload as the completion signal: it MUST save the final conversation, mark the generation complete in the registry, and close the response. It MUST NOT wait for the upstream socket to close, because providers may keep the connection open after `[DONE]`, which would otherwise leave the generation registered as active and reject the next request with HTTP 409. Stopping at `[DONE]` SHALL cancel the upstream reader rather than merely releasing its lock, so the connection is actually closed instead of left dangling.
-
-An upstream socket that closes **without** ever sending `[DONE]` SHALL be treated as the end of the stream too, and logged as such, so a truncated response still finalizes rather than hanging.
-
-#### Scenario: Provider keeps the connection open after `[DONE]`
-
-- **WHEN** the upstream emits `[DONE]` but does not close the connection
-- **THEN** the backend still finalizes the generation, releases the registry entry, and closes its response
-
-### Requirement: A pre-stream failure releases the registry entry
-
-If any step between registering the generation and opening the upstream stream fails — resolving the deployment's generation capability, fetching the conversation, or building its history — the backend SHALL release the registry entry before rethrowing, so a transient failure does not lock the conversation until stale eviction.
-
-#### Scenario: Conversation fetch fails after registration
-
-- **WHEN** registration succeeds but the subsequent `getConversation` throws
-- **THEN** the backend marks the generation errored (releasing the entry) and rethrows, so a retry is not rejected with 409
-
-### Requirement: A failure before the stream opens is reported with its own status code
-
-`ConversationStreamingService.streamCompletion` is an async generator, so everything it does before calling `onReadyToStream` — registering the generation, resolving the deployment, fetching the conversation — runs on the consuming loop's first `next()` rather than at the call site. `ConversationController.streamCompletion` SHALL therefore distinguish a rejection that arrives before SSE headers were sent from one that arrives after: while `res.headersSent` is false it MUST NOT end the response, so the rejection propagates to the exception filter, which owns the status code and body. Once the stream is open the status is already committed, so a later failure ends the response as before and only the SSE transport reports it.
-
-Ending the response on the pre-stream path would flush an empty `200` and leave the exception filter nothing to write, which is how a second browser tab submitting into a conversation that is already generating rendered an empty assistant answer instead of the documented `409`.
-
-The duplicate-generation condition is scoped to the caller's **principal** and conversation path, as `generation-principal-ownership` defines — not to a cookie session. For a header-authenticated caller, all clients presenting tokens for the same (`providerId`, `sub`) are one principal, so a second such client submitting into the same conversation hits the same `409`.
-
-#### Scenario: A duplicate active generation is reported as 409
-
-- **GIVEN** a generation is already active for this principal and conversation path
-- **WHEN** a second request to `POST /conversations/completions` reaches `register` for the same principal and path
-- **THEN** the response is `409` with the conflict message, not a `200` with an empty body
-
-#### Scenario: A mid-stream failure still ends the open SSE response
-
-- **GIVEN** SSE headers have been sent and at least one chunk written
-- **WHEN** the generator subsequently rejects
-- **THEN** the controller ends the response, leaving the already-committed `200` status and the chunks written so far intact
-
-#### Scenario: A second bearer client of the same principal is reported as 409
-
-- **GIVEN** a generation is already active on a conversation path for header principal (`providerId` P, `sub` S)
-- **WHEN** a different client presenting a valid token for the same (P, S) posts to `POST /conversations/completions` for that path
-- **THEN** the response is `409` with the conflict message
-
-### Requirement: Backend-owned persistence is independent of the authentication mode
-
-Every persistence guarantee in this capability — saving the start state before opening the upstream stream, assembling the assistant message chunk by chunk, and saving the final or partial state on completion, stop, or error regardless of whether the originating HTTP request is still connected — SHALL hold identically for a header-authenticated caller and a cookie-authenticated caller.
-
-#### Scenario: A bearer caller's generation persists after the client disconnects
-
-- **GIVEN** a header-authenticated caller started a generation and its HTTP connection then closed
-- **WHEN** the upstream stream subsequently reaches `[DONE]`
-- **THEN** the backend persists the complete assistant message, and reopening the conversation shows the full response — the same outcome the cookie-authenticated path produces
-
-#### Scenario: A bearer caller's stopped generation persists the partial answer
-
-- **GIVEN** a header-authenticated caller's generation has produced some tokens
-- **WHEN** that principal stops it via `POST .../completions/stop`
-- **THEN** the saved conversation contains the partial assistant message flagged `wasStoppedByUser: true`
