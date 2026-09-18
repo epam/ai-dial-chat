@@ -1,3 +1,11 @@
+> **NOT DELIVERED — do not sync into `openspec/specs/`.** These requirements were
+> implemented and then reverted by `f5c6ce8ea4`; nothing below is true of
+> `development` today. The published `@epam/ai-dial-chat-shared/tailwind-preset` does
+> not exist, and the host-setup documentation it describes is not in
+> `openspec/lib-styling-guide.md`, `docs/architecture.md`, or any library README. The
+> text is kept as the record of the analysis, for whenever the missing-utilities half
+> of issue #8707 is decided. See §7 of `../../tasks.md`.
+
 ## ADDED Requirements
 
 ### Requirement: Tailwind is a hard requirement for consuming hosts

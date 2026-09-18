@@ -132,6 +132,7 @@ available on that same element.
 | `dial-ci-action-row`            | The row wrapper rendered when the action bar is visible (today `flex flex-wrap items-center gap-2`)  |
 | `dial-ci-textarea-wrap`         | The `<div>` that wraps the textarea area inside the action row                                       |
 | `dial-ci-add-cluster`           | The `<div>` that wraps the add-attachment button node                                                |
+| `dial-ci-tools-chips`           | The `<div>` that wraps the `ToolsChips` row inside the action row                                    |
 | `dial-ci-footer-actions`        | The trailing cluster holding the model selector, mic, and send/stop buttons (today `ms-auto …`)       |
 | `dial-ci-model-selector-button` | Every `<button>` that carries `styles.modelSelectorButton`, in all three branches of `ModelSelectorControl` |
 
@@ -153,6 +154,15 @@ props, which keep their current behaviour.
 
 - **WHEN** `ConversationInput` is rendered with `hideAddButton` set to `true`
 - **THEN** no element carries `dial-ci-add-cluster`
+
+#### Scenario: Tool chips cell is addressable, and absent without tools
+
+- **WHEN** `ConversationInput` is rendered with at least one visible tool in
+  `toolsMenuItems` and an `onToolToggle` handler
+- **THEN** the `<div>` wrapping the chips carries `dial-ci-tools-chips` and descends
+  from `dial-ci-action-row`
+- **AND WHEN** it is rendered with no tools
+- **THEN** no element carries `dial-ci-tools-chips`
 
 #### Scenario: Model selector button is addressable on desktop
 
