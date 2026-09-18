@@ -2,11 +2,20 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
+
+/** Terminal state of a stage. Absent or `null` while the stage is still running. */
+export enum StageStatusDto {
+  /** The stage completed successfully. */
+  Completed = 'completed',
+  /** The stage encountered an error. */
+  Failed = 'failed',
+}
 
 /** File attached to one assistant "thinking step" (stage). */
 export class StageAttachmentDto {
@@ -38,7 +47,10 @@ export class StageDto {
   @IsNumber()
   index?: number;
 
-  @ApiPropertyOptional({ description: 'Stage title' })
+  @ApiPropertyOptional({
+    description:
+      'Stage title. `null` on the chunk that opens the stage, before the name streams in',
+  })
   @IsOptional()
   @IsString()
   name?: string;
@@ -47,6 +59,25 @@ export class StageDto {
   @IsOptional()
   @IsString()
   content?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Terminal state of the stage. Absent or `null` while the stage is still running',
+    enum: StageStatusDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsEnum(StageStatusDto)
+  status?: StageStatusDto | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Short source/category label shown beside the stage name (e.g. `MCP`)',
+    example: 'MCP',
+  })
+  @IsOptional()
+  @IsString()
+  tag?: string;
 
   @ApiPropertyOptional({
     description: 'Files produced or referenced by this stage',

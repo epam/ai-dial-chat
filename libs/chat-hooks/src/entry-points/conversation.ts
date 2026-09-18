@@ -7,6 +7,7 @@ export * from '../conversation/greeting';
 export * from '../conversation/message-factory';
 export * from '../conversation/message-utils';
 export * from '../conversation/quick-app-conversation-starters';
+export * from '../conversation/stage';
 export * from '../conversation/starter-option';
 export * from '../conversation/deriveConversationRowActionState/deriveConversationRowActionState';
 export * from '../conversation/useActiveConversationSync/useActiveConversationSync';
@@ -37,6 +38,10 @@ export {
   getStarterSubmitText,
 } from '../conversation/useConversationHandlers/starter-option';
 export * from '../conversation/useConversationHandlers/useConversationHandlers';
+export {
+  applyChunkToMessages,
+  mergeStages,
+} from '../conversation/useConversationStream/apply-chunk';
 export { getConversationPath } from '../conversation/useConversationStream/conversation-path';
 export { isAwaitingGenerationResume } from '../conversation/useConversationStream/generation-resume';
 export * from '../conversation/useConversationStream/useConversationStream';

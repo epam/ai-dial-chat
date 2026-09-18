@@ -921,6 +921,40 @@ const ChatPage = ({
 
 Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
 
+#### applyChunkToMessages / mergeStages
+
+The two chunk-merge primitives `useConversationStream` is built on, for hosts that own their own stream loop and cannot delegate it to the hook. `applyChunkToMessages` applies one SSE chunk to a message list; `mergeStages` merges stage deltas on their own, for hosts that keep a flattened `Stage[]` beside the message instead of inside `Message.custom_content.stages`.
+
+```ts
+import {
+  applyChunkToMessages,
+  mergeStages,
+} from '@epam/ai-dial-chat-hooks/conversation';
+import type { Message, Stage, StreamChunk } from '@epam/ai-dial-chat-shared';
+
+const onChunk = (
+  messages: Message[],
+  assistantIndex: number,
+  chunk: StreamChunk,
+) => {
+  /* `null` means the chunk carried nothing actionable — keep the previous state. */
+  const next = applyChunkToMessages(messages, assistantIndex, chunk);
+  if (next) setMessages(next);
+};
+
+const onStageDelta = (accumulated: Stage[], incoming: Stage[]): Stage[] =>
+  mergeStages(accumulated, incoming);
+```
+
+| Export                 | Signature                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `applyChunkToMessages` | `(messages: Message[], messageIndex: number, chunk: StreamChunk) => Message[] \| null` |
+| `mergeStages`          | `(existing: Stage[], incoming: Stage[]) => Stage[]`                                    |
+
+`applyChunkToMessages` returns `null` when the chunk carries no actionable data — no text, `form_schema`, attachments, stages, annotations, `state`, or `responseId`. A stage-only chunk with empty `content` is **not** a no-op: it returns an updated list. Both helpers merge stages by `index`, concatenating partial `name` and `content` across chunks, merging stage attachments by their own `index`, and normalizing a first chunk's `name: null` to `''`.
+
+Both are also available from the root entry (`@epam/ai-dial-chat-hooks`).
+
 ### useConversationHandlers
 
 Composes send/regenerate/edit/delete/rate/starter-submission orchestration for a displayed conversation on top of the library's own `useAttachmentUpload` and the injected `startStream` (the `useConversationStream` result). Optimistic message-pair insertion, delete confirmation, and rate revert-on-failure mutate the same `ConversationStateAccessor` channel passed to `useConversationStream`, so the two hooks stay in lockstep.
@@ -1639,6 +1673,46 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 - **`DialFileManagerVariant`** / **`DialFileManagerActionProfile`** — identify which host is driving `useDialFileManager` (`Attach | Standalone | FolderPicker`) and which action set that gates (`Attach | Browse | Full`); `deriveActionProfile(variant)` maps the former to the latter.
 
 ## Conversation & File Utilities
+
+### toStage / mapStages
+
+Normalize a REST or stream stage payload into the renderable `Stage` shape
+`CollapsedGroup` / `StagesPanel` expect. `toStage` handles one stage;
+`mapStages` handles a raw array or a message-like payload, reading
+`custom_content.stages` and falling back to a camelCasing host's
+`customContent.stages`.
+
+```ts
+import { mapStages, toStage } from '@epam/ai-dial-chat-hooks/conversation';
+import type { RawStage } from '@epam/ai-dial-chat-hooks/conversation';
+
+/* A conversation message loaded over REST — `StageDto` satisfies `RawStage`. */
+const stages = mapStages(message); // Stage[] | undefined
+
+/* Or one stage at a time. */
+const stage = toStage({
+  index: 0,
+  name: null,
+  status: null,
+} satisfies RawStage);
+// → { index: 0, name: '', status: null }
+```
+
+| Export      | Signature                                                                             |
+| ----------- | ------------------------------------------------------------------------------------- |
+| `toStage`   | `(stage: RawStage) => Stage`                                                          |
+| `mapStages` | `(source: RawStage[] \| RawStageSource \| null \| undefined) => Stage[] \| undefined` |
+
+Normalization rules: `index` defaults to `0`, `name` to `''` (the opening
+chunk sends `null`), `status` maps `'completed'` / `'failed'` to `StageStatus`
+and anything else — including `null` and an unknown string — to `null` (still
+running), and `content` / `tag` / `attachments` pass through when present
+(each attachment's missing `title` becoming `''`). `mapStages` returns
+`undefined` for a nullish or empty source rather than an empty array.
+
+`RawStage`, `RawStageAttachment`, and `RawStageSource` describe the wire shape
+before normalization — every field optional and nullable — so the generated
+`StageDto` satisfies `RawStage` with no cast.
 
 ### getModelIdFromConversationId
 

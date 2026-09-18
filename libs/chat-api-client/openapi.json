@@ -9108,11 +9108,22 @@
           },
           "name": {
             "type": "string",
-            "description": "Stage title"
+            "description": "Stage title. `null` on the chunk that opens the stage, before the name streams in"
           },
           "content": {
             "type": "string",
             "description": "Stage text content"
+          },
+          "status": {
+            "type": "string",
+            "description": "Terminal state of the stage. Absent or `null` while the stage is still running",
+            "enum": ["completed", "failed"],
+            "nullable": true
+          },
+          "tag": {
+            "type": "string",
+            "description": "Short source/category label shown beside the stage name (e.g. `MCP`)",
+            "example": "MCP"
           },
           "attachments": {
             "description": "Files produced or referenced by this stage",

@@ -90,7 +90,21 @@ const mergeStageAttachments = (
   return result;
 };
 
-const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
+/**
+ * Merges incoming stage deltas into an existing stage list, keyed by `index`.
+ *
+ * Partial `name` and `content` strings are concatenated across chunks;
+ * attachments are merged by their own `index` (concatenating partial `title`
+ * and `data`); every other field on the incoming delta overwrites the
+ * accumulated one. A brand-new stage whose first chunk carries `name: null`
+ * is normalized to `''`.
+ *
+ * Exported for hosts that keep a flattened `Stage[]` on the message instead
+ * of `Message.custom_content.stages` and therefore cannot reuse
+ * {@link applyChunkToMessages}. Prefer `useConversationStream` when the host
+ * can delegate the whole stream loop.
+ */
+export const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
   const result = [...existing];
   for (const stage of incoming) {
     const idx = result.findIndex((s) => s.index === stage.index);
