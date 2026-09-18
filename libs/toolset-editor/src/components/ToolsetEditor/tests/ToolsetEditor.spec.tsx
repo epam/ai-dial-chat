@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { TOOLSET_EDITOR_CLASS } from '../../../constants/public-class-names';
 import { ToolsetTransportType } from '../../../constants/toolsets';
 import type { ToolsetEditorProps } from '../../../models/toolset-editor-props';
 import type {
@@ -35,8 +36,22 @@ vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
         <div>{rightContent as never}</div>
       </div>
     ),
-    EditorSection: ({ children }: { children?: unknown }) => (
-      <div>{children as never}</div>
+    /* The real section renders its title and merges `className` onto its
+       root; the stub has to do both, or a class assertion on it proves
+       nothing. */
+    EditorSection: ({
+      children,
+      title,
+      className,
+    }: {
+      children?: unknown;
+      title?: unknown;
+      className?: string;
+    }) => (
+      <div className={className}>
+        <h2>{title as never}</h2>
+        {children as never}
+      </div>
     ),
   };
 });
@@ -595,5 +610,33 @@ describe('ToolsetEditor', () => {
     );
 
     await waitFor(() => expect(onToolsetsChanged).toHaveBeenCalledOnce());
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('ToolsetEditor — public class names', () => {
+  it('stamps both editor columns', () => {
+    renderEditor();
+
+    expect(
+      closestWithClass(
+        screen.getByText('Metadata'),
+        TOOLSET_EDITOR_CLASS.metadataSection,
+      ),
+    ).toBeTruthy();
+    expect(
+      closestWithClass(
+        screen.getByText('Setup'),
+        TOOLSET_EDITOR_CLASS.setupSection,
+      ),
+    ).toBeTruthy();
   });
 });

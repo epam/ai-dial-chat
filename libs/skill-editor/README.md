@@ -142,3 +142,35 @@ import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
   }}
 />
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. The root
+surface therefore carries a stable public class, exported as
+`SKILL_EDITOR_CLASS`.
+
+| Key    | Class                    | Element                                                     |
+| ------ | ------------------------ | ----------------------------------------------------------- |
+| `root` | `dial-skill-editor-root` | The editor's root surface, which is also the file drop zone |
+
+The class carries no declarations of its own: nothing in `styles.css` selects on
+it, so it changes nothing until a host writes a rule. Renaming it, or moving it
+to a different element, is a breaking change. The convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+```tsx
+import { SKILL_EDITOR_CLASS } from '@epam/ai-dial-skill-editor';
+
+SKILL_EDITOR_CLASS.root; // 'dial-skill-editor-root'
+```
+
+```css
+.dial-skill-editor-root {
+  background: var(--bg-layer-base);
+}
+```
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

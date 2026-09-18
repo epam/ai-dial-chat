@@ -70,3 +70,4 @@ export * from './hooks/useIsMobile';
  * public API.
  */
 export * from './file-manager/index';
+export { CHAT_SHARED_CLASS } from './constants/public-class-names';

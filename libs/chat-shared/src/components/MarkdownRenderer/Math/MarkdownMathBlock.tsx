@@ -1,4 +1,5 @@
 import { type FC, type ReactNode, memo } from 'react';
+import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { useHorizontalOverflow } from '../../../hooks/useHorizontalOverflow';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownMathBlock.module.scss';
@@ -40,6 +41,7 @@ export const MarkdownMathBlock: FC<MarkdownMathBlockProps> = memo(
           'w-full min-w-0 max-w-full overflow-x-auto overflow-y-hidden',
           styles.scrollContainer,
           className,
+          CHAT_SHARED_CLASS.mathBlock,
         )}
         onScroll={handleScroll}
         role={isScrollable ? 'region' : undefined}

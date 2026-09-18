@@ -5,6 +5,7 @@ import {
   IconButton,
 } from '@epam/ai-dial-ui-kit';
 import { Fragment, memo, useMemo, type FC, type ReactNode } from 'react';
+import { NAVIGATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type {
   NavigationLinkRenderer,
   NavigationPanelItem,
@@ -59,6 +60,7 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
           'relative z-10 flex h-full w-[60px] flex-col justify-between shadow-sm',
           typography?.fontClassName,
           className,
+          NAVIGATION_PANEL_CLASS.rail,
         )}
       >
         <div className="flex flex-col items-center">
@@ -94,6 +96,7 @@ export const NavigationPanel: FC<NavigationPanelProps> = memo(
                       styles.item,
                       'rounded-xl',
                       item.isActive && styles.itemActive,
+                      NAVIGATION_PANEL_CLASS.item,
                     )}
                   />,
                 )}

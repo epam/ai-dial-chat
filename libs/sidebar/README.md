@@ -87,6 +87,68 @@ import { PanelNoResults } from '@epam/ai-dial-sidebar';
 <PanelNoResults label="No results" />;
 ```
 
+## Public class names
+
+The panel chrome carries stable `dial-sb-*` classes in addition to its internal
+classes. Target those instead of `[role='complementary']` and its
+`> div:nth-child(n)` descendants — the role is an accessibility contract, not a
+styling one, and the child order changes without notice. The names are exported
+so you never hardcode them:
+
+```tsx
+import { SIDEBAR_CLASS } from '@epam/ai-dial-sidebar';
+
+SIDEBAR_CLASS.aside; // 'dial-sb-aside'
+```
+
+| Class            | Element                                    |
+| ---------------- | ------------------------------------------ |
+| `dial-sb-aside`  | The panel's `<aside role="complementary">` |
+| `dial-sb-header` | The 48 px header bar rendered by `Header`  |
+
+These classes carry no declarations of their own, so they change nothing until
+you style them, and they are additive to the `className`, `headerClassName`, and
+`styles` props, which keep working exactly as before.
+
+`dial-sb-aside` is on the region, **not** on the wrapper around it. The wrapper
+is where `styles.className` lands, which is how the libs built on this panel
+mark themselves — [`@epam/ai-dial-attachment-canvas`](../attachment-canvas/README.md)
+with `dial-attachment-canvas-panel` and
+[`@epam/ai-dial-source-panel`](../source-panel/README.md) with
+`dial-source-panel-panel`. Size or position the wrapper, and descend from it to
+reach the region:
+
+```css
+.dial-attachment-canvas-panel {
+  inline-size: 720px;
+}
+
+.dial-attachment-canvas-panel .dial-sb-aside {
+  background: var(--bg-layer-base);
+}
+```
+
+### Replacing fragile selectors
+
+| Instead of                                 | Use               |
+| ------------------------------------------ | ----------------- |
+| `[role='complementary']`                   | `.dial-sb-aside`  |
+| `[role='complementary'] > div:first-child` | `.dial-sb-header` |
+
+### Stability
+
+A `dial-sb-*` class is public API: renaming it, removing it, or moving it to a
+different element is a breaking change, announced in the release notes and
+recorded here with its replacement. The element itself stays free — its Tailwind
+utilities, its CSS-module class, and its position in the DOM may all change.
+
+Your own overrides are responsible for direction: the class names are
+direction-agnostic and identical under `dir="rtl"`, so use CSS logical
+properties (`border-inline-end`, `inset-inline-start`) rather than physical ones.
+
+The full convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
 ## Enums
 
 ```tsx

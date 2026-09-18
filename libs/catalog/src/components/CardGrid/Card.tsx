@@ -21,6 +21,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { CATALOG_CLASS } from '../../constants/public-class-names';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
@@ -132,6 +133,7 @@ export const Card: FC<CardProps> = ({
         isFeaturedVisible ? styles.featuredCard : undefined,
         isSelected ? styles.selectedCard : undefined,
         className,
+        CATALOG_CLASS.card,
       )}
     >
       {isFeaturedVisible && (

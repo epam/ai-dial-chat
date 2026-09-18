@@ -239,6 +239,8 @@ A failed job additionally carries `errorCode: ConversationTransferErrorCode` —
 
 A `Warning` job delivered its file, but not everything the user asked for made it in. It carries `warningCode: ConversationTransferWarningCode` — currently the single value `AttachmentSkipped` — set only alongside `ConversationTransferJobStatus.Warning`, and translation-free in the same way.
 
+Warning jobs may also carry `warningNames?: string[]`: untranslated names of skipped attachments. Import jobs retain the same unique names emitted in their warning event so hosts can identify the skipped files after the notification disappears. Names are optional for compatibility with export jobs and older producers.
+
 ### FilterTab
 
 Canonical conversation ownership/grouping identifiers shared by the headless mapping hooks and the conversation panel. `@epam/ai-dial-conversation-panel` re-exports the same enum for compatibility.
@@ -934,3 +936,51 @@ roll a consuming host back to a previous `@epam/ai-dial-chat-shared` release:
 3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
    resolved version and integrity hash, rather than a partial mix of pre- and post-change
    versions.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key               | Class                                | Element                                                       |
+| ----------------- | ------------------------------------ | ------------------------------------------------------------- |
+| `codeBlock`       | `dial-chat-shared-code-block`        | The bordered container of a fenced code block                 |
+| `codeBlockHeader` | `dial-chat-shared-code-block-header` | Its sticky header, holding the language label and the actions |
+| `table`           | `dial-chat-shared-table`             | The bordered container of a Markdown table                    |
+| `tableScroll`     | `dial-chat-shared-table-scroll`      | The scrolling box around a table, which owns its overflow     |
+| `mathBlock`       | `dial-chat-shared-math-block`        | The scrolling box around a display-math block                 |
+
+```tsx
+import { CHAT_SHARED_CLASS } from '@epam/ai-dial-chat-shared';
+
+CHAT_SHARED_CLASS.codeBlock; // 'dial-chat-shared-code-block'
+```
+
+The record is exported from the root entry and from `./markdown`, so a host that
+only pulls the Markdown entry point can still name the classes it renders.
+
+```css
+.dial-chat-shared-code-block {
+  border-radius: 8px;
+}
+```
+
+### Why not `dial-cm-code-block`
+
+[Issue #8707](https://github.com/epam/ai-dial-chat/issues/8707) asked for the
+code block under the `dial-cm-` prefix. That prefix belongs to
+[`@epam/ai-dial-conversation-messages`](../conversation-messages/README.md),
+while `MarkdownCodeBlock` is rendered from this package — and one prefix owned
+by two libs is the collision the directory-name grammar exists to prevent. A
+host that used to descend from `dial-cm-assistant-content pre` can now target
+`dial-chat-shared-code-block` directly.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

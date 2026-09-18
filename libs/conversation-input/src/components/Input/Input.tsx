@@ -27,6 +27,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useAttachments } from '../../hooks/useAttachments';
 import { useCommandMenu } from '../../hooks/useCommandMenu/useCommandMenu';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
@@ -741,6 +742,7 @@ export const Input: FC<InputProps> = ({
         'focus-within:outline focus-within:-outline-offset-1 active:outline active:-outline-offset-1',
         attachments.length > 6 ? 'py-4 ps-4' : 'p-4',
         className,
+        CONVERSATION_INPUT_CLASS.wrapper,
       )}
     >
       {(prefixAttachments.length > 0 || attachments.length > 0) && (
@@ -799,11 +801,30 @@ export const Input: FC<InputProps> = ({
       )}
       {!isVoiceActive && hideActionBar && textareaArea}
       {!isVoiceActive && !hideActionBar && (
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex w-full min-w-0 items-center self-stretch">
+        <div
+          className={mergeClasses(
+            'flex flex-wrap items-center gap-2',
+            CONVERSATION_INPUT_CLASS.actionRow,
+          )}
+        >
+          <div
+            className={mergeClasses(
+              'flex w-full min-w-0 items-center self-stretch',
+              CONVERSATION_INPUT_CLASS.textareaWrap,
+            )}
+          >
             {textareaArea}
           </div>
-          {attachButtonNode && <div className="flex">{attachButtonNode}</div>}
+          {attachButtonNode && (
+            <div
+              className={mergeClasses(
+                'flex',
+                CONVERSATION_INPUT_CLASS.addCluster,
+              )}
+            >
+              {attachButtonNode}
+            </div>
+          )}
           {visibleTools.length > 0 && onToolToggle != null && (
             <div className="min-w-0 flex-1">
               <ToolsChips
@@ -815,7 +836,12 @@ export const Input: FC<InputProps> = ({
               />
             </div>
           )}
-          <div className="ms-auto flex flex-shrink-0 items-center gap-2">
+          <div
+            className={mergeClasses(
+              'ms-auto flex flex-shrink-0 items-center gap-2',
+              CONVERSATION_INPUT_CLASS.footerActions,
+            )}
+          >
             {renderFooterActions ? (
               renderFooterActions({ canSend, onSend: handleSend })
             ) : (

@@ -86,3 +86,4 @@ export {
   partitionAttachmentsForApplicationVisualizer,
 } from './utils/visualizer';
 export type { ApplicationVisualizerPartition } from './utils/visualizer';
+export { ATTACHMENT_CANVAS_CLASS } from './constants/public-class-names';

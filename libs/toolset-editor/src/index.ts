@@ -44,3 +44,4 @@ export {
   isValidEndpointUrl,
   normalizeReturnedEndpointUrl,
 } from './utils/toolsets';
+export { TOOLSET_EDITOR_CLASS } from './constants/public-class-names';

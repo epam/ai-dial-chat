@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { SHARE_CLASS } from '../../../constants/public-class-names';
 import type { SharePopoverProps } from '../../../models/share-popover-props';
 import { ShareLinkAccess } from '../../../types/share';
 import SharePopover from '../SharePopover';
@@ -442,5 +443,18 @@ describe('SharePopover', () => {
 
     expect(screen.getByRole('alert')).toBeTruthy();
     expect(screen.queryByDisplayValue(ITEM_URL)).toBeNull();
+  });
+});
+
+describe('SharePopover — public class names', () => {
+  /*
+   * A lost public class fails silently: the build passes and a host's
+   * stylesheet simply stops applying, so it is asserted here. The popover's
+   * `aria-label` is its localisable title, so the role is the locator.
+   */
+  it('stamps the popover root', () => {
+    render(<SharePopover {...makeProps()} />);
+
+    expect(screen.getByRole('dialog').classList).toContain(SHARE_CLASS.popover);
   });
 });

@@ -2,6 +2,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { ListView } from '../ListView';
 
@@ -284,5 +285,52 @@ describe('ListView', () => {
         .getByLabelText('Catalog')
         .getAttribute('data-alternate-odd-row-colors'),
     ).toBe('false');
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('ListView — public class names', () => {
+  it('stamps the list box when there are rows', () => {
+    render(
+      <ListView
+        items={[makeItem({ id: 'item-1', name: 'Claude' })]}
+        query=""
+        type={CatalogEntityType.Model}
+        ariaLabel="Catalog"
+      />,
+    );
+
+    /* The row's cells come from stubbed renderers; its star control is what
+       this file can reach. */
+    expect(
+      closestWithClass(
+        screen.getByRole('button', { name: 'star item-1' }),
+        CATALOG_CLASS.listView,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('stamps the empty state, which is a root of its own', () => {
+    render(
+      <ListView
+        items={[]}
+        query=""
+        type={CatalogEntityType.Model}
+        ariaLabel="Catalog"
+        emptyStateTitle="No items"
+      />,
+    );
+
+    expect(
+      closestWithClass(screen.getByText('No items'), CATALOG_CLASS.listView),
+    ).toBeTruthy();
   });
 });

@@ -267,6 +267,205 @@ className={mergeClasses(styles.wrapper, 'flex w-full gap-2', className)}
 
 ---
 
+## Public class names
+
+CSS-module locals are hashed at build time, Tailwind utilities change whenever the
+layout changes, and DOM order is not a contract. A host embedding these libs therefore
+has nothing stable to target — so selected elements additionally carry a **public class
+name** that exists purely as a styling hook.
+
+### Grammar
+
+```
+dial-<lib-prefix>-<element>[-<state>]
+```
+
+- `<lib-prefix>` is the lib's **directory name** under `libs/`, except for the five
+  libs listed as legacy below. Directory names are unique by construction, so a prefix
+  can never be claimed twice and a new lib needs no decision — and a host reading
+  `.dial-scheduled-tasks-row` in its own stylesheet can tell which package to install.
+
+  The first version of this section derived the prefix from the lib's CSS-custom-property
+  prefix, so that the class contract and the theming contract would read the same. That
+  does not generalise past the five libs it was written for, for two measured reasons:
+
+  - **Five var prefixes are claimed by two libs each** — `--ai-` (`attachment-input`,
+    `catalog`), `--cm-` (`conversation-messages`, `chat-shared`), `--cc-`
+    (`quotations`, `attachment-canvas`), `--pp-` (`prompts`, `publish-panel`) and
+    `--sp-` (`settings-panel`, `source-panel`). Two of those collide with a contract
+    that is already written down: `attachment-input` ships `dial-ai-*`, and the
+    `dial-cm-code-block` that issue #8707 asks for belongs to `MarkdownCodeBlock`,
+    which lives in `chat-shared` rather than in `conversation-messages`.
+  - **Eleven of the twenty-two libs with stylesheets use more than one own prefix** —
+    `publish-panel` alone uses seven (`--pare-`, `--par-`, `--pft-`, `--phl-`, `--pf-`,
+    `--pp-`, `--spp-`). Their prefixes are per component, not per lib, so "the lib's var
+    prefix" names nothing.
+
+  The five short prefixes stay as they are: issue #8707 proposed them by name, and they
+  are documented in five lib READMEs. They are a **closed list** — nothing new joins it.
+
+  | Lib                     | Class prefix                | Source         |
+  | ----------------------- | --------------------------- | -------------- |
+  | `sidebar`               | `dial-sb-`                  | legacy (#8707) |
+  | `conversation-panel`    | `dial-cp-`                  | legacy (#8707) |
+  | `conversation-messages` | `dial-cm-`                  | legacy (#8707) |
+  | `conversation-input`    | `dial-ci-`                  | legacy (#8707) |
+  | `attachment-input`      | `dial-ai-`                  | legacy (#8707) |
+  | `attachment-canvas`     | `dial-attachment-canvas-`   | directory name |
+  | `builder-form`          | `dial-builder-form-`        | directory name |
+  | `catalog`               | `dial-catalog-`             | directory name |
+  | `chat-shared`           | `dial-chat-shared-`         | directory name |
+  | `conversation-stages`   | `dial-conversation-stages-` | directory name |
+  | `mcp-apps`              | `dial-mcp-apps-`            | directory name |
+  | `navigation-panel`      | `dial-navigation-panel-`    | directory name |
+  | `prompt-editor`         | `dial-prompt-editor-`       | directory name |
+  | `prompts`               | `dial-prompts-`             | directory name |
+  | `publish-panel`         | `dial-publish-panel-`       | directory name |
+  | `quotations`            | `dial-quotations-`          | directory name |
+  | `scheduled-tasks`       | `dial-scheduled-tasks-`     | directory name |
+  | `settings-panel`        | `dial-settings-panel-`      | directory name |
+  | `share`                 | `dial-share-`               | directory name |
+  | `skill-editor`          | `dial-skill-editor-`        | directory name |
+  | `skills`                | `dial-skills-`              | directory name |
+  | `source-panel`          | `dial-source-panel-`        | directory name |
+  | `starter-buttons`       | `dial-starter-buttons-`     | directory name |
+  | `toolset-editor`        | `dial-toolset-editor-`      | directory name |
+  | `usage-dashboard`       | `dial-usage-dashboard-`     | directory name |
+
+  Libs with no UI of their own — `chat-hooks`, `ai-dial-chat-hooks`, `chat-api-client`,
+  `chat-overlay`, `ai-dial-kit` — have no entry and need none: they render no element.
+
+- `<element>` and `<state>` are lower-case kebab-case. **No BEM** — no `__`, no `--`.
+- A state is an **additive** class applied alongside the base class, never a replacement:
+
+  ```
+  dial-ai-attachment-tile                    ← always
+  dial-ai-attachment-tile dial-ai-attachment-tile-selected   ← when selected
+  ```
+
+Flat kebab-case matches `@epam/ai-dial-ui-kit`, whose public classes already spell state
+as a suffix (`dial-kit-input`, `dial-kit-input-error`, `dial-kit-input-small`,
+`dial-kit-grid-selection-visible`). A `--` segment also reads as a CSS custom property
+at a glance, and these libs are dense with real ones.
+
+### The names live in one constants file per lib
+
+```ts
+// libs/attachment-input/src/constants/public-class-names.ts
+/*
+ * Public, host-addressable class names — part of this package's public API.
+ * Read the Public class names section of openspec/lib-styling-guide.md before
+ * renaming one or moving it to a different element.
+ */
+export const ATTACHMENT_INPUT_CLASS = {
+  tray: 'dial-ai-attachment-tray',
+  tile: 'dial-ai-attachment-tile',
+  tileSelected: 'dial-ai-attachment-tile-selected',
+} as const;
+```
+
+Re-export the record from the lib's `src/index.ts` so a host can import the names
+instead of hardcoding them.
+
+Use `as const`, not an enum. `AGENTS.md` asks for string enums for finite sets of
+statuses, modes, variants, or lifecycle states — this is none of those. It is a keyed
+lookup table that is never compared, never switched on, and never held in a variable,
+and a host needs the literal type to interpolate into a selector.
+
+Every component reads the name from the record. A public class name **must not** appear
+as a string literal in a component file — that is the same silent failure as
+[§3 Never apply a module class as a raw string](#3-never-apply-a-module-class-as-a-raw-string),
+where a typo looks correct in review and in the DOM.
+
+### Rules
+
+1. **Emitted unconditionally, and always last.** No prop, flag, context value, or host
+   configuration enables a public class. Append it as the **final argument** of the
+   element's existing `mergeClasses` call — after the CSS-module class, the Tailwind
+   utilities, and any caller `className` pass-through:
+
+   ```tsx
+   className={mergeClasses(
+     styles.tile,
+     ATTACHMENT_TILE_BASE_CLASS,
+     className,
+     ATTACHMENT_INPUT_CLASS.tile,
+     isSelected && ATTACHMENT_INPUT_CLASS.tileSelected,
+   )}
+   ```
+
+   The position is free to be fixed because a `dial-*` name is not a Tailwind utility:
+   `mergeClasses` is `twMerge(classNames(...))`, and `tailwind-merge` only resolves
+   conflicts between utilities it recognises, so it never drops a public class wherever
+   it sits. Keeping it last therefore costs nothing and buys one predictable place to
+   look for the host contract in every component — the alternative, threading it between
+   the module class and the caller's `className`, reads differently in every call and is
+   what let the class drift in the first place.
+
+2. **No declarations, ever.** Never write a rule for a `dial-<prefix>-*` class in a
+   `.module.scss`. The published `styles.css` must contain no `.dial-*` selector — the
+   class changes nothing by itself, which is what makes adding it safe. Specificity and
+   `!important` are the host's problem, exactly as they already are for `dial-kit-*`.
+
+3. **ARIA attributes are not styling hooks.** Never ask a host to select by `role` or
+   `aria-label`, and never freeze label text so a host's selector keeps working. Labels
+   are localisable — `AttachmentTray`'s `aria-label` defaults to `'Attached files'` but
+   is overridable through `labels.ariaLabel`, so a host that selects by it breaks its
+   own styling the moment the app translates. Where a host previously had only an ARIA
+   selector, put a public class on that same element.
+
+4. **Direction-agnostic.** No class name encodes a physical direction — no `-left`, no
+   `-right` — and the emitted set is identical under `dir="ltr"` and `dir="rtl"`. The
+   host is responsible for using CSS logical properties in its own overrides.
+
+### Stability promise
+
+Once published, a `dial-*` class is public API of its package:
+
+- Renaming it, removing it, or **moving it to a different element** is a breaking
+  change — a host's selector targets the element, not just the name.
+- Announce any such change through the package's release notes and record it in the
+  lib's `README.md` with its replacement, in the same change.
+- Adding a class is non-breaking.
+
+The element itself stays free: its Tailwind utilities, its CSS-module class, and its
+position in the DOM can all change. That is the entire point.
+
+Note on enforcement: every `libs/*/package.json` is pinned at `0.0.1` with
+`private: true`, and the published version is stamped by the `epam/ai-dial-ci` release
+pipeline, so no in-repo version bump can carry this promise. It rests on the guard tests
+and the README instead.
+
+### Guard tests are mandatory
+
+A lost public class fails exactly like the four failure modes in
+[Dead-style checks](#dead-style-checks): the build passes, types pass, lint passes, and
+a host's stylesheet silently stops applying. So every public class needs at least one
+co-located test in the lib's `tests/` folder.
+
+Two rules for those tests:
+
+- **Locate by role, label, or text — then assert the class.** Querying *by* the public
+  class would pass even if the class landed on the wrong element.
+- **Resolve the expected value from the exported record**, never from a duplicated
+  literal, so the test cannot drift from the component.
+
+```tsx
+// ✅ correct — find the element by what it is, then assert the hook
+expect(screen.getByRole('list', { name: 'Attached files' })).toHaveClass(
+  ATTACHMENT_INPUT_CLASS.tray,
+);
+
+// ❌ wrong — passes even if the class is on the wrong node
+expect(document.querySelector('.dial-ai-attachment-tray')).toBeInTheDocument();
+```
+
+Cover the non-happy states too, which is where a naive implementation breaks: error and
+loading tiles, an empty list that renders nothing at all, and skeleton or
+empty/error menu rows.
+
+---
+
 ## Consuming in another project
 
 ### With this app's theme (CSS vars already defined)

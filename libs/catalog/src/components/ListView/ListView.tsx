@@ -3,6 +3,7 @@ import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import { Grid } from '@epam/ai-dial-ui-kit/grid';
 import type { GridApi } from 'ag-grid-community';
 import { type CSSProperties, FC, useEffect, useMemo, useRef } from 'react';
+import { CATALOG_CLASS } from '../../constants/public-class-names';
 import type { CatalogItem } from '../../models/catalog-item';
 import { GridContext } from '../../models/grid-context';
 import { ListViewProps } from '../../models/list-props';
@@ -32,7 +33,12 @@ export const ListView: FC<ListViewProps> = ({
 }) => {
   if (items.length === 0) {
     return (
-      <div className="flex size-full flex-col items-center justify-center">
+      <div
+        className={mergeClasses(
+          'flex size-full flex-col items-center justify-center',
+          CATALOG_CLASS.listView,
+        )}
+      >
         <PanelEmptyState label={emptyStateTitle ?? 'No results'} />
       </div>
     );
@@ -101,7 +107,11 @@ export const ListView: FC<ListViewProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('w-full rounded-xl border', styles.listContainer)}
+      className={mergeClasses(
+        'w-full rounded-xl border',
+        styles.listContainer,
+        CATALOG_CLASS.listView,
+      )}
     >
       <div
         ref={containerRef}

@@ -6,3 +6,4 @@ export type {
   SettingsPanelColors,
   SettingsPanelTypography,
 } from './models/settings-panel-props';
+export { SETTINGS_PANEL_CLASS } from './constants/public-class-names';

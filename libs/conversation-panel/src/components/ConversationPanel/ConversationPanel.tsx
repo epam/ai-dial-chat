@@ -21,6 +21,7 @@ import {
   useState,
 } from 'react';
 import { List, type ListImperativeAPI } from 'react-window';
+import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
 import { ConversationPanelProps } from '../../models/panel-props';
 import type { RowRendererData, VirtualRow } from '../../models/virtual-row';
@@ -427,7 +428,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           colors={newChatButtonColors}
         />
 
-        <div role="search" className="px-3 py-2">
+        <div
+          role="search"
+          className={mergeClasses('px-3 py-2', CONVERSATION_PANEL_CLASS.search)}
+        >
           <Search
             wrapperClassName={mergeClasses(
               styles.search,

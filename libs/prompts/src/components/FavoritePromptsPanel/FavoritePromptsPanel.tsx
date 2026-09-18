@@ -14,6 +14,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from 'react';
+import { PROMPTS_CLASS } from '../../constants/public-class-names';
 import type { FavoritePromptItem } from '../../models/favorite-prompt-item';
 import type { FavoritePromptsPanelProps } from '../../models/favorite-prompts-panel-props';
 import styles from './FavoritePromptsPanel.module.scss';
@@ -171,7 +172,13 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
   };
 
   return (
-    <div className="flex min-w-[240px] flex-col" style={cssVars}>
+    <div
+      className={mergeClasses(
+        'flex min-w-[240px] flex-col',
+        PROMPTS_CLASS.favoritesPanel,
+      )}
+      style={cssVars}
+    >
       <p
         className={mergeClasses(
           headerClassName,

@@ -260,6 +260,31 @@ describe('useConversationTransferQueue', () => {
   });
 
   describe('retryJob', () => {
+    it('clears names and warning code before a new attempt', async () => {
+      const { result, jobId } = renderQueueWithJob();
+      await act(async () => {
+        await result.current.startJob(jobId, async () => undefined);
+      });
+      act(() => {
+        result.current.warnJob(
+          jobId,
+          ConversationTransferWarningCode.AttachmentSkipped,
+          ['absent.pdf'],
+        );
+      });
+      expect(result.current.jobs[0].warningNames).toEqual(['absent.pdf']);
+
+      await act(async () => {
+        result.current.retryJob(jobId);
+      });
+
+      expect(result.current.jobs[0].status).toBe(
+        ConversationTransferJobStatus.InProgress,
+      );
+      expect(result.current.jobs[0].warningCode).toBeUndefined();
+      expect(result.current.jobs[0].warningNames).toBeUndefined();
+    });
+
     it('resets progress and clears the recorded error', async () => {
       const { result } = renderHook(() => useConversationTransferQueue());
       let jobId = '';

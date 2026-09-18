@@ -12,6 +12,7 @@ import {
   ConversationTransferErrorCode,
   ConversationTransferJobStatus,
   ConversationTransferSubjectKind,
+  ConversationTransferWarningCode,
 } from '@epam/ai-dial-chat-shared';
 import {
   act,
@@ -260,6 +261,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconWorldShare: () => null,
   IconWorldOff: () => null,
   IconAlertCircleFilled: () => null,
+  IconAlertTriangleFilled: () => null,
   IconCheck: () => null,
   IconFile: () => null,
   IconFileZip: () => null,
@@ -274,6 +276,13 @@ vi.mock('@tabler/icons-react', () => ({
 
 vi.mock('react-i18next', async () => {
   const { default: en } = await import('../../../i18n/locales/en.json');
+  const { createInstance } = await import('i18next');
+  const warningI18n = createInstance();
+  await warningI18n.init({
+    lng: 'en',
+    resources: { en: { translation: en } },
+    interpolation: { escapeValue: false },
+  });
   const translatedKeys = new Set([
     'conversationPanel.rename.renameTitle',
     'conversationPanel.rename.renameInputPlaceholder',
@@ -308,8 +317,20 @@ vi.mock('react-i18next', async () => {
     useTranslation: () => ({
       t: (
         key: string,
-        params?: { title?: string; fileName?: string; count?: number },
+        params?: {
+          title?: string;
+          fileName?: string;
+          count?: number;
+          names?: string;
+        },
       ) => {
+        if (
+          key === 'conversationImport.warningAttachmentSkipped' ||
+          key === 'conversationImport.jobWarningAttachmentSkipped' ||
+          key === 'conversationImport.nameListWithRest'
+        ) {
+          return warningI18n.t(key, params);
+        }
         if (!translatedKeys.has(key)) return key;
 
         const { count } = params ?? {};
@@ -1588,6 +1609,93 @@ describe('ConversationPanelView — import header action', () => {
 });
 
 describe('ConversationPanelView — separate import/export transfer queues', () => {
+  it.each([
+    { names: ['absent.pdf'], expectedNames: '"absent.pdf"' },
+    {
+      names: ['absent.pdf', 'missing.txt'],
+      expectedNames: '"absent.pdf", "missing.txt"',
+    },
+    {
+      names: ['a.pdf', 'b.pdf', 'c.pdf', 'd.pdf', 'e.pdf', 'f.pdf'],
+      expectedNames: '"a.pdf", "b.pdf", "c.pdf", "d.pdf", "e.pdf" and 1 other',
+    },
+  ])(
+    'names skipped attachments in the notification and their own queue row: $expectedNames',
+    ({ names, expectedNames }) => {
+      const makeWarningJob = (id: string, warningNames: string[]) => ({
+        id,
+        subject: { kind: ConversationTransferSubjectKind.All as const },
+        status: ConversationTransferJobStatus.Warning,
+        fileName: id + '.dial',
+        progress: { percent: 100 },
+        warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+        warningNames,
+      });
+      vi.mocked(useConversationImport).mockReturnValue({
+        jobs: [
+          makeWarningJob('imp-1', names),
+          makeWarningJob('imp-2', ['other.pdf']),
+        ],
+        importConversations: mockImportConversations,
+        cancelJob: mockCancelImportJob,
+        dismissJob: mockDismissImportJob,
+        retryJob: mockRetryImportJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+      const message =
+        expectedNames + ' could not be uploaded and were skipped.';
+      expect(screen.getByRole('img', { name: message })).toBeTruthy();
+      expect(
+        screen.getByRole('img', {
+          name: '"other.pdf" could not be uploaded and were skipped.',
+        }),
+      ).toBeTruthy();
+
+      const params = vi.mocked(useConversationImport).mock.calls.at(-1)?.[0];
+      params?.onWarning?.({
+        jobId: 'imp-1',
+        code: ConversationTransferWarningCode.AttachmentSkipped,
+        names,
+      });
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ message }),
+      );
+    },
+  );
+
+  it.each([{ warningNames: undefined }, { warningNames: [] }])(
+    'uses a generic warning for a job without names: %j',
+    ({ warningNames }) => {
+      vi.mocked(useConversationImport).mockReturnValue({
+        jobs: [
+          {
+            id: 'imp-legacy',
+            subject: { kind: ConversationTransferSubjectKind.All },
+            status: ConversationTransferJobStatus.Warning,
+            fileName: 'legacy.dial',
+            progress: { percent: 100 },
+            warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+            warningNames,
+          },
+        ],
+        importConversations: mockImportConversations,
+        cancelJob: mockCancelImportJob,
+        dismissJob: mockDismissImportJob,
+        retryJob: mockRetryImportJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(
+        screen.getByRole('img', {
+          name: 'Some attachments could not be uploaded and were skipped.',
+        }),
+      ).toBeTruthy();
+    },
+  );
+
   it('shows an import job in its own non-modal queue', () => {
     vi.mocked(useConversationImport).mockReturnValue({
       jobs: [

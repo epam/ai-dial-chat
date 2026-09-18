@@ -10,6 +10,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, useMemo } from 'react';
+import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import { useInlineStartIndent } from '../../hooks/useInlineStartIndent/useInlineStartIndent';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { MessageActions } from '../MessageActions/MessageActions';
@@ -155,6 +156,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                  * receive the indent.
                  */
                 beforeContent != null && text && FIRST_LINE_INDENT_CLASS_NAME,
+                CONVERSATION_MESSAGES_CLASS.assistantContent,
               )}
             >
               {beforeContent != null && text && (

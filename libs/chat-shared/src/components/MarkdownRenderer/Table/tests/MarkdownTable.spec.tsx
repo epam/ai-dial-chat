@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CHAT_SHARED_CLASS } from '../../../../constants/public-class-names';
 import { copyMarkdownAsRichText } from '../../../../utils/copy-to-clipboard';
 import { downloadTextFile } from '../../../../utils/file-download';
 import { MarkdownTable } from '../MarkdownTable';
@@ -332,5 +333,24 @@ describe('MarkdownTable', () => {
       const icon = screen.getByRole('button', { name }).querySelector('svg');
       expect(icon?.getAttribute('class')).not.toContain('rtl:scale-x-[-1]');
     });
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('MarkdownTable — public class names', () => {
+  it('stamps the table container and its scrolling box', () => {
+    renderTable();
+
+    const table = screen.getByRole('table');
+    expect(closestWithClass(table, CHAT_SHARED_CLASS.tableScroll)).toBeTruthy();
+    expect(closestWithClass(table, CHAT_SHARED_CLASS.table)).toBeTruthy();
   });
 });

@@ -11,6 +11,7 @@ import {
 import { IconFolderPlus, IconPencil, IconTrashX } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { useCallback, useMemo, useState } from 'react';
+import { PROMPT_EDITOR_CLASS } from '../../constants/public-class-names';
 import type { PromptFolderFieldProps } from '../../models/prompt-folder-field-props';
 import { FolderFormMode } from '../../types/folder-form-mode';
 
@@ -154,7 +155,12 @@ export const PromptFolderField: FC<PromptFolderFieldProps> = ({
   const nameFieldError = validationError ?? nameError;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      className={mergeClasses(
+        'flex flex-col gap-2',
+        PROMPT_EDITOR_CLASS.folderField,
+      )}
+    >
       <div className="flex items-end gap-2">
         <Select
           id="prompt-folder"

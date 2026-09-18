@@ -4,3 +4,4 @@ export type {
   StarterButtonsLabels,
   StarterButtonsStyles,
 } from './models/starter-props';
+export { STARTER_BUTTONS_CLASS } from './constants/public-class-names';

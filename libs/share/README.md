@@ -93,3 +93,31 @@ import type {
 `ShareLinkData` — `{ url: string; expiresInDays: number; access: ShareLinkAccess[] }` —
 is the shape the host's share-link seam returns; the popover takes its fields as
 individual props rather than the object.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key       | Class                | Element                                                                    |
+| --------- | -------------------- | -------------------------------------------------------------------------- |
+| `popover` | `dial-share-popover` | The popover's `role="dialog"` root, which carries the themed CSS variables |
+
+```tsx
+import { SHARE_CLASS } from '@epam/ai-dial-share';
+
+SHARE_CLASS.popover; // 'dial-share-popover'
+```
+
+The popover's `aria-label` is its localisable title, so it was never usable as
+a selector — this class replaces it.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

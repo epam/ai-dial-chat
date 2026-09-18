@@ -9,6 +9,7 @@ import {
 import { DIAL_ICON_SIZE, ElementSize, LinkButton } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC, useId } from 'react';
+import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import type { UserMessageBubbleProps } from '../../models/message-bubble';
 import { BubblePosition } from '../../types/bubble-position';
 import { MessageActions } from '../MessageActions/MessageActions';
@@ -114,6 +115,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
               'flex w-fit items-center justify-end rounded-es-2xl rounded-ss-2xl border px-6 py-4',
               positionRadius,
               bubbleClassName,
+              CONVERSATION_MESSAGES_CLASS.userBubble,
             )}
           >
             <div className="flex min-w-0 flex-col items-start">

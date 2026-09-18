@@ -15,3 +15,4 @@ export type {
 } from './components/QrCode/QrCode';
 export type { ShareLinkData } from './models/share-link-data';
 export { ShareLinkAccess, SharePopoverView } from './types/share';
+export { SHARE_CLASS } from './constants/public-class-names';

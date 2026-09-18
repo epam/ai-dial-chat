@@ -12,6 +12,7 @@ import {
   useMemo,
 } from 'react';
 import { ATTACHMENT_TILE_BASE_CLASS } from '../../../constants/attachment-group';
+import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import type { FileAttachmentProps } from '../../../models/attachment-file-row';
 import {
   getAttachmentCardState,
@@ -122,6 +123,8 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     !isError && styles.hovered,
     isSelected && styles.selected,
     isError && styles.tileError,
+    ATTACHMENT_INPUT_CLASS.tile,
+    isSelected && ATTACHMENT_INPUT_CLASS.tileSelected,
   );
 
   const nameEl = (
@@ -141,6 +144,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         'line-clamp-2 w-full min-w-0 break-words',
         styles.nameText,
         !isError && cornerIconSpacing,
+        ATTACHMENT_INPUT_CLASS.tileName,
       )}
     >
       {searchQuery ? (
@@ -156,6 +160,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
       className={mergeClasses(
         'flex w-full items-center gap-1',
         isError && cornerIconSpacing,
+        ATTACHMENT_INPUT_CLASS.tileType,
       )}
     >
       <Glyph size={16} className={styles.typeText} aria-hidden />

@@ -83,3 +83,33 @@ the row background/text/focus colors (applied as CSS custom properties):
 - `SettingsPanelStyles` — `{ typography?, colors? }`
 - `SettingsPanelColors` — CSS-custom-property color overrides
 - `SettingsPanelTypography` — typography class overrides
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key       | Class                          | Element                                                |
+| --------- | ------------------------------ | ------------------------------------------------------ |
+| `panel`   | `dial-settings-panel-panel`    | The panel root, which carries the themed CSS variables |
+| `tabList` | `dial-settings-panel-tab-list` | The vertical tab list holding the section rows         |
+| `tab`     | `dial-settings-panel-tab`      | Every section row, selected or not                     |
+
+```tsx
+import { SETTINGS_PANEL_CLASS } from '@epam/ai-dial-settings-panel';
+
+SETTINGS_PANEL_CLASS.tab; // 'dial-settings-panel-tab'
+```
+
+`role="tablist"` and `role="tab"` stay accessibility contracts — these classes
+are what a host selects on instead.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

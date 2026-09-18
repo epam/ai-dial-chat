@@ -565,3 +565,43 @@ to the UI Kit's `dial-italic-text` and can be overridden through
 `McpAppDisplayMode` is the display-mode union of the MCP UI protocol
 (`'inline'` | `'fullscreen'` | `'pip'`) — the accepted values for
 `hostContext.displayMode` and for `onRequestDisplayMode` requests and replies.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key     | Class                          | Element                                                               |
+| ------- | ------------------------------ | --------------------------------------------------------------------- |
+| `panel` | `dial-attachment-canvas-panel` | The canvas panel wrapper — the box that owns its width and transition |
+
+```tsx
+import { ATTACHMENT_CANVAS_CLASS } from '@epam/ai-dial-attachment-canvas';
+
+ATTACHMENT_CANVAS_CLASS.panel; // 'dial-attachment-canvas-panel'
+```
+
+The canvas is drawn by [`@epam/ai-dial-sidebar`](../sidebar/README.md), which
+puts this class on the **wrapper** around the region rather than on the
+`role="complementary"` element — that one carries `dial-sb-aside`. Size the
+wrapper, and descend from it to reach the region:
+
+```css
+.dial-attachment-canvas-panel {
+  inline-size: 720px;
+}
+
+.dial-attachment-canvas-panel .dial-sb-aside {
+  background: var(--bg-layer-base);
+}
+```
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.
