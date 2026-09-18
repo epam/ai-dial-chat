@@ -26,14 +26,31 @@ class TestMetricReader extends MetricReader {
   }
 }
 
+/*
+ * Models enough of a `Writable`'s termination contract for the SSE handlers'
+ * cleanup to run against it: `end()` reports `'finish'` on a later tick, as a
+ * real stream does once its queue has drained, and `destroy()` exists because
+ * the handlers' bounded release calls it when `'finish'` never arrives.
+ */
 class TestResponse extends EventEmitter {
   writableEnded = false;
+  writableFinished = false;
+  destroyed = false;
   writableLength = 0;
   setHeader = vi.fn();
   flushHeaders = vi.fn();
   write = vi.fn().mockReturnValue(true);
   end = vi.fn(() => {
     this.writableEnded = true;
+    setImmediate(() => {
+      this.writableFinished = true;
+      this.emit('finish');
+    });
+    return this;
+  });
+  destroy = vi.fn(() => {
+    this.destroyed = true;
+    this.emit('close');
     return this;
   });
 }
@@ -334,11 +351,18 @@ describe('SSE subscription metrics', () => {
         ).toBe(1);
 
         await generationModule.close();
+        /*
+         * Cleanup releases the response asynchronously (graceful `end()`,
+         * then a bounded `destroy()`), so its own `'finish'`/`'close'`
+         * listeners come off on the tick after `'finish'` arrives.
+         */
+        await new Promise((resolve) => setImmediate(resolve));
 
         expect(response.write).toHaveBeenCalledWith(
           'data: {"type":"stopped"}\n\n',
         );
         expect(response.writableEnded).toBe(true);
+        expect(response.destroy).not.toHaveBeenCalled();
         expect(response.listenerCount('close')).toBe(0);
         expect(
           await activeSubscriptions(SseSubscriptionKind.GenerationAttach),

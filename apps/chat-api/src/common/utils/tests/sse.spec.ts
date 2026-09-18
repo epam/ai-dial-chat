@@ -1,7 +1,7 @@
 import { Writable } from 'node:stream';
 import type { Response } from 'express';
-import { describe, expect, it } from 'vitest';
-import { waitForDrain, writeSseChunk } from '../sse';
+import { describe, expect, it, vi } from 'vitest';
+import { releaseSseResponse, waitForDrain, writeSseChunk } from '../sse';
 
 /**
  * A real Node `Writable` with a tiny `highWaterMark` and a `write` that
@@ -115,5 +115,111 @@ describe('waitForDrain', () => {
     await pending;
 
     expect(writable.listenerCount('drain')).toBe(0);
+  });
+});
+
+describe('releaseSseResponse', () => {
+  const RELEASE_TIMEOUT_MS = 20;
+
+  it('leaves an already-terminal response untouched', async () => {
+    const writable = new Writable({
+      write(_chunk, _encoding, callback) {
+        callback();
+      },
+    });
+    writable.end();
+    await new Promise((resolve) => writable.once('finish', resolve));
+    const end = vi.spyOn(writable, 'end');
+    const destroy = vi.spyOn(writable, 'destroy');
+
+    const result = await releaseSseResponse(
+      writable as unknown as Response,
+      RELEASE_TIMEOUT_MS,
+    );
+
+    expect(result).toBe('already-terminal');
+    expect(end).not.toHaveBeenCalled();
+    expect(destroy).not.toHaveBeenCalled();
+  });
+
+  it('ends the response and resolves "ended" when it flushes within the bound', async () => {
+    const { writable, flush } = createStalledWritable();
+    const res = writable as unknown as Response;
+    writeSseChunk(res, 'a'.repeat(10));
+
+    const pending = releaseSseResponse(res, 1000);
+    flush();
+
+    /*
+     * The resolved outcome is the assertion that the graceful path was taken.
+     * A `destroy` spy is not: Node's own `autoDestroy` destroys a stream
+     * after `'finish'`, so the call happens either way.
+     */
+    await expect(pending).resolves.toBe('ended');
+    expect(writable.writableFinished).toBe(true);
+  });
+
+  it('destroys the response only after the bound elapses without a flush', async () => {
+    const { writable } = createStalledWritable();
+    const res = writable as unknown as Response;
+    writeSseChunk(res, 'a'.repeat(10));
+
+    const result = await releaseSseResponse(res, RELEASE_TIMEOUT_MS);
+
+    expect(result).toBe('destroyed');
+    /*
+     * `end()` alone could not finish: the queued chunk never drained, which
+     * is exactly why the fallback exists rather than trusting `end()`.
+     */
+    expect(writable.writableEnded).toBe(true);
+    expect(writable.destroyed).toBe(true);
+  });
+
+  it('resolves "ended" when the connection closes mid-wait', async () => {
+    const { writable } = createStalledWritable();
+    const res = writable as unknown as Response;
+    writeSseChunk(res, 'a'.repeat(10));
+    const destroy = vi.spyOn(writable, 'destroy');
+
+    const pending = releaseSseResponse(res, 1000);
+    writable.emit('close');
+
+    await expect(pending).resolves.toBe('ended');
+    expect(destroy).not.toHaveBeenCalled();
+    expect(writable.destroyed).toBe(false);
+  });
+
+  it('removes its finish/close listeners and timer on every branch', async () => {
+    const drained = createStalledWritable();
+    const drainedRes = drained.writable as unknown as Response;
+    writeSseChunk(drainedRes, 'a'.repeat(10));
+    const pending = releaseSseResponse(drainedRes, 1000);
+    drained.flush();
+    await pending;
+
+    expect(drained.writable.listenerCount('finish')).toBe(0);
+    expect(drained.writable.listenerCount('close')).toBe(0);
+
+    const stalled = createStalledWritable();
+    const stalledRes = stalled.writable as unknown as Response;
+    writeSseChunk(stalledRes, 'a'.repeat(10));
+    await releaseSseResponse(stalledRes, RELEASE_TIMEOUT_MS);
+
+    expect(stalled.writable.listenerCount('finish')).toBe(0);
+    expect(stalled.writable.listenerCount('close')).toBe(0);
+  });
+
+  it('is safe to call twice', async () => {
+    const { writable, flush } = createStalledWritable();
+    const res = writable as unknown as Response;
+    writeSseChunk(res, 'a'.repeat(10));
+
+    const first = releaseSseResponse(res, 1000);
+    flush();
+    await expect(first).resolves.toBe('ended');
+
+    await expect(releaseSseResponse(res, 1000)).resolves.toBe(
+      'already-terminal',
+    );
   });
 });
