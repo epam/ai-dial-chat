@@ -312,10 +312,9 @@ describe('streamCompletion — downstream response lifecycle under backpressure'
 
 describe('streamCompletion — downstream response lifecycle over real HTTP', () => {
   /*
-   * 8 MiB of intent: enough that the kernel socket buffer fills and Node has
-   * to queue the remainder in the response, on any reasonable default
-   * `SO_SNDBUF`, so the 1 MiB threshold is genuinely crossed rather than
-   * absorbed by the OS.
+   * 8 MiB of intent, so that even a socket whose underlying write never
+   * completes still crosses the 1 MiB threshold on its own — the queueing
+   * this asserts comes from the write below, not from chunk count.
    */
   const REAL_HTTP_CHUNKS = 128;
 
@@ -331,10 +330,55 @@ describe('streamCompletion — downstream response lifecycle over real HTTP', ()
     return { server, port: address.port };
   };
 
-  /** A client that sends the request and then never reads the response body. */
-  const connectNonReadingClient = (port: number): net.Socket => {
+  /**
+   * Makes the response's underlying TCP socket withhold every in-flight
+   * write, so `res` never drains regardless of the machine's OS-level
+   * socket buffer size.
+   *
+   * `socket.pause()`-ing the *client* was tried first and is what this
+   * replaces: on a real network stack the kernel's receive window can
+   * absorb megabytes before the sender ever blocks, so whether the payload
+   * below has fully flushed by the time this test samples it is a race
+   * against that buffer's size — observed to flip `writableFinished` to
+   * `true` early on a CI runner with a larger window than the machine this
+   * was authored on.
+   *
+   * Patching the *internal* `_write` (not the public `write()`) is what
+   * keeps `res.writableLength`'s own bookkeeping correct: the public API is
+   * where `Writable` increments it, and only the paired `_write` callback
+   * decrements it, so withholding that callback reproduces genuine
+   * backpressure deterministically. `_destroy` is patched too, to abort any
+   * outstanding write with an error before tearing down — mirroring what a
+   * real socket handle does on destroy (and is *why* `destroy()` reclaims
+   * the buffer on a genuine stalled connection) — because a stand-in `_write`
+   * that never calls back has no other way to resolve it.
+   */
+  const stallSocketWrites = (socket: net.Socket): void => {
+    const pendingCallbacks: Array<(err?: Error) => void> = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (socket as any)._write = (
+      _chunk: unknown,
+      _encoding: unknown,
+      callback: (err?: Error) => void,
+    ) => {
+      pendingCallbacks.push(callback);
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const originalDestroy = (socket as any)._destroy.bind(socket);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (socket as any)._destroy = (
+      err: Error | null,
+      cb: (err?: Error) => void,
+    ) => {
+      const stalled = pendingCallbacks.splice(0);
+      originalDestroy(err, cb);
+      stalled.forEach((callback) => callback(err ?? new Error('destroyed')));
+    };
+  };
+
+  /** A client that sends the request and is never read by the test. */
+  const connectClient = (port: number): net.Socket => {
     const socket = net.connect(port, '127.0.0.1', () => {
-      socket.pause();
       socket.write(
         'POST /api/v1/conversations/completions HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n',
       );
@@ -343,7 +387,7 @@ describe('streamCompletion — downstream response lifecycle over real HTTP', ()
     return socket;
   };
 
-  it('releases a real ServerResponse whose peer stopped reading: ended, then destroyed with its buffer reclaimed', async () => {
+  it('releases a real ServerResponse whose underlying socket stopped accepting writes: ended, then destroyed with its buffer reclaimed', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout'] });
 
     const events: string[] = [];
@@ -353,6 +397,7 @@ describe('streamCompletion — downstream response lifecycle over real HTTP', ()
     let serverResponse: http.ServerResponse | undefined;
     let handled: Promise<void> | undefined;
     const { server, port } = await startServer((req, res) => {
+      stallSocketWrites(req.socket);
       serverResponse = res;
       Object.assign(req, TEST_REQUEST);
       handled = makeController(streamingService, generationService)
@@ -364,7 +409,7 @@ describe('streamCompletion — downstream response lifecycle over real HTTP', ()
         )
         .catch(() => undefined);
     });
-    const socket = connectNonReadingClient(port);
+    const socket = connectClient(port);
 
     try {
       await waitUntil(
@@ -385,6 +430,10 @@ describe('streamCompletion — downstream response lifecycle over real HTTP', ()
       await handled;
 
       expect(serverResponse?.destroyed).toBe(true);
+      // The bytes still queued for the aborted in-flight write are released
+      // as part of destroying the socket, the same as a real stalled
+      // connection — not left buffered on an object nothing references
+      // anymore.
       expect(serverResponse?.writableLength).toBe(0);
       expect(generationService.abort).not.toHaveBeenCalled();
       expect(events).toContain('persisted');
