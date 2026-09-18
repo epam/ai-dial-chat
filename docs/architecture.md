@@ -235,13 +235,17 @@ Current implementation uses **React Context** with no external state library. Th
 | `ActiveScheduledTaskContext`  | Scheduled task currently being viewed or edited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UserConfigContext`           | Per-user preferences persisted through `/api/v1/user-config`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `HalloweenContext`            | The Halloween easter egg, gated on the `halloweenEnabled` feature flag: which decorative celebration is playing, and the two triggers (the pumpkin's click run and the secret phrase typed into either conversation input). In-memory only; nothing is persisted or sent anywhere. Unlike the other contexts, its consumer hook resolves to a permanently disabled easter egg outside the provider instead of throwing                                                                                                                                                                                               |
 | `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
 
 - `createContext<T | undefined>(undefined)`
 - `useMemo` on context value to prevent consumer re-renders
-- Guard consumer hook throws a clear error when used outside the provider
+- Guard consumer hook throws a clear error when used outside the provider —
+  the one exception is `HalloweenContext`, whose default value is an inert,
+  disabled easter egg, so a decorative feature cannot break a tree that skips
+  its provider
 
 ### API layer
 

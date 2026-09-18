@@ -1495,5 +1495,11 @@
     "noLimitLabel": "No limit",
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"
+  },
+  "halloween": {
+    "toastTitle": "🎃 Happy Halloween!",
+    "treatsToastMessage": "No tricks here — help yourself to the candy.",
+    "ghostToastMessage": "You poked the pumpkin one time too many. Something woke up.",
+    "pumpkinLabel": "Halloween pumpkin"
   }
 }

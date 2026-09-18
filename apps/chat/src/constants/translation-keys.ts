@@ -1374,3 +1374,10 @@ export enum UsageI18nKeys {
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
 }
+
+export enum HalloweenI18nKeys {
+  ToastTitle = 'halloween.toastTitle',
+  TreatsToastMessage = 'halloween.treatsToastMessage',
+  GhostToastMessage = 'halloween.ghostToastMessage',
+  PumpkinLabel = 'halloween.pumpkinLabel',
+}

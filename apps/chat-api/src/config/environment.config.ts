@@ -816,6 +816,18 @@ export class EnvironmentVariables {
   SKILL_USAGE_ENABLED?: boolean = false;
 
   @IsOptional()
+  @Transform(({ obj, key }) => {
+    /* Same raw-source-value read as SKILL_USAGE_ENABLED above, so an env var
+     * explicitly set to "false"/"0"/"no" parses to `false`. */
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  HALLOWEEN_ENABLED?: boolean = false;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)

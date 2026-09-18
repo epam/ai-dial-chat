@@ -88,6 +88,7 @@ import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useHalloween } from '../../context/HalloweenContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
@@ -335,6 +336,7 @@ const ConversationView: FC<Props> = ({
     return entries.length > 0 ? entries : undefined;
   }, [promptsMenuOverlays, skillMenuOverlay]);
   const { showErrorNotification, showSuccessNotification } = useNotification();
+  const { consumeSecretPhrase } = useHalloween();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -658,6 +660,10 @@ const ConversationView: FC<Props> = ({
 
   const handleSendWithAnchor = useCallback(
     async (message: string, attachments: Attachment[]) => {
+      /* The Halloween easter egg's secret phrase celebrates instead of
+         sending. A no-op unless the flag is on, so the phrase otherwise
+         reaches the model as an ordinary message. */
+      if (consumeSecretPhrase(message)) return;
       armAnchor(messages.length);
       /* ConversationInput awaits this to know whether to restore the draft
        * on failure — forward onSend's result rather than discarding it. */
@@ -669,7 +675,14 @@ const ConversationView: FC<Props> = ({
        */
       removeSelectedSkill();
     },
-    [onSend, messages.length, armAnchor, selectedSkills, removeSelectedSkill],
+    [
+      onSend,
+      messages.length,
+      armAnchor,
+      consumeSecretPhrase,
+      selectedSkills,
+      removeSelectedSkill,
+    ],
   );
 
   const handleRegenerateMessageWithAnchor = useCallback(

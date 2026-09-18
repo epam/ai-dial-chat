@@ -1,0 +1,138 @@
+/*
+ * Animations for the `halloween` easter egg. Every one of them is opt-in
+ * chrome, so the whole file collapses to a static frame under
+ * `prefers-reduced-motion: reduce` — see the block at the bottom.
+ */
+
+@keyframes halloween-fall {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -12vh, 0) rotate(0deg);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(var(--halloween-drift, 0), 112vh, 0) rotate(360deg);
+  }
+}
+
+@keyframes halloween-ghost-fly {
+  from {
+    opacity: 0;
+    transform: translate3d(-20vw, 0, 0) scale(0.7);
+  }
+
+  15% {
+    opacity: 0.9;
+  }
+
+  85% {
+    opacity: 0.9;
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(120vw, -14vh, 0) scale(1.25);
+  }
+}
+
+@keyframes halloween-ghost-fly-rtl {
+  from {
+    opacity: 0;
+    transform: translate3d(20vw, 0, 0) scale(0.7);
+  }
+
+  15% {
+    opacity: 0.9;
+  }
+
+  85% {
+    opacity: 0.9;
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(-120vw, -14vh, 0) scale(1.25);
+  }
+}
+
+@keyframes halloween-bat-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(2.5rem, -0.75rem, 0) scale(1.1);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes halloween-pumpkin-bob {
+  from,
+  to {
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+
+  50% {
+    transform: translate3d(0, -0.375rem, 0) rotate(6deg);
+  }
+}
+
+.treat {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--halloween-x, 50%);
+  animation: halloween-fall var(--halloween-duration, 3.5s) linear
+    var(--halloween-delay, 0s) both;
+}
+
+.ghost {
+  position: absolute;
+  inset-block-start: 55%;
+  inset-inline-start: 0;
+  animation: halloween-ghost-fly 3.2s ease-in-out both;
+}
+
+:global([dir='rtl']) .ghost {
+  animation-name: halloween-ghost-fly-rtl;
+}
+
+.bat {
+  animation: halloween-bat-drift var(--halloween-duration, 6s) ease-in-out
+    var(--halloween-delay, 0s) infinite;
+}
+
+.pumpkin {
+  animation: halloween-pumpkin-bob 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .treat,
+  .ghost,
+  .bat,
+  .pumpkin {
+    animation: none;
+  }
+
+  /* Without the fall, a treat would otherwise sit frozen at the very top. */
+  .treat {
+    inset-block-start: 40%;
+    opacity: 1;
+  }
+
+  .ghost {
+    inset-inline-start: 40%;
+    opacity: 0.9;
+  }
+}

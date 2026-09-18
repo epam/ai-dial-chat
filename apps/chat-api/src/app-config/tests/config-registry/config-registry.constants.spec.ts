@@ -82,4 +82,21 @@ describe('CONFIG_DEFINITIONS', () => {
       envVar: 'DEFAULT_DEPLOYMENT_PINNED',
     });
   });
+
+  it('contains the client-visible features.halloweenEnabled entry', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.halloweenEnabled',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.halloweenEnabled',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: false,
+      critical: false,
+      envVar: 'HALLOWEEN_ENABLED',
+    });
+    expect(entry).not.toHaveProperty('allowedRolesEnvVar');
+  });
 });

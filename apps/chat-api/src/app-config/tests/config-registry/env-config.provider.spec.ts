@@ -342,6 +342,29 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('features.halloweenEnabled', () => {
+    it('returns true when HALLOWEEN_ENABLED is true', async () => {
+      const { provider } = makeProvider({ HALLOWEEN_ENABLED: true });
+      expect(await provider.resolve('features.halloweenEnabled', ctx)).toBe(
+        true,
+      );
+    });
+
+    it('returns false when HALLOWEEN_ENABLED is false', async () => {
+      const { provider } = makeProvider({ HALLOWEEN_ENABLED: false });
+      expect(await provider.resolve('features.halloweenEnabled', ctx)).toBe(
+        false,
+      );
+    });
+
+    it('returns undefined when HALLOWEEN_ENABLED is absent (falls through to the registry default of false)', async () => {
+      const { provider } = makeProvider({ HALLOWEEN_ENABLED: undefined });
+      expect(
+        await provider.resolve('features.halloweenEnabled', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('dialCore.externalUrl', () => {
     it('returns the external URL when DIAL_CORE_EXTERNAL_URL is set', async () => {
       const { provider } = makeProvider({
