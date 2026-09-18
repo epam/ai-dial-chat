@@ -112,6 +112,21 @@ const isSameResourceUrl = (
  * `publishesSource`'s original behaviour of matching *any* non-`DELETE`
  * resource.
  */
+/*
+ * The resource a publication publishes `sourceUrl` by, or `undefined`. Shared
+ * so `getPublicationSourceAction` and `getPublicationSourceCredentials` read
+ * the same resource, as both their docs promise.
+ */
+const findPublishingResource = (
+  publication: PublicationLike,
+  sourceUrl: string,
+): PublicationResourceLike | undefined =>
+  publication.resources?.find(
+    (resource) =>
+      isSameResourceUrl(resource.sourceUrl, sourceUrl) &&
+      resource.action !== PublicationResourceAction.Delete,
+  );
+
 export const getPublicationSourceAction = (
   publication: PublicationLike,
   sourceUrl: string,
@@ -123,9 +138,7 @@ export const getPublicationSourceAction = (
   if (resources.length === 0) {
     return null;
   }
-  const publishing = resources.find(
-    (resource) => resource.action !== PublicationResourceAction.Delete,
-  );
+  const publishing = findPublishingResource(publication, sourceUrl);
   return publishing
     ? ((publishing.action as PublicationResourceAction | undefined) ??
         PublicationResourceAction.Add)
@@ -145,14 +158,8 @@ export const getPublicationSourceAction = (
 export const getPublicationSourceCredentials = (
   publication: PublicationLike,
   sourceUrl: string,
-): boolean => {
-  const resource = publication.resources?.find(
-    (candidate) =>
-      isSameResourceUrl(candidate.sourceUrl, sourceUrl) &&
-      candidate.action !== PublicationResourceAction.Delete,
-  );
-  return resource?.publishCredentials === true;
-};
+): boolean =>
+  findPublishingResource(publication, sourceUrl)?.publishCredentials === true;
 
 /**
  * Whether `publication` publishes `sourceUrl`.

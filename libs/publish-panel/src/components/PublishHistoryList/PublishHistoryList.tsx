@@ -48,6 +48,12 @@ export interface PublishHistoryListColors {
   currentBadgeBackground?: string;
   /** Text color of the "Current" badge. Fallback: `--text-accent`. */
   currentBadgeText?: string;
+  /** Border color of the shared-credentials marker. Fallback: `--stroke-tertiary`. */
+  sharedCredentialsBadgeBorder?: string;
+  /** Background color of the shared-credentials marker. Fallback: `--bg-layer-sunken`. */
+  sharedCredentialsBadgeBackground?: string;
+  /** Text color of the shared-credentials marker. Fallback: `--text-secondary`. */
+  sharedCredentialsBadgeText?: string;
   /** Text color of each entry's version line. Fallback: `--text-primary`. */
   versionText?: string;
   /** Text color of each entry's publish date. Fallback: `--text-secondary`. */
@@ -79,6 +85,9 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
     '--phl-badge-border': colors?.currentBadgeBorder,
     '--phl-badge-bg': colors?.currentBadgeBackground,
     '--phl-badge-text': colors?.currentBadgeText,
+    '--phl-shared-creds-border': colors?.sharedCredentialsBadgeBorder,
+    '--phl-shared-creds-bg': colors?.sharedCredentialsBadgeBackground,
+    '--phl-shared-creds-text': colors?.sharedCredentialsBadgeText,
     '--phl-version-text': colors?.versionText,
     '--phl-date-text': colors?.dateText,
     '--phl-empty-text': colors?.emptyStateText,
@@ -144,7 +153,7 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
                 label={sharedCredentialsLabel}
                 className={mergeClasses(
                   'shrink-0 whitespace-nowrap',
-                  styles.currentBadge,
+                  styles.sharedCredentialsBadge,
                 )}
               />
             )}

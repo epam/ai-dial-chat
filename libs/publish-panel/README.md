@@ -100,8 +100,8 @@ through. The checkbox is disabled while `isSubmitting` is `true`.
   publishCredentials={publishCredentials}
   onPublishCredentialsChange={setPublishCredentials}
   labels={{
-    credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
-    credentialsHint: t(CatalogI18nKeys.PublishCredentialsHint),
+    credentialsLabel: t('catalog.publish.credentialsLabel'),
+    credentialsHint: t('catalog.publish.credentialsHint'),
   }}
 />
 ```
@@ -230,7 +230,7 @@ displays or accepts a credential value.
 <PublishHistoryList
   entries={folderHistory}
   currentVersion={currentVersion}
-  sharedCredentialsLabel={t(CatalogI18nKeys.PublishHistorySharedCredentials)}
+  sharedCredentialsLabel={t('catalog.publish.historySharedCredentials')}
 />
 ```
 
