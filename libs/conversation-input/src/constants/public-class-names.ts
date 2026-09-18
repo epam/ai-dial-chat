@@ -17,6 +17,8 @@ export const CONVERSATION_INPUT_CLASS = {
   textareaWrap: 'dial-ci-textarea-wrap',
   /** The wrapper around the add-attachment button. */
   addCluster: 'dial-ci-add-cluster',
+  /** The wrapper around the tool chips, present only when tools are shown. */
+  toolsChips: 'dial-ci-tools-chips',
   /** The trailing cluster: model selector, mic, and send/stop buttons. */
   footerActions: 'dial-ci-footer-actions',
   /** The model selector trigger button, in every presentation. */
@@ -33,7 +35,8 @@ export const CONVERSATION_INPUT_CLASS = {
   modelMenuItem: 'dial-ci-model-menu-item',
   /**
    * The currently selected deployment row, additive to `modelMenuItem`. The
-   * check mark itself is drawn by `@epam/ai-dial-ui-kit` and has no class here.
+   * check mark itself is drawn by `@epam/ai-dial-ui-kit`, which marks it
+   * `DIAL_KIT_CLASS.menuItemCheck`; this package owns no class for it.
    */
   modelMenuItemSelected: 'dial-ci-model-menu-item-selected',
 } as const;
