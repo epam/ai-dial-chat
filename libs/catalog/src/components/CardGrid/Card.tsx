@@ -21,6 +21,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { CATALOG_CLASS } from '../../constants/public-class-names';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
@@ -127,6 +128,7 @@ export const Card: FC<CardProps> = ({
       aria-label={item.name}
       style={cssVars}
       className={mergeClasses(
+        CATALOG_CLASS.card,
         'box-border cursor-pointer gap-3',
         styles.card,
         isFeaturedVisible ? styles.featuredCard : undefined,

@@ -2,6 +2,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import {
   CredentialStatus,
@@ -287,5 +288,19 @@ describe('Card — description rendering', () => {
     );
     expect(descriptionDiv?.className).toContain('line-clamp-2');
     expect(descriptionDiv?.className).toContain('min-h-[2lh]');
+  });
+});
+
+describe('Card — public class names', () => {
+  it('stamps the card in every state', () => {
+    const { rerender } = render(<Card item={makeItem()} />);
+    expect(screen.getByRole('article', { hidden: true }).classList).toContain(
+      CATALOG_CLASS.card,
+    );
+
+    rerender(<Card item={makeItem()} isSelected />);
+    expect(screen.getByRole('article', { hidden: true }).classList).toContain(
+      CATALOG_CLASS.card,
+    );
   });
 });

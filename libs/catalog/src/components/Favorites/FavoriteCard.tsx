@@ -7,6 +7,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
+import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { AppIdentityColors } from '../../models/app-identity-styles';
 import { CatalogItem } from '../../models/catalog-item';
 import { DeploymentSize } from '../../types/deployment-icon-size';
@@ -98,6 +99,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       tabIndex={handleClick != null ? 0 : undefined}
       aria-label={item.name}
       className={mergeClasses(
+        CATALOG_CLASS.favoriteCard,
         'box-border min-w-0 cursor-pointer flex-row items-start gap-1 text-start',
         isLeaving && styles.cardLeaving,
         isSelected && styles.selectedCard,
