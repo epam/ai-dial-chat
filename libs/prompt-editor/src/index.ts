@@ -13,3 +13,4 @@ export type {
 } from './models/prompt-editor-props';
 export type { PromptFolderFieldProps } from './models/prompt-folder-field-props';
 export { FolderFormMode } from './types/folder-form-mode';
+export { PROMPT_EDITOR_CLASS } from './constants/public-class-names';

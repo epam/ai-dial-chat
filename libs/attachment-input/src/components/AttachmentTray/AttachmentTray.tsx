@@ -1,5 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
+import { ATTACHMENT_INPUT_CLASS } from '../../constants/public-class-names';
 import type { AttachmentTrayProps } from '../../models/attachment-tray';
 import { AttachmentCard } from '../AttachmentCard/AttachmentCard';
 
@@ -31,10 +32,15 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
       className={mergeClasses(
         'flex w-full min-w-0 gap-2 overflow-x-auto',
         className,
+        ATTACHMENT_INPUT_CLASS.tray,
       )}
     >
       {attachments.map((attachment) => (
-        <div key={attachment.id} role="listitem">
+        <div
+          key={attachment.id}
+          role="listitem"
+          className={ATTACHMENT_INPUT_CLASS.trayItem}
+        >
           <AttachmentCard
             attachment={attachment}
             onRemove={onRemove}

@@ -1,0 +1,28 @@
+/*
+ * Three-tier fallback per openspec/lib-styling-guide.md: the host's own
+ * variable, then this app's design token, then the light-theme literal.
+ *
+ * The prefix is `--mcpapp-`: `--mcp-` is already claimed by
+ * `@epam/ai-dial-attachment-canvas` for the full-width canvas renderer's
+ * status colors, and one prefix owned by two libs is what the class grammar
+ * exists to prevent.
+ */
+
+.preview {
+  /*
+   * The surface the mounted app sits on. This was a `bg-layer-2` utility,
+   * which is a design-system 1.0 token name the 2.0 theme does not define — so
+   * Tailwind emitted nothing for it and the card rendered transparent. The
+   * raised layer is the 2.0 token for a surface lifted off the page, matching
+   * the code block this preview's chrome is modelled on.
+   */
+  background: var(--mcpapp-preview-bg, var(--bg-layer-raised, #fcfcfc));
+  border-color: var(--mcpapp-preview-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.previewHeader {
+  border-bottom-color: var(
+    --mcpapp-preview-header-border,
+    var(--stroke-tertiary, #e0e6f0)
+  );
+}

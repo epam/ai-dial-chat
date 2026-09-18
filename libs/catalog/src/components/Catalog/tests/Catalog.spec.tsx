@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogSortKey } from '../../../types/sort';
 import {
@@ -1312,5 +1313,26 @@ describe('Catalog — read-only', () => {
     render(<Catalog items={[]} favorites={[]} isReadonly />);
 
     expect(screen.getByRole('heading', { name: 'Catalog' })).toBeTruthy();
+  });
+});
+
+describe('Catalog — public class names', () => {
+  /*
+   * A lost public class fails silently: the build passes, types pass, lint
+   * passes, and a host's stylesheet simply stops applying. The set is the
+   * catalog's layout skeleton, so each piece is asserted from something that
+   * has a role or text of its own.
+   */
+  it('stamps the catalog root', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+
+    /*
+     * The root is the `section` the catalog names itself with. The toolbar,
+     * the cards and the list view are stubbed out in this file, so each of
+     * their classes is asserted in that component's own spec instead.
+     */
+    expect(screen.getByRole('region', { name: 'Catalog' }).classList).toContain(
+      CATALOG_CLASS.root,
+    );
   });
 });

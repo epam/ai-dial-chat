@@ -1,4 +1,6 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
+import { SCHEDULED_TASKS_CLASS } from '../../constants/public-class-names';
 import type { ScheduledTaskCardGridProps } from '../../models/scheduled-task-card-grid-props';
 import { ScheduledTaskCard } from '../ScheduledTaskCard/ScheduledTaskCard';
 import { ScheduledTaskCardSkeleton } from '../ScheduledTaskCardSkeleton/ScheduledTaskCardSkeleton';
@@ -13,7 +15,12 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
   trailingSkeletonCount = 0,
   skeletonStyles,
 }) => (
-  <div className="grid grid-cols-1 gap-5 desktop:grid-cols-3">
+  <div
+    className={mergeClasses(
+      'grid grid-cols-1 gap-5 desktop:grid-cols-3',
+      SCHEDULED_TASKS_CLASS.cardGrid,
+    )}
+  >
     {items.map((item) => (
       <ScheduledTaskCard
         key={item.id}

@@ -40,3 +40,4 @@ export type {
   ModelLimitsStyles,
   ModelLimitsTypography,
 } from './models/model-limits-props';
+export { USAGE_DASHBOARD_CLASS } from './constants/public-class-names';

@@ -1,5 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { useId, useRef, type FC, type KeyboardEvent } from 'react';
+import { SETTINGS_PANEL_CLASS } from '../../constants/public-class-names';
 import type {
   SettingsPanelItem,
   SettingsPanelProps,
@@ -91,7 +92,11 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
 
   return (
     <div
-      className={mergeClasses('flex flex-col gap-3 bg-layer-raised', className)}
+      className={mergeClasses(
+        'flex flex-col gap-3 bg-layer-raised',
+        className,
+        SETTINGS_PANEL_CLASS.panel,
+      )}
       style={cssVars}
     >
       {sectionLabel && (
@@ -113,7 +118,10 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
         // a tab stop, but jsx-a11y requires an interactive role to declare
         // its own (non-reachable) focusability.
         tabIndex={-1}
-        className="flex flex-col px-2"
+        className={mergeClasses(
+          'flex flex-col gap-1 px-2',
+          SETTINGS_PANEL_CLASS.tabList,
+        )}
       >
         {items.map((item) => {
           const isActive = item.id === activeId;
@@ -139,6 +147,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
                 'focus-visible:outline focus-visible:-outline-offset-1',
                 styles.row,
                 isVisuallyActive && styles.rowActive,
+                SETTINGS_PANEL_CLASS.tab,
               )}
             >
               {item.icon}

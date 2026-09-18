@@ -15,6 +15,7 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { type FC, memo, useCallback, useEffect, useRef, useState } from 'react';
+import { ATTACHMENT_CANVAS_CLASS } from '../../constants/public-class-names';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { isDownloadable } from '../../utils/download';
@@ -192,6 +193,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           isOpen ? 'mobile:w-full mobile:max-w-full' : 'w-0',
           className,
           panelStyles?.className,
+          ATTACHMENT_CANVAS_CLASS.panel,
         ),
       }}
       rightActions={

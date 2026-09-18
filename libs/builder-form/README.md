@@ -387,3 +387,34 @@ through `styles.header` (typed `BuilderFormHeaderStyles`, holding
 `BuilderFormHeaderColors` and `BuilderFormHeaderTypography`). All of these are
 exported for consumers building those objects. The header, body, and actions
 components themselves are internal to the container.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key       | Class                       | Element                                                    |
+| --------- | --------------------------- | ---------------------------------------------------------- |
+| `layout`  | `dial-builder-form-layout`  | The editor layout root, holding the header and the columns |
+| `section` | `dial-builder-form-section` | Every `EditorSection` box, titled or not                   |
+
+```tsx
+import { BUILDER_FORM_CLASS } from '@epam/ai-dial-builder-form';
+
+BUILDER_FORM_CLASS.section; // 'dial-builder-form-section'
+```
+
+Both classes reach every editor built on this package, so a host styling
+`.dial-builder-form-section` restyles the prompt, skill and toolset editors at
+once. To reach one of them only, pair this class with that editor's own —
+`.dial-toolset-editor-setup-section`, for instance.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

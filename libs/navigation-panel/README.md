@@ -177,3 +177,32 @@ import type {
   UserMenuTypography,
 } from '@epam/ai-dial-navigation-panel';
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key    | Class                        | Element                               |
+| ------ | ---------------------------- | ------------------------------------- |
+| `rail` | `dial-navigation-panel-rail` | The `nav` rail itself                 |
+| `item` | `dial-navigation-panel-item` | Every item in the rail, active or not |
+
+```tsx
+import { NAVIGATION_PANEL_CLASS } from '@epam/ai-dial-navigation-panel';
+
+NAVIGATION_PANEL_CLASS.item; // 'dial-navigation-panel-item'
+```
+
+`role="navigation"` stays an accessibility contract: use `dial-navigation-panel-rail`
+as the selector instead.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

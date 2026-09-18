@@ -28,6 +28,14 @@ export default defineConfig(() => ({
         index: 'src/index.ts',
       },
       name: '@epam/ai-dial-mcp-apps',
+      /*
+       * Without this the CSS asset is named after `name` above, so the
+       * CSS-module rules land in `ai-dial-mcp-apps.css` while
+       * `createLibTailwindUtilities` appends the utility layer to
+       * `index.css` — and `exports['./styles.css']`, which points at
+       * `index.css`, ships a host the utilities without the themable rules.
+       */
+      cssFileName: 'index',
       formats: ['es' as const],
     },
     rolldownOptions: {

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Toolbar } from '../Toolbar';
 
@@ -100,5 +101,24 @@ describe('Toolbar', () => {
 
     expect(screen.getByLabelText('breadcrumb')).toBeTruthy();
     expect(screen.queryByText('Browse')).toBeNull();
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('Toolbar — public class names', () => {
+  it('stamps the toolbar root', () => {
+    renderToolbar();
+
+    expect(
+      closestWithClass(screen.getByText('Browse'), CATALOG_CLASS.toolbar),
+    ).toBeTruthy();
   });
 });

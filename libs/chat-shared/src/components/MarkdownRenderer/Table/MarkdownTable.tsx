@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { useHorizontalOverflow } from '../../../hooks/useHorizontalOverflow';
 import { buildCssVars } from '../../../utils/build-css-vars';
 import { copyMarkdownAsRichText } from '../../../utils/copy-to-clipboard';
@@ -177,6 +178,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
           'group/table relative w-full min-w-0 max-w-full rounded-xl border [overflow:clip]',
           styles.tableContainer,
           classNames.tableWrapper,
+          CHAT_SHARED_CLASS.table,
         )}
       >
         {showActions && (
@@ -209,6 +211,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
               [styles.tableScrollFadeEnd]:
                 !hasContentBeyondStart && hasContentBeyondEnd,
             },
+            CHAT_SHARED_CLASS.tableScroll,
           )}
           onScroll={handleScroll}
           role={isScrollable ? 'region' : undefined}

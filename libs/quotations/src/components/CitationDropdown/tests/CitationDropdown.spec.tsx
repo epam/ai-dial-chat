@@ -2,6 +2,7 @@ import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { QUOTATIONS_CLASS } from '../../../constants/public-class-names';
 import {
   CitationCardProvider,
   type CitationCardHook,
@@ -178,5 +179,34 @@ describe('CitationDropdown', () => {
     await userEvent.click(marker);
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
+  });
+});
+
+/*
+ * Walking up to the panel is the only way to assert a class on it: it carries
+ * no role or text of its own, and querying *by* the class would still pass
+ * with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('CitationDropdown — public class names', () => {
+  /*
+   * The panel is the only citation surface whose class travels as a prop into
+   * the kit's tooltip rather than onto an element this component renders, so a
+   * lost class here would not even show up as a changed stylesheet — only as a
+   * host's rule that silently stops applying.
+   */
+  it('stamps the floating panel it reveals', async () => {
+    render(<Wrapper group={makeGroup()} onOpenInBrowser={vi.fn()} />);
+    await userEvent.click(screen.getByRole('button'));
+
+    /* The revealed panel is the element with the tooltip role. */
+    const panel = screen.getByRole('tooltip');
+    expect(
+      panel.classList.contains(QUOTATIONS_CLASS.citationDropdown) ||
+        closestWithClass(panel, QUOTATIONS_CLASS.citationDropdown) != null,
+    ).toBe(true);
   });
 });

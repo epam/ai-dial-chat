@@ -82,6 +82,25 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
 />;
 ```
 
+#### Colors
+
+The preview's surface and its two borders are themable through
+`McpAppInlinePreviewColors`, applied as CSS custom properties on the preview's
+root. Each falls back to this design system's token, and then to the light
+literal, so passing nothing keeps the stock look:
+
+```tsx
+import type { McpAppInlinePreviewColors } from '@epam/ai-dial-mcp-apps';
+
+const colors: McpAppInlinePreviewColors = {
+  previewBackground: 'var(--my-surface)', // --bg-layer-raised
+  previewBorder: 'var(--my-border)', // --stroke-tertiary
+  previewHeaderBorder: 'var(--my-border-soft)', // --stroke-tertiary
+};
+
+<McpAppInlinePreview {...props} colors={colors} />;
+```
+
 ## Utilities
 
 - `findMcpAppForMessage(message, mcpAppTools)` — matches a message to the MCP App tool it called, or the deployment's first discovered tool.
@@ -97,3 +116,32 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
 - `McpAppHostAdapter`, `FetchMcpAppResourceHtml`, `CallMcpAppTool`
 - `McpAppResponseCache`, `CachedMcpAppResponse`
 - `McpAppInlinePreviewStatus`, `McpAppInlinePreviewState`, `McpAppInlinePreviewProps`
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key             | Class                          | Element                                                     |
+| --------------- | ------------------------------ | ----------------------------------------------------------- |
+| `preview`       | `dial-mcp-apps-preview`        | The preview's bordered outer card                           |
+| `previewHeader` | `dial-mcp-apps-preview-header` | The header strip above the mounted app, holding its actions |
+
+```tsx
+import { MCP_APPS_CLASS } from '@epam/ai-dial-mcp-apps';
+
+MCP_APPS_CLASS.previewHeader; // 'dial-mcp-apps-preview-header'
+```
+
+The header sits outside the mounted app's own content, so restyling it never
+overlaps whatever the app draws.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

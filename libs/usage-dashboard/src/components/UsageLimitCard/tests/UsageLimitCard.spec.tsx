@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { USAGE_DASHBOARD_CLASS } from '../../../constants/public-class-names';
 import {
   UsageLimitCardData,
   UsageLimitCardGroupLabels,
@@ -250,5 +251,17 @@ describe('UsageLimitCard', () => {
       expect(resetLine.className).toContain('break-words');
       expect(resetLine.className).not.toContain('whitespace-nowrap');
     });
+  });
+});
+
+describe('UsageLimitCard — public class names', () => {
+  it('stamps the card root', () => {
+    renderCard();
+
+    /* The card names itself from its title and period, both localisable, so
+       the group role is what a test can rely on. */
+    expect(screen.getByRole('group').classList).toContain(
+      USAGE_DASHBOARD_CLASS.card,
+    );
   });
 });
