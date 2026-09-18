@@ -472,15 +472,24 @@ describe('ConversationMessageItem — inline citations', () => {
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
 
+    /* The single annotation carries no `index`, so its highlight id is
+       derived from its own identity (cit id + selector digest) rather than
+       a fixed position — assert the shape, not a pinned literal (#8907). */
     expect(mockOpenCanvas).toHaveBeenCalledWith(
       expect.objectContaining({
         type: AttachmentContentType.Ooxml,
         format: 'docx',
-        highlights: [expect.objectContaining({ id: '0' })],
-        selectedHighlightId: '0',
+        highlights: [expect.objectContaining({ id: expect.any(String) })],
+        selectedHighlightId: expect.any(String),
       }),
       'report.docx',
     );
+    const [call] = mockOpenCanvas.mock.calls;
+    const content = call[0] as {
+      highlights: { id: string }[];
+      selectedHighlightId: string;
+    };
+    expect(content.selectedHighlightId).toBe(content.highlights[0].id);
   });
 
   it('previews the second annotation of a grouped Office citation, not the group primary', async () => {
