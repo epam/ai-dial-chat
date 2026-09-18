@@ -22,32 +22,6 @@ Import the stylesheet once in the consuming app:
 import '@epam/ai-dial-conversation-messages/styles.css';
 ```
 
-### Tailwind setup (required)
-
-This package's layout, spacing, and sizing are Tailwind utility classes in its
-compiled JSX — not rules in its stylesheet. Your own Tailwind build has to
-produce them, so add the design-token preset and scan this package:
-
-```js
-// your tailwind.config.js
-module.exports = {
-  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
-  content: [
-    './src/**/*.{html,js,ts,jsx,tsx}',
-    './node_modules/@epam/ai-dial-conversation-messages/dist/**/*.js',
-    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
-  ],
-};
-```
-
-The preset is required, not optional: this package's JSX uses semantic token
-utilities (`bg-layer-raised`, `text-secondary`, `stroke-secondary`, …) whose
-class names exist only in that theme.
-
-**Omitting either piece fails silently** — no build error, no warning, correct
-DOM, missing layout. Tailwind CSS 3 in the host is a hard requirement; a
-non-Tailwind host is unsupported.
-
 ## Peer Dependencies
 
 - `react`
@@ -182,10 +156,10 @@ import { CONVERSATION_MESSAGES_CLASS } from '@epam/ai-dial-conversation-messages
 CONVERSATION_MESSAGES_CLASS.userBubble; // 'dial-cm-user-bubble'
 ```
 
-| Class                       | Element                                           |
-| --------------------------- | ------------------------------------------------- |
-| `dial-cm-user-bubble`       | The user message's bubble                         |
-| `dial-cm-assistant-content` | The assistant message's streamed content region   |
+| Class                       | Element                                         |
+| --------------------------- | ----------------------------------------------- |
+| `dial-cm-user-bubble`       | The user message's bubble                       |
+| `dial-cm-assistant-content` | The assistant message's streamed content region |
 
 `dial-cm-user-bubble` is emitted only when the bubble renders — a message with
 neither text nor `beforeContent` has no bubble at all. It is additive to
@@ -196,11 +170,11 @@ you style them.
 
 ### Replacing fragile selectors
 
-| Instead of                     | Use                                |
-| ------------------------------ | ---------------------------------- |
-| `[class*='userBubble']`        | `.dial-cm-user-bubble`             |
-| `[aria-live='polite']`         | `.dial-cm-assistant-content`       |
-| `[aria-live='polite'] pre`     | `.dial-cm-assistant-content pre`   |
+| Instead of                 | Use                              |
+| -------------------------- | -------------------------------- |
+| `[class*='userBubble']`    | `.dial-cm-user-bubble`           |
+| `[aria-live='polite']`     | `.dial-cm-assistant-content`     |
+| `[aria-live='polite'] pre` | `.dial-cm-assistant-content pre` |
 
 `aria-live` is an accessibility contract, not a styling one — using it as a
 selector pressures this package to keep an ARIA attribute frozen on a

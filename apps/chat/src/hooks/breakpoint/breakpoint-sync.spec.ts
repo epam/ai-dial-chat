@@ -9,11 +9,11 @@ import { describe, expect, it } from 'vitest';
 /*
  * The responsive boundary is single-sourced in chat-shared's breakpoint
  * constants. The sites that can import them (useBreakpoint, useIsMobile, the
- * catalog virtualizer) cannot drift; the sites that cannot — the published
- * Tailwind preset (plain CJS run by tooling, and by a host's own build), SCSS
- * stylesheets, and the dependency-less chat-overlay package — repeat the
- * literal. This spec pins every repeat to the constant so a boundary move can
- * never leave a site behind silently.
+ * catalog virtualizer) cannot drift; the sites that cannot — the root
+ * tailwind config (plain CJS run by tooling), SCSS stylesheets, and the
+ * dependency-less chat-overlay package — repeat the literal. This spec pins
+ * every repeat to the constant so a boundary move can never leave a site
+ * behind silently.
  */
 
 /* The spec lives at apps/chat/src/hooks/breakpoint/, five levels below the repo root. */
@@ -23,28 +23,11 @@ const readRepoFile = (relativePath: string): string =>
   readFileSync(join(REPO_ROOT, relativePath), 'utf-8');
 
 describe('breakpoint-sync', () => {
-  it('the Tailwind preset screens match the breakpoint constants', () => {
-    /*
-     * The named screens live in the preset rather than in the repo-root config,
-     * which now contributes only this repository's content globs — a host
-     * inherits the boundary by extending
-     * `@epam/ai-dial-chat-shared/tailwind-preset`.
-     */
-    const preset = readRepoFile('libs/chat-shared/tailwind-preset.cjs');
+  it('the root tailwind screens match the breakpoint constants', () => {
+    const config = readRepoFile('tailwind.config.js');
 
-    expect(preset).toContain(`mobile: { max: '${MOBILE_MAX_WIDTH_PX}px' }`);
-    expect(preset).toContain(`desktop: { min: '${DESKTOP_BREAKPOINT_PX}px' }`);
-  });
-
-  it('the repo-root config extends the preset that owns the screens', () => {
-    /*
-     * Every app and lib config extends the repo-root file, so the boundary only
-     * reaches them through this line; without it the named screens would be
-     * absent and `mobile:`/`desktop:` utilities would silently emit nothing.
-     */
-    expect(readRepoFile('tailwind.config.js')).toContain(
-      "presets: [require('./libs/chat-shared/tailwind-preset.cjs')]",
-    );
+    expect(config).toContain(`mobile: { max: '${MOBILE_MAX_WIDTH_PX}px' }`);
+    expect(config).toContain(`desktop: { min: '${DESKTOP_BREAKPOINT_PX}px' }`);
   });
 
   it('the chat-overlay mobile breakpoint matches the breakpoint constants', () => {

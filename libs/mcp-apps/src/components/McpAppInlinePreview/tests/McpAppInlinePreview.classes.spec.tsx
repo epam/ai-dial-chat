@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { MCP_APPS_CLASS } from '../../../constants/public-class-names';
 import type {
@@ -47,6 +47,7 @@ const match: McpAppToolRef = {
   toolName: 'weather',
   mcpToolName: 'weather',
   kind: 'toolset',
+  discovery: 'direct',
 };
 
 const response: CachedMcpAppResponse = { html: '<p>app</p>' };
@@ -61,8 +62,10 @@ const cache: McpAppResponseCache = {
 const hostAdapter: McpAppHostAdapter = {
   hostContext: {} as McpAppHostAdapter['hostContext'],
   sandboxUrl: 'https://sandbox.example',
-  fetchResourceHtml: vi.fn(async () => response),
-  callTool: vi.fn(async () => ({})) as McpAppHostAdapter['callTool'],
+  fetchResourceHtml: vi.fn(async () => response.html),
+  callTool: vi.fn(async () => ({
+    content: [],
+  })) as unknown as McpAppHostAdapter['callTool'],
 };
 
 const renderPreview = () =>

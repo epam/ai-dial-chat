@@ -107,42 +107,6 @@ import {
 } from '@epam/ai-dial-chat-shared/markdown';
 ```
 
-## Tailwind preset entry
-
-`@epam/ai-dial-chat-shared/tailwind-preset` is the AI DIAL design-token Tailwind
-preset — the single source of the semantic colour scale that every
-`@epam/ai-dial-*` UI package is built against. It is a CommonJS Tailwind config
-fragment, not module source, so it is consumed from a config file rather than
-imported into application code:
-
-```js
-// your tailwind.config.js
-module.exports = {
-  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
-  content: [
-    './src/**/*.{html,js,ts,jsx,tsx}',
-    './node_modules/@epam/ai-dial-conversation-input/dist/**/*.js',
-    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
-    // …one entry per consumed @epam/ai-dial-* package
-  ],
-};
-```
-
-The preset is **required** for any host rendering `@epam/ai-dial-*` UI packages.
-Their JSX uses semantic token utilities — `bg-layer-raised`, `text-secondary`,
-`text-primary`, `stroke-secondary`, `bg-control-accent-alpha` and roughly 130
-more — whose class names exist only in this theme. A host without it emits none
-of them, with no build error and no warning.
-
-It deliberately carries no `content` globs; those are specific to each consumer,
-which is why every package README lists its own. Needing no `dependencies`, the
-preset adds nothing to a host's install beyond this package, which every UI
-package already declares as a peer.
-
-The full host setup — the `content` globs, the `styles.css` imports, and the
-silent-failure symptoms to recognise — is in
-[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
-
 ## Domain Models
 
 ```tsx

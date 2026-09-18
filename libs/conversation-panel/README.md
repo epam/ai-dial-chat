@@ -22,32 +22,6 @@ Import the stylesheet once in the consuming app:
 import '@epam/ai-dial-conversation-panel/styles.css';
 ```
 
-### Tailwind setup (required)
-
-This package's layout, spacing, and sizing are Tailwind utility classes in its
-compiled JSX — not rules in its stylesheet. Your own Tailwind build has to
-produce them, so add the design-token preset and scan this package:
-
-```js
-// your tailwind.config.js
-module.exports = {
-  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
-  content: [
-    './src/**/*.{html,js,ts,jsx,tsx}',
-    './node_modules/@epam/ai-dial-conversation-panel/dist/**/*.js',
-    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
-  ],
-};
-```
-
-The preset is required, not optional: this package's JSX uses semantic token
-utilities (`bg-layer-raised`, `text-secondary`, `stroke-secondary`, …) whose
-class names exist only in that theme.
-
-**Omitting either piece fails silently** — no build error, no warning, correct
-DOM, missing layout. Tailwind CSS 3 in the host is a hard requirement; a
-non-Tailwind host is unsupported.
-
 ## Peer Dependencies
 
 - `react`
@@ -162,10 +136,10 @@ you style them.
 
 ### Replacing fragile selectors
 
-| Instead of                                                            | Use                         |
-| --------------------------------------------------------------------- | --------------------------- |
-| `[role='complementary'] > div:nth-child(2) > div:first-child > button` | `.dial-cp-new-chat-button`  |
-| `[role='search'] .dial-kit-input`                                     | `.dial-cp-search .dial-kit-input` |
+| Instead of                                                             | Use                               |
+| ---------------------------------------------------------------------- | --------------------------------- |
+| `[role='complementary'] > div:nth-child(2) > div:first-child > button` | `.dial-cp-new-chat-button`        |
+| `[role='search'] .dial-kit-input`                                      | `.dial-cp-search .dial-kit-input` |
 
 `dial-kit-input` is itself a public class of `@epam/ai-dial-ui-kit`, so
 descending to it from `dial-cp-search` is supported — what was fragile was the

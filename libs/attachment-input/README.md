@@ -24,32 +24,6 @@ Import the stylesheet once in the consuming app:
 import '@epam/ai-dial-attachment-input/styles.css';
 ```
 
-### Tailwind setup (required)
-
-This package's layout, spacing, and sizing are Tailwind utility classes in its
-compiled JSX — not rules in its stylesheet. Your own Tailwind build has to
-produce them, so add the design-token preset and scan this package:
-
-```js
-// your tailwind.config.js
-module.exports = {
-  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
-  content: [
-    './src/**/*.{html,js,ts,jsx,tsx}',
-    './node_modules/@epam/ai-dial-attachment-input/dist/**/*.js',
-    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
-  ],
-};
-```
-
-The preset is required, not optional: this package's JSX uses semantic token
-utilities (`bg-layer-raised`, `text-secondary`, `stroke-secondary`, …) whose
-class names exist only in that theme.
-
-**Omitting either piece fails silently** — no build error, no warning, correct
-DOM, missing layout. Tailwind CSS 3 in the host is a hard requirement; a
-non-Tailwind host is unsupported.
-
 ## Peer Dependencies
 
 - `react`
@@ -224,15 +198,15 @@ import { ATTACHMENT_INPUT_CLASS } from '@epam/ai-dial-attachment-input';
 ATTACHMENT_INPUT_CLASS.tile; // 'dial-ai-attachment-tile'
 ```
 
-| Class                              | Element                                                     |
-| ---------------------------------- | ----------------------------------------------------------- |
-| `dial-ai-attachment-tray`          | The tray's `role="list"` root                               |
-| `dial-ai-attachment-tray-item`     | Each `role="listitem"` wrapper in the tray                  |
-| `dial-ai-attachment-tile`          | The square tile, for both image and non-previewable files   |
-| `dial-ai-attachment-tile-selected` | The tile when selected, **additive** to the tile class      |
-| `dial-ai-attachment-tile-name`     | The tile's filename element                                 |
-| `dial-ai-attachment-tile-type`     | The tile's type and size row                                |
-| `dial-ai-attachment-tile-action`   | Every corner action: download, retry, open-link, remove     |
+| Class                              | Element                                                   |
+| ---------------------------------- | --------------------------------------------------------- |
+| `dial-ai-attachment-tray`          | The tray's `role="list"` root                             |
+| `dial-ai-attachment-tray-item`     | Each `role="listitem"` wrapper in the tray                |
+| `dial-ai-attachment-tile`          | The square tile, for both image and non-previewable files |
+| `dial-ai-attachment-tile-selected` | The tile when selected, **additive** to the tile class    |
+| `dial-ai-attachment-tile-name`     | The tile's filename element                               |
+| `dial-ai-attachment-tile-type`     | The tile's type and size row                              |
+| `dial-ai-attachment-tile-action`   | Every corner action: download, retry, open-link, remove   |
 
 A selected tile carries both `dial-ai-attachment-tile` and
 `dial-ai-attachment-tile-selected`, so one rule can style all tiles and a second
@@ -244,14 +218,14 @@ you style them.
 
 ### Replacing fragile selectors
 
-| Instead of                                       | Use                                  |
-| ------------------------------------------------ | ------------------------------------ |
-| `[role='list'][aria-label='Attached files']`     | `.dial-ai-attachment-tray`           |
-| `[role='listitem']`                              | `.dial-ai-attachment-tray-item`      |
-| `[class*='_tile_']`                              | `.dial-ai-attachment-tile`           |
-| `[class*='_selected_']`                          | `.dial-ai-attachment-tile-selected`  |
+| Instead of                                        | Use                                       |
+| ------------------------------------------------- | ----------------------------------------- |
+| `[role='list'][aria-label='Attached files']`      | `.dial-ai-attachment-tray`                |
+| `[role='listitem']`                               | `.dial-ai-attachment-tray-item`           |
+| `[class*='_tile_']`                               | `.dial-ai-attachment-tile`                |
+| `[class*='_selected_']`                           | `.dial-ai-attachment-tile-selected`       |
 | `[class*='_nameText_']` / `[class*='_typeText_']` | `.dial-ai-attachment-tile-name` / `-type` |
-| `[class*='_actionButton_']`                      | `.dial-ai-attachment-tile-action`    |
+| `[class*='_actionButton_']`                       | `.dial-ai-attachment-tile-action`         |
 
 The `aria-label` selector deserves a specific warning: the tray's label is
 localisable through `labels.ariaLabel`, so selecting by `'Attached files'`

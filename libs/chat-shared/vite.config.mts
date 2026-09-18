@@ -1,5 +1,5 @@
 /// <reference types='vitest' />
-import { copyFileSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
@@ -43,22 +43,6 @@ export default defineConfig(() => ({
       root: import.meta.dirname,
       requiredMarkers: REQUIRED_PUBLISHED_STYLE_MARKERS,
     }),
-    /*
-     * The Tailwind preset is plain CommonJS config data, not module source, so
-     * it lives at the package root rather than under `src/` and is copied into
-     * `dist/` verbatim. It has to land there because `tools/publish-lib.mjs`
-     * publishes from inside `dist/` and refuses any `exports` target missing
-     * from the build output.
-     */
-    {
-      name: 'copy-tailwind-preset',
-      writeBundle() {
-        copyFileSync(
-          path.join(import.meta.dirname, 'tailwind-preset.cjs'),
-          path.join(import.meta.dirname, 'dist', 'tailwind-preset.cjs'),
-        );
-      },
-    },
   ],
   build: {
     outDir: './dist',

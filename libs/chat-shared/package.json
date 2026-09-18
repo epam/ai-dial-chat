@@ -14,7 +14,6 @@
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
-    "./tailwind-preset": "./dist/tailwind-preset.cjs",
     ".": {
       "@epam/source": "./src/index.ts",
       "types": "./dist/index.d.ts",

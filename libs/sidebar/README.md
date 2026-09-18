@@ -26,32 +26,6 @@ Import the stylesheet once in the consuming app:
 import '@epam/ai-dial-sidebar/styles.css';
 ```
 
-### Tailwind setup (required)
-
-This package's layout, spacing, and sizing are Tailwind utility classes in its
-compiled JSX — not rules in its stylesheet. Your own Tailwind build has to
-produce them, so add the design-token preset and scan this package:
-
-```js
-// your tailwind.config.js
-module.exports = {
-  presets: [require('@epam/ai-dial-chat-shared/tailwind-preset')],
-  content: [
-    './src/**/*.{html,js,ts,jsx,tsx}',
-    './node_modules/@epam/ai-dial-sidebar/dist/**/*.js',
-    './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
-  ],
-};
-```
-
-The preset is required, not optional: this package's JSX uses semantic token
-utilities (`bg-layer-raised`, `text-secondary`, `stroke-secondary`, …) whose
-class names exist only in that theme.
-
-**Omitting either piece fails silently** — no build error, no warning, correct
-DOM, missing layout. Tailwind CSS 3 in the host is a hard requirement; a
-non-Tailwind host is unsupported.
-
 ## Peer Dependencies
 
 - `react`
@@ -127,10 +101,10 @@ import { SIDEBAR_CLASS } from '@epam/ai-dial-sidebar';
 SIDEBAR_CLASS.aside; // 'dial-sb-aside'
 ```
 
-| Class            | Element                                        |
-| ---------------- | ---------------------------------------------- |
-| `dial-sb-aside`  | The panel's `<aside role="complementary">`     |
-| `dial-sb-header` | The 48 px header bar rendered by `Header`      |
+| Class            | Element                                    |
+| ---------------- | ------------------------------------------ |
+| `dial-sb-aside`  | The panel's `<aside role="complementary">` |
+| `dial-sb-header` | The 48 px header bar rendered by `Header`  |
 
 These classes carry no declarations of their own, so they change nothing until
 you style them, and they are additive to the `className`, `headerClassName`, and
@@ -138,10 +112,10 @@ you style them, and they are additive to the `className`, `headerClassName`, and
 
 ### Replacing fragile selectors
 
-| Instead of                                | Use                |
-| ----------------------------------------- | ------------------ |
-| `[role='complementary']`                  | `.dial-sb-aside`   |
-| `[role='complementary'] > div:first-child` | `.dial-sb-header`  |
+| Instead of                                 | Use               |
+| ------------------------------------------ | ----------------- |
+| `[role='complementary']`                   | `.dial-sb-aside`  |
+| `[role='complementary'] > div:first-child` | `.dial-sb-header` |
 
 ### Stability
 

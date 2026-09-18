@@ -23,7 +23,13 @@ const closestWithClass = (from: Element, className: string): Element | null =>
 
 describe('skills — public class names', () => {
   it('stamps the composer chip', () => {
-    render(<ChatSkill name="summarize" path="skills/summarize" />);
+    render(
+      <ChatSkill
+        name="summarize"
+        path="skills/summarize"
+        onViewDetails={vi.fn()}
+      />,
+    );
 
     expect(
       screen.getByRole('button', { name: '/summarize' }).classList,
@@ -32,7 +38,12 @@ describe('skills — public class names', () => {
 
   it('keeps the chip class in the unsupported state', () => {
     render(
-      <ChatSkill name="summarize" path="skills/summarize" isUnsupported />,
+      <ChatSkill
+        name="summarize"
+        path="skills/summarize"
+        isUnsupported
+        onViewDetails={vi.fn()}
+      />,
     );
 
     expect(
