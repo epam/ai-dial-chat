@@ -31,7 +31,24 @@ export const HALLOWEEN_SPIDER_COUNT = 9;
 export const HALLOWEEN_GHOST_COUNT = 7;
 
 /**
- * How long a corner spider stays in its hiding spot after the pointer
- * startled it, before creeping back onto the web.
+ * How close, in pixels, the pointer gets to a corner spider before it bolts.
+ * Generous enough that the spider moves before the cursor is on top of it,
+ * which is what makes it feel skittish rather than clicked.
+ */
+export const HALLOWEEN_SPIDER_FLEE_RADIUS_PX = 120;
+
+/** How far, in pixels, a corner spider bolts per nudge. */
+export const HALLOWEEN_SPIDER_FLEE_STEP_PX = 64;
+
+/**
+ * How far, in pixels, a corner spider may stray from its perch. Cornered at
+ * this radius it slides around the boundary instead of stopping dead, so a
+ * pointer can herd it around the web but never pin it.
+ */
+export const HALLOWEEN_SPIDER_MAX_OFFSET_PX = 104;
+
+/**
+ * How long a corner spider waits, undisturbed, before creeping back to its
+ * perch.
  */
 export const HALLOWEEN_SPIDER_RETURN_MS = 2600;

@@ -150,18 +150,18 @@
 }
 
 /*
- * The perched spider. Creeping back is the slow default; the dash away is the
- * fast override, so being startled reads as a scurry and the return as the
- * spider thinking better of it.
+ * The perched spider. Creeping back is the slow default; bolting is the fast
+ * override, so being startled reads as a scurry and the return as the spider
+ * thinking better of it. The displacement itself is an inline transform, set
+ * per pointer move — only its pacing lives here.
  */
 .cornerSpider {
-  transition: transform 1.3s cubic-bezier(0.33, 0, 0.24, 1);
+  transition: transform 1.25s cubic-bezier(0.33, 0, 0.24, 1);
 }
 
 .cornerSpiderFleeing {
-  transition-duration: 260ms;
-  transition-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1);
-  transform: translate3d(3.25rem, 2.25rem, 0) rotate(28deg);
+  transition-duration: 240ms;
+  transition-timing-function: cubic-bezier(0.22, 0.92, 0.3, 1);
 }
 
 .pumpkin {
@@ -177,12 +177,13 @@
     animation: none;
   }
 
-  /* The dash is a transition, not an animation — hold the spider still
-     instead of teleporting it to the hiding spot. */
+  /* The spider never takes an offset in this mode — see
+     `HalloweenCornerSpider`, which cannot be overridden from here because the
+     displacement is an inline transform. Dropping the transition keeps the
+     rule honest either way. */
   .cornerSpider,
   .cornerSpiderFleeing {
     transition: none;
-    transform: none;
   }
 
   /* Un-animated, the spiders would hang above the top edge; show them already

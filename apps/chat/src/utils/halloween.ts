@@ -124,3 +124,68 @@ export const buildHalloweenGhostFlight = (): HalloweenGhostFlight[] =>
       } as CSSProperties,
     };
   });
+
+/** A point in viewport pixels. */
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface SpiderFleeInput {
+  /** Where the spider sits when undisturbed, in viewport pixels. */
+  perch: Point;
+  /** The pointer, in viewport pixels. */
+  pointer: Point;
+  /** The spider's current displacement from its perch. */
+  offset: Point;
+  /** How close the pointer gets before the spider bolts. */
+  fleeRadius: number;
+  /** How far the spider bolts per nudge. */
+  fleeStep: number;
+  /** How far the spider may stray from its perch. */
+  maxOffset: number;
+}
+
+/**
+ * The spider's next displacement from its perch, or `null` when the pointer
+ * is far enough away that it has no reason to move.
+ *
+ * It bolts straight along the line away from the pointer, which is what makes
+ * a chase work: the cursor pushes and the spider gives ground. Clamping the
+ * result to `maxOffset` is a circle, not a box, so a spider herded against
+ * the boundary keeps whatever part of the push runs along it and slides round
+ * instead of stopping dead. A push aimed exactly at the centre has no such
+ * component and does hold it against the leash, which is the one way to
+ * corner it.
+ *
+ * A pointer exactly on the spider has no direction to flee along, so it
+ * breaks the tie diagonally rather than dividing by zero.
+ */
+export const nextHalloweenSpiderOffset = ({
+  perch,
+  pointer,
+  offset,
+  fleeRadius,
+  fleeStep,
+  maxOffset,
+}: SpiderFleeInput): Point | null => {
+  const position = { x: perch.x + offset.x, y: perch.y + offset.y };
+  const awayX = position.x - pointer.x;
+  const awayY = position.y - pointer.y;
+  const distance = Math.hypot(awayX, awayY);
+  if (distance > fleeRadius) return null;
+
+  const isTie = distance < 1;
+  const stepX = isTie ? fleeStep * Math.SQRT1_2 : (awayX / distance) * fleeStep;
+  const stepY = isTie ? fleeStep * Math.SQRT1_2 : (awayY / distance) * fleeStep;
+
+  const nextX = offset.x + stepX;
+  const nextY = offset.y + stepY;
+  const strayed = Math.hypot(nextX, nextY);
+  if (strayed <= maxOffset) return { x: nextX, y: nextY };
+
+  return {
+    x: (nextX / strayed) * maxOffset,
+    y: (nextY / strayed) * maxOffset,
+  };
+};

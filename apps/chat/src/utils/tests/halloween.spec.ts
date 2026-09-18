@@ -8,6 +8,7 @@ import {
   buildHalloweenGhostFlight,
   buildHalloweenSpiderDrop,
   isHalloweenSecretPhrase,
+  nextHalloweenSpiderOffset,
 } from '../halloween';
 
 describe('isHalloweenSecretPhrase', () => {
@@ -122,5 +123,102 @@ describe('buildHalloweenGhostFlight', () => {
     const paths = flight.map((ghost) => JSON.stringify(ghost.style));
 
     expect(new Set(paths).size).toBe(HALLOWEEN_GHOST_COUNT);
+  });
+});
+
+describe('nextHalloweenSpiderOffset', () => {
+  const base = {
+    perch: { x: 200, y: 200 },
+    offset: { x: 0, y: 0 },
+    fleeRadius: 100,
+    fleeStep: 50,
+    maxOffset: 120,
+  };
+
+  it('stays put while the pointer keeps its distance', () => {
+    expect(
+      nextHalloweenSpiderOffset({ ...base, pointer: { x: 400, y: 200 } }),
+    ).toBeNull();
+  });
+
+  it('bolts directly away from an approaching pointer', () => {
+    /* Pointer to the spider's left, so it must move right and not at all
+       vertically. */
+    const next = nextHalloweenSpiderOffset({
+      ...base,
+      pointer: { x: 150, y: 200 },
+    });
+
+    expect(next).toEqual({ x: 50, y: 0 });
+  });
+
+  it('gives ground again when the pointer follows', () => {
+    const first = nextHalloweenSpiderOffset({
+      ...base,
+      pointer: { x: 150, y: 200 },
+    });
+    const second = nextHalloweenSpiderOffset({
+      ...base,
+      offset: first as { x: number; y: number },
+      /* The pointer has closed in on where the spider just moved to. */
+      pointer: { x: 200, y: 200 },
+    });
+
+    expect(second?.x).toBeGreaterThan(first?.x as number);
+  });
+
+  it('measures the pointer against where the spider actually is, not its perch', () => {
+    /* Within the radius of the perch, but the spider has already bolted well
+       clear of it. */
+    expect(
+      nextHalloweenSpiderOffset({
+        ...base,
+        offset: { x: 110, y: 0 },
+        pointer: { x: 190, y: 200 },
+      }),
+    ).toBeNull();
+  });
+
+  it('slides around the boundary when the push comes in at an angle', () => {
+    const next = nextHalloweenSpiderOffset({
+      ...base,
+      offset: { x: base.maxOffset, y: 0 },
+      /* Below and behind, so the push has a tangential component. */
+      pointer: { x: 250, y: 240 },
+    });
+
+    expect(Math.hypot(next?.x as number, next?.y as number)).toBeCloseTo(
+      base.maxOffset,
+    );
+    /* Traded some of its outward reach for movement along the boundary. */
+    expect(next?.x).toBeLessThan(base.maxOffset);
+    expect(next?.y).toBeLessThan(0);
+  });
+
+  it('never strays further than the leash allows', () => {
+    let offset = { x: 0, y: 0 };
+    /* A pointer parked on the spider, shoving it in one direction forever. */
+    for (let nudge = 0; nudge < 20; nudge += 1) {
+      offset =
+        nextHalloweenSpiderOffset({
+          ...base,
+          offset,
+          pointer: { x: 200 + offset.x - 10, y: 200 + offset.y },
+        }) ?? offset;
+    }
+
+    expect(Math.hypot(offset.x, offset.y)).toBeLessThanOrEqual(
+      base.maxOffset + 0.001,
+    );
+  });
+
+  it('breaks the tie diagonally when the pointer is exactly on it', () => {
+    const next = nextHalloweenSpiderOffset({
+      ...base,
+      pointer: { x: 200, y: 200 },
+    });
+
+    expect(next?.x).toBeCloseTo(base.fleeStep * Math.SQRT1_2);
+    expect(next?.y).toBeCloseTo(base.fleeStep * Math.SQRT1_2);
   });
 });

@@ -87,18 +87,34 @@ Offsets SHALL be expressed in `vw`/`vh` and passed as custom properties, so one 
 - **WHEN** a ghost celebration renders
 - **THEN** more than one silhouette is drawn, and no two consecutive ghosts share one
 
-### Requirement: A corner spider scurries away from the pointer
+### Requirement: A corner spider keeps its distance from the pointer
 
-Each corner spider SHALL dash out of the way when the pointer reaches it and SHALL creep back on its own after `HALLOWEEN_SPIDER_RETURN_MS`, without a second gesture. The dash SHALL be fast and the return slow, so being startled reads as a scurry and the return as the spider thinking better of it. Re-entering mid-dash SHALL restart the countdown rather than queue a second one, so the spider cannot be made to flicker. The two corners SHALL be independent: startling one SHALL NOT move the other.
+A corner spider SHALL bolt directly away from the pointer every time the cursor comes within `HALLOWEEN_SPIDER_FLEE_RADIUS_PX` of where the spider actually is, by `HALLOWEEN_SPIDER_FLEE_STEP_PX` per nudge, so a pointer that follows it keeps pushing it along and a chase works. After `HALLOWEEN_SPIDER_RETURN_MS` undisturbed it SHALL creep back to its perch, with no further input. Bolting SHALL be fast and the return slow, so being startled reads as a scurry and the return as the spider thinking better of it.
 
-Only the spiders SHALL take pointer events back from the otherwise pointer-transparent decoration layer, so the rest of the corner stays click-through.
+Distance SHALL be measured from the spider's chosen position — its perch plus the displacement last chosen — not from its live bounding rect, which during a transition reports the element mid-flight and would feed the spider's own motion back in as a chase. The perch SHALL be re-measured on resize.
 
-The gesture is deliberately pointer-only and the spider stays `aria-hidden`: it accomplishes nothing, so a keyboard user is missing nothing, and making a decoration focusable inside a hidden layer would cost more than it gives. The dash is a transform transition rather than an animation, so `prefers-reduced-motion: reduce` SHALL hold the spider still rather than teleport it to the hiding spot.
+Displacement SHALL be clamped to `HALLOWEEN_SPIDER_MAX_OFFSET_PX` as a circle, not a box, so a spider herded against the boundary keeps whatever part of the push runs along it and slides round rather than stopping dead. A push aimed exactly at the centre has no such component and does hold it against the leash — the one way to corner it. A pointer exactly on the spider SHALL break the tie diagonally rather than divide by zero.
 
-#### Scenario: The pointer reaches a corner spider
+Pointer moves SHALL be coalesced into one animation frame, because a cursor crossing the web fires far more of them than there are frames to render. The two corners SHALL be independent: one spider bolting SHALL NOT move the other.
 
-- **WHEN** the flag is on and the pointer enters one corner spider
-- **THEN** that spider dashes to its hiding spot, the other corner's spider does not move, and after `HALLOWEEN_SPIDER_RETURN_MS` the first creeps back with no further input
+The decoration layer takes no pointer events; the spider listens on the window instead, so nothing in the corner becomes click-through-blocking in order to make this work.
+
+The gesture is deliberately pointer-only and the spider stays `aria-hidden`: it accomplishes nothing, so a keyboard user is missing nothing, and making a decoration focusable inside a hidden layer would cost more than it gives. Under `prefers-reduced-motion: reduce` the spider SHALL never take a displacement at all. That check lives in the component rather than the stylesheet, because the displacement is an inline transform a media query could not override; a host without `matchMedia` SHALL get the ordinary spider rather than an error.
+
+#### Scenario: The pointer closes in on one corner
+
+- **WHEN** the flag is on and the pointer comes within the flee radius of one corner spider
+- **THEN** that spider bolts away from it and the other corner's spider does not move
+
+#### Scenario: The pointer gives chase
+
+- **WHEN** the pointer follows a spider to where it just bolted
+- **THEN** the spider gives ground again rather than settling
+
+#### Scenario: The pointer loses interest
+
+- **WHEN** a displaced spider is left alone for `HALLOWEEN_SPIDER_RETURN_MS`
+- **THEN** it creeps back to its perch
 
 ### Requirement: The spider celebration abseils from the top edge
 
