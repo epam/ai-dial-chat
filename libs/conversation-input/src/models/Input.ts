@@ -19,6 +19,14 @@ export enum SendOnEnter {
   MetaEnter = 'meta-enter',
 }
 
+/** Controls how the `Input` component arranges the textarea and the controls around it. */
+export enum ActionRowLayout {
+  /** Textarea occupies its own line; the add button, tool chips, and footer actions wrap below it. */
+  Stacked = 'stacked',
+  /** Add button, textarea, and footer actions share one line; tool chips move to their own row above. Ignored on mobile. */
+  Inline = 'inline',
+}
+
 /** CSS custom-property overrides for the `Input` component. */
 export interface InputColors {
   /** Input area background color. */
@@ -275,6 +283,12 @@ export interface InputProps {
    * `EditMessageInput` where the action row lives outside the bordered box.
    */
   hideActionBar?: boolean;
+  /**
+   * How the action row arranges the textarea and the controls around it.
+   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` is ignored
+   * on mobile, where one line does not fit.
+   */
+  actionRowLayout?: ActionRowLayout;
   /**
    * When provided, replaces the default send/stop/model-selector area with custom content.
    * Receives `canSend` (textarea has non-empty trimmed content) and `onSend` (triggers the

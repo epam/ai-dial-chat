@@ -50,6 +50,32 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  FilterChips: <T extends string>({
+    items,
+    value,
+    onChange,
+    'aria-label': ariaLabel,
+    chipClassName,
+  }: {
+    items: { value: T; label: string }[];
+    value: T;
+    onChange: (value: T) => void;
+    'aria-label'?: string;
+    chipClassName?: string;
+  }) => (
+    <div role="group" aria-label={ariaLabel}>
+      {items.map((item) => (
+        <button
+          key={item.value}
+          aria-pressed={item.value === value}
+          className={chipClassName}
+          onClick={() => onChange(item.value)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
   TagAppearance: { Outlined: 'outlined', Selectable: 'selectable' },
   EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },

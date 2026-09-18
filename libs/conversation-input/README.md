@@ -228,11 +228,14 @@ CONVERSATION_INPUT_CLASS.actionRow; // 'dial-ci-action-row'
 | `dial-ci-action-row`            | The row holding the textarea, add button, tool chips, and actions |
 | `dial-ci-textarea-wrap`         | The textarea cell inside the action row                           |
 | `dial-ci-add-cluster`           | The add-attachment button wrapper                                 |
+| `dial-ci-tools-chips`           | The tool chips cell inside the action row                         |
 | `dial-ci-footer-actions`        | The trailing cluster: model selector, mic, and send/stop buttons  |
 | `dial-ci-model-selector-button` | The model selector trigger button, in every presentation          |
 
-`dial-ci-action-row` is absent when `hideActionBar` is set, and
-`dial-ci-add-cluster` is absent when `hideAddButton` is set.
+`dial-ci-action-row` is absent when `hideActionBar` is set,
+`dial-ci-add-cluster` is absent when `hideAddButton` is set, and
+`dial-ci-tools-chips` is absent unless `toolsMenuItems` yields at least one
+visible tool and `onToolToggle` is supplied.
 
 The model-selector menu carries its own set:
 
@@ -250,10 +253,17 @@ host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
 is why the menu needs a class of its own rather than a descendant selector from
 `dial-ci-wrapper`.
 
-The selected row's **check mark has no class here**: it is drawn by
-`@epam/ai-dial-ui-kit` from the menu item's `mark`, so nothing in this package
-owns that element. Style it by descending from the row:
-`.dial-ci-model-menu-item-selected svg`.
+The selected row's **check mark has no class from this package**: it is drawn
+by `@epam/ai-dial-ui-kit` from the menu item's `mark`, so nothing here owns that
+element. The kit gives it `dial-kit-menuitem-check`, exported as
+`DIAL_KIT_CLASS.menuItemCheck` — target that, scoped to the row when you need to
+distinguish this menu from other kit menus:
+
+```css
+.dial-ci-model-menu-item-selected .dial-kit-menuitem-check {
+  color: var(--text-accent);
+}
+```
 
 `dial-ci-model-menu-item` is emitted for deployment rows only — not for
 loading skeletons, nor for the single disabled row shown in the empty and error
@@ -298,6 +308,39 @@ import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 SendOnEnter.Enter; // Enter submits; Shift+Enter inserts a newline
 SendOnEnter.MetaEnter; // ⌘/Ctrl+Enter submits; bare Enter inserts a newline
 ```
+
+```tsx
+import { ActionRowLayout } from '@epam/ai-dial-conversation-input';
+
+ActionRowLayout.Stacked; // textarea on its own line, controls wrap below (default)
+ActionRowLayout.Inline; // add button, textarea and footer actions share one line
+```
+
+### Action row layout
+
+`actionRowLayout` chooses how `Input` and `ConversationInput` arrange the
+textarea and the controls around it. It defaults to `ActionRowLayout.Stacked`,
+which is the layout the composer has always had: the textarea takes the whole
+first line and the add button, tool chips, and footer actions wrap below it.
+
+```tsx
+<ConversationInput
+  actionRowLayout={ActionRowLayout.Inline}
+  onSend={handleSend}
+/>
+```
+
+`ActionRowLayout.Inline` puts the add button, the textarea, and the footer
+actions on one line. Tool chips are variable-width, so they move to a row of
+their own above the action row rather than competing for the line.
+
+The layout is ignored on mobile, where one line does not fit — you do not need
+to branch on viewport yourself.
+
+Neither layout uses an `order-*` utility: each renders its children in the
+order they appear on screen, so the tab order always matches the visual order.
+If you were previously reordering the row from the host with container queries,
+drop that override — it desynchronises focus order from what the user sees.
 
 ## Building
 

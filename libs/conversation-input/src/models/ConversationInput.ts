@@ -8,6 +8,7 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type {
+  ActionRowLayout,
   ChatSettingsConfig,
   CommandMenuConfig,
   InputColors,
@@ -181,6 +182,12 @@ export interface EditMessageInputProps {
 export interface ConversationInputProps {
   /** Placeholder text shown inside the textarea when empty. */
   placeholder?: string;
+  /**
+   * How the action row arranges the textarea and the controls around it.
+   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` is ignored
+   * on mobile, where one line does not fit.
+   */
+  actionRowLayout?: ActionRowLayout;
   /**
    * Message value. Sets the initial textarea content on mount and syncs the
    * textarea whenever the value changes.

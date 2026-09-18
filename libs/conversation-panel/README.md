@@ -74,8 +74,11 @@ row. The list then stays on whichever tab is active — `FilterTab.All` unless
 `activeFilter` says otherwise — so every group remains visible; only the
 control disappears. `labels.filterLabels` stays required either way.
 
-The row renders each filter as a ui-kit `Tag` in its `TagAppearance.Selectable`
-appearance, so the chips take their colors from the active theme's tag tokens.
+The row is the ui-kit's `FilterChips`, which draws each filter as a `Tag` in
+its `TagAppearance.Selectable` appearance, so the chips take their colors from
+the active theme's tag tokens. This component only maps the panel's vocabulary
+onto it: `FilterTab` values, the host's `filterLabels`, and `hiddenSources` as
+an exclusion list.
 It is a named `role="group"` of toggle chips — the selected one carries
 `aria-pressed` — not a `tablist`, because the chips filter the list in place
 rather than switching between panels. `labels.filterLabels.groupAriaLabel` names

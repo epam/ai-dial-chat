@@ -10,7 +10,7 @@
  * the wrong node fails rather than passes. Hence the rule exemption below.
  */
 /* eslint-disable testing-library/no-container, testing-library/no-node-access */
-import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
+import type { DeploymentItem, ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_INPUT_CLASS } from '../../../constants/public-class-names';
@@ -28,6 +28,10 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 
 const makeDeployments = (): DeploymentItem[] => [
   { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+];
+
+const makeTools = (): ToolMenuItem[] => [
+  { id: 'web-search', label: 'Web search', icon: null, isSelected: false },
 ];
 
 /*
@@ -91,6 +95,28 @@ describe('Input — public class names', () => {
         CONVERSATION_INPUT_CLASS.addCluster,
       ),
     ).toBeTruthy();
+  });
+
+  it('marks the tool chips cell', () => {
+    render(<Input toolsMenuItems={makeTools()} onToolToggle={vi.fn()} />);
+
+    const chipsCell = closestWithClass(
+      screen.getByRole('button', { name: 'Web search' }),
+      CONVERSATION_INPUT_CLASS.toolsChips,
+    );
+
+    expect(chipsCell).toBeTruthy();
+    expect(
+      closestWithClass(chipsCell!, CONVERSATION_INPUT_CLASS.actionRow),
+    ).toBeTruthy();
+  });
+
+  it('omits the tool chips cell when no tools are shown', () => {
+    const { container } = render(<Input />);
+
+    expect(
+      container.querySelectorAll(`.${CONVERSATION_INPUT_CLASS.toolsChips}`),
+    ).toHaveLength(0);
   });
 
   it('marks the footer actions cluster', () => {
