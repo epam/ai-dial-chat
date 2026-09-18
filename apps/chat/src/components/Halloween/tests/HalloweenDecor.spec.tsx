@@ -61,6 +61,12 @@ const perch = (spider: HTMLElement, x: number, y: number) => {
 /* Built by hand rather than with `fireEvent.pointerMove`: jsdom has no
    `PointerEvent`, and the fallback it substitutes drops `clientX`/`clientY`,
    which is the whole payload here. */
+/** The horizontal displacement out of the spider's inline transform. */
+const readOffsetX = (spider: HTMLElement) =>
+  Number.parseFloat(
+    /translate3d\((-?[\d.]+)px/.exec(spider.style.transform)?.[1] ?? 'NaN',
+  );
+
 const movePointer = (x: number, y: number) =>
   fireEvent(
     window,
@@ -124,6 +130,39 @@ describe('HalloweenDecor', () => {
       ),
     );
     expect(far.style.transform).toBe(farAtRest);
+  });
+
+  it('never flips a spider, so both flee in screen coordinates', () => {
+    mockHalloween(true);
+    render(<HalloweenDecor />);
+
+    /* The webs are mirrored to face their corner. A mirror on the corner
+       itself would take the spider with it and invert its inline transform —
+       it would then run towards the pointer and jam against its leash, which
+       is exactly the bug this pins down. */
+    queryCornerSpiders().forEach((spider) =>
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(spider.closest('[class*="scale-x-"]')).toBeNull(),
+    );
+  });
+
+  it('bolts the same way in either corner', async () => {
+    mockHalloween(true);
+    render(<HalloweenDecor />);
+    const [start, end] = queryCornerSpiders();
+    perch(start, 100, 100);
+    perch(end, 900, 100);
+    fireEvent(window, new Event('resize'));
+
+    /* Approached one at a time: moves are coalesced into a frame, so firing
+       both before yielding would only ever deliver the last position. A
+       pointer to the left of each — both must move right, whatever corner
+       they are in. */
+    movePointer(60, 100);
+    await waitFor(() => expect(readOffsetX(start)).toBeGreaterThan(0));
+
+    movePointer(860, 100);
+    await waitFor(() => expect(readOffsetX(end)).toBeGreaterThan(0));
   });
 
   it('keeps giving ground while the pointer chases it', async () => {

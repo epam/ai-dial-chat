@@ -106,6 +106,11 @@ The gesture is deliberately pointer-only and the spider stays `aria-hidden`: it 
 - **WHEN** the flag is on and the pointer comes within the flee radius of one corner spider
 - **THEN** that spider bolts away from it and the other corner's spider does not move
 
+#### Scenario: Both corners behave the same
+
+- **WHEN** a pointer approaches each corner spider from its left in turn
+- **THEN** both bolt to the right — displacement is in screen coordinates, so no corner may sit under a mirrored ancestor
+
 #### Scenario: The pointer gives chase
 
 - **WHEN** the pointer follows a spider to where it just bolted
@@ -149,7 +154,7 @@ The easter egg SHALL persist nothing, read no storage, and issue no request; all
 
 **Accessibility:** The cobwebs, the corner spiders, and everything either celebration draws are decorative — they SHALL sit in `aria-hidden` layers that take no pointer events beyond the corner spiders' own hover target, and the only announcement SHALL be the notification each celebration raises. The pumpkin SHALL be a labelled `GhostIconButton` kept outside the `aria-hidden` layer, so it stays focusable and is never an unreachable control inside a hidden subtree. The celebration layer SHALL be portaled to `document.body` so no scroll container clips it.
 
-**RTL:** The decoration SHALL use logical positioning so the corners follow the document's `dir`. A web is drawn from its own top-left, so whichever corner it lands in decides whether it is mirrored, and each corner SHALL carry the `rtl:` counterpart that keeps its dense end in the screen corner. The mirror SHALL take the perched spider with it, so it flees outward along its own web without a second set of offsets.
+**RTL:** The decoration SHALL use logical positioning so the corners follow the document's `dir`. A web is drawn from its own top-left, so whichever corner it lands in decides whether it is mirrored, and each web SHALL carry the `rtl:` counterpart that keeps its dense end in the screen corner. The mirror SHALL sit on the web itself and never on the corner wrapper: a flipped ancestor would also flip the spider's inline transform, so it would flee towards the pointer instead of away from it and jam against its leash. The spider SHALL be placed with logical insets instead, which follow the corner the same way the mirror does.
 
 **Reduced motion:** Every animation the feature adds SHALL be suppressed under `prefers-reduced-motion: reduce`, resolving to a static frame rather than to an empty screen. Because an un-animated ghost would otherwise sit at the layer's origin with the rest of the flock stacked on top of it, each one SHALL carry a spread-out resting position used in that state; an un-animated spider SHALL likewise render already paid out on its thread rather than parked above the top edge.
 

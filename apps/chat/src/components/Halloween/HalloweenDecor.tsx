@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostIconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback } from 'react';
@@ -8,17 +9,25 @@ import { HalloweenBurst } from '../../types/halloween';
 import styles from './Halloween.module.scss';
 import HalloweenCornerSpider from './HalloweenCornerSpider';
 
+interface CobwebProps {
+  /** Mirroring classes, so the web's dense end lands in the screen corner. */
+  className?: string;
+}
+
 /*
  * A corner cobweb: radial spokes with the quarter-circle threads strung
- * between them, drawn from the origin so the same paths serve both corners
- * once one is mirrored. The spokes are drawn heavier than the threads, the
- * way a real web reads. Kept faint on purpose — it frames the screen, it does
- * not compete with it.
+ * between them, drawn from its own top-left so the same paths serve both
+ * corners once one is mirrored. The spokes are drawn heavier than the
+ * threads, the way a real web reads. Kept faint on purpose — it frames the
+ * screen, it does not compete with it.
  */
-const Cobweb: FC = () => (
+const Cobweb: FC<CobwebProps> = ({ className }) => (
   <svg
     viewBox="0 0 64 64"
-    className="size-32 stroke-tertiary opacity-40 desktop:size-52"
+    className={mergeClasses(
+      'size-32 stroke-tertiary opacity-40 desktop:size-52',
+      className,
+    )}
     fill="none"
     aria-hidden="true"
     focusable="false"
@@ -65,19 +74,20 @@ const HalloweenDecor: FC = () => {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 select-none overflow-hidden"
       >
-        {/* The web is drawn from its own top-left, so whichever corner it
-            lands in decides whether it is mirrored — hence the `rtl:`
-            counterparts. The mirror takes the spider with it, so each one
-            flees outward along its own web without a second set of offsets.
-            The faintness lives on the web itself: the spiders are the part
+        {/* The mirror belongs on the web, never on the corner: a flipped
+            ancestor would also flip the spider's inline transform, so it
+            would flee towards the pointer instead of away from it and jam
+            against its leash. The spider is placed with logical insets
+            instead, which follow the corner the same way the mirror does.
+            The faintness lives on the web too — the spiders are the part
             worth seeing. */}
-        <div className="absolute start-0 top-0 rtl:scale-x-[-1]">
-          <Cobweb />
-          <HalloweenCornerSpider className="left-[42%] top-[30%]" />
+        <div className="absolute start-0 top-0">
+          <Cobweb className="rtl:scale-x-[-1]" />
+          <HalloweenCornerSpider className="start-[42%] top-[30%]" />
         </div>
-        <div className="absolute end-0 top-0 scale-x-[-1] rtl:scale-x-100">
-          <Cobweb />
-          <HalloweenCornerSpider className="left-[26%] top-[48%]" />
+        <div className="absolute end-0 top-0">
+          <Cobweb className="scale-x-[-1] rtl:scale-x-100" />
+          <HalloweenCornerSpider className="end-[26%] top-[48%]" />
         </div>
       </div>
       <div className="absolute bottom-4 end-4">
