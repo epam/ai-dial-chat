@@ -510,7 +510,11 @@ export const useConversationImport = ({
          * Every conversation imported, but some of their attachments did not
          * come across — delivered, yet not what the user asked for.
          */
-        queue.warnJob(jobId, ConversationTransferWarningCode.AttachmentSkipped);
+        queue.warnJob(
+          jobId,
+          ConversationTransferWarningCode.AttachmentSkipped,
+          [...skippedAttachmentNames],
+        );
       } else {
         queue.succeedJob(jobId);
       }
