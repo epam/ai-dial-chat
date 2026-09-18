@@ -658,7 +658,9 @@ policy and is not changed by `CSP_MODE`.
 - **Metrics Logging**: Request duration and status tracking for monitoring
 - **SSE stream lifecycle**: All four SSE-writing handlers share the backpressure helper in `common/utils/sse.ts` (`writeSseChunk`/`waitForDrain`) instead of ignoring `res.write()`'s return value.
   - `client-channel/subscribe` and `conversations/watch` relay an upstream DIAL Core stream. Each constructs its `AbortController` and registers `res.on('close', ...)` **before** the first `await` of upstream setup, so a browser disconnect during that await aborts the pending upstream call immediately instead of only being observed once it resolves. While relaying, a `res.write()` that returns `false` pauses further upstream reads until `'drain'`, the response closing, an upstream error, or `SSE_DRAIN_TIMEOUT_MS` (5000ms) elapses — whichever comes first. If the timeout elapses first, the connection is treated as stalled: the upstream reader is cancelled and the response ends, the same as an explicit disconnect.
-  - `conversations/completions` (`streamCompletion`) and `conversations/completions/attach` (`attachToGeneration`) never pause or abort their backend-owned generation for a slow client. After each write, if the response's buffered bytes (`res.writableLength`) exceed `SSE_COMPLETION_MAX_BUFFERED_BYTES` / `SSE_ATTACH_MAX_BUFFERED_BYTES` (1 MiB each), the handler stops writing to that one response (marking it detached / running its existing cleanup) while the generation keeps running and persists normally — see `docs/` for the generation-independent-of-connection guarantee.
+  - `conversations/completions` (`streamCompletion`) and `conversations/completions/attach` (`attachToGeneration`) never pause or abort their backend-owned generation for a slow client. After each write, if the response's buffered bytes (`res.writableLength`) exceed `SSE_COMPLETION_MAX_BUFFERED_BYTES` / `SSE_ATTACH_MAX_BUFFERED_BYTES` (1 MiB each), the handler stops writing to that one response while the generation keeps running and persists normally — see `docs/` for the generation-independent-of-connection guarantee.
+  - `streamCompletion` tracks that response through the four states of `SseResponseState`, because the two non-streaming ones owe opposite cleanup. A `client_closed` response was already destroyed by Node and is never written to, ended, or destroyed again. A `backpressure_detached` one is still open, so the handler owns terminating it: once the generator has returned — and therefore after its terminal save and registry release have run — `releaseSseResponse` calls `res.end()` and destroys the response only if `'finish'`/`'close'` has not arrived within `SSE_RELEASE_TIMEOUT_MS` (15000ms). `attachToGeneration`'s `cleanup()` releases a detached subscriber the same way, without awaiting it. The consuming `for await` always `continue`s and never `break`s: abandoning the generator would trigger its own cleanup and abort the generation's `AbortController`.
+  - The bound is what actually reclaims memory, not `res.end()` alone. On a real `http.ServerResponse` whose peer has stopped reading, `end()` sets `writableEnded` but leaves `writableFinished` false and `writableLength` unchanged indefinitely, because `'finish'` only fires once the queue drains. Graceful termination is still tried first: a client that resumes reading receives everything already queued and a clean end of stream rather than an aborted socket.
 
 ## Testing
 
@@ -843,6 +845,7 @@ port. Metrics can also be sent through the existing `otlp` exporter configuratio
 | `dial.chat.process.memory` (unit `B`) | `dial_chat_process_memory`     | Bytes from one `process.memoryUsage()` call in the Node.js process serving Nest requests, once per metric collection. Each memory `kind` is a separate series. |
 | `dial.chat.sse.active`                | `dial_chat_sse_active`         | Outstanding SSE operations for each `kind`, including setup and cleanup as described below.                                                                    |
 | `dial.chat.generations.active`        | `dial_chat_generations_active` | Number of entries physically retained in the process's generation registry. No application labels.                                                             |
+| `dial.chat.completion.response.terminations` (unit `{response}`) | `dial_chat_completion_response_terminations_total` | One point per downstream completion response that reached the streaming phase, labelled by how it ended. |
 
 Memory `kind` values are `rss`, `heap_used`, `heap_total`, `external`, and `array_buffers`,
 corresponding to Node.js's `rss`, `heapUsed`, `heapTotal`, `external`, and `arrayBuffers` fields.
@@ -860,6 +863,18 @@ subscription until its cleanup runs, even after its handler returns. These count
 count of open browser connections. Ordinary completion-response delivery is not part of the
 SSE gauge; registered generations have their own gauge. On application shutdown, registered
 generations emit a stopped terminal event so attached subscriptions can run their cleanup.
+
+The completion-termination counter's only label is `reason`, a fixed four-value set:
+`completed` (ended by the handler once the generator finished), `client_closed` (the browser
+disconnected, so the response was left untouched), `backpressure_ended` (detached for buffered
+bytes, then flushed and ended inside `SSE_RELEASE_TIMEOUT_MS`), and `backpressure_destroyed`
+(detached, then destroyed because it never flushed). A non-trivial `backpressure_destroyed`
+rate means the release bound is too short for real clients, not that responses are leaking.
+Completion delivery still does not contribute to `dial_chat_sse_active`, whose `kind` values
+remain `client_channel`, `conversation_watch`, and `generation_attach`. There is deliberately
+no gauge of open completion responses — `dial_chat_http_requests_active` already counts one for
+as long as it stays unfinished — and no aggregate of their buffered `writableLength`, which
+would require instrumentation to retain live response objects.
 
 The generation gauge includes stopped or aborted entries while persistence is still pending.
 Entries stop contributing when they are removed on completion, error, stale eviction,
