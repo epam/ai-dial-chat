@@ -5,6 +5,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
+import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import {
   IconCheck,
   IconCode,
@@ -84,6 +85,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
   const [isCopiedJson, setIsCopiedJson] = useState(false);
   const [isHtmlSourceView, setIsHtmlSourceView] = useState(false);
+  /* Populated once `ui/initialize` completes — see mcp-app-trigger spec.md. */
+  const [mcpAppInfo, setMcpAppInfo] = useState<Implementation | undefined>(
+    undefined,
+  );
   const copyTextResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyJsonResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -140,9 +145,29 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
 
   useEffect(() => {
     setIsHtmlSourceView(false);
+    setMcpAppInfo(undefined);
   }, [content]);
 
   const { className, panelStyles, ...bodyStylesProp } = stylesProp ?? {};
+
+  const panelTitle =
+    content.type === AttachmentContentType.McpApp && mcpAppInfo != null ? (
+      <>
+        <span>{fileName}</span>
+        <span
+          aria-hidden
+          className="border-current mx-1.5 inline-block h-3 w-0 border-s align-middle text-secondary"
+        />
+        <span>{mcpAppInfo.name}</span>
+        {mcpAppInfo.version && (
+          <span className="dial-caption-text ml-2 text-secondary">
+            {mcpAppInfo.version}
+          </span>
+        )}
+      </>
+    ) : (
+      fileName
+    );
 
   const showHtmlToggle =
     !isLoading &&
@@ -173,7 +198,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     <SidebarPanel
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
-      title={fileName}
+      title={panelTitle}
       labels={{ ariaLabel, closeLabel, resizeLabel }}
       onClose={onClose}
       resizable={!isMobile}
@@ -347,6 +372,11 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         isLoading={isLoading}
         fileName={fileName}
         isHtmlSourceView={isHtmlSourceView}
+        onAppInfo={
+          content.type === AttachmentContentType.McpApp
+            ? setMcpAppInfo
+            : undefined
+        }
         labels={{
           unsupportedLabel,
           loadErrorLabel,

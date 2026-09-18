@@ -6,7 +6,10 @@ import type {
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
 import type { McpUiHostContext } from '@mcp-ui/client';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type {
+  CallToolResult,
+  Implementation,
+} from '@modelcontextprotocol/sdk/types.js';
 import type { CSSProperties } from 'react';
 import {
   AttachmentContentType,
@@ -254,6 +257,8 @@ export interface McpAppCanvasContent {
   toolResult?: CallToolResult;
   /** UI context delivered to the View during the `ui/initialize` handshake; built by the app layer from the active theme, locale, and CSS design tokens. */
   hostContext?: McpUiHostContext;
+  /** Host identity (`name`/`version`) delivered during the `ui/initialize` handshake. Defaults to a generic `'MCP-UI Host'` identity when omitted. */
+  hostInfo?: Implementation;
   /** Forwards a `tools/call` request issued by the mounted app to the owning MCP session via the app layer. */
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>;
   /** Handles the mounted app's `ui/open-link` request. Return `false` when the URL must not be opened — the app then receives an error result. When omitted, the renderer itself opens http(s) URLs in a new browser tab (other schemes are rejected). */
@@ -580,6 +585,8 @@ export interface AttachmentCanvasBodyProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. Only relevant when content type is `MarkdownTable`. */
   tableDownloadFilename?: string;
+  /** Called once a mounted `McpApp` completes its `ui/initialize` handshake, with its declared name/version. Only relevant when content type is `McpApp`; omitted when the app didn't declare an `appInfo`. */
+  onAppInfo?: (appInfo: Implementation) => void;
   /**
    * Fetches a PDF file by URL and returns its bytes as a `Blob`. Used when
    * content type is `Pdf` to load the file before rendering. Defaults to a

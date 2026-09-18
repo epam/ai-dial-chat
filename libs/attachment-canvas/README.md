@@ -115,7 +115,7 @@ needed from the host.
 
 ### AttachmentCanvas
 
-Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required. When `content.type` is `McpApp` and `content.onReload` is set, the header shows a reload action (labelled by `labels.mcpAppReloadLabel`, default `'Reload'`) that lets the host re-fetch the resource and re-resolve the tool result from scratch — the lib has no cache of its own, so this is purely a signal for the app layer to bypass whatever cache it keeps. When content type is `MarkdownTable`, supply the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own copy-as-CSV/TXT/Markdown and download-as-CSV actions in an inline header above the table — the same header a Markdown table renders inline in chat. The panel's own header only ever shows its close button for this content type.
+Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required. When `content.type` is `McpApp` and `content.onReload` is set, the header shows a reload action (labelled by `labels.mcpAppReloadLabel`, default `'Reload'`) that lets the host re-fetch the resource and re-resolve the tool result from scratch — the lib has no cache of its own, so this is purely a signal for the app layer to bypass whatever cache it keeps. For `McpApp` content, once the mounted app completes its `ui/initialize` handshake, its declared name and version (version smaller) are prepended before `fileName` in the panel title, separated by a vertical divider (not a text character), truncated with a tooltip by the panel's own header the same way `fileName` alone already is. When content type is `MarkdownTable`, supply the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own copy-as-CSV/TXT/Markdown and download-as-CSV actions in an inline header above the table — the same header a Markdown table renders inline in chat. The panel's own header only ever shows its close button for this content type.
 
 ```tsx
 import {
@@ -139,7 +139,7 @@ import {
 
 ### AttachmentCanvasBody
 
-Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`.
+Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`. For content type `McpApp`, pass `onAppInfo` to be notified once the mounted app completes its `ui/initialize` handshake, with its declared name/version.
 
 ```tsx
 import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
@@ -201,6 +201,10 @@ The bridge serves the app's `ui/open-link` and `ui/request-display-mode` request
 
 Some apps request the container size they need by sending `ui/notifications/host-context-changed` upstream with `containerDimensions` (fixed `width`/`height`, or `maxWidth`/`maxHeight` clamps) instead of the standard `size-changed` notification. The renderer applies such a request to its sandbox iframe the same way `AppFrame` applies `size-changed` — a fixed size replaces the iframe's defaults, a `max*` value only clamps — so those apps are sized correctly too. This is renderer-internal (no content callback) and never shrinks the fullscreen canvas, whose 100% fill is enforced by a stylesheet rule with `!important`.
 
+`onAppInfo`, when passed, is called once the mounted app completes its `ui/initialize` handshake, with its declared name/version (omitted if the app didn't declare one) — `AttachmentCanvas` uses it to prepend the app's name/version before the panel title, and `@epam/ai-dial-mcp-apps`'s `McpAppInlinePreview` uses it the same way for its header.
+
+`content.hostInfo` is the host's own identity (`name`/`version`) sent back to the app during the same handshake — the app layer builds it (e.g. `{ name: 'ai-dial-chat', version: appVersion }`); when omitted, a generic `'MCP-UI Host'` identity is sent instead.
+
 ```tsx
 import {
   McpAppCanvasRenderer,
@@ -219,7 +223,11 @@ const content: McpAppCanvasContent = {
   onRequestDisplayMode: (mode) => (mode === 'fullscreen' ? expand() : 'inline'),
 };
 
-<McpAppCanvasRenderer content={content} errorLabel="Failed to load app" />;
+<McpAppCanvasRenderer
+  content={content}
+  errorLabel="Failed to load app"
+  onAppInfo={(appInfo) => console.log(appInfo.name, appInfo.version)}
+/>;
 ```
 
 ## Context

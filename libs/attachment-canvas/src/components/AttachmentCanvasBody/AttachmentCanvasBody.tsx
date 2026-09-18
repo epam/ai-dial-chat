@@ -135,6 +135,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   loadPdf,
   hidePdfToolbar = false,
   configurePdfWorker,
+  onAppInfo,
 }) => {
   const {
     colors,
@@ -429,7 +430,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           />
         );
       case AttachmentContentType.McpApp:
-        return <McpAppCanvasRenderer content={content} />;
+        return <McpAppCanvasRenderer content={content} onAppInfo={onAppInfo} />;
       case AttachmentContentType.Unsupported:
         return (
           <p className={mergeClasses('text-center', styles.statusLabel)}>
@@ -478,6 +479,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     loadPdf,
     hidePdfToolbar,
     configurePdfWorker,
+    onAppInfo,
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,

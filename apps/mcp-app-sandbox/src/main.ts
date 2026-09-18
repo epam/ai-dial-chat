@@ -8,6 +8,14 @@ import { EnvironmentVariables } from './config/environment.config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   /*
+   * Explicit deny-by-default CORS: this route is only ever navigated to as
+   * an iframe `src` (validated by its own Referer allowlist), never fetched
+   * cross-origin by script. Nest/Express already send no CORS headers
+   * without this call, so this documents that posture as an intentional
+   * policy rather than an accidental omission (design.md D17).
+   */
+  app.enableCors({ origin: false, credentials: false });
+  /*
    * xFrameOptions and CSP are disabled - we don't know what the sandboxed app will need to do, and the sandbox proxy is already isolated from the rest of the system (and the user) by design. The sandbox proxy is not intended to be a general-purpose web server, and is only meant to serve MCP apps in a controlled environment.
    */
   app.use(

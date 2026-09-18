@@ -63,7 +63,7 @@ const { status, content, reload } = useMcpAppInlinePreview(
 
 ### `McpAppInlinePreview`
 
-Renders a compact, always-visible preview of a message's matched MCP App, with a header strip above the preview frame (styled like the code block header in `@epam/ai-dial-chat-shared`'s Markdown renderer — small ghost icon buttons in a bordered `min-h-10` header) carrying a reload button and an expand-to-canvas button. An app's `ui/request-display-mode` request for `'fullscreen'` expands into the canvas via `onExpand` — the same surface the expand button opens; any other requested mode keeps the preview, and the app is answered with `'inline'`.
+Renders a compact, always-visible preview of a message's matched MCP App, with a header strip above the preview frame (styled like the code block header in `@epam/ai-dial-chat-shared`'s Markdown renderer — a bordered `min-h-10` header) showing the matched tool's `mcpToolName` on the start side, wrapped in `@epam/ai-dial-ui-kit`'s `EllipsisTooltip`, and appending the mounted app's own declared name and version (version smaller) — separated by a vertical divider, not a text character — once its `ui/initialize` handshake completes. With small ghost icon buttons, the end side carries a reload button and an expand-to-canvas button. An app's `ui/request-display-mode` request for `'fullscreen'` expands into the canvas via `onExpand` — the same surface the expand button opens; any other requested mode keeps the preview, and the app is answered with `'inline'`. While `isOpenedInCanvas` is `true`, the header stays but the body shows `openedInCanvasLabel` centered instead of mounting the app.
 
 ```tsx
 import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
@@ -79,6 +79,7 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
   reloadAriaLabel="Reload"
   actionsGroupAriaLabel="MCP app actions"
   loadErrorLabel="Failed to load app"
+  openedInCanvasLabel="Opened in canvas"
 />;
 ```
 

@@ -3611,8 +3611,9 @@ building blocks from `@epam/ai-dial-mcp-apps` into the surface a host injects in
 `useMcpAppInlinePreview`/`McpAppInlinePreview`, plus the full-width canvas equivalent
 (`useOpenMcpAppCanvas`) and tool discovery (`useMcpAppTools`). None of these hooks read app
 context, i18n, or construct a client — every DIAL Core call goes through a `McpAppsApiClient`
-the host builds once via `createMcpAppsApiClient`, and every user-visible string (canvas title,
-error labels) is passed in as a parameter.
+the host builds once via `createMcpAppsApiClient`, and every user-visible string (error labels)
+is passed in as a parameter. The canvas/inline-preview panel title is the matched tool's own
+`mcpToolName`, not a host-supplied label.
 
 ### createMcpAppsApiClient
 
@@ -3651,7 +3652,7 @@ const mcpAppTools = useMcpAppTools(
 
 ### useMcpAppHostAdapter
 
-Builds the `McpAppHostAdapter` (`@epam/ai-dial-mcp-apps`) a host injects into that library's hooks/components, from a `McpAppsApiClient`, a sandbox-proxy URL, and the host's theme/locale values. The fourth parameter (`McpAppHostContextParams`) also accepts `availableDisplayModes`, the display modes the host can switch an app between via `ui/request-display-mode`; it defaults to `['inline', 'fullscreen']` — the compact inline preview and the full-width canvas.
+Builds the `McpAppHostAdapter` (`@epam/ai-dial-mcp-apps`) a host injects into that library's hooks/components, from a `McpAppsApiClient`, a sandbox-proxy URL, the host's theme/locale values, and the host's own identity (`hostInfo`). The fourth parameter (`McpAppHostContextParams`) also accepts `availableDisplayModes`, the display modes the host can switch an app between via `ui/request-display-mode`; it defaults to `['inline', 'fullscreen']` — the compact inline preview and the full-width canvas.
 
 ```tsx
 import { useMcpAppHostAdapter } from '@epam/ai-dial-chat-hooks/mcp-apps';
@@ -3664,6 +3665,7 @@ const hostAdapter = useMcpAppHostAdapter(
     theme: currentTheme,
     locale: i18n.language,
   },
+  { name: 'ai-dial-chat', version: appVersion },
 );
 ```
 
@@ -3678,7 +3680,6 @@ const { openMcpAppCanvas } = useOpenMcpAppCanvas(
   mcpAppCache,
   hostAdapter,
   {
-    title: t('mcpApp.title'),
     forbiddenErrorLabel: t('mcpApp.forbidden'),
     loadErrorLabel: t('mcpApp.loadError'),
   },
