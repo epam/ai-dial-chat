@@ -492,6 +492,37 @@ import '@epam/ai-dial-conversation-input/styles.css';
 />
 ```
 
+### The published stylesheet carries the layout too
+
+Each lib has its own `tailwind.config.js` scanning its `src/**`, so its Vite
+build emits the utility classes that lib actually uses into `dist/index.css` —
+which is what `./styles.css` points at. A host that imports the stylesheet gets
+the layout, not only the colors. Measured on `attachment-input`:
+`.size-\[84px\]`, `.p-1\.5`, `.end-1`, `.top-1` and
+`.group-hover\/attachment-tile\:opacity-100` are all in the published file.
+
+This is worth stating because the opposite was believed and written down —
+issue [#8707](https://github.com/epam/ai-dial-chat/issues/8707) reports a host
+hand-polyfilling those exact utilities, and the reverted
+`lib-host-tailwind-contract` spec asserted that `styles.css` "carries no utility
+layer". Both were wrong: the utilities the reporter could not find were missing
+from `@epam/ai-dial-ui-kit`'s stylesheet, not from ours. **Import each lib's own
+`styles.css`** rather than expecting the kit's to cover them.
+
+Two caveats:
+
+- **Preflight is not included.** `box-sizing: border-box` and the
+  `border-style: solid` reset are not in the published file, and several
+  utilities assume them — `size-*` sizes the content box without the first, and
+  `border` sets a width against an initial `border-style: none` without the
+  second. Either run Tailwind's preflight in the host, or declare the two in the
+  module, as `Attachment.module.scss` does for the attachment tile.
+- **The design-token theme is not published.** Utilities named after our tokens
+  (`text-secondary`, `bg-layer-raised`, …) are emitted with their resolved
+  `var(--token, #hex)` values, so they render, but a host cannot generate new
+  ones — `@epam/ai-dial-chat-shared/tailwind-preset` was built and then reverted
+  (`f5c6ce8ea4`).
+
 ---
 
 ## Component type convention

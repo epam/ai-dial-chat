@@ -630,6 +630,63 @@ const publicExports = (libDir) => {
   return isDecidable ? names : undefined;
 };
 
+/*
+ * Public `dial-*` class names are a host-facing contract that nothing else
+ * verifies: a renamed class still compiles, still passes its guard test if the
+ * test reads the constant, and silently stops matching the host's stylesheet.
+ * So the constants record and the README must agree in both directions.
+ *
+ * Only the lib's own prefixes are checked, so a README may freely mention
+ * `dial-kit-*`, a typography class, or another lib's class.
+ */
+const PUBLIC_CLASS_LITERAL = /'(dial-[a-z0-9]+(?:-[a-z0-9]+)*)'/g;
+const CLASS_TOKEN = /dial-[a-z0-9]+(?:-[a-z0-9]+)*/g;
+
+const declaredPublicClasses = (libDir) => {
+  const path = `${libDir}/src/constants/public-class-names.ts`;
+  if (!existsSync(path)) return null;
+
+  const names = new Set();
+  for (const match of readFileSync(path, 'utf8').matchAll(PUBLIC_CLASS_LITERAL)) {
+    names.add(match[1]);
+  }
+  return names.size > 0 ? names : null;
+};
+
+/* `dial-ci-action-row` and `dial-catalog-card` both yield `dial-<seg>-`. */
+const ownPrefixes = (names) =>
+  new Set([...names].map((name) => name.split('-').slice(0, 2).join('-') + '-'));
+
+const checkPublicClassNames = (src, file, libDir) => {
+  const declared = declaredPublicClasses(libDir);
+  if (!declared) return;
+
+  for (const name of declared) {
+    if (!src.includes(name)) {
+      fail(
+        file,
+        `does not document "${name}", which ${libDir}/src/constants/public-class-names.ts declares`,
+      );
+    }
+  }
+
+  const prefixes = [...ownPrefixes(declared)];
+  const reported = new Set();
+  for (const match of src.matchAll(CLASS_TOKEN)) {
+    const name = match[0];
+    if (declared.has(name) || reported.has(name)) continue;
+    /* Inside a longer identifier — the package name `@epam/ai-dial-<lib>`. */
+    if (src[match.index - 1] === '-') continue;
+    if (!prefixes.some((prefix) => name.startsWith(prefix))) continue;
+
+    reported.add(name);
+    fail(
+      file,
+      `line ${lineAt(src, match.index)}: documents "${name}", which ${libDir}/src/constants/public-class-names.ts does not declare`,
+    );
+  }
+};
+
 const checkReadmeImports = (src, file, libDir) => {
   const pkg = readJson(`${libDir}/package.json`);
   if (!pkg?.name) return;
@@ -691,6 +748,7 @@ for (const file of files) {
     .join('/');
   if (libDir.startsWith('libs/') && file.endsWith('README.md')) {
     checkReadmeImports(src, file, libDir);
+    checkPublicClassNames(src, file, libDir);
     checkReadmeVersionCitations(src, file, libDir);
   }
 }
@@ -710,5 +768,5 @@ console.log(
   `Documentation validation passed (${files.length} markdown files).`,
 );
 console.log(
-  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, one range per external package, no test tooling in a published manifest, peer metadata matching declared peers, README version citations, relative links, README imports vs public exports.',
+  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, one range per external package, no test tooling in a published manifest, peer metadata matching declared peers, README version citations, relative links, README imports vs public exports, public dial-* class names vs their README.',
 );

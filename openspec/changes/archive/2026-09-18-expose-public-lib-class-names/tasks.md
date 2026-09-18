@@ -302,9 +302,14 @@ inherits, so it lands last and is verified against unchanged CSS output.
       makes YAML parse them as maps, so OpenSpec silently drops **all** `proposal` and
       `tasks` rules for every change in this repo: `proposal[8]`, `tasks[4]`,
       `tasks[18]`. One-line fix, unrelated to this change.
-- [ ] 9.4 Extend `scripts/validate-docs.mjs` to cross-check that every `dial-*` class
+- [x] 9.4 Extend `scripts/validate-docs.mjs` to cross-check that every `dial-*` class
       asserted in a library's tests is documented in that library's README and vice
       versa, making the contract CI-enforced rather than review-enforced.
+      **Done**, with the source of truth changed from the tests to
+      `src/constants/public-class-names.ts` — that record *is* the declared contract,
+      whereas a test asserting a class is one step removed from it. The check runs both
+      directions and is scoped to each lib's own prefixes, so a README may still cite
+      `dial-kit-*`, a typography class, or a sibling lib's class.
 - [x] 9.5 Consider a public class for `MarkdownCodeBlock` in `libs/chat-shared`
       (issue #8707's `dial-cm-code-block`), which sits outside the five libraries in
       this change. **Done in this change** — the stamping was widened from the five

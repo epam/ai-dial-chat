@@ -3,8 +3,21 @@
 > `development` today. The published `@epam/ai-dial-chat-shared/tailwind-preset` does
 > not exist, and the host-setup documentation it describes is not in
 > `openspec/lib-styling-guide.md`, `docs/architecture.md`, or any library README. The
-> text is kept as the record of the analysis, for whenever the missing-utilities half
-> of issue #8707 is decided. See §7 of `../../tasks.md`.
+> text is kept as the record of the analysis. See §7 of `../../tasks.md`.
+>
+> **The premise is also wrong, which is the more useful thing to know.** Every
+> statement below that a published `styles.css` "carries no utility layer" is false,
+> and so is the same claim in the `f5c6ce8ea4` commit message. Each lib has its own
+> `tailwind.config.js` scanning its `src/**`, and its Vite build emits the utilities
+> it uses straight into `dist/index.css`. Measured on an unmodified `attachment-input`
+> build: `.size-\[84px\]`, `.p-1\.5`, `.end-1`, `.top-1`, `.group\/attachment-tile`
+> and `.group-hover\/attachment-tile\:opacity-100` are all present. A host that
+> imports `@epam/ai-dial-attachment-input/styles.css` therefore already has the tile
+> geometry — the polyfills issue #8707 describes were never needed. What that
+> stylesheet genuinely lacks is Tailwind's **preflight**, which is a much smaller
+> gap; `Attachment.module.scss` now restates the two declarations that depended on
+> it. Do not resurrect the requirements below on the strength of the reasoning they
+> state.
 
 ## ADDED Requirements
 

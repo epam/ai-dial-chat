@@ -1,4 +1,17 @@
+/*
+ * These two are not layout — they stand in for Tailwind's preflight, which the
+ * published styles.css does not carry. The utility layer itself does ship
+ * (`size-[84px]`, `border` and the rest are emitted into dist/index.css by this
+ * lib's own Tailwind pass), but both utilities assume the preflight reset: a
+ * host that imports only our stylesheet got a 86px tile, because `size-[84px]`
+ * sizes the content box without `border-box`, and no visible border at all,
+ * because `border` sets only `border-width` while the initial `border-style` is
+ * `none`.
+ */
 .tile {
+  box-sizing: border-box;
+  border-style: solid;
+
   background: var(--ai-tile-bg, var(--bg-layer-raised, #fcfcfc));
   border-color: var(--ai-tile-border, var(--stroke-secondary, #d1dbea));
 
