@@ -589,6 +589,11 @@ const CatalogView: FC<Props> = ({
           }),
           historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
           historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
+          historySharedCredentialsLabel: t(
+            CatalogI18nKeys.PublishHistorySharedCredentials,
+          ),
+          credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
+          credentialsHint: t(CatalogI18nKeys.PublishCredentialsHint),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
           rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),

@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import {
   getPublicationSourceAction,
+  getPublicationSourceCredentials,
   PublicationResourceAction,
   PublicationStatus,
   publishesSource,
@@ -68,7 +69,11 @@ interface ListedPublication {
   status?: string;
   targetFolder?: string;
   createdAt?: number | string;
-  resources?: { action?: string; sourceUrl?: string }[];
+  resources?: {
+    action?: string;
+    sourceUrl?: string;
+    publishCredentials?: boolean;
+  }[];
 }
 
 const SOURCE_URL = 'applications/bucket-123/my-app__1.0.0';
@@ -186,6 +191,74 @@ describe('getPublicationSourceAction', () => {
     );
     expect(publishesSource(publication, SOURCE_URL)).toBe(true);
     expect(removesSource(publication, SOURCE_URL)).toBe(false);
+  });
+});
+
+describe('getPublicationSourceCredentials', () => {
+  const withCredentials = (
+    publishCredentials: boolean | undefined,
+    action = PublicationResourceAction.Add,
+  ): ListedPublication => ({
+    ...listed('publications/b/1'),
+    resources: [
+      publishCredentials === undefined
+        ? { action, sourceUrl: SOURCE_URL }
+        : { action, sourceUrl: SOURCE_URL, publishCredentials },
+    ],
+  });
+
+  it('reports true when the matched resource carries the flag', () => {
+    expect(
+      getPublicationSourceCredentials(withCredentials(true), SOURCE_URL),
+    ).toBe(true);
+  });
+
+  it('reports false when the matched resource carries the flag as false', () => {
+    expect(
+      getPublicationSourceCredentials(withCredentials(false), SOURCE_URL),
+    ).toBe(false);
+  });
+
+  /* A publication predating the field requested nothing. */
+  it('reports false when the resource has no such property', () => {
+    expect(
+      getPublicationSourceCredentials(withCredentials(undefined), SOURCE_URL),
+    ).toBe(false);
+  });
+
+  it('reports false when the publication does not reference the source at all', () => {
+    expect(
+      getPublicationSourceCredentials(listed('publications/b/1'), SOURCE_URL),
+    ).toBe(false);
+  });
+
+  /* A DELETE grants nobody anything, so it never reports shared credentials. */
+  it('ignores a DELETE resource', () => {
+    expect(
+      getPublicationSourceCredentials(
+        withCredentials(true, PublicationResourceAction.Delete),
+        SOURCE_URL,
+      ),
+    ).toBe(false);
+  });
+
+  /* Core echoes urls percent-encoded; the same tolerance the action lookup has. */
+  it('matches a percent-encoded source url', () => {
+    expect(
+      getPublicationSourceCredentials(
+        {
+          ...listed('publications/b/1'),
+          resources: [
+            {
+              action: PublicationResourceAction.Add,
+              sourceUrl: 'prompts/bucket-123/test%20space',
+              publishCredentials: true,
+            },
+          ],
+        },
+        'prompts/bucket-123/test space',
+      ),
+    ).toBe(true);
   });
 });
 

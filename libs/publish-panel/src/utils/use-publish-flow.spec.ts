@@ -123,7 +123,7 @@ describe('usePublishFlow', () => {
       await result.current.handleSubmit();
     });
 
-    expect(onPublish).toHaveBeenCalledWith(item, [], [], '');
+    expect(onPublish).toHaveBeenCalledWith(item, [], [], '', false);
   });
 
   it('adds a locally created folder and reports it to the host', () => {
@@ -197,7 +197,7 @@ describe('usePublishFlow', () => {
       await result.current.handleSubmit();
     });
 
-    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '');
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
     expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
   });
 
@@ -381,6 +381,113 @@ describe('usePublishFlow', () => {
     ).toBe(true);
   });
 
+  it('starts with the credentials opt-in cleared', () => {
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    expect(result.current.publishCredentials).toBe(false);
+  });
+
+  /*
+   * The legacy bug this guards (GH #5074): the option survived a publish and
+   * the next open started with it already ticked.
+   */
+  it('clears the credentials opt-in on reset', () => {
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    act(() => {
+      result.current.setPublishCredentials(true);
+    });
+    expect(result.current.publishCredentials).toBe(true);
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.publishCredentials).toBe(false);
+  });
+
+  /* Unlike `rules`, it is never pre-filled — selecting it is a deliberate act. */
+  it('does not pre-select the option from a history entry that carried shared credentials', () => {
+    const historyWithCredentials: PublishHistoryEntry[] = [
+      {
+        version: '4.0.1',
+        publishedAt: Date.now(),
+        folderPath: ['Shared'],
+        publishCredentials: true,
+      },
+    ];
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history: historyWithCredentials,
+        folderItems,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+
+    expect(result.current.hasExistingPublicationInFolder).toBe(true);
+    expect(result.current.publishCredentials).toBe(false);
+  });
+
+  it('passes the credentials opt-in to onPublish as its fifth argument', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() =>
+      usePublishFlow({ item, history, folderItems, onPublish }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+      result.current.setPublishCredentials(true);
+    });
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', true);
+  });
+
+  /* A four-parameter host callback stays assignable and simply ignores it. */
+  it('accepts a host callback that declares only the first four parameters', async () => {
+    const onPublish = vi.fn(
+      async (
+        _item: PublishFlowItem,
+        _folderPath: string[],
+        _rules: PublicationRule[],
+        _author: string,
+      ) => undefined,
+    );
+    const { result } = renderHook(() =>
+      usePublishFlow({ item, history, folderItems, onPublish }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
+  });
+
   it('resets folder selection and locally created folders', () => {
     const { result } = renderHook(() =>
       usePublishFlow({
@@ -430,7 +537,13 @@ describe('usePublishFlow', () => {
         await result.current.handleSubmit();
       });
 
-      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [rule], '');
+      expect(onPublish).toHaveBeenCalledWith(
+        item,
+        ['Shared'],
+        [rule],
+        '',
+        false,
+      );
     });
 
     it('setRules updates state independent of folder selection', () => {
@@ -637,7 +750,7 @@ describe('usePublishFlow', () => {
         await result.current.handleSubmit();
       });
 
-      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '');
+      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
     });
 
     it('replaces an untouched author when defaultAuthor resolves later', () => {
@@ -680,7 +793,13 @@ describe('usePublishFlow', () => {
         await result.current.handleSubmit();
       });
 
-      expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], 'DIAL Team');
+      expect(onPublish).toHaveBeenCalledWith(
+        item,
+        ['Shared'],
+        [],
+        'DIAL Team',
+        false,
+      );
     });
 
     it('restores the prefill on reset and resumes syncing defaultAuthor', () => {

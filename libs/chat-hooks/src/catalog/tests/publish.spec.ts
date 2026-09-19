@@ -39,12 +39,14 @@ describe('mapPublishHistoryEntryDto', () => {
       version: '1.2.0',
       publishedAt: '2026-07-13T10:00:00.000Z',
       publishedBy: 'user@example.com',
+      publishCredentials: false,
     };
 
     expect(mapPublishHistoryEntryDto(dto)).toEqual({
       version: '1.2.0',
       publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
       folderPath: ['Organization', 'Data Science', 'Published models'],
+      publishCredentials: false,
     });
   });
 
@@ -56,9 +58,41 @@ describe('mapPublishHistoryEntryDto', () => {
       version: '1.0.0',
       publishedAt: '2026-01-01T00:00:00.000Z',
       publishedBy: 'user@example.com',
+      publishCredentials: false,
     };
 
     expect(mapPublishHistoryEntryDto(dto).folderPath).toEqual(['Organization']);
+  });
+
+  it('carries publishCredentials: true through unchanged', () => {
+    const dto: PublishHistoryEntryDto = {
+      entityId: 'tool-abc123',
+      entityType: 'toolset',
+      folderPath: 'Organization',
+      version: '1.0.0',
+      publishedAt: '2026-01-01T00:00:00.000Z',
+      publishedBy: 'user@example.com',
+      publishCredentials: true,
+    };
+
+    expect(mapPublishHistoryEntryDto(dto).publishCredentials).toBe(true);
+  });
+
+  /*
+   * A response from a backend that predates the field: absent reads the same
+   * as `false` on the lib model, so nothing has to distinguish the two.
+   */
+  it('leaves publishCredentials undefined when the DTO omits it', () => {
+    const dto = {
+      entityId: 'tool-abc123',
+      entityType: 'toolset',
+      folderPath: 'Organization',
+      version: '1.0.0',
+      publishedAt: '2026-01-01T00:00:00.000Z',
+      publishedBy: 'user@example.com',
+    } as PublishHistoryEntryDto;
+
+    expect(mapPublishHistoryEntryDto(dto).publishCredentials).toBeUndefined();
   });
 });
 
