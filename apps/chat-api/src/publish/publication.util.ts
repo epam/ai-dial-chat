@@ -101,17 +101,6 @@ const isSameResourceUrl = (
   );
 };
 
-/**
- * The action a publication applies to `sourceUrl`, or `null` when the
- * publication does not reference it at all.
- *
- * A resource with no `action` reads as `ADD` — Core's own default, and a
- * publication that lists a resource without one is publishing it. A
- * publication that both adds and removes the same source (Core has no such
- * flow, but the shape allows it) reports the publishing action, preserving
- * `publishesSource`'s original behaviour of matching *any* non-`DELETE`
- * resource.
- */
 /*
  * The resource a publication publishes `sourceUrl` by, or `undefined`. Shared
  * so `getPublicationSourceAction` and `getPublicationSourceCredentials` read
@@ -127,6 +116,17 @@ const findPublishingResource = (
       resource.action !== PublicationResourceAction.Delete,
   );
 
+/**
+ * The action a publication applies to `sourceUrl`, or `null` when the
+ * publication does not reference it at all.
+ *
+ * A resource with no `action` reads as `ADD` — Core's own default, and a
+ * publication that lists a resource without one is publishing it. A
+ * publication that both adds and removes the same source (Core has no such
+ * flow, but the shape allows it) reports the publishing action, preserving
+ * `publishesSource`'s original behaviour of matching *any* non-`DELETE`
+ * resource.
+ */
 export const getPublicationSourceAction = (
   publication: PublicationLike,
   sourceUrl: string,
