@@ -211,6 +211,7 @@ export class AppConfigService {
     let applicationVisualizers: Record<string, ApplicationVisualizerDto> = {};
     let customVariables: Record<string, unknown> = {};
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
+    let maxAttachmentFileSizeBytes = 536_870_912;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -316,6 +317,9 @@ export class AppConfigService {
         publicationFilterSources = Array.isArray(resolved)
           ? resolved
           : DEFAULT_PUBLICATION_FILTER_SOURCES;
+      } else if (def.key === 'attachments.maxFileSizeBytes') {
+        maxAttachmentFileSizeBytes =
+          typeof resolved === 'number' ? resolved : 536_870_912;
       }
     }
 
@@ -346,6 +350,7 @@ export class AppConfigService {
         applicationVisualizers,
         customVariables,
         publicationFilterSources,
+        maxAttachmentFileSizeBytes,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

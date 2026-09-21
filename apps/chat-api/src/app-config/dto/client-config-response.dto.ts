@@ -230,6 +230,13 @@ export class ClientConfigDto {
     example: ['title', 'role', 'dial_roles'],
   })
   publicationFilterSources!: string[];
+
+  @ApiProperty({
+    description:
+      'Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.',
+    example: 536870912,
+  })
+  maxAttachmentFileSizeBytes!: number;
 }
 
 export class ClientConfigMetadataDto {

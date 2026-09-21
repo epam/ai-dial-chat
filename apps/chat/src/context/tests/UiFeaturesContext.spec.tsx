@@ -38,6 +38,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       customVisualizers: [],
       applicationVisualizers: {},
       publicationFilterSources: ['title', 'role', 'dial_roles'],
+      maxAttachmentFileSizeBytes: 536_870_912,
     },
   } satisfies AppConfigState);
 

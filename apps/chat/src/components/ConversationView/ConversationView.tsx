@@ -27,6 +27,7 @@ import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
+  formatFileSize,
   isStatusMessage,
   MessageRole,
   StatusEvent,
@@ -69,7 +70,6 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
   AttachmentCanvasI18nKeys,
   AttachmentsI18nKeys,
@@ -84,7 +84,7 @@ import {
   PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { useFeatureFlag } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -338,6 +338,9 @@ const ConversationView: FC<Props> = ({
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
+  const {
+    config: { maxAttachmentFileSizeBytes },
+  } = useAppConfig();
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
@@ -415,10 +418,23 @@ const ConversationView: FC<Props> = ({
     ({
       reason,
       formats,
+      maxFileSizeBytes,
     }: {
       reason: AttachmentValidationErrorReason;
       formats?: string;
+      maxFileSizeBytes?: number;
     }) => {
+      if (reason === AttachmentValidationErrorReason.FileTooLarge) {
+        showErrorNotification({
+          title: t(AttachmentsI18nKeys.FileTooLargeTitle),
+          message: t(AttachmentsI18nKeys.FileTooLargeMessage, {
+            maxSize:
+              maxFileSizeBytes != null ? formatFileSize(maxFileSizeBytes) : '',
+          }),
+        });
+        return;
+      }
+
       const noTypesAllowed =
         reason === AttachmentValidationErrorReason.NoTypesAllowed;
       showErrorNotification({
@@ -445,6 +461,7 @@ const ConversationView: FC<Props> = ({
     fileAccept,
   } = useAttachmentValidation({
     allowedMimeTypes: selectedDeployment?.inputAttachmentTypes ?? [],
+    maxFileSizeBytes: maxAttachmentFileSizeBytes,
     onValidationError: handleAttachmentValidationError,
   });
 
@@ -1152,7 +1169,7 @@ const ConversationView: FC<Props> = ({
                   onAttach={handleAttachDialFiles}
                   bucket={bucket}
                   allowedTypes={inputAttachmentTypes}
-                  maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
+                  maxSelectableFileSize={maxAttachmentFileSizeBytes}
                   maximumAttachmentsAmount={
                     selectedDeployment?.maxInputAttachments
                   }

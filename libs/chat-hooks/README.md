@@ -1113,10 +1113,11 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 | Name                | Type                                              | Description                                                               |
 | ------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
 | `allowedMimeTypes`  | `string[]`                                        | Resolved MIME types currently allowed for attachments.                    |
+| `maxFileSizeBytes`  | `number`                                          | Maximum attachment file size, in bytes. Omit to leave size unrestricted.  |
 | `onValidationError` | `(event: AttachmentValidationErrorEvent) => void` | Called at most once per debounce window when a rejected file is reported. |
 | `debounceMs`        | `number`                                          | Debounce window before firing `onValidationError`. Defaults to `100`.     |
 
-`AttachmentValidationErrorEvent` is `{ reason: AttachmentValidationErrorReason; allowedMimeTypes: string[]; formats?: string }`, where `reason` is `NoTypesAllowed` or `UnsupportedType` and `formats` (present only for `UnsupportedType`) is an already-formatted, non-translated extension list (e.g. `".png, .jpg"`).
+`AttachmentValidationErrorEvent` is `{ reason: AttachmentValidationErrorReason; allowedMimeTypes?: string[]; formats?: string; maxFileSizeBytes?: number }`, where `reason` is `NoTypesAllowed`, `UnsupportedType`, or `FileTooLarge`. `allowedMimeTypes` is present for `NoTypesAllowed`/`UnsupportedType`; `formats` (present only for `UnsupportedType`) is an already-formatted, non-translated extension list (e.g. `".png, .jpg"`); `maxFileSizeBytes` (echoing the caller-supplied limit) is present only for `FileTooLarge`. A file that is both an unsupported type and oversized is reported only as `UnsupportedType` — the MIME-type check runs first and short-circuits the size check.
 
 **Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
 
