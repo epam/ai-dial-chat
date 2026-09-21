@@ -74,4 +74,35 @@ describe('FeatureGuard', () => {
     const result = await guard.canActivate(ctx);
     expect(result).toBe(true);
   });
+
+  it('allows an enabled alternative using the same caller context', async () => {
+    const { guard, reflector, featureFlagsService } = makeGuard(false);
+    vi.spyOn(reflector, 'get').mockReturnValue([
+      FeatureKey.ScheduledTasksEnabled,
+      FeatureKey.LiveChatInteraction,
+    ]);
+    vi.mocked(featureFlagsService.isEnabled)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    expect(
+      await guard.canActivate(
+        makeContext({ sub: 'user-1', claims: { roles: ['user'] } }),
+      ),
+    ).toBe(true);
+    expect(featureFlagsService.isEnabled).toHaveBeenLastCalledWith(
+      FeatureKey.LiveChatInteraction,
+      { appId: 'chat-ui', userId: 'user-1', roles: ['user'] },
+    );
+  });
+
+  it('denies when all alternative features are disabled', async () => {
+    const { guard, reflector } = makeGuard(false);
+    vi.spyOn(reflector, 'get').mockReturnValue([
+      FeatureKey.ScheduledTasksEnabled,
+      FeatureKey.LiveChatInteraction,
+    ]);
+    await expect(guard.canActivate(makeContext())).rejects.toThrow(
+      ForbiddenException,
+    );
+  });
 });

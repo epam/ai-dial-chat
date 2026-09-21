@@ -18,7 +18,12 @@ import {
   signInExternalService,
   signOutExternalService,
 } from '../../server-api/external-services';
+import { getOfflineCredentials } from '../../server-api/offline-credentials';
 import { ROUTES } from '../../types/routes';
+import {
+  OfflineCredentialsLoginOutcomeType,
+  useOfflineCredentialsLogin,
+} from '../offlineCredentials/useOfflineCredentialsLogin';
 
 /** OAuth client settings needed to build the authorize URL — a subset of an external service's `auth_settings`. */
 export interface ExternalServiceOAuthSettings {
@@ -34,6 +39,8 @@ export enum ExternalServiceLoginOutcomeType {
   Failure = 'failure',
   PopupBlocked = 'popup-blocked',
   Cancelled = 'cancelled',
+  AdminConsentRequired = 'admin-consent-required',
+  OfflineUnavailable = 'offline-unavailable',
 }
 
 export type ExternalServiceLoginOutcome = {
@@ -59,7 +66,7 @@ export interface ExternalServiceLoginParams {
    */
   offlineUsageConsent?: boolean;
   /**
-   * Always logs out the target level first regardless of any cached status —
+   * For API-key/OAuth credentials, logs out the target level first regardless of any cached status —
    * a Core-pushed `external-service/signin` event is proof credentials may
    * be stale even if a cached read still reports signed in. The signin
    * dialog always passes `true`, mirroring `useToolsetLogin`'s `forceStale`.
@@ -85,18 +92,83 @@ const toToolsetCredentialsLevel = (
  * External-service counterpart to `useToolsetLogin`: shares the exact same
  * OAuth popup/BroadcastChannel handshake and stale-credential-clearing rule,
  * driving the `external-services` BFF endpoints instead of the toolset ones.
+ * DIAL-native services use platform offline credentials and separate admin consent.
  */
 export const useExternalServiceLogin = (): {
   login: (
     params: ExternalServiceLoginParams,
   ) => Promise<ExternalServiceLoginOutcome>;
 } => {
+  const { login: loginOfflineCredentials } = useOfflineCredentialsLogin();
+
+  const loginWithDialNative = useCallback(
+    async ({
+      appId,
+      serviceId,
+    }: ExternalServiceLoginParams): Promise<ExternalServiceLoginOutcome> => {
+      /* Reserve the popup during the click, before fetching consent and OAuth settings. */
+      const popup = openToolsetOAuthPopup();
+      if (!popup) return { type: ExternalServiceLoginOutcomeType.PopupBlocked };
+
+      try {
+        const service = await getExternalService(appId, serviceId);
+        if (service.appLevelAuthStatus !== 'SIGNED_IN') {
+          popup.close();
+          return {
+            type:
+              service.appLevelAuthStatus === 'SIGNED_OUT'
+                ? ExternalServiceLoginOutcomeType.AdminConsentRequired
+                : ExternalServiceLoginOutcomeType.Failure,
+          };
+        }
+
+        const status = await getOfflineCredentials();
+        if (status.connected) {
+          popup.close();
+          return { type: ExternalServiceLoginOutcomeType.Success };
+        }
+        if (!status.available || !status.connect) {
+          popup.close();
+          return { type: ExternalServiceLoginOutcomeType.OfflineUnavailable };
+        }
+
+        const outcome = await loginOfflineCredentials(
+          status.connect,
+          getOfflineCredentials,
+          popup,
+        );
+        if (outcome.type === OfflineCredentialsLoginOutcomeType.Success) {
+          const refreshed = await getExternalService(appId, serviceId);
+          return {
+            type:
+              refreshed.appLevelAuthStatus === 'SIGNED_IN'
+                ? ExternalServiceLoginOutcomeType.Success
+                : refreshed.appLevelAuthStatus === 'SIGNED_OUT'
+                  ? ExternalServiceLoginOutcomeType.AdminConsentRequired
+                  : ExternalServiceLoginOutcomeType.Failure,
+          };
+        }
+        if (outcome.type === OfflineCredentialsLoginOutcomeType.Cancelled) {
+          return { type: ExternalServiceLoginOutcomeType.Cancelled };
+        }
+        return { type: ExternalServiceLoginOutcomeType.Failure };
+      } catch {
+        popup.close();
+        return { type: ExternalServiceLoginOutcomeType.Failure };
+      }
+    },
+    [loginOfflineCredentials],
+  );
+
   const logoutLevel = useCallback(
     async (
       appId: string,
       serviceId: string,
       credentialsLevel: ExternalServiceCredentialsLevel,
-      authenticationType: ExternalServiceAuthType,
+      authenticationType: Exclude<
+        ExternalServiceAuthType,
+        ExternalServiceAuthType.DialNative
+      >,
     ): Promise<void> => {
       try {
         await signOutExternalService(appId, serviceId, {
@@ -227,6 +299,10 @@ export const useExternalServiceLogin = (): {
         offlineUsageConsent,
       } = params;
 
+      if (authenticationType === ExternalServiceAuthType.DialNative) {
+        return { type: ExternalServiceLoginOutcomeType.Failure };
+      }
+
       try {
         if (forceStale) {
           await logoutLevel(
@@ -254,10 +330,12 @@ export const useExternalServiceLogin = (): {
     (
       params: ExternalServiceLoginParams,
     ): Promise<ExternalServiceLoginOutcome> =>
-      params.authenticationType === ExternalServiceAuthType.OAuth
-        ? loginWithOAuth(params)
-        : loginWithApiKey(params),
-    [loginWithOAuth, loginWithApiKey],
+      params.authenticationType === ExternalServiceAuthType.DialNative
+        ? loginWithDialNative(params)
+        : params.authenticationType === ExternalServiceAuthType.OAuth
+          ? loginWithOAuth(params)
+          : loginWithApiKey(params),
+    [loginWithDialNative, loginWithOAuth, loginWithApiKey],
   );
 
   return { login };

@@ -499,7 +499,7 @@ DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` and `externa
 
 #### External Services (`/api/v1/external-services`)
 
-BFF proxy for an application's external-service credentials, driving the `external-service/signin` interrupt above. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).
+BFF proxy for an application's external-service credentials, driving the `external-service/signin` interrupt above. DIAL-native services use the shared offline-credentials OAuth flow, with separate administrator consent reported by `appLevelAuthStatus`. The offline-credentials endpoints accept either `scheduledTasksEnabled` or `liveChatInteraction` capability. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).
 
 | Method | Path                                                    | Description                                        |
 | ------ | ------------------------------------------------------- | -------------------------------------------------- |
