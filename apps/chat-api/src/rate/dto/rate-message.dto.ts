@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
+import {
+  DEPLOYMENT_ID_PATTERN,
+  DEPLOYMENT_ID_VALIDATION_MESSAGE,
+} from '../../common/validators/deployment-id.pattern';
 
 const rateValues = [1, -1, null] as const;
 
@@ -29,9 +40,15 @@ export class RateMessageDto {
   @ApiProperty({
     description: 'Model deployment ID that produced the response',
     example: 'anthropic.claude-v3-sonnet',
+    maxLength: 256,
+    pattern: DEPLOYMENT_ID_PATTERN.source,
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(256)
+  @Matches(DEPLOYMENT_ID_PATTERN, {
+    message: DEPLOYMENT_ID_VALIDATION_MESSAGE,
+  })
   modelId!: string;
 
   @ApiProperty({
