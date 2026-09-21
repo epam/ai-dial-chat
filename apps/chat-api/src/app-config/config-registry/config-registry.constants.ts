@@ -379,4 +379,16 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'PUBLICATION_FILTER_SOURCES',
   },
+  {
+    key: 'attachments.maxFileSizeBytes',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'client',
+    defaultValue: 536_870_912,
+    critical: false,
+    description:
+      'Maximum attachment/upload file size in bytes, surfaced to the client so it can reject an oversized file before attempting to upload it. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that already bounds the POST /api/v1/files Multer limit — so the frontend pre-check and the backend enforcement can never diverge.',
+    owner: 'chat-team',
+    envVar: 'FILE_UPLOAD_MAX_BYTES',
+  },
 ];

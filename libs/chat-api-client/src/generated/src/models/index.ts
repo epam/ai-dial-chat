@@ -984,6 +984,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   publicationFilterSources: Array<string>;
+  /**
+   * Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  maxAttachmentFileSizeBytes: number;
 }
 
 /**
