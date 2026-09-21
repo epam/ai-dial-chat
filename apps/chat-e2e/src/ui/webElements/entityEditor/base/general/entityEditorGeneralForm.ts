@@ -20,6 +20,11 @@ export class EntityEditorGeneralForm extends EntityEditorForm {
   public name = this.getChildElementBySelector(
     AddEntityGeneralInfoFormSelector.name,
   );
+  public nameErrorLabel = this.getChildElementBySelector(
+    AddEntityGeneralInfoFormSelector.fieldErrorLabel(
+      AddEntityGeneralInfoFormSelector.nameContainer,
+    ),
+  );
   public version = this.getChildElementBySelector(
     AddEntityGeneralInfoFormSelector.version,
   );
