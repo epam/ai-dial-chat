@@ -63,6 +63,17 @@ CSS/SCSS imports remain side effects. Load catalog UI through a host lazy bounda
 
 ### Catalog
 
+The card view renders first by default. Once data is available, `Catalog`
+prepares the hidden list table during browser idle time using a React
+transition (with a short timer fallback when idle callbacks are unavailable).
+The first list-view click then reuses that instance. Clicking before preparation
+finishes opens the list immediately; it does not wait for the idle callback.
+Hidden views are inert, and pending preparation is cancelled when loading
+resumes, results become empty, or the catalog unmounts.
+During preparation the table keeps its real width inside an invisible,
+zero-height wrapper, so AG Grid can lay out its columns without extending the
+page. After the first visit, the inactive table uses `display: none`.
+
 Root component. Manages all state internally (search, filters, view mode, selected item) and renders the toolbar and content area.
 
 `items` and `favorites` are both required — the Browse section and the Favorites
@@ -242,7 +253,9 @@ empty state for free.
 
 ### CardGrid
 
-Virtualized grid view of catalog cards.
+Virtualized grid view of catalog cards. Switching views preserves the hidden
+grid's measured layout and mounted cards. Hidden views ignore scroll/resize
+measurements until they become visible; unchanged visible rows are reused.
 
 ```tsx
 import { CardGrid } from '@epam/ai-dial-catalog';
@@ -311,10 +324,16 @@ virtualisation off, so `ListView` windows the rows itself: it hands the grid
 only the rows around the viewport and reserves the rest of the table's height
 with spacers. Rows are a fixed 60 px for that reason — a `styles.typography`
 override that changes a cell's line count would break the reserved height.
+Window changes render without row movement/fade animations or deferred cell
+drawing, and keep the column configuration stable while scrolling.
 
 Name, Folder and Tags share the spare width (Name takes twice the share of the
 other two), so widening the table widens the columns that carry variable-length
 values rather than only the name.
+
+Edge padding follows AG Grid's first/last displayed-column markers, including
+when switching tabs restores hidden columns. The Favorite header and star
+button share the same end inset; the star renderer fills the cell width.
 
 The Folder cell shows the deepest folder and keeps the full path in a tooltip
 and in the accessible name — a breadcrumb of the whole path collapses into

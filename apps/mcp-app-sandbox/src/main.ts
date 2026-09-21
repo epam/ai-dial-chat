@@ -17,11 +17,20 @@ async function bootstrap() {
   app.enableCors({ origin: false, credentials: false });
   /*
    * xFrameOptions and CSP are disabled - we don't know what the sandboxed app will need to do, and the sandbox proxy is already isolated from the rest of the system (and the user) by design. The sandbox proxy is not intended to be a general-purpose web server, and is only meant to serve MCP apps in a controlled environment.
+   *
+   * referrerPolicy is overridden from helmet's "no-referrer" default to
+   * "strict-origin-when-cross-origin" (the modern browser default). The
+   * sandboxed app's document inherits this page's referrer policy (it is
+   * injected via document.write/srcdoc, not its own navigation), so
+   * "no-referrer" strips the Referer header from every outbound request the
+   * app makes - including map tile fetches - which some third-party
+   * services reject as unidentifiable traffic.
    */
   app.use(
     helmet({
       contentSecurityPolicy: false,
       xFrameOptions: false,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     }),
   );
   app.useGlobalPipes(
