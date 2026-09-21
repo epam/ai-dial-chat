@@ -124,7 +124,10 @@ const SigninRow: FC<SigninRowProps> = ({
       )}
 
       {rowState.error && (
-        <div className="dial-small-text flex items-center gap-2 text-error">
+        <div
+          role="alert"
+          className="dial-small-text flex flex-wrap items-center gap-2 break-words text-error"
+        >
           <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
           <span>{rowState.error}</span>
           <button
@@ -135,6 +138,12 @@ const SigninRow: FC<SigninRowProps> = ({
             {t(ToolsetSigninI18nKeys.ErrorRetry)}
           </button>
         </div>
+      )}
+
+      {info.authenticationType === RowAuthType.DialNative && (
+        <p className="dial-small-text break-words text-secondary">
+          {t(ToolsetSigninI18nKeys.DialNativeHint)}
+        </p>
       )}
 
       {isNoAuth ? (
@@ -512,6 +521,22 @@ const SigninInterruptDialog: FC = () => {
           await finishLogin(event, info);
           return;
         }
+        if (
+          outcome.type ===
+            ExternalServiceLoginOutcomeType.AdminConsentRequired ||
+          outcome.type === ExternalServiceLoginOutcomeType.OfflineUnavailable
+        ) {
+          setRowState(event.id, {
+            status: RowStatus.Idle,
+            error: t(
+              outcome.type ===
+                ExternalServiceLoginOutcomeType.AdminConsentRequired
+                ? ToolsetSigninI18nKeys.AdminConsentRequired
+                : ToolsetSigninI18nKeys.OfflineUnavailable,
+            ),
+          });
+          return;
+        }
         if (outcome.type === ExternalServiceLoginOutcomeType.PopupBlocked) {
           setRowState(event.id, {
             status: RowStatus.Idle,
@@ -612,13 +637,22 @@ const SigninInterruptDialog: FC = () => {
             );
           })}
         </div>
-        <Checkbox
-          className="mt-2"
-          isSelected={offlineUsageConsent}
-          onChange={setOfflineUsageConsent}
-          labelProps={{ label: t(ToolsetSigninI18nKeys.OfflineUsageConsent) }}
-          caption={t(ToolsetSigninI18nKeys.OfflineUsageConsentHint)}
-        />
+        {pendingEvents.some((event) => {
+          const authType = infoByResourceKey.get(
+            getResourceKey(event),
+          )?.authenticationType;
+          return (
+            authType === RowAuthType.ApiKey || authType === RowAuthType.OAuth
+          );
+        }) && (
+          <Checkbox
+            className="mt-2"
+            isSelected={offlineUsageConsent}
+            onChange={setOfflineUsageConsent}
+            labelProps={{ label: t(ToolsetSigninI18nKeys.OfflineUsageConsent) }}
+            caption={t(ToolsetSigninI18nKeys.OfflineUsageConsentHint)}
+          />
+        )}
       </div>
     </Popup>
   );

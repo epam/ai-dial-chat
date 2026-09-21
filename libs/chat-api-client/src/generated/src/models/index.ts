@@ -4094,6 +4094,12 @@ export interface GetExternalServiceResponseDto {
    */
   userLevelAuthStatus?: string;
   /**
+   * APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  appLevelAuthStatus?: string;
+  /**
    * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
    * @type {string}
    * @memberof GetExternalServiceResponseDto
@@ -4138,6 +4144,7 @@ export const GetExternalServiceResponseDtoAuthenticationTypeEnum = {
   None: 'NONE',
   ApiKey: 'API_KEY',
   Oauth: 'OAUTH',
+  DialNative: 'DIAL_NATIVE',
 } as const;
 export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
   (typeof GetExternalServiceResponseDtoAuthenticationTypeEnum)[keyof typeof GetExternalServiceResponseDtoAuthenticationTypeEnum];
