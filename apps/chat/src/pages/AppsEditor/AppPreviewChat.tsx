@@ -40,6 +40,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import ConversationView from '../../components/ConversationView/ConversationView';
+import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
@@ -49,6 +50,7 @@ import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  RateI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
@@ -99,7 +101,8 @@ interface Props {
 
 const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   const { t } = useTranslation();
-  const { showErrorNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } =
+    useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const { items, isLoading: isDeploymentsLoading } = useDeployments();
@@ -446,17 +449,47 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   );
 
   const handleRate = useCallback(
-    (messageIndex: number, rating: MessageRating | null) => {
-      void handleRateMessage(messageIndex, rating);
+    async (messageIndex: number, rating: MessageRating | null) => {
+      const success = await handleRateMessage(messageIndex, rating);
+      if (success && rating === MessageRating.Like) {
+        showSuccessNotification({
+          title: t(RateI18nKeys.LikeToastTitle),
+          message: t(RateI18nKeys.LikeToastDescription),
+        });
+      }
     },
-    [handleRateMessage],
+    [handleRateMessage, showSuccessNotification, t],
   );
 
-  const handleDislike = useCallback(
-    (messageIndex: number) => {
-      void handleRateMessage(messageIndex, MessageRating.Dislike);
+  const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] =
+    useState<number | null>(null);
+
+  const handleOpenDislikeModal = useCallback((messageIndex: number) => {
+    setPendingDislikeMessageIndex(messageIndex);
+  }, []);
+
+  const handleDislikeModalClose = useCallback(() => {
+    setPendingDislikeMessageIndex(null);
+  }, []);
+
+  const handleDislikeSubmit = useCallback(
+    async (comment: string) => {
+      if (pendingDislikeMessageIndex == null) return;
+      const index = pendingDislikeMessageIndex;
+      setPendingDislikeMessageIndex(null);
+      const success = await handleRateMessage(
+        index,
+        MessageRating.Dislike,
+        comment,
+      );
+      if (success) {
+        showSuccessNotification({
+          title: t(RateI18nKeys.DislikeToastTitle),
+          message: t(RateI18nKeys.LikeToastDescription),
+        });
+      }
     },
-    [handleRateMessage],
+    [pendingDislikeMessageIndex, handleRateMessage, showSuccessNotification, t],
   );
 
   if (isAppInfoLoading) {
@@ -523,7 +556,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         onDeleteMessage={handleDeleteMessage}
         onRegenerateMessage={handleRegenerateMessage}
         onRateMessage={handleRate}
-        onDislikeMessage={handleDislike}
+        onDislikeMessage={handleOpenDislikeModal}
         onStartEdit={handleStartEdit}
         onCancelEdit={handleCancelEdit}
         onEditMessage={handleEditMessage}
@@ -549,6 +582,13 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         onConfirm={handleConfirmDelete}
         onClose={() => setPendingDeleteIndex(null)}
       />
+
+      {pendingDislikeMessageIndex != null && (
+        <NegativeFeedbackModal
+          onClose={handleDislikeModalClose}
+          onSubmit={handleDislikeSubmit}
+        />
+      )}
     </div>
   );
 };
