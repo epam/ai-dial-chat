@@ -1,7 +1,7 @@
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  OutlinedButton,
+  LinkButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangleFilled, IconArrowRight } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
@@ -153,7 +153,7 @@ const ScheduledTasksLoginBanner: FC<Props> = ({
         </div>
       </div>
       {onLogIn && (
-        <OutlinedButton
+        <LinkButton
           label={primaryLabel}
           disabled={isLoggingIn}
           iconAfter={
