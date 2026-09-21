@@ -20,4 +20,11 @@ export class PublishHistoryEntryDto {
 
   @ApiProperty({ example: 'user@example.com' })
   publishedBy!: string;
+
+  @ApiProperty({
+    description:
+      "Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.",
+    example: true,
+  })
+  publishCredentials!: boolean;
 }

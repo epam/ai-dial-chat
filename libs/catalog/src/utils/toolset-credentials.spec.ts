@@ -8,6 +8,7 @@ import {
   ToolsetAuthenticationType,
 } from '../types/toolset-auth';
 import {
+  canPublishCredentials,
   getCredentialsBadgeState,
   getCredentialsBannerState,
   getCredentialsUiState,
@@ -100,6 +101,58 @@ describe('getCredentialsBadgeState', () => {
         base({ authenticationType: ToolsetAuthenticationType.OAuth }),
       ),
     ).toBe(CredentialsBadgeState.LoggedOut);
+  });
+});
+
+describe('canPublishCredentials', () => {
+  it('is false when the item has no credentials at all', () => {
+    expect(canPublishCredentials(undefined)).toBe(false);
+  });
+
+  it('is false for a toolset that needs no login', () => {
+    expect(
+      canPublishCredentials({
+        authenticationType: ToolsetAuthenticationType.None,
+        globalStatus: CredentialStatus.SignedIn,
+      }),
+    ).toBe(false);
+  });
+
+  /* Access the publisher does not hold cannot be passed on. */
+  it('is false when signed out at every level', () => {
+    expect(
+      canPublishCredentials({
+        authenticationType: ToolsetAuthenticationType.OAuth,
+        userStatus: CredentialStatus.SignedOut,
+        globalStatus: CredentialStatus.SignedOut,
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when no status is reported at all', () => {
+    expect(
+      canPublishCredentials({
+        authenticationType: ToolsetAuthenticationType.OAuth,
+      }),
+    ).toBe(false);
+  });
+
+  it('is true for an OAuth toolset signed in at the global level', () => {
+    expect(
+      canPublishCredentials({
+        authenticationType: ToolsetAuthenticationType.OAuth,
+        globalStatus: CredentialStatus.SignedIn,
+      }),
+    ).toBe(true);
+  });
+
+  it('is true for an API-key toolset signed in at the user level', () => {
+    expect(
+      canPublishCredentials({
+        authenticationType: ToolsetAuthenticationType.ApiKey,
+        userStatus: CredentialStatus.SignedIn,
+      }),
+    ).toBe(true);
   });
 });
 

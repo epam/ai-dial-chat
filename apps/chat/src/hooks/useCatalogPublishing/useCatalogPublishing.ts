@@ -45,6 +45,7 @@ interface UseCatalogPublishingResult {
     folderPath: string[],
     rules: PublicationRule[],
     author: string,
+    publishCredentials: boolean,
   ) => Promise<void>;
   handleUnpublish: (item: CatalogItem, folderPath: string[]) => Promise<void>;
   handlePublishSuccess: (item: CatalogItem, folderPath: string[]) => void;
@@ -157,6 +158,7 @@ export const useCatalogPublishing = ({
       folderPath: string[],
       rules: PublicationRule[],
       author: string,
+      publishCredentials: boolean,
     ) => {
       const entityType = toPublishEntityType(item.type);
       if (!entityType) {
@@ -170,6 +172,9 @@ export const useCatalogPublishing = ({
            fallback applies instead of an empty "Hosted by". */
         ...(trimmedAuthor ? { author: trimmedAuthor } : {}),
         rules: rules.map(toPublishRuleDto),
+        /* Omitted rather than sent as `false`, so a publish without shared
+           access sends exactly the request it sent before this field. */
+        ...(publishCredentials ? { publishCredentials: true } : {}),
       });
     },
     [],
