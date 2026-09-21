@@ -105,6 +105,8 @@ const ScheduledTaskCreatePage: FC = () => {
       displayNameLabel: t(EditorI18nKeys.NameLabel),
       displayNameRequired: t(EditorI18nKeys.NameRequired),
       runAtLabel: t(ScheduledTasksI18nKeys.CreateRunAtLabel),
+      timeLabel: t(ScheduledTasksI18nKeys.CreateTimeLabel),
+      timeInvalidLabel: t(ScheduledTasksI18nKeys.CreateTimeInvalid),
       repeatLabel: t(ScheduledTasksI18nKeys.CreateRepeatLabel),
       repeatOptions: [
         {
@@ -128,7 +130,6 @@ const ScheduledTaskCreatePage: FC = () => {
           label: t(ScheduledTasksI18nKeys.CreateRepeatMonthly),
         },
       ],
-      timeLabel: t(ScheduledTasksI18nKeys.CreateTimeLabel),
       dayOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDayOfWeekLabel),
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
       minuteLabel: t(ScheduledTasksI18nKeys.CreateMinuteLabel),
@@ -229,6 +230,7 @@ const ScheduledTaskCreatePage: FC = () => {
           labelledById={modelLabelId}
           isDisabled={isSubmitting}
           isInvalid={Boolean(errors.modelId)}
+          panelClassName="desktop:min-w-[320px] [--ds-search-inline:12px]"
         />
       }
       modelLabelId={modelLabelId}
