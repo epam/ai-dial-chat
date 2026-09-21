@@ -18,11 +18,6 @@
           "^build"
         ]
       },
-      "lint": {
-        "dependsOn": [
-          "typecheck"
-        ]
-      },
       "test-oauth-browser": {
         "executor": "nx:run-commands",
         "options": {
