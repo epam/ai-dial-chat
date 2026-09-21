@@ -1,4 +1,4 @@
-import { type CSSProperties, type FC } from 'react';
+import { type CSSProperties, type FC, memo } from 'react';
 import { CARD_ROW_HEIGHT } from '../../constants/virtual-grid';
 import type { CardRowData } from '../../models/card-row-data';
 import { Card } from './Card';
@@ -14,60 +14,64 @@ export interface CardRowRendererProps extends CardRowData {
  * Empty column slots in the last row are filled with invisible spacer divs
  * so that earlier cards keep their flex-1 width.
  */
-export const CardRowRenderer: FC<CardRowRendererProps> = ({
-  rowIndex,
-  items,
-  columnCount,
-  query,
-  onToggleFavorite,
-  isFavoriteVisible,
-  onItemClick,
-  featuredLabel,
-  addToFavoritesAriaLabel,
-  removeFromFavoritesAriaLabel,
-  selectedItemId,
-  credentialsBadgeLoggedOutLabel,
-  isReadonly,
-  featuredChipStyle,
-}) => {
-  const start = rowIndex * columnCount;
-  const rowItems = items.slice(start, start + columnCount);
+export const CardRowRenderer: FC<CardRowRendererProps> = memo(
+  ({
+    rowIndex,
+    items,
+    columnCount,
+    query,
+    onToggleFavorite,
+    isFavoriteVisible,
+    onItemClick,
+    featuredLabel,
+    addToFavoritesAriaLabel,
+    removeFromFavoritesAriaLabel,
+    selectedItemId,
+    credentialsBadgeLoggedOutLabel,
+    isReadonly,
+    featuredChipStyle,
+  }) => {
+    const start = rowIndex * columnCount;
+    const rowItems = items.slice(start, start + columnCount);
 
-  const style: CSSProperties = {
-    top: rowIndex * CARD_ROW_HEIGHT,
-    height: CARD_ROW_HEIGHT,
-  };
+    const style: CSSProperties = {
+      top: rowIndex * CARD_ROW_HEIGHT,
+      height: CARD_ROW_HEIGHT,
+    };
 
-  return (
-    <div style={style} className="absolute flex w-full gap-5 pb-5">
-      {Array.from({ length: columnCount }, (_, colIndex) => {
-        const item = rowItems[colIndex];
-        return (
-          <div
-            key={item?.id ?? `spacer-${colIndex}`}
-            className="h-full min-w-0 flex-1"
-          >
-            {item && (
-              <Card
-                item={item}
-                query={query}
-                initialIsStarred={item.isStarred}
-                onToggle={onToggleFavorite}
-                isFavoriteVisible={isFavoriteVisible}
-                onClick={onItemClick}
-                featuredLabel={featuredLabel}
-                addToFavoritesAriaLabel={addToFavoritesAriaLabel}
-                removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
-                isSelected={item.id === selectedItemId}
-                className="h-full"
-                credentialsBadgeLoggedOutLabel={credentialsBadgeLoggedOutLabel}
-                isReadonly={isReadonly}
-                styles={{ colors: { featuredChipStyle } }}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+    return (
+      <div style={style} className="absolute flex w-full gap-5 pb-5">
+        {Array.from({ length: columnCount }, (_, colIndex) => {
+          const item = rowItems[colIndex];
+          return (
+            <div
+              key={item?.id ?? `spacer-${colIndex}`}
+              className="h-full min-w-0 flex-1"
+            >
+              {item && (
+                <Card
+                  item={item}
+                  query={query}
+                  initialIsStarred={item.isStarred}
+                  onToggle={onToggleFavorite}
+                  isFavoriteVisible={isFavoriteVisible}
+                  onClick={onItemClick}
+                  featuredLabel={featuredLabel}
+                  addToFavoritesAriaLabel={addToFavoritesAriaLabel}
+                  removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
+                  isSelected={item.id === selectedItemId}
+                  className="h-full"
+                  credentialsBadgeLoggedOutLabel={
+                    credentialsBadgeLoggedOutLabel
+                  }
+                  isReadonly={isReadonly}
+                  styles={{ colors: { featuredChipStyle } }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  },
+);
