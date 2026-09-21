@@ -61,6 +61,22 @@ const getValidAttachments = (
     Boolean(attachment.data || attachment.url),
   );
 
+/*
+ * `custom_content.skills[].url` is persisted verbatim from the frontend
+ * (e.g. `skills/public/my chats/123`), unlike every other DIAL resource path
+ * in this codebase, which is percent-encoded right at the DIAL Core call
+ * boundary via `encodeDialResourcePath`. Left unencoded, a path segment with
+ * a space or other reserved character makes DIAL Core reject the whole
+ * completion request with a 400 — encode here, at the same boundary.
+ */
+const getEncodedSkills = (
+  customContent?: ConversationMessageDto['custom_content'],
+) =>
+  customContent?.skills?.map((skill) => ({
+    ...skill,
+    url: encodeDialResourcePath(skill.url),
+  }));
+
 type RelayOutcome =
   | {
       outcome: 'rejected';
@@ -521,10 +537,12 @@ export class ConversationStreamingService {
       .filter((m) => m.role !== ConversationMessageRole.Status)
       .map((m) => {
         const validAttachments = getValidAttachments(m.custom_content);
+        const encodedSkills = getEncodedSkills(m.custom_content);
         const content = Object.fromEntries(
           Object.entries({
             ...m.custom_content,
             attachments: validAttachments.length ? validAttachments : undefined,
+            skills: encodedSkills?.length ? encodedSkills : undefined,
             configuration_value: undefined,
             stages: undefined,
           }).filter(([, value]) => value != null),
