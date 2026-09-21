@@ -137,6 +137,88 @@ describe('PublishPanel', () => {
     expect(screen.queryByText('Custom entity header')).toBeNull();
   });
 
+  describe('credentials opt-in', () => {
+    const CREDENTIALS_LABEL = 'Publish with my credentials';
+
+    it('renders nothing when no change handler is supplied', () => {
+      renderPanel();
+      expect(screen.queryByLabelText(CREDENTIALS_LABEL)).toBeNull();
+      expect(screen.queryByRole('checkbox')).toBeNull();
+    });
+
+    it('renders the checkbox with its default label once a handler is supplied', () => {
+      renderPanel({ onPublishCredentialsChange: vi.fn() });
+      expect(screen.getByRole('checkbox')).toBeTruthy();
+      expect(screen.getByText(CREDENTIALS_LABEL)).toBeTruthy();
+    });
+
+    it('renders host-supplied label and caption in place of the defaults', () => {
+      renderPanel({
+        onPublishCredentialsChange: vi.fn(),
+        labels: {
+          credentialsLabel: 'Partager mes identifiants',
+          credentialsHint: 'Les membres ne devront pas se connecter.',
+        },
+      });
+      expect(screen.getByText('Partager mes identifiants')).toBeTruthy();
+      expect(
+        screen.getByText('Les membres ne devront pas se connecter.'),
+      ).toBeTruthy();
+    });
+
+    it('reflects the current value', () => {
+      renderPanel({
+        publishCredentials: true,
+        onPublishCredentialsChange: vi.fn(),
+      });
+      expect(screen.getByRole('checkbox').getAttribute('aria-checked')).toBe(
+        'true',
+      );
+    });
+
+    it('reports the negated value on toggle and holds no state of its own', async () => {
+      const onPublishCredentialsChange = vi.fn();
+      renderPanel({ publishCredentials: false, onPublishCredentialsChange });
+
+      await userEvent.click(screen.getByRole('checkbox'));
+
+      expect(onPublishCredentialsChange).toHaveBeenCalledWith(true);
+      /* Controlled: the panel still renders what the host passed. */
+      expect(screen.getByRole('checkbox').getAttribute('aria-checked')).toBe(
+        'false',
+      );
+    });
+
+    it('is disabled while a publish request is in flight', () => {
+      renderPanel({
+        isSubmitting: true,
+        onPublishCredentialsChange: vi.fn(),
+      });
+      const checkbox = screen.getByRole('checkbox');
+      expect(
+        checkbox.hasAttribute('disabled') ||
+          checkbox.getAttribute('aria-disabled') === 'true',
+      ).toBe(true);
+    });
+
+    /* The consequence of ticking must be in the description, not the label alone. */
+    it('wires the caption as the checkbox accessible description', () => {
+      renderPanel({
+        onPublishCredentialsChange: vi.fn(),
+        labels: {
+          credentialsHint: 'Members will use this without signing in.',
+        },
+      });
+
+      const checkbox = screen.getByRole('checkbox');
+      const caption = screen.getByText(
+        'Members will use this without signing in.',
+      );
+      expect(caption.id).toBeTruthy();
+      expect(checkbox.getAttribute('aria-describedby')).toContain(caption.id);
+    });
+  });
+
   it('renders the folder section title', () => {
     renderPanel();
     expect(screen.getByText('Publish to folder')).toBeTruthy();

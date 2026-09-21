@@ -271,6 +271,11 @@
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publishHistoryLoading": "Loading history…",
     "publishHistoryError": "Failed to load publish history.",
+    "publish": {
+      "credentialsLabel": "Publish with my credentials",
+      "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them.",
+      "historySharedCredentials": "Shared credentials"
+    },
     "skillsLoadError": "Failed to load skills",
     "tab": {
       "models": "Models",
