@@ -13,8 +13,8 @@ import {
   useConversationStream,
 } from '@epam/ai-dial-chat-hooks';
 import {
-  MessageRating,
   generateUUID,
+  MessageRating,
   MessageRole,
   ResponseFormat,
   type Attachment,
@@ -24,8 +24,8 @@ import {
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ConfirmationPopupVariant,
   ConfirmationPopup,
+  ConfirmationPopupVariant,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -101,8 +101,7 @@ interface Props {
 
 const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   const { t } = useTranslation();
-  const { showSuccessNotification, showErrorNotification } =
-    useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const { items, isLoading: isDeploymentsLoading } = useDeployments();
@@ -461,8 +460,9 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     [handleRateMessage, showSuccessNotification, t],
   );
 
-  const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] =
-    useState<number | null>(null);
+  const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
+    number | null
+  >(null);
 
   const handleOpenDislikeModal = useCallback((messageIndex: number) => {
     setPendingDislikeMessageIndex(messageIndex);
