@@ -31,6 +31,39 @@ describe('PublishCatalogEntityDto — version', () => {
   });
 });
 
+describe('PublishCatalogEntityDto — publishCredentials', () => {
+  it('passes when publishCredentials is omitted, which is every pre-change caller', async () => {
+    const errors = await validateDto(BASE_BODY);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts true', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      publishCredentials: true,
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts false', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      publishCredentials: false,
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a non-boolean value before it can reach Core', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      publishCredentials: 'yes',
+    });
+    expect(
+      errors.some((error) => error.property === 'publishCredentials'),
+    ).toBe(true);
+  });
+});
+
 describe('PublishCatalogEntityDto — author', () => {
   it('passes when author is omitted', async () => {
     const errors = await validateDto(BASE_BODY);

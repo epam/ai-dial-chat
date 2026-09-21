@@ -41,6 +41,11 @@ describe('UploadProgressModal', () => {
     );
     expect(screen.queryByText('Queued')).toBeNull();
 
+    /* One bar per row, so each has to name the file it tracks. */
+    expect(
+      screen.getByRole('progressbar', { name: 'report.pdf' }),
+    ).toBeTruthy();
+
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onCancel).toHaveBeenCalledOnce();
   });

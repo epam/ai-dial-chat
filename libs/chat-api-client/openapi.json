@@ -5624,7 +5624,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher's own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -11721,6 +11721,11 @@
             "items": {
               "$ref": "#/components/schemas/PublishRuleDto"
             }
+          },
+          "publishCredentials": {
+            "type": "boolean",
+            "description": "Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.",
+            "example": true
           }
         },
         "required": ["folderPath"]
@@ -11845,6 +11850,11 @@
           "publishedBy": {
             "type": "string",
             "example": "user@example.com"
+          },
+          "publishCredentials": {
+            "type": "boolean",
+            "description": "Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.",
+            "example": true
           }
         },
         "required": [
@@ -11853,7 +11863,8 @@
           "folderPath",
           "version",
           "publishedAt",
-          "publishedBy"
+          "publishedBy",
+          "publishCredentials"
         ]
       },
       "PublishRulesResultDto": {
