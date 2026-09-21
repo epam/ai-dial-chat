@@ -94,6 +94,8 @@ interface Props {
   onClose: () => void;
   /** Optional i18n string overrides. */
   labels?: DeploymentSelectorLabels;
+  /** Additional classes merged over the panel root's defaults. */
+  className?: string;
 }
 
 const SECTION_HEADING_CLASS_NAME =
@@ -125,6 +127,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
   onBrowseCatalog,
   onClose,
   labels = {},
+  className,
 }) => {
   const {
     searchPlaceholder = 'Search models, agents…',
@@ -396,7 +399,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
 
   return (
     <div
-      className="flex min-w-[360px] flex-col"
+      className={mergeClasses('flex min-w-[360px] flex-col', className)}
       /*
        * Bound to the kit Dropdown's own live available-height var (set by
        * floating-ui) so the list, not the outer popup wrapper, absorbs any
@@ -411,7 +414,10 @@ const DeploymentSelectorPanel: FC<Props> = ({
       {/* Sticky search header */}
       <div
         role="search"
-        className="sticky top-0 z-10 bg-layer-raised px-1 pb-3 pt-2"
+        className={mergeClasses(
+          'sticky top-0 z-10 bg-layer-raised pb-3 pt-2',
+          styles.searchHeader,
+        )}
       >
         <Search
           inputRef={searchInputRef}

@@ -39,6 +39,7 @@ export type {
   ScheduledTaskRepeatOption,
 } from './models/scheduled-task-create-form-props';
 export { DESCRIPTION_MAX_LENGTH } from './constants/scheduled-task-create-form';
+export { TIME_OF_DAY_PATTERN } from './utils/calendar-value';
 export { ScheduledTaskRepeat } from './types/scheduled-task-schedule';
 export { ScheduledTaskDetailView } from './components/ScheduledTaskDetailView/ScheduledTaskDetailView';
 export type {

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { vi } from 'vitest';
 
 class MockResizeObserver {
@@ -93,6 +94,16 @@ const mockUseTranslationResult = {
   },
 };
 
+/*
+ * `Trans` mirrors `mockT`: no locale resources are loaded in tests, so it
+ * renders the `i18nKey` itself (a plain string is valid React children),
+ * keeping key-based assertions working for components that interpolate
+ * markup into translated sentences.
+ */
+const MockTrans = ({ i18nKey }: { i18nKey?: string }): ReactNode =>
+  i18nKey ?? null;
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => mockUseTranslationResult,
+  Trans: MockTrans,
 }));
