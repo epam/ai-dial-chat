@@ -270,9 +270,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
             ))}
         <button
           type="button"
-          onClick={() =>
-            treeOptions?.onTabChange?.(DialFileManagerTabs.Shared)
-          }
+          onClick={() => treeOptions?.onTabChange?.(DialFileManagerTabs.Shared)}
         >
           Invoke tab-change handler
         </button>
