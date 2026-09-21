@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -12,6 +13,7 @@ export enum ExternalServiceAuthType {
   None = 'NONE',
   ApiKey = 'API_KEY',
   OAuth = 'OAUTH',
+  DialNative = 'DIAL_NATIVE',
 }
 
 export enum ExternalServiceCredentialsLevel {
@@ -19,6 +21,12 @@ export enum ExternalServiceCredentialsLevel {
   Application = 'APPLICATION',
   User = 'USER',
 }
+
+const EXTERNAL_SERVICE_CREDENTIAL_AUTH_TYPES = [
+  ExternalServiceAuthType.None,
+  ExternalServiceAuthType.ApiKey,
+  ExternalServiceAuthType.OAuth,
+] as const;
 
 export class GetExternalServiceResponseDto {
   @ApiProperty({ example: 'FinHub API' })
@@ -39,6 +47,13 @@ export class GetExternalServiceResponseDto {
       "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.",
   })
   userLevelAuthStatus?: string;
+
+  @ApiPropertyOptional({
+    example: 'SIGNED_IN',
+    description:
+      'APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator.',
+  })
+  appLevelAuthStatus?: string;
 
   @ApiPropertyOptional({
     example: 'SIGNED_OUT',
@@ -74,11 +89,14 @@ export class ExternalServiceSigninBodyDto {
   credentialsLevel!: ExternalServiceCredentialsLevel;
 
   @ApiProperty({
-    enum: ExternalServiceAuthType,
+    enum: EXTERNAL_SERVICE_CREDENTIAL_AUTH_TYPES,
     example: ExternalServiceAuthType.ApiKey,
   })
-  @IsEnum(ExternalServiceAuthType)
-  authenticationType!: ExternalServiceAuthType;
+  @IsIn(EXTERNAL_SERVICE_CREDENTIAL_AUTH_TYPES)
+  authenticationType!: Exclude<
+    ExternalServiceAuthType,
+    ExternalServiceAuthType.DialNative
+  >;
 
   @ApiPropertyOptional({ description: 'API key value (API_KEY auth).' })
   @ValidateIf(
@@ -139,11 +157,14 @@ export class ExternalServiceLogoutBodyDto {
   credentialsLevel!: ExternalServiceCredentialsLevel;
 
   @ApiProperty({
-    enum: ExternalServiceAuthType,
+    enum: EXTERNAL_SERVICE_CREDENTIAL_AUTH_TYPES,
     example: ExternalServiceAuthType.ApiKey,
   })
-  @IsEnum(ExternalServiceAuthType)
-  authenticationType!: ExternalServiceAuthType;
+  @IsIn(EXTERNAL_SERVICE_CREDENTIAL_AUTH_TYPES)
+  authenticationType!: Exclude<
+    ExternalServiceAuthType,
+    ExternalServiceAuthType.DialNative
+  >;
 }
 
 export class ExternalServiceAuthResultDto {

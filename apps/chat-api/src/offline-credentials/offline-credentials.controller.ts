@@ -43,7 +43,10 @@ export class OfflineCredentialsController {
 
   @Get()
   @UseGuards(FeatureGuard)
-  @RequireFeature(FeatureKey.ScheduledTasksEnabled)
+  @RequireFeature(
+    FeatureKey.ScheduledTasksEnabled,
+    FeatureKey.LiveChatInteraction,
+  )
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'getOfflineCredentials',
@@ -64,7 +67,7 @@ export class OfflineCredentialsController {
   @ApiResponse({
     status: 403,
     description:
-      'Caller lacks permission, or the scheduledTasksEnabled feature is not enabled',
+      'Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled',
   })
   @ApiResponse({
     status: 502,
@@ -80,7 +83,10 @@ export class OfflineCredentialsController {
 
   @Post('signin')
   @UseGuards(FeatureGuard)
-  @RequireFeature(FeatureKey.ScheduledTasksEnabled)
+  @RequireFeature(
+    FeatureKey.ScheduledTasksEnabled,
+    FeatureKey.LiveChatInteraction,
+  )
   @HttpCode(200)
   @ApiOperation({
     operationId: 'signInOfflineCredentials',
@@ -108,7 +114,7 @@ export class OfflineCredentialsController {
   @ApiResponse({
     status: 403,
     description:
-      'Caller lacks permission, or the scheduledTasksEnabled feature is not enabled',
+      'Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled',
   })
   @ApiResponse({
     status: 502,

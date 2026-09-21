@@ -129,6 +129,25 @@ describe('toDialExternalServiceSignoutBody', () => {
 });
 
 describe('mapDialExternalServiceToDto', () => {
+  it('keeps DIAL_NATIVE offline connection and application consent statuses separate', () => {
+    expect(
+      mapDialExternalServiceToDto({
+        display_name: 'DIAL',
+        auth_settings: {
+          authentication_type: 'DIAL_NATIVE',
+          user_level_auth_status: 'SIGNED_IN',
+          app_level_auth_status: 'SIGNED_OUT',
+        },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        authenticationType: ExternalServiceAuthType.DialNative,
+        userLevelAuthStatus: 'SIGNED_IN',
+        appLevelAuthStatus: 'SIGNED_OUT',
+      }),
+    );
+  });
+
   it('maps a full Core response', () => {
     expect(
       mapDialExternalServiceToDto({
