@@ -75,35 +75,28 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  const { DialFileManagerTabs: Tabs } = actual;
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
+  const { DialFileManagerActions: Actions, DialFileManagerTabs: Tabs } = actual;
   return {
     ...actual,
     useDialFileManagerTabs: vi.fn().mockImplementation(() => ({
       activeTab: mockActiveTab.value ?? Tabs.MyFiles,
       handleTabChange: mockHandleTabChange,
       tabs: [
-        { id: Tabs.MyFiles, label: 'My Files' },
-        { id: Tabs.Shared, label: 'Shared with Me' },
-        { id: Tabs.Organization, label: 'Organization' },
+        { value: Tabs.MyFiles, label: 'My Files' },
+        { value: Tabs.Shared, label: 'Shared with Me' },
+        { value: Tabs.Organization, label: 'Organization' },
       ],
     })),
-  };
-});
-
-vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
-  const { DialFileManagerActions: Actions } = actual;
-  return {
-    ...actual,
     DialFileManager: ({
       className,
       gridClassName,
       gridOptions,
       uploadEnabled,
       toolbarOptions,
+      treeOptions,
       bulkActionsToolbarOptions,
       filesLoading,
       allowedFileTypes,
@@ -133,10 +126,12 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         visibleColumns?: FileManagerColumnKey[];
       };
       uploadEnabled?: boolean;
-      toolbarOptions?: {
-        tabs?: Array<{ id: string; label: string }>;
+      treeOptions?: {
+        tabs?: Array<{ value: string; label: string }>;
         activeTab?: string;
         onTabChange?: (id: DialFileManagerTabs) => void;
+      };
+      toolbarOptions?: {
         showHiddenFilesToggle?: boolean;
         hiddenFilesSwitcherLabel?: string;
         showHiddenFilesLabel?: string;
@@ -200,8 +195,8 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         data-hidden-files-label={toolbarOptions?.hiddenFilesSwitcherLabel}
         data-show-hidden-files-label={toolbarOptions?.showHiddenFilesLabel}
         data-hide-hidden-files-label={toolbarOptions?.hideHiddenFilesLabel}
-        data-active-tab={toolbarOptions?.activeTab}
-        data-tab-count={toolbarOptions?.tabs?.length}
+        data-active-tab={treeOptions?.activeTab}
+        data-tab-count={treeOptions?.tabs?.length}
         data-has-delete={String(
           Actions.Delete in (gridOptions?.actionLabels ?? {}),
         )}
@@ -262,12 +257,12 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       >
         {selectedPaths?.size
           ? null
-          : toolbarOptions?.tabs?.map((tab) => (
+          : treeOptions?.tabs?.map((tab) => (
               <button
-                key={tab.id}
+                key={tab.value}
                 type="button"
                 onClick={() =>
-                  toolbarOptions.onTabChange?.(tab.id as DialFileManagerTabs)
+                  treeOptions.onTabChange?.(tab.value as DialFileManagerTabs)
                 }
               >
                 {tab.label}
@@ -276,7 +271,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         <button
           type="button"
           onClick={() =>
-            toolbarOptions?.onTabChange?.(DialFileManagerTabs.Shared)
+            treeOptions?.onTabChange?.(DialFileManagerTabs.Shared)
           }
         >
           Invoke tab-change handler
@@ -905,7 +900,7 @@ describe('DialFileManagerModal', () => {
 });
 
 describe('DialFileManagerModal — tab navigation', () => {
-  it('renders three tabs in the toolbar', () => {
+  it('renders three tabs beside the folder tree', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
@@ -926,7 +921,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
   });
 
-  it('passes the activeTab from useDialFileManagerTabs to toolbarOptions', () => {
+  it('passes the activeTab from useDialFileManagerTabs to treeOptions', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });

@@ -20,6 +20,7 @@ import {
 import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
 import {
   DialFileNodeType,
+  useDialFileManagerTabs,
   type DialFile,
   type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
@@ -28,7 +29,6 @@ import {
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
-  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,

@@ -5,7 +5,7 @@ import {
   GridSelectionMode,
   type DialFileAcceptType,
   type FileManagerGridRow,
-  type ToolbarOptions,
+  type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
 import {
   NOT_ALLOWED_SYMBOLS_REGEXP,
@@ -82,8 +82,8 @@ export interface DialFileManagerShellProps {
   labels: DialFileManagerShellLabels;
   /** Currently active tab. */
   activeTab: DialFileManagerTabs;
-  /** Tab configuration for the toolbar. */
-  tabs: ToolbarOptions['tabs'];
+  /** Filter chips scoping the tree and the grid, rendered above the folder tree. */
+  tabs: FileTreeOptions['tabs'];
   /** Called when the user switches tabs. */
   onTabChange: (tab: DialFileManagerTabs) => void;
   /** Set of currently selected file/folder virtual paths. */
@@ -287,6 +287,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   const treeOptions = useMemo(
     () => ({
       header: labels.treeHeaderByTab[activeTab],
+      tabs,
+      activeTab,
+      onTabChange,
       expandedPaths,
       loadedPaths,
       loadingPaths: folderPopupLoadingPaths,
@@ -295,7 +298,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     }),
     [
       labels.treeHeaderByTab,
+      tabs,
       activeTab,
+      onTabChange,
       expandedPaths,
       loadedPaths,
       folderPopupLoadingPaths,
@@ -312,9 +317,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const toolbarOptions = useMemo(
     () => ({
-      tabs,
-      activeTab,
-      onTabChange,
       showHiddenFilesToggle: true,
       hiddenFilesSwitcherLabel: labels.hiddenFilesLabel,
       showHiddenFilesLabel: labels.showHiddenFilesLabel,
@@ -330,9 +332,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       },
     }),
     [
-      tabs,
-      activeTab,
-      onTabChange,
       labels.hiddenFilesLabel,
       labels.showHiddenFilesLabel,
       labels.hideHiddenFilesLabel,
