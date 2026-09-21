@@ -370,6 +370,43 @@ attachment cleanup. Tasks that outlive removal of their registry entry are outsi
 The gauges retain only counts, without per-user or per-conversation labels. See
 [runtime instruments](../apps/chat-api/src/telemetry/runtime-metrics.ts).
 
+### Completion-response termination
+
+The originating conversation completion handler records
+`dial.chat.completion.response.terminations` (Counter, unit `{response}`), exposed
+as `dial_chat_completion_response_terminations_total`. Its only application
+attribute is the bounded `reason` value:
+
+| Reason                   | Interpretation                                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `completed`              | The handler ended the response after consuming the generator. This can include a failure after stream headers were committed. |
+| `client_closed`          | The handler observed a client close and left the response untouched.                                                          |
+| `backpressure_ended`     | The detached response was released without the helper taking its forced-destroy outcome.                                      |
+| `backpressure_destroyed` | The release helper took its forced-destroy fallback.                                                                          |
+
+Recording happens in controller finalization, not when backpressure first occurs.
+Ordinary pre-stream rejections do not contribute, but an observed disconnect
+during a failing preflight can still produce `client_closed`. This counter is
+therefore not an exact count of responses that successfully entered streaming.
+The controller keeps consuming backend-owned generation and its terminal
+persistence attempt before releasing the detached response. The current
+`SSE_RELEASE_TIMEOUT_MS` bound is 15 seconds **from the start of response release**;
+it does not bound generation or persistence. Attach responses use the same release
+helper but do not contribute to this originating-completion counter.
+
+Neither `completed` nor `backpressure_ended` proves successful generation,
+successful persistence, or that a browser received all output. A rising
+`backpressure_destroyed` rate shows that forced release is being used; it does not
+alone establish a leak or an incorrectly configured timeout. Correlate it with
+HTTP active requests, terminal transport outcomes and per-process memory.
+The existing HTTP active metric counts unfinished response lifecycles; telemetry
+does not retain response objects to aggregate their buffered bytes.
+
+The supplied dashboards do not yet include a panel for this counter. See the
+[instrument](../apps/chat-api/src/conversations/streaming/completion-response-metrics.ts),
+[controller](../apps/chat-api/src/conversations/conversation.controller.ts), and
+[release helper](../apps/chat-api/src/common/utils/sse.ts).
+
 ## Read rates, latency, and missing data correctly
 
 Use `rate()` on counters and histogram sums/counts, and read active-operation metrics directly.
