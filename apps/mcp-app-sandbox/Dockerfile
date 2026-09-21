@@ -5,7 +5,9 @@
 # ─────────────────────────────────────────────
 FROM node:24.17-alpine AS node-base
 
-RUN npm install --global npm@12.0.1
+# npm 12.0.x still bundles vulnerable brace-expansion, ip-address, and tar.
+RUN apk upgrade --no-cache libcrypto3 libssl3 \
+    && npm install --global npm@11.19.1
 
 # ─────────────────────────────────────────────
 # Stage 1: install all workspace dependencies
