@@ -676,12 +676,12 @@ export const Catalog: FC<CatalogProps> = ({
               </div>
 
               {listMountState !== ListMountState.Unmounted && (
+                /* The first preparation needs real width for ag-grid's
+                   layout, but must not add height to the card view. */
                 <div
                   inert={viewMode !== CatalogViewMode.Cards}
                   className={mergeClasses(
                     'pb-8',
-                    /* The first preparation needs real width for ag-grid's
-                       layout, but must not add height to the card view. */
                     viewMode !== CatalogViewMode.Cards &&
                       (listMountState === ListMountState.Prepared
                         ? 'invisible h-0 overflow-hidden p-0'
