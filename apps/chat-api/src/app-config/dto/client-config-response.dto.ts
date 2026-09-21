@@ -92,6 +92,16 @@ export class ClientConfigDto {
   @IsString()
   mcpAppUserAgent!: string | null;
 
+  @ApiPropertyOptional({
+    description:
+      'Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to "ai-dial-chat" on the client.',
+    type: String,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  mcpAppHostName!: string | null;
+
   @ApiProperty({
     description:
       'Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.',

@@ -880,7 +880,6 @@ export enum AttachmentCanvasI18nKeys {
   VisualizerActionsAriaLabel = 'attachmentCanvas.visualizerActionsAriaLabel',
   VisualizerLoadingLabel = 'attachmentCanvas.visualizerLoadingLabel',
   VisualizerLoadErrorLabel = 'attachmentCanvas.visualizerLoadErrorLabel',
-  McpAppTitle = 'attachmentCanvas.mcpAppTitle',
   McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
   McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',
   PdfThumbnailsLabel = 'attachmentCanvas.pdfThumbnailsLabel',

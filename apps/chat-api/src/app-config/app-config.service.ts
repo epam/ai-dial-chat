@@ -196,6 +196,7 @@ export class AppConfigService {
     let mcpAppSandboxUrl: string | null = null;
     let mcpAppTheme: 'light' | 'dark' | null = null;
     let mcpAppUserAgent: string | null = null;
+    let mcpAppHostName: string | null = null;
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
@@ -237,6 +238,8 @@ export class AppConfigService {
           resolved === 'light' || resolved === 'dark' ? resolved : null;
       } else if (def.key === 'mcpApps.userAgent') {
         mcpAppUserAgent = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'mcpApps.hostName') {
+        mcpAppHostName = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'fileManager.availableTabs') {
         fileManagerTabs = Array.isArray(resolved)
           ? resolved
@@ -328,6 +331,7 @@ export class AppConfigService {
         mcpAppSandboxUrl,
         mcpAppTheme,
         mcpAppUserAgent,
+        mcpAppHostName,
         fileManagerTabs,
         overlayEnabled,
         overlayAllowedOrigins,
