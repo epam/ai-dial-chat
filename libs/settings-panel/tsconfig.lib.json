@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
+    "outDir": "out-tsc/lib",
     "declaration": true,
     "sourceMap": true,
     "types": [
@@ -16,7 +16,7 @@
     "moduleResolution": "bundler",
     "lib": ["dom"],
     "forceConsistentCasingInFileNames": true,
-    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
+    "tsBuildInfoFile": "out-tsc/lib/tsconfig.lib.tsbuildinfo",
     "ignoreDeprecations": "6.0"
   },
   "exclude": [

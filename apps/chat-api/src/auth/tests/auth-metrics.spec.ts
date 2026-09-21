@@ -11,6 +11,7 @@ import { Reflector } from '@nestjs/core';
 import { metrics } from '@opentelemetry/api';
 import {
   type DataPoint,
+  type ExponentialHistogram,
   type Histogram,
   MeterProvider,
   MetricReader,
@@ -30,6 +31,15 @@ import type { SessionGuard as SessionGuardClass } from '../session/session.guard
 import type { SessionService } from '../session/session.service';
 import type { SessionPayload, SessionUser } from '../session/session.types';
 import type { AuthStrategy } from '../strategies/auth-strategy.interface';
+
+/*
+ * `MetricData` (the element type of `ScopeMetrics.metrics[number].dataPoints`)
+ * is a discriminated union, so `dataPoints` widens to a union of array types
+ * that `Array.prototype.flatMap` cannot infer a single element type through.
+ * This alias gives the traversal below an explicit, sound element type.
+ */
+type AuthDataPoint =
+  DataPoint<number> | DataPoint<Histogram> | DataPoint<ExponentialHistogram>;
 
 class TestMetricReader extends MetricReader {
   protected async onForceFlush(): Promise<void> {
@@ -694,7 +704,7 @@ describe('auth and session metrics', () => {
     const authAttributeValues = resourceMetrics.scopeMetrics
       .flatMap((scope) => scope.metrics)
       .filter((metric) => metric.descriptor.name.startsWith('dial.chat.auth.'))
-      .flatMap((metric) => metric.dataPoints)
+      .flatMap<AuthDataPoint>((metric) => metric.dataPoints)
       .flatMap((point) => Object.values(point.attributes))
       .map(String);
 

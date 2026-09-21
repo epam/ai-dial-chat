@@ -196,6 +196,7 @@ export class AppConfigService {
     let mcpAppSandboxUrl: string | null = null;
     let mcpAppTheme: 'light' | 'dark' | null = null;
     let mcpAppUserAgent: string | null = null;
+    let mcpAppHostName: string | null = null;
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
@@ -210,6 +211,7 @@ export class AppConfigService {
     let applicationVisualizers: Record<string, ApplicationVisualizerDto> = {};
     let customVariables: Record<string, unknown> = {};
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
+    let maxAttachmentFileSizeBytes = 536_870_912;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -237,6 +239,8 @@ export class AppConfigService {
           resolved === 'light' || resolved === 'dark' ? resolved : null;
       } else if (def.key === 'mcpApps.userAgent') {
         mcpAppUserAgent = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'mcpApps.hostName') {
+        mcpAppHostName = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'fileManager.availableTabs') {
         fileManagerTabs = Array.isArray(resolved)
           ? resolved
@@ -313,6 +317,9 @@ export class AppConfigService {
         publicationFilterSources = Array.isArray(resolved)
           ? resolved
           : DEFAULT_PUBLICATION_FILTER_SOURCES;
+      } else if (def.key === 'attachments.maxFileSizeBytes') {
+        maxAttachmentFileSizeBytes =
+          typeof resolved === 'number' ? resolved : 536_870_912;
       }
     }
 
@@ -328,6 +335,7 @@ export class AppConfigService {
         mcpAppSandboxUrl,
         mcpAppTheme,
         mcpAppUserAgent,
+        mcpAppHostName,
         fileManagerTabs,
         overlayEnabled,
         overlayAllowedOrigins,
@@ -342,6 +350,7 @@ export class AppConfigService {
         applicationVisualizers,
         customVariables,
         publicationFilterSources,
+        maxAttachmentFileSizeBytes,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

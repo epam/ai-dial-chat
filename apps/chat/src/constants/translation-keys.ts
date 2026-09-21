@@ -447,6 +447,8 @@ export enum ScheduledTasksI18nKeys {
   DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',
   DetailDeleteConfirmTitle = 'scheduledTasks.detail.deleteConfirmTitle',
   DetailDeleteConfirmDescription = 'scheduledTasks.detail.deleteConfirmDescription',
+  DetailDeleteConsequenceConversationsAccessible = 'scheduledTasks.detail.deleteConsequenceConversationsAccessible',
+  DetailDeleteConsequenceCannotBeUndone = 'scheduledTasks.detail.deleteConsequenceCannotBeUndone',
   DetailDeleteConfirmingLabel = 'scheduledTasks.detail.deleteConfirmingLabel',
   DetailDeleteSuccess = 'scheduledTasks.detail.deleteSuccess',
   DetailDeleteNotFoundError = 'scheduledTasks.detail.deleteNotFoundError',
@@ -499,6 +501,7 @@ export enum DialFileManagerI18nKeys {
   UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
   MaxSizeOnly = 'dialFileManager.maxSizeOnly',
+  UploadFileTooLarge = 'dialFileManager.uploadFileTooLarge',
   AllTypes = 'dialFileManager.allTypes',
   UpToFiles = 'dialFileManager.upToFiles',
   AttachingHiddenFilesNotAllowed = 'dialFileManager.attachingHiddenFilesNotAllowed',
@@ -823,6 +826,8 @@ export enum AttachmentsI18nKeys {
   NoAttachmentsAllowedMessage = 'attachments.noAttachmentsAllowed.message',
   NetworkErrorTitle = 'attachments.networkError.title',
   NetworkErrorMessage = 'attachments.networkError.message',
+  FileTooLargeTitle = 'attachments.fileTooLarge.title',
+  FileTooLargeMessage = 'attachments.fileTooLarge.message',
 }
 
 export enum CitationsI18nKeys {
@@ -878,7 +883,6 @@ export enum AttachmentCanvasI18nKeys {
   VisualizerActionsAriaLabel = 'attachmentCanvas.visualizerActionsAriaLabel',
   VisualizerLoadingLabel = 'attachmentCanvas.visualizerLoadingLabel',
   VisualizerLoadErrorLabel = 'attachmentCanvas.visualizerLoadErrorLabel',
-  McpAppTitle = 'attachmentCanvas.mcpAppTitle',
   McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
   McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',
   PdfThumbnailsLabel = 'attachmentCanvas.pdfThumbnailsLabel',
@@ -1146,6 +1150,9 @@ export enum ToolsetSigninI18nKeys {
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
+  AdminConsentRequired = 'toolsetSignin.adminConsentRequired',
+  OfflineUnavailable = 'toolsetSignin.offlineUnavailable',
+  DialNativeHint = 'toolsetSignin.dialNativeHint',
   ErrorPopupBlocked = 'toolsetSignin.errorPopupBlocked',
   ErrorDeclineFailed = 'toolsetSignin.errorDeclineFailed',
   ErrorRetry = 'toolsetSignin.errorRetry',

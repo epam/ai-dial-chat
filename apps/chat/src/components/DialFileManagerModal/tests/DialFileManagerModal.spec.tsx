@@ -108,6 +108,8 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       filesLoading,
       allowedFileTypes,
       maxSelectableFileSize,
+      maxFileSize,
+      uploadValidationMessages,
       unsupportedFileTypeTooltip,
       getDisabledTooltip,
       selectedPaths,
@@ -151,6 +153,8 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       filesLoading?: boolean;
       allowedFileTypes?: string[];
       maxSelectableFileSize?: number;
+      maxFileSize?: number;
+      uploadValidationMessages?: { oversizedFiles?: string };
       unsupportedFileTypeTooltip?: string;
       getDisabledTooltip?: (row: {
         nodeType?: string;
@@ -188,6 +192,8 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         data-loading={filesLoading}
         data-allowed-file-types={allowedFileTypes?.join(',')}
         data-max-selectable-file-size={maxSelectableFileSize}
+        data-max-file-size={maxFileSize}
+        data-oversized-files-message={uploadValidationMessages?.oversizedFiles}
         data-unsupported-file-type-tooltip={unsupportedFileTypeTooltip}
         data-hidden-file-tooltip={getDisabledTooltip?.({
           nodeType: DialFileNodeType.ITEM,
@@ -901,6 +907,30 @@ describe('DialFileManagerModal', () => {
     expect(manager.getAttribute('data-unsupported-file-type-tooltip')).toBe(
       'Unsupported file type. Supported types: .pdf.',
     );
+  });
+
+  it('forwards maxSelectableFileSize as the ui-kit maxFileSize prop and a translated oversized-upload message', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+
+    render(
+      <DialFileManagerModal {...defaultProps} maxSelectableFileSize={1024} />,
+    );
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-max-file-size')).toBe('1024');
+    expect(manager.getAttribute('data-oversized-files-message')).toBe(
+      'dialFileManager.uploadFileTooLarge',
+    );
+  });
+
+  it('does not set maxFileSize or an oversized-upload message when maxSelectableFileSize is absent', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-max-file-size')).toBeNull();
+    expect(manager.getAttribute('data-oversized-files-message')).toBeNull();
   });
 });
 

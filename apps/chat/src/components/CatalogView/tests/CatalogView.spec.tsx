@@ -695,6 +695,7 @@ describe('CatalogView', () => {
         mcpAppSandboxUrl: null,
         mcpAppTheme: null,
         mcpAppUserAgent: null,
+        mcpAppHostName: null,
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],
@@ -708,6 +709,7 @@ describe('CatalogView', () => {
         customVisualizers: [],
         applicationVisualizers: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
+        maxAttachmentFileSizeBytes: 536_870_912,
       },
     });
   });

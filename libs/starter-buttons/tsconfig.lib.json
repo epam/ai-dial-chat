@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "../../dist/libs/starter-buttons",
-    "tsBuildInfoFile": "../../dist/libs/starter-buttons/tsconfig.lib.tsbuildinfo",
+    "outDir": "out-tsc/lib",
+    "tsBuildInfoFile": "out-tsc/lib/tsconfig.lib.tsbuildinfo",
 
     "jsx": "react-jsx",
 

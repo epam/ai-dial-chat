@@ -9,8 +9,11 @@ import {
   useAttachmentValidation,
 } from '../useAttachmentValidation';
 
-const makeAttachment = (contentType: string): Attachment =>
-  ({ contentType, name: 'file', file: new File([], 'file') }) as Attachment;
+const makeAttachment = (contentType: string, sizeBytes = 0): Attachment => {
+  const file = new File([], 'file');
+  Object.defineProperty(file, 'size', { value: sizeBytes });
+  return { contentType, name: 'file', file } as Attachment;
+};
 
 describe('useAttachmentValidation', () => {
   beforeEach(() => {
@@ -196,5 +199,107 @@ describe('useAttachmentValidation', () => {
         allowedMimeTypes: ['audio/mpeg'],
       }),
     );
+  });
+
+  describe('file size', () => {
+    it('rejects a file exceeding maxFileSizeBytes and reports it after the debounce window', () => {
+      const onValidationError = vi.fn();
+      const { result } = renderHook(() =>
+        useAttachmentValidation({
+          allowedMimeTypes: ['image/png'],
+          maxFileSizeBytes: 1000,
+          onValidationError,
+        }),
+      );
+
+      const reason = result.current.validateAttachment(
+        makeAttachment('image/png', 1001),
+      );
+      expect(reason).toBe(AttachmentErrorReason.FileTooLarge);
+      expect(onValidationError).not.toHaveBeenCalled();
+
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(onValidationError).toHaveBeenCalledOnce();
+      expect(onValidationError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reason: AttachmentValidationErrorReason.FileTooLarge,
+          maxFileSizeBytes: 1000,
+        }),
+      );
+    });
+
+    it('allows a file at exactly maxFileSizeBytes', () => {
+      const { result } = renderHook(() =>
+        useAttachmentValidation({
+          allowedMimeTypes: ['image/png'],
+          maxFileSizeBytes: 1000,
+        }),
+      );
+
+      expect(
+        result.current.validateAttachment(makeAttachment('image/png', 1000)),
+      ).toBe(undefined);
+    });
+
+    it('does not restrict size when maxFileSizeBytes is omitted', () => {
+      const { result } = renderHook(() =>
+        useAttachmentValidation({ allowedMimeTypes: ['image/png'] }),
+      );
+
+      expect(
+        result.current.validateAttachment(
+          makeAttachment('image/png', 10_000_000_000),
+        ),
+      ).toBe(undefined);
+    });
+
+    it('reports only UnsupportedType for a file that is both an unsupported type and oversized', () => {
+      const onValidationError = vi.fn();
+      const { result } = renderHook(() =>
+        useAttachmentValidation({
+          allowedMimeTypes: ['image/png'],
+          maxFileSizeBytes: 1000,
+          onValidationError,
+        }),
+      );
+
+      const reason = result.current.validateAttachment(
+        makeAttachment('application/pdf', 2000),
+      );
+      expect(reason).toBe(AttachmentErrorReason.UnsupportedType);
+
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(onValidationError).toHaveBeenCalledOnce();
+      expect(onValidationError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reason: AttachmentValidationErrorReason.UnsupportedType,
+        }),
+      );
+    });
+
+    it('clears the pending size-rejection timer on unmount so no callback fires afterward', () => {
+      const onValidationError = vi.fn();
+      const { result, unmount } = renderHook(() =>
+        useAttachmentValidation({
+          allowedMimeTypes: ['image/png'],
+          maxFileSizeBytes: 1000,
+          onValidationError,
+        }),
+      );
+
+      result.current.validateAttachment(makeAttachment('image/png', 1001));
+      unmount();
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+
+      expect(onValidationError).not.toHaveBeenCalled();
+    });
   });
 });

@@ -32,6 +32,22 @@ describe('AttachmentCard — corner actions in the error state', () => {
     expect(screen.getAllByLabelText('Retry upload')).toHaveLength(1);
   });
 
+  it('hides retry for a file-too-large error, keeping remove', () => {
+    render(
+      <AttachmentCard
+        attachment={{
+          ...failedAttachment,
+          errorReason: AttachmentErrorReason.FileTooLarge,
+        }}
+        onRetry={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByLabelText('Retry upload')).toBeNull();
+    expect(screen.getByLabelText('Remove attachment')).toBeTruthy();
+  });
+
   it('uses the host-supplied labels for both actions', () => {
     render(
       <AttachmentCard
