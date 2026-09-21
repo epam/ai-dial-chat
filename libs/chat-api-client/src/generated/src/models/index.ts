@@ -5259,6 +5259,12 @@ export interface PublishCatalogEntityDto {
    * @memberof PublishCatalogEntityDto
    */
   rules?: Array<PublishRuleDto>;
+  /**
+   * Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.
+   * @type {boolean}
+   * @memberof PublishCatalogEntityDto
+   */
+  publishCredentials?: boolean;
 }
 /**
  *
@@ -5358,6 +5364,12 @@ export interface PublishHistoryEntryDto {
    * @memberof PublishHistoryEntryDto
    */
   publishedBy: string;
+  /**
+   * Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.
+   * @type {boolean}
+   * @memberof PublishHistoryEntryDto
+   */
+  publishCredentials: boolean;
 }
 
 /**

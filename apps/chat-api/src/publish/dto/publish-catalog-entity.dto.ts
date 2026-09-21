@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsOptional,
   IsString,
   Matches,
@@ -70,4 +71,13 @@ export class PublishCatalogEntityDto {
   @ValidateNested({ each: true })
   @Type(() => PublishRuleDto)
   rules?: PublishRuleDto[];
+
+  @ApiPropertyOptional({
+    description:
+      "Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.",
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  publishCredentials?: boolean;
 }

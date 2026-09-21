@@ -72,6 +72,46 @@ arrives through `usePublishFlow`'s `defaultAuthor`.
 Override its copy through `labels.authorLabel`, `labels.authorPlaceholder`, and
 `labels.authorHint`.
 
+#### Credentials opt-in
+
+Supply `onPublishCredentialsChange` to render an opt-in checkbox below the
+author field, asking whether the publication should carry the publisher's own
+credentials for the resource. Supplying the handler is what renders the
+control at all — omit it and the panel is exactly what it was before, which is
+what the conversation publish flow does. The value is controlled: pass
+`usePublishFlow`'s `publishCredentials`/`setPublishCredentials` straight
+through. The checkbox is disabled while `isSubmitting` is `true`.
+
+```tsx
+<PublishPanel
+  resource={{ title: item.name, version: item.version }}
+  history={history}
+  folderItems={folderItems}
+  onSelectedFolderPathChange={setSelectedFolderPath}
+  onCreateFolder={handleCreateFolder}
+  hasExistingPublicationInFolder={false}
+  hasWriteAccess
+  isSubmitting={false}
+  author={author}
+  onAuthorChange={setAuthor}
+  rules={rules}
+  onRulesChange={setRules}
+  ruleSourceOptions={['title', 'roles', 'dial_roles']}
+  publishCredentials={publishCredentials}
+  onPublishCredentialsChange={setPublishCredentials}
+  labels={{
+    credentialsLabel: t('catalog.publish.credentialsLabel'),
+    credentialsHint: t('catalog.publish.credentialsHint'),
+  }}
+/>
+```
+
+The library knows nothing about what the flag means to any backend: deciding
+whether to offer the control, and all of its copy, belong to the host.
+`labels.credentialsHint` is rendered as the checkbox's accessible description
+by the kit, so it must state what ticking the box does rather than restate the
+label.
+
 Add `type` (and optionally `iconUrl`) to `resource` to get the richer entity
 summary row — icon, type label, name, and a current-version tag — rendered by
 `ResourceSummary` from `@epam/ai-dial-chat-shared`. `libs/catalog`'s
@@ -180,6 +220,20 @@ import { PublishHistoryList } from '@epam/ai-dial-publish-panel';
 <PublishHistoryList entries={folderHistory} currentVersion={currentVersion} />;
 ```
 
+An entry whose `publishCredentials` is `true` is marked with a text label,
+overridable through `sharedCredentialsLabel` (default
+`'Shared credentials'`). The marker reports what that publication
+_requested_ — the library never claims the credential was applied, and never
+displays or accepts a credential value.
+
+```tsx
+<PublishHistoryList
+  entries={folderHistory}
+  currentVersion={currentVersion}
+  sharedCredentialsLabel={t('catalog.publish.historySharedCredentials')}
+/>
+```
+
 ## Hooks
 
 ### usePublishFlow
@@ -194,7 +248,7 @@ const publishFlow = usePublishFlow({
   history,
   folderItems,
   defaultAuthor: currentUserDisplayName,
-  onPublish: async (item, folderPath, rules, author) => {
+  onPublish: async (item, folderPath, rules, author, publishCredentials) => {
     /* ... */
   },
   onPublishSuccess: (item, folderPath) => {
@@ -213,6 +267,14 @@ while the user has not edited the field, a later `defaultAuthor` replaces the
 current value; once `setAuthor` has been called, it no longer does.
 `handleSubmit` forwards the trimmed `author` to `onPublish` as its fourth
 argument.
+
+The hook also owns `publishCredentials` (a `boolean`) and
+`setPublishCredentials`, forwarded to `onPublish` as its fifth argument. It
+starts `false`, `reset()` restores it to `false`, and it is never pre-filled
+from history or the selected folder — a folder whose previous publication
+carried shared credentials still opens with the option cleared. The argument
+is additive, so a host callback declaring only the first four parameters stays
+assignable and keeps behaving as it did.
 
 ## Utilities
 

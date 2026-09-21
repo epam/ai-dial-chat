@@ -63,6 +63,7 @@ export const mapPublishHistoryEntryDto = (
   version: dto.version,
   publishedAt: Date.parse(dto.publishedAt),
   folderPath: dto.folderPath.split('/').filter(Boolean),
+  publishCredentials: dto.publishCredentials,
 });
 
 /** Maps a conversation publish-history API response entry to the publish panel's `PublishHistoryEntry` model. */
