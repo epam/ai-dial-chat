@@ -41,12 +41,11 @@ import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
 import {
   calendarValueToDateValue,
   calendarValueToDayOfWeek,
-  calendarValueToRunAt,
   dateValueToCalendarValue,
   dayOfWeekToCalendarValue,
-  runAtToCalendarValue,
   TIME_OF_DAY_PATTERN,
 } from '../../utils/calendar-value';
+import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField/ScheduledTaskRunAtField';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
 const MarkdownEditor = lazy(async () => {
@@ -136,6 +135,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   const timeError = isTimeFieldShown
     ? (timeBlurError ?? errors.time)
     : undefined;
+
+  const handleRunAtChange = (value: string) => onFieldChange('runAt', value);
 
   const isCreateDisabled =
     isSubmitting ||
@@ -250,28 +251,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             />
 
             {values.repeat === ScheduledTaskRepeat.OneTime && (
-              <div className="flex flex-col gap-1">
-                <Calendar
-                  id="scheduled-task-run-at"
-                  mode={CalendarMode.DateTime}
-                  value={runAtToCalendarValue(values.runAt)}
-                  onChange={(value) =>
-                    onFieldChange('runAt', calendarValueToRunAt(value))
-                  }
-                  labelProps={{ label: labels.runAtLabel, required: true }}
-                  invalid={Boolean(errors.runAt)}
-                />
-                {errors.runAt && (
-                  <p
-                    className={mergeClasses(
-                      instructionsErrorClassName,
-                      styles.instructionsError,
-                    )}
-                  >
-                    {errors.runAt}
-                  </p>
-                )}
-              </div>
+              <ScheduledTaskRunAtField
+                label={labels.runAtLabel}
+                value={values.runAt ?? ''}
+                onChange={handleRunAtChange}
+                error={errors.runAt}
+                errorClassName={instructionsErrorClassName}
+              />
             )}
 
             {values.repeat !== ScheduledTaskRepeat.OneTime && (
