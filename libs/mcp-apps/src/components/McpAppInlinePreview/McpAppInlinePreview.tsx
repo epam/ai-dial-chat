@@ -151,7 +151,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                 />
                 <span className="dial-tiny-lead-semi-text">{appInfo.name}</span>
                 {appInfo.version && (
-                  <span className="dial-caption-text ml-2">
+                  <span className="dial-caption-text ms-2">
                     {appInfo.version}
                   </span>
                 )}

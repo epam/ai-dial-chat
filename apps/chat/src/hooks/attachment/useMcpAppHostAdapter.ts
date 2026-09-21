@@ -36,7 +36,7 @@ export const useMcpAppHostAdapter = (
     },
     {
       name: config.mcpAppHostName ?? DEFAULT_HOST_NAME,
-      version: config.appVersion,
+      version: config.appVersion ?? undefined,
     },
   );
 };
