@@ -6,8 +6,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { mcpAppsApiClient } from '../../server-api/mcp-apps';
 import { UserConfigStatus } from '../../types/user-config-status';
 
-/** This app's own identity, sent to every mounted MCP App as `hostInfo` during its `ui/initialize` handshake. */
-const HOST_NAME = 'ai-dial-chat';
+/** Fallback identity when `MCP_APP_HOST_NAME` is not configured, sent to every mounted MCP App as `hostInfo` during its `ui/initialize` handshake. */
+const DEFAULT_HOST_NAME = 'ai-dial-chat';
 
 /**
  * App-level adapter wiring `@epam/ai-dial-chat-hooks/mcp-apps`'s host-agnostic
@@ -34,6 +34,9 @@ export const useMcpAppHostAdapter = (
       locale: i18n.language,
       mcpAppUserAgent: config.mcpAppUserAgent ?? undefined,
     },
-    { name: HOST_NAME, version: config.appVersion },
+    {
+      name: config.mcpAppHostName ?? DEFAULT_HOST_NAME,
+      version: config.appVersion,
+    },
   );
 };

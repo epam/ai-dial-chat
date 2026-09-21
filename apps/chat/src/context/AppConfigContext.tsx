@@ -35,6 +35,7 @@ export interface AppConfigState {
     mcpAppSandboxUrl: string | null;
     mcpAppTheme: 'light' | 'dark' | null;
     mcpAppUserAgent: string | null;
+    mcpAppHostName: string | null;
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
@@ -64,6 +65,7 @@ const INITIAL_STATE: AppConfigState = {
     mcpAppSandboxUrl: null,
     mcpAppTheme: null,
     mcpAppUserAgent: null,
+    mcpAppHostName: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
@@ -109,6 +111,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             mcpAppSandboxUrl: response.config?.mcpAppSandboxUrl ?? null,
             mcpAppTheme: response.config?.mcpAppTheme ?? null,
             mcpAppUserAgent: response.config?.mcpAppUserAgent ?? null,
+            mcpAppHostName: response.config?.mcpAppHostName ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,

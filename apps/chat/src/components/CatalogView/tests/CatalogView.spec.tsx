@@ -695,6 +695,7 @@ describe('CatalogView', () => {
         mcpAppSandboxUrl: null,
         mcpAppTheme: null,
         mcpAppUserAgent: null,
+        mcpAppHostName: null,
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],

@@ -355,6 +355,10 @@ export interface AttachmentCanvasColors {
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
   jsonCollapsedBackground?: string;
+  /** Divider color between the file name and the MCP App name in the panel title. Defaults to `--text-secondary`. */
+  mcpAppDividerColor?: string;
+  /** MCP App version text color in the panel title. Defaults to `--text-secondary`. */
+  mcpAppVersionColor?: string;
 }
 
 /** Themeable typography overrides for the AttachmentCanvas plain-text content body. */
@@ -378,6 +382,8 @@ export interface AttachmentCanvasTypography {
   jsonClassName?: string;
   /** CSS utility class applied to the decorative XLSX `fx` label. Defaults to `'dial-italic-text'`. */
   xlsxFormulaLabelClassName?: string;
+  /** CSS utility class applied to the MCP App version text in the panel title. Defaults to `'dial-caption-text'`. */
+  mcpAppVersionClassName?: string;
 }
 
 /** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */

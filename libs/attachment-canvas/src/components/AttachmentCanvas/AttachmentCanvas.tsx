@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
 import {
   DIAL_ICON_SIZE,
@@ -15,12 +15,21 @@ import {
   IconMarkdown,
   IconRefresh,
 } from '@tabler/icons-react';
-import { type FC, memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type FC,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ATTACHMENT_CANVAS_CLASS } from '../../constants/public-class-names';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { isDownloadable } from '../../utils/download';
 import { AttachmentCanvasBody } from '../AttachmentCanvasBody/AttachmentCanvasBody';
+import styles from './AttachmentCanvas.module.scss';
 
 const COPY_RESET_MS = 2000;
 
@@ -150,22 +159,41 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   }, [content]);
 
   const { className, panelStyles, ...bodyStylesProp } = stylesProp ?? {};
+  const { colors, typography } = bodyStylesProp;
+
+  const panelTitleCssVars = useMemo(
+    () =>
+      buildCssVars({
+        '--ac-mcp-app-divider': colors?.mcpAppDividerColor,
+        '--ac-mcp-app-version': colors?.mcpAppVersionColor,
+      }),
+    [colors?.mcpAppDividerColor, colors?.mcpAppVersionColor],
+  );
 
   const panelTitle =
     content.type === AttachmentContentType.McpApp && mcpAppInfo != null ? (
-      <>
+      <span style={panelTitleCssVars}>
         <span>{fileName}</span>
         <span
           aria-hidden
-          className="border-current mx-1.5 inline-block h-3 w-0 border-s align-middle text-secondary"
+          className={mergeClasses(
+            'mx-1.5 inline-block h-3 w-0 border-s align-middle',
+            styles.mcpAppDivider,
+          )}
         />
         <span>{mcpAppInfo.name}</span>
         {mcpAppInfo.version && (
-          <span className="dial-caption-text ml-2 text-secondary">
+          <span
+            className={mergeClasses(
+              'ms-2',
+              typography?.mcpAppVersionClassName ?? 'dial-caption-text',
+              styles.mcpAppVersion,
+            )}
+          >
             {mcpAppInfo.version}
           </span>
         )}
-      </>
+      </span>
     ) : (
       fileName
     );

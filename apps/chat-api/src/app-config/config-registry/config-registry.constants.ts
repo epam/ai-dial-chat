@@ -98,6 +98,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'MCP_APP_USER_AGENT',
   },
   {
+    key: 'mcpApps.hostName',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — the client falls back to its own default identity.',
+    owner: 'chat-team',
+    envVar: 'MCP_APP_HOST_NAME',
+  },
+  {
     key: 'app.version',
     type: 'config',
     valueType: 'string',

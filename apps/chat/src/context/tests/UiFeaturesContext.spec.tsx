@@ -24,6 +24,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       mcpAppSandboxUrl: null,
       mcpAppTheme: null,
       mcpAppUserAgent: null,
+      mcpAppHostName: null,
       fileManagerTabs: [],
       overlayEnabled: false,
       overlayAllowedOrigins: [],
