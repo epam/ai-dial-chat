@@ -40,8 +40,27 @@ jobs:
     with:
       node-version: 24
       maximize-build-space: false
-      platforms: "linux/amd64,linux/arm64"
     secrets: inherit
+
+  # Repository-owned: run_tests delegates to epam/ai-dial-ci/.github/workflows/node_pr.yml@4.11.0,
+  # whose node_test.yml jobs are `npm run format` (prettier --write), `npm run lint`
+  # (nx lint --fix) and `npm run test` (Vitest, which strips types without checking
+  # them) — none of them typechecks. Scope: every project with a `typecheck` target
+  # (32 as of this job's introduction).
+  typecheck:
+    name: Workspace typecheck (all projects)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck all projects
+        run: npm exec nx run-many -- -t typecheck --all
 
   # Validates apps/mcp-app-sandbox/Dockerfile builds, mirroring node_pr.yml's own
   # docker_build job (build-only, no push) since that reusable workflow only builds

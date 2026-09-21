@@ -107,6 +107,16 @@ describe('AppConfigService', () => {
         'role',
         'dial_roles',
       ]);
+      expect(result.config.maxAttachmentFileSizeBytes).toBe(536_870_912);
+    });
+
+    it('surfaces an operator-configured maxAttachmentFileSizeBytes value', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'attachments.maxFileSizeBytes' ? 104_857_600 : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.maxAttachmentFileSizeBytes).toBe(104_857_600);
     });
 
     it('surfaces an operator-configured publicationFilterSources list verbatim', async () => {

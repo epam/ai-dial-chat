@@ -6710,6 +6710,11 @@
             "description": "Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to \"ai-dial-chat\" on the client.",
             "nullable": true
           },
+          "mcpAppHostName": {
+            "type": "string",
+            "description": "Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to \"ai-dial-chat\" on the client.",
+            "nullable": true
+          },
           "fileManagerTabs": {
             "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
             "example": ["my_files", "shared", "organization"],
@@ -6808,6 +6813,11 @@
             "items": {
               "type": "string"
             }
+          },
+          "maxAttachmentFileSizeBytes": {
+            "type": "number",
+            "description": "Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.",
+            "example": 536870912
           }
         },
         "required": [
@@ -6823,7 +6833,8 @@
           "customVisualizers",
           "applicationVisualizers",
           "customVariables",
-          "publicationFilterSources"
+          "publicationFilterSources",
+          "maxAttachmentFileSizeBytes"
         ]
       },
       "ClientConfigMetadataDto": {

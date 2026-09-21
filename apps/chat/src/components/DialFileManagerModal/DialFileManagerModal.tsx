@@ -348,6 +348,15 @@ const DialFileManagerModal: FC<Props> = ({
     });
   }, [allowedTypes, allowedTypesLabel, t]);
 
+  const oversizedUploadMessage = useMemo(() => {
+    if (maxSelectableFileSize == null || maxSelectableFileSize <= 0) {
+      return undefined;
+    }
+    return t(DialFileManagerI18nKeys.UploadFileTooLarge, {
+      maxSize: formatFileSize(maxSelectableFileSize),
+    });
+  }, [maxSelectableFileSize, t]);
+
   const allowedFileTypes = useMemo(
     () => mimeTypesToDialFileAcceptTypes(allowedTypes),
     [allowedTypes],
@@ -597,6 +606,7 @@ const DialFileManagerModal: FC<Props> = ({
       unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
       allowedFileTypes={allowedFileTypes}
       autoSelectUploadedItems={autoSelectUploadedItems}
+      oversizedUploadMessage={oversizedUploadMessage}
     />
   );
 };

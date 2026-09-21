@@ -901,6 +901,12 @@ export interface ClientConfigDto {
    */
   mcpAppUserAgent?: string | null;
   /**
+   * Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to "ai-dial-chat" on the client.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppHostName?: string | null;
+  /**
    * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
@@ -984,6 +990,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   publicationFilterSources: Array<string>;
+  /**
+   * Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  maxAttachmentFileSizeBytes: number;
 }
 
 /**

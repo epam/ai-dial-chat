@@ -36,8 +36,25 @@ Build the production Docker image from the repo root:
 docker build -f apps/mcp-app-sandbox/Dockerfile -t mcp-app-sandbox .
 ```
 
+Run the built image, mapping the port and setting the required allowed-origins
+env var:
+
+```bash
+docker run -p 3100:3100 \
+  -e MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS=https://chat.example.com \
+  mcp-app-sandbox
+```
+
 ## Local development
+
+### directly
 
 ```bash
 MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS=http://localhost:4207 npm exec nx serve mcp-app-sandbox
+```
+
+### docker image
+
+```bash
+    docker run -p 3100:3100 -e MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS=http://localhost:4207 mcp-app-sandbox
 ```
