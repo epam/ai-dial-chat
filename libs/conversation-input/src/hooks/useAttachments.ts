@@ -301,7 +301,10 @@ export const useAttachments = ({
         return { ...attachment, status: RequestStatus.Error, errorReason };
       }
 
-      if (attachment.errorReason === AttachmentErrorReason.UnsupportedType) {
+      if (
+        attachment.errorReason === AttachmentErrorReason.UnsupportedType ||
+        attachment.errorReason === AttachmentErrorReason.FileTooLarge
+      ) {
         changed = true;
         const restored: Attachment = {
           ...attachment,

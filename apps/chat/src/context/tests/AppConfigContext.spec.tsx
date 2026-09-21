@@ -524,4 +524,45 @@ describe('AppConfigContext', () => {
       ]);
     });
   });
+
+  describe('maxAttachmentFileSizeBytes', () => {
+    it('defaults to 512 MB before the config loads', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      expect(result.current.config.maxAttachmentFileSizeBytes).toBe(
+        536_870_912,
+      );
+    });
+
+    it('surfaces an operator-configured value from a successful API call', async () => {
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as { config: object }).config,
+          maxAttachmentFileSizeBytes: 104_857_600,
+        },
+      } as unknown as ClientConfigResponseDto);
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.maxAttachmentFileSizeBytes).toBe(
+        104_857_600,
+      );
+    });
+
+    it('remains at the default when the API call fails', async () => {
+      mockGetClientConfig.mockRejectedValue(new Error('network error'));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Error),
+      );
+
+      expect(result.current.config.maxAttachmentFileSizeBytes).toBe(
+        536_870_912,
+      );
+    });
+  });
 });

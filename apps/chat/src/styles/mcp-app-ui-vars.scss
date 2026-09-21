@@ -1,0 +1,100 @@
+/* Defaults for MCP UI host-context CSS variables — see design.md D18 in openspec/changes/mcp-apps-support. */
+:root {
+  /* Backgrounds */
+  --color-background-primary: var(--bg-layer-raised, #fcfcfc);
+  --color-background-secondary: var(--bg-layer-base, #f5f7fa);
+  --color-background-tertiary: var(--bg-layer-sunken, #eef1f7);
+  --color-background-inverse: var(--bg-control-inverted, #57647a);
+  --color-background-ghost: transparent;
+  --color-background-info: var(--bg-info, #e1eaf9);
+  --color-background-danger: var(--bg-error, #f3d6d8);
+  --color-background-success: var(--bg-success, #dbf1eb);
+  --color-background-warning: var(--bg-warning, #faf0cf);
+  --color-background-disabled: var(--bg-control-disable-primary, #dce0e8);
+
+  /* Text */
+  --color-text-primary: var(--text-primary, #161b2d);
+  --color-text-secondary: var(--text-secondary, #57647a);
+  --color-text-tertiary: var(--text-tertiary, #848e9c);
+  --color-text-inverse: var(--text-control-permanent, #fcfcfc);
+  --color-text-ghost: var(--text-tertiary, #848e9c);
+  --color-text-info: var(--text-info, #1d4ed8);
+  --color-text-danger: var(--text-error, #ae2f2f);
+  --color-text-success: var(--text-success, #007274);
+  --color-text-warning: var(--text-warning, #7f6300);
+  --color-text-disabled: var(--text-control-disable-primary, #848e9c);
+
+  /* Borders */
+  --color-border-primary: var(--stroke-primary, #57647a);
+  --color-border-secondary: var(--stroke-secondary, #d1dbea);
+  --color-border-tertiary: var(--stroke-tertiary, #e0e6f0);
+  --color-border-inverse: var(--stroke-primary, #57647a);
+  --color-border-ghost: transparent;
+  --color-border-info: var(--stroke-info, #1d4ed8);
+  --color-border-danger: var(--stroke-error, #ae2f2f);
+  --color-border-success: var(--stroke-success, #007274);
+  --color-border-warning: var(--stroke-warning, #eec840);
+  --color-border-disabled: var(--stroke-control-disable-primary, #848e9c);
+
+  /* Focus rings */
+  --color-ring-primary: var(--stroke-focus-black, var(--stroke-focus, #161b2d));
+  --color-ring-secondary: var(--stroke-accent-focus, #6785fb);
+  --color-ring-inverse: var(--stroke-focus-black, var(--stroke-focus, #161b2d));
+  --color-ring-info: var(--stroke-info, #1d4ed8);
+  --color-ring-danger: var(--stroke-error, #ae2f2f);
+  --color-ring-success: var(--stroke-success, #007274);
+  --color-ring-warning: var(--stroke-warning, #eec840);
+
+  /* Fonts — `--theme-font` is set in `styles.scss`; no mono token exists in this app */
+  --font-sans: var(--theme-font, 'Inter', sans-serif);
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Fira Code', monospace;
+
+  /* Font weights — no app-level weight tokens; standard CSS scale */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /*
+   * Font sizes/line-heights from the ui-kit's `dial-*-text` scale (D18).
+   */
+  --font-text-xs-size: 10px;
+  --font-text-sm-size: 14px;
+  --font-text-md-size: 16px;
+  --font-text-lg-size: 16px;
+  --font-heading-xs-size: 16px;
+  --font-heading-sm-size: 18px;
+  --font-heading-md-size: 20px;
+  --font-heading-lg-size: 22px;
+  --font-heading-xl-size: 28px;
+  --font-heading-2xl-size: 32px;
+  --font-heading-3xl-size: 32px;
+  --font-text-xs-line-height: 12px;
+  --font-text-sm-line-height: 20px;
+  --font-text-md-line-height: 24px;
+  --font-text-lg-line-height: 26px;
+  --font-heading-xs-line-height: 24px;
+  --font-heading-sm-line-height: 26px;
+  --font-heading-md-line-height: 28px;
+  --font-heading-lg-line-height: 32px;
+  --font-heading-xl-line-height: 40px;
+  --font-heading-2xl-line-height: 48px;
+  --font-heading-3xl-line-height: 48px;
+
+  /* Border radii — Tailwind's default `rounded-*` scale (D18). */
+  --border-radius-xs: 2px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+  --border-radius-full: 9999px;
+
+  /* Border width — matches `tailwind.config.js`'s `outlineWidth.DEFAULT` */
+  --border-width-regular: 1px;
+
+  /* Shadows — see design.md D18 for why colors are inlined here. */
+  --shadow-hairline: 0 1px 4px 0 #2764d933, 0 1px 2px 0 #161b2d08;
+  --shadow-sm: 0 8px 10px 0 #2764d914;
+  --shadow-md: 0 8px 24px 0 #2764d90f;
+  --shadow-lg: 0 8px 44px 0 #2764d914;
+}

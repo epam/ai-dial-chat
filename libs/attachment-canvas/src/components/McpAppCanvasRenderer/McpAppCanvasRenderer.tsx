@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { AppFrame } from '@mcp-ui/client';
+import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useMcpAppBridge } from '../../hooks/useMcpAppBridge/useMcpAppBridge';
@@ -13,6 +14,8 @@ export interface McpAppCanvasRendererProps {
   content: McpAppCanvasContent;
   /** Message shown when the app fails to initialize. Defaults to `'Failed to load app'`. */
   errorLabel?: string;
+  /** Called once the mounted app completes its `ui/initialize` handshake, with its declared name/version. Omitted when the app didn't declare an `appInfo`. */
+  onAppInfo?: (appInfo: Implementation) => void;
 }
 
 enum RendererStatus {
@@ -33,6 +36,7 @@ enum RendererStatus {
 export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   content,
   errorLabel = 'Failed to load app',
+  onAppInfo,
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
   const { html, sandboxUrl, toolInput, toolResult, hostContext } = content;
@@ -95,7 +99,8 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
     <div
       ref={containerRef}
       className={mergeClasses(
-        'relative h-full w-full',
+        /* `min-h-[200px]` is a Loading-overlay floor, not the intended size — see design.md D19. */
+        'relative h-full min-h-[200px] w-full',
         isFullscreen && styles.fullscreenFrame,
       )}
     >
@@ -107,7 +112,10 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
           toolInput={toolInput}
           toolResult={toolResult}
           onSizeChanged={() => setStatus(RendererStatus.Ready)}
-          onInitialized={() => setStatus(RendererStatus.Ready)}
+          onInitialized={(appInfo) => {
+            setStatus(RendererStatus.Ready);
+            if (appInfo.appVersion != null) onAppInfo?.(appInfo.appVersion);
+          }}
           onError={() => setStatus(RendererStatus.Error)}
         />
       )}

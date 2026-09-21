@@ -46,7 +46,24 @@ describe('RateService', () => {
 
       await service.rateMessage(validDto, ACCESS_TOKEN);
 
-      const expectedUrl = `${BASE_URL}/v1/${encodeURIComponent(validDto.modelId)}/rate`;
+      const expectedUrl = `${BASE_URL}/v1/${validDto.modelId}/rate`;
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expectedUrl,
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    it('keeps literal "/" path segments for a custom app deployment id instead of percent-encoding them', async () => {
+      fetchSpy.mockResolvedValue({ ok: true } as Response);
+      const service = makeService();
+      const appDto: RateMessageDto = {
+        ...validDto,
+        modelId: 'applications/bucket/My%20App__1.0',
+      };
+
+      await service.rateMessage(appDto, ACCESS_TOKEN);
+
+      const expectedUrl = `${BASE_URL}/v1/applications/bucket/My%20App__1.0/rate`;
       expect(fetchSpy).toHaveBeenCalledWith(
         expectedUrl,
         expect.objectContaining({ method: 'POST' }),

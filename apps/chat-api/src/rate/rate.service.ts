@@ -19,7 +19,20 @@ export class RateService {
     accessToken: string,
     jobTitle?: string,
   ): Promise<void> {
-    const url = `${this.dialClient.baseUrl}/v1/${encodeURIComponent(dto.modelId)}/rate`;
+    /*
+     * `dto.modelId` is the deployment id the conversation was created
+     * against — `conversation.model.id` — passed through unencoded, the same
+     * way the DIAL SDK builds every other `/v1/deployments/{deployment_name}`-
+     * style URL (see `sendChatCompletionRequestUrl` in
+     * `@epam/ai-dial-typescript-sdk`). A plain model id (e.g. "gpt-4o") has no
+     * characters that need encoding, but a custom app's deployment id is a
+     * multi-segment DIAL Core resource path (e.g.
+     * "applications/<bucket>/My%20App__1.0", already percent-encoded per
+     * segment by the frontend) whose literal "/" separators are meaningful
+     * path segments. Wrapping the whole string in `encodeURIComponent` would
+     * turn those into `%2F` and 404 against DIAL Core.
+     */
+    const url = `${this.dialClient.baseUrl}/v1/${dto.modelId}/rate`;
 
     this.logger.debug(
       `Rating message: responseId=${dto.responseId}, rate=${dto.rate}, modelId=${dto.modelId}`,

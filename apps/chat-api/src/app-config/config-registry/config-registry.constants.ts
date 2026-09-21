@@ -98,6 +98,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'MCP_APP_USER_AGENT',
   },
   {
+    key: 'mcpApps.hostName',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — the client falls back to its own default identity.',
+    owner: 'chat-team',
+    envVar: 'MCP_APP_HOST_NAME',
+  },
+  {
     key: 'app.version',
     type: 'config',
     valueType: 'string',
@@ -378,5 +390,17 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES (comma-separated); falls back to the legacy default when unset or empty.",
     owner: 'chat-team',
     envVar: 'PUBLICATION_FILTER_SOURCES',
+  },
+  {
+    key: 'attachments.maxFileSizeBytes',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'client',
+    defaultValue: 536_870_912,
+    critical: false,
+    description:
+      'Maximum attachment/upload file size in bytes, surfaced to the client so it can reject an oversized file before attempting to upload it. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that already bounds the POST /api/v1/files Multer limit — so the frontend pre-check and the backend enforcement can never diverge.',
+    owner: 'chat-team',
+    envVar: 'FILE_UPLOAD_MAX_BYTES',
   },
 ];

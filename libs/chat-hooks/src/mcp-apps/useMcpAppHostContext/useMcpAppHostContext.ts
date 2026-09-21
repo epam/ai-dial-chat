@@ -104,7 +104,7 @@ export interface McpAppHostContextParams {
   mcpAppTheme?: string;
   /** Host's current i18n locale (BCP 47). */
   locale: string;
-  /** Operator-configured MCP App user-agent override. Defaults to `'ai-dial-chat'`. */
+  /** Operator-configured MCP App user-agent override. Defaults to the browser's own `navigator.userAgent`. */
   mcpAppUserAgent?: string;
   /**
    * Display modes the host can switch an app between via
@@ -137,7 +137,7 @@ export const useMcpAppHostContext = (
       theme: (mcpAppTheme ?? theme) as 'light' | 'dark',
       locale,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      userAgent: mcpAppUserAgent ?? 'ai-dial-chat',
+      userAgent: mcpAppUserAgent ?? navigator.userAgent,
       platform: 'web',
       displayMode,
       availableDisplayModes: availableDisplayModes ?? ['inline', 'fullscreen'],

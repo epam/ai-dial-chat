@@ -830,35 +830,27 @@ const ConversationMessageItem: FC<Props> = ({
                     )}
                   />
                 ))}
-              {mcpAppMatch &&
-                onOpenApp &&
-                (isMcpAppOpenedInCanvas ? (
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
-                  >
-                    <span className="dial-body-text text-primary">
-                      {openedInCanvasLabel}
-                    </span>
-                  </div>
-                ) : (
-                  <McpAppInlinePreview
-                    match={mcpAppMatch}
-                    toolCall={mcpAppToolCallSeed}
-                    cache={mcpAppCache}
-                    cacheKey={mcpAppCanvasKey(index)}
-                    hostAdapter={mcpAppHostAdapter}
-                    onExpand={() =>
-                      onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
-                    }
-                    expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
-                    reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
-                    loadErrorLabel={t(
-                      AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
-                    )}
-                  />
-                ))}
+              {mcpAppMatch && onOpenApp && (
+                <McpAppInlinePreview
+                  match={mcpAppMatch}
+                  toolCall={mcpAppToolCallSeed}
+                  cache={mcpAppCache}
+                  cacheKey={mcpAppCanvasKey(index)}
+                  hostAdapter={mcpAppHostAdapter}
+                  onExpand={() =>
+                    onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
+                  }
+                  expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
+                  reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
+                  loadErrorLabel={t(
+                    AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
+                  )}
+                  isOpenedInCanvas={isMcpAppOpenedInCanvas}
+                  openedInCanvasLabel={
+                    openedInCanvasLabel ?? 'Opened in canvas'
+                  }
+                />
+              )}
               {msg.streamErrorMessage != null && (
                 <div className="w-full">
                   <ErrorMessageNotification

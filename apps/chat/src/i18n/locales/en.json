@@ -633,6 +633,10 @@
     "networkError": {
       "title": "Network unavailable",
       "message": "Some files were not uploaded because your internet connection was lost.\n Please try again:\n"
+    },
+    "fileTooLarge": {
+      "title": "File too large",
+      "message": "Max file size is {{maxSize}}. Please upload a smaller file."
     }
   },
   "chatSettings": {
@@ -845,6 +849,7 @@
     "noPermissionToCreate": "You don't have permission to create items in this folder",
     "maxSizeSupportedTypes": "Maximum size: {{maxSize}}. Supported types: {{allowedExtensions}}",
     "maxSizeOnly": "Maximum size: {{maxSize}}",
+    "uploadFileTooLarge": "Max file size is {{maxSize}}.",
     "allTypes": "all",
     "upToFiles_one": "Up to {{count}} file",
     "upToFiles_other": "Up to {{count}} files",
@@ -966,7 +971,6 @@
     "visualizerActionsAriaLabel": "Visualizer actions",
     "visualizerLoadingLabel": "Loading visualizer",
     "visualizerLoadErrorLabel": "Failed to load visualizer",
-    "mcpAppTitle": "MCP App",
     "mcpAppLoadErrorLabel": "Failed to load MCP App",
     "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App",
     "pdfThumbnailsLabel": "Thumbnails",

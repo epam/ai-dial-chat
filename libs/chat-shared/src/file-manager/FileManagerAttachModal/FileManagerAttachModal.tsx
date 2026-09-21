@@ -103,6 +103,8 @@ export interface FileManagerAttachModalProps {
   allowedFileTypes?: DialFileAcceptType[];
   /** Whether to auto-select items immediately after upload. Defaults to `false`. */
   autoSelectUploadedItems?: boolean;
+  /** Pre-translated message shown by the ui-kit when a newly-selected file exceeds `maxSelectableFileSize`. Omit to leave upload-size validation unrestricted regardless of `maxSelectableFileSize`. */
+  oversizedUploadMessage?: string;
 }
 
 /** File-manager modal with Popup chrome and an Attach footer. Selection and tab state are controlled by the host. */
@@ -133,6 +135,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
     unsupportedFileTypeTooltip,
     allowedFileTypes,
     autoSelectUploadedItems = false,
+    oversizedUploadMessage,
   }) => {
     const { items, isLoading, searchResults } = controller;
 
@@ -317,6 +320,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
             isRowSelectable={isRowSelectable}
             getDisabledTooltip={getDisabledTooltip}
             unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
+            oversizedUploadMessage={oversizedUploadMessage}
           />
         </div>
       </Popup>
