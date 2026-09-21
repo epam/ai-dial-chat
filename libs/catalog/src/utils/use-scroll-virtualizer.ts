@@ -76,10 +76,17 @@ export const useScrollVirtualizer = (
     const scrollEl = getScrollParent(container.parentElement);
 
     const update = () => {
+      const containerWidth = container.clientWidth;
+      const viewportHeight = scrollEl.clientHeight;
+      /*
+       * Catalog keeps both views mounted. A hidden grid has zero width;
+       * preserve its rows and columns so revealing it does not rebuild
+       * every card from a temporary single-column layout.
+       */
+      if (containerWidth === 0 || viewportHeight === 0) return;
+
       const containerRect = container.getBoundingClientRect();
       const scrollElRect = scrollEl.getBoundingClientRect();
-      const viewportHeight = scrollEl.clientHeight;
-      const containerWidth = container.clientWidth;
 
       const cols = getColumnCount(containerWidth);
       const rows = Math.ceil(itemCount / cols);
@@ -95,12 +102,19 @@ export const useScrollVirtualizer = (
         startRow + Math.ceil(viewportHeight / CARD_ROW_HEIGHT) + 2 * overscan,
       );
 
-      setState({ startRow, endRow, columnCount: cols });
+      setState((previous) =>
+        previous.startRow === startRow &&
+        previous.endRow === endRow &&
+        previous.columnCount === cols
+          ? previous
+          : { startRow, endRow, columnCount: cols },
+      );
     };
 
     scrollEl.addEventListener('scroll', update, { passive: true });
     const ro = new ResizeObserver(update);
     ro.observe(container);
+    ro.observe(scrollEl);
     update();
 
     return () => {

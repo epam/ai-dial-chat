@@ -2,7 +2,15 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogSortKey } from '../../../types/sort';
@@ -118,6 +126,9 @@ vi.mock('../../Toolbar/Toolbar', () => ({
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
       <button onClick={() => onViewModeChange?.(CatalogViewMode.Cards)}>
         List view
+      </button>
+      <button onClick={() => onViewModeChange?.(CatalogViewMode.Grid)}>
+        Grid view
       </button>
       {sortOptions.map((option) => (
         <button key={option.value} onClick={() => onSortChange?.(option.value)}>
@@ -273,6 +284,22 @@ const makeItem = (
 });
 
 describe('Catalog', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'requestIdleCallback',
+      vi.fn(() => 1),
+    );
+    vi.stubGlobal('cancelIdleCallback', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('renders page title', () => {
     render(<Catalog items={[]} favorites={[]} />);
     expect(screen.getByText('Catalog')).toBeTruthy();
@@ -329,6 +356,123 @@ describe('Catalog', () => {
       />,
     );
     expect(screen.queryByLabelText('catalog list')).toBeNull();
+  });
+
+  it('prepares the hidden table during idle time and reuses it on the first list click', async () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+
+    const prepareList = vi.mocked(window.requestIdleCallback).mock.calls[0][0];
+    act(() => {
+      prepareList({ didTimeout: false, timeRemaining: () => 50 });
+    });
+    const list = screen.getByLabelText('catalog list');
+    /* The mock grid has no view wrapper of its own; assert that preparation
+       cannot expose its controls before the user selects the list. */
+    // eslint-disable-next-line testing-library/no-node-access
+    const preparedWrapper = list.closest('[inert]');
+    expect(preparedWrapper?.className).toContain('invisible');
+    expect(preparedWrapper?.className).toContain('h-0');
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.getByLabelText('catalog list')).toBe(list);
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(list.closest('[inert]')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Grid view' }));
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(list.closest('[inert]')?.className).toContain('hidden');
+  });
+
+  it('opens the table without waiting when the first click precedes idle preparation', async () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+    expect(window.cancelIdleCallback).toHaveBeenCalledWith(1);
+    expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not prepare an empty, loading, or already visible table', () => {
+    const { rerender } = render(<Catalog items={[]} favorites={[]} />);
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+
+    rerender(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} isLoading />,
+    );
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+
+    rerender(
+      <Catalog
+        key="list"
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        initialViewMode={CatalogViewMode.Cards}
+      />,
+    );
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+  });
+
+  it('cancels pending preparation on unmount', () => {
+    const { unmount } = render(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
+    );
+    unmount();
+    expect(window.cancelIdleCallback).toHaveBeenCalledWith(1);
+  });
+
+  it('cancels and reschedules preparation as data becomes unavailable and returns', () => {
+    const items = [makeItem('1', 'Claude')];
+    const { rerender } = render(<Catalog items={items} favorites={[]} />);
+    rerender(<Catalog items={items} favorites={[]} isLoading />);
+    expect(window.cancelIdleCallback).toHaveBeenCalledTimes(1);
+
+    rerender(<Catalog items={items} favorites={[]} />);
+    expect(window.requestIdleCallback).toHaveBeenCalledTimes(2);
+
+    rerender(<Catalog items={[]} favorites={[]} />);
+    expect(window.cancelIdleCallback).toHaveBeenCalledTimes(2);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+  });
+
+  it('prepares the table after a delay when idle callbacks are unavailable', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('requestIdleCallback', undefined);
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+  });
+
+  it('cancels the fallback timer when the catalog unmounts', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('requestIdleCallback', undefined);
+    const clearTimeout = vi.spyOn(window, 'clearTimeout');
+    const { unmount } = render(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
+    );
+    unmount();
+    expect(clearTimeout).toHaveBeenCalledTimes(1);
+    clearTimeout.mockRestore();
+  });
+
+  it('keeps the prepared table collapsed if the results become empty', () => {
+    const { rerender } = render(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
+    );
+    const prepareList = vi.mocked(window.requestIdleCallback).mock.calls[0][0];
+    act(() => {
+      prepareList({ didTimeout: false, timeRemaining: () => 50 });
+    });
+    rerender(<Catalog items={[]} favorites={[]} />);
+    // eslint-disable-next-line testing-library/no-node-access
+    const wrapper = screen.getByLabelText('catalog list').closest('[inert]');
+    expect(wrapper?.className).toContain('h-0');
+    expect(wrapper?.className).not.toContain('h-full');
   });
 
   it('caps the browse content column by default', () => {
