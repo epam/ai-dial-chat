@@ -40,7 +40,6 @@ jobs:
     with:
       node-version: 24
       maximize-build-space: false
-      platforms: "linux/amd64,linux/arm64"
     secrets: inherit
 
   # Repository-owned: run_tests delegates to epam/ai-dial-ci/.github/workflows/node_pr.yml@4.11.0,
