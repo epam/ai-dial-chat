@@ -244,4 +244,27 @@ describe('ExternalServicesController (integration)', () => {
       expect(res.body).toEqual({ success: true });
     });
   });
+
+  it.each([
+    ['signin', 'UNKNOWN'],
+    ['signout', 'UNKNOWN'],
+    ['signin', 'DIAL_NATIVE'],
+    ['signout', 'DIAL_NATIVE'],
+  ])(
+    'rejects unsupported %s auth type %s',
+    async (action, authenticationType) => {
+      app = await buildApp(service);
+
+      const res = await request(app.getHttpServer())
+        .post(`/api/v1/external-services/${APP_ID}/dial-native/${action}`)
+        .send({
+          credentialsLevel: ExternalServiceCredentialsLevel.User,
+          authenticationType,
+        });
+
+      expect(res.status).toBe(400);
+      expect(service.signIn).not.toHaveBeenCalled();
+      expect(service.signOut).not.toHaveBeenCalled();
+    },
+  );
 });

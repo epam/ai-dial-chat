@@ -1,10 +1,14 @@
+## Purpose
+
+Provide authenticated, uncached offline-credentials status and OAuth sign-in for proactive Scheduled Tasks login and reactive DIAL-native chat interrupts.
+
 ## ADDED Requirements
 
 ### Requirement: Offline-credentials status endpoint
 The system SHALL expose `GET /api/v1/offline-credentials`, proxying DIAL
 Core's `GET /v1/user/offline-credentials` via `DialClientService` using the
 session user's bearer access token, and SHALL require a valid session and
-the `scheduledTasksEnabled` feature flag before returning a response.
+at least one of `scheduledTasksEnabled` or `liveChatInteraction` before returning a response. Both flags SHALL be evaluated for the same caller and roles. No new flag is introduced.
 
 #### Scenario: Authenticated user with available, unconnected credentials
 - **WHEN** a session-authenticated user with `scheduledTasksEnabled` calls
@@ -29,8 +33,7 @@ the `scheduledTasksEnabled` feature flag before returning a response.
 - **THEN** the endpoint returns `401` before invoking DIAL Core
 
 #### Scenario: Feature disabled
-- **WHEN** the caller's session does not have the `scheduledTasksEnabled`
-  feature flag enabled
+- **WHEN** neither `scheduledTasksEnabled` nor `liveChatInteraction` is enabled for the caller
 - **THEN** the endpoint returns `403`
 
 #### Scenario: Upstream error
@@ -45,11 +48,15 @@ the `scheduledTasksEnabled` feature flag before returning a response.
 - **WHEN** any client or intermediary receives a response from this endpoint
 - **THEN** the response includes `Cache-Control: private, no-store`
 
+#### Scenario: Live chat enabled without Scheduled Tasks
+- **WHEN** `liveChatInteraction` is enabled and `scheduledTasksEnabled` is disabled for an authenticated caller
+- **THEN** the status endpoint permits the request and returns Core's mapped status
+
 ### Requirement: Offline-credentials sign-in endpoint
 The system SHALL expose `POST /api/v1/offline-credentials/signin`, proxying
 DIAL Core's `POST /v1/user/offline-credentials/signin` via
 `DialClientService`, accepting `{ code, redirectUri }`, and SHALL validate
-`redirectUri` against an app-owned allowlist before forwarding it upstream.
+`redirectUri` against an app-owned allowlist before forwarding it upstream. The endpoint SHALL require a valid session, the standard CSRF checks, and at least one of `scheduledTasksEnabled` or `liveChatInteraction`.
 
 #### Scenario: Successful sign-in
 - **WHEN** a session-authenticated, feature-enabled user submits a valid
@@ -77,8 +84,7 @@ DIAL Core's `POST /v1/user/offline-credentials/signin` via
 - **THEN** the endpoint returns `401`
 
 #### Scenario: Feature disabled
-- **WHEN** the caller's session does not have the `scheduledTasksEnabled`
-  feature flag enabled
+- **WHEN** neither `scheduledTasksEnabled` nor `liveChatInteraction` is enabled for the caller
 - **THEN** the endpoint returns `403`
 
 #### Scenario: Upstream error
@@ -88,6 +94,18 @@ DIAL Core's `POST /v1/user/offline-credentials/signin` via
 #### Scenario: Upstream unreachable
 - **WHEN** DIAL Core is unreachable or times out
 - **THEN** the endpoint returns `503`
+
+#### Scenario: Live chat OAuth exchange without Scheduled Tasks
+- **WHEN** `liveChatInteraction` is enabled, `scheduledTasksEnabled` is disabled, and the authenticated caller submits a valid code, allowlisted redirect URI, and required CSRF header
+- **THEN** the endpoint permits the exchange and returns `200 { "success": true }` when Core confirms success
+
+### Requirement: Offline-credentials generated client
+
+The application SHALL use the normal generated `OfflineCredentialsApi.getOfflineCredentials` and `OfflineCredentialsApi.signInOfflineCredentials` methods through `apps/chat/src/server-api/offline-credentials.ts`. The contract SHALL use `GetOfflineCredentialsResponseDto`, `OfflineCredentialsSigninBodyDto`, and `OfflineCredentialsAuthResultDto`; transport configuration and auth SHALL remain at the application edge.
+
+#### Scenario: OAuth request uses the generated contract
+- **WHEN** the callback submits `{ "code": "authorization-code", "redirectUri": "https://chat.example.com/auth/toolset-signin" }`
+- **THEN** the app adapter calls the generated `signInOfflineCredentials` operation and receives `{ "success": true }` on HTTP 200
 
 ### Requirement: Offline-credentials logging discipline
 The system SHALL log offline-credentials operations at `debug`/`warn`/`error`

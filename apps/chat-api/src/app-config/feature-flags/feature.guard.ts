@@ -20,10 +20,9 @@ export class FeatureGuard implements CanActivate {
   ) {}
 
   async canActivate(executionContext: ExecutionContext): Promise<boolean> {
-    const featureKey = this.reflector.get<FeatureKey | undefined>(
-      FEATURE_KEY_METADATA,
-      executionContext.getHandler(),
-    );
+    const featureKey = this.reflector.get<
+      FeatureKey | FeatureKey[] | undefined
+    >(FEATURE_KEY_METADATA, executionContext.getHandler());
 
     if (!featureKey) {
       return true;
@@ -36,16 +35,15 @@ export class FeatureGuard implements CanActivate {
       userId: sessionUser?.sub,
       roles: extractRoles(sessionUser?.claims),
     };
-    const isEnabled = await this.featureFlagsService.isEnabled(
-      featureKey,
-      context,
-    );
-
-    if (!isEnabled) {
-      throw new ForbiddenException(`Feature "${featureKey}" is not enabled`);
+    const featureKeys = Array.isArray(featureKey) ? featureKey : [featureKey];
+    for (const key of featureKeys) {
+      if (await this.featureFlagsService.isEnabled(key, context)) {
+        return true;
+      }
     }
-
-    return true;
+    throw new ForbiddenException(
+      `Feature "${featureKeys.join('" or "')}" is not enabled`,
+    );
   }
 }
 
