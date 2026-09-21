@@ -347,7 +347,7 @@ does not exist. Do not reconcile the two families as one population.
 | ------------------------------ | ------------------------------ | ----------------------------------------- | --------------------------------------------------------------------- |
 | `dial.chat.process.memory`     | `dial_chat_process_memory`     | ObservableGauge / bytes (`B`)             | `kind`: `rss`, `heap_used`, `heap_total`, `external`, `array_buffers` |
 | `dial.chat.sse.active`         | `dial_chat_sse_active`         | ObservableGauge / count, no declared unit | `kind`: `client_channel`, `conversation_watch`, `generation_attach`   |
-| `dial.chat.generations.active` | `dial_chat_generations_active` | ObservableGauge / count, no declared unit | None                                                                  |
+| `dial.chat.generations.active` | `dial_chat_generations_active` | ObservableGauge / count, no declared unit | `state`: `active`, `cancel_requested`, `finalizing`, `settling`       |
 
 One `process.memoryUsage()` call supplies all five memory values per collection in the Node
 process serving Nest requests. `heap_used` and `heap_total` describe used and allocated JavaScript
@@ -363,12 +363,28 @@ subscription until cleanup, including time after its handler returns. These are 
 operations, not a direct count of browser connections. Normal completion-response delivery is
 not part of this gauge.
 
-The generation gauge counts entries physically retained in the generation registry, including
-stopped or aborted entries awaiting persistence. Completion, error, stale eviction, replacement,
-and shutdown release removed entries. Shutdown also emits a stopped terminal event to permit
-attachment cleanup. Tasks that outlive removal of their registry entry are outside this count.
-The gauges retain only counts, without per-user or per-conversation labels. See
+The generation gauge counts entries physically retained in the generation registry, broken down
+by the bounded `state` attribute, including entries that are cancelling, finalizing, or retained
+pending an unsettled persistence write. Completion, error, and shutdown release an entry (the
+`released` lifecycle value is never reported, since a released entry contributes nothing). Stale
+expiry and a max-duration timeout only _request cancellation_ — they no longer remove an entry;
+the owning worker still performs its own single terminal save and releases the entry itself.
+Shutdown also emits a stopped terminal event to permit attachment cleanup. Tasks that outlive
+removal of their registry entry are outside this count. The gauges retain only counts, without
+per-user or per-conversation labels. See
 [runtime instruments](../apps/chat-api/src/telemetry/runtime-metrics.ts).
+
+**`state="settling"` — read this as retention, not as persistence.** An entry reports
+`state="settling"` when its terminal write was dispatched but did not settle within
+`GENERATION_FINALIZE_TIMEOUT_MS`: its attach subscribers, timer and runtime tracking have already
+been released, but it **still owns its registry key** — a later request for the same principal
+and conversation path keeps getting `409` — because releasing the key would readmit the
+stale-overwrite this design exists to prevent. **A falling gauge value, including a `settling`
+entry eventually disappearing, is never evidence that the underlying conversation was durably
+persisted.** The only way to confirm persistence is to read the conversation back from storage.
+See `openspec/specs/generation-registry/spec.md` and
+`openspec/specs/backend-owned-generation-persistence/spec.md` for the full guarantee, and
+"Operational validation" below for how to check a retained backlog in practice.
 
 ### Completion-response termination
 
@@ -522,3 +538,34 @@ contracts when adding availability panels.
    range, then inspect exported spans and correlated logs. Treat missing backend data, sampling,
    and absent searchable attributes as collection limits rather than evidence that an operation
    did not occur.
+
+## Operational validation of the generation registry's cleanup bounds
+
+When checking that the eviction/finalization fix (`openspec/specs/generation-registry/spec.md`)
+behaves under load, run each of these separately rather than stacked, so one load type's effect
+on the gauge and on memory is not attributed to another:
+
+1. **Start load** — normal generations, watching `state="active"` rise and fall back to the
+   baseline as each one completes.
+2. **Stop load** — explicit user Stops, watching the brief `state="cancel_requested"` →
+   `state="finalizing"` transition before release.
+3. **Reconnect load** — attach/resume traffic, watching `dial.chat.sse.active{kind="generation_attach"}`
+   rather than the generations gauge, since attach subscribers are a separate count.
+4. **Expiry load** — generations left to run past the stale threshold with no further traffic from
+   that principal, then a later `register()` from any principal to trigger the sweep, watching
+   `state="cancel_requested"` appear without the entry disappearing until its own worker settles.
+
+For each run, record: retained generations by `state`, `dial.chat.sse.active{kind="generation_attach"}`,
+and process RSS / heap / external — without stacking them into one figure — then confirm the count
+returns to baseline and stays there through a quiet period once load stops. **A lower retained
+count, or a `state="settling"` entry eventually disappearing, is not proof of successful
+persistence** — confirming that requires reading the affected conversations back from storage and
+checking the assistant message each load type was expected to produce.
+
+## Rollback
+
+See `design.md`'s Migration Plan in `openspec/changes/fix-generation-eviction-lifecycle/` (or,
+once archived, the equivalent record for that change) for the drain procedure and its in-flight
+implications — in short: drain new completions rather than reverting under load, use
+`state="finalizing"`/`state="settling"` as the drain signal, and expect a pod restart to clear the
+registry with no way to assert an in-flight write's outcome afterward.

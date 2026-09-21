@@ -11,12 +11,32 @@ export enum SseSubscriptionKind {
   GenerationAttach = 'generation_attach',
 }
 
+/*
+ * Mirrors the four non-released values of
+ * `ConversationGenerationService`'s `GenerationLifecycleState` — declared
+ * locally rather than imported, so this infrastructure module does not
+ * depend back on the domain service that already depends on it. `released`
+ * is deliberately absent: a released entry contributes nothing to the gauge
+ * (`observability-telemetry`).
+ */
+export enum GenerationGaugeState {
+  Active = 'active',
+  CancelRequested = 'cancel_requested',
+  Finalizing = 'finalizing',
+  Settling = 'settling',
+}
+
 const activeSubscriptions: Record<SseSubscriptionKind, number> = {
   [SseSubscriptionKind.ClientChannel]: 0,
   [SseSubscriptionKind.ConversationWatch]: 0,
   [SseSubscriptionKind.GenerationAttach]: 0,
 };
-let activeGenerations = 0;
+const activeGenerationsByState: Record<GenerationGaugeState, number> = {
+  [GenerationGaugeState.Active]: 0,
+  [GenerationGaugeState.CancelRequested]: 0,
+  [GenerationGaugeState.Finalizing]: 0,
+  [GenerationGaugeState.Settling]: 0,
+};
 
 /*
  * Only fixed counters live here. An operation owns its completion callback, so
@@ -35,14 +55,32 @@ export const trackSseSubscription = (
   };
 };
 
-export const trackGeneration = (): (() => void) => {
-  activeGenerations += 1;
+export interface GenerationTracker {
+  /** Moves the entry's retained count from its current state to `state`. */
+  setState: (state: GenerationGaugeState) => void;
+  /** Releases the entry's retained count. Idempotent. */
+  finish: () => void;
+}
+
+export const trackGeneration = (
+  initialState: GenerationGaugeState = GenerationGaugeState.Active,
+): GenerationTracker => {
+  let currentState = initialState;
+  activeGenerationsByState[currentState] += 1;
   let finished = false;
 
-  return () => {
-    if (finished) return;
-    finished = true;
-    activeGenerations -= 1;
+  return {
+    setState: (state: GenerationGaugeState) => {
+      if (finished || state === currentState) return;
+      activeGenerationsByState[currentState] -= 1;
+      currentState = state;
+      activeGenerationsByState[currentState] += 1;
+    },
+    finish: () => {
+      if (finished) return;
+      finished = true;
+      activeGenerationsByState[currentState] -= 1;
+    },
   };
 };
 
@@ -60,7 +98,7 @@ export const initializeRuntimeMetrics = (
     'dial.chat.generations.active',
     {
       description:
-        'Conversation generations retained by the process until registry removal.',
+        'Conversation generations retained by the process until registry removal, broken down by lifecycle state. A falling value is not evidence of durable persistence — see docs/observability.md.',
     },
   );
   const observables = [memory, subscriptions, generations];
@@ -76,7 +114,9 @@ export const initializeRuntimeMetrics = (
     for (const kind of Object.values(SseSubscriptionKind)) {
       result.observe(subscriptions, activeSubscriptions[kind], { kind });
     }
-    result.observe(generations, activeGenerations);
+    for (const state of Object.values(GenerationGaugeState)) {
+      result.observe(generations, activeGenerationsByState[state], { state });
+    }
   };
 
   meter.addBatchObservableCallback(collect, observables);
