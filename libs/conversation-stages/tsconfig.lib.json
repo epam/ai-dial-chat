@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "../../dist/libs/conversation-stages",
+    "outDir": "out-tsc/lib",
 
     "jsx": "react-jsx",
 
