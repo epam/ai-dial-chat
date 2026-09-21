@@ -99,13 +99,8 @@ afterEach(() => {
 describe('attachToGeneration — per-subscriber backpressure', () => {
   it('detaches a slow subscriber once its buffered output exceeds the limit, while a well-behaved concurrent subscriber and the generation continue unaffected', async () => {
     const { controller, generationService } = makeController();
-    generationService.register(OWNER_KEY, PATH, GEN_ID);
-    generationService.seedAssembledMessage(
-      OWNER_KEY,
-      PATH,
-      GEN_ID,
-      makeMessage(''),
-    );
+    const lease = generationService.register(OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
 
     const slowRes = new FakeAttachResponse(false);
     const fastRes = new FakeAttachResponse(true);
@@ -127,9 +122,7 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
     const bigChunk = 'x'.repeat(100 * 1024);
     for (let i = 0; i < 12; i += 1) {
       generationService.applyChunk(
-        OWNER_KEY,
-        PATH,
-        GEN_ID,
+        lease,
         { choices: [{ delta: { content: bigChunk } }] },
         makeMessage(bigChunk),
       );
@@ -139,7 +132,7 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
     expect(slowRes.end).toHaveBeenCalledOnce();
     expect(fastRes.writableEnded).toBe(false);
 
-    generationService.complete(OWNER_KEY, PATH, GEN_ID);
+    generationService.complete(lease);
 
     expect(fastRes.writableEnded).toBe(true);
     expect(
@@ -168,13 +161,8 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
   it('destroys a detached subscriber that cannot flush, once the release bound elapses, without touching the generation or other subscribers', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout'] });
     const { controller, generationService } = makeController();
-    generationService.register(OWNER_KEY, PATH, GEN_ID);
-    generationService.seedAssembledMessage(
-      OWNER_KEY,
-      PATH,
-      GEN_ID,
-      makeMessage(''),
-    );
+    const lease = generationService.register(OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
 
     const stalledRes = new FakeAttachResponse(false, false);
     const fastRes = new FakeAttachResponse(true);
@@ -195,9 +183,7 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
     const bigChunk = 'x'.repeat(100 * 1024);
     for (let i = 0; i < 12; i += 1) {
       generationService.applyChunk(
-        OWNER_KEY,
-        PATH,
-        GEN_ID,
+        lease,
         { choices: [{ delta: { content: bigChunk } }] },
         makeMessage(bigChunk),
       );
@@ -212,7 +198,7 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
     expect(stalledRes.writableLength).toBe(0);
 
     // The generation and the well-behaved subscriber are unaffected.
-    generationService.complete(OWNER_KEY, PATH, GEN_ID);
+    generationService.complete(lease);
     expect(fastRes.destroy).not.toHaveBeenCalled();
     expect(
       fastRes.write.mock.calls.some(([chunk]) =>
@@ -223,13 +209,8 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
 
   it('does not re-end or re-destroy a subscriber whose cleanup already ran', async () => {
     const { controller, generationService } = makeController();
-    generationService.register(OWNER_KEY, PATH, GEN_ID);
-    generationService.seedAssembledMessage(
-      OWNER_KEY,
-      PATH,
-      GEN_ID,
-      makeMessage(''),
-    );
+    const lease = generationService.register(OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
 
     const slowRes = new FakeAttachResponse(false);
     const req = {
@@ -244,9 +225,7 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
     const bigChunk = 'x'.repeat(100 * 1024);
     for (let i = 0; i < 12; i += 1) {
       generationService.applyChunk(
-        OWNER_KEY,
-        PATH,
-        GEN_ID,
+        lease,
         { choices: [{ delta: { content: bigChunk } }] },
         makeMessage(bigChunk),
       );
@@ -257,7 +236,7 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
     // A late disconnect, then the generation's terminal event: both route
     // through the same `cleanup()`, which must stay a no-op after the first.
     slowRes.emit('close');
-    generationService.complete(OWNER_KEY, PATH, GEN_ID);
+    generationService.complete(lease);
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(slowRes.end).toHaveBeenCalledOnce();

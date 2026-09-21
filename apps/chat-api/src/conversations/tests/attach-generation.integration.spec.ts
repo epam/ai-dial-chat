@@ -98,8 +98,8 @@ describe('POST /conversations/completions/attach (integration)', () => {
   });
 
   it('returns 404 when the generation already finished before attach arrives', async () => {
-    generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
-    generationService.complete(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.complete(lease);
 
     await request(app.getHttpServer())
       .post('/conversations/completions/attach')
@@ -115,13 +115,8 @@ describe('POST /conversations/completions/attach (integration)', () => {
   });
 
   it('delivers a snapshot, then live chunks, then a terminal event, in order', async () => {
-    generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
-    generationService.seedAssembledMessage(
-      COOKIE_OWNER_KEY,
-      PATH,
-      GEN_ID,
-      makeMessage(''),
-    );
+    const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
 
     const reqPromise = request(app.getHttpServer())
       .post('/conversations/completions/attach')
@@ -129,13 +124,11 @@ describe('POST /conversations/completions/attach (integration)', () => {
 
     setTimeout(() => {
       generationService.applyChunk(
-        COOKIE_OWNER_KEY,
-        PATH,
-        GEN_ID,
+        lease,
         { choices: [{ delta: { content: 'Hi' } }] },
         makeMessage('Hi'),
       );
-      generationService.complete(COOKIE_OWNER_KEY, PATH, GEN_ID);
+      generationService.complete(lease);
     }, 20);
 
     const res = await reqPromise.expect(200);
@@ -151,13 +144,8 @@ describe('POST /conversations/completions/attach (integration)', () => {
   });
 
   it('emits a stopped terminal event when the generation was stopped by the user', async () => {
-    generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
-    generationService.seedAssembledMessage(
-      COOKIE_OWNER_KEY,
-      PATH,
-      GEN_ID,
-      makeMessage(''),
-    );
+    const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
 
     const reqPromise = request(app.getHttpServer())
       .post('/conversations/completions/attach')
@@ -165,7 +153,7 @@ describe('POST /conversations/completions/attach (integration)', () => {
 
     setTimeout(() => {
       generationService.abort(COOKIE_OWNER_KEY, PATH, GEN_ID);
-      generationService.error(COOKIE_OWNER_KEY, PATH, GEN_ID);
+      generationService.error(lease);
     }, 20);
 
     const res = await reqPromise.expect(200);
@@ -173,13 +161,8 @@ describe('POST /conversations/completions/attach (integration)', () => {
   });
 
   it('supports two concurrent subscribers on the same generation, each with their own snapshot', async () => {
-    generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
-    generationService.seedAssembledMessage(
-      COOKIE_OWNER_KEY,
-      PATH,
-      GEN_ID,
-      makeMessage(''),
-    );
+    const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
 
     const req1 = request(app.getHttpServer())
       .post('/conversations/completions/attach')
@@ -190,13 +173,11 @@ describe('POST /conversations/completions/attach (integration)', () => {
 
     setTimeout(() => {
       generationService.applyChunk(
-        COOKIE_OWNER_KEY,
-        PATH,
-        GEN_ID,
+        lease,
         { choices: [{ delta: { content: 'Hi' } }] },
         makeMessage('Hi'),
       );
-      generationService.complete(COOKIE_OWNER_KEY, PATH, GEN_ID);
+      generationService.complete(lease);
     }, 20);
 
     const [res1, res2] = await Promise.all([
@@ -262,13 +243,8 @@ describe('POST /conversations/completions/attach — header-authenticated caller
    * (`generation-principal-ownership`).
    */
   it('returns 404 and opens no stream for a non-owning principal', async () => {
-    generationService.register(HEADER_OWNER_KEY, PATH, GEN_ID);
-    generationService.seedAssembledMessage(
-      HEADER_OWNER_KEY,
-      PATH,
-      GEN_ID,
-      makeMessage('secret so far'),
-    );
+    const lease = generationService.register(HEADER_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage('secret so far'));
 
     /* Same sub, different provider — a different principal. */
     principal = {
@@ -287,13 +263,8 @@ describe('POST /conversations/completions/attach — header-authenticated caller
   });
 
   it('replays snapshot, live chunks and one terminal event for the bearer principal', async () => {
-    generationService.register(HEADER_OWNER_KEY, PATH, GEN_ID);
-    generationService.seedAssembledMessage(
-      HEADER_OWNER_KEY,
-      PATH,
-      GEN_ID,
-      makeMessage(''),
-    );
+    const lease = generationService.register(HEADER_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
 
     const reqPromise = request(app.getHttpServer())
       .post('/conversations/completions/attach')
@@ -301,13 +272,11 @@ describe('POST /conversations/completions/attach — header-authenticated caller
 
     setTimeout(() => {
       generationService.applyChunk(
-        HEADER_OWNER_KEY,
-        PATH,
-        GEN_ID,
+        lease,
         { choices: [{ delta: { content: 'Hi' } }] },
         makeMessage('Hi'),
       );
-      generationService.complete(HEADER_OWNER_KEY, PATH, GEN_ID);
+      generationService.complete(lease);
     }, 20);
 
     const res = await reqPromise.expect(200);
