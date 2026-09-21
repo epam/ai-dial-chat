@@ -33,6 +33,14 @@
   }
 }
 
+/* Inline padding of the sticky search header, overridable from the panel
+   root's className via the --ds-search-inline custom property (e.g.
+   `[--ds-search-inline:12px]` for the 320px scheduled-task panel, whose
+   search field then matches the 296px form field it opens from). */
+.searchHeader {
+  padding-inline: var(--ds-search-inline, 4px);
+}
+
 /* Bleeds the sticky label's background 1px upward so subpixel scroll
    positions don't leave a seam where the row underneath peeks through. */
 .stickyLabelSeamFix {

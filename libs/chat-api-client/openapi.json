@@ -6343,7 +6343,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6389,7 +6389,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
             "description": "DIAL Core returned an error response or rejected sign-in"
@@ -9522,13 +9522,18 @@
           },
           "authenticationType": {
             "type": "string",
-            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "enum": ["NONE", "API_KEY", "OAUTH", "DIAL_NATIVE"],
             "example": "API_KEY"
           },
           "userLevelAuthStatus": {
             "type": "string",
             "example": "SIGNED_IN",
             "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "appLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator."
           },
           "globalAuthStatus": {
             "type": "string",

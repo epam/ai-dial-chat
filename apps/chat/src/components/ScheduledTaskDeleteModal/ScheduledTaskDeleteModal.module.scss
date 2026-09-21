@@ -1,0 +1,12 @@
+/*
+ * The kit caps popup widths with unlayered `div .dial-md-popup` rules
+ * (max-width 800px at >=768px). Layered Tailwind utilities lose to those
+ * whatever the class list says, and a single module class only ties the
+ * kit's specificity — leaving the winner to CSS-bundle order. The doubled
+ * class below raises this rule above the kit's deterministically, pinning
+ * the design's 440px cap without !important or kit-internal class names.
+ * It is a cap: narrower viewports still shrink the dialog.
+ */
+.modal.modal {
+  max-width: 440px;
+}

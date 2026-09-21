@@ -6,6 +6,7 @@ import {
   Configuration,
   ConversationsApi,
   DeploymentsApi,
+  ExternalServicesApi,
   FilesApi,
   HealthApi,
   OfflineCredentialsApi,
@@ -100,5 +101,6 @@ export const promptsApi = new PromptsApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
 export const scheduledTasksApi = new ScheduledTasksApi(config);
 export const offlineCredentialsApi = new OfflineCredentialsApi(config);
+export const externalServicesApi = new ExternalServicesApi(config);
 export const healthApi = new HealthApi(config);
 export const transcriptionApi = new TranscriptionApi(config);

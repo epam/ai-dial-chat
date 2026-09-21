@@ -840,12 +840,12 @@ configure its scrape target for port `9464`, path `/metrics`, and restrict acces
 deployment's NetworkPolicy. This unauthenticated listener remains separate from the application
 port. Metrics can also be sent through the existing `otlp` exporter configuration.
 
-| OpenTelemetry instrument              | Prometheus series              | Meaning                                                                                                                                                        |
-| ------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dial.chat.process.memory` (unit `B`) | `dial_chat_process_memory`     | Bytes from one `process.memoryUsage()` call in the Node.js process serving Nest requests, once per metric collection. Each memory `kind` is a separate series. |
-| `dial.chat.sse.active`                | `dial_chat_sse_active`         | Outstanding SSE operations for each `kind`, including setup and cleanup as described below.                                                                    |
-| `dial.chat.generations.active`        | `dial_chat_generations_active` | Number of entries physically retained in the process's generation registry. No application labels.                                                             |
-| `dial.chat.completion.response.terminations` (unit `{response}`) | `dial_chat_completion_response_terminations_total` | One point per downstream completion response that reached the streaming phase, labelled by how it ended. |
+| OpenTelemetry instrument                                         | Prometheus series                                  | Meaning                                                                                                                                                        |
+| ---------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dial.chat.process.memory` (unit `B`)                            | `dial_chat_process_memory`                         | Bytes from one `process.memoryUsage()` call in the Node.js process serving Nest requests, once per metric collection. Each memory `kind` is a separate series. |
+| `dial.chat.sse.active`                                           | `dial_chat_sse_active`                             | Outstanding SSE operations for each `kind`, including setup and cleanup as described below.                                                                    |
+| `dial.chat.generations.active`                                   | `dial_chat_generations_active`                     | Number of entries physically retained in the process's generation registry. No application labels.                                                             |
+| `dial.chat.completion.response.terminations` (unit `{response}`) | `dial_chat_completion_response_terminations_total` | One point per downstream completion response that reached the streaming phase, labelled by how it ended.                                                       |
 
 Memory `kind` values are `rss`, `heap_used`, `heap_total`, `external`, and `array_buffers`,
 corresponding to Node.js's `rss`, `heapUsed`, `heapTotal`, `external`, and `arrayBuffers` fields.
@@ -866,10 +866,18 @@ generations emit a stopped terminal event so attached subscriptions can run thei
 
 The completion-termination counter's only label is `reason`, a fixed four-value set:
 `completed` (ended by the handler once the generator finished), `client_closed` (the browser
-disconnected, so the response was left untouched), `backpressure_ended` (detached for buffered
-bytes, then flushed and ended inside `SSE_RELEASE_TIMEOUT_MS`), and `backpressure_destroyed`
-(detached, then destroyed because it never flushed). A non-trivial `backpressure_destroyed`
-rate means the release bound is too short for real clients, not that responses are leaking.
+disconnected, so the response was left untouched), `backpressure_ended` (detached after a
+buffer threshold or write failure, then released without the helper's forced-destroy outcome),
+and `backpressure_destroyed` (the release helper took its forced-destroy fallback).
+An already-terminal response or a close during release can contribute to `backpressure_ended`;
+that reason does not prove a successful flush. Ordinary pre-stream rejections are not counted,
+but `client_closed` can be recorded if a disconnect was observed during a failing preflight.
+A non-trivial `backpressure_destroyed`
+rate shows that forced release is being used; investigate slow or stalled clients and the
+transport before changing the bound. That rate alone does not establish a leak or an
+incorrect timeout. Recording and detached-response release happen in controller finalization,
+after generation and its terminal persistence attempt; the release bound does not limit
+generation or persistence duration. These reasons do not establish successful persistence.
 Completion delivery still does not contribute to `dial_chat_sse_active`, whose `kind` values
 remain `client_channel`, `conversation_watch`, and `generation_attach`. There is deliberately
 no gauge of open completion responses — `dial_chat_http_requests_active` already counts one for
