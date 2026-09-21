@@ -300,7 +300,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
           </div>
         }
       >
-        <div className="flex min-h-0 flex-col">
+        <div className="flex h-full min-h-0 flex-col">
           <DialFileManagerShell
             controller={controller}
             labels={shellLabels}
