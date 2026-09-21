@@ -363,28 +363,62 @@ subscription until cleanup, including time after its handler returns. These are 
 operations, not a direct count of browser connections. Normal completion-response delivery is
 not part of this gauge.
 
-The generation gauge counts entries physically retained in the generation registry, broken down
-by the bounded `state` attribute, including entries that are cancelling, finalizing, or retained
-pending an unsettled persistence write. Completion, error, and shutdown release an entry (the
-`released` lifecycle value is never reported, since a released entry contributes nothing). Stale
-expiry and a max-duration timeout only _request cancellation_ — they no longer remove an entry;
-the owning worker still performs its own single terminal save and releases the entry itself.
-Shutdown also emits a stopped terminal event to permit attachment cleanup. Tasks that outlive
-removal of their registry entry are outside this count. The gauges retain only counts, without
-per-user or per-conversation labels. See
-[runtime instruments](../apps/chat-api/src/telemetry/runtime-metrics.ts).
+The generation gauge counts entries retained by one process, with four `state` series emitted
+on every collection, including zero values. Normal completion can move directly from `active`
+to `finalizing`; cancellation and a finalization timeout introduce the other states:
 
-**`state="settling"` — read this as retention, not as persistence.** An entry reports
-`state="settling"` when its terminal write was dispatched but did not settle within
-`GENERATION_FINALIZE_TIMEOUT_MS`: its attach subscribers, timer and runtime tracking have already
-been released, but it **still owns its registry key** — a later request for the same principal
-and conversation path keeps getting `409` — because releasing the key would readmit the
-stale-overwrite this design exists to prevent. **A falling gauge value, including a `settling`
-entry eventually disappearing, is never evidence that the underlying conversation was durably
-persisted.** The only way to confirm persistence is to read the conversation back from storage.
-See `openspec/specs/generation-registry/spec.md` and
-`openspec/specs/backend-owned-generation-persistence/spec.md` for the full guarantee, and
-"Operational validation" below for how to check a retained backlog in practice.
+| `state`            | Meaning                                                                                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `active`           | An admitted entry before cancellation or terminal finalization, including capability/history lookup and the start-state save. It does not prove that an upstream stream is running.                 |
+| `cancel_requested` | User stop, maximum duration, or stale handling requested cancellation. The worker and its registry ownership remain until settlement.                                                               |
+| `finalizing`       | The worker entered its single terminal-save attempt and is waiting for it to resolve or reject.                                                                                                     |
+| `settling`         | The finalization timeout expired. Existing attachment listeners were notified and removed and timers cleared; the pending write, registry entry, assembled snapshot, and gauge contribution remain. |
+
+`released` is not emitted: releasing a registry key removes that entry's contribution. A normal
+settlement follows a resolved or rejected terminal save; preflight failure can release an entry
+without a terminal save. Shutdown also clears entries, notifying subscribers when terminal cleanup has not already run,
+without waiting for or proving the outcome of an in-flight write. Stale expiry and maximum duration
+request cancellation rather than removing entries. The gauge has no cancellation-reason label.
+See the [registry implementation](../apps/chat-api/src/conversations/conversation-generation.service.ts)
+and [runtime instruments](../apps/chat-api/src/telemetry/runtime-metrics.ts).
+
+The dashboard generation legends include `state`. For a total per scraped process, sum these
+mutually exclusive state counts while preserving target identity, for example:
+
+```promql
+sum by (cluster, namespace, job, pod, instance) (
+  dial_chat_generations_active{otel_scope_name="dial-chat-api"}
+)
+```
+
+Choose one ingestion path to avoid duplicate counting. Unlike overlapping memory kinds,
+generation state counts can be summed. A rolling deployment can contain older unlabeled series;
+inspect each process's revision and raw labels before comparing state-specific totals.
+
+**Finalization timeout is a cleanup boundary, not a persistence deadline.**
+`GENERATION_FINALIZE_TIMEOUT_MS` starts when `beginFinalizing()` runs immediately before the
+terminal-save call. On expiry, a `settling` entry still rejects another start for the same
+principal and conversation path **in that process** with `409`. Its write is not cancelled,
+retried, or duplicated by this timeout, and the worker and originating completion handler can
+remain awaiting it. The timeout does not cover capability/history lookup, the start-state save,
+or an upstream operation that does not settle after cancellation. The separate maximum-duration
+timer requests cancellation; it is not a hard upper bound on total task lifetime. Defaults are
+listed in the [backend environment reference](../apps/chat-api/README.md#environment-variables).
+
+Admission, leases, stop, attach, and these counts are process-local. They provide no distributed
+lock, cross-pod ownership transfer, or storage-side fencing. Restart clears the in-memory
+registry but does not establish whether an outstanding remote write committed. Recovery of a
+retained key occurs when the write settles or the process exits. **A falling gauge, including a
+`settling` entry disappearing, never proves durable persistence.** Read the conversation back
+from storage to check the expected terminal content.
+
+There is also a current late-attachment limit: `attach()` accepts any retained entry, including
+`settling`. An attachment created after the timeout's terminal notification does not receive a
+replayed terminal event and is not covered by that already-fired cleanup timer. Do not treat
+this timeout as a bound for every future attachment or for all retained memory. The gauges
+retain only counts; the registry itself still retains its entry and snapshot. These limits are
+separate from the [registry contract](../openspec/specs/generation-registry/spec.md) and
+[persistence contract](../openspec/specs/backend-owned-generation-persistence/spec.md).
 
 ### Completion-response termination
 
@@ -539,33 +573,40 @@ contracts when adding availability panels.
    and absent searchable attributes as collection limits rather than evidence that an operation
    did not occur.
 
-## Operational validation of the generation registry's cleanup bounds
+## Operational validation of generation lifecycle limits
 
-When checking that the eviction/finalization fix (`openspec/specs/generation-registry/spec.md`)
-behaves under load, run each of these separately rather than stacked, so one load type's effect
-on the gauge and on memory is not attributed to another:
+Use controlled traffic and read back the affected conversations. Run each workload separately
+so memory and state changes can be attributed to it:
 
-1. **Start load** — normal generations, watching `state="active"` rise and fall back to the
-   baseline as each one completes.
-2. **Stop load** — explicit user Stops, watching the brief `state="cancel_requested"` →
-   `state="finalizing"` transition before release.
-3. **Reconnect load** — attach/resume traffic, watching `dial.chat.sse.active{kind="generation_attach"}`
-   rather than the generations gauge, since attach subscribers are a separate count.
-4. **Expiry load** — generations left to run past the stale threshold with no further traffic from
-   that principal, then a later `register()` from any principal to trigger the sweep, watching
-   `state="cancel_requested"` appear without the entry disappearing until its own worker settles.
+1. **Start and completion** — watch `active` then `finalizing`, and verify release after the
+   terminal save settles. A short intermediate state may fall between collection samples.
+2. **User stop and maximum duration** — exercise each cancellation cause separately. Check
+   `cancel_requested` and finalization, the stored user-stop versus non-user-error marker, and
+   that a second start on the same process and key receives `409` while ownership remains.
+3. **Reconnect** — watch `dial_chat_sse_active{kind="generation_attach"}` separately from registry
+   counts. Include a late attachment after a finalization timeout when evaluating the documented
+   late-attachment limitation.
+4. **Delayed terminal persistence** — delay a save past `GENERATION_FINALIZE_TIMEOUT_MS` and
+   verify that `settling` stays counted, existing subscribers are released, and the same-process
+   key remains occupied. Resolve and reject separate controlled writes, then check release and
+   storage independently. The timeout must not be interpreted as remote-write cancellation.
+5. **Stale sweep** — use controlled clock/timer fixtures to isolate stale cancellation. The sweep
+   runs only on `register()` and its threshold is `max(30 min, MAX_GENERATION_DURATION_MS) + 1 min`.
+   Under normal timer execution, the maximum-duration timer requests cancellation first; simply
+   leaving a live generation idle is not an independent reproduction of the stale-sweep path.
 
-For each run, record: retained generations by `state`, `dial.chat.sse.active{kind="generation_attach"}`,
-and process RSS / heap / external — without stacking them into one figure — then confirm the count
-returns to baseline and stays there through a quiet period once load stops. **A lower retained
-count, or a `state="settling"` entry eventually disappearing, is not proof of successful
-persistence** — confirming that requires reading the affected conversations back from storage and
-checking the assistant message each load type was expected to produce.
+For every workload, record the application revision, retained counts by state, attachment count,
+and process RSS, heap, and external memory without stacking memory kinds. Check the expected
+return to baseline through a quiet period. A deliberately unsettled write is expected to retain
+its entry; its continued presence is not evidence of a dashboard defect. These checks describe
+acceptance work and do not claim that a production workload or OOM investigation has passed.
 
 ## Rollback
 
-See `design.md`'s Migration Plan in `openspec/changes/fix-generation-eviction-lifecycle/` (or,
-once archived, the equivalent record for that change) for the drain procedure and its in-flight
-implications — in short: drain new completions rather than reverting under load, use
-`state="finalizing"`/`state="settling"` as the drain signal, and expect a pod restart to clear the
-registry with no way to assert an in-flight write's outcome afterward.
+The [archived migration plan](../openspec/changes/archive/2026-09-21-fix-generation-eviction-lifecycle/design.md)
+describes the drain procedure. Stop admitting new completions and account for **all four**
+non-released states before reverting. `finalizing` and `settling` identify pending terminal
+writes, but `active` and `cancel_requested` still represent owned work too. Do not infer a drained
+process from one state reaching zero. A never-settling write prevents a clean drain; restarting
+clears local ownership without confirming the remote write's result. Reverting restores the
+older admission behavior and its replacement risk.

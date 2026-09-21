@@ -210,8 +210,8 @@
       }
     },
     {
-      "title": "Registered generations by pod - all APIs",
-      "description": "Physical registry entries, including entries awaiting persistence. No generation_api label: Generation API filter intentionally does not apply to this panel.",
+      "title": "Retained generations by process and state - all APIs",
+      "description": "Process-local registry entries by state: active, cancel_requested, finalizing, settling. Settling retains the entry and gauge contribution while its terminal write is pending; cleanup or a falling count does not prove durable persistence. No generation_api label: the Generation API filter does not apply.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -267,7 +267,7 @@
           "refId": "A",
           "editorMode": "code",
           "expr": "dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}",
-          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}}",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}} / {{state}}",
           "range": true,
           "instant": false,
           "format": "time_series"
