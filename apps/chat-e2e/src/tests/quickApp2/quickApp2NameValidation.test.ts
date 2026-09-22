@@ -245,6 +245,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMDIAL-4758');
+    const appName =
+      applicationNamePrefix + ExpectedConstants.allowedSpecialChars;
 
     await dialTest.step('Open My workspace', async () => {
       await marketplacePage.openMyWorkspacePage({
@@ -268,7 +270,7 @@ dialTest(
       'Fill in app name with allowed char and proceed with app creation',
       async () => {
         await entityEditorGeneralForm.fillInEntityFields({
-          name: applicationNamePrefix + ExpectedConstants.allowedSpecialChars,
+          name: appName,
         });
         await entityEditorGeneralForm.goNext();
         await entityEditorPage.waitForPageLoadedForEdit(
@@ -283,9 +285,8 @@ dialTest(
         await entityEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(entityDetailsModal, 'visible');
         await entityDetailsModalAssertion.assertEntityCommonAttributes({
-          expectedName: ExpectedConstants.allowedSpecialChars,
+          expectedName: appName,
         });
-
         await entityDetailsModal.clickUseButton({
           isInstalledDeploymentsUpdated: false,
         });
