@@ -705,8 +705,9 @@ describe('auth and session metrics', () => {
       .flatMap((scope) => scope.metrics)
       .filter((metric) => metric.descriptor.name.startsWith('dial.chat.auth.'))
       .flatMap<AuthDataPoint>((metric) =>
-        metric.dataPoints.flatMap((point) => Object.values(point.attributes)),
+        metric.dataPoints as readonly AuthDataPoint[],
       )
+      .flatMap((point) => Object.values(point.attributes))
       .map(String);
 
     for (const value of forbidden) {
