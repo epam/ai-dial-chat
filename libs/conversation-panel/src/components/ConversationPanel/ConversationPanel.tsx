@@ -78,6 +78,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       searchWrapperClassName,
       headerClassName,
       headerActionsClassName,
+      newChatButtonClassName,
     } = panelStyles ?? {};
 
     const {
@@ -429,6 +430,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           onClick={onNewChat}
           labelClassName={typography?.newChatLabelClassName}
           colors={newChatButtonColors}
+          className={newChatButtonClassName}
         />
 
         <div
