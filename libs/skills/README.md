@@ -204,6 +204,35 @@ picker (e.g. a catalog view chunk) loads in place on first open. The shell
 never selects or navigates itself — it hands `onSelect` and `onClose` to
 `renderContent` and forwards a selection to `onSelect`.
 
+### `SkillArchiveUploadDialog`
+
+```tsx
+import { SkillArchiveUploadDialog } from '@epam/ai-dial-skills';
+
+<SkillArchiveUploadDialog
+  isOpen={isDialogOpen}
+  errorText={selectionError}
+  accept=".zip,.md"
+  labels={{
+    dialogTitle: 'Upload skill',
+    dropZoneLabel: 'Drag and drop it or click here to upload',
+    dropZoneMobileLabel: 'Click here to upload',
+    formatsLabel: 'File formats .zip and SKILL.md',
+    fileInputAriaLabel: 'Upload a skill ZIP archive or a SKILL.md file',
+    closeAriaLabel: 'Close',
+  }}
+  onClose={closeDialog}
+  onFilesSelected={handleFilesSelected}
+  onFilesRejected={handleFilesRejected}
+/>;
+```
+
+Presentation for a skill-archive upload: a `Popup` with a drop area showing the accepted formats
+and any local rejection message. It has no dependency on an import controller — wire
+`onFilesSelected`/`onFilesRejected` to `@epam/ai-dial-chat-hooks`' `useSkillArchiveImport` (or an
+equivalent host controller). Every label falls back to an English default, so `labels` may be
+omitted entirely for an English-only host.
+
 ## Hooks
 
 ### `useSkillSelectorOverlay`

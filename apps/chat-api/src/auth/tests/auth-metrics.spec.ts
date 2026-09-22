@@ -694,8 +694,9 @@ describe('auth and session metrics', () => {
     const authAttributeValues = resourceMetrics.scopeMetrics
       .flatMap((scope) => scope.metrics)
       .filter((metric) => metric.descriptor.name.startsWith('dial.chat.auth.'))
-      .flatMap((metric) => metric.dataPoints)
-      .flatMap((point) => Object.values(point.attributes))
+      .flatMap((metric) =>
+        metric.dataPoints.flatMap((point) => Object.values(point.attributes)),
+      )
       .map(String);
 
     for (const value of forbidden) {

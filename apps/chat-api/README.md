@@ -840,12 +840,12 @@ configure its scrape target for port `9464`, path `/metrics`, and restrict acces
 deployment's NetworkPolicy. This unauthenticated listener remains separate from the application
 port. Metrics can also be sent through the existing `otlp` exporter configuration.
 
-| OpenTelemetry instrument              | Prometheus series              | Meaning                                                                                                                                                        |
-| ------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dial.chat.process.memory` (unit `B`) | `dial_chat_process_memory`     | Bytes from one `process.memoryUsage()` call in the Node.js process serving Nest requests, once per metric collection. Each memory `kind` is a separate series. |
-| `dial.chat.sse.active`                | `dial_chat_sse_active`         | Outstanding SSE operations for each `kind`, including setup and cleanup as described below.                                                                    |
-| `dial.chat.generations.active`        | `dial_chat_generations_active` | Number of entries physically retained in the process's generation registry. No application labels.                                                             |
-| `dial.chat.completion.response.terminations` (unit `{response}`) | `dial_chat_completion_response_terminations_total` | One point per downstream completion response that reached the streaming phase, labelled by how it ended. |
+| OpenTelemetry instrument                                         | Prometheus series                                  | Meaning                                                                                                                                                        |
+| ---------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dial.chat.process.memory` (unit `B`)                            | `dial_chat_process_memory`                         | Bytes from one `process.memoryUsage()` call in the Node.js process serving Nest requests, once per metric collection. Each memory `kind` is a separate series. |
+| `dial.chat.sse.active`                                           | `dial_chat_sse_active`                             | Outstanding SSE operations for each `kind`, including setup and cleanup as described below.                                                                    |
+| `dial.chat.generations.active`                                   | `dial_chat_generations_active`                     | Number of entries physically retained in the process's generation registry. No application labels.                                                             |
+| `dial.chat.completion.response.terminations` (unit `{response}`) | `dial_chat_completion_response_terminations_total` | One point per downstream completion response that reached the streaming phase, labelled by how it ended.                                                       |
 
 Memory `kind` values are `rss`, `heap_used`, `heap_total`, `external`, and `array_buffers`,
 corresponding to Node.js's `rss`, `heapUsed`, `heapTotal`, `external`, and `arrayBuffers` fields.

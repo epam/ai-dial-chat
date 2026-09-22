@@ -126,10 +126,14 @@ export const SUBPATH_FIXTURES = [
      * resolvers moved to `./file-manager-canvas` below, so browsing, upload
      * and naming helpers no longer require them
      * ([issue #8855](https://github.com/epam/ai-dial-chat/issues/8855)).
+     *
+     * `@epam/ai-dial-attachment-input` was added for `useFileAttachmentPicker`,
+     * whose row-eligibility predicate calls its `isMimeTypeAllowed` directly.
      */
     peers: [
       '@epam/ai-dial-react-file-manager',
       'ag-grid-community',
+      '@epam/ai-dial-attachment-input',
       '@epam/ai-dial-ui-kit',
       '@epam/ai-dial-chat-shared',
       ...CHAT_SHARED_ROOT_PEERS,
