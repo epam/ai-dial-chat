@@ -48,6 +48,25 @@ const makeMessage = (content: string): ConversationMessageDto => ({
   timestamp: '2026-01-01T00:00:00.000Z',
 });
 
+/* Start the HTTP request immediately; Supertest requests are otherwise lazy. */
+const startAttachRequest = async (app: INestApplication) =>
+  await request(app.getHttpServer())
+    .post('/conversations/completions/attach')
+    .send({ path: PATH })
+    .expect(200);
+
+const waitForSubscribers = async (
+  service: ConversationGenerationService,
+  ownerKey: string,
+  count = 1,
+) => {
+  await vi.waitFor(() => {
+    const attachment = service.attach(ownerKey, PATH);
+    expect(attachment?.emitter.listenerCount('chunk')).toBe(count);
+    expect(attachment?.emitter.listenerCount('terminal')).toBe(count);
+  });
+};
+
 describe('POST /conversations/completions/attach (integration)', () => {
   let app: INestApplication;
   let generationService: ConversationGenerationService;
@@ -118,20 +137,16 @@ describe('POST /conversations/completions/attach (integration)', () => {
     const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
     generationService.seedAssembledMessage(lease, makeMessage(''));
 
-    const reqPromise = request(app.getHttpServer())
-      .post('/conversations/completions/attach')
-      .send({ path: PATH });
+    const reqPromise = startAttachRequest(app);
+    await waitForSubscribers(generationService, COOKIE_OWNER_KEY);
+    generationService.applyChunk(
+      lease,
+      { choices: [{ delta: { content: 'Hi' } }] },
+      makeMessage('Hi'),
+    );
+    generationService.complete(lease);
 
-    setTimeout(() => {
-      generationService.applyChunk(
-        lease,
-        { choices: [{ delta: { content: 'Hi' } }] },
-        makeMessage('Hi'),
-      );
-      generationService.complete(lease);
-    }, 20);
-
-    const res = await reqPromise.expect(200);
+    const res = await reqPromise;
 
     expect(res.headers['content-type']).toContain('text/event-stream');
     const snapshotIdx = res.text.indexOf('"type":"snapshot"');
@@ -147,16 +162,12 @@ describe('POST /conversations/completions/attach (integration)', () => {
     const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
     generationService.seedAssembledMessage(lease, makeMessage(''));
 
-    const reqPromise = request(app.getHttpServer())
-      .post('/conversations/completions/attach')
-      .send({ path: PATH });
+    const reqPromise = startAttachRequest(app);
+    await waitForSubscribers(generationService, COOKIE_OWNER_KEY);
+    generationService.abort(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.error(lease);
 
-    setTimeout(() => {
-      generationService.abort(COOKIE_OWNER_KEY, PATH, GEN_ID);
-      generationService.error(lease);
-    }, 20);
-
-    const res = await reqPromise.expect(200);
+    const res = await reqPromise;
     expect(res.text).toContain('"type":"stopped"');
   });
 
@@ -164,26 +175,17 @@ describe('POST /conversations/completions/attach (integration)', () => {
     const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
     generationService.seedAssembledMessage(lease, makeMessage(''));
 
-    const req1 = request(app.getHttpServer())
-      .post('/conversations/completions/attach')
-      .send({ path: PATH });
-    const req2 = request(app.getHttpServer())
-      .post('/conversations/completions/attach')
-      .send({ path: PATH });
+    const req1 = startAttachRequest(app);
+    const req2 = startAttachRequest(app);
+    await waitForSubscribers(generationService, COOKIE_OWNER_KEY, 2);
+    generationService.applyChunk(
+      lease,
+      { choices: [{ delta: { content: 'Hi' } }] },
+      makeMessage('Hi'),
+    );
+    generationService.complete(lease);
 
-    setTimeout(() => {
-      generationService.applyChunk(
-        lease,
-        { choices: [{ delta: { content: 'Hi' } }] },
-        makeMessage('Hi'),
-      );
-      generationService.complete(lease);
-    }, 20);
-
-    const [res1, res2] = await Promise.all([
-      req1.expect(200),
-      req2.expect(200),
-    ]);
+    const [res1, res2] = await Promise.all([req1, req2]);
 
     expect(res1.text).toContain('"content":"Hi"');
     expect(res1.text).toContain('"type":"done"');
@@ -266,20 +268,16 @@ describe('POST /conversations/completions/attach — header-authenticated caller
     const lease = generationService.register(HEADER_OWNER_KEY, PATH, GEN_ID);
     generationService.seedAssembledMessage(lease, makeMessage(''));
 
-    const reqPromise = request(app.getHttpServer())
-      .post('/conversations/completions/attach')
-      .send({ path: PATH });
+    const reqPromise = startAttachRequest(app);
+    await waitForSubscribers(generationService, HEADER_OWNER_KEY);
+    generationService.applyChunk(
+      lease,
+      { choices: [{ delta: { content: 'Hi' } }] },
+      makeMessage('Hi'),
+    );
+    generationService.complete(lease);
 
-    setTimeout(() => {
-      generationService.applyChunk(
-        lease,
-        { choices: [{ delta: { content: 'Hi' } }] },
-        makeMessage('Hi'),
-      );
-      generationService.complete(lease);
-    }, 20);
-
-    const res = await reqPromise.expect(200);
+    const res = await reqPromise;
 
     const snapshotIdx = res.text.indexOf('"type":"snapshot"');
     const chunkIdx = res.text.indexOf('"type":"chunk"');
