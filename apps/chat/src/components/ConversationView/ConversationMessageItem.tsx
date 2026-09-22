@@ -11,6 +11,8 @@ import {
   annotationToOoxmlCanvasContent,
   annotationToPdfCanvasContent,
   attachmentDtosToDisplayAttachments,
+  isDialFileId,
+  isExternalSourcePreviewable,
   messageHasStages,
   openAnnotationAttachment,
   referenceAttachmentToPdfCanvasContent,
@@ -124,6 +126,15 @@ const MESSAGE_TEXT_STYLES = {
    too much vertical space on a phone. Desktop keeps the wider scale. */
 const COMPACT_MESSAGE_TEXT_STYLES = {
   typography: { fontClassName: 'dial-small-paragraph-text' },
+};
+
+const isCitationPreviewable = (annotation: Annotation): boolean => {
+  const attachment = annotation.body?.source?.attachment;
+  return (
+    attachment != null &&
+    (isDialFileId(attachment.url) ||
+      isExternalSourcePreviewable(attachment.type, attachment.url))
+  );
 };
 
 interface Props {
@@ -427,6 +438,7 @@ const ConversationMessageItem: FC<Props> = ({
   const citationCallbacks = useMemo(
     () => ({
       onPreview: handleCitationPreview,
+      isPreviewable: isCitationPreviewable,
       onOpenInBrowser: handleCitationOpenInBrowser,
       buildLabels: buildCitationLabels,
     }),
@@ -830,35 +842,27 @@ const ConversationMessageItem: FC<Props> = ({
                     )}
                   />
                 ))}
-              {mcpAppMatch &&
-                onOpenApp &&
-                (isMcpAppOpenedInCanvas ? (
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
-                  >
-                    <span className="dial-body-text text-primary">
-                      {openedInCanvasLabel}
-                    </span>
-                  </div>
-                ) : (
-                  <McpAppInlinePreview
-                    match={mcpAppMatch}
-                    toolCall={mcpAppToolCallSeed}
-                    cache={mcpAppCache}
-                    cacheKey={mcpAppCanvasKey(index)}
-                    hostAdapter={mcpAppHostAdapter}
-                    onExpand={() =>
-                      onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
-                    }
-                    expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
-                    reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
-                    loadErrorLabel={t(
-                      AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
-                    )}
-                  />
-                ))}
+              {mcpAppMatch && onOpenApp && (
+                <McpAppInlinePreview
+                  match={mcpAppMatch}
+                  toolCall={mcpAppToolCallSeed}
+                  cache={mcpAppCache}
+                  cacheKey={mcpAppCanvasKey(index)}
+                  hostAdapter={mcpAppHostAdapter}
+                  onExpand={() =>
+                    onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
+                  }
+                  expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
+                  reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
+                  loadErrorLabel={t(
+                    AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
+                  )}
+                  isOpenedInCanvas={isMcpAppOpenedInCanvas}
+                  openedInCanvasLabel={
+                    openedInCanvasLabel ?? 'Opened in canvas'
+                  }
+                />
+              )}
               {msg.streamErrorMessage != null && (
                 <div className="w-full">
                   <ErrorMessageNotification

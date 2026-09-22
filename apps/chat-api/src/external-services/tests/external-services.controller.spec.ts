@@ -66,6 +66,7 @@ describe('ExternalServicesController (integration)', () => {
   let app: INestApplication;
   let service: {
     getExternalService: ReturnType<typeof vi.fn>;
+    listExternalServices: ReturnType<typeof vi.fn>;
     signIn: ReturnType<typeof vi.fn>;
     signOut: ReturnType<typeof vi.fn>;
   };
@@ -73,6 +74,7 @@ describe('ExternalServicesController (integration)', () => {
   beforeEach(() => {
     service = {
       getExternalService: vi.fn(),
+      listExternalServices: vi.fn().mockResolvedValue([]),
       signIn: vi.fn().mockResolvedValue(undefined),
       signOut: vi.fn().mockResolvedValue(undefined),
     };
@@ -81,6 +83,47 @@ describe('ExternalServicesController (integration)', () => {
   afterEach(async () => {
     vi.clearAllMocks();
     await app.close();
+  });
+
+  describe('GET /api/v1/external-services/:appId', () => {
+    it('returns fresh authentication metadata for the decoded application id', async () => {
+      app = await buildApp(service);
+      service.listExternalServices.mockResolvedValue([
+        {
+          id: 'finance',
+          displayName: 'Finance',
+          authenticationType: 'API_KEY',
+        },
+      ]);
+      const res = await request(app.getHttpServer()).get(
+        `/api/v1/external-services/${APP_ID}`,
+      );
+      expect(res.status).toBe(200);
+      expect(res.headers['cache-control']).toBe('private, no-store');
+      expect(res.body[0].id).toBe('finance');
+      expect(service.listExternalServices).toHaveBeenCalledWith(
+        TEST_USER.at,
+        decodeURIComponent(APP_ID),
+      );
+    });
+
+    it('rejects malformed application ids', async () => {
+      app = await buildApp(service);
+      const res = await request(app.getHttpServer()).get(
+        '/api/v1/external-services/bad%20id',
+      );
+      expect(res.status).toBe(400);
+      expect(service.listExternalServices).not.toHaveBeenCalled();
+    });
+
+    it('requires the liveChatInteraction capability', async () => {
+      app = await buildApp(service, { featureEnabled: false });
+      const res = await request(app.getHttpServer()).get(
+        `/api/v1/external-services/${APP_ID}`,
+      );
+      expect(res.status).toBe(403);
+      expect(service.listExternalServices).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /api/v1/external-services/:appId/:serviceId', () => {
@@ -244,4 +287,27 @@ describe('ExternalServicesController (integration)', () => {
       expect(res.body).toEqual({ success: true });
     });
   });
+
+  it.each([
+    ['signin', 'UNKNOWN'],
+    ['signout', 'UNKNOWN'],
+    ['signin', 'DIAL_NATIVE'],
+    ['signout', 'DIAL_NATIVE'],
+  ])(
+    'rejects unsupported %s auth type %s',
+    async (action, authenticationType) => {
+      app = await buildApp(service);
+
+      const res = await request(app.getHttpServer())
+        .post(`/api/v1/external-services/${APP_ID}/dial-native/${action}`)
+        .send({
+          credentialsLevel: ExternalServiceCredentialsLevel.User,
+          authenticationType,
+        });
+
+      expect(res.status).toBe(400);
+      expect(service.signIn).not.toHaveBeenCalled();
+      expect(service.signOut).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -448,6 +448,8 @@ export interface ItemDetailsStyles {
 
 /** Props for `DetailsPanel`. */
 export interface DetailsPanelProps {
+  /** Renders host-owned credential controls below the header. Omitted in read-only mode. */
+  renderCredentials?: (item: CatalogItem) => ReactNode;
   /** The catalog item to display in the panel. */
   item: CatalogItem;
   /** Controls whether the panel is visible. */
@@ -520,12 +522,18 @@ export interface DetailsPanelProps {
    * display name; the catalog library holds no notion of a session.
    */
   publishDefaultAuthor?: string;
-  /** Called with the destination folder path, current access rules, and trimmed display author when the user confirms publish/update. */
+  /**
+   * Called with the destination folder path, current access rules, trimmed
+   * display author, and the credentials opt-in when the user confirms
+   * publish/update. The fifth argument is additive — a callback declaring only
+   * the first four parameters stays assignable.
+   */
   onPublish?: (
     item: CatalogItem,
     folderPath: string[],
     rules: PublicationRule[],
     author: string,
+    publishCredentials: boolean,
   ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;

@@ -7,37 +7,23 @@ import {
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
 import { resolveAppVersion } from '../common/utils/app-version';
+import { normalizeAnnouncements } from './announcements.normalizer';
 import type { AppConfigEvalContext } from './app-config.types';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from './config-registry/config-registry.constants';
-import type {
-  AnnouncementItemDto,
-  AnnouncementLinkDto,
-} from './dto/announcement-item.dto';
+import type { AnnouncementItemDto } from './dto/announcement-item.dto';
 import type { ApplicationVisualizerDto } from './dto/application-visualizer.dto';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import type { CustomVisualizerDto } from './dto/custom-visualizer.dto';
+import { normalizeEnabledUiFeatures } from './enabled-ui-features.normalizer';
 import { FeatureKey } from './feature-flags/feature-key.enum';
 import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
-import {
-  DEPRECATED_UI_FEATURE_ALIASES,
-  KNOWN_UI_FEATURES,
-} from './known-ui-features.constants';
+import { toNullableText } from './text.util';
 
 const CACHE_TTL_SECONDS = 60;
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
-
-/* Blank and whitespace-only operator values are treated as "unset" so the
- * banner never reserves space for an empty string. */
-const toNullableText = (value: unknown): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
 
 /* The provider already validated every entry, so this only has to reject the
  * shapes that are not a registry at all — an array included, since
@@ -47,45 +33,6 @@ const isApplicationVisualizerRegistry = (
 ): value is Record<string, ApplicationVisualizerDto> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const MAX_ANNOUNCEMENTS = 10;
-
-/* Parsed rather than prefix-matched, so "JaVaScRiPt:" and whitespace-padded
- * schemes are caught too. Relative URLs are rejected on purpose: operator
- * config must not be able to point at an in-app route. */
-const isExternalHttpUrl = (href: string): boolean => {
-  try {
-    const { protocol } = new URL(href);
-    return protocol === 'http:' || protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
-
-type AnnouncementRejection = { reason: string };
-
-const parseAnnouncementLink = (
-  raw: unknown,
-): AnnouncementLinkDto | null | AnnouncementRejection => {
-  /* No link at all is valid — an announcement may be purely informational. */
-  if (raw == null) {
-    return null;
-  }
-  if (typeof raw !== 'object') {
-    return { reason: 'link is not an object' };
-  }
-
-  const { label, href } = raw as Record<string, unknown>;
-  const parsedLabel = toNullableText(label);
-  if (!parsedLabel) {
-    return { reason: 'link.label is blank or missing' };
-  }
-  if (typeof href !== 'string' || !isExternalHttpUrl(href.trim())) {
-    return { reason: `link.href is not an http(s) URL: ${String(href)}` };
-  }
-
-  return { label: parsedLabel, href: href.trim() };
-};
-
 @Injectable()
 export class AppConfigService {
   private readonly logger = new Logger(AppConfigService.name);
@@ -94,71 +41,6 @@ export class AppConfigService {
     private readonly compositeProvider: CompositeConfigProvider,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
-
-  /**
-   * Normalizes the operator-authored announcements list. Bad entries are
-   * dropped with a warning rather than throwing: a typo in a Helm values file
-   * must never take down `/api/v1/client-config`.
-   */
-  private normalizeAnnouncements(resolved: unknown): AnnouncementItemDto[] {
-    if (!Array.isArray(resolved)) {
-      if (resolved != null) {
-        this.logger.warn(
-          'ANNOUNCEMENTS did not resolve to an array; ignoring it',
-        );
-      }
-      return [];
-    }
-
-    const items: AnnouncementItemDto[] = [];
-
-    for (const entry of resolved) {
-      if (entry == null || typeof entry !== 'object') {
-        this.logger.warn('Ignoring announcement entry that is not an object');
-        continue;
-      }
-
-      const { title, description, link } = entry as Record<string, unknown>;
-
-      const parsedTitle = toNullableText(title);
-      if (!parsedTitle) {
-        this.logger.warn(
-          'Ignoring announcement entry with a blank or missing title',
-        );
-        continue;
-      }
-
-      const parsedLink = parseAnnouncementLink(link);
-      if (parsedLink && 'reason' in parsedLink) {
-        /* Dropping the whole entry, not just the link: a row that still looks
-         * right but silently lost its call to action is worse than a missing
-         * row, because nobody notices it. */
-        this.logger.warn(
-          `Ignoring announcement "${parsedTitle}": ${parsedLink.reason}`,
-        );
-        continue;
-      }
-
-      const rawDescription = toNullableText(description);
-
-      items.push({
-        title: parsedTitle,
-        description: rawDescription
-          ? sanitizeAnnouncementHtml(rawDescription)
-          : null,
-        link: parsedLink,
-      });
-    }
-
-    if (items.length > MAX_ANNOUNCEMENTS) {
-      this.logger.warn(
-        `ANNOUNCEMENTS carried ${items.length} entries; keeping the first ${MAX_ANNOUNCEMENTS} and dropping the rest`,
-      );
-      return items.slice(0, MAX_ANNOUNCEMENTS);
-    }
-
-    return items;
-  }
 
   async resolveValue(
     key: string,
@@ -196,6 +78,7 @@ export class AppConfigService {
     let mcpAppSandboxUrl: string | null = null;
     let mcpAppTheme: 'light' | 'dark' | null = null;
     let mcpAppUserAgent: string | null = null;
+    let mcpAppHostName: string | null = null;
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
@@ -210,6 +93,7 @@ export class AppConfigService {
     let applicationVisualizers: Record<string, ApplicationVisualizerDto> = {};
     let customVariables: Record<string, unknown> = {};
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
+    let maxAttachmentFileSizeBytes = 536_870_912;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -237,6 +121,8 @@ export class AppConfigService {
           resolved === 'light' || resolved === 'dark' ? resolved : null;
       } else if (def.key === 'mcpApps.userAgent') {
         mcpAppUserAgent = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'mcpApps.hostName') {
+        mcpAppHostName = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'fileManager.availableTabs') {
         fileManagerTabs = Array.isArray(resolved)
           ? resolved
@@ -255,7 +141,9 @@ export class AppConfigService {
         const raw = toNullableText(resolved);
         announcementDescription = raw ? sanitizeAnnouncementHtml(raw) : null;
       } else if (def.key === 'announcement.items') {
-        announcements = this.normalizeAnnouncements(resolved);
+        announcements = normalizeAnnouncements(resolved, (message) =>
+          this.logger.warn(message),
+        );
       } else if (def.key === 'welcomeScreen.description') {
         /* Plain text by contract: never sanitized, never parsed as markup. */
         welcomeScreenDescription = toNullableText(resolved);
@@ -265,37 +153,9 @@ export class AppConfigService {
             ? sanitizeFooterHtml(resolved, appVersion)
             : '';
       } else if (def.key === 'uiFeatures.enabledUiFeatures') {
-        const rawValue = Array.isArray(resolved) ? resolved : [];
-        if (rawValue.length > 0) {
-          const filtered = rawValue.reduce<string[]>((acc, entry) => {
-            const raw = String(entry);
-            const alias = DEPRECATED_UI_FEATURE_ALIASES[raw];
-            if (alias != null) {
-              this.logger.warn(
-                `ENABLED_UI_FEATURES entry "${raw}" is deprecated; using "${alias}" instead`,
-              );
-              acc.push(alias);
-              return acc;
-            }
-            if (KNOWN_UI_FEATURES.has(raw)) {
-              acc.push(raw);
-              return acc;
-            }
-            this.logger.warn(
-              `Ignoring unrecognized ENABLED_UI_FEATURES entry: "${raw}"`,
-            );
-            return acc;
-          }, []);
-          if (filtered.length > 0) {
-            /* A deprecated alias can resolve onto a value the list already
-             * carries, so dedupe before the response goes out. */
-            enabledUiFeatures = [...new Set(filtered)];
-          } else {
-            this.logger.warn(
-              'ENABLED_UI_FEATURES contained only unrecognized entries; falling back to compiled-in defaults',
-            );
-          }
-        }
+        enabledUiFeatures = normalizeEnabledUiFeatures(resolved, (message) =>
+          this.logger.warn(message),
+        );
       } else if (def.key === 'customVariables') {
         customVariables =
           resolved !== null &&
@@ -313,6 +173,9 @@ export class AppConfigService {
         publicationFilterSources = Array.isArray(resolved)
           ? resolved
           : DEFAULT_PUBLICATION_FILTER_SOURCES;
+      } else if (def.key === 'attachments.maxFileSizeBytes') {
+        maxAttachmentFileSizeBytes =
+          typeof resolved === 'number' ? resolved : 536_870_912;
       }
     }
 
@@ -328,6 +191,7 @@ export class AppConfigService {
         mcpAppSandboxUrl,
         mcpAppTheme,
         mcpAppUserAgent,
+        mcpAppHostName,
         fileManagerTabs,
         overlayEnabled,
         overlayAllowedOrigins,
@@ -342,6 +206,7 @@ export class AppConfigService {
         applicationVisualizers,
         customVariables,
         publicationFilterSources,
+        maxAttachmentFileSizeBytes,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

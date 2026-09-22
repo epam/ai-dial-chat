@@ -1,16 +1,7 @@
 import { EntityHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  ButtonAppearance,
-  DangerButton,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  Input,
-  LinkButton,
-  NeutralButton,
-  Spinner,
-} from '@epam/ai-dial-ui-kit';
-import { IconBuildingCommunity, IconKey, IconUser } from '@tabler/icons-react';
-import { FC, ReactNode, useCallback, useState } from 'react';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconBuildingCommunity, IconUser } from '@tabler/icons-react';
+import type { FC } from 'react';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import type {
   ItemDetailsStyles,
@@ -21,246 +12,8 @@ import {
   CredentialStatus,
   ToolsetAuthenticationType,
 } from '../../../../types/toolset-auth';
-import { CredentialsIdentityIcon } from '../CredentialsIdentityIcon/CredentialsIdentityIcon';
-import { CredentialsInfoCard } from '../CredentialsInfoCard/CredentialsInfoCard';
+import { CredentialsRow } from '../CredentialsRow/CredentialsRow';
 import styles from './CredentialsManagementPanel.module.scss';
-
-/** Props for {@link CredentialsManagementRow}. */
-interface CredentialsManagementRowProps {
-  /** Item the row manages credentials for. */
-  item: CatalogItem;
-  /** Credentials slot this row manages. */
-  level: CredentialsLevel;
-  /** Row title, e.g. `'Personal credentials'`. */
-  label: string;
-  /** Row description shown under the title. */
-  description: string;
-  /** Leading icon shown in the row's identity chip. */
-  icon: ReactNode;
-  /** Current sign-in status for this level. */
-  status: CredentialStatus | undefined;
-  /**
-   * Whether this level is the one actually in effect. Personal credentials
-   * take precedence over organization-wide ones, so the organization row is
-   * never `isActive` while the personal row is also signed in — only the
-   * active level's checkmark is shown.
-   */
-  isActive: boolean;
-  /** Authentication mechanism required by the item. */
-  authenticationType: ToolsetAuthenticationType;
-  /** Already-formatted relative time since the API key was added, shown when signed in via `API_KEY`. */
-  apiKeyAddedWhen?: string;
-  /** Called with the entered key (or no key, for OAuth) when the row's login action is submitted. May return a promise; the row shows a spinner in place of the action label until it resolves. */
-  onLogin?: (
-    item: CatalogItem,
-    params: { level: CredentialsLevel; apiKey?: string },
-  ) => Promise<void> | void;
-  /** Called when "Log out" is clicked on a signed-in OAuth row, so the host can show a full logout-confirmation sub-view for this level. */
-  onRequestLogout?: (level: CredentialsLevel) => void;
-  /** Called when "Delete" is clicked on a configured API key, so the host can show a full delete-confirmation sub-view for this level. */
-  onRequestDeleteApiKey?: (level: CredentialsLevel) => void;
-  /** Text overrides. */
-  texts?: ItemDetailsTexts;
-  /** CSS class applied to the row title. */
-  labelClassName: string;
-  /** CSS class applied to the row description. */
-  descriptionClassName: string;
-  /** CSS class applied to the empty-API-key validation message. */
-  errorClassName: string;
-  /** CSS class applied to the configured-key card's title. */
-  keyCardTitleClassName: string;
-  /** CSS class applied to the configured-key card's description. */
-  keyCardDescriptionClassName: string;
-  /** CSS class applied to the "Delete" action on a configured API key. */
-  deleteActionClassName: string;
-}
-
-/** One credentials slot (personal or organization) in the admin management sub-screen: status, and a login/logout or add/delete-key action. */
-const CredentialsManagementRow: FC<CredentialsManagementRowProps> = ({
-  item,
-  level,
-  label,
-  description,
-  icon,
-  status,
-  isActive,
-  authenticationType,
-  apiKeyAddedWhen,
-  onLogin,
-  onRequestLogout,
-  onRequestDeleteApiKey,
-  texts,
-  labelClassName,
-  descriptionClassName,
-  errorClassName,
-  keyCardTitleClassName,
-  keyCardDescriptionClassName,
-  deleteActionClassName,
-}) => {
-  const [apiKey, setApiKey] = useState('');
-  const [hasEmptyKeyError, setHasEmptyKeyError] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const isSignedIn = status === CredentialStatus.SignedIn;
-
-  const handleLogin = useCallback(() => {
-    onLogin?.(item, { level });
-  }, [item, level, onLogin]);
-
-  const handleApiKeyChange = useCallback((value?: string) => {
-    setApiKey(value ?? '');
-    setHasEmptyKeyError(false);
-  }, []);
-
-  const handleAddApiKey = useCallback(async () => {
-    if (apiKey.trim().length === 0) {
-      setHasEmptyKeyError(true);
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await onLogin?.(item, { level, apiKey });
-      setApiKey('');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [item, level, apiKey, onLogin]);
-
-  const handleRequestLogout = useCallback(() => {
-    onRequestLogout?.(level);
-  }, [level, onRequestLogout]);
-
-  const handleRequestDeleteApiKey = useCallback(() => {
-    onRequestDeleteApiKey?.(level);
-  }, [level, onRequestDeleteApiKey]);
-
-  const loginLabel = texts?.loginActionLabel ?? 'Log in';
-  const logoutLabel = texts?.logoutActionLabel ?? 'Log out';
-  const addLabel = texts?.addApiKeyActionLabel ?? 'Add';
-  const deleteLabel = texts?.deleteActionLabel ?? 'Delete';
-  const signedInLabel = texts?.credentialsSignedInLabel ?? 'Signed in';
-  const signedOutLabel = texts?.credentialsSignedOutLabel ?? 'Signed out';
-  const addingStatusLabel = texts?.addingApiKeyStatusLabel ?? 'Adding';
-  const configuredMessage =
-    texts?.apiKeyConfiguredMessage ?? 'Key has been configured';
-  const addedWhenLabel =
-    apiKeyAddedWhen != null
-      ? (texts?.apiKeyAddedLabel ?? ((when) => `Added ${when}`))(
-          apiKeyAddedWhen,
-        )
-      : undefined;
-
-  return (
-    <div className="flex items-start gap-3 rounded-xl p-3">
-      <CredentialsIdentityIcon
-        icon={icon}
-        isActive={isActive}
-        statusLabel={isActive ? signedInLabel : signedOutLabel}
-      />
-
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span className={labelClassName}>{label}</span>
-            <span
-              className={mergeClasses(
-                descriptionClassName,
-                styles.rowDescription,
-              )}
-            >
-              {description}
-            </span>
-          </div>
-          {authenticationType === ToolsetAuthenticationType.OAuth &&
-            (isSignedIn ? (
-              <DangerButton
-                appearance={ButtonAppearance.Ghost}
-                label={logoutLabel}
-                className="min-w-28 shrink-0 justify-center whitespace-nowrap"
-                onClick={handleRequestLogout}
-              />
-            ) : (
-              <NeutralButton
-                label={loginLabel}
-                className="min-w-28 shrink-0 justify-center whitespace-nowrap"
-                onClick={handleLogin}
-              />
-            ))}
-        </div>
-
-        {authenticationType === ToolsetAuthenticationType.ApiKey &&
-          !isSignedIn && (
-            <div className="flex animate-fadeIn flex-col gap-1 pt-1">
-              <div className="flex items-end gap-2">
-                <Input
-                  id={`catalog-item-${item.id}-${level}-api-key`}
-                  type="password"
-                  autoComplete="current-password"
-                  value={apiKey}
-                  onChange={handleApiKeyChange}
-                  labelProps={{ label: texts?.apiKeyFieldLabel ?? 'API key' }}
-                  invalid={hasEmptyKeyError}
-                  disabled={isSaving}
-                  containerClassName="min-w-0 flex-1"
-                />
-                <NeutralButton
-                  label={isSaving ? undefined : addLabel}
-                  aria-label={isSaving ? addingStatusLabel : undefined}
-                  iconBefore={
-                    isSaving ? (
-                      <Spinner
-                        size={DIAL_ICON_SIZE.SM}
-                        ariaLabel={addingStatusLabel}
-                      />
-                    ) : undefined
-                  }
-                  className="shrink-0 whitespace-nowrap"
-                  onClick={handleAddApiKey}
-                  disabled={isSaving}
-                />
-              </div>
-              {/*
-               * Rendered below the input+button row, not through Input's own
-               * `error` prop, so the button never shifts when it appears.
-               */}
-              {hasEmptyKeyError && (
-                <span
-                  className={mergeClasses(errorClassName, styles.errorText)}
-                >
-                  {texts?.apiKeyRequiredErrorMessage ?? 'API key is required.'}
-                </span>
-              )}
-            </div>
-          )}
-
-        {authenticationType === ToolsetAuthenticationType.ApiKey &&
-          isSignedIn && (
-            <div className="animate-fadeIn pt-1">
-              <CredentialsInfoCard
-                icon={
-                  <IconKey
-                    size={DIAL_ICON_SIZE.SM}
-                    aria-hidden
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                }
-                title={configuredMessage}
-                description={addedWhenLabel}
-                titleClassName={keyCardTitleClassName}
-                descriptionClassName={keyCardDescriptionClassName}
-                action={
-                  <LinkButton
-                    label={deleteLabel}
-                    className={deleteActionClassName}
-                    onClick={handleRequestDeleteApiKey}
-                  />
-                }
-              />
-            </div>
-          )}
-      </div>
-    </div>
-  );
-};
 
 /** Props for {@link CredentialsManagementPanel}. */
 interface CredentialsManagementPanelProps {
@@ -354,9 +107,7 @@ export const CredentialsManagementPanel: FC<
           {description}
         </span>
         <div className="flex flex-col">
-          <CredentialsManagementRow
-            item={item}
-            level={CredentialsLevel.User}
+          <CredentialsRow
             label={texts?.personalCredentialsLabel ?? 'Personal credentials'}
             description={
               texts?.personalCredentialsDescription ??
@@ -373,9 +124,16 @@ export const CredentialsManagementPanel: FC<
             isActive={isUserActive}
             authenticationType={credentials.authenticationType}
             apiKeyAddedWhen={credentials.userApiKeyAddedWhen}
-            onLogin={onLogin}
-            onRequestLogout={onRequestLogout}
-            onRequestDeleteApiKey={onRequestDeleteApiKey}
+            onLogin={(apiKey) =>
+              onLogin?.(item, {
+                level: CredentialsLevel.User,
+                ...(apiKey != null ? { apiKey } : {}),
+              })
+            }
+            onRequestLogout={() => onRequestLogout?.(CredentialsLevel.User)}
+            onRequestDeleteApiKey={() =>
+              onRequestDeleteApiKey?.(CredentialsLevel.User)
+            }
             texts={texts}
             labelClassName={credentialsRowLabelClassName}
             descriptionClassName={credentialsRowDescriptionClassName}
@@ -384,9 +142,7 @@ export const CredentialsManagementPanel: FC<
             keyCardDescriptionClassName={credentialsKeyCardDescriptionClassName}
             deleteActionClassName={deleteActionClassName}
           />
-          <CredentialsManagementRow
-            item={item}
-            level={CredentialsLevel.Global}
+          <CredentialsRow
             label={
               texts?.organizationCredentialsLabel ?? 'Organization credentials'
             }
@@ -405,9 +161,16 @@ export const CredentialsManagementPanel: FC<
             isActive={isGlobalActive}
             authenticationType={credentials.authenticationType}
             apiKeyAddedWhen={credentials.globalApiKeyAddedWhen}
-            onLogin={onLogin}
-            onRequestLogout={onRequestLogout}
-            onRequestDeleteApiKey={onRequestDeleteApiKey}
+            onLogin={(apiKey) =>
+              onLogin?.(item, {
+                level: CredentialsLevel.Global,
+                ...(apiKey != null ? { apiKey } : {}),
+              })
+            }
+            onRequestLogout={() => onRequestLogout?.(CredentialsLevel.Global)}
+            onRequestDeleteApiKey={() =>
+              onRequestDeleteApiKey?.(CredentialsLevel.Global)
+            }
             texts={texts}
             labelClassName={credentialsRowLabelClassName}
             descriptionClassName={credentialsRowDescriptionClassName}

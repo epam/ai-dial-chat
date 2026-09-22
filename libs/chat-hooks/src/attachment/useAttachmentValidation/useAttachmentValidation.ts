@@ -17,22 +17,28 @@ export enum AttachmentValidationErrorReason {
   NoTypesAllowed = 'noTypesAllowed',
   /** The attachment's content type is not among the allowed MIME types. */
   UnsupportedType = 'unsupportedType',
+  /** The attachment's file size exceeds `maxFileSizeBytes`. */
+  FileTooLarge = 'fileTooLarge',
 }
 
 /** Structured, translation-free report of a rejected attachment, emitted at most once per debounce window. */
 export interface AttachmentValidationErrorEvent {
   /** Why the attachment(s) were rejected. */
   reason: AttachmentValidationErrorReason;
-  /** The resolved MIME types the caller currently allows (possibly empty). */
-  allowedMimeTypes: string[];
+  /** The resolved MIME types the caller currently allows (possibly empty). Present only when `reason` is `NoTypesAllowed` or `UnsupportedType`. */
+  allowedMimeTypes?: string[];
   /** Already-formatted, non-translated extension list (e.g. ".png, .jpg"), present only when `reason` is `UnsupportedType`. */
   formats?: string;
+  /** The size limit, in bytes, that was exceeded. Present only when `reason` is `FileTooLarge`. */
+  maxFileSizeBytes?: number;
 }
 
 /** Parameters for {@link useAttachmentValidation}. */
 export interface UseAttachmentValidationParams {
   /** Resolved MIME types currently allowed for attachments. */
   allowedMimeTypes: string[];
+  /** Maximum attachment file size, in bytes. When omitted, no file is rejected for size. */
+  maxFileSizeBytes?: number;
   /** Called with a structured event when a rejected attachment is reported, at most once per debounce window. */
   onValidationError?: (event: AttachmentValidationErrorEvent) => void;
   /** Debounce window, in ms, before firing `onValidationError` for a rejected file. Defaults to `100`. */
@@ -60,6 +66,7 @@ export interface UseAttachmentValidationResult {
  */
 export const useAttachmentValidation = ({
   allowedMimeTypes,
+  maxFileSizeBytes,
   onValidationError,
   debounceMs = DEFAULT_UNSUPPORTED_TYPE_DEBOUNCE_MS,
 }: UseAttachmentValidationParams): UseAttachmentValidationResult => {
@@ -85,11 +92,17 @@ export const useAttachmentValidation = ({
   const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const fileTooLargeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   useEffect(
     () => () => {
       if (unsupportedTypeTimerRef.current != null) {
         clearTimeout(unsupportedTypeTimerRef.current);
+      }
+      if (fileTooLargeTimerRef.current != null) {
+        clearTimeout(fileTooLargeTimerRef.current);
       }
     },
     [],
@@ -118,9 +131,24 @@ export const useAttachmentValidation = ({
         }, debounceMs);
         return AttachmentErrorReason.UnsupportedType;
       }
+
+      if (maxFileSizeBytes != null && attachment.file.size > maxFileSizeBytes) {
+        if (fileTooLargeTimerRef.current != null) {
+          clearTimeout(fileTooLargeTimerRef.current);
+        }
+        fileTooLargeTimerRef.current = setTimeout(() => {
+          onValidationError?.({
+            reason: AttachmentValidationErrorReason.FileTooLarge,
+            maxFileSizeBytes,
+          });
+          fileTooLargeTimerRef.current = null;
+        }, debounceMs);
+        return AttachmentErrorReason.FileTooLarge;
+      }
+
       return undefined;
     },
-    [stableAllowedMimeTypes, debounceMs, onValidationError],
+    [stableAllowedMimeTypes, maxFileSizeBytes, debounceMs, onValidationError],
   );
 
   return {

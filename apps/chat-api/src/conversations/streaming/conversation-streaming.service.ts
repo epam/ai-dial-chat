@@ -17,7 +17,9 @@ import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import {
   ConversationGenerationService,
+  GenerationCancelReason,
   GenerationStatus,
+  type GenerationLease,
 } from '../conversation-generation.service';
 import {
   ConversationMessageDto,
@@ -58,6 +60,22 @@ const getValidAttachments = (
   (customContent?.attachments ?? []).filter((attachment) =>
     Boolean(attachment.data || attachment.url),
   );
+
+/*
+ * `custom_content.skills[].url` is persisted verbatim from the frontend
+ * (e.g. `skills/public/my chats/123`), unlike every other DIAL resource path
+ * in this codebase, which is percent-encoded right at the DIAL Core call
+ * boundary via `encodeDialResourcePath`. Left unencoded, a path segment with
+ * a space or other reserved character makes DIAL Core reject the whole
+ * completion request with a 400 — encode here, at the same boundary.
+ */
+const getEncodedSkills = (
+  customContent?: ConversationMessageDto['custom_content'],
+) =>
+  customContent?.skills?.map((skill) => ({
+    ...skill,
+    url: encodeDialResourcePath(skill.url),
+  }));
 
 type RelayOutcome =
   | {
@@ -434,7 +452,7 @@ export class ConversationStreamingService {
       `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
     );
 
-    const abortController = this.generationService.register(
+    const lease: GenerationLease = this.generationService.register(
       ownerKey,
       conversationPath,
       generationId,
@@ -453,9 +471,7 @@ export class ConversationStreamingService {
     } catch (err) {
       generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
       this.generationService.error(
-        ownerKey,
-        conversationPath,
-        generationId,
+        lease,
         err instanceof Error ? err.message : undefined,
       );
       throw err;
@@ -483,9 +499,7 @@ export class ConversationStreamingService {
        * (e.g. regenerate) would be rejected with a 409 until stale eviction.
        */
       this.generationService.error(
-        ownerKey,
-        conversationPath,
-        generationId,
+        lease,
         err instanceof Error ? err.message : undefined,
       );
       throw err;
@@ -523,10 +537,12 @@ export class ConversationStreamingService {
       .filter((m) => m.role !== ConversationMessageRole.Status)
       .map((m) => {
         const validAttachments = getValidAttachments(m.custom_content);
+        const encodedSkills = getEncodedSkills(m.custom_content);
         const content = Object.fromEntries(
           Object.entries({
             ...m.custom_content,
             attachments: validAttachments.length ? validAttachments : undefined,
+            skills: encodedSkills?.length ? encodedSkills : undefined,
             configuration_value: undefined,
             stages: undefined,
           }).filter(([, value]) => value != null),
@@ -563,23 +579,12 @@ export class ConversationStreamingService {
     const assembledMessage = {
       ...startConversation.messages[assistantMessageIndex],
     };
-    this.generationService.seedAssembledMessage(
-      ownerKey,
-      conversationPath,
-      generationId,
-      assembledMessage,
-    );
+    this.generationService.seedAssembledMessage(lease, assembledMessage);
     const publishChunk = (
       rawChunk: unknown,
       message: ConversationMessageDto,
     ) => {
-      this.generationService.applyChunk(
-        ownerKey,
-        conversationPath,
-        generationId,
-        rawChunk,
-        message,
-      );
+      this.generationService.applyChunk(lease, rawChunk, message);
     };
 
     const finalize = async (
@@ -596,6 +601,13 @@ export class ConversationStreamingService {
           partialMessage,
         ],
       };
+      /*
+       * Record that the terminal write has been dispatched before awaiting
+       * it (generation-registry, D5): a cancellation arriving after this
+       * point is recorded for telemetry only and never adds, replaces, or
+       * cancels this — the only — write attempt.
+       */
+      this.generationService.beginFinalizing(lease);
       try {
         await this.persistenceService.saveConversation(
           conversationPath,
@@ -607,18 +619,9 @@ export class ConversationStreamingService {
         this.logger.warn(`Failed to save ${status} conversation`, err);
       }
       if (status === GenerationStatus.Done) {
-        this.generationService.complete(
-          ownerKey,
-          conversationPath,
-          generationId,
-        );
+        this.generationService.complete(lease);
       } else {
-        this.generationService.error(
-          ownerKey,
-          conversationPath,
-          generationId,
-          partialMessage.streamErrorMessage,
-        );
+        this.generationService.error(lease, partialMessage.streamErrorMessage);
       }
     };
 
@@ -636,7 +639,7 @@ export class ConversationStreamingService {
               configuration,
             }),
             token,
-            abortController.signal,
+            lease.abortController.signal,
             assembledMessage,
             clientChannelId,
             timezone,
@@ -649,7 +652,7 @@ export class ConversationStreamingService {
             model,
             requestBody,
             token,
-            abortController.signal,
+            lease.abortController.signal,
             assembledMessage,
             clientChannelId,
             timezone,
@@ -701,8 +704,8 @@ export class ConversationStreamingService {
           break;
         case 'aborted': {
           const wasStopped =
-            this.generationService.getStatus(ownerKey, conversationPath) ===
-            GenerationStatus.Stopped;
+            this.generationService.getCancellation(lease)?.reason ===
+            GenerationCancelReason.UserStop;
           const partialMsg = {
             ...relayResult.assembledMessage,
             ...(wasStopped
@@ -750,13 +753,12 @@ export class ConversationStreamingService {
        * abandonment didn't.
        */
       if (!relayCompletedNormally) {
-        abortController.abort();
+        lease.abortController.abort();
         const wasStopped =
-          this.generationService.getStatus(ownerKey, conversationPath) ===
-          GenerationStatus.Stopped;
+          this.generationService.getCancellation(lease)?.reason ===
+          GenerationCancelReason.UserStop;
         const currentAssembledMessage =
-          this.generationService.attach(ownerKey, conversationPath)
-            ?.assembledMessage ?? assembledMessage;
+          this.generationService.getAssembledMessage(lease) ?? assembledMessage;
         const partialMsg = {
           ...currentAssembledMessage,
           ...(wasStopped

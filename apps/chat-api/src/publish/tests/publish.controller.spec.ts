@@ -102,6 +102,7 @@ describe('PublishController (integration)', () => {
         '1.2.0',
         'Test User',
         undefined,
+        undefined,
       );
     });
 
@@ -128,6 +129,7 @@ describe('PublishController (integration)', () => {
         '1.2.0',
         'Test User',
         rules,
+        undefined,
       );
     });
 
@@ -145,6 +147,7 @@ describe('PublishController (integration)', () => {
         'Organization/Data Science',
         '1.2.0',
         'DIAL Team',
+        undefined,
         undefined,
       );
     });
@@ -164,6 +167,7 @@ describe('PublishController (integration)', () => {
         '1.2.0',
         'DIAL Team',
         undefined,
+        undefined,
       );
     });
 
@@ -182,7 +186,56 @@ describe('PublishController (integration)', () => {
         '1.2.0',
         'Test User',
         undefined,
+        undefined,
       );
+    });
+
+    it('forwards publishCredentials: true from the request body to the service', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, publishCredentials: true })
+        .expect(201);
+
+      expect(service.publish).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        'toolset',
+        'tool-abc123',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+        undefined,
+        true,
+      );
+    });
+
+    /* The controller never derives, infers, or overrides the flag. */
+    it('forwards publishCredentials: false unchanged', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, publishCredentials: false })
+        .expect(201);
+
+      expect(service.publish).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        'toolset',
+        'tool-abc123',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+        undefined,
+        false,
+      );
+    });
+
+    it('returns 400 for a non-boolean publishCredentials without calling Core', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/catalog/toolset/tool-abc123/publish')
+        .send({ ...validBody, publishCredentials: 'yes' })
+        .expect(400);
+
+      expect(service.publish).not.toHaveBeenCalled();
     });
 
     it('returns 400 when author exceeds the 200-character limit', async () => {
@@ -252,6 +305,7 @@ describe('PublishController (integration)', () => {
         'Organization/Data Science',
         undefined,
         'Test User',
+        undefined,
         undefined,
       );
     });

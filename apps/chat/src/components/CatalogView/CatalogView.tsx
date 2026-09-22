@@ -1,5 +1,6 @@
 import {
   Catalog,
+  type CatalogItem,
   CredentialsLevel,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
@@ -14,7 +15,7 @@ import {
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -31,7 +32,7 @@ import {
   PublishI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
@@ -71,6 +72,7 @@ import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
 } from '../../utils/publish';
+import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
 
@@ -182,6 +184,22 @@ const CatalogView: FC<Props> = ({
     OverlayFeature.CatalogHideMyApps,
   );
   const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
+  const isApplicationAuthCapable = useFeatureFlag('liveChatInteraction');
+  const isApplicationAuthEnabled = useUiFeature(
+    OverlayFeature.LiveChatInteraction,
+  );
+  const renderCredentials = useCallback(
+    (item: CatalogItem) => {
+      if (
+        item.type !== CatalogEntityType.Agent ||
+        !isApplicationAuthCapable ||
+        !isApplicationAuthEnabled
+      )
+        return null;
+      return <ApplicationCredentials key={item.id} appId={item.id} />;
+    },
+    [isApplicationAuthCapable, isApplicationAuthEnabled],
+  );
   const isCustomAppsEnabled = useUiFeature(OverlayFeature.CustomApps);
   const isSchemaAppsEnabled = useUiFeature(OverlayFeature.SchemaApps);
   const isHideCustomAppCreationEnabled = useUiFeature(
@@ -552,6 +570,7 @@ const CatalogView: FC<Props> = ({
         onToggleFavorite={onToggleFavorite}
         onUseInChat={handleUseInChat}
         onLogin={handleLogin}
+        renderCredentials={renderCredentials}
         onLogout={handleLogout}
         onEdit={handleEdit}
         onDownload={handleDownload}
@@ -589,6 +608,11 @@ const CatalogView: FC<Props> = ({
           }),
           historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
           historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
+          historySharedCredentialsLabel: t(
+            CatalogI18nKeys.PublishHistorySharedCredentials,
+          ),
+          credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
+          credentialsHint: t(CatalogI18nKeys.PublishCredentialsHint),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
           rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),

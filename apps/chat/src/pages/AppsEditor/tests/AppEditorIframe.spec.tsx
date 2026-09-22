@@ -9,6 +9,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as AppConfigContextModule from '../../../context/AppConfigContext';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as deploymentsApi from '../../../server-api/deployments';
@@ -18,6 +19,20 @@ import { AuthStatus } from '../../../types/auth-status';
 import type { AppEditorIframeHandle } from '../AppEditorIframe';
 import AppEditorIframe from '../AppEditorIframe';
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useFeatureFlag: vi.fn(() => true),
+}));
+vi.mock('../../../hooks/useUiFeature', () => ({
+  useUiFeature: vi.fn(() => true),
+}));
+vi.mock(
+  '../../../components/ApplicationCredentials/ApplicationCredentials',
+  () => ({
+    ApplicationCredentials: ({ appId }: { appId: string }) => (
+      <div>Credentials for {appId}</div>
+    ),
+  }),
+);
 vi.mock('../../../context/auth/UserContext');
 vi.mock('../../../context/ThemeContext');
 vi.mock('../../../server-api/toolsets', () => ({
@@ -29,6 +44,18 @@ vi.mock('../../../server-api/deployments', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  Popup: ({
+    children,
+    onClose,
+  }: {
+    children: React.ReactNode;
+    onClose: () => void;
+  }) => (
+    <div role="dialog">
+      {children}
+      <button onClick={onClose}>Close credentials</button>
+    </div>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
@@ -999,5 +1026,90 @@ describe('AppEditorIframe — toolset login broadcast', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(postMessageSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('application credential requests from Quick apps', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(AppConfigContextModule.useFeatureFlag).mockReturnValue(true);
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+  });
+
+  it('does not advertise or open credential forms when the feature is disabled', () => {
+    vi.mocked(AppConfigContextModule.useFeatureFlag).mockReturnValue(false);
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.get('applicationCredentials')).toBe(
+      'false',
+    );
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        origin: SCHEMA.editorUrl,
+        source: iframe.contentWindow,
+        data: {
+          type: AppsEditorEvent.RequestApplicationCredentials,
+          appId: 'agent',
+        },
+      }),
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('opens the shared forms only for a message from the embedded editor window', () => {
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.get('applicationCredentials')).toBe(
+      'true',
+    );
+    const data = {
+      type: AppsEditorEvent.RequestApplicationCredentials,
+      appId: 'applications/public/agent with space',
+    };
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data,
+        origin: SCHEMA.editorUrl,
+        source: window,
+      }),
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data,
+        origin: 'https://untrusted.example',
+        source: iframe.contentWindow,
+      }),
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data,
+        origin: SCHEMA.editorUrl,
+        source: iframe.contentWindow,
+      }),
+    );
+    expect(
+      screen.getByText(
+        'Credentials for applications/public/agent%20with%20space',
+      ),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByText('Close credentials'));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

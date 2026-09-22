@@ -5,7 +5,7 @@ import {
   DEPLOYMENT_ID_VALIDATION_MESSAGE,
 } from '../../common/validators/deployment-id.pattern';
 
-export class GetExternalServiceDto {
+export class ListExternalServicesDto {
   @ApiProperty({
     description:
       'Application identifier the external service belongs to. Slash-separated ' +
@@ -18,7 +18,9 @@ export class GetExternalServiceDto {
     message: DEPLOYMENT_ID_VALIDATION_MESSAGE,
   })
   appId!: string;
+}
 
+export class GetExternalServiceDto extends ListExternalServicesDto {
   @ApiProperty({
     description:
       "The external service id defined in the application's `external_services` config.",

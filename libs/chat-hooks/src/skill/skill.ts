@@ -141,6 +141,49 @@ export interface ParsedSkillManifest {
 // captures the YAML body plus everything after the closing `---`.
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
+/** A line consisting solely of `---`, opening or closing a frontmatter block. */
+const FENCE_LINE_PATTERN = /^---[ \t]*$/;
+
+/**
+ * Answers one question: would appending this text after the fence that
+ * `buildSkillManifest` writes produce a *second* frontmatter block?
+ *
+ * That happens when the text's first non-blank line is a bare `---` and some
+ * later line is a bare `---` too — the exact shape of a `SKILL.md` pasted
+ * wholesale into the editor's Instructions field.
+ *
+ * Detection is deliberately structural rather than YAML-based: a pasted block
+ * whose fenced content fails to parse corrupts the stored manifest
+ * identically (and renders as a setext `h2` in the Catalog's Details tab just
+ * the same), so requiring parseable YAML here would let the worst cases
+ * through. Keeping `parseYaml` out also makes this cheap enough to run on
+ * every keystroke.
+ *
+ * A single unclosed fence returns `false`: with no closing fence there is no
+ * second block, matching `FRONTMATTER_PATTERN`'s own requirement. A `---`
+ * appearing later in the body (a horizontal rule, a setext underline) is
+ * likewise not a frontmatter block.
+ */
+export const startsWithFrontmatterBlock = (text: string): boolean => {
+  /*
+   * A BOM survives a paste from a Windows-authored file, and CRLF would leave
+   * every line with a trailing `\r` that no fence pattern matches.
+   */
+  const lines = text
+    .replace(/^\uFEFF/, '')
+    .replace(/\r\n/g, '\n')
+    .split('\n');
+
+  const openingIndex = lines.findIndex((line) => line.trim() !== '');
+  if (openingIndex === -1 || !FENCE_LINE_PATTERN.test(lines[openingIndex])) {
+    return false;
+  }
+
+  return lines.some(
+    (line, index) => index > openingIndex && FENCE_LINE_PATTERN.test(line),
+  );
+};
+
 /**
  * Parses a `SKILL.md`'s YAML frontmatter and instructions body — the inverse
  * of `buildSkillManifest`/`buildSkillManifestFromFrontmatter`. Throws if the

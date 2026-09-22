@@ -107,6 +107,27 @@ other node requires the user to confirm a popup before
 "Upload from device" as an Add action; it does not support creating an empty
 file or folder.
 
+`onValuesChange` reports the complete current `SkillEditorValues` whenever the
+user edits `name`, `description`, or `instructions` — including a paste into
+the Instructions editor. It is not called for file-tree changes (those arrive
+through `fileActions` and `onDirtyChange`) and not called while the form seeds
+from `initialValues`, since seeding is not a user edit. Use it to validate a
+field's content as it changes and feed the result back through `errors`; the
+component derives no meaning from the values it reports:
+
+```tsx
+<SkillEditor
+  // ...
+  onValuesChange={(values) =>
+    setErrors(
+      isFrontmatter(values.instructions)
+        ? { instructions: t('skillEditor.error.instructionsFrontmatter') }
+        : {},
+    )
+  }
+/>
+```
+
 The header is rendered by `EditorLayout` (from `@epam/ai-dial-builder-form`).
 Pass `onBack` (called when the back arrow is activated), `title` (the page
 heading), and optionally `backAriaLabel` (accessible label for the arrow,

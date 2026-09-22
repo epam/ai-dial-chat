@@ -47,7 +47,10 @@ vi.mock(
   async () => import('../../../context/tests/app-config-context-mock'),
 );
 mockUseAppConfig.mockImplementation(() => ({
-  config: { fileManagerTabs: mockFileManagerTabs.value },
+  config: {
+    fileManagerTabs: mockFileManagerTabs.value,
+    maxAttachmentFileSizeBytes: 536_870_912,
+  },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -79,6 +82,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       toolbarOptions,
       treeOptions,
       autoSelectUploadedItems,
+      maxSelectableFileSize,
+      maxFileSize,
+      uploadValidationMessages,
     }: {
       items?: { path: string }[];
       gridOptions?: {
@@ -94,11 +100,17 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         tabs?: Array<{ value: string; label: string }>;
       };
       autoSelectUploadedItems?: boolean;
+      maxSelectableFileSize?: number;
+      maxFileSize?: number;
+      uploadValidationMessages?: { oversizedFiles?: string };
     }) => (
       <div
         role="region"
         aria-label="file manager"
         data-tab-count={treeOptions?.tabs?.length}
+        data-max-selectable-file-size={maxSelectableFileSize}
+        data-max-file-size={maxFileSize}
+        data-oversized-files-message={uploadValidationMessages?.oversizedFiles}
         data-has-download={String(
           Actions.Download in (gridOptions?.actionLabels ?? {}),
         )}
@@ -269,6 +281,18 @@ describe('DialFileManagerPage', () => {
     render(<DialFileManagerPage />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-tab-count')).toBe('2');
+  });
+
+  it('forwards the AppConfig-sourced size limit as both maxSelectableFileSize and the ui-kit maxFileSize prop, with a translated oversized-upload message', () => {
+    render(<DialFileManagerPage />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-max-selectable-file-size')).toBe(
+      '536870912',
+    );
+    expect(manager.getAttribute('data-max-file-size')).toBe('536870912');
+    expect(manager.getAttribute('data-oversized-files-message')).toBe(
+      'dialFileManager.uploadFileTooLarge',
+    );
   });
 });
 

@@ -84,12 +84,14 @@ export interface ScheduledTaskCreateFormLabels {
   displayNameRequired: string;
   /** Run-at field label (shown when `repeat` is "oneTime"). */
   runAtLabel: string;
+  /** Time-of-day field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
+  timeLabel: string;
+  /** Validation message shown under the time field when its visible draft is not a complete `HH:mm` value. */
+  timeInvalidLabel: string;
   /** Accessible label for the Repeat dropdown. */
   repeatLabel: string;
   /** Options rendered in the Repeat dropdown. */
   repeatOptions: ScheduledTaskRepeatOption[];
-  /** Time field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
-  timeLabel: string;
   /** Day-of-week field label (shown when `repeat` is "weekly"). */
   dayOfWeekLabel: string;
   /** Day-of-month field label (shown when `repeat` is "monthly"). */

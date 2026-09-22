@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import {
   extractDialErrorMessage,
   handleDialFetchError,
@@ -6,8 +6,10 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { parseDialApplicationResource } from '../common/utils/dial-application-resource';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { DialClientService } from '../dial/dial-client.service';
 import type {
+  ApplicationExternalServiceDto,
   ExternalServiceLogoutBodyDto,
   ExternalServiceSigninBodyDto,
   GetExternalServiceResponseDto,
@@ -31,6 +33,41 @@ export class ExternalServicesService {
   private readonly logger = new Logger(ExternalServicesService.name);
 
   constructor(private readonly dialClient: DialClientService) {}
+
+  /** Reads public application metadata; the management listing excludes inline services for ordinary users. */
+  async listExternalServices(
+    accessToken: string,
+    appId: string,
+  ): Promise<ApplicationExternalServiceDto[]> {
+    try {
+      const response = await this.dialClient.client.getApplication(
+        encodeDialResourcePath(appId),
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+      if (response.error) {
+        return mapDialHttpStatus(
+          response.response.status,
+          'list application external services',
+          this.logger,
+        );
+      }
+      if (!response.data) {
+        throw new BadGatewayException(
+          'DIAL Core returned no application metadata',
+        );
+      }
+      return Object.entries(response.data.external_services ?? {}).map(
+        ([id, service]) => ({ id, ...mapDialExternalServiceToDto(service) }),
+      );
+    } catch (error) {
+      return handleDialFetchError(
+        error,
+        'list application external services',
+        this.logger,
+        0,
+      );
+    }
+  }
 
   async getExternalService(
     accessToken: string,
@@ -56,13 +93,30 @@ export class ExternalServicesService {
          * `GET /v1/applications/{appId}/external-services/{id}` is a MANAGEMENT
          * route: it reveals the inline `client_secret`, so Core serves inline
          * (admin-declared) definitions only to callers who can manage the
-         * application — every other caller gets 404. An ordinary user signing
+         * application — other callers may get 403 or 404. An ordinary user signing
          * in to an admin-declared service is exactly the sign-in interrupt's
          * case, so fall back to the application resource, which any user who
          * can read the app may read and which carries the same public
          * `auth_settings` (`client_id`, `authorization_endpoint`,
          * `scopes_supported`) with the secret stripped.
          */
+        if (
+          response.response.status === 403 ||
+          response.response.status === 404
+        ) {
+          try {
+            const services = await this.listExternalServices(
+              accessToken,
+              appId,
+            );
+            const service = services.find(
+              (candidate) => candidate.id === serviceId,
+            );
+            if (service) return service;
+          } catch {
+            /* Preserve the original management error when the application is unreadable. */
+          }
+        }
         if (response.response.status === 404) {
           const fallback = await this.getExternalServiceFromApplication(
             authHeaders,

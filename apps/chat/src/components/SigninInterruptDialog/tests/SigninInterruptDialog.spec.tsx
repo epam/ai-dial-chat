@@ -336,6 +336,54 @@ describe('SigninInterruptDialog', () => {
       );
     });
 
+    it.each([
+      [
+        ExternalServiceLoginOutcomeType.AdminConsentRequired,
+        ToolsetSigninI18nKeys.AdminConsentRequired,
+      ],
+      [
+        ExternalServiceLoginOutcomeType.OfflineUnavailable,
+        ToolsetSigninI18nKeys.OfflineUnavailable,
+      ],
+    ])(
+      'shows the actionable DIAL_NATIVE error %s without reporting success',
+      async (type, message) => {
+        const reportEvent = vi.fn();
+        mockGetExternalService.mockResolvedValue({
+          displayName: 'DIAL native',
+          authenticationType: 'DIAL_NATIVE',
+        });
+        mockUseExternalServiceLogin.mockReturnValue({
+          login: vi.fn().mockResolvedValue({ type }),
+        });
+        mockUseClientChannel.mockReturnValue({
+          channelId: 'channel-1',
+          pendingEvents: [externalServiceEvent('evt-1', APP_ID, 'dial-native')],
+          reportEvent,
+          ensureConnected: vi.fn(),
+          waitForChannel: vi.fn().mockResolvedValue('channel-1'),
+          notifyGenerationSettled: vi.fn(),
+        });
+        mockUseDeployments.mockReturnValue(makeDeploymentsValue([]) as never);
+        mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
+        render(<SigninInterruptDialog />);
+        await screen.findByText('DIAL native');
+        expect(screen.queryByRole('checkbox')).toBeNull();
+        expect(
+          screen.queryByLabelText(ToolsetSigninI18nKeys.ApiKeyLabel),
+        ).toBeNull();
+        expect(
+          screen.getByText(ToolsetSigninI18nKeys.DialNativeHint),
+        ).toBeTruthy();
+        fireEvent.click(
+          screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+        );
+        expect(await screen.findByText(message)).toBeTruthy();
+        expect(screen.getByRole('alert')).toBeTruthy();
+        expect(reportEvent).not.toHaveBeenCalled();
+      },
+    );
+
     it('auto-resolves a NONE-auth external service without user interaction', async () => {
       const reportEvent = vi.fn().mockResolvedValue(undefined);
       mockGetExternalService.mockResolvedValue({

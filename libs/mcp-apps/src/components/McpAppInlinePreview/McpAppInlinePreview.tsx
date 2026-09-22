@@ -5,16 +5,18 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
+  EllipsisTooltip,
   GhostIconButton,
   Spinner,
   mergeClasses,
 } from '@epam/ai-dial-ui-kit';
+import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import {
   IconAlertTriangle,
   IconArrowsMaximize,
   IconRefresh,
 } from '@tabler/icons-react';
-import { FC, memo, useCallback } from 'react';
+import { FC, memo, useCallback, useEffect, useState } from 'react';
 import { MCP_APPS_CLASS } from '../../constants/public-class-names';
 import { useMcpAppInlinePreview } from '../../hooks/useMcpAppInlinePreview/useMcpAppInlinePreview';
 import {
@@ -49,21 +51,20 @@ export interface McpAppInlinePreviewProps {
   actionsGroupAriaLabel?: string;
   /** Message shown when the resource fails to load or the app fails to initialize. */
   loadErrorLabel: string;
+  /**
+   * Whether this message's MCP App is currently open in the full-width
+   * canvas. When `true`, the header stays (so the tool/app identity is still
+   * visible) but the body shows `openedInCanvasLabel` centered instead of
+   * mounting the app — only one live app instance exists at a time.
+   */
+  isOpenedInCanvas?: boolean;
+  /** Message shown centered in the body when `isOpenedInCanvas` is `true`. */
+  openedInCanvasLabel: string;
   /** Color overrides applied as CSS custom properties on the preview's root. */
   colors?: McpAppInlinePreviewColors;
 }
 
-/**
- * Renders a compact, always-visible preview of a message's matched MCP App
- * directly under the message body, spanning the full available width and
- * sized to the mounted app's actual content height. A header strip above the
- * app — styled like the code block's header in `@epam/ai-dial-chat-shared`'s
- * Markdown renderer, with small ghost icon buttons — carries a reload button
- * (re-fetches from scratch, bypassing `cache`) and the expand-to-canvas
- * button (`onExpand`). It sits outside the app's rendered content, so it
- * never overlaps whatever the app draws. Renders nothing while
- * `hostAdapter.sandboxUrl` isn't configured.
- */
+/** Compact, always-visible header+frame preview of a message's matched MCP App — see `McpAppInlinePreviewProps` and the mcp-app-trigger openspec. */
 const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   match,
   toolCall,
@@ -75,14 +76,17 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   reloadAriaLabel,
   actionsGroupAriaLabel = 'MCP app actions',
   loadErrorLabel,
+  isOpenedInCanvas = false,
+  openedInCanvasLabel,
   colors,
 }) => {
-  /*
-   * An app mounted in the compact preview can ask to go fullscreen via
-   * `ui/request-display-mode` — answered by expanding into the full-width
-   * canvas, the same surface the expand button opens. Any other mode request
-   * (including `pip`, which no surface here provides) keeps the preview.
-   */
+  /* Populated once `ui/initialize` completes; reset per `cacheKey` — see mcp-app-trigger spec.md. */
+  const [appInfo, setAppInfo] = useState<Implementation | undefined>(undefined);
+  useEffect(() => {
+    setAppInfo(undefined);
+  }, [cacheKey]);
+
+  /* Maps an app's `ui/request-display-mode` to `onExpand` for 'fullscreen' — see mcp-app-trigger spec.md. */
   const handleRequestDisplayMode = useCallback(
     (mode: McpAppDisplayMode): McpAppDisplayMode => {
       if (mode === 'fullscreen') {
@@ -100,7 +104,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     '--mcpapp-preview-header-border': colors?.previewHeaderBorder,
   });
 
-  const { status, content, reload } = useMcpAppInlinePreview(
+  const { status, content, reload, attemptId } = useMcpAppInlinePreview(
     match,
     toolCall,
     cache,
@@ -130,14 +134,40 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
       <div
         className={mergeClasses(
           styles.previewHeader,
-          'flex min-h-10 items-center justify-end border-b px-4 py-2',
+          'flex min-h-10 items-center justify-between gap-2 border-b px-4 py-2',
           MCP_APPS_CLASS.previewHeader,
         )}
       >
+        <EllipsisTooltip
+          text={
+            appInfo != null ? (
+              <>
+                <span className="dial-tiny-lead-semi-text">
+                  {match.mcpToolName}
+                </span>
+                <span
+                  aria-hidden
+                  className="border-current mx-1.5 inline-block h-3 w-0 border-s align-middle"
+                />
+                <span className="dial-tiny-lead-semi-text">{appInfo.name}</span>
+                {appInfo.version && (
+                  <span className="dial-caption-text ms-2">
+                    {appInfo.version}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="dial-tiny-lead-semi-text">
+                {match.mcpToolName}
+              </span>
+            )
+          }
+          className="text-secondary"
+        />
         <div
           role="toolbar"
           aria-label={actionsGroupAriaLabel}
-          className="flex items-center gap-1"
+          className="flex shrink-0 items-center gap-1"
         >
           <GhostIconButton
             icon={
@@ -166,26 +196,49 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
         </div>
       </div>
       <div className="relative min-h-[200px] w-full">
-        {status === McpAppInlinePreviewStatus.Loading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Spinner />
+        {isOpenedInCanvas ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className="absolute inset-0 flex items-center justify-center p-4"
+          >
+            <span className="dial-body-text text-center text-secondary">
+              {openedInCanvasLabel}
+            </span>
           </div>
-        )}
-        {status === McpAppInlinePreviewStatus.Error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
-            <IconAlertTriangle
-              size={40}
-              stroke={DIAL_KIT_ICON_STROKE}
-              aria-hidden
-              className="text-error"
-            />
-            <p role="alert" className="dial-body-text text-center text-primary">
-              {loadErrorLabel}
-            </p>
-          </div>
-        )}
-        {status === McpAppInlinePreviewStatus.Ready && content && (
-          <McpAppCanvasRenderer content={content} errorLabel={loadErrorLabel} />
+        ) : (
+          <>
+            {status === McpAppInlinePreviewStatus.Loading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Spinner />
+              </div>
+            )}
+            {status === McpAppInlinePreviewStatus.Error && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
+                <IconAlertTriangle
+                  size={40}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
+                  className="text-error"
+                />
+                <p
+                  role="alert"
+                  className="dial-body-text text-center text-primary"
+                >
+                  {loadErrorLabel}
+                </p>
+              </div>
+            )}
+            {status === McpAppInlinePreviewStatus.Ready && content && (
+              <McpAppCanvasRenderer
+                /* Remounts on reload so a prior error doesn't stick — see design.md D23. */
+                key={attemptId}
+                content={content}
+                errorLabel={loadErrorLabel}
+                onAppInfo={setAppInfo}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

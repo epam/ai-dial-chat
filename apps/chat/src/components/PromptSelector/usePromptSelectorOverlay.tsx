@@ -1,215 +1,104 @@
-import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
 import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  extractPromptParams,
-  resolvePromptParams,
-} from '@epam/ai-dial-chat-shared';
-import type { FavoritePromptItem } from '@epam/ai-dial-prompts';
+  usePromptSelectorOverlay as usePromptSelectorOverlayWorkflow,
+  type FavoritePromptItem,
+  type RenderPromptCatalogProps,
+  type UsePromptSelectorOverlayResult,
+} from '@epam/ai-dial-prompts';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  lazy,
-  Suspense,
-  useCallback,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+  ButtonsI18nKeys,
+  FavoritesI18nKeys,
+  NavigationI18nKeys,
+  PromptSelectorI18nKeys,
+} from '../../constants/translation-keys';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useUiFeature } from '../../hooks/useUiFeature';
-
-const PromptSelectorOverlay = lazy(() => import('./PromptSelectorOverlay'));
 
 const PromptCatalogModal = lazy(async () => {
   const module = await import('./PromptCatalogModal');
   return { default: module.default };
 });
 
-const PromptParametersPopupOverlay = lazy(
-  () => import('./PromptParametersPopupOverlay'),
-);
+/** Minimal prompt shape the "Prompt parameters" popup needs — a full `PromptResponseDto` satisfies it structurally. */
+export type PendingParametersPrompt = FavoritePromptItem;
 
-const buildFavoritePromptItem = (
-  prompt: PromptResponseDto,
-): FavoritePromptItem => ({
-  id: prompt.id,
-  name: prompt.name,
-  description: prompt.description,
-  content: prompt.content,
-});
-
-/** Minimal prompt shape the "Prompt parameters" popup needs — satisfied by a full `PromptResponseDto` or a lighter object built from a `CatalogItem`. */
-export type PendingParametersPrompt = Pick<
-  PromptResponseDto,
-  'id' | 'name' | 'content' | 'description'
->;
-
-interface UsePromptSelectorOverlayOptions {
+interface UseAppPromptSelectorOverlayOptions {
   /** Called with the resolved prompt text (parameters already substituted, if any). */
   onInsertText: (text: string) => void;
 }
 
-interface UsePromptSelectorOverlayResult {
-  /**
-   * Pass as the `renderOverlay` of the Prompts entry in the `menuOverlays`
-   * prop of `ConversationInput`/`Input`. `undefined` while
-   * `OverlayFeature.Prompts` is disabled: the host omits the entry entirely
-   * when this is `undefined`, so a stub renderer would leave the row in
-   * place with nothing behind it.
-   */
-  renderOverlay?: (onClose: () => void) => ReactNode;
-  /** Render this element at a stable level outside the popover (e.g. next to the input). */
-  promptCatalogModal: ReactNode;
-  /** Render this element at a stable level outside the popover (e.g. next to the input). */
-  parametersPopup: ReactNode;
-  /**
-   * Opens the "Prompt parameters" popup directly for a prompt that already
-   * came from outside the Add-menu flow (e.g. the Catalog page's "Use in
-   * chat" action). No back chevron is shown — there is no modal to return to.
-   */
-  openParametersPopup: (prompt: PendingParametersPrompt) => void;
-}
-
 /**
- * Owns the Prompts Add-menu flow: the favorites overlay, the "Use prompt"
- * browse modal, and the parameter-resolution popup. Gated behind
- * `OverlayFeature.Prompts`, matching `CatalogView`.
+ * Host adapter for `@epam/ai-dial-prompts`' `usePromptSelectorOverlay`: supplies the merged
+ * prompt listing, favorites state, translated labels, and the lazy-loaded "Use prompt" browse
+ * modal. Gated behind `OverlayFeature.Prompts`, matching `CatalogView`.
  */
-export function usePromptSelectorOverlay({
+export const usePromptSelectorOverlay = ({
   onInsertText,
-}: UsePromptSelectorOverlayOptions): UsePromptSelectorOverlayResult {
+}: UseAppPromptSelectorOverlayOptions): UsePromptSelectorOverlayResult => {
+  const { t } = useTranslation();
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
   const { prompts, sharedWithMe, publicPrompts } = usePrompts();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
-
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
-  const [pendingPrompt, setPendingPrompt] =
-    useState<PendingParametersPrompt | null>(null);
-  const [openedFromBrowse, setOpenedFromBrowse] = useState(false);
 
   const allPrompts = useMemo(
     () => [...prompts, ...sharedWithMe, ...publicPrompts],
     [prompts, sharedWithMe, publicPrompts],
   );
 
-  const favoritePromptItems = useMemo<FavoritePromptItem[]>(
-    () =>
-      allPrompts
-        .filter((prompt) => favoriteIds.has(prompt.id))
-        .map(buildFavoritePromptItem),
-    [allPrompts, favoriteIds],
+  const handleToggleFavorite = useCallback(
+    (id: string) => toggleFavorite(id, false, FavoriteEntityType.Prompt),
+    [toggleFavorite],
   );
 
-  const handlePromptPicked = useCallback(
-    (prompt: PromptResponseDto, fromBrowse: boolean) => {
-      const parameters = extractPromptParams(prompt.content);
-      if (parameters.length === 0) {
-        onInsertText(prompt.content);
-        setIsCatalogOpen(false);
-        return;
-      }
-      setPendingPrompt(prompt);
-      setOpenedFromBrowse(fromBrowse);
-    },
-    [onInsertText],
-  );
-
-  const renderOverlay = useCallback(
-    (onClose: () => void): ReactNode => (
+  const renderCatalog = useCallback(
+    ({ isOpen, onSelect, onClose }: RenderPromptCatalogProps) => (
       <Suspense fallback={null}>
-        <PromptSelectorOverlay
-          favorites={favoritePromptItems}
-          onSelect={(item) => {
-            const prompt = allPrompts.find((p) => p.id === item.id);
-            if (prompt) handlePromptPicked(prompt, false);
-            onClose();
-          }}
-          onToggleFavorite={(id) =>
-            toggleFavorite(id, false, FavoriteEntityType.Prompt)
-          }
-          onBrowse={() => {
-            onClose();
-            setIsCatalogOpen(true);
+        <PromptCatalogModal
+          isOpen={isOpen}
+          onClose={onClose}
+          onSelect={(id) => {
+            const prompt = allPrompts.find((p) => p.id === id);
+            if (prompt) onSelect(prompt);
           }}
         />
       </Suspense>
     ),
-    [favoritePromptItems, allPrompts, handlePromptPicked, toggleFavorite],
+    [allPrompts],
   );
 
-  const promptCatalogModal = (
-    <Suspense fallback={null}>
-      <PromptCatalogModal
-        isOpen={isCatalogOpen}
-        onClose={() => setIsCatalogOpen(false)}
-        onSelect={(id) => {
-          const prompt = allPrompts.find((p) => p.id === id);
-          if (prompt) handlePromptPicked(prompt, true);
-        }}
-      />
-    </Suspense>
+  const labels = useMemo(
+    () => ({
+      panelLabels: {
+        myCollectionLabel: t(PromptSelectorI18nKeys.MyCollectionLabel),
+        emptyHintLabel: t(PromptSelectorI18nKeys.EmptyHint),
+        browseLabel: t(PromptSelectorI18nKeys.BrowseLabel),
+        removeFromFavoritesLabel: t(FavoritesI18nKeys.RemoveFromFavorites),
+      },
+      parametersLabels: {
+        title: t(PromptSelectorI18nKeys.ParametersTitle),
+        closeLabel: t(ButtonsI18nKeys.Close),
+        backLabel: t(NavigationI18nKeys.Back),
+        parametersLabel: t(PromptSelectorI18nKeys.ParametersLabel),
+        detailsLabel: t(PromptSelectorI18nKeys.DetailsLabel),
+        enterValuePlaceholder: t(PromptSelectorI18nKeys.EnterValuePlaceholder),
+        cancelLabel: t(ButtonsI18nKeys.Cancel),
+        submitLabel: t(ButtonsI18nKeys.Confirm),
+      },
+    }),
+    [t],
   );
 
-  const openParametersPopup = useCallback((prompt: PendingParametersPrompt) => {
-    setOpenedFromBrowse(false);
-    setPendingPrompt(prompt);
-  }, []);
-
-  const handleClosePopup = useCallback(() => {
-    setPendingPrompt(null);
-  }, []);
-
-  const handleBackToBrowse = useCallback(() => {
-    setPendingPrompt(null);
-    setIsCatalogOpen(true);
-  }, []);
-
-  const handleSubmitPopup = useCallback(
-    (values: Record<string, string>) => {
-      if (pendingPrompt) {
-        onInsertText(resolvePromptParams(pendingPrompt.content, values));
-      }
-      setPendingPrompt(null);
-      setIsCatalogOpen(false);
-    },
-    [pendingPrompt, onInsertText],
-  );
-
-  const pendingParameters = useMemo(
-    () =>
-      pendingPrompt != null ? extractPromptParams(pendingPrompt.content) : [],
-    [pendingPrompt],
-  );
-
-  const parametersPopup = pendingPrompt != null && (
-    <Suspense fallback={null}>
-      <PromptParametersPopupOverlay
-        open
-        promptName={pendingPrompt.name}
-        content={pendingPrompt.content}
-        description={pendingPrompt.description}
-        parameters={pendingParameters}
-        onBack={openedFromBrowse ? handleBackToBrowse : undefined}
-        onClose={handleClosePopup}
-        onCancel={handleClosePopup}
-        onSubmit={handleSubmitPopup}
-      />
-    </Suspense>
-  );
-
-  if (!isPromptsEnabled) {
-    return {
-      renderOverlay: undefined,
-      promptCatalogModal: null,
-      parametersPopup: null,
-      openParametersPopup: () => undefined,
-    };
-  }
-
-  return {
-    renderOverlay,
-    promptCatalogModal,
-    parametersPopup,
-    openParametersPopup,
-  };
-}
+  return usePromptSelectorOverlayWorkflow({
+    isEnabled: isPromptsEnabled,
+    prompts: allPrompts,
+    favoriteIds,
+    onToggleFavorite: handleToggleFavorite,
+    onInsertText,
+    labels,
+    renderCatalog,
+  });
+};

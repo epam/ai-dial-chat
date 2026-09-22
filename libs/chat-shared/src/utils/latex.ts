@@ -140,6 +140,11 @@ const skipWhitespace = (content: string, index: number): number => {
  * never finds a closing fence — so the block runs to the end of the message and
  * swallows every heading and paragraph after it as raw LaTeX. Normalizing the
  * fences keeps a block that cannot be typeset contained within its own delimiters.
+ *
+ * The same rule rescues the opposite failure: a one-line `$$x = 0$$` owning its
+ * whole line is rejected as a block (its closing `$$` lands in the meta field,
+ * where a `$` is not allowed) and degrades to inline math, which renders without
+ * `display="block"` and so never reaches the scrollable display-math wrapper.
  */
 const normalizeDisplayMathFences = (content: string): string => {
   if (!content.includes('$$')) return content;
@@ -155,20 +160,33 @@ const normalizeDisplayMathFences = (content: string): string => {
     const end = start + match[0].length;
     const body = match[1];
 
-    /* Single-line spans are parsed as inline math text, which has no meta rule
-       and no closing-fence rule, so they are already safe. */
-    if (!body.includes('\n') || isInCodeBlock(start, codeRegions)) continue;
+    if (isInCodeBlock(start, codeRegions)) continue;
 
     /* Only a fence that starts its own line is parsed as a block; one that starts
-       mid-line is inline math text and, again, already safe. */
+       mid-line is inline math text and needs no fence of its own. */
     const lineStart = content.lastIndexOf('\n', start - 1) + 1;
     if (content.slice(lineStart, start).trim() !== '') continue;
+
+    const lineEnd = content.indexOf('\n', end);
+    const tail = content.slice(end, lineEnd === -1 ? content.length : lineEnd);
+
+    /* A `$$ ... $$` span written entirely on one line is display math by intent,
+       but the flow tokenizer rejects it: everything after the opening fence on
+       that line is read as *meta*, and meta may not contain a `$`, so the closing
+       fence disqualifies the construct and the span falls back to inline math
+       text. Inline math carries no `display="block"`, which is the only mark
+       routing a formula into the scrollable `MarkdownMathBlock` wrapper — so a
+       long, internally unbreakable formula overflowed the message column with no
+       way to scroll it. Splitting the fences onto their own lines makes it parse
+       as the block it already was. A span with prose still on its line is left
+       alone: there it reads as inline math, and blocking it would break the
+       sentence apart. */
+    if (!body.includes('\n') && (tail.trim() !== '' || body.trim() === ''))
+      continue;
 
     const inner = body
       .replace(LEADING_FENCE_BREAK_REGEX, '')
       .replace(TRAILING_FENCE_BREAK_REGEX, '');
-    const lineEnd = content.indexOf('\n', end);
-    const tail = content.slice(end, lineEnd === -1 ? content.length : lineEnd);
 
     result.push(content.slice(lastIndex, start));
     result.push(`$$\n${inner}\n$$${tail.trim() === '' ? '' : '\n'}`);

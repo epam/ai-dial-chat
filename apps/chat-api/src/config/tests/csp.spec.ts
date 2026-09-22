@@ -192,6 +192,17 @@ describe('Helmet security headers', () => {
     );
   });
 
+  it('sends a referrer policy that keeps the origin visible cross-site', async () => {
+    app = await createTestApp([]);
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+
+    expect(response.headers['referrer-policy']).toBe(
+      'strict-origin-when-cross-origin',
+    );
+  });
+
   it('allows local HTTP transport when secure transport is disabled', async () => {
     app = await createTestApp([], false);
     const response = await request(app.getHttpServer())

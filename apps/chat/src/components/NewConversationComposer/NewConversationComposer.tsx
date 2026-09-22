@@ -16,6 +16,7 @@ import {
 import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  formatFileSize,
   ResponseFormat,
   type Attachment,
   type DeploymentItem,
@@ -32,7 +33,6 @@ import type {
 import type { FC, ReactNode } from 'react';
 import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -188,7 +188,7 @@ const NewConversationComposer: FC<Props> = ({
   const { t } = useTranslation();
   const { language } = useLanguage();
   const {
-    config: { welcomeScreenDescription },
+    config: { welcomeScreenDescription, maxAttachmentFileSizeBytes },
   } = useAppConfig();
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const { user } = useUser();
@@ -245,10 +245,23 @@ const NewConversationComposer: FC<Props> = ({
     ({
       reason,
       formats,
+      maxFileSizeBytes,
     }: {
       reason: AttachmentValidationErrorReason;
       formats?: string;
+      maxFileSizeBytes?: number;
     }) => {
+      if (reason === AttachmentValidationErrorReason.FileTooLarge) {
+        showErrorNotification({
+          title: t(AttachmentsI18nKeys.FileTooLargeTitle),
+          message: t(AttachmentsI18nKeys.FileTooLargeMessage, {
+            maxSize:
+              maxFileSizeBytes != null ? formatFileSize(maxFileSizeBytes) : '',
+          }),
+        });
+        return;
+      }
+
       const noTypesAllowed =
         reason === AttachmentValidationErrorReason.NoTypesAllowed;
       showErrorNotification({
@@ -275,6 +288,7 @@ const NewConversationComposer: FC<Props> = ({
     fileAccept,
   } = useAttachmentValidation({
     allowedMimeTypes: resolvedSelectedDeployment?.inputAttachmentTypes ?? [],
+    maxFileSizeBytes: maxAttachmentFileSizeBytes,
     onValidationError: handleAttachmentValidationError,
   });
 
@@ -597,7 +611,7 @@ const NewConversationComposer: FC<Props> = ({
           onAttach={handleAttachDialFiles}
           bucket={bucket}
           allowedTypes={inputAttachmentTypes}
-          maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
+          maxSelectableFileSize={maxAttachmentFileSizeBytes}
           maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
           existingAttachmentsAmount={attachmentsAmount}
           canAttachFolders={selectedDeployment?.features?.folderAttachments}

@@ -88,6 +88,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  MCP_APP_HOST_NAME?: string;
+
+  @IsOptional()
+  @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}(-preview)?$/, {
     message:
       'DIAL_API_VERSION must follow the YYYY-MM-DD or YYYY-MM-DD-preview format',
@@ -953,4 +957,18 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   MAX_GENERATION_DURATION_MS?: number = 1_800_000;
+
+  /*
+   * Bounds subscriber and resource release, never ownership (see
+   * openspec/specs/generation-registry/spec.md): if a generation's terminal
+   * write has not settled this long after being dispatched, attach
+   * subscribers are released and the entry moves to the retained `settling`
+   * state, still owning its registry key so a replacement is never admitted
+   * over an unsettled write.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  GENERATION_FINALIZE_TIMEOUT_MS?: number = 60_000;
 }

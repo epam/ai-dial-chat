@@ -22,6 +22,7 @@ import { useUser } from './auth/UserContext';
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
+const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
 
 export interface AppConfigState {
   status: UserConfigStatus;
@@ -35,6 +36,7 @@ export interface AppConfigState {
     mcpAppSandboxUrl: string | null;
     mcpAppTheme: 'light' | 'dark' | null;
     mcpAppUserAgent: string | null;
+    mcpAppHostName: string | null;
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
@@ -48,6 +50,7 @@ export interface AppConfigState {
     customVisualizers: CustomVisualizer[];
     applicationVisualizers: ApplicationVisualizerRegistry;
     publicationFilterSources: string[];
+    maxAttachmentFileSizeBytes: number;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -64,6 +67,7 @@ const INITIAL_STATE: AppConfigState = {
     mcpAppSandboxUrl: null,
     mcpAppTheme: null,
     mcpAppUserAgent: null,
+    mcpAppHostName: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
@@ -77,6 +81,7 @@ const INITIAL_STATE: AppConfigState = {
     customVisualizers: [],
     applicationVisualizers: {},
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
+    maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
   },
 };
 
@@ -109,6 +114,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             mcpAppSandboxUrl: response.config?.mcpAppSandboxUrl ?? null,
             mcpAppTheme: response.config?.mcpAppTheme ?? null,
             mcpAppUserAgent: response.config?.mcpAppUserAgent ?? null,
+            mcpAppHostName: response.config?.mcpAppHostName ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,
@@ -130,6 +136,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             publicationFilterSources:
               response.config?.publicationFilterSources ??
               DEFAULT_PUBLICATION_FILTER_SOURCES,
+            maxAttachmentFileSizeBytes:
+              response.config?.maxAttachmentFileSizeBytes ??
+              DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
           },
           metadata: response.metadata,
         });

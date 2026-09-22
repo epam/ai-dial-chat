@@ -30,6 +30,7 @@ const DEFAULT_ERROR_REASON_TEXT: Record<AttachmentErrorReason, string> = {
   [AttachmentErrorReason.Network]: 'Upload failed · network error',
   [AttachmentErrorReason.UnsupportedType]:
     'Upload failed · unsupported file type',
+  [AttachmentErrorReason.FileTooLarge]: 'Upload failed · file too large',
 };
 
 /** Non-previewable attachment tile showing a file type glyph, extension label, and filename with upload-state feedback. */
@@ -80,7 +81,8 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
   const canRetry =
     isError &&
     !!onRetry &&
-    errorReason !== AttachmentErrorReason.UnsupportedType;
+    errorReason !== AttachmentErrorReason.UnsupportedType &&
+    errorReason !== AttachmentErrorReason.FileTooLarge;
 
   const cornerActionCount =
     Number(!!canDownload) +

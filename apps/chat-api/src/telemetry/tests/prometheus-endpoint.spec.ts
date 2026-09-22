@@ -52,7 +52,7 @@ describe('Prometheus scrape endpoint', () => {
     finishSubscription = trackSseSubscription(
       SseSubscriptionKind.ClientChannel,
     );
-    finishGeneration = trackGeneration();
+    finishGeneration = trackGeneration().finish;
     meter
       .createHistogram('http.server.request.duration', { unit: 's' })
       .record(0.1, { 'http.request.method': 'GET' });
@@ -114,6 +114,8 @@ describe('Prometheus scrape endpoint', () => {
     expect(body).toMatch(
       /dial_chat_sse_active\{[^\n]*kind="generation_attach"[^\n]*\} 0/,
     );
-    expect(body).toMatch(/dial_chat_generations_active\{[^\n]*\} 1/);
+    expect(body).toMatch(
+      /dial_chat_generations_active\{[^\n]*state="active"[^\n]*\} 1/,
+    );
   });
 });

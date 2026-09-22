@@ -25,6 +25,8 @@ export interface McpAppInlinePreviewState {
   content?: McpAppCanvasContent;
   /** Re-fetches the resource and re-resolves the tool result from scratch, bypassing `cache`. */
   reload: () => void;
+  /** Increments on every `reload()` call. Pass as the `key` on `McpAppCanvasRenderer` to force a remount — see design.md D23. */
+  attemptId: number;
 }
 
 /**
@@ -54,7 +56,8 @@ export const useMcpAppInlinePreview = (
   hostAdapter: McpAppHostAdapter,
   onRequestDisplayMode?: (mode: McpAppDisplayMode) => McpAppDisplayMode | void,
 ): McpAppInlinePreviewState => {
-  const { hostContext, sandboxUrl, fetchResourceHtml, callTool } = hostAdapter;
+  const { hostContext, hostInfo, sandboxUrl, fetchResourceHtml, callTool } =
+    hostAdapter;
   const [html, setHtml] = useState<string>();
   const [toolResult, setToolResult] = useState<CallToolResult>();
   /*
@@ -132,12 +135,13 @@ export const useMcpAppInlinePreview = (
     sandboxUrl == null ||
     html == null
   ) {
-    return { status, reload };
+    return { status, reload, attemptId: reloadToken };
   }
 
   return {
     status,
     reload,
+    attemptId: reloadToken,
     content: {
       type: AttachmentContentType.McpApp,
       html,
@@ -145,6 +149,7 @@ export const useMcpAppInlinePreview = (
       toolInput: toolCall?.toolInput,
       toolResult,
       hostContext,
+      hostInfo,
       onToolCall,
       onRequestDisplayMode,
     },

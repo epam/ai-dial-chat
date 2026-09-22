@@ -51,19 +51,21 @@ export interface OfflineCredentialsLoginOutcome {
  * Offline-credentials counterpart to `useToolsetLogin`/`useExternalServiceLogin`:
  * reuses the exact same OAuth popup/`BroadcastChannel` handshake, but drives
  * the `offline-credentials` BFF domain and treats a fresh
- * `useOfflineCredentialsGate` refetch — not the raw callback result — as
- * authoritative for reporting success, per design.md Decision 5.
+ * status refetch as authoritative for reporting success. Callers that fetch
+ * settings after the click can pass a popup they already opened synchronously.
  */
 export const useOfflineCredentialsLogin = (): {
   login: (
     connect: OfflineCredentialsConnectSettings,
     refetch: () => Promise<OfflineCredentialsStatusResult | null>,
+    preparedPopup?: Window,
   ) => Promise<OfflineCredentialsLoginOutcome>;
 } => {
   const login = useCallback(
     async (
       connect: OfflineCredentialsConnectSettings,
       refetch: () => Promise<OfflineCredentialsStatusResult | null>,
+      preparedPopup?: Window,
     ): Promise<OfflineCredentialsLoginOutcome> => {
       const authFormData = {
         authenticationType: ToolsetAuthTypes.OAuth,
@@ -79,7 +81,7 @@ export const useOfflineCredentialsLogin = (): {
        * handler so the browser still treats it as user-triggered — mirrors
        * `useExternalServiceLogin.loginWithOAuth`.
        */
-      const popup = openToolsetOAuthPopup();
+      const popup = preparedPopup ?? openToolsetOAuthPopup();
       if (!popup) {
         return { type: OfflineCredentialsLoginOutcomeType.PopupBlocked };
       }

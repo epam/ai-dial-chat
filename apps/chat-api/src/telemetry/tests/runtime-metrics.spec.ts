@@ -1,6 +1,7 @@
 import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  GenerationGaugeState,
   initializeRuntimeMetrics,
   SseSubscriptionKind,
   trackGeneration,
@@ -101,9 +102,12 @@ describe('runtime metrics', () => {
         attributes: { kind },
       })),
     );
-    expect(await collectValues('dial.chat.generations.active')).toEqual([
-      { value: 0, attributes: {} },
-    ]);
+    expect(await collectValues('dial.chat.generations.active')).toEqual(
+      Object.values(GenerationGaugeState).map((state) => ({
+        value: 0,
+        attributes: { state },
+      })),
+    );
   });
 
   it('counts concurrent subscriptions independently by kind and ignores repeated completion', async () => {
@@ -144,31 +148,45 @@ describe('runtime metrics', () => {
     ]);
   });
 
-  it('counts active generations independently of attached clients without operation labels', async () => {
-    const finishFirst = trackGeneration();
-    const finishSecond = trackGeneration();
+  it('counts active generations independently of attached clients, broken down by state', async () => {
+    const first = trackGeneration();
+    const second = trackGeneration();
     const finishAttach = trackSseSubscription(
       SseSubscriptionKind.GenerationAttach,
     );
-    finishOperations.push(finishFirst, finishSecond, finishAttach);
+    finishOperations.push(first.finish, second.finish, finishAttach);
     finishAttach();
 
-    expect(await collectValues('dial.chat.generations.active')).toEqual([
-      { value: 2, attributes: {} },
-    ]);
-    finishFirst();
-    finishFirst();
-    expect(await collectValues('dial.chat.generations.active')).toEqual([
-      { value: 1, attributes: {} },
-    ]);
-    finishSecond();
-    expect(await collectValues('dial.chat.generations.active')).toEqual([
-      { value: 0, attributes: {} },
-    ]);
+    expect(await collectValues('dial.chat.generations.active')).toContainEqual({
+      value: 2,
+      attributes: { state: GenerationGaugeState.Active },
+    });
+
+    second.setState(GenerationGaugeState.Finalizing);
+    expect(await collectValues('dial.chat.generations.active')).toEqual(
+      expect.arrayContaining([
+        { value: 1, attributes: { state: GenerationGaugeState.Active } },
+        { value: 1, attributes: { state: GenerationGaugeState.Finalizing } },
+      ]),
+    );
+
+    first.finish();
+    first.finish();
+    expect(await collectValues('dial.chat.generations.active')).toContainEqual({
+      value: 0,
+      attributes: { state: GenerationGaugeState.Active },
+    });
+    second.finish();
+    expect(await collectValues('dial.chat.generations.active')).toEqual(
+      Object.values(GenerationGaugeState).map((state) => ({
+        value: 0,
+        attributes: { state },
+      })),
+    );
   });
 
   it('stops memory sampling when callbacks are removed and preserves live counts on reinitialization', async () => {
-    const finish = trackGeneration();
+    const { finish } = trackGeneration();
     finishOperations.push(finish);
     await collectMetrics();
     vi.mocked(process.memoryUsage).mockClear();
@@ -181,9 +199,10 @@ describe('runtime metrics', () => {
     stopCollecting = initializeRuntimeMetrics(
       provider.getMeter('test-runtime'),
     );
-    expect(await collectValues('dial.chat.generations.active')).toEqual([
-      { value: 1, attributes: {} },
-    ]);
+    expect(await collectValues('dial.chat.generations.active')).toContainEqual({
+      value: 1,
+      attributes: { state: GenerationGaugeState.Active },
+    });
     expect(process.memoryUsage).toHaveBeenCalledOnce();
   });
 
@@ -192,10 +211,10 @@ describe('runtime metrics', () => {
     const finishSubscription = trackSseSubscription(
       SseSubscriptionKind.ClientChannel,
     );
-    const finishGeneration = trackGeneration();
-    finishOperations.push(finishSubscription, finishGeneration);
+    const generation = trackGeneration();
+    finishOperations.push(finishSubscription, generation.finish);
     finishSubscription();
-    finishGeneration();
+    generation.finish();
 
     expect(process.memoryUsage).not.toHaveBeenCalled();
   });

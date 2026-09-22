@@ -1,5 +1,6 @@
 export { ChatSkill } from './components/ChatSkill/ChatSkill';
 export { FavoriteSkillsPanel } from './components/FavoriteSkillsPanel/FavoriteSkillsPanel';
+export { SkillArchiveUploadDialog } from './components/SkillArchiveUploadDialog/SkillArchiveUploadDialog';
 export { SkillCatalogModal } from './components/SkillCatalogModal/SkillCatalogModal';
 export { SkillDetailsSidePanel } from './components/SkillDetailsSidePanel/SkillDetailsSidePanel';
 export { SkillInfoTooltipContent } from './components/SkillInfoTooltipContent/SkillInfoTooltipContent';
@@ -18,6 +19,10 @@ export type {
   FavoriteSkillsPanelLabels,
   FavoriteSkillsPanelProps,
 } from './models/favorite-skills-panel-props';
+export type {
+  SkillArchiveUploadDialogLabels,
+  SkillArchiveUploadDialogProps,
+} from './models/skill-archive-upload-dialog-props';
 export type { SkillCatalogModalProps } from './models/skill-catalog-modal-props';
 export type { SkillDetailsSidePanelProps } from './models/skill-details-side-panel-props';
 export type { SkillInfoTooltipContentProps } from './models/skill-info-tooltip-content-props';

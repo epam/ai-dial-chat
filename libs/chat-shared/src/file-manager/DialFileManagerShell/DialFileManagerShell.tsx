@@ -98,8 +98,10 @@ export interface DialFileManagerShellProps {
   autoSelectUploadedItems?: boolean;
   /** MIME type filters for selectable files. */
   allowedFileTypes?: DialFileAcceptType[];
-  /** Maximum file size in bytes for selectable files. */
+  /** Maximum file size in bytes for selectable files, and — reused as the ui-kit's own `maxFileSize` — the maximum size accepted for a newly-uploaded file. */
   maxSelectableFileSize?: number;
+  /** Pre-translated message shown by the ui-kit when a newly-selected file exceeds `maxSelectableFileSize`. Omit to leave upload-size validation unrestricted regardless of `maxSelectableFileSize`. */
+  oversizedUploadMessage?: string;
   /** Custom row-selectability predicate, forwarded to the grid's row selection. */
   isRowSelectable?: (node: {
     data?: FileManagerSelectableNode | null;
@@ -128,6 +130,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   autoSelectUploadedItems = false,
   allowedFileTypes,
   maxSelectableFileSize,
+  oversizedUploadMessage,
   isRowSelectable,
   getDisabledTooltip,
   unsupportedFileTypeTooltip,
@@ -513,6 +516,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             filesLoading={isLoading}
             allowedFileTypes={allowedFileTypes}
             maxSelectableFileSize={maxSelectableFileSize}
+            maxFileSize={maxSelectableFileSize}
+            uploadValidationMessages={
+              oversizedUploadMessage != null
+                ? { oversizedFiles: oversizedUploadMessage }
+                : undefined
+            }
             selectedPaths={selectedPaths}
             onSelectedPathsChange={onSelectedPathsChange}
             navigationPanelOptions={{
