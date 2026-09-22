@@ -3124,6 +3124,17 @@ const { name, description, about, body } =
   parseSkillManifestDocument(rawManifestText);
 ```
 
+### startsWithFrontmatterBlock
+
+Reports whether a text value's first non-blank line is a bare `---` fence closed by a later bare `---` — i.e. whether appending it after `buildSkillManifest`'s own fence would produce a `SKILL.md` with two frontmatter blocks. Detection is structural, not YAML-based, so a pasted block whose fenced content fails to parse is still reported; a single unclosed fence and a `---` appearing later in the body are not.
+
+```ts
+import { startsWithFrontmatterBlock } from '@epam/ai-dial-chat-hooks';
+
+startsWithFrontmatterBlock('---\nname: pdf\n---\n\n# PDF Tools'); // true
+startsWithFrontmatterBlock('# PDF Tools\n\n---\n\nMore.'); // false
+```
+
 ### skillFileToAttachment
 
 Converts a skill supporting file's in-memory bytes into the `Attachment` shape the chat attachment-canvas pipeline expects, so it can be previewed the same way a chat attachment is.

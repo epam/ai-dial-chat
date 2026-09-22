@@ -334,6 +334,84 @@ describe('SkillEditor page', () => {
     expect(createSkill).not.toHaveBeenCalled();
   });
 
+  it('flags a pasted SKILL.md front matter before any submit and keeps the typed Name/Description', async () => {
+    render(<SkillEditor />);
+
+    await user.type(
+      screen.getByPlaceholderText('skillEditor.namePlaceholder'),
+      'my-copy',
+    );
+    await user.type(
+      screen.getByPlaceholderText('skillEditor.descriptionPlaceholder'),
+      'My own description',
+    );
+    const instructions = await screen.findByPlaceholderText(
+      'skillEditor.instructionsPlaceholder',
+    );
+    await user.click(instructions);
+    await user.paste(
+      '---\nname: pdf\ndisplay_name: PDF Tools\ndescription: Work with PDFs\n---\n\n# PDF Tools',
+    );
+
+    expect(
+      await screen.findByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeTruthy();
+    expect(screen.getByDisplayValue('my-copy')).toBeTruthy();
+    expect(screen.getByDisplayValue('My own description')).toBeTruthy();
+    expect(createSkill).not.toHaveBeenCalled();
+  });
+
+  it('blocks Create while the front-matter error stands, and lets it through once removed', async () => {
+    render(<SkillEditor />);
+
+    await fillRequiredFields(user, 'my-copy', 'My own description', '');
+    const instructions = await screen.findByPlaceholderText(
+      'skillEditor.instructionsPlaceholder',
+    );
+    await user.click(instructions);
+    await user.paste('---\nname: pdf\n---\n\n# PDF Tools');
+    await user.click(getCreateButton());
+
+    expect(
+      await screen.findByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeTruthy();
+    expect(createSkill).not.toHaveBeenCalled();
+
+    await user.clear(instructions);
+    await user.type(instructions, '# PDF Tools');
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText('skillEditor.error.instructionsFrontmatter'),
+      ).toBeNull(),
+    );
+    await user.click(getCreateButton());
+
+    await waitFor(() => expect(createSkill).toHaveBeenCalledOnce());
+    const manifest = vi.mocked(createSkill).mock.calls[0][2];
+    expect(manifest.split(/^---[ \t]*$/m)).toHaveLength(3);
+  });
+
+  it('does not flag a SKILL.md imported through the upload dialog', async () => {
+    render(<SkillEditor />);
+    const manifestFile = new File(
+      ['---\nname: good-morning\ndescription: A greeting skill\n---\n\nDo it.'],
+      'SKILL.md',
+    );
+
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
+    expect(
+      screen.queryByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeNull();
+  });
+
   it('shows a naming conflict inline when createSkill rejects with 409', async () => {
     vi.mocked(createSkill).mockRejectedValue({
       response: { status: 409, json: () => Promise.resolve({}) },
@@ -711,6 +789,33 @@ describe('SkillEditor page — edit mode', () => {
       ),
     );
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+  });
+
+  it('shows no front-matter error for a well-formed stored skill', async () => {
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
+
+    render(<SkillEditor />);
+
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+    expect(
+      screen.queryByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeNull();
+  });
+
+  it('surfaces the front-matter error on opening a skill already stored with two blocks', async () => {
+    const corrupt =
+      '---\nname: docs-helper\ndescription: Explains docs\n---\n\n---\nname: pdf\ndescription: Work with PDFs\n---\n\n# PDF Tools';
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(corrupt));
+
+    render(<SkillEditor />);
+
+    expect(
+      await screen.findByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeTruthy();
+
+    await user.click(getSaveButton());
+
+    expect(updateSkill).not.toHaveBeenCalled();
   });
 
   it('opens only one ZIP request during the StrictMode setup-cleanup-setup cycle', async () => {
