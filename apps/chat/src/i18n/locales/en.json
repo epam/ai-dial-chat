@@ -988,7 +988,9 @@
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
     "regionAriaLabelWithTitle": "Announcement: {{title}}",
-    "closeLabel": "Close announcement"
+    "closeLabel": "Close announcement",
+    "expandLabel": "Show the full announcement",
+    "collapseLabel": "Collapse the announcement"
   },
   "announcementsPopover": {
     "pillLabel_one": "+{{count}} announcement",
