@@ -39,7 +39,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   onAppInfo,
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
-  /* The underlying `Error#message` from `AppFrame`'s `onError` (e.g. a sandbox handshake timeout) — shown as a detail line under `errorLabel`. */
+  /* `AppFrame`'s `onError` message, shown as a detail line under `errorLabel` — trust boundary discussed in design.md D23. */
   const [errorDetail, setErrorDetail] = useState<string>();
   const { html, sandboxUrl, toolInput, toolResult, hostContext } = content;
   /*

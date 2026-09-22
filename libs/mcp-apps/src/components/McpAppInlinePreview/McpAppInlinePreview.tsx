@@ -104,7 +104,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     '--mcpapp-preview-header-border': colors?.previewHeaderBorder,
   });
 
-  const { status, content, reload } = useMcpAppInlinePreview(
+  const { status, content, reload, attemptId } = useMcpAppInlinePreview(
     match,
     toolCall,
     cache,
@@ -231,6 +231,8 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
             )}
             {status === McpAppInlinePreviewStatus.Ready && content && (
               <McpAppCanvasRenderer
+                /* Remounts on reload so a prior error doesn't stick — see design.md D23. */
+                key={attemptId}
                 content={content}
                 errorLabel={loadErrorLabel}
                 onAppInfo={setAppInfo}

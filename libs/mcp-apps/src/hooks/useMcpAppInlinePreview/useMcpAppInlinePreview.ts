@@ -25,6 +25,8 @@ export interface McpAppInlinePreviewState {
   content?: McpAppCanvasContent;
   /** Re-fetches the resource and re-resolves the tool result from scratch, bypassing `cache`. */
   reload: () => void;
+  /** Increments on every `reload()` call. Pass as the `key` on `McpAppCanvasRenderer` to force a remount — see design.md D23. */
+  attemptId: number;
 }
 
 /**
@@ -133,12 +135,13 @@ export const useMcpAppInlinePreview = (
     sandboxUrl == null ||
     html == null
   ) {
-    return { status, reload };
+    return { status, reload, attemptId: reloadToken };
   }
 
   return {
     status,
     reload,
+    attemptId: reloadToken,
     content: {
       type: AttachmentContentType.McpApp,
       html,
