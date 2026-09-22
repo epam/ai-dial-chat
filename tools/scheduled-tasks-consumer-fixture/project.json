@@ -2,6 +2,15 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "scheduled-tasks-consumer-fixture",
   "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --project tsconfig.consumer.json --noEmit",
+        "cwd": "tools/scheduled-tasks-consumer-fixture"
+      },
+      "dependsOn": ["pack-lib"],
+      "outputs": []
+    },
     "pack-lib": {
       "executor": "nx:run-commands",
       "options": {
@@ -14,16 +23,23 @@
           "target": "build"
         },
         {
-          "projects": ["@epam/ai-dial-catalog"],
+          "projects": ["@epam/ai-dial-catalog", "@epam/ai-dial-chat-hooks"],
           "target": "build"
         }
       ]
     },
     "build": {
-      "dependsOn": ["pack-lib"]
+      "dependsOn": ["pack-lib"],
+      "options": {
+        "env": { "NODE_ENV": "production" }
+      }
     },
     "test": {
-      "executor": "nx:noop",
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/verify.mjs",
+        "cwd": "tools/scheduled-tasks-consumer-fixture"
+      },
       "dependsOn": ["build"]
     }
   }

@@ -2,12 +2,12 @@ import type {
   CreateScheduledTaskBodyDto,
   UpdateScheduledTaskBodyDto,
 } from '@epam/ai-dial-chat-api-client';
+import type { ScheduledTaskCreateFormValues } from '@epam/ai-dial-scheduled-tasks';
 import {
   validateScheduledTaskFormValues,
   type ScheduledTaskValidationErrors,
   type ScheduledTaskValidationOptions,
 } from '@epam/ai-dial-scheduled-tasks/validation';
-import type { ScheduledTaskCreateFormValues } from '@epam/ai-dial-scheduled-tasks';
 import {
   mapFormValuesToCreateBody,
   mapFormValuesToUpdateBody,

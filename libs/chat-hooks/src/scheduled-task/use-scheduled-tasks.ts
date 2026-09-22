@@ -36,6 +36,7 @@ export const useScheduledTasks = (
   const generation = useRef(0);
   const offset = useRef(0);
   const loadingMore = useRef(false);
+  const moreController = useRef<AbortController | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
 
   useEffect(() => {
@@ -46,16 +47,29 @@ export const useScheduledTasks = (
   useEffect(() => {
     const current = ++generation.current;
     const controller = new AbortController();
+    moreController.current?.abort();
+    moreController.current = null;
+    loadingMore.current = false;
+    setIsLoadingMore(false);
+    setInitialError(null);
+    setLoadMoreError(null);
+    setItems([]);
+    setHasMore(false);
+    offset.current = 0;
+    const cleanup = () => {
+      ++generation.current;
+      controller.abort();
+      moreController.current?.abort();
+      moreController.current = null;
+    };
     if (!enabled) {
       setIsLoading(false);
       setItems([]);
       setHasMore(false);
-      return () => controller.abort();
+      return cleanup;
     }
     const run = async () => {
       setIsLoading(true);
-      setInitialError(null);
-      setLoadMoreError(null);
       try {
         const page = await client.listScheduledTasks({
           limit: pageSize,
@@ -80,12 +94,14 @@ export const useScheduledTasks = (
       }
     };
     void run();
-    return () => controller.abort();
+    return cleanup;
   }, [client, debouncedSearch, enabled, pageSize, reload, sortKey]);
 
   const loadMore = useCallback(() => {
     if (!enabled || !hasMore || isLoading || loadingMore.current) return;
     loadingMore.current = true;
+    const controller = new AbortController();
+    moreController.current = controller;
     const current = generation.current;
     const currentOffset = offset.current;
     void (async () => {
@@ -95,16 +111,22 @@ export const useScheduledTasks = (
         const page = await client.listScheduledTasks({
           limit: pageSize,
           offset: currentOffset,
+          signal: controller.signal,
           search: debouncedSearch,
           sort: sortKey,
         });
         if (generation.current !== current) return;
-        setItems((previous) => [
-          ...previous,
-          ...page.items.filter(
-            (item) => !new Set(previous.map(({ id }) => id)).has(item.id),
-          ),
-        ]);
+        setItems((previous) => {
+          const ids = new Set(previous.map(({ id }) => id));
+          return [
+            ...previous,
+            ...page.items.filter(({ id }) => {
+              if (ids.has(id)) return false;
+              ids.add(id);
+              return true;
+            }),
+          ];
+        });
         offset.current = currentOffset + page.items.length;
         setHasMore(page.next != null);
       } catch (error) {
@@ -115,8 +137,11 @@ export const useScheduledTasks = (
               : new Error('Failed to load more scheduled tasks'),
           );
       } finally {
-        if (generation.current === current) setIsLoadingMore(false);
-        loadingMore.current = false;
+        if (generation.current === current) {
+          setIsLoadingMore(false);
+          loadingMore.current = false;
+          moreController.current = null;
+        }
       }
     })();
   }, [client, debouncedSearch, enabled, hasMore, isLoading, pageSize, sortKey]);

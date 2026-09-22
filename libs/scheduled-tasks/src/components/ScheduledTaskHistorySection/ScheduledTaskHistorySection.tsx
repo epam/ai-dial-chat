@@ -23,6 +23,8 @@ export const ScheduledTaskHistorySection: FC<
   skeletonCount = 6,
   error,
   onRetry,
+  loadMoreError,
+  onRetryLoadMore,
   hasMore = false,
   onLoadMore,
   onRunClick,
@@ -44,16 +46,28 @@ export const ScheduledTaskHistorySection: FC<
         styles.historyCard,
       )
     : 'pt-2';
-  const footer =
-    onLoadMore && hasMore && labels.historyShowMoreLabel ? (
-      <li className={footerClassName}>
+  const footer = loadMoreError ? (
+    <li className={footerClassName}>
+      <p role="alert">
+        {labels.historyLoadMoreErrorLabel ?? labels.historyErrorLabel}
+      </p>
+      {onRetryLoadMore && (
         <GhostButton
-          label={labels.historyShowMoreLabel}
-          onClick={onLoadMore}
+          label={labels.historyRetryLabel}
+          onClick={onRetryLoadMore}
           disabled={isLoadingMore}
         />
-      </li>
-    ) : undefined;
+      )}
+    </li>
+  ) : onLoadMore && hasMore && labels.historyShowMoreLabel ? (
+    <li className={footerClassName}>
+      <GhostButton
+        label={labels.historyShowMoreLabel}
+        onClick={onLoadMore}
+        disabled={isLoadingMore}
+      />
+    </li>
+  ) : undefined;
 
   const nextRun = nextRunLabel ? (
     <p className={mergeClasses(runTimestampClassName, styles.subtitleText)}>
@@ -99,8 +113,9 @@ export const ScheduledTaskHistorySection: FC<
     return (
       <div
         className={mergeClasses(
-          'flex max-h-[var(--st-history-max-height,70vh)] w-full flex-col overflow-y-auto rounded-xl shadow-md desktop:w-[var(--st-history-width,360px)]',
+          'flex max-h-[var(--st-history-max-height,70vh)] w-full max-w-full flex-col overflow-y-auto rounded-xl shadow-md',
           styles.historyCard,
+          styles.cardLayout,
         )}
         style={
           {

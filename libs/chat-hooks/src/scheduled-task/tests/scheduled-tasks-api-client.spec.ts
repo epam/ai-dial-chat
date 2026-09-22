@@ -1,5 +1,5 @@
-import { createScheduledTasksApiClient } from '../scheduled-tasks-api-client';
 import { describe, expect, it, vi } from 'vitest';
+import { createScheduledTasksApiClient } from '../scheduled-tasks-api-client';
 
 const configuredClient = {
   listScheduledTasks: vi.fn(),

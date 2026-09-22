@@ -7,6 +7,8 @@ import {
   useAvailableHeightCap,
 } from '@epam/ai-dial-chat-shared';
 import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Input,
   Textarea,
   Calendar,
@@ -18,6 +20,7 @@ import {
   Select,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
+import { IconArrowNarrowLeft } from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
  * it here, rather than eagerly from the host app's entry point, keeps this
@@ -97,8 +100,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     '--stcf-details-border': colors?.detailsColumnBorder,
     '--stcf-subtitle-text': colors?.sectionSubtitleText,
     '--stcf-error-text': colors?.instructionsErrorText,
-    '--stcf-details-width': layout?.detailsWidth,
-    '--stcf-column-gap': layout?.columnGap,
   });
 
   /*
@@ -167,7 +168,23 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
       isCancelDisabled={isSubmitting}
       isSubmitDisabled={isCreateDisabled}
       isSubmitting={isSubmitting}
-      backIcon={backIcon}
+      backIcon={
+        backIcon === undefined ? (
+          <IconArrowNarrowLeft
+            size={DIAL_ICON_SIZE.LG}
+            stroke={DIAL_KIT_ICON_STROKE}
+            aria-hidden
+            className="rtl:scale-x-[-1]"
+          />
+        ) : (
+          backIcon
+        )
+      }
+      layout={{
+        sideColumnWidth: layout?.detailsWidth,
+        columnGap: layout?.columnGap,
+        reserveEndColumn: false,
+      }}
       className={className}
       styles={{
         colors: { background: colors?.background },
@@ -182,8 +199,9 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           role="group"
           aria-label={labels.detailsSectionTitle}
           className={mergeClasses(
-            'flex flex-1 flex-col gap-5 border-e px-4 py-6 desktop:px-8',
+            'flex flex-1 flex-col gap-5 border-e py-6',
             styles.detailsColumn,
+            styles.formColumn,
           )}
         >
           <div className="flex flex-col gap-1">
@@ -424,7 +442,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
       <div
         role="group"
         aria-label={labels.configurationSectionTitle}
-        className="flex flex-1 flex-col gap-5 px-4 py-6 desktop:px-8"
+        className={mergeClasses(
+          'flex flex-1 flex-col gap-5 py-6',
+          styles.formColumn,
+        )}
       >
         <div className="flex flex-col gap-1">
           <h2 className={sectionTitleClassName}>

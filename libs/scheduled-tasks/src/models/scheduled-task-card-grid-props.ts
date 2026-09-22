@@ -1,12 +1,12 @@
-import type { ScheduledTaskCardStyles } from './scheduled-task-card-props';
+import type {
+  ScheduledTaskCardLabels,
+  ScheduledTaskCardStyles,
+} from './scheduled-task-card-props';
 import type { ScheduledTaskCardSkeletonStyles } from './scheduled-task-card-skeleton-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
 
 /** Localized labels for the {@link ScheduledTaskCardGrid} component's cards. All have English defaults. */
-export interface ScheduledTaskCardGridLabels {
-  /** Label shown in a card's "new" badge. Defaults to `'NEW'`. */
-  newBadgeLabel?: string;
-}
+export type ScheduledTaskCardGridLabels = ScheduledTaskCardLabels;
 
 /** Props for the {@link ScheduledTaskCardGrid} component. */
 export interface ScheduledTaskCardGridProps {
@@ -28,7 +28,10 @@ export interface ScheduledTaskCardGridProps {
 }
 
 export interface ScheduledTaskCardGridLayout {
+  /** Maximum column count. Defaults to 3; fewer columns fit narrower containers. */
   maxColumns?: 1 | 2 | 3;
+  /** Maximum grid width. Defaults to '1180px'. */
+  maxWidth?: string;
   minCardWidth?: string;
   gap?: string;
   cardHeight?: string;

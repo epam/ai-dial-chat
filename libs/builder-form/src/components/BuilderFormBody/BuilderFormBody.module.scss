@@ -1,0 +1,23 @@
+/* Scoped breakpoints keep composed forms independent of host Tailwind screens. */
+.body.body {
+  flex-direction: column;
+}
+.sideColumn.sideColumn {
+  width: 100%;
+}
+.reservedColumn.reservedColumn {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .body.body {
+    flex-direction: row;
+  }
+  .sideColumn.sideColumn {
+    width: 400px;
+    flex-shrink: 0;
+  }
+  .reservedColumn.reservedColumn {
+    display: block;
+  }
+}

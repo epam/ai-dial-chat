@@ -83,6 +83,8 @@ const ScheduledTaskDetailPage: FC = () => {
     isLoading: runsIsLoading,
     isLoadingMore: runsIsLoadingMore,
     error: runsError,
+    loadMoreError: runsLoadMoreError,
+    retryLoadMore: retryRunsLoadMore,
     hasMore: runsHasMore,
     loadMore: onRunsLoadMore,
     refetch: refetchRuns,
@@ -395,6 +397,8 @@ const ScheduledTaskDetailPage: FC = () => {
         runsIsLoadingMore={runsIsLoadingMore}
         runsError={runsError}
         onRunsRetry={refetchRuns}
+        runsLoadMoreError={runsLoadMoreError}
+        onRunsRetryLoadMore={retryRunsLoadMore}
         runsHasMore={runsHasMore}
         onRunsLoadMore={onRunsLoadMore}
         onRunClick={handleRunClick}

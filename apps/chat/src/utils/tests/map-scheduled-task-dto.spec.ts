@@ -77,14 +77,14 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
-  it('falls back to a generic recurring label when cron fields lack hour/minute', () => {
+  it('shows invalid schedule when cron fields are empty', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({ trigger: { cron: { fields: {} } } }),
       fakeT,
     );
 
     expect(result.scheduleLabel).toBe(
-      ScheduledTasksI18nKeys.CardScheduleRecurringFallback,
+      ScheduledTasksI18nKeys.EditInvalidScheduleLabel,
     );
   });
 

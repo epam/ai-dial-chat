@@ -42,7 +42,7 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
          * row reads as the first row of the form content sitting under the
          * app shell's floating header rather than as a page bar.
          */
-        'flex h-16 items-center justify-between gap-6 border-t px-4 desktop:border-b desktop:border-t-0 desktop:px-8',
+        'flex h-16 items-center justify-between gap-6',
         styles.header,
       )}
     >
@@ -73,7 +73,7 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
        * single instance between the top of the page and the bottom, so
        * exactly one copy is visible (and tabbable) at any width.
        */}
-      <div className="hidden items-center gap-2 desktop:flex">
+      <div className={mergeClasses('items-center gap-2', styles.actions)}>
         <BuilderFormActions
           labels={labels}
           onCancel={onCancel}

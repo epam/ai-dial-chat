@@ -3972,3 +3972,30 @@ consuming host back to a previous `@epam/ai-dial-chat-hooks` release:
 3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
    resolved version and integrity hash, rather than a partial mix of pre- and post-change
    versions.
+
+## Scheduler request lifetime and descriptions
+
+`useScheduledTasks` and `useScheduledTaskRuns` abort initial and next-page
+requests when their identity changes or they unmount. Generation checks also
+ignore results from transports that do not honor abort. A new generation
+clears old data, loading guards and errors. An incremental failure retains
+loaded records and its offset; `retryLoadMore` retries that page.
+
+`describeScheduledTaskTrigger(trigger, { timeZone, referenceDate })` is
+independent of editability. Defaults are UTC and the current date. A host
+displaying local time should explicitly pass
+`Intl.DateTimeFormat().resolvedOptions().timeZone`. The reference date
+determines the offset for the existing UTC-storage policy; this is not a
+timezone-aware future scheduler. Numeric weekday values use Monday = 0.
+Hourly `time` is the local minute; daily/weekly/monthly `time` is HH:mm.
+`EveryNMinutes` supplies `intervalMinutes`.
+
+The scheduler APIs are available from both the root barrel and the
+`/scheduled-tasks` entry; prefer the subpath for a focused dependency graph.
+An explicit wildcard or nonzero `second` is `Custom`, preserving the original
+expression instead of describing it as a single minute-level run.
+
+Additional cron constraints and supported scheduler expressions outside the
+simple categories stay `Custom` with their complete expression. Invalid
+numeric ranges/dates are `Invalid`. Monthly schedules crossing midnight stay Custom when the shifted day is not
+equivalent around short months; shifts wholly within days 1–28 remain Monthly. The host owns all localized text.

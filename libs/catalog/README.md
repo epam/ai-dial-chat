@@ -1074,3 +1074,7 @@ surface. The host decides which items qualify and supplies API/authentication
 behavior and translations; `useApplicationCredentials` from
 `@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients.
 Existing toolset `onLogin` / `onLogout` contracts are unchanged.
+
+The public `DeploymentSelectorField` restores focus through the input's
+supported `onFocus` event and never requires a private input ref or DOM query.
+Its keyboard and Browse behavior is exercised by the packed scheduler consumer.

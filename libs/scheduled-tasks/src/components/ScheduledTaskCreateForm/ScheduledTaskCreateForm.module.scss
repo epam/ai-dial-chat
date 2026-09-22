@@ -1,3 +1,11 @@
+.formColumn.formColumn {
+  padding-inline: 16px;
+
+  @media (min-width: 1280px) {
+    padding-inline: 32px;
+  }
+}
+
 .detailsColumn {
   border-inline-end-color: var(
     --stcf-details-border,

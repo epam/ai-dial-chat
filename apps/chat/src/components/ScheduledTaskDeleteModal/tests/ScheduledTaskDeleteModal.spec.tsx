@@ -7,6 +7,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ButtonVariant: { Danger: 'danger', Neutral: 'neutral' },
+  ButtonAppearance: { Ghost: 'ghost' },
   /* Mirrors the real popup: body children plus the footer buttons declared
      as data. The test i18n mock returns keys, so labels render as their
      translation keys. */
@@ -17,7 +18,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     mainButtons,
   }: {
     open: boolean;
-    header: string;
+    header: React.ReactNode;
     children?: React.ReactNode;
     mainButtons?: {
       label?: React.ReactNode;
@@ -26,7 +27,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     }[];
   }) =>
     open ? (
-      <div role="dialog" aria-label={header}>
+      <div role="dialog" aria-labelledby="delete-dialog-title">
+        <h2 id="delete-dialog-title">{header}</h2>
         {children}
         {mainButtons?.map((button, index) => (
           <button
@@ -58,6 +60,11 @@ describe('ScheduledTaskDeleteModal', () => {
   it('renders the task name, warning sentence, and consequences list when open', () => {
     renderModal();
 
+    expect(
+      screen.getByRole('dialog', {
+        name: 'scheduledTasks.detail.deleteConfirmTitle',
+      }),
+    ).toBeTruthy();
     expect(screen.getByText('Daily summary')).toBeTruthy();
     /* The test Trans mock renders the i18nKey itself. */
     expect(

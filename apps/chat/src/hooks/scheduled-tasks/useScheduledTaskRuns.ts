@@ -9,3 +9,8 @@ export const useScheduledTaskRuns = (scheduleId: string, enabled = true) => {
   });
   return { ...result, error: result.initialError };
 };
+
+/** Public app-adapter result retained for active-task conversation consumers. */
+export type UseScheduledTaskRunsResult = ReturnType<
+  typeof useScheduledTaskRuns
+>;

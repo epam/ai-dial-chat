@@ -5,7 +5,7 @@ import type { ScheduledTaskCardGridProps } from '../../models/scheduled-task-car
 import { ScheduledTaskCard } from '../ScheduledTaskCard/ScheduledTaskCard';
 import { ScheduledTaskCardSkeleton } from '../ScheduledTaskCardSkeleton/ScheduledTaskCardSkeleton';
 
-/** Mobile-first responsive grid of {@link ScheduledTaskCard}s: one column on mobile, three columns on desktop. */
+/** Container-responsive grid of {@link ScheduledTaskCard}s with one to three columns. */
 export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
   items,
   searchQuery,
@@ -22,11 +22,15 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
         '--st-grid-min-card-width': layout?.minCardWidth,
         '--st-grid-gap': layout?.gap,
         '--st-card-height': layout?.cardHeight,
-        '--st-grid-columns': layout?.maxColumns,
+        '--st-grid-columns': layout?.maxColumns ?? 3,
+        maxWidth: layout?.maxWidth ?? '1180px',
+        gap: 'var(--st-grid-gap, 20px)',
+        gridTemplateColumns:
+          'repeat(auto-fill, minmax(min(100%, max(var(--st-grid-min-card-width, 320px), calc((100% - (var(--st-grid-columns) - 1) * var(--st-grid-gap, 20px)) / var(--st-grid-columns)))), 1fr))',
       } as CSSProperties
     }
     className={mergeClasses(
-      'grid grid-cols-1 gap-[var(--st-grid-gap,20px)] desktop:grid-cols-[repeat(var(--st-grid-columns,3),minmax(var(--st-grid-min-card-width,0),1fr))]',
+      'mx-auto grid w-full min-w-0',
       SCHEDULED_TASKS_CLASS.cardGrid,
     )}
   >
@@ -38,7 +42,6 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
         onCardClick={onCardClick}
         labels={labels}
         styles={cardStyles}
-        className={layout?.cardHeight ? 'h-[var(--st-card-height)]' : undefined}
       />
     ))}
     {Array.from({ length: trailingSkeletonCount }, (_, index) => (

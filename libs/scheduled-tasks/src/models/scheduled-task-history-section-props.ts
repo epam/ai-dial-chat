@@ -10,6 +10,8 @@ export interface ScheduledTaskHistorySectionLabels {
   historyEmptyLabel: string;
   /** Message shown alongside the retry action when `error` is set. */
   historyErrorLabel: string;
+  /** Next-page failure message; falls back to historyErrorLabel. */
+  historyLoadMoreErrorLabel?: string;
   /** Label for the retry action shown alongside `error`. */
   historyRetryLabel: string;
   /** Announced via `aria-live` while a load-more runs fetch is in flight. */
@@ -62,6 +64,10 @@ export interface ScheduledTaskHistorySectionProps {
   error?: Error | null;
   /** Called when the user activates the retry action shown alongside `error`. */
   onRetry?: () => void;
+  /** Next-page failure, displayed beneath existing runs. */
+  loadMoreError?: Error | null;
+  /** Retries the failed page without clearing existing runs. */
+  onRetryLoadMore?: () => void;
   /** Whether another page of `items` is available beyond what has been loaded. Defaults to `false`. */
   hasMore?: boolean;
   /** Called when the user activates the "Show more" button, rendered while `hasMore` is `true`. Omit to hide the button entirely. */

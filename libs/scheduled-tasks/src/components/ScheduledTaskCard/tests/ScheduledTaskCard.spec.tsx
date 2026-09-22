@@ -108,7 +108,9 @@ describe('ScheduledTaskCard', () => {
   it('renders the card with a fixed height', () => {
     render(<ScheduledTaskCard item={buildItem()} />);
 
-    expect(screen.getByRole('group').className).toContain('h-[232px]');
+    expect(screen.getByRole('group').className).toContain(
+      'h-[var(--st-card-height,232px)]',
+    );
   });
 
   it('clamps a long description instead of growing the card', () => {

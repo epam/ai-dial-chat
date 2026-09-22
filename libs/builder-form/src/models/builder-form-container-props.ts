@@ -55,4 +55,6 @@ export interface BuilderFormContainerProps {
   metadata?: ReactNode;
   /** Style overrides. */
   styles?: BuilderFormContainerStyles;
+  /** Optional container-responsive body sizing. */
+  layout?: import('./builder-form-body-props').BuilderFormBodyProps['layout'];
 }

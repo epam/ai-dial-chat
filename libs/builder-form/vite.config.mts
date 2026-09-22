@@ -5,7 +5,9 @@ import dts from 'vite-plugin-dts';
 import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
 
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => ({
+  // Published libraries must also run with React's production runtime.
+  oxc: command === 'build' ? { jsx: { development: false } } : undefined,
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/builder-form',
   plugins: [

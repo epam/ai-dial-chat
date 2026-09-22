@@ -16,7 +16,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import type { TabItem } from '@epam/ai-dial-ui-kit';
 import {
-  IconArrowLeft,
+  IconArrowNarrowLeft,
   IconPencilMinus,
   IconTrashX,
 } from '@tabler/icons-react';
@@ -67,6 +67,8 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   runsSkeletonCount = 6,
   runsError,
   onRunsRetry,
+  runsLoadMoreError,
+  onRunsRetryLoadMore,
   runsHasMore = false,
   onRunsLoadMore,
   onRunClick,
@@ -160,6 +162,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         historyTitle: labels.historyTitle,
         historyEmptyLabel: labels.historyEmptyLabel,
         historyErrorLabel: labels.historyErrorLabel,
+        historyLoadMoreErrorLabel: labels.historyLoadMoreErrorLabel,
         historyRetryLabel: labels.historyRetryLabel,
         historyLoadingMoreLabel: labels.historyLoadingMoreLabel,
         historyShowMoreLabel: labels.historyShowMoreLabel,
@@ -173,6 +176,8 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       skeletonCount={runsSkeletonCount}
       error={runsError}
       onRetry={onRunsRetry}
+      loadMoreError={runsLoadMoreError}
+      onRetryLoadMore={onRunsRetryLoadMore}
       hasMore={runsHasMore}
       onLoadMore={onRunsLoadMore}
       onRunClick={onRunClick}
@@ -209,7 +214,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     >
       <div
         className={mergeClasses(
-          'flex h-16 shrink-0 items-center justify-between gap-2 border-t px-8 desktop:border-b desktop:border-t-0',
+          'flex h-16 shrink-0 items-center justify-between gap-2 px-8',
           styles.header,
         )}
       >
@@ -217,7 +222,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           <GhostIconButton
             icon={
               backIcon === undefined ? (
-                <IconArrowLeft
+                <IconArrowNarrowLeft
                   size={DIAL_ICON_SIZE.LG}
                   className="rtl:scale-x-[-1]"
                   aria-hidden
@@ -237,7 +242,8 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
            */}
           <h1
             className={mergeClasses(
-              'hidden truncate desktop:block',
+              'truncate',
+              styles.desktopTitle,
               titleClassName,
             )}
           >
@@ -246,7 +252,8 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           {isDeleted && (
             <span
               className={mergeClasses(
-                'hidden shrink-0 desktop:inline',
+                'shrink-0',
+                styles.desktopBadge,
                 fieldValueClassName,
                 styles.subtitleText,
               )}
@@ -307,7 +314,12 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
        * (mobile and tablet), where the in-header title is hidden — exactly
        * one copy of the title is visible at any width.
        */}
-      <div className="flex min-w-0 items-center gap-2 px-8 py-3 desktop:hidden">
+      <div
+        className={mergeClasses(
+          'min-w-0 items-center gap-2 px-8 py-3',
+          styles.mobileTitleRow,
+        )}
+      >
         <h1 className={mergeClasses('truncate', titleClassName)}>
           {displayName}
         </h1>
@@ -373,19 +385,25 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           <div
             style={
               {
+                flexDirection: 'row',
+                flexWrap: 'wrap',
                 '--st-details-width': layout?.detailsWidth,
                 '--st-history-width': layout?.historyWidth,
                 '--st-history-max-height': layout?.historyMaxHeight,
                 '--st-configuration-min-width': layout?.configurationMinWidth,
               } as CSSProperties
             }
-            className="flex flex-1 flex-col desktop:flex-row"
+            className="flex flex-1"
           >
             <div
               role="group"
               aria-label={labels.detailsTitle}
+              style={{
+                flex: `0 1 ${layout?.detailsWidth ?? '360px'}`,
+                maxWidth: '100%',
+              }}
               className={mergeClasses(
-                'flex w-full flex-col gap-5 border-e px-8 py-6 desktop:w-[var(--st-details-width,360px)] desktop:shrink-0',
+                'flex w-full flex-col gap-5 border-e px-8 py-6',
                 styles.detailsColumn,
               )}
             >
@@ -393,14 +411,26 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
               {detailsSection}
             </div>
 
-            <div className="flex w-full min-w-0 flex-1 flex-col gap-5 px-8 py-6 desktop:min-w-[var(--st-configuration-min-width,0)]">
+            <div
+              style={{
+                flex: `1 1 ${layout?.configurationMinWidth ?? '320px'}`,
+                minWidth: 0,
+              }}
+              className="flex w-full min-w-0 flex-col gap-5 px-8 py-6"
+            >
               <h2 className={sectionTitleClassName}>
                 {labels.configurationTitle}
               </h2>
               {configurationSection}
             </div>
 
-            <div className="flex w-full justify-center p-6 desktop:w-auto desktop:items-start">
+            <div
+              style={{
+                flex: `0 1 calc(${layout?.historyWidth ?? '360px'} + 48px)`,
+                minWidth: 0,
+              }}
+              className="flex w-full items-start justify-center p-6"
+            >
               {buildHistorySection(ScheduledTaskHistorySectionVariant.Card)}
             </div>
           </div>

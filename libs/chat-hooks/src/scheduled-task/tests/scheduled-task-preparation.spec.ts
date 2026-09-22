@@ -1,13 +1,13 @@
 import {
-  prepareScheduledTaskCreateBody,
-  prepareScheduledTaskUpdateBody,
-} from '../scheduled-task-preparation';
-import {
   ScheduledTaskRepeat,
   type ScheduledTaskCreateFormValues,
 } from '@epam/ai-dial-scheduled-tasks';
 import { ScheduledTaskValidationErrorCode } from '@epam/ai-dial-scheduled-tasks/validation';
 import { describe, expect, it } from 'vitest';
+import {
+  prepareScheduledTaskCreateBody,
+  prepareScheduledTaskUpdateBody,
+} from '../scheduled-task-preparation';
 
 const values: ScheduledTaskCreateFormValues = {
   displayName: 'Monthly review',

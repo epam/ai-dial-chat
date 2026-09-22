@@ -260,3 +260,50 @@ Maximum length of the create form's description field: `500` characters.
 ```ts
 import { DESCRIPTION_MAX_LENGTH } from '@epam/ai-dial-scheduled-tasks';
 ```
+
+## Review corrections: layout, history and package boundaries
+
+Import UI Kit base/theme CSS once and the public scheduler stylesheet:
+
+```ts
+import '@epam/ai-dial-ui-kit/styles.css';
+import '@epam/ai-dial-scheduled-tasks/styles.css';
+```
+
+The scheduler stylesheet includes the **built CSS Modules** of builder-form.
+Do not import builder source styles: compiling a module as plain CSS loses
+the class names used by the published JavaScript.
+
+- `gridLayout` (or CardGrid's `layout`) supports `maxColumns` (3),
+  `minCardWidth` (320px), `maxWidth` (1180px), `gap` (20px) and
+  `cardHeight` (232px). Columns respond to the available container width;
+  skeletons inherit the same height.
+- Card colors `pausedTitleText` and `completedTitleText` override
+  `titleText` for that status only. CardGrid accepts every card badge label.
+- Form `styles.layout.detailsWidth` and `columnGap` configure the shared
+  builder layout. The scheduler uses two wrapping columns without an empty
+  third column. Generic builder forms retain their existing default layout.
+- Detail columns wrap when their requested sizes cannot fit. Existing mobile
+  tabs remain. History width excludes its surrounding 24px padding.
+- Detail accepts `runsLoadMoreError` and `onRunsRetryLoadMore`; the standalone
+  HistorySection accepts `loadMoreError` and `onRetryLoadMore`. These show a
+  footer error without replacing loaded runs. `historyLoadMoreErrorLabel`
+  defaults to `historyErrorLabel`.
+- Delete confirmation `cancelAppearance` defaults to UI Kit
+  `ButtonAppearance.Ghost`. Existing title/action class settings still apply.
+- Scheduler forms/details default to a narrow back arrow; explicit
+  `backIcon` replaces it, and `null` hides it.
+
+The `/validation` subpath ships its own JavaScript and declaration entry and
+can be imported without mounting UI. The packed consumer's test target checks
+real installed types, imports, CSS, grid sizing and interactions:
+
+```sh
+npm exec nx run scheduled-tasks-consumer-fixture:test
+```
+
+Responsive visibility and spacing in scheduler surfaces and their builder shell
+use scoped CSS with the package's 1280px desktop threshold. Host utility styles
+using a different desktop threshold do not expose duplicate titles/actions or
+show the Create label inside its mobile icon button. The packed fixture checks
+both stylesheet orders in LTR and RTL at 360, 900, 1279, 1280 and 1920px.

@@ -1,6 +1,6 @@
 /* The scheduler is a composed surface: its documented stylesheet includes the
  * structural styles supplied by its builder-form dependency. */
-import '../../builder-form/src/styles.css';
+import '@epam/ai-dial-builder-form/styles.css';
 
 export { ScheduledTasks } from './components/ScheduledTasks/ScheduledTasks';
 export type {

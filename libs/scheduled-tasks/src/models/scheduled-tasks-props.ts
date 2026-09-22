@@ -1,8 +1,10 @@
 import { SelectOption } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
-import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
-import type { ScheduledTaskCardGridLayout } from './scheduled-task-card-grid-props';
+import type {
+  ScheduledTaskCardGridLabels,
+  ScheduledTaskCardGridLayout,
+} from './scheduled-task-card-grid-props';
 import type { ScheduledTaskCardStyles } from './scheduled-task-card-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
 

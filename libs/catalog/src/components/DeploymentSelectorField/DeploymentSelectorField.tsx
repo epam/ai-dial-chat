@@ -164,7 +164,9 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
   );
   const trigger = (
     <Input
-      ref={triggerRef}
+      onFocus={(event) => {
+        triggerRef.current = event.currentTarget;
+      }}
       readOnly
       role="combobox"
       aria-haspopup="listbox"

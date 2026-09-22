@@ -16,7 +16,9 @@ const EXTERNAL_PEER_NAMES = [
   ...Object.keys(ownPackageJson.peerDependencies ?? {}),
 ];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => ({
+  // Published libraries must also run with React's production runtime.
+  oxc: command === 'build' ? { jsx: { development: false } } : undefined,
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/chat-hooks',
   resolve: {
@@ -105,6 +107,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-attachment-input': path.resolve(
         import.meta.dirname,
         '../attachment-input/src/index.ts',
+      ),
+      '@epam/ai-dial-builder-form/styles.css': path.resolve(
+        import.meta.dirname,
+        '../builder-form/src/styles.css',
       ),
       '@epam/ai-dial-builder-form': path.resolve(
         import.meta.dirname,

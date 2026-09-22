@@ -136,6 +136,6 @@ describe('DeploymentSelectorField', () => {
     fireEvent.keyDown(combobox, { key: 'Enter' });
     expect(combobox.getAttribute('aria-expanded')).toBe('true');
     fireEvent.click(screen.getByRole('option', { name: 'Model' }));
-    expect(document.activeElement).toBe(combobox);
+    expect(combobox.matches(':focus')).toBe(true);
   });
 });

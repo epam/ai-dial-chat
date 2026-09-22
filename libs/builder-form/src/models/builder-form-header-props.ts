@@ -1,5 +1,5 @@
-import type { BuilderFormActionsLabels } from './builder-form-actions-props';
 import type { ReactNode } from 'react';
+import type { BuilderFormActionsLabels } from './builder-form-actions-props';
 
 /** Localized labels used by the {@link BuilderFormHeader} component. */
 export interface BuilderFormHeaderLabels extends BuilderFormActionsLabels {

@@ -5,6 +5,7 @@ import { ScheduledTaskDeleteConfirmation } from '../ScheduledTaskDeleteConfirmat
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   ButtonVariant: { Danger: 'danger' },
+  ButtonAppearance: { Ghost: 'ghost' },
   Popup: ({
     header,
     children,

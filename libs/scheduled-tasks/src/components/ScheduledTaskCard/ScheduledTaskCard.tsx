@@ -53,8 +53,19 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     typography?.pausedBadgeClassName ?? 'dial-tiny-text';
   const completedBadgeClassName =
     typography?.completedBadgeClassName ?? 'dial-tiny-text';
+  const status =
+    item.presentationStatus ??
+    (item.isActive === false
+      ? ScheduledTaskPresentationStatus.Paused
+      : ScheduledTaskPresentationStatus.Active);
+  const statusTitleText =
+    status === ScheduledTaskPresentationStatus.Paused
+      ? colors?.pausedTitleText
+      : status === ScheduledTaskPresentationStatus.Completed
+        ? colors?.completedTitleText
+        : undefined;
   const cssVars = buildCssVars({
-    '--stc-title-text': colors?.titleText,
+    '--stc-title-text': statusTitleText ?? colors?.titleText,
     '--stc-desc-text': colors?.descriptionText,
     '--stc-pill-bg': colors?.schedulePillBackground,
     '--stc-pill-border': colors?.schedulePillBorder,
@@ -71,11 +82,6 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     '--stc-completed-border': colors?.completedBadgeBorder,
     '--stc-completed-text': colors?.completedBadgeText,
   });
-  const status =
-    item.presentationStatus ??
-    (item.isActive === false
-      ? ScheduledTaskPresentationStatus.Paused
-      : ScheduledTaskPresentationStatus.Active);
 
   const cardClickProps = onCardClick
     ? {
@@ -96,7 +102,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       aria-label={item.displayName}
       style={cssVars}
       className={mergeClasses(
-        'h-[232px]',
+        'h-[var(--st-card-height,232px)]',
         onCardClick && 'cursor-pointer',
         className,
         SCHEDULED_TASKS_CLASS.card,

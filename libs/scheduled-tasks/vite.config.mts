@@ -5,7 +5,9 @@ import dts from 'vite-plugin-dts';
 import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
 
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => ({
+  // Published libraries must also run with React's production runtime.
+  oxc: command === 'build' ? { jsx: { development: false } } : undefined,
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/scheduled-tasks',
   plugins: [
@@ -24,9 +26,10 @@ export default defineConfig(() => ({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: 'src/index.ts',
+      entry: { index: 'src/index.ts', validation: 'src/validation.ts' },
+      cssFileName: 'index',
       name: '@epam/ai-dial-scheduled-tasks',
-      fileName: 'index',
+      fileName: (_format, entryName) => `${entryName}.js`,
       formats: ['es' as const],
     },
     rolldownOptions: {
@@ -55,16 +58,29 @@ export default defineConfig(() => ({
      * vitest cannot load. Kept out of the shared `resolve.alias` so it never
      * affects this lib's own production build.
      */
-    alias: {
-      '@epam/ai-dial-builder-form': path.resolve(
-        import.meta.dirname,
-        '../builder-form/src/index.ts',
-      ),
-      '@epam/ai-dial-chat-shared': path.resolve(
-        import.meta.dirname,
-        '../chat-shared/src/index.ts',
-      ),
-    },
+    alias: [
+      {
+        find: '@epam/ai-dial-builder-form/styles.css',
+        replacement: path.resolve(
+          import.meta.dirname,
+          '../builder-form/src/styles.css',
+        ),
+      },
+      {
+        find: /^@epam\/ai-dial-builder-form$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          '../builder-form/src/index.ts',
+        ),
+      },
+      {
+        find: /^@epam\/ai-dial-chat-shared$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          '../chat-shared/src/index.ts',
+        ),
+      },
+    ],
     setupFiles: ['./src/test-setup.ts'],
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],

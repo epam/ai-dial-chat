@@ -422,3 +422,17 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Optional body layout
+
+`BuilderFormBody` and `BuilderFormContainer` accept `layout` with
+`sideColumnWidth` (400px), `columnGap` (0px) and `reserveEndColumn` (true).
+Supplying layout enables wrapping columns based on the available container
+width. Set `reserveEndColumn: false` for a two-column form. Omitting layout
+preserves the existing responsive three-column behavior.
+The public `styles.css` entry is the built stylesheet with matching CSS
+Modules names; composed packages must include that entry, not source SCSS.
+
+The composed form header, body and action footer use scoped 1280px responsive
+rules. Host Tailwind screen definitions do not change which action set is visible.
+Explicit body layout options still size and wrap columns by their container.

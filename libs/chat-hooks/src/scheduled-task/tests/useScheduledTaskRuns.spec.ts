@@ -4,10 +4,7 @@ import { useScheduledTaskRuns } from '../use-scheduled-task-runs';
 
 describe('shared useScheduledTaskRuns', () => {
   it('discards a response from a replaced schedule identity', async () => {
-    let resolveFirst: (page: {
-      items: { id: string }[];
-      next: null;
-    }) => void = () => {};
+    let resolveFirst!: (page: { items: { id: string }[]; next: null }) => void;
     const listScheduledTaskRuns = vi.fn().mockImplementation(
       () =>
         new Promise((resolve) => {

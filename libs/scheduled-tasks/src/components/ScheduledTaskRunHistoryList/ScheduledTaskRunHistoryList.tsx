@@ -141,7 +141,8 @@ export const ScheduledTaskRunHistoryList: FC<
         aria-label={accessibleName}
         aria-current={isCurrent ? 'true' : undefined}
         className={mergeClasses(
-          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full pe-2 ps-0 desktop:ps-5',
+          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full pe-2',
+          styles.rowLayout,
           isCurrent && styles.currentRun,
           isClickable && 'cursor-pointer',
           isClickable && styles.interactiveRow,
@@ -180,7 +181,10 @@ export const ScheduledTaskRunHistoryList: FC<
       <li
         key={`history-skeleton-${index}`}
         aria-hidden="true"
-        className="flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 pe-2 ps-0 desktop:ps-5"
+        className={mergeClasses(
+          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 pe-2',
+          styles.rowLayout,
+        )}
       >
         <Skeleton
           variant={SkeletonVariant.Rectangular}

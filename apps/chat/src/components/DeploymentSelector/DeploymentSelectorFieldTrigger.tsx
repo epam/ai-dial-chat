@@ -1,6 +1,6 @@
+import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
-import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,

@@ -1,20 +1,47 @@
+import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
+import {
+  DeploymentSelectorField,
+  type DeploymentSelectorDisplayRecord,
+} from '@epam/ai-dial-catalog';
+import {
+  describeScheduledTaskTrigger,
+  prepareScheduledTaskCreateBody,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   ScheduledTaskCreateForm,
+  ScheduledTaskRepeat,
+  ScheduledTaskCardGrid,
   ScheduledTaskDetailView,
   ScheduledTaskPresentationStatus,
   ScheduledTaskDeleteConfirmation,
   ScheduledTasks,
   ScheduledTasksSortKey,
 } from '@epam/ai-dial-scheduled-tasks';
-import '@epam/ai-dial-scheduled-tasks/styles.css';
-import {
-  DeploymentSelectorField,
-  type DeploymentSelectorDisplayRecord,
-} from '@epam/ai-dial-catalog';
-import '@epam/ai-dial-catalog/styles.css';
-import './styles.css';
-import { createRoot } from 'react-dom/client';
+import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/validation';
 import { useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import '@epam/ai-dial-scheduled-tasks/styles.css';
+import '@epam/ai-dial-catalog/styles.css';
+import '@epam/ai-dial-ui-kit/styles.css';
+import './styles.css';
+
+const values = {
+  displayName: 'Packed task',
+  modelId: 'model-a',
+  prompt: '',
+  repeat: ScheduledTaskRepeat.Daily,
+  time: '09:00',
+};
+const descriptor = describeScheduledTaskTrigger({
+  cron: { fields: { hour: '9', minute: '0' } },
+});
+const validation = validateScheduledTaskFormValues(values, { now: new Date() });
+const prepared = prepareScheduledTaskCreateBody(
+  { ...values, prompt: 'Run task' },
+  { now: new Date() },
+);
+if (!validation.prompt || !prepared.ok || descriptor.time !== '09:00')
+  throw new Error('Packed scheduler contracts failed');
 
 const Fixture = () => {
   const [sortKey, setSortKey] = useState(ScheduledTasksSortKey.FirstToRun);
@@ -30,6 +57,23 @@ const Fixture = () => {
       <button type="button" onClick={() => setDeleteOpen(true)}>
         Open delete confirmation
       </button>
+      <div className="header">Unrelated host header</div>
+      <section aria-label="Responsive cards">
+        <ScheduledTaskCardGrid
+          items={Array.from({ length: 5 }, (_, i) => ({
+            id: String(i),
+            displayName: 'Card ' + i,
+            scheduleLabel: 'Daily',
+          }))}
+          trailingSkeletonCount={1}
+          layout={{
+            minCardWidth: '240px',
+            maxWidth: '100%',
+            cardHeight: '190px',
+            gap: '16px',
+          }}
+        />
+      </section>
       <ScheduledTasks
         labels={{
           title: 'Tasks',
@@ -63,6 +107,22 @@ const Fixture = () => {
           },
         ]}
       />
+      <section aria-label="Default builder">
+        <BuilderFormContainer
+          labels={{
+            title: 'Generic editor',
+            backButtonLabel: 'Back',
+            cancelButtonLabel: 'Cancel',
+            submitButtonLabel: 'Save',
+          }}
+          left={<div data-testid="generic-left">Left column</div>}
+          onBack={() => undefined}
+          onCancel={() => undefined}
+          onSubmit={() => undefined}
+        >
+          <div data-testid="generic-main">Main column</div>
+        </BuilderFormContainer>
+      </section>
       <section aria-label="Scheduled task form">
         <ScheduledTaskCreateForm
           labels={{
@@ -77,12 +137,12 @@ const Fixture = () => {
             configurationSectionSubtitle: 'Packed public editor',
             displayNameLabel: 'Name',
             displayNameRequired: 'Name is required',
+            timeInvalidLabel: 'Invalid time',
             descriptionLabel: 'Description',
             modelOrAgentLabel: 'Model',
             repeatLabel: 'Repeat',
-            repeatOptions: [{ key: 'daily', label: 'Daily' }],
+            repeatOptions: [{ key: ScheduledTaskRepeat.Daily, label: 'Daily' }],
             timeLabel: 'Time',
-            timeInvalidLabel: 'Invalid time',
             instructionsLabel: 'Instructions',
             instructionsPlaceholder: 'Write instructions',
             runAtLabel: 'Run at',
@@ -98,11 +158,11 @@ const Fixture = () => {
             displayName: 'Packed task',
             description: '',
             modelId: deploymentId ?? '',
-            prompt: 'Prompt',
-            repeat: 'daily',
+            prompt: '',
+            repeat: ScheduledTaskRepeat.Daily,
             time: '09:00',
-            timezone: 'UTC',
           }}
+          styles={{ layout: { detailsWidth: '280px', columnGap: '24px' } }}
           errors={{}}
           modelLabelId="fixture-model-label"
           modelSelector={
@@ -118,6 +178,7 @@ const Fixture = () => {
                 browseLabel: 'Browse',
               }}
               onSelect={setDeploymentId}
+              onBrowse={() => setDeleteOpen(true)}
             />
           }
           onFieldChange={() => undefined}
@@ -164,6 +225,7 @@ const Fixture = () => {
           repeatsLabel="Daily"
           instructionsMarkdown="Packed instructions"
           runs={[]}
+          renderInstructions={(text) => <p>{text}</p>}
         />
       </section>
       <ScheduledTaskDeleteConfirmation

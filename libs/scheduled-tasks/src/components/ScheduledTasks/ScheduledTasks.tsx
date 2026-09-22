@@ -187,7 +187,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     if (!scrollRoot) return;
 
     const checkVisibility = () => {
-      if (isLoadingMore || isLoading || !hasMore) return;
+      if (isLoadingMore || isLoading || loadMoreError || !hasMore) return;
       const rootRect = scrollRoot.getBoundingClientRect();
       const sentinelRect = sentinel.getBoundingClientRect();
       if (
@@ -208,7 +208,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
      * effect and re-checks the newly taller layout. Listing `items.length`
      * too would only force a redundant teardown/re-attach of the listener.
      */
-  }, [hasMore, isLoadingMore, isLoading, onLoadMore]);
+  }, [hasMore, isLoadingMore, isLoading, loadMoreError, onLoadMore]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -296,7 +296,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
            * the plus icon alone carries the action, centered. `aria-label`
            * keeps the accessible name stable at every width. */
           label={labels.createButtonLabel}
-          textClassName="hidden desktop:inline"
+          textClassName={styles.createButtonLabel}
           aria-label={labels.createButtonLabel}
           iconBefore={
             <IconPlus
@@ -367,7 +367,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
       <div
         className={mergeClasses(
-          'mx-auto flex size-full w-full max-w-[1180px] flex-col',
+          'mx-auto flex size-full w-full min-w-0 flex-col',
           isCentered && 'items-center justify-center',
         )}
       >

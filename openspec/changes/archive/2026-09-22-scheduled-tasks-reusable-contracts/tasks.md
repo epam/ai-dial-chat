@@ -176,4 +176,29 @@ Depends on every preceding section. No external application edits or registry pu
 
   **Completion verification:** `npm run validate:docs`, scoped Prettier check, and exactly one `npm run verify:full`. Record pre-existing failures separately; all change-specific regressions must pass. Keep every task unchecked until its implementation and evidence exist.
 
-  **Recorded workspace exception (2026-09-22):** The daemon-disabled full verification reached `@epam/ai-dial-catalog:typecheck` and failed on pre-existing TS6305 declaration-output errors plus implicit-any diagnostics in unrelated catalog credential, detail, list and utility tests. The scheduled-tasks typecheck and every change-specific contract, package, documentation and formatting check passed.
+  **Review verification (2026-09-22):** Superseded by [review-verification.md](review-verification.md). Installed-package/browser acceptance and the final 33-project typecheck pass; the standard lint/full-suite limitations are explicitly recorded there.
+
+## 10. Review corrections and verified external consumption
+
+- [x] 10.1 Emit and import the public validation entry; ship matching scoped builder CSS and clean declaration builds.
+- [x] 10.2 Fix list/history cancellation, reset and request guards; retain failed-page retry and add regression coverage.
+- [x] 10.3 Preserve full cron constraints and provide deterministic timezone-aware descriptions; adopt them in host formatting.
+- [x] 10.4 Implement container-responsive grid, matching skeletons, live form/detail layout settings and per-status title styling.
+- [x] 10.5 Forward history incremental errors/retry, support Cancel appearance and remove legacy label duplication.
+- [x] 10.6 Verify real packed imports and rendered CSS/interaction contracts, update documentation/specs, and repeat focused and full checks.
+
+  **Evidence:** [review-verification.md](review-verification.md) records the executed checks, corrected distribution/runtime contracts, and the separately reproduced pre-existing Nx lint classification failure.
+
+## 11. Final review corrections
+
+- [x] 11.1 Synchronize scheduler root/subpath exports, preserve second constraints and repair the app deletion test adapter.
+
+  **Verification:** `npm run test:file -- libs/chat-hooks/src/entry-points/tests/entry-points.spec.ts libs/chat-hooks/src/scheduled-task/tests/scheduled-task-description.spec.ts apps/chat/src/components/ScheduledTaskDeleteModal/tests/ScheduledTaskDeleteModal.spec.tsx`.
+
+- [x] 11.2 Scope responsive rules for scheduler and its builder composition; verify both host stylesheet orders and 769px/1280px host breakpoints with packed Chromium tests.
+
+  **Verification:** scheduler/builder component tests and `scheduled-tasks-consumer-fixture:test` against rebuilt packages.
+
+- [x] 11.3 Restore review evidence, complete final verification, sync all six delta specs and archive only this change.
+
+  **Verification:** frontend and affected-library tests, all-project typecheck, frontend build, packed consumer check, docs/OpenSpec validation and one final `npm run verify:full` with unrelated failures recorded.

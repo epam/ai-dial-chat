@@ -16,6 +16,10 @@ export interface ScheduledTaskCardLabels {
 export interface ScheduledTaskCardColors {
   /** Card title text color. Fallback: `--text-primary`. */
   titleText?: string;
+  /** Paused title color. Falls back to titleText and the theme. */
+  pausedTitleText?: string;
+  /** Completed title color. Falls back to titleText and the theme. */
+  completedTitleText?: string;
   /** Description/prompt-preview text color. Fallback: `--text-control-disable-primary`. */
   descriptionText?: string;
   /** Schedule pill background. Fallback: `--bg-layer-sunken`. */

@@ -14,7 +14,7 @@ execFileSync(process.execPath, [sharedPacker], {
     ...process.env,
     FIXTURE_ROOT_DIR: fixtureRoot,
     FIXTURE_ROOT_PACKAGE:
-      '@epam/ai-dial-scheduled-tasks,@epam/ai-dial-catalog',
+      '@epam/ai-dial-scheduled-tasks,@epam/ai-dial-catalog,@epam/ai-dial-chat-hooks',
   },
   stdio: 'inherit',
 });

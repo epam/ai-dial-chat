@@ -40,7 +40,7 @@ The app SHALL use trigger-only descriptions and host-resolved model display name
 
 ### Requirement: Delete confirmation presentation is reusable and host-configurable
 
-scheduled-tasks SHALL export ScheduledTaskDeleteConfirmation with controlled open/pending state, task name, host-provided title/body/consequences/action labels, callbacks and typed title/action styling. It SHALL render safe React content and contain no API, routing or i18n imports. The parent SHALL retain mutation, notification and navigation ownership.
+scheduled-tasks SHALL export ScheduledTaskDeleteConfirmation with controlled open/pending state, task name, host-provided title/body/consequences/action labels, callbacks, cancelAppearance (Ghost by default), and typed title/action styling. It SHALL render safe React content and contain no API, routing or i18n imports. The parent SHALL retain mutation, notification and navigation ownership.
 
 #### Scenario: Host supplies the complete deletion design
 

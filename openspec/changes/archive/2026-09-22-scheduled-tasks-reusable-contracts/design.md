@@ -74,10 +74,10 @@ The following names and values are the intended contract; existing equivalent fi
 | ScheduledTasks | cardStyles forwarded to grid/cards; sortIcon; className; gridLayout { maxColumns, minCardWidth, maxWidth, gap, cardHeight } | Scoped responsive grid; external-consumer fixture uses 3, 320px, 1120px, 20px, 184px; 1/2/3 columns as available inline space permits |
 | Card | optional status enum Active/Paused/Completed; labels for statuses; per-status title/badge foreground/background in styles.colors | Explicit status wins; absent status preserves isActive mapping; external-consumer fixture sets Paused/Completed backgrounds transparent and title to --text-secondary |
 | Create/edit | backIcon; labels.instructionsPlaceholder; existing headerBorder; styles.layout for column sizing/gap | Tertiary header border without an app importing private dependency CSS |
-| DetailView | backIcon; className; styles.layout { detailsWidth, configurationMinWidth, historyWidth, columnGap }; historyStyles forwarded | external-consumer fixture uses details 220-280px, configuration >=280px, history outer width up to 408px / inner panel360px; narrow layout falls back before content overflows |
-| History | styles.layout { maxHeight, rowMinHeight }; styles.colors { rowHoverBackground, rowFocusBackground }; labels | 40px minimum rows in external-consumer fixture, bounded vertical scroll, neutral hover/focus token; full label and status accessibility |
-| Confirmation | title/body/consequences/action labels, styles.typography.titleClassName, cancelAppearance | Host can reproduce 16px title and ghost Cancel |
-| Catalog picker | className; styles/layout with fit-container width; explicit desktop popup and mobile-sheet composition inputs | Popup follows reference width, viewport collision handling; nested content min-inline-size:0, no hard360px minimum |
+| DetailView | backIcon; className; layout { detailsWidth, configurationMinWidth, historyWidth, historyMaxHeight }; historyStyles forwarded | external-consumer fixture uses details 220-280px, configuration >=280px, history outer width up to 408px / inner panel360px; narrow layout falls back before content overflows |
+| History | styles { maxHeight, rowMinHeight, rowHoverBackground, rowFocusBackground }; labels | 40px minimum rows in external-consumer fixture, bounded vertical scroll, neutral hover/focus token; full label and status accessibility |
+| Confirmation | title/body/consequences/action labels, styles.titleClassName, cancelAppearance | Host can reproduce 16px title and ghost Cancel |
+| Catalog picker | className, panelClassName; reference-bounded popup width; renderPanel/renderOverlay composition callbacks | Popup follows reference width, viewport collision handling; nested content min-inline-size:0, no hard360px minimum |
 
 Implement layout sizes as documented CSS-length strings where min()/clamp() is useful, numeric count fields as numbers, with defaults matching current parent behavior unless this change explicitly changes an icon or interaction affordance. A host does not need a private child selector to configure any row in this table. Container queries or scoped media rules are acceptable; global generated utility selectors with host-dependent meaning are not.
 
@@ -129,7 +129,7 @@ Use documented `@epam/ai-dial-scheduled-tasks/styles.css` and corresponding cata
 
 Avoid global resets and unscoped responsive utility emission in affected surfaces. Test host utility definitions with desktop thresholds 769px and1280px, including both stylesheet orders. A scheduler's dimensions follow its own scope/container, while unrelated host elements are unaffected.
 
-Create `tools/scheduled-tasks-consumer-fixture/` using packed dist artifacts and their workspace dependency closure, following `tools/attachment-canvas-consumer-fixture/`. It has no parent tsconfig aliases or app imports. It demonstrates all surfaces, alternate labels/styles, custom/absent icons and fake configured adapters. Its package/type contract tests validate the distributed public API; browser UX coverage belongs in the repository's e2e suite.
+Create `tools/scheduled-tasks-consumer-fixture/` using packed dist artifacts and their workspace dependency closure, following `tools/attachment-canvas-consumer-fixture/`. It has no parent tsconfig aliases or app imports. It demonstrates all surfaces, alternate labels/styles, custom/absent icons and fake configured adapters. Its package/type contract checks validate installed declarations and imports. The same fixture runs headless Chromium against its production build to verify computed styles, container widths, placeholders and selector interactions; source-string tests alone are insufficient.
 
 ### 9. i18n, access, documentation and observability
 
@@ -164,3 +164,37 @@ External application migration is documented and represented in the parent-owned
 ## Open Questions
 
 No blocking product decision remains. The exact release version follows the normal publishing process. During implementation, verify any current UI-kit limitation through its MCP documentation; if a required prop is missing, record a specific upstream dependency rather than reintroducing a DOM workaround. Older specs' legacy naming is acknowledged above and must not cause a breaking rename.
+
+## Review correction decisions
+
+- Emit validation as a real Vite library entry with a matching declaration wrapper.
+- Compose builder styles from its public built stylesheet so hashed selectors match.
+- Implement container-based grid columns, matching skeleton height, maximum width,
+  status-specific title colors, and consumed builder form layout parameters.
+- Forward history incremental failures/retry all the way through the parent page.
+- Describe complete cron constraints with explicit display timezone/reference date;
+  preserve custom constraints and monthly rollover ambiguity instead of inventing
+  a simplified recurrence. Parent card/detail formatting uses this descriptor.
+- Keep request controllers and finally guards generation-scoped; reset all stale
+  state on identity changes and retain the failed offset for incremental retry.
+- Expose ghost Cancel appearance and remove unused legacy form-label objects.
+- Use the installed UI Kit input's supported focus event, not an unsupported ref.
+- Replace the source-only fixture acceptance with strict installed-package type
+  checking and browser assertions. See review-verification.md for recorded results.
+
+### Final review corrections (2026-09-23)
+
+The scheduler subpath and root hooks barrel expose the same APIs. Explicit
+wildcard/nonzero seconds remain Custom. Responsive scheduler rules and the
+composed builder header/body/footer are scoped CSS exceptions to the normal
+utility-first layout convention: published global desktop utility names collide
+with consuming applications that define a different breakpoint. The fixture
+checks both stylesheet orders, two host breakpoints and both text directions.
+Library build transforms also explicitly emit production-compatible JSX,
+independent of the environment inherited from Nx test. Catalog and publish-panel
+externalize React runtimes; publish-panel keeps its declared file-manager peer
+external. The browser fixture builds with NODE_ENV=production and the final
+review also checks development-server loading. Final verification evidence is
+recorded in review-verification.md. The browser verifier uses a static public
+validation import so Nx does not classify the scheduler package as a lazy-loaded
+UI dependency merely because of the verification harness.

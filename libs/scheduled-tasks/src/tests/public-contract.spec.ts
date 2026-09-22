@@ -30,14 +30,7 @@ describe('scheduled-tasks public distribution contract', () => {
 
   it('bundles builder-form structural styles into the scheduler stylesheet entry', () => {
     const entry = readFileSync(resolve(libraryRoot, 'src/index.ts'), 'utf8');
-    const builderStyles = readFileSync(
-      resolve(libraryRoot, '../builder-form/src/styles.css'),
-      'utf8',
-    );
-
-    expect(entry).toContain('../../builder-form/src/styles.css');
-    expect(builderStyles).toContain('BuilderFormHeader.module.scss');
-    expect(builderStyles).toContain('BuilderFormContainer.module.scss');
+    expect(entry).toContain('@epam/ai-dial-builder-form/styles.css');
   });
 
   it('keeps UI libraries independent of host integration contracts', () => {

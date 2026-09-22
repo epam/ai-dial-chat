@@ -1,4 +1,4 @@
-import { ButtonVariant, Popup } from '@epam/ai-dial-ui-kit';
+import { ButtonAppearance, ButtonVariant, Popup } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
 
 export interface ScheduledTaskDeleteConfirmationStyles {
@@ -13,6 +13,8 @@ export interface ScheduledTaskDeleteConfirmationProps {
   body: ReactNode;
   consequences?: ReactNode[];
   cancelLabel: string;
+  /** Cancel button appearance. Defaults to Ghost. */
+  cancelAppearance?: ButtonAppearance;
   confirmLabel: string;
   pendingLabel?: string;
   isDeleting?: boolean;
@@ -31,6 +33,7 @@ export const ScheduledTaskDeleteConfirmation: FC<
   body,
   consequences = [],
   cancelLabel,
+  cancelAppearance = ButtonAppearance.Ghost,
   confirmLabel,
   pendingLabel,
   isDeleting = false,
@@ -51,7 +54,12 @@ export const ScheduledTaskDeleteConfirmation: FC<
       header={<span className={styles?.titleClassName}>{title}</span>}
       onClose={close}
       mainButtons={[
-        { label: cancelLabel, onClick: close, disabled: isDeleting },
+        {
+          label: cancelLabel,
+          onClick: close,
+          disabled: isDeleting,
+          appearance: cancelAppearance,
+        },
         {
           label: isDeleting ? (pendingLabel ?? confirmLabel) : confirmLabel,
           onClick: confirm,

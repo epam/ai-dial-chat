@@ -20,6 +20,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
   left,
   children,
   metadata,
+  layout,
   styles: containerStyles,
 }) => {
   const { colors, header, cssVars } = containerStyles ?? {};
@@ -49,7 +50,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
         backIcon={backIcon}
         styles={header}
       />
-      <BuilderFormBody left={left} metadata={metadata}>
+      <BuilderFormBody left={left} metadata={metadata} layout={layout}>
         {children}
       </BuilderFormBody>
       {/*
@@ -64,7 +65,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
        */}
       <div
         className={mergeClasses(
-          'sticky bottom-0 z-10 flex items-center gap-2 p-3 desktop:hidden',
+          'sticky bottom-0 z-10 items-center gap-2 p-3',
           styles.footer,
         )}
       >

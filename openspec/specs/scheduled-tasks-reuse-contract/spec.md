@@ -1,4 +1,10 @@
-## ADDED Requirements
+# scheduled-tasks-reuse-contract Specification
+
+## Purpose
+
+Define the public validation, request lifecycle, presentation and stylesheet contracts that let applications reuse Scheduled Tasks without private DOM or CSS patches.
+
+## Requirements
 
 ### Requirement: Shared schedule validation returns host-translatable field errors
 
@@ -130,7 +136,12 @@ Documented scheduled-tasks/styles.css SHALL supply internal structural dependenc
 
 ### Requirement: A built-package consumer proves reuse and documents migration
 
-A parent-owned external fixture SHALL install packed distribution artifacts with dependency closure, without source aliases or app imports. Package/type contract tests SHALL cover all scheduler surfaces, alternate strings/styles/icons, typed exports and public CSS imports. Browser UX coverage belongs in the repository's e2e suite. Documentation SHALL map every F01-F15 finding to public replacement APIs. Implementation SHALL migrate the parent but SHALL not require editing an external application repository to pass.
+A parent-owned external fixture SHALL install packed distribution artifacts with dependency closure, without source aliases or app imports. Package/type contract tests SHALL cover all scheduler surfaces, alternate strings/styles/icons, typed exports and public CSS imports. The fixture SHALL run browser assertions against its production build for computed styles, container-responsive layout, editor placeholders and selector interactions. Source-text assertions alone SHALL NOT count as installed-package verification. Documentation SHALL map every F01-F15 finding to public replacement APIs. Implementation SHALL migrate the parent but SHALL not require editing an external application repository to pass.
+
+#### Scenario: Scheduler root and subpath exports stay compatible
+
+- **WHEN** a scheduler API is added to chat-hooks/scheduled-tasks
+- **THEN** the same API is exported by the root chat-hooks barrel and covered by the existing entry-point parity guard.
 
 #### Scenario: Packed artifacts expose the complete contract
 
@@ -141,3 +152,23 @@ A parent-owned external fixture SHALL install packed distribution artifacts with
 
 - **WHEN** a maintainer follows the documented consumer migration map
 - **THEN** the guide identifies replacements for observers, private CSS, duplicated hooks/formatters, deep CSS imports and local form label duplication.
+
+#### Scenario: Validation has an independently importable distribution entry
+
+- **WHEN** an installed consumer imports scheduled-tasks/validation without source aliases
+- **THEN** its JavaScript and declarations resolve and validation executes without mounting UI.
+
+#### Scenario: Built structural CSS retains module identity
+
+- **WHEN** scheduler styles compose builder-form structural styles
+- **THEN** selectors match the builder JavaScript CSS Module names and do not style unrelated host header/title/container classes.
+
+#### Scenario: Explicit display timezone preserves trigger meaning
+
+- **WHEN** a host supplies timeZone and referenceDate to the trigger descriptor
+- **THEN** supported simple UTC schedules produce local time/weekday fields using that date's offset; additional constraints remain Custom, invalid numeric ranges are Invalid, and monthly midnight rollover remains Custom when a shifted day cannot be represented identically across short months.
+
+#### Scenario: Explicit seconds preserve cron frequency
+
+- **WHEN** a cron includes `second: '*'` or a nonzero second expression
+- **THEN** the descriptor returns Custom with the original expression; an explicit zero second may use a supported minute-level description.
