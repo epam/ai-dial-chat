@@ -354,6 +354,10 @@ An entry with no `link` SHALL be included, rendering as an announcement without 
 
 Every rejected entry SHALL be dropped and logged with a warning naming the entry and the reason. The service SHALL cap the returned list at the supported maximum, dropping and logging the excess. A malformed value (invalid JSON, or a JSON root that is not an array) SHALL result in `announcements: []` with a logged warning. Invalid announcements configuration SHALL NEVER cause the request to fail and SHALL NEVER suppress the banner's own announcement fields.
 
+The service SHALL validate every configured entry — including entries beyond the supported maximum — before applying the cap: an entry past the maximum that is itself invalid (blank title, or a present-but-invalid link) SHALL still be dropped and logged with its own rejection warning, exactly as an invalid entry within the first N would be. The service SHALL NOT stop processing once N valid entries have been accumulated. The cap-exceeded warning, when the accepted-entry count exceeds the maximum, SHALL be logged last — after every per-entry rejection warning — and SHALL report the total number of entries that passed validation (before truncation), not the number configured or the number returned.
+
+The service SHALL NOT mutate the resolved `announcement.items` value or any of its entry or link objects while validating and normalizing them; the returned `AnnouncementItemDto[]` SHALL be built from new objects. Duplicate entries (byte-for-byte identical title/description/link) in the configured list SHALL each be evaluated independently and, if valid, SHALL each appear in the returned list — the service SHALL NOT deduplicate announcements.
+
 `AnnouncementItemDto` and `AnnouncementLinkDto` SHALL be declared as classes with `@ApiProperty` metadata on every field, so `@nestjs/swagger` emits runtime metadata and the generated client exposes the shape.
 
 #### Scenario: A complete announcement is returned
@@ -415,6 +419,26 @@ Every rejected entry SHALL be dropped and logged with a warning naming the entry
 
 - **WHEN** `ANNOUNCEMENTS` contains more entries than the supported maximum
 - **THEN** `config.announcements` contains only the first N entries in configured order and a warning names the dropped ones
+
+#### Scenario: An invalid entry beyond the cap is still individually rejected and logged
+
+- **WHEN** `ANNOUNCEMENTS` contains more valid entries than the supported maximum, and one of the entries positioned after the maximum has a blank title
+- **THEN** that entry's own rejection warning is logged, in addition to the cap-exceeded warning, and `config.announcements` contains exactly the first N valid entries
+
+#### Scenario: The cap warning is logged last and counts valid entries
+
+- **WHEN** `ANNOUNCEMENTS` contains a mix of valid entries exceeding the supported maximum and at least one invalid entry interleaved among them
+- **THEN** each invalid entry's rejection warning is logged before the cap-exceeded warning, and the cap-exceeded warning reports the total count of entries that passed validation, not the count configured or the count ultimately returned
+
+#### Scenario: Duplicate announcements are preserved
+
+- **WHEN** `ANNOUNCEMENTS` contains two entries with identical title, description, and link
+- **THEN** `config.announcements` contains both entries, neither deduplicated nor merged
+
+#### Scenario: The configured input is not mutated
+
+- **WHEN** `GET /api/v1/client-config` is called with a non-empty `ANNOUNCEMENTS` value
+- **THEN** resolving `announcement.items` again for a subsequent, independent request returns entries with the same values as the first resolution, unaffected by any normalization performed for the first request
 
 ### Requirement: Custom client variables remain isolated from built-in settings
 

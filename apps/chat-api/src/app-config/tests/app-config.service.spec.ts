@@ -707,6 +707,205 @@ describe('AppConfigService', () => {
       expect(result.config.announcements[9].title).toBe('Announcement 9');
     });
 
+    it('logs a single exact warning and returns an empty list when ANNOUNCEMENTS resolves to a non-array value', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items' ? { title: 'x' } : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledOnce();
+      expect(warnSpy).toHaveBeenCalledWith(
+        'ANNOUNCEMENTS did not resolve to an array; ignoring it',
+      );
+    });
+
+    it.each([
+      ['null', null],
+      ['undefined', undefined],
+    ])(
+      'returns an empty list with no warning when ANNOUNCEMENTS resolves to %s',
+      async (_label, value) => {
+        const { service } = makeService(async (key: string) =>
+          key === 'announcement.items' ? value : undefined,
+        );
+        const warnSpy = vi
+          .spyOn(
+            (service as never as { logger: { warn: () => void } }).logger,
+            'warn',
+          )
+          .mockImplementation(() => undefined);
+
+        const result = await service.getClientConfig(ctx);
+
+        expect(result.config.announcements).toEqual([]);
+        expect(warnSpy).not.toHaveBeenCalled();
+      },
+    );
+
+    it('logs the exact warning text for a non-object announcement entry', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items' ? ['not-an-object'] : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement entry that is not an object',
+      );
+    });
+
+    it('logs the exact warning text for a blank or missing title', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items' ? [{ title: '   ' }] : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement entry with a blank or missing title',
+      );
+    });
+
+    it('logs the exact warning text for a blank link label', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [
+              {
+                title: 'No label',
+                link: { label: '  ', href: 'https://x.dev' },
+              },
+            ]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement "No label": link.label is blank or missing',
+      );
+    });
+
+    it('logs the exact warning text for an invalid link href', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [{ title: 'Bad link', link: { label: 'Go', href: '/settings' } }]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement "Bad link": link.href is not an http(s) URL: /settings',
+      );
+    });
+
+    it('preserves duplicate announcements rather than deduplicating them', async () => {
+      const entry = {
+        title: 'Same announcement',
+        description: 'Same body',
+        link: { label: 'Go', href: 'https://x.dev' },
+      };
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items' ? [entry, { ...entry }] : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toHaveLength(2);
+      expect(result.config.announcements[0]).toEqual(
+        result.config.announcements[1],
+      );
+    });
+
+    it('logs a rejection warning for an invalid entry positioned beyond the cap', async () => {
+      const validEntries = Array.from({ length: 10 }, (_, index) => ({
+        title: `Announcement ${index}`,
+      }));
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [...validEntries, { title: '   ' }]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toHaveLength(10);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement entry with a blank or missing title',
+      );
+    });
+
+    it('logs the cap-exceeded warning last, reporting the total number of valid entries', async () => {
+      const validEntries = Array.from({ length: 12 }, (_, index) => ({
+        title: `Announcement ${index}`,
+      }));
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [...validEntries, { title: '   ' }]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toHaveLength(10);
+      expect(warnSpy).toHaveBeenCalledTimes(2);
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        1,
+        'Ignoring announcement entry with a blank or missing title',
+      );
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        2,
+        'ANNOUNCEMENTS carried 12 entries; keeping the first 10 and dropping the rest',
+      );
+    });
+
     it('returns empty string for footerHtmlMessage when FOOTER_HTML_MESSAGE is not set', async () => {
       const { service } = makeService(async () => undefined);
       const result = await service.getClientConfig(ctx);
@@ -927,6 +1126,37 @@ describe('AppConfigService', () => {
 
       expect(second).toEqual(first);
       expect(second.config.enabledUiFeatures).toEqual(['likes']);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        resolveCallsAfterFirst,
+      );
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it('serves a cache hit without re-resolving providers or emitting new announcement warnings', async () => {
+      const { service, compositeProvider } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [{ title: 'Good' }, { title: '   ' }]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const first = await service.getClientConfig(ctx);
+      warnSpy.mockClear();
+      const resolveCallsAfterFirst = (
+        compositeProvider.resolve as never as {
+          mock: { calls: unknown[] };
+        }
+      ).mock.calls.length;
+
+      const second = await service.getClientConfig(ctx);
+
+      expect(second).toEqual(first);
+      expect(second.config.announcements).toHaveLength(1);
       expect(compositeProvider.resolve).toHaveBeenCalledTimes(
         resolveCallsAfterFirst,
       );
