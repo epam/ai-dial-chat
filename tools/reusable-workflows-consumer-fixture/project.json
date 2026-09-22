@@ -10,7 +10,11 @@
       },
       "dependsOn": [
         {
-          "projects": ["@epam/ai-dial-skills", "@epam/ai-dial-prompts"],
+          "projects": [
+            "@epam/ai-dial-skills",
+            "@epam/ai-dial-prompts",
+            "chat-api-client"
+          ],
           "target": "build"
         }
       ]

@@ -116,9 +116,12 @@ Beyond typecheck/bundle success, `scripts/run.mjs` asserts:
 npm exec nx run reusable-workflows-consumer-fixture:verify
 ```
 
-This transitively builds `@epam/ai-dial-skills` and `@epam/ai-dial-prompts`
-first (via Nx's project-to-project `dependsOn`), so it always packs current
-source.
+This builds `@epam/ai-dial-skills`, `@epam/ai-dial-prompts`, and
+`chat-api-client` first (via Nx's project-to-project `dependsOn`). The fixture
+packs the generated API client as part of the dependency and peer closure,
+so its build is explicitly required even when no source import pulls it into
+the other packages' build graph. This also works on a clean CI checkout
+without an existing `libs/chat-api-client/dist`.
 
 The root test command runs the same verification as part of the normal CI
 test stage:
