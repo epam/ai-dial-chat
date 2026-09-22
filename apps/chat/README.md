@@ -390,3 +390,17 @@ Modern evergreen browsers: Chrome, Firefox, Safari, and Edge (latest).
 
 Copyright © EPAM Systems. Released under the
 [Apache License 2.0](../../LICENSE).
+
+### Application credentials in Catalog and Quick Apps
+
+Catalog application details expose API-key, OAuth and DIAL-native external-service
+credentials when `liveChatInteraction` is enabled. Each service is independent and
+credential changes are refreshed immediately. The Chat `ApplicationCredentials`
+adapter maps API data and translations into `@epam/ai-dial-catalog` forms, which
+reuse the toolset credentials UI. Metadata loading lives in
+`useApplicationCredentials` from `@epam/ai-dial-chat-hooks`; Chat supplies the configured clients and the existing login/logout flow.
+The Quick Apps iframe receives
+`applicationCredentials=true` when the host supports these forms. Sending
+`{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId: 'applications/public/my-agent' }`
+from that iframe opens the same host dialog; no credentials are sent through
+`postMessage`. See [the authentication flow](../../docs/auth/auth-bff-encrypted-cookie.md#proactive-application-credential-forms).

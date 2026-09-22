@@ -348,6 +348,8 @@ export interface CatalogProps {
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
   ) => Promise<void> | void;
+  /** Renders host-owned credential controls below the details header. Omitted in read-only mode. */
+  renderCredentials?: (item: CatalogItem) => ReactNode;
   /**
    * Called when logout is confirmed in the details panel's credentials
    * section, for the given credentials `level`. May return a promise;

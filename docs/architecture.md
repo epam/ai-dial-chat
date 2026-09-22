@@ -164,6 +164,13 @@ Libraries must stay free of host and external-system knowledge: no REST paths, g
 
 `libs/chat-hooks` has a narrower exception: hooks may depend on the generated client's types and operation signatures and accept an already-configured client instance. The library must not construct or configure that client or acquire any other host-owned integration knowledge.
 
+Application credentials follow this boundary: `libs/catalog` owns the reusable
+forms and shares credentials rows/status cards with toolsets; `libs/chat-hooks`
+owns metadata loading through supplied, configured API clients. The Chat adapter
+maps DTOs and localized labels into the form contract and owns OAuth/offline login,
+personal signout, feature gating and the Quick Apps iframe bridge. See the
+[authentication flow](auth/auth-bff-encrypted-cookie.md#proactive-application-credential-forms).
+
 `@epam/ai-dial-toolset-editor` is the first other lib that depends on `chat-hooks`: it peers on it for the host-agnostic OAuth helpers (`src/oauth/` — callback path is a parameter, no routes or i18n) and imports the root barrel only, never a subpath. This does not extend to other libs; a new lib needing those helpers should raise it in review rather than assume the exception generalizes.
 
 The styling contract every UI lib follows — CSS variable naming, what belongs in `.module.scss` versus Tailwind, the `styles={{ colors, typography }}` prop shape, and the checks that catch inert styles — is in [`openspec/lib-styling-guide.md`](../openspec/lib-styling-guide.md). `libs/conversation-input` is the reference implementation.
@@ -517,13 +524,14 @@ DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` and `externa
 
 #### External Services (`/api/v1/external-services`)
 
-BFF proxy for an application's external-service credentials, driving the `external-service/signin` interrupt above. DIAL-native services use the shared offline-credentials OAuth flow, with separate administrator consent reported by `appLevelAuthStatus`. The offline-credentials endpoints accept either `scheduledTasksEnabled` or `liveChatInteraction` capability. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).
+BFF proxy for an application's external-service credentials, driving the `external-service/signin` interrupt above. Catalog details and the Quick Apps host dialog also expose proactive forms through `ApplicationCredentials`, using a fresh list from `GET /api/v1/external-services/{appId}`. DIAL-native services use the shared offline-credentials OAuth flow, with separate administrator consent reported by `appLevelAuthStatus`. The offline-credentials endpoints accept either `scheduledTasksEnabled` or `liveChatInteraction` capability. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services).
 
-| Method | Path                                                    | Description                                        |
-| ------ | ------------------------------------------------------- | -------------------------------------------------- |
-| `GET`  | `/api/v1/external-services/{appId}/{serviceId}`         | Get display metadata + auth type (not cached)      |
-| `POST` | `/api/v1/external-services/{appId}/{serviceId}/signin`  | Submit API-key/OAuth credentials                   |
-| `POST` | `/api/v1/external-services/{appId}/{serviceId}/signout` | Revoke credentials (Core 404 = idempotent success) |
+| Method | Path                                                    | Description                                                       |
+| ------ | ------------------------------------------------------- | ----------------------------------------------------------------- |
+| `GET`  | `/api/v1/external-services/{appId}`                     | List public service metadata and credential statuses (not cached) |
+| `GET`  | `/api/v1/external-services/{appId}/{serviceId}`         | Get display metadata + auth type (not cached)                     |
+| `POST` | `/api/v1/external-services/{appId}/{serviceId}/signin`  | Submit API-key/OAuth credentials                                  |
+| `POST` | `/api/v1/external-services/{appId}/{serviceId}/signout` | Revoke credentials (Core 404 = idempotent success)                |
 
 #### Infrastructure
 

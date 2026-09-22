@@ -2626,3 +2626,45 @@ describe('DetailsPanel — Unpublish', () => {
     ).toBeTruthy();
   });
 });
+
+describe('DetailsPanel host credential slot', () => {
+  it('renders host forms for an open editable item and hides them in readonly mode', () => {
+    const renderCredentials = vi.fn(() => (
+      <div>Application credential forms</div>
+    ));
+    const { rerender } = render(
+      <DetailsPanel
+        item={item}
+        isOpen
+        onClose={vi.fn()}
+        renderCredentials={renderCredentials}
+      />,
+    );
+    expect(screen.getByText('Application credential forms')).toBeTruthy();
+    expect(renderCredentials).toHaveBeenCalledWith(item);
+    rerender(
+      <DetailsPanel
+        item={item}
+        isOpen
+        isReadonly
+        onClose={vi.fn()}
+        renderCredentials={renderCredentials}
+      />,
+    );
+    expect(screen.queryByText('Application credential forms')).toBeNull();
+  });
+  it('does not mount credential forms while the details panel is closed', () => {
+    const renderCredentials = vi.fn(() => (
+      <div>Application credential forms</div>
+    ));
+    render(
+      <DetailsPanel
+        item={item}
+        isOpen={false}
+        onClose={vi.fn()}
+        renderCredentials={renderCredentials}
+      />,
+    );
+    expect(renderCredentials).not.toHaveBeenCalled();
+  });
+});

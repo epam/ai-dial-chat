@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   Param,
   Post,
@@ -15,12 +16,16 @@ import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
 import {
+  ApplicationExternalServiceDto,
   ExternalServiceAuthResultDto,
   ExternalServiceLogoutBodyDto,
   ExternalServiceSigninBodyDto,
   GetExternalServiceResponseDto,
 } from './dto/external-service.dto';
-import { GetExternalServiceDto } from './dto/get-external-service.dto';
+import {
+  GetExternalServiceDto,
+  ListExternalServicesDto,
+} from './dto/get-external-service.dto';
 import { ExternalServicesService } from './external-services.service';
 
 @ApiTags('external-services')
@@ -29,6 +34,41 @@ export class ExternalServicesController {
   constructor(
     private readonly externalServicesService: ExternalServicesService,
   ) {}
+
+  @Get(':appId')
+  @Header('Cache-Control', 'private, no-store')
+  @UseGuards(FeatureGuard)
+  @RequireFeature(FeatureKey.LiveChatInteraction)
+  @ApiOperation({
+    summary: 'List application external-service authentication metadata',
+    description:
+      'Reads the accessible application through DIAL Core, including inline services. Returns only public OAuth configuration and credential statuses; never secrets. Not cached so login/logout changes are immediately visible.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'External services, or an empty list when none are configured',
+    type: [ApplicationExternalServiceDto],
+  })
+  @ApiResponse({ status: 400, description: 'Invalid application identifier' })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'No access to the application or liveChatInteraction is disabled',
+  })
+  @ApiResponse({ status: 404, description: 'Application not found' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an invalid response',
+  })
+  @ApiResponse({ status: 503, description: 'DIAL Core unavailable' })
+  listExternalServices(
+    @Req() req: Request,
+    @Param() params: ListExternalServicesDto,
+  ): Promise<ApplicationExternalServiceDto[]> {
+    const { at } = req.user as SessionUser;
+    return this.externalServicesService.listExternalServices(at, params.appId);
+  }
 
   @Get(':appId/:serviceId')
   @UseGuards(FeatureGuard)

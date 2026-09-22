@@ -227,6 +227,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onLoadContentFile,
   onLoadContentFilePreview,
   renderContentFilePreview,
+  renderCredentials,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -1336,6 +1337,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     )
                   );
                 })()}
+
+              {!isReadonly && isOpen && renderCredentials?.(item)}
 
               <div className="flex items-center px-6">
                 <Tabs

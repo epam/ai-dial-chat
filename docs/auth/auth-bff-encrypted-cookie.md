@@ -231,6 +231,37 @@ Both kinds share the exact same channel plumbing:
   `WindowProxy` cannot close it. A real manual close is treated as cancellation when focus returns
   to the initiating tab. OAuth codes and credentials are never persisted by this handoff.
 
+#### Proactive application credential forms
+
+Application details in the Catalog also show these forms before any completion starts.
+The Chat `ApplicationCredentials` adapter supplies configured clients to
+`useApplicationCredentials` in `libs/chat-hooks`. The hook loads
+`GET /api/v1/external-services/{appId}`, an uncached,
+session-authenticated endpoint gated by `liveChatInteraction`. It reads DIAL Core's
+single-application endpoint through the SDK, because the management listing hides
+inline definitions from ordinary users. The response is an array of service identifiers,
+public OAuth settings and authentication statuses through an allowlist that excludes secrets.
+
+The reusable `ApplicationCredentials` UI in `libs/catalog` shares the credentials
+row, identity icon and configured-key card with toolsets. It accepts normalized
+service states, labels and callbacks; Chat owns DTO mapping, OAuth/offline login,
+personal signout, feature gating and iframe integration.
+Each authenticated service has its own API-key or OAuth form, current personal status,
+and login/logout actions. Shared credentials are informational; logout is confirmed and
+revokes only the user's credentials. DIAL-native services reuse offline access and require
+administrator application consent; the form never revokes shared offline credentials.
+The optional offline-use consent checkbox starts unchecked. Status is reloaded after
+successful mutations, and service-load failures offer retry. Services with `NONE` auth
+are omitted. Catalog forms require both backend and overlay `liveChatInteraction` support.
+
+The Quick Apps editor advertises host support via the `applicationCredentials=true`
+iframe query parameter. An authenticated agent's chip or advanced-settings action sends
+`{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId }`. The Chat host verifies the editor
+origin and exact source window, then opens the same forms in a host dialog. API keys,
+authorization codes and tokens never cross this message boundary. Both repositories
+must include this contract for the action to appear. No client-channel subscription or
+chat request is needed, and closing the dialog preserves unsaved Quick app settings.
+
 ### 5.6 Proactive Offline-Credentials Consent (Scheduled Tasks)
 
 ![Offline-credentials consent](./auth-diagrams/10-offline-credentials-consent.svg)
@@ -242,7 +273,7 @@ Scheduled Tasks run unattended on a cron trigger via the DIAL Scheduler routed d
 **This is a third, distinct pattern, different from both 5.1 and 5.5:**
 
 - **vs. 5.1 (OIDC login):** this flow never touches the session cookie. The user is already authenticated to Chat; the OAuth round trip here only grants DIAL Core its own separate, long-lived credential for the Scheduler to use later.
-- **vs. 5.5 (toolset/external-service sign-in):** those flows are _reactive_ — triggered by a DIAL-Core-pushed `client-channel` event mid-completion, because a live tool call is blocked waiting for credentials. This flow is _proactive_ — triggered by the user simply navigating into the Scheduled Tasks section, with no in-flight completion to interrupt.
+- **vs. 5.5 (toolset/external-service sign-in):** the completion-interrupt variants of those flows are _reactive_ — triggered by a DIAL-Core-pushed `client-channel` event mid-completion, because a live tool call is blocked waiting for credentials. This flow is _proactive_ — triggered by the user simply navigating into the Scheduled Tasks section, with no in-flight completion to interrupt.
 
 Mechanics:
 
