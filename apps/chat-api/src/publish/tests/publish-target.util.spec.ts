@@ -4,6 +4,7 @@ import {
   getPublishedTargetUrl,
   getResourceName,
   getResourceTypePrefix,
+  stripPublicTargetFolder,
 } from '../publish-target.util';
 
 /*
@@ -40,6 +41,25 @@ describe('getPublishedTargetUrl', () => {
       ),
     ).toBe(
       'skills/public/Organization/Data%20Science/Published%20models/skill-a',
+    );
+  });
+
+  /*
+   * Issue #8974: the folder's plain name really contains `%20`. The percent
+   * sign itself has to be escaped, or Core decodes the target folder back to
+   * `test folder` and the published copy lands under the wrong name.
+   */
+  it('escapes a literal percent escape in a plain folder name', () => {
+    expect(getPublishedTargetUrl('skills', 'test%20folder', 'skill-a')).toBe(
+      'skills/public/test%2520folder/skill-a',
+    );
+  });
+
+  it('round-trips a literal percent escape back through stripPublicTargetFolder', () => {
+    const folderPath = 'test%20folder/nested%2Fname';
+
+    expect(stripPublicTargetFolder(getPublicTargetFolder(folderPath))).toBe(
+      folderPath,
     );
   });
 

@@ -13,10 +13,7 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
 import { formatCalendarDate } from '../shared/formatting';
-import {
-  safeDecodeURIComponent,
-  stripSurroundingSlashes,
-} from '../shared/string-utils';
+import { stripSurroundingSlashes } from '../shared/string-utils';
 import { SKILL_MANIFEST_FILE } from '../skill/skill';
 import type { SkillAboutDetails } from '../skill/skill-manifest';
 import { SKILL_MANIFEST_MAX_BYTES, SkillSource } from '../skill/skill-types';
@@ -28,13 +25,19 @@ const SOURCE_FOLDER_LABEL: Record<SkillSource, keyof DeploymentFolderLabels> = {
   [SkillSource.Public]: 'public',
 };
 
+/*
+ * `parentPath` is not decoded. DIAL Core returns `name`/`parentPath` as plain
+ * text and percent-encodes only `url`, so decoding here rewrote a folder whose
+ * name legitimately contains a percent escape — `test%20folder` was displayed
+ * as `test folder` (Issue #8974).
+ */
 const resolveSkillFolder = (
   parentPath: string | undefined,
   source: SkillSource,
   folderLabels: DeploymentFolderLabels,
 ): string[] => [
   folderLabels[SOURCE_FOLDER_LABEL[source]],
-  ...(parentPath ?? '').split('/').filter(Boolean).map(safeDecodeURIComponent),
+  ...(parentPath ?? '').split('/').filter(Boolean),
 ];
 
 /** Parameters for {@link mapSkillToCatalogItem}. */
