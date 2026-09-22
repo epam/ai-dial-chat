@@ -12,6 +12,7 @@ import {
   buildSkillManifestForSubmit,
   isValidSkillRelativePath,
   normalizeSkillName,
+  startsWithFrontmatterBlock,
 } from './skill';
 import type { SkillFileContent } from './skill-file-preview';
 
@@ -71,6 +72,12 @@ export interface SkillEditorSubmitClient {
 export interface SkillEditorSubmitMessages {
   /** Shown when a required field is empty. */
   required: string;
+  /**
+   * Shown when the Instructions value opens with its own YAML frontmatter
+   * block — pasting a whole `SKILL.md` in there would otherwise produce a
+   * manifest with two frontmatter blocks.
+   */
+  instructionsFrontmatter: string;
   /** Shown when the normalized skill name fails DIAL's naming rules. */
   nameInvalid: string;
   /** Shown when the skill name already exists (409), or defensively on an unreachable create-mode 412. */
@@ -151,6 +158,12 @@ export interface UseSkillEditorSubmitResult {
   clearConflict: () => void;
   /** Validates and submits the given form values. */
   handleSubmit: (values: SkillEditorValues) => Promise<void>;
+  /**
+   * Re-runs the Instructions frontmatter check against the editor's current
+   * values, so a pasted `SKILL.md` is flagged as the text lands rather than
+   * only on submit. Pass as the editor's `onValuesChange`.
+   */
+  handleValuesChange: (values: SkillEditorValues) => void;
 }
 
 /**
@@ -379,6 +392,29 @@ export const useSkillEditorSubmit = ({
     ],
   );
 
+  const handleValuesChange = useCallback(
+    (values: SkillEditorValues) => {
+      const hasFrontmatter = startsWithFrontmatterBlock(values.instructions);
+      setErrors((prev) => {
+        /*
+         * Touch only this one message: a required-field or any other
+         * host-set `instructions` message must survive, and the other
+         * fields' errors are none of this check's business.
+         */
+        const isShowing =
+          prev.instructions === messages.instructionsFrontmatter;
+        if (hasFrontmatter === isShowing) return prev;
+        if (hasFrontmatter) {
+          return { ...prev, instructions: messages.instructionsFrontmatter };
+        }
+        const next = { ...prev };
+        delete next.instructions;
+        return next;
+      });
+    },
+    [messages],
+  );
+
   const handleSubmit = useCallback(
     async (values: SkillEditorValues) => {
       if (phase === 'submitting' || !bucket) return;
@@ -390,6 +426,16 @@ export const useSkillEditorSubmit = ({
       }
       if (!values.instructions.trim()) {
         nextErrors.instructions = messages.required;
+      } else if (startsWithFrontmatterBlock(values.instructions)) {
+        /*
+         * The required-field check above takes precedence, so the field never
+         * renders two messages at once. This guard is deliberately kept here
+         * as well as on the live `handleValuesChange` path: a value that
+         * never passed through the change callback (a host that omits
+         * `onValuesChange`, or a skill loaded already carrying a second
+         * block) must still be unable to reach `buildSkillManifestForSubmit`.
+         */
+        nextErrors.instructions = messages.instructionsFrontmatter;
       }
       if (Object.keys(nextErrors).length > 0) {
         setErrors(nextErrors);
@@ -416,5 +462,6 @@ export const useSkillEditorSubmit = ({
     conflict,
     clearConflict: () => setConflict(undefined),
     handleSubmit,
+    handleValuesChange,
   };
 };
