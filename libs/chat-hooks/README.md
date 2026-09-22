@@ -1749,12 +1749,13 @@ const attachments = dialFilesToAttachments(selectedFiles, bucket, {
 
 ### mimeTypesToFileAccept / isDialFileAcceptType / mimeTypesToDialFileAcceptTypes / mimeTypesToAttachmentExtensionLabels
 
-MIME/accept-type helpers for file pickers. `mimeTypesToFileAccept` always filters through `isDialFileAcceptType`, so it never disagrees with `mimeTypesToDialFileAcceptTypes` about which types are acceptable.
+MIME/accept-type helpers for file pickers. `mimeTypesToFileAccept` always filters through `isDialFileAcceptType`, so it never disagrees with `mimeTypesToDialFileAcceptTypes` about which types are acceptable. Both resolve MIME aliases to the canonical type a picker's own MIME table recognizes, so a deployment declaring `text/json` still offers `.json` files.
 
 ```ts
 import { mimeTypesToFileAccept } from '@epam/ai-dial-chat-hooks';
 
 mimeTypesToFileAccept(['image/*', 'application/pdf']); // 'image/*,application/pdf'
+mimeTypesToFileAccept(['text/json']); // 'application/json'
 ```
 
 ## API Transport
