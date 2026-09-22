@@ -87,10 +87,29 @@ export const ModelSelectorControl: FC<Props> = ({
   const caretIcon = (
     <IconChevronDown
       size={DIAL_ICON_SIZE.SM}
-      className={styles.modelSelectorCaret}
+      className={mergeClasses(
+        styles.modelSelectorCaret,
+        CONVERSATION_INPUT_CLASS.modelSelectorCaret,
+      )}
       aria-hidden
       stroke={DIAL_KIT_ICON_STROKE}
     />
+  );
+
+  /*
+   * The icon comes from `DeploymentIcon`, which takes no class of its own, so
+   * the host styling hook needs a wrap. It is layout-neutral: the icon is a
+   * fixed-size, non-shrinking box in all three presentations.
+   */
+  const iconNode = (
+    <span
+      className={mergeClasses(
+        'flex shrink-0 items-center',
+        CONVERSATION_INPUT_CLASS.modelSelectorIcon,
+      )}
+    >
+      {selectorIcon}
+    </span>
   );
 
   if (isMobile) {
@@ -100,7 +119,7 @@ export const ModelSelectorControl: FC<Props> = ({
           <GhostIconButton
             icon={
               <div className="flex items-center gap-1">
-                {selectorIcon}
+                {iconNode}
                 {caretIcon}
               </div>
             }
@@ -188,7 +207,7 @@ export const ModelSelectorControl: FC<Props> = ({
               }
             }}
           >
-            {selectorIcon}
+            {iconNode}
             <span className="flex min-w-0 max-w-[180px] items-baseline gap-1">
               <span
                 className={mergeClasses(
@@ -250,7 +269,7 @@ export const ModelSelectorControl: FC<Props> = ({
               CONVERSATION_INPUT_CLASS.modelSelectorButton,
             )}
           >
-            {selectorIcon}
+            {iconNode}
             {caretIcon}
           </button>
         </Tooltip>

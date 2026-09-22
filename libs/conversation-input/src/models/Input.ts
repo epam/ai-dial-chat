@@ -1,3 +1,4 @@
+import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 import type {
   Attachment,
   AttachmentErrorReason,
@@ -23,7 +24,7 @@ export enum SendOnEnter {
 export enum ActionRowLayout {
   /** Textarea occupies its own line; the add button, tool chips, and footer actions wrap below it. */
   Stacked = 'stacked',
-  /** Add button, textarea, and footer actions share one line; tool chips move to their own row above. Ignored on mobile. */
+  /** Add button, textarea, and footer actions share one line; tool chips move to their own row above. Applies below the desktop breakpoint only when the host opts in. */
   Inline = 'inline',
 }
 
@@ -181,6 +182,11 @@ export interface InputProps {
   colors?: InputColors;
   /** Typography overrides applied as CSS custom properties. */
   typography?: InputTypography;
+  /**
+   * Style overrides for the attachment tray inside the composer and, through
+   * its `card` slot, for every tile in it.
+   */
+  attachmentTray?: AttachmentTrayStyles;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
   /**
@@ -285,10 +291,19 @@ export interface InputProps {
   hideActionBar?: boolean;
   /**
    * How the action row arranges the textarea and the controls around it.
-   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` is ignored
-   * on mobile, where one line does not fit.
+   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` applies
+   * from the desktop breakpoint (1280px) up, unless
+   * `isInlineActionRowAllowedBelowDesktop` opts the narrower widths in.
    */
   actionRowLayout?: ActionRowLayout;
+  /**
+   * When `true`, `ActionRowLayout.Inline` also applies below the desktop
+   * breakpoint (1280px). Set it when the embedded composer is wide enough
+   * there — a phone-width one is not. Affects the action row alone: the add
+   * menu and model picker keep their bottom-sheet presentation. Defaults to
+   * `false`.
+   */
+  isInlineActionRowAllowedBelowDesktop?: boolean;
   /**
    * When provided, replaces the default send/stop/model-selector area with custom content.
    * Receives `canSend` (textarea has non-empty trimmed content) and `onSend` (triggers the

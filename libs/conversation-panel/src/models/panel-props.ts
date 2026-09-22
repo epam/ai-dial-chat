@@ -113,6 +113,15 @@ export interface ConversationPanelStyles {
   /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
   taskBadgeClassName?: string;
   /**
+   * Extra class name(s) merged onto the panel's header bar. The header is
+   * `h-[64px]` by default; a `h-*` utility passed here replaces that height
+   * rather than losing to it, so a host does not need `!important` on
+   * `.dial-sb-header`.
+   */
+  headerClassName?: string;
+  /** Extra class name(s) merged onto the header's trailing action cluster — `headerActions` and the panel toggle. */
+  headerActionsClassName?: string;
+  /**
    * Extra CSS class merged onto the search field's wrapper. The wrapper's
    * corner radius is themed with the `--cp-search-radius` custom property, so
    * this is only needed for anything the panel's own stylesheet does not

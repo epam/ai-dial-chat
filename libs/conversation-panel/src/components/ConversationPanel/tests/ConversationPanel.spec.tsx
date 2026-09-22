@@ -142,23 +142,44 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarOrientation: { Left: 'left', Right: 'right' },
+  /*
+   * The real panel puts `styles.headerClassName` on its header bar and
+   * `styles.headerActionsClassName` on the cluster holding `rightActions`.
+   * The stand-in keeps that nesting and gives both boxes a role and name, so
+   * a class landing on the wrong one fails without reaching into the DOM.
+   */
   SidebarPanel: ({
     children,
     isOpen,
     ariaLabel,
     rightActions,
+    styles,
   }: {
     children: React.ReactNode;
     isOpen?: boolean;
     ariaLabel: string;
     rightActions?: React.ReactNode;
+    styles?: {
+      headerClassName?: string;
+      headerActionsClassName?: string;
+    };
   }) => (
     <aside role="complementary" aria-label={ariaLabel} aria-hidden={!isOpen}>
-      {rightActions && (
-        <div role="group" aria-label="panel header actions">
-          {rightActions}
-        </div>
-      )}
+      <div
+        role="group"
+        aria-label="panel header"
+        className={styles?.headerClassName}
+      >
+        {rightActions && (
+          <div
+            role="group"
+            aria-label="panel header actions"
+            className={styles?.headerActionsClassName}
+          >
+            {rightActions}
+          </div>
+        )}
+      </div>
       {children}
     </aside>
   ),
@@ -516,5 +537,44 @@ describe('ConversationPanel — public class names', () => {
     expect(screen.getByRole('search').classList).toContain(
       CONVERSATION_PANEL_CLASS.search,
     );
+  });
+});
+
+describe('ConversationPanel — header style forwarding', () => {
+  it('keeps its own header height when the host passes no class', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
+
+    expect(
+      screen.getByRole('group', { name: 'panel header' }).classList,
+    ).toContain('h-[64px]');
+  });
+
+  it('forwards styles.headerClassName onto the header bar', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        styles={{ headerClassName: 'h-[80px] border-b' }}
+      />,
+    );
+
+    const header = screen.getByRole('group', { name: 'panel header' });
+    expect(header.classList).toContain('h-[80px]');
+    expect(header.classList).toContain('border-b');
+  });
+
+  it('forwards styles.headerActionsClassName onto the trailing action cluster', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        headerActions={<button>Test Action</button>}
+        styles={{ headerActionsClassName: 'gap-4' }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('group', { name: 'panel header actions' }).classList,
+    ).toContain('gap-4');
   });
 });

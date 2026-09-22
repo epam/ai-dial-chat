@@ -202,3 +202,56 @@ describe('AttachmentCard — public class names', () => {
     expect(remove.getAttribute('aria-describedby')).toBeTruthy();
   });
 });
+
+describe('AttachmentTray — card style forwarding', () => {
+  it('forwards styles.card.className onto every tile', () => {
+    const { container } = render(
+      <AttachmentTray
+        attachments={[makeFile('a'), makeFile('b')]}
+        styles={{ card: { className: 'host-tile' } }}
+      />,
+    );
+
+    expect(container.querySelectorAll('.host-tile')).toHaveLength(2);
+  });
+
+  it('forwards styles.card.typography onto the tile type row', () => {
+    render(
+      <AttachmentTray
+        attachments={[makeFile('doc')]}
+        styles={{ card: { typography: { metaClassName: 'dial-tiny-text' } } }}
+      />,
+    );
+
+    const tile = closestWithClass(
+      screen.getByText('doc'),
+      ATTACHMENT_INPUT_CLASS.tile,
+    );
+
+    expect(
+      tile!.querySelector(
+        `.${ATTACHMENT_INPUT_CLASS.tileType} .dial-tiny-text`,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('leaves the card on its own defaults when styles.card is absent', () => {
+    render(
+      <AttachmentTray
+        attachments={[makeFile('doc')]}
+        styles={{ className: 'gap-4' }}
+      />,
+    );
+
+    const tile = closestWithClass(
+      screen.getByText('doc'),
+      ATTACHMENT_INPUT_CLASS.tile,
+    );
+
+    expect(
+      tile!.querySelector(
+        `.${ATTACHMENT_INPUT_CLASS.tileType} .dial-caption-text`,
+      ),
+    ).toBeTruthy();
+  });
+});

@@ -113,6 +113,25 @@ button in the host app.
 needs; a `rounded-*` utility passed there still wins over `--cp-search-radius`,
 since a host's utilities are emitted after this package's stylesheet.
 
+### Header
+
+The panel renders a 64 px header inside `SidebarPanel`. `styles.headerClassName`
+is merged after that height and `styles.headerActionsClassName` onto the cluster
+holding `headerActions` and the panel toggle, so a `h-*` or `gap-*` passed here
+replaces the default rather than competing with it at equal specificity — which
+is what a rule on `.dial-sb-header` does:
+
+```tsx
+<ConversationPanel
+  {...props}
+  headerActions={<CollapseButton />}
+  styles={{
+    headerClassName: 'h-[56px] px-4',
+    headerActionsClassName: 'gap-2',
+  }}
+/>
+```
+
 ## Public class names
 
 The panel's controls carry stable `dial-cp-*` classes in addition to their
