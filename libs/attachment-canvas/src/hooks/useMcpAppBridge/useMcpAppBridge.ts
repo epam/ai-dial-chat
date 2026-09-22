@@ -10,11 +10,13 @@ import type {
 } from '../../models/attachment-canvas';
 
 /*
- * Host identity/capabilities advertised during the `ui/initialize` handshake —
- * the same defaults `@mcp-ui/client`'s `AppRenderer` used before this package
- * started owning its `AppBridge` directly.
+ * Fallback host identity advertised during the `ui/initialize` handshake when
+ * `content.hostInfo` is omitted — the same default `@mcp-ui/client`'s
+ * `AppRenderer` used before this package started owning its `AppBridge`
+ * directly. A lib must not hardcode the app's own name/version (library
+ * isolation), so the app layer supplies those via `content.hostInfo`.
  */
-const HOST_INFO = { name: 'MCP-UI Host', version: '1.0.0' };
+const DEFAULT_HOST_INFO = { name: 'MCP-UI Host', version: '1.0.0' };
 const HOST_CAPABILITIES = { openLinks: {} };
 
 /*
@@ -155,9 +157,26 @@ export const useMcpAppBridge = (
        * everything else (iframe, transport, connect, tool input/result
        * delivery) exactly as before.
        */
-      bridge = new AppBridge(null, HOST_INFO, HOST_CAPABILITIES, {
-        hostContext: contentRef.current.hostContext,
-      });
+      /* Seeds `ui/initialize`'s `containerDimensions` synchronously — see design.md D20. */
+      const rect = containerRef.current?.getBoundingClientRect();
+      const initialHostContext =
+        rect != null && rect.width > 0 && rect.height > 0
+          ? {
+              ...contentRef.current.hostContext,
+              containerDimensions: {
+                width: Math.round(rect.width),
+                height: Math.round(rect.height),
+              },
+            }
+          : contentRef.current.hostContext;
+      bridge = new AppBridge(
+        null,
+        contentRef.current.hostInfo ?? DEFAULT_HOST_INFO,
+        HOST_CAPABILITIES,
+        {
+          hostContext: initialHostContext,
+        },
+      );
       bridge.onopenlink = async ({ url }) => {
         const handler = contentRef.current.onOpenLink;
         const isOpened = handler != null ? handler(url) : openLinkInNewTab(url);
@@ -211,9 +230,20 @@ export const useMcpAppBridge = (
     };
   }, [containerRef]);
 
-  /* Propagates live host-context changes (resize, theme switch) to the mounted app. */
+  /*
+   * Propagates live host-context changes (resize, theme switch) to the
+   * mounted app. `appBridge` becomes non-null as soon as this hook creates
+   * it, but `AppFrame` only calls `.connect()` on it later, once the sandbox
+   * proxy iframe reports ready — `transport` stays undefined until then, and
+   * `setHostContext` throws `Not connected` if a change lands first (slower
+   * apps widen this race).
+   */
   useEffect(() => {
-    if (appBridge != null && liveHostContext != null) {
+    if (
+      appBridge != null &&
+      appBridge.transport != null &&
+      liveHostContext != null
+    ) {
       appBridge.setHostContext(liveHostContext);
     }
   }, [appBridge, liveHostContext]);

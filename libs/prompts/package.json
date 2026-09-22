@@ -16,6 +16,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./parameters-popup": {
+      "@epam/source": "./src/entry-points/parameters-popup.ts",
+      "types": "./dist/entry-points/parameters-popup.d.ts",
+      "import": "./dist/parameters-popup.js",
+      "default": "./dist/parameters-popup.js"
     }
   },
   "dependencies": {

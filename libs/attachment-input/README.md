@@ -171,7 +171,8 @@ import {
   ATTACHMENT_COLLAPSE_THRESHOLD,
 } from '@epam/ai-dial-attachment-input';
 
-// Check if a file type is permitted (an empty allowlist permits nothing)
+// Check if a file type is permitted (an empty allowlist permits nothing).
+// Both sides are canonicalized, so a declared 'text/json' permits 'application/json'.
 const isAllowed = isMimeTypeAllowed(file.type, allowedMimeTypes);
 
 // Convert MIME types to a human-readable extension label string

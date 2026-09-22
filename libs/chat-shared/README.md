@@ -602,6 +602,8 @@ import {
   extractInitials,
   pickAvatarColor,
   isAudioTranscriptionSupported,
+  getBaseMimeType,
+  normalizeMimeType,
   ensureDownloadFilename,
   downloadTextFile,
   triggerBlobDownload,
@@ -656,6 +658,10 @@ formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
 const initials = extractInitials(user.displayName);
 const { background, foreground } = pickAvatarColor(user.displayName);
 
+// Canonicalize a MIME type before comparing it — case and parameters dropped, aliases resolved
+getBaseMimeType('Application/JSON; charset=utf-8'); // 'application/json'
+normalizeMimeType('text/json'); // 'application/json'
+
 // Ensure a download filename carries a file extension; derives one from the url path or MIME type when absent
 ensureDownloadFilename(
   'Q3 Summary',
@@ -689,6 +695,7 @@ resolvePromptParams('Reply in {{language|Spanish}}.', {}); // 'Reply in Spanish.
 
 ```tsx
 import {
+  MIME_TYPE_ALIASES,
   MIME_TYPE_EXT_MAP,
   MIME_TYPE_WILDCARD,
   MIME_TYPE_AUDIO_PREFIX,
@@ -707,21 +714,22 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                               |
-| -------------------------------------------- | --------------------------------------------------------------------- |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names        |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists      |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types       |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders         |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step     |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                   |
-| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field  |
-| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh` |
-| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to    |
-| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap  |
-| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview    |
-| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap    |
-| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box               |
+| Constant                                     | Purpose                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| `MIME_TYPE_ALIASES`                          | Non-canonical MIME spelling → canonical type, read by `normalizeMimeType` |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names            |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists          |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types           |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders             |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step         |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                       |
+| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field      |
+| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`     |
+| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to        |
+| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap      |
+| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview        |
+| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap        |
+| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box                   |
 
 ## Stylesheet
 

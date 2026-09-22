@@ -1,6 +1,14 @@
 import { CatalogEntityType, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SelectOption, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  FC,
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -39,6 +47,12 @@ import { CreateButton } from './CreateButton';
 const POST_AUTH_REFRESH_ATTEMPTS = 3;
 const POST_AUTH_REFRESH_DELAY_MS = 300;
 
+enum ListMountState {
+  Unmounted = 'unmounted',
+  Prepared = 'prepared',
+  Shown = 'shown',
+}
+
 /** Root catalog component: entity browsing with tabs, search, sort, filter, favorites strip, and details panel. */
 export const Catalog: FC<CatalogProps> = ({
   items,
@@ -73,6 +87,7 @@ export const Catalog: FC<CatalogProps> = ({
   isShareVisible,
   isSharePrimary,
   onFetchDetails,
+  renderCredentials,
   onEdit,
   onDownload,
   isDownloadVisible,
@@ -150,8 +165,10 @@ export const Catalog: FC<CatalogProps> = ({
 
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<CatalogViewMode>(initialViewMode);
-  const [listEverShown, setListEverShown] = useState(
-    initialViewMode === CatalogViewMode.Cards,
+  const [listMountState, setListMountState] = useState(
+    initialViewMode === CatalogViewMode.Cards
+      ? ListMountState.Shown
+      : ListMountState.Unmounted,
   );
   const [internalSortKey, setInternalSortKey] = useState<CatalogSortKey>(
     CatalogSortKey.RecentlyUpdated,
@@ -434,6 +451,38 @@ export const Catalog: FC<CatalogProps> = ({
     [myAppsFiltered, activeTab],
   );
 
+  useEffect(() => {
+    if (
+      listMountState !== ListMountState.Unmounted ||
+      isLoading ||
+      tabFiltered.length === 0
+    ) {
+      return;
+    }
+
+    /*
+     * Initialize the hidden grid after cards have rendered, so the first
+     * list-view click can reveal an existing instance. The transition lets
+     * user input take priority over this optional preparation.
+     */
+    const prepareList = () => {
+      startTransition(() => {
+        setListMountState((state) =>
+          state === ListMountState.Unmounted ? ListMountState.Prepared : state,
+        );
+      });
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(prepareList);
+      return () => window.cancelIdleCallback(id);
+    }
+
+    // Give the initial view time to paint in browsers without idle callbacks.
+    const id = window.setTimeout(prepareList, 200);
+    return () => window.clearTimeout(id);
+  }, [listMountState, isLoading, tabFiltered.length]);
+
   const isSelectedItemStarred =
     selectedItem != null && favorites.some((f) => f.id === selectedItem.id);
 
@@ -444,7 +493,7 @@ export const Catalog: FC<CatalogProps> = ({
   }, [selectedItem]);
 
   const handleViewModeChange = useCallback((mode: CatalogViewMode) => {
-    if (mode === CatalogViewMode.Cards) setListEverShown(true);
+    if (mode === CatalogViewMode.Cards) setListMountState(ListMountState.Shown);
     setViewMode(mode);
   }, []);
 
@@ -607,6 +656,7 @@ export const Catalog: FC<CatalogProps> = ({
           ) : (
             <>
               <div
+                inert={viewMode !== CatalogViewMode.Grid}
                 className={mergeClasses(
                   tabFiltered.length > 0 ? 'pb-8' : 'size-full flex-1',
                   viewMode !== CatalogViewMode.Grid && 'hidden',
@@ -626,12 +676,20 @@ export const Catalog: FC<CatalogProps> = ({
                 />
               </div>
 
-              {listEverShown && (
+              {listMountState !== ListMountState.Unmounted && (
+                /* The first preparation needs real width for ag-grid's
+                   layout, but must not add height to the card view. */
                 <div
+                  inert={viewMode !== CatalogViewMode.Cards}
                   className={mergeClasses(
                     'pb-8',
-                    viewMode !== CatalogViewMode.Cards && 'hidden',
-                    tabFiltered.length === 0 && 'h-full',
+                    viewMode !== CatalogViewMode.Cards &&
+                      (listMountState === ListMountState.Prepared
+                        ? 'invisible h-0 overflow-hidden p-0'
+                        : 'hidden'),
+                    tabFiltered.length === 0 &&
+                      viewMode === CatalogViewMode.Cards &&
+                      'h-full',
                   )}
                 >
                   <ListView
@@ -660,6 +718,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {detailsPanelItem != null && (
         <DetailsPanel
+          renderCredentials={renderCredentials}
           item={detailsPanelItem}
           isOpen={isDetailsOpen}
           isStarred={isSelectedItemStarred}

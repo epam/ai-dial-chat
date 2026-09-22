@@ -1,3 +1,30 @@
+## DIAL-native correction (2026-09-21)
+
+Runtime verification showed that DIAL Core rejects both external-service `signin`
+and `signout` for `DIAL_NATIVE`. This amendment extends the existing offline login
+flow to reactive chat interrupts; it supersedes the original compile-only scope
+for that auth type. Administrator consent management remains out of scope.
+
+Acceptance criteria for the correction:
+
+- Native interrupts use offline OAuth without per-service credential mutations.
+- Application consent is represented by `appLevelAuthStatus` and is required
+  independently of the user's offline connection; unknown status fails closed.
+- Both offline endpoints accept either `scheduledTasksEnabled` or
+  `liveChatInteraction`, preserving session, CSRF, and redirect validation.
+- The external-service app adapter uses regenerated `ExternalServicesApi` types
+  and methods; no hand-authored library acquires transport knowledge.
+- Native-only dialogs omit per-service consent and show localized, accessible
+  administrator-consent/unavailable-access messages. API-key/OAuth flows retain
+  their existing behavior.
+- Automated regression coverage passes; live OAuth and administrator-consent
+  checks remain explicit verification tasks.
+
+Compatibility: no endpoint is added or removed. The metadata field is optional;
+API-key/OAuth contracts are preserved. Rollback restores this amendment's frontend,
+metadata mapping, and alternative feature gating together; it also restores the
+known native-login failure, so it is not a native-auth workaround.
+
 ## Why
 
 Scheduled Tasks run unattended, on a cron trigger, with nobody present to
@@ -74,12 +101,11 @@ required. This proposal adds that signal and the login flow.
 
 - Offline-credentials **sign-out** (`offlineCredentialsSignOut` exists in the
   SDK but is out of scope for this change).
-- Application external-service consent grant/withdrawal — unrelated existing
-  feature, untouched.
+- Administrator-managed application consent grant/withdrawal; Chat only reads the status.
 - Any other change introduced by SDK PR #33 beyond the offline-credentials
   surface (`getOfflineCredentials`, `offlineCredentialsSignIn`,
   `OfflineCredentialsStatus`, `OfflineCredentialsSignInRequest`) and the
-  `DIAL_NATIVE` auth-type addition strictly as needed for the SDK to compile.
+  `DIAL_NATIVE` runtime support described in the correction above.
 - Changes to the primary Chat OIDC session login/logout flow
   (`docs/auth/auth-bff-encrypted-cookie.md` §5.1–5.4).
 - Redesigning the toolset or external-service auth UX — this proposal reuses
@@ -110,7 +136,7 @@ required. This proposal adds that signal and the login flow.
    `{ available, connected, connect? }` shape, requires a valid session
    (`SessionUser`/`validateServerSession`-equivalent guard already used by
    every versioned `chat-api` controller), is gated by the
-   `scheduledTasksEnabled` feature flag, and never caches (`Cache-Control:
+   `scheduledTasksEnabled` or `liveChatInteraction` feature flag, and never caches (`Cache-Control:
    private, no-store`).
 3. `POST /api/v1/offline-credentials/signin` accepts `{ code, redirectUri }`,
    validates `redirectUri` against an app-owned allowlist before forwarding
@@ -222,10 +248,7 @@ required. This proposal adds that signal and the login flow.
 
 ### Modified Capabilities
 
-_None — no existing OpenSpec capability spec in `openspec/specs/` currently
-documents Scheduled Tasks, toolsets, or external-service auth; this change
-introduces the two capabilities above as net-new specs rather than deltas
-against an existing one._
+- `external-service-authentication`: DIAL-native metadata and consent status, offline-credentials interrupt handling, generated-client usage, and rejection of per-service native credential mutations.
 
 ## Impact
 
@@ -252,6 +275,6 @@ against an existing one._
   `POST /api/v1/offline-credentials/signin`. Both require a valid encrypted
   session cookie (the same `SessionUser`-populating guard every other
   versioned `chat-api` controller relies on — no new auth mechanism) and are
-  additionally gated by the `scheduledTasksEnabled` feature flag.
+  additionally gated by either `scheduledTasksEnabled` or `liveChatInteraction`.
 - **Docs**: `docs/auth/auth-bff-encrypted-cookie.md` gains a new subsection
   and an updated/added Mermaid diagram under `docs/auth/auth-diagrams/`.

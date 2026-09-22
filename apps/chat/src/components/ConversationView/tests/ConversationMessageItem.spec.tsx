@@ -227,6 +227,113 @@ describe('ConversationMessageItem — reference-only attachments', () => {
 });
 
 describe('ConversationMessageItem — inline citations', () => {
+  it.each([
+    ['text/html', 'https://example.com/page.html'],
+    ['text/html', 'files/bucket/page.html'],
+    ['application/pdf', 'https://example.com/report.pdf'],
+    [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'https://example.com/report.docx',
+    ],
+  ])('keeps Preview for a supported citation: %s %s', async (type, url) => {
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Source<cit data-id="123"></cit>',
+      timestamp: '2026-09-21T13:47:50Z',
+      custom_content: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: '123' } },
+            body: {
+              source: { type: 'attachment', attachment: { type, url } },
+            },
+          },
+        ],
+      },
+    };
+    const onAttachmentClick = vi.fn();
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    if (type === 'text/html') {
+      expect(onAttachmentClick).toHaveBeenCalledWith(
+        expect.objectContaining({ url, contentType: type }),
+      );
+    } else {
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({ url }),
+        expect.any(String),
+      );
+    }
+  });
+
+  it.each([false, true])(
+    'offers only Open in browser for an external web citation (mobile: %s)',
+    async (isMobile) => {
+      isMobileMock = isMobile;
+      const url = 'https://data.imf.org/en/datasets/IMF.RES:WEO';
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content:
+          'Inflation in 2026 increased, as reported by IMF:WEO dataset <cit data-id="123"></cit>',
+        timestamp: '2026-09-21T13:47:50Z',
+        custom_content: {
+          annotations: [
+            {
+              index: 0,
+              target: { selector: { type: 'html_tag', tag: 'cit', id: '123' } },
+              body: {
+                title: 'World Economic Outlook',
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'text/html',
+                    url,
+                    title: 'World Economic Outlook dataset',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+      const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+      try {
+        render(
+          <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+        );
+        await userEvent.click(
+          screen.getByRole('button', {
+            name: CitationsI18nKeys.MarkerAriaLabel,
+          }),
+        );
+        expect(
+          screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
+        ).toBeNull();
+        await userEvent.click(
+          screen.getByRole('button', {
+            name: CitationsI18nKeys.PopupOpenInBrowser,
+          }),
+        );
+        expect(open).toHaveBeenCalledWith(url, '_blank', 'noopener,noreferrer');
+        expect(mockOpenCanvas).not.toHaveBeenCalled();
+      } finally {
+        open.mockRestore();
+      }
+    },
+  );
+
   it.each([false, true])(
     'opens the selected cit document and page after reload (raw format: %s)',
     async (rawFormat) => {
@@ -927,87 +1034,89 @@ describe('ConversationMessageItem — inline citations', () => {
    * — each PDF group here has exactly one annotation, so
    * `annotationsToPdfHighlights` never gathers more than one entry.
    */
-  it('reproduces issue #8822: two repeated cit ids, one multi-selector annotation each, PDF source', async () => {
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content:
-        '\n\r\n\rBased on the provided document, **David Reynolds** was an independent eye-witness to the incident. \n\nHere are the key details regarding his statement and involvement:\n* **Role:** He was a pedestrian located near the scene of the accident <cit data-id="ff3390"></cit>.\n* **Observations:** \n  * He reported hearing screeching tires and seeing a Honda vehicle spinning immediately after the initial impact <cit data-id="ff3390"></cit>.\n  * He noted that the Mustang involved had absolutely no opportunity to avoid the subsequent collision <cit data-id="7bba1b"></cit>.\n* **Conclusion:** He characterized the entire event as a rapid chain reaction <cit data-id="7bba1b"></cit>.',
-      timestamp: '2026-09-16T07:21:28.670Z',
-      custom_content: {
-        annotations: [
-          {
-            target: {
-              selector: { type: 'html_tag', tag: 'cit', id: 'ff3390' },
-            },
-            body: {
-              title: 'max_artificial_claim.pdf',
-              quote:
-                'David Reynolds, a pedestrian crossing nearby, reported, "I heard the screeching tires and turned to see the Honda spinning after the first impact.',
-              selector: [
-                {
-                  type: 'pdf_region',
-                  page: 1,
-                  bbox: { lt: [68.544, 603.504], wh: [455.94, 19.8] },
-                },
-                {
-                  type: 'pdf_region',
-                  page: 1,
-                  bbox: { lt: [68.544, 614.592], wh: [299.268, 19.008] },
-                },
-              ],
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/pdf',
-                  url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
-                  title: 'max_artificial_claim.pdf',
+  it.each([0, 1, 2, 3])(
+    'reproduces issue #8822: repeated PDF citation %i supports preview and download',
+    async (markerIndex) => {
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content:
+          '\n\r\n\rBased on the provided document, **David Reynolds** was an independent eye-witness to the incident. \n\nHere are the key details regarding his statement and involvement:\n* **Role:** He was a pedestrian located near the scene of the accident <cit data-id="ff3390"></cit>.\n* **Observations:** \n  * He reported hearing screeching tires and seeing a Honda vehicle spinning immediately after the initial impact <cit data-id="ff3390"></cit>.\n  * He noted that the Mustang involved had absolutely no opportunity to avoid the subsequent collision <cit data-id="7bba1b"></cit>.\n* **Conclusion:** He characterized the entire event as a rapid chain reaction <cit data-id="7bba1b"></cit>.',
+        timestamp: '2026-09-16T07:21:28.670Z',
+        custom_content: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'ff3390' },
+              },
+              body: {
+                title: 'max_artificial_claim.pdf',
+                quote:
+                  'David Reynolds, a pedestrian crossing nearby, reported, "I heard the screeching tires and turned to see the Honda spinning after the first impact.',
+                selector: [
+                  {
+                    type: 'pdf_region',
+                    page: 1,
+                    bbox: { lt: [68.544, 603.504], wh: [455.94, 19.8] },
+                  },
+                  {
+                    type: 'pdf_region',
+                    page: 1,
+                    bbox: { lt: [68.544, 614.592], wh: [299.268, 19.008] },
+                  },
+                ],
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/pdf',
+                    url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
+                    title: 'max_artificial_claim.pdf',
+                  },
                 },
               },
             },
-          },
-          {
-            target: {
-              selector: { type: 'html_tag', tag: 'cit', id: '7bba1b' },
-            },
-            body: {
-              title: 'max_artificial_claim.pdf',
-              quote:
-                'The Mustang didn’t have a chance to avoid the collision — it was like a chain reaction."',
-              selector: [
-                {
-                  type: 'pdf_region',
-                  page: 1,
-                  bbox: { lt: [68.544, 624.096], wh: [394.128, 19.8] },
-                },
-              ],
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/pdf',
-                  url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
-                  title: 'max_artificial_claim.pdf',
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: '7bba1b' },
+              },
+              body: {
+                title: 'max_artificial_claim.pdf',
+                quote:
+                  'The Mustang didn’t have a chance to avoid the collision — it was like a chain reaction."',
+                selector: [
+                  {
+                    type: 'pdf_region',
+                    page: 1,
+                    bbox: { lt: [68.544, 624.096], wh: [394.128, 19.8] },
+                  },
+                ],
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/pdf',
+                    url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
+                    title: 'max_artificial_claim.pdf',
+                  },
                 },
               },
             },
-          },
-        ],
-      },
-    };
+          ],
+        },
+      };
 
-    const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(() => undefined);
+      const clickSpy = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(() => undefined);
 
-    render(
-      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-    );
+      render(
+        <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+      );
 
-    const markers = screen.getAllByRole('button', {
-      name: CitationsI18nKeys.MarkerAriaLabel,
-    });
-    expect(markers).toHaveLength(4);
+      const markers = screen.getAllByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      });
+      expect(markers).toHaveLength(4);
 
-    for (const marker of markers) {
+      const marker = markers[markerIndex];
       await userEvent.click(marker);
       expect(screen.getAllByRole('dialog')).toHaveLength(1);
 
@@ -1017,19 +1126,16 @@ describe('ConversationMessageItem — inline citations', () => {
       expect(mockOpenCanvas).toHaveBeenCalledOnce();
       expect(screen.queryAllByRole('dialog')).toHaveLength(0);
       mockOpenCanvas.mockClear();
-    }
-
-    for (const marker of markers) {
       await userEvent.click(marker);
       await userEvent.click(
         screen.getByRole('button', { name: ButtonsI18nKeys.Download }),
       );
       expect(clickSpy).toHaveBeenCalledOnce();
       clickSpy.mockClear();
-    }
 
-    clickSpy.mockRestore();
-  });
+      clickSpy.mockRestore();
+    },
+  );
 });
 
 describe('ConversationMessageItem — stopped generation', () => {

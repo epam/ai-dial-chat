@@ -25,6 +25,7 @@ import { AppModule } from './app/app.module';
 import { createFrontendMiddleware } from './app/static-assets';
 import { clearLegacyCookies } from './auth/cookies/cookie-options';
 import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
+import { buildCorsOptionsDelegate } from './config/cors';
 import {
   buildPermissionsPolicyHeader,
   createHelmetOptions,
@@ -157,11 +158,17 @@ async function bootstrap() {
   const globalPrefix = process.env.API_PREFIX || 'api';
 
   app.setGlobalPrefix(globalPrefix);
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:4207',
-    credentials: true,
-    exposedHeaders: ['X-CSRF-Token', 'X-DIAL-CLIENT-CHANNEL-ID', 'traceparent'],
-  });
+  app.enableCors(
+    buildCorsOptionsDelegate({
+      origin: process.env.CORS_ORIGIN || 'http://localhost:4207',
+      credentials: true,
+      exposedHeaders: [
+        'X-CSRF-Token',
+        'X-DIAL-CLIENT-CHANNEL-ID',
+        'traceparent',
+      ],
+    }),
+  );
 
   app.use(
     await createFrontendMiddleware({

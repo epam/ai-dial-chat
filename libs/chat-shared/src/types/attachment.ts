@@ -4,6 +4,8 @@ export enum AttachmentErrorReason {
   Network = 'network',
   /** File MIME type is not in the deployment's inputAttachmentTypes list. */
   UnsupportedType = 'unsupported-type',
+  /** File size exceeds the configured maximum attachment size. */
+  FileTooLarge = 'file-too-large',
 }
 
 /** Discriminates the kind of content an attachment carries. */

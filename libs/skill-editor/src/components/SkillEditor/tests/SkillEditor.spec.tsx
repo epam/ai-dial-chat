@@ -430,6 +430,86 @@ describe('SkillEditor', () => {
     expect(onDirtyChange).not.toHaveBeenCalledWith(true);
   });
 
+  it('renders an Instructions error under dir="rtl" with no physical-direction classes', () => {
+    /* The root's own dir="rtl" is covered by the dir-override test above. */
+    renderEditor({
+      dir: 'rtl',
+      errors: { instructions: 'Remove the front matter block' },
+    });
+
+    const message = screen.getByText('Remove the front matter block');
+    expect(message.className).not.toMatch(
+      /\b(ml-|mr-|pl-|pr-|left-|right-|text-left|text-right)/,
+    );
+  });
+
+  it('reports the full value object when a field is edited', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onValuesChange = vi.fn();
+    renderEditor({
+      onValuesChange,
+      initialValues: { name: 'my-copy', instructions: '# Body' },
+    });
+
+    await user.type(screen.getByRole('textbox', { name: /Description/ }), 'Hi');
+
+    expect(onValuesChange).toHaveBeenLastCalledWith({
+      name: 'my-copy',
+      description: 'Hi',
+      instructions: '# Body',
+    });
+  });
+
+  it('reports the pasted value when text is pasted into Instructions', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onValuesChange = vi.fn();
+    renderEditor({ onValuesChange });
+
+    const pasted = '---\nname: pdf\n---\n\n# PDF Tools';
+    const instructions = await screen.findByRole('textbox', {
+      name: /Instructions/,
+    });
+    await user.click(instructions);
+    await user.paste(pasted);
+
+    expect(onValuesChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ instructions: pasted }),
+    );
+  });
+
+  it('does not report a change when initialValues are reseeded', () => {
+    const onValuesChange = vi.fn();
+    const { rerender } = renderEditor({ onValuesChange });
+
+    rerender(
+      <SkillEditor
+        title="Test Skill"
+        onBack={vi.fn()}
+        initialValues={{
+          name: 'good-morning-breakfast',
+          description: 'A morning greeting skill',
+          instructions: '# Instructions',
+        }}
+        files={[]}
+        fileActions={fileActions}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        onValuesChange={onValuesChange}
+      />,
+    );
+
+    expect(onValuesChange).not.toHaveBeenCalled();
+  });
+
+  it('edits fields normally when no onValuesChange is supplied', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor();
+
+    await user.type(screen.getByRole('textbox', { name: /Name/ }), 'my-copy');
+
+    expect(screen.getByDisplayValue('my-copy')).toBeTruthy();
+  });
+
   it('renders a conflict message with a working Reload latest control', async () => {
     const onReloadLatest = vi.fn();
     const user = userEvent.setup({ delay: null });

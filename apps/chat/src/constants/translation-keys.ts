@@ -218,6 +218,9 @@ export enum CatalogI18nKeys {
   PublishFolderEmptyState = 'catalog.publishFolderEmptyState',
   PublishHistoryLoading = 'catalog.publishHistoryLoading',
   PublishHistoryError = 'catalog.publishHistoryError',
+  PublishCredentialsLabel = 'catalog.publish.credentialsLabel',
+  PublishCredentialsHint = 'catalog.publish.credentialsHint',
+  PublishHistorySharedCredentials = 'catalog.publish.historySharedCredentials',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
@@ -444,6 +447,8 @@ export enum ScheduledTasksI18nKeys {
   DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',
   DetailDeleteConfirmTitle = 'scheduledTasks.detail.deleteConfirmTitle',
   DetailDeleteConfirmDescription = 'scheduledTasks.detail.deleteConfirmDescription',
+  DetailDeleteConsequenceConversationsAccessible = 'scheduledTasks.detail.deleteConsequenceConversationsAccessible',
+  DetailDeleteConsequenceCannotBeUndone = 'scheduledTasks.detail.deleteConsequenceCannotBeUndone',
   DetailDeleteConfirmingLabel = 'scheduledTasks.detail.deleteConfirmingLabel',
   DetailDeleteSuccess = 'scheduledTasks.detail.deleteSuccess',
   DetailDeleteNotFoundError = 'scheduledTasks.detail.deleteNotFoundError',
@@ -496,6 +501,7 @@ export enum DialFileManagerI18nKeys {
   UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
   MaxSizeOnly = 'dialFileManager.maxSizeOnly',
+  UploadFileTooLarge = 'dialFileManager.uploadFileTooLarge',
   AllTypes = 'dialFileManager.allTypes',
   UpToFiles = 'dialFileManager.upToFiles',
   AttachingHiddenFilesNotAllowed = 'dialFileManager.attachingHiddenFilesNotAllowed',
@@ -820,6 +826,8 @@ export enum AttachmentsI18nKeys {
   NoAttachmentsAllowedMessage = 'attachments.noAttachmentsAllowed.message',
   NetworkErrorTitle = 'attachments.networkError.title',
   NetworkErrorMessage = 'attachments.networkError.message',
+  FileTooLargeTitle = 'attachments.fileTooLarge.title',
+  FileTooLargeMessage = 'attachments.fileTooLarge.message',
 }
 
 export enum CitationsI18nKeys {
@@ -875,7 +883,6 @@ export enum AttachmentCanvasI18nKeys {
   VisualizerActionsAriaLabel = 'attachmentCanvas.visualizerActionsAriaLabel',
   VisualizerLoadingLabel = 'attachmentCanvas.visualizerLoadingLabel',
   VisualizerLoadErrorLabel = 'attachmentCanvas.visualizerLoadErrorLabel',
-  McpAppTitle = 'attachmentCanvas.mcpAppTitle',
   McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
   McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',
   PdfThumbnailsLabel = 'attachmentCanvas.pdfThumbnailsLabel',
@@ -989,6 +996,7 @@ export enum SkillEditorI18nKeys {
   BucketMissingTitle = 'skillEditor.bucketMissingTitle',
   BucketMissingMessage = 'skillEditor.bucketMissingMessage',
   ErrorRequired = 'skillEditor.error.required',
+  ErrorInstructionsFrontmatter = 'skillEditor.error.instructionsFrontmatter',
   ErrorNameInvalid = 'skillEditor.error.nameInvalid',
   ErrorNameConflict = 'skillEditor.error.nameConflict',
   ErrorPathInvalid = 'skillEditor.error.pathInvalid',
@@ -1143,6 +1151,9 @@ export enum ToolsetSigninI18nKeys {
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
+  AdminConsentRequired = 'toolsetSignin.adminConsentRequired',
+  OfflineUnavailable = 'toolsetSignin.offlineUnavailable',
+  DialNativeHint = 'toolsetSignin.dialNativeHint',
   ErrorPopupBlocked = 'toolsetSignin.errorPopupBlocked',
   ErrorDeclineFailed = 'toolsetSignin.errorDeclineFailed',
   ErrorRetry = 'toolsetSignin.errorRetry',
@@ -1373,4 +1384,13 @@ export enum UsageI18nKeys {
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
+}
+
+export enum ApplicationCredentialsI18nKeys {
+  Title = 'applicationCredentials.title',
+  LoadError = 'applicationCredentials.loadError',
+  SignedIn = 'applicationCredentials.signedIn',
+  SignedOut = 'applicationCredentials.signedOut',
+  SharedCredentials = 'applicationCredentials.sharedCredentials',
+  ConfirmLogout = 'applicationCredentials.confirmLogout',
 }

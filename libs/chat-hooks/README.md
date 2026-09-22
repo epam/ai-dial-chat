@@ -1113,10 +1113,11 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 | Name                | Type                                              | Description                                                               |
 | ------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
 | `allowedMimeTypes`  | `string[]`                                        | Resolved MIME types currently allowed for attachments.                    |
+| `maxFileSizeBytes`  | `number`                                          | Maximum attachment file size, in bytes. Omit to leave size unrestricted.  |
 | `onValidationError` | `(event: AttachmentValidationErrorEvent) => void` | Called at most once per debounce window when a rejected file is reported. |
 | `debounceMs`        | `number`                                          | Debounce window before firing `onValidationError`. Defaults to `100`.     |
 
-`AttachmentValidationErrorEvent` is `{ reason: AttachmentValidationErrorReason; allowedMimeTypes: string[]; formats?: string }`, where `reason` is `NoTypesAllowed` or `UnsupportedType` and `formats` (present only for `UnsupportedType`) is an already-formatted, non-translated extension list (e.g. `".png, .jpg"`).
+`AttachmentValidationErrorEvent` is `{ reason: AttachmentValidationErrorReason; allowedMimeTypes?: string[]; formats?: string; maxFileSizeBytes?: number }`, where `reason` is `NoTypesAllowed`, `UnsupportedType`, or `FileTooLarge`. `allowedMimeTypes` is present for `NoTypesAllowed`/`UnsupportedType`; `formats` (present only for `UnsupportedType`) is an already-formatted, non-translated extension list (e.g. `".png, .jpg"`); `maxFileSizeBytes` (echoing the caller-supplied limit) is present only for `FileTooLarge`. A file that is both an unsupported type and oversized is reported only as `UnsupportedType` — the MIME-type check runs first and short-circuits the size check.
 
 **Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
 
@@ -1560,6 +1561,61 @@ const { tabs } = useDialFileManagerTabConfig(
 
 **Returns** (`UseDialFileManagerTabConfigResult`): `{ tabs: FileTreeOptions['tabs'] }` — the filter chips the file manager renders above its folder tree.
 
+### useFileAttachmentPicker
+
+Composes `useDialFileManagerTabs`/`useDialFileManagerTabConfig`/`useDialFileManager` into the stateful part of an attachment picker: active tab, selected paths (reset on tab change, defensively copied on every change), and hidden-path/MIME/size/folder row eligibility. It forwards the resulting controller and picker fields directly to `@epam/ai-dial-chat-shared/file-manager`'s `FileManagerAttachModal`, which remains the sole owner of final attachment filtering, deduplication, and count enforcement — this hook supplies policy, not another attach handler. Available from both the package root and `./file-manager`.
+
+```tsx
+import { useFileAttachmentPicker } from '@epam/ai-dial-chat-hooks';
+// or: from '@epam/ai-dial-chat-hooks/file-manager';
+import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+
+const {
+  controller,
+  activeTab,
+  tabs,
+  onTabChange,
+  selectedPaths,
+  onSelectedPathsChange,
+  isRowSelectable,
+  isFileTypeAllowed,
+  allowedFileTypes,
+} = useFileAttachmentPicker({
+  fileManagerOptions, // the same options useDialFileManager accepts, minus bucket/activeTab/rootLabel/variant/forbiddenSymbolsRegExp
+  bucket,
+  tabLabels: {
+    [DialFileManagerTabs.MyFiles]: 'My files',
+    [DialFileManagerTabs.Shared]: 'Shared with me',
+    [DialFileManagerTabs.Organization]: 'Organization',
+    [DialFileManagerTabs.Review]: '',
+  },
+  allowedTabs: ['my_files', 'shared'], // or undefined for no restriction
+  allowedTypes: ['image/*'],
+  maxSelectableFileSize: 10 * 1024 * 1024,
+  canAttachFolders: false,
+});
+
+<FileManagerAttachModal
+  controller={controller}
+  activeTab={activeTab}
+  tabs={tabs}
+  onTabChange={onTabChange}
+  selectedPaths={selectedPaths}
+  onSelectedPathsChange={onSelectedPathsChange}
+  isRowSelectable={isRowSelectable}
+  isFileTypeAllowed={isFileTypeAllowed}
+  allowedFileTypes={allowedFileTypes}
+  // isOpen, onClose, onAttach, labels, resolveFolderPath, ... — host-owned
+/>;
+```
+
+#### API
+
+**Parameters** (`UseFileAttachmentPickerOptions`): `fileManagerOptions`, `bucket`, and `tabLabels` are required; `forbiddenSymbolsRegExp`, `allowedTabs`, `initialTab` (defaults to `DialFileManagerTabs.MyFiles`), `allowedTypes`, `maxSelectableFileSize`, and `canAttachFolders` (defaults to `false`) are optional.
+
+**Returns** (`UseFileAttachmentPickerResult`): `controller` (the composed `UseDialFileManagerResult`), `activeTab`, `tabs`, `onTabChange`, `selectedPaths`, `onSelectedPathsChange`, `isRowSelectable`, `isFileTypeAllowed`, `allowedFileTypes`.
+
 ### useDialFileMutations
 
 Implements create-folder, download, delete, rename, copy, and move against the injected `DialFilesApi`, reporting validation failures as a `FileNameValidationError` and successful mutations through a structured `FileOperationSuccessEvent` rather than a translated toast.
@@ -1748,12 +1804,13 @@ const attachments = dialFilesToAttachments(selectedFiles, bucket, {
 
 ### mimeTypesToFileAccept / isDialFileAcceptType / mimeTypesToDialFileAcceptTypes / mimeTypesToAttachmentExtensionLabels
 
-MIME/accept-type helpers for file pickers. `mimeTypesToFileAccept` always filters through `isDialFileAcceptType`, so it never disagrees with `mimeTypesToDialFileAcceptTypes` about which types are acceptable.
+MIME/accept-type helpers for file pickers. `mimeTypesToFileAccept` always filters through `isDialFileAcceptType`, so it never disagrees with `mimeTypesToDialFileAcceptTypes` about which types are acceptable. Both resolve MIME aliases to the canonical type a picker's own MIME table recognizes, so a deployment declaring `text/json` still offers `.json` files.
 
 ```ts
 import { mimeTypesToFileAccept } from '@epam/ai-dial-chat-hooks';
 
 mimeTypesToFileAccept(['image/*', 'application/pdf']); // 'image/*,application/pdf'
+mimeTypesToFileAccept(['text/json']); // 'application/json'
 ```
 
 ## API Transport
@@ -3067,6 +3124,17 @@ const { name, description, about, body } =
   parseSkillManifestDocument(rawManifestText);
 ```
 
+### startsWithFrontmatterBlock
+
+Reports whether a text value's first non-blank line is a bare `---` fence closed by a later bare `---` — i.e. whether appending it after `buildSkillManifest`'s own fence would produce a `SKILL.md` with two frontmatter blocks. Detection is structural, not YAML-based, so a pasted block whose fenced content fails to parse is still reported; a single unclosed fence and a `---` appearing later in the body are not.
+
+```ts
+import { startsWithFrontmatterBlock } from '@epam/ai-dial-chat-hooks';
+
+startsWithFrontmatterBlock('---\nname: pdf\n---\n\n# PDF Tools'); // true
+startsWithFrontmatterBlock('# PDF Tools\n\n---\n\nMore.'); // false
+```
+
 ### skillFileToAttachment
 
 Converts a skill supporting file's in-memory bytes into the `Attachment` shape the chat attachment-canvas pipeline expects, so it can be previewed the same way a chat attachment is.
@@ -3229,6 +3297,53 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
       saveError: 'Could not save the skill',
     },
   });
+```
+
+### useSkillArchiveImport
+
+Headless controller for a skill-archive-upload flow: dialog visibility, an exact-`SKILL.md`/`.zip` filename precheck, in-flight exclusion, and import completion. Accepts the host's already-configured `importArchive` request and observes completion/failure through `onImported`/`onError` — it never imports app contexts, i18n, notification transports, or a configured API client, and error outcomes are semantic values (`SkillArchiveImportErrorKind`) rather than translation keys. Available from both the package root and `./skill-editor`.
+
+```ts
+import {
+  useSkillArchiveImport,
+  SkillArchiveImportStatus,
+  SkillArchiveImportErrorKind,
+  SkillArchiveSelectionRejectionReason,
+} from '@epam/ai-dial-chat-hooks';
+// or: from '@epam/ai-dial-chat-hooks/skill-editor';
+
+interface SkillImportResult {
+  name: string;
+}
+
+const {
+  isDialogOpen,
+  status,
+  selectionRejectionReason,
+  errorKind,
+  openDialog,
+  closeDialog,
+  handleFilesSelected,
+  handleFilesRejected,
+} = useSkillArchiveImport<SkillImportResult>({
+  importArchive: (file) => skillsApi.importSkillArchive(file),
+  onImported: async (result) => {
+    notifySuccess(`"${result.name}" has been created.`);
+    await refetchSkills();
+  },
+  onError: (error, kind) => {
+    showErrorNotification(translateErrorKind(kind));
+  },
+});
+
+if (status === SkillArchiveImportStatus.Error && errorKind) {
+  // translate `errorKind` (Validation/Collision/RateLimited/ServiceUnavailable/Generic)
+} else if (
+  selectionRejectionReason ===
+  SkillArchiveSelectionRejectionReason.UnsupportedFilename
+) {
+  // show the local "pick a ZIP or a file named exactly SKILL.md" rejection
+}
 ```
 
 ### useSkillFilePreview
@@ -3687,8 +3802,9 @@ building blocks from `@epam/ai-dial-mcp-apps` into the surface a host injects in
 `useMcpAppInlinePreview`/`McpAppInlinePreview`, plus the full-width canvas equivalent
 (`useOpenMcpAppCanvas`) and tool discovery (`useMcpAppTools`). None of these hooks read app
 context, i18n, or construct a client — every DIAL Core call goes through a `McpAppsApiClient`
-the host builds once via `createMcpAppsApiClient`, and every user-visible string (canvas title,
-error labels) is passed in as a parameter.
+the host builds once via `createMcpAppsApiClient`, and every user-visible string (error labels)
+is passed in as a parameter. The canvas/inline-preview panel title is the matched tool's own
+`mcpToolName`, not a host-supplied label.
 
 ### createMcpAppsApiClient
 
@@ -3727,7 +3843,7 @@ const mcpAppTools = useMcpAppTools(
 
 ### useMcpAppHostAdapter
 
-Builds the `McpAppHostAdapter` (`@epam/ai-dial-mcp-apps`) a host injects into that library's hooks/components, from a `McpAppsApiClient`, a sandbox-proxy URL, and the host's theme/locale values. The fourth parameter (`McpAppHostContextParams`) also accepts `availableDisplayModes`, the display modes the host can switch an app between via `ui/request-display-mode`; it defaults to `['inline', 'fullscreen']` — the compact inline preview and the full-width canvas.
+Builds the `McpAppHostAdapter` (`@epam/ai-dial-mcp-apps`) a host injects into that library's hooks/components, from a `McpAppsApiClient`, a sandbox-proxy URL, the host's theme/locale values, and the host's own identity (`hostInfo`). The fourth parameter (`McpAppHostContextParams`) also accepts `availableDisplayModes`, the display modes the host can switch an app between via `ui/request-display-mode`; it defaults to `['inline', 'fullscreen']` — the compact inline preview and the full-width canvas.
 
 ```tsx
 import { useMcpAppHostAdapter } from '@epam/ai-dial-chat-hooks/mcp-apps';
@@ -3740,6 +3856,7 @@ const hostAdapter = useMcpAppHostAdapter(
     theme: currentTheme,
     locale: i18n.language,
   },
+  { name: 'ai-dial-chat', version: appVersion },
 );
 ```
 
@@ -3754,7 +3871,6 @@ const { openMcpAppCanvas } = useOpenMcpAppCanvas(
   mcpAppCache,
   hostAdapter,
   {
-    title: t('mcpApp.title'),
     forbiddenErrorLabel: t('mcpApp.forbidden'),
     loadErrorLabel: t('mcpApp.loadError'),
   },
@@ -3764,6 +3880,33 @@ const { openMcpAppCanvas } = useOpenMcpAppCanvas(
   },
 );
 ```
+
+### useApplicationCredentials
+
+Loads uncached application service metadata using host-configured
+`ExternalServicesApi` and `OfflineCredentialsApi` operations. It owns service-list,
+loading/error and offline-connection state, filters `NONE` services, and reads
+offline status only for `DIAL_NATIVE` services. A generation guard ignores obsolete
+responses and refresh callbacks after an application switch or unmount.
+
+```tsx
+import { useApplicationCredentials } from '@epam/ai-dial-chat-hooks/catalog';
+
+const { services, isLoading, hasError, isOfflineConnected, refresh } =
+  useApplicationCredentials({
+    appId,
+    externalServicesClient,
+    offlineCredentialsClient,
+  });
+```
+
+`UseApplicationCredentialsParams` is exported. Its clients are already configured
+by the host (including auth and CSRF); keep their identities stable. Only
+`listExternalServices` and `getOfflineCredentials` are required respectively.
+The hook owns no client configuration, localization, UI or login flow. The host
+maps returned service DTOs into its view models and calls `refresh` after a
+successful credential mutation. Errors, including offline-status failures, set
+`hasError`; `refresh` retries them.
 
 ## Building
 

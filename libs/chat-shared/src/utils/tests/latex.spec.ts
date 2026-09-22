@@ -385,8 +385,31 @@ y$ which spans lines`;
       expect(preprocessLaTeX(content)).toBe(content);
     });
 
-    it('leaves a single-line display block untouched', () => {
+    it('splits the fences of a single-line display block onto their own lines', () => {
       const content = '$$x^2 + y^2 = z^2$$';
+      const expected = '$$\nx^2 + y^2 = z^2\n$$';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
+    it('splits the fences of a single-line block sitting in its own paragraph', () => {
+      const content = 'Before.\n\n$$x_{1,2,3} = 0$$\n\nAfter.';
+      const expected = 'Before.\n\n$$\nx_{1,2,3} = 0\n$$\n\nAfter.';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
+    it('splits the fences of a single-line block on a line of its own inside a paragraph', () => {
+      const content = 'The result is:\n$$E = mc^2$$\nwhich follows.';
+      const expected = 'The result is:\n$$\nE = mc^2\n$$\nwhich follows.';
+      expect(preprocessLaTeX(content)).toBe(expected);
+    });
+
+    it('leaves a single-line block followed by prose on its line untouched', () => {
+      const content = '$$x^2$$ is the answer.';
+      expect(preprocessLaTeX(content)).toBe(content);
+    });
+
+    it('leaves an empty display span untouched', () => {
+      const content = '$$$$';
       expect(preprocessLaTeX(content)).toBe(content);
     });
 

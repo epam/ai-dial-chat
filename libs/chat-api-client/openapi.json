@@ -1775,6 +1775,60 @@
         "tags": ["client-channel"]
       }
     },
+    "/api/v1/external-services/{appId}": {
+      "get": {
+        "description": "Reads the accessible application through DIAL Core, including inline services. Returns only public OAuth configuration and credential statuses; never secrets. Not cached so login/logout changes are immediately visible.",
+        "operationId": "listExternalServices",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "External services, or an empty list when none are configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationExternalServiceDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application identifier"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "No access to the application or liveChatInteraction is disabled"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "502": {
+            "description": "DIAL Core returned an invalid response"
+          },
+          "503": {
+            "description": "DIAL Core unavailable"
+          }
+        },
+        "summary": "List application external-service authentication metadata",
+        "tags": ["external-services"]
+      }
+    },
     "/api/v1/external-services/{appId}/{serviceId}": {
       "get": {
         "description": "Returns an application external service's display metadata and authentication type by proxying DIAL Core (GET /v1/applications/{appId}/external-services/{id}) using the caller's session access token.",
@@ -5624,7 +5678,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher's own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -6343,7 +6397,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6389,7 +6443,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
             "description": "DIAL Core returned an error response or rejected sign-in"
@@ -6710,6 +6764,11 @@
             "description": "Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to \"ai-dial-chat\" on the client.",
             "nullable": true
           },
+          "mcpAppHostName": {
+            "type": "string",
+            "description": "Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to \"ai-dial-chat\" on the client.",
+            "nullable": true
+          },
           "fileManagerTabs": {
             "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
             "example": ["my_files", "shared", "organization"],
@@ -6808,6 +6867,11 @@
             "items": {
               "type": "string"
             }
+          },
+          "maxAttachmentFileSizeBytes": {
+            "type": "number",
+            "description": "Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.",
+            "example": 536870912
           }
         },
         "required": [
@@ -6823,7 +6887,8 @@
           "customVisualizers",
           "applicationVisualizers",
           "customVariables",
-          "publicationFilterSources"
+          "publicationFilterSources",
+          "maxAttachmentFileSizeBytes"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -9509,6 +9574,68 @@
         },
         "required": ["id", "result"]
       },
+      "ApplicationExternalServiceDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "FinHub API"
+          },
+          "description": {
+            "type": "string",
+            "example": "Financial data lookup service"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH", "DIAL_NATIVE"],
+            "example": "API_KEY"
+          },
+          "userLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "appLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator."
+          },
+          "globalAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_OUT",
+            "description": "GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "clientId": {
+            "type": "string",
+            "example": "my-client-id"
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/authorize"
+          },
+          "scopesSupported": {
+            "example": ["read", "write"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "codeChallenge": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "codeChallengeMethod": {
+            "type": "string",
+            "example": "S256"
+          },
+          "id": {
+            "type": "string",
+            "description": "External-service identifier within the application",
+            "example": "finhub-api2"
+          }
+        },
+        "required": ["displayName", "authenticationType", "id"]
+      },
       "GetExternalServiceResponseDto": {
         "type": "object",
         "properties": {
@@ -9522,13 +9649,18 @@
           },
           "authenticationType": {
             "type": "string",
-            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "enum": ["NONE", "API_KEY", "OAUTH", "DIAL_NATIVE"],
             "example": "API_KEY"
           },
           "userLevelAuthStatus": {
             "type": "string",
             "example": "SIGNED_IN",
             "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "appLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator."
           },
           "globalAuthStatus": {
             "type": "string",
@@ -11233,7 +11365,9 @@
           "modelId": {
             "type": "string",
             "description": "Model deployment ID that produced the response",
-            "example": "anthropic.claude-v3-sonnet"
+            "example": "anthropic.claude-v3-sonnet",
+            "maxLength": 256,
+            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
           },
           "rate": {
             "type": "number",
@@ -11716,6 +11850,11 @@
             "items": {
               "$ref": "#/components/schemas/PublishRuleDto"
             }
+          },
+          "publishCredentials": {
+            "type": "boolean",
+            "description": "Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.",
+            "example": true
           }
         },
         "required": ["folderPath"]
@@ -11840,6 +11979,11 @@
           "publishedBy": {
             "type": "string",
             "example": "user@example.com"
+          },
+          "publishCredentials": {
+            "type": "boolean",
+            "description": "Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.",
+            "example": true
           }
         },
         "required": [
@@ -11848,7 +11992,8 @@
           "folderPath",
           "version",
           "publishedAt",
-          "publishedBy"
+          "publishedBy",
+          "publishCredentials"
         ]
       },
       "PublishRulesResultDto": {

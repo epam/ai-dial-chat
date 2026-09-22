@@ -18,6 +18,7 @@ import { FileManagerAttachModal } from '../FileManagerAttachModal';
 
 const shellEmitted = vi.hoisted(() => ({
   lastSet: null as Set<string> | null,
+  lastOversizedUploadMessage: undefined as string | undefined,
 }));
 
 vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
@@ -28,44 +29,52 @@ vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
       onSelectedPathsChange,
       onTabChange,
       selectedPaths,
+      oversizedUploadMessage,
     }: {
       onSelectedPathsChange: (paths: Set<string>) => void;
       onTabChange: (tab: DialFileManagerTabs) => void;
       selectedPaths: Set<string>;
-    }) => (
-      <div>
-        <button
-          onClick={() =>
-            onSelectedPathsChange(new Set(['/My files/report.pdf']))
-          }
-        >
-          select file
-        </button>
-        <button
-          onClick={() => onSelectedPathsChange(new Set(['/My files/docs/']))}
-        >
-          select folder
-        </button>
-        <button
-          onClick={() => {
-            const paths = new Set(['/My files/report.pdf', '/My files/docs/']);
-            shellEmitted.lastSet = paths;
-            onSelectedPathsChange(paths);
-          }}
-        >
-          select file and folder
-        </button>
-        <button
-          onClick={() =>
-            onSelectedPathsChange(new Set(['/My files/unknown.pdf']))
-          }
-        >
-          select unknown path
-        </button>
-        <button onClick={() => onTabChange(Tabs.Shared)}>change tab</button>
-        <span data-testid="selection-size">{selectedPaths.size}</span>
-      </div>
-    ),
+      oversizedUploadMessage?: string;
+    }) => {
+      shellEmitted.lastOversizedUploadMessage = oversizedUploadMessage;
+      return (
+        <div>
+          <button
+            onClick={() =>
+              onSelectedPathsChange(new Set(['/My files/report.pdf']))
+            }
+          >
+            select file
+          </button>
+          <button
+            onClick={() => onSelectedPathsChange(new Set(['/My files/docs/']))}
+          >
+            select folder
+          </button>
+          <button
+            onClick={() => {
+              const paths = new Set([
+                '/My files/report.pdf',
+                '/My files/docs/',
+              ]);
+              shellEmitted.lastSet = paths;
+              onSelectedPathsChange(paths);
+            }}
+          >
+            select file and folder
+          </button>
+          <button
+            onClick={() =>
+              onSelectedPathsChange(new Set(['/My files/unknown.pdf']))
+            }
+          >
+            select unknown path
+          </button>
+          <button onClick={() => onTabChange(Tabs.Shared)}>change tab</button>
+          <span data-testid="selection-size">{selectedPaths.size}</span>
+        </div>
+      );
+    },
   };
 });
 
@@ -167,6 +176,7 @@ interface RenderOptions {
   }) => boolean;
   maximumAttachmentsAmount?: number;
   existingAttachmentsAmount?: number;
+  oversizedUploadMessage?: string;
 }
 
 const renderModal = ({
@@ -369,6 +379,18 @@ describe('FileManagerAttachModal', () => {
     it('reflects the current selectedPaths in the shell', () => {
       renderModal({ selectedPaths: new Set(['/My files/report.pdf']) });
       expect(screen.getByTestId('selection-size').textContent).toBe('1');
+    });
+
+    it('forwards oversizedUploadMessage to the shell', () => {
+      renderModal({ oversizedUploadMessage: 'Max file size is 512 MB.' });
+      expect(shellEmitted.lastOversizedUploadMessage).toBe(
+        'Max file size is 512 MB.',
+      );
+    });
+
+    it('forwards an undefined oversizedUploadMessage when not provided', () => {
+      renderModal();
+      expect(shellEmitted.lastOversizedUploadMessage).toBeUndefined();
     });
   });
 

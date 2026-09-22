@@ -53,6 +53,7 @@ import {
   findContentNodeName,
 } from '../../utils/catalog-content-tree';
 import {
+  canPublishCredentials,
   getCredentialsBannerState,
   getSignedInLevel,
 } from '../../utils/toolset-credentials';
@@ -226,6 +227,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onLoadContentFile,
   onLoadContentFilePreview,
   renderContentFilePreview,
+  renderCredentials,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -551,6 +553,15 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onPublishError,
     onFetchExistingRules,
   });
+
+  /*
+   * Offering the option is the catalog's call, not the panel's: only a toolset
+   * that needs a login and whose publisher holds one can pass that access on.
+   * `libs/publish-panel` renders whatever it is handed and knows none of this.
+   */
+  const isPublishCredentialsEligible =
+    item.type === CatalogEntityType.Toolset &&
+    canPublishCredentials(item.credentials);
 
   const publishDerived = useMemo(
     () =>
@@ -1240,6 +1251,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 hasSubmitError={publishFlow.hasSubmitError}
                 author={publishFlow.author}
                 onAuthorChange={publishFlow.setAuthor}
+                publishCredentials={publishFlow.publishCredentials}
+                onPublishCredentialsChange={
+                  isPublishCredentialsEligible
+                    ? publishFlow.setPublishCredentials
+                    : undefined
+                }
                 rules={publishFlow.rules}
                 onRulesChange={publishFlow.setRules}
                 ruleSourceOptions={ruleSourceOptions}
@@ -1320,6 +1337,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     )
                   );
                 })()}
+
+              {!isReadonly && isOpen && renderCredentials?.(item)}
 
               <div className="flex items-center px-6">
                 <Tabs

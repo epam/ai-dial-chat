@@ -32,6 +32,7 @@ describe('app-config API', () => {
         applicationVisualizers: {},
         customVariables: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
+        maxAttachmentFileSizeBytes: 536_870_912,
       },
     });
 

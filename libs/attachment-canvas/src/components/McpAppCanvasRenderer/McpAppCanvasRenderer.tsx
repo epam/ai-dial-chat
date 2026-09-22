@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
 import { AppFrame } from '@mcp-ui/client';
+import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useMcpAppBridge } from '../../hooks/useMcpAppBridge/useMcpAppBridge';
@@ -13,6 +14,8 @@ export interface McpAppCanvasRendererProps {
   content: McpAppCanvasContent;
   /** Message shown when the app fails to initialize. Defaults to `'Failed to load app'`. */
   errorLabel?: string;
+  /** Called once the mounted app completes its `ui/initialize` handshake, with its declared name/version. Omitted when the app didn't declare an `appInfo`. */
+  onAppInfo?: (appInfo: Implementation) => void;
 }
 
 enum RendererStatus {
@@ -33,8 +36,11 @@ enum RendererStatus {
 export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   content,
   errorLabel = 'Failed to load app',
+  onAppInfo,
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
+  /* `AppFrame`'s `onError` message, shown as a detail line under `errorLabel` — trust boundary discussed in design.md D23. */
+  const [errorDetail, setErrorDetail] = useState<string>();
   const { html, sandboxUrl, toolInput, toolResult, hostContext } = content;
   /*
    * `AppFrame` re-creates its sandbox iframe whenever `sandbox.url` changes
@@ -95,11 +101,15 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
     <div
       ref={containerRef}
       className={mergeClasses(
-        'relative h-full w-full',
+        /* `min-h-[200px]` is a Loading-overlay floor, not the intended size — see design.md D19. */
+        'relative h-full min-h-[200px] w-full',
         isFullscreen && styles.fullscreenFrame,
+        !isFullscreen &&
+          status === RendererStatus.Loading &&
+          styles.loadingFrame,
       )}
     >
-      {appBridge != null && (
+      {appBridge != null && !isErrored && (
         <AppFrame
           html={html}
           sandbox={sandbox}
@@ -107,8 +117,14 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
           toolInput={toolInput}
           toolResult={toolResult}
           onSizeChanged={() => setStatus(RendererStatus.Ready)}
-          onInitialized={() => setStatus(RendererStatus.Ready)}
-          onError={() => setStatus(RendererStatus.Error)}
+          onInitialized={(appInfo) => {
+            setStatus(RendererStatus.Ready);
+            if (appInfo.appVersion != null) onAppInfo?.(appInfo.appVersion);
+          }}
+          onError={(error) => {
+            setErrorDetail(error.message);
+            setStatus(RendererStatus.Error);
+          }}
         />
       )}
       {!isErrored && status === RendererStatus.Loading && (
@@ -122,7 +138,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
         </div>
       )}
       {isErrored && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
           <IconAlertTriangle
             size={60}
             stroke={DIAL_KIT_ICON_STROKE}
@@ -134,6 +150,12 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
             className={mergeClasses('text-center', styles.statusLabel)}
           >
             {errorLabel}
+            {errorDetail && (
+              <>
+                <br />
+                <span className={styles.statusDetail}>{errorDetail}</span>
+              </>
+            )}
           </p>
         </div>
       )}

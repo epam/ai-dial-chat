@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
 import {
   useAppConfig as useAppConfigMock,
@@ -71,6 +71,7 @@ interface FormProps {
     prompt: string;
     description?: string;
     repeat: string;
+    time: string;
     startDate?: string;
     endDate?: string;
     runAt?: string;
@@ -94,6 +95,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     Monthly: 'monthly',
   },
   DESCRIPTION_MAX_LENGTH: 500,
+  TIME_OF_DAY_PATTERN: /^([01]\d|2[0-3]):([0-5]\d)$/,
   ScheduledTaskCreateForm: ({
     labels,
     values,
@@ -151,6 +153,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.runAt ?? ''}
         onChange={(e) => onFieldChange('runAt', e.target.value)}
       />
+      <input
+        aria-label="time"
+        value={values.time}
+        onChange={(e) => onFieldChange('time', e.target.value)}
+      />
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.modelId && <span>{errors.modelId}</span>}
       {errors.prompt && <span>{errors.prompt}</span>}
@@ -179,18 +186,16 @@ const renderAtRoute = (initialEntry: string) =>
   );
 
 const fillValidForm = async () => {
-  await userEvent.type(
-    screen.getByRole('textbox', { name: 'displayName' }),
-    'Daily summary',
-  );
+  fireEvent.change(screen.getByRole('textbox', { name: 'displayName' }), {
+    target: { value: 'Daily summary' },
+  });
   await userEvent.selectOptions(
     screen.getByRole('combobox', { name: 'modelId' }),
     'gpt-4o',
   );
-  await userEvent.type(
-    screen.getByRole('textbox', { name: 'prompt' }),
-    'Summarize my inbox',
-  );
+  fireEvent.change(screen.getByRole('textbox', { name: 'prompt' }), {
+    target: { value: 'Summarize my inbox' },
+  });
 };
 
 describe('ScheduledTaskCreatePage', () => {
@@ -202,6 +207,11 @@ describe('ScheduledTaskCreatePage', () => {
     });
     useThemeMock.mockReturnValue({ currentTheme: 'light' });
     useAppConfigMock.mockReturnValue({ status: 'ready' });
+  });
+  /* Always restores real timers, even when a fake-timer test times out
+   and skips its own cleanup. */
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders a fallback instead of NotFound while app config is still loading', () => {
@@ -233,6 +243,40 @@ describe('ScheduledTaskCreatePage', () => {
 
     expect(modelLabelId).toBeTruthy();
     expect(triggerLabelledById).toBe(modelLabelId);
+  });
+
+  it('sends the entered time in the create body as UTC cron fields', async () => {
+    /*
+     * Both the mapper's local→UTC conversion and the expectation below read
+     * the wall clock; pin one instant so a minute or DST boundary between
+     * them cannot flip the assertion. `shouldAdvanceTime` keeps timers
+     * firing so userEvent and async queries still work under the fake clock.
+     */
+    vi.useFakeTimers({
+      now: new Date('2025-06-15T00:00:00Z'),
+      shouldAdvanceTime: true,
+    });
+
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    const timeInput = screen.getByLabelText('time');
+    await userEvent.clear(timeInput);
+    await userEvent.type(timeInput, '08:45');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    const fields = createScheduledTaskMock.mock.calls[0][0].trigger.cron.fields;
+    /* The mapper converts the local 08:45 to UTC with a reference Date —
+       compute the expectation the same way so the test holds in any
+       runner timezone. */
+    const reference = new Date();
+    reference.setHours(8, 45, 0, 0);
+    expect(fields.hour).toBe(String(reference.getUTCHours()));
+    expect(fields.minute).toBe(String(reference.getUTCMinutes()));
   });
 
   it('navigates to the default list route on Cancel when returnUrl is absent', async () => {
@@ -416,22 +460,19 @@ describe('ScheduledTaskCreatePage', () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'startDate' }),
-      '2026-08-01',
-    );
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'endDate' }),
-      '2026-08-31',
-    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: '2026-08-01' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: '2026-08-31' },
+    });
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'repeat' }),
       'oneTime',
     );
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'runAt' }),
-      '2099-08-24T09:00',
-    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'runAt' }), {
+      target: { value: '2099-08-24T09:00' },
+    });
     await userEvent.click(
       screen.getByRole('button', { name: 'buttons.create' }),
     );

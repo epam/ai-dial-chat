@@ -1,4 +1,4 @@
-import { FileDropzone, Popup, PopupSize } from '@epam/ai-dial-ui-kit';
+import { SkillArchiveUploadDialog as SkillArchiveUploadDialogBase } from '@epam/ai-dial-skills';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SKILL_ARCHIVE_ACCEPT } from '../../constants/skills';
@@ -22,9 +22,8 @@ interface Props {
 }
 
 /**
- * Dialog the Catalog's "Create → Skill → Upload" action opens, so the user
- * sees the drop area and the supported formats before the file picker
- * appears rather than landing straight in the OS dialog.
+ * Host adapter for `@epam/ai-dial-skills`' `SkillArchiveUploadDialog`: supplies the app's
+ * translated labels and accepted-file hint over the reusable presentation component.
  */
 const SkillArchiveUploadDialog: FC<Props> = ({
   isOpen,
@@ -36,34 +35,24 @@ const SkillArchiveUploadDialog: FC<Props> = ({
   const { t } = useTranslation();
 
   return (
-    <Popup
-      open={isOpen}
-      size={PopupSize.Sm}
-      header={t(SkillArchiveImportI18nKeys.DialogTitle)}
-      closeAriaLabel={t(ButtonsI18nKeys.Close)}
+    <SkillArchiveUploadDialogBase
+      isOpen={isOpen}
+      errorText={errorText}
+      accept={SKILL_ARCHIVE_ACCEPT}
+      labels={{
+        dialogTitle: t(SkillArchiveImportI18nKeys.DialogTitle),
+        dropZoneLabel: t(SkillArchiveImportI18nKeys.DialogDropZoneLabel),
+        dropZoneMobileLabel: t(
+          SkillArchiveImportI18nKeys.DialogDropZoneMobileLabel,
+        ),
+        formatsLabel: t(SkillArchiveImportI18nKeys.DialogFormats),
+        fileInputAriaLabel: t(SkillArchiveImportI18nKeys.FileInputAriaLabel),
+        closeAriaLabel: t(ButtonsI18nKeys.Close),
+      }}
       onClose={onClose}
-    >
-      <div className="px-6 py-4">
-        <FileDropzone
-          label={
-            <>
-              <span className="desktop:hidden">
-                {t(SkillArchiveImportI18nKeys.DialogDropZoneMobileLabel)}
-              </span>
-              <span className="hidden desktop:inline">
-                {t(SkillArchiveImportI18nKeys.DialogDropZoneLabel)}
-              </span>
-            </>
-          }
-          description={t(SkillArchiveImportI18nKeys.DialogFormats)}
-          ariaLabel={t(SkillArchiveImportI18nKeys.FileInputAriaLabel)}
-          accept={SKILL_ARCHIVE_ACCEPT}
-          errorText={errorText}
-          onChange={onFilesSelected}
-          onReject={onFilesRejected}
-        />
-      </div>
-    </Popup>
+      onFilesSelected={onFilesSelected}
+      onFilesRejected={onFilesRejected}
+    />
   );
 };
 

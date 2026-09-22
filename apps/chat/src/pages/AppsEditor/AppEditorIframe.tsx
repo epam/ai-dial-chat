@@ -14,7 +14,8 @@ import {
   ToolsetOAuthResultType,
   waitForToolsetOAuthResult,
 } from '@epam/ai-dial-chat-hooks';
-import { Spinner } from '@epam/ai-dial-ui-kit';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { Popup, Spinner } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
   memo,
@@ -26,9 +27,16 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppsEditorI18nKeys } from '../../constants/translation-keys';
+import { ApplicationCredentials } from '../../components/ApplicationCredentials/ApplicationCredentials';
+import {
+  ApplicationCredentialsI18nKeys,
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
+import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { getDeploymentDetails } from '../../server-api/deployments';
 import { getToolset, logoutToolset } from '../../server-api/toolsets';
 import type {
@@ -89,6 +97,13 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const { t } = useTranslation();
     const { user } = useUser();
     const { currentTheme } = useTheme();
+    const isApplicationAuthCapable = useFeatureFlag('liveChatInteraction');
+    const isApplicationAuthEnabled = useUiFeature(
+      OverlayFeature.LiveChatInteraction,
+    );
+    const [credentialsAppId, setCredentialsAppId] = useState<string | null>(
+      null,
+    );
 
     const [isUiLoading, setIsUiLoading] = useState(true);
     const [isReadyToSave, setIsReadyToSave] = useState(false);
@@ -101,9 +116,19 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         authProvider: providerId,
         id: appId,
         theme: currentTheme,
+        applicationCredentials: String(
+          isApplicationAuthCapable && isApplicationAuthEnabled,
+        ),
       });
       return `${schema.editorUrl}?${params.toString()}`;
-    }, [schema.editorUrl, appId, user?.providerId, currentTheme]);
+    }, [
+      schema.editorUrl,
+      appId,
+      user?.providerId,
+      currentTheme,
+      isApplicationAuthCapable,
+      isApplicationAuthEnabled,
+    ]);
 
     /*
      * Single source of truth for the embedded editor's origin — every
@@ -361,6 +386,17 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         if (!targetOrigin || event.origin !== targetOrigin) return;
         const displayName = schema.displayName ?? '';
         switch (event.data?.type) {
+          case AppsEditorEvent.RequestApplicationCredentials:
+            if (
+              event.source === iframeRef.current?.contentWindow &&
+              isApplicationAuthCapable &&
+              isApplicationAuthEnabled &&
+              typeof event.data.appId === 'string' &&
+              event.data.appId.length > 0
+            ) {
+              setCredentialsAppId(encodeToolsetId(event.data.appId));
+            }
+            break;
           case `${displayName}/${AppsEditorEvent.ReadyToInteract}`:
             setIsUiLoading(false);
             break;
@@ -407,6 +443,8 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         onSaveError,
         handleToolsetLoginRequest,
         handleToolsetLogoutRequest,
+        isApplicationAuthCapable,
+        isApplicationAuthEnabled,
       ],
     );
 
@@ -483,6 +521,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useEffect(() => {
       setIsReadyToSave(false);
       setIsLoggedOut(false);
+      setCredentialsAppId(null);
     }, [iframeUrl]);
 
     useEffect(() => {
@@ -510,6 +549,22 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
 
     return (
       <div className="relative size-full">
+        {credentialsAppId &&
+          isApplicationAuthCapable &&
+          isApplicationAuthEnabled && (
+            <Popup
+              open
+              header={t(ApplicationCredentialsI18nKeys.Title)}
+              closeAriaLabel={t(ButtonsI18nKeys.Close)}
+              onClose={() => setCredentialsAppId(null)}
+            >
+              <ApplicationCredentials
+                key={credentialsAppId}
+                appId={credentialsAppId}
+                showEmptyState
+              />
+            </Popup>
+          )}
         {isUiLoading && (
           <div
             className="absolute inset-0 flex items-center justify-center bg-layer-sunken"

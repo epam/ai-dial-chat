@@ -18,10 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - environment-name: "development"
-            gitlab-project-id: "2977"
-          - environment-name: "development-overlay"
-            gitlab-project-id: "3016"
+          - environment-name: "development-old"
+            gitlab-project-id: "3612"
+          - environment-name: "development-overlay-old"
+            gitlab-project-id: "3613"
 
     name: Deploy to ${{ matrix.environment-name }}
     uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.11.0
@@ -41,10 +41,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - environment-name: "development-ng"
-            gitlab-project-id: "3350"
-          - environment-name: "development-overlay-ng"
-            gitlab-project-id: "3351"
+          - environment-name: "development"
+            gitlab-project-id: "2977"
+          - environment-name: "development-overlay"
+            gitlab-project-id: "3016"
+          - environment-name: "development-mcp-app-sandbox"
+            gitlab-project-id: "3614"  
 
     name: Deploy to ${{ matrix.environment-name }}
     uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.11.0

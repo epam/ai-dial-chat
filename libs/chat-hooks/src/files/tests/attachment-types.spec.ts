@@ -35,6 +35,23 @@ describe('mimeTypesToDialFileAcceptTypes', () => {
   it('returns undefined when no types are provided', () => {
     expect(mimeTypesToDialFileAcceptTypes()).toBeUndefined();
   });
+
+  it('canonicalizes an aliased MIME type so the file picker recognizes it', () => {
+    /* Issue #8939: a picker given `text/json` offers no .json file. */
+    expect(mimeTypesToDialFileAcceptTypes(['text/json'])).toEqual([
+      'application/json',
+    ]);
+    expect(mimeTypesToDialFileAcceptTypes(['image/jpg'])).toEqual([
+      'image/jpeg',
+    ]);
+  });
+
+  it('passes dotted extensions and wildcards through unchanged', () => {
+    expect(mimeTypesToDialFileAcceptTypes(['.json', 'text/*'])).toEqual([
+      '.json',
+      'text/*',
+    ]);
+  });
 });
 
 describe('mimeTypesToFileAccept', () => {
@@ -88,5 +105,10 @@ describe('mimeTypesToAttachmentExtensionLabels', () => {
 
   it('keeps wildcard MIME types readable', () => {
     expect(mimeTypesToAttachmentExtensionLabels(['image/*'])).toBe('image/*');
+  });
+
+  it('labels an aliased MIME type from its canonical extension', () => {
+    expect(mimeTypesToAttachmentExtensionLabels(['text/json'])).toBe('.json');
+    expect(mimeTypesToAttachmentExtensionLabels(['image/jpg'])).toBe('.jpg');
   });
 });

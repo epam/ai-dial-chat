@@ -24,8 +24,18 @@
   max-height: none !important;
 }
 
+/* Hides `AppFrame`'s hardcoded 600px loading-state iframe height — see design.md D24. */
+.loadingFrame :global(iframe) {
+  height: 100% !important;
+}
+
 .statusLabel {
   color: var(--mcp-status-text, var(--text-primary, #161b2d));
+}
+
+/* The technical detail line (e.g. the underlying `Error#message`) shown under `errorLabel` — muted, never the error-icon red. */
+.statusDetail {
+  color: var(--mcp-status-detail-text, var(--text-secondary, #57647a));
 }
 
 .errorIcon {

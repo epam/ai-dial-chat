@@ -534,6 +534,48 @@ describe('MarkdownRenderer', () => {
     expect(scrollContainer?.className).toContain('min-w-0');
   });
 
+  /* Issue #8951: a one-line `$$…$$` owning its whole line was rejected as a math
+     block (its closing fence lands in the meta field, which may not hold a `$`)
+     and fell back to inline math. Inline math has no `display="block"`, so it
+     never reached the scroll container, and a formula with no internal break
+     opportunity — one long subscript list — overflowed the message column and
+     collided with the rest of the line. */
+  it('wraps a single-line block formula standing on its own line in the scroll container', async () => {
+    render(
+      <MarkdownRenderer
+        content={'Result:\n\n$$x_{1,2,3,4,5,6,7,8,9,10} = 0$$\n\nDone.'}
+      />,
+    );
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: MathML has no role under jsdom
+      expect(document.querySelector('math[display="block"]')).toBeTruthy();
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const math = document.querySelector('math[display="block"]');
+    // eslint-disable-next-line testing-library/no-node-access
+    const scrollContainer = math?.parentElement?.parentElement;
+
+    expect(scrollContainer?.className).toContain('overflow-x-auto');
+  });
+
+  it('keeps a single-line formula followed by prose inline in its paragraph', async () => {
+    render(<MarkdownRenderer content="$$x^2$$ is the answer." />);
+
+    await waitFor(() => {
+      // eslint-disable-next-line testing-library/no-node-access -- see note above: MathML has no role under jsdom
+      expect(document.querySelector('math')).toBeTruthy();
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const math = document.querySelector('math');
+
+    expect(math?.getAttribute('display')).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(math?.parentElement?.parentElement?.tagName).toBe('P');
+  });
+
   it('keeps KaTeX wrapper classes through sanitization but drops classes from raw HTML', async () => {
     render(
       <MarkdownRenderer
