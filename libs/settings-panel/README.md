@@ -59,8 +59,10 @@ import { SettingsPanel } from '@epam/ai-dial-settings-panel';
 />;
 ```
 
-Pass `styles={{ typography, colors }}` to override the section-header/label typography classes or
-the row background/text/focus colors (applied as CSS custom properties):
+Pass `styles={{ typography, colors }}` to override the section-header typography class or
+the row background/text/focus colors (applied as CSS custom properties). The rows are drawn by
+the UI kit's `Tabs`, so their typography is the kit's `dial-small-text` / `dial-small-semi-text`
+step and is not overridable here:
 
 ```tsx
 <SettingsPanel
@@ -82,7 +84,7 @@ the row background/text/focus colors (applied as CSS custom properties):
 - `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, styles?, className? }`
 - `SettingsPanelStyles` — `{ typography?, colors? }`
 - `SettingsPanelColors` — CSS-custom-property color overrides
-- `SettingsPanelTypography` — typography class overrides
+- `SettingsPanelTypography` — `{ sectionLabelClassName? }`
 
 ## Public class names
 

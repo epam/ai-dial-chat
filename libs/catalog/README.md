@@ -19,7 +19,7 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.9 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.12 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 - `ag-grid-community@35.3.0`
 

@@ -60,34 +60,27 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  const { DialFileManagerTabs: Tabs } = actual;
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
+  const { DialFileManagerActions: Actions, DialFileManagerTabs: Tabs } = actual;
   return {
     ...actual,
     useDialFileManagerTabs: vi.fn().mockImplementation(() => ({
       activeTab: mockActiveTab.value ?? Tabs.MyFiles,
       handleTabChange: mockHandleTabChange,
       tabs: [
-        { id: Tabs.MyFiles, label: 'My Files' },
-        { id: Tabs.Shared, label: 'Shared with Me' },
-        { id: Tabs.Organization, label: 'Organization' },
+        { value: Tabs.MyFiles, label: 'My Files' },
+        { value: Tabs.Shared, label: 'Shared with Me' },
+        { value: Tabs.Organization, label: 'Organization' },
       ],
     })),
-  };
-});
-
-vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
-  const { DialFileManagerActions: Actions } = actual;
-  return {
-    ...actual,
     DialFileManager: ({
       items,
       gridOptions,
       bulkActionsToolbarOptions,
       toolbarOptions,
+      treeOptions,
       autoSelectUploadedItems,
       maxSelectableFileSize,
       maxFileSize,
@@ -101,8 +94,10 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
       };
       toolbarOptions?: {
-        tabs?: Array<{ id: string; label: string }>;
         newActions?: { uploadArchive?: { label?: string } };
+      };
+      treeOptions?: {
+        tabs?: Array<{ value: string; label: string }>;
       };
       autoSelectUploadedItems?: boolean;
       maxSelectableFileSize?: number;
@@ -112,7 +107,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       <div
         role="region"
         aria-label="file manager"
-        data-tab-count={toolbarOptions?.tabs?.length}
+        data-tab-count={treeOptions?.tabs?.length}
         data-max-selectable-file-size={maxSelectableFileSize}
         data-max-file-size={maxFileSize}
         data-oversized-files-message={uploadValidationMessages?.oversizedFiles}

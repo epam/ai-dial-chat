@@ -916,7 +916,7 @@
       "shared": "Shared with Me"
     },
     "myFiles": {
-      "treeHeader": "Folder tree",
+      "treeHeader": "File storage",
       "emptyStateTitle": "No files yet",
       "emptyStateDescription": "Upload files to your personal storage"
     },
