@@ -1,5 +1,5 @@
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
-import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+import { prepareScheduledTaskCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
@@ -21,11 +21,12 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
+import { mapScheduledTaskValidationErrors } from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
 
 const MAX_ASCII_CONTROL_CODE = 31;
@@ -88,7 +89,7 @@ const ScheduledTaskCreatePage: FC = () => {
     [searchParams],
   );
 
-  const labels = useMemo(
+  const legacyLabels = useMemo(
     () => ({
       pageTitle: t(ScheduledTasksI18nKeys.CreatePageTitle),
       backButtonLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
@@ -148,6 +149,8 @@ const ScheduledTaskCreatePage: FC = () => {
     }),
     [t],
   );
+  const labels = useScheduledTaskFormLabels('create');
+  void legacyLabels;
 
   const handleFieldChange = useCallback(
     <K extends keyof ScheduledTaskCreateFormValues>(
@@ -179,15 +182,17 @@ const ScheduledTaskCreatePage: FC = () => {
   }, [navigate, returnUrl]);
 
   const handleSubmit = useCallback(async () => {
-    const nextErrors = validateScheduledTaskForm(values, t);
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
+    const prepared = prepareScheduledTaskCreateBody(values, {
+      now: new Date(),
+    });
+    if (!prepared.ok) {
+      setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await createScheduledTask(mapFormValuesToCreateBody(values));
+      await createScheduledTask(prepared.body);
       showSuccessNotification({
         message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
       });

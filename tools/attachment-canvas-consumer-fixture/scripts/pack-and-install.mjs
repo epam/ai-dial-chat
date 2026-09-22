@@ -43,9 +43,16 @@ import { fileURLToPath } from 'node:url';
 import { preparePublishPackageJson } from '../../publish-lib-package-json.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const fixtureRoot = resolve(__dirname, '..');
+const fixtureRoot = process.env.FIXTURE_ROOT_DIR
+  ? resolve(process.env.FIXTURE_ROOT_DIR)
+  : resolve(__dirname, '..');
+const npmCache = resolve(fixtureRoot, '.npm-cache');
 const workspaceRoot = resolve(fixtureRoot, '../..');
-const ROOT_PACKAGE = '@epam/ai-dial-attachment-canvas';
+const ROOT_PACKAGES = (process.env.FIXTURE_ROOT_PACKAGE ??
+  '@epam/ai-dial-attachment-canvas')
+  .split(',')
+  .map((packageName) => packageName.trim())
+  .filter(Boolean);
 
 /*
  * One version for every lib packed here, so each manifest's resolved sibling
@@ -104,7 +111,10 @@ const collectPackClosure = (packageName, collected = new Map()) => {
   return collected;
 };
 
-const packClosure = collectPackClosure(ROOT_PACKAGE);
+const packClosure = ROOT_PACKAGES.reduce(
+  (collected, packageName) => collectPackClosure(packageName, collected),
+  new Map(),
+);
 
 for (const [packageName, projectRoot] of packClosure) {
   if (!existsSync(resolve(workspaceRoot, projectRoot, 'dist'))) {
@@ -145,7 +155,12 @@ const packPublishReady = (projectRoot) => {
   const packOutput = execFileSync(
     'npm',
     ['pack', '--json', '--pack-destination', fixtureRoot],
-    { cwd: distDir, encoding: 'utf-8', shell },
+    {
+      cwd: distDir,
+      encoding: 'utf-8',
+      shell,
+      env: { ...process.env, npm_config_cache: npmCache },
+    },
   );
   const [{ filename }] = JSON.parse(packOutput);
   return resolve(fixtureRoot, filename);
@@ -175,6 +190,8 @@ try {
       '--legacy-peer-deps',
       '--package-lock=false',
       '--prefer-offline',
+      '--no-audit',
+      '--no-fund',
       ...tarballPaths,
     ],
     {
@@ -182,6 +199,7 @@ try {
       encoding: 'utf-8',
       stdio: 'inherit',
       shell,
+      env: { ...process.env, npm_config_cache: npmCache },
     },
   );
 } finally {

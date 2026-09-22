@@ -84,6 +84,10 @@ import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
 
 `BuilderFormContainer`'s header is configured through `labels` (typed `BuilderFormHeaderLabels`) and styled through `styles.header` (typed `BuilderFormHeaderStyles`, holding `BuilderFormHeaderColors` and `BuilderFormHeaderTypography`). All four are exported for consumers building those objects. The header and body components themselves are internal to the container.
 
+`backIcon` is optional: omit it for the generic mirrored arrow, pass `null` to
+omit the decorative icon, or provide a `ReactNode`. Its accessible label and
+callback remain the header's own contract.
+
 ### EditorLayout
 
 Full-height editor shell with a header and a responsive two-column body. On desktop, `actions` render at the end of the header row. On mobile/tablet, `actions` instead render in a bordered bar pinned to the bottom of the page, outside the scrollable body, so they never overlap `leftContent`/`rightContent`; each button grows to share the bar's width equally, and the primary action (the last child, e.g. Save/Create) is placed on the inline-start side with Cancel on the inline-end side — the reverse of the header's order.

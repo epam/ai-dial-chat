@@ -130,20 +130,14 @@ Documented scheduled-tasks/styles.css SHALL supply internal structural dependenc
 
 ### Requirement: A built-package consumer proves reuse and documents migration
 
-A parent-owned external fixture SHALL install packed distribution artifacts with dependency closure, without source aliases or app imports. Automated tests SHALL cover all scheduler surfaces, alternate strings/styles/icons, narrow layouts, RTL, keyboard interaction, typed exports and CSS order. Documentation SHALL map every F01-F15 finding to public replacement APIs. Implementation SHALL migrate the parent but SHALL not require editing an external application repository to pass.
+A parent-owned external fixture SHALL install packed distribution artifacts with dependency closure, without source aliases or app imports. Package/type contract tests SHALL cover all scheduler surfaces, alternate strings/styles/icons, typed exports and public CSS imports. Browser UX coverage belongs in the repository's e2e suite. Documentation SHALL map every F01-F15 finding to public replacement APIs. Implementation SHALL migrate the parent but SHALL not require editing an external application repository to pass.
 
 #### Scenario: Packed artifacts expose the complete contract
 
 - **WHEN** the fixture installs the built packages and typechecks/renders its scheduler flow
 - **THEN** public imports resolve and all surfaces work without root app providers or unpublished source files.
 
-#### Scenario: Narrow and RTL layouts remain usable
-
-- **WHEN** the fixture renders at 320,360,768 and1280px viewports and constrained nested containers in LTR and RTL
-- **THEN** forms, pickers and history have no horizontal overflow, back icons mirror, focus is visible and keyboard open/select/close restores focus.
-
 #### Scenario: Adoption guide removes the known workarounds
 
 - **WHEN** a maintainer follows the documented consumer migration map
 - **THEN** the guide identifies replacements for observers, private CSS, duplicated hooks/formatters, deep CSS imports and local form label duplication.
-

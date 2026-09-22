@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostButton } from '@epam/ai-dial-ui-kit';
-import { type FC } from 'react';
+import { type CSSProperties, type FC } from 'react';
 import type { ScheduledTaskHistorySectionProps } from '../../models/scheduled-task-history-section-props';
 import { ScheduledTaskHistorySectionVariant } from '../../types/scheduled-task-history-section-variant';
 import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
@@ -29,6 +29,7 @@ export const ScheduledTaskHistorySection: FC<
   runTimestampClassName = 'dial-small-text',
   sectionTitleClassName = 'dial-body-semi-text',
   colors,
+  styles: historyStyles,
 }) => {
   const isCard = variant === ScheduledTaskHistorySectionVariant.Card;
 
@@ -84,7 +85,13 @@ export const ScheduledTaskHistorySection: FC<
         unreadIndicatorLabel: labels.unreadIndicatorLabel,
       }}
       footer={footer}
-      styles={{ typography: { runTimestampClassName }, colors }}
+      styles={{
+        typography: { runTimestampClassName },
+        colors: historyStyles?.colors ?? colors,
+        rowMinHeight: historyStyles?.rowMinHeight,
+        rowHoverBackground: historyStyles?.rowHoverBackground,
+        rowFocusBackground: historyStyles?.rowFocusBackground,
+      }}
     />
   );
 
@@ -92,9 +99,14 @@ export const ScheduledTaskHistorySection: FC<
     return (
       <div
         className={mergeClasses(
-          'flex max-h-[70vh] w-full flex-col overflow-y-auto rounded-xl shadow-md desktop:w-[360px]',
+          'flex max-h-[var(--st-history-max-height,70vh)] w-full flex-col overflow-y-auto rounded-xl shadow-md desktop:w-[var(--st-history-width,360px)]',
           styles.historyCard,
         )}
+        style={
+          {
+            '--st-history-max-height': historyStyles?.maxHeight,
+          } as CSSProperties
+        }
       >
         <div
           className={mergeClasses(

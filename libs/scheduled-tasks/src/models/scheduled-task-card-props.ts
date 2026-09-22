@@ -6,6 +6,7 @@ export interface ScheduledTaskCardLabels {
   newBadgeLabel?: string;
   /** Label shown in the "Paused" badge when `item.isActive` is `false`. Defaults to `'Paused'`. */
   pausedBadgeLabel?: string;
+  completedBadgeLabel?: string;
 }
 
 /**
@@ -39,6 +40,9 @@ export interface ScheduledTaskCardColors {
   pausedBadgeBorder?: string;
   /** "Paused" badge icon and text color. Fallback: `--text-control-disable-primary`. */
   pausedBadgeText?: string;
+  completedBadgeBackground?: string;
+  completedBadgeBorder?: string;
+  completedBadgeText?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTaskCard} component. */
@@ -59,6 +63,7 @@ export interface ScheduledTaskCardTypography {
   newBadgeClassName?: string;
   /** CSS class applied to the "Paused" badge's label text. Defaults to `'dial-tiny-text'`. */
   pausedBadgeClassName?: string;
+  completedBadgeClassName?: string;
 }
 
 /** Style overrides for the {@link ScheduledTaskCard} component. */

@@ -15,6 +15,8 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
   isCancelDisabled = false,
   isSubmitDisabled = false,
   isSubmitting = false,
+  backIcon,
+  className,
   left,
   children,
   metadata,
@@ -32,6 +34,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
       }}
       className={mergeClasses(
         'flex h-full w-full flex-col overflow-y-auto',
+        className,
         styles.container,
       )}
     >
@@ -43,6 +46,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
         isCancelDisabled={isCancelDisabled}
         isSubmitDisabled={isSubmitDisabled}
         isSubmitting={isSubmitting}
+        backIcon={backIcon}
         styles={header}
       />
       <BuilderFormBody left={left} metadata={metadata}>

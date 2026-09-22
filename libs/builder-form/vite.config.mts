@@ -34,6 +34,7 @@ export default defineConfig(() => ({
         'react',
         'react-dom',
         'react/jsx-runtime',
+        'react/jsx-dev-runtime',
         '@epam/ai-dial-chat-shared',
         '@epam/ai-dial-ui-kit',
         '@tabler/icons-react',

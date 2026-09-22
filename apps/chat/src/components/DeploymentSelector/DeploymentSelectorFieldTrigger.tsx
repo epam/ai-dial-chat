@@ -1,9 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
+import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
   Input,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
@@ -239,38 +239,47 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
 
   return (
     <>
-      <Dropdown
+      <DeploymentSelectorField
+        selectedId={selectedId}
+        selectedLabel={resolvedLabel}
+        records={[]}
+        placeholder={effectivePlaceholder}
+        labels={{
+          searchPlaceholder: t(DeploymentSelectorI18nKeys.SearchPlaceholder),
+          searchAriaLabel: t(DeploymentSelectorI18nKeys.AriaLabel),
+          emptyLabel: t(DeploymentSelectorI18nKeys.EmptyHint),
+          errorLabel: t(DeploymentSelectorI18nKeys.Error),
+        }}
+        onSelect={onSelect}
+        isLoading={isLoading}
+        error={error}
+        isDisabled={isDisabled}
+        isInvalid={isInvalid}
+        labelledById={labelledById}
+        className={className}
+        panelClassName={panelClassName}
+        iconAfter={
+          isLoading ? (
+            <Spinner
+              size={DIAL_ICON_SIZE.SM}
+              ariaLabel={t(DeploymentSelectorI18nKeys.Loading)}
+            />
+          ) : (
+            <IconChevronDown
+              size={DIAL_ICON_SIZE.MD}
+              className={mergeClasses(
+                'transition-transform',
+                isOpen && 'rotate-180',
+              )}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          )
+        }
         open={isOpen}
         onOpenChange={handleOpenChange}
-        outsideClosable
-        disabled={isDisabled}
-        renderOverlay={() => renderOverlay(() => setIsOpen(false))}
-        /*
-         * `matchReferenceWidth` only sets a `min-width` on the overlay, so a
-         * long agent name still stretches the panel far past the field it
-         * belongs to. Capping it at the field's own width — the kit publishes
-         * it as `--reference-width` on the floating element — makes the panel
-         * read as this field's popup, the way a Select's list does. The
-         * `max()` floor keeps the panel's own 360px minimum honoured on a
-         * field narrower than that, and `!` is required because the kit writes
-         * its available-width cap as an inline style.
-         */
-        listClassName="!bg-layer-raised !max-w-[max(var(--reference-width),360px)]"
-        className="w-full"
-      >
-        {/*
-         * Built on the same `Input` component `Select` wraps in a `readOnly`
-         * combobox (see `@epam/ai-dial-ui-kit` Select.tsx), so this trigger's
-         * chrome (border, radius, height, focus/hover, colors) always stays
-         * pixel-identical to every other field/dropdown in the app instead
-         * of duplicating those styles by hand. Opening is handled by
-         * `Dropdown`'s default click trigger (a click anywhere in the field,
-         * including the chevron, toggles it via `onOpenChange`) — the same
-         * way `Select` opens, rather than a manual `onClick` scoped to just
-         * the `<input>` element, which the icon sits outside of.
-         */}
-        {fieldInput}
-      </Dropdown>
+        renderPanel={(close) => renderOverlay(close)}
+      />
       {catalogModal}
     </>
   );

@@ -76,12 +76,14 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   onSubmit,
   isSubmitting = false,
   markdownEditorTheme,
+  backIcon,
+  className,
   styles: formStyles,
 }) => {
   const instructionsEditorId = useId();
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const [timeBlurError, setTimeBlurError] = useState<string>();
-  const { colors, typography } = formStyles ?? {};
+  const { colors, typography, layout } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
     typography?.sectionTitleClassName ?? 'dial-body-semi-text';
@@ -95,6 +97,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     '--stcf-details-border': colors?.detailsColumnBorder,
     '--stcf-subtitle-text': colors?.sectionSubtitleText,
     '--stcf-error-text': colors?.instructionsErrorText,
+    '--stcf-details-width': layout?.detailsWidth,
+    '--stcf-column-gap': layout?.columnGap,
   });
 
   /*
@@ -163,6 +167,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
       isCancelDisabled={isSubmitting}
       isSubmitDisabled={isCreateDisabled}
       isSubmitting={isSubmitting}
+      backIcon={backIcon}
+      className={className}
       styles={{
         colors: { background: colors?.background },
         header: {
@@ -461,6 +467,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 onChange={(value) => onFieldChange('prompt', value)}
                 height={480}
                 theme={markdownEditorTheme}
+                placeholder={labels.instructionsPlaceholder}
               />
             </Suspense>
           </div>

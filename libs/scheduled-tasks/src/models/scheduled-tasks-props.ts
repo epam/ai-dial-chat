@@ -2,6 +2,8 @@ import { SelectOption } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
+import type { ScheduledTaskCardGridLayout } from './scheduled-task-card-grid-props';
+import type { ScheduledTaskCardStyles } from './scheduled-task-card-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
 
 /** Localized labels used by the {@link ScheduledTasks} component. */
@@ -36,6 +38,7 @@ export interface ScheduledTasksLabels {
   retryLabel: string;
   /** Announced via `aria-live` while a load-more fetch is in flight (`isLoadingMore`). Optional — no announcement is made when omitted. */
   loadingMoreLabel?: string;
+  loadMoreErrorLabel?: string;
   /** Localized labels forwarded as-is to every card in the grid. */
   cardLabels?: ScheduledTaskCardGridLabels;
 }
@@ -105,6 +108,12 @@ export interface ScheduledTasksProps {
   onCardClick?: (id: string) => void;
   /** Content rendered between the search/sort toolbar and the content region (e.g. a status banner). Renders nothing when omitted. */
   banner?: ReactNode;
+  sortIcon?: ReactNode | null;
+  className?: string;
+  gridLayout?: ScheduledTaskCardGridLayout;
+  cardStyles?: ScheduledTaskCardStyles;
+  loadMoreError?: Error | null;
+  onRetryLoadMore?: () => void;
   /** Style overrides. */
   styles?: ScheduledTasksStyles;
 }

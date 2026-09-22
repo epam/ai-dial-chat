@@ -696,10 +696,12 @@
       "noResultsLabel": "No results",
       "errorLabel": "Failed to load scheduled tasks",
       "retryLabel": "Retry",
-      "loadingMoreLabel": "Loading more scheduled tasks…"
+      "loadingMoreLabel": "Loading more scheduled tasks…",
+      "loadMoreErrorLabel": "Failed to load more scheduled tasks"
     },
     "card": {
       "newBadgeLabel": "NEW",
+      "completedBadgeLabel": "Completed",
       "editActionLabel": "Edit",
       "scheduleDailyAt": "Every day at {{time}}",
       "scheduleWeeklyAt": "Every {{day}} at {{time}}",
@@ -783,6 +785,8 @@
     },
     "edit": {
       "pageTitle": "Edit scheduled task",
+      "loadErrorLabel": "Failed to load the scheduled task",
+      "invalidScheduleLabel": "This task's schedule can't be edited here yet.",
       "unsupportedTriggerMessage": "This task's schedule can't be edited here yet.",
       "successNotification": "Scheduled task updated",
       "errorNotification": "Failed to update the scheduled task"

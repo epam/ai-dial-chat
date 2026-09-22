@@ -23,7 +23,7 @@ export interface ScheduledTaskHistorySectionLabels {
 }
 
 /** Status-icon and unread-dot color overrides forwarded to the run list. */
-interface ScheduledTaskHistorySectionColors {
+export interface ScheduledTaskHistorySectionColors {
   /** Success status icon color. Fallback: `--text-success`. */
   successIconColor?: string;
   /** Error status icon color. Fallback: `--text-error`. */
@@ -32,6 +32,14 @@ interface ScheduledTaskHistorySectionColors {
   missedIconColor?: string;
   /** Unread-dot indicator fill color. Fallback: `--text-accent`. */
   unreadDotColor?: string;
+}
+
+export interface ScheduledTaskHistorySectionStyles {
+  colors?: ScheduledTaskHistorySectionColors;
+  maxHeight?: string;
+  rowMinHeight?: string;
+  rowHoverBackground?: string;
+  rowFocusBackground?: string;
 }
 
 /** Props for the {@link ScheduledTaskHistorySection} component. */
@@ -66,4 +74,5 @@ export interface ScheduledTaskHistorySectionProps {
   sectionTitleClassName?: string;
   /** Status-icon and unread-dot color overrides forwarded to the run list. */
   colors?: ScheduledTaskHistorySectionColors;
+  styles?: ScheduledTaskHistorySectionStyles;
 }

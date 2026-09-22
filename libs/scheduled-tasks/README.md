@@ -22,11 +22,20 @@ external to preserve the editor's dynamic boundary in consuming applications.
 
 ## Peer Dependencies
 
+Import `@epam/ai-dial-scheduled-tasks/styles.css` once in the host. It includes
+the structural CSS required by `@epam/ai-dial-builder-form`; import UI Kit
+base/theme styles once at the host root.
+
 - `react`
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-chat-shared`
 
 ## Components
+
+The optional `className`, icon, `styles`, and layout props are per-instance.
+Typed values take precedence over the package's CSS-variable fallbacks, which
+then use host theme tokens. Omitting an icon retains the default; `null` hides
+it while preserving the control's accessible name and keyboard behaviour.
 
 ### ScheduledTasks
 
@@ -74,6 +83,10 @@ import {
 ### ScheduledTaskCard
 
 A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, and optional location breadcrumb and "new" badge. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
+
+`item.presentationStatus` takes precedence over the legacy `isActive` flag;
+when omitted, `isActive` retains its existing behavior. Supply
+`labels.completedBadgeLabel` for localized completed-state copy.
 
 ```tsx
 import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
@@ -160,6 +173,40 @@ import {
   onRunsLoadMore={() => {}}
   onRunClick={(run) => navigateToConversation(run.conversationId)}
 />;
+```
+
+### ScheduledTaskDeleteConfirmation
+
+Controlled deletion presentation that leaves mutations, routing, notifications,
+and translated copy to the host. `isDeleting` prevents duplicate confirmation
+and dismissal callbacks.
+
+```tsx
+import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskDeleteConfirmation
+  open={isDeleteOpen}
+  taskName={task.displayName}
+  title="Delete task"
+  body="This action cannot be undone."
+  cancelLabel="Cancel"
+  confirmLabel="Delete"
+  isDeleting={isDeleting}
+  onClose={closeDelete}
+  onConfirm={deleteTask}
+/>;
+```
+
+## Validation entry point
+
+Use the pure validation entry before an app submits a task. It returns typed
+error codes rather than translated text, and accepts an injected clock for
+deterministic validation.
+
+```ts
+import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/validation';
+
+const errors = validateScheduledTaskFormValues(values, { now: new Date() });
 ```
 
 ## Public class names

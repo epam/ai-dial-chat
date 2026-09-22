@@ -129,7 +129,7 @@ Use documented `@epam/ai-dial-scheduled-tasks/styles.css` and corresponding cata
 
 Avoid global resets and unscoped responsive utility emission in affected surfaces. Test host utility definitions with desktop thresholds 769px and1280px, including both stylesheet orders. A scheduler's dimensions follow its own scope/container, while unrelated host elements are unaffected.
 
-Create `tools/scheduled-tasks-consumer-fixture/` using packed dist artifacts and their workspace dependency closure, following `tools/attachment-canvas-consumer-fixture/`. It has no parent tsconfig aliases or app imports. It demonstrates all surfaces, alternate labels/styles, custom/absent icons and fake configured adapters. Unit/type checks cannot replace browser geometry, keyboard and CSS-order checks.
+Create `tools/scheduled-tasks-consumer-fixture/` using packed dist artifacts and their workspace dependency closure, following `tools/attachment-canvas-consumer-fixture/`. It has no parent tsconfig aliases or app imports. It demonstrates all surfaces, alternate labels/styles, custom/absent icons and fake configured adapters. Its package/type contract tests validate the distributed public API; browser UX coverage belongs in the repository's e2e suite.
 
 ### 9. i18n, access, documentation and observability
 
@@ -164,4 +164,3 @@ External application migration is documented and represented in the parent-owned
 ## Open Questions
 
 No blocking product decision remains. The exact release version follows the normal publishing process. During implementation, verify any current UI-kit limitation through its MCP documentation; if a required prop is missing, record a specific upstream dependency rather than reintroducing a DOM workaround. Older specs' legacy naming is acknowledged above and must not cause a breaking rename.
-

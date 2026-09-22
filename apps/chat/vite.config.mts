@@ -185,6 +185,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/share/src/index.ts',
       ),
+      '@epam/ai-dial-scheduled-tasks/validation': path.resolve(
+        import.meta.dirname,
+        '../../libs/scheduled-tasks/src/validation/index.ts',
+      ),
       '@epam/ai-dial-scheduled-tasks': path.resolve(
         import.meta.dirname,
         '../../libs/scheduled-tasks/src/index.ts',

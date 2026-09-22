@@ -19,6 +19,7 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
   isCancelDisabled = false,
   isSubmitDisabled = false,
   isSubmitting = false,
+  backIcon,
   styles: headerStyles,
 }) => {
   const { colors, typography } = headerStyles ?? {};
@@ -48,12 +49,16 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <GhostIconButton
           icon={
-            <IconArrowLeft
-              size={DIAL_ICON_SIZE.LG}
-              className="rtl:scale-x-[-1]"
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
+            backIcon === undefined ? (
+              <IconArrowLeft
+                size={DIAL_ICON_SIZE.LG}
+                className="rtl:scale-x-[-1]"
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            ) : (
+              backIcon
+            )
           }
           aria-label={labels.backButtonLabel}
           onClick={onBack}

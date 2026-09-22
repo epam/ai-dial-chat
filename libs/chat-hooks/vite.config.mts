@@ -94,6 +94,10 @@ export default defineConfig(() => ({
      * affects this lib's own production build.
      */
     alias: {
+      '@epam/ai-dial-scheduled-tasks/validation': path.resolve(
+        import.meta.dirname,
+        '../scheduled-tasks/src/validation/index.ts',
+      ),
       '@epam/ai-dial-chat-api-client': path.resolve(
         import.meta.dirname,
         '../chat-api-client/src/index.ts',

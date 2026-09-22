@@ -1,0 +1,10 @@
+/*
+ * Structural styles are exposed as a source entry as well as the generated
+ * package stylesheet. Composed libraries import this at build time so their
+ * published CSS remains self-contained.
+ */
+@import './components/AddAvatar/AddAvatar.module.scss';
+@import './components/BuilderFormContainer/BuilderFormContainer.module.scss';
+@import './components/BuilderFormHeader/BuilderFormHeader.module.scss';
+@import './components/EditorLayout/EditorLayout.module.scss';
+@import './components/EditorSection/EditorSection.module.scss';

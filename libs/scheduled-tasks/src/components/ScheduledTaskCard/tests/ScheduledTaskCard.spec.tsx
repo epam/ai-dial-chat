@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { SCHEDULED_TASKS_CLASS } from '../../../constants/public-class-names';
-import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
+import {
+  ScheduledTaskPresentationStatus,
+  type ScheduledTaskItem,
+} from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -168,6 +171,21 @@ describe('ScheduledTaskCard', () => {
 
     render(<ScheduledTaskCard item={buildItem()} />);
     expect(screen.getAllByText('Every Monday 12:00').length).toBeGreaterThan(0);
+  });
+
+  it('gives an explicit completed status precedence over legacy isActive', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({
+          isActive: false,
+          presentationStatus: ScheduledTaskPresentationStatus.Completed,
+        })}
+        labels={{ completedBadgeLabel: 'Finished' }}
+      />,
+    );
+
+    expect(screen.getByText('Finished')).toBeTruthy();
+    expect(screen.queryByText('Paused')).toBeNull();
   });
 
   it('pins the schedule pill to the bottom of the card regardless of description length', () => {

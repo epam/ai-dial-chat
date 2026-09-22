@@ -1,0 +1,27 @@
+/* Host baseline normally supplied by the UI Kit/theme bundle. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+.fixture-shell {
+  display: grid;
+  gap: 24px;
+  margin: 0 auto;
+  max-inline-size: 1120px;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.fixture-detail {
+  block-size: 620px;
+  min-inline-size: 0;
+}

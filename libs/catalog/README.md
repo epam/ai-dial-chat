@@ -16,12 +16,20 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-catalog/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `@epam/ai-dial-ui-kit` ^0.15.0-dev.9 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
-- `ag-grid-community@35.3.0`
+
+`ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
+dependencies and install transitively; they are not host peers.
 
 Both `@epam/ai-dial-chat-shared` and `@epam/ai-dial-publish-panel` are kept
 external by the library build — a consumer's own bundler resolves them, so
@@ -56,6 +64,38 @@ every JS module side-effect free; importing `Catalog` from the root still
 pulls in the full publish/editor UI as before.
 
 ## Components
+
+### DeploymentSelectorField
+
+`DeploymentSelectorField` is a controlled, provider-free deployment picker
+for hosts that already resolved their display records. It does not fetch,
+persist favorites, open a catalog modal, or mutate a conversation. Supply
+those behaviours through callbacks or `renderOverlay` / `renderPanel` slots.
+
+```tsx
+import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
+
+<DeploymentSelectorField
+  selectedId={selectedId}
+  records={[{ id: 'model-a', label: 'Model A' }]}
+  placeholder="Choose a model"
+  labels={{
+    searchPlaceholder: 'Search models',
+    searchAriaLabel: 'Search models',
+    emptyLabel: 'No models',
+    errorLabel: 'Could not load models',
+    browseLabel: 'Browse',
+  }}
+  labelledById="model-label"
+  onSelect={setSelectedId}
+  onBrowse={openCatalog}
+/>;
+```
+
+Omit `open` for local popup state, or provide `open` and `onOpenChange` for a
+controlled overlay. Enter, Space, and pointer activation open the picker;
+selection and Escape close it, restoring focus to the combobox. Result labels
+use the UI Kit `Highlight` component for the current search query.
 
 The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
 keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;

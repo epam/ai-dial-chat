@@ -2,9 +2,9 @@ import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
   getApiErrorStatus,
-  mapFormValuesToUpdateBody,
   mapScheduledTaskDtoToFormValues,
 } from '@epam/ai-dial-chat-hooks';
+import { prepareScheduledTaskUpdateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
@@ -34,13 +34,14 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import {
   getScheduledTask,
   updateScheduledTask,
 } from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
+import { mapScheduledTaskValidationErrors } from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
 
 const ScheduledTaskEditPage: FC = () => {
@@ -125,7 +126,7 @@ const ScheduledTaskEditPage: FC = () => {
     };
   }, [isEnabled, scheduleId, taskFetchToken]);
 
-  const labels = useMemo(
+  const legacyLabels = useMemo(
     () => ({
       pageTitle: t(ScheduledTasksI18nKeys.EditPageTitle),
       backButtonLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
@@ -185,6 +186,8 @@ const ScheduledTaskEditPage: FC = () => {
     }),
     [t],
   );
+  const labels = useScheduledTaskFormLabels('edit');
+  void legacyLabels;
 
   const handleFieldChange = useCallback(
     <K extends keyof ScheduledTaskCreateFormValues>(
@@ -222,15 +225,17 @@ const ScheduledTaskEditPage: FC = () => {
   const handleSubmit = useCallback(async () => {
     if (!values) return;
 
-    const nextErrors = validateScheduledTaskForm(values, t);
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
+    const prepared = prepareScheduledTaskUpdateBody(values, {
+      now: new Date(),
+    });
+    if (!prepared.ok) {
+      setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await updateScheduledTask(scheduleId, mapFormValuesToUpdateBody(values));
+      await updateScheduledTask(scheduleId, prepared.body);
       showSuccessNotification({
         message: t(ScheduledTasksI18nKeys.EditSuccessNotification),
       });
@@ -285,7 +290,7 @@ const ScheduledTaskEditPage: FC = () => {
         role="alert"
         className="flex size-full flex-col items-center justify-center gap-3"
       >
-        <p>{t(ScheduledTasksI18nKeys.DetailErrorLabel)}</p>
+        <p>{t(ScheduledTasksI18nKeys.EditLoadErrorLabel)}</p>
         <GhostButton
           label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
           onClick={handleRetry}
@@ -300,7 +305,7 @@ const ScheduledTaskEditPage: FC = () => {
         role="alert"
         className="flex size-full flex-col items-center justify-center gap-3"
       >
-        <p>{t(ScheduledTasksI18nKeys.EditUnsupportedTriggerMessage)}</p>
+        <p>{t(ScheduledTasksI18nKeys.EditInvalidScheduleLabel)}</p>
         <GhostButton
           label={t(ScheduledTasksI18nKeys.CreateBackButtonLabel)}
           onClick={handleBack}

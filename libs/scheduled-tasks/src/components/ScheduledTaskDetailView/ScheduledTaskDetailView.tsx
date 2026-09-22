@@ -20,7 +20,7 @@ import {
   IconPencilMinus,
   IconTrashX,
 } from '@tabler/icons-react';
-import { type FC, type ReactNode, useState } from 'react';
+import { type CSSProperties, type FC, type ReactNode, useState } from 'react';
 import type { ScheduledTaskDetailViewProps } from '../../models/scheduled-task-detail-view-props';
 import { ScheduledTaskDetailTab } from '../../types/scheduled-task-detail-tab';
 import { ScheduledTaskHistorySectionVariant } from '../../types/scheduled-task-history-section-variant';
@@ -71,6 +71,10 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   onRunsLoadMore,
   onRunClick,
   styles: viewStyles,
+  className,
+  backIcon,
+  layout,
+  historyStyles,
 }) => {
   const { colors, typography } = viewStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h2-text';
@@ -175,6 +179,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       runTimestampClassName={runTimestampClassName}
       sectionTitleClassName={sectionTitleClassName}
       colors={colors}
+      styles={historyStyles}
     />
   );
 
@@ -199,6 +204,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       className={mergeClasses(
         'flex h-full w-full flex-col overflow-y-auto',
         styles.container,
+        className,
       )}
     >
       <div
@@ -210,12 +216,16 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         <div className="flex min-w-0 items-center gap-2">
           <GhostIconButton
             icon={
-              <IconArrowLeft
-                size={DIAL_ICON_SIZE.LG}
-                className="rtl:scale-x-[-1]"
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
+              backIcon === undefined ? (
+                <IconArrowLeft
+                  size={DIAL_ICON_SIZE.LG}
+                  className="rtl:scale-x-[-1]"
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ) : (
+                backIcon
+              )
             }
             aria-label={labels.backAriaLabel}
             onClick={onBack}
@@ -360,12 +370,22 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
             </div>
           </div>
         ) : (
-          <div className="flex flex-1 flex-col desktop:flex-row">
+          <div
+            style={
+              {
+                '--st-details-width': layout?.detailsWidth,
+                '--st-history-width': layout?.historyWidth,
+                '--st-history-max-height': layout?.historyMaxHeight,
+                '--st-configuration-min-width': layout?.configurationMinWidth,
+              } as CSSProperties
+            }
+            className="flex flex-1 flex-col desktop:flex-row"
+          >
             <div
               role="group"
               aria-label={labels.detailsTitle}
               className={mergeClasses(
-                'flex w-full flex-col gap-5 border-e px-8 py-6 desktop:w-[360px] desktop:shrink-0',
+                'flex w-full flex-col gap-5 border-e px-8 py-6 desktop:w-[var(--st-details-width,360px)] desktop:shrink-0',
                 styles.detailsColumn,
               )}
             >
@@ -373,7 +393,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
               {detailsSection}
             </div>
 
-            <div className="flex w-full min-w-0 flex-1 flex-col gap-5 px-8 py-6">
+            <div className="flex w-full min-w-0 flex-1 flex-col gap-5 px-8 py-6 desktop:min-w-[var(--st-configuration-min-width,0)]">
               <h2 className={sectionTitleClassName}>
                 {labels.configurationTitle}
               </h2>

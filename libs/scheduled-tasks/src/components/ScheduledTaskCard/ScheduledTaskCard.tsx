@@ -10,6 +10,7 @@ import { IconPlayerPause } from '@tabler/icons-react';
 import type { FC, KeyboardEvent } from 'react';
 import { SCHEDULED_TASKS_CLASS } from '../../constants/public-class-names';
 import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-props';
+import { ScheduledTaskPresentationStatus } from '../../models/scheduled-task-item';
 import styles from './ScheduledTaskCard.module.scss';
 
 /**
@@ -32,6 +33,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
 }) => {
   const newBadgeLabel = labels?.newBadgeLabel ?? 'NEW';
   const pausedBadgeLabel = labels?.pausedBadgeLabel ?? 'Paused';
+  const completedBadgeLabel = labels?.completedBadgeLabel ?? 'Completed';
 
   const { colors, typography } = cardStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
@@ -49,6 +51,8 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     typography?.newBadgeClassName ?? 'dial-tiny-semi-text';
   const pausedBadgeClassName =
     typography?.pausedBadgeClassName ?? 'dial-tiny-text';
+  const completedBadgeClassName =
+    typography?.completedBadgeClassName ?? 'dial-tiny-text';
   const cssVars = buildCssVars({
     '--stc-title-text': colors?.titleText,
     '--stc-desc-text': colors?.descriptionText,
@@ -63,7 +67,15 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     '--stc-paused-bg': colors?.pausedBadgeBackground,
     '--stc-paused-border': colors?.pausedBadgeBorder,
     '--stc-paused-text': colors?.pausedBadgeText,
+    '--stc-completed-bg': colors?.completedBadgeBackground,
+    '--stc-completed-border': colors?.completedBadgeBorder,
+    '--stc-completed-text': colors?.completedBadgeText,
   });
+  const status =
+    item.presentationStatus ??
+    (item.isActive === false
+      ? ScheduledTaskPresentationStatus.Paused
+      : ScheduledTaskPresentationStatus.Active);
 
   const cardClickProps = onCardClick
     ? {
@@ -126,7 +138,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
 
       <div className="mt-auto flex shrink-0 flex-col gap-3">
         <div className="flex min-h-[28px] items-center">
-          {item.isActive === false ? (
+          {status === ScheduledTaskPresentationStatus.Paused ? (
             <span
               className={mergeClasses(
                 'inline-flex items-center gap-1.5 rounded-full border px-2 py-1',
@@ -141,6 +153,17 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
                 stroke={DIAL_KIT_ICON_STROKE}
               />
               {pausedBadgeLabel}
+            </span>
+          ) : status === ScheduledTaskPresentationStatus.Completed ? (
+            <span
+              className={mergeClasses(
+                'inline-flex items-center rounded-full border px-2 py-1',
+                styles.completedPill,
+                completedBadgeClassName,
+                styles.completedLabel,
+              )}
+            >
+              {completedBadgeLabel}
             </span>
           ) : (
             <span

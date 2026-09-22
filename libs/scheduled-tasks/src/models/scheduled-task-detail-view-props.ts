@@ -101,6 +101,13 @@ export interface ScheduledTaskDetailViewStyles {
   typography?: ScheduledTaskDetailViewTypography;
 }
 
+export interface ScheduledTaskDetailViewLayout {
+  detailsWidth?: string;
+  historyWidth?: string;
+  historyMaxHeight?: string;
+  configurationMinWidth?: string;
+}
+
 /** Props for the {@link ScheduledTaskDetailView} component. */
 export interface ScheduledTaskDetailViewProps {
   /** Localized labels. */
@@ -165,4 +172,12 @@ export interface ScheduledTaskDetailViewProps {
   onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** Style overrides. */
   styles?: ScheduledTaskDetailViewStyles;
+  /** Additional class names on the view root. */
+  className?: string;
+  /** Replacement for the directional default back icon. `null` hides it. */
+  backIcon?: ReactNode | null;
+  /** Desktop column and history sizing. */
+  layout?: ScheduledTaskDetailViewLayout;
+  /** Forwarded history presentation settings. */
+  historyStyles?: import('./scheduled-task-history-section-props').ScheduledTaskHistorySectionStyles;
 }

@@ -11,6 +11,12 @@
   "exports": {
     "./package.json": "./package.json",
     "./styles.css": "./dist/index.css",
+    "./validation": {
+      "@epam/source": "./src/validation/index.ts",
+      "types": "./dist/validation.d.ts",
+      "import": "./dist/validation.js",
+      "default": "./dist/validation.js"
+    },
     ".": {
       "@epam/source": "./src/index.ts",
       "types": "./dist/index.d.ts",

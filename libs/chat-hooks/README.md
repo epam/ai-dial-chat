@@ -2738,6 +2738,41 @@ const fileName = buildPromptExportFileName(promptDto.name, 'ai_dial');
 
 ## Scheduled-Task Utilities
 
+### Scheduled-task contracts
+
+Import scheduled-task utilities from the focused subpath. The scheduler facade
+accepts an already configured generated client: hosts retain the base URL,
+authentication, CSRF, retries, and notification policy.
+
+```ts
+import {
+  createScheduledTasksApiClient,
+  describeScheduledTaskTrigger,
+  prepareScheduledTaskCreateBody,
+  useScheduledTasks,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const scheduler = createScheduledTasksApiClient(configuredClient);
+const prepared = prepareScheduledTaskCreateBody(values, { now: new Date() });
+const descriptor = describeScheduledTaskTrigger(trigger);
+const state = useScheduledTasks(scheduler, {
+  enabled: true,
+  pageSize: 20,
+  debounceMs: 300,
+});
+```
+
+`prepareScheduledTaskCreateBody` and `prepareScheduledTaskUpdateBody` return
+a discriminated success/failure result, so a host never sends a silently
+changed schedule. The older `mapFormValuesToCreateBody` and
+`mapFormValuesToUpdateBody` stay available for validated input only.
+
+`useScheduledTasks` defaults to a 20-item page and 300ms search debounce;
+`useScheduledTaskRuns` defaults to a 10-item page. Both cancel and ignore
+stale generations, distinguish `initialError` from `loadMoreError`, preserve
+loaded records after a page failure, and expose `retryLoadMore`. No hook
+constructs a client or reads application state.
+
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
 Maps validated scheduled-task create/edit form values to their request bodies (converting local wall-clock time to the UTC cron fields DIAL Scheduler expects), and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor.

@@ -17,7 +17,7 @@ import {
   Search,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlus } from '@tabler/icons-react';
+import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
 import {
   FC,
   useCallback,
@@ -92,6 +92,12 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   onCardClick,
   banner,
   styles: scheduledTasksStyles,
+  sortIcon,
+  className,
+  gridLayout,
+  cardStyles,
+  loadMoreError,
+  onRetryLoadMore,
 }) => {
   const { colors, typography } = scheduledTasksStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
@@ -242,7 +248,17 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           skeletonStyles={{
             colors: { skeletonColor: colors?.skeletonColor },
           }}
+          cardStyles={cardStyles}
+          layout={gridLayout}
         />
+        {loadMoreError && (
+          <div role="alert" className="flex items-center gap-3">
+            <span className={mergeClasses(subtitleClassName, styles.subtitle)}>
+              {labels.loadMoreErrorLabel ?? labels.errorLabel}
+            </span>
+            <GhostButton label={labels.retryLabel} onClick={onRetryLoadMore} />
+          </div>
+        )}
 
         <div ref={sentinelRef} aria-hidden className="h-px w-full" />
       </div>
@@ -257,6 +273,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
       className={mergeClasses(
         'flex h-full w-full flex-col gap-6 overflow-y-auto px-8 py-4',
         styles.container,
+        className,
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -325,6 +342,17 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
               label={activeSortLabel}
               variant={ButtonVariant.Primary}
               appearance={ButtonAppearance.Ghost}
+              iconBefore={
+                sortIcon === undefined ? (
+                  <IconArrowsSort
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                ) : (
+                  sortIcon
+                )
+              }
               className={styles.sortButton}
             />
           </div>

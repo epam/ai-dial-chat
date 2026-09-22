@@ -58,7 +58,7 @@ The second option meets reuse requirements without introducing a second applicat
 3. Old pages cannot alter a new query/task, including after abort is ignored; incremental failures preserve existing results and retry the failed page.
 4. Schedule descriptions depend only on trigger data; network, not-found and unsupported-edit states are distinct.
 5. Visual settings are configurable and per-instance; documented consumer presentation is reproducible. Existing parent mobile tabs and chat picker behavior remain intact.
-6. Built-package fixture tests cover hosts with different responsive CSS, narrow widths, RTL, keyboard operation and public import/type resolution.
+6. Built-package fixture tests cover public import/type resolution and the documented package/CSS contract.
 7. Parent consumers are migrated, public contracts documented, and review findings traced to requirements and automated verification.
 
 ## Impact
@@ -74,4 +74,3 @@ New labels/error messages are host-translated; existing translation keys are reu
 New props are optional with documented defaults. Existing form values, callbacks, modelSelector, theme options and API DTOs stay compatible. Existing isActive callers retain their meaning; an explicit presentation status takes precedence only when supplied. Parent app wrappers preserve existing exports during migration.
 
 No database migration is involved. Roll back consumers and the coherent package version set together. Do not remove legacy exports or require a breaking release in this change; design.md records the behavior corrections and CSS changes that still require release notes.
-

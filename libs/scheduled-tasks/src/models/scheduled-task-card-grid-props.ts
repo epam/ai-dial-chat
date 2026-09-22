@@ -24,4 +24,12 @@ export interface ScheduledTaskCardGridProps {
   trailingSkeletonCount?: number;
   /** Style overrides forwarded to each trailing skeleton card. */
   skeletonStyles?: ScheduledTaskCardSkeletonStyles;
+  layout?: ScheduledTaskCardGridLayout;
+}
+
+export interface ScheduledTaskCardGridLayout {
+  maxColumns?: 1 | 2 | 3;
+  minCardWidth?: string;
+  gap?: string;
+  cardHeight?: string;
 }

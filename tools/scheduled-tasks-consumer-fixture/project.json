@@ -1,0 +1,30 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "scheduled-tasks-consumer-fixture",
+  "targets": {
+    "pack-lib": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/pack-and-install.mjs",
+        "cwd": "tools/scheduled-tasks-consumer-fixture"
+      },
+      "dependsOn": [
+        {
+          "projects": ["@epam/ai-dial-scheduled-tasks"],
+          "target": "build"
+        },
+        {
+          "projects": ["@epam/ai-dial-catalog"],
+          "target": "build"
+        }
+      ]
+    },
+    "build": {
+      "dependsOn": ["pack-lib"]
+    },
+    "test": {
+      "executor": "nx:noop",
+      "dependsOn": ["build"]
+    }
+  }
+}

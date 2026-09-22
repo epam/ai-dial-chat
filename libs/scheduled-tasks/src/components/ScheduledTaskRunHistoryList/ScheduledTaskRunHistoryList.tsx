@@ -13,7 +13,7 @@ import {
   IconCircleX,
   IconClipboardX,
 } from '@tabler/icons-react';
-import { type FC, type KeyboardEvent } from 'react';
+import { type CSSProperties, type FC, type KeyboardEvent } from 'react';
 import type { ScheduledTaskRunHistoryListProps } from '../../models/scheduled-task-run-history-list-props';
 import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item';
 import { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
@@ -93,6 +93,8 @@ export const ScheduledTaskRunHistoryList: FC<
     '--strhl-subtitle-text': colors?.subtitleTextColor,
     '--strhl-current-run-bg': colors?.currentRunBackground,
     '--strhl-unread-dot': colors?.unreadDotColor,
+    '--strhl-row-hover-bg': listStyles?.rowHoverBackground,
+    '--strhl-row-focus-bg': listStyles?.rowFocusBackground,
   });
 
   const renderRow = (run: ScheduledTaskRunItem) => {
@@ -139,9 +141,10 @@ export const ScheduledTaskRunHistoryList: FC<
         aria-label={accessibleName}
         aria-current={isCurrent ? 'true' : undefined}
         className={mergeClasses(
-          'flex h-8 max-w-[328px] items-center justify-between gap-2 rounded-full pe-2 ps-0 desktop:ps-5',
+          'flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full pe-2 ps-0 desktop:ps-5',
           isCurrent && styles.currentRun,
           isClickable && 'cursor-pointer',
+          isClickable && styles.interactiveRow,
         )}
       >
         <span className="flex items-center gap-2 truncate">
@@ -165,7 +168,7 @@ export const ScheduledTaskRunHistoryList: FC<
             {run.timestampLabel}
           </span>
         </span>
-        <span className="flex h-8 w-14 shrink-0 items-center justify-end">
+        <span className="flex min-h-[var(--strhl-row-min-height,32px)] w-14 shrink-0 items-center justify-end">
           <RunStatusIcon status={run.status} />
         </span>
       </li>
@@ -177,7 +180,7 @@ export const ScheduledTaskRunHistoryList: FC<
       <li
         key={`history-skeleton-${index}`}
         aria-hidden="true"
-        className="flex h-8 max-w-[328px] items-center justify-between gap-2 pe-2 ps-0 desktop:ps-5"
+        className="flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 pe-2 ps-0 desktop:ps-5"
       >
         <Skeleton
           variant={SkeletonVariant.Rectangular}
@@ -196,7 +199,12 @@ export const ScheduledTaskRunHistoryList: FC<
   if (isLoading && items.length === 0) {
     return (
       <ul
-        style={cssVars}
+        style={
+          {
+            ...cssVars,
+            '--strhl-row-min-height': listStyles?.rowMinHeight,
+          } as CSSProperties
+        }
         aria-label={labels.historyTitle}
         className="flex flex-col gap-0.5"
       >
@@ -240,7 +248,12 @@ export const ScheduledTaskRunHistoryList: FC<
 
   return (
     <ul
-      style={cssVars}
+      style={
+        {
+          ...cssVars,
+          '--strhl-row-min-height': listStyles?.rowMinHeight,
+        } as CSSProperties
+      }
       aria-label={labels.historyTitle}
       className="flex flex-col gap-0.5"
     >

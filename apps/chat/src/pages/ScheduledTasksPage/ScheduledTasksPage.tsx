@@ -76,9 +76,11 @@ const ScheduledTasksPage: FC = () => {
     setSortKey,
     isLoading,
     isLoadingMore,
+    loadMoreError,
     error,
     hasMore,
     loadMore,
+    retryLoadMore,
     refetch,
   } = useScheduledTasks(isEnabled);
 
@@ -193,6 +195,7 @@ const ScheduledTasksPage: FC = () => {
       loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),
       cardLabels: {
         newBadgeLabel: t(ScheduledTasksI18nKeys.CardNewBadgeLabel),
+        completedBadgeLabel: t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel),
       },
     }),
     [t],
@@ -225,7 +228,9 @@ const ScheduledTasksPage: FC = () => {
       onRetry={refetch}
       hasMore={hasMore}
       isLoadingMore={isLoadingMore}
+      loadMoreError={loadMoreError}
       onLoadMore={loadMore}
+      onRetryLoadMore={retryLoadMore}
       onCardClick={handleCardClick}
       banner={
         <ScheduledTasksLoginBanner
