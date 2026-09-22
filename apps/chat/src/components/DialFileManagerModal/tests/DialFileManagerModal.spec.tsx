@@ -1,7 +1,7 @@
 import {
-  DialFileManagerVariant,
-  FileManagerNotificationReason,
   type UseDialFileManagerResult,
+  type UseFileAttachmentPickerOptions,
+  type UseFileAttachmentPickerResult,
 } from '@epam/ai-dial-chat-hooks';
 import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import {
@@ -12,23 +12,11 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useCallback, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import DialFileManagerModal from '../DialFileManagerModal';
-
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
-  return {
-    ...actual,
-    useDialFileManager: vi.fn(),
-  };
-});
-
-vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => createNotificationContextValue(mockShowNotification),
-}));
 
 const { mockActiveTab, mockHandleTabChange, mockFileManagerTabs } = vi.hoisted(
   () => ({
@@ -42,6 +30,131 @@ const { mockActiveTab, mockHandleTabChange, mockFileManagerTabs } = vi.hoisted(
 
 const { mockShowNotification } = vi.hoisted(() => ({
   mockShowNotification: vi.fn(),
+}));
+
+/*
+ * `useFileAttachmentPicker` now owns the active tab, selection, and row/MIME
+ * eligibility that this modal used to compute itself — the state machine this
+ * suite exercises through interaction (tab clicks, selection buttons) has
+ * moved into that hook, unit-tested at
+ * `libs/chat-hooks/src/files/useFileAttachmentPicker/tests`. This fake
+ * reproduces just enough of it (real React state, the same 3-tab list, the
+ * same eligibility rules) so the modal's own wiring — which options it
+ * forwards, how it renders the composed result — stays covered end to end
+ * without duplicating the hook's own test suite.
+ */
+const ALL_TABS = [
+  { id: DialFileManagerTabs.MyFiles, label: 'My Files', disabled: false },
+  { id: DialFileManagerTabs.Shared, label: 'Shared with Me', disabled: false },
+  {
+    id: DialFileManagerTabs.Organization,
+    label: 'Organization',
+    disabled: false,
+  },
+];
+
+let currentControllerResult: UseDialFileManagerResult;
+
+const setControllerResult = (result: UseDialFileManagerResult) => {
+  currentControllerResult = result;
+};
+
+const isRowEligible = (
+  data:
+    | {
+        nodeType?: string;
+        path?: string;
+        contentType?: string;
+        contentLength?: number;
+      }
+    | null
+    | undefined,
+  {
+    allowedTypes,
+    maxSelectableFileSize,
+    canAttachFolders,
+  }: UseFileAttachmentPickerOptions,
+): boolean => {
+  if (data == null) return false;
+  if (data.path?.split('/').some((segment) => segment.startsWith('.'))) {
+    return false;
+  }
+  if (data.nodeType === DialFileNodeType.FOLDER) {
+    return Boolean(canAttachFolders);
+  }
+  if (
+    allowedTypes != null &&
+    allowedTypes.length > 0 &&
+    data.contentType != null &&
+    !allowedTypes.some((type) => type === '*/*' || type === data.contentType)
+  ) {
+    return false;
+  }
+  if (
+    maxSelectableFileSize != null &&
+    data.contentLength != null &&
+    data.contentLength > maxSelectableFileSize
+  ) {
+    return false;
+  }
+  return true;
+};
+
+const fakeUseFileAttachmentPicker = (
+  options: UseFileAttachmentPickerOptions,
+): UseFileAttachmentPickerResult => {
+  const [activeTab, setActiveTab] = useState(
+    (mockActiveTab.value as DialFileManagerTabs | undefined) ??
+      options.initialTab ??
+      DialFileManagerTabs.MyFiles,
+  );
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+
+  const onSelectedPathsChange = useCallback((paths: Set<string>) => {
+    setSelectedPaths(new Set(paths));
+  }, []);
+
+  const onTabChange = useCallback((tab: DialFileManagerTabs) => {
+    setSelectedPaths(new Set());
+    mockHandleTabChange(tab);
+    setActiveTab(tab);
+  }, []);
+
+  const tabs = ALL_TABS.filter(
+    (tab) =>
+      options.allowedTabs == null || options.allowedTabs.includes(tab.id),
+  );
+
+  return {
+    controller: currentControllerResult,
+    activeTab,
+    tabs,
+    onTabChange,
+    selectedPaths,
+    onSelectedPathsChange,
+    isRowSelectable: ({ data }) => isRowEligible(data, options),
+    isFileTypeAllowed: (contentType) =>
+      options.allowedTypes == null ||
+      options.allowedTypes.length === 0 ||
+      options.allowedTypes.some(
+        (type) => type === '*/*' || type === contentType,
+      ),
+    allowedFileTypes:
+      options.allowedTypes as UseFileAttachmentPickerResult['allowedFileTypes'],
+  };
+};
+
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
+  return {
+    ...actual,
+    useFileAttachmentPicker: vi.fn(),
+  };
+});
+
+vi.mock('../../../context/NotificationContext', () => ({
+  useNotification: () => createNotificationContextValue(mockShowNotification),
 }));
 
 vi.mock(
@@ -74,23 +187,6 @@ vi.mock('react-i18next', () => ({
     },
   }),
 }));
-
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  const { DialFileManagerTabs: Tabs } = actual;
-  return {
-    ...actual,
-    useDialFileManagerTabs: vi.fn().mockImplementation(() => ({
-      activeTab: mockActiveTab.value ?? Tabs.MyFiles,
-      handleTabChange: mockHandleTabChange,
-      tabs: [
-        { id: Tabs.MyFiles, label: 'My Files' },
-        { id: Tabs.Shared, label: 'Shared with Me' },
-        { id: Tabs.Organization, label: 'Organization' },
-      ],
-    })),
-  };
-});
 
 vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   const actual =
@@ -347,7 +443,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   };
 });
 
-const mockUseDialFileManager = vi.mocked(chatHooksModule.useDialFileManager);
+const mockUseFileAttachmentPicker = vi.mocked(
+  chatHooksModule.useFileAttachmentPicker,
+);
 
 const defaultHookResult: UseDialFileManagerResult = {
   items: [
@@ -487,13 +585,13 @@ beforeEach(() => {
   mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
   mockHandleTabChange.mockClear();
   mockShowNotification.mockClear();
-  mockUseDialFileManager.mockClear();
-  mockUseDialFileManager.mockReturnValue(defaultHookResult);
+  mockUseFileAttachmentPicker.mockClear();
+  mockUseFileAttachmentPicker.mockImplementation(fakeUseFileAttachmentPicker);
+  setControllerResult(defaultHookResult);
 });
 
 describe('DialFileManagerModal', () => {
   it('renders with the given title when isOpen is true', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
     expect(screen.getByText('Attach files')).toBeTruthy();
   });
@@ -501,7 +599,6 @@ describe('DialFileManagerModal', () => {
   it('calls onClose when the header close button is clicked', () => {
     const onClose = vi.fn();
 
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} onClose={onClose} />);
 
     fireEvent.click(screen.getByRole('button', { name: /close/i }));
@@ -509,7 +606,7 @@ describe('DialFileManagerModal', () => {
   });
 
   it('renders error card with role="alert" when error is set', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       error: 'dialFileManager.error',
     });
@@ -521,7 +618,7 @@ describe('DialFileManagerModal', () => {
 
   it('calls retry when the retry button is clicked', () => {
     const retry = vi.fn();
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       error: 'dialFileManager.error',
       retry,
@@ -532,7 +629,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('renders DialFileManager when error is null', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
     const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
@@ -555,7 +651,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('passes conflictResolutionPopupOptions to DialFileManager', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
     const manager = screen.getByRole('region', { name: 'file manager' });
@@ -580,7 +675,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('keeps a fixed modal height and pads the footer', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
     const dialog = screen.getByRole('dialog');
@@ -609,7 +703,6 @@ describe('DialFileManagerModal', () => {
 
   it('attaches selected files', () => {
     const onAttach = vi.fn();
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} onAttach={onAttach} />);
 
     expect(
@@ -626,7 +719,6 @@ describe('DialFileManagerModal', () => {
 
   it('does not attach when selected files plus existing attachments exceed the maximum amount', () => {
     const onAttach = vi.fn();
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(
       <DialFileManagerModal
         {...defaultProps}
@@ -650,7 +742,6 @@ describe('DialFileManagerModal', () => {
 
   it('attaches selected folder as DIAL Core path when canAttachFolders is true', () => {
     const onAttach = vi.fn();
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(
       <DialFileManagerModal
         {...defaultProps}
@@ -671,7 +762,7 @@ describe('DialFileManagerModal', () => {
   it('skips selected folder when DIAL Core source path is missing', () => {
     const onAttach = vi.fn();
     const root = defaultHookResult.items[0];
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       items: [
         {
@@ -702,7 +793,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('marks folder rows as selectable when canAttachFolders is true', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} canAttachFolders />);
 
     expect(
@@ -712,7 +802,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('marks folder rows as not selectable when canAttachFolders is false (default)', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
     expect(
@@ -722,7 +811,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('shows the selection count and clears the selection', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
@@ -741,7 +829,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('blocks dot-prefixed hidden files from attach selection', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
     const manager = screen.getByRole('region', { name: 'file manager' });
@@ -759,7 +846,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('does not add a created folder to selection when the model cannot attach folders', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select docs folder' }));
@@ -772,7 +858,6 @@ describe('DialFileManagerModal', () => {
 
   it('keeps an allowed file while dropping a non-selectable folder from the same selection', () => {
     const onAttach = vi.fn();
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} onAttach={onAttach} />);
 
     fireEvent.click(
@@ -788,13 +873,12 @@ describe('DialFileManagerModal', () => {
   });
 
   it('does not render content when isOpen is false', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} isOpen={false} />);
     expect(screen.queryByText('Attach files')).toBeNull();
   });
 
   it('shows a loader while an archive is being prepared', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       isDownloading: true,
       isAnyOperationInProgress: true,
@@ -812,7 +896,7 @@ describe('DialFileManagerModal', () => {
   });
 
   it('disables Attach while any file operation is in progress', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       isAnyOperationInProgress: true,
     });
@@ -826,7 +910,7 @@ describe('DialFileManagerModal', () => {
   });
 
   it('enables Attach when no file operation is in progress and a file is selected', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       isAnyOperationInProgress: false,
     });
@@ -840,7 +924,7 @@ describe('DialFileManagerModal', () => {
   });
 
   it('keeps Attach disabled while isLoading is true even when isAnyOperationInProgress is false', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       isLoading: true,
       isAnyOperationInProgress: false,
@@ -857,10 +941,10 @@ describe('DialFileManagerModal', () => {
   it('passes a notification handler that forwards translated folder-load errors to showNotification', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
-    const passedOptions = mockUseDialFileManager.mock.calls[0][0];
-    passedOptions.onNotification?.({
+    const passedOptions = mockUseFileAttachmentPicker.mock.calls[0][0];
+    passedOptions.fileManagerOptions.onNotification?.({
       variant: NotificationVariant.Error,
-      reason: FileManagerNotificationReason.FolderLoadFailed,
+      reason: chatHooksModule.FileManagerNotificationReason.FolderLoadFailed,
     });
 
     expect(mockShowNotification).toHaveBeenCalledWith({
@@ -870,7 +954,7 @@ describe('DialFileManagerModal', () => {
   });
 
   it('disables upload and new folder when the hook reports no WRITE permission', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       uploadEnabled: false,
       isNewButtonDisabled: true,
@@ -889,8 +973,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('passes unsupported attachment constraints to the file manager', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
-
     render(
       <DialFileManagerModal
         {...defaultProps}
@@ -910,8 +992,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('forwards maxSelectableFileSize as the ui-kit maxFileSize prop and a translated oversized-upload message', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
-
     render(
       <DialFileManagerModal {...defaultProps} maxSelectableFileSize={1024} />,
     );
@@ -924,8 +1004,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('does not set maxFileSize or an oversized-upload message when maxSelectableFileSize is absent', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
-
     render(<DialFileManagerModal {...defaultProps} />);
 
     const manager = screen.getByRole('region', { name: 'file manager' });
@@ -936,7 +1014,6 @@ describe('DialFileManagerModal', () => {
 
 describe('DialFileManagerModal — tab navigation', () => {
   it('renders three tabs in the toolbar', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-tab-count')).toBe('3');
@@ -947,7 +1024,6 @@ describe('DialFileManagerModal — tab navigation', () => {
 
   it('renders only the tabs allowed by the deployment-configured fileManagerTabs', () => {
     mockFileManagerTabs.value = ['my_files', 'organization'];
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-tab-count')).toBe('2');
@@ -956,8 +1032,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
   });
 
-  it('passes the activeTab from useDialFileManagerTabs to toolbarOptions', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+  it('passes the activeTab from useFileAttachmentPicker to toolbarOptions', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-active-tab')).toBe(
@@ -965,50 +1040,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     );
   });
 
-  it('passes My Files as rootLabel for the My Files tab', () => {
-    mockActiveTab.value = DialFileManagerTabs.MyFiles;
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
-
-    render(<DialFileManagerModal {...defaultProps} />);
-
-    expect(mockUseDialFileManager).toHaveBeenCalledWith(
-      expect.objectContaining({
-        activeTab: DialFileManagerTabs.MyFiles,
-        rootLabel: 'dialFileManager.tab.myFiles',
-      }),
-    );
-  });
-
-  it('passes Shared with Me as rootLabel for the Shared tab', () => {
-    mockActiveTab.value = DialFileManagerTabs.Shared;
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
-
-    render(<DialFileManagerModal {...defaultProps} />);
-
-    expect(mockUseDialFileManager).toHaveBeenCalledWith(
-      expect.objectContaining({
-        activeTab: DialFileManagerTabs.Shared,
-        rootLabel: 'dialFileManager.tab.shared',
-      }),
-    );
-  });
-
-  it('passes Organization as rootLabel for the Organization tab', () => {
-    mockActiveTab.value = DialFileManagerTabs.Organization;
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
-
-    render(<DialFileManagerModal {...defaultProps} />);
-
-    expect(mockUseDialFileManager).toHaveBeenCalledWith(
-      expect.objectContaining({
-        activeTab: DialFileManagerTabs.Organization,
-        rootLabel: 'basic.organization',
-      }),
-    );
-  });
-
   it('clears selectedPaths when the tab-change handler is invoked', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
@@ -1028,7 +1060,7 @@ describe('DialFileManagerModal — tab navigation', () => {
 
 describe('DialFileManagerModal — per-tab Delete action visibility', () => {
   it('includes Delete in actionLabels on my_files tab', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       actionLabels: {
         [DialFileManagerActions.Download]: 'Download',
@@ -1042,7 +1074,7 @@ describe('DialFileManagerModal — per-tab Delete action visibility', () => {
   });
 
   it('omits Delete from actionLabels on shared tab', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       actionLabels: {
         [DialFileManagerActions.Download]: 'Download',
@@ -1055,7 +1087,7 @@ describe('DialFileManagerModal — per-tab Delete action visibility', () => {
   });
 
   it('omits Delete from actionLabels on organization tab', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       actionLabels: {
         [DialFileManagerActions.Download]: 'Download',
@@ -1069,7 +1101,7 @@ describe('DialFileManagerModal — per-tab Delete action visibility', () => {
 
 describe('DialFileManagerModal — Copy/Move/Duplicate excluded (Attach profile)', () => {
   it('does not surface Copy/Move/Duplicate in row/tree/bulk menus on my_files', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       actionLabels: {
         [DialFileManagerActions.Download]: 'Download',
@@ -1088,19 +1120,11 @@ describe('DialFileManagerModal — Copy/Move/Duplicate excluded (Attach profile)
     expect(manager.getAttribute('data-has-bulk-duplicate')).toBe('false');
     expect(manager.getAttribute('data-has-delete')).toBe('true');
   });
-
-  it('passes variant Attach to useDialFileManager so actionProfile resolves to Attach', () => {
-    render(<DialFileManagerModal {...defaultProps} />);
-
-    expect(mockUseDialFileManager).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: DialFileManagerVariant.Attach }),
-    );
-  });
 });
 
 describe('DialFileManagerModal — per-tab uploadEnabled', () => {
   it('passes uploadEnabled=false when organization tab is active', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       uploadEnabled: false,
       isNewButtonDisabled: true,
@@ -1112,7 +1136,7 @@ describe('DialFileManagerModal — per-tab uploadEnabled', () => {
   });
 
   it('passes uploadEnabled=false when on shared root', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       uploadEnabled: false,
       isNewButtonDisabled: true,
@@ -1123,7 +1147,7 @@ describe('DialFileManagerModal — per-tab uploadEnabled', () => {
   });
 
   it('passes uploadEnabled=true when my_files tab has WRITE permission', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       uploadEnabled: true,
       isNewButtonDisabled: false,
@@ -1136,7 +1160,7 @@ describe('DialFileManagerModal — per-tab uploadEnabled', () => {
 
 describe('DialFileManagerModal — sharedWithMeIds', () => {
   it('passes sharedWithMeIds to DialFileManager when on Shared tab', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       sharedWithMeIds: ['shared/file1.pdf', 'shared/folder1/'],
     });
@@ -1148,7 +1172,7 @@ describe('DialFileManagerModal — sharedWithMeIds', () => {
   });
 
   it('passes undefined sharedWithMeIds on My Files tab', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       sharedWithMeIds: undefined,
     });
@@ -1160,7 +1184,7 @@ describe('DialFileManagerModal — sharedWithMeIds', () => {
 
 describe('DialFileManagerModal — per-tab visibleColumns', () => {
   it('does not include Author column on my_files tab', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       visibleColumns: [
         FileManagerColumnKey.Name,
@@ -1176,7 +1200,7 @@ describe('DialFileManagerModal — per-tab visibleColumns', () => {
   });
 
   it('includes Author column on Shared tab', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       visibleColumns: [
         FileManagerColumnKey.Name,
@@ -1267,7 +1291,7 @@ describe('DialFileManagerModal — tab-specific empty states', () => {
   });
 
   it('shows "This folder is empty" with empty description when inside a subfolder', () => {
-    mockUseDialFileManager.mockReturnValue({
+    setControllerResult({
       ...defaultHookResult,
       path: '/My files/reports/',
     });

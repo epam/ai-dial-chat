@@ -1561,6 +1561,61 @@ const { tabs } = useDialFileManagerTabConfig(
 
 **Returns** (`UseDialFileManagerTabConfigResult`): `{ tabs: ToolbarOptions['tabs'] }`.
 
+### useFileAttachmentPicker
+
+Composes `useDialFileManagerTabs`/`useDialFileManagerTabConfig`/`useDialFileManager` into the stateful part of an attachment picker: active tab, selected paths (reset on tab change, defensively copied on every change), and hidden-path/MIME/size/folder row eligibility. It forwards the resulting controller and picker fields directly to `@epam/ai-dial-chat-shared/file-manager`'s `FileManagerAttachModal`, which remains the sole owner of final attachment filtering, deduplication, and count enforcement — this hook supplies policy, not another attach handler. Available from both the package root and `./file-manager`.
+
+```tsx
+import { useFileAttachmentPicker } from '@epam/ai-dial-chat-hooks';
+// or: from '@epam/ai-dial-chat-hooks/file-manager';
+import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+
+const {
+  controller,
+  activeTab,
+  tabs,
+  onTabChange,
+  selectedPaths,
+  onSelectedPathsChange,
+  isRowSelectable,
+  isFileTypeAllowed,
+  allowedFileTypes,
+} = useFileAttachmentPicker({
+  fileManagerOptions, // the same options useDialFileManager accepts, minus bucket/activeTab/rootLabel/variant/forbiddenSymbolsRegExp
+  bucket,
+  tabLabels: {
+    [DialFileManagerTabs.MyFiles]: 'My files',
+    [DialFileManagerTabs.Shared]: 'Shared with me',
+    [DialFileManagerTabs.Organization]: 'Organization',
+    [DialFileManagerTabs.Review]: '',
+  },
+  allowedTabs: ['my_files', 'shared'], // or undefined for no restriction
+  allowedTypes: ['image/*'],
+  maxSelectableFileSize: 10 * 1024 * 1024,
+  canAttachFolders: false,
+});
+
+<FileManagerAttachModal
+  controller={controller}
+  activeTab={activeTab}
+  tabs={tabs}
+  onTabChange={onTabChange}
+  selectedPaths={selectedPaths}
+  onSelectedPathsChange={onSelectedPathsChange}
+  isRowSelectable={isRowSelectable}
+  isFileTypeAllowed={isFileTypeAllowed}
+  allowedFileTypes={allowedFileTypes}
+  // isOpen, onClose, onAttach, labels, resolveFolderPath, ... — host-owned
+/>;
+```
+
+#### API
+
+**Parameters** (`UseFileAttachmentPickerOptions`): `fileManagerOptions`, `bucket`, and `tabLabels` are required; `forbiddenSymbolsRegExp`, `allowedTabs`, `initialTab` (defaults to `DialFileManagerTabs.MyFiles`), `allowedTypes`, `maxSelectableFileSize`, and `canAttachFolders` (defaults to `false`) are optional.
+
+**Returns** (`UseFileAttachmentPickerResult`): `controller` (the composed `UseDialFileManagerResult`), `activeTab`, `tabs`, `onTabChange`, `selectedPaths`, `onSelectedPathsChange`, `isRowSelectable`, `isFileTypeAllowed`, `allowedFileTypes`.
+
 ### useDialFileMutations
 
 Implements create-folder, download, delete, rename, copy, and move against the injected `DialFilesApi`, reporting validation failures as a `FileNameValidationError` and successful mutations through a structured `FileOperationSuccessEvent` rather than a translated toast.
@@ -1749,12 +1804,13 @@ const attachments = dialFilesToAttachments(selectedFiles, bucket, {
 
 ### mimeTypesToFileAccept / isDialFileAcceptType / mimeTypesToDialFileAcceptTypes / mimeTypesToAttachmentExtensionLabels
 
-MIME/accept-type helpers for file pickers. `mimeTypesToFileAccept` always filters through `isDialFileAcceptType`, so it never disagrees with `mimeTypesToDialFileAcceptTypes` about which types are acceptable.
+MIME/accept-type helpers for file pickers. `mimeTypesToFileAccept` always filters through `isDialFileAcceptType`, so it never disagrees with `mimeTypesToDialFileAcceptTypes` about which types are acceptable. Both resolve MIME aliases to the canonical type a picker's own MIME table recognizes, so a deployment declaring `text/json` still offers `.json` files.
 
 ```ts
 import { mimeTypesToFileAccept } from '@epam/ai-dial-chat-hooks';
 
 mimeTypesToFileAccept(['image/*', 'application/pdf']); // 'image/*,application/pdf'
+mimeTypesToFileAccept(['text/json']); // 'application/json'
 ```
 
 ## API Transport
@@ -3230,6 +3286,53 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
       saveError: 'Could not save the skill',
     },
   });
+```
+
+### useSkillArchiveImport
+
+Headless controller for a skill-archive-upload flow: dialog visibility, an exact-`SKILL.md`/`.zip` filename precheck, in-flight exclusion, and import completion. Accepts the host's already-configured `importArchive` request and observes completion/failure through `onImported`/`onError` — it never imports app contexts, i18n, notification transports, or a configured API client, and error outcomes are semantic values (`SkillArchiveImportErrorKind`) rather than translation keys. Available from both the package root and `./skill-editor`.
+
+```ts
+import {
+  useSkillArchiveImport,
+  SkillArchiveImportStatus,
+  SkillArchiveImportErrorKind,
+  SkillArchiveSelectionRejectionReason,
+} from '@epam/ai-dial-chat-hooks';
+// or: from '@epam/ai-dial-chat-hooks/skill-editor';
+
+interface SkillImportResult {
+  name: string;
+}
+
+const {
+  isDialogOpen,
+  status,
+  selectionRejectionReason,
+  errorKind,
+  openDialog,
+  closeDialog,
+  handleFilesSelected,
+  handleFilesRejected,
+} = useSkillArchiveImport<SkillImportResult>({
+  importArchive: (file) => skillsApi.importSkillArchive(file),
+  onImported: async (result) => {
+    notifySuccess(`"${result.name}" has been created.`);
+    await refetchSkills();
+  },
+  onError: (error, kind) => {
+    showErrorNotification(translateErrorKind(kind));
+  },
+});
+
+if (status === SkillArchiveImportStatus.Error && errorKind) {
+  // translate `errorKind` (Validation/Collision/RateLimited/ServiceUnavailable/Generic)
+} else if (
+  selectionRejectionReason ===
+  SkillArchiveSelectionRejectionReason.UnsupportedFilename
+) {
+  // show the local "pick a ZIP or a file named exactly SKILL.md" rejection
+}
 ```
 
 ### useSkillFilePreview

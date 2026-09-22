@@ -11,7 +11,6 @@ import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as skillsApi from '../../../server-api/skills.api';
 import {
-  mapSkillArchiveImportErrorKey,
   SkillArchiveImportStatus,
   useSkillArchiveImport,
 } from '../useSkillArchiveImport';
@@ -31,7 +30,7 @@ const IMPORT_RESPONSE: SkillImportResponseDto = {
   etag: '"abc123"',
 };
 
-describe('useSkillArchiveImport', () => {
+describe('useSkillArchiveImport (host adapter)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useNotification).mockReturnValue(
@@ -93,6 +92,7 @@ describe('useSkillArchiveImport', () => {
     await act(async () => {
       result.current.handleFilesSelected([file]);
       await Promise.resolve();
+      await Promise.resolve();
     });
 
     expect(mockImportSkillArchive).toHaveBeenCalledWith(file);
@@ -137,6 +137,7 @@ describe('useSkillArchiveImport', () => {
       ]);
       await Promise.resolve();
       await Promise.resolve();
+      await Promise.resolve();
     });
 
     expect(result.current.status).toBe(SkillArchiveImportStatus.Error);
@@ -172,6 +173,7 @@ describe('useSkillArchiveImport', () => {
       result.current.handleFilesSelected([
         new File(['zip bytes'], 'skill.zip'),
       ]);
+      await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
@@ -225,6 +227,7 @@ describe('useSkillArchiveImport', () => {
 
     await act(async () => {
       result.current.handleFilesSelected([file]);
+      await Promise.resolve();
       await Promise.resolve();
     });
 
@@ -291,21 +294,5 @@ describe('useSkillArchiveImport', () => {
     });
 
     expect(result.current.selectionError).toBeUndefined();
-  });
-});
-
-describe('mapSkillArchiveImportErrorKey', () => {
-  it.each([
-    [400, SkillArchiveImportI18nKeys.ErrorValidation],
-    [413, SkillArchiveImportI18nKeys.ErrorValidation],
-    [422, SkillArchiveImportI18nKeys.ErrorValidation],
-    [409, SkillArchiveImportI18nKeys.ErrorCollision],
-    [429, SkillArchiveImportI18nKeys.ErrorRateLimited],
-    [502, SkillArchiveImportI18nKeys.ErrorServiceUnavailable],
-    [503, SkillArchiveImportI18nKeys.ErrorServiceUnavailable],
-    [401, SkillArchiveImportI18nKeys.ErrorGeneric],
-    [undefined, SkillArchiveImportI18nKeys.ErrorGeneric],
-  ])('maps status %s to %s', (status, expected) => {
-    expect(mapSkillArchiveImportErrorKey(status)).toBe(expected);
   });
 });

@@ -696,6 +696,32 @@ Default CORS settings:
 - Origin: `http://localhost:4207` (React app)
 - Credentials: `true`
 
+`config/cors.ts` overrides that policy for
+`/api/v{N}/toolsets/:id/mcp-app-resource` and
+`/api/v{N}/toolsets/:id/mcp-app-tool-call`: the delegate sets `origin: false`
+and `credentials: false`, so these responses receive no CORS permission headers.
+The chat host fetches resources and forwards tool calls through its same-origin
+BFF. This does not replace authentication, CSRF validation or sandbox isolation.
+The current matchers hardcode `/api`; changing the global prefix requires
+reviewing these matchers too.
+
+## MCP Apps Configuration
+
+The BFF exposes these values through `GET /api/v1/client-config`. They configure
+the chat host; the sandbox is a separate deployment on a distinct origin.
+
+| Variable              | Client behavior when unset     | Purpose                                                                                            |
+| --------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `MCP_APP_SANDBOX_URL` | MCP App opening is unavailable | Base URL of the separately deployed sandbox proxy.                                                 |
+| `MCP_APP_THEME`       | Use the active chat theme      | Optional `light` or `dark` override for `hostContext.theme`.                                       |
+| `MCP_APP_USER_AGENT`  | Browser `navigator.userAgent`  | Identifier supplied as `hostContext.userAgent`.                                                    |
+| `MCP_APP_HOST_NAME`   | `ai-dial-chat`                 | Identifier supplied as `hostInfo.name` during `ui/initialize`; exposed as `config.mcpAppHostName`. |
+
+Unset optional values are represented as `null` in client config; the client
+applies the fallbacks above. Configure the sandbox's embedding allowlist using
+`MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS` in that app's environment. See the
+[sandbox deployment guide](../mcp-app-sandbox/README.md).
+
 ## Static File Serving
 
 The API also serves the built React application. Static files are served from:

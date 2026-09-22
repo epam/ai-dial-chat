@@ -186,18 +186,16 @@ const renderAtRoute = (initialEntry: string) =>
   );
 
 const fillValidForm = async () => {
-  await userEvent.type(
-    screen.getByRole('textbox', { name: 'displayName' }),
-    'Daily summary',
-  );
+  fireEvent.change(screen.getByRole('textbox', { name: 'displayName' }), {
+    target: { value: 'Daily summary' },
+  });
   await userEvent.selectOptions(
     screen.getByRole('combobox', { name: 'modelId' }),
     'gpt-4o',
   );
-  await userEvent.type(
-    screen.getByRole('textbox', { name: 'prompt' }),
-    'Summarize my inbox',
-  );
+  fireEvent.change(screen.getByRole('textbox', { name: 'prompt' }), {
+    target: { value: 'Summarize my inbox' },
+  });
 };
 
 describe('ScheduledTaskCreatePage', () => {
@@ -462,22 +460,19 @@ describe('ScheduledTaskCreatePage', () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'startDate' }),
-      '2026-08-01',
-    );
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'endDate' }),
-      '2026-08-31',
-    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: '2026-08-01' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: '2026-08-31' },
+    });
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'repeat' }),
       'oneTime',
     );
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'runAt' }),
-      '2099-08-24T09:00',
-    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'runAt' }), {
+      target: { value: '2099-08-24T09:00' },
+    });
     await userEvent.click(
       screen.getByRole('button', { name: 'buttons.create' }),
     );

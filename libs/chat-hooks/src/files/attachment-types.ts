@@ -1,3 +1,4 @@
+import { normalizeMimeType } from '@epam/ai-dial-chat-shared';
 import type { DialFileAcceptType } from '@epam/ai-dial-react-file-manager';
 import { extension as getMimeExtension } from 'mime-types';
 
@@ -8,7 +9,14 @@ export const isDialFileAcceptType = (
   type: string,
 ): type is DialFileAcceptType => type.startsWith('.') || type.includes('/');
 
-/** Normalizes `*` to the all-files wildcard and drops any value that is not a valid `DialFileAcceptType`. */
+/**
+ * Normalizes `*` to the all-files wildcard, canonicalizes MIME aliases, and drops
+ * any value that is not a valid `DialFileAcceptType`.
+ *
+ * Aliases are resolved because a file picker matches an `accept` entry against its
+ * own MIME table: a declared `text/json` offers no `.json` file, while the
+ * `application/json` it denotes does.
+ */
 export const mimeTypesToDialFileAcceptTypes = (
   types?: string[],
 ): DialFileAcceptType[] | undefined => {
@@ -17,7 +25,11 @@ export const mimeTypesToDialFileAcceptTypes = (
   }
 
   return types
-    .map((type) => (type === '*' ? ALL_FILES_ACCEPT_TYPE : type))
+    .map((type) => {
+      if (type === '*') return ALL_FILES_ACCEPT_TYPE;
+      // A dotted extension is not a MIME type and must pass through untouched.
+      return type.startsWith('.') ? type : normalizeMimeType(type);
+    })
     .filter(isDialFileAcceptType);
 };
 
@@ -45,13 +57,14 @@ export const mimeTypesToAttachmentExtensionLabels = (types: string[]): string =>
         return type;
       }
 
-      const extension = getMimeExtension(type);
+      const canonicalType = normalizeMimeType(type);
+      const extension = getMimeExtension(canonicalType);
 
       if (extension !== false) {
         return `.${extension}`;
       }
 
-      const subtype = type.split('/')[1];
+      const subtype = canonicalType.split('/')[1];
       return subtype != null ? `.${subtype.toLowerCase()}` : type;
     })
     .join(', ');

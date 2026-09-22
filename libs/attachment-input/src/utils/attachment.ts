@@ -1,7 +1,9 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
+  getBaseMimeType,
   MIME_TYPE_EXT_MAP,
+  normalizeMimeType,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
 import type { Icon } from '@tabler/icons-react';
@@ -70,16 +72,21 @@ export const mimeTypesToExtensionLabels = (
   wildcardLabels: Record<string, string> = WILDCARD_TYPE_LABELS,
 ): string => {
   const labels = types.map((type) => {
-    const normalizedType = type.toLowerCase().split(';')[0].trim();
-    if (normalizedType.endsWith('/*')) {
-      const major = normalizedType.slice(0, -2);
+    const baseType = getBaseMimeType(type);
+    if (baseType.endsWith('/*')) {
+      const major = baseType.slice(0, -2);
       return wildcardLabels[major] ?? `${major} files`;
     }
-    const labelOverride = MIME_TYPE_LABEL_OVERRIDES[normalizedType];
+    /*
+     * Aliases are resolved so a declared `text/json` is labelled from the same
+     * entry as the `application/json` it denotes.
+     */
+    const canonicalType = normalizeMimeType(baseType);
+    const labelOverride = MIME_TYPE_LABEL_OVERRIDES[canonicalType];
     if (labelOverride) return labelOverride;
-    const extension = MIME_TYPE_EXT_MAP[normalizedType];
+    const extension = MIME_TYPE_EXT_MAP[canonicalType];
     if (extension) return extension.toUpperCase();
-    const subtype = normalizedType.split('/')[1];
+    const subtype = canonicalType.split('/')[1];
     return subtype != null ? subtype.toUpperCase() : type.toUpperCase();
   });
   return labels.join(', ');
@@ -91,6 +98,9 @@ export const mimeTypesToExtensionLabels = (
  * Matching rules:
  * - Exact match: `'application/pdf'` allows `'application/pdf'`.
  * - Wildcard prefix: `'image/*'` allows any `'image/...'` MIME type.
+ * - Alias match: both sides are canonicalized, so `'text/json'` allows
+ *   `'application/json'` and vice versa.
+ * - Parameters and letter case are ignored on both sides.
  *
  * Returns `false` when `allowedTypes` is empty (no attachment types allowed).
  */
@@ -99,24 +109,36 @@ export const isMimeTypeAllowed = (
   allowedTypes: string[],
 ): boolean => {
   if (allowedTypes.length === 0) return false;
+
+  const baseMimeType = getBaseMimeType(mimeType);
+  const canonicalMimeType = normalizeMimeType(baseMimeType);
+
   return allowedTypes.some((allowed) => {
-    if (allowed === '*' || allowed === '*/*') return true;
-    if (allowed.endsWith('/*')) {
-      const prefix = allowed.slice(0, -2);
-      return mimeType.startsWith(`${prefix}/`);
+    const baseAllowed = getBaseMimeType(allowed);
+    if (baseAllowed === '*' || baseAllowed === '*/*') return true;
+    if (baseAllowed.endsWith('/*')) {
+      const prefix = baseAllowed.slice(0, -2);
+      /*
+       * A wildcard is tested against both spellings, so `text/*` still covers a
+       * literal `text/json` while `application/*` covers its canonical form.
+       */
+      return (
+        baseMimeType.startsWith(`${prefix}/`) ||
+        canonicalMimeType.startsWith(`${prefix}/`)
+      );
     }
-    return mimeType === allowed;
+    return canonicalMimeType === normalizeMimeType(baseAllowed);
   });
 };
 
-/** Returns the Tabler icon component for a given MIME content type, or `IconFile` for unknown types. */
-export const getAttachmentIcon = (contentType: string): Icon => {
-  if (!contentType) return IconFile;
+/** Returns the Tabler icon component for a given MIME content type, or `IconFile` for unknown types. Aliases resolve to their canonical type first. */
+export const getAttachmentIcon = (rawContentType: string): Icon => {
+  if (!rawContentType) return IconFile;
+  const contentType = normalizeMimeType(rawContentType);
   // Broad category checks first
   if (contentType.startsWith('image/')) {
     switch (contentType) {
       case 'image/jpeg':
-      case 'image/jpg':
         return IconFileTypeJpg;
       case 'image/png':
         return IconFileTypePng;
@@ -138,7 +160,6 @@ export const getAttachmentIcon = (contentType: string): Icon => {
     case 'application/pdf':
       return IconFileTypePdf;
     case 'application/msword':
-    case 'application/vnd.ms-word':
       return IconFileTypeDoc;
     case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
       return IconFileTypeDocx;
@@ -153,8 +174,7 @@ export const getAttachmentIcon = (contentType: string): Icon => {
 
     // Archives
     case 'application/zip':
-    case 'application/x-zip-compressed':
-    case 'application/x-rar-compressed':
+    case 'application/vnd.rar':
     case 'application/x-7z-compressed':
     case 'application/gzip':
     case 'application/x-tar':
@@ -168,20 +188,16 @@ export const getAttachmentIcon = (contentType: string): Icon => {
     case 'text/html':
     case 'application/xhtml+xml':
       return IconFileTypeHtml;
-    case 'text/xml':
     case 'application/xml':
       return IconFileTypeXml;
     case 'application/sql':
-    case 'text/x-sql':
       return IconFileTypeSql;
 
     // Web / code
     case 'text/javascript':
-    case 'application/javascript':
       return IconFileTypeJs;
     case 'text/jsx':
       return IconFileTypeJsx;
-    case 'application/typescript':
     case 'text/typescript':
       return IconFileTypeTs;
     case 'text/tsx':
@@ -189,10 +205,8 @@ export const getAttachmentIcon = (contentType: string): Icon => {
     case 'text/css':
       return IconFileTypeCss;
     case 'text/x-php':
-    case 'application/x-php':
       return IconFileTypePhp;
     case 'text/x-rustsrc':
-    case 'application/x-rust':
       return IconFileTypeRs;
     case 'text/x-vue':
       return IconFileTypeVue;
@@ -214,7 +228,7 @@ const getBottomIcon = (attachment: DisplayAttachment): Icon => {
 export const getExtFromContentType = (
   contentType: string,
 ): string | undefined => {
-  const mime = contentType.toLowerCase().split(';')[0].trim();
+  const mime = normalizeMimeType(contentType);
   const override = MIME_TYPE_EXT_MAP[mime];
   if (override) return override;
   const subtype = mime.split('/')[1];

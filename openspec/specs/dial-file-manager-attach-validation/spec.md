@@ -8,12 +8,12 @@ Define how the DIAL file manager attach modal validates selectable rows and the 
 
 `DialFileManagerModal` SHALL prevent selection of any grid row whose `path` contains a hidden path segment. A segment is hidden when it starts with `.` (for example `.env`, `.hidden`, or the file-manager placeholder `.dial_folder`). This includes files inside hidden folders. The `isRowSelectable` predicate SHALL return `false` for such rows.
 
-A utility function `isHiddenPath(path: string): boolean` SHALL live in `apps/chat/src/utils/file-path.ts` (or an existing app-level file-path utility) and evaluate path segments rather than relying on a single marker string. This helper MUST NOT be placed inside any `libs/*` package.
+The canonical `isHiddenPath(path: string): boolean` SHALL be owned by `@epam/ai-dial-chat-shared` and evaluate path segments rather than relying on a single marker string. The reusable attachment picker and shared modal SHALL consume this helper without an app-local duplicate.
 
 i18n: tooltip key `DialFileManager.AttachingHiddenFilesNotAllowed`
 RTL: none (tooltip text only)
 Feature flag: none
-Memoisation: `isRowSelectable` is already inside `useMemo`-wrapped `gridOptions`; no additional memoisation needed.
+Memoisation: the reusable picker SHALL expose a memoized `isRowSelectable` predicate that updates when its constraints change.
 
 #### Scenario: Dot-prefixed hidden file is not selectable
 
@@ -36,7 +36,7 @@ Memoisation: `isRowSelectable` is already inside `useMemo`-wrapped `gridOptions`
 
 When `allowedTypes` is provided and non-empty, `DialFileManagerModal` SHALL prevent selection of file rows whose `contentType` does not match any entry in `allowedTypes`.
 
-Matching SHALL use `isMimeTypeAllowed(contentType, allowedTypes)` from `apps/chat/src/utils/attachment-mime.ts`. Wildcard (`image/*`, `*/*`) matching MUST be supported.
+Matching SHALL use the canonical `isMimeTypeAllowed(contentType, allowedTypes)` from `@epam/ai-dial-attachment-input`, consumed directly by the reusable attachment picker. Wildcard (`image/*`, `*/*`) matching MUST be supported.
 
 When `allowedTypes` is empty or absent, all MIME types are allowed (no restriction).
 
@@ -44,7 +44,7 @@ MIME filtering applies to `DialFileNodeType.ITEM` rows only; `FOLDER` rows are u
 
 RTL: none
 Feature flag: none
-Memoisation: `isRowSelectable` inside `useMemo`-wrapped `gridOptions`
+Memoisation: the reusable picker SHALL expose a memoized `isRowSelectable` predicate that updates when its constraints change.
 
 #### Scenario: File with disallowed MIME type is not selectable
 

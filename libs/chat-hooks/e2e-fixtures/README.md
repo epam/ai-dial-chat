@@ -179,3 +179,21 @@ The application fixture builds the same React host against source aliases and is
 The executable limits live in `application-mode.mjs` and `cold-load-probes.mjs`. Both source and packed fixtures must meet the fixed limits; a source regression cannot automatically raise them. Keep a measurement and rationale with any intentional budget amendment.
 
 Use `KEEP_FIXTURES=1` when inspecting generated files. Reports are written to the OS temporary directory. Package byte measurements do not measure host LCP.
+
+## Reusable chat workflows
+
+`useSkillArchiveImport` and `useFileAttachmentPicker`
+(`openspec/changes/extract-reusable-chat-workflows`) are reachable through the existing
+`skill-editor` and `file-manager` subpath entries, so no new fixture was added here — the
+existing `skill-editor`/`file-manager` fixtures already typecheck and bundle them. Adding
+`useFileAttachmentPicker` did add a real, previously-undeclared peer to the `file-manager`
+fixture's closure: it calls `@epam/ai-dial-attachment-input`'s `isMimeTypeAllowed` directly, so
+`fixtures.mjs`'s `file-manager` entry now lists that peer explicitly.
+
+`@epam/ai-dial-skills`'s `SkillArchiveUploadDialog` and `@epam/ai-dial-prompts`'s
+`usePromptSelectorOverlay` have no fixture here — both packages declare workspace-sibling
+packages as ordinary `dependencies`, not `peerDependencies` (the shape this harness's peer-closure
+model isn't built for; see `.claude/rules/libs.md`'s "a sibling lib is a dependency" section).
+`tools/reusable-workflows-consumer-fixture` covers them instead, modeled on
+`tools/attachment-canvas-consumer-fixture`. See `docs/reusable-chat-workflows.md` for the full
+adoption map and the split between behavior tests and package-consumption fixtures.
