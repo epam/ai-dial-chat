@@ -69,6 +69,26 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  DangerButton: ({
+    label,
+    onClick,
+    onMouseEnter,
+    onFocus,
+  }: {
+    label: string;
+    onClick: () => void;
+    onMouseEnter?: () => void;
+    onFocus?: () => void;
+  }) => (
+    <button
+      data-variant="danger"
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onFocus={onFocus}
+    >
+      {label}
+    </button>
+  ),
   NeutralIconButton: ({
     'aria-label': ariaLabel,
     icon,
@@ -194,6 +214,16 @@ const openManage = async (label = 'Manage') => {
   await userEvent.click(screen.getByRole('button', { name: label }));
 };
 
+/*
+ * The overflow trigger only exists once two or more actions survive
+ * filtering — a lone one is promoted to a button in the action row — so a
+ * test that asserts an action is nowhere has to cope with either surface.
+ */
+const openManageIfPresent = async () => {
+  const trigger = screen.queryByRole('button', { name: 'Manage' });
+  if (trigger) await userEvent.click(trigger);
+};
+
 describe('Header', () => {
   it('renders Use in chat for a Model item', () => {
     render(<Header item={makeItem(CatalogEntityType.Model)} />);
@@ -212,7 +242,7 @@ describe('Header', () => {
 
   it('does not render Publish for a Prompt item by default', async () => {
     render(<Header item={makeItem(CatalogEntityType.Prompt)} />);
-    await openManage();
+    await openManageIfPresent();
     expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
   });
 
@@ -305,7 +335,7 @@ describe('Header', () => {
         isPublishVisible={() => false}
       />,
     );
-    await openManage();
+    await openManageIfPresent();
     expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
   });
 
@@ -545,7 +575,7 @@ describe('Header', () => {
 
   it('does not render Download when onDownload is absent', async () => {
     render(<Header item={makeItem(CatalogEntityType.Prompt)} />);
-    await openManage();
+    await openManageIfPresent();
     expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
   });
 
@@ -646,7 +676,7 @@ describe('Header — Download as primary action', () => {
     render(
       <Header item={makeItem(CatalogEntityType.Skill)} onDownload={vi.fn()} />,
     );
-    await openManage();
+    await openManageIfPresent();
     expect(screen.getAllByRole('button', { name: 'Download' })).toHaveLength(1);
   });
 
@@ -812,7 +842,7 @@ describe('Header', () => {
         item={{ ...makeItem(CatalogEntityType.Toolset), isMyApp: false }}
       />,
     );
-    await openManage();
+    await openManageIfPresent();
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
   });
 
@@ -872,7 +902,7 @@ describe('Header', () => {
         isUnshareVisible={() => false}
       />,
     );
-    await openManage();
+    await openManageIfPresent();
     expect(
       screen.queryByRole('button', { name: 'Remove from My List' }),
     ).toBeNull();
@@ -904,7 +934,7 @@ describe('Header', () => {
 
   it('does not render Remove from My List when onUnshare is not supplied', async () => {
     render(<Header item={makeSharedItem()} isPublishVisible={() => true} />);
-    await openManage();
+    await openManageIfPresent();
     expect(
       screen.queryByRole('button', { name: 'Remove from My List' }),
     ).toBeNull();
@@ -959,7 +989,7 @@ describe('Header', () => {
 
   it('does not render Revoke access for an item shared with the user', async () => {
     render(<Header item={makeSharedItem()} onRevokeShare={vi.fn()} />);
-    await openManage();
+    await openManageIfPresent();
     expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
   });
 
@@ -977,7 +1007,7 @@ describe('Header', () => {
         isRevokeShareVisible={() => false}
       />,
     );
-    await openManage();
+    await openManageIfPresent();
     expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
   });
 
@@ -1002,7 +1032,7 @@ describe('Header', () => {
         isRevokeShareVisible={() => true}
       />,
     );
-    await openManage();
+    await openManageIfPresent();
     expect(screen.queryByRole('button', { name: 'Revoke access' })).toBeNull();
   });
 
@@ -1907,5 +1937,159 @@ describe('Header — read-only', () => {
 
     expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+});
+
+describe('Header — the last action standing', () => {
+  const makeSharedToolset = (): CatalogItem => ({
+    ...makeItem(CatalogEntityType.Toolset),
+    isMyApp: false,
+    sharedWithMe: true,
+  });
+
+  it('renders the only surviving action as a button instead of the overflow menu', () => {
+    render(
+      <Header
+        item={makeSharedToolset()}
+        onUnshare={vi.fn()}
+        isPublishVisible={() => false}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+  });
+
+  it('calls the action when the promoted button is clicked', async () => {
+    const onUnshare = vi.fn();
+    const item = makeSharedToolset();
+    render(
+      <Header
+        item={item}
+        onUnshare={onUnshare}
+        isPublishVisible={() => false}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    );
+
+    expect(onUnshare).toHaveBeenCalledWith(item);
+  });
+
+  it('keeps a destructive action styled as one once promoted', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        isPublishVisible={() => false}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Delete' }).dataset.variant).toBe(
+      'danger',
+    );
+  });
+
+  it('keeps the overflow menu once a second action survives', async () => {
+    render(
+      <Header
+        item={makeSharedToolset()}
+        onUnshare={vi.fn()}
+        onDownload={vi.fn()}
+        isPublishVisible={() => false}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Remove from My List' }),
+    ).toBeNull();
+    await openManage();
+    expect(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('holds the overflow menu for an item whose Revoke access entry resolves lazily', () => {
+    const onFetchRecipientsCount = vi.fn().mockResolvedValue(0);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        isPublishVisible={() => false}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+
+    /* Delete is the only entry, but the recipient count is what decides
+     * whether a second one joins it, so the trigger stays put. */
+    expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+  });
+
+  it('holds the overflow menu for an item whose Unpublish entry resolves lazily', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Agent), isMyApp: false }}
+        isPublishVisible={() => true}
+        isUnpublishVisible={() => true}
+        onOpenUnpublish={vi.fn()}
+        isPublishHistoryResolved={false}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+  });
+
+  it('keeps the menu for an entry the count later rules out, rather than swapping surface mid-hover', async () => {
+    const onFetchRecipientsCount = vi.fn().mockResolvedValue(0);
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        isPublishVisible={() => false}
+        onRevokeShare={vi.fn()}
+        onFetchRecipientsCount={onFetchRecipientsCount}
+      />,
+    );
+
+    /* Hovering settles the count at zero, so Delete is once again the only
+     * entry — and the trigger the pointer is on must not become it. */
+    await userEvent.hover(screen.getByRole('button', { name: 'Manage' }));
+    await waitFor(() => expect(onFetchRecipientsCount).toHaveBeenCalled());
+
+    expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+  });
+
+  it('does not swap the trigger out from under an open menu', async () => {
+    const { rerender } = render(
+      <Header
+        item={makeSharedToolset()}
+        onUnshare={vi.fn()}
+        onDownload={vi.fn()}
+        isPublishVisible={() => false}
+      />,
+    );
+
+    await openManage();
+    /* The host resolves the item's details and Download drops away, leaving
+     * a single entry behind — with the menu open, it stays an entry. */
+    rerender(
+      <Header
+        item={makeSharedToolset()}
+        onUnshare={vi.fn()}
+        isPublishVisible={() => false}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Remove from My List' }),
+    ).toBeTruthy();
   });
 });
