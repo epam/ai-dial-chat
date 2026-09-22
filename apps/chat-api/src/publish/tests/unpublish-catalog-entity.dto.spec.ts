@@ -51,6 +51,17 @@ describe('UnpublishCatalogEntityDto', () => {
     expect(errors.some((error) => error.property === 'version')).toBe(true);
   });
 
+  /* A DELETE resource grants nobody anything, so the flag has no meaning here. */
+  it('rejects publishCredentials, which unpublish must never forward', async () => {
+    const errors = await validateBody({
+      folderPath: 'Organization',
+      publishCredentials: true,
+    });
+    expect(
+      errors.some((error) => error.property === 'publishCredentials'),
+    ).toBe(true);
+  });
+
   it('rejects a rules array, which unpublish must never forward', async () => {
     const errors = await validateBody({
       folderPath: 'Organization',

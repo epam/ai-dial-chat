@@ -82,16 +82,9 @@ New SDK members consumed:
 - `offlineCredentialsSignOut` exists in the SDK but is **not called** by any
   code in this change (Non-goal).
 
-Compile-time impact: SDK `0.1.0-dev.37` (PR #33) adds a `DIAL_NATIVE` member
-to whatever discriminated auth-type union the SDK exports for its own
-internal client configuration. Task 1 (SDK upgrade) must run
-`npm exec nx build chat-api` after bumping the version and fix any
-`exhaustive switch`/`never` narrowing the compiler flags in
-`apps/chat-api` code that pattern-matches over an SDK-exported auth-type
-union (none is currently known to exist in `DialClientService` or the
-`external-services`/`scheduled-tasks` domains, but this must be re-verified
-against the installed `0.1.0-dev.37` `.d.ts` files as the first sub-step of
-that task, not assumed).
+Runtime impact: `DIAL_NATIVE` is a metadata authentication type, not a generic
+external-service sign-in credential. Core rejects both per-service mutations.
+The September 21 correction below replaces the initial compile-only assumption.
 
 ### 2. Upstream and BFF contracts
 
@@ -152,26 +145,27 @@ Response: { "success": true }
 ```ts
 @ApiTags('offline-credentials')
 @Controller({ path: 'offline-credentials', version: '1' })
-@UseGuards(FeatureGuard)
-@RequireFeature(FeatureKey.ScheduledTasksEnabled)
 export class OfflineCredentialsController {
   @Get()
+  @UseGuards(FeatureGuard)
+  @RequireFeature(FeatureKey.ScheduledTasksEnabled, FeatureKey.LiveChatInteraction)
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({ operationId: 'getOfflineCredentials', ... })
   getOfflineCredentials(@Req() req: Request): Promise<GetOfflineCredentialsResponseDto> { ... }
 
   @Post('signin')
+  @UseGuards(FeatureGuard)
+  @RequireFeature(FeatureKey.ScheduledTasksEnabled, FeatureKey.LiveChatInteraction)
   @HttpCode(200)
   @ApiOperation({ operationId: 'signInOfflineCredentials', ... })
   signIn(@Req() req: Request, @Body() body: OfflineCredentialsSigninBodyDto): Promise<OfflineCredentialsAuthResultDto> { ... }
 }
 ```
 
-Reused, not reinvented: `FeatureGuard`/`RequireFeature(FeatureKey
-.ScheduledTasksEnabled)` (same guard `ScheduledTasksController` already
-uses, `apps/chat-api/src/scheduled-tasks/scheduled-tasks.controller.ts:45-46`)
-gates both endpoints — offline credentials only matter when Scheduled Tasks
-is enabled, so no new feature flag is introduced. Both routes require the
+`FeatureGuard` reads method-level `RequireFeature` metadata. Each offline
+handler accepts either `ScheduledTasksEnabled` or `LiveChatInteraction`; the
+alternatives are evaluated for the same caller and roles. Existing single-feature
+handlers retain their behavior. No new flag is introduced. Both routes require the
 session guard that already populates `req.user as SessionUser` on every
 versioned controller (see `getExternalService`/`listScheduledTasks` reading
 `const { at } = req.user as SessionUser`) — unauthenticated calls 401 before
@@ -184,7 +178,7 @@ helpers, `apps/chat-api/src/common/dial/dial-error.mapper.ts`):
 | --------------------------------------------------- | ----------- | --------- |
 | Invalid `redirectUri` (fails allowlist)              | 400         | `BadRequestException` (via `ValidationPipe`) |
 | No session cookie                                    | 401         | `UnauthorizedException` |
-| `scheduledTasksEnabled` flag off for caller           | 403         | `ForbiddenException` (via `FeatureGuard`) |
+| Both `scheduledTasksEnabled` and `liveChatInteraction` disabled for caller           | 403         | `ForbiddenException` (via `FeatureGuard`) |
 | DIAL Core rate limit exceeded                       | 429         | `HttpException` via `mapDialHttpStatus` |
 | Other DIAL Core errors (`response.error`)            | Mapped status | Shared `mapDialHttpStatus` mapping |
 | DIAL Core sign-in resolves to `false`                | 502         | `BadGatewayException` ("Core reported failure" — mirrors `ExternalServicesService.signIn`'s identical `!response.data` branch) |
@@ -586,3 +580,53 @@ is updated to list the new diagram.
   (no level concept) based on the contract shapes given; confirm against the
   actual `0.1.0-dev.37` `.d.ts` types in task 1 before finalizing the DTOs
   in task 2.
+
+
+## DIAL-native interrupt correction (2026-09-21)
+
+The implementation remains at the app edge. `useExternalServiceLogin` owns the
+native branch and delegates OAuth to `useOfflineCredentialsLogin`, whose optional
+`preparedPopup` parameter preserves browser click activation while native login
+fetches settings. `SigninInterruptDialog` owns row state and the existing
+`ClientChannelContext` reports success only after the native branch confirms it.
+No new context, route, library, client-side credential store, or cache is added.
+
+Sequence:
+
+1. Reserve a popup synchronously on the login click.
+2. Fetch fresh external-service metadata. Require `appLevelAuthStatus: SIGNED_IN`.
+   `SIGNED_OUT` produces an administrator-consent message; missing/unknown status
+   produces failure. Close the reserved popup on these outcomes.
+3. Fetch `GET /api/v1/offline-credentials`. Reuse an already-connected account
+   without revocation. If offline access is unavailable or connection settings are
+   absent, close the popup and show the unavailable message.
+4. Reuse the existing OfflineCredentials OAuth callback, which posts `{ code,
+   redirectUri }` to `/api/v1/offline-credentials/signin`.
+5. Require fresh `connected: true`, then re-read application consent before
+   reporting success. Callback success alone is insufficient.
+
+`GetExternalServiceResponseDto.appLevelAuthStatus` maps Core's
+`app_level_auth_status`. This is independent of `userLevelAuthStatus` and of the
+legacy `globalAuthStatus`. Both management metadata and application-resource
+fallback use the same mapper. Per-service signin/signout DTOs exclude DIAL_NATIVE;
+their 400 response prevents attempts to mutate native administrator consent.
+
+Generated `ExternalServicesApi` owns all three external-service operations.
+`apps/chat/src/server-api/external-services.ts` is its app adapter. Native auth
+never enters its credential mutation methods. Existing API-key/OAuth login and
+`offlineUsageConsent` behavior are retained.
+
+The dialog uses `toolsetSignin.dialNativeHint`, `toolsetSignin.adminConsentRequired`,
+and `toolsetSignin.offlineUnavailable`. Errors use `role="alert"`; text wraps at
+mobile and desktop widths with inherited RTL direction. The shared per-service
+consent checkbox appears only if an API-key/OAuth row is present. Native login
+never grants or withdraws administrator consent.
+
+Alternatives: merely accepting the enum or skipping only signout both leave
+unsupported Core operations; treating offline connection alone as success ignores
+application consent. Reusing the existing offline OAuth path with independent
+consent checks avoids these failures without duplicating callback logic.
+
+Verification evidence and unresolved live checks are recorded in tasks section 15.
+The earlier proactive Scheduled Tasks route/banner flow remains independently
+specified by `scheduled-tasks-offline-credentials-login`.

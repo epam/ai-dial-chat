@@ -17,12 +17,9 @@ import type {
 import type { ApplicationVisualizerDto } from './dto/application-visualizer.dto';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import type { CustomVisualizerDto } from './dto/custom-visualizer.dto';
+import { normalizeEnabledUiFeatures } from './enabled-ui-features.normalizer';
 import { FeatureKey } from './feature-flags/feature-key.enum';
 import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
-import {
-  DEPRECATED_UI_FEATURE_ALIASES,
-  KNOWN_UI_FEATURES,
-} from './known-ui-features.constants';
 
 const CACHE_TTL_SECONDS = 60;
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
@@ -196,6 +193,7 @@ export class AppConfigService {
     let mcpAppSandboxUrl: string | null = null;
     let mcpAppTheme: 'light' | 'dark' | null = null;
     let mcpAppUserAgent: string | null = null;
+    let mcpAppHostName: string | null = null;
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
@@ -210,6 +208,7 @@ export class AppConfigService {
     let applicationVisualizers: Record<string, ApplicationVisualizerDto> = {};
     let customVariables: Record<string, unknown> = {};
     let publicationFilterSources: string[] = DEFAULT_PUBLICATION_FILTER_SOURCES;
+    let maxAttachmentFileSizeBytes = 536_870_912;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -237,6 +236,8 @@ export class AppConfigService {
           resolved === 'light' || resolved === 'dark' ? resolved : null;
       } else if (def.key === 'mcpApps.userAgent') {
         mcpAppUserAgent = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'mcpApps.hostName') {
+        mcpAppHostName = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'fileManager.availableTabs') {
         fileManagerTabs = Array.isArray(resolved)
           ? resolved
@@ -265,37 +266,9 @@ export class AppConfigService {
             ? sanitizeFooterHtml(resolved, appVersion)
             : '';
       } else if (def.key === 'uiFeatures.enabledUiFeatures') {
-        const rawValue = Array.isArray(resolved) ? resolved : [];
-        if (rawValue.length > 0) {
-          const filtered = rawValue.reduce<string[]>((acc, entry) => {
-            const raw = String(entry);
-            const alias = DEPRECATED_UI_FEATURE_ALIASES[raw];
-            if (alias != null) {
-              this.logger.warn(
-                `ENABLED_UI_FEATURES entry "${raw}" is deprecated; using "${alias}" instead`,
-              );
-              acc.push(alias);
-              return acc;
-            }
-            if (KNOWN_UI_FEATURES.has(raw)) {
-              acc.push(raw);
-              return acc;
-            }
-            this.logger.warn(
-              `Ignoring unrecognized ENABLED_UI_FEATURES entry: "${raw}"`,
-            );
-            return acc;
-          }, []);
-          if (filtered.length > 0) {
-            /* A deprecated alias can resolve onto a value the list already
-             * carries, so dedupe before the response goes out. */
-            enabledUiFeatures = [...new Set(filtered)];
-          } else {
-            this.logger.warn(
-              'ENABLED_UI_FEATURES contained only unrecognized entries; falling back to compiled-in defaults',
-            );
-          }
-        }
+        enabledUiFeatures = normalizeEnabledUiFeatures(resolved, (message) =>
+          this.logger.warn(message),
+        );
       } else if (def.key === 'customVariables') {
         customVariables =
           resolved !== null &&
@@ -313,6 +286,9 @@ export class AppConfigService {
         publicationFilterSources = Array.isArray(resolved)
           ? resolved
           : DEFAULT_PUBLICATION_FILTER_SOURCES;
+      } else if (def.key === 'attachments.maxFileSizeBytes') {
+        maxAttachmentFileSizeBytes =
+          typeof resolved === 'number' ? resolved : 536_870_912;
       }
     }
 
@@ -328,6 +304,7 @@ export class AppConfigService {
         mcpAppSandboxUrl,
         mcpAppTheme,
         mcpAppUserAgent,
+        mcpAppHostName,
         fileManagerTabs,
         overlayEnabled,
         overlayAllowedOrigins,
@@ -342,6 +319,7 @@ export class AppConfigService {
         applicationVisualizers,
         customVariables,
         publicationFilterSources,
+        maxAttachmentFileSizeBytes,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

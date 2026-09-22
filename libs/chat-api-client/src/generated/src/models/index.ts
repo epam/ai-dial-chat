@@ -901,6 +901,12 @@ export interface ClientConfigDto {
    */
   mcpAppUserAgent?: string | null;
   /**
+   * Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to "ai-dial-chat" on the client.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppHostName?: string | null;
+  /**
    * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
@@ -984,6 +990,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   publicationFilterSources: Array<string>;
+  /**
+   * Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  maxAttachmentFileSizeBytes: number;
 }
 
 /**
@@ -4088,6 +4100,12 @@ export interface GetExternalServiceResponseDto {
    */
   userLevelAuthStatus?: string;
   /**
+   * APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  appLevelAuthStatus?: string;
+  /**
    * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
    * @type {string}
    * @memberof GetExternalServiceResponseDto
@@ -4132,6 +4150,7 @@ export const GetExternalServiceResponseDtoAuthenticationTypeEnum = {
   None: 'NONE',
   ApiKey: 'API_KEY',
   Oauth: 'OAUTH',
+  DialNative: 'DIAL_NATIVE',
 } as const;
 export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
   (typeof GetExternalServiceResponseDtoAuthenticationTypeEnum)[keyof typeof GetExternalServiceResponseDtoAuthenticationTypeEnum];
@@ -5259,6 +5278,12 @@ export interface PublishCatalogEntityDto {
    * @memberof PublishCatalogEntityDto
    */
   rules?: Array<PublishRuleDto>;
+  /**
+   * Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.
+   * @type {boolean}
+   * @memberof PublishCatalogEntityDto
+   */
+  publishCredentials?: boolean;
 }
 /**
  *
@@ -5358,6 +5383,12 @@ export interface PublishHistoryEntryDto {
    * @memberof PublishHistoryEntryDto
    */
   publishedBy: string;
+  /**
+   * Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.
+   * @type {boolean}
+   * @memberof PublishHistoryEntryDto
+   */
+  publishCredentials: boolean;
 }
 
 /**

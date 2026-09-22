@@ -188,8 +188,8 @@
     },
     {
       "id": 3,
-      "title": "DIAL Chat Generations active",
-      "description": "Generation entries physically retained by each Nest process. Includes stopped/aborted entries until removal; does not count every task or downstream response outside the registry.",
+      "title": "DIAL Chat Retained Generations by State",
+      "description": "Process-local registry entries by state: active, cancel_requested, finalizing, settling. Settling retains the entry and gauge contribution while its terminal write is pending; cleanup or a falling count does not prove durable persistence. The count does not cover tasks or downstream responses outside the registry.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -263,7 +263,7 @@
           "refId": "A",
           "editorMode": "code",
           "expr": "dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}",
-          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}}",
+          "legendFormat": "{{cluster}} / {{namespace}} / {{pod}} / {{instance}} / {{job}} / {{state}}",
           "range": true,
           "instant": false,
           "format": "time_series"

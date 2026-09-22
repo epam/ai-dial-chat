@@ -5624,7 +5624,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher's own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -6343,7 +6343,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6389,7 +6389,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
             "description": "DIAL Core returned an error response or rejected sign-in"
@@ -6710,6 +6710,11 @@
             "description": "Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to \"ai-dial-chat\" on the client.",
             "nullable": true
           },
+          "mcpAppHostName": {
+            "type": "string",
+            "description": "Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to \"ai-dial-chat\" on the client.",
+            "nullable": true
+          },
           "fileManagerTabs": {
             "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
             "example": ["my_files", "shared", "organization"],
@@ -6808,6 +6813,11 @@
             "items": {
               "type": "string"
             }
+          },
+          "maxAttachmentFileSizeBytes": {
+            "type": "number",
+            "description": "Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.",
+            "example": 536870912
           }
         },
         "required": [
@@ -6823,7 +6833,8 @@
           "customVisualizers",
           "applicationVisualizers",
           "customVariables",
-          "publicationFilterSources"
+          "publicationFilterSources",
+          "maxAttachmentFileSizeBytes"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -9522,13 +9533,18 @@
           },
           "authenticationType": {
             "type": "string",
-            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "enum": ["NONE", "API_KEY", "OAUTH", "DIAL_NATIVE"],
             "example": "API_KEY"
           },
           "userLevelAuthStatus": {
             "type": "string",
             "example": "SIGNED_IN",
             "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "appLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator."
           },
           "globalAuthStatus": {
             "type": "string",
@@ -11716,6 +11732,11 @@
             "items": {
               "$ref": "#/components/schemas/PublishRuleDto"
             }
+          },
+          "publishCredentials": {
+            "type": "boolean",
+            "description": "Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.",
+            "example": true
           }
         },
         "required": ["folderPath"]
@@ -11840,6 +11861,11 @@
           "publishedBy": {
             "type": "string",
             "example": "user@example.com"
+          },
+          "publishCredentials": {
+            "type": "boolean",
+            "description": "Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.",
+            "example": true
           }
         },
         "required": [
@@ -11848,7 +11874,8 @@
           "folderPath",
           "version",
           "publishedAt",
-          "publishedBy"
+          "publishedBy",
+          "publishCredentials"
         ]
       },
       "PublishRulesResultDto": {

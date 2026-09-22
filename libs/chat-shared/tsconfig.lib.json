@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "../../dist/libs/chat-shared",
-    "tsBuildInfoFile": "../../dist/libs/chat-shared/tsconfig.lib.tsbuildinfo",
+    "outDir": "out-tsc/lib",
+    "tsBuildInfoFile": "out-tsc/lib/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "jsx": "react-jsx",
     "module": "esnext",

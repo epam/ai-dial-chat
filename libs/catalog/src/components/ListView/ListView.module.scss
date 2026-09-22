@@ -39,16 +39,6 @@
     ) !important;
   }
 
-  :global(.ag-header-row) :global(.ag-header-cell):first-child,
-  :global(.ag-row) :global(.ag-cell):first-child {
-    padding-inline-start: 1rem;
-  }
-
-  :global(.ag-header-row) :global(.ag-header-cell):last-child,
-  :global(.ag-row) :global(.ag-cell):last-child {
-    padding-inline-end: 1rem;
-  }
-
   :global(.ag-row-even) {
     background: var(--cat-list-row-even-bg, var(--bg-layer-base, #f5f7fa));
   }

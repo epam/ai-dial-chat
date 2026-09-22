@@ -18,8 +18,6 @@ import { McpAppResourceFetchError } from '../mcp-apps-api-client';
 
 /** User-facing text `useOpenMcpAppCanvas` needs but cannot resolve itself — a lib must not call `t()`. */
 export interface UseOpenMcpAppCanvasLabels {
-  /** Canvas panel title while an MCP App is loading or open. */
-  title: string;
   /** Error label shown when the resource fetch is forbidden (HTTP 403). */
   forbiddenErrorLabel: string;
   /** Error label shown for any other resource-load/tool-call failure. */
@@ -57,7 +55,8 @@ export const useOpenMcpAppCanvas = (
   onBeforeOpen?: () => void,
 ) => {
   const { openCanvas, openCanvasLoading, closeCanvas } = useAttachmentCanvas();
-  const { hostContext, sandboxUrl, fetchResourceHtml, callTool } = hostAdapter;
+  const { hostContext, hostInfo, sandboxUrl, fetchResourceHtml, callTool } =
+    hostAdapter;
 
   /*
    * An app mounted in the full-width canvas can ask to go back inline via
@@ -108,7 +107,7 @@ export const useOpenMcpAppCanvas = (
       }
 
       onBeforeOpen?.();
-      openCanvasLoading(labels.title, canvasKey);
+      openCanvasLoading(match.mcpToolName, canvasKey);
 
       try {
         const seedKey = computeMcpAppSeedKey(toolCall);
@@ -152,6 +151,7 @@ export const useOpenMcpAppCanvas = (
             toolInput: toolCall?.toolInput,
             toolResult,
             hostContext,
+            hostInfo,
             onToolCall: (name, args) =>
               callTool(match.toolsetId, name, args, match.kind),
             onRequestDisplayMode: handleRequestDisplayMode,
@@ -165,7 +165,7 @@ export const useOpenMcpAppCanvas = (
               );
             },
           },
-          labels.title,
+          match.mcpToolName,
           canvasKey,
         );
         return true;
@@ -182,7 +182,7 @@ export const useOpenMcpAppCanvas = (
               ? labels.forbiddenErrorLabel
               : labels.loadErrorLabel,
           },
-          labels.title,
+          match.mcpToolName,
           canvasKey,
         );
         return false;
@@ -194,6 +194,7 @@ export const useOpenMcpAppCanvas = (
       onBeforeOpen,
       sandboxUrl,
       hostContext,
+      hostInfo,
       fetchResourceHtml,
       callTool,
       cache,

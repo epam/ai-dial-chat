@@ -271,6 +271,11 @@
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publishHistoryLoading": "Loading history…",
     "publishHistoryError": "Failed to load publish history.",
+    "publish": {
+      "credentialsLabel": "Publish with my credentials",
+      "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them.",
+      "historySharedCredentials": "Shared credentials"
+    },
     "skillsLoadError": "Failed to load skills",
     "tab": {
       "models": "Models",
@@ -628,6 +633,10 @@
     "networkError": {
       "title": "Network unavailable",
       "message": "Some files were not uploaded because your internet connection was lost.\n Please try again:\n"
+    },
+    "fileTooLarge": {
+      "title": "File too large",
+      "message": "Max file size is {{maxSize}}. Please upload a smaller file."
     }
   },
   "chatSettings": {
@@ -761,8 +770,10 @@
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
       "activeStatusUpdateError": "Failed to update the task's active status",
-      "deleteConfirmTitle": "Confirm Deleting Task",
-      "deleteConfirmDescription": "Are you sure you want to delete the task \"{{taskName}}\"? All run conversations will still be accessible.",
+      "deleteConfirmTitle": "Delete task",
+      "deleteConfirmDescription": "Are you sure you want to delete <bold>{{taskName}}</bold>? This action is permanent and cannot be undone.",
+      "deleteConsequenceConversationsAccessible": "All run conversations will still be accessible",
+      "deleteConsequenceCannotBeUndone": "Cannot be undone",
       "deleteConfirmingLabel": "Deleting…",
       "deleteSuccess": "Scheduled task deleted",
       "deleteNotFoundError": "This task has already been deleted or could not be found",
@@ -838,6 +849,7 @@
     "noPermissionToCreate": "You don't have permission to create items in this folder",
     "maxSizeSupportedTypes": "Maximum size: {{maxSize}}. Supported types: {{allowedExtensions}}",
     "maxSizeOnly": "Maximum size: {{maxSize}}",
+    "uploadFileTooLarge": "Max file size is {{maxSize}}.",
     "allTypes": "all",
     "upToFiles_one": "Up to {{count}} file",
     "upToFiles_other": "Up to {{count}} files",
@@ -959,7 +971,6 @@
     "visualizerActionsAriaLabel": "Visualizer actions",
     "visualizerLoadingLabel": "Loading visualizer",
     "visualizerLoadErrorLabel": "Failed to load visualizer",
-    "mcpAppTitle": "MCP App",
     "mcpAppLoadErrorLabel": "Failed to load MCP App",
     "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App",
     "pdfThumbnailsLabel": "Thumbnails",
@@ -1157,6 +1168,9 @@
     "apiKeyLabel": "API key",
     "apiKeyPlaceholder": "Enter API key",
     "errorLoginFailed": "Failed to log in. Please try again.",
+    "adminConsentRequired": "A DIAL administrator must approve this application's access before you can continue. Contact your administrator, then retry.",
+    "offlineUnavailable": "Offline access is not configured for your account. Contact your administrator.",
+    "dialNativeHint": "Connect your account for offline access. An administrator must separately approve this application's access.",
     "errorPopupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again.",
     "errorDeclineFailed": "Failed to decline. Please try again.",
     "errorRetry": "Retry",

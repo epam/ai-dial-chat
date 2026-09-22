@@ -28,7 +28,7 @@ How a selected skill travels with a user message: the custom_content.skills payl
 #### Scenario: No API surface changes
 
 - **WHEN** the change is complete
-- **THEN** the generated OpenAPI client, the chat-api controllers, and the completion-request construction are unchanged except for the additive `custom_content.skills` field riding the existing channel
+- **THEN** the generated OpenAPI client, the chat-api controllers, and the completion-request construction are unchanged except for the additive `custom_content.skills` field riding the existing channel and its per-entry `url` being percent-encoded for the wire (see the regenerate/continue requirement below)
 
 ---
 
@@ -47,20 +47,27 @@ A user message carrying `custom_content.skills` SHALL persist with the conversat
 
 Regenerating an assistant response and resuming a generation after a reload (the continue-last-user flows) SHALL forward the originating user message's `custom_content` — including `skills` — unchanged to the completion request. No flow SHALL strip or reconstruct the skills field. Forwarding SHALL remain verbatim even when the current viewer lacks read access to a referenced private skill (e.g. someone else's shared conversation): per Core PR #1956 such a request fails server-side with 403 and SHALL surface as an ordinary stream error — the UI SHALL NOT pre-validate or strip the field.
 
+"Unchanged" governs selection and inclusion of the field, not its wire byte-encoding: `chat-api`'s completion-request builder (`ConversationStreamingService`, `apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`) SHALL percent-encode each forwarded `skills[].url`'s path segments (via the same `encodeDialResourcePath` helper used for every other DIAL resource path this service sends to DIAL Core) immediately before including it in the outbound completion request body. This is encoding, not stripping or re-resolution — the url's segments (decoded first, so an already-encoded url is not double-encoded) are preserved, only reserved characters (e.g. spaces) are escaped. Without it, a skill resource path containing a reserved character is rejected by DIAL Core with 400 for every deployment, even though the same skill is selectable and its metadata resolves normally — persistence (previous requirement) and history rendering (below) continue to use the raw, non-percent-encoded url from `custom_content.skills`; only the value sent to DIAL Core in the completion request is encoded.
+
 #### Scenario: Regenerate
 
 - **WHEN** the user regenerates a response to a user message that carries `custom_content.skills`
-- **THEN** the completion request includes that message's `custom_content` with the `skills` field unchanged
+- **THEN** the completion request includes that message's `custom_content` with the `skills` field unchanged, its `url` percent-encoded for the wire
 
 #### Scenario: Regenerate without read access to the skill
 
 - **WHEN** a viewer who cannot read a referenced private skill regenerates that message
-- **THEN** the request still carries the `skills` field verbatim and the failure surfaces as a stream error (no silent stripping)
+- **THEN** the request still carries the `skills` field verbatim (percent-encoded) and the failure surfaces as a stream error (no silent stripping)
 
 #### Scenario: Continue after reload
 
 - **WHEN** a conversation is reloaded while its last user message awaits a reply and the generation resumes
-- **THEN** the resumed request includes that message's `custom_content.skills` unchanged
+- **THEN** the resumed request includes that message's `custom_content.skills` unchanged, its `url` percent-encoded for the wire
+
+#### Scenario: Skill path with reserved characters
+
+- **WHEN** the selected skill's resource path contains a character requiring percent-encoding (e.g. a space, as in `skills/public/my chats/123`)
+- **THEN** the completion request sent to DIAL Core carries the percent-encoded `url` (e.g. `skills/public/my%20chats/123`), while the persisted conversation and the rendered `ChatSkill` element continue to use the raw, unencoded path
 
 ---
 

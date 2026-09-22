@@ -4,7 +4,10 @@ import {
   useDialFileManager,
   useDialFileManagerTabConfig,
 } from '@epam/ai-dial-chat-hooks';
-import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
+import {
+  formatFileSize,
+  type DialFileManagerShellLabels,
+} from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
   NOT_ALLOWED_SYMBOLS,
@@ -27,7 +30,7 @@ import { useUser } from '../../context/auth/UserContext';
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();
   const {
-    config: { fileManagerTabs },
+    config: { fileManagerTabs, maxAttachmentFileSizeBytes },
   } = useAppConfig();
   const hostOptions = useDialFileManagerHostOptions();
   const { user } = useUser();
@@ -114,6 +117,15 @@ const DialFileManagerPage: FC = () => {
     }),
     [t],
   );
+
+  const oversizedUploadMessage = useMemo(() => {
+    if (maxAttachmentFileSizeBytes == null || maxAttachmentFileSizeBytes <= 0) {
+      return undefined;
+    }
+    return t(DialFileManagerI18nKeys.UploadFileTooLarge, {
+      maxSize: formatFileSize(maxAttachmentFileSizeBytes),
+    });
+  }, [maxAttachmentFileSizeBytes, t]);
 
   const renameValidationMessages = useMemo(
     () => ({
@@ -282,6 +294,8 @@ const DialFileManagerPage: FC = () => {
         variant={DialFileManagerVariant.Standalone}
         actionProfile={DialFileManagerActionProfile.Full}
         autoSelectUploadedItems={false}
+        maxSelectableFileSize={maxAttachmentFileSizeBytes}
+        oversizedUploadMessage={oversizedUploadMessage}
       />
     </div>
   );

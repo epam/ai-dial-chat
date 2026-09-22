@@ -93,6 +93,7 @@ describe('useCatalogPublishing', () => {
         ['Organization', 'Data Science'],
         [],
         '',
+        false,
       );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -104,6 +105,61 @@ describe('useCatalogPublishing', () => {
           rules: [],
         },
       );
+    });
+
+    it('sends publishCredentials: true when the publisher opted in', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'tool-abc123',
+        entityType: 'toolset',
+        folderPath: 'Organization/Data Science',
+        version: '1.2.0',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+      const { result } = renderPublishing();
+
+      await result.current.handlePublish(
+        makeCatalogItem(),
+        ['Organization', 'Data Science'],
+        [],
+        '',
+        true,
+      );
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'toolset',
+        'tool-abc123',
+        {
+          folderPath: 'Organization/Data Science',
+          version: '1.2.0',
+          rules: [],
+          publishCredentials: true,
+        },
+      );
+    });
+
+    /* The request must be byte-identical to the pre-change one when clear. */
+    it('omits publishCredentials entirely when the option is clear', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'tool-abc123',
+        entityType: 'toolset',
+        folderPath: 'Organization/Data Science',
+        version: '1.2.0',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+      const { result } = renderPublishing();
+
+      await result.current.handlePublish(
+        makeCatalogItem(),
+        ['Organization', 'Data Science'],
+        [],
+        '',
+        false,
+      );
+
+      const [[, , body]] = vi.mocked(publishCatalogEntity).mock.calls;
+      expect(body).not.toHaveProperty('publishCredentials');
     });
 
     it('sends an edited author with the publish request', async () => {
@@ -122,6 +178,7 @@ describe('useCatalogPublishing', () => {
         ['Organization', 'Data Science'],
         [],
         'DIAL Team',
+        false,
       );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -152,6 +209,7 @@ describe('useCatalogPublishing', () => {
         ['Organization', 'Data Science'],
         [],
         '  DIAL Team  ',
+        false,
       );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -182,6 +240,7 @@ describe('useCatalogPublishing', () => {
           ['Organization', 'Data Science'],
           [],
           author,
+          false,
         );
 
         expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -216,6 +275,7 @@ describe('useCatalogPublishing', () => {
         ['Organization', 'Data Science'],
         [],
         '',
+        false,
       );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -288,6 +348,7 @@ describe('useCatalogPublishing', () => {
         ['Organization', 'Data Science'],
         rules,
         '',
+        false,
       );
 
       expect(publishCatalogEntity).toHaveBeenCalledWith(
@@ -326,6 +387,7 @@ describe('useCatalogPublishing', () => {
           ['Organization'],
           [],
           '',
+          false,
         ),
       ).rejects.toThrow('Forbidden');
     });
@@ -339,6 +401,7 @@ describe('useCatalogPublishing', () => {
           version: '1.0',
           publishedAt: '2026-07-13T10:00:00.000Z',
           publishedBy: 'user@example.com',
+          publishCredentials: false,
         },
       ]);
       const { result } = renderPublishing();
@@ -354,6 +417,7 @@ describe('useCatalogPublishing', () => {
           version: '1.0',
           publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
           folderPath: ['Organization', 'Data Science'],
+          publishCredentials: false,
         },
       ]);
     });
@@ -381,6 +445,7 @@ describe('useCatalogPublishing', () => {
           version: '1.0',
           publishedAt: '2026-07-13T10:00:00.000Z',
           publishedBy: 'user@example.com',
+          publishCredentials: false,
         },
       ]);
       const { result } = renderPublishing();
@@ -580,6 +645,21 @@ describe('useCatalogPublishing', () => {
             folderPath: ['Data Science'],
           },
         ]);
+      });
+
+      /* No publication record exists to read the flag from; absent reads as false. */
+      it('leaves publishCredentials unset on the synthesised entry', async () => {
+        const { result } = renderPublishing();
+
+        const history = await result.current.getPublishHistory(
+          makeCatalogItem({
+            id: PUBLIC_AGENT_ID,
+            type: CatalogEntityType.Agent,
+            isMyApp: false,
+          }),
+        );
+
+        expect(history[0].publishCredentials).toBeUndefined();
       });
 
       it('decodes percent-encoded folder segments the id carries', async () => {

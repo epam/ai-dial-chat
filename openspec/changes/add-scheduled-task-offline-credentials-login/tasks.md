@@ -488,3 +488,34 @@
 - [x] 14.1 Run `npm exec nx affected -t lint,test,build --base=origin/development-1.0`
       and resolve any failures before considering this change ready to
       apply.
+
+
+## 15. DIAL-native interrupt correction (2026-09-21)
+
+- [x] 15.1 Add native metadata and `appLevelAuthStatus` mapping in
+      `apps/chat-api/src/external-services/`; reject native per-service mutations.
+      Covered by mapper and controller regression tests.
+- [x] 15.2 Implement the native branch in `useExternalServiceLogin` through
+      `useOfflineCredentialsLogin`, preserving synchronous popup reservation and
+      independently verifying offline connection and application consent.
+- [x] 15.3 Update `SigninInterruptDialog` messages, `role="alert"`, and conditional
+      per-service consent checkbox; keep i18n keys in `en.json` and app constants.
+- [x] 15.4 Permit either Scheduled Tasks or live-chat capability on offline
+      endpoints using method-level feature alternatives, retaining session/CSRF
+      checks. Cover enabled alternatives and both-disabled denial.
+- [x] 15.5 Regenerate OpenAPI/client and use `ExternalServicesApi` in the app
+      adapter. Keep host integration out of hand-authored libraries.
+- [x] 15.6 Run automated checks: 44 relevant frontend tests passed; backend run
+      passed 3499/3500 tests, with the unrelated attach-generation test passing
+      all 8 tests on isolated repeat. Final chat/chat-api lint, frontend typecheck,
+      client build/lint, `openapi:check`, and `validate:docs` passed.
+- [ ] 15.7 Verify live OAuth against the target DIAL Core/IdP with application
+      consent present, absent, and withdrawn during login; verify popup cancellation
+      and mobile/desktop RTL rendering. This has not been exercised manually.
+- [ ] 15.8 Obtain a green full verification run. Existing `auth-metrics.spec.ts`
+      type errors and missing `chat-overlay-sandbox` declaration outputs block
+      `verify:full`; do not mark the change fully verified based on focused tests.
+- [ ] 15.9 Sync delta specs to main specs using a compatible OpenSpec CLI, then
+      archive only after outstanding verification is resolved. The installed CLI's
+      status JSON lacks `artifactPaths.specs.existingOutputPaths`, required by the
+      repository sync skill; main specs have not been changed by this correction.

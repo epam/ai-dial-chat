@@ -6,7 +6,8 @@ import { DeploymentItemType } from '../../../deployments/dto/deployment-item.dto
 import type { DialClientService } from '../../../dial/dial-client.service';
 import {
   ConversationGenerationService,
-  GenerationStatus,
+  GenerationCancelReason,
+  type GenerationLease,
 } from '../../conversation-generation.service';
 import {
   ConversationMessageRole,
@@ -55,6 +56,13 @@ const makeMockRes = () => {
       ),
   };
 };
+
+const makeLease = (
+  abortController = new AbortController(),
+): GenerationLease => ({
+  abortController,
+  operationId: 1,
+});
 
 const textToStream = (chunks: string[]): ReadableStream<Uint8Array> => {
   const encoder = new TextEncoder();
@@ -149,11 +157,13 @@ describe('ConversationStreamingService', () => {
       maybeRenameAfterFirstReply: vi.fn(),
     };
     mockGenerationService = {
-      register: vi.fn().mockReturnValue(new AbortController()),
+      register: vi.fn().mockReturnValue(makeLease()),
       abort: vi.fn().mockReturnValue(true),
       complete: vi.fn(),
       error: vi.fn(),
-      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+      beginFinalizing: vi.fn(),
+      getCancellation: vi.fn().mockReturnValue({ requested: false }),
+      getAssembledMessage: vi.fn(),
       seedAssembledMessage: vi.fn(),
       applyChunk: vi.fn(),
       attach: vi.fn(),
@@ -1418,11 +1428,7 @@ describe('ConversationStreamingService', () => {
        * The generation is released (complete), not left active — so a
        * subsequent request (e.g. regenerate) would not get a 409.
        */
-      expect(mockGenerationService.complete).toHaveBeenCalledWith(
-        'test-session-id',
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-gen-id',
-      );
+      expect(mockGenerationService.complete).toHaveBeenCalledOnce();
       expect(mockGenerationService.error).not.toHaveBeenCalled();
     });
 
@@ -1434,12 +1440,12 @@ describe('ConversationStreamingService', () => {
         .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
       const generationAbortController = new AbortController();
-      vi.mocked(mockGenerationService.register).mockReturnValue(
-        generationAbortController,
-      );
-      vi.mocked(mockGenerationService.getStatus).mockReturnValue(
-        GenerationStatus.Stopped,
-      );
+      const lease = makeLease(generationAbortController);
+      vi.mocked(mockGenerationService.register).mockReturnValue(lease);
+      vi.mocked(mockGenerationService.getCancellation).mockReturnValue({
+        requested: true,
+        reason: GenerationCancelReason.UserStop,
+      });
 
       const encoder = new TextEncoder();
       const cancel = vi.fn();
@@ -1487,9 +1493,7 @@ describe('ConversationStreamingService', () => {
       expect(stoppedSave.messages.at(-1)?.wasStoppedByUser).toBe(true);
       expect(mockGenerationService.complete).not.toHaveBeenCalled();
       expect(mockGenerationService.error).toHaveBeenCalledWith(
-        'test-session-id',
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-gen-id',
+        lease,
         undefined,
       );
     });
@@ -1502,9 +1506,8 @@ describe('ConversationStreamingService', () => {
         .spyOn(mockDialClient.client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
       const generationAbortController = new AbortController();
-      vi.mocked(mockGenerationService.register).mockReturnValue(
-        generationAbortController,
-      );
+      const lease = makeLease(generationAbortController);
+      vi.mocked(mockGenerationService.register).mockReturnValue(lease);
 
       const encoder = new TextEncoder();
       const cancel = vi.fn();
@@ -1559,12 +1562,7 @@ describe('ConversationStreamingService', () => {
       expect(generationAbortController.signal.aborted).toBe(true);
       expect(mockGenerationService.complete).not.toHaveBeenCalled();
       expect(mockGenerationService.error).toHaveBeenCalledOnce();
-      expect(mockGenerationService.error).toHaveBeenCalledWith(
-        'test-session-id',
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-gen-id',
-        '',
-      );
+      expect(mockGenerationService.error).toHaveBeenCalledWith(lease, '');
       expect(saveConversationSpy).toHaveBeenCalledTimes(2);
       const partialSave = saveConversationSpy.mock.calls[1][2].body as {
         messages: { streamErrorMessage?: string }[];
@@ -1609,6 +1607,481 @@ describe('ConversationStreamingService', () => {
 
       expect(mockGenerationService.complete).toHaveBeenCalledOnce();
       expect(mockGenerationService.error).not.toHaveBeenCalled();
+    });
+
+    /*
+     * `generation-registry` requires the aborted-outcome classification to
+     * read cancellation state through the lease identity, never through
+     * whatever entry currently occupies the owner+path key — so a
+     * replacement that reused the same client generationId can never fool
+     * this read. Keying the mock off lease identity (rather than always
+     * answering the same way) proves the service passes the lease through,
+     * not just "the current entry".
+     */
+    it('classifies the aborted outcome by lease identity, not by whatever occupies the registry key', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      const lease = makeLease();
+      vi.mocked(mockGenerationService.register).mockReturnValue(lease);
+      vi.mocked(mockGenerationService.getCancellation).mockImplementation(
+        (candidate: GenerationLease) =>
+          candidate === lease
+            ? { requested: true, reason: GenerationCancelReason.UserStop }
+            : { requested: false },
+      );
+
+      const encoder = new TextEncoder();
+      const pendingToolCallStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"choices":[{"delta":{"content":"partial"}}]}\n\n',
+            ),
+          );
+        },
+      });
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(pendingToolCallStream, { status: 200 }),
+      } as never);
+
+      const res = makeMockRes();
+      const streamPromise = runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+      await vi.waitFor(() => expect(res.write).toHaveBeenCalled());
+      lease.abortController.abort();
+      await streamPromise;
+
+      expect(mockGenerationService.getCancellation).toHaveBeenCalledWith(lease);
+      const finalSave = saveConversationSpy.mock.calls.at(-1)?.[2].body as {
+        messages: { wasStoppedByUser?: boolean }[];
+      };
+      expect(finalSave.messages.at(-1)?.wasStoppedByUser).toBe(true);
+    });
+
+    /*
+     * `responses-api-generation` shares this single `finalize` path with
+     * Chat Completions (`relayIterator`/`finalize` in `streamCompletion`), so
+     * the same lease-scoped classification requirement must hold for a
+     * Responses-API generation too.
+     */
+    it('classifies a stale-cancelled Responses-API generation by lease identity as well', async () => {
+      vi.mocked(mockDeploymentsService.getDeploymentDetails).mockResolvedValue({
+        id: 'gpt-4o',
+        type: DeploymentItemType.Model,
+        modelDetails: { features: { responsesApi: true } },
+      });
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      const lease = makeLease();
+      vi.mocked(mockGenerationService.register).mockReturnValue(lease);
+      vi.mocked(mockGenerationService.getCancellation).mockImplementation(
+        (candidate: GenerationLease) =>
+          candidate === lease
+            ? { requested: true, reason: GenerationCancelReason.StaleExpiry }
+            : { requested: false },
+      );
+
+      const encoder = new TextEncoder();
+      const pendingResponseStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"type":"response.output_text.delta","delta":"partial"}\n\n',
+            ),
+          );
+        },
+      });
+      vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue({
+        response: new Response(pendingResponseStream, { status: 200 }),
+      } as never);
+
+      const res = makeMockRes();
+      const streamPromise = runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+      await vi.waitFor(() => expect(res.write).toHaveBeenCalled());
+      lease.abortController.abort();
+      await streamPromise;
+
+      expect(mockGenerationService.getCancellation).toHaveBeenCalledWith(lease);
+      const finalSave = saveConversationSpy.mock.calls.at(-1)?.[2].body as {
+        messages: { streamErrorMessage?: string; wasStoppedByUser?: boolean }[];
+      };
+      /* Stale expiry — a non-user abort, never a user Stop. */
+      expect(finalSave.messages.at(-1)?.streamErrorMessage).toBe('');
+      expect(finalSave.messages.at(-1)?.wasStoppedByUser).toBeUndefined();
+    });
+
+    /*
+     * Same requirement for the abandoned-generator `finally` branch: it must
+     * fall back to the locally-held `assembledMessage` rather than reading
+     * whatever entry currently occupies the key once the lease's own entry
+     * has been replaced (`getAssembledMessage` returns `undefined` for a
+     * stale lease per `generation-registry`).
+     */
+    it('falls back to the locally-held assembled message when the lease has been replaced, in the abandoned-generator branch', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      const lease = makeLease();
+      vi.mocked(mockGenerationService.register).mockReturnValue(lease);
+      /* Simulates a replacement: this lease's entry no longer resolves. */
+      vi.mocked(mockGenerationService.getCancellation).mockReturnValue(
+        undefined,
+      );
+      vi.mocked(mockGenerationService.getAssembledMessage).mockReturnValue(
+        undefined,
+      );
+
+      const encoder = new TextEncoder();
+      const neverEndingStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"choices":[{"delta":{"content":"locally-held"}}]}\n\n',
+            ),
+          );
+        },
+      });
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(neverEndingStream, { status: 200 }),
+      } as never);
+
+      const stream = service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        () => undefined,
+        'user1',
+      );
+
+      for await (const _chunk of stream) {
+        break;
+      }
+
+      expect(mockGenerationService.getAssembledMessage).toHaveBeenCalledWith(
+        lease,
+      );
+      /*
+       * A stale lease resolves no registry state, so the branch falls back
+       * to whatever it holds locally rather than throwing or reading a
+       * replacement's content — proven by finalize completing at all with a
+       * defined body, not by a specific fallback value.
+       */
+      const finalSave = saveConversationSpy.mock.calls.at(-1)?.[2].body as {
+        messages: { content?: string }[];
+      };
+      expect(finalSave.messages.at(-1)?.content).toBeDefined();
+    });
+
+    /*
+     * A terminal write dispatched before a cancellation arrives cannot be
+     * made harmless by any identity check performed before the `await` — the
+     * write is already issued. This constructs a deferred `saveConversation`
+     * so the assertion can only pass if the actually-persisted body is the
+     * one the dispatched write carried, not a call count that a pre-save
+     * check could satisfy by accident.
+     */
+    it('does not let a cancellation arriving after the terminal write was dispatched change what gets persisted', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      let resolveSave: (() => void) | undefined;
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockImplementation((...args: unknown[]) => {
+          const body = (args[2] as { body: unknown }).body as {
+            messages: { role: string; content?: string }[];
+          };
+          /*
+           * Only gate the terminal write — it carries the completed content —
+           * not the start-state write, whose assistant placeholder is empty.
+           */
+          if (body.messages.some((m) => m.role === 'assistant' && m.content)) {
+            return new Promise((resolve) => {
+              resolveSave = () => resolve({ data: {} } as never);
+            });
+          }
+          return Promise.resolve({ data: {} } as never);
+        });
+      const lease = makeLease();
+      vi.mocked(mockGenerationService.register).mockReturnValue(lease);
+
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      const streamPromise = runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      await vi.waitFor(() =>
+        expect(mockGenerationService.beginFinalizing).toHaveBeenCalled(),
+      );
+      /* Cancellation arrives only after the write was already dispatched. */
+      vi.mocked(mockGenerationService.getCancellation).mockReturnValue({
+        requested: true,
+        reason: GenerationCancelReason.UserStop,
+      });
+      lease.abortController.abort();
+      resolveSave?.();
+      await streamPromise;
+
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const finalSave = saveConversationSpy.mock.calls.at(-1)?.[2].body as {
+        messages: { content?: string; wasStoppedByUser?: boolean }[];
+      };
+      /* The completed content, not a stopped/partial one — one write, one outcome. */
+      expect(finalSave.messages.at(-1)?.content).toContain('Hello');
+      expect(mockGenerationService.complete).toHaveBeenCalledOnce();
+      expect(mockGenerationService.error).not.toHaveBeenCalled();
+    });
+
+    it('releases ownership without a second write when the terminal write rejects ambiguously', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValueOnce({ data: {} } as never) // start-state write
+        .mockRejectedValueOnce(new Error('ambiguous failure')); // terminal write
+
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      /* The worker is demonstrably finished, so ownership still releases. */
+      expect(mockGenerationService.complete).toHaveBeenCalledOnce();
+      expect(mockGenerationService.error).not.toHaveBeenCalled();
+    });
+  });
+
+  /*
+   * Cross-layer coverage against the real `ConversationGenerationService`
+   * rather than the mock — the only way to show that a stale cancellation
+   * mid-write, and a never-settling terminal write, behave per
+   * `generation-registry` end-to-end through `streamCompletion`.
+   */
+  describe('streamCompletion — cross-layer races against the real registry', () => {
+    let realGenerationService: ConversationGenerationService;
+
+    beforeEach(() => {
+      realGenerationService = new ConversationGenerationService({
+        get: (key: string) =>
+          key === 'GENERATION_FINALIZE_TIMEOUT_MS' ? 5000 : undefined,
+      } as never);
+      service = new ConversationStreamingService(
+        mockDialClient,
+        realGenerationService,
+        persistenceService,
+        mockDeploymentsService,
+        new ResponsesAdapter(mockDialClient),
+        mockFeatureFlagsService,
+      );
+    });
+
+    afterEach(() => {
+      realGenerationService.onModuleDestroy();
+    });
+
+    it('a stale-cancelled worker still performs its own terminal save and releases the entry, never orphaning it', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      /* The key is released — a later request for the same owner+path is admitted. */
+      expect(() =>
+        realGenerationService.register(
+          'test-session-id',
+          'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+          'another-gen-id',
+        ),
+      ).not.toThrow();
+    });
+
+    it('releases subscribers while retaining ownership when the terminal write never settles', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValueOnce({ data: {} } as never) // start-state write
+        .mockImplementationOnce(() => new Promise(() => undefined)); // terminal write never settles
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      vi.useFakeTimers();
+      try {
+        /*
+         * Deliberately not awaited: the terminal write never settles, so
+         * `streamCompletion`'s own generator never returns either — this
+         * test asserts the registry's bounded release, not that the bound
+         * makes the generator finish.
+         */
+        void runStreamCompletion(
+          'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+          'test-token',
+          'test-bucket',
+          'test-gen-id',
+          CompletionMode.Append,
+          'Hello',
+          undefined,
+          'gpt-4o',
+          undefined,
+          'test-session-id',
+          res as never,
+        );
+        await vi.waitFor(() => expect(res.write).toHaveBeenCalled(), {
+          timeout: 1000,
+        });
+        await vi.advanceTimersByTimeAsync(5000);
+      } finally {
+        vi.useRealTimers();
+      }
+
+      /*
+       * Ownership is retained (not this test's claim that the bound
+       * cancelled the remote write — it never resolves): a later request for
+       * the same owner+path is still rejected.
+       */
+      expect(() =>
+        realGenerationService.register(
+          'test-session-id',
+          'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+          'another-gen-id',
+        ),
+      ).toThrow();
     });
   });
 });

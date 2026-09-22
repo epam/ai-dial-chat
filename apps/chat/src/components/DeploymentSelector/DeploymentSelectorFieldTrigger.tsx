@@ -44,6 +44,8 @@ interface Props {
    * field resolves its own label from them.
    */
   extraOptions?: DeploymentSelectorExtraOption[];
+  /** Additional classes merged over the selector panel root's defaults. */
+  panelClassName?: string;
 }
 
 /**
@@ -63,6 +65,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
   isInvalid = false,
   className,
   extraOptions,
+  panelClassName,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -80,6 +83,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
         setIsOpen(false);
       },
       extraOptions,
+      panelClassName,
     );
 
   const handleOpenChange = useCallback(

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
 import {
   useAppConfig as useAppConfigMock,
@@ -86,6 +86,7 @@ interface FormProps {
     prompt: string;
     description?: string;
     repeat: string;
+    time: string;
     minute?: string;
   };
   errors: Record<string, string | undefined>;
@@ -107,9 +108,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     Monthly: 'monthly',
   },
   DESCRIPTION_MAX_LENGTH: 500,
+  TIME_OF_DAY_PATTERN: /^([01]\d|2[0-3]):([0-5]\d)$/,
   ScheduledTaskCreateForm: ({
     labels,
     values,
+    errors,
     modelSelector,
     modelLabelId,
     onFieldChange,
@@ -129,8 +132,14 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.displayName}
         onChange={(e) => onFieldChange('displayName', e.target.value)}
       />
+      <input
+        aria-label="time"
+        value={values.time}
+        onChange={(e) => onFieldChange('time', e.target.value)}
+      />
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
+      {errors.displayName && <span>{errors.displayName}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button onClick={onSubmit} disabled={isSubmitting}>
         {labels.createButtonLabel}
@@ -176,6 +185,11 @@ describe('ScheduledTaskEditPage', () => {
     useAppConfigMock.mockReturnValue({ status: 'ready' });
     getApiErrorStatusMock.mockReturnValue(undefined);
     getApiErrorDetailsMock.mockResolvedValue({ traceId: undefined });
+  });
+  /* Always restores real timers, even when a fake-timer test times out
+   and skips its own cleanup. */
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders the NotFound page when scheduledTasksEnabled is false, without calling getScheduledTask', () => {
@@ -316,6 +330,39 @@ describe('ScheduledTaskEditPage', () => {
 
     expect(screen.getByText('scheduled task detail page')).toBeTruthy();
     expect(updateScheduledTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('sends the edited time in the update body as UTC cron fields', async () => {
+    /*
+     * Both the mapper's local→UTC conversion and the expectation below read
+     * the wall clock; pin one instant so a minute or DST boundary between
+     * them cannot flip the assertion. `shouldAdvanceTime` keeps timers
+     * firing so userEvent and async queries still work under the fake clock.
+     */
+    vi.useFakeTimers({
+      now: new Date('2025-06-15T00:00:00Z'),
+      shouldAdvanceTime: true,
+    });
+
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    const timeInput = screen.getByLabelText('time');
+    await userEvent.clear(timeInput);
+    await userEvent.type(timeInput, '08:45');
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+    const fields = updateScheduledTaskMock.mock.calls[0][1].trigger.cron.fields;
+    /* The mapper converts the local 08:45 to UTC with a reference Date —
+       compute the expectation the same way so the test holds in any
+       runner timezone. */
+    const reference = new Date();
+    reference.setHours(8, 45, 0, 0);
+    expect(fields.hour).toBe(String(reference.getUTCHours()));
+    expect(fields.minute).toBe(String(reference.getUTCMinutes()));
   });
 
   it('navigates to the detail route without a network call when Cancel is activated', async () => {

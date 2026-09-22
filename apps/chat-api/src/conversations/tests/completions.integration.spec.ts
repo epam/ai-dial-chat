@@ -21,6 +21,7 @@ import { SSE_RELEASE_TIMEOUT_MS } from '../../common/utils/sse';
 import {
   ConversationGenerationService,
   GenerationStatus,
+  type GenerationLease,
 } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
@@ -738,6 +739,7 @@ describe('generation ownership isolation (real registry)', () => {
   let app: INestApplication;
   let generationService: ConversationGenerationService;
   let principal: { user: SessionUser; authSource: AuthSource };
+  let currentLease: GenerationLease | undefined;
 
   const headerUser = (
     providerId: string,
@@ -788,7 +790,7 @@ describe('generation ownership isolation (real registry)', () => {
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
-        generationService.register(
+        currentLease = generationService.register(
           args[9] as string,
           args[0] as string,
           args[3] as string,
@@ -909,7 +911,7 @@ describe('generation ownership isolation (real registry)', () => {
 
     const attachPromise = attachToGeneration();
     setTimeout(() => {
-      generationService.complete('h:provider-1:subject-1', PATH, GEN_ID);
+      generationService.complete(currentLease!);
     }, 20);
     const attachRes = await attachPromise.expect(200);
     expect(attachRes.text).toContain('"type":"snapshot"');
