@@ -76,6 +76,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       typography,
       newChatButton: newChatButtonColors,
       searchWrapperClassName,
+      headerClassName,
+      headerActionsClassName,
     } = panelStyles ?? {};
 
     const {
@@ -413,7 +415,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           bodyClassName: 'flex flex-col overflow-hidden p-0 gap-3',
           cssVars,
           titleClassName: typography?.fontClassName,
-          headerClassName: 'h-[64px]',
+          headerClassName: mergeClasses('h-[64px]', headerClassName),
+          headerActionsClassName,
           className: mergeClasses(
             isOpen ? 'w-[324px] mobile:w-full' : 'w-0',
             className,

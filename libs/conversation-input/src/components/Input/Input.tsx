@@ -79,6 +79,7 @@ export const Input: FC<InputProps> = ({
   discardRecordingLabel,
   colors,
   typography,
+  attachmentTray,
   className,
   pendingDropFiles = [],
   onDropFilesConsumed,
@@ -95,6 +96,7 @@ export const Input: FC<InputProps> = ({
   hideAttachFile = false,
   hideActionBar = false,
   actionRowLayout = ActionRowLayout.Stacked,
+  isInlineActionRowAllowedBelowDesktop = false,
   renderFooterActions,
   isInputDisabled = false,
   isModelSelectorDisabled = false,
@@ -732,11 +734,14 @@ export const Input: FC<InputProps> = ({
   );
 
   /*
-   * One line does not fit a phone, so the inline layout is desktop-only and a
-   * host does not have to branch on viewport itself.
+   * One line does not fit a phone, so the inline layout is desktop-only by
+   * default and a host does not have to branch on viewport itself. An embed
+   * whose composer is already wide below 1280px opts the narrower widths in
+   * rather than reimplementing the layout.
    */
   const isInlineActionRow =
-    actionRowLayout === ActionRowLayout.Inline && !isMobile;
+    actionRowLayout === ActionRowLayout.Inline &&
+    (!isMobile || isInlineActionRowAllowedBelowDesktop);
 
   const addClusterNode = attachButtonNode && (
     <div className={mergeClasses('flex', CONVERSATION_INPUT_CLASS.addCluster)}>
@@ -789,6 +794,7 @@ export const Input: FC<InputProps> = ({
           onRetry={handleRetry}
           onExpand={handleExpand}
           labels={{ removeLabel, retryLabel, uploadingLabel }}
+          styles={attachmentTray}
           onAttachmentClick={
             onAttachmentClick != null
               ? (id) => {
