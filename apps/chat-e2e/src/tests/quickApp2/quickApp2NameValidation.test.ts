@@ -7,7 +7,7 @@ import {
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { EntityEditSteps } from '@/src/ui/webElements';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, applicationNamePrefix } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
@@ -268,7 +268,7 @@ dialTest(
       'Fill in app name with allowed char and proceed with app creation',
       async () => {
         await entityEditorGeneralForm.fillInEntityFields({
-          name: ExpectedConstants.allowedSpecialChars,
+          name: applicationNamePrefix + ExpectedConstants.allowedSpecialChars,
         });
         await entityEditorGeneralForm.goNext();
         await entityEditorPage.waitForPageLoadedForEdit(
