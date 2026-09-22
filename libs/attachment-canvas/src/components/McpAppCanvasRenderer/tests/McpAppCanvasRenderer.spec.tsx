@@ -25,8 +25,14 @@ interface BridgeDouble {
   close: () => Promise<void>;
 }
 
+interface AppFrameDouble {
+  onError?: (error: Error) => void;
+}
+
 const bridges: BridgeDouble[] = [];
 const closeSpy = vi.fn(() => Promise.resolve());
+/* Captures each render's props so a test can invoke `onError` the way a real sandboxed app failure would. */
+const appFrames: AppFrameDouble[] = [];
 
 vi.mock('@mcp-ui/client', () => ({
   AppBridge: class {
@@ -45,7 +51,10 @@ vi.mock('@mcp-ui/client', () => ({
     }
   },
   /* Stands in for the real sandbox iframe `AppFrame` mounts. */
-  AppFrame: () => <iframe title="mcp-app" />,
+  AppFrame: (props: AppFrameDouble) => {
+    appFrames.push(props);
+    return <iframe title="mcp-app" />;
+  },
 }));
 
 vi.mock('@modelcontextprotocol/ext-apps/app-bridge', () => ({
@@ -67,6 +76,7 @@ const mountApp = async (content: McpAppCanvasContent = baseContent) => {
 
 beforeEach(() => {
   bridges.length = 0;
+  appFrames.length = 0;
   closeSpy.mockClear();
   /* `window` is shared across tests, so its spies must not accumulate calls. */
   vi.restoreAllMocks();
@@ -249,5 +259,43 @@ describe('McpAppCanvasRenderer — bridge lifecycle', () => {
     unmount();
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('McpAppCanvasRenderer — AppFrame onError', () => {
+  it('unmounts AppFrame and shows the error message under errorLabel', async () => {
+    render(
+      <McpAppCanvasRenderer
+        content={baseContent}
+        errorLabel="Failed to load MCP App"
+      />,
+    );
+    await waitFor(() => expect(appFrames).toHaveLength(1));
+
+    appFrames[0].onError?.(
+      new Error('Timed out waiting for sandbox proxy iframe to be ready'),
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('Failed to load MCP App');
+    expect(alert.textContent).toContain(
+      'Timed out waiting for sandbox proxy iframe to be ready',
+    );
+    expect(screen.queryByTitle('mcp-app')).toBeNull();
+  });
+
+  it('remounts cleanly (new AppBridge, no error overlay) when given a new key, as a reload does', async () => {
+    const { rerender } = render(
+      <McpAppCanvasRenderer key="attempt-1" content={baseContent} />,
+    );
+    await waitFor(() => expect(appFrames).toHaveLength(1));
+    appFrames[0].onError?.(new Error('boom'));
+    expect(await screen.findByRole('alert')).toBeTruthy();
+
+    rerender(<McpAppCanvasRenderer key="attempt-2" content={baseContent} />);
+
+    await waitFor(() => expect(bridges).toHaveLength(2));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByTitle('mcp-app')).toBeTruthy();
   });
 });

@@ -28,6 +28,11 @@
   color: var(--mcp-status-text, var(--text-primary, #161b2d));
 }
 
+/* The technical detail line (e.g. the underlying `Error#message`) shown under `errorLabel` — muted, never the error-icon red. */
+.statusDetail {
+  color: var(--mcp-status-detail-text, var(--text-secondary, #57647a));
+}
+
 .errorIcon {
   color: var(--mcp-error-icon, var(--text-error, #ae2f2f));
 }

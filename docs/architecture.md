@@ -343,9 +343,9 @@ NestJS 11 server. Entry: `apps/chat-api/src/main.ts`.
 
 Configured at startup:
 
-- `helmet` — security headers (CSP, HSTS, etc.). Generic responses do not allow
-  WebAssembly. App-owned frontend middleware gives chat HTML a fresh style nonce
-  and its required WebAssembly permission, while the PDF worker receives a
+- `helmet` — security headers (CSP, HSTS, `Referrer-Policy: strict-origin-when-cross-origin`,
+  etc.). Generic responses do not allow WebAssembly. App-owned frontend middleware gives chat HTML
+  a fresh style nonce and its required WebAssembly permission, while the PDF worker receives a
   separate worker policy. `CSP_MODE` controls report-only rollout versus strict
   enforcement. Report-only mode accepts legacy HTML without the nonce marker with
   a startup warning; enforcement requires a nonce-aware build. See

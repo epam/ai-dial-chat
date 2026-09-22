@@ -39,6 +39,8 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   onAppInfo,
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
+  /* `AppFrame`'s `onError` message, shown as a detail line under `errorLabel` — trust boundary discussed in design.md D23. */
+  const [errorDetail, setErrorDetail] = useState<string>();
   const { html, sandboxUrl, toolInput, toolResult, hostContext } = content;
   /*
    * `AppFrame` re-creates its sandbox iframe whenever `sandbox.url` changes
@@ -104,7 +106,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
         isFullscreen && styles.fullscreenFrame,
       )}
     >
-      {appBridge != null && (
+      {appBridge != null && !isErrored && (
         <AppFrame
           html={html}
           sandbox={sandbox}
@@ -116,7 +118,10 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
             setStatus(RendererStatus.Ready);
             if (appInfo.appVersion != null) onAppInfo?.(appInfo.appVersion);
           }}
-          onError={() => setStatus(RendererStatus.Error)}
+          onError={(error) => {
+            setErrorDetail(error.message);
+            setStatus(RendererStatus.Error);
+          }}
         />
       )}
       {!isErrored && status === RendererStatus.Loading && (
@@ -130,7 +135,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
         </div>
       )}
       {isErrored && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
           <IconAlertTriangle
             size={60}
             stroke={DIAL_KIT_ICON_STROKE}
@@ -142,6 +147,12 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
             className={mergeClasses('text-center', styles.statusLabel)}
           >
             {errorLabel}
+            {errorDetail && (
+              <>
+                <br />
+                <span className={styles.statusDetail}>{errorDetail}</span>
+              </>
+            )}
           </p>
         </div>
       )}
