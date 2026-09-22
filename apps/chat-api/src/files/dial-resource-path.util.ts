@@ -1,3 +1,5 @@
+import { encodePlainDialResourcePath } from '../common/utils/encode-dial-path';
+
 /** Builds the `files/{bucket}/{path}` DIAL resource URL from a relative path. */
 export const buildDialFileUrl = (bucket: string, path: string): string =>
   `files/${bucket}/${path}`;
@@ -12,10 +14,7 @@ export const buildDialFileUrl = (bucket: string, path: string): string =>
  * would reach DIAL Core as `a b.pdf`, a resource that does not exist).
  */
 export const encodeDialFilePath = (path: string): string =>
-  path
-    .split('/')
-    .map((segment) => encodeURIComponent(segment))
-    .join('/');
+  encodePlainDialResourcePath(path);
 
 /** Same as {@link buildDialFileUrl}, but percent-encodes the path first. */
 export const buildDialFileResourceUrl = (
