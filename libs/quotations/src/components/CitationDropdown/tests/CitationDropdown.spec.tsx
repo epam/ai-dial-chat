@@ -51,6 +51,7 @@ const markerLabels = {
 const Wrapper = (props: {
   group: AnnotationGroup;
   onPreview?: (annotation: Annotation) => void;
+  isPreviewable?: (annotation: Annotation) => boolean;
   onOpenInBrowser: (annotation: Annotation) => void;
 }) => {
   const citationCard = useCitationCard();
@@ -92,6 +93,63 @@ const TwoOccurrenceWrapper = (props: {
 };
 
 describe('CitationDropdown', () => {
+  it('updates preview availability and the secondary action for the selected annotation', async () => {
+    const group = makeGroup();
+    const webAnnotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: 'text/html', url: 'https://example.com/page' },
+        },
+      },
+    };
+    const pdfAnnotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'https://example.com/report.pdf',
+          },
+        },
+      },
+    };
+    group.annotations = [webAnnotation, pdfAnnotation];
+    group.primaryAnnotation = webAnnotation;
+    const onPreview = vi.fn();
+    const onOpenInBrowser = vi.fn();
+    render(
+      <Wrapper
+        group={group}
+        onPreview={onPreview}
+        isPreviewable={(annotation) => annotation === pdfAnnotation}
+        onOpenInBrowser={onOpenInBrowser}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button'));
+    expect(screen.queryByRole('button', { name: 'Preview' })).toBeNull();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Open in browser' }),
+    );
+    expect(onOpenInBrowser).toHaveBeenLastCalledWith(webAnnotation);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+    expect(onOpenInBrowser).toHaveBeenLastCalledWith(pdfAnnotation);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Previous' }));
+    expect(screen.queryByRole('button', { name: 'Preview' })).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Open in browser' }),
+    ).toBeTruthy();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(onPreview).toHaveBeenCalledExactlyOnceWith(pdfAnnotation);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('opens the popup with a Preview button when onPreview is provided', async () => {
     render(
       <Wrapper

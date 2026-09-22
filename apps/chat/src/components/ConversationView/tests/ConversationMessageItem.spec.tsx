@@ -227,6 +227,113 @@ describe('ConversationMessageItem — reference-only attachments', () => {
 });
 
 describe('ConversationMessageItem — inline citations', () => {
+  it.each([
+    ['text/html', 'https://example.com/page.html'],
+    ['text/html', 'files/bucket/page.html'],
+    ['application/pdf', 'https://example.com/report.pdf'],
+    [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'https://example.com/report.docx',
+    ],
+  ])('keeps Preview for a supported citation: %s %s', async (type, url) => {
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'Source<cit data-id="123"></cit>',
+      timestamp: '2026-09-21T13:47:50Z',
+      custom_content: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', tag: 'cit', id: '123' } },
+            body: {
+              source: { type: 'attachment', attachment: { type, url } },
+            },
+          },
+        ],
+      },
+    };
+    const onAttachmentClick = vi.fn();
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    if (type === 'text/html') {
+      expect(onAttachmentClick).toHaveBeenCalledWith(
+        expect.objectContaining({ url, contentType: type }),
+      );
+    } else {
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({ url }),
+        expect.any(String),
+      );
+    }
+  });
+
+  it.each([false, true])(
+    'offers only Open in browser for an external web citation (mobile: %s)',
+    async (isMobile) => {
+      isMobileMock = isMobile;
+      const url = 'https://data.imf.org/en/datasets/IMF.RES:WEO';
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content:
+          'Inflation in 2026 increased, as reported by IMF:WEO dataset <cit data-id="123"></cit>',
+        timestamp: '2026-09-21T13:47:50Z',
+        custom_content: {
+          annotations: [
+            {
+              index: 0,
+              target: { selector: { type: 'html_tag', tag: 'cit', id: '123' } },
+              body: {
+                title: 'World Economic Outlook',
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'text/html',
+                    url,
+                    title: 'World Economic Outlook dataset',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+      const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+      try {
+        render(
+          <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+        );
+        await userEvent.click(
+          screen.getByRole('button', {
+            name: CitationsI18nKeys.MarkerAriaLabel,
+          }),
+        );
+        expect(
+          screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
+        ).toBeNull();
+        await userEvent.click(
+          screen.getByRole('button', {
+            name: CitationsI18nKeys.PopupOpenInBrowser,
+          }),
+        );
+        expect(open).toHaveBeenCalledWith(url, '_blank', 'noopener,noreferrer');
+        expect(mockOpenCanvas).not.toHaveBeenCalled();
+      } finally {
+        open.mockRestore();
+      }
+    },
+  );
+
   it.each([false, true])(
     'opens the selected cit document and page after reload (raw format: %s)',
     async (rawFormat) => {

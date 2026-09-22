@@ -20,6 +20,8 @@ import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 export interface UseCitationMarkdownComponentsCallbacks {
   /** Called when a citation marker's preview action is invoked, with the clicked annotation and its group. */
   onPreview(annotation: Annotation, group: AnnotationGroup): void;
+  /** Whether the host can preview an annotation. Defaults to allowing preview. */
+  isPreviewable?(annotation: Annotation): boolean;
   /** Called when a citation marker's open-in-browser action is invoked. */
   onOpenInBrowser(annotation: Annotation): void;
   /** Builds the translated label bundles used by a given citation group's card and marker. */
@@ -87,7 +89,7 @@ export const useCitationMarkdownComponents = (
   isStreaming = false,
   isCompactTypography = false,
 ): { processedContent: string; markdownComponents: Components } => {
-  const { onPreview, onOpenInBrowser, buildLabels } = callbacks;
+  const { onPreview, isPreviewable, onOpenInBrowser, buildLabels } = callbacks;
 
   const processedContent = useMemo(() => {
     if (isStreaming) return stripCitTagsWhileStreaming(content);
@@ -113,6 +115,7 @@ export const useCitationMarkdownComponents = (
           key={`citation-${group.groupKey}`}
           group={group}
           onPreview={(annotation) => onPreview(annotation, group)}
+          isPreviewable={isPreviewable}
           onOpenInBrowser={onOpenInBrowser}
           cardLabels={cardLabels}
           markerLabels={markerLabels}
@@ -173,6 +176,7 @@ export const useCitationMarkdownComponents = (
   }, [
     groups,
     onPreview,
+    isPreviewable,
     onOpenInBrowser,
     buildLabels,
     isCompactTypography,

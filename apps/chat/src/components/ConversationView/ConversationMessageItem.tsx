@@ -11,6 +11,8 @@ import {
   annotationToOoxmlCanvasContent,
   annotationToPdfCanvasContent,
   attachmentDtosToDisplayAttachments,
+  isDialFileId,
+  isExternalSourcePreviewable,
   messageHasStages,
   openAnnotationAttachment,
   referenceAttachmentToPdfCanvasContent,
@@ -124,6 +126,15 @@ const MESSAGE_TEXT_STYLES = {
    too much vertical space on a phone. Desktop keeps the wider scale. */
 const COMPACT_MESSAGE_TEXT_STYLES = {
   typography: { fontClassName: 'dial-small-paragraph-text' },
+};
+
+const isCitationPreviewable = (annotation: Annotation): boolean => {
+  const attachment = annotation.body?.source?.attachment;
+  return (
+    attachment != null &&
+    (isDialFileId(attachment.url) ||
+      isExternalSourcePreviewable(attachment.type, attachment.url))
+  );
 };
 
 interface Props {
@@ -427,6 +438,7 @@ const ConversationMessageItem: FC<Props> = ({
   const citationCallbacks = useMemo(
     () => ({
       onPreview: handleCitationPreview,
+      isPreviewable: isCitationPreviewable,
       onOpenInBrowser: handleCitationOpenInBrowser,
       buildLabels: buildCitationLabels,
     }),
