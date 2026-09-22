@@ -43,8 +43,9 @@ root/
 ├── apps/
 │   ├── chat/                  # React SPA — frontend chat application (port 4207)
 │   ├── chat-api/              # NestJS — backend API server (port 5000)
-│   └── chat-overlay-sandbox/  # Static host page for exercising the overlay (port 4300)
-├── libs/                      # 22 @epam/* libraries — see Libraries below
+│   ├── chat-overlay-sandbox/  # Static host page for exercising the overlay (port 4300)
+│   └── mcp-app-sandbox/       # Separate-origin MCP Apps sandbox proxy (port 3100)
+├── libs/                      # 28 @epam/* libraries — see Libraries below
 ├── docs/                      # Architecture, requirements, auth, theming, overlay migration
 ├── openspec/
 │   ├── config.yaml            # Tech stack, commands, architecture rules for AI agents
@@ -54,6 +55,11 @@ root/
 ├── nx.json
 └── package.json
 ```
+
+The MCP Apps sandbox runs on an origin distinct from the chat host and has its
+own embedding allowlist. The BFF publishes its URL and host identity through
+client config; see [MCP Apps configuration](../apps/chat-api/README.md#mcp-apps-configuration)
+and the [sandbox deployment guide](../apps/mcp-app-sandbox/README.md).
 
 ### Typechecking and verification
 
@@ -346,7 +352,9 @@ Configured at startup:
   [CSP configuration](../apps/chat-api/README.md#content-security-policy).
 - `ValidationPipe` — whitelist + `forbidNonWhitelisted` + `transform`
 - URI versioning — business endpoints at `/api/v{N}/{resource}`
-- CORS with `credentials: true`
+- CORS with `credentials: true`, except the default-prefix MCP App resource and
+  tool-call routes, which receive no CORS permission headers. See
+  [CORS configuration](../apps/chat-api/README.md#cors-configuration).
 - Swagger at `/api/docs` (non-production)
 - Static assets from `apps/chat/dist` and nonce-bearing React SPA HTML for
   non-`/api/*` routes (`app/static-assets.ts`). HTML templates are cached in memory;
@@ -469,6 +477,12 @@ No endpoint in this domain carries a per-route rate limit — repo-wide rate lim
 | `DELETE` | `/api/v1/conversations?path=`              | Delete conversation                                                                     |
 
 `POST /api/v1/conversations/completions` routes to one of two upstream generation APIs per request — `ConversationStreamingService.streamCompletion` resolves `features.responsesApi` off `DeploymentsService.getDeploymentDetails` (under the caller's own token, before opening the upstream stream) and dispatches to an inline Chat Completions relay or `responses.adapter.ts` (`apps/chat-api/src/conversations/generation/`) accordingly. Both normalize their upstream SSE events into the same `chat.completion.chunk` shape, so `apply-chunk.server.ts` and the persistence lifecycle below are unchanged regardless of which API served the request. Deployments that don't declare `responses_api: true` keep using Chat Completions exactly as before.
+
+For Chat Completions requests, the streaming service maps each
+`custom_content.skills[].url` through `encodeDialResourcePath` before sending
+the upstream payload. Encoding preserves path separators while escaping path
+segments; this mapping does not mutate the stored conversation. The Responses
+adapter receives its own request inputs and is a separate mapping boundary.
 
 **The backend, not the frontend, owns conversation persistence** across a completion's full lifecycle. `ConversationGenerationService` keeps an in-memory registry keyed by **principal**+conversation path — an opaque owner key that `resolvePrincipalKey` (`apps/chat-api/src/auth/session/principal-key.ts`) derives from server-verified identity only: the session `sid` under cookie auth, the verified `providerId`+`sub` pair under header (bearer) auth, in disjoint `c:`/`h:` namespaces. All three completion endpoints work under either authentication mode: `streamCompletion` saves the start state (user message + empty assistant placeholder) before opening the upstream stream, assembles the assistant message chunk-by-chunk as it relays the response, and attempts to save the final/partial state on completion, stop, or error regardless of whether the originating HTTP request is still connected. Save failures are logged; stream completion does not prove durable persistence. `ConversationController.streamCompletion` tracks client disconnection for response cleanup while continuing to consume the generation, so closing the tab does not stop upstream work. `POST .../completions/stop` aborts an active generation.
 
