@@ -3879,7 +3879,7 @@ offline status only for `DIAL_NATIVE` services. A generation guard ignores obsol
 responses and refresh callbacks after an application switch or unmount.
 
 ```tsx
-import { useApplicationCredentials } from '@epam/ai-dial-chat-hooks';
+import { useApplicationCredentials } from '@epam/ai-dial-chat-hooks/catalog';
 
 const { services, isLoading, hasError, isOfflineConnected, refresh } =
   useApplicationCredentials({
