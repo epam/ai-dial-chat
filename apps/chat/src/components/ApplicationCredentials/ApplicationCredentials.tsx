@@ -89,7 +89,9 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
         [ExternalServiceLoginOutcomeType.OfflineUnavailable]:
           ToolsetSigninI18nKeys.OfflineUnavailable,
       };
-      throw new Error(t(keys[outcome.type]));
+      throw new Error(
+        t(keys[outcome.type] ?? ToolsetSigninI18nKeys.ErrorLoginFailed),
+      );
     },
     [appId, services, login, refresh, t],
   );

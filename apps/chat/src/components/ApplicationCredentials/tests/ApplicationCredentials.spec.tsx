@@ -171,6 +171,21 @@ describe('ApplicationCredentials', () => {
     );
   });
 
+  it('shows the localized login error for an unknown outcome without refreshing credentials', async () => {
+    login.mockResolvedValue({ type: 'unknown-outcome' });
+    const user = userEvent.setup();
+    render(<ApplicationCredentials appId="agent" />);
+    const row = within(await screen.findByRole('group', { name: 'Git' }));
+
+    await user.click(row.getByRole('button', { name: ButtonsI18nKeys.LogIn }));
+
+    expect(await row.findByRole('alert')).toHaveProperty(
+      'textContent',
+      ToolsetSigninI18nKeys.ErrorLoginFailed,
+    );
+    expect(listExternalServices).toHaveBeenCalledTimes(1);
+  });
+
   it('requires confirmation before revoking only personal credentials', async () => {
     vi.mocked(listExternalServices).mockResolvedValue([
       {
