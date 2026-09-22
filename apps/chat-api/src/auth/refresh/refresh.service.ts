@@ -1,4 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import {
   AUTH_OUTCOME_ATTRIBUTE,
   AUTH_PROVIDER_ATTRIBUTE,
@@ -9,17 +11,34 @@ import {
   resolveAuthProvider,
 } from '../auth-metrics';
 import { ProviderRegistryService } from '../providers/provider-registry.service';
+import {
+  getSessionCookieMaxAge,
+  resolveRefreshTokenExpiry,
+} from '../session/session-expiration';
 import type { SessionPayload } from '../session/session.types';
+
+export interface SessionRefreshResult {
+  payload: SessionPayload;
+  /** False for an absorbed race: callers must not overwrite the winning cookie. */
+  refreshed: boolean;
+}
 
 @Injectable()
 export class RefreshService {
   private readonly logger = new Logger(RefreshService.name);
   // Per-pod mutex: sid → in-flight refresh promise (prevents concurrent RT exchange)
-  private readonly inFlight = new Map<string, Promise<SessionPayload>>();
+  private readonly inFlight = new Map<string, Promise<SessionRefreshResult>>();
 
-  constructor(private readonly registry: ProviderRegistryService) {}
+  constructor(
+    private readonly registry: ProviderRegistryService,
+    private readonly config: ConfigService<EnvironmentVariables, true>,
+  ) {}
 
-  refresh(payload: SessionPayload): Promise<SessionPayload> {
+  async refresh(payload: SessionPayload): Promise<SessionRefreshResult> {
+    getSessionCookieMaxAge(payload);
+    if (!payload.rt) {
+      throw new UnauthorizedException('No refresh token');
+    }
     const existing = this.inFlight.get(payload.sid);
     if (existing) {
       /*
@@ -42,7 +61,9 @@ export class RefreshService {
     return promise;
   }
 
-  private async doRefresh(payload: SessionPayload): Promise<SessionPayload> {
+  private async doRefresh(
+    payload: SessionPayload,
+  ): Promise<SessionRefreshResult> {
     const startedAt = process.hrtime.bigint();
     /*
      * One terminal observation per real exchange. `record` is called on every exit path,
@@ -64,6 +85,7 @@ export class RefreshService {
       throw err;
     }
 
+    const exchangeStartedAt = Math.floor(Date.now() / 1000);
     let tokenSet: Awaited<ReturnType<typeof client.refresh>>;
     try {
       tokenSet = await client.refresh(payload.rt);
@@ -81,12 +103,18 @@ export class RefreshService {
          * a false logout.
          */
         const now = Math.floor(Date.now() / 1000);
+        try {
+          getSessionCookieMaxAge(payload, now);
+        } catch (expired) {
+          record(AuthRefreshOutcome.InvalidGrant);
+          throw expired;
+        }
         if (payload.at_exp > now) {
           this.logger.log(
             `Absorbed a lost refresh-token race for sid ${payload.sid}; access token is still valid`,
           );
           record(AuthRefreshOutcome.RaceAbsorbed);
-          return payload;
+          return { payload, refreshed: false };
         }
         record(AuthRefreshOutcome.InvalidGrant);
         throw new UnauthorizedException('Refresh token expired or revoked');
@@ -102,14 +130,30 @@ export class RefreshService {
     const now = Math.floor(Date.now() / 1000);
     const newRt = tokenSet.refresh_token;
 
-    record(AuthRefreshOutcome.Refreshed);
-
-    return {
+    const refreshed: SessionPayload = {
       ...payload,
       at: tokenSet.access_token ?? payload.at,
       at_exp: tokenSet.expires_at ?? now + 3600,
       rt: newRt ?? payload.rt,
+      rt_exp: resolveRefreshTokenExpiry(
+        payload.providerId,
+        tokenSet,
+        exchangeStartedAt,
+        payload,
+      ),
       iat: now,
+    };
+    record(AuthRefreshOutcome.Refreshed);
+    /* Validate the existing deadline before renewal; an expired session cannot revive. */
+    getSessionCookieMaxAge(refreshed, now);
+    return {
+      payload: {
+        ...refreshed,
+        session_exp:
+          now +
+          this.config.get('AUTH_SESSION_MAX_AGE_SECONDS', { infer: true }),
+      },
+      refreshed: true,
     };
   }
 }

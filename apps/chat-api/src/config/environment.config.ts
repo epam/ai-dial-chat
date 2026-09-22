@@ -127,6 +127,12 @@ export class EnvironmentVariables {
   })
   AUTH_SESSION_PREV_SECRET?: string;
 
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  @Min(1)
+  @Max(2147483647)
+  AUTH_SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+
   @IsOptional()
   @IsString()
   AUTH_SESSION_COOKIE_NAME?: string = '__Host-chat.sess';

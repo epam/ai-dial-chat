@@ -68,7 +68,7 @@ export enum AuthRefreshOutcome {
   Refreshed = 'refreshed',
   /** `invalid_grant` arrived while this payload's access token was still valid — a lost rotation race absorbed without forcing a logout. This is neither a refresh success nor a session loss. */
   RaceAbsorbed = 'race_absorbed',
-  /** `invalid_grant` with an already-expired access token: the session cannot be recovered. */
+  /** `invalid_grant` after access-token or session expiry: the session cannot be recovered. */
   InvalidGrant = 'invalid_grant',
   /** Any other failure of the exchange, including an unresolvable provider. */
   UpstreamError = 'upstream_error',

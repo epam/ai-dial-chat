@@ -63,6 +63,10 @@ import {
   AuthProviderId,
   type ProviderConfig,
 } from './providers/provider.types';
+import {
+  getSessionCookieMaxAge,
+  resolveRefreshTokenExpiry,
+} from './session/session-expiration';
 import { SessionService } from './session/session.service';
 import {
   getJobTitleClaim,
@@ -175,14 +179,14 @@ export class AuthController {
       callbackUrl,
     };
     const txToken = await this.session.encrypt({
-      v: 1,
+      v: 2,
       sid: randomUUID(),
       providerId: params.providerId,
       sub: '',
       at: JSON.stringify(txPayload),
       rt: '',
       at_exp: Math.floor(Date.now() / 1000) + 600,
-      rt_exp: Math.floor(Date.now() / 1000) + 600,
+      session_exp: Math.floor(Date.now() / 1000) + 600,
       iat: Math.floor(Date.now() / 1000),
       csrf: randomUUID(),
       claims: {},
@@ -288,7 +292,10 @@ export class AuthController {
     };
     try {
       const txPayload = await this.session.decrypt(txToken);
-      if (txPayload.at_exp < Math.floor(Date.now() / 1000)) {
+      if (
+        !Number.isSafeInteger(txPayload.at_exp) ||
+        txPayload.at_exp <= Math.floor(Date.now() / 1000)
+      ) {
         throw new BadRequestException('Transaction expired');
       }
       txData = JSON.parse(txPayload.at) as typeof txData;
@@ -333,6 +340,7 @@ export class AuthController {
     this.logger.debug(
       `callback() exchanging code for tokens redirectUri=${redirectUri}`,
     );
+    const exchangeStartedAt = Math.floor(Date.now() / 1000);
     let tokenSet;
     try {
       const params2 = client.callbackParams(req);
@@ -445,7 +453,7 @@ export class AuthController {
     }
 
     const payload: SessionPayload = {
-      v: 1,
+      v: 2,
       sid: randomUUID(),
       providerId: params.providerId,
       sub: claims.sub,
@@ -453,9 +461,13 @@ export class AuthController {
       rt: tokenSet.refresh_token ?? '',
       it: tokenSet.id_token,
       at_exp: tokenSet.expires_at ?? now + 3600,
-      rt_exp:
-        now +
-        (providerConfig.scope.includes('offline_access') ? 86400 * 30 : 3600),
+      session_exp:
+        now + this.config.get('AUTH_SESSION_MAX_AGE_SECONDS', { infer: true }),
+      rt_exp: resolveRefreshTokenExpiry(
+        params.providerId,
+        tokenSet,
+        exchangeStartedAt,
+      ),
       iat: now,
       csrf: randomUUID(),
       claims: filteredClaims,
@@ -475,7 +487,7 @@ export class AuthController {
       sessionToken,
       {
         ...getCookieOptions(this.config),
-        maxAge: (payload.rt_exp - now) * 1000,
+        maxAge: getSessionCookieMaxAge(payload),
       },
       req.cookies as Record<string, string> | undefined,
     );

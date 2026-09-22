@@ -309,7 +309,7 @@ concurrent requests on different replicas each perform their own exchange.
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `refreshed`                        | The identity provider returned a new token set.                                                                                                                                       |
 | `race_absorbed`                    | `invalid_grant` arrived while the access token was still valid — a lost refresh-token rotation race, absorbed without forcing a logout. Neither a refresh success nor a session loss. |
-| `invalid_grant`                    | `invalid_grant` with an already-expired access token: the session cannot be recovered.                                                                                                |
+| `invalid_grant`                    | `invalid_grant` after access-token or session expiry: the session cannot be recovered.                                                                                                |
 | `upstream_error`                   | Any other failure of the exchange, including an unresolvable provider.                                                                                                                |
 
 `dial_chat_auth_authorization_total` counts one `SessionGuard` decision per guarded request.

@@ -57,6 +57,7 @@ const configStub = {
   get: (key: string) => {
     const values: Record<string, unknown> = {
       AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
+      AUTH_SESSION_MAX_AGE_SECONDS: 2592000,
       CORS_ORIGIN: 'http://localhost:4207',
       AUTH_COOKIE_SECURE: true,
       OVERLAY_ENABLED: false,
@@ -67,13 +68,14 @@ const configStub = {
 
 const sessionPayload = (overrides: Partial<SessionPayload> = {}) =>
   ({
-    v: 1,
+    v: 2,
     sid: 'sid-1',
     providerId: PROVIDER,
     sub: 'user-1',
     at: 'access-token',
     rt: 'refresh-token',
     at_exp: Math.floor(Date.now() / 1000) + 3600,
+    session_exp: Math.floor(Date.now() / 1000) + 86400,
     rt_exp: Math.floor(Date.now() / 1000) + 86400,
     iat: Math.floor(Date.now() / 1000),
     csrf: 'csrf-1',
@@ -485,9 +487,12 @@ describe('auth and session metrics', () => {
     const buildRefreshService = (
       client: Record<string, unknown>,
     ): RefreshServiceClass =>
-      new RefreshService({
-        getProvider: vi.fn().mockReturnValue({ client, config: {} }),
-      } as unknown as ProviderRegistryService);
+      new RefreshService(
+        {
+          getProvider: vi.fn().mockReturnValue({ client, config: {} }),
+        } as unknown as ProviderRegistryService,
+        configStub,
+      );
 
     const invalidGrant = () =>
       Object.assign(new Error('invalid_grant'), { error: 'invalid_grant' });
