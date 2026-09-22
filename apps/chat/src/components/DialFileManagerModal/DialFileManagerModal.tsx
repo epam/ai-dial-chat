@@ -272,11 +272,6 @@ const DialFileManagerModal: FC<Props> = ({
     });
   }, [maxSelectableFileSize, t]);
 
-  const allowedFileTypes = useMemo(
-    () => mimeTypesToDialFileAcceptTypes(allowedTypes),
-    [allowedTypes],
-  );
-
   const resolveFolderPath = useCallback(
     (file: DialFile): string | null => {
       const source = file.url ?? file.id ?? '';

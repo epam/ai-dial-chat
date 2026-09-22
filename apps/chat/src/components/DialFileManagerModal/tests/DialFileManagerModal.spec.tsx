@@ -992,8 +992,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('forwards maxSelectableFileSize as the ui-kit maxFileSize prop and a translated oversized-upload message', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
-
     render(
       <DialFileManagerModal {...defaultProps} maxSelectableFileSize={1024} />,
     );
@@ -1006,8 +1004,6 @@ describe('DialFileManagerModal', () => {
   });
 
   it('does not set maxFileSize or an oversized-upload message when maxSelectableFileSize is absent', () => {
-    mockUseDialFileManager.mockReturnValue(defaultHookResult);
-
     render(<DialFileManagerModal {...defaultProps} />);
 
     const manager = screen.getByRole('region', { name: 'file manager' });
