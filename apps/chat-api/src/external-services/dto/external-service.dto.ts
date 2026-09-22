@@ -80,6 +80,14 @@ export class GetExternalServiceResponseDto {
   codeChallengeMethod?: string;
 }
 
+export class ApplicationExternalServiceDto extends GetExternalServiceResponseDto {
+  @ApiProperty({
+    description: 'External-service identifier within the application',
+    example: 'finhub-api2',
+  })
+  id!: string;
+}
+
 export class ExternalServiceSigninBodyDto {
   @ApiProperty({
     enum: ExternalServiceCredentialsLevel,

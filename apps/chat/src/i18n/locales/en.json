@@ -1509,5 +1509,13 @@
     "noLimitLabel": "No limit",
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"
+  },
+  "applicationCredentials": {
+    "title": "Application credentials",
+    "loadError": "Failed to load application credentials.",
+    "signedIn": "You are logged in.",
+    "signedOut": "You are not logged in.",
+    "sharedCredentials": "Shared credentials are available. You can also log in with your own credentials.",
+    "confirmLogout": "Log out of your personal credentials for this service?"
   }
 }

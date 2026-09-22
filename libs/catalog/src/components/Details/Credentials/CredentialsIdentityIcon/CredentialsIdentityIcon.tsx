@@ -58,6 +58,10 @@ export const CredentialsIdentityIcon: FC<CredentialsIdentityIconProps> = ({
         className={mergeClasses('absolute -end-2 -top-2', styles.activeIcon)}
       />
     )}
-    {statusLabel != null && <span className="sr-only">{statusLabel}</span>}
+    {statusLabel != null && (
+      <span role="status" className="sr-only">
+        {statusLabel}
+      </span>
+    )}
   </span>
 );

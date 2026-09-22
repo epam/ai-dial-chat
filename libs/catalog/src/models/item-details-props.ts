@@ -448,6 +448,8 @@ export interface ItemDetailsStyles {
 
 /** Props for `DetailsPanel`. */
 export interface DetailsPanelProps {
+  /** Renders host-owned credential controls below the header. Omitted in read-only mode. */
+  renderCredentials?: (item: CatalogItem) => ReactNode;
   /** The catalog item to display in the panel. */
   item: CatalogItem;
   /** Controls whether the panel is visible. */

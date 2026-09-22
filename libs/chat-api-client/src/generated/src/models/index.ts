@@ -434,6 +434,98 @@ export interface ApplicationDto {
 /**
  *
  * @export
+ * @interface ApplicationExternalServiceDto
+ */
+export interface ApplicationExternalServiceDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  authenticationType: ApplicationExternalServiceDtoAuthenticationTypeEnum;
+  /**
+   * USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  userLevelAuthStatus?: string;
+  /**
+   * APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  appLevelAuthStatus?: string;
+  /**
+   * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  globalAuthStatus?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationExternalServiceDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  codeChallenge?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  codeChallengeMethod?: string;
+  /**
+   * External-service identifier within the application
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  id: string;
+}
+
+/**
+ * @export
+ */
+export const ApplicationExternalServiceDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+  DialNative: 'DIAL_NATIVE',
+} as const;
+export type ApplicationExternalServiceDtoAuthenticationTypeEnum =
+  (typeof ApplicationExternalServiceDtoAuthenticationTypeEnum)[keyof typeof ApplicationExternalServiceDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
  * @interface ApplicationSchemaSummaryDto
  */
 export interface ApplicationSchemaSummaryDto {

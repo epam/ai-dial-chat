@@ -3870,6 +3870,33 @@ const { openMcpAppCanvas } = useOpenMcpAppCanvas(
 );
 ```
 
+### useApplicationCredentials
+
+Loads uncached application service metadata using host-configured
+`ExternalServicesApi` and `OfflineCredentialsApi` operations. It owns service-list,
+loading/error and offline-connection state, filters `NONE` services, and reads
+offline status only for `DIAL_NATIVE` services. A generation guard ignores obsolete
+responses and refresh callbacks after an application switch or unmount.
+
+```tsx
+import { useApplicationCredentials } from '@epam/ai-dial-chat-hooks/catalog';
+
+const { services, isLoading, hasError, isOfflineConnected, refresh } =
+  useApplicationCredentials({
+    appId,
+    externalServicesClient,
+    offlineCredentialsClient,
+  });
+```
+
+`UseApplicationCredentialsParams` is exported. Its clients are already configured
+by the host (including auth and CSRF); keep their identities stable. Only
+`listExternalServices` and `getOfflineCredentials` are required respectively.
+The hook owns no client configuration, localization, UI or login flow. The host
+maps returned service DTOs into its view models and calls `refresh` after a
+successful credential mutation. Errors, including offline-status failures, set
+`hasError`; `refresh` retries them.
+
 ## Building
 
 ```sh

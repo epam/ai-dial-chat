@@ -971,3 +971,66 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+### ApplicationCredentials
+
+`ApplicationCredentials` renders application service credentials with the same
+`CredentialsRow`, identity/status icon and configured-key card used by toolset
+credentials management. It owns only form drafts, pending state, validation,
+offline-use checkbox state and removal confirmation. The host supplies normalized
+`ApplicationCredential[]`, localized `ApplicationCredentialsTexts`, and callbacks.
+It imports no API client, application DTO, i18n, routing, or authentication provider.
+
+```tsx
+import {
+  ApplicationCredentials,
+  CredentialStatus,
+  ToolsetAuthenticationType,
+} from '@epam/ai-dial-catalog';
+
+<ApplicationCredentials
+  services={[
+    {
+      id: 'finance',
+      name: 'Finance',
+      authenticationType: ToolsetAuthenticationType.ApiKey,
+      status: CredentialStatus.SignedOut,
+      canLogout: true,
+      canConsentToOfflineUsage: true,
+    },
+  ]}
+  onRetry={reloadCredentials}
+  onLogin={async (serviceId, { apiKey, offlineUsageConsent }) => {
+    const success = await login(serviceId, { apiKey, offlineUsageConsent });
+    if (success) await reloadCredentials();
+    return success;
+  }}
+  onLogout={async (serviceId) => {
+    await logout(serviceId);
+    await reloadCredentials();
+  }}
+/>;
+```
+
+The callback names in the example are host implementations. `onLogin` resolves
+`true` on success or `false` on cancellation; a rejection displays its user-facing
+error message and keeps the draft. `onLogout` runs only after confirmation.
+`canLogout` and `canConsentToOfflineUsage` default to false; a host can represent a
+non-removable redirect-based connection without exposing provider details. A
+`hasSharedCredentials` banner is informational. Status changes belong to the host:
+callbacks refresh and supply new service data. Key the component by application
+identity to reset drafts when switching applications.
+
+`isLoading` and `hasError` expose metadata loading/retry states. With no services,
+the default is no content; `showEmptyState` enables an explicit empty message.
+`ApplicationCredentialLoginParams` and `ApplicationCredentialsProps` are exported
+alongside the service and text models. Text overrides use English defaults and the
+same credentials CSS variables as the toolset rows.
+
+`Catalog` and `DetailsPanel` accept `renderCredentials?: (item: CatalogItem) => ReactNode`.
+The slot appears below the item header in the open, editable, normal details view.
+A host adapter can render `ApplicationCredentials` here and reuse it in another
+surface. The host decides which items qualify and supplies API/authentication
+behavior and translations; `useApplicationCredentials` from
+`@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients.
+Existing toolset `onLogin` / `onLogout` contracts are unchanged.

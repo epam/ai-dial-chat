@@ -7,6 +7,7 @@ import type {
 import { externalServicesApi } from './api-client';
 
 export type {
+  ApplicationExternalServiceDto,
   ExternalServiceAuthResultDto,
   ExternalServiceLogoutBodyDto,
   ExternalServiceSigninBodyDto,

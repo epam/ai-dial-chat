@@ -87,6 +87,7 @@ export const Catalog: FC<CatalogProps> = ({
   isShareVisible,
   isSharePrimary,
   onFetchDetails,
+  renderCredentials,
   onEdit,
   onDownload,
   isDownloadVisible,
@@ -717,6 +718,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {detailsPanelItem != null && (
         <DetailsPanel
+          renderCredentials={renderCredentials}
           item={detailsPanelItem}
           isOpen={isDetailsOpen}
           isStarred={isSelectedItemStarred}

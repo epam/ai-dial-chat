@@ -1775,6 +1775,60 @@
         "tags": ["client-channel"]
       }
     },
+    "/api/v1/external-services/{appId}": {
+      "get": {
+        "description": "Reads the accessible application through DIAL Core, including inline services. Returns only public OAuth configuration and credential statuses; never secrets. Not cached so login/logout changes are immediately visible.",
+        "operationId": "listExternalServices",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "External services, or an empty list when none are configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationExternalServiceDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application identifier"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "No access to the application or liveChatInteraction is disabled"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "502": {
+            "description": "DIAL Core returned an invalid response"
+          },
+          "503": {
+            "description": "DIAL Core unavailable"
+          }
+        },
+        "summary": "List application external-service authentication metadata",
+        "tags": ["external-services"]
+      }
+    },
     "/api/v1/external-services/{appId}/{serviceId}": {
       "get": {
         "description": "Returns an application external service's display metadata and authentication type by proxying DIAL Core (GET /v1/applications/{appId}/external-services/{id}) using the caller's session access token.",
@@ -9520,6 +9574,68 @@
         },
         "required": ["id", "result"]
       },
+      "ApplicationExternalServiceDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "FinHub API"
+          },
+          "description": {
+            "type": "string",
+            "example": "Financial data lookup service"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH", "DIAL_NATIVE"],
+            "example": "API_KEY"
+          },
+          "userLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "appLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator."
+          },
+          "globalAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_OUT",
+            "description": "GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "clientId": {
+            "type": "string",
+            "example": "my-client-id"
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/authorize"
+          },
+          "scopesSupported": {
+            "example": ["read", "write"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "codeChallenge": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "codeChallengeMethod": {
+            "type": "string",
+            "example": "S256"
+          },
+          "id": {
+            "type": "string",
+            "description": "External-service identifier within the application",
+            "example": "finhub-api2"
+          }
+        },
+        "required": ["displayName", "authenticationType", "id"]
+      },
       "GetExternalServiceResponseDto": {
         "type": "object",
         "properties": {
@@ -11249,7 +11365,9 @@
           "modelId": {
             "type": "string",
             "description": "Model deployment ID that produced the response",
-            "example": "anthropic.claude-v3-sonnet"
+            "example": "anthropic.claude-v3-sonnet",
+            "maxLength": 256,
+            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
           },
           "rate": {
             "type": "number",

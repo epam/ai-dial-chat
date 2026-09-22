@@ -47,6 +47,8 @@ export enum AppsEditorEvent {
   RequestToolsetLogout = 'REQUEST_TOOLSET_LOGOUT',
   /** Sent back to the iframe with the outcome of a `RequestToolsetLogout`. */
   ToolsetLogoutResult = 'TOOLSET_LOGOUT_RESULT',
+  /** Opens the host's credential forms for `{ appId: string }`; no credential material crosses the iframe boundary. */
+  RequestApplicationCredentials = 'REQUEST_APPLICATION_CREDENTIALS',
 }
 
 /**
