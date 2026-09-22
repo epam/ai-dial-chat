@@ -122,6 +122,13 @@ export interface ConversationPanelStyles {
   /** Extra class name(s) merged onto the header's trailing action cluster — `headerActions` and the panel toggle. */
   headerActionsClassName?: string;
   /**
+   * Extra class name(s) merged onto the New chat button. Its `h-[36px]` height
+   * and `shadow-chat-button` elevation are merged, not fixed, so a `h-*` or
+   * `shadow-*` utility passed here replaces them. The corner radius is themed
+   * separately, through the kit's `--radius-control`.
+   */
+  newChatButtonClassName?: string;
+  /**
    * Extra CSS class merged onto the search field's wrapper. The wrapper's
    * corner radius is themed with the `--cp-search-radius` custom property, so
    * this is only needed for anything the panel's own stylesheet does not

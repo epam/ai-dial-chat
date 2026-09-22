@@ -109,6 +109,20 @@ The New chat button is not on this list on purpose: it is a labelled button, so
 it reads the ui-kit's own `--radius-control` and stays in step with every other
 button in the host app.
 
+Its height and elevation are classes rather than properties, and
+`styles.newChatButtonClassName` is merged after them, so a `h-*` or `shadow-*`
+utility passed there replaces the default instead of landing beside it:
+
+```tsx
+<ConversationPanel
+  {...props}
+  styles={{ newChatButtonClassName: 'h-[44px] shadow-md' }}
+/>
+```
+
+Colors stay on `styles.newChatButton` (`background`, `text`, `focusOutline`),
+which sets them as custom properties.
+
 `styles.searchWrapperClassName` remains for anything else the search wrapper
 needs; a `rounded-*` utility passed there still wins over `--cp-search-radius`,
 since a host's utilities are emitted after this package's stylesheet.

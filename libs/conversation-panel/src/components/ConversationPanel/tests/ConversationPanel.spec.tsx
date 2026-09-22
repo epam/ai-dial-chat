@@ -563,6 +563,20 @@ describe('ConversationPanel — header style forwarding', () => {
     expect(header.classList).toContain('border-b');
   });
 
+  it('forwards styles.newChatButtonClassName onto the New chat button', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        styles={{ newChatButtonClassName: 'h-[44px]' }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: /New chat/ }).classList,
+    ).toContain('h-[44px]');
+  });
+
   it('forwards styles.headerActionsClassName onto the trailing action cluster', () => {
     render(
       <ConversationPanel

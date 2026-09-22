@@ -621,7 +621,9 @@ import {
   buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
 
-// Merge conditional class names — the only supported way to compose classes
+// Merge conditional class names — the only supported way to compose classes.
+// Conflicting utilities collapse to the last one, including the workspace
+// theme's own `shadow-chat-button` against the stock shadow scale.
 const className = mergeClasses('base-class', isActive && 'active');
 
 // Map a *Colors object to CSS custom property declarations; undefined values are dropped

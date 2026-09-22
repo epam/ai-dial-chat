@@ -16,11 +16,24 @@ export interface NewChatButtonProps {
   labelClassName?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: NewChatButtonColors;
+  /**
+   * Extra class name(s) merged onto the button. The button is `h-[36px]` with
+   * the `shadow-chat-button` elevation by default, and both are merged rather
+   * than fixed, so a `h-*` or `shadow-*` utility passed here replaces them.
+   * The corner radius is not a class: it reads the kit's `--radius-control`.
+   */
+  className?: string;
 }
 
 /** Full-width button rendered at the top of the conversation panel to start a new chat. */
 export const NewChatButton: FC<NewChatButtonProps> = memo(
-  ({ label, onClick, labelClassName = 'dial-small-semi-text', colors }) => {
+  ({
+    label,
+    onClick,
+    labelClassName = 'dial-small-semi-text',
+    colors,
+    className,
+  }) => {
     const cssVars = buildCssVars({
       '--cp-new-chat-bg': colors?.background,
       '--cp-new-chat-text': colors?.text,
@@ -35,6 +48,7 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
           className={mergeClasses(
             'flex h-[36px] w-full cursor-pointer items-center justify-center gap-2 px-3 py-1 shadow-chat-button hover:shadow-xs focus-visible:shadow-xs active:shadow-xs',
             styles.button,
+            className,
             CONVERSATION_PANEL_CLASS.newChatButton,
           )}
         >
