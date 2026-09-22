@@ -69,6 +69,14 @@ The list's height animates to match once the row is gone.
 
 ### `PromptParametersPopup`
 
+The package root preserves the existing `PromptParametersPopup` export and props.
+It loads the popup and its catalog dependencies only when `open` is true, with an
+internal Suspense boundary; consumers do not need to add one. The workflow hook
+uses the same wrapper, keeping AG Grid out of the initial bundle.
+
+The `./parameters-popup` subpath exposes the eager component for hosts that want
+to manage loading themselves.
+
 ```tsx
 import { PromptParametersPopup } from '@epam/ai-dial-prompts';
 import {
@@ -105,6 +113,61 @@ it holding `Spanish`, so confirming without typing submits the default; a bare
 `{{tone}}` opens empty, as before. Every field stays required, so a parameter
 without a default still has to be filled before Submit enables.
 
+## Hooks
+
+### `usePromptSelectorOverlay`
+
+```tsx
+import {
+  usePromptSelectorOverlay,
+  type FavoritePromptItem,
+} from '@epam/ai-dial-prompts';
+
+const {
+  renderOverlay,
+  promptCatalogModal,
+  parametersPopup,
+  openParametersPopup,
+} = usePromptSelectorOverlay({
+  isEnabled: isPromptsFeatureEnabled,
+  prompts: mergedPromptListing, // FavoritePromptItem[] — id/name/content/description
+  favoriteIds,
+  onToggleFavorite: (id) => removeFavorite(id),
+  onInsertText: (text) => insertIntoComposer(text),
+  labels: {
+    panelLabels: { myCollectionLabel: 'My Collection' },
+    parametersLabels: { title: 'Prompt parameters' },
+  },
+  renderCatalog: ({ isOpen, onSelect, onClose }) => (
+    <LazyPromptCatalogModal
+      isOpen={isOpen}
+      onClose={onClose}
+      onSelect={(id) => {
+        const prompt = mergedPromptListing.find((p) => p.id === id);
+        if (prompt) onSelect(prompt);
+      }}
+    />
+  ),
+});
+
+// renderOverlay?.(onClose) — pass as the Add-menu Prompts entry's renderOverlay
+// {promptCatalogModal} / {parametersPopup} — render at a stable level outside that popover
+```
+
+Owns the favorites overlay, the browse/parameter transitions, and parameter resolution over
+`FavoritePromptsPanel`/`PromptParametersPopup`; it renders neither the browse modal nor the
+Add-menu row itself. The host supplies the merged prompt listing (a `FavoritePromptItem[]` the
+host already resolved from its own sources), favorites state, an `isEnabled` policy, and
+`renderCatalog` — its own lazy-loaded browse-modal content, whose `onSelect` receives the full
+structural prompt so this hook never fetches or imports a generated DTO. `renderOverlay` is
+`undefined` while disabled, and `openParametersPopup` is then a no-op — a host wires
+`openParametersPopup` to a route-level "Use in chat" action to open the popup directly, with no
+Back action offered.
+
+`parametersPopup` renders `PromptParametersPopup` behind a `React.lazy()`/`Suspense` boundary
+internally, so a host that only calls this hook never pulls the popup's `@epam/ai-dial-catalog`
+dependency (and the AG Grid it bundles) into its initial chunk.
+
 ## Types
 
 ```tsx
@@ -116,6 +179,10 @@ import type {
   PromptParametersPopupColors,
   PromptParametersPopupLabels,
   PromptParametersPopupProps,
+  RenderPromptCatalogProps,
+  UsePromptSelectorOverlayLabels,
+  UsePromptSelectorOverlayOptions,
+  UsePromptSelectorOverlayResult,
 } from '@epam/ai-dial-prompts';
 ```
 

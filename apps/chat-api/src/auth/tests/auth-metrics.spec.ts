@@ -704,7 +704,9 @@ describe('auth and session metrics', () => {
     const authAttributeValues = resourceMetrics.scopeMetrics
       .flatMap((scope) => scope.metrics)
       .filter((metric) => metric.descriptor.name.startsWith('dial.chat.auth.'))
-      .flatMap<AuthDataPoint>((metric) => metric.dataPoints)
+      .flatMap<AuthDataPoint>(
+        (metric) => metric.dataPoints as readonly AuthDataPoint[],
+      )
       .flatMap((point) => Object.values(point.attributes))
       .map(String);
 

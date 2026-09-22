@@ -1,0 +1,27 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "reusable-workflows-consumer-fixture",
+  "targets": {
+    "verify": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/run.mjs",
+        "cwd": "tools/reusable-workflows-consumer-fixture"
+      },
+      "dependsOn": [
+        {
+          "projects": [
+            "@epam/ai-dial-skills",
+            "@epam/ai-dial-prompts",
+            "chat-api-client"
+          ],
+          "target": "build"
+        }
+      ]
+    },
+    "test": {
+      "executor": "nx:noop",
+      "dependsOn": ["verify"]
+    }
+  }
+}
