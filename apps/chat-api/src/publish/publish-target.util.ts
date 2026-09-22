@@ -1,4 +1,4 @@
-import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import { encodePlainDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 
 /*
@@ -56,14 +56,22 @@ export const getPublicationsListScope = (bucket: string): string =>
  * `public/{folderPath}/`, always trailing-slashed (bare `public/` at the
  * root). `folderPath` arrives as plain, unencoded text (e.g. `"test 14.04"`)
  * from the request body, but DIAL Core rejects resource urls containing raw
- * spaces/special characters (`Bad resource url: public/test 14.04/`) — each
- * segment is percent-encoded via `encodeDialResourcePath`, the same helper
- * `toolsets.service.ts`/`conversation.service.ts` use for every other
- * DIAL resource path built from user-supplied text.
+ * spaces/special characters (`Bad resource url: public/test 14.04/`) — so
+ * every segment is percent-encoded.
+ *
+ * The encoder is `encodePlainDialResourcePath`, **not** the idempotent
+ * `encodeDialResourcePath` every other DIAL resource path uses. That one
+ * decodes each segment before encoding it, which is lossy for a plain folder
+ * name that legitimately contains a percent escape: a folder literally named
+ * `test%20folder` decoded to `test folder`, so the published copy landed in a
+ * folder of that name and the skill card's breadcrumb showed a space
+ * (Issue #8974). Encoding without the pre-decode sends
+ * `public/test%2520folder/`, which Core stores back under the author's
+ * literal name.
  */
 export const getPublicTargetFolder = (folderPath: string): string =>
   folderPath
-    ? `${PUBLIC_URL_PREFIX}/${encodeDialResourcePath(folderPath)}/`
+    ? `${PUBLIC_URL_PREFIX}/${encodePlainDialResourcePath(folderPath)}/`
     : `${PUBLIC_URL_PREFIX}/`;
 
 /** Strips the leading `public/` segment and trailing slash DIAL Core returns in `Publication.targetFolder`, decoding each segment back to the plain folder path the frontend works with. */
