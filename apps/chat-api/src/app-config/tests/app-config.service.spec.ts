@@ -269,6 +269,119 @@ describe('AppConfigService', () => {
       expect(result.config.enabledUiFeatures).toBeNull();
     });
 
+    it.each([
+      ['a non-array value', 'not-an-array'],
+      ['an empty array', []],
+    ])(
+      'falls back to null with no warning when enabledUiFeatures resolves to %s',
+      async (_label, value) => {
+        const { service } = makeService(async (key: string) =>
+          key === 'uiFeatures.enabledUiFeatures' ? value : undefined,
+        );
+        const warnSpy = vi
+          .spyOn(
+            (service as never as { logger: { warn: () => void } }).logger,
+            'warn',
+          )
+          .mockImplementation(() => undefined);
+
+        const result = await service.getClientConfig(ctx);
+
+        expect(result.config.enabledUiFeatures).toBeNull();
+        expect(warnSpy).not.toHaveBeenCalled();
+      },
+    );
+
+    it('preserves the input order of multiple recognized enabledUiFeatures entries', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures'
+          ? ['likes', 'header', 'prompts']
+          : undefined,
+      );
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual([
+        'likes',
+        'header',
+        'prompts',
+      ]);
+    });
+
+    it('coerces a non-string enabledUiFeatures entry with String() before reporting it', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures' ? [42] : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toBeNull();
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        1,
+        'Ignoring unrecognized ENABLED_UI_FEATURES entry: "42"',
+      );
+    });
+
+    it('logs the unrecognized-entry warning once per repeated occurrence, in order', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures'
+          ? ['bogus', 'likes', 'bogus']
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['likes']);
+      expect(warnSpy).toHaveBeenCalledTimes(2);
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        1,
+        'Ignoring unrecognized ENABLED_UI_FEATURES entry: "bogus"',
+      );
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        2,
+        'Ignoring unrecognized ENABLED_UI_FEATURES entry: "bogus"',
+      );
+    });
+
+    it('logs the deprecated-alias warning once per repeated occurrence, in order', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures'
+          ? ['custom-applications', 'custom-applications']
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['schema-apps']);
+      expect(warnSpy).toHaveBeenCalledTimes(2);
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        1,
+        'ENABLED_UI_FEATURES entry "custom-applications" is deprecated; using "schema-apps" instead',
+      );
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        2,
+        'ENABLED_UI_FEATURES entry "custom-applications" is deprecated; using "schema-apps" instead',
+      );
+    });
+
     it('returns null defaultDeploymentId when DEFAULT_DEPLOYMENT is not set', async () => {
       const { service } = makeService(async () => undefined);
       const result = await service.getClientConfig(ctx);
@@ -787,6 +900,37 @@ describe('AppConfigService', () => {
       expect(compositeProvider.resolve).toHaveBeenCalledTimes(
         CLIENT_DEFINITIONS_COUNT * 2,
       );
+    });
+
+    it('serves a cache hit without re-resolving providers or emitting new enabledUiFeatures warnings', async () => {
+      const { service, compositeProvider } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures'
+          ? ['likes', 'not-a-real-feature']
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const first = await service.getClientConfig(ctx);
+      warnSpy.mockClear();
+      const resolveCallsAfterFirst = (
+        compositeProvider.resolve as never as {
+          mock: { calls: unknown[] };
+        }
+      ).mock.calls.length;
+
+      const second = await service.getClientConfig(ctx);
+
+      expect(second).toEqual(first);
+      expect(second.config.enabledUiFeatures).toEqual(['likes']);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        resolveCallsAfterFirst,
+      );
+      expect(warnSpy).not.toHaveBeenCalled();
     });
   });
 

@@ -1,133 +1,4 @@
-## Purpose
-
-In-memory tracking of active generations per principal+path, enforcing one active generation per conversation and supporting stop, complete, and error transitions. The owner key is opaque to this capability — `generation-principal-ownership` defines how it is derived.
-## Requirements
-### Requirement: In-memory generation registry keyed by principal and path
-
-`ConversationGenerationService` (`apps/chat-api/src/conversations/conversation-generation.service.ts`) SHALL track generations in an in-memory map keyed by `` `${ownerKey}::${path}` ``, where `ownerKey` is the caller's principal key as defined by `generation-principal-ownership` — the cookie session id for a cookie-authenticated caller, and the verified `providerId`+`sub` pair for a header-authenticated caller. The service SHALL accept that key as an opaque `ownerKey` parameter on the public, client-addressed operations `register`, `abort` and `attach`, and SHALL NOT itself inspect the authentication mode or derive the key. Worker-facing operations address their entry through the lease returned by `register` instead.
-
-Each entry stores the client-supplied `generationId`, the internal operation identity, an `AbortController`, an explicit lifecycle state drawn from a named string enum, an optional cancellation reason, `startedAt`, the assembled message snapshot, its attach emitter, its max-duration timer, its runtime-tracking release, and its pre-rendered subject-free log label.
-
-The lifecycle states SHALL be exactly: running; cancellation-requested; finalizing, entered when the terminal write is dispatched; retained, entered when that write has not settled within the finalization bound; and released, meaning the entry is no longer in the map. Every state other than released denotes continuing ownership of the key.
-
-The registry is not persisted; a pod restart clears it, and the registry is not a cross-pod coordination mechanism.
-
-#### Scenario: Concurrent generation for the same path is rejected
-
-- **WHEN** `register` is called for an `ownerKey + path` whose key is occupied by an entry in any state other than released
-- **THEN** it throws `ConflictException` (HTTP 409)
-
-#### Scenario: Completed generation frees the path
-
-- **WHEN** a generation settles on successful completion
-- **THEN** the entry is removed, so a later `register` for the same `ownerKey + path` succeeds
-
-#### Scenario: Two different principals generate on the same path independently
-
-- **WHEN** `register` is called for the same `path` under two different `ownerKey` values
-- **THEN** both registrations succeed and produce separate entries, because the map key differs
-
-#### Scenario: One principal's cancellation does not affect another's entry on the same path
-
-- **GIVEN** two principals each own a generation on the same conversation path
-- **WHEN** one of them is stopped, expires, times out, or settles
-- **THEN** the other principal's entry keeps its state, its subscribers, its timer, and its runtime tracking, and its own registry key remains admissible to no one else
-
-### Requirement: Stop validates the generation id
-
-`abort(ownerKey, path, generationId)` SHALL only abort when the stored entry is `active` and its `generationId` matches the supplied id; otherwise it returns `false`.
-
-#### Scenario: Abort with a stale generation id is a no-op
-
-- **WHEN** `abort` is called with a `generationId` that does not match the active entry
-- **THEN** it returns `false` and does not abort the running generation
-
-#### Scenario: Abort under another principal's key is a no-op
-
-- **WHEN** `abort` is called with the correct `path` and `generationId` but an `ownerKey` that does not own the entry
-- **THEN** it returns `false` and does not abort the running generation
-
-### Requirement: Stale entries are evicted
-
-Stale handling SHALL request cancellation rather than remove an entry. On each `register`, for every entry older than the stale threshold that is still running, the service SHALL set that entry's cancellation reason to stale-expiry, log the expiry at warning level using the entry's pre-rendered subject-free label, and abort the entry's `AbortController`.
-
-Stale handling SHALL NOT clear the entry's max-duration timer, SHALL NOT delete the registry key, SHALL NOT release the entry's runtime generation tracking, and SHALL NOT deliver a terminal event. Those belong to the owning worker's single settlement, which still runs exactly once. An entry that already has a cancellation reason, or that is finalizing or retained pending an unsettled write, SHALL be left untouched, so cancellation is not requested twice.
-
-Aborting is requested only by the four cancellation entry points — user Stop, stale expiry, max-duration timeout, and shutdown. Entry removal SHALL NOT abort as a side effect, and the shutdown path SHALL NOT be copied into stale handling.
-
-The stale threshold SHALL be derived from the configured maximum generation duration so that it can never pre-empt the max-duration timer:
-
-```
-staleThreshold = max(30 minutes, MAX_GENERATION_DURATION_MS) + a fixed grace period
-```
-
-`MAX_GENERATION_DURATION_MS` is validated with a minimum and no maximum, so a configuration above 30 minutes SHALL still have its max-duration timer fire before the stale threshold is reached.
-
-Stale handling SHALL be triggered by `register` only. No per-request sweep timer and no queue SHALL be introduced. Consequently, recovery of an entry orphaned in-process depends on a later `register` from some principal, and a fully idle process performs no sweep; the per-entry max-duration timer, which is traffic-independent, is what bounds a running generation without another request.
-
-The stale sweep SHALL NOT be described as a backstop for a process crash. A crash loses the registry, its timers, and the sweep together; after a restart the registry is empty and no claim can be made about any write that was in flight.
-
-#### Scenario: An expired running generation is cancelled, not removed
-
-- **GIVEN** a generation is still running and has passed the stale threshold
-- **WHEN** `register` runs for any owner and path and performs the sweep
-- **THEN** the expired entry's cancellation reason is set to stale-expiry, its `AbortController` is aborted, it is logged by path and owner digest only, and its registry key, max-duration timer, runtime tracking, and subscribers are all left in place for its owning worker to settle
-
-#### Scenario: Stale cancellation does not orphan upstream work
-
-- **GIVEN** a generation is cancelled by the stale sweep
-- **WHEN** its worker unwinds
-- **THEN** the worker performs its own single terminal save attempt, delivers exactly one terminal event per subscriber, and releases the registry entry — the entry is never removed while its worker is still running
-
-#### Scenario: A configured maximum above 30 minutes is not pre-empted by the stale threshold
-
-- **GIVEN** `MAX_GENERATION_DURATION_MS` is configured to 45 minutes
-- **WHEN** a generation runs past 30 minutes
-- **THEN** its max-duration timer is still armed and still fires at 45 minutes, and the stale threshold has not been reached
-
-#### Scenario: Cancellation is not requested twice for the same entry
-
-- **GIVEN** an entry has already had cancellation requested, or is finalizing, or is retained pending an unsettled write
-- **WHEN** a later `register` performs the sweep
-- **THEN** the entry is left untouched and its `AbortController` is not aborted again
-
-#### Scenario: Recovery depends on later traffic, and this is the documented behaviour
-
-- **GIVEN** an entry is orphaned in-process and the service receives no further `register` calls
-- **THEN** no sweep runs and the entry is not cancelled by expiry; the per-entry max-duration timer remains the traffic-independent bound on a running generation
-
-### Requirement: Active generations are bounded by a server-owned max-duration timeout, independent of client connection state
-
-`ConversationGenerationService.register` SHALL start a timer for the new entry, in addition to the existing `AbortController`. If the entry is still running after `MAX_GENERATION_DURATION_MS` from registration, the timer SHALL set the entry's cancellation reason to max-duration and abort the entry's `AbortController`, and the owning worker SHALL finalize it as a non-user abort, releasing the registry entry the way any other non-user abort does. Settlement SHALL clear the entry's timer, so a generation that finishes normally never triggers it.
-
-The timer SHALL resolve its target entry by the entry's internal operation identity, so a timer armed for one generation can never abort a later generation that occupies the same key — including one that reuses the same client-supplied `generationId`.
-
-No path other than settlement SHALL clear this timer. In particular, stale handling SHALL NOT clear it, because the stale threshold is derived to be strictly greater than the configured maximum duration.
-
-This bound is independent of the client's HTTP connection: it fires whether or not the originating browser connection is still open, and it is not affected by disconnect (which, per `backend-owned-generation-persistence`, has no effect on the generation). It is the traffic-independent bound on a running generation; stale handling is a backstop for entries this timer cannot cover, and is not a backstop for a process crash, which loses the timer and the registry together.
-
-#### Scenario: A stalled generation is finalized without depending on client disconnect or the stale sweep
-
-- **GIVEN** a generation is registered and actively streaming, and the client remains connected throughout
-- **WHEN** the upstream stream produces no terminal event within `MAX_GENERATION_DURATION_MS`
-- **THEN** the backend sets the cancellation reason to max-duration, aborts the generation's `AbortController`, persists the partial assistant message as a non-user abort, and releases the registry entry — without waiting for the stale sweep and without requiring the client to disconnect
-
-#### Scenario: A normal-speed generation never triggers the timeout
-
-- **WHEN** a generation reaches a terminal upstream event or an explicit Stop well within `MAX_GENERATION_DURATION_MS`
-- **THEN** its max-duration timer is cleared by that settlement and never fires
-
-#### Scenario: The timeout is unaffected by client disconnect
-
-- **GIVEN** the client disconnects mid-generation
-- **WHEN** the upstream subsequently reaches a terminal event before `MAX_GENERATION_DURATION_MS` elapses
-- **THEN** the generation finalizes from that terminal event, and the max-duration timer — cleared by the same settlement — never fires
-
-#### Scenario: A timer armed for an earlier generation cannot abort a later one on the same key
-
-- **GIVEN** a generation was registered, settled, and a new generation was registered for the same owner and path, reusing the same client-supplied `generationId`
-- **WHEN** the first generation's max-duration timer fires
-- **THEN** it matches no entry by internal operation identity and aborts nothing
+## ADDED Requirements
 
 ### Requirement: Each admitted generation has an internal operation identity distinct from the client generation id
 
@@ -274,3 +145,117 @@ Shutdown SHALL NOT be documented or reported as establishing any outcome for an 
 - **WHEN** the module is destroyed while a terminal write is in flight
 - **THEN** the shutdown path neither waits for that write nor reports its outcome, and the capability does not assert whether it committed
 
+## MODIFIED Requirements
+
+### Requirement: Stale entries are evicted
+
+Stale handling SHALL request cancellation rather than remove an entry. On each `register`, for every entry older than the stale threshold that is still running, the service SHALL set that entry's cancellation reason to stale-expiry, log the expiry at warning level using the entry's pre-rendered subject-free label, and abort the entry's `AbortController`.
+
+Stale handling SHALL NOT clear the entry's max-duration timer, SHALL NOT delete the registry key, SHALL NOT release the entry's runtime generation tracking, and SHALL NOT deliver a terminal event. Those belong to the owning worker's single settlement, which still runs exactly once. An entry that already has a cancellation reason, or that is finalizing or retained pending an unsettled write, SHALL be left untouched, so cancellation is not requested twice.
+
+Aborting is requested only by the four cancellation entry points — user Stop, stale expiry, max-duration timeout, and shutdown. Entry removal SHALL NOT abort as a side effect, and the shutdown path SHALL NOT be copied into stale handling.
+
+The stale threshold SHALL be derived from the configured maximum generation duration so that it can never pre-empt the max-duration timer:
+
+```
+staleThreshold = max(30 minutes, MAX_GENERATION_DURATION_MS) + a fixed grace period
+```
+
+`MAX_GENERATION_DURATION_MS` is validated with a minimum and no maximum, so a configuration above 30 minutes SHALL still have its max-duration timer fire before the stale threshold is reached.
+
+Stale handling SHALL be triggered by `register` only. No per-request sweep timer and no queue SHALL be introduced. Consequently, recovery of an entry orphaned in-process depends on a later `register` from some principal, and a fully idle process performs no sweep; the per-entry max-duration timer, which is traffic-independent, is what bounds a running generation without another request.
+
+The stale sweep SHALL NOT be described as a backstop for a process crash. A crash loses the registry, its timers, and the sweep together; after a restart the registry is empty and no claim can be made about any write that was in flight.
+
+#### Scenario: An expired running generation is cancelled, not removed
+
+- **GIVEN** a generation is still running and has passed the stale threshold
+- **WHEN** `register` runs for any owner and path and performs the sweep
+- **THEN** the expired entry's cancellation reason is set to stale-expiry, its `AbortController` is aborted, it is logged by path and owner digest only, and its registry key, max-duration timer, runtime tracking, and subscribers are all left in place for its owning worker to settle
+
+#### Scenario: Stale cancellation does not orphan upstream work
+
+- **GIVEN** a generation is cancelled by the stale sweep
+- **WHEN** its worker unwinds
+- **THEN** the worker performs its own single terminal save attempt, delivers exactly one terminal event per subscriber, and releases the registry entry — the entry is never removed while its worker is still running
+
+#### Scenario: A configured maximum above 30 minutes is not pre-empted by the stale threshold
+
+- **GIVEN** `MAX_GENERATION_DURATION_MS` is configured to 45 minutes
+- **WHEN** a generation runs past 30 minutes
+- **THEN** its max-duration timer is still armed and still fires at 45 minutes, and the stale threshold has not been reached
+
+#### Scenario: Cancellation is not requested twice for the same entry
+
+- **GIVEN** an entry has already had cancellation requested, or is finalizing, or is retained pending an unsettled write
+- **WHEN** a later `register` performs the sweep
+- **THEN** the entry is left untouched and its `AbortController` is not aborted again
+
+#### Scenario: Recovery depends on later traffic, and this is the documented behaviour
+
+- **GIVEN** an entry is orphaned in-process and the service receives no further `register` calls
+- **THEN** no sweep runs and the entry is not cancelled by expiry; the per-entry max-duration timer remains the traffic-independent bound on a running generation
+
+### Requirement: In-memory generation registry keyed by principal and path
+
+`ConversationGenerationService` (`apps/chat-api/src/conversations/conversation-generation.service.ts`) SHALL track generations in an in-memory map keyed by `` `${ownerKey}::${path}` ``, where `ownerKey` is the caller's principal key as defined by `generation-principal-ownership` — the cookie session id for a cookie-authenticated caller, and the verified `providerId`+`sub` pair for a header-authenticated caller. The service SHALL accept that key as an opaque `ownerKey` parameter on the public, client-addressed operations `register`, `abort` and `attach`, and SHALL NOT itself inspect the authentication mode or derive the key. Worker-facing operations address their entry through the lease returned by `register` instead.
+
+Each entry stores the client-supplied `generationId`, the internal operation identity, an `AbortController`, an explicit lifecycle state drawn from a named string enum, an optional cancellation reason, `startedAt`, the assembled message snapshot, its attach emitter, its max-duration timer, its runtime-tracking release, and its pre-rendered subject-free log label.
+
+The lifecycle states SHALL be exactly: running; cancellation-requested; finalizing, entered when the terminal write is dispatched; retained, entered when that write has not settled within the finalization bound; and released, meaning the entry is no longer in the map. Every state other than released denotes continuing ownership of the key.
+
+The registry is not persisted; a pod restart clears it, and the registry is not a cross-pod coordination mechanism.
+
+#### Scenario: Concurrent generation for the same path is rejected
+
+- **WHEN** `register` is called for an `ownerKey + path` whose key is occupied by an entry in any state other than released
+- **THEN** it throws `ConflictException` (HTTP 409)
+
+#### Scenario: Completed generation frees the path
+
+- **WHEN** a generation settles on successful completion
+- **THEN** the entry is removed, so a later `register` for the same `ownerKey + path` succeeds
+
+#### Scenario: Two different principals generate on the same path independently
+
+- **WHEN** `register` is called for the same `path` under two different `ownerKey` values
+- **THEN** both registrations succeed and produce separate entries, because the map key differs
+
+#### Scenario: One principal's cancellation does not affect another's entry on the same path
+
+- **GIVEN** two principals each own a generation on the same conversation path
+- **WHEN** one of them is stopped, expires, times out, or settles
+- **THEN** the other principal's entry keeps its state, its subscribers, its timer, and its runtime tracking, and its own registry key remains admissible to no one else
+
+### Requirement: Active generations are bounded by a server-owned max-duration timeout, independent of client connection state
+
+`ConversationGenerationService.register` SHALL start a timer for the new entry, in addition to the existing `AbortController`. If the entry is still running after `MAX_GENERATION_DURATION_MS` from registration, the timer SHALL set the entry's cancellation reason to max-duration and abort the entry's `AbortController`, and the owning worker SHALL finalize it as a non-user abort, releasing the registry entry the way any other non-user abort does. Settlement SHALL clear the entry's timer, so a generation that finishes normally never triggers it.
+
+The timer SHALL resolve its target entry by the entry's internal operation identity, so a timer armed for one generation can never abort a later generation that occupies the same key — including one that reuses the same client-supplied `generationId`.
+
+No path other than settlement SHALL clear this timer. In particular, stale handling SHALL NOT clear it, because the stale threshold is derived to be strictly greater than the configured maximum duration.
+
+This bound is independent of the client's HTTP connection: it fires whether or not the originating browser connection is still open, and it is not affected by disconnect (which, per `backend-owned-generation-persistence`, has no effect on the generation). It is the traffic-independent bound on a running generation; stale handling is a backstop for entries this timer cannot cover, and is not a backstop for a process crash, which loses the timer and the registry together.
+
+#### Scenario: A stalled generation is finalized without depending on client disconnect or the stale sweep
+
+- **GIVEN** a generation is registered and actively streaming, and the client remains connected throughout
+- **WHEN** the upstream stream produces no terminal event within `MAX_GENERATION_DURATION_MS`
+- **THEN** the backend sets the cancellation reason to max-duration, aborts the generation's `AbortController`, persists the partial assistant message as a non-user abort, and releases the registry entry — without waiting for the stale sweep and without requiring the client to disconnect
+
+#### Scenario: A normal-speed generation never triggers the timeout
+
+- **WHEN** a generation reaches a terminal upstream event or an explicit Stop well within `MAX_GENERATION_DURATION_MS`
+- **THEN** its max-duration timer is cleared by that settlement and never fires
+
+#### Scenario: The timeout is unaffected by client disconnect
+
+- **GIVEN** the client disconnects mid-generation
+- **WHEN** the upstream subsequently reaches a terminal event before `MAX_GENERATION_DURATION_MS` elapses
+- **THEN** the generation finalizes from that terminal event, and the max-duration timer — cleared by the same settlement — never fires
+
+#### Scenario: A timer armed for an earlier generation cannot abort a later one on the same key
+
+- **GIVEN** a generation was registered, settled, and a new generation was registered for the same owner and path, reusing the same client-supplied `generationId`
+- **WHEN** the first generation's max-duration timer fires
+- **THEN** it matches no entry by internal operation identity and aborts nothing
