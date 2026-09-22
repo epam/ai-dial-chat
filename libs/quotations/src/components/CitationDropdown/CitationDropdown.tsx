@@ -24,6 +24,8 @@ export interface CitationDropdownProps {
    * group has nothing previewable — the "Preview" button is hidden.
    */
   onPreview?: (annotation: Annotation) => void;
+  /** Whether the host can preview the active annotation. Defaults to allowing preview when `onPreview` is provided. */
+  isPreviewable?: (annotation: Annotation) => boolean;
   /** Called when the user clicks "Open in browser" for an annotation. */
   onOpenInBrowser: (annotation: Annotation) => void;
   /** Optional icon rendered before the marker's label. */
@@ -44,6 +46,7 @@ export interface CitationDropdownProps {
 export const CitationDropdown: FC<CitationDropdownProps> = ({
   group,
   onPreview,
+  isPreviewable,
   onOpenInBrowser,
   icon,
   headerIcon,
@@ -56,6 +59,8 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   const ownerKey = useId();
   const isOpen = citationCard.isOpen(ownerKey);
   const activeIndex = citationCard.getActiveIndex(group.groupKey);
+  const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
+  const canPreview = isPreviewable?.(annotation) ?? true;
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -66,13 +71,13 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
 
   const handlePreview = useMemo(
     () =>
-      onPreview
+      onPreview && canPreview
         ? (annotation: Annotation) => {
             onPreview(annotation);
             citationCard.closePopup(ownerKey);
           }
         : undefined,
-    [onPreview, citationCard, ownerKey],
+    [onPreview, canPreview, citationCard, ownerKey],
   );
 
   /*

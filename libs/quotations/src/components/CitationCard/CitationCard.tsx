@@ -104,8 +104,7 @@ export const CitationCard: FC<CitationCardProps> = ({
   const total = group.annotations.length;
   const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
   const hasSwitcher = total > 1;
-  const sourceContentType =
-    group.primaryAnnotation.body?.source?.attachment?.type;
+  const sourceContentType = annotation.body?.source?.attachment?.type;
   const isWebLink =
     onPreview == null ||
     sourceContentType === MIMEType.HTML ||

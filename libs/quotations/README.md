@@ -76,6 +76,11 @@ import { CitationCard } from '@epam/ai-dial-quotations';
 
 Combines `CitationMarker` and `CitationCard` into a tooltip-based dropdown.
 
+Pass the optional `isPreviewable(annotation)` callback to control Preview for
+each active annotation. When it returns `false`, the card shows only
+"Open in browser"; without it, providing `onPreview` enables Preview as before.
+Availability is checked again when the user switches annotations within a card.
+
 ```tsx
 import {
   CitationDropdown,
@@ -116,6 +121,12 @@ Builds `react-markdown` component overrides for rendering citations: a `cit` ele
 While `isStreaming` is `true`, `processedContent` hides only complete supported `<cit data-id="…"></cit>` citation elements via `stripCitTagsWhileStreaming`. Partial or unsupported `cit` markup is escaped and displayed literally, so an HTML parser cannot swallow the streamed suffix.
 
 The hook owns no PDF-detection, attachment-DTO, or canvas-opening logic — that belongs in the host's `onPreview` implementation.
+
+Its callbacks also accept optional `isPreviewable(annotation)`, forwarded to
+`CitationDropdown`. The host supplies its source classification policy: DIAL Chat
+keeps Preview for DIAL files and supported external file sources, and hides it
+for ordinary external web pages such as `https://data.imf.org/en/datasets/IMF.RES:WEO`.
+The library does not interpret DIAL file paths or decide which viewers the host supports.
 
 ```tsx
 import { useCitationMarkdownComponents } from '@epam/ai-dial-quotations';
