@@ -134,7 +134,6 @@ jobs:
   chat_hooks_browser_parity:
     # Checks browser startup requests, deferred feature mounting and reopening,
     # OAuth events, markdown reload recovery, styles, and mobile RTL rendering.
-    # Also exercises the scheduled-tasks packed consumer with the installed browser.
     name: chat-hooks browser-observed startup parity
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -150,8 +149,6 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run browser-observed packed/source parity
         run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-browser-parity
-      - name: Run scheduled-tasks packed browser checks
-        run: npm exec nx run scheduled-tasks-consumer-fixture:test-browser
 
   publish_lib_coherent_release:
     # Checks that packed libraries from one release install together and

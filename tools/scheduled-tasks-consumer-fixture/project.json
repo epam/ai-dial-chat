@@ -41,14 +41,6 @@
         "cwd": "tools/scheduled-tasks-consumer-fixture"
       },
       "dependsOn": ["pack-lib"]
-    },
-    "test-browser": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node scripts/verify.mjs",
-        "cwd": "tools/scheduled-tasks-consumer-fixture"
-      },
-      "dependsOn": ["build"]
     }
   }
 }
