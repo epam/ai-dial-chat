@@ -24,6 +24,10 @@ export class SessionService {
       .encrypt(this.keys.activeKey);
   }
 
+  /*
+   * Decode only: logout and in-progress login transactions may use old payloads.
+   * CookieSessionStrategy enforces schema and expiration before authorization.
+   */
   async decrypt(token: string): Promise<SessionPayload> {
     const keysToTry: Uint8Array[] = [this.keys.activeKey];
     if (this.keys.previousKey) {

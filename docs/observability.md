@@ -339,9 +339,10 @@ concurrent requests on different replicas each perform their own exchange.
 
 | `dial_chat_auth_outcome` (refresh) | Meaning                                                                                                                                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `refreshed`                        | The identity provider returned a new token set.                                                                                                                                       |
+| `refreshed`                        | The identity provider returned a new token set and the session passed the deadline check before renewal.                                                                              |
 | `race_absorbed`                    | `invalid_grant` arrived while the access token was still valid — a lost refresh-token rotation race, absorbed without forcing a logout. Neither a refresh success nor a session loss. |
-| `invalid_grant`                    | `invalid_grant` with an already-expired access token: the session cannot be recovered.                                                                                                |
+| `invalid_grant`                    | `invalid_grant` after access-token or session expiry: the session cannot be recovered.                                                                                                |
+| `session_expired`                  | The exchange returned a token set, but finished after the session deadline: nothing is renewed and the request fails.                                                                 |
 | `upstream_error`                   | Any other failure of the exchange, including an unresolvable provider.                                                                                                                |
 
 `dial_chat_auth_authorization_total` counts one `SessionGuard` decision per guarded request.
@@ -581,6 +582,17 @@ the repository examples do not configure, query, or verify them. Real ingress RP
 observed application arrivals because traffic may be rejected before reaching Node or may be
 generated internally. Use the deployment's verified ingress, Kubernetes, and synthetic-check
 contracts when adding availability panels.
+
+### Auth and session monitoring
+
+Use the [Auth and sessions dashboard](examples/dashboards/05-bff-auth-sessions.json)
+for login/callback outcomes, refresh exchanges and latency, coalesced requests,
+authorization rejections, and logout results. The refresh outcome panel includes
+`session_expired` when an exchange finishes after the session deadline.
+Routine login, session validation, renewal, and refresh-race recovery emit metrics
+without per-event logs. Warnings and errors remain for operational failures;
+`auth.refresh.failed` contains only the session ID, provider ID, and outcome,
+without token values or raw provider errors.
 
 ## Investigation workflow
 
