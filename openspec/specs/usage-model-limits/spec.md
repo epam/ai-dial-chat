@@ -342,8 +342,10 @@ owns. Selector, minute/hour, and Requests keys SHALL only be removed if unused e
 
 ### Requirement: Library isolation for the adapter
 
-The adapters SHALL own all DTO field selection, unlimited-sentinel checks, status thresholds,
-currency/number formatting, locale/icon resolution, and deployment joins. That work SHALL happen in
+The adapters SHALL own DTO field selection, unlimited-sentinel checks, status thresholds,
+shared currency/number formatting, and deployment joins. Host-specific locale/icon resolution,
+translated strings, and reset-time formatting SHALL be supplied through callbacks or parameters.
+The response adaptation SHALL happen in
 `map-usage-data-to-dashboard.ts` and `map-user-usage-to-model-limits.ts` under
 `libs/chat-hooks/src/usage/` — the narrow, explicitly justified location recorded in AGENTS.md
 §Library isolation's DIAL-Core-response-adapter exception — and SHALL NOT happen in
@@ -397,4 +399,7 @@ preserved.
 #### Scenario: No import cycle between the library and the adapter's host library
 - **WHEN** the project graph is inspected
 - **THEN** `libs/usage-dashboard` depends on neither `libs/chat-hooks` nor `apps/chat`, and
-  `libs/chat-hooks`'s dependency on `@epam/ai-dial-usage-dashboard` is type-only
+  `libs/chat-hooks` consumes its normalized display types and runtime display enums through an
+  optional peer dependency; hosts loading the root or `./utils` entry point SHALL install that
+  peer. This one-way runtime dependency SHALL NOT introduce a reverse import from the
+  presentational library into the adapters.

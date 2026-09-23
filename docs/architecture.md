@@ -164,6 +164,22 @@ Libraries must stay free of host and external-system knowledge: no REST paths, g
 
 `libs/chat-hooks` has a narrower exception: hooks may depend on the generated client's types and operation signatures and accept an already-configured client instance. The library must not construct or configure that client or acquire any other host-owned integration knowledge.
 
+The separate response-adapter exception permits the three usage mappers in
+`libs/chat-hooks/src/usage/`: `mapUsageDataToDashboard`, `mapUserUsageToModelLimits`, and
+`mapOverallCostLimitsToPeriodStatuses`. They interpret the generated response's fields,
+sentinels, and thresholds, with behavior characterized by the existing test suites.
+The adaptation is shared across DIAL-Core-backed hosts; translated strings, icon URLs,
+locale resolution, and reset-time formatting still come from host-supplied callbacks
+or parameters. An additional adapter needs its own equivalent justification in its
+change's design; this is not permission to move arbitrary product rules into a library.
+
+These adapters are exported from both the `chat-hooks` root and `./utils` entry point.
+They use `usage-dashboard` display enums at runtime, so consumers of these entry
+points need its optional peer installed. The dependency is one-way:
+`usage-dashboard` consumes normalized models and imports neither `chat-hooks` nor the
+generated client. See the [usage utilities contract](../libs/chat-hooks/README.md#usage-utilities)
+and [mapper migration](../libs/usage-dashboard/README.md#breaking--dto-interpreting-utilities-removed).
+
 Application credentials follow this boundary: `libs/catalog` owns the reusable
 forms and shares credentials rows/status cards with toolsets; `libs/chat-hooks`
 owns metadata loading through supplied, configured API clients. The Chat adapter
@@ -214,7 +230,7 @@ which never sees a raw timestamp, a locale, or a timezone. All other BFF interpr
 selection, the unlimited-sentinel check, status-threshold derivation, and the deployment join — lives
 in the `libs/chat-hooks/src/usage` adapters `map-usage-data-to-dashboard.ts` and
 `map-user-usage-to-model-limits.ts`, under the narrow, recorded DIAL-Core-response-adapter exception
-(see Library isolation below); `@epam/ai-dial-usage-dashboard` renders only the normalized
+(see [Library isolation](#library-isolation)); `@epam/ai-dial-usage-dashboard` renders only the normalized
 cards, rows, and period statuses those adapters produce. The tab also arms a timer for the earliest
 displayed boundary and re-fetches when it elapses, so post-reset figures always come from a fresh
 DIAL Core response — nothing is ever zeroed locally.

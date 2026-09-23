@@ -32,9 +32,10 @@ generated-client exceptions recorded in AGENTS.md §Library isolation cover `lib
 
 The library SHALL render already-normalized display models supplied by its host. All interpretation
 of DIAL Core responses — generated DTO field selection, the unlimited sentinel
-(`total >= 2 ** 53`), status thresholds, currency and number formatting, deployment-type filtering,
-locale and icon resolution, and reset-time formatting — SHALL happen in host-owned adapters outside
-this library. The host passes the results in through `UsageLimitCardData`, `ModelLimitRow`,
+(`total >= 2 ** 53`), status thresholds, shared currency and number formatting, deployment-type
+filtering, and deployment joins — SHALL happen in response adapters outside this library.
+Host-specific locale and icon resolution, translated strings, and reset-time formatting SHALL
+remain host-supplied callbacks or parameters. The host passes the results in through `UsageLimitCardData`, `ModelLimitRow`,
 `ModelLimitPeriodStatuses`, and the components' label props; in AI DIAL Chat those adapters live in
 `libs/chat-hooks` (see the `usage-model-limits` and `usage-data-hook` capabilities), under the
 narrow `chat-hooks` DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation —

@@ -1424,6 +1424,12 @@ const SkillCatalog = ({
 
 ## Usage Utilities
 
+Available from both `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/utils`.
+These adapters use display enums from `@epam/ai-dial-usage-dashboard` at runtime.
+It is an optional peer in the package manifest, but must be installed when loading
+either entry point; optional means hosts using other feature subpaths can omit it.
+The root retains its broader feature-peer requirements listed above.
+
 Three pure functions turning `useUsageData`'s already-fetched `UserLimitStatsResponseDto` into the normalized display models `@epam/ai-dial-usage-dashboard`'s `UsageLimitCardGroup` and `ModelLimitsSection` render. This is the narrow, explicitly justified DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation: the adaptation is driven entirely by the generated response's own shape (the unlimited sentinel, status thresholds, field names), fully characterized by an existing test suite, and consumed identically by every DIAL-Core-backed chat application this library serves. Every user-visible string is produced by a caller-supplied `t` function matching i18next's `TFunction` signature, and every host-specific concern (icon-URL construction, locale resolution, date/time formatting) arrives as a caller-supplied callback — none of the three functions imports `react-i18next`, an app context, or `Intl`.
 
 ### mapUsageDataToDashboard
@@ -1545,6 +1551,11 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
 
 - `ResetTimeDisplay` — `{ resetsAtMs, isoValue, label, ariaLabel }`, the structural shape `formatResetTime` returns. Field-for-field identical to `apps/chat/src/utils/usage-reset-time.ts`'s own `ResetTimeDisplay`, so a host's existing formatter satisfies this type with no adapter or cast.
 - `FormatResetTime` — `(resetsAt: string | undefined) => ResetTimeDisplay | undefined`
+
+When migrating the former `usage-dashboard` utility imports, use `ResetTimeDisplay`
+instead of `ResetTimeDisplayLike`. The three function names, translation-key constants,
+and `FormatResetTime` keep their names; only their owning package changes. See the
+[migration guidance](../usage-dashboard/README.md#breaking--dto-interpreting-utilities-removed).
 
 ## File Manager
 

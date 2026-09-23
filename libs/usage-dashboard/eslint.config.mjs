@@ -9,7 +9,7 @@ export default [
     rules: {
       /*
        * This library renders already-normalized display models only — DTO
-       * interpretation is host-owned (see AGENTS.md §Library isolation). A
+       * interpretation stays outside it (see AGENTS.md §Library isolation). A
        * returning import here, even through a re-export, must fail lint
        * rather than wait for review.
        */
@@ -23,7 +23,7 @@ export default [
                 '@epam/ai-dial-chat-api-client/*',
               ],
               message:
-                'libs/usage-dashboard must not import the generated BFF client — DTO interpretation belongs in host-owned adapters (apps/chat/src/utils in AI DIAL Chat). See AGENTS.md §Library isolation.',
+                'libs/usage-dashboard must not import the generated BFF client — usage DTO interpretation belongs in libs/chat-hooks/src/usage under its recorded exception, with host-specific behavior supplied by callbacks. See AGENTS.md §Library isolation.',
             },
           ],
         },
