@@ -57,6 +57,9 @@ const selectUnshareFileManagerItems = (state: RootState) =>
 const selectIsResourceShared = (state: RootState) =>
   rootSelector(state).isShared;
 
+const selectIsInvitationProcessed = (state: RootState, invitationId: string) =>
+  rootSelector(state).processedInvitationIds.includes(invitationId);
+
 export const ShareSelectors = {
   selectInvitationId,
   selectWriteInvitationId,
@@ -73,4 +76,5 @@ export const ShareSelectors = {
   selectUnshareResourceId,
   selectUnshareFileManagerItems,
   selectIsResourceShared,
+  selectIsInvitationProcessed,
 };

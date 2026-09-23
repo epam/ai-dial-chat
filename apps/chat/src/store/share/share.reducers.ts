@@ -32,6 +32,7 @@ const initialState: ShareState = {
   writeInvitationId: undefined,
   acceptedId: undefined,
   isFolderAccepted: undefined,
+  processedInvitationIds: [],
   isConversation: undefined,
   isPrompt: undefined,
   unshareResourceId: undefined,
@@ -221,10 +222,16 @@ export const shareSlice = createSlice({
     },
     acceptShareInvitation: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         invitationId: string;
       }>,
-    ) => state,
+    ) => {
+      if (!state.processedInvitationIds.includes(payload.invitationId)) {
+        state.processedInvitationIds.push(payload.invitationId);
+      }
+    },
     acceptShareInvitationSuccess: (
       state,
       {

@@ -137,6 +137,7 @@ import {
   OverlaySelectors,
   PublicationSelectors,
   SettingsSelectors,
+  ShareSelectors,
   UISelectors,
   WidgetsSelectors,
 } from '@/src/store/selectors';
@@ -221,17 +222,23 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initShareEpic: AppEpic = (action$) =>
+const initShareEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.initShare.type),
     switchMap(() => {
       const searchParams = new URLSearchParams(window.location.search);
+      const invitationId = searchParams.get(SHARE_QUERY_PARAM);
 
       return iif(
-        () => searchParams.has(SHARE_QUERY_PARAM),
+        () =>
+          !!invitationId &&
+          !ShareSelectors.selectIsInvitationProcessed(
+            state$.value,
+            invitationId,
+          ),
         of(
           ShareActions.acceptShareInvitation({
-            invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
+            invitationId: invitationId!,
           }),
         ),
         EMPTY,

@@ -31,6 +31,7 @@ export interface ShareState {
   unshareEntity?: UnshareEntity;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
+  processedInvitationIds: string[];
   shareFeatureType?: FeatureType;
   shareIsFolder?: boolean;
   isConversation?: boolean;
