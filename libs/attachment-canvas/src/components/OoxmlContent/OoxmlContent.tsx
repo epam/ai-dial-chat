@@ -17,12 +17,18 @@ import styles from './OoxmlContent.module.scss';
 interface OoxmlViewer {
   load(source: string | ArrayBuffer): Promise<void>;
   destroy(): void;
+  /**
+   * Re-lays out a canvas-based viewer after its container was resized. Absent
+   * for DOCX/PPTX/XLSX, which already refit themselves via `refitOnResize`
+   * or their own internal resize observer.
+   */
+  resize?(): void | Promise<void>;
 }
 
 /** A loaded viewer plus everything the renderer has to release for it. */
 interface OoxmlSurface {
   /** The viewer painting the document. */
-  viewer: { destroy(): void };
+  viewer: { destroy(): void; resize?(): void | Promise<void> };
   /**
    * Engine borrowed through a `from*()` factory. `viewer.destroy()` deliberately
    * leaves it alive, so the renderer owns this second `destroy()`.
@@ -102,6 +108,20 @@ const createViewer = async (
       return {
         load: (source) => viewer.load(source, { format: 'csv' }),
         destroy: () => viewer.destroy(),
+        /*
+         * `relayout()` re-measures its own wrapper from `canvas.getBoundingClientRect()`
+         * and then pins the wrapper to that pixel size — after the first call, the
+         * canvas's box no longer tracks this `container` via its `width: 100%` class,
+         * it tracks the now-fixed wrapper. Setting the canvas's own inline size from
+         * `container` first breaks that circularity so every later resize still
+         * measures the real, live container instead of the vendor's frozen copy.
+         */
+        resize: () => {
+          const { width, height } = container.getBoundingClientRect();
+          if (width > 0) canvas.style.width = `${width}px`;
+          if (height > 0) canvas.style.height = `${height}px`;
+          return viewer.relayout();
+        },
       };
     }
     case OoxmlFileType.Pptx: {
@@ -365,10 +385,20 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
      * observer's lifetime from the viewer's for no benefit. No "skip the
      * first callback" flag either: `observe()`'s initial delivery coalesces
      * harmlessly with `loadDocument`'s own first `measure()` below.
+     *
+     * Also drives `surface.viewer.resize()`, which only the CSV branch
+     * implements: `XlsxSheetViewer` paints onto a raw `<canvas>` with no
+     * `refitOnResize` option and no internal resize observer of its own
+     * (unlike the DOCX/PPTX viewers and the full `XlsxViewer`), so without
+     * this call a panel resize stretches the existing raster instead of
+     * re-laying out the grid.
      */
     const observeContainer = (): void => {
       if (disposed) return;
-      resizeObserver = new ResizeObserver(scheduleRecompute);
+      resizeObserver = new ResizeObserver(() => {
+        void surface?.viewer.resize?.();
+        scheduleRecompute();
+      });
       resizeObserver.observe(container);
     };
 
@@ -401,8 +431,9 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
           }
           surface = { viewer };
           surfaceRef.current = undefined;
-          observeContainer();
           await viewer.load(content.url);
+          if (disposed) return;
+          observeContainer();
         }
         if (disposed) return;
         setIsLoading(false);
