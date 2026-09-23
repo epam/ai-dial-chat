@@ -1,25 +1,21 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  CardShell,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  FolderPath,
-  Highlight,
-} from '@epam/ai-dial-ui-kit';
-import { IconPlayerPause } from '@tabler/icons-react';
+import { CardShell, FolderPath, Highlight } from '@epam/ai-dial-ui-kit';
 import type { FC, KeyboardEvent } from 'react';
 import { SCHEDULED_TASKS_CLASS } from '../../constants/public-class-names';
 import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-props';
-import { ScheduledTaskPresentationStatus } from '../../models/scheduled-task-item';
+import { ScheduledTaskStatus } from '../../types/scheduled-task-status';
+import { getScheduledTaskStatus } from '../../utils/scheduled-task-status';
+import { ScheduledTaskStatusPill } from '../ScheduledTaskStatusPill/ScheduledTaskStatusPill';
 import styles from './ScheduledTaskCard.module.scss';
 
 /**
  * Single scheduled-task card: title, optional "new" badge and description,
- * schedule pill (replaced by a "Paused" badge when `item.isActive` is
- * `false`), and location breadcrumb. Renders on the shared `CardShell` from
- * `@epam/ai-dial-ui-kit` (radius, padding, shadow, hover lift), the same shell
- * the Catalog browse card uses. The card has a fixed height; a long
- * description is clamped with an ellipsis, and the schedule pill (plus the
+ * status pill (the schedule label, or a "Paused"/"Completed" badge when the
+ * resolved status is paused/completed — via `getScheduledTaskStatus`), and
+ * location breadcrumb. Renders on the shared `CardShell` from
+ * `@epam/ai-dial-ui-kit` (radius, padding, shadow, hover lift), the same
+ * shell the Catalog browse card uses. The card has a fixed height; a long
+ * description is clamped with an ellipsis, and the status pill (plus the
  * location breadcrumb, when present) is pinned to the bottom regardless of
  * description length.
  */
@@ -43,29 +39,47 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     typography?.descriptionSizeClassName ?? 'dial-tiny-text';
   const scheduleLabelClassName =
     typography?.scheduleLabelClassName ?? 'dial-tiny-text';
+  const pausedBadgeClassName =
+    typography?.pausedBadgeClassName ?? 'dial-tiny-text';
+  const completedBadgeClassName =
+    typography?.completedBadgeClassName ?? 'dial-tiny-text';
+
   const locationLabelClassName =
     typography?.locationLabelClassName ?? 'dial-tiny-text';
   const locationLeafClassName =
     typography?.locationLeafClassName ?? 'dial-tiny-semi-text';
   const newBadgeClassName =
     typography?.newBadgeClassName ?? 'dial-tiny-semi-text';
-  const pausedBadgeClassName =
-    typography?.pausedBadgeClassName ?? 'dial-tiny-text';
-  const completedBadgeClassName =
-    typography?.completedBadgeClassName ?? 'dial-tiny-text';
-  const status =
-    item.presentationStatus ??
-    (item.isActive === false
-      ? ScheduledTaskPresentationStatus.Paused
-      : ScheduledTaskPresentationStatus.Active);
-  const statusTitleText =
-    status === ScheduledTaskPresentationStatus.Paused
-      ? colors?.pausedTitleText
-      : status === ScheduledTaskPresentationStatus.Completed
-        ? colors?.completedTitleText
-        : undefined;
+
+  /*
+   * Status resolution: the pill takes a pre-resolved status/text pair, so the
+   * card maps each status to its text and typography class here. Enum-keyed,
+   * so adding a status member without an entry fails to compile — no inline
+   * per-status branches.
+   */
+  const status = getScheduledTaskStatus(item);
+  const statusSources: Record<
+    ScheduledTaskStatus,
+    { text: string; textClassName: string }
+  > = {
+    [ScheduledTaskStatus.Scheduled]: {
+      text: item.scheduleLabel,
+      textClassName: scheduleLabelClassName,
+    },
+    [ScheduledTaskStatus.Paused]: {
+      text: pausedBadgeLabel,
+      textClassName: pausedBadgeClassName,
+    },
+    [ScheduledTaskStatus.Completed]: {
+      text: completedBadgeLabel,
+      textClassName: completedBadgeClassName,
+    },
+  };
+  const { text: statusText, textClassName: statusTextClassName } =
+    statusSources[status];
+
   const cssVars = buildCssVars({
-    '--stc-title-text': statusTitleText ?? colors?.titleText,
+    '--stc-title-text': colors?.titleText,
     '--stc-desc-text': colors?.descriptionText,
     '--stc-pill-bg': colors?.schedulePillBackground,
     '--stc-pill-border': colors?.schedulePillBorder,
@@ -144,45 +158,11 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
 
       <div className="mt-auto flex shrink-0 flex-col gap-3">
         <div className="flex min-h-[28px] items-center">
-          {status === ScheduledTaskPresentationStatus.Paused ? (
-            <span
-              className={mergeClasses(
-                'inline-flex items-center gap-1.5 rounded-full border px-2 py-1',
-                styles.pausedPill,
-                pausedBadgeClassName,
-                styles.pausedLabel,
-              )}
-            >
-              <IconPlayerPause
-                size={DIAL_ICON_SIZE.SM}
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-              {pausedBadgeLabel}
-            </span>
-          ) : status === ScheduledTaskPresentationStatus.Completed ? (
-            <span
-              className={mergeClasses(
-                'inline-flex items-center rounded-full border px-2 py-1',
-                styles.completedPill,
-                completedBadgeClassName,
-                styles.completedLabel,
-              )}
-            >
-              {completedBadgeLabel}
-            </span>
-          ) : (
-            <span
-              className={mergeClasses(
-                'inline-block rounded-lg border px-2 py-1',
-                styles.schedulePill,
-                scheduleLabelClassName,
-                styles.scheduleLabel,
-              )}
-            >
-              {item.scheduleLabel}
-            </span>
-          )}
+          <ScheduledTaskStatusPill
+            status={status}
+            text={statusText}
+            textClassName={statusTextClassName}
+          />
         </div>
 
         {item.locationSegments && item.locationSegments.length > 0 && (

@@ -227,6 +227,7 @@ const ScheduledTaskDetailPage: FC = () => {
         missed: t(ScheduledTasksI18nKeys.DetailStatusMissed),
       },
       activeStatusLabel: t(ScheduledTasksI18nKeys.DetailActiveStatusLabel),
+      completedFieldLabel: t(ScheduledTasksI18nKeys.DetailCompletedFieldLabel),
       activeStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
@@ -260,6 +261,24 @@ const ScheduledTaskDetailPage: FC = () => {
     (task?.triggerType === 'cron' &&
       cronWindowEndDate != null &&
       new Date(cronWindowEndDate).getTime() <= Date.now());
+
+  /*
+   * The disabled switch's explanatory text differs per case: a fired one-time
+   * schedule already ran, while a recurring schedule's activity window has
+   * closed — the user sees why the toggle is dead rather than a bare disabled
+   * control.
+   */
+  let isActiveDisabledReason: string | undefined;
+  if (isActiveDisabled) {
+    isActiveDisabledReason =
+      task?.triggerType === 'date'
+        ? t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted)
+        : t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
+  }
+
+  const completedLabel = task?.isCompleted
+    ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
+    : undefined;
 
   const handleActiveChange = useCallback(
     async (nextActive: boolean) => {
@@ -372,7 +391,7 @@ const ScheduledTaskDetailPage: FC = () => {
   return (
     <>
       <ScheduledTaskDetailView
-        labels={labels}
+        labels={{ ...labels, isActiveDisabledReason }}
         onBack={handleBack}
         onEdit={task && !isTaskDeleted ? handleEdit : undefined}
         onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
@@ -390,6 +409,7 @@ const ScheduledTaskDetailPage: FC = () => {
         modelLabel={modelLabel}
         repeatsLabel={repeatsLabel}
         activeWindowLabel={activeWindowLabel}
+        completedLabel={completedLabel}
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
         runs={runItems}

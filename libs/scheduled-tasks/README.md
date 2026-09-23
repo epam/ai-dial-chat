@@ -82,11 +82,9 @@ import {
 
 ### ScheduledTaskCard
 
-A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, and optional location breadcrumb and "new" badge. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
+A single scheduled task rendered as a card: title, optional description/prompt preview, a status pill, and optional location breadcrumb and "new" badge. The status pill is resolved by `getScheduledTaskStatus`: an explicit `item.presentationStatus` wins over the derived statuses; otherwise `item.isCompleted: true` renders a "Completed" badge (check icon), `item.isActive: false` renders a "Paused" badge, and otherwise the schedule label renders as the schedule pill — exactly one of the three, never two together. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
 
-`item.presentationStatus` takes precedence over the legacy `isActive` flag;
-when omitted, `isActive` retains its existing behavior. Supply
-`labels.completedBadgeLabel` for localized completed-state copy.
+Supply `labels.completedBadgeLabel` for localized completed-state copy.
 
 ```tsx
 import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
@@ -96,7 +94,9 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
     id: 'sched_1',
     displayName: 'Competitor Updates',
     scheduleLabel: 'Every Monday 12:00',
+    isCompleted: true,
   }}
+  labels={{ completedBadgeLabel: 'Completed' }}
   onCardClick={(id) => {}}
 />;
 ```
@@ -240,6 +240,27 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Utilities
+
+### getScheduledTaskStatus
+
+Resolves a `ScheduledTaskItem`'s visual status with fixed precedence: an explicit `presentationStatus` wins over `isCompleted`, which wins over `isActive === false`, which wins over the schedule pill. The card uses it internally; it is exported so a host (or test) resolves the same status the card renders.
+
+```ts
+import {
+  getScheduledTaskStatus,
+  ScheduledTaskStatus,
+} from '@epam/ai-dial-scheduled-tasks';
+
+getScheduledTaskStatus({ isCompleted: true, isActive: false }); // ScheduledTaskStatus.Completed
+getScheduledTaskStatus({ isActive: false }); // ScheduledTaskStatus.Paused
+getScheduledTaskStatus({ isActive: true }); // ScheduledTaskStatus.Scheduled
+```
+
+### ScheduledTaskStatus
+
+String enum of card visual statuses: `Scheduled = 'scheduled'` (schedule pill), `Paused = 'paused'` ("Paused" badge), `Completed = 'completed'` ("Completed" badge). Returned by `getScheduledTaskStatus`.
 
 ## Constants
 

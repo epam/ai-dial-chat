@@ -21,7 +21,11 @@ import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task
 import type { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
 import { ScheduledTasksSortKey } from './dto/list-scheduled-tasks-query.dto';
 import type { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
-import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
+import { ScheduledTaskRunStatus } from './dto/scheduled-task-run.dto';
+import {
+  ScheduleTriggerType,
+  type ScheduledTaskDto,
+} from './dto/scheduled-task.dto';
 import type { UpdateScheduledTaskBodyDto } from './dto/update-scheduled-task.dto';
 import {
   fromUpstreamRun,
@@ -154,6 +158,103 @@ export class ScheduledTasksService {
     searchParams.set('order_by', 'created_at');
     searchParams.set('order_dir', 'desc');
     return `${this.buildSchedulesUrl(scheduleId)}/runs?${searchParams.toString()}`;
+  }
+
+  /*
+   * Completion candidate gate, first two clauses of the derivation for
+   * one-time (date-trigger) schedules: nothing left to run. The gate is an OR
+   * so it is path-independent — list responses that omit the nested `trigger`
+   * rely on `nextRunTime` alone; responses that carry `trigger` have both arms
+   * and they agree wherever both are computable. The clock comparison uses
+   * this server's clock, keeping skew/timezone handling in one place.
+   */
+  private isCompletionCandidate(task: ScheduledTaskDto): boolean {
+    if (task.triggerType !== ScheduleTriggerType.Date) {
+      return false;
+    }
+    if (task.nextRunTime == null) {
+      return true;
+    }
+    const triggerDate = task.trigger?.date;
+    const triggerDateMs = triggerDate ? new Date(triggerDate).getTime() : NaN;
+    return !Number.isNaN(triggerDateMs) && triggerDateMs <= Date.now();
+  }
+
+  /*
+   * Recurring-schedule terminal state: the activity window has closed with no
+   * upcoming run, so resuming can never produce another run — the same
+   * condition that disables the detail view's Active switch. Unlike a one-time
+   * schedule, this is unambiguous from the schedule fields alone, so no
+   * run-history call is needed. A cron schedule without an `endDate`, or with
+   * one still in the future, is merely paused — not terminal. Degrades to
+   * `false` when the response carries no `trigger.cron.endDate` (a list shape
+   * without the nested trigger), leaving such cards on today's Paused display.
+   */
+  private isExpiredRecurring(task: ScheduledTaskDto): boolean {
+    if (task.triggerType !== ScheduleTriggerType.Cron) {
+      return false;
+    }
+    if (task.nextRunTime != null) {
+      return false;
+    }
+    const endDate = task.trigger?.cron?.endDate;
+    const endDateMs = endDate ? new Date(endDate).getTime() : NaN;
+    return !Number.isNaN(endDateMs) && endDateMs <= Date.now();
+  }
+
+  /** Newest run of a schedule (the runs endpoint's documented order is newest-first). */
+  private async fetchNewestRun(
+    scheduleId: string,
+    accessToken: string,
+  ): Promise<UpstreamScheduleRun | undefined> {
+    const result = await this.fetchUpstream<
+      UpstreamScheduleResponse & { results?: UpstreamScheduleRun[] }
+    >(
+      this.buildRunsUrl(scheduleId, { limit: 1, offset: 0 }),
+      'GET',
+      accessToken,
+      `resolve scheduled task completion "${scheduleId}"`,
+    );
+    return result.results?.[0];
+  }
+
+  /*
+   * Terminal-state resolution: an expired-window recurring schedule is
+   * completed from its fields alone (no runs call); a one-time candidate
+   * additionally needs its newest run to be terminal (Success or Error) —
+   * "completed" means the task has finished, regardless of outcome.
+   * InProgress, Missed, and an empty run list all mean not completed, and a
+   * non-terminal schedule is never completed. A failed runs call degrades to
+   * `undefined` (rendered identically to false) instead of failing the parent
+   * list/get.
+   */
+  private async resolveIsCompleted(
+    task: ScheduledTaskDto,
+    accessToken: string,
+  ): Promise<boolean | undefined> {
+    if (this.isExpiredRecurring(task)) {
+      return true;
+    }
+    if (!this.isCompletionCandidate(task)) {
+      return false;
+    }
+    try {
+      const newestRun = await this.fetchNewestRun(task.id, accessToken);
+      if (newestRun == null) {
+        return false;
+      }
+      const status = fromUpstreamRun(newestRun).status;
+      return (
+        status === ScheduledTaskRunStatus.Success ||
+        status === ScheduledTaskRunStatus.Error
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to resolve completion for scheduled task "${task.id}"; returning isCompleted as unknown`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return undefined;
+    }
   }
 
   /*
@@ -341,7 +442,20 @@ export class ScheduledTasksService {
               : `object{${Object.keys(result).join(',')}}`
           })`,
         );
-        return { items: items.map(fromUpstreamSchedule), ...pagination };
+        /*
+         * Completion enrichment runs inside the cache wrapper, so a cached
+         * page pays no runs calls; checks fire in parallel and only for the
+         * page's candidate items (one-time schedules with no next run).
+         */
+        const mappedTasks = items.map(fromUpstreamSchedule);
+        const completions = await Promise.all(
+          mappedTasks.map((task) => this.resolveIsCompleted(task, accessToken)),
+        );
+        const enrichedItems = mappedTasks.map((task, index) => ({
+          ...task,
+          isCompleted: completions[index],
+        }));
+        return { items: enrichedItems, ...pagination };
       },
     });
   }
@@ -380,7 +494,11 @@ export class ScheduledTasksService {
       accessToken,
       `get scheduled task "${scheduleId}"`,
     );
-    return fromUpstreamSchedule(result);
+    const task = fromUpstreamSchedule(result);
+    return {
+      ...task,
+      isCompleted: await this.resolveIsCompleted(task, accessToken),
+    };
   }
 
   async listScheduledTaskRuns(

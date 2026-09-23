@@ -12083,6 +12083,11 @@
             "type": "boolean",
             "example": true
           },
+          "isCompleted": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs)."
+          },
           "isDeleted": {
             "type": "boolean",
             "example": false
@@ -12208,6 +12213,11 @@
           "isActive": {
             "type": "boolean",
             "example": true
+          },
+          "isCompleted": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs)."
           },
           "isDeleted": {
             "type": "boolean",
@@ -12366,6 +12376,11 @@
           "isActive": {
             "type": "boolean",
             "example": true
+          },
+          "isCompleted": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs)."
           },
           "isDeleted": {
             "type": "boolean",

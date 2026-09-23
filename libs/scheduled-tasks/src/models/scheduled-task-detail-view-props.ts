@@ -26,6 +26,10 @@ export interface ScheduledTaskDetailViewLabels {
   activeWindowLabel: string;
   /** Accessible name and visible label of the header's Active switch. Distinct from `activeWindowLabel`, which describes the cron activity date window. Shown only when `isActive` is defined. */
   activeStatusLabel: string;
+  /** Text shown next to the Active switch when `isActiveDisabled` is `true`, explaining why resuming is unavailable (e.g. a one-time schedule that already ran). Omit to hide. */
+  isActiveDisabledReason?: string;
+  /** Label for the completed-state field in the Details section. Defaults to `'Status'`. */
+  completedFieldLabel?: string;
   /** Announced via `aria-live` after a pause/resume mutation completes, separate from the switch's own accessible name. Empty string announces nothing. */
   activeStatusAnnouncement?: string;
   /** Title of the Configuration section. */
@@ -148,6 +152,8 @@ export interface ScheduledTaskDetailViewProps {
   repeatsLabel?: string;
   /** Pre-formatted activity-window label, e.g. "Aug 1, 2026 – Dec 31, 2026". Omit to hide (unbounded or one-shot schedule). */
   activeWindowLabel?: string;
+  /** Pre-formatted completed-state value shown as a field in the Details section, e.g. "Completed" — for a task that can no longer produce a future run. Omit to hide. */
+  completedLabel?: string;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */

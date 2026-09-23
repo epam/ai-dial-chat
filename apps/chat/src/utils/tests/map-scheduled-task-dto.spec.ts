@@ -187,6 +187,31 @@ describe('mapScheduledTaskDtoToItem', () => {
 
     expect(result.isActive).toBeUndefined();
   });
+
+  it('maps isCompleted true to the item unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ isCompleted: true, isActive: false }),
+      fakeT,
+    );
+
+    expect(result.isCompleted).toBe(true);
+    expect(result.isActive).toBe(false);
+  });
+
+  it('maps isCompleted false to the item unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ isCompleted: false }),
+      fakeT,
+    );
+
+    expect(result.isCompleted).toBe(false);
+  });
+
+  it('maps a missing isCompleted to undefined without throwing', () => {
+    const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
+
+    expect(result.isCompleted).toBeUndefined();
+  });
 });
 
 describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion', () => {
