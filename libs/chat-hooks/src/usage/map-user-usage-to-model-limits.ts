@@ -12,11 +12,12 @@ import type {
   ModelLimitPeriodStatus,
   ModelLimitPeriodStatuses,
   ModelLimitRow,
-} from '../models/model-limits-props';
+} from '@epam/ai-dial-usage-dashboard';
 import {
   ModelLimitMetricKind,
   ModelLimitStatus,
-} from '../models/model-limits-props';
+} from '@epam/ai-dial-usage-dashboard';
+export type { FormatResetTime } from './map-usage-data-to-dashboard';
 import type { FormatResetTime } from './map-usage-data-to-dashboard';
 
 /** A translate function compatible with i18next's `TFunction`. */

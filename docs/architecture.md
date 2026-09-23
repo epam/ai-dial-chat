@@ -152,7 +152,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-skill-editor`          | `skill-editor`          | Skill authoring form with a file tree and conflict handling                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `@epam/ai-dial-builder-form`          | `builder-form`          | Presentational builder form shells, editor layouts and shared deployment field sets for composing and editing DIAL entities                                                                                                                                                                                                                                                                                                                                                        |
 | `@epam/ai-dial-scheduled-tasks`       | `scheduled-tasks`       | Host-agnostic Scheduled Tasks list, form, detail/history and delete-confirmation presentation; `styles.css` composes required builder-form structural CSS                                                                                                                                                                                                                                                                                                                          |
-| `@epam/ai-dial-usage-dashboard`       | `usage-dashboard`       | Aggregate calendar-period (UTC day/week/month) cost-limit cards and the per-model limits table for the Settings Usage tab, including each period's host-formatted reset time                                                                                                                                                                                                                                                                                                       |
+| `@epam/ai-dial-usage-dashboard`       | `usage-dashboard`       | Aggregate calendar-period (UTC day/week/month) cost-limit cards and the per-model limits table for the Settings Usage tab, rendering normalized display models only — DTO interpretation lives in `libs/chat-hooks/src/usage`                                                                                                                                                                                                                                                      |
 
 Conversation-history reuse is split across three acyclic layers. `chat-shared` owns the canonical `FilterTab`, the transfer-job contracts (job, status, subject, determinate progress, and the `ConversationTransferErrorCode` taxonomy), and conversation-name utilities. `chat-hooks` owns headless resource-state and conversation-panel controller hooks, with host-specific routing, labels, feature policy, and configured clients injected by `apps/chat`. `conversation-panel` owns the virtualized panel plus the labels-driven `ImportExportQueue` — with its per-row UI kit `Spinner` and `getTransferFileIcon` mapping — and the `RenameConversationPopup` presentation component, and consumes `FilterTab` and the transfer-job contracts from `chat-shared` directly rather than re-exporting them.
 
@@ -163,6 +163,22 @@ Libraries must stay free of host and external-system knowledge: no REST paths, g
 `@epam/ai-dial-chat-api-client` is the generated-client exception: it is generated from the backend's OpenAPI document and exists to carry endpoint paths and DTOs. Do not hand-edit it; applications normally consume it through `apps/chat/src/server-api`.
 
 `libs/chat-hooks` has a narrower exception: hooks may depend on the generated client's types and operation signatures and accept an already-configured client instance. The library must not construct or configure that client or acquire any other host-owned integration knowledge.
+
+The separate response-adapter exception permits the three usage mappers in
+`libs/chat-hooks/src/usage/`: `mapUsageDataToDashboard`, `mapUserUsageToModelLimits`, and
+`mapOverallCostLimitsToPeriodStatuses`. They interpret the generated response's fields,
+sentinels, and thresholds, with behavior characterized by the existing test suites.
+The adaptation is shared across DIAL-Core-backed hosts; translated strings, icon URLs,
+locale resolution, and reset-time formatting still come from host-supplied callbacks
+or parameters. An additional adapter needs its own equivalent justification in its
+change's design; this is not permission to move arbitrary product rules into a library.
+
+These adapters are exported from both the `chat-hooks` root and its dedicated `./usage`
+entry point. They use `usage-dashboard` display enums at runtime, so consumers of
+either entry point need its optional peer installed. The dependency is one-way:
+`usage-dashboard` consumes normalized models and imports neither `chat-hooks` nor the
+generated client. See the [usage utilities contract](../libs/chat-hooks/README.md#usage-utilities)
+and [mapper migration](../libs/usage-dashboard/README.md#breaking--dto-interpreting-utilities-removed).
 
 Application credentials follow this boundary: `libs/catalog` owns the reusable
 forms and shares credentials rows/status cards with toolsets; `libs/chat-hooks`
@@ -209,10 +225,15 @@ member plus one entry there. Two tabs ship, in rail order: `PreferencesTab` then
 the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
 boundaries, and DIAL Core reports each one's exclusive end as an optional `resetsAt` instant.
 `UsageTab` formats those at the application edge (`utils/usage-reset-time.ts` — the only place
-`Date`/`Intl` touch a reset time) and passes preformatted strings into
-`@epam/ai-dial-usage-dashboard`, which never sees a raw timestamp, a locale, or a timezone. The tab
-also arms a timer for the earliest displayed boundary and re-fetches when it elapses, so post-reset
-figures always come from a fresh DIAL Core response — nothing is ever zeroed locally.
+`Date`/`Intl` touch a reset time) and passes preformatted strings into `@epam/ai-dial-usage-dashboard`,
+which never sees a raw timestamp, a locale, or a timezone. All other BFF interpretation — DTO field
+selection, the unlimited-sentinel check, status-threshold derivation, and the deployment join — lives
+in the `libs/chat-hooks/src/usage` adapters `map-usage-data-to-dashboard.ts` and
+`map-user-usage-to-model-limits.ts`, under the narrow, recorded DIAL-Core-response-adapter exception
+(see [Library isolation](#library-isolation)); `@epam/ai-dial-usage-dashboard` renders only the normalized
+cards, rows, and period statuses those adapters produce. The tab also arms a timer for the earliest
+displayed boundary and re-fetches when it elapses, so post-reset figures always come from a fresh
+DIAL Core response — nothing is ever zeroed locally.
 `PreferencesTab` hosts the language, keyboard-shortcut and "Default agent for new chats"
 preferences. A theme row is implemented but **commented out**, parked for an
 upcoming theming feature — which is why `useThemeOptions` and the

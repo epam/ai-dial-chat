@@ -6,8 +6,8 @@ Defines the `Usage` tab (page header plus up to three aggregate cost-limit cards
 `useUsageData` hook: fetching the current user's usage from the existing BFF `GET
 /api/v1/user/usage` endpoint via the existing `server-api` wrapper, exposing per-request
 loading/error state, a deduplicated error notification, and the library-isolation contract that
-keeps presentational card rendering in `libs/usage-dashboard` while all data-fetching and DTO
-interpretation stays in `apps/chat`.
+keeps presentational card rendering in `libs/usage-dashboard` while DTO interpretation lives in
+`libs/chat-hooks` (data-fetching via `useUsageData` remains as described below).
 
 ## Requirements
 
@@ -16,8 +16,8 @@ The system SHALL provide a `Usage` tab/page component, registered as the sole en
 `SettingsTabs` config, that renders a page header (title and one-line description) followed by up
 to three aggregate cost-limit cards — Today (`dayCostStats`), This week (`weekCostStats`), This
 month (`monthCostStats`) — via the `@epam/ai-dial-usage-dashboard` library's
-`UsageLimitCardGroup`'s `cards` prop, mapped from `useUsageData`'s result through the app-level
-mapper `apps/chat/src/utils/map-usage-data-to-dashboard.ts` in that fixed order. The header SHALL
+`UsageLimitCardGroup`'s `cards` prop, mapped from `useUsageData`'s result through the
+`@epam/ai-dial-chat-hooks` mapper `mapUsageDataToDashboard` in that fixed order. The header SHALL
 render unconditionally, independent of `isLoading`. Its title SHALL be an `<h2>` — `SettingsPage`
 (`apps/chat/src/pages/SettingsPage/SettingsPage.tsx`) already renders the page's sole `<h1>` — with
 both title and description text sourced from localized `UsageI18nKeys` entries, never hardcoded.
@@ -146,22 +146,45 @@ any app context, routing, auth/session/cookies, environment variables, feature f
 `react-i18next`. It accepts `getUserUsage: () => Promise<UserLimitStatsResponseDto>` as a parameter
 so all DIAL Core wiring stays in the app. The app passes `getUserUsage` from
 `apps/chat/src/server-api/user-limits.ts` and the generated `UserLimitStatsResponseDto` type from
-`@epam/ai-dial-chat-api-client` without modification.
+`@epam/ai-dial-chat-api-client` without modification. This hook's contract is unchanged by the
+adapter relocation described below.
 
-All DTO interpretation — the unlimited-sentinel check (`total >= 2**53`), status-threshold
-derivation, and currency formatting — lives in `libs/usage-dashboard`'s transform utilities (see
-the `usage-dashboard-lib` capability). The `Usage` tab component imports those utilities from
-`@epam/ai-dial-usage-dashboard` and passes app-owned callbacks (`resolveCatalogIconUrl`,
-`resolveLocalizedText`) to keep host-specific URL construction and locale resolution out of the lib.
+All DTO interpretation — generated field selection, the unlimited-sentinel check
+(`total >= 2 ** 53`), status-threshold derivation, currency and compact-number formatting, the
+`DeploymentItemDtoTypeEnum.Model` filter, and the deployment join — SHALL live in the adapters
+`map-usage-data-to-dashboard.ts` and `map-user-usage-to-model-limits.ts` under
+`libs/chat-hooks/src/usage/`, exported from `@epam/ai-dial-chat-hooks`'s `./usage` entry point — the
+narrow, explicitly justified location recorded in AGENTS.md §Library isolation. It SHALL NOT live in
+`libs/usage-dashboard` or any other hand-authored library outside that recorded exception. The
+`Usage` tab component imports those adapters from `@epam/ai-dial-chat-hooks` and imports
+`UsageLimitCardGroup` / `ModelLimitsSection` and their normalized display types from
+`@epam/ai-dial-usage-dashboard`, passing app-owned callbacks (`resolveCatalogIconUrl`,
+`resolveLocalizedText`, `formatUsageResetTime`) into the adapters so host-specific URL construction,
+locale resolution, and date/time formatting stay at the application edge.
 
-The presentational rendering of the cards SHALL live in the hand-authored `libs/usage-dashboard`
-package (see the `usage-dashboard-lib` capability), which SHALL NOT import any `server-api/*`
-wrapper or app context/hook/feature-flag/env/routing/storage/analytics module.
+`libs/usage-dashboard` SHALL NOT declare or import `@epam/ai-dial-chat-api-client` in source, barrel,
+`package.json`, `tsconfig.lib.json`, or `vite.config.mts`, and SHALL NOT import any `server-api/*`
+wrapper or app context/hook/feature-flag/env/routing/storage/analytics module. It renders the
+normalized cards, rows, and period statuses it is given (see the `usage-dashboard-lib` capability).
 
 #### Scenario: Static analysis passes module boundary lint
 - **WHEN** `npm exec nx lint chat`, `npm exec nx lint chat-hooks`, and `npm exec nx lint usage-dashboard` run
 - **THEN** `@nx/enforce-module-boundaries` reports no violations introduced by `useUsageData`, the
-  `Usage` tab component, or the transform utilities in `libs/usage-dashboard`
+  `Usage` tab component, or the usage adapters, and the project-scoped
+  `no-restricted-imports` rule in `libs/usage-dashboard/eslint.config.mjs` reports no restricted
+  generated-client import
+
+#### Scenario: Usage adapters live inside their recorded exception
+- **WHEN** the repository is searched for the usage DTO mappers
+- **THEN** they exist only under `libs/chat-hooks/src/usage/`, and no hand-authored library outside
+  `libs/chat-hooks` and `libs/chat-api-client` exports a function taking
+  `UserLimitStatsResponseDto`, `DeploymentLimitsResponseDto`, `LimitStatsDto`, or
+  `DeploymentItemDto`
+
+#### Scenario: useUsageData behaviour is unaffected by the relocation
+- **WHEN** the Usage tab mounts, refetches on a `refreshToken` bump, and unmounts
+- **THEN** the hook's fetch lifecycle, stale-request handling, `isLoading`/`usageError` outputs, and
+  subscription lifetimes are the same as before the adapters moved, with no fetch added or removed
 
 ### Requirement: Deduplicated error notification on fetch failure
 The system SHALL show a user-visible, localized error notification via the existing

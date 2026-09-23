@@ -35,8 +35,45 @@ names were renamed accordingly; the old names are no longer exported or accepted
 Column-label **values** should change with them — pass `Today` / `This week` / `This month` rather
 than `Last 24 hours` / `Last 7 days` / `Last 30 days`.
 
-`mapUsageDataToDashboard` also gained a required third parameter, `formatResetTime`; see
-[Utilities](#utilities).
+### BREAKING — DTO-interpreting utilities removed
+
+`mapUsageDataToDashboard`, `mapUserUsageToModelLimits`, `mapOverallCostLimitsToPeriodStatuses`, the
+`USAGE_DATA_I18N_KEYS` / `USAGE_MODEL_LIMITS_I18N_KEYS` constants, and the `FormatResetTime` /
+`ResetTimeDisplayLike` types are no longer exported. They interpreted generated
+`@epam/ai-dial-chat-api-client` DTOs — the DIAL Core unlimited sentinel, period field names, and the
+`DeploymentItemDtoTypeEnum.Model` filter — which is host-owned knowledge this library must not carry.
+No compatibility wrapper is kept; a DTO-bound wrapper would preserve exactly the coupling this change
+removes. Install `@epam/ai-dial-chat-hooks` and import the three functions from there instead — they
+are the narrow, explicitly justified DIAL-Core-response-adapter exception recorded in AGENTS.md
+§Library isolation, so a host no longer needs to copy them into its own edge code.
+
+```tsx
+// The host imports rendering from this package and the adapter from @epam/ai-dial-chat-hooks.
+import { mapUsageDataToDashboard } from '@epam/ai-dial-chat-hooks';
+import { UsageLimitCardGroup } from '@epam/ai-dial-usage-dashboard';
+
+const cards = mapUsageDataToDashboard(usage, t, formatResetTime);
+// <UsageLimitCardGroup cards={cards} labels={labels} /> — call shape unchanged
+```
+
+A host that only renders cards/rows it already normalizes is unaffected. Component props, status
+enums, `./styles.css`, theme tokens, and the public `dial-*` classes are unchanged.
+
+Migration: install `@epam/ai-dial-chat-hooks` (if not already), switch the import's source module
+from this package to `@epam/ai-dial-chat-hooks`, and keep calling it with the same arguments and
+passing its result to the same component prop.
+
+The functions, both `USAGE_*_I18N_KEYS` constants, and `FormatResetTime` are available from
+the `chat-hooks` root and `@epam/ai-dial-chat-hooks/usage`. The former
+`ResetTimeDisplayLike` type is now named `ResetTimeDisplay` in `chat-hooks`; update that
+named import as well. Its structural fields remain `resetsAtMs`, `isoValue`, `label`,
+and `ariaLabel`, so the host's formatter can keep returning the same shape.
+
+Keep `@epam/ai-dial-usage-dashboard` installed when using these adapters: it is an
+optional peer of `chat-hooks`, but the root and `./usage` entry points load its display
+enums at runtime. Importing from `./usage` avoids the root's broader feature-peer
+requirements; consult the [entry-point dependency table](../chat-hooks/README.md)
+for the complete peer contract.
 
 ### Reset times
 
@@ -289,87 +326,6 @@ selector state.
 The heading and row count remain visible when `rows` is empty; the table body switches to
 `labels.emptyStateLabel`.
 
-## Utilities
-
-Three pure transform functions map raw `UserLimitStatsResponseDto` data (from `@epam/ai-dial-chat-api-client`) into the props each component consumes. They are host-agnostic: every user-visible string is produced by a caller-supplied `t` function that matches i18next's `TFunction` signature.
-
-### mapUsageDataToDashboard
-
-Maps a `UserLimitStatsResponseDto` into the `cards` array for `UsageLimitCardGroup`, in Today / This week / This month order. A period is omitted when the response carries no usable stat for it.
-
-Requires a host-owned `formatResetTime(resetsAt)` callback, so that all `Date`/`Intl` work stays at the application edge. It receives each period's raw `resetsAt` and returns a `ResetTimeDisplayLike`, or `undefined` when the value is absent, unparseable, or `Intl` is unavailable — in which case the card carries no reset fields.
-
-```tsx
-import {
-  mapUsageDataToDashboard,
-  USAGE_DATA_I18N_KEYS,
-  UsageLimitCardGroup,
-} from '@epam/ai-dial-usage-dashboard';
-import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
-
-// In your component:
-const formatResetTime = useCallback(
-  (resetsAt: string | undefined) =>
-    formatMyResetTime(resetsAt, activeLocale, t),
-  [activeLocale, t],
-);
-
-const cards = mapUsageDataToDashboard(usage, t, formatResetTime);
-// <UsageLimitCardGroup cards={cards} labels={labels} />
-```
-
-Keep `formatResetTime` referentially stable (for example with `useCallback`) — it is a dependency of
-the `useMemo` the mapper usually sits behind, so an unstable identity recomputes on every render.
-
-`USAGE_DATA_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`. Include those keys in your translation bundle.
-
-### mapUserUsageToModelLimits
-
-Maps `usage.deployments` into the `rows` array for `ModelLimitsSection`, joined with display metadata from a list of `DeploymentItemDto`. Only deployments that have nonzero usage in at least one displayed period are included. Requires two host-owned callbacks to stay host-agnostic:
-
-- `resolveIconUrl(iconUrl)` — resolves a deployment's raw `iconUrl` to the URL the avatar should load (typically the app's own icon-proxy endpoint).
-- `resolveDisplayName(name, locale)` — resolves a localized-text map or plain string to the display name for the active locale.
-
-Cost and Tokens cells use the same `total >= 2 ** 53` sentinel test. A sentinel Cost `total` produces an `Unlimited` cell showing attributed spend with no cap; a genuinely finite one produces a `Finite` cell whose status folds into the row's overall Status alongside finite Tokens statuses.
-
-```tsx
-import {
-  mapUserUsageToModelLimits,
-  USAGE_MODEL_LIMITS_I18N_KEYS,
-  ModelLimitsSection,
-} from '@epam/ai-dial-usage-dashboard';
-
-const rows = mapUserUsageToModelLimits(
-  usage,
-  deploymentItems,
-  activeLocale,
-  t,
-  (iconUrl) => resolveMyIconUrl(iconUrl),
-  (name, locale) => resolveLocalizedText(name, locale),
-);
-// <ModelLimitsSection rows={rows} labels={labels} periodStatuses={periodStatuses} />
-```
-
-`USAGE_MODEL_LIMITS_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`.
-
-### mapOverallCostLimitsToPeriodStatuses
-
-Maps the top-level Cost budget fields from `UserLimitStatsResponseDto` (the same source `mapUsageDataToDashboard` uses for the aggregate cards) into the `periodStatuses` prop for `ModelLimitsSection`. Produces a `{ status, tooltipLabel? }` entry keyed `day`, `week`, and `month`.
-
-Pass the same `formatResetTime` callback used for the aggregate cards as an optional fourth argument to add each header's reset trio, read from the same top-level `*CostStats` stat that drives that header's status. A per-deployment `resetsAt` is never read for a header, and a top-level value is never reconciled against a differing per-deployment one. Omit the argument to produce statuses with no reset fields.
-
-```tsx
-import { mapOverallCostLimitsToPeriodStatuses } from '@epam/ai-dial-usage-dashboard';
-
-const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
-  usage,
-  activeLocale,
-  t,
-  formatResetTime,
-);
-// <ModelLimitsSection periodStatuses={periodStatuses} ... />
-```
-
 ## Types
 
 - `UsageLimitStatus` — `Default | RunningLow | LimitReached`
@@ -392,8 +348,6 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
 - `ModelLimitsStyles` — `{ colors?, typography? }`
 - `ModelLimitsColors` — CSS-custom-property color overrides
 - `ModelLimitsTypography` — typography class overrides
-- `ResetTimeDisplayLike` — `{ resetsAtMs, isoValue, label, ariaLabel }`, the structural shape `formatResetTime` returns
-- `FormatResetTime` — `(resetsAt: string | undefined) => ResetTimeDisplayLike | undefined`
 
 ## Public class names
 
