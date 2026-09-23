@@ -104,6 +104,9 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
         /* `min-h-[200px]` is a Loading-overlay floor, not the intended size — see design.md D19. */
         'relative h-full min-h-[200px] w-full',
         isFullscreen && styles.fullscreenFrame,
+        !isFullscreen &&
+          status === RendererStatus.Loading &&
+          styles.loadingFrame,
       )}
     >
       {appBridge != null && !isErrored && (

@@ -25,7 +25,7 @@ import '@epam/ai-dial-catalog/styles.css';
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.9 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.12 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -471,6 +471,25 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 
 See `DetailsPanelProps` (and its `texts` / `styles` overrides) in the Types
 section below; a skills-scoped wrapper lives in `@epam/ai-dial-skills`.
+
+#### The Manage menu, and the last action standing
+
+Secondary actions collect behind the header's `...` trigger: Edit, Download,
+Publish/Unpublish, Delete, "Revoke access", "Remove from My List", and Share
+where `isSharePrimary` returns `false`. When filtering leaves exactly one of
+them, it renders as a button in the action row instead and the trigger goes
+away — a menu of one costs a click for nothing and leaves the header looking
+empty until it is opened. A destructive action keeps its danger styling on
+the way across.
+
+Two entries resolve lazily off that trigger, so an item that could produce
+either keeps its menu whatever the lookup eventually says: `Unpublish` (an
+item with `onOpenUnpublish` that `isUnpublishVisible` does not reject) and
+"Revoke access" (an owned item with both `onRevokeShare` and
+`onFetchRecipientsCount`). Gating on the pending state instead would let the
+hover that starts a lookup turn the button back into the trigger under the
+pointer that was reaching for it. The menu likewise stays put while it is
+open.
 
 ## Enums
 

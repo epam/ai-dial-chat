@@ -1000,6 +1000,7 @@ export enum SkillEditorI18nKeys {
   BucketMissingTitle = 'skillEditor.bucketMissingTitle',
   BucketMissingMessage = 'skillEditor.bucketMissingMessage',
   ErrorRequired = 'skillEditor.error.required',
+  ErrorInstructionsFrontmatter = 'skillEditor.error.instructionsFrontmatter',
   ErrorNameInvalid = 'skillEditor.error.nameInvalid',
   ErrorNameConflict = 'skillEditor.error.nameConflict',
   ErrorPathInvalid = 'skillEditor.error.pathInvalid',

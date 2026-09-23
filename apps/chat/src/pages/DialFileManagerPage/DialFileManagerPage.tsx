@@ -8,12 +8,12 @@ import {
   formatFileSize,
   type DialFileManagerShellLabels,
 } from '@epam/ai-dial-chat-shared';
+import { useDialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
-  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';

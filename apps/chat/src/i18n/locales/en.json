@@ -921,7 +921,7 @@
       "shared": "Shared with Me"
     },
     "myFiles": {
-      "treeHeader": "Folder tree",
+      "treeHeader": "File storage",
       "emptyStateTitle": "No files yet",
       "emptyStateDescription": "Upload files to your personal storage"
     },
@@ -1296,6 +1296,7 @@
     "bucketMissingMessage": "We couldn't determine your storage location. Please sign in again or try later.",
     "error": {
       "required": "This field is required.",
+      "instructionsFrontmatter": "Remove the \"---\" front matter block from the start of the instructions — the skill's name and description belong in the fields above. To keep fields like display_name from the original skill, upload its SKILL.md file instead.",
       "nameInvalid": "Use only letters, digits, and hyphens.",
       "nameConflict": "A skill with this name already exists.",
       "pathInvalid": "Enter a valid relative path.",

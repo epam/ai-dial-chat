@@ -16,7 +16,7 @@ usable by any host whose skill storage differs from DIAL Core's.
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.9 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.12 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -37,8 +37,8 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.9`
-- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.2`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.12`
+- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.4`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -106,6 +106,27 @@ other node requires the user to confirm a popup before
 `fileActions.onRemoveNode` is called. The library currently offers only
 "Upload from device" as an Add action; it does not support creating an empty
 file or folder.
+
+`onValuesChange` reports the complete current `SkillEditorValues` whenever the
+user edits `name`, `description`, or `instructions` — including a paste into
+the Instructions editor. It is not called for file-tree changes (those arrive
+through `fileActions` and `onDirtyChange`) and not called while the form seeds
+from `initialValues`, since seeding is not a user edit. Use it to validate a
+field's content as it changes and feed the result back through `errors`; the
+component derives no meaning from the values it reports:
+
+```tsx
+<SkillEditor
+  // ...
+  onValuesChange={(values) =>
+    setErrors(
+      isFrontmatter(values.instructions)
+        ? { instructions: t('skillEditor.error.instructionsFrontmatter') }
+        : {},
+    )
+  }
+/>
+```
 
 The header is rendered by `EditorLayout` (from `@epam/ai-dial-builder-form`).
 Pass `onBack` (called when the back arrow is activated), `title` (the page

@@ -89,6 +89,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   onReloadLatest,
   isNameReadOnly = false,
   onDirtyChange,
+  onValuesChange,
   fileActions,
   supportingFileContent,
   onSubmit,
@@ -108,6 +109,17 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     instructions: initialValues?.instructions ?? '',
   });
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
+  /*
+   * Applies a field edit and reports the resulting values. Deliberately not
+   * routed through `setValues`'s updater form — invoking the host callback
+   * from inside an updater would make it impure, and every caller here is a
+   * distinct user event, so the `values` closure is current.
+   */
+  const updateValues = (patch: Partial<SkillEditorValues>) => {
+    const next = { ...values, ...patch };
+    setValues(next);
+    onValuesChange?.(next);
+  };
   const seededInitialValuesRef = useRef(initialValues);
   const isReseeding = seededInitialValuesRef.current !== initialValues;
   const seededFilesRef = useRef<SkillFileTreeNode[]>(files);
@@ -461,9 +473,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                     required: true,
                   }}
                   value={values.name}
-                  onChange={(value) =>
-                    setValues((prev) => ({ ...prev, name: value ?? '' }))
-                  }
+                  onChange={(value) => updateValues({ name: value ?? '' })}
                   placeholder={t.namePlaceholder ?? 'good-morning-breakfast'}
                   caption={
                     errors?.name
@@ -485,9 +495,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                     t.descriptionPlaceholder ??
                     'What this skill does and when to use it'
                   }
-                  onChange={(value) =>
-                    setValues((prev) => ({ ...prev, description: value }))
-                  }
+                  onChange={(value) => updateValues({ description: value })}
                   error={errors?.description}
                   invalid={!!errors?.description}
                 />
@@ -522,10 +530,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                       <LazyMarkdown
                         value={values.instructions}
                         onChange={(value) =>
-                          setValues((prev) => ({
-                            ...prev,
-                            instructions: value,
-                          }))
+                          updateValues({ instructions: value })
                         }
                         theme={instructionsEditorTheme}
                         placeholder={

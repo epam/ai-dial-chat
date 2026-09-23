@@ -16,10 +16,6 @@ export interface SettingsPanelItem {
 export interface SettingsPanelTypography {
   /** Typography class applied to the section header. Defaults to `'dial-h1-text'`. */
   sectionLabelClassName?: string;
-  /** Typography class applied to an inactive row's label. Defaults to `'dial-small-text'`. */
-  itemLabelClassName?: string;
-  /** Typography class applied to the active row's label. Defaults to `'dial-small-semi-text'`. */
-  activeItemLabelClassName?: string;
 }
 
 /** Color overrides for the {@link SettingsPanel} component, applied as CSS custom properties. */
