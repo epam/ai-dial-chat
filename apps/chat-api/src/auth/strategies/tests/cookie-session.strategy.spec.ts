@@ -6,9 +6,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import type { Request, Response } from 'express';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BucketService } from '../../bucket/bucket.service';
 import { RefreshService } from '../../refresh/refresh.service';
+import { SessionExpiredDuringRefreshException } from '../../session/session-expiration';
 import { SessionService } from '../../session/session.service';
 import type { SessionPayload } from '../../session/session.types';
 import { CookieSessionStrategy } from '../cookie-session.strategy';
@@ -18,13 +19,14 @@ const COOKIE_NAME = '__Host-chat.sess';
 function makePayload(overrides?: Partial<SessionPayload>): SessionPayload {
   const now = Math.floor(Date.now() / 1000);
   return {
-    v: 1,
+    v: 2,
     sid: randomUUID(),
     providerId: 'keycloak',
     sub: 'user-1',
     at: 'access-token',
     rt: 'refresh-token',
     at_exp: now + 3600,
+    session_exp: now + 86400,
     rt_exp: now + 86400,
     iat: now,
     csrf: randomUUID(),
@@ -50,6 +52,7 @@ function makeReqRes(cookieValue?: string): {
 }
 
 describe('CookieSessionStrategy', () => {
+  afterEach(() => vi.useRealTimers());
   let strategy: CookieSessionStrategy;
   let sessionService: {
     decryptFromRequest: ReturnType<typeof vi.fn>;
@@ -90,10 +93,123 @@ describe('CookieSessionStrategy', () => {
     expect(strategy.supports(req)).toBe(false);
   });
 
+  it('rejects an expired session with a valid access token and clears every cookie chunk', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    sessionService.decryptFromRequest.mockResolvedValue(
+      makePayload({ session_exp: now }),
+    );
+    const { req, res } = makeReqRes('expired');
+    req.cookies[`${COOKIE_NAME}.0`] = 'chunk0';
+    req.cookies[`${COOKIE_NAME}.1`] = 'chunk1';
+
+    await expect(
+      strategy.authenticate(req, res as unknown as Response),
+    ).rejects.toThrow(UnauthorizedException);
+    expect(refreshService.refresh).not.toHaveBeenCalled();
+    expect(bucketService.getUserBucket).not.toHaveBeenCalled();
+    for (const name of [COOKIE_NAME, `${COOKIE_NAME}.0`, `${COOKIE_NAME}.1`]) {
+      expect(res.cookie).toHaveBeenCalledWith(
+        name,
+        '',
+        expect.objectContaining({ maxAge: 0 }),
+      );
+    }
+  });
+
+  it('allows a near-expired access token without a refresh token until its actual expiry', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const { req, res } = makeReqRes('valid');
+    sessionService.decryptFromRequest.mockResolvedValue(
+      makePayload({ rt: '', at_exp: now + 30 }),
+    );
+    await expect(
+      strategy.authenticate(req, res as unknown as Response),
+    ).resolves.toMatchObject({ sub: 'user-1' });
+    sessionService.decryptFromRequest.mockResolvedValue(
+      makePayload({ rt: '', at_exp: now }),
+    );
+    await expect(
+      strategy.authenticate(req, res as unknown as Response),
+    ).rejects.toThrow(UnauthorizedException);
+    expect(refreshService.refresh).not.toHaveBeenCalled();
+  });
+
+  it('does not authorize a session that expires during bucket resolution', async () => {
+    vi.useFakeTimers();
+    const now = Math.floor(Date.now() / 1000);
+    sessionService.decryptFromRequest.mockResolvedValue(
+      makePayload({ session_exp: now + 5, bucket: '', rt: '' }),
+    );
+    bucketService.getUserBucket.mockImplementation(async () => {
+      vi.setSystemTime((now + 10) * 1000);
+      return { bucket: 'resolved' };
+    });
+    const { req, res } = makeReqRes('valid');
+    await expect(
+      strategy.authenticate(req, res as unknown as Response),
+    ).rejects.toThrow(UnauthorizedException);
+    expect(res.cookie).not.toHaveBeenCalledWith(
+      COOKIE_NAME,
+      'new-encrypted-token',
+      expect.anything(),
+    );
+  });
+
+  it('uses the remaining renewed lifetime when writing a refreshed cookie', async () => {
+    vi.useFakeTimers();
+    const now = Math.floor(Date.now() / 1000);
+    const payload = makePayload({
+      session_exp: now + 120,
+      at_exp: now + 30,
+      rt_exp: undefined,
+    });
+    sessionService.decryptFromRequest.mockResolvedValue(payload);
+    refreshService.refresh.mockImplementation(async () => {
+      vi.setSystemTime((now + 10) * 1000);
+      return {
+        payload: { ...payload, at_exp: now + 3600, session_exp: now + 2592010 },
+        refreshed: true,
+      };
+    });
+    const { req, res } = makeReqRes('valid');
+    await strategy.authenticate(req, res as unknown as Response);
+    expect(res.cookie).toHaveBeenCalledWith(
+      COOKIE_NAME,
+      'new-encrypted-token',
+      expect.objectContaining({ maxAge: 2592000000 }),
+    );
+  });
+
   it('supports() is true when a session cookie is present', () => {
     const { req } = makeReqRes('valid-token');
     expect(strategy.supports(req)).toBe(true);
   });
+
+  it.each(['session', 'refresh token'])(
+    'renews before the %s deadline even when the access token is still fresh',
+    async (deadline) => {
+      const now = Math.floor(Date.now() / 1000);
+      const payload = makePayload({
+        session_exp: now + (deadline === 'session' ? 30 : 86400),
+        rt_exp: deadline === 'refresh token' ? now + 30 : undefined,
+      });
+      sessionService.decryptFromRequest.mockResolvedValue(payload);
+      refreshService.refresh.mockResolvedValue({
+        payload: { ...payload, session_exp: now + 2592000, rt_exp: undefined },
+        refreshed: true,
+      });
+
+      const { req, res } = makeReqRes('valid');
+      await strategy.authenticate(req, res as unknown as Response);
+
+      expect(refreshService.refresh).toHaveBeenCalledWith(payload);
+      expect(res.cookie).toHaveBeenCalledWith(
+        COOKIE_NAME,
+        'new-encrypted-token',
+        expect.objectContaining({ maxAge: 2592000000 }),
+      );
+    },
+  );
 
   it('throws UnauthorizedException when cookie is missing', async () => {
     sessionService.decryptFromRequest.mockRejectedValue(
@@ -131,7 +247,10 @@ describe('CookieSessionStrategy', () => {
     const refreshed = makePayload({ at_exp: now + 3600, rt_exp: now + 86400 });
 
     sessionService.decryptFromRequest.mockResolvedValue(payload);
-    refreshService.refresh.mockResolvedValue(refreshed);
+    refreshService.refresh.mockResolvedValue({
+      payload: refreshed,
+      refreshed: true,
+    });
 
     const { req, res } = makeReqRes('valid-token');
 
@@ -161,6 +280,27 @@ describe('CookieSessionStrategy', () => {
     await expect(
       strategy.authenticate(req, res as unknown as Response),
     ).rejects.toThrow(UnauthorizedException);
+    /* Preserve a winning pod's cookie for the frontend recovery probe. */
+    expect(res.cookie).not.toHaveBeenCalled();
+  });
+
+  it('does not clear the cookie when the exchange completes after the session deadline', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const payload = makePayload({ at_exp: now + 30 });
+    sessionService.decryptFromRequest.mockResolvedValue(payload);
+    refreshService.refresh.mockRejectedValue(
+      new SessionExpiredDuringRefreshException('Session expired'),
+    );
+
+    const { req, res } = makeReqRes('valid-token');
+    await expect(
+      strategy.authenticate(req, res as unknown as Response),
+    ).rejects.toThrow(UnauthorizedException);
+    /*
+     * The session was valid when the request started; the deadline only
+     * elapsed mid-exchange, so a still-valid cookie must survive for a retry.
+     */
+    expect(res.cookie).not.toHaveBeenCalled();
   });
 
   it('converts an unexpected error from RefreshService into a clean UnauthorizedException', async () => {
@@ -187,7 +327,10 @@ describe('CookieSessionStrategy', () => {
     });
 
     sessionService.decryptFromRequest.mockResolvedValue(payload);
-    refreshService.refresh.mockResolvedValue(refreshed);
+    refreshService.refresh.mockResolvedValue({
+      payload: refreshed,
+      refreshed: true,
+    });
 
     const { req, res } = makeReqRes('valid-token');
     const user = await strategy.authenticate(req, res as unknown as Response);
@@ -206,9 +349,12 @@ describe('CookieSessionStrategy', () => {
     const makeStrategyWithRealRefreshService = (mockClient: {
       refresh: ReturnType<typeof vi.fn>;
     }) => {
-      const realRefreshService = new RefreshService({
-        getProvider: vi.fn().mockReturnValue({ client: mockClient }),
-      } as never);
+      const realRefreshService = new RefreshService(
+        {
+          getProvider: vi.fn().mockReturnValue({ client: mockClient }),
+        } as never,
+        { get: () => 2592000 } as never,
+      );
       const strategySessionService = {
         decryptFromRequest: vi.fn(),
         encrypt: vi.fn().mockResolvedValue('new-encrypted-token'),
@@ -223,7 +369,11 @@ describe('CookieSessionStrategy', () => {
             key === 'AUTH_SESSION_COOKIE_NAME' ? COOKIE_NAME : undefined,
         } as never,
       );
-      return { strategyInstance, strategySessionService };
+      return {
+        strategyInstance,
+        strategySessionService,
+        strategyBucketService,
+      };
     };
 
     it('authorizes the losing pod instead of 401ing it, when the access token is still valid', async () => {
@@ -247,6 +397,8 @@ describe('CookieSessionStrategy', () => {
         strategyA.authenticate(reqA, resA as unknown as Response),
       ).resolves.toMatchObject({ sub: payload.sub, sid: payload.sid });
 
+      expect(resA.cookie).toHaveBeenCalled();
+
       // Pod B: same stale payload/cookie, but the IdP has already consumed
       // this refresh token via Pod A — it rejects with invalid_grant.
       const podBClient = {
@@ -260,6 +412,8 @@ describe('CookieSessionStrategy', () => {
       await expect(
         strategyB.authenticate(reqB, resB as unknown as Response),
       ).resolves.toMatchObject({ sub: payload.sub, sid: payload.sid });
+      expect(resB.cookie).not.toHaveBeenCalled();
+      expect(sessionB.encrypt).not.toHaveBeenCalled();
     });
 
     it('still 401s the losing pod when the access token has already expired', async () => {
@@ -277,6 +431,71 @@ describe('CookieSessionStrategy', () => {
       await expect(
         strategyB.authenticate(reqB, resB as unknown as Response),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('does not overwrite the winner after coalescing a lost race or resolving a missing bucket', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const payload = makePayload({ at_exp: now + 30, bucket: '' });
+      const client = {
+        refresh: vi.fn().mockRejectedValue({ error: 'invalid_grant' }),
+      };
+      const {
+        strategyInstance,
+        strategySessionService,
+        strategyBucketService,
+      } = makeStrategyWithRealRefreshService(client);
+      strategySessionService.decryptFromRequest
+        .mockResolvedValueOnce(payload)
+        .mockResolvedValueOnce({ ...payload });
+      strategyBucketService.getUserBucket.mockResolvedValue({
+        bucket: 'resolved',
+      });
+      const first = makeReqRes('stale');
+      const second = makeReqRes('stale');
+
+      const users = await Promise.all([
+        strategyInstance.authenticate(
+          first.req,
+          first.res as unknown as Response,
+        ),
+        strategyInstance.authenticate(
+          second.req,
+          second.res as unknown as Response,
+        ),
+      ]);
+
+      expect(client.refresh).toHaveBeenCalledTimes(1);
+      expect(users.map((user) => user.bucket)).toEqual([
+        'resolved',
+        'resolved',
+      ]);
+      expect(first.res.cookie).not.toHaveBeenCalled();
+      expect(second.res.cookie).not.toHaveBeenCalled();
+      expect(strategySessionService.encrypt).not.toHaveBeenCalled();
+    });
+
+    it('rejects an absorbed race if its access token expires during bucket resolution', async () => {
+      vi.useFakeTimers();
+      const now = Math.floor(Date.now() / 1000);
+      const payload = makePayload({ at_exp: now + 30, bucket: '' });
+      const {
+        strategyInstance,
+        strategySessionService,
+        strategyBucketService,
+      } = makeStrategyWithRealRefreshService({
+        refresh: vi.fn().mockRejectedValue({ error: 'invalid_grant' }),
+      });
+      strategySessionService.decryptFromRequest.mockResolvedValue(payload);
+      strategyBucketService.getUserBucket.mockImplementation(async () => {
+        vi.setSystemTime((now + 30) * 1000);
+        return { bucket: 'resolved' };
+      });
+      const { req, res } = makeReqRes('stale');
+
+      await expect(
+        strategyInstance.authenticate(req, res as unknown as Response),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(res.cookie).not.toHaveBeenCalled();
     });
   });
 
@@ -327,6 +546,23 @@ describe('CookieSessionStrategy', () => {
   });
 
   describe('authenticateOptional() — used by OptionalSessionGuard', () => {
+    it.each(['session', 'access', 'legacy'])(
+      'returns no user for %s expiration without side effects',
+      async (kind) => {
+        const now = Math.floor(Date.now() / 1000);
+        const payload = makePayload();
+        if (kind === 'session') payload.session_exp = now;
+        if (kind === 'access') payload.at_exp = now;
+        sessionService.decryptFromRequest.mockResolvedValue(
+          kind === 'legacy' ? { ...payload, v: 1 } : payload,
+        );
+        const { req } = makeReqRes('expired');
+        await expect(strategy.authenticateOptional(req)).resolves.toBeNull();
+        expect(refreshService.refresh).not.toHaveBeenCalled();
+        expect(bucketService.getUserBucket).not.toHaveBeenCalled();
+        expect(sessionService.encrypt).not.toHaveBeenCalled();
+      },
+    );
     it('returns null instead of throwing when the cookie is missing or tampered', async () => {
       sessionService.decryptFromRequest.mockRejectedValue(
         new UnauthorizedException(),
@@ -345,6 +581,19 @@ describe('CookieSessionStrategy', () => {
 
       expect(refreshService.refresh).not.toHaveBeenCalled();
       expect(user).toMatchObject({ sub: payload.sub, sid: payload.sid });
+    });
+
+    it('does not renew a session approaching its own deadline', async () => {
+      const payload = makePayload({
+        session_exp: Math.floor(Date.now() / 1000) + 30,
+      });
+      sessionService.decryptFromRequest.mockResolvedValue(payload);
+      const { req } = makeReqRes('valid');
+      await expect(strategy.authenticateOptional(req)).resolves.toMatchObject({
+        sub: payload.sub,
+      });
+      expect(refreshService.refresh).not.toHaveBeenCalled();
+      expect(sessionService.encrypt).not.toHaveBeenCalled();
     });
 
     it('never resolves the bucket even when payload.bucket is empty', async () => {
