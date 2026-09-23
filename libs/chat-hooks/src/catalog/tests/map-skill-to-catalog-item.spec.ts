@@ -159,15 +159,16 @@ describe('mapSkillToCatalogItem', () => {
     expect(item.folder).toEqual(['Organization']);
   });
 
-  /*
-   * DIAL Core returns `parentPath` as plain text — only `url` is
-   * percent-encoded — so decoding it here turned a folder literally named
-   * `test%20folder` into `test folder` (Issue #8974).
-   */
-  it('keeps a literal percent escape in a folder name intact', () => {
+  it('decodes percent-encoded folder segments', () => {
     const item = mapPersonal({ parentPath: 'test%20folder/' });
 
-    expect(item.folder).toEqual(['Personal', 'test%20folder']);
+    expect(item.folder).toEqual(['Personal', 'test folder']);
+  });
+
+  it('keeps a malformed percent escape in a folder name as-is', () => {
+    const item = mapPersonal({ parentPath: '100%/' });
+
+    expect(item.folder).toEqual(['Personal', '100%']);
   });
 
   it('keeps a folder name containing a raw space intact', () => {
