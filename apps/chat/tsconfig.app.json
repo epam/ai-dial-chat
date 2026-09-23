@@ -46,16 +46,19 @@
   ],
   "references": [
     {
-      "path": "../../libs/builder-form/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/usage-dashboard/tsconfig.lib.json"
     },
     {
       "path": "../../libs/prompt-editor/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/builder-form/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/settings-panel/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/toolset-editor/tsconfig.lib.json"
     },
     {
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
@@ -103,9 +106,6 @@
       "path": "../../libs/chat-api-client/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/toolset-editor/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/publish-panel/tsconfig.lib.json"
     },
     {
@@ -119,9 +119,6 @@
     },
     {
       "path": "../../libs/chat-overlay/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/chat-hooks/tsconfig.lib.json"
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"

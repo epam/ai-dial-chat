@@ -27,9 +27,6 @@
       "path": "../builder-form/tsconfig.lib.json"
     },
     {
-      "path": "../chat-hooks/tsconfig.lib.json"
-    },
-    {
       "path": "../chat-shared/tsconfig.lib.json"
     }
   ]
