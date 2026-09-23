@@ -161,7 +161,7 @@ When the panel is empty (per the updated definition above):
 When the panel is not empty:
 
 - `leftActions` SHALL contain a search input (text field with `IconSearch`) whose `aria-label` is the i18n value of `sidebar.sources.search`. Typing into the input filters sources as described in the Search scenario below. The search input SHALL only render when at least one of `uploaded`, `generated`, or `sources` is non-empty; it MAY be omitted when the conversation has no searchable file/source content even if scheduled-task sections are rendering.
-- `rightActions` SHALL contain a `GhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`. This button SHALL be enabled whenever at least one attachment in `uploaded` or `generated` is downloadable (i.e. has a DIAL-hosted file URL resolvable by the same mechanism `handleAttachmentClick` uses), and SHALL be disabled only when no attachment currently in `uploaded`/`generated` is downloadable. This action operates only on `uploaded`/`generated` attachments and is unaffected by scheduled-task section content.
+- `rightActions` SHALL contain a `GhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll` whenever at least one attachment in `uploaded` or `generated` is downloadable (i.e. has a DIAL-hosted file URL resolvable by the same mechanism `handleAttachmentClick` uses). When no attachment currently in `uploaded`/`generated` is downloadable, the button SHALL NOT be rendered at all (it is hidden, never shown in a disabled state). This action operates only on `uploaded`/`generated` attachments and is unaffected by scheduled-task section content.
 - Activating the enabled download-all button SHALL trigger a download of every downloadable attachment in `uploaded` and `generated`, using the same URL-resolution and download-triggering mechanism as clicking an individual attachment card. Attachments that are not downloadable via that mechanism (e.g. reference-only attachments) SHALL be silently skipped, matching single-click behavior for those attachments.
 - The body SHALL render sections in the following order:
   1. When the active conversation is a scheduled-task conversation: the History section, then the Details section (both defined in the ADDED requirements below).
@@ -197,20 +197,20 @@ For both states:
 - **AND** the search input is rendered enabled
 - **AND** the Uploaded Files, Generated Files, and Sources sections are rendered
 
-#### Scenario: Download-all button is enabled when a downloadable attachment is present
+#### Scenario: Download-all button is shown when a downloadable attachment is present
 
 - **WHEN** at least one attachment in `uploaded` or `generated` has a DIAL-hosted file URL
-- **THEN** the download-all button in `rightActions` is rendered without the `disabled` attribute
+- **THEN** the download-all button in `rightActions` is rendered and enabled
 
-#### Scenario: Download-all button is disabled when nothing is downloadable
+#### Scenario: Download-all button is hidden when nothing is downloadable
 
 - **WHEN** `uploaded` and `generated` contain only attachments without a resolvable DIAL-hosted file URL (or both lists are empty)
-- **THEN** the download-all button is rendered with the `disabled` attribute
+- **THEN** the download-all button is not rendered
 
 #### Scenario: Download-all ignores scheduled-task section content
 
 - **WHEN** the active conversation is a scheduled-task conversation with a populated History section but empty `uploaded`/`generated`
-- **THEN** the download-all button is disabled and activating it (if somehow enabled) triggers no download related to run history or task details
+- **THEN** the download-all button is not rendered, and no download related to run history or task details can be triggered
 
 #### Scenario: Activating download-all downloads every downloadable attachment
 

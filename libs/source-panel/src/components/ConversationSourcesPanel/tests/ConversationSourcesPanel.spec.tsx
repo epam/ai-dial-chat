@@ -220,15 +220,9 @@ describe('ConversationSourcesPanel', () => {
     expect(screen.getByText('Example')).toBeTruthy();
   });
 
-  it('renders the download-all button disabled when onDownloadAll is omitted', () => {
+  it('hides the download-all button when onDownloadAll is omitted', () => {
     renderPanel({ uploaded: [makeAttachment('upload.pdf')] });
-    expect(
-      (
-        screen.getByRole('button', {
-          name: 'Download all',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
   });
 
   it('renders the download-all button enabled and wired to onDownloadAll', async () => {
