@@ -629,7 +629,10 @@ const className = mergeClasses('base-class', isActive && 'active');
 // Map a *Colors object to CSS custom property declarations; undefined values are dropped
 const cssVars = buildCssVars({ '--cs-text': colors?.text });
 
-// Serialize a rendered <table>'s rows to CSV/TSV/Markdown, the format MarkdownTable's own copy actions use
+// Serialize a rendered <table>'s rows to CSV or Markdown, the formats MarkdownTable's own copy actions use.
+// A KaTeX-rendered cell comes back as the LaTeX it was built from, so the math survives a round trip.
+// In Markdown a pipe inside a formula is written as `\vert` / `\Vert`, which renders the same glyphs and
+// cannot split the row; CSV columns keep the bare source.
 const csv = serializeMarkdownTableRows(
   Array.from(tableElement.rows),
   MarkdownTableCopyFormat.Csv,
