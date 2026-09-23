@@ -986,6 +986,9 @@ dialTest(
     const expectedColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textInfo,
     );
+    const expectedHeaderCheckboxColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.controlsBgAccent,
+    );
     let headerCheckbox: Checkbox;
     const bulkButtons = [
       fileManagerToolbar.getMoveToButton(),
@@ -1044,7 +1047,7 @@ dialTest(
           headerCheckbox = fileManagerGrid.gridHeaderCheckbox;
           await baseAssertion.assertElementBorderColors(
             headerCheckbox,
-            expectedColor,
+            i === 0 ? expectedHeaderCheckboxColor : expectedColor,
           );
           await baseAssertion.assertElementState(
             fileManagerToolbar.getSelectedIconsButton(i + 1),
@@ -1086,7 +1089,7 @@ dialTest(
             );
             await baseAssertion.assertElementBorderColors(
               headerCheckbox,
-              expectedColor,
+              expectedHeaderCheckboxColor,
             );
             for (const button of bulkButtons) {
               await baseAssertion.assertElementState(button, 'visible');
