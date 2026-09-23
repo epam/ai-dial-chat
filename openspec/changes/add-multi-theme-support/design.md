@@ -70,6 +70,15 @@ allowlist.
 - *Alternative — a chat-api side store.* `chat-api` has no database. A cache is not persistence, and
   the value must travel with the application when it is shared or published.
 
+**Re-litigated and confirmed during implementation.** The cost of this decision is real — it is the
+only reason the application write/read API changed at all. The cheaper option was put back on the
+table: store `themeUrl` inside `applicationProperties`, which both endpoints already accept as a
+free-form object and already return verbatim, for **zero** API change. It was rejected again, by the
+user, on the same ground: for a Quick App the embedded schema editor writes the application resource
+itself and replaces `application_properties` with its own model, so the key would vanish on the
+author's next Settings-step save. The requirement is that the theme is stored *with the
+application*, reliably — not merely stored somewhere cheap. Do not "simplify" this back.
+
 The write is additive: `createApplication`/`updateApplication` read the stored
 `catalog_properties`, set or delete the single `themeUrl` key, and write the object back. Unlike
 `application_properties`, this is a **merge, not a replacement** — chat does not own the other keys
