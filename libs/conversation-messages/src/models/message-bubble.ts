@@ -3,6 +3,7 @@ import type {
   DisplayAttachment,
   MarkdownRendererClassNames,
   MessageRole,
+  ResponseFormat,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
@@ -141,6 +142,14 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
 
 /** Props for `AssistantMessageBubble`. */
 export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
+  /**
+   * Conversation response format. `ResponseFormat.PlainText` renders the
+   * message body verbatim — no Markdown pipeline, so a table, a heading, or
+   * `**bold**` reaches the reader exactly as the model wrote it — and the
+   * markdown-only props below stop applying. Defaults to
+   * `ResponseFormat.Markdown`.
+   */
+  responseFormat?: ResponseFormat;
   /** react-markdown component overrides. Use to inject custom renderers (e.g. citation markers) into markdown elements. */
   markdownComponents?: Components;
   /** Per-element markdown typography classes. Defaults to the renderer's full-size scale; pass `COMPACT_MARKDOWN_CLASS_NAMES` for the smaller body scale. */

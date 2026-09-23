@@ -32,6 +32,7 @@ import {
   type DisplayAttachment,
   type MessageRating,
   type Message as MessageType,
+  type ResponseFormat,
   type RequestSkill,
   type StarterOption,
   type UploadedAttachmentResult,
@@ -208,6 +209,8 @@ interface Props {
   isTextAttachmentsAllowed?: boolean;
   /** Renders message text one type-scale step down. The host sets it on narrow viewports. */
   isCompactTypography?: boolean;
+  /** The conversation's response format. `ResponseFormat.PlainText` renders the body verbatim instead of as Markdown. */
+  responseFormat?: ResponseFormat;
   maximumAttachmentsAmount?: number;
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   hideAttachFile?: boolean;
@@ -300,6 +303,7 @@ const ConversationMessageItem: FC<Props> = ({
   isAttachmentsEnabled,
   isTextAttachmentsAllowed,
   isCompactTypography = false,
+  responseFormat,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   hideAttachFile,
@@ -698,6 +702,7 @@ const ConversationMessageItem: FC<Props> = ({
             msg.streamErrorMessage != null ? 'w-full' : undefined,
           ),
         }}
+        responseFormat={responseFormat}
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }

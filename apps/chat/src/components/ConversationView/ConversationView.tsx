@@ -14,6 +14,7 @@ import {
   getQuickAppConversationStarters,
   isQuickAppSchema,
   referenceAttachmentToPdfCanvasContent,
+  normalizeResponseFormat,
   shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
@@ -361,6 +362,10 @@ const ConversationView: FC<Props> = ({
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  /* Applies to existing messages as well as new ones, which is what the
+     chat-settings hint promises — the format is a property of the
+     conversation, not of the message it was chosen before. */
+  const responseFormat = normalizeResponseFormat(conversation.responseFormat);
   const mcpAppCache = useMcpAppResponseCache(conversation.id);
   const mcpAppHostAdapter = useMcpAppHostAdapter('fullscreen');
   const { closePanel } = useConversationPanel();
@@ -906,6 +911,7 @@ const ConversationView: FC<Props> = ({
                     totalCount={messages.length}
                     isAssistantTyping={isAssistantTyping}
                     isCompactTypography={isMobile}
+                    responseFormat={responseFormat}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
                     onStartEdit={isReadOnly ? undefined : handleStartEdit}
