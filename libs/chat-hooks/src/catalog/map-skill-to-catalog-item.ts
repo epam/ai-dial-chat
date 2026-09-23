@@ -29,17 +29,34 @@ const SOURCE_FOLDER_LABEL: Record<SkillSource, keyof DeploymentFolderLabels> = {
 };
 
 /*
- * Folder segments are percent-decoded for display, matching the prompt mapper:
- * published skill paths can arrive encoded, which rendered `test%20folder`
- * instead of `test folder` in the card breadcrumb.
+ * Folder segments come from `url`, not `parentPath`. DIAL Core always
+ * percent-encodes `url` (`skills/{bucket}/{...folders}/{name}`), so decoding
+ * its folder segments yields the real name either way: a published folder
+ * whose `parentPath` arrived encoded (`test%20folder` → `test folder`,
+ * Issue #8882) and a folder literally named `test%20folder`, whose `url`
+ * carries `test%2520folder` (Issue #8974). Decoding `parentPath` itself could
+ * not tell those two apart. When the `url` shape does not line up with
+ * `parentPath`, `parentPath` is shown verbatim.
  */
-const resolveSkillFolder = (
+const resolveSkillFolderSegments = (
+  url: string,
   parentPath: string | undefined,
+): string[] => {
+  const parentSegments = (parentPath ?? '').split('/').filter(Boolean);
+  const urlFolderSegments = url.split('/').filter(Boolean).slice(2, -1);
+
+  return urlFolderSegments.length === parentSegments.length
+    ? urlFolderSegments.map(safeDecodeURIComponent)
+    : parentSegments;
+};
+
+const resolveSkillFolder = (
+  skill: SkillMetadataItemDto,
   source: SkillSource,
   folderLabels: DeploymentFolderLabels,
 ): string[] => [
   folderLabels[SOURCE_FOLDER_LABEL[source]],
-  ...(parentPath ?? '').split('/').filter(Boolean).map(safeDecodeURIComponent),
+  ...resolveSkillFolderSegments(skill.url, skill.parentPath),
 ];
 
 /** Parameters for {@link mapSkillToCatalogItem}. */
@@ -91,7 +108,7 @@ export const mapSkillToCatalogItem = (
     isMyApp: isPersonal && (skill.isMy ?? true),
     sharedWithMe: skill.sharedWithMe ?? source === SkillSource.SharedWithMe,
     isEditable: !isPublic && (skill.canEdit ?? isPersonal),
-    folder: resolveSkillFolder(skill.parentPath, source, folderLabels),
+    folder: resolveSkillFolder(skill, source, folderLabels),
   };
 };
 

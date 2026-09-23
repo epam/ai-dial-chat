@@ -1,12 +1,11 @@
 import { memo, type FC } from 'react';
 import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent';
-import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import type {
   MarkdownRendererClassNames,
   MarkdownRendererColors,
 } from './MarkdownRenderer';
-import styles from './MarkdownRenderer.module.scss';
+import { ThinkingShimmer } from './ThinkingShimmer';
 
 /** Props for {@link PlainTextRenderer}. */
 export interface PlainTextRendererProps {
@@ -66,17 +65,8 @@ export const PlainTextRenderer: FC<PlainTextRendererProps> = memo(
       streamCharactersPerSecond,
     );
 
-    const cssVars = buildCssVars({
-      '--cm-thinking-inverted': colors?.thinkingPrimary,
-      '--cm-thinking-secondary': colors?.thinkingSecondary,
-    });
-
     if (isStreaming && !displayedContent) {
-      return (
-        <span className={styles.thinking} style={cssVars}>
-          {thinkingLabel}
-        </span>
-      );
+      return <ThinkingShimmer label={thinkingLabel} colors={colors} />;
     }
 
     /*
@@ -86,7 +76,7 @@ export const PlainTextRenderer: FC<PlainTextRendererProps> = memo(
      * to either format unchanged.
      */
     return (
-      <div style={cssVars} className={containerClassName}>
+      <div className={containerClassName}>
         <p
           className={mergeClasses(
             classNames.p,
