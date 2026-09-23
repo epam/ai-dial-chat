@@ -20,9 +20,9 @@ Its value SHALL gain:
 The state is a single last-writer-wins `string | null`. No stack, no precedence rule: the two
 surfaces that set it (see below) are different routes and cannot be mounted at once.
 
-The overlay SHALL be inert unless `useFeatureFlag('appThemesEnabled')` is `true`.
-`setAppThemeUrl` still records the value, but no fetch is made and no colors are applied while the
-flag is off.
+There is no client feature flag gating the overlay. Whether a theme can load at all is decided
+server-side by `THEMES_ALLOWED_ORIGINS`: an application whose origin the operator has not
+allow-listed gets a `400`, the base theme stays, and nothing else changes.
 
 #### Scenario: Setting an app theme applies it
 
@@ -36,9 +36,9 @@ flag is off.
 - **THEN** the user's selected base theme's colors are reapplied from the already-loaded base
   configuration, `isAppThemeActive` is `false`, and no network request is made
 
-#### Scenario: The feature flag is off
+#### Scenario: An application with no theme URL
 
-- **WHEN** `features.appThemesEnabled` is `false` and `setAppThemeUrl` is called with a URL
+- **WHEN** `setAppThemeUrl` is called with `null` for an application that declares no theme
 - **THEN** no request is made, the base theme stays applied, and `isAppThemeActive` is `false`
 
 #### Scenario: Consumers do not re-render on unrelated parent renders

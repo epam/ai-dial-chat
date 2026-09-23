@@ -11,7 +11,7 @@ export class GetRemoteThemeDto {
   @ApiProperty({
     description:
       'Base URL of an allow-listed external themes host. The service requests ' +
-      '`<themeUrl>/config.json`; any query string or fragment is ignored.',
+      '`<themeUrl>/config.json`; a query string or fragment is ignored.',
     example: 'https://themes.contoso.example.com',
     type: String,
   })

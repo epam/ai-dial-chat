@@ -222,9 +222,11 @@ allow-listed-origin failure surfaces on save as the 400's message.
   slice 4 against a live DIAL Core before any UI depends on it; the namespaced-key fallback and the
   decision are recorded in this document before the slice continues. The three frontend slices ahead
   of it do not depend on the answer.
-- **An operator enables `APP_THEMES_ENABLED` and forgets `THEMES_ALLOWED_ORIGINS`** → Every remote
-  theme request 400s and the base theme stays. The failure is visible in the logs and invisible to
-  users, which is the right way round. Startup logs a warning when the flag is on and the list empty.
+- **An operator never sets `THEMES_ALLOWED_ORIGINS`** → The editor still offers the field, but every
+  remote theme request 400s and the base theme stays. The failure is visible in the logs and
+  invisible to users, which is the right way round. The cost of having no second switch is that an
+  author can save a theme URL on a deployment where it can never load; the benefit is that there is
+  no state where the feature is "on" but unusable.
 - **An app theme ships unreadable contrast** → Nothing in the pipeline can prevent it; it is the
   same exposure the operator theme already has. The blast radius is bounded by D5 (replacement, not
   merge, so the result is *that theme* rather than a hybrid) and by the app-scoped lifetime — leaving
@@ -248,10 +250,10 @@ No data migration. Deployment order:
    slices that consume the new operations.
 3. Frontend picker slices (1–2) — independent of the flag and of the backend change; shippable on
    their own.
-4. Frontend app-theme slices — gated by `features.appThemesEnabled`.
+4. Frontend app-theme slices — inert until `THEMES_ALLOWED_ORIGINS` names an origin.
 
-**Rollback**: unset `APP_THEMES_ENABLED`. The editor field disappears and stored `themeUrl` values
-are ignored but not deleted, so re-enabling is lossless. A full frontend revert restores today's
+**Rollback**: unset `THEMES_ALLOWED_ORIGINS`. Stored `themeUrl` values are ignored but not deleted,
+so re-enabling is lossless. A full frontend revert restores today's
 light/dark/system picker; the only unguarded behaviour change is the `ThemeContext` restore fix,
 which reverts with it.
 

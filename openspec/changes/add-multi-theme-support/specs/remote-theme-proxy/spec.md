@@ -7,7 +7,6 @@
 | Variable | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `THEMES_ALLOWED_ORIGINS` | optional string | unset | Comma-separated list of exact `https://host[:port]` origins that may be fetched as remote themes. |
-| `APP_THEMES_ENABLED` | optional boolean | `false` | Whether the per-application theme feature is offered to clients. |
 
 `THEMES_SERVICE_TIMEOUT_MS` (existing, default `5000`) SHALL also bound remote theme requests.
 
@@ -16,15 +15,10 @@ validated with `new URL()` and required to have protocol `https:`. An entry that
 whose protocol is not `https:`, SHALL be dropped and logged at `warn` level on startup; it SHALL NOT
 prevent boot.
 
-When `APP_THEMES_ENABLED` is `true` and the parsed origin set is empty, the service SHALL log a
-`warn` on startup stating that remote themes are enabled but no origin is allow-listed.
-
-`features.appThemesEnabled` SHALL be registered in
-`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts` as
-`{ type: 'feature', valueType: 'boolean', visibility: 'client', defaultValue: false, envVar: 'APP_THEMES_ENABLED' }`
-with a matching `FeatureKey.AppThemesEnabled = 'features.appThemesEnabled'` member in
-`apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts`. No `allowedRolesEnvVar` is
-declared — the flag is deployment-wide.
+`THEMES_ALLOWED_ORIGINS` is the feature's only switch. There SHALL be no client feature flag for
+per-application themes: unset or empty, every remote theme request is rejected, so a stored theme
+URL simply never applies and the editor field is harmless. A second switch would only add a state
+where the field is offered but no theme could ever load.
 
 #### Scenario: Origins are parsed into a set
 
@@ -36,12 +30,6 @@ declared — the flag is deployment-wide.
 - **WHEN** `THEMES_ALLOWED_ORIGINS` contains `http://a.example.com`
 - **THEN** that entry is dropped, a `warn` is logged naming it, the application boots, and requests
   for that origin are rejected
-
-#### Scenario: The feature is on with no allowlist
-
-- **WHEN** `APP_THEMES_ENABLED=true` and `THEMES_ALLOWED_ORIGINS` is unset
-- **THEN** a `warn` is logged at startup, `features.appThemesEnabled` is still reported `true` to
-  clients, and every remote theme request is rejected with 400
 
 ---
 
@@ -143,7 +131,7 @@ Example `400` response:
 
 #### Scenario: A non-allow-listed origin is rejected before any request
 
-- **WHEN** the requested origin is not in `THEMES_ALLOWED_ORIGINS`
+- **WHEN** the requested origin is not in `THEMES_ALLOWED_ORIGINS` (including when it is unset)
 - **THEN** the endpoint responds `400`, and no outbound HTTP request is made
 
 #### Scenario: An internal address is rejected

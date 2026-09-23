@@ -85,7 +85,7 @@ export class RemoteThemeController {
     description:
       'Fetches a single image from an allow-listed external themes host. The icon name is ' +
       'validated against the same allowlist as the built-in icon endpoint, so path traversal ' +
-      'is rejected before any request is made. Results are cached for 5 minutes.',
+      'is rejected before the outbound request is made. Results are cached for 5 minutes.',
   })
   @ApiResponse({
     status: 200,

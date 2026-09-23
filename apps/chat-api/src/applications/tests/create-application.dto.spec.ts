@@ -78,3 +78,45 @@ describe('CreateApplicationBodyDto — locales', () => {
     expect(errors.some((e) => e.property === 'locales')).toBe(true);
   });
 });
+
+describe('CreateApplicationBodyDto — themeUrl', () => {
+  it('accepts an absolute https url', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      themeUrl: 'https://themes.contoso.example.com',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts the field being absent', async () => {
+    const errors = await validateDto(BASE_BODY);
+    expect(errors.some((e) => e.property === 'themeUrl')).toBe(false);
+  });
+
+  /* An empty string is the documented "clear it" value, not a bad URL. */
+  it('accepts an empty string', async () => {
+    const errors = await validateDto({ ...BASE_BODY, themeUrl: '' });
+    expect(errors.some((e) => e.property === 'themeUrl')).toBe(false);
+  });
+
+  it('rejects a plain-http url', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      themeUrl: 'http://themes.contoso.example.com',
+    });
+    expect(errors.some((e) => e.property === 'themeUrl')).toBe(true);
+  });
+
+  it('rejects a string that is not a url', async () => {
+    const errors = await validateDto({ ...BASE_BODY, themeUrl: 'not a url' });
+    expect(errors.some((e) => e.property === 'themeUrl')).toBe(true);
+  });
+
+  it('rejects a scheme-relative url', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      themeUrl: '//themes.contoso.example.com',
+    });
+    expect(errors.some((e) => e.property === 'themeUrl')).toBe(true);
+  });
+});

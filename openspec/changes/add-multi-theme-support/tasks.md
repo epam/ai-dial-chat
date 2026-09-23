@@ -68,16 +68,14 @@ loop within a task, `npm run verify:changed` at the end of each group.
 
 ## 4. Backend: environment, feature flag, allowlist
 
-- [x] 4.1 Add `THEMES_ALLOWED_ORIGINS` (optional string) and `APP_THEMES_ENABLED` (optional boolean,
-      default `false`) to `EnvironmentVariables` in
+- [x] 4.1 Add `THEMES_ALLOWED_ORIGINS` (optional string) to `EnvironmentVariables` in
       `apps/chat-api/src/config/environment.config.ts` with class-validator decorators. No casts.
-- [x] 4.2 Add `AppThemesEnabled = 'features.appThemesEnabled'` to
-      `apps/chat-api/src/app-config/feature-flags/feature-key.enum.ts` and the matching
-      `{ type: 'feature', valueType: 'boolean', visibility: 'client', defaultValue: false, envVar: 'APP_THEMES_ENABLED' }`
-      entry to `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`.
+      (No `APP_THEMES_ENABLED` — the allowlist is the only switch.)
+- [x] 4.2 ~~Register a `features.appThemesEnabled` client flag.~~ **Dropped at the user's request** —
+      no client feature flag; `THEMES_ALLOWED_ORIGINS` alone decides whether a theme can load.
 - [x] 4.3 In `apps/chat-api/src/themes/theme.service.ts`, parse `THEMES_ALLOWED_ORIGINS` once in the
       constructor into a `Set<string>` of `https` origins; drop and `warn` on each unparseable or
-      non-`https` entry; `warn` when `APP_THEMES_ENABLED` is true and the set is empty.
+      non-`https` entry.
 - [x] 4.4 Add a private `resolveAllowedOrigin(themeUrl)` helper that parses, checks the protocol,
       checks set membership, and throws `BadRequestException` — with a message that discloses
       nothing about reachability — before any socket is opened.
@@ -116,33 +114,33 @@ loop within a task, `npm run verify:changed` at the end of each group.
 
 ## 6. Backend: themeUrl on the application write and read paths
 
-- [ ] 6.1 Add `themeUrl` to `apps/chat-api/src/applications/dto/create-application.dto.ts` and
+- [x] 6.1 Add `themeUrl` to `apps/chat-api/src/applications/dto/create-application.dto.ts` and
       `update-application.dto.ts` with `@IsString() @IsOptional()`, an https-or-empty URL check, and
       `@ApiPropertyOptional`.
-- [ ] 6.2 In `apps/chat-api/src/applications/applications.service.ts`, write
+- [x] 6.2 In `apps/chat-api/src/applications/applications.service.ts`, write
       `catalog_properties.themeUrl` on create when the value is non-empty.
-- [ ] 6.3 In the same service's update path, apply **merge** semantics to `catalog_properties` —
+- [x] 6.3 In the same service's update path, apply **merge** semantics to `catalog_properties` —
       omitted/`null` carries through, non-empty sets the one key, empty deletes the one key, an
       emptied map is written as `{}`. Do not touch the `applicationProperties` replacement logic.
-- [ ] 6.4 Add `themeUrl` to `ModelCatalogPropertiesDto` and `themeUrl: getString(raw, 'themeUrl')`
+- [x] 6.4 Add `themeUrl` to `ModelCatalogPropertiesDto` and `themeUrl: getString(raw, 'themeUrl')`
       to `mapCatalogProperties` in
       `apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`.
-- [ ] 6.5 Extend `apps/chat-api/src/applications/tests/` and
+- [x] 6.5 Extend `apps/chat-api/src/applications/tests/` and
       `apps/chat-api/src/deployments/details/tests/deployments-details.service.spec.ts` for every
       scenario in the `applications-write-api` and `deployment-details-api` deltas, including that
       sibling catalog keys survive and a non-string value is ignored.
-- [ ] 6.6 Verify: `npm exec nx test chat-api`, `npm exec nx lint chat-api`.
+- [x] 6.6 Verify: `npm exec nx test chat-api`, `npm exec nx lint chat-api`.
 
 ## 7. Contract regeneration
 
-- [ ] 7.1 Run `npm run openapi` and `npm run openapi:check`; confirm the new operation ids are
+- [x] 7.1 Run `npm run openapi` and `npm run openapi:check`; confirm the new operation ids are
       `getRemoteTheme` / `getRemoteThemeIcon` and that the three DTOs carry `themeUrl`.
-- [ ] 7.2 Build and lint `chat-api-client`. Do not hand-edit any generated file.
-- [ ] 7.3 Add `THEMES_REMOTE = '/api/v1/themes/remote'` and
+- [x] 7.2 Build and lint `chat-api-client`. Do not hand-edit any generated file.
+- [x] 7.3 Add `THEMES_REMOTE = '/api/v1/themes/remote'` and
       `THEMES_REMOTE_ICON = '/api/v1/themes/remote/icon'` to the `ApiEndpoints` enum in
       `apps/chat/src/server-api/base.ts` — the icon URL is built by hand for `<img src>`, as
       `resolveCatalogIconUrl` does today.
-- [ ] 7.4 Add a `getRemoteTheme` wrapper to `apps/chat/src/server-api/` delegating to the generated
+- [x] 7.4 Add a `getRemoteTheme` wrapper to `apps/chat/src/server-api/` delegating to the generated
       client, following the shape of `apps/chat/src/server-api/deployments.ts`.
 
 ## 8. Frontend: the AppsEditor theme URL field
@@ -154,9 +152,9 @@ loop within a task, `npm run verify:changed` at the end of each group.
       `getThemeUrl: () => string \| undefined` to `GeneralFormHandle` in
       `apps/chat/src/pages/AppsEditor/GeneralForm.tsx`. Leave `TriggerSaveGeneralPayload` in
       `apps/chat/src/types/apps-editor.ts` unchanged — it is the iframe wire contract.
-- [ ] 8.3 Render the ui-kit `Input` below `DeploymentCreationForm`, gated on
-      `useFeatureFlag('appThemesEnabled')`, with the label, placeholder, caption and error slot from
-      8.1. Seed it through the existing ref-guarded initial-values effect.
+- [ ] 8.3 Render the ui-kit `Input` below `DeploymentCreationForm`, always shown, with the label,
+      placeholder, caption and error slot from 8.1. Seed it through its own ref-guarded effect (the
+      shared one has already latched by the time the details request resolves).
 - [ ] 8.4 Add https-or-empty validation that blocks submission and renders
       `appsEditor.generalForm.themeUrlInvalid`, alongside — not replacing —
       `validateDeploymentCreationFields`.
@@ -176,8 +174,7 @@ loop within a task, `npm run verify:changed` at the end of each group.
 ## 9. Frontend: the app theme overlay
 
 - [ ] 9.1 Extend `ThemeContext` with `appThemeUrl`, `setAppThemeUrl`, `isAppThemeActive`, keeping
-      `useMemo`/`useCallback` and the outside-provider throw. Inert while
-      `useFeatureFlag('appThemesEnabled')` is false.
+      `useMemo`/`useCallback` and the outside-provider throw.
 - [ ] 9.2 Add the fetch-and-apply effect: `getRemoteTheme`, cancelled flag, an in-memory
       per-URL cache for the provider's lifetime, id-matched theme selection falling back to the
       first theme, colours applied in place of the base theme, console-only error handling.
@@ -206,13 +203,12 @@ loop within a task, `npm run verify:changed` at the end of each group.
 
 - [ ] 10.1 Update `docs/theme-customization.md`: remove the "ids other than light/dark/system are
       unreachable" limitation at `:94`, describe the generalized picker, and add a per-application
-      theme section covering `THEMES_ALLOWED_ORIGINS`, `APP_THEMES_ENABLED`, the two surfaces, the
+      theme section covering `THEMES_ALLOWED_ORIGINS`, the two surfaces, the
       logo-yes/favicon-no rule, and the five-minute cache.
 - [ ] 10.2 Update `docs/architecture.md`: the two new `ApiEndpoints` members, the new versioned
       themes routes, and the new context surface — same change, not a follow-up.
-- [ ] 10.3 Update `apps/chat-api/README.md` and `apps/chat-api/.env.template` with both new
-      variables, and `docs/ENABLED_FEATURES_ROLES.md` with `features.appThemesEnabled` (no roles
-      variable).
+- [ ] 10.3 Update `apps/chat-api/README.md` and `apps/chat-api/.env.template` with
+      `THEMES_ALLOWED_ORIGINS`. No `ENABLED_FEATURES_ROLES.md` entry — there is no feature flag.
 - [ ] 10.4 Run the accessibility pass on the two new controls per `.claude/rules/a11y.md`: the
       Settings `Select` is labelled and keyboard-operable, the editor `Input` associates its caption
       and error, no decorative icon is left unlabelled, and no focus is lost on a theme repaint.

@@ -13,8 +13,9 @@ lib, the lib SHALL receive a labelled string value, an `onChange`, and an alread
 message — never the endpoint path, the origin allowlist, or any knowledge of DIAL
 `catalog_properties`.
 
-The field SHALL be rendered only when `useFeatureFlag('appThemesEnabled')` is `true`, and SHALL be
-absent — not disabled — otherwise.
+The field SHALL always be rendered. There is no client feature flag: whether a stored theme can
+actually load is decided server-side by `THEMES_ALLOWED_ORIGINS`, and a theme URL saved against an
+origin the operator has not allow-listed is inert rather than broken.
 
 `GeneralFormInitialValues` SHALL gain `themeUrl?: string`, seeded once by the same ref-guarded
 effect that seeds the other initial values.
@@ -46,15 +47,10 @@ announced with the field rather than as loose text.
 classes; the URL value itself renders LTR inside the input, which is the browser's own behaviour for
 an `<input type="url">`-shaped value and requires no override.
 
-#### Scenario: The field renders when the feature is enabled
+#### Scenario: The field renders on the General step
 
-- **WHEN** an author opens the General step with `features.appThemesEnabled` on
-- **THEN** a `Theme URL` input renders below the shared form fields, above the column's end
-
-#### Scenario: The field is absent when the feature is off
-
-- **WHEN** `features.appThemesEnabled` is `false`
-- **THEN** no theme URL input is rendered and no theme value is sent on save
+- **WHEN** an author opens the General step
+- **THEN** a `Theme URL` input renders below the shared form fields
 
 #### Scenario: An existing value prefills the field
 
@@ -127,8 +123,9 @@ resource itself and has no knowledge of `catalog_properties`, so re-asserting th
 afterwards is what survives that write. This is the same mechanism the existing
 `features.skills_supported` re-assertion relies on.
 
-When the feature flag is off, neither call SHALL carry the field, so an operator turning the
-feature off does not cause the next save to clear a stored value.
+When the General step was never mounted — a deep link straight to Settings — `getThemeUrl()` is
+unavailable and the field SHALL be omitted from the update, leaving the stored value alone.
+Sending an empty string there would silently delete a theme the author never saw.
 
 #### Scenario: Creating an application with a theme URL
 
@@ -151,18 +148,19 @@ feature off does not cause the next save to clear a stored value.
 - **THEN** the follow-up `updateApplication` call carries `themeUrl: ""`, which deletes the stored
   key
 
+#### Scenario: A deep link to Settings omits the field
+
+- **WHEN** the author opens `/apps-editor?step=settings` directly and saves, never visiting the
+  General step
+- **THEN** the follow-up `updateApplication` call carries no `themeUrl`, and the stored value is
+  unchanged
+
 #### Scenario: The value survives the embedded editor's own save
 
 - **WHEN** the embedded QuickApps editor persists the application and the host's follow-up PATCH
   then runs
 - **THEN** the stored `catalog_properties.themeUrl` reflects the value from the form, regardless of
   what the embedded editor wrote
-
-#### Scenario: The feature flag is off during a save
-
-- **WHEN** `features.appThemesEnabled` is `false` and the author saves an application that has a
-  stored `themeUrl`
-- **THEN** neither call carries a `themeUrl` key, and the stored value is left in place
 
 ---
 
@@ -182,8 +180,7 @@ no state set after unmount — and SHALL be keyed on the application id so switc
 refetches. A failed fetch SHALL leave the field empty and SHALL NOT block the form or show an
 error: the rest of the General step is prefilled from the list item and stays usable.
 
-The fetch SHALL be skipped entirely when `features.appThemesEnabled` is `false`, and when creating
-a new application.
+The fetch SHALL be skipped when creating a new application, since there is nothing stored to read.
 
 #### Scenario: The stored value prefills the field
 
@@ -202,7 +199,7 @@ a new application.
 - **WHEN** the author opens the General step to create a new application
 - **THEN** no details request is made and the field starts empty
 
-#### Scenario: No fetch is made while the feature is off
+#### Scenario: A failed details fetch leaves the field empty
 
-- **WHEN** `features.appThemesEnabled` is `false`
-- **THEN** no details request is made for the theme URL
+- **WHEN** the details request rejects
+- **THEN** the field renders empty and the rest of the form is prefilled as today

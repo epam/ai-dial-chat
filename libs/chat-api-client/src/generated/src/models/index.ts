@@ -1866,6 +1866,12 @@ export interface CreateApplicationBodyDto {
    */
   applicationProperties?: object;
   /**
+   * Base URL of a themes host whose theme is applied while this application is open. Must be an absolute https:// URL. Send an empty string to clear it.
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  themeUrl?: string;
+  /**
    *
    * @type {Array<LocaleTextEntryDto>}
    * @memberof CreateApplicationBodyDto
@@ -4818,6 +4824,12 @@ export interface ModelCatalogPropertiesDto {
    * @memberof ModelCatalogPropertiesDto
    */
   parameters?: string;
+  /**
+   * Base URL of a themes host whose theme the host applies while this application is open. Set through the apps editor's Theme URL field.
+   * @type {string}
+   * @memberof ModelCatalogPropertiesDto
+   */
+  themeUrl?: string;
 }
 /**
  *
@@ -7463,6 +7475,12 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   applicationProperties?: object;
+  /**
+   * Base URL of a themes host whose theme is applied while this application is open. Must be an absolute https:// URL. Send an empty string to clear it; omit to leave unchanged.
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  themeUrl?: string;
   /**
    *
    * @type {Array<LocaleTextEntryDto>}

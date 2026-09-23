@@ -401,3 +401,149 @@ describe('GeneralForm', () => {
     );
   });
 });
+
+describe('GeneralForm — theme URL field', () => {
+  const user = userEvent.setup({ delay: null });
+
+  const getThemeInput = () =>
+    screen.getByLabelText(
+      AppsEditorI18nKeys.GeneralFormThemeUrlLabel,
+    ) as HTMLInputElement;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders the field when the feature is enabled', () => {
+    renderForm();
+    expect(getThemeInput()).toBeTruthy();
+  });
+
+  it('prefills from initialValues', () => {
+    renderForm({ initialValues: { themeUrl: 'https://themes.example.com' } });
+    expect(getThemeInput().value).toBe('https://themes.example.com');
+  });
+
+  /*
+   * The stored value arrives from a details request that resolves after the
+   * form has mounted, so a late-arriving prop must still seed the field.
+   */
+  it('seeds a value that arrives after the first render', async () => {
+    const { rerender } = render(<GeneralForm {...DEFAULT_PROPS} />);
+    expect(getThemeInput().value).toBe('');
+
+    rerender(
+      <GeneralForm
+        {...DEFAULT_PROPS}
+        initialValues={{ themeUrl: 'https://late.example.com' }}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(getThemeInput().value).toBe('https://late.example.com'),
+    );
+  });
+
+  it('does not overwrite an edit when the stored value arrives late', async () => {
+    const { rerender } = render(<GeneralForm {...DEFAULT_PROPS} />);
+    await user.type(getThemeInput(), 'https://mine.example.com');
+
+    rerender(
+      <GeneralForm
+        {...DEFAULT_PROPS}
+        initialValues={{ themeUrl: 'https://stored.example.com' }}
+      />,
+    );
+
+    expect(getThemeInput().value).toBe('https://mine.example.com');
+  });
+
+  it('rejects a plain-http url and does not call the API', async () => {
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
+    await user.type(getNameInput(), 'My App');
+    await user.type(getThemeInput(), 'http://themes.example.com');
+
+    await act(async () => {
+      await ref.current?.submit();
+    });
+
+    expect(
+      screen
+        .getAllByRole('alert')
+        .some((el) =>
+          el.textContent?.includes(
+            AppsEditorI18nKeys.GeneralFormThemeUrlInvalid,
+          ),
+        ),
+    ).toBe(true);
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  it('rejects a value with no scheme and does not call the API', async () => {
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
+    await user.type(getNameInput(), 'My App');
+    await user.type(getThemeInput(), 'themes.example.com');
+
+    await act(async () => {
+      await ref.current?.submit();
+    });
+
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  it('submits cleanly when the field is left empty', async () => {
+    const ref = createRef<GeneralFormHandle>();
+    vi.mocked(createApplication).mockResolvedValue({ id: 'users/u/apps/new' });
+    renderForm({}, ref);
+    await user.type(getNameInput(), 'My App');
+
+    await act(async () => {
+      await ref.current?.submit();
+    });
+
+    expect(createApplication).toHaveBeenCalledWith(
+      expect.objectContaining({ themeUrl: undefined }),
+    );
+  });
+
+  it('sends a valid theme url on create', async () => {
+    const ref = createRef<GeneralFormHandle>();
+    vi.mocked(createApplication).mockResolvedValue({ id: 'users/u/apps/new' });
+    renderForm({}, ref);
+    await user.type(getNameInput(), 'My App');
+    await user.type(getThemeInput(), 'https://themes.example.com');
+
+    await act(async () => {
+      await ref.current?.submit();
+    });
+
+    expect(createApplication).toHaveBeenCalledWith(
+      expect.objectContaining({ themeUrl: 'https://themes.example.com' }),
+    );
+  });
+
+  describe('getThemeUrl handle', () => {
+    it('returns the trimmed value', async () => {
+      const ref = createRef<GeneralFormHandle>();
+      renderForm({}, ref);
+      await user.type(getThemeInput(), 'https://themes.example.com');
+
+      expect(ref.current?.getThemeUrl()).toBe('https://themes.example.com');
+    });
+
+    /* An empty string is what tells the update endpoint to delete the key. */
+    it('returns an empty string once a stored value is cleared', async () => {
+      const ref = createRef<GeneralFormHandle>();
+      renderForm(
+        { initialValues: { themeUrl: 'https://themes.example.com' } },
+        ref,
+      );
+      await user.clear(getThemeInput());
+
+      expect(ref.current?.getThemeUrl()).toBe('');
+    });
+
+  });
+});

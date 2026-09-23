@@ -196,7 +196,10 @@ export class ApplicationsService {
         undefined,
         body.themeUrl,
       );
-      if (catalogProperties != null && Object.keys(catalogProperties).length > 0)
+      if (
+        catalogProperties != null &&
+        Object.keys(catalogProperties).length > 0
+      )
         dialBody.catalogProperties = catalogProperties;
 
       const response = await this.dialClient.client.saveCustomApplication(

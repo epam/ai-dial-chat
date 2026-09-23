@@ -79,6 +79,11 @@ describe('ThemeService — remote themes', () => {
 
   const mockCacheManager = { get: vi.fn(), set: vi.fn() };
 
+  const warnedWith = (needle: string) =>
+    (warn.mock.calls as unknown[][]).some((call) =>
+      String(call[0]).includes(needle),
+    );
+
   const createService = async (
     overrides: Record<string, unknown> = {},
   ): Promise<ThemeService> => {
@@ -89,7 +94,6 @@ describe('ThemeService — remote themes', () => {
         THEMES_CONFIG_URL: 'https://themes.example.com',
         THEMES_SERVICE_TIMEOUT_MS: 5000,
         THEMES_ALLOWED_ORIGINS: `${ALLOWED}, ${SECOND_ALLOWED}`,
-        APP_THEMES_ENABLED: true,
       },
       overrides,
     );
@@ -139,11 +143,7 @@ describe('ThemeService — remote themes', () => {
       });
       global.fetch = vi.fn();
 
-      expect(
-        warn.mock.calls.some((call) =>
-          String(call[0]).includes('http://insecure.example.com'),
-        ),
-      ).toBe(true);
+      expect(warnedWith('http://insecure.example.com')).toBe(true);
       await expect(
         withBadEntry.getRemoteTheme('https://insecure.example.com'),
       ).rejects.toThrow(BadRequestException);
@@ -154,33 +154,7 @@ describe('ThemeService — remote themes', () => {
       warn.mockClear();
       await createService({ THEMES_ALLOWED_ORIGINS: 'not a url' });
 
-      expect(
-        warn.mock.calls.some((call) => String(call[0]).includes('not a url')),
-      ).toBe(true);
-    });
-
-    it('warns at startup when the feature is on with no allow-listed origin', async () => {
-      warn.mockClear();
-      await createService({
-        THEMES_ALLOWED_ORIGINS: undefined,
-        APP_THEMES_ENABLED: true,
-      });
-
-      expect(
-        warn.mock.calls.some((call) =>
-          String(call[0]).includes('APP_THEMES_ENABLED'),
-        ),
-      ).toBe(true);
-    });
-
-    it('does not warn when the feature is off and no origin is listed', async () => {
-      warn.mockClear();
-      await createService({
-        THEMES_ALLOWED_ORIGINS: undefined,
-        APP_THEMES_ENABLED: false,
-      });
-
-      expect(warn).not.toHaveBeenCalled();
+      expect(warnedWith('not a url')).toBe(true);
     });
 
     it('rejects an origin that is not allow-listed before opening a socket', async () => {

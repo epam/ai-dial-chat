@@ -20,8 +20,9 @@ through their icon and nothing else, while the surrounding chat stays in the ope
 ### 1. Every theme the configured themes host serves becomes selectable
 
 - **Fix the restore bug** in `ThemeContext` — the stored `StorageKey.Theme` value is honoured on
-  load when it names a theme the configuration still contains, falling back to the first configured
-  theme (then `light`) when it does not.
+  load when it names a theme the configuration still contains, falling back to `light` when it does
+  not. `light` is also the default for a user who has never chosen, whatever order the themes host
+  lists its themes in (see the note below).
 - **Re-enable the parked theme row** on the Settings → Preferences tab, generalized from the
   hardcoded light/dark/system triple to *every* entry in `GET /api/themes`. Labels come from i18n
   for the three known ids and from the theme's own `displayName` for any other id.
@@ -67,14 +68,16 @@ through their icon and nothing else, while the surrounding chat stays in the ope
 
 ### 4. Gating, docs, rollback
 
-- New client feature flag `features.appThemesEnabled` (env `APP_THEMES_ENABLED`) registered in
-  `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`. Off by default. The
-  editor field is hidden and the app-theme overlay is inert while it is off.
-- **Rollback**: non-breaking in both directions. Unset `APP_THEMES_ENABLED` and the editor field and
-  the overlay disappear; a `themeUrl` already stored in `catalog_properties` is simply ignored.
-  Reverting the frontend alone leaves the picker showing light/dark/system as today. The only
-  behaviour change that is not flag-gated is the `ThemeContext` restore fix — that is a bug fix, and
-  its observable effect is that a stored preference is now honoured.
+- **No client feature flag.** `THEMES_ALLOWED_ORIGINS` is the only switch: unset or empty, every
+  remote theme request is rejected, so a stored theme URL never applies and the editor field is
+  harmless. A second switch would only add a state where the field is offered but no theme could
+  ever load. (Dropped during implementation at the user's request — an earlier draft had an
+  `APP_THEMES_ENABLED` flag.)
+- **Rollback**: non-breaking in both directions. Unset `THEMES_ALLOWED_ORIGINS` and every stored
+  `themeUrl` becomes inert — the field still shows, but no theme loads and the base palette stays.
+  Reverting the frontend alone leaves the picker showing light/dark/system as today. The one
+  behaviour change no switch covers is the `ThemeContext` restore fix — that is a bug fix, and its
+  observable effect is that a stored preference is now honoured.
 
   **Raised and settled during implementation (slice 1):** the first draft of the resolution order
   fell back to `config.themes[0].id` when nothing was stored, which would have flipped every
@@ -134,8 +137,7 @@ through their icon and nothing else, while the surrounding chat stays in the ope
 - `src/themes/` — remote-theme controller, service methods, DTOs, origin allowlist validator
 - `src/applications/` — `themeUrl` on both write DTOs and in the DIAL body mapping
 - `src/deployments/utils/deployment-mapper.util.ts` + `dto/deployment-details.dto.ts` — read path
-- `src/config/environment.config.ts` — `THEMES_ALLOWED_ORIGINS`, `APP_THEMES_ENABLED`
-- `src/app-config/config-registry/config-registry.constants.ts` + `feature-flags/feature-key.enum.ts`
+- `src/config/environment.config.ts` — `THEMES_ALLOWED_ORIGINS`
 
 **Contract** — `npm run openapi` regeneration and a `@epam/ai-dial-chat-api-client` rebuild; the
 generated operations `getRemoteTheme` / `getRemoteThemeIcon` are new, and the application write DTOs

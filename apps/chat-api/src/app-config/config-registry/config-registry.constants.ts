@@ -344,22 +344,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DEFAULT_DEPLOYMENT_PINNED',
   },
   {
-    key: 'features.appThemesEnabled',
-    type: 'feature',
-    valueType: 'boolean',
-    visibility: 'client',
-    defaultValue: false,
-    critical: false,
-    description:
-      'Whether an application may carry its own theme URL: the Theme URL field in the ' +
-      'apps editor, and the host applying that theme while the application is open. ' +
-      'Requires THEMES_ALLOWED_ORIGINS to list the origins that may be fetched — with ' +
-      'the flag on and no allow-listed origin, every remote theme request is rejected. ' +
-      'Deployment-wide; no per-role variable.',
-    owner: 'chat-team',
-    envVar: 'APP_THEMES_ENABLED',
-  },
-  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',

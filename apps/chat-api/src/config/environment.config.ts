@@ -115,23 +115,17 @@ export class EnvironmentVariables {
    * Comma-separated exact `https://host[:port]` origins that a per-application
    * theme URL may point at. Fetching a URL an application author supplies is
    * SSRF by construction, so this list — not the URL's shape — is what bounds
-   * the outbound request. Unset or empty disables remote themes entirely.
-   * Entries are parsed and validated in ThemeService; a malformed one is
-   * dropped with a warning rather than failing boot, so one bad entry cannot
-   * take the deployment down.
+   * the outbound request.
+   *
+   * This is also the feature's only switch: unset or empty, every remote theme
+   * request is rejected, so a stored theme URL simply never applies. Entries
+   * are parsed and validated in ThemeService; a malformed one is dropped with
+   * a warning rather than failing boot, so one bad entry cannot take the
+   * deployment down.
    */
   @IsOptional()
   @IsString()
   THEMES_ALLOWED_ORIGINS?: string;
-
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
-  })
-  @IsBoolean()
-  APP_THEMES_ENABLED?: boolean = false;
 
   // Auth / session
   @IsNotEmpty()

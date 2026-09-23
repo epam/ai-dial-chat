@@ -71,15 +71,6 @@ export class ThemeService {
     this.allowedOrigins = this.parseAllowedOrigins(
       this.configService.get('THEMES_ALLOWED_ORIGINS', { infer: true }),
     );
-
-    if (
-      this.configService.get('APP_THEMES_ENABLED', { infer: true }) &&
-      this.allowedOrigins.size === 0
-    ) {
-      this.logger.warn(
-        'APP_THEMES_ENABLED is on but THEMES_ALLOWED_ORIGINS lists no usable origin — every remote theme request will be rejected',
-      );
-    }
   }
 
   /**

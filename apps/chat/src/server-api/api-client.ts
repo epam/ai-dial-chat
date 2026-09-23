@@ -17,6 +17,7 @@ import {
   ShareApi,
   SkillsApi,
   ToolsetsApi,
+  ThemesApi,
   TranscriptionApi,
   UserApi,
   UserConfigApi,
@@ -104,3 +105,4 @@ export const offlineCredentialsApi = new OfflineCredentialsApi(config);
 export const externalServicesApi = new ExternalServicesApi(config);
 export const healthApi = new HealthApi(config);
 export const transcriptionApi = new TranscriptionApi(config);
+export const themesApi = new ThemesApi(config);

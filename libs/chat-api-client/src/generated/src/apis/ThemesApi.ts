@@ -15,6 +15,15 @@
 import * as runtime from '../runtime';
 import type { ThemeConfigResponseDto } from '../models/index';
 
+export interface GetRemoteThemeRequest {
+  themeUrl: string;
+}
+
+export interface GetRemoteThemeIconRequest {
+  themeUrl: string;
+  iconName: string;
+}
+
 export interface GetThemeIconRequest {
   iconName: string;
 }
@@ -23,6 +32,127 @@ export interface GetThemeIconRequest {
  *
  */
 export class ThemesApi extends runtime.BaseAPI {
+  /**
+   * Fetches `<themeUrl>/config.json` from an external themes host, provided its origin is listed in THEMES_ALLOWED_ORIGINS. Redirects are not followed, the response is size-capped, and colour keys that are not safe as CSS custom property names are dropped. Results are cached for 5 minutes.
+   * Get a remote theme configuration
+   */
+  async getRemoteThemeRaw(
+    requestParameters: GetRemoteThemeRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ThemeConfigResponseDto>> {
+    if (requestParameters['themeUrl'] == null) {
+      throw new runtime.RequiredError(
+        'themeUrl',
+        'Required parameter "themeUrl" was null or undefined when calling getRemoteTheme().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['themeUrl'] != null) {
+      queryParameters['themeUrl'] = requestParameters['themeUrl'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/themes/remote`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ThemeConfigResponseDto>(response);
+  }
+
+  /**
+   * Fetches `<themeUrl>/config.json` from an external themes host, provided its origin is listed in THEMES_ALLOWED_ORIGINS. Redirects are not followed, the response is size-capped, and colour keys that are not safe as CSS custom property names are dropped. Results are cached for 5 minutes.
+   * Get a remote theme configuration
+   */
+  async getRemoteTheme(
+    requestParameters: GetRemoteThemeRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ThemeConfigResponseDto> {
+    const response = await this.getRemoteThemeRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Fetches a single image from an allow-listed external themes host. The icon name is validated against the same allowlist as the built-in icon endpoint, so path traversal is rejected before the outbound request is made. Results are cached for 5 minutes.
+   * Get a remote theme icon
+   */
+  async getRemoteThemeIconRaw(
+    requestParameters: GetRemoteThemeIconRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters['themeUrl'] == null) {
+      throw new runtime.RequiredError(
+        'themeUrl',
+        'Required parameter "themeUrl" was null or undefined when calling getRemoteThemeIcon().',
+      );
+    }
+
+    if (requestParameters['iconName'] == null) {
+      throw new runtime.RequiredError(
+        'iconName',
+        'Required parameter "iconName" was null or undefined when calling getRemoteThemeIcon().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['themeUrl'] != null) {
+      queryParameters['themeUrl'] = requestParameters['themeUrl'];
+    }
+
+    if (requestParameters['iconName'] != null) {
+      queryParameters['iconName'] = requestParameters['iconName'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/themes/remote/icon`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    if (this.isJsonMime(response.headers.get('content-type'))) {
+      return new runtime.JSONApiResponse<string>(response);
+    } else {
+      return new runtime.TextApiResponse(response);
+    }
+  }
+
+  /**
+   * Fetches a single image from an allow-listed external themes host. The icon name is validated against the same allowlist as the built-in icon endpoint, so path traversal is rejected before the outbound request is made. Results are cached for 5 minutes.
+   * Get a remote theme icon
+   */
+  async getRemoteThemeIcon(
+    requestParameters: GetRemoteThemeIconRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<string> {
+    const response = await this.getRemoteThemeIconRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.
    * Get theme icon
