@@ -121,6 +121,9 @@
       "path": "../../libs/chat-overlay/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/chat-hooks/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
     }
   ]
