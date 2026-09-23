@@ -130,7 +130,7 @@ whether you need to `npm install` it.
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                                                       |
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                                                       |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                                                       |
-| `./utils`                 | `@epam/ai-dial-usage-dashboard` | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                               |
+| `./utils`                 | `@epam/ai-dial-usage-dashboard`                                                                                                                     | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                               |
 | `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                                                       |
 
 Six of the peers above (`@epam/ai-dial-builder-form`, `@epam/ai-dial-catalog`,
