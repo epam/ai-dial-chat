@@ -127,7 +127,8 @@ export class EnvironmentVariables {
   })
   AUTH_SESSION_PREV_SECRET?: string;
 
-  @Transform(({ value }) => Number(value))
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @Min(1)
   @Max(2147483647)

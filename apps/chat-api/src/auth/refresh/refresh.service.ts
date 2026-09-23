@@ -14,6 +14,7 @@ import { ProviderRegistryService } from '../providers/provider-registry.service'
 import {
   getSessionCookieMaxAge,
   resolveRefreshTokenExpiry,
+  SessionExpiredDuringRefreshException,
 } from '../session/session-expiration';
 import type { SessionPayload } from '../session/session.types';
 
@@ -153,9 +154,15 @@ export class RefreshService {
      */
     try {
       getSessionCookieMaxAge(refreshed, now);
-    } catch (expired) {
+    } catch {
       record(AuthRefreshOutcome.SessionExpired);
-      throw expired;
+      /*
+       * The exchange itself succeeded — this session was valid when the
+       * request started. Surfacing the underlying InvalidSessionException
+       * here would make the caller clear the cookie, forcing a hard logout
+       * for what is really just a slow round-trip.
+       */
+      throw new SessionExpiredDuringRefreshException('Session expired');
     }
     record(AuthRefreshOutcome.Refreshed);
     const renewed: SessionPayload = {

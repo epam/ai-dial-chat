@@ -5,6 +5,15 @@ import type { SessionPayload } from './session.types';
 /** Distinguishes a locally invalid cookie from a recoverable refresh race. */
 export class InvalidSessionException extends UnauthorizedException {}
 
+/**
+ * A session that was valid at request start but whose deadline elapsed while
+ * a refresh exchange was in flight. Deliberately does not extend
+ * `InvalidSessionException`: the cookie is not structurally invalid, so the
+ * caller must return a plain 401 without clearing it, letting a still-valid
+ * cookie from another tab or a later retry succeed.
+ */
+export class SessionExpiredDuringRefreshException extends UnauthorizedException {}
+
 /** Enforces the server deadline before deriving a browser cookie lifetime. */
 export const getSessionCookieMaxAge = (
   payload: SessionPayload,

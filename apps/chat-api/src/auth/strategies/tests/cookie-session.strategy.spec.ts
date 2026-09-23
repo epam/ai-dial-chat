@@ -9,6 +9,7 @@ import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BucketService } from '../../bucket/bucket.service';
 import { RefreshService } from '../../refresh/refresh.service';
+import { SessionExpiredDuringRefreshException } from '../../session/session-expiration';
 import { SessionService } from '../../session/session.service';
 import type { SessionPayload } from '../../session/session.types';
 import { CookieSessionStrategy } from '../cookie-session.strategy';
@@ -280,6 +281,25 @@ describe('CookieSessionStrategy', () => {
       strategy.authenticate(req, res as unknown as Response),
     ).rejects.toThrow(UnauthorizedException);
     /* Preserve a winning pod's cookie for the frontend recovery probe. */
+    expect(res.cookie).not.toHaveBeenCalled();
+  });
+
+  it('does not clear the cookie when the exchange completes after the session deadline', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const payload = makePayload({ at_exp: now + 30 });
+    sessionService.decryptFromRequest.mockResolvedValue(payload);
+    refreshService.refresh.mockRejectedValue(
+      new SessionExpiredDuringRefreshException('Session expired'),
+    );
+
+    const { req, res } = makeReqRes('valid-token');
+    await expect(
+      strategy.authenticate(req, res as unknown as Response),
+    ).rejects.toThrow(UnauthorizedException);
+    /*
+     * The session was valid when the request started; the deadline only
+     * elapsed mid-exchange, so a still-valid cookie must survive for a retry.
+     */
     expect(res.cookie).not.toHaveBeenCalled();
   });
 

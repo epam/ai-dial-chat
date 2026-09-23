@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProviderRegistryService } from '../providers/provider-registry.service';
+import { SessionExpiredDuringRefreshException } from '../session/session-expiration';
 import { SessionPayload } from '../session/session.types';
 import { RefreshService } from './refresh.service';
 
@@ -154,7 +155,7 @@ describe('RefreshService', () => {
     });
     await expect(
       service.refresh(makePayload({ session_exp: now + 5 })),
-    ).rejects.toThrow(UnauthorizedException);
+    ).rejects.toThrow(SessionExpiredDuringRefreshException);
   });
 
   it('throws UnauthorizedException on invalid_grant when the access token has already expired', async () => {

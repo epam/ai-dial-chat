@@ -146,6 +146,7 @@ export class CookieSessionStrategy implements AuthStrategy {
       }
     }
 
+    /* Guard: throws if the session deadline crossed zero during async bucket resolution. */
     getSessionCookieMaxAge(payload);
     if (
       refreshRaceAbsorbed &&
