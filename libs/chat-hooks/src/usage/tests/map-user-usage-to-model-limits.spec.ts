@@ -4,12 +4,12 @@ import type {
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
-import { describe, expect, it, vi } from 'vitest';
 import {
   ModelLimitMetricKind,
   ModelLimitStatus,
-} from '../../models/model-limits-props';
-import type { FormatResetTime } from '../map-usage-data-to-dashboard';
+} from '@epam/ai-dial-usage-dashboard';
+import { describe, expect, it, vi } from 'vitest';
+import type { FormatResetTime } from '../map-user-usage-to-model-limits';
 import {
   USAGE_MODEL_LIMITS_I18N_KEYS,
   mapOverallCostLimitsToPeriodStatuses,
@@ -215,6 +215,28 @@ describe('mapUserUsageToModelLimits', () => {
 
     expect(row.name).toBe('unknown-model');
     expect(row.avatarSrc).toBeUndefined();
+  });
+
+  it('falls back to item.id when a matched item resolves an empty display name', () => {
+    const [row] = mapUsage(
+      withUsage({ 'gpt-4o': { dayTokenStats: { used: 1, total: 10 } } }),
+      [modelItem({ id: 'gpt-4o', displayName: '' })],
+      { resolveDisplayName: () => '' },
+    );
+
+    expect(row.name).toBe('gpt-4o');
+  });
+
+  it('lets a later deployment item with the same ID win enrichment', () => {
+    const [row] = mapUsage(
+      withUsage({ 'gpt-4o': { dayTokenStats: { used: 1, total: 10 } } }),
+      [
+        modelItem({ id: 'gpt-4o', displayName: 'First' }),
+        modelItem({ id: 'gpt-4o', displayName: 'Second' }),
+      ],
+    );
+
+    expect(row.name).toBe('Second');
   });
 
   it('calls resolveIconUrl and forwards its result to avatarSrc', () => {
@@ -461,6 +483,23 @@ describe('mapUserUsageToModelLimits', () => {
       );
 
       expect(row.status).toBe(ModelLimitStatus.Unavailable);
+    });
+
+    it('prefers a finite cost status over the NoLimit fallback when every token period is unlimited', () => {
+      const [row] = mapUsage(
+        withUsage({
+          'gpt-4o': {
+            dayTokenStats: { used: 10, total: 2 ** 53 },
+            weekTokenStats: { used: 10, total: 2 ** 53 },
+            monthTokenStats: { used: 10, total: 2 ** 53 },
+            dayCostStats: { used: 9, total: 10 },
+          },
+        }),
+      );
+
+      expect(row.day.tokens.kind).toBe(ModelLimitMetricKind.Unlimited);
+      expect(row.day.cost.status).toBe(ModelLimitStatus.RunningLow);
+      expect(row.status).toBe(ModelLimitStatus.RunningLow);
     });
 
     it('applies the worst overall Cost status to every model row', () => {
