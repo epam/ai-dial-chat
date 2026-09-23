@@ -25,6 +25,9 @@
       "path": "../share/tsconfig.lib.json"
     },
     {
+      "path": "../usage-dashboard/tsconfig.lib.json"
+    },
+    {
       "path": "../scheduled-tasks/tsconfig.lib.json"
     },
     {

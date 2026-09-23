@@ -1,6 +1,6 @@
 import type { UserLimitStatsResponseDto } from '@epam/ai-dial-chat-api-client';
+import { UsageLimitStatus } from '@epam/ai-dial-usage-dashboard';
 import { describe, expect, it } from 'vitest';
-import { UsageLimitStatus } from '../../models/usage-limit-card-props';
 import type { FormatResetTime } from '../map-usage-data-to-dashboard';
 import {
   USAGE_DATA_I18N_KEYS,
@@ -227,6 +227,17 @@ describe('mapUsageDataToDashboard', () => {
       noReset,
     );
 
+    expect(result[0].status).toBe(UsageLimitStatus.LimitReached);
+  });
+
+  it('treats a finite total of zero as 100% used', () => {
+    const result = mapUsageDataToDashboard(
+      withStats({ dayCostStats: { used: 0, total: 0 } }),
+      t,
+      noReset,
+    );
+
+    expect(result[0].usedPercent).toBe(100);
     expect(result[0].status).toBe(UsageLimitStatus.LimitReached);
   });
 

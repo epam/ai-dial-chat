@@ -12,10 +12,11 @@ formatting, and the join against `useDeployments().items`); the library only ren
 given.
 
 The adapter functions (`mapUserUsageToModelLimits`, `mapOverallCostLimitsToPeriodStatuses`) live in
-`libs/usage-dashboard/src/utils/map-user-usage-to-model-limits.ts` (exported from
-`@epam/ai-dial-usage-dashboard`) so they can be reused by other apps hosting this tab. They accept
-host-owned callbacks (`resolveIconUrl`, `resolveDisplayName`) to keep URL construction and locale
-resolution in the app. See the `usage-dashboard-lib` capability spec for the utility API details.
+`libs/chat-hooks/src/usage/map-user-usage-to-model-limits.ts`, under the narrow, explicitly justified
+`chat-hooks` DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation. They
+accept host-owned callbacks (`resolveIconUrl`, `resolveDisplayName`) to keep URL construction and
+locale resolution local to the host. See the `usage-dashboard-lib` capability spec for the library's
+rendering-only contract.
 
 ## Requirements
 
@@ -203,18 +204,18 @@ status but at least one token or overall Cost limit is `Unlimited`, overall Stat
 
 ### Requirement: Aggregate period cost cards
 
-The `mapUsageDataToDashboard` utility (in `libs/usage-dashboard`, see the `usage-dashboard-lib` capability) SHALL map the top-level
+The `mapUsageDataToDashboard` adapter (in `libs/chat-hooks/src/usage/map-usage-data-to-dashboard.ts`, exported from `@epam/ai-dial-chat-hooks`'s `./usage` entry point) SHALL map the top-level
 `dayCostStats`, `weekCostStats`, and `monthCostStats` fields from `UserLimitStatsResponseDto` into
 `UsageLimitCardData[]` for `UsageLimitCardGroup`. A period whose stats are absent or non-finite
 SHALL be omitted from the array entirely. Card `title` and `periodDescription` SHALL use calendar
 wording (`Today`, `This week`, `This month`) and SHALL NOT use trailing-window wording
 (`Last 24 hours`, `Last 7 days`, `Last 30 days`).
 
-The utility SHALL accept a host-supplied `formatResetTime: (resetsAt: string | undefined) => ResetTimeDisplay | undefined`
+The adapter SHALL accept a host-supplied `formatResetTime: (resetsAt: string | undefined) => ResetTimeDisplay | undefined`
 callback and SHALL populate each card's `resetLabel`, `resetIsoValue`, and `resetAriaLabel` from its
 result. When the callback returns `undefined` — because `resetsAt` was absent, unparseable, or
 `Intl` was unavailable — the card SHALL carry no reset fields and SHALL otherwise be identical to
-its pre-change output. The utility SHALL NOT parse or format a timestamp itself.
+its pre-change output. The adapter SHALL NOT parse or format a timestamp itself.
 
 When a period's `total >= 2 ** 53` (the unlimited sentinel — Long.MAX_VALUE from the backend,
 meaning no cost limit is configured for that period), the adapter SHALL produce a card with
@@ -223,6 +224,14 @@ meaning no cost limit is configured for that period), the adapter SHALL produce 
 caption, no remaining caption, and no used-percent label. This is the expected behavior when an
 administrator has not configured a cost limit for the period; the absence of limit information is
 intentional and SHALL NOT be treated as a display error.
+
+Status derivation SHALL keep the 75%/100% thresholds against an **unclamped** `usedPercent`, SHALL
+treat a finite `total` of zero as 100% used, and SHALL floor `used` at zero. Localized strings SHALL
+come from a caller-supplied translate callback keyed on the adapter's own `USAGE_DATA_I18N_KEYS`
+const (`libs/chat-hooks/src/usage/map-usage-data-to-dashboard.ts`), a portable key-path object
+reusing the exact same 8 path strings `apps/chat/src/constants/translation-keys.ts`'s
+`UsageI18nKeys` declares; the adapter SHALL NOT import `react-i18next` or the app's own enum, so it
+stays a pure function behind `UsageTab`'s `useMemo`.
 
 #### Scenario: Unconfigured weekly limit shows spend only
 
@@ -255,18 +264,26 @@ intentional and SHALL NOT be treated as a display error.
 - **THEN** that card carries no `resetLabel`/`resetIsoValue`/`resetAriaLabel` and its other fields
   are unchanged
 
+#### Scenario: Over-limit usage is not clamped
+
+- **WHEN** `dayCostStats` has `used` greater than a finite `total`
+- **THEN** `usedPercent` exceeds 100, the status is `LimitReached`, and the value is passed to the
+  library unclamped exactly as before the adapter moved
+
 ### Requirement: Overall Cost period header indicators
 
 `mapOverallCostLimitsToPeriodStatuses` SHALL normalize the top-level stats into period headers.
-The utility (in `libs/usage-dashboard`, see the
-`usage-dashboard-lib` capability) SHALL normalize the top-level `dayCostStats`, `weekCostStats`, and
+The adapter (in `libs/chat-hooks/src/usage/map-user-usage-to-model-limits.ts`, alongside the row adapter
+it shares period-status derivation with) SHALL normalize the top-level `dayCostStats`,
+`weekCostStats`, and
 `monthCostStats` into a `ModelLimitPeriodStatuses` value keyed `day`, `week`, and `month`. Each
 entry SHALL carry the status and tooltip derived exactly as today, plus the preformatted reset trio
 produced by the same host-supplied `formatResetTime` callback used for the aggregate cards, read
 from the same top-level stat that drives the entry's status.
 
-The utility SHALL NOT read a per-deployment `resetsAt` for a period header, and SHALL NOT reconcile
-a top-level `resetsAt` against a differing per-deployment one.
+The adapter SHALL NOT read a per-deployment `resetsAt` for a period header, and SHALL NOT reconcile
+a top-level `resetsAt` against a differing per-deployment one. When the `formatResetTime` argument
+is omitted, the adapter SHALL produce statuses with no reset fields.
 
 #### Scenario: Header indicator uses the same overall Cost budget as its card
 
@@ -285,6 +302,12 @@ a top-level `resetsAt` against a differing per-deployment one.
 - **WHEN** a deployment's `dayCostStats.resetsAt` differs from the top-level `dayCostStats.resetsAt`
 - **THEN** the day period header shows the top-level value and neither value is adjusted
 
+#### Scenario: Absent usage produces unavailable statuses
+
+- **WHEN** `usage` is `undefined`
+- **THEN** all three period statuses are `ModelLimitStatus.Unavailable` with no tooltip and no reset
+  fields
+
 ### Requirement: Formatting and accessible labels
 
 The adapter SHALL format displayed cost with the established localized currency formatter plus the
@@ -295,11 +318,13 @@ unlimited/unavailable states. Period cells SHALL use localized Today, This week,
 labels visibly; localized Tokens and Cost labels supplied by `UsageTab` SHALL provide
 non-visual accessible context for the metric values.
 
-The integration SHALL reuse `UsageI18nKeys.TodayPeriodDescription`,
-`ThisWeekPeriodDescription`, `ThisMonthPeriodDescription`, `TokensColumnLabel`, and
-`CostColumnLabel`, and SHALL add localized keys for `Model tokens limits`, `spent`, `Follows cost
-limit`, its accessible value description, and both overall Cost status tooltip templates. Selector,
-minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
+The adapter's own `USAGE_MODEL_LIMITS_I18N_KEYS` const SHALL reuse the same path strings as
+`UsageI18nKeys.TodayPeriodDescription`, `ThisWeekPeriodDescription`, `ThisMonthPeriodDescription`,
+plus dedicated key paths for `Model tokens limits`, `spent`, `Follows cost limit`, its accessible
+value description, and both overall Cost status tooltip templates. `UsageTab` continues to supply
+`TokensColumnLabel` and `CostColumnLabel` from its own `UsageI18nKeys` directly as label props —
+those two are not part of the adapter's own const, since they are column labels the tab already
+owns. Selector, minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
 
 #### Scenario: Visible token numbers are compact and currency-free
 - **WHEN** day Tokens has `used: 1600000` and `total: 2000000`
@@ -317,24 +342,64 @@ minute/hour, and Requests keys SHALL only be removed if unused elsewhere.
 
 ### Requirement: Library isolation for the adapter
 
-All DTO field selection, unlimited-sentinel checks, status thresholds, currency/number formatting, locale/icon resolution, and deployment joins SHALL happen inside `libs/usage-dashboard`'s transform
-utilities (`mapUserUsageToModelLimits`, `mapOverallCostLimitsToPeriodStatuses`). The utilities
-accept host-owned callbacks (`resolveIconUrl`, `resolveDisplayName`) and a caller-supplied translate
-function for all user-visible strings, keeping app-specific URL construction and locale resolution
-out of the library. `libs/usage-dashboard` SHALL NOT import app code, app contexts, feature flags,
-routing, storage, or analytics. `ModelLimitsSection` and `UsageLimitCardGroup` receive only
-normalized rows/cards and localized labels.
+The adapters SHALL own DTO field selection, unlimited-sentinel checks, status thresholds,
+shared currency/number formatting, and deployment joins. Host-specific locale/icon resolution,
+translated strings, and reset-time formatting SHALL be supplied through callbacks or parameters.
+The response adaptation SHALL happen in
+`map-usage-data-to-dashboard.ts` and `map-user-usage-to-model-limits.ts` under
+`libs/chat-hooks/src/usage/` — the narrow, explicitly justified location recorded in AGENTS.md
+§Library isolation's DIAL-Core-response-adapter exception — and SHALL NOT happen in
+`libs/usage-dashboard` or any other hand-authored library outside that recorded exception.
+`libs/usage-dashboard` SHALL NOT import `@epam/ai-dial-chat-api-client`, app code, app contexts,
+feature flags, routing, storage, or analytics, and SHALL receive only normalized
+rows/cards/period statuses and localized labels through props (see the `usage-dashboard-lib`
+capability).
 
-`UsageTab` wires the transform utilities from `@epam/ai-dial-usage-dashboard` with
-`useUsageData(getUserUsage, ...)` from `@epam/ai-dial-chat-hooks` and `useDeployments()` from the
-app context. No new context or hook is introduced.
+This coupling's presence in `libs/chat-hooks` SHALL NOT be read as license to move an
+uncharacterized, product-specific, or per-host-varying DTO transformation into that library, or into
+`libs/chat-shared`. Each such future case needs its own equivalent justification recorded in that
+change's design doc, per AGENTS.md's exception text. Isolation SHALL NOT be satisfied by copying
+generated DTO interfaces into `libs/usage-dashboard`, by replacing the runtime
+`DeploymentItemDtoTypeEnum` there with equivalent hardcoded backend strings, or by using type-only
+imports there while still interpreting BFF field names or the unlimited sentinel.
+
+The adapters SHALL keep accepting host-owned callbacks (`resolveIconUrl`, `resolveDisplayName`,
+`formatResetTime`) and a caller-supplied translate function, so they remain pure functions that
+`UsageTab` can memoize; they SHALL NOT import `react-i18next`, an app context, or a UI-kit rendering
+component. `libs/usage-dashboard` SHALL NOT import these adapters, and no dependency cycle SHALL be
+introduced between `libs/chat-hooks` and `libs/usage-dashboard`.
+
+`UsageTab` wires the adapters imported from `@epam/ai-dial-chat-hooks` with
+`useUsageData(getUserUsage, ...)` (also from `@epam/ai-dial-chat-hooks`) and `useDeployments()` from
+the app context, and imports `UsageLimitCardGroup` and `ModelLimitsSection` from
+`@epam/ai-dial-usage-dashboard`. No new context or hook is introduced, no fetching is added or
+removed, and existing `useMemo`/`useCallback` dependency arrays and subscription lifetimes are
+preserved.
 
 #### Scenario: Library public API stays normalized
 - **WHEN** `libs/usage-dashboard` public types are inspected
 - **THEN** they expose period-shaped presentation props but no raw DTO field such as `dayTokenStats`,
   API path/client type, unlimited sentinel, or status threshold in the component props
 
+#### Scenario: Library carries no generated-client edge
+- **WHEN** `libs/usage-dashboard`'s source, barrel, `package.json`, `tsconfig.lib.json`, and
+  `vite.config.mts` are inspected
+- **THEN** none of them names `@epam/ai-dial-chat-api-client`
+
+#### Scenario: The coupling stays inside its recorded exception
+- **WHEN** `libs/chat-shared` is inspected
+- **THEN** it has gained no usage-dashboard DTO mapper, no copied generated DTO interface, and no
+  hardcoded substitute for `DeploymentItemDtoTypeEnum`
+
 #### Scenario: Existing feature ownership remains unchanged
 - **WHEN** the comparison table renders
 - **THEN** `useUsageData` and `useDeployments` remain the only owners of fetched Usage and deployment
   state; no new context or hook is introduced
+
+#### Scenario: No import cycle between the library and the adapter's host library
+- **WHEN** the project graph is inspected
+- **THEN** `libs/usage-dashboard` depends on neither `libs/chat-hooks` nor `apps/chat`, and
+  `libs/chat-hooks` consumes its normalized display types and runtime display enums through an
+  optional peer dependency; hosts loading the root or `./usage` entry point SHALL install that
+  peer. This one-way runtime dependency SHALL NOT introduce a reverse import from the
+  presentational library into the adapters.

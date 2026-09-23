@@ -1,0 +1,31 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "usage-dashboard-consumer-fixture",
+  "targets": {
+    "pack-lib": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        {
+          "projects": ["usage-dashboard"],
+          "target": "build"
+        }
+      ]
+    },
+    "build": {
+      "executor": "nx:noop",
+      "dependsOn": ["pack-lib"]
+    },
+    "verify": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/run.mjs",
+        "cwd": "tools/usage-dashboard-consumer-fixture"
+      },
+      "dependsOn": ["build"]
+    },
+    "test": {
+      "executor": "nx:noop",
+      "dependsOn": ["verify"]
+    }
+  }
+}

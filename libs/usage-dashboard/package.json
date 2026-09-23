@@ -19,8 +19,7 @@
     }
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0",
-    "@epam/ai-dial-chat-api-client": "*"
+    "@tabler/icons-react": "^3.44.0"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",

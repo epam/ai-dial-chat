@@ -1,0 +1,7 @@
+{
+  "name": "usage-dashboard-consumer-fixture",
+  "description": "Runs scripts/run.mjs, which scans @epam/ai-dial-usage-dashboard's built dist/ for a returning generated-BFF-client import, then installs the packed tarball into a fully isolated, explicitly resolved dependency tree — every documented peer pinned against package-lock.json and no @epam/ai-dial-chat-api-client anywhere in the tree — to prove the published exports map, dependency closure, and split CSS resolve outside the workspace's own @epam/source alias graph and node_modules tree",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0"
+}
