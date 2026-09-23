@@ -17,6 +17,7 @@ export const ScheduledTaskDetailsSection: FC<
   modelLabel,
   repeatsLabel,
   activeWindowLabel,
+  completedLabel,
   fieldLabelClassName = 'dial-tiny-text',
   fieldValueClassName = 'dial-small-text',
 }) => (
@@ -29,6 +30,17 @@ export const ScheduledTaskDetailsSection: FC<
           {labels.descriptionLabel}
         </span>
         <p className={fieldValueClassName}>{description}</p>
+      </div>
+    )}
+
+    {completedLabel && (
+      <div className="flex flex-col gap-1">
+        <span
+          className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
+        >
+          {labels.completedFieldLabel ?? 'Status'}
+        </span>
+        <p className={fieldValueClassName}>{completedLabel}</p>
       </div>
     )}
 

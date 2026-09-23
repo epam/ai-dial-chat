@@ -46,6 +46,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   onDelete,
   isDeleting = false,
   isDeleted = false,
+  isCompleted = false,
   isActive,
   isActiveUpdating = false,
   isActiveDisabled = false,
@@ -58,6 +59,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   modelLabel,
   repeatsLabel,
   activeWindowLabel,
+  completedLabel,
   nextRunLabel,
   instructionsMarkdown,
   skillDisplayName,
@@ -135,11 +137,13 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         modelLabel: labels.modelLabel,
         repeatsLabel: labels.repeatsLabel,
         activeWindowLabel: labels.activeWindowLabel,
+        completedFieldLabel: labels.completedFieldLabel,
       }}
       description={description}
       modelLabel={modelLabel}
       repeatsLabel={repeatsLabel}
       activeWindowLabel={activeWindowLabel}
+      completedLabel={completedLabel}
       fieldLabelClassName={fieldLabelClassName}
       fieldValueClassName={fieldValueClassName}
     />
@@ -267,14 +271,26 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {!isDeleted && isActive !== undefined && (
-            <Switch
-              id="scheduled-task-active-switch"
-              labelProps={{ label: labels.activeStatusLabel }}
-              isOn={isActive}
-              disabled={isActiveUpdating || isActiveDisabled || isDeleting}
-              onChange={(value) => onActiveChange?.(value)}
-            />
+          {!isDeleted && !isCompleted && isActive !== undefined && (
+            <>
+              <Switch
+                id="scheduled-task-active-switch"
+                labelProps={{ label: labels.activeStatusLabel }}
+                isOn={isActive}
+                disabled={isActiveUpdating || isActiveDisabled || isDeleting}
+                onChange={(value) => onActiveChange?.(value)}
+              />
+              {isActiveDisabled && labels.isActiveDisabledReason && (
+                <span
+                  className={mergeClasses(
+                    fieldValueClassName,
+                    styles.subtitleText,
+                  )}
+                >
+                  {labels.isActiveDisabledReason}
+                </span>
+              )}
+            </>
           )}
 
           {!isDeleted && onDelete && (

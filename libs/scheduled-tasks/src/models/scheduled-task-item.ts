@@ -14,8 +14,11 @@ export interface ScheduledTaskItem {
   isNew?: boolean;
   /** When explicitly `false`, the card shows a "Paused" badge in place of the schedule pill. `true` or `undefined` renders the schedule pill as usual. */
   isActive?: boolean;
-  /** Optional display status; takes precedence over legacy `isActive`. */
+  /** Optional explicit display status; takes precedence over the derived `isCompleted`/`isActive` statuses. */
   presentationStatus?: ScheduledTaskPresentationStatus;
+
+  /** When `true`, the card shows a "Completed" badge in place of the schedule pill — a task that can no longer produce a future run (a finished one-time task, or a recurring task whose activity window has closed). Pre-resolved by the host app; the lib performs no completion derivation. Takes precedence over `isActive` when both are set. */
+  isCompleted?: boolean;
 }
 export enum ScheduledTaskPresentationStatus {
   Active = 'active',

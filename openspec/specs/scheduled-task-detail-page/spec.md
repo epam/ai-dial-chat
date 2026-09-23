@@ -233,7 +233,7 @@ When `item.isUnread` is `true`, the row SHALL additionally render the shared unr
 
 ### Requirement: Presentational ScheduledTaskDetailView stays host-agnostic
 
-`libs/scheduled-tasks` SHALL export a presentational `ScheduledTaskDetailView` component accepting only props: localized label strings (including Edit and Delete button labels, the Active switch's label/status announcements, a deleted-state label, and the History panel's `unreadIndicatorLabel`), detail field values (`description`, model display value, schedule label), either `instructionsMarkdown: string` or a `renderInstructions: (markdown: string) => ReactNode` callback, a runs list (each item optionally carrying `conversationId` and `isUnread`) plus `{ runsHasMore, runsIsLoadingMore, runsSkeletonCount, onRunsLoadMore, onRunClick? }`, top-level `isLoading`/`error` flags and their History-scoped counterparts, an `onBack` callback, an optional `onEdit?: () => void` callback, optional `isActive?: boolean`/`isActiveUpdating?: boolean`/`isActiveDisabled?: boolean`/`onActiveChange?: (nextActive: boolean) => void` for the Active switch, an optional `onDelete?: () => void` callback, an optional `isDeleting?: boolean` flag, and an optional `isDeleted?: boolean` flag.
+`libs/scheduled-tasks` SHALL export a presentational `ScheduledTaskDetailView` component accepting only props: localized label strings (including Edit and Delete button labels, the Active switch's label/status announcements, a deleted-state label, and the History panel's `unreadIndicatorLabel`), detail field values (`description`, model display value, schedule label), either `instructionsMarkdown: string` or a `renderInstructions: (markdown: string) => ReactNode` callback, a runs list (each item optionally carrying `conversationId` and `isUnread`) plus `{ runsHasMore, runsIsLoadingMore, runsSkeletonCount, onRunsLoadMore, onRunClick? }`, top-level `isLoading`/`error` flags and their History-scoped counterparts, an `onBack` callback, an optional `onEdit?: () => void` callback, optional `isActive?: boolean`/`isActiveUpdating?: boolean`/`isActiveDisabled?: boolean`/`isCompleted?: boolean`/`onActiveChange?: (nextActive: boolean) => void` for the Active switch (no switch renders when `isCompleted` is `true`), an optional `onDelete?: () => void` callback, an optional `isDeleting?: boolean` flag, and an optional `isDeleted?: boolean` flag.
 
 When `onEdit` is supplied, the component SHALL render the Edit button; when omitted, no Edit button renders. When `onDelete` is supplied, the component SHALL render the Delete action; when omitted, no Delete action renders. When `isActive` is `undefined`, no Active switch SHALL render. When `isDeleted` is `true`, the component SHALL render its read-only deleted-state indicator and SHALL NOT render the Edit button, Delete action, or Active switch regardless of whether `onEdit`/`onDelete`/`isActive` are supplied — `isDeleted` takes precedence over the presence of those callbacks. When `isDeleting` is `true`, the component SHALL render the Edit button, Delete action, and Active switch (whichever are otherwise eligible to render) in a disabled state rather than omitting them. `onRunClick`, when supplied, SHALL be invoked by the History panel only for a row whose run carries a non-empty `conversationId`, per the "History rows show skeleton loading, status icon, timestamp, and duration" requirement; the component SHALL NOT itself navigate, resolve routes, or call `markConversationViewed`. The component SHALL NOT import `@epam/chat-api-client`, any routing module, i18n, or auth/env/analytics modules, and SHALL NOT render any confirmation dialog itself — activating Delete only invokes `onDelete`; the host page owns opening/closing the confirmation dialog, the API call, and all post-delete navigation.
 
@@ -516,29 +516,34 @@ All directional layout in the detail page header, Details/Configuration sections
 - **WHEN** the user navigates away from `/scheduled-tasks/sched_123` (unmount or `scheduleId` change) while a pause/resume call for `sched_123` is still in flight, and that call later resolves
 - **THEN** no component state is updated as a result of that resolution
 
-### Requirement: Active switch is disabled, not hidden, when a schedule can no longer produce a future run
+### Requirement: Active switch is hidden for completed tasks, disabled only when the completed signal degrades
 
-`ScheduledTaskDetailPage` SHALL pass `isActiveDisabled={true}` to `ScheduledTaskDetailView` whenever the loaded task has permanently exhausted its ability to produce a future run — the switch still renders (since `isActive` is defined), but disabled, rather than offering a resume action DIAL Scheduler cannot fulfill. Two cases qualify:
+`ScheduledTaskDetailPage` SHALL pass `isCompleted={true}` to `ScheduledTaskDetailView` when the loaded task has `isCompleted: true`, and the view SHALL NOT render the Active switch (nor any disabled-switch reason) in that case — a completed task can never produce another run, so no dead-end control is offered; the completed line in the details summary carries the state. When the BFF's `isCompleted` is `undefined` or `false` but the loaded task's fields show it can no longer produce a future run — the enrichment degraded (a failed runs check) or a run is still in flight — the page SHALL pass `isActiveDisabled={true}` so the switch still renders (since `isActive` is defined) but disabled, with an explanatory reason label (a `labels` entry with an English default, localized by the page). Two field shapes qualify for the disabled fallback:
 
 - **Completed one-time schedule:** `triggerType` is `date` (one-time) and `nextRunTime` is `null` — the schedule has already run once and a `date` trigger cannot be rescheduled.
 - **Expired recurring schedule:** `triggerType` is `cron` and `trigger.cron.endDate` is a past timestamp — the schedule's activity window has closed, so resuming it cannot produce a future run within that window either.
 
 A recurring (`cron`) schedule with no upcoming run but an `endDate` that has not yet passed (or no `endDate` at all) is merely paused, not exhausted, and MUST remain togglable.
 
-#### Scenario: Completed one-time schedule shows a disabled, unchecked switch
+#### Scenario: Completed one-time task renders no switch at all
 
-- **WHEN** the loaded task has `triggerType: 'date'` and `nextRunTime: null`
-- **THEN** the Active switch renders unchecked and disabled, and toggling it (via pointer or keyboard) has no effect and calls neither `pauseScheduledTask` nor `resumeScheduledTask`
+- **WHEN** the loaded task has `isCompleted: true`, `triggerType: 'date'`, and `nextRunTime: null`
+- **THEN** no Active switch and no disabled-switch reason render, the details summary shows the completed line, and neither `pauseScheduledTask` nor `resumeScheduledTask` can be called from the page
 
-#### Scenario: Recurring schedule whose activity window has ended shows a disabled, unchecked switch
+#### Scenario: Recurring schedule whose activity window has ended renders no switch
 
-- **WHEN** the loaded task has `triggerType: 'cron'` and `trigger.cron.endDate` in the past
-- **THEN** the Active switch renders unchecked and disabled, and toggling it (via pointer or keyboard) has no effect and calls neither `pauseScheduledTask` nor `resumeScheduledTask`
+- **WHEN** the loaded task has `isCompleted: true` and `triggerType: 'cron'` with a past `trigger.cron.endDate`
+- **THEN** no Active switch renders and the details summary shows the completed line
+
+#### Scenario: Degraded completed signal keeps the switch visible but disabled with a reason
+
+- **WHEN** the loaded task omits `isCompleted` (a failed runs check) and has `triggerType: 'date'` with `nextRunTime: null`
+- **THEN** the Active switch renders unchecked and disabled with the explanatory reason label visible, and toggling it (via pointer or keyboard) has no effect and calls neither `pauseScheduledTask` nor `resumeScheduledTask`
 
 #### Scenario: Recurring schedule with no upcoming run remains togglable
 
 - **WHEN** the loaded task has `triggerType: 'cron'`, `nextRunTime: null` (paused, not completed), and `trigger.cron.endDate` is absent or in the future
-- **THEN** the Active switch renders unchecked but NOT disabled, and toggling it on calls `resumeScheduledTask`
+- **THEN** the Active switch renders unchecked but NOT disabled, no reason label is shown, and toggling it on calls `resumeScheduledTask`
 
 ### Requirement: Detail and history layout have public per-instance settings
 

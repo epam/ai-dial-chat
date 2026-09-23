@@ -668,16 +668,21 @@ On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Co
 
 ### Requirement: Scheduled task ownership and trigger-kind metadata
 
-`ScheduledTaskDto` SHALL include optional `serviceId` (upstream `service_id`), `triggerType` (upstream `trigger_type`, one of `cron`/`date`), `updatedAt` (upstream `updated_at`, ISO-8601), and `createdBy` (upstream `created_by`, the owning user's sub) fields, confirmed present on a live DIAL Scheduler list response. These are additive optional fields; mapping MUST NOT throw when any of them is absent. `triggerType` reflects which trigger variant the schedule uses even when the list endpoint's `trigger` object itself is absent (see the "List scheduled tasks" requirement above).
+`ScheduledTaskDto` SHALL include optional `serviceId` (upstream `service_id`), `triggerType` (one of `cron`/`date`), `updatedAt` (upstream `updated_at`, ISO-8601), and `createdBy` (upstream `created_by`, the owning user's sub) fields, confirmed present on a live DIAL Scheduler list response. These are additive optional fields; mapping MUST NOT throw when any of them is absent. `triggerType` reflects which trigger variant the schedule uses even when the list endpoint's `trigger` object itself is absent (see the "List scheduled tasks" requirement above). Upstream GET responses (observed live) carry the nested `trigger` object but no `trigger_type` — `fromUpstreamSchedule` SHALL therefore derive `triggerType` from the nested trigger shape (`trigger.cron` present → `cron`, `trigger.date` present → `date`) whenever `trigger_type` is absent, so both response shapes name the trigger kind. The completed-state derivation and the detail page's disabled-switch fallbacks both branch on `triggerType`, so a GET response must not silently lose it.
 
 #### Scenario: Upstream ownership/trigger-kind fields are mapped
 
 - **WHEN** an upstream schedule includes `service_id`, `trigger_type`, `updated_at`, and `created_by`
 - **THEN** the mapped `ScheduledTaskDto` includes `serviceId`, `triggerType`, `updatedAt`, and `createdBy` with the same values
 
+#### Scenario: GET response without trigger_type derives the kind from the nested trigger
+
+- **WHEN** an upstream GET response includes `trigger: { date: null, cron: { fields, end_date } }` and no `trigger_type` field
+- **THEN** the mapped `ScheduledTaskDto.triggerType` is `cron` (derived from the nested trigger), so downstream completed-state derivation behaves identically to a list response
+
 #### Scenario: Missing ownership/trigger-kind fields does not throw
 
-- **WHEN** an upstream schedule omits `service_id`, `trigger_type`, `updated_at`, and/or `created_by`
+- **WHEN** an upstream schedule omits `service_id`, `trigger_type`, `updated_at`, and/or `created_by` and its nested `trigger` names no variant
 - **THEN** the corresponding `ScheduledTaskDto` fields are `undefined`, and mapping does not throw
 
 ### Requirement: List response surfaces upstream pagination metadata

@@ -6,6 +6,7 @@ export interface ScheduledTaskCardLabels {
   newBadgeLabel?: string;
   /** Label shown in the "Paused" badge when `item.isActive` is `false`. Defaults to `'Paused'`. */
   pausedBadgeLabel?: string;
+  /** Label shown in the "Completed" badge when `item.isCompleted` is `true`. Defaults to `'Completed'`. */
   completedBadgeLabel?: string;
 }
 
@@ -38,14 +39,17 @@ export interface ScheduledTaskCardColors {
   newBadgeText?: string;
   /** Divider border color above the location breadcrumb. Fallback: `--stroke-tertiary`. */
   locationDividerBorder?: string;
-  /** "Paused" badge background. Fallback: `--bg-layer-sunken`. */
+  /** "Paused" badge background. Defaults to transparent. */
   pausedBadgeBackground?: string;
   /** "Paused" badge border color. Fallback: `--stroke-tertiary`. */
   pausedBadgeBorder?: string;
   /** "Paused" badge icon and text color. Fallback: `--text-control-disable-primary`. */
   pausedBadgeText?: string;
+  /** "Completed" badge background. Defaults to transparent. */
   completedBadgeBackground?: string;
+  /** "Completed" badge border color. Fallback: `--stroke-tertiary`. */
   completedBadgeBorder?: string;
+  /** "Completed" badge icon and text color. Fallback: `--text-secondary`. */
   completedBadgeText?: string;
 }
 
@@ -67,6 +71,7 @@ export interface ScheduledTaskCardTypography {
   newBadgeClassName?: string;
   /** CSS class applied to the "Paused" badge's label text. Defaults to `'dial-tiny-text'`. */
   pausedBadgeClassName?: string;
+  /** CSS class applied to the "Completed" badge's label text. Defaults to `'dial-tiny-text'`. */
   completedBadgeClassName?: string;
 }
 

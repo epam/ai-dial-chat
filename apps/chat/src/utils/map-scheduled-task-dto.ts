@@ -60,8 +60,8 @@ export const buildScheduleLabel = (
  * `description` maps 1:1 to `descriptionPreview` (undefined when absent)
  * with no truncation — the BFF's 500-char cap bounds the value, and the
  * card's own line-clamp/ellipsis handles presentation-layer truncation.
- * `isActive` maps 1:1 from the DTO with no reinterpretation — derivation is
- * owned entirely by the BFF mapper.
+ * `isActive` and `isCompleted` map 1:1 from the DTO with no reinterpretation —
+ * derivation is owned entirely by the BFF mapper.
  */
 export const mapScheduledTaskDtoToItem = (
   task: ScheduledTaskDto,
@@ -73,6 +73,7 @@ export const mapScheduledTaskDtoToItem = (
   descriptionPreview: task.description,
   scheduleLabel: buildScheduleLabel(task, t, locale),
   isActive: task.isActive,
+  isCompleted: task.isCompleted,
 });
 
 /** Maps a list of `ScheduledTaskDto` to `ScheduledTaskItem[]`, preserving order. */

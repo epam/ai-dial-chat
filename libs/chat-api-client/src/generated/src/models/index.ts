@@ -2205,6 +2205,12 @@ export interface CreatedScheduledTaskDto {
    */
   isActive?: boolean;
   /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
+  /**
    *
    * @type {boolean}
    * @memberof CreatedScheduledTaskDto
@@ -6090,6 +6096,12 @@ export interface ScheduledTaskDto {
    */
   isActive?: boolean;
   /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isCompleted?: boolean;
+  /**
    *
    * @type {boolean}
    * @memberof ScheduledTaskDto
@@ -7858,6 +7870,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
   /**
    *
    * @type {boolean}

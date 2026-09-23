@@ -230,6 +230,7 @@ const ScheduledTaskDetailPage: FC = () => {
         missed: t(ScheduledTasksI18nKeys.DetailStatusMissed),
       },
       activeStatusLabel: t(ScheduledTasksI18nKeys.DetailActiveStatusLabel),
+      completedFieldLabel: t(ScheduledTasksI18nKeys.DetailCompletedFieldLabel),
       activeStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
@@ -249,12 +250,20 @@ const ScheduledTaskDetailPage: FC = () => {
   };
 
   /*
-   * A one-time (`date`) schedule with no next run has already fired and
-   * can't produce another run by resuming it. A recurring (`cron`) schedule
-   * whose activity window `endDate` has already passed can't produce a
-   * future run either, even though — unlike a one-time schedule — it may
-   * still be actively paused/resumable in principle; both cases disable
-   * (not hide) the switch so the state stays visible without offering a
+   * A completed task can never produce another run, so its Active switch is
+   * hidden entirely (the completed line in the details summary carries the
+   * state) — no dead-end control is offered.
+   */
+  const isTaskCompleted = task?.isCompleted === true;
+
+  /*
+   * Fallback for the shapes where the BFF's `isCompleted` enrichment degraded
+   * to `undefined` (a failed runs check) or the run is still in flight: a
+   * one-time (`date`) schedule with no next run has already fired, and a
+   * recurring (`cron`) schedule whose activity window `endDate` has already
+   * passed can't produce a future run either. Completed tasks never reach
+   * this — their switch is hidden above — so this only disables the switch
+   * that still renders, keeping the state visible without offering a
    * dead-end toggle.
    */
   const cronWindowEndDate = task?.trigger.cron?.endDate;
@@ -263,6 +272,25 @@ const ScheduledTaskDetailPage: FC = () => {
     (task?.triggerType === 'cron' &&
       cronWindowEndDate != null &&
       new Date(cronWindowEndDate).getTime() <= Date.now());
+
+  /*
+   * The disabled switch's explanatory text differs per case: a fired one-time
+   * schedule already ran, while a recurring schedule's activity window has
+   * closed — the user sees why the toggle is dead rather than a bare disabled
+   * control. Only computed while the switch renders; a completed task hides
+   * the switch, so it gets no reason.
+   */
+  let isActiveDisabledReason: string | undefined;
+  if (isActiveDisabled && !isTaskCompleted) {
+    isActiveDisabledReason =
+      task?.triggerType === 'date'
+        ? t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted)
+        : t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
+  }
+
+  const completedLabel = task?.isCompleted
+    ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
+    : undefined;
 
   const handleActiveChange = useCallback(
     async (nextActive: boolean) => {
@@ -375,12 +403,13 @@ const ScheduledTaskDetailPage: FC = () => {
   return (
     <>
       <ScheduledTaskDetailView
-        labels={labels}
+        labels={{ ...labels, isActiveDisabledReason }}
         onBack={handleBack}
         onEdit={task && !isTaskDeleted ? handleEdit : undefined}
         onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
         isDeleting={isDeleting}
         isDeleted={isTaskDeleted}
+        isCompleted={isTaskCompleted}
         isActive={isTaskDeleted ? undefined : task?.isActive}
         isActiveUpdating={isActiveUpdating}
         isActiveDisabled={isActiveDisabled}
@@ -393,6 +422,7 @@ const ScheduledTaskDetailPage: FC = () => {
         modelLabel={modelLabel}
         repeatsLabel={repeatsLabel}
         activeWindowLabel={activeWindowLabel}
+        completedLabel={completedLabel}
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
         skillDisplayName={skillDisplayName}
