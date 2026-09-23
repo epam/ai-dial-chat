@@ -80,6 +80,14 @@ describe('serializeMarkdownTableRows — formula cells', () => {
     ).toBe('| Bound |\n| :-- |\n| $$-\\tfrac12$$ |');
   });
 
+  it('leaves a formula\u2019s backslashes single, so the LaTeX is not doubled', () => {
+    const rows = [createMathRow('\\alpha \\wedge \\beta')];
+
+    expect(
+      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
+    ).toBe('| $$\\alpha \\wedge \\beta$$ |\n| :-- |');
+  });
+
   it('writes the bare source into a CSV column, without math delimiters', () => {
     const rows = [createMathRow('\\alpha>\\tfrac54')];
 
@@ -88,12 +96,30 @@ describe('serializeMarkdownTableRows — formula cells', () => {
     );
   });
 
-  it('escapes a pipe in the source so a formula cannot split the row', () => {
+  /* An escaped pipe is not an option inside `$$…$$`: GFM leaves the backslash
+     in place there, so `\|` would reach KaTeX as the norm delimiter ‖. */
+  it('rewrites a pipe in the source to the LaTeX that renders it', () => {
     const rows = [createMathRow('\\left|x\\right|')];
 
     expect(
       serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
-    ).toBe('| $$\\left\\|x\\right\\|$$ |\n| :-- |');
+    ).toBe('| $$\\left\\vert x\\right\\vert$$ |\n| :-- |');
+  });
+
+  it('rewrites an escaped pipe to the norm delimiter it stands for', () => {
+    const rows = [createMathRow('a\\|b')];
+
+    expect(
+      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
+    ).toBe('| $$a\\Vert b$$ |\n| :-- |');
+  });
+
+  it('keeps the pipe itself in a CSV column, which has no row to split', () => {
+    const rows = [createMathRow('\\left|x\\right|')];
+
+    expect(serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Csv)).toBe(
+      '"\\left|x\\right|"',
+    );
   });
 
   it('escapes a pipe in ordinary cell text as well', () => {
@@ -102,6 +128,24 @@ describe('serializeMarkdownTableRows — formula cells', () => {
     expect(
       serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
     ).toBe('| a \\| b |\n| :-- |');
+  });
+
+  /* Escaping the pipe alone would serialize this as `a \\| b`, where GFM reads
+     `\\` as one backslash and then splits the row on the bare pipe. */
+  it('escapes a backslash in cell text before the pipe it precedes', () => {
+    const rows = [createRow('a \\| b')];
+
+    expect(
+      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
+    ).toBe('| a \\\\\\| b |\n| :-- |');
+  });
+
+  it('escapes a backslash in cell text that no pipe follows', () => {
+    const rows = [createRow('C:\\path')];
+
+    expect(
+      serializeMarkdownTableRows(rows, MarkdownTableCopyFormat.Markdown),
+    ).toBe('| C:\\\\path |\n| :-- |');
   });
 
   it('keeps a formula inline with the prose around it', () => {
@@ -116,6 +160,20 @@ describe('serializeMarkdownTableRows — formula cells', () => {
     expect(
       serializeMarkdownTableRows([row], MarkdownTableCopyFormat.Markdown),
     ).toBe('| holds for $$\\alpha$$ only |\n| :-- |');
+  });
+
+  it('escapes the prose around a formula without touching its LaTeX', () => {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.innerHTML =
+      `a | b <span class="katex"><math><semantics><mrow><mi>α</mi></mrow>` +
+      `<annotation encoding="application/x-tex">\\alpha</annotation>` +
+      `</semantics></math></span>`;
+    row.appendChild(cell);
+
+    expect(
+      serializeMarkdownTableRows([row], MarkdownTableCopyFormat.Markdown),
+    ).toBe('| a \\| b $$\\alpha$$ |\n| :-- |');
   });
 
   it('falls back to the rendered text when KaTeX left no annotation', () => {

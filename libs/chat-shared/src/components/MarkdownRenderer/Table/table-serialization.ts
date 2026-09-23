@@ -28,22 +28,89 @@ const TEX_ANNOTATION_SELECTOR = 'annotation[encoding="application/x-tex"]';
 const readTexSource = (formula: Element): string | null =>
   formula.querySelector(TEX_ANNOTATION_SELECTOR)?.textContent?.trim() || null;
 
-/* `$$…$$` rather than `$…$`: the renderer that reads this Markdown back
-   configures `remark-math` with `singleDollarTextMath: false`, so single
-   dollars stay literal text. Double dollars inside a line still parse as
-   inline math, which is what a table cell needs. */
-const wrapAsInlineMath = (source: string): string => `$$${source}$$`;
+/* A cell's prose is read back as inline Markdown, so both the escape character
+   and the cell delimiter have to be escaped, in that order: GFM returns `\\`
+   as one backslash and `\|` as a literal pipe. Escaping only the pipe would
+   serialize `a \| b` as `a \\| b`, where the pipe arrives unescaped and splits
+   the row. */
+const escapeMarkdownText = (value: string): string =>
+  value.replace(/\\/g, String.raw`\\`).replace(/\|/g, String.raw`\|`);
 
-/* A spreadsheet has no use for math delimiters, so the CSV column carries the
-   bare LaTeX — still the source the model wrote, unlike the rendered glyphs. */
-const keepTexSource = (source: string): string => source;
+/* A pipe inside a formula cannot be escaped the same way. GFM resolves `\|`
+   only in text: inside `$$…$$` the backslash is left in place, so an escaped
+   pipe reaches KaTeX as `\|` — the norm delimiter ‖ rather than the bar that
+   was written — while an unescaped one splits the row. Both pipe forms are
+   therefore rewritten to the LaTeX commands for those glyphs, which renders
+   identically and leaves no pipe in the cell to escape.
+
+   Known limit: a pipe in a column spec (`\begin{array}{c|c}`) is a column rule
+   rather than a glyph, so no form of it survives a table cell — KaTeX rejects
+   `\vert` and `\|` alike there. Rewriting at least keeps the row intact, so
+   the damage stays inside the one formula. */
+const rewriteMathPipes = (source: string): string =>
+  source.replace(/\\\||\|/g, (pipe, offset: number) => {
+    const command = pipe === '|' ? String.raw`\vert` : String.raw`\Vert`;
+    /* A command name swallows the letters that follow it, so `|x|` has to
+       become `\vert x\vert`, not `\vertx\vert`. */
+    const separator = /^[a-zA-Z]/.test(source.slice(offset + pipe.length))
+      ? ' '
+      : '';
+
+    return `${command}${separator}`;
+  });
+
+/* The two formats differ in both halves of a cell, so each carries its own
+   pair of rules. Markdown escapes its text and wraps a formula as `$$…$$`
+   rather than `$…$`, because the renderer that reads this back configures
+   `remark-math` with `singleDollarTextMath: false`, which leaves single
+   dollars as literal text. A spreadsheet wants neither: its column takes the
+   bare LaTeX, still the source the model wrote rather than the rendered
+   glyphs. */
+interface CellTextFormat {
+  /** Renders a formula's LaTeX as the cell should carry it. */
+  formatFormula: (source: string) => string;
+  /** Escapes the parts of a cell that are not a formula. */
+  escapeText: (value: string) => string;
+}
+
+const MARKDOWN_CELL_FORMAT: CellTextFormat = {
+  formatFormula: (source) => `$$${rewriteMathPipes(source)}$$`,
+  escapeText: escapeMarkdownText,
+};
+
+const CSV_CELL_FORMAT: CellTextFormat = {
+  formatFormula: (source) => source,
+  escapeText: (value) => value,
+};
+
+/* Escaping the finished cell as one string is not an option: by then a formula
+   is indistinguishable from the prose around it, and its backslashes must stay
+   single. The text is therefore escaped in place, node by node, while the
+   formulas are still standing and can be skipped. */
+const escapeTextOutsideFormulas = (
+  root: HTMLTableCellElement,
+  escapeText: (value: string) => string,
+): void => {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const textNodes: Text[] = [];
+
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode as Text);
+  }
+
+  textNodes.forEach((node) => {
+    if (node.parentElement?.closest(KATEX_SELECTOR) != null) return;
+
+    node.data = escapeText(node.data);
+  });
+};
 
 const readCellText = (
   cell: HTMLTableCellElement,
-  wrapFormula: (source: string) => string,
+  { formatFormula, escapeText }: CellTextFormat,
 ): string => {
   if (cell.querySelector(KATEX_SELECTOR) == null) {
-    return cell.textContent?.trim() ?? '';
+    return escapeText(cell.textContent?.trim() ?? '');
   }
 
   /* Cloned so the table the reader is looking at is never mutated. Document
@@ -51,13 +118,15 @@ const readCellText = (
      detaches the inner matches — `contains` then skips them. */
   const clone = cell.cloneNode(true) as HTMLTableCellElement;
 
+  escapeTextOutsideFormulas(clone, escapeText);
+
   clone.querySelectorAll(KATEX_SELECTOR).forEach((formula) => {
     if (!clone.contains(formula)) return;
 
     const source = readTexSource(formula);
     formula.replaceWith(
       document.createTextNode(
-        source ? wrapFormula(source) : (formula.textContent ?? ''),
+        source ? formatFormula(source) : escapeText(formula.textContent ?? ''),
       ),
     );
   });
@@ -67,28 +136,16 @@ const readCellText = (
 
 const getCellValues = (
   row: HTMLTableRowElement,
-  wrapFormula: (source: string) => string,
-): string[] =>
-  Array.from(row.cells).map((cell) => readCellText(cell, wrapFormula));
-
-/* An unescaped pipe ends the cell, so a formula such as `\left|x\right|` would
-   split one column into three. Backslashes are escaped first so existing escapes
-   remain literal and cannot interfere with pipe escaping. GFM then turns `\|`
-   back into a literal pipe when it parses the table, so the LaTeX survives the
-   round trip intact. */
-const escapeMarkdownCell = (value: string): string =>
-  value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
+  format: CellTextFormat,
+): string[] => Array.from(row.cells).map((cell) => readCellText(cell, format));
 
 const serializeCsvRow = (row: HTMLTableRowElement): string =>
-  getCellValues(row, keepTexSource)
+  getCellValues(row, CSV_CELL_FORMAT)
     .map((value) => (value ? `"${value.replace(/"/g, '""')}"` : ''))
     .join(',');
 
-const serializeMarkdownRow = (row: HTMLTableRowElement): string => {
-  const cells = getCellValues(row, wrapAsInlineMath).map(escapeMarkdownCell);
-
-  return `| ${cells.join(' | ')} |`;
-};
+const serializeMarkdownRow = (row: HTMLTableRowElement): string =>
+  `| ${getCellValues(row, MARKDOWN_CELL_FORMAT).join(' | ')} |`;
 
 export const serializeMarkdownTableRows = (
   rows: readonly HTMLTableRowElement[],
