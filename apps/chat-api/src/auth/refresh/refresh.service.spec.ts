@@ -76,9 +76,6 @@ describe('RefreshService', () => {
   });
 
   it('updates rt when provider rotates the refresh token', async () => {
-    const debug = vi
-      .spyOn(Logger.prototype, 'debug')
-      .mockImplementation(() => undefined);
     const payload = makePayload();
     const now = Math.floor(Date.now() / 1000);
     mockClient.refresh.mockResolvedValue({
@@ -93,37 +90,6 @@ describe('RefreshService', () => {
     expect(result.rt).toBe('new-rt');
     expect(result.rt_exp).toBeUndefined();
     expect(result.session_exp).toBe(now + 2592000);
-    const records = debug.mock.calls.map(([message]) =>
-      JSON.parse(String(message)),
-    );
-    expect(records).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          event: 'auth.refresh.started',
-          sessionId: payload.sid,
-        }),
-        expect.objectContaining({
-          event: 'auth.refresh.exchange_completed',
-          outcome: 'refreshed',
-        }),
-        expect.objectContaining({
-          event: 'auth.session.renewed',
-          previousSessionExpiresAt: payload.session_exp,
-          sessionExpiresAt: result.session_exp,
-          refreshTokenRotated: true,
-        }),
-      ]),
-    );
-    const output = JSON.stringify(records);
-    for (const token of [
-      payload.at,
-      payload.rt,
-      result.at,
-      result.rt,
-      payload.csrf,
-    ]) {
-      expect(output).not.toContain(token);
-    }
   });
 
   it('renews the session independently of the Keycloak refresh deadline', async () => {
@@ -176,9 +142,6 @@ describe('RefreshService', () => {
   });
 
   it('rejects a successful exchange that completes after the existing session deadline', async () => {
-    const debug = vi
-      .spyOn(Logger.prototype, 'debug')
-      .mockImplementation(() => undefined);
     vi.useFakeTimers();
     const now = Math.floor(Date.now() / 1000);
     mockClient.refresh.mockImplementation(async () => {
@@ -192,19 +155,6 @@ describe('RefreshService', () => {
     await expect(
       service.refresh(makePayload({ session_exp: now + 5 })),
     ).rejects.toThrow(UnauthorizedException);
-    expect(
-      debug.mock.calls.map(([message]) => JSON.parse(String(message))),
-    ).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          event: 'auth.refresh.exchange_completed',
-          outcome: 'session_expired',
-        }),
-      ]),
-    );
-    expect(JSON.stringify(debug.mock.calls)).not.toContain(
-      'auth.session.renewed',
-    );
   });
 
   it('throws UnauthorizedException on invalid_grant when the access token has already expired', async () => {
@@ -237,9 +187,6 @@ describe('RefreshService', () => {
   });
 
   it('logs an upstream failure without leaking provider error details or tokens', async () => {
-    const debug = vi
-      .spyOn(Logger.prototype, 'debug')
-      .mockImplementation(() => undefined);
     const error = vi
       .spyOn(Logger.prototype, 'error')
       .mockImplementation(() => undefined);
@@ -252,12 +199,18 @@ describe('RefreshService', () => {
       UnauthorizedException,
     );
 
-    expect(JSON.stringify(debug.mock.calls)).toContain('upstream_error');
-    expect(JSON.stringify(error.mock.calls)).toContain('auth.refresh.failed');
-    const output = JSON.stringify([debug.mock.calls, error.mock.calls]);
+    expect(error).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({
+        event: 'auth.refresh.failed',
+        sessionId: payload.sid,
+        providerId: payload.providerId,
+        outcome: 'upstream_error',
+      }),
+    );
+    const output = JSON.stringify(error.mock.calls);
     expect(output).not.toContain(payload.rt);
     expect(output).not.toContain(payload.at);
-    expect(output).not.toContain('auth.session.renewed');
+    expect(output).not.toContain('provider response contains');
   });
 
   it('coalesces concurrent calls for the same sid into a single upstream request', async () => {

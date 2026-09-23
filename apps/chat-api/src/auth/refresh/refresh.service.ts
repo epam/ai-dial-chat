@@ -11,7 +11,6 @@ import {
   resolveAuthProvider,
 } from '../auth-metrics';
 import { ProviderRegistryService } from '../providers/provider-registry.service';
-import { getSessionDebugMetadata } from '../session/session-debug';
 import {
   getSessionCookieMaxAge,
   resolveRefreshTokenExpiry,
@@ -38,13 +37,6 @@ export class RefreshService {
   async refresh(payload: SessionPayload): Promise<SessionRefreshResult> {
     getSessionCookieMaxAge(payload);
     if (!payload.rt) {
-      this.logger.debug(
-        JSON.stringify({
-          event: 'auth.refresh.skipped',
-          ...getSessionDebugMetadata(payload),
-          reason: 'no_refresh_token',
-        }),
-      );
       throw new UnauthorizedException('No refresh token');
     }
     const existing = this.inFlight.get(payload.sid);
@@ -58,12 +50,6 @@ export class RefreshService {
       authRefreshCoalesced.add(1, {
         [AUTH_PROVIDER_ATTRIBUTE]: resolveAuthProvider(payload.providerId),
       });
-      this.logger.debug(
-        JSON.stringify({
-          event: 'auth.refresh.coalesced',
-          ...getSessionDebugMetadata(payload),
-        }),
-      );
       return existing;
     }
 
@@ -79,12 +65,6 @@ export class RefreshService {
     payload: SessionPayload,
   ): Promise<SessionRefreshResult> {
     const startedAt = process.hrtime.bigint();
-    this.logger.debug(
-      JSON.stringify({
-        event: 'auth.refresh.started',
-        ...getSessionDebugMetadata(payload),
-      }),
-    );
     /*
      * One terminal observation per real exchange. `record` is called on every exit path,
      * including every failure branch, so an identity-provider outage and a genuinely
@@ -96,15 +76,6 @@ export class RefreshService {
         [AUTH_PROVIDER_ATTRIBUTE]: resolveAuthProvider(payload.providerId),
         [AUTH_OUTCOME_ATTRIBUTE]: outcome,
       });
-      this.logger.debug(
-        JSON.stringify({
-          event: 'auth.refresh.exchange_completed',
-          sessionId: payload.sid,
-          providerId: payload.providerId,
-          outcome,
-          durationMs: Math.round(durationSeconds * 1000),
-        }),
-      );
     };
 
     let client: ReturnType<ProviderRegistryService['getProvider']>['client'];
@@ -140,9 +111,6 @@ export class RefreshService {
           throw expired;
         }
         if (payload.at_exp > now) {
-          this.logger.log(
-            `Absorbed a lost refresh-token race for sid ${payload.sid}; access token is still valid`,
-          );
           record(AuthRefreshOutcome.RaceAbsorbed);
           return { payload, refreshed: false };
         }
@@ -195,14 +163,6 @@ export class RefreshService {
       session_exp:
         now + this.config.get('AUTH_SESSION_MAX_AGE_SECONDS', { infer: true }),
     };
-    this.logger.debug(
-      JSON.stringify({
-        event: 'auth.session.renewed',
-        ...getSessionDebugMetadata(renewed),
-        previousSessionExpiresAt: payload.session_exp,
-        refreshTokenRotated: renewed.rt !== payload.rt,
-      }),
-    );
     return {
       payload: renewed,
       refreshed: true,

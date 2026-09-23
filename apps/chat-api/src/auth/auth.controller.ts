@@ -63,7 +63,6 @@ import {
   AuthProviderId,
   type ProviderConfig,
 } from './providers/provider.types';
-import { getSessionDebugMetadata } from './session/session-debug';
 import {
   getSessionCookieMaxAge,
   resolveRefreshTokenExpiry,
@@ -138,9 +137,6 @@ export class AuthController {
     @Query() query: LoginQueryDto,
     @Res() res: Response,
   ): Promise<void> {
-    this.logger.debug(
-      `login() start providerId=${params.providerId} callbackUrl=${query.callbackUrl ?? 'none'}`,
-    );
     const { client, config: providerConfig } = this.registry.getProvider(
       params.providerId,
     );
@@ -194,9 +190,6 @@ export class AuthController {
       bucket: '',
     });
 
-    this.logger.debug(
-      `login() redirecting to IdP redirectUri=${redirectUri} authUrl=${authUrl}`,
-    );
     res.cookie(getTransactionCookieName(this.config), txToken, {
       ...getCookieOptions(this.config),
       maxAge: 600 * 1000,
@@ -261,7 +254,6 @@ export class AuthController {
     req: Request,
     res: Response,
   ): Promise<void> {
-    this.logger.debug(`callback() start providerId=${params.providerId}`);
     if (query.error) {
       this.logger.warn(
         `IdP returned error for provider=${params.providerId}: ${query.error} - ${query.error_description ?? 'no description'}`,
@@ -338,9 +330,6 @@ export class AuthController {
       corsOrigin,
     });
 
-    this.logger.debug(
-      `callback() exchanging code for tokens redirectUri=${redirectUri}`,
-    );
     const exchangeStartedAt = Math.floor(Date.now() / 1000);
     let tokenSet;
     try {
@@ -354,9 +343,6 @@ export class AuthController {
       this.logger.error('Token exchange failed', err);
       throw new BadGatewayException('Token exchange failed');
     }
-    this.logger.debug(
-      `callback() token exchange succeeded sub=${tokenSet.claims().sub} at_exp=${tokenSet.expires_at ?? 'none'}`,
-    );
 
     const claims = tokenSet.claims();
     const now = Math.floor(Date.now() / 1000);
@@ -406,9 +392,6 @@ export class AuthController {
     if (rolesClaimValue !== undefined) {
       filteredClaims[rolesClaim] = rolesClaimValue;
     }
-    this.logger.debug(
-      `callback() rolesClaim="${rolesClaim}" resolved=${rolesClaimValue !== undefined}`,
-    );
 
     /*
      * The legacy Keycloak provider read job_title from UserInfo. Some realms
@@ -489,22 +472,11 @@ export class AuthController {
       },
       req.cookies as Record<string, string> | undefined,
     );
-    this.logger.debug(
-      JSON.stringify({
-        event: 'auth.session.created',
-        ...getSessionDebugMetadata(payload),
-        sessionMaxAgeSeconds: payload.session_exp - payload.iat,
-        cookieMaxAgeSeconds: cookieMaxAge / 1000,
-      }),
-    );
     res.cookie(getTransactionCookieName(this.config), '', {
       ...getCookieOptions(this.config),
       maxAge: 0,
     });
 
-    this.logger.debug(
-      `callback() done, redirecting to callbackUrl=${callbackUrl}`,
-    );
     res.redirect(callbackUrl);
   }
 
@@ -518,8 +490,6 @@ export class AuthController {
       'No-op success for a header-authenticated caller (no session to clear)',
   })
   async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
-    this.logger.debug('logout() start');
-
     /*
      * A header-authenticated caller never had a session created for it — no
      * cookie to clear, no RP-initiated logout flow tied to a stored ID token.
@@ -544,9 +514,6 @@ export class AuthController {
     const candidate =
       origin ?? (referer ? new URL(referer as string).origin : undefined);
     if (!candidate || !this.isOriginAllowed(candidate)) {
-      this.logger.debug(
-        `logout() blocked: origin check failed candidate=${candidate ?? 'none'}`,
-      );
       authLogout.add(1, {
         [AUTH_RESULT_ATTRIBUTE]: AuthLogoutResult.OriginRejected,
         [AUTH_REVOCATION_ATTRIBUTE]: AuthLogoutRevocation.NotAttempted,
@@ -594,13 +561,9 @@ export class AuthController {
           const revocationEndpoint =
             client.issuer.metadata['revocation_endpoint'];
           if (revocationEndpoint && payload.rt) {
-            this.logger.debug(
-              `logout() revoking token for sub=${payload.sub} providerId=${payload.providerId}`,
-            );
             try {
               await client.revoke(payload.rt);
               revocation = AuthLogoutRevocation.Success;
-              this.logger.debug('logout() token revocation succeeded');
             } catch (err) {
               revocation = AuthLogoutRevocation.Failed;
               this.logger.warn('Token revocation failed (non-fatal)', err);
@@ -617,9 +580,6 @@ export class AuthController {
         }
       }
 
-      this.logger.debug(
-        `logout() done, redirecting to endSessionUrl=${endSessionUrl ?? '/'}`,
-      );
       res.redirect(endSessionUrl ?? '/');
     } finally {
       authLogout.add(1, {
@@ -666,18 +626,10 @@ export class AuthController {
     try {
       ({ config } = this.registry.getProvider(user.providerId));
     } catch {
-      this.logger.debug(
-        `computeIsAdmin() no provider config for providerId=${user.providerId}`,
-      );
-
       return false;
     }
 
     if (!config.adminRoles?.length) {
-      this.logger.debug(
-        `computeIsAdmin() providerId=${user.providerId} has no adminRoles configured`,
-      );
-
       return false;
     }
 
@@ -692,9 +644,6 @@ export class AuthController {
         : [];
 
     const isAdmin = roles.some((role) => config.adminRoles?.includes(role));
-    this.logger.debug(
-      `computeIsAdmin() providerId=${user.providerId} rolesClaim="${rolesClaim}" adminRoles=${JSON.stringify(config.adminRoles)} userRoles=${JSON.stringify(roles)} isAdmin=${isAdmin}`,
-    );
 
     return isAdmin;
   }

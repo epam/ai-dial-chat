@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 import {
-  Logger,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -52,10 +51,7 @@ function makeReqRes(cookieValue?: string): {
 }
 
 describe('CookieSessionStrategy', () => {
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
-  });
+  afterEach(() => vi.useRealTimers());
   let strategy: CookieSessionStrategy;
   let sessionService: {
     decryptFromRequest: ReturnType<typeof vi.fn>;
@@ -97,9 +93,6 @@ describe('CookieSessionStrategy', () => {
   });
 
   it('rejects an expired session with a valid access token and clears every cookie chunk', async () => {
-    const debug = vi
-      .spyOn(Logger.prototype, 'debug')
-      .mockImplementation(() => undefined);
     const now = Math.floor(Date.now() / 1000);
     sessionService.decryptFromRequest.mockResolvedValue(
       makePayload({ session_exp: now }),
@@ -113,13 +106,6 @@ describe('CookieSessionStrategy', () => {
     ).rejects.toThrow(UnauthorizedException);
     expect(refreshService.refresh).not.toHaveBeenCalled();
     expect(bucketService.getUserBucket).not.toHaveBeenCalled();
-    expect(debug).toHaveBeenCalledWith(
-      JSON.stringify({
-        event: 'auth.session.rejected',
-        reason: 'Session expired',
-        clearCookie: true,
-      }),
-    );
     for (const name of [COOKIE_NAME, `${COOKIE_NAME}.0`, `${COOKIE_NAME}.1`]) {
       expect(res.cookie).toHaveBeenCalledWith(
         name,
@@ -201,9 +187,6 @@ describe('CookieSessionStrategy', () => {
   it.each(['session', 'refresh token'])(
     'renews before the %s deadline even when the access token is still fresh',
     async (deadline) => {
-      const debug = vi
-        .spyOn(Logger.prototype, 'debug')
-        .mockImplementation(() => undefined);
       const now = Math.floor(Date.now() / 1000);
       const payload = makePayload({
         session_exp: now + (deadline === 'session' ? 30 : 86400),
@@ -219,24 +202,6 @@ describe('CookieSessionStrategy', () => {
       await strategy.authenticate(req, res as unknown as Response);
 
       expect(refreshService.refresh).toHaveBeenCalledWith(payload);
-      const records = debug.mock.calls.map(([message]) =>
-        JSON.parse(String(message)),
-      );
-      expect(records).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            event: 'auth.session.checked',
-            accessTokenNearExpiry: false,
-            sessionNearExpiry: true,
-            refreshRequired: true,
-          }),
-          expect.objectContaining({
-            event: 'auth.session.cookie_updated',
-            cookieMaxAgeSeconds: 2592000,
-            renewed: true,
-          }),
-        ]),
-      );
       expect(res.cookie).toHaveBeenCalledWith(
         COOKIE_NAME,
         'new-encrypted-token',
