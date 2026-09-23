@@ -27,6 +27,25 @@ describe('session expiration', () => {
     expect(getSessionCookieMaxAge(payload, now)).toBe(28800000);
   });
 
+  /*
+   * Only Keycloak reports a refresh-token lifetime this backend accepts, so every other
+   * provider leaves `rt_exp` unknown and the application deadline is the only bound. The
+   * provider may still revoke the token earlier; that surfaces as `invalid_grant`.
+   */
+  it('bounds a non-Keycloak session by the application deadline alone', () => {
+    expect(
+      getSessionCookieMaxAge(
+        {
+          ...payload,
+          providerId: 'auth0',
+          rt: 'rotated-rt',
+          rt_exp: undefined,
+        },
+        now,
+      ),
+    ).toBe(28800000);
+  });
+
   it('uses the earlier application or known refresh deadline', () => {
     expect(getSessionCookieMaxAge({ ...payload, rt_exp: now + 600 }, now)).toBe(
       600000,

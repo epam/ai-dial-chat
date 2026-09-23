@@ -556,6 +556,51 @@ describe('auth and session metrics', () => {
       expect((point?.value as Histogram).count).toBe(1);
     });
 
+    it('records a post-deadline exchange as session_expired, not refreshed', async () => {
+      const start = Math.floor(Date.now() / 1000);
+      const refreshedBefore =
+        (
+          (
+            await pointFor('dial.chat.auth.refresh.duration', {
+              'dial.chat.auth.outcome': 'refreshed',
+            })
+          )?.value as Histogram | undefined
+        )?.count ?? 0;
+      let clock: ReturnType<typeof vi.spyOn> | undefined;
+      const service = buildRefreshService({
+        refresh: vi.fn().mockImplementation(async () => {
+          /* The exchange itself succeeds, but only after the session deadline. */
+          clock = vi.spyOn(Date, 'now').mockReturnValue((start + 120) * 1000);
+          return { access_token: 'new-at', expires_at: start + 3600 };
+        }),
+      });
+
+      try {
+        await expect(
+          service.refresh(
+            sessionPayload({ sid: 'refresh-late', session_exp: start + 5 }),
+          ),
+        ).rejects.toThrow(UnauthorizedException);
+      } finally {
+        clock?.mockRestore();
+      }
+
+      const point = await pointFor('dial.chat.auth.refresh.duration', {
+        'dial.chat.auth.outcome': 'session_expired',
+      });
+      expect((point?.value as Histogram).count).toBe(1);
+      /* The unusable token set must not also read as a successful refresh. */
+      const refreshedAfter =
+        (
+          (
+            await pointFor('dial.chat.auth.refresh.duration', {
+              'dial.chat.auth.outcome': 'refreshed',
+            })
+          )?.value as Histogram | undefined
+        )?.count ?? 0;
+      expect(refreshedAfter).toBe(refreshedBefore);
+    });
+
     it('records any other exchange failure as upstream_error', async () => {
       const service = buildRefreshService({
         refresh: vi.fn().mockRejectedValue(new Error('connect ETIMEDOUT')),

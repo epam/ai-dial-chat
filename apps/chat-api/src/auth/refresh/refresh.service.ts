@@ -11,6 +11,7 @@ import {
   resolveAuthProvider,
 } from '../auth-metrics';
 import { ProviderRegistryService } from '../providers/provider-registry.service';
+import { getSessionDebugMetadata } from '../session/session-debug';
 import {
   getSessionCookieMaxAge,
   resolveRefreshTokenExpiry,
@@ -37,6 +38,13 @@ export class RefreshService {
   async refresh(payload: SessionPayload): Promise<SessionRefreshResult> {
     getSessionCookieMaxAge(payload);
     if (!payload.rt) {
+      this.logger.debug(
+        JSON.stringify({
+          event: 'auth.refresh.skipped',
+          ...getSessionDebugMetadata(payload),
+          reason: 'no_refresh_token',
+        }),
+      );
       throw new UnauthorizedException('No refresh token');
     }
     const existing = this.inFlight.get(payload.sid);
@@ -50,6 +58,12 @@ export class RefreshService {
       authRefreshCoalesced.add(1, {
         [AUTH_PROVIDER_ATTRIBUTE]: resolveAuthProvider(payload.providerId),
       });
+      this.logger.debug(
+        JSON.stringify({
+          event: 'auth.refresh.coalesced',
+          ...getSessionDebugMetadata(payload),
+        }),
+      );
       return existing;
     }
 
@@ -65,16 +79,32 @@ export class RefreshService {
     payload: SessionPayload,
   ): Promise<SessionRefreshResult> {
     const startedAt = process.hrtime.bigint();
+    this.logger.debug(
+      JSON.stringify({
+        event: 'auth.refresh.started',
+        ...getSessionDebugMetadata(payload),
+      }),
+    );
     /*
      * One terminal observation per real exchange. `record` is called on every exit path,
-     * including the two failure branches, so an identity-provider outage and a genuinely
+     * including every failure branch, so an identity-provider outage and a genuinely
      * dead session stay distinguishable instead of both reading as "refresh missing".
      */
     const record = (outcome: AuthRefreshOutcome): void => {
-      authRefreshDuration.record(elapsedSeconds(startedAt), {
+      const durationSeconds = elapsedSeconds(startedAt);
+      authRefreshDuration.record(durationSeconds, {
         [AUTH_PROVIDER_ATTRIBUTE]: resolveAuthProvider(payload.providerId),
         [AUTH_OUTCOME_ATTRIBUTE]: outcome,
       });
+      this.logger.debug(
+        JSON.stringify({
+          event: 'auth.refresh.exchange_completed',
+          sessionId: payload.sid,
+          providerId: payload.providerId,
+          outcome,
+          durationMs: Math.round(durationSeconds * 1000),
+        }),
+      );
     };
 
     let client: ReturnType<ProviderRegistryService['getProvider']>['client'];
@@ -119,9 +149,14 @@ export class RefreshService {
         record(AuthRefreshOutcome.InvalidGrant);
         throw new UnauthorizedException('Refresh token expired or revoked');
       }
+      /* Provider error messages can contain tokens or request bodies. */
       this.logger.error(
-        'Token refresh failed',
-        err instanceof Error ? err.stack : String(err),
+        JSON.stringify({
+          event: 'auth.refresh.failed',
+          sessionId: payload.sid,
+          providerId: payload.providerId,
+          outcome: AuthRefreshOutcome.UpstreamError,
+        }),
       );
       record(AuthRefreshOutcome.UpstreamError);
       throw new UnauthorizedException('Token refresh failed');
@@ -143,16 +178,33 @@ export class RefreshService {
       ),
       iat: now,
     };
+    /*
+     * Validate the existing deadline before renewal; an expired session cannot revive.
+     * A slow exchange can land past the deadline, so this outcome is recorded before
+     * `Refreshed`: the tokens are new but unusable, and the call throws.
+     */
+    try {
+      getSessionCookieMaxAge(refreshed, now);
+    } catch (expired) {
+      record(AuthRefreshOutcome.SessionExpired);
+      throw expired;
+    }
     record(AuthRefreshOutcome.Refreshed);
-    /* Validate the existing deadline before renewal; an expired session cannot revive. */
-    getSessionCookieMaxAge(refreshed, now);
+    const renewed: SessionPayload = {
+      ...refreshed,
+      session_exp:
+        now + this.config.get('AUTH_SESSION_MAX_AGE_SECONDS', { infer: true }),
+    };
+    this.logger.debug(
+      JSON.stringify({
+        event: 'auth.session.renewed',
+        ...getSessionDebugMetadata(renewed),
+        previousSessionExpiresAt: payload.session_exp,
+        refreshTokenRotated: renewed.rt !== payload.rt,
+      }),
+    );
     return {
-      payload: {
-        ...refreshed,
-        session_exp:
-          now +
-          this.config.get('AUTH_SESSION_MAX_AGE_SECONDS', { infer: true }),
-      },
+      payload: renewed,
       refreshed: true,
     };
   }

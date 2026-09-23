@@ -70,6 +70,8 @@ export enum AuthRefreshOutcome {
   RaceAbsorbed = 'race_absorbed',
   /** `invalid_grant` after access-token or session expiry: the session cannot be recovered. */
   InvalidGrant = 'invalid_grant',
+  /** The exchange returned a token set, but it completed after the session deadline: the session is not renewed and the call fails. */
+  SessionExpired = 'session_expired',
   /** Any other failure of the exchange, including an unresolvable provider. */
   UpstreamError = 'upstream_error',
 }

@@ -307,9 +307,10 @@ concurrent requests on different replicas each perform their own exchange.
 
 | `dial_chat_auth_outcome` (refresh) | Meaning                                                                                                                                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `refreshed`                        | The identity provider returned a new token set.                                                                                                                                       |
+| `refreshed`                        | The identity provider returned a new token set and the session passed the deadline check before renewal.                                                                              |
 | `race_absorbed`                    | `invalid_grant` arrived while the access token was still valid — a lost refresh-token rotation race, absorbed without forcing a logout. Neither a refresh success nor a session loss. |
 | `invalid_grant`                    | `invalid_grant` after access-token or session expiry: the session cannot be recovered.                                                                                                |
+| `session_expired`                  | The exchange returned a token set, but finished after the session deadline: nothing is renewed and the request fails.                                                                 |
 | `upstream_error`                   | Any other failure of the exchange, including an unresolvable provider.                                                                                                                |
 
 `dial_chat_auth_authorization_total` counts one `SessionGuard` decision per guarded request.
@@ -549,6 +550,37 @@ the repository examples do not configure, query, or verify them. Real ingress RP
 observed application arrivals because traffic may be rejected before reaching Node or may be
 generated internally. Use the deployment's verified ingress, Kubernetes, and synthetic-check
 contracts when adding availability panels.
+
+### Session and token-refresh debug logs
+
+Set `LOG_LEVEL=debug` and restart the backend to inspect the session lifecycle.
+The `AuthController`, `CookieSessionStrategy`, and `RefreshService` emit JSON strings
+with an `event` field, preserving their contents in both console and OpenTelemetry
+log bodies. Correlate records by `sessionId` and, where available, trace context.
+Expiration timestamps are Unix seconds; `cookieMaxAgeSeconds` is the remaining
+effective cookie lifetime, and exchange `durationMs` is in milliseconds.
+Unknown refresh-token expiry is `null`.
+
+| Event                                                    | What to verify                                                                                                                                                                                                         |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.session.created`                                   | Configured `sessionMaxAgeSeconds`, actual cookie lifetime, provider, and token deadlines at login.                                                                                                                     |
+| `auth.session.checked`                                   | `accessTokenNearExpiry` and `sessionNearExpiry` explain `refreshRequired`; `hasRefreshToken=false` prevents refresh.                                                                                                   |
+| `auth.refresh.started` / `auth.refresh.coalesced`        | An exchange starts, or this request joins an existing exchange on the same pod.                                                                                                                                        |
+| `auth.refresh.exchange_completed`                        | Outcome (`refreshed`, `race_absorbed`, `invalid_grant`, `session_expired`, or `upstream_error`) and duration. `session_expired` identifies a successful provider exchange that finished too late to renew the session. |
+| `auth.session.renewed`                                   | Compare `previousSessionExpiresAt` with `sessionExpiresAt`; `refreshTokenRotated` indicates replacement without exposing the token.                                                                                    |
+| `auth.session.cookie_updated`                            | The response wrote the cookie with `cookieMaxAgeSeconds`; `renewed=false` identifies a bucket-resolution rewrite that did not itself renew the session.                                                                |
+| `auth.session.cookie_preserved`                          | A lost refresh race left the winning cookie intact.                                                                                                                                                                    |
+| `auth.session.rejected`                                  | Local invalid/expired sessions clear cookies; access expiry during race recovery preserves them (`clearCookie=false`).                                                                                                 |
+| `auth.session.optional_ignored` / `auth.refresh.skipped` | Optional authentication ignored an unusable session, or direct refresh was skipped because no refresh token exists.                                                                                                    |
+
+An ordinary successful renewal follows `checked` → `started` → `exchange_completed`
+→ `renewed` → `cookie_updated`. Failed/absorbed exchanges and exchanges that finish
+after the existing session deadline do not emit `auth.session.renewed`.
+`auth.refresh.failed` is also emitted at error level for upstream exchange failures.
+Session diagnostics allowlist only correlation IDs, deadlines, and decision flags;
+access/refresh/ID tokens, CSRF values, cookies, claims, and raw provider errors are
+not included. See the [session lifetime policy](auth/auth-bff-encrypted-cookie.md#35-session-lifetime-policy)
+for renewal triggers and expiry rules.
 
 ## Investigation workflow
 

@@ -63,6 +63,7 @@ import {
   AuthProviderId,
   type ProviderConfig,
 } from './providers/provider.types';
+import { getSessionDebugMetadata } from './session/session-debug';
 import {
   getSessionCookieMaxAge,
   resolveRefreshTokenExpiry,
@@ -474,12 +475,9 @@ export class AuthController {
       bucket,
     };
 
-    this.logger.debug(
-      `callback() session created sid=${payload.sid} sub=${payload.sub} bucket=${payload.bucket || 'empty'} providerId=${payload.providerId}`,
-    );
-
     const sessionToken = await this.session.encrypt(payload);
     const cookieName = getSessionCookieName(this.config);
+    const cookieMaxAge = getSessionCookieMaxAge(payload);
 
     setCookieValue(
       res,
@@ -487,9 +485,17 @@ export class AuthController {
       sessionToken,
       {
         ...getCookieOptions(this.config),
-        maxAge: getSessionCookieMaxAge(payload),
+        maxAge: cookieMaxAge,
       },
       req.cookies as Record<string, string> | undefined,
+    );
+    this.logger.debug(
+      JSON.stringify({
+        event: 'auth.session.created',
+        ...getSessionDebugMetadata(payload),
+        sessionMaxAgeSeconds: payload.session_exp - payload.iat,
+        cookieMaxAgeSeconds: cookieMaxAge / 1000,
+      }),
     );
     res.cookie(getTransactionCookieName(this.config), '', {
       ...getCookieOptions(this.config),

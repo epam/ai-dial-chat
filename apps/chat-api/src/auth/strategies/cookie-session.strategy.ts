@@ -17,6 +17,7 @@ import {
   setCookieValue,
 } from '../cookies/cookie-options';
 import { RefreshService } from '../refresh/refresh.service';
+import { getSessionDebugMetadata } from '../session/session-debug';
 import {
   getSessionCookieMaxAge,
   InvalidSessionException,
@@ -53,6 +54,13 @@ export class CookieSessionStrategy implements AuthStrategy {
       return await this.authenticateSession(req, res);
     } catch (err) {
       if (err instanceof InvalidSessionException) {
+        this.logger.debug(
+          JSON.stringify({
+            event: 'auth.session.rejected',
+            reason: err.message,
+            clearCookie: true,
+          }),
+        );
         clearCookieValue(
           res,
           getSessionCookieName(this.config),
@@ -85,11 +93,22 @@ export class CookieSessionStrategy implements AuthStrategy {
 
     let refreshRaceAbsorbed = false;
     const now = Math.floor(Date.now() / 1000);
+    const accessTokenNearExpiry = payload.at_exp < now + 60;
+    const sessionNearExpiry = remainingLifetime < 60000;
+    this.logger.debug(
+      JSON.stringify({
+        event: 'auth.session.checked',
+        ...getSessionDebugMetadata(payload),
+        now,
+        cookieMaxAgeSeconds: remainingLifetime / 1000,
+        accessTokenNearExpiry,
+        sessionNearExpiry,
+        refreshRequired:
+          Boolean(payload.rt) && (accessTokenNearExpiry || sessionNearExpiry),
+      }),
+    );
     /* Renew before either the access token or the effective session deadline expires. */
-    if (
-      payload.rt &&
-      (payload.at_exp < now + 60 || remainingLifetime < 60000)
-    ) {
+    if (payload.rt && (accessTokenNearExpiry || sessionNearExpiry)) {
       try {
         const result = await this.refresh.refresh(payload);
         payload = result.payload;
@@ -97,17 +116,34 @@ export class CookieSessionStrategy implements AuthStrategy {
         if (result.refreshed) {
           const newToken = await this.session.encrypt(payload);
           const cookieName = getSessionCookieName(this.config);
+          const cookieMaxAge = getSessionCookieMaxAge(payload);
           setCookieValue(
             res,
             cookieName,
             newToken,
             {
               ...getCookieOptions(this.config),
-              maxAge: getSessionCookieMaxAge(payload),
+              maxAge: cookieMaxAge,
             },
             req.cookies as Record<string, string> | undefined,
           );
+          this.logger.debug(
+            JSON.stringify({
+              event: 'auth.session.cookie_updated',
+              ...getSessionDebugMetadata(payload),
+              cookieMaxAgeSeconds: cookieMaxAge / 1000,
+              renewed: true,
+            }),
+          );
           res.setHeader('X-CSRF-Token', payload.csrf);
+        } else {
+          this.logger.debug(
+            JSON.stringify({
+              event: 'auth.session.cookie_preserved',
+              ...getSessionDebugMetadata(payload),
+              reason: 'refresh_race_absorbed',
+            }),
+          );
         }
       } catch (err) {
         if (err instanceof UnauthorizedException) {
@@ -125,15 +161,24 @@ export class CookieSessionStrategy implements AuthStrategy {
         if (!refreshRaceAbsorbed) {
           const newToken = await this.session.encrypt(payload);
           const cookieName = getSessionCookieName(this.config);
+          const cookieMaxAge = getSessionCookieMaxAge(payload);
           setCookieValue(
             res,
             cookieName,
             newToken,
             {
               ...getCookieOptions(this.config),
-              maxAge: getSessionCookieMaxAge(payload),
+              maxAge: cookieMaxAge,
             },
             req.cookies as Record<string, string> | undefined,
+          );
+          this.logger.debug(
+            JSON.stringify({
+              event: 'auth.session.cookie_updated',
+              ...getSessionDebugMetadata(payload),
+              cookieMaxAgeSeconds: cookieMaxAge / 1000,
+              renewed: false,
+            }),
           );
         }
       } catch (err) {
@@ -150,6 +195,14 @@ export class CookieSessionStrategy implements AuthStrategy {
       refreshRaceAbsorbed &&
       payload.at_exp <= Math.floor(Date.now() / 1000)
     ) {
+      this.logger.debug(
+        JSON.stringify({
+          event: 'auth.session.rejected',
+          ...getSessionDebugMetadata(payload),
+          reason: 'access_token_expired_during_refresh_recovery',
+          clearCookie: false,
+        }),
+      );
       throw new UnauthorizedException(
         'Access token expired during refresh recovery',
       );
@@ -177,8 +230,22 @@ export class CookieSessionStrategy implements AuthStrategy {
     try {
       payload = await this.session.decryptFromRequest(req);
       getSessionCookieMaxAge(payload);
-      if (payload.at_exp <= Math.floor(Date.now() / 1000)) return null;
+      if (payload.at_exp <= Math.floor(Date.now() / 1000)) {
+        this.logger.debug(
+          JSON.stringify({
+            event: 'auth.session.optional_ignored',
+            reason: 'access_token_expired',
+          }),
+        );
+        return null;
+      }
     } catch {
+      this.logger.debug(
+        JSON.stringify({
+          event: 'auth.session.optional_ignored',
+          reason: 'missing_invalid_or_expired_session',
+        }),
+      );
       return null;
     }
 
