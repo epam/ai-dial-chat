@@ -1,3 +1,7 @@
+.search {
+  background: var(--ci-sheet-search-bg, transparent);
+}
+
 .divider {
   background: var(--ci-sheet-divider, var(--stroke-secondary, #d1dbea));
 }

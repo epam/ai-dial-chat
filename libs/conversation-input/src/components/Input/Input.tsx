@@ -80,6 +80,7 @@ export const Input: FC<InputProps> = ({
   colors,
   typography,
   attachmentTray,
+  modelMenu,
   className,
   pendingDropFiles = [],
   onDropFilesConsumed,
@@ -884,6 +885,7 @@ export const Input: FC<InputProps> = ({
                   selectedDeploymentId={selectedDeploymentId}
                   onDeploymentChange={onDeploymentChange}
                   modelSelectorLabels={modelSelectorLabels}
+                  menuStyles={modelMenu}
                   isStreaming={isStreaming}
                   isMobile={isMobile}
                   isDisabled={isModelSelectorDisabled}
