@@ -24,10 +24,21 @@ const getParent = (element: Element): HTMLElement =>
   // eslint-disable-next-line testing-library/no-node-access
   element.parentElement as HTMLElement;
 
+/*
+ * `Input` wraps its textarea in a permanent `relative` positioning div (the
+ * highlighted-mention-run overlay's anchor) one level up from the textarea
+ * itself — present unconditionally, specifically so that div's appearance
+ * never depends on live state (a mention being added/removed mid-draft), or
+ * the textarea would unmount and remount every time that state flipped. So
+ * the "cell" these tests care about is two levels up, not one.
+ */
+const getTextareaCell = (textarea: Element): HTMLElement =>
+  getParent(getParent(textarea));
+
 const expectTextareaOwnsItsRow = (): void => {
   const textarea = screen.getByRole('textbox');
   const addButton = screen.getByLabelText('Add');
-  const textareaCell = getParent(textarea);
+  const textareaCell = getTextareaCell(textarea);
 
   /* The textarea sits in a cell of its own — the + button is not in it. */
   expect(textareaCell.contains(addButton)).toBe(false);
@@ -71,7 +82,7 @@ describe('Input — layout', () => {
     expectTextareaOwnsItsRow();
 
     const textarea = screen.getByRole('textbox');
-    const textareaCell = getParent(textarea);
+    const textareaCell = getTextareaCell(textarea);
     const addButton = screen.getByLabelText('Add');
     const controlsRow = getParent(addButton);
 
@@ -79,7 +90,7 @@ describe('Input — layout', () => {
 
     expect((textarea as HTMLTextAreaElement).value).toContain('\n');
     /* Same nodes in the same relationship — nothing moved. */
-    expect(getParent(screen.getByRole('textbox'))).toBe(textareaCell);
+    expect(getTextareaCell(screen.getByRole('textbox'))).toBe(textareaCell);
     expect(getParent(screen.getByLabelText('Add'))).toBe(controlsRow);
     expectTextareaOwnsItsRow();
   });
@@ -122,7 +133,9 @@ describe('Input — layout', () => {
       const addButton = screen.getByLabelText('Add');
 
       /* Same row as the textarea cell — the row no longer wraps. */
-      expect(getParent(getParent(textarea)).contains(addButton)).toBe(true);
+      expect(getParent(getTextareaCell(textarea)).contains(addButton)).toBe(
+        true,
+      );
       /*
        * The add button comes first in the DOM, so the tab order matches the
        * visual order without any `order-*` utility.
@@ -179,7 +192,7 @@ describe('Input — layout', () => {
       const chip = screen.getByRole('button', { name: 'Web Search' });
       const addButton = screen.getByLabelText('Add');
       /* The textarea cell's parent is the action row — see the helper above. */
-      const actionRow = getParent(getParent(screen.getByRole('textbox')));
+      const actionRow = getParent(getTextareaCell(screen.getByRole('textbox')));
 
       expect(actionRow.contains(chip)).toBe(false);
       expect(actionRow.contains(addButton)).toBe(true);
@@ -199,7 +212,7 @@ describe('Input — layout', () => {
       );
 
       const chip = screen.getByRole('button', { name: 'Web Search' });
-      const actionRow = getParent(getParent(screen.getByRole('textbox')));
+      const actionRow = getParent(getTextareaCell(screen.getByRole('textbox')));
 
       expect(actionRow.contains(chip)).toBe(true);
     });

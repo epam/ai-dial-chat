@@ -1,24 +1,21 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  GhostButton,
-  InteractiveTooltip,
-  TooltipPlacement,
-} from '@epam/ai-dial-ui-kit';
-import { useState, type FC } from 'react';
+import { InteractiveTooltip, TooltipPlacement } from '@epam/ai-dial-ui-kit';
+import { useLayoutEffect, useRef, useState, type FC } from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
 
 /**
- * A used skill rendered as a `/name` ghost button with a description tooltip
- * and a "View details" action, or the error state while unsupported.
+ * A used skill rendered as a `/name` chip — plain, selectable text styled to
+ * read as a button, with a description tooltip and a "View details" action,
+ * or the error state while unsupported.
  */
 export const ChatSkill: FC<ChatSkillProps> = ({
   name,
   path,
   description,
   isUnsupported = false,
-  labelClassName = 'dial-body-paragraph-text',
+  labelClassName = 'dial-body-paragraph-text text-accent',
   unsupportedLabelClassName = 'text-error',
   unsupportedClassName = 'bg-error',
   onViewDetails,
@@ -43,6 +40,19 @@ export const ChatSkill: FC<ChatSkillProps> = ({
     onViewDetails(path);
   };
 
+  /*
+   * `/` is rendered out-of-flow so it can be styled independently; the
+   * measured width becomes the label's start padding, keeping the chip's
+   * total width equal to the invisible `/{name}` text it overlays. See
+   * design.md Decision 3a (multi-skill-message-mentions).
+   */
+  const slashRef = useRef<HTMLSpanElement | null>(null);
+  const [slashWidth, setSlashWidth] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    setSlashWidth(slashRef.current?.getBoundingClientRect().width ?? null);
+  }, [labelClassName]);
+
   return (
     <InteractiveTooltip
       key={tooltipGeneration}
@@ -64,35 +74,41 @@ export const ChatSkill: FC<ChatSkillProps> = ({
       }
     >
       {/*
-       * The span is the tooltip's trigger (`asChild`), so the tooltip stays
-       * open while the pointer moves between it and the button. The button
-       * body is presentation only — activating it does nothing beyond opening
-       * the tooltip; removal is the host input's Backspace-at-start gesture.
+       * Plain, selectable text span, not a `<button>` — sized to net-zero
+       * extra width so the composer mirror can overlay it on the real
+       * textarea text. See design.md Decision 3a (multi-skill-message-mentions)
+       * for the full rationale.
        */}
-      <span className="inline-flex items-center">
-        {/*
-         * `h-auto px-2 py-0` overrides the kit button's `h-[40px] px-4` so
-         * the chip is exactly its label line (26px with the default
-         * `dial-body-paragraph-text` label) plus 8px of horizontal padding —
-         * no vertical padding, so the total height stays at the label line's
-         * height and the chip's text aligns with the input's first text line.
-         * In the error state the color classes join the layout/typography
-         * classes so the whole chip reads as the error: error-tinted
-         * background, error-colored `/{name}` label.
-         */}
-        <GhostButton
-          label={`/${name}`}
-          textClassName={
-            isUnsupported
-              ? mergeClasses(labelClassName, unsupportedLabelClassName)
-              : labelClassName
-          }
-          className={mergeClasses(
-            'h-auto px-2 py-0',
-            isUnsupported && unsupportedClassName,
-            SKILLS_CLASS.chip,
-          )}
-        />
+      <span
+        tabIndex={0}
+        className={mergeClasses(
+          'relative -me-1 -ms-1 inline-block cursor-pointer select-text rounded-full pe-1 ps-1',
+          isUnsupported
+            ? unsupportedClassName
+            : 'hover:bg-info focus-visible:bg-info active:bg-info',
+          isUnsupported
+            ? mergeClasses(labelClassName, unsupportedLabelClassName)
+            : labelClassName,
+          SKILLS_CLASS.chip,
+        )}
+        aria-label={`/${name}`}
+      >
+        <span
+          ref={slashRef}
+          aria-hidden
+          className="inset-inline-start-0 pointer-events-none absolute top-0 select-none"
+        >
+          /
+        </span>
+        <span
+          aria-hidden
+          className="select-none"
+          style={{
+            paddingInlineStart: slashWidth != null ? slashWidth : undefined,
+          }}
+        >
+          {name}
+        </span>
       </span>
     </InteractiveTooltip>
   );

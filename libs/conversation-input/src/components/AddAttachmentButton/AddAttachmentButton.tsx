@@ -94,6 +94,12 @@ interface AddAttachmentButtonProps {
    * selection is complete.
    */
   menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Called to read the host's textarea caret position when a `menuOverlays`
+   * entry opens, forwarded as that entry's `renderOverlay`'s second
+   * argument. Absent (or returning `undefined`) reports `0`.
+   */
+  getCaretPosition?: () => number;
   /** Color overrides. */
   colors?: AddAttachmentButtonColors;
 }
@@ -125,6 +131,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   toolsMenuTitle = 'Tools',
   toolsBackLabel = 'Back',
   menuOverlays,
+  getCaretPosition,
   colors,
 }) => {
   const isMobile = useIsMobile();
@@ -263,7 +270,10 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                */
               children: [{ key: `${overlay.key}-panel`, label: '' }],
               renderSubMenu: () =>
-                overlay.renderOverlay(() => setIsDesktopMenuOpen(false)),
+                overlay.renderOverlay(
+                  () => setIsDesktopMenuOpen(false),
+                  getCaretPosition?.() ?? 0,
+                ),
             }),
       })),
       ...(onRecordVoice != null
@@ -327,6 +337,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       toolsMenuTitle,
       toolsSubmenuChildren,
       menuOverlays,
+      getCaretPosition,
       cssVars,
     ],
   );
@@ -415,7 +426,10 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               onClose={() => setOpenMenuOverlayKey(null)}
               style={style}
             >
-              {overlay.renderOverlay(() => setOpenMenuOverlayKey(null))}
+              {overlay.renderOverlay(
+                () => setOpenMenuOverlayKey(null),
+                getCaretPosition?.() ?? 0,
+              )}
             </BottomSheetShell>
           ))}
           {chatSettings != null && (

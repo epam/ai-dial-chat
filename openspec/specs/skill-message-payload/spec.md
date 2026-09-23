@@ -2,33 +2,43 @@
 
 ## Purpose
 
-How a selected skill travels with a user message: the custom_content.skills payload on send, its persistence with the conversation, forwarding on regenerate and continue, restoration on edit, and its rendering and metadata resolution in conversation history.
+How selected skills travel with a user message: the custom_content.skills payload on send, its persistence with the conversation, forwarding on regenerate and continue, restoration on edit, and its rendering and metadata resolution in conversation history.
 
 ## Requirements
 
 ### Requirement: User message carries the selected skill
 
-`MessageCustomContent` (`libs/chat-shared/src/models/chat.ts`) SHALL gain an optional `skills?: RequestSkill[]` field, where `RequestSkill` is `{ url: string }` — each entry's `url` is the skill's resource path in the same URL form the skill listing and `CatalogItem.id` use (`skills/{bucket}/{path}`). The entry shape SHALL match DIAL Core's merged `RequestSkill` schema (Core PR #1956, 2026-09-11): Core requires each entry to be an object with a non-blank `url` (a bare string is rejected with 400), skips public skills, and auto-shares each referenced non-public skill to the per-request API key with read-only access (the attachment mechanism); a referenced skill the user cannot read fails the request with 403. Sending a user message while a skill is selected SHALL attach a single entry — `{ url: <selected skill's resource path> }` — to that message's `custom_content.skills` (the array shape future-proofs the wire contract) and SHALL clear the selection afterwards, so the next message starts without a skill (per-message semantics, matching how attachments behave). Sending with no skill selected SHALL NOT add the field. The field SHALL flow through the existing message `custom_content` channel — no new endpoint, request shape, or generated-client change is introduced. All skill-usage UI and payload construction SHALL render/execute only when the `features.skillUsageEnabled` flag is enabled for the session.
+`MessageCustomContent` (`libs/chat-shared/src/models/chat.ts`) SHALL retain the optional `skills?: RequestSkill[]` field, where `RequestSkill` is `{ url: string }` — each entry's `url` is the skill's resource path in the same URL form the skill listing and `CatalogItem.id` use (`skills/{bucket}/{path}`), matching DIAL Core's merged `RequestSkill` schema (Core PR #1956, 2026-09-11) unchanged. A message MAY now carry **any number** of skill mentions, not at most one. A skill mention is represented in the message text as the literal substring `/{name}` at the point the user selected it (from the `/` command menu or the Skills add-menu); `custom_content.skills` SHALL list one `{ url }` entry per mention, **in the same left-to-right order the mentions appear in the message text** — order is the only way to disambiguate two mentions whose displayed `/{name}` label is identical but which resolve to different skills (different `url`). Sending a user message with one or more mentions SHALL attach a `custom_content.skills` entry per mention, in that order, and SHALL clear every mention from the composer's draft afterwards, so the next message starts with none (per-message semantics, matching how attachments behave, extended from "the one selection" to "every mention"). Sending with no mentions SHALL NOT add the field. The field SHALL flow through the existing message `custom_content` channel — no new endpoint, request shape, or generated-client change is introduced. All skill-usage UI and payload construction SHALL render/execute only when the `features.skillUsageEnabled` flag is enabled for the session.
 
-#### Scenario: Sending with a selected skill
+#### Scenario: Sending with a single mention
 
-- **WHEN** the user sends a message while a skill is selected
-- **THEN** the constructed user message carries `custom_content.skills` with one `{ url }` entry for that skill's resource path, and the input's selection is cleared
+- **WHEN** the user sends a message containing exactly one skill mention
+- **THEN** the constructed user message carries `custom_content.skills` with one `{ url }` entry for that skill's resource path, and the mention is cleared from the composer's draft
+
+#### Scenario: Sending with multiple mentions
+
+- **WHEN** the user sends a message such as `/abc please summarize this, then run /csd on the result`, having selected the skill behind `/abc` and then the skill behind `/csd`
+- **THEN** the constructed user message's `custom_content.skills` carries two entries, `[{ url: <abc's url> }, { url: <csd's url> }]`, in that order — matching the mentions' left-to-right position in the sent text — and both mentions are cleared from the composer's draft afterwards
+
+#### Scenario: Two mentions with the same displayed name, different skills
+
+- **WHEN** the user's message contains two mentions that both render as `/report` but were selected from two different skills (different resource paths)
+- **THEN** `custom_content.skills` carries both entries in the order the mentions appear in the text, and that order — not the shared name — is what a reader (or the app, on reload) uses to tell them apart
 
 #### Scenario: Sending without a skill
 
-- **WHEN** the user sends a message with no skill selected
+- **WHEN** the user sends a message with no skill mentions
 - **THEN** the user message carries no `skills` entry in its `custom_content`
 
 #### Scenario: First message of an AppsEditor preview conversation
 
-- **WHEN** the user selects a skill in the AppsEditor preview chat's composer and sends the first message
-- **THEN** the conversation-creation request carries `custom_content.skills` with the selected skill's `{ url }`, the created conversation's first user message persists it, the continue-last-user completion forwards it unchanged, and the selection is cleared
+- **WHEN** the user mentions one or more skills in the AppsEditor preview chat's composer and sends the first message
+- **THEN** the conversation-creation request carries `custom_content.skills` with one ordered entry per mention, the created conversation's first user message persists it, the continue-last-user completion forwards it unchanged, and every mention is cleared from the composer's draft afterwards
 
 #### Scenario: No API surface changes
 
 - **WHEN** the change is complete
-- **THEN** the generated OpenAPI client, the chat-api controllers, and the completion-request construction are unchanged except for the additive `custom_content.skills` field riding the existing channel and its per-entry `url` being percent-encoded for the wire (see the regenerate/continue requirement below)
+- **THEN** the generated OpenAPI client, the chat-api controllers, and the completion-request construction are unchanged except for the additive `custom_content.skills` field riding the existing channel, its length no longer capped at one entry, and its per-entry `url` being percent-encoded for the wire (see the regenerate/continue requirement below)
 
 ---
 
@@ -71,51 +81,112 @@ Regenerating an assistant response and resuming a generation after a reload (the
 
 ---
 
-### Requirement: Editing a message restores its skill
+### Requirement: Composing renders mentions as highlighted text, not full chips
 
-Entering edit mode on a user message that carries `custom_content.skills` SHALL seed the corresponding skill into the edit input as the selected skill (rendered as the `ChatSkill` element through the same inline mechanism the conversation input uses). Re-sending the edited message SHALL carry the message's current skill state — unchanged if the user left it selected, absent if the user removed it via the input's Backspace-at-start gesture (the `ChatSkill` element carries no remove control of its own), replaced if the user selected a different skill. Cancelling the edit SHALL change nothing.
+While a message is being actively composed or edited (the new-conversation composer, the existing-conversation composer, the edit-message input, and the AppsEditor/Quick Apps preview composer — all built on the same underlying `<textarea>`-based `Input`), each currently-tracked skill mention SHALL render as a highlighted run of the mention's own `/{name}` text, sharing the character width and font of the surrounding draft text exactly (no substitution of a differently-sized chip widget into the live editing surface). Live-composing mentions SHALL NOT expose a hover tooltip or "View details" action — those remain exclusive to the read-only history rendering (below) and are not available until the message is sent and re-rendered from history, or (for an already-sent message) until an active edit session on it ends. Selecting a skill from the `/` command menu or the Skills add-menu SHALL insert `/{name}` into the draft text at the caret and begin tracking it as a mention; placing the caret at the trailing boundary of a tracked mention and pressing Backspace SHALL remove that entire mention's text in one operation rather than one character; editing into the interior of a tracked mention's text SHALL stop tracking it as a mention (its text remains as plain text) rather than partially updating it.
 
-#### Scenario: Edit restores the skill
+#### Scenario: Inserting a mention from the command menu
 
-- **WHEN** the user starts editing a message that was sent with a skill
-- **THEN** the edit input shows that skill as its selected `ChatSkill` element
+- **WHEN** the user types `/` at the caret in an empty textarea, the Skills popup opens, and the user selects a skill
+- **THEN** `/{name}` is inserted into the draft at that position, rendered as a highlighted run, and tracked as a mention
 
-#### Scenario: Re-send keeps the skill
+#### Scenario: Inserting a mention mid-sentence from the add menu
 
-- **WHEN** the user re-sends an edited message without touching the restored skill
-- **THEN** the updated message carries the same `skills` entry
+- **WHEN** the user has already typed text, places the caret mid-sentence, opens the Skills add-menu, and selects a skill
+- **THEN** `/{name}` is inserted at the caret position (not at the start of the message), rendered as a highlighted run inline with the surrounding typed text, and tracked as a mention
 
-#### Scenario: Re-send without the skill
+#### Scenario: Whole-mention Backspace
 
-- **WHEN** the user removes the restored skill with Backspace at the start of the edit input and re-sends the edited message
-- **THEN** the updated message carries no `skills` entry
+- **WHEN** the caret is collapsed immediately after a tracked mention's text and the user presses Backspace
+- **THEN** the entire `/{name}` run is removed in a single edit, and that mention no longer contributes a `custom_content.skills` entry on send
+
+#### Scenario: Editing inside a mention breaks it
+
+- **WHEN** the user places the caret inside a tracked mention's `/{name}` text and types or deletes a character
+- **THEN** that run stops being tracked as a mention (no more highlight, no `custom_content.skills` entry on send) while its current text remains in the draft as plain text
+
+#### Scenario: No tooltip while composing
+
+- **WHEN** the pointer rests on or focus reaches a highlighted mention run inside an actively composing or editing textarea
+- **THEN** no tooltip opens and no "View details" action is available, unlike the same mention once it is part of sent, read-only history
 
 ---
 
-### Requirement: Conversation history renders the skill
+### Requirement: Editing a message restores its skill mentions
 
-A message loaded from conversation history — user or assistant — that carries `custom_content.skills` SHALL render one `ChatSkill` element per entry (today at most one) at the inline-start of the message's first text line, inside the message bubble, with the text word-flowing after it on the same line and wrapping to full width below — the same word flow the conversation input's selected-skill chip has. Hovering/focusing the element SHALL show the same interactive tooltip (description with its loading/absent states above the "View details" button), and activating "View details" SHALL open the same skill details side panel the input flow opens (on the chat route). The bubble slot the element renders in SHALL be a generic `beforeContent` ReactNode prop on the user and assistant message bubbles (forwarded by `MessageBubble`) — `libs/conversation-messages` SHALL NOT know about skills; the user bubble renders the slot inline within the text, the assistant bubble overlays it on the first markdown block's first line (which indents past the measured slot width), and the chip's label SHALL use the type-scale step the bubble's body text uses (host-supplied) so its height matches that text line.
+Entering edit mode on a user message that carries `custom_content.skills` SHALL reconstruct each entry's position in the message text (matching the ordered `custom_content.skills` urls against `/{name}` occurrences in the text, resolving each entry's expected name from the current skill listing) and seed the edit input's draft with that same text plus live tracking of each successfully-located mention, so further edits, undo, and Backspace behave the same as during original composition. A mention whose exact `/{name}` text cannot be located (e.g. a prior edit, before this edit session, partially altered it) is not seeded as a live-tracked mention — its literal text (whatever it now reads) is preserved as plain text in the draft. Re-sending the edited message SHALL carry exactly the message's current mention state: unchanged entries the user left alone, entries removed via the whole-mention Backspace gesture or by editing into a mention's text, and entries added by selecting further skills during the edit — each still in the text's left-to-right order.
 
-#### Scenario: History display
+#### Scenario: Edit restores every mention
 
-- **WHEN** a conversation containing a message sent with a skill is opened
-- **THEN** that message renders a `ChatSkill` element labeled `/{skill name}` at the inline-start of its first text line, with the message text flowing after it on that line and wrapping to full width below
+- **WHEN** the user starts editing a message that was sent with two skill mentions
+- **THEN** the edit input's draft text shows both mentions at their original positions, both live-tracked as mentions
+
+#### Scenario: Re-send keeps all mentions
+
+- **WHEN** the user re-sends an edited message without touching any of its restored mentions
+- **THEN** the updated message carries the same ordered `skills` entries as before the edit
+
+#### Scenario: Re-send after removing one of several mentions
+
+- **WHEN** the user removes one restored mention (via the whole-mention Backspace gesture, with the caret collapsed immediately after that mention) and re-sends the edited message, leaving the other mention(s) untouched
+- **THEN** the updated message's `skills` array omits the removed mention's entry and keeps the others, in their original relative order
+
+#### Scenario: Re-send without any skill
+
+- **WHEN** the user removes every restored mention and re-sends the edited message
+- **THEN** the updated message carries no `skills` entry
+
+#### Scenario: Editing into a mention's text breaks it
+
+- **WHEN** the user places the caret inside a restored mention's `/{name}` text (not at its trailing boundary) and types or deletes a character there
+- **THEN** that mention is no longer tracked as a skill mention (its `custom_content.skills` entry is dropped on send), and the edited text remains in the draft as plain text
+
+#### Scenario: Cancelling the edit changes nothing
+
+- **WHEN** the user cancels an edit after the draft's mentions were reconstructed or changed
+- **THEN** the original message and its `custom_content.skills` are unchanged
+
+---
+
+### Requirement: Conversation history renders each skill mention inline
+
+A user message loaded from conversation history that carries `custom_content.skills` SHALL render one `ChatSkill` element per entry, each positioned inline at that mention's actual location within the message's flowing text — reconstructed by matching the ordered `custom_content.skills` urls against `/{name}` occurrences in the text — with the surrounding text word-flowing around each element and wrapping to full width. An assistant message that carries `custom_content.skills` (metadata the assistant's own text did not author) SHALL continue to render all of its entries together at the inline-start of the message's first text line, as today, since assistant text has no reliable mention positions to reconstruct against. Hovering/focusing any rendered element SHALL show the same interactive tooltip (description with its loading/absent states above the "View details" button), and activating "View details" SHALL open the same skill details side panel the input flow opens (on the chat route). The bubble slot mechanism (`beforeContent` on `MessageBubble`, forwarded from `libs/conversation-messages`) is generalized from a single `ReactNode` to an ordered set of content for the user bubble (`textSegments`), still owned entirely by the host (`libs/conversation-messages` SHALL NOT know about skills) — the user bubble renders the ordered content inline within its plain text, the assistant bubble keeps its existing single-slot overlay behavior (`beforeContent`) for its (still single-position) leading group of chips.
+
+#### Scenario: History display with one mention
+
+- **WHEN** a conversation containing a user message sent with one skill mention is opened
+- **THEN** that message renders a `ChatSkill` element labeled `/{skill name}` at the mention's position within the flowing text, with the surrounding text wrapping around it
+
+#### Scenario: History display with multiple mentions
+
+- **WHEN** a conversation containing a user message sent with two skill mentions (e.g. `/abc ... /csd ...`) is opened
+- **THEN** that message renders two `ChatSkill` elements, each at its respective mention's position in the flowing text, in the same order as the message's `custom_content.skills` array
 
 #### Scenario: History tooltip
 
-- **WHEN** the pointer rests on the history `ChatSkill` element
+- **WHEN** the pointer rests on any history `ChatSkill` element
 - **THEN** the interactive tooltip opens showing the description (when resolved) and the "View details" button, and "View details" opens the skill details side panel
+
+#### Scenario: Assistant message with multiple skill entries
+
+- **WHEN** an assistant message carries more than one `custom_content.skills` entry
+- **THEN** all of that message's `ChatSkill` elements render together at the inline-start of its first text line, as a group, unchanged from today's single-slot behavior
 
 #### Scenario: Messages without skills
 
 - **WHEN** a message carries no `skills` entry
 - **THEN** its rendering is byte-identical to today (no slot content, no layout change)
 
+#### Scenario: A mention the text no longer contains
+
+- **WHEN** a `custom_content.skills` entry's expected `/{name}` text cannot be located in the message's content (e.g. corrupted or hand-edited data)
+- **THEN** that entry renders nowhere in the flowing text — it is neither dropped from the underlying data nor shown as a broken or placeholder element
+
 ---
 
 ### Requirement: Skill metadata resolved from the carried url
 
-The wire payload carries only each skill's `url`; display metadata SHALL be resolved app-side per url: the skill's name from the loaded skill listing (`skills`, `sharedWithMe`, and `publicSkills` pools, matched on the entry's `url`); when the url is absent from every pool (a skill the viewer cannot access), the fallback display name SHALL be the url's last non-empty segment. The description SHALL come from the existing per-session lazy description fetch (the same `SKILL.md` download-and-parse pipeline and session cache the favorites tooltip uses — history shares the cache, so a skill already resolved this session does not refetch, and opening history tooltips triggers the fetch with the same first-open callback semantics). A failed fetch or unresolvable url SHALL degrade silently: the element renders with its fallback name and a description-less tooltip, with no error notification and no retry this session.
+The wire payload carries only each skill's `url`; display metadata SHALL be resolved app-side per url: the skill's name from the loaded skill listing (`skills`, `sharedWithMe`, and `publicSkills` pools, matched on the entry's `url`); when the url is absent from every pool (a skill the viewer cannot access), the fallback display name SHALL be the url's last non-empty segment. This resolved name is also what history rendering and edit-mode reconstruction use as the expected `/{name}` text when matching a `custom_content.skills` entry against occurrences in the message text (see "Conversation history renders each skill mention inline" and "Editing a message restores its skill mentions"), left-to-right and in `custom_content.skills` array order, consuming each matched occurrence so a later entry never re-matches an already-consumed one. The description SHALL come from the existing per-session lazy description fetch (the same `SKILL.md` download-and-parse pipeline and session cache the favorites tooltip uses — history shares the cache, so a skill already resolved this session does not refetch, and opening history tooltips triggers the fetch with the same first-open callback semantics). A failed fetch or unresolvable url SHALL degrade silently: the element renders with its fallback name and a description-less tooltip, with no error notification and no retry this session.
 
 #### Scenario: Skill present in the listing
 
@@ -131,6 +202,47 @@ The wire payload carries only each skill's `url`; display metadata SHALL be reso
 
 - **WHEN** a skill's description was already resolved this session (e.g. its menu-row tooltip was opened)
 - **THEN** the history tooltip renders the cached description without a new fetch
+
+#### Scenario: Matching consumes occurrences left to right
+
+- **WHEN** a message's text contains `/report` twice and `custom_content.skills` lists two different skills both named "report"
+- **THEN** the first occurrence of `/report` in reading order is matched to the first array entry and the second occurrence to the second array entry, regardless of which of the two skills happens to be alphabetically or otherwise "first"
+
+---
+
+### Requirement: Command-menu popup opens on the word at the caret, anywhere in the textarea
+
+The slash-command popup SHALL open whenever the whitespace-delimited word containing the caret starts with the trigger character (e.g. `/`) and contains no whitespace or second trigger character — regardless of where that word sits in the textarea (start, middle, after other text, between two existing words, or as the only content) and regardless of what other text the message already contains. The popup SHALL stay open while that same word keeps matching, and SHALL close the moment the caret's word stops matching (including when the caret moves to a different, non-matching word). It SHALL reopen when that word's value becomes exactly the bare trigger character again after having been dismissed (Escape or an outside click) while more characters followed the trigger within the same word — for example: typing `/sdf`, dismissing the popup, then backspacing `/sdf` → `/sd` → `/s` → `/`. The popup SHALL NOT reopen at any intermediate value with characters still following the trigger within that word (e.g. it does not reopen at `/sd` or `/s` during that same backspacing sequence), and SHALL NOT reopen merely because the word still matches the trigger-plus-query shape without actually returning to the bare trigger.
+
+#### Scenario: Opens on a trigger typed after other text
+
+- **WHEN** the user has already typed `text text ` and types `/` next
+- **THEN** the popup opens, exactly as it would if the textarea had been empty
+
+#### Scenario: Opens on a trigger typed between two existing words
+
+- **WHEN** the user places the caret between two words separated by whitespace and types `/`
+- **THEN** the popup opens, scoped to that new word, without affecting the surrounding text
+
+#### Scenario: Reopens after backspacing a mid-message trigger word back to bare
+
+- **WHEN** the user types `/ab ` after other text, dismisses the resulting popup, then backspaces the word down to `/` (e.g. `/ab` → `/a` → `/`)
+- **THEN** the popup reopens the moment that word's value becomes exactly `/`, the same as it does when the same word sits at the start of an otherwise-empty textarea
+
+#### Scenario: Reopens on backspacing to the bare trigger after dismissal
+
+- **WHEN** the user types `/sdf`, dismisses the resulting popup without selecting anything, then presses Backspace three times until the textarea reads `/`
+- **THEN** the popup reopens the moment the textarea's value becomes exactly `/`
+
+#### Scenario: Does not reopen while a query still follows the trigger
+
+- **WHEN** the user types `/sdf`, dismisses the popup, then backspaces once to `/sd`
+- **THEN** the popup does not reopen while the value is `/sd`
+
+#### Scenario: Unaffected — clearing to empty and retyping still reopens
+
+- **WHEN** the user dismisses the popup, clears the textarea entirely, and types the trigger character again
+- **THEN** the popup reopens, as it already does today
 
 ---
 

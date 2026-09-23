@@ -242,7 +242,13 @@ Set `isAudioMessageSupported` to show the microphone. Pass translated `transcrib
 
 Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed — `ConversationInput` wraps it with the app-facing props it needs. The layout is always two rows: the textarea on its own full-width row, and the action bar (`+` button, tools chips, model selector, send/stop, mic) below it. Pass `hideActionBar` to render only the textarea and the attachment tray.
 
-`commandMenu` (on both `Input` and `ConversationInput`) mounts a host-injected slash-command menu. When provided, typing the configured `triggerPrefix` as the first character of an empty textarea opens an overlay above the input — as does pasting into an empty textarea a value that is exactly the prefix, or the prefix plus a whitespace-free query (`/` and `/test` trigger; `/s sdf`, multi-line content, or any paste into a non-empty textarea insert as a regular paste and open nothing). The menu stays open while the value keeps matching the prefix followed by a query with no whitespace or second prefix character, and closes on unmatch, Escape, or an outside click; selection typically goes through `ctx.close({ consumeQuery: true })`, which removes the `/query` text from the textarea.
+`onChange` (on `Input`, `ConversationInput`, and `EditMessageInput`) fires with the textarea's current value on every change — typing, deleting, pasting, undo/redo — not only on send/save. Omit it to ignore keystrokes between sends, as before this prop existed on `ConversationInput`/`EditMessageInput`; a host tracking live state derived from the draft (e.g. skill-mention anchors that must reconcile as the user edits around them) wires this alongside `activeMentions`/`onBackspaceAtCaret`.
+
+`commandMenu` (on `Input`, `ConversationInput`, and `EditMessageInput`) mounts a host-injected slash-command menu. The trigger is evaluated against the whitespace-delimited word around the caret, not the whole textarea value, so it opens whenever the configured `triggerPrefix` starts that word — typed as its first character anywhere in the text (start, middle, or after other words/mentions), or arriving in a paste that produces such a word. The menu stays open while the caret's word keeps matching the prefix followed by a query with no whitespace or second prefix character, and closes the moment it stops (including when the caret moves to a different, non-matching word); selection typically goes through `ctx.close({ consumeQuery: true })`, which removes that `/query` text from wherever it sits in the textarea. `ctx.caretPosition` gives the triggering word's start offset, for splicing a selection's result in at that same spot. A dismissed menu also reopens the moment its word returns to exactly the bare `triggerPrefix` — whether reached by typing it fresh, or by backspacing down to it after typing more and dismissing (e.g. `/sdf` → dismiss → Backspace ×3 → `/` reopens) — even though dismissing at any other query value keeps that same word's menu closed until the word stops matching and starts again.
+
+`menuOverlays` (on `ConversationInput` and `EditMessageInput`) adds host-injected entries to the `+` menu, alongside the built-in attach-file/tools/chat-settings items. On `EditMessageInput`, these render from its own external add-button (the edit surface hides `Input`'s built-in action bar), so they remain available even when `hideAttachFile` hides the attach-file entry. Each entry's `renderOverlay(onClose, caretPosition)` also receives the textarea's caret offset at the moment the overlay opened, so a selection made in it can splice text into `message` at that exact position (via `messageRevision`/`caretPositionOverride`) instead of always appending at the end.
+
+`activeMentions` (on `Input`, `ConversationInput`, and `EditMessageInput`) highlights ranges of the current `message` as styled runs — e.g. a host-tracked skill mention's `/{name}` text — without altering the text itself: the textarea's own text renders transparent (the caret stays visible and normally colored) and a non-interactive mirror underneath renders the identical text with each range styled, so a highlighted run stays pixel-aligned with the real characters underneath it. A range's `isUnsupported: true` renders it in an error style instead of the default highlight — e.g. a mention selected on a deployment that doesn't support it. `onBackspaceAtCaret(caretPosition)` lets the host ask, on every Backspace, whether a tracked range ends exactly at the caret; returning `{ start, length }` makes `Input` delete that whole range as one native edit (so undo still reverts it) instead of the default single-character deletion. `caretPositionOverride` places the caret once, the next time `messageRevision` bumps and the resulting `message` value takes effect — useful right after the host pushes a new `message` that spliced text in at a known position (e.g. inserting a mention) and wants the caret to land after it rather than wherever the browser defaults to.
 
 ```tsx
 import { Input } from '@epam/ai-dial-conversation-input';
@@ -284,6 +290,31 @@ import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 >
   {sheetContent}
 </BottomSheetShell>;
+```
+
+## Hooks
+
+### useComposerSeed / useComposerSeedSource
+
+Holds the one `message`/`messageRevision` pair a composer component
+(`Input`, `ConversationInput`) accepts, with an imperative `seedMessage` for
+one-shot writes (a picked starter, route state). Pair with
+`useComposerSeedSource` for each additional externally revision-tracked
+source that should also seed the composer, such as a skill-mention hook's own
+message push — whichever source's revision last changed wins.
+
+```tsx
+import {
+  ConversationInput,
+  useComposerSeed,
+  useComposerSeedSource,
+} from '@epam/ai-dial-conversation-input';
+
+const { message, messageRevision, seedMessage } = useComposerSeed();
+
+useComposerSeedSource(skillMessageRevision, () => seedMessage(skillMessage));
+
+<ConversationInput message={message} messageRevision={messageRevision} ... />;
 ```
 
 ## Public class names

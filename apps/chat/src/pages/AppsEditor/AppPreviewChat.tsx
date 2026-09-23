@@ -13,6 +13,10 @@ import {
   useConversationStream,
 } from '@epam/ai-dial-chat-hooks';
 import {
+  useComposerSeed,
+  useComposerSeedSource,
+} from '@epam/ai-dial-conversation-input';
+import {
   generateUUID,
   MessageRating,
   MessageRole,
@@ -181,7 +185,6 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [inputMessage, setInputMessage] = useState<string | undefined>();
   const conversationRef = useRef<Conversation | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -266,13 +269,33 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillElement,
+    message: skillMessage,
+    messageRevision: skillMessageRevision,
+    activeMentions,
+    onDraftChange,
+    onBackspaceAtCaret,
+    caretPositionOverride,
     selectedSkills,
     isSkillUnsupported,
-    removeSelectedSkill,
+    resetSkillMentions,
+    seedSkillMentions,
   } = useSkillSelectorOverlay({
     isSkillsSupported: isAppSkillsSupported,
   });
+
+  /*
+   * Merges the starter-selection seed (`seedComposerText`) with the skill
+   * hook's own message/messageRevision push (a mention insertion) into the
+   * one message/messageRevision pair `NewConversationComposer` accepts.
+   */
+  const {
+    message: composerSeedText,
+    messageRevision: composerSeedRevision,
+    seedMessage: seedComposerText,
+  } = useComposerSeed();
+  useComposerSeedSource(skillMessageRevision, () =>
+    seedComposerText(skillMessage),
+  );
 
   const handleCreateConversation = useCallback(
     async (
@@ -282,65 +305,72 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       skills?: RequestSkill[],
     ) => {
       const attachmentDtos = attachmentsToDtos(attachments || []);
-      const created = await apiCreateConversation(
-        message,
-        normalizeDeploymentId(appId),
-        attachmentDtos,
-        undefined,
-        undefined,
-        skills,
-      );
-      const savedConversation = {
-        ...created,
-        prompt: chatSettingsValues.systemPrompt,
-        temperature: chatSettingsValues.temperature,
-        responseFormat: chatSettingsValues.responseFormat,
-      } as ConversationResponseDto;
-      await saveConversation(
-        getConversationPath(created.id),
-        savedConversation,
-      );
-
-      const assistantPlaceholder: Message = {
-        role: MessageRole.Assistant,
-        content: '',
-        timestamp: new Date().toISOString(),
-      };
-      const createdConversation = savedConversation as Conversation;
-      const withPlaceholder = {
-        ...createdConversation,
-        messages: [...createdConversation.messages, assistantPlaceholder],
-      };
-      conversationRef.current = withPlaceholder;
-      setConversation(withPlaceholder);
-      setConversationId(created.id);
-
-      startStream(
-        created.id,
-        message,
-        withPlaceholder.messages.length - 1,
-        appId,
-        attachmentDtos?.length || skills?.length
-          ? {
-              ...(attachmentDtos?.length
-                ? { attachments: attachmentDtos }
-                : {}),
-              ...(skills?.length ? { skills } : {}),
-            }
-          : undefined,
-        generateUUID(),
-        CompletionMode.ContinueLastUser,
-      );
       /*
-       * The selection is consumed by the created conversation's first
-       * message (or discarded on the starter path below, which carries no
-       * skill); a no-op while nothing is selected or the skill flag is off.
-       * On failure the awaits above reject first, so the selection survives
-       * for the retry.
+       * The textarea itself clears the instant `onSend` fires (`Input.tsx`'s
+       * own `handleSend`), but the composer only unmounts once
+       * `setConversationId` below flips this preview to the `ConversationView`
+       * branch — after two awaited API calls. Without resetting here first,
+       * the mention chip stays tracked (and visibly rendered over the
+       * now-empty, placeholder-showing input) for that entire gap. Restored
+       * on failure below so a retry still has its skill mention.
        */
-      removeSelectedSkill();
+      resetSkillMentions();
+      try {
+        const created = await apiCreateConversation(
+          message,
+          normalizeDeploymentId(appId),
+          attachmentDtos,
+          undefined,
+          undefined,
+          skills,
+        );
+        const savedConversation = {
+          ...created,
+          prompt: chatSettingsValues.systemPrompt,
+          temperature: chatSettingsValues.temperature,
+          responseFormat: chatSettingsValues.responseFormat,
+        } as ConversationResponseDto;
+        await saveConversation(
+          getConversationPath(created.id),
+          savedConversation,
+        );
+
+        const assistantPlaceholder: Message = {
+          role: MessageRole.Assistant,
+          content: '',
+          timestamp: new Date().toISOString(),
+        };
+        const createdConversation = savedConversation as Conversation;
+        const withPlaceholder = {
+          ...createdConversation,
+          messages: [...createdConversation.messages, assistantPlaceholder],
+        };
+        conversationRef.current = withPlaceholder;
+        setConversation(withPlaceholder);
+        setConversationId(created.id);
+
+        startStream(
+          created.id,
+          message,
+          withPlaceholder.messages.length - 1,
+          appId,
+          attachmentDtos?.length || skills?.length
+            ? {
+                ...(attachmentDtos?.length
+                  ? { attachments: attachmentDtos }
+                  : {}),
+                ...(skills?.length ? { skills } : {}),
+              }
+            : undefined,
+          generateUUID(),
+          CompletionMode.ContinueLastUser,
+        );
+      } catch (err) {
+        seedSkillMentions(message, skills);
+        throw err;
+      }
     },
-    [appId, startStream, removeSelectedSkill],
+    [appId, startStream, resetSkillMentions, seedSkillMentions],
   );
 
   /*
@@ -366,7 +396,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     (starter: StarterOption) => {
       const text = getStarterPopulateText(starter);
       if (!starter['dial:widgetOptions'].submit) {
-        setInputMessage(text);
+        seedComposerText(text);
         return;
       }
 
@@ -389,7 +419,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
 
       void createFromStarter();
     },
-    [handleCreateConversation, showErrorNotification, t],
+    [handleCreateConversation, showErrorNotification, t, seedComposerText],
   );
 
   /*
@@ -520,11 +550,14 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             isInputDisabled={quickAppStarters.isChatMessageInputDisabled}
             placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
             introText={quickAppStarters.introText}
-            message={inputMessage}
+            message={composerSeedText}
+            messageRevision={composerSeedRevision}
+            onChange={onDraftChange}
             onCreateConversation={handleCreateFromComposer}
             menuOverlays={skillMenuOverlay ? [skillMenuOverlay] : undefined}
-            inlineStartSlot={selectedSkillElement}
-            onInlineStartRemove={removeSelectedSkill}
+            activeMentions={activeMentions}
+            onBackspaceAtCaret={onBackspaceAtCaret}
+            caretPositionOverride={caretPositionOverride}
             isSkillUnsupported={isSkillUnsupported}
             commandMenu={commandMenu}
           >

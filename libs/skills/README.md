@@ -9,14 +9,18 @@ skills/favorites data), and hands every interaction back through callbacks —
 it never fetches, navigates, or modifies the composer itself.
 
 `useSkillSelectorOverlay` owns the selection flow's state — the favorites
-overlay, the browse-modal and details-panel open state, and the single
-selected skill — while the host injects the listing data (descriptions
-included), the favorites state, labels, the browse modal's picker content,
-the app-owned details-panel component, and the current deployment's
-skills-support flag (a plain boolean — the lib knows nothing about
-deployments). While that flag is `false` the skill entry points are hidden,
-but an already-selected chip stays and renders in `ChatSkill`'s error state.
-The send-time semantics of a selected skill stay app-owned.
+overlay, the browse-modal and details-panel open state, and every currently
+mentioned skill, tracked as a character-range anchor within the composer's
+draft text — while the host injects the listing data (descriptions included),
+the favorites state, labels, the browse modal's picker content, the app-owned
+details-panel component, and the current deployment's skills-support flag (a
+plain boolean — the lib knows nothing about deployments). While that flag is
+`false` the skill entry points are hidden, but a tracked mention stays in the
+draft text and folds into `isSkillUnsupported` for the host's own
+send-disabled condition. A message can carry any number of mentions,
+interleaved anywhere with free text — order (not the shared `/{name}` label)
+is what disambiguates two mentions that display the same name but resolve to
+different skills. The send-time semantics of a selected skill stay app-owned.
 
 `SkillDetailsSidePanel` composes `@epam/ai-dial-catalog`'s exported
 `DetailsPanel` into a right-anchored skill details panel. It adds no chrome of
@@ -317,12 +321,17 @@ const {
   commandMenu,
   skillCatalogModal,
   skillDetailsPanel,
-  selectedSkillElement,
-  selectedSkillPath,
-  selectedSkills,
+  message,
+  messageRevision,
+  activeMentions,
+  onDraftChange,
+  onBackspaceAtCaret,
+  caretPositionOverride,
   isSkillUnsupported,
-  selectSkill,
-  removeSelectedSkill,
+  selectedSkills,
+  resetSkillMentions,
+  seedSkillMentions,
+  renderHistorySkillSegments,
   renderHistorySkills,
 }: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
   isEnabled: isSkillUsageEnabled,
@@ -342,10 +351,33 @@ const {
   ),
   detailsPanelComponent: SkillDetailsPanel,
 });
+
+// Forwarded straight through to ConversationInput/EditMessageInput:
+<ConversationInput
+  message={message}
+  messageRevision={messageRevision}
+  activeMentions={activeMentions}
+  onChange={(text) => {
+    onDraftChange(text);
+    /* ...whatever else the host already does with the typed text... */
+  }}
+  onBackspaceAtCaret={onBackspaceAtCaret}
+  caretPositionOverride={caretPositionOverride}
+  menuOverlays={skillMenuOverlay ? [skillMenuOverlay] : undefined}
+  commandMenu={commandMenu}
+  isSendDisabled={isSkillUnsupported}
+  onSend={async (text, attachments) => {
+    await sendMessage(text, attachments, { skills: selectedSkills });
+    resetSkillMentions();
+  }}
+/>;
 ```
 
-Owns the Skills Add-menu flow's state. `skillMenuOverlay` is the entry for
-the `menuOverlays` prop of `ConversationInput`/`Input`; `commandMenu` is the
+Owns the Skills Add-menu flow's state — a message can carry any number of
+skill mentions, interleaved anywhere with free text, each tracked as a
+character-range anchor within the composer's draft text. `skillMenuOverlay`
+is the entry for the `menuOverlays` prop of
+`ConversationInput`/`EditMessageInput`/`Input`; `commandMenu` is the
 `/`-prefix command-menu config for the input's `commandMenu` prop — the same
 favorites panel in search mode over the typed query, with
 `labels.emptyQueryHintLabel` as its empty-query hint. Both entries are
@@ -360,36 +392,50 @@ stable level outside the popover. `skillDetailsPanel` renders the injected
 `detailsPanelComponent` (wrapped in `Suspense`, so a lazily loaded component
 is fine); the open state of the modal and the panel, and the wiring of "View
 details" and "Use in chat" back to selection, are the hook's.
-`selectedSkillElement` is the selected skill as a `ChatSkill` element for the
-conversation input's `inlineStartSlot` — at most one, replaced on every
-selection, with the shared tooltip (the listing-sourced description, same as
-the rows) and no remove control of its own (removal is the input's
-Backspace-at-position-0 gesture, wired through `removeSelectedSkill`).
-`isSkillUnsupported` is `true` while a skill is selected and
+
+`message`/`messageRevision` carry the draft text after the most recent
+selection, with every `/{name}` mention spliced in — pass straight through
+to the composer's own `message`/`messageRevision` props, the same one-shot
+"populated by a starter selection" mechanism those props already support
+(not a value fed back on every keystroke). `activeMentions` is every
+currently-tracked mention's character range, for the composer's
+`activeMentions` prop (the live-composing highlighted-run render).
+`onDraftChange` reconciles tracked mentions against the composer's own
+`onChange` value on ordinary typing — wire it alongside whatever else the
+host already does with that callback. `onBackspaceAtCaret` and
+`caretPositionOverride` forward straight to the composer's identically-named
+props. `isSkillUnsupported` is `true` while at least one mention exists and
 `isSkillsSupported` is `false` (always `false` while `isEnabled` is `false`):
-the selected chip renders in `ChatSkill`'s error state — the error-state
-tooltip message comes from `labels.unsupportedTooltipLabel`, which has an
-English default — and hosts fold the flag into their send-disabled
-condition, while the chip, its removal gesture, and the details panel stay
-available.
-`selectedSkillPath` is the selected skill's resource URL
-(`skills/{bucket}/{path}`) — the value the host sends as the `{ url }` entry
-of the outgoing message's `custom_content.skills` (`null` while nothing is
-selected or `isEnabled` is `false`) — and `selectSkill` selects by that same
-resource URL. `selectedSkills` is that send-time payload ready-made —
-`[{ url: <selected path> }]` while a skill is selected, `undefined` otherwise
-(so `custom_content.skills` is omitted from the message entirely).
-`renderHistorySkills` renders a history message's
-`custom_content.skills` entries as `ChatSkill` elements beside the
-message bubble's first text line, with the text word-flowing after them
-(user and assistant messages alike): each entry's name and description are
-resolved from the injected listing pools matched on its url (the name falling
-back to the url's last non-empty segment, the description omitted when no
-pool carries the url), and "View details" opens the same details panel;
-it returns `null` while `isEnabled` is `false` or the array is empty. The
-chip renders beside the bubble's first text line, so pass
-`historyChipLabelClassName` with the label class the bubbles' body text
-uses, keeping the chip's height matched to that line.
+hosts fold it into their send-disabled condition — a live-composing mention
+has no per-mention error styling of its own (it's a plain highlighted run,
+not a `ChatSkill`), so this boolean is the only unsupported-state signal
+while composing. `selectedSkills` is the send-time
+`custom_content.skills` payload — every tracked mention's `{ url }`, in
+left-to-right text order, or `undefined` while nothing is mentioned (so the
+field is omitted from the message entirely; order, not the shared `/{name}`
+label, is what disambiguates two mentions that display the same name but
+resolve to different skills). `resetSkillMentions` clears every tracked
+mention and the draft alongside it — call after a successful send.
+`seedSkillMentions(content, skills)` seeds the draft and its tracked mentions
+from a persisted message — call once when entering edit mode on a message
+that carries `custom_content.skills`.
+
+`renderHistorySkillSegments(content, skills)` renders a **user** message's
+`content` and `custom_content.skills` as an ordered array interleaving
+plain-text runs and `ChatSkill` elements at each mention's actual text
+position — for `UserMessageBubble`'s `textSegments` prop. `renderHistorySkills(skills)`
+renders every entry as a flat list of `ChatSkill` elements, ignoring text
+position — for `AssistantMessageBubble`'s `beforeContent` slot, since
+assistant text is model-generated markdown and never authors positioned
+mentions. Both resolve each entry's name and description from the injected
+listing pools matched on its url (the name falling back to the url's last
+non-empty segment, the description omitted when no pool carries the url),
+and share the same "View details" panel; both return `null` while `isEnabled`
+is `false` or the array is empty/absent, and a mention
+`renderHistorySkillSegments` cannot locate in `content` is simply omitted
+from the render. The chips render beside the bubble's first text line, so
+pass `historyChipLabelClassName` with the label class the bubbles' body text
+uses, keeping the chips' height matched to that line.
 
 Row and chip descriptions come from the listing entries the host injects —
 no per-skill fetch happens anywhere in the flow, and opening a tooltip

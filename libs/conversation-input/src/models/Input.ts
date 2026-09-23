@@ -58,6 +58,14 @@ export interface InputColors {
   voiceWaveform?: string;
   /** Voice bar stop button and recording-dot accent color. Defaults to `--text-error`. */
   voiceAccent?: string;
+  /** Background color of a tracked skill mention's highlighted run. Defaults to `--bg-control-accent-alpha`. */
+  mentionHighlightBg?: string;
+  /** Text color of a tracked skill mention's highlighted run. Defaults to `--text-accent`. */
+  mentionHighlightText?: string;
+  /** Background color of a tracked skill mention's highlighted run while unsupported. Defaults to `--bg-error`. */
+  mentionHighlightUnsupportedBg?: string;
+  /** Text color of a tracked skill mention's highlighted run while unsupported. Defaults to `--text-error`. */
+  mentionHighlightUnsupportedText?: string;
 }
 
 /** Typography overrides for the `Input` component. */
@@ -137,8 +145,14 @@ export interface MenuOverlayConfig {
   title: string;
   /** Icon node rendered to the left of the menu-item label. */
   icon: ReactNode;
-  /** Renders the overlay panel content. Receives a callback the panel calls to close the whole menu once selection is complete. */
-  renderOverlay: (onClose: () => void) => ReactNode;
+  /**
+   * Renders the overlay panel content. Receives a callback the panel calls to
+   * close the whole menu once selection is complete, and the textarea's
+   * caret offset at the moment the overlay opened (0 when it cannot be
+   * determined) — e.g. so a selection made here can splice text in at that
+   * exact position via `message`/`messageRevision`/`caretPositionOverride`.
+   */
+  renderOverlay: (onClose: () => void, caretPosition: number) => ReactNode;
   /** Accessible label for the back arrow in the mobile stacked bottom sheet. Defaults to `'Back'`. */
   backLabel?: string;
 }
@@ -147,6 +161,8 @@ export interface MenuOverlayConfig {
 export interface CommandMenuContext {
   /** Current query: the value typed after the trigger prefix, with no whitespace or second prefix character. */
   query: string;
+  /** Character offset where the triggering word (prefix + query) starts in the textarea's current value. */
+  caretPosition: number;
   /**
    * Closes the menu. Pass `{ consumeQuery: true }` to also remove the trigger
    * prefix and query from the textarea (the selection path — the `/query`
@@ -155,9 +171,9 @@ export interface CommandMenuContext {
   close: (options?: { consumeQuery?: boolean }) => void;
 }
 
-/** Host-injected slash-command menu: an overlay opened by entering a trigger prefix into an empty textarea — typed or pasted. */
+/** Host-injected slash-command menu: an overlay opened by entering a trigger prefix as its own word anywhere in the textarea. */
 export interface CommandMenuConfig {
-  /** Prefix that opens the menu when entered into an empty textarea (e.g. `'/'`) — typed as its first character, or arriving in a paste whose result is the prefix alone or with a whitespace-free query. */
+  /** Prefix that opens the menu when it starts a whitespace-delimited word (e.g. `'/'`) — typed as the word's first character, or arriving in a paste that produces such a word. */
   triggerPrefix: string;
   /** Renders the menu content for the current query. */
   renderMenu: (ctx: CommandMenuContext) => ReactNode;
@@ -171,12 +187,53 @@ export interface CommandMenuConfig {
   menuLabel?: string;
 }
 
+/**
+ * A range within `Input`'s current `message` text, rendered as a highlighted
+ * run (e.g. a skill mention's `/{name}` text). Positional only — beyond
+ * placement, `Input` attaches no meaning to what a range represents.
+ */
+export interface HighlightedTextRange {
+  /** Character offset where the highlighted run starts. */
+  start: number;
+  /** Length of the highlighted run. */
+  length: number;
+  /**
+   * Renders the run in its error styling instead of the default highlight
+   * (e.g. a skill mention selected on a deployment that doesn't support
+   * skills). Ignored when `render` is provided — the renderer owns its own
+   * error styling. Defaults to `false`.
+   */
+  isUnsupported?: boolean;
+  /**
+   * Renders this range as host-owned content (e.g. `ChatSkill`, the same
+   * interactive chip a sent message renders it as) instead of the default
+   * highlight span. Unlike the rest of the mirror — which duplicates the
+   * textarea's own text purely for visual highlighting and stays inert
+   * (`pointer-events: none`, `aria-hidden`) — the returned node is rendered
+   * with real pointer events and outside `aria-hidden`, so hover/focus/click
+   * (a tooltip, a "View details" action) work exactly as they do once the
+   * mention is part of sent history.
+   */
+  render?: () => ReactNode;
+}
+
 /** One-shot text hand-off that the `Input` inserts at the caret. */
 export interface TextInsertion {
   /** Text inserted at the caret, replacing whatever is selected. */
   text: string;
   /** Token that performs the insertion; bump it to insert the same text again. */
   revision: number;
+}
+
+/**
+ * Imperative handle exposed by `Input` via `ref`. Lets a host that renders
+ * its own UI outside `Input` (e.g. `EditMessageInput`'s external add-menu
+ * button, which sits alongside `Input` rather than inside it) read the live
+ * caret position without owning the textarea itself.
+ */
+export interface InputHandle {
+  /** The textarea's current caret offset (its `selectionStart`), or the message's length when it cannot be read. */
+  getCaretPosition: () => number;
 }
 
 /** Props accepted by the `Input` component. */
@@ -431,21 +488,35 @@ export interface InputProps {
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Host-supplied content rendered inside the text area at its inline-start;
-   * typed text starts after it on the first line and wraps at full width
-   * below. The slot's width is measured and the first text line indents past
-   * it, and the placeholder is suppressed. Absent renders the text area
-   * unchanged.
+   * Ranges of `message` rendered as highlighted runs — e.g. a host-tracked
+   * skill mention's `/{name}` text. The textarea's own text is rendered
+   * transparent (its caret stays visible and normally colored) and a
+   * non-interactive mirror underneath renders the same text with each range
+   * wrapped in a highlight span, so the highlighted text stays pixel-aligned
+   * with the real, editable characters underneath it. Carries no semantic
+   * meaning to `Input` beyond where to draw a highlight. Absent (or empty)
+   * renders the text area unchanged, with normal (non-transparent) text.
    */
-  inlineStartSlot?: ReactNode;
+  activeMentions?: HighlightedTextRange[];
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `inlineStartSlot` is present — the slot's remove gesture (there is
-   * nothing to delete backwards at position 0, so the keypress is redirected
-   * to the slot and suppressed). Absent leaves Backspace with no slot-side
-   * behavior.
+   * Called on Backspace with the caret collapsed at some position, to ask the
+   * host whether a tracked range ends exactly there. Returning a range makes
+   * `Input` delete that whole range in one native edit (preserving undo)
+   * instead of the browser's default single-character deletion; returning
+   * `undefined` leaves Backspace unhandled. Absent disables the mechanism
+   * entirely (ordinary Backspace behavior).
    */
-  onInlineStartRemove?: () => void;
+  onBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
+  /**
+   * One-shot caret placement applied whenever `messageRevision` changes (e.g.
+   * right after the host pushes a new `message` that inserted a mention at a
+   * known position) — moves the caret there once, after the value updates.
+   * Absent leaves the caret wherever the browser puts it after the value
+   * change.
+   */
+  caretPositionOverride?: number;
   /**
    * Host-injected slash-command menu. When provided, typing `triggerPrefix`
    * as the first character of an empty textarea — or pasting into an empty
