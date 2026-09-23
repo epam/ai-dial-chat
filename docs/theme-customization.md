@@ -385,6 +385,13 @@ theme automatically. In a project without these tokens the hex fallback applies,
 and a host can still override individual values through each component's
 `styles={{ colors, typography }}` prop.
 
+For composed surfaces, import the library's documented stylesheet once rather
+than a private dependency stylesheet. For example,
+`@epam/ai-dial-scheduled-tasks/styles.css` includes the structural
+builder-form CSS needed by its form while UI Kit base/theme CSS remains a
+singleton host import. This preserves the same token cascade without coupling
+an embedding app to the scheduler's private composition.
+
 The chain is exactly three tiers. The middle tier names the current token only —
 it does not carry the pre-0.14 aliases that `tailwind.config.js` keeps for its
 utilities, because a lib is not supposed to know this application's rename

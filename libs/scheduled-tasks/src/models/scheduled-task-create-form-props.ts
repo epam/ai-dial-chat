@@ -112,6 +112,8 @@ export interface ScheduledTaskCreateFormLabels {
   descriptionLabel: string;
   /** Accessible label for the Instructions markdown editor. */
   instructionsLabel: string;
+  /** Optional placeholder forwarded to the Instructions editor. */
+  instructionsPlaceholder?: string;
   /** Label for the Cancel action. */
   cancelButtonLabel: string;
   /** Label for the Save action (submits the create form). */
@@ -157,6 +159,8 @@ export interface ScheduledTaskCreateFormStyles {
   colors?: ScheduledTaskCreateFormColors;
   /** Typography class overrides. */
   typography?: ScheduledTaskCreateFormTypography;
+  /** Layout values scoped to this form instance. */
+  layout?: { detailsWidth?: string; columnGap?: string };
 }
 
 /** Props for the {@link ScheduledTaskCreateForm} component. */
@@ -195,6 +199,10 @@ export interface ScheduledTaskCreateFormProps {
   isSubmitting?: boolean;
   /** Color theme applied to the Instructions markdown editor. Defaults to the editor's own default (`EditorThemes.light`). */
   markdownEditorTheme?: EditorThemes;
+  /** Optional replacement for the default back icon. */
+  backIcon?: ReactNode;
+  /** Additional class name on the form root. */
+  className?: string;
   /** Style overrides. */
   styles?: ScheduledTaskCreateFormStyles;
 }

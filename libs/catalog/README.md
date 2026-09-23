@@ -16,12 +16,20 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-catalog/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
 - `@epam/ai-dial-ui-kit` ^0.15.0-dev.12 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
-- `ag-grid-community@35.3.0`
+
+`ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
+dependencies and install transitively; they are not host peers.
 
 Both `@epam/ai-dial-chat-shared` and `@epam/ai-dial-publish-panel` are kept
 external by the library build — a consumer's own bundler resolves them, so
@@ -56,6 +64,46 @@ every JS module side-effect free; importing `Catalog` from the root still
 pulls in the full publish/editor UI as before.
 
 ## Components
+
+### DeploymentSelectorField
+
+`DeploymentSelectorField` is a controlled, provider-free deployment picker
+for hosts that already resolved their display records. It does not fetch,
+persist favorites, open a catalog modal, or mutate a conversation. Supply
+those behaviours through callbacks or `renderOverlay` / `renderPanel` slots.
+
+```tsx
+import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
+
+<DeploymentSelectorField
+  selectedId={selectedId}
+  records={[{ id: 'model-a', label: 'Model A' }]}
+  placeholder="Choose a model"
+  labels={{
+    searchPlaceholder: 'Search models',
+    searchAriaLabel: 'Search models',
+    emptyLabel: 'No models',
+    errorLabel: 'Could not load models',
+    browseLabel: 'Browse',
+  }}
+  labelledById="model-label"
+  onSelect={setSelectedId}
+  onBrowse={openCatalog}
+/>;
+```
+
+Omit `open` for local popup state, or provide `open` and `onOpenChange` for a
+controlled overlay. Enter, Space, and pointer activation open the picker;
+selection and Escape close it, restoring focus to the combobox. Result labels
+use the UI Kit `Highlight` component for the current search query. Records can
+also supply a decorative `icon` and a `description`, both rendered in the row.
+
+`renderPanel(onClose)` replaces the default searchable list. The resulting panel
+is passed to `renderOverlay(panel, open, onClose)` when a host supplies a sheet;
+otherwise it appears in the default dropdown. These slots compose together.
+Pass `ariaHasPopup="dialog"` for a sheet (the default is `"listbox"`). The same
+field handles selection display, disabled state and keyboard/pointer activation
+in both layouts; favorites and catalog integration remain host-owned panel content.
 
 The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
 keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;
@@ -1053,3 +1101,7 @@ surface. The host decides which items qualify and supplies API/authentication
 behavior and translations; `useApplicationCredentials` from
 `@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients.
 Existing toolset `onLogin` / `onLogout` contracts are unchanged.
+
+The public `DeploymentSelectorField` restores focus through the input's
+supported `onFocus` event and never requires a private input ref or DOM query.
+Its keyboard and Browse behavior is exercised by the packed scheduler consumer.

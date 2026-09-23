@@ -16,7 +16,9 @@ const EXTERNAL_PEER_NAMES = [
   '@epam/ai-dial-publish-panel',
 ];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => ({
+  // Published libraries must also run with React's production runtime.
+  oxc: command === 'build' ? { jsx: { development: false } } : undefined,
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/catalog',
   plugins: [
@@ -54,6 +56,7 @@ export default defineConfig(() => ({
           'react',
           'react-dom',
           'react/jsx-runtime',
+          'react/jsx-dev-runtime',
           '@tabler/icons-react',
         ].includes(id) ||
         /^@epam\/ai-dial-ui-kit(?:\/|$)/.test(id) ||

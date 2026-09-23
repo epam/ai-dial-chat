@@ -19,6 +19,7 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
   isCancelDisabled = false,
   isSubmitDisabled = false,
   isSubmitting = false,
+  backIcon,
   styles: headerStyles,
 }) => {
   const { colors, typography } = headerStyles ?? {};
@@ -41,19 +42,23 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
          * row reads as the first row of the form content sitting under the
          * app shell's floating header rather than as a page bar.
          */
-        'flex h-16 items-center justify-between gap-6 border-t px-4 desktop:border-b desktop:border-t-0 desktop:px-8',
+        'flex h-16 items-center justify-between gap-6',
         styles.header,
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <GhostIconButton
           icon={
-            <IconArrowLeft
-              size={DIAL_ICON_SIZE.LG}
-              className="rtl:scale-x-[-1]"
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
+            backIcon === undefined ? (
+              <IconArrowLeft
+                size={DIAL_ICON_SIZE.LG}
+                className="rtl:scale-x-[-1]"
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            ) : (
+              backIcon
+            )
           }
           aria-label={labels.backButtonLabel}
           onClick={onBack}
@@ -68,7 +73,7 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
        * single instance between the top of the page and the bottom, so
        * exactly one copy is visible (and tabbable) at any width.
        */}
-      <div className="hidden items-center gap-2 desktop:flex">
+      <div className={mergeClasses('items-center gap-2', styles.actions)}>
         <BuilderFormActions
           labels={labels}
           onCancel={onCancel}

@@ -10,9 +10,14 @@ const REQUIRED_PUBLISHED_STYLE_MARKERS = [
   '.desktop\\:mt-2',
   '.rtl\\:flex-row-reverse',
 ] as const;
-const EXTERNAL_PEER_NAMES = ['@epam/ai-dial-chat-shared'];
+const EXTERNAL_PEER_NAMES = [
+  '@epam/ai-dial-chat-shared',
+  '@epam/ai-dial-react-file-manager',
+];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => ({
+  // Published libraries must also run with React's production runtime.
+  oxc: command === 'build' ? { jsx: { development: false } } : undefined,
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/publish-panel',
   plugins: [
@@ -47,6 +52,7 @@ export default defineConfig(() => ({
           'react',
           'react-dom',
           'react/jsx-runtime',
+          'react/jsx-dev-runtime',
           '@epam/ai-dial-ui-kit',
           '@tabler/icons-react',
         ].includes(id) || isExternalPeerImport(id),

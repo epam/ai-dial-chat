@@ -185,6 +185,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/share/src/index.ts',
       ),
+      '@epam/ai-dial-scheduled-tasks/validation': path.resolve(
+        import.meta.dirname,
+        '../../libs/scheduled-tasks/src/validation/index.ts',
+      ),
       '@epam/ai-dial-scheduled-tasks': path.resolve(
         import.meta.dirname,
         '../../libs/scheduled-tasks/src/index.ts',
@@ -192,6 +196,11 @@ export default defineConfig(() => ({
       '@epam/ai-dial-quotations': path.resolve(
         import.meta.dirname,
         '../../libs/quotations/src/index.ts',
+      ),
+      // Source components import their CSS Modules; do not prefix-match the public CSS subpath.
+      '@epam/ai-dial-builder-form/styles.css': path.resolve(
+        import.meta.dirname,
+        '../../libs/builder-form/src/styles.css',
       ),
       '@epam/ai-dial-builder-form': path.resolve(
         import.meta.dirname,

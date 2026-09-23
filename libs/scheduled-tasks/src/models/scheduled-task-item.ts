@@ -14,4 +14,11 @@ export interface ScheduledTaskItem {
   isNew?: boolean;
   /** When explicitly `false`, the card shows a "Paused" badge in place of the schedule pill. `true` or `undefined` renders the schedule pill as usual. */
   isActive?: boolean;
+  /** Optional display status; takes precedence over legacy `isActive`. */
+  presentationStatus?: ScheduledTaskPresentationStatus;
+}
+export enum ScheduledTaskPresentationStatus {
+  Active = 'active',
+  Paused = 'paused',
+  Completed = 'completed',
 }
