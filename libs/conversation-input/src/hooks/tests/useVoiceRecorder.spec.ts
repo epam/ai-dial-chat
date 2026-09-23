@@ -1,7 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TranscribeAudio } from '../../models/Voice';
-import { useVoiceRecorder, VoiceRecorderState } from '../useVoiceRecorder';
+import {
+  useVoiceRecorder,
+  VoiceRecorderState,
+  VoiceRecordingMode,
+} from '../useVoiceRecorder';
 
 const stopTrack = vi.fn();
 const closeContext = vi.fn();
@@ -97,10 +101,45 @@ describe('useVoiceRecorder', () => {
     expect(onAttachAudio).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'audio/mp4',
-        name: expect.stringMatching(/\.mp4$/),
+        name: expect.stringMatching(/\.m4a$/),
       }),
     );
   });
+
+  describe.each([VoiceRecordingMode.Attachment, VoiceRecordingMode.Dictation])(
+    '%s filenames',
+    (mode) => {
+      it.each([
+        ['audio/webm', 'weba'],
+        ['audio/webm;codecs=opus', 'weba'],
+        ['audio/ogg;codecs=opus', 'oga'],
+        ['audio/mp4', 'm4a'],
+        ['audio/mp4;codecs=mp4a.40.2', 'm4a'],
+        ['audio/x-custom;codecs=custom', 'x-custom'],
+      ])(
+        'delivers %s as .%s without changing the audio',
+        async (mimeType, extension) => {
+          const transcribe = vi.fn<TranscribeAudio>().mockResolvedValue('Text');
+          const { result, onAttachAudio } = setup(transcribe);
+          await act(async () => result.current.startRecording(mode));
+          recorders[0].mimeType = mimeType;
+          await new Promise((resolve) => setTimeout(resolve, 110));
+          await act(async () => result.current.stopRecording());
+
+          const callback =
+            mode === VoiceRecordingMode.Attachment ? onAttachAudio : transcribe;
+          expect(callback).toHaveBeenCalledOnce();
+          const file = callback.mock.calls[0][0] as File;
+          expect(file.name).toMatch(new RegExp(`^voice-.+\\.${extension}$`));
+          expect(file.type).toBe(mimeType);
+          expect(file.size).toBe(5);
+          expect(
+            mode === VoiceRecordingMode.Attachment ? transcribe : onAttachAudio,
+          ).not.toHaveBeenCalled();
+        },
+      );
+    },
+  );
 
   it('ignores an old result after discard and a new recording', async () => {
     let resolve!: (text: string) => void;
@@ -187,7 +226,7 @@ describe('useVoiceRecorder', () => {
       expect(transcribe.mock.calls[0][0]).toEqual(
         expect.objectContaining({
           type: 'audio/mp4',
-          name: expect.stringMatching(/\.mp4$/),
+          name: expect.stringMatching(/\.m4a$/),
           size: new Blob(['header', 'middle', 'audio']).size,
         }),
       );
