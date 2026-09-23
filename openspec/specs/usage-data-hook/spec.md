@@ -153,7 +153,7 @@ All DTO interpretation — generated field selection, the unlimited-sentinel che
 (`total >= 2 ** 53`), status-threshold derivation, currency and compact-number formatting, the
 `DeploymentItemDtoTypeEnum.Model` filter, and the deployment join — SHALL live in the adapters
 `map-usage-data-to-dashboard.ts` and `map-user-usage-to-model-limits.ts` under
-`libs/chat-hooks/src/usage/`, exported from `@epam/ai-dial-chat-hooks`'s `./utils` entry point — the
+`libs/chat-hooks/src/usage/`, exported from `@epam/ai-dial-chat-hooks`'s `./usage` entry point — the
 narrow, explicitly justified location recorded in AGENTS.md §Library isolation. It SHALL NOT live in
 `libs/usage-dashboard` or any other hand-authored library outside that recorded exception. The
 `Usage` tab component imports those adapters from `@epam/ai-dial-chat-hooks` and imports

@@ -64,14 +64,14 @@ from this package to `@epam/ai-dial-chat-hooks`, and keep calling it with the sa
 passing its result to the same component prop.
 
 The functions, both `USAGE_*_I18N_KEYS` constants, and `FormatResetTime` are available from
-the `chat-hooks` root and `@epam/ai-dial-chat-hooks/utils`. The former
+the `chat-hooks` root and `@epam/ai-dial-chat-hooks/usage`. The former
 `ResetTimeDisplayLike` type is now named `ResetTimeDisplay` in `chat-hooks`; update that
 named import as well. Its structural fields remain `resetsAtMs`, `isoValue`, `label`,
 and `ariaLabel`, so the host's formatter can keep returning the same shape.
 
 Keep `@epam/ai-dial-usage-dashboard` installed when using these adapters: it is an
-optional peer of `chat-hooks`, but the root and `./utils` entry points load its display
-enums at runtime. Importing from `./utils` avoids the root's broader feature-peer
+optional peer of `chat-hooks`, but the root and `./usage` entry points load its display
+enums at runtime. Importing from `./usage` avoids the root's broader feature-peer
 requirements; consult the [entry-point dependency table](../chat-hooks/README.md)
 for the complete peer contract.
 

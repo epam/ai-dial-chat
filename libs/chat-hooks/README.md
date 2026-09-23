@@ -1425,7 +1425,7 @@ const SkillCatalog = ({
 
 ## Usage Utilities
 
-Available from both `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/utils`.
+Available from both `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/usage`.
 These adapters use display enums from `@epam/ai-dial-usage-dashboard` at runtime.
 It is an optional peer in the package manifest, but must be installed when loading
 either entry point; optional means hosts using other feature subpaths can omit it.

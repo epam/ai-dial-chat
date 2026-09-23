@@ -204,7 +204,7 @@ status but at least one token or overall Cost limit is `Unlimited`, overall Stat
 
 ### Requirement: Aggregate period cost cards
 
-The `mapUsageDataToDashboard` adapter (in `libs/chat-hooks/src/usage/map-usage-data-to-dashboard.ts`, exported from `@epam/ai-dial-chat-hooks`'s `./utils` entry point) SHALL map the top-level
+The `mapUsageDataToDashboard` adapter (in `libs/chat-hooks/src/usage/map-usage-data-to-dashboard.ts`, exported from `@epam/ai-dial-chat-hooks`'s `./usage` entry point) SHALL map the top-level
 `dayCostStats`, `weekCostStats`, and `monthCostStats` fields from `UserLimitStatsResponseDto` into
 `UsageLimitCardData[]` for `UsageLimitCardGroup`. A period whose stats are absent or non-finite
 SHALL be omitted from the array entirely. Card `title` and `periodDescription` SHALL use calendar
@@ -400,6 +400,6 @@ preserved.
 - **WHEN** the project graph is inspected
 - **THEN** `libs/usage-dashboard` depends on neither `libs/chat-hooks` nor `apps/chat`, and
   `libs/chat-hooks` consumes its normalized display types and runtime display enums through an
-  optional peer dependency; hosts loading the root or `./utils` entry point SHALL install that
+  optional peer dependency; hosts loading the root or `./usage` entry point SHALL install that
   peer. This one-way runtime dependency SHALL NOT introduce a reverse import from the
   presentational library into the adapters.

@@ -173,9 +173,9 @@ locale resolution, and reset-time formatting still come from host-supplied callb
 or parameters. An additional adapter needs its own equivalent justification in its
 change's design; this is not permission to move arbitrary product rules into a library.
 
-These adapters are exported from both the `chat-hooks` root and `./utils` entry point.
-They use `usage-dashboard` display enums at runtime, so consumers of these entry
-points need its optional peer installed. The dependency is one-way:
+These adapters are exported from both the `chat-hooks` root and its dedicated `./usage`
+entry point. They use `usage-dashboard` display enums at runtime, so consumers of
+either entry point need its optional peer installed. The dependency is one-way:
 `usage-dashboard` consumes normalized models and imports neither `chat-hooks` nor the
 generated client. See the [usage utilities contract](../libs/chat-hooks/README.md#usage-utilities)
 and [mapper migration](../libs/usage-dashboard/README.md#breaking--dto-interpreting-utilities-removed).
