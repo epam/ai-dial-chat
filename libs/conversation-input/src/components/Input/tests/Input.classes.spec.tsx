@@ -11,6 +11,7 @@
  */
 /* eslint-disable testing-library/no-container, testing-library/no-node-access */
 import type { DeploymentItem, ToolMenuItem } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_INPUT_CLASS } from '../../../constants/public-class-names';
@@ -201,5 +202,48 @@ describe('Input — public class names', () => {
     } finally {
       document.documentElement.dir = 'ltr';
     }
+  });
+});
+
+describe('Input — attachment tray style forwarding', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue(false);
+  });
+
+  const attachment = {
+    id: 'report',
+    name: 'report.pdf',
+    file: new File([], 'report.pdf', { type: 'application/pdf' }),
+    type: AttachmentType.File,
+    contentType: 'application/pdf',
+    url: 'files/report.pdf',
+    status: RequestStatus.Idle,
+  };
+
+  it('forwards the tray class onto the tray found by its role', () => {
+    render(
+      <Input
+        initialAttachments={[attachment]}
+        attachmentTray={{ className: 'host-tray' }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('list', { name: 'Attached files' }).classList,
+    ).toContain('host-tray');
+  });
+
+  it('forwards the nested card styles onto every tile in the tray', () => {
+    render(
+      <Input
+        initialAttachments={[attachment]}
+        attachmentTray={{ card: { className: 'host-tile' } }}
+      />,
+    );
+
+    expect(
+      closestWithClass(screen.getByText('report'), 'host-tile'),
+    ).toBeTruthy();
   });
 });

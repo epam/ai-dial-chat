@@ -24,6 +24,14 @@ export const CONVERSATION_INPUT_CLASS = {
   /** The model selector trigger button, in every presentation. */
   modelSelectorButton: 'dial-ci-model-selector-button',
   /**
+   * The box wrapping the selected deployment's icon inside the trigger, in
+   * every presentation. The icon itself is drawn by `DeploymentIcon` from
+   * `@epam/ai-dial-chat-shared`, so this marks the wrap rather than the glyph.
+   */
+  modelSelectorIcon: 'dial-ci-model-selector-icon',
+  /** The trigger's chevron, in every presentation. Decorative — the button carries the label. */
+  modelSelectorCaret: 'dial-ci-model-selector-caret',
+  /**
    * The model menu root. Present on all three presentations: the desktop
    * dropdown, the host-supplied `modelPickerOverlay` dropdown, and the mobile
    * bottom sheet.

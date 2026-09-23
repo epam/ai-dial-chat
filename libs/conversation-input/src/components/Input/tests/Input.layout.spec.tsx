@@ -140,6 +140,33 @@ describe('Input — layout', () => {
       expectTextareaOwnsItsRow();
     });
 
+    it('keeps the inline layout below the desktop breakpoint when the host opts in', () => {
+      mockUseIsMobile.mockReturnValue(true);
+      render(
+        <Input
+          actionRowLayout={ActionRowLayout.Inline}
+          isInlineActionRowAllowedBelowDesktop
+        />,
+      );
+
+      const textarea = screen.getByRole('textbox');
+      const addButton = screen.getByLabelText('Add');
+
+      expect(getParent(getParent(textarea)).contains(addButton)).toBe(true);
+    });
+
+    it('ignores the opt-in while the layout is stacked', () => {
+      mockUseIsMobile.mockReturnValue(true);
+      render(
+        <Input
+          actionRowLayout={ActionRowLayout.Stacked}
+          isInlineActionRowAllowedBelowDesktop
+        />,
+      );
+
+      expectTextareaOwnsItsRow();
+    });
+
     it('moves the tool chips out of the action row', () => {
       render(
         <Input
