@@ -213,10 +213,11 @@ boundaries, and DIAL Core reports each one's exclusive end as an optional `reset
 `@epam/ai-dial-usage-dashboard`, which never sees a raw timestamp, a locale, or a timezone. The tab
 also arms a timer for the earliest displayed boundary and re-fetches when it elapses, so post-reset
 figures always come from a fresh DIAL Core response — nothing is ever zeroed locally.
-`PreferencesTab` hosts the language, keyboard-shortcut and "Default agent for new chats"
-preferences. A theme row is implemented but **commented out**, parked for an
-upcoming theming feature — which is why `useThemeOptions` and the
-`settings.theme*` i18n keys exist with no live caller. The "Default agent for
+`PreferencesTab` hosts the theme, language, keyboard-shortcut and "Default agent for new chats"
+preferences. The theme row is driven by `useThemeOptions`, which derives its options from whatever
+`GET /api/themes` returns rather than from a fixed light/dark/system list: one entry per configured
+theme, plus a synthetic `System` entry only where both `light` and `dark` exist. It is hidden below
+two options. The "Default agent for
 new chats" row renders only while `DEFAULT_DEPLOYMENT_PINNED` is on, since the
 pin is what gives its "Default agent" option something to refer to; in a default
 deployment (flag off) only the keyboard-shortcut row is visible. All three of

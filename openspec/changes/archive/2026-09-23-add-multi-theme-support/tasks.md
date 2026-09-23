@@ -59,21 +59,29 @@ loop within a task, `npm run verify:changed` at the end of each group.
 
 ## 3. Docs and final verification
 
-- [ ] 3.1 Update `docs/theme-customization.md`: remove the "ids other than light/dark/system are
+- [x] 3.1 Update `docs/theme-customization.md`: remove the "ids other than light/dark/system are
       unreachable" limitation, describe the generalized picker (every configured theme, `system`
       only when both `light` and `dark` exist, row hidden below two options), and state that `light`
       is the default for a user who has never chosen.
-- [ ] 3.2 Check whether `docs/architecture.md` describes the theme picker or the `ThemeContext`
+- [x] 3.2 Check whether `docs/architecture.md` describes the theme picker or the `ThemeContext`
       restore behaviour; update it only if it does. No new endpoint, context or route was added, so
       it may need nothing.
-- [ ] 3.3 Run the accessibility pass on the new control per `.claude/rules/a11y.md`: the `Select` is
+- [x] 3.3 Run the accessibility pass on the new control per `.claude/rules/a11y.md`: the `Select` is
       labelled via `labelProps.label`, keyboard-operable through the kit component, and no focus is
       lost when the theme repaints.
-- [ ] 3.4 Run `npm run validate:docs` — not covered by lint, test or build; the PR workflow runs it
+- [x] 3.4 Run `npm run validate:docs` — not covered by lint, test or build; the PR workflow runs it
       as its own job.
-- [ ] 3.5 Run `npm run verify:full` once, then the five-axis review from
+- [x] 3.5 Run `npm run verify:full` once, then the five-axis review from
       `.claude/skills/code-review-and-quality/SKILL.md`.
-- [ ] 3.6 Record any out-of-scope finding met along the way as a follow-up here rather than fixing
-      it inline. Known, pre-existing on this branch and **not** caused by this change:
-      `SkillEditorPreview.spec.tsx` fails intermittently in a full-suite run while passing in
-      isolation.
+- [x] 3.6 Record any out-of-scope finding met along the way as a follow-up here rather than fixing
+      it inline. All of the following are pre-existing on this branch and **not** caused by this
+      change:
+      - `@epam/ai-dial-chat-shared:typecheck` fails on `ToolbarOptions.tabs` in
+        `DialFileManagerShell.tsx` and `FileManagerAttachModal.tsx`, and
+        `useFileAttachmentPicker.spec.ts` ("filters the tab list down to allowedTabs") fails with
+        it — one root cause, the file-manager package bump. Fixed in the sibling
+        `ai-dial-react-file-manager` repo and released as a package, not here. This blocks
+        `lint:check` for everything downstream.
+      - `SkillEditorPreview.spec.tsx` and `apps/chat-api/src/telemetry/tests/http-lifecycle.integration.spec.ts`
+        fail intermittently in a full-suite run and pass in isolation — load-sensitive flakes.
+      - `npm run test:full:quiet` exits `0` even when tasks fail; read the log, not the exit code.
