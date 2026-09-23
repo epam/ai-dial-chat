@@ -323,6 +323,43 @@ describe('ThemeContext', () => {
       vi.unstubAllGlobals();
     });
 
+    /*
+     * `system` resolves to `light` or `dark` at runtime, so a configuration
+     * missing either one cannot honour it. Admitting it regardless meant the
+     * provider applied a theme id that was not in the configuration and fell
+     * through to no colours at all.
+     */
+    it('falls back to light when system is stored but dark is not configured', async () => {
+      vi.mocked(applyThemeColors.getOsPreferredTheme).mockReturnValue('dark');
+      mockGet.mockResolvedValue({
+        ...mockThemeConfig,
+        themes: [
+          mockThemeConfig.themes[1],
+          {
+            id: 'contoso-night',
+            displayName: 'Contoso Night',
+            colors: { 'primary-color': '#101010' },
+            'app-logo': '',
+          },
+        ],
+      });
+      mockGetFromLocalStorage.mockReturnValue('system');
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.themes).toHaveLength(2);
+      });
+
+      expect(result.current.currentTheme).toBe('light');
+      expect(mockApplyThemeColors).toHaveBeenCalledWith(
+        document.documentElement,
+        mockThemeConfig.themes[1],
+      );
+    });
+
     it('applies nothing when the configuration has no themes', async () => {
       mockGet.mockResolvedValue({ ...mockThemeConfig, themes: [] });
       mockGetFromLocalStorage.mockReturnValue(null);

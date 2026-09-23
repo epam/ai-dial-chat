@@ -8,7 +8,8 @@ SHALL restore it from `localStorage` under `StorageKey.Theme` once the theme con
 
 Resolution order for the initially selected theme id:
 
-1. the stored value, when it is `system` **or** names a theme present in `config.themes`;
+1. the stored value, when it names a theme present in `config.themes`, or when it is `system` **and
+   the configuration contains both `light` and `dark`**;
 2. otherwise `ThemeId.Light`.
 
 `ThemeId.Light` is the default for a user who has never chosen, regardless of the order the themes
@@ -62,6 +63,13 @@ assignment of `config.themes[0].id` or `ThemeId.Light` and is otherwise ignored.
   preference is dark
 - **THEN** the `dark` colors are applied, `selectedTheme` is `system`, `currentTheme` is `dark`, and
   a later change of the OS preference to light re-resolves to the `light` colors without a reload
+
+#### Scenario: `system` is stored but the configuration cannot honour it
+
+- **WHEN** the stored value is `system`, the configuration contains `light` and a custom theme but
+  no `dark`, and the OS preference is dark
+- **THEN** the `light` theme is applied rather than an id the configuration does not contain, and
+  the provider does not subscribe to OS colour-scheme changes
 
 #### Scenario: No theme configuration is available
 
