@@ -287,7 +287,7 @@ dialAdminTest(
         );
         await adminApproveRequiredConversationsAssertion.assertFolderNameColor(
           { name: requestName },
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentSecondary),
         );
         await adminApproveRequiredPromptsAssertion.assertFolderBackgroundColor(
           { name: requestName },

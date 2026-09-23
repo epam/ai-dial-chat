@@ -841,7 +841,7 @@ dialTest(
     );
     await chatBarFolderAssertion.assertFolderNameColor(
       { name: newFolderName },
-      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentSecondary),
     );
   },
 );
@@ -931,7 +931,7 @@ dialTest(
         );
         await chatBarFolderAssertion.assertFolderNameColor(
           { name: folderName },
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentSecondary),
         );
       },
     );

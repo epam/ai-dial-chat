@@ -984,7 +984,7 @@ dialTest(
     setTestIds('EPMDIAL-6513', 'EPMDIAL-6514');
     const attachments = [Attachment.sunImageName, Attachment.flowerImageName];
     const expectedColor = ThemesUtil.getRgbColorByKey(
-      ThemeColorAttributes.controlsBgAccent,
+      ThemeColorAttributes.textInfo,
     );
     let headerCheckbox: Checkbox;
     const bulkButtons = [
