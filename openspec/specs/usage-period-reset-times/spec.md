@@ -114,11 +114,27 @@ The formatter:
 
 The result SHALL be passed into `libs/usage-dashboard` as preformatted strings only.
 `libs/usage-dashboard` SHALL NOT import `Intl`, receive a locale or timezone, or receive a raw
-`resetsAt` value. `UsageTab` SHALL supply the formatter to `mapUsageDataToDashboard` and
-`mapOverallCostLimitsToPeriodStatuses` as a `formatResetTime` callback, following the existing
-`resolveIconUrl` / `resolveDisplayName` callback pattern, and SHALL wrap it in `useCallback` so the
-mappers' `useMemo` dependencies stay stable. `mapUserUsageToModelLimits` does not take the callback:
-reset times are rendered per period header, not per row.
+`resetsAt` value. The presentational library holds no reset-time mapper at all: the adapters that
+consume `formatResetTime` (`mapUsageDataToDashboard`, `mapOverallCostLimitsToPeriodStatuses`) live in
+`libs/chat-hooks/src/usage/` — the narrow, explicitly justified location recorded in AGENTS.md
+§Library isolation, not `libs/usage-dashboard`.
+
+`UsageTab` SHALL supply the formatter to `mapUsageDataToDashboard` and
+`mapOverallCostLimitsToPeriodStatuses` (both imported from `@epam/ai-dial-chat-hooks`) as a
+`formatResetTime` callback, following the existing `resolveIconUrl` / `resolveDisplayName` callback
+pattern, and SHALL wrap it in `useCallback` so the adapters' `useMemo` dependencies stay stable.
+`mapUserUsageToModelLimits` does not take the callback: reset times are rendered per period header,
+not per row.
+
+Because `libs/chat-hooks` must not import the app's own `ResetTimeDisplay` type (a library importing
+an app type is exactly the coupling AGENTS.md §Library isolation forbids in the other direction),
+`libs/chat-hooks/src/usage/` SHALL declare its own structural `ResetTimeDisplay`-shaped type and
+type `formatResetTime` against it. The two shapes SHALL be field-for-field identical
+(`resetsAtMs: number`, `isoValue: string`, `label: string`, `ariaLabel: string`), so `UsageTab`'s
+`formatUsageResetTime` return value satisfies the library's type with no adapter or cast at the call
+site. `@epam/ai-dial-usage-dashboard` SHALL continue to export neither `ResetTimeDisplayLike` nor
+`FormatResetTime` — that removal, made when the adapters first left the presentational library, is
+unaffected by which non-presentational location they live in now.
 
 #### Scenario: UTC boundary is rendered in the viewer's timezone
 - **WHEN** `resetsAt` is `2026-09-16T00:00:00Z` and the viewer's resolved zone is `Europe/Warsaw`
@@ -134,12 +150,26 @@ reset times are rendered per period header, not per row.
 #### Scenario: Library never interprets a timestamp
 - **WHEN** `libs/usage-dashboard`'s sources are inspected
 - **THEN** no file parses, formats, or timezone-shifts a `resetsAt` value, constructs a `Date`, or
-  calls a date/time `Intl` API; the mappers pass each raw `resetsAt` straight to the host's
-  `formatResetTime` callback and store only the strings it returns, and the module-boundary lint
-  passes
+  calls a date/time `Intl` API, and no file receives a raw `resetsAt` at all — the library's props
+  carry only the preformatted `resetLabel` / `resetIsoValue` / `resetAriaLabel` strings; the
+  module-boundary lint passes
+
+#### Scenario: The adapters pass reset strings straight through
+- **WHEN** the `mapUsageDataToDashboard` and `mapOverallCostLimitsToPeriodStatuses` adapters run
+- **THEN** each passes its raw `resetsAt` straight to `formatUsageResetTime` and stores only the
+  strings returned, present-or-all-absent as a trio, exactly as before either relocation
+
+#### Scenario: The library's own type never crosses into the app
+
+- **WHEN** `libs/chat-hooks/src/usage/`'s source is inspected
+- **THEN** it declares its own `ResetTimeDisplay`-shaped type rather than importing
+  `apps/chat/src/utils/usage-reset-time.ts`'s `ResetTimeDisplay`, and `UsageTab`'s
+  `formatUsageResetTime` return value is accepted with no cast at the call site
 
 > The library's pre-existing `Intl.NumberFormat` instances for Tokens formatting are unaffected —
-> the constraint is on date/time interpretation, not on `Intl` as a namespace.
+> the constraint is on date/time interpretation, not on `Intl` as a namespace. Those instances live
+> with the adapters in `libs/chat-hooks`; the presentational library's remaining components format
+> nothing.
 
 ---
 

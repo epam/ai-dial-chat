@@ -6,9 +6,11 @@ Defines the host-agnostic `@epam/ai-dial-usage-dashboard` library: the presentat
 `UsageLimitCardGroup`/`UsageLimitCard` components that render the Usage settings page's
 aggregate cost-limit cards, and the `ModelLimitsSection` component that renders the per-model
 limits table below them — their public prop/label/color contracts, status-driven visual
-treatment, accessibility, and responsive/RTL behavior. The library never interprets raw DTOs,
-formats currency, computes percentages, or derives status — that stays in `apps/chat` (see the
-`usage-data-hook` and `usage-model-limits` capabilities).
+treatment, accessibility, and responsive/RTL behavior. The library renders already-normalized
+display models only: it never interprets raw DTOs, formats currency, computes percentages, or
+derives status — that stays in `libs/chat-hooks` (see the `usage-data-hook` and `usage-model-limits`
+capabilities). It has no dependency, direct or transitive, on the generated
+`@epam/ai-dial-chat-api-client`; that boundary is mechanically enforced (see below).
 
 ## Requirements
 
@@ -18,30 +20,88 @@ The system SHALL provide a buildable React library `libs/usage-dashboard`
 (package `@epam/ai-dial-usage-dashboard`, Nx tag `type:ui`), scaffolded via an Nx generator and
 matching the inferred-target structure used by `libs/settings-panel` (no hand-written
 `project.json`; `package.json` carries `"nx": { "tags": ["type:ui"] }`; build/test come from the
-`@nx/vite` and `@nx/vitest` inferred plugins via `vite.config.mts`). The library's presentational
-components (see `UsageLimitCardGroup`/`UsageLimitCard`/`ModelLimitsSection` requirements below)
-SHALL import only `react`, `react-dom`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, and
+`@nx/vite` and `@nx/vitest` inferred plugins via `vite.config.mts`). The library SHALL import only
+`react`, `react-dom`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, and
 `@tabler/icons-react` as peer/runtime dependencies.
 
-The library additionally exports pure transform utilities (see `## Utilities` section below) that
-depend on `@epam/ai-dial-chat-api-client` types and runtime values. `@epam/ai-dial-chat-api-client`
-SHALL therefore be declared as a peer dependency in `package.json` and referenced in
-`tsconfig.lib.json`. This exception applies only to the transform utilities; the presentational
-components SHALL NOT import any generated client type directly.
+The library SHALL NOT depend on `@epam/ai-dial-chat-api-client` in any form. It SHALL NOT appear in
+`package.json` (`dependencies`, `peerDependencies`, or `optionalDependencies`), in a
+`tsconfig.lib.json` project reference, or in a `vite.config.mts` resolve/test alias. The narrow
+generated-client exceptions recorded in AGENTS.md §Library isolation cover `libs/chat-api-client` and
+`libs/chat-hooks` only; they do not extend to this presentational package.
+
+The library SHALL render already-normalized display models supplied by its host. All interpretation
+of DIAL Core responses — generated DTO field selection, the unlimited sentinel
+(`total >= 2 ** 53`), status thresholds, shared currency and number formatting, deployment-type
+filtering, and deployment joins — SHALL happen in response adapters outside this library.
+Host-specific locale and icon resolution, translated strings, and reset-time formatting SHALL
+remain host-supplied callbacks or parameters. The host passes the results in through `UsageLimitCardData`, `ModelLimitRow`,
+`ModelLimitPeriodStatuses`, and the components' label props; in AI DIAL Chat those adapters live in
+`libs/chat-hooks` (see the `usage-model-limits` and `usage-data-hook` capabilities), under the
+narrow `chat-hooks` DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation —
+never in this presentational package itself.
 
 The library SHALL NOT import any `server-api/*` wrapper, any app
-context/hook/feature-flag/env/routing/storage/analytics module, or `react-i18next`. Transform
-utilities that need i18n strings SHALL accept a caller-supplied `Translate` callback instead.
+context/hook/feature-flag/env/routing/storage/analytics module, or `react-i18next`. Every
+user-visible string SHALL arrive as a prop; no component SHALL accept a translate callback, a
+locale, a timezone, or a raw timestamp.
 
 #### Scenario: Module boundary lint passes
 - **WHEN** `npm exec nx lint usage-dashboard` runs
 - **THEN** `@nx/enforce-module-boundaries` reports no violations, confirming the library depends
   only on `chat-shared`-tier, UI-kit, and `@tabler/icons-react` packages
 
-#### Scenario: No server-api or i18n imports
+#### Scenario: No generated-client, server-api, or i18n imports
 - **WHEN** the library's source is inspected
-- **THEN** no file imports `apps/chat/src/server-api/*` or `react-i18next`/`i18next`; generated-client
-  imports are limited to the transform utilities described in the `## Utilities` section
+- **THEN** no file imports `@epam/ai-dial-chat-api-client` or any of its subpaths,
+  `apps/chat/src/server-api/*`, or `react-i18next`/`i18next`
+
+#### Scenario: Manifest and build configuration carry no client edge
+- **WHEN** `libs/usage-dashboard/package.json`, `tsconfig.lib.json`, and `vite.config.mts` are
+  inspected
+- **THEN** none of them names `@epam/ai-dial-chat-api-client` as a dependency, a peer, a project
+  reference, or an alias
+
+### Requirement: Generated-client imports are mechanically prevented from returning
+
+The repository SHALL enforce the library's generated-client boundary with checks that fail a build
+or test run, rather than relying on review. The enforcement SHALL be scoped to this boundary and
+SHALL reuse existing repository conventions; it SHALL NOT introduce a new repository-wide
+architecture-rule framework, tag hierarchy, or dependency-analysis layer.
+
+Two checks SHALL be in place:
+
+1. **Source and barrel.** `libs/usage-dashboard/eslint.config.mjs` SHALL declare a project-scoped
+   `no-restricted-imports` rule rejecting `@epam/ai-dial-chat-api-client` and its subpaths, so a
+   direct import or a re-export through `src/index.ts` fails `npm exec nx lint usage-dashboard`.
+   The existing `@nx/dependency-checks` configuration in that file SHALL continue to fail an import
+   the manifest does not declare, covering the same boundary from the manifest side.
+2. **Emitted artifacts and real installation.** A packed-consumer check SHALL scan the library's
+   built `dist/**/*.js` and `dist/**/*.d.ts` for the `@epam/ai-dial-chat-api-client` specifier and
+   for re-exported generated DTO type names, and SHALL install the packed tarball into a dependency
+   tree isolated from the workspace's own `node_modules` and `@epam/source` aliases, containing only
+   the library's documented peers and deliberately **not** the generated client. It SHALL follow the
+   shape of the existing `tools/attachment-canvas-consumer-fixture` and
+   `tools/reusable-workflows-consumer-fixture` projects and reuse
+   `libs/chat-hooks/e2e-fixtures/harness.mjs`, because an in-checkout fixture would let an
+   "uninstalled" peer resolve from the workspace root and pass for the wrong reason.
+
+#### Scenario: A reintroduced source import fails lint
+- **WHEN** a file under `libs/usage-dashboard/src/**` imports a value or type from
+  `@epam/ai-dial-chat-api-client`
+- **THEN** `npm exec nx lint usage-dashboard` fails, naming the restricted import
+
+#### Scenario: A leak through the barrel or an emitted declaration fails the artifact scan
+- **WHEN** the library is built and its `dist` JavaScript or `.d.ts` output references
+  `@epam/ai-dial-chat-api-client` or re-exports a generated DTO type name
+- **THEN** the packed-consumer check fails and names the offending emitted file
+
+#### Scenario: A consumer installs and renders without the generated client
+- **WHEN** the packed tarball is installed into an isolated tree holding only the documented peers
+  (`react`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`, and their own required peers), with
+  no `@epam/ai-dial-chat-api-client` and no workspace alias
+- **THEN** the consumer typechecks, bundles, imports `./styles.css`, and renders
+  `UsageLimitCardGroup` and `ModelLimitsSection` from normalized fixture data
 
 ### Requirement: UsageLimitCardGroup and UsageLimitCard public API
 
@@ -432,91 +492,6 @@ target where it is shown on mobile.
   Today, This week, This month, Status
 
 ---
-
-**Utilities**
-
-The library exports three pure transform functions in
-`libs/usage-dashboard/src/utils/` that map raw `UserLimitStatsResponseDto` data into the props
-consumed by the presentational components. Moving these utilities into the library means any app
-that hosts the Usage tab can share the DTO-interpretation logic without duplicating it.
-
-### Requirement: mapUsageDataToDashboard utility
-
-The library SHALL export `mapUsageDataToDashboard(usage, t, formatResetTime)` and the companion const
-`USAGE_DATA_I18N_KEYS` from `libs/usage-dashboard/src/utils/map-usage-data-to-dashboard.ts`.
-
-`mapUsageDataToDashboard` SHALL accept `usage: UserLimitStatsResponseDto | undefined`, a
-caller-supplied `t: (key: string, options?) => string` translate callback, and a caller-supplied
-`formatResetTime: FormatResetTime` callback, and SHALL return a
-`UsageLimitCardData[]` array mapping `dayCostStats` / `weekCostStats` / `monthCostStats` to Today /
-This week / This month cards in that fixed order. A period SHALL be omitted from the result when the
-response carries no usable stat for it. All DTO interpretation — the unlimited-sentinel check
-(`total >= 2**53`), status-threshold derivation (`RUNNING_LOW_THRESHOLD_PERCENT = 75`), and
-`formatCost` currency formatting — SHALL happen inside this utility. Reset-time interpretation
-SHALL NOT: each card's `resetLabel` / `resetIsoValue` / `resetAriaLabel` come from
-`formatResetTime`, and all three are absent when it returns `undefined`.
-
-`USAGE_DATA_I18N_KEYS` SHALL be a `const` object whose values are the default i18n key strings the
-utility passes to `t`, so consuming apps know which keys to include in their translation bundle.
-
-#### Scenario: All three periods mapped
-- **WHEN** `usage` carries `dayCostStats`, `weekCostStats`, and `monthCostStats`
-- **THEN** the returned array contains three `UsageLimitCardData` entries in Today / This week /
-  This month order
-
-#### Scenario: Missing period omitted
-- **WHEN** `usage` has only `dayCostStats`
-- **THEN** the returned array contains exactly one entry for Today
-
-### Requirement: mapUserUsageToModelLimits utility
-
-The library SHALL export `mapUserUsageToModelLimits(usage, deploymentItems, activeLocale, t,
-resolveIconUrl, resolveDisplayName)` and the companion const `USAGE_MODEL_LIMITS_I18N_KEYS` from
-`libs/usage-dashboard/src/utils/map-user-usage-to-model-limits.ts`.
-
-`mapUserUsageToModelLimits` SHALL accept:
-- `usage: UserLimitStatsResponseDto | undefined`
-- `deploymentItems: DeploymentItemDto[]`
-- `activeLocale: string`
-- `t: (key, options?) => string`
-- `resolveIconUrl: (iconUrl: string | undefined) => string | undefined` — host callback that
-  resolves a raw icon URL to the URL the avatar should load (e.g. through the app's icon-proxy)
-- `resolveDisplayName: (name: string | Record<string, string> | undefined | null, locale: string) => string`
-  — host callback that resolves a localized-text map or plain string to the display name
-
-These two callbacks keep host-specific URL construction and locale resolution out of the library.
-The app passes `resolveCatalogIconUrl` and `resolveLocalizedText` from its own utils.
-
-The function SHALL return `ModelLimitRow[]` built from `usage.deployments`, joining with
-`deploymentItems` for display name/version/icon metadata, applying the same period-to-field mapping
-defined in the `usage-model-limits` capability spec. Only deployments with nonzero usage in at
-least one displayed period SHALL be included.
-
-#### Scenario: Host callbacks invoked for icon and name resolution
-- **WHEN** `mapUserUsageToModelLimits` processes a deployment with a raw `iconUrl`
-- **THEN** `resolveIconUrl` is called with that raw value and its return is used as `avatarSrc`
-
-### Requirement: mapOverallCostLimitsToPeriodStatuses utility
-
-The library SHALL export `mapOverallCostLimitsToPeriodStatuses(usage, activeLocale, t, formatResetTime?)` from
-`libs/usage-dashboard/src/utils/map-user-usage-to-model-limits.ts`.
-
-The function SHALL accept `usage: UserLimitStatsResponseDto | undefined`, `activeLocale: string`,
-`t`, and an optional `formatResetTime: FormatResetTime`, and SHALL return a
-`ModelLimitPeriodStatuses` object keyed `day` / `week` / `month`, mapping the top-level
-`dayCostStats` / `weekCostStats` / `monthCostStats` fields to the three fixed period headers of
-`ModelLimitsSection`, with `status`, optional `tooltipLabel`, and — when `formatResetTime` is
-supplied — the preformatted reset trio for each period. Omitting `formatResetTime` SHALL produce
-statuses with no reset fields.
-
-#### Scenario: Limit-reached period header status
-- **WHEN** `dayCostStats` has `used >= total`
-- **THEN** `day.status` is `ModelLimitStatus.LimitReached` and `tooltipLabel` is a
-  non-empty string from `t`
-
-#### Scenario: Absent usage produces unavailable statuses
-- **WHEN** `usage` is `undefined`
-- **THEN** all three period statuses are `ModelLimitStatus.Unavailable` with no tooltip
 
 ### Requirement: Reset-time rendering is responsive, RTL-safe, and accessible
 
