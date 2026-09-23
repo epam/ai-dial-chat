@@ -89,7 +89,7 @@ Configure the dashboard variables before interpreting the panels:
 | `route`, `method`                    | Dashboard 01's filters for the legacy handler histogram; its method choices are scoped to the selected route.                                                                                                                                                |
 | `generation_api`                     | Generation API filter where present. Capability-resolution failures have no API label and are intentionally queried separately.                                                                                                                              |
 | `auth_provider`                      | Dashboard 05's identity-provider filter. Its values come from the login counter, so the list is empty until the first login redirect. Only the login, callback, and refresh instruments carry that attribute; the authorization and logout panels ignore it. |
-| `scrape_job`                         | Dashboard 00's explicit Prometheus job for scrape health. Replace `__configure_bff_scrape_job__` with the exact backend scrape job. The `up` query uses this value instead of the application-metric `job` selection, and ignores HTTP route/method filters. |
+| `scrape_job`                         | Dashboard 00's explicit Prometheus job for scrape health. It defaults to `dial-chat-metrics`, the reference deployment's job; replace it when the deployment scrapes the backend under another job. The `up` query uses this value instead of the application-metric `job` selection, and ignores HTTP route/method filters. |
 | `tempo_datasource`, `trace_service`  | Optional Tempo data source and actual OpenTelemetry `service.name` for dashboard 00's trace link. The default service name is `@epam/chat-api`; use the deployment's `OTEL_SERVICE_NAME` override when configured.                                           |
 
 Variable choices are derived from application series and are not a complete inventory of desired
@@ -110,6 +110,33 @@ legacy formatter requires an appropriate special-character setting or a custom e
 The runtime memory panel uses bytes and leaves stacking disabled. Its five series overlap and
 must remain separate. Multi-value variables use regex selectors; preserve that behavior when
 adapting the queries. See [Prometheus template variables](https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/).
+
+### If the scrape-health panel shows No samples
+
+This panel is the one place where the job name does not come from the dashboard's own `job`
+selector, so a working dashboard can still leave it empty. The `job` label on the application
+metrics and the `job` label on `up` describe different things: the first is whatever the
+collection path attaches to the exported series, the second names the Prometheus scrape
+configuration. Prometheus Operator, for example, labels its targets `<namespace>/<service-monitor>`
+while the application metrics keep an unrelated job value. Copying the value out of the `job`
+selector therefore produces no `up` series.
+
+Resolve the name from `up` itself. First locate the backend:
+
+```promql
+group by (namespace, pod, instance, job) (dial_chat_generations_active{otel_scope_name="dial-chat-api"})
+```
+
+Then find the target that scrapes it, matching on `instance` or `pod`:
+
+```promql
+group by (job, pod, instance) (up{namespace="<namespace>"})
+```
+
+Put that `job` value in the textbox. If an exact job still yields nothing, remove the
+`cluster`, `namespace`, and `pod` matchers from the panel query: a statically configured target
+carries none of those labels. A data source that receives metrics through OTLP or remote write
+has no `up` series at all, and the panel cannot apply there.
 
 ### If every panel shows No samples
 
