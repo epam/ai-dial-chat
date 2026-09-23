@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
+  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -34,6 +36,16 @@ export class ThemeService {
   private readonly timeout: number | undefined;
   private readonly THEMES_CACHE_KEY = 'themes:config';
   private readonly ICON_CACHE_PREFIX = 'themes:icon:';
+  private readonly REMOTE_CACHE_PREFIX = 'themes:remote:';
+  private readonly REMOTE_ICON_CACHE_PREFIX = 'themes:remote:icon:';
+  /** Origins a per-application theme URL may be fetched from. Empty disables remote themes. */
+  private readonly allowedOrigins: Set<string>;
+  /** Cap on a remote `config.json`, refused before parsing. */
+  private readonly MAX_REMOTE_CONFIG_BYTES = 256 * 1024;
+  /** Cap on a remote icon, refused before buffering. */
+  private readonly MAX_REMOTE_ICON_BYTES = 2 * 1024 * 1024;
+  /** A colour key is written straight into a CSS custom property name. */
+  private readonly COLOR_KEY_PATTERN = /^[a-zA-Z0-9-]+$/;
 
   /**
    * Creates an instance of ThemeService.
@@ -56,6 +68,98 @@ export class ThemeService {
     this.timeout = this.configService.get('THEMES_SERVICE_TIMEOUT_MS', {
       infer: true,
     });
+    this.allowedOrigins = this.parseAllowedOrigins(
+      this.configService.get('THEMES_ALLOWED_ORIGINS', { infer: true }),
+    );
+
+    if (
+      this.configService.get('APP_THEMES_ENABLED', { infer: true }) &&
+      this.allowedOrigins.size === 0
+    ) {
+      this.logger.warn(
+        'APP_THEMES_ENABLED is on but THEMES_ALLOWED_ORIGINS lists no usable origin — every remote theme request will be rejected',
+      );
+    }
+  }
+
+  /**
+   * Parses `THEMES_ALLOWED_ORIGINS` into the set of origins a remote theme may
+   * be fetched from.
+   *
+   * A malformed or non-`https` entry is dropped with a warning rather than
+   * throwing: one bad entry in an operator's comma-separated list must not
+   * stop the application from booting.
+   */
+  private parseAllowedOrigins(raw: string | undefined): Set<string> {
+    const origins = new Set<string>();
+    if (!raw) return origins;
+
+    for (const entry of raw.split(',')) {
+      const candidate = entry.trim();
+      if (!candidate) continue;
+
+      let parsed: URL;
+      try {
+        parsed = new URL(candidate);
+      } catch {
+        this.logger.warn(
+          `Ignoring unparseable THEMES_ALLOWED_ORIGINS entry: ${candidate}`,
+        );
+        continue;
+      }
+
+      if (parsed.protocol !== 'https:') {
+        this.logger.warn(
+          `Ignoring non-https THEMES_ALLOWED_ORIGINS entry: ${candidate}`,
+        );
+        continue;
+      }
+
+      origins.add(parsed.origin);
+    }
+
+    return origins;
+  }
+
+  /**
+   * Resolves an application-supplied theme URL to the upstream base this
+   * service may request, or throws before any socket is opened.
+   *
+   * Membership is exact origin equality, never a suffix match: allow-listing
+   * `https://themes.example.com` must not admit
+   * `https://themes.example.com.attacker.test`. The rejection message names
+   * neither the resolved address nor any upstream detail, so a caller cannot
+   * use this endpoint to probe what the server can reach.
+   */
+  private resolveAllowedOrigin(themeUrl: string): {
+    origin: string;
+    pathname: string;
+  } {
+    let parsed: URL;
+    try {
+      parsed = new URL(themeUrl);
+    } catch {
+      throw new BadRequestException('themeUrl is not a valid URL');
+    }
+
+    if (parsed.protocol !== 'https:') {
+      throw new BadRequestException('themeUrl must use https');
+    }
+
+    if (!this.allowedOrigins.has(parsed.origin)) {
+      throw new BadRequestException('themeUrl origin is not allowed');
+    }
+
+    /*
+     * The supplied query and fragment are discarded: the upstream request is
+     * always `<origin><pathname>/config.json`, so a caller cannot steer it by
+     * appending to the URL. A trailing slash is trimmed so a host given with
+     * and without one shares a cache entry.
+     */
+    return {
+      origin: parsed.origin,
+      pathname: parsed.pathname.replace(/\/+$/, ''),
+    };
   }
 
   /**
@@ -251,5 +355,257 @@ export class ThemeService {
         'Theme service is currently unavailable',
       );
     }
+  }
+
+  /**
+   * Fetches a theme configuration from an allow-listed external themes host on
+   * behalf of an application that declares its own theme URL.
+   *
+   * @throws {BadRequestException} The URL is malformed, not https, or its origin is not allow-listed — thrown before any request is made.
+   * @throws {NotFoundException} The host has no `config.json` there.
+   * @throws {BadGatewayException} The host redirected, errored, or returned an oversized or malformed body.
+   * @throws {ServiceUnavailableException} The request timed out or the host was unreachable.
+   */
+  async getRemoteTheme(themeUrl: string): Promise<ThemeConfigResponseDto> {
+    const { origin, pathname } = this.resolveAllowedOrigin(themeUrl);
+    const cacheKey = `${this.REMOTE_CACHE_PREFIX}${this.hashTarget(origin, pathname)}`;
+
+    const cached =
+      await this.cacheManager.get<ThemeConfigResponseDto>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Returning cached remote theme for ${origin}`);
+      return cached;
+    }
+
+    const response = await this.fetchRemote(
+      `${origin}${pathname}/config.json`,
+      origin,
+    );
+
+    const body = await this.readCapped(
+      response,
+      this.MAX_REMOTE_CONFIG_BYTES,
+      origin,
+    );
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(body.toString('utf8'));
+    } catch {
+      this.logger.error(`Remote theme at ${origin} is not valid JSON`);
+      throw new BadGatewayException('Remote theme configuration is malformed');
+    }
+
+    const config = this.sanitizeRemoteConfig(parsed, origin);
+    await this.cacheManager.set(cacheKey, config);
+    return config;
+  }
+
+  /**
+   * Fetches one image from an allow-listed external themes host.
+   *
+   * `iconName` is validated by the controller's DTO against the same
+   * path-traversal allowlist the built-in icon endpoint uses.
+   */
+  async getRemoteThemeIcon(
+    themeUrl: string,
+    iconName: string,
+  ): Promise<string | Buffer> {
+    const { origin, pathname } = this.resolveAllowedOrigin(themeUrl);
+    const cacheKey = `${this.REMOTE_ICON_CACHE_PREFIX}${this.hashTarget(origin, pathname)}:${iconName}`;
+
+    const cached = await this.cacheManager.get<string | Buffer>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Returning cached remote icon: ${iconName}`);
+      return cached;
+    }
+
+    const response = await this.fetchRemote(
+      `${origin}${pathname}/${iconName}`,
+      origin,
+      iconName,
+    );
+
+    const buffer = await this.readCapped(
+      response,
+      this.MAX_REMOTE_ICON_BYTES,
+      origin,
+    );
+    const content = iconName.includes('.svg')
+      ? buffer.toString('utf8')
+      : buffer;
+
+    await this.cacheManager.set(cacheKey, content);
+    return content;
+  }
+
+  /**
+   * Hashes the upstream target into a cache key.
+   *
+   * An arbitrary-length URL with arbitrary characters has no business being a
+   * cache key verbatim; the pathname is included so two applications pointing
+   * at different directories on one host do not collide.
+   */
+  private hashTarget(origin: string, pathname: string): string {
+    return createHash('sha256').update(`${origin}${pathname}`).digest('hex');
+  }
+
+  /**
+   * Performs the upstream request shared by both remote endpoints.
+   *
+   * Redirects are not followed: an allow-listed origin answering `302` to an
+   * internal address would otherwise turn the allowlist into a stepping stone.
+   */
+  private async fetchRemote(
+    url: string,
+    origin: string,
+    iconName?: string,
+  ): Promise<Response> {
+    const subject = iconName ? `icon '${iconName}' at ${origin}` : origin;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        redirect: 'manual',
+      });
+
+      if (response.status >= 300 && response.status < 400) {
+        this.logger.error(
+          `Remote theme host redirected for ${subject}; refusing to follow`,
+        );
+        throw new BadGatewayException('Remote theme host returned a redirect');
+      }
+
+      if (!response.ok) {
+        this.logger.error(
+          `Failed to fetch remote theme ${subject}: ${response.status} ${response.statusText}`,
+        );
+        if (response.status === 404) {
+          throw new NotFoundException('Remote theme resource not found');
+        }
+        throw new BadGatewayException('Remote theme host returned an error');
+      }
+
+      return response;
+    } catch (er) {
+      const error = er as { name?: string; message?: string; stack?: string };
+
+      if (error.name === 'AbortError') {
+        this.logger.error(
+          `Remote theme request for ${subject} timed out after ${this.timeout}ms`,
+        );
+        throw new ServiceUnavailableException('Remote theme request timed out');
+      }
+
+      if (
+        er instanceof NotFoundException ||
+        er instanceof BadGatewayException ||
+        er instanceof ServiceUnavailableException
+      ) {
+        throw er;
+      }
+
+      this.logger.error(
+        `Unexpected error fetching remote theme ${subject}: ${error.message}`,
+        error.stack,
+      );
+      throw new ServiceUnavailableException('Remote theme host is unavailable');
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  /**
+   * Buffers a response body, refusing anything over `limit`.
+   *
+   * `Content-Length` is only a hint — a host may omit or understate it — so the
+   * running total is checked as chunks arrive rather than trusting the header.
+   */
+  private async readCapped(
+    response: Response,
+    limit: number,
+    origin: string,
+  ): Promise<Buffer> {
+    const declared = Number(response.headers.get('content-length'));
+    if (Number.isFinite(declared) && declared > limit) {
+      this.logger.error(
+        `Remote theme response from ${origin} declares ${declared} bytes, over the ${limit} limit`,
+      );
+      throw new BadGatewayException('Remote theme response is too large');
+    }
+
+    const body = response.body;
+    if (!body) return Buffer.alloc(0);
+
+    const chunks: Buffer[] = [];
+    let total = 0;
+
+    const reader = body.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.length;
+      if (total > limit) {
+        await reader.cancel();
+        this.logger.error(
+          `Remote theme response from ${origin} exceeded the ${limit} byte limit`,
+        );
+        throw new BadGatewayException('Remote theme response is too large');
+      }
+      chunks.push(Buffer.from(value));
+    }
+
+    return Buffer.concat(chunks);
+  }
+
+  /**
+   * Validates a remote configuration and strips colour keys that are not safe
+   * to write as CSS custom property names.
+   *
+   * A key containing `;` or `}` is inert in every current browser once it
+   * reaches `style.setProperty`, but this payload comes from a third party the
+   * operator only allow-listed by origin, so the question is removed rather
+   * than left to the browser.
+   */
+  private sanitizeRemoteConfig(
+    parsed: unknown,
+    origin: string,
+  ): ThemeConfigResponseDto {
+    const config = parsed as Partial<ThemeConfigResponseDto>;
+    const themes = config?.themes;
+
+    if (!Array.isArray(themes) || themes.length === 0) {
+      this.logger.error(`Remote theme at ${origin} declares no themes`);
+      throw new BadGatewayException('Remote theme configuration is malformed');
+    }
+
+    const sanitized = themes.map((theme) => {
+      if (!theme || typeof theme.id !== 'string' || theme.id.trim() === '') {
+        this.logger.error(
+          `Remote theme at ${origin} has a theme without an id`,
+        );
+        throw new BadGatewayException(
+          'Remote theme configuration is malformed',
+        );
+      }
+
+      const colors: Record<string, string> = {};
+      for (const [key, value] of Object.entries(theme.colors ?? {})) {
+        if (typeof value !== 'string') continue;
+        if (!this.COLOR_KEY_PATTERN.test(key)) {
+          this.logger.warn(
+            `Dropping unsafe colour key '${key}' from remote theme at ${origin}`,
+          );
+          continue;
+        }
+        colors[key] = value;
+      }
+
+      return { ...theme, colors };
+    });
+
+    return { ...config, themes: sanitized } as ThemeConfigResponseDto;
   }
 }

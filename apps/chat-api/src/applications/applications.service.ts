@@ -35,7 +35,10 @@ import type {
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from './dto/update-application.dto';
-import { hoistApplicationFields } from './utils/application-body-mapping';
+import {
+  applyThemeUrlToCatalogProperties,
+  hoistApplicationFields,
+} from './utils/application-body-mapping';
 
 type DialApplication = components['schemas']['Application'];
 
@@ -189,6 +192,12 @@ export class ApplicationsService {
         dialBody.inputAttachmentTypes = inputAttachmentTypes;
       if (maxInputAttachments != null)
         dialBody.maxInputAttachments = maxInputAttachments;
+      const catalogProperties = applyThemeUrlToCatalogProperties(
+        undefined,
+        body.themeUrl,
+      );
+      if (catalogProperties != null && Object.keys(catalogProperties).length > 0)
+        dialBody.catalogProperties = catalogProperties;
 
       const response = await this.dialClient.client.saveCustomApplication(
         bucket,
@@ -312,6 +321,20 @@ export class ApplicationsService {
        */
       if (body.applicationProperties != null) {
         mergedBody.application_properties = body.applicationProperties;
+      }
+
+      /*
+       * `catalog_properties` is merged rather than replaced — see
+       * `applyThemeUrlToCatalogProperties`. Omitting `themeUrl` carries the
+       * stored map through untouched, which is what every existing caller
+       * (and every General-step-only save) does.
+       */
+      const nextCatalogProperties = applyThemeUrlToCatalogProperties(
+        mergedBody.catalogProperties,
+        body.themeUrl,
+      );
+      if (nextCatalogProperties != null) {
+        mergedBody.catalogProperties = nextCatalogProperties;
       }
 
       const saveResponse = await this.dialClient.client.saveCustomApplication(

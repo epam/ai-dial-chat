@@ -117,6 +117,28 @@ export class UpdateApplicationBodyDto {
   applicationProperties?: Record<string, unknown> | null;
 
   /*
+   * Merged into `catalog_properties`, deliberately unlike
+   * `applicationProperties` above: chat does not own that map's other keys
+   * (`provider`, `vendor`, `license`, …), so only `themeUrl` is touched.
+   * Omitted or null leaves the stored map alone; an empty string deletes the
+   * one key.
+   */
+  @ApiPropertyOptional({
+    example: 'https://themes.contoso.example.com',
+    description:
+      'Base URL of a themes host whose theme is applied while this application is open. ' +
+      'Must be an absolute https:// URL. Send an empty string to clear it; omit to leave unchanged.',
+  })
+  @IsString()
+  @IsOptional()
+  @ValidateIf((_o, value) => value !== '')
+  @IsUrl(
+    { protocols: ['https'], require_protocol: true },
+    { message: 'themeUrl must be an https URL' },
+  )
+  themeUrl?: string;
+
+  /*
    * Additional (non-primary) locale translations for `name`/`description`.
    * Absent/empty means DIAL Core stores plain strings, unchanged from today.
    */

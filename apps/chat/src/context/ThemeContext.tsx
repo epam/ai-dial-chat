@@ -95,20 +95,34 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /*
+   * A stored id only means something once the configuration is known, since a
+   * theme the configuration no longer serves cannot be applied. The stored
+   * value is deliberately left in place when it does not match: a theme
+   * missing from one load of the configuration should not erase a preference
+   * that the next load would honour again.
+   *
+   * Light is the default for a user who has never chosen, regardless of the
+   * order the themes host lists its themes in — configuration order is not a
+   * statement about which theme a first-time visitor should get. A deployment
+   * that serves no `light` theme therefore renders in the built-in Tailwind
+   * light palette until the user picks something, which is what it does today.
+   */
   useEffect(() => {
+    if (!config) return;
+
     const storedTheme =
       typeof window !== 'undefined'
         ? getFromLocalStorage(StorageKey.Theme)
         : null;
-    const defaultTheme = config?.themes?.[0].id;
-    const configuredTheme =
-      storedTheme && defaultTheme !== ThemeId.Dark
-        ? defaultTheme
-        : ThemeId.Light;
-    if (configuredTheme) {
-      setSelectedThemeId(configuredTheme);
-      updateTheme(configuredTheme);
-    }
+    const isStoredThemeAvailable =
+      storedTheme === ThemeId.System ||
+      config.themes?.some((theme) => theme.id === storedTheme);
+    const resolvedTheme =
+      storedTheme && isStoredThemeAvailable ? storedTheme : ThemeId.Light;
+
+    setSelectedThemeId(resolvedTheme);
+    updateTheme(resolvedTheme);
   }, [config, updateTheme]);
 
   // Subscribe to OS color scheme changes when the stored preference is 'system'

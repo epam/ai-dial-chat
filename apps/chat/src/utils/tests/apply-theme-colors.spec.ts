@@ -115,4 +115,93 @@ describe('applyThemeColors', () => {
     applyThemeColors(mockElement, lightTheme);
     expect(mockElement.style.getPropertyValue('--bg-color')).toBe('#ffffff');
   });
+
+  /*
+   * Themes declaring different key sets are the whole point of supporting more
+   * than light/dark: without clearing, switching from a theme that declares a
+   * key to one that does not leaves the previous theme's colour in place.
+   */
+  describe('clearing previously applied properties', () => {
+    const richTheme: Theme = {
+      id: 'rich',
+      displayName: 'Rich',
+      'app-logo': '',
+      colors: {
+        'bg-layer-base': '#ffffff',
+        'text-accent-primary': '#0000ff',
+        'border-primary': '#cccccc',
+      },
+    };
+
+    const sparseTheme: Theme = {
+      id: 'sparse',
+      displayName: 'Sparse',
+      'app-logo': '',
+      colors: { 'bg-layer-base': '#000000' },
+    };
+
+    it('removes keys the next theme does not declare', () => {
+      applyThemeColors(mockElement, richTheme);
+      applyThemeColors(mockElement, sparseTheme);
+
+      expect(mockElement.style.getPropertyValue('--bg-layer-base')).toBe(
+        '#000000',
+      );
+      expect(mockElement.style.getPropertyValue('--text-accent-primary')).toBe(
+        '',
+      );
+      expect(mockElement.style.getPropertyValue('--border-primary')).toBe('');
+    });
+
+    it('clears everything previously written when called with no theme', () => {
+      applyThemeColors(mockElement, richTheme);
+      applyThemeColors(mockElement, undefined);
+
+      expect(mockElement.style.getPropertyValue('--bg-layer-base')).toBe('');
+      expect(mockElement.style.getPropertyValue('--text-accent-primary')).toBe(
+        '',
+      );
+      expect(mockElement.style.getPropertyValue('--border-primary')).toBe('');
+      expect(mockElement.style.length).toBe(0);
+    });
+
+    it('does not remove properties it never wrote', () => {
+      mockElement.style.setProperty('--set-by-someone-else', '#123456');
+
+      applyThemeColors(mockElement, richTheme);
+      applyThemeColors(mockElement, undefined);
+
+      expect(mockElement.style.getPropertyValue('--set-by-someone-else')).toBe(
+        '#123456',
+      );
+    });
+
+    it('tracks applied keys per element', () => {
+      const otherElement = document.createElement('div');
+
+      applyThemeColors(mockElement, richTheme);
+      applyThemeColors(otherElement, sparseTheme);
+      applyThemeColors(otherElement, undefined);
+
+      expect(mockElement.style.getPropertyValue('--text-accent-primary')).toBe(
+        '#0000ff',
+      );
+      expect(otherElement.style.getPropertyValue('--bg-layer-base')).toBe('');
+    });
+
+    it('is idempotent when the same theme is applied twice', () => {
+      applyThemeColors(mockElement, richTheme);
+      applyThemeColors(mockElement, richTheme);
+
+      expect(mockElement.style.getPropertyValue('--bg-layer-base')).toBe(
+        '#ffffff',
+      );
+      expect(mockElement.style.getPropertyValue('--text-accent-primary')).toBe(
+        '#0000ff',
+      );
+      expect(mockElement.style.getPropertyValue('--border-primary')).toBe(
+        '#cccccc',
+      );
+    });
+  });
 });

@@ -160,6 +160,7 @@ export const mapCatalogProperties = (
     license: getString(raw, 'license'),
     knowledgeCutoffDate: getString(raw, 'knowledgeCutoffDate'),
     parameters: getString(raw, 'parameters'),
+    themeUrl: getString(raw, 'themeUrl'),
   };
 
   return Object.values(properties).some((value) => value != null)

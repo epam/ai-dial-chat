@@ -7,4 +7,5 @@ export enum FeatureKey {
   ResponsesApiEnabled = 'features.responsesApiEnabled',
   SkillUsageEnabled = 'features.skillUsageEnabled',
   DefaultDeploymentPinned = 'features.defaultDeploymentPinned',
+  AppThemesEnabled = 'features.appThemesEnabled',
 }

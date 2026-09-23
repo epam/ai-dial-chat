@@ -102,6 +102,13 @@ export class ModelCatalogPropertiesDto {
     example: '100B',
   })
   parameters?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Base URL of a themes host whose theme the host applies while this application is open. Set through the apps editor's Theme URL field.",
+    example: 'https://themes.contoso.example.com',
+  })
+  themeUrl?: string;
 }
 
 /**
