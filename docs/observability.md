@@ -268,7 +268,12 @@ generation.
 Capability resolution records `resolved` with the selected API, or `failed` without an API label.
 Filtering failures by `generation_api` would lose them. Unrecognized Responses events are counted
 by a sanitized event type, truncated to 64 characters, without event payloads. The length limit
-does not impose a finite bound on the number of distinct event-type values. See the
+does not impose a finite bound on the number of distinct event-type values. That counter is
+created on its first recorded event, so an empty panel is its ordinary state, and a deployment
+whose capability resolution never selects the Responses API cannot produce one at all. Its panel
+in dashboard 03 therefore reads `No unrecognized events` rather than the `No samples` used
+elsewhere; any series it does show means the upstream emitted an event type the adapter does not
+handle. See the
 [Responses adapter](../apps/chat-api/src/conversations/generation/responses.adapter.ts) and
 [Responses integration](responses-api-integration.md).
 
