@@ -114,5 +114,9 @@ export const useMcpAppTools = (
     void loadIndirectTools();
   }, [toolCallNames, toolsets, client]);
 
-  return [...directTools, ...indirectTools];
+  /* Stable identity between renders so memoized message rows don't re-render. */
+  return useMemo(
+    () => [...directTools, ...indirectTools],
+    [directTools, indirectTools],
+  );
 };

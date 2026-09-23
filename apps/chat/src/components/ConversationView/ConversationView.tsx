@@ -578,27 +578,19 @@ const ConversationView: FC<Props> = ({
    * For each message, resolve the deployment active at that point in the conversation.
    * Scans status messages in order so messages before a model change get the initial model icon.
    */
-  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
-    () =>
-      messages.reduce<{
-        ids: (string | undefined)[];
-        activeId: string | undefined;
-      }>(
-        (acc, msg) => {
-          const nextId =
-            isStatusMessage(msg) &&
-            msg.custom_content?.event_type === StatusEvent.ModelChanged
-              ? msg.custom_content.new_deployment_id
-              : acc.activeId;
-          return {
-            ids: [...acc.ids, msg.deploymentId ?? nextId],
-            activeId: nextId,
-          };
-        },
-        { ids: [], activeId: initialModelId },
-      ).ids,
-    [messages, initialModelId],
-  );
+  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(() => {
+    /* Single linear pass — copying the accumulator per message was O(n²) on long conversations. */
+    let activeId = initialModelId;
+    return messages.map((msg) => {
+      if (
+        isStatusMessage(msg) &&
+        msg.custom_content?.event_type === StatusEvent.ModelChanged
+      ) {
+        activeId = msg.custom_content.new_deployment_id;
+      }
+      return msg.deploymentId ?? activeId;
+    });
+  }, [messages, initialModelId]);
 
   const messageHistory = useMemo(
     () =>
@@ -853,6 +845,11 @@ const ConversationView: FC<Props> = ({
     [openAttachmentCanvas],
   );
 
+  const clearPendingDialAttachments = useCallback(
+    () => setPendingDialAttachments([]),
+    [],
+  );
+
   const handleMessageAttachmentClick = useCallback(
     (attachment: DisplayAttachment, messageIndex: number) => {
       /*
@@ -993,9 +990,7 @@ const ConversationView: FC<Props> = ({
                       !isAttachmentsAllowed || !isInputFilesEnabled
                     }
                     fileAccept={fileAccept}
-                    onAttachmentClick={(attachment) =>
-                      handleMessageAttachmentClick(attachment, index)
-                    }
+                    onAttachmentClick={handleMessageAttachmentClick}
                     selectedAttachmentKey={selectedAttachmentKey}
                     onDialFileSystemClick={
                       isAttachmentsAllowed
@@ -1012,7 +1007,7 @@ const ConversationView: FC<Props> = ({
                     }
                     onPendingAttachmentsConsumed={
                       isEditActive && isThisMessageEditing
-                        ? () => setPendingDialAttachments([])
+                        ? clearPendingDialAttachments
                         : undefined
                     }
                     onMessageTooLong={handleMessageTooLong}
