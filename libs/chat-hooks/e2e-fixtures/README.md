@@ -62,6 +62,11 @@ harness nested fixtures under `libs/chat-hooks/e2e-fixtures/.tmp/` and the
 negative fixture (task 6.5) passed without the missing peer ever being
 installed, for exactly this reason.
 
+Packing also uses a private temporary copy of each library's `dist/` output.
+The shared publish transform writes only to that copy, so concurrent consumer
+fixtures using different synthetic versions cannot overwrite each other's
+package manifests or change the shared build output.
+
 ## What each fixture proves
 
 - **`minimal`** — installs only the `react` runtime peer (plus consumer-owned

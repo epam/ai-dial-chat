@@ -32,15 +32,16 @@
 import { execFileSync } from 'node:child_process';
 import {
   existsSync,
+  mkdtempSync,
   readFileSync,
   readdirSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { preparePublishPackageJson } from '../../publish-lib-package-json.mjs';
+import { prepareFixturePackage } from '../../prepare-fixture-package.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixtureRoot = process.env.FIXTURE_ROOT_DIR
@@ -48,8 +49,9 @@ const fixtureRoot = process.env.FIXTURE_ROOT_DIR
   : resolve(__dirname, '..');
 const npmCache = resolve(fixtureRoot, '.npm-cache');
 const workspaceRoot = resolve(fixtureRoot, '../..');
-const ROOT_PACKAGES = (process.env.FIXTURE_ROOT_PACKAGE ??
-  '@epam/ai-dial-attachment-canvas')
+const ROOT_PACKAGES = (
+  process.env.FIXTURE_ROOT_PACKAGE ?? '@epam/ai-dial-attachment-canvas'
+)
   .split(',')
   .map((packageName) => packageName.trim())
   .filter(Boolean);
@@ -127,7 +129,7 @@ for (const [packageName, projectRoot] of packClosure) {
 }
 
 // ---------------------------------------------------------------------------
-// Rewrite each dist/package.json into a publish-ready shape, then npm pack it.
+// Prepare private publish-ready copies of dist/, then npm pack them.
 // ---------------------------------------------------------------------------
 
 // On Windows, `npm` resolves to `npm.cmd`, a batch file the OS can only
@@ -135,35 +137,30 @@ for (const [packageName, projectRoot] of packClosure) {
 // argument here is a fixed literal or an absolute path this script itself
 // computed, never external input, so shell-string concatenation is safe.
 const packPublishReady = (projectRoot) => {
-  const distDir = resolve(workspaceRoot, projectRoot, 'dist');
-  const rawSource = readManifest(projectRoot);
-
-  writeFileSync(
-    resolve(distDir, 'package.json'),
-    JSON.stringify(
-      preparePublishPackageJson(JSON.parse(rawSource), {
-        version: FIXTURE_VERSION,
-        projectRoot,
-        isWorkspaceLib,
-        rawSource,
-      }),
-      null,
-      2,
-    ) + '\n',
-  );
-
-  const packOutput = execFileSync(
-    'npm',
-    ['pack', '--json', '--pack-destination', fixtureRoot],
-    {
-      cwd: distDir,
-      encoding: 'utf-8',
-      shell,
-      env: { ...process.env, npm_config_cache: npmCache },
-    },
-  );
-  const [{ filename }] = JSON.parse(packOutput);
-  return resolve(fixtureRoot, filename);
+  const tmpRoot = mkdtempSync(resolve(tmpdir(), 'attachment-canvas-pack-'));
+  try {
+    const distDir = prepareFixturePackage({
+      workspaceRoot,
+      projectRoot,
+      tmpRoot,
+      version: FIXTURE_VERSION,
+      isWorkspaceLib,
+    });
+    const packOutput = execFileSync(
+      'npm',
+      ['pack', '--json', '--pack-destination', fixtureRoot],
+      {
+        cwd: distDir,
+        encoding: 'utf-8',
+        shell,
+        env: { ...process.env, npm_config_cache: npmCache },
+      },
+    );
+    const [{ filename }] = JSON.parse(packOutput);
+    return resolve(fixtureRoot, filename);
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true, maxRetries: 3 });
+  }
 };
 
 const tarballPaths = [...packClosure.values()].map(packPublishReady);

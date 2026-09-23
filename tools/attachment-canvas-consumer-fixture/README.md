@@ -19,11 +19,11 @@ and then builds against it.
 ## What it does
 
 1. `pack-lib` (`scripts/pack-and-install.mjs`) rewrites
-   `libs/attachment-canvas/dist/package.json` into the same publish-ready
-   shape `tools/publish-lib.mjs` produces for a real `npm publish` (strips
+   a private temporary copy of `libs/attachment-canvas/dist/package.json`
+   into the same publish-ready shape `tools/publish-lib.mjs` produces for a real `npm publish` (strips
    `"./dist/"` export prefixes, drops the `"@epam/source"` condition,
-   `"private"`, and `"nx"`), runs `npm pack` from inside `dist/`, and installs
-   the resulting tarball with a real cache-first `npm install` into this project's own
+   `"private"`, and `"nx"`), runs `npm pack` from that copy without modifying
+   the shared build output, and installs the resulting tarball with a real cache-first `npm install` into this project's own
    `node_modules/@epam/ai-dial-attachment-canvas` — never the workspace
    root's, which npm workspaces symlinks straight to `libs/attachment-canvas`
    source.

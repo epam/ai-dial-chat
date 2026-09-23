@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
-import { cpSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import test, { after, before } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -164,16 +164,19 @@ test('mixed release: existing local tarballs identify an incompatible internal p
   const coherent = dependencyResolver.resolvePeerClosure(peers);
   assertCoherentTarballs(coherent);
   const oldDir = createFixtureDir(tmpRoot, 'old-shared');
-  cpSync(path.join(workspaceRoot, 'libs/chat-shared/dist'), oldDir, {
-    recursive: true,
+  /* Use the packed manifest: isolated packing leaves shared dist/ untouched. */
+  const sharedTarball = fileURLToPath(coherent['@epam/ai-dial-chat-shared']);
+  execFileSync('tar', ['-xf', path.basename(sharedTarball), '-C', oldDir], {
+    cwd: path.dirname(sharedTarball),
   });
-  const manifestPath = path.join(oldDir, 'package.json');
+  const oldPackageDir = path.join(oldDir, 'package');
+  const manifestPath = path.join(oldPackageDir, 'package.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   manifest.version = '0.0.0-packed.previous';
   writeFileSync(manifestPath, JSON.stringify(manifest));
   const [{ filename }] = JSON.parse(
     execNpmSync(['pack', '--json', '--pack-destination', tmpRoot], {
-      cwd: oldDir,
+      cwd: oldPackageDir,
       encoding: 'utf8',
     }),
   );
@@ -183,6 +186,6 @@ test('mixed release: existing local tarballs identify an incompatible internal p
   };
   assert.throws(
     () => assertCoherentTarballs(mixed),
-    /requires 0\.0\.0-packed\.0/,
+    / -> @epam\/ai-dial-chat-shared requires 0\.0\.0-packed\.0/,
   );
 });

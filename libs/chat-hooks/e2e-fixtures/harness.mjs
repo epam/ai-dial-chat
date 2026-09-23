@@ -26,6 +26,8 @@ import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
 
+import { prepareFixturePackage } from '../../../tools/prepare-fixture-package.mjs';
+
 /*
  * npm resolves a `file:` dependency spec without percent-decoding it, while
  * `pathToFileURL` — which is how every fixture below names a packed tarball —
@@ -96,10 +98,8 @@ const listFiles = (root, relativeDir = '') =>
   );
 
 /**
- * Runs `tools/publish-lib.mjs --dry=true` (writes the publish-ready
- * package.json into `dist/`, does not actually publish) and then `npm pack`
- * from inside `dist/`, producing a real tarball other npm installs can
- * consume. Returns the absolute tarball path.
+ * Applies the publish transform to a private copy of `dist/`, then runs
+ * `npm pack` there. Parallel fixtures never rewrite each other's manifests.
  */
 const packWorkspacePackage = ({
   workspaceRoot,
@@ -109,23 +109,26 @@ const packWorkspacePackage = ({
   version,
   verifyPackedFileContract = false,
 }) => {
-  const distDir = path.join(workspaceRoot, projectRoot, 'dist');
-  if (!existsSync(distDir)) {
+  const buildDir = path.join(workspaceRoot, projectRoot, 'dist');
+  if (!existsSync(buildDir)) {
     throw new Error(
-      `Build output not found at:\n  ${distDir}\nRun "npm exec nx build ${projectName}" first.`,
+      `Build output not found at:\n  ${buildDir}\nRun "npm exec nx build ${projectName}" first.`,
     );
   }
 
-  execFileSync(
-    'node',
-    [
-      'tools/publish-lib.mjs',
-      projectName,
-      `--version=${version}`,
-      '--dry=true',
-    ],
-    { cwd: workspaceRoot, stdio: 'pipe' },
+  const workspacePackages = readWorkspacePackages(
+    workspaceRoot,
+    JSON.parse(
+      readFileSync(path.join(workspaceRoot, 'package-lock.json'), 'utf8'),
+    ),
   );
+  const distDir = prepareFixturePackage({
+    workspaceRoot,
+    projectRoot,
+    tmpRoot,
+    version,
+    isWorkspaceLib: (name) => workspacePackages.has(name),
+  });
 
   mkdirSync(tmpRoot, { recursive: true });
   const packOutput = execNpmSync(

@@ -64,7 +64,9 @@ reimplementing it — that module already solves this exact problem for
    required peers `@epam/ai-dial-react-file-manager`/`ag-grid-community` — is
    either packed (if it's a workspace lib) or pinned to the exact version this
    workspace's own `package-lock.json` resolves it to (if it's external).
-   Nothing is skipped with `--legacy-peer-deps`.
+   Nothing is skipped with `--legacy-peer-deps`. Packing uses private temporary
+   copies of `dist/`; shared build manifests stay untouched even when other
+   consumer fixtures run concurrently with a different synthetic version.
 3. One `npm install` (`npmInstallFixture`) installs that fully declared
    dependency set with npm's normal peer-dependency resolution.
 4. `typecheckFixture` runs a real `tsc --noEmit` against an `entry.ts` that
