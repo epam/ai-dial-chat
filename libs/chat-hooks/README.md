@@ -130,7 +130,8 @@ whether you need to `npm install` it.
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                                                       |
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                                                       |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                                                       |
-| `./utils`                 | `@epam/ai-dial-usage-dashboard`                                                                                                                     | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                               |
+| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                               |
+| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                       | —                                                                                       |
 | `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                                                       |
 
 Six of the peers above (`@epam/ai-dial-builder-form`, `@epam/ai-dial-catalog`,
@@ -1442,7 +1443,7 @@ Requires a host-owned `formatResetTime(resetsAt)` callback, so that all `Date`/`
 import {
   mapUsageDataToDashboard,
   USAGE_DATA_I18N_KEYS,
-} from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-hooks/usage';
 import { UsageLimitCardGroup } from '@epam/ai-dial-usage-dashboard';
 
 // In your component:
@@ -1485,7 +1486,7 @@ Cost and Tokens cells use the same `total >= 2 ** 53` sentinel test. A sentinel 
 import {
   mapUserUsageToModelLimits,
   USAGE_MODEL_LIMITS_I18N_KEYS,
-} from '@epam/ai-dial-chat-hooks';
+} from '@epam/ai-dial-chat-hooks/usage';
 import { ModelLimitsSection } from '@epam/ai-dial-usage-dashboard';
 
 const rows = mapUserUsageToModelLimits(
@@ -1523,7 +1524,7 @@ Maps the top-level Cost budget fields from `UserLimitStatsResponseDto` (the same
 Pass the same `formatResetTime` callback used for the aggregate cards as an optional fourth argument to add each header's reset trio, read from the same top-level `*CostStats` stat that drives that header's status. A per-deployment `resetsAt` is never read for a header, and a top-level value is never reconciled against a differing per-deployment one. Omit the argument to produce statuses with no reset fields.
 
 ```tsx
-import { mapOverallCostLimitsToPeriodStatuses } from '@epam/ai-dial-chat-hooks';
+import { mapOverallCostLimitsToPeriodStatuses } from '@epam/ai-dial-chat-hooks/usage';
 
 const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
   usage,

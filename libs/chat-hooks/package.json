@@ -118,6 +118,12 @@
       "import": "./dist/utils.js",
       "default": "./dist/utils.js"
     },
+    "./usage": {
+      "@epam/source": "./src/entry-points/usage.ts",
+      "types": "./dist/usage.d.ts",
+      "import": "./dist/usage.js",
+      "default": "./dist/usage.js"
+    },
     "./mcp-apps": {
       "@epam/source": "./src/entry-points/mcp-apps.ts",
       "types": "./dist/mcp-apps.d.ts",

@@ -77,6 +77,19 @@ export const PROBE_DEFINITIONS = [
     sourceEntryFile: 'entry-points/source-content.ts',
     featurePeers: [],
   },
+  {
+    name: 'chat-hooks-usage-mapusagedatatodashboard',
+    exportName: 'mapUsageDataToDashboard',
+    packageName: '@epam/ai-dial-chat-hooks',
+    projectRoot: 'libs/chat-hooks',
+    specifier: '@epam/ai-dial-chat-hooks/usage',
+    sourceEntryFile: 'entry-points/usage.ts',
+    featurePeers: [
+      '@epam/ai-dial-usage-dashboard',
+      '@epam/ai-dial-chat-shared',
+      ...CHAT_SHARED_ROOT_PEERS,
+    ],
+  },
 ];
 const probeEntrySource = ({ exportName, specifier }) =>
   `import { ${exportName} } from '${specifier}';\nglobalThis.__probe = ${exportName};\n`;

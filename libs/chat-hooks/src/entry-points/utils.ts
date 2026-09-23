@@ -13,6 +13,4 @@ export * from '../shared/external-services';
 export * from '../shared/formatting';
 export * from '../shared/locale';
 export * from '../shared/string-utils';
-export * from '../usage/map-usage-data-to-dashboard';
-export * from '../usage/map-user-usage-to-model-limits';
 export * from '../usage/useUsageData/useUsageData';

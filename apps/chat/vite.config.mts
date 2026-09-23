@@ -113,6 +113,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/utils.ts',
       ),
+      '@epam/ai-dial-chat-hooks/usage': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/usage.ts',
+      ),
       '@epam/ai-dial-chat-hooks/mcp-apps': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/mcp-apps.ts',

@@ -218,7 +218,15 @@ export const SUBPATH_FIXTURES = [
     peers: [
       '@epam/ai-dial-builder-form',
       '@epam/ai-dial-chat-shared',
+      ...CHAT_SHARED_ROOT_PEERS,
+    ],
+  },
+  {
+    name: 'usage',
+    subpath: 'usage',
+    peers: [
       '@epam/ai-dial-usage-dashboard',
+      '@epam/ai-dial-chat-shared',
       ...CHAT_SHARED_ROOT_PEERS,
     ],
   },

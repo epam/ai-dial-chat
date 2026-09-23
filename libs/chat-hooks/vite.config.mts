@@ -68,6 +68,7 @@ export default defineConfig(({ command }) => ({
         sharing: 'src/entry-points/sharing.ts',
         attachments: 'src/entry-points/attachments.ts',
         utils: 'src/entry-points/utils.ts',
+        usage: 'src/entry-points/usage.ts',
         'mcp-apps': 'src/entry-points/mcp-apps.ts',
       },
       name: '@epam/ai-dial-chat-hooks',
