@@ -95,7 +95,15 @@ import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
 Omit `open` for local popup state, or provide `open` and `onOpenChange` for a
 controlled overlay. Enter, Space, and pointer activation open the picker;
 selection and Escape close it, restoring focus to the combobox. Result labels
-use the UI Kit `Highlight` component for the current search query.
+use the UI Kit `Highlight` component for the current search query. Records can
+also supply a decorative `icon` and a `description`, both rendered in the row.
+
+`renderPanel(onClose)` replaces the default searchable list. The resulting panel
+is passed to `renderOverlay(panel, open, onClose)` when a host supplies a sheet;
+otherwise it appears in the default dropdown. These slots compose together.
+Pass `ariaHasPopup="dialog"` for a sheet (the default is `"listbox"`). The same
+field handles selection display, disabled state and keyboard/pointer activation
+in both layouts; favorites and catalog integration remain host-owned panel content.
 
 The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
 keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;

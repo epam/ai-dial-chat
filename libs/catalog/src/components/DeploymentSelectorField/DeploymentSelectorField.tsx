@@ -8,6 +8,7 @@ import {
   Search,
 } from '@epam/ai-dial-ui-kit';
 import {
+  type AriaAttributes,
   type FC,
   type KeyboardEvent,
   type ReactNode,
@@ -51,6 +52,8 @@ export interface DeploymentSelectorFieldProps {
   isDisabled?: boolean;
   isInvalid?: boolean;
   labelledById?: string;
+  /** Accessible popup role. Use `dialog` for a host-rendered sheet. Defaults to `listbox`. */
+  ariaHasPopup?: AriaAttributes['aria-haspopup'];
   className?: string;
   panelClassName?: string;
   /** Optional host-resolved trailing affordance, such as a loading spinner. */
@@ -83,6 +86,7 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
   isDisabled = false,
   isInvalid = false,
   labelledById,
+  ariaHasPopup = 'listbox',
   className,
   panelClassName,
   iconAfter,
@@ -94,12 +98,13 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const isOpen = open ?? uncontrolledOpen;
   const setIsOpen = (nextOpen: boolean) => {
+    if (nextOpen && isDisabled) return;
     if (open === undefined) setUncontrolledOpen(nextOpen);
     onOpenChange?.(nextOpen);
   };
   const [query, setQuery] = useState('');
   const triggerRef = useRef<HTMLInputElement>(null);
-  const options = useMemo(
+  const options = useMemo<DeploymentSelectorDisplayRecord[]>(
     () =>
       [...extraOptions, ...records].filter((option) =>
         option.label.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
@@ -114,7 +119,9 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
     onSelect(id);
     close();
   };
-  const panel = (
+  const panel = renderPanel ? (
+    renderPanel(close)
+  ) : (
     <div
       className={mergeClasses('w-full min-w-0 max-w-full p-3', panelClassName)}
     >
@@ -142,7 +149,13 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
               aria-selected={option.id === selectedId}
               selected={option.id === selectedId}
               label={
-                <Highlight text={option.label} query={query} maxLines={2} />
+                <span className="flex min-w-0 items-center gap-2">
+                  {option.icon && <span aria-hidden>{option.icon}</span>}
+                  <span className="flex min-w-0 flex-col">
+                    <Highlight text={option.label} query={query} maxLines={2} />
+                    {option.description && <span>{option.description}</span>}
+                  </span>
+                </span>
               }
               onClick={() => select(option.id)}
               className="h-auto max-w-full py-2"
@@ -169,7 +182,7 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
       }}
       readOnly
       role="combobox"
-      aria-haspopup="listbox"
+      aria-haspopup={ariaHasPopup}
       aria-expanded={isOpen}
       aria-labelledby={labelledById}
       disabled={isDisabled}
@@ -181,13 +194,12 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
         ''
       }
       placeholder={placeholder}
-      onClick={() => setIsOpen(!isOpen)}
       onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Escape') {
           close();
           return;
         }
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (renderOverlay && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           setIsOpen(!isOpen);
         }
@@ -201,7 +213,12 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
   if (renderOverlay)
     return (
       <>
-        {trigger}
+        {/* The input handles keyboard activation; this wrapper also makes
+            the trailing icon and padding pointer targets for custom sheets. */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- keyboard activation is owned by the combobox input */}
+        <div className="w-full min-w-0" onClick={() => setIsOpen(!isOpen)}>
+          {trigger}
+        </div>
         {renderOverlay(panel, isOpen, close)}
       </>
     );
@@ -212,7 +229,7 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
       disabled={isDisabled}
       className="w-full"
       listClassName="w-[min(var(--reference-width),calc(100vw-2rem))] max-w-full"
-      renderOverlay={() => renderPanel?.(close) ?? panel}
+      renderOverlay={() => panel}
     >
       {trigger}
     </Dropdown>

@@ -127,6 +127,24 @@ try {
       'Form overflow at ' + width,
     );
   }
+  const hostPicker = page.getByRole('combobox', {
+    name: 'Host model',
+    exact: true,
+  });
+  for (const width of [360, 1280]) {
+    await page.setViewportSize({ width, height: 1100 });
+    await hostPicker.focus();
+    await page.keyboard.press('Enter');
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Host panel action' }).click();
+    await page.waitForFunction(
+      () =>
+        document.activeElement?.getAttribute('aria-labelledby') ===
+        'host-picker-label',
+    );
+    assert.equal(await hostPicker.getAttribute('aria-expanded'), 'false');
+    assert.equal(await page.getByRole('dialog').count(), 0);
+  }
   const detail = page.getByRole('region', {
     name: 'Scheduled task detail',
     exact: true,

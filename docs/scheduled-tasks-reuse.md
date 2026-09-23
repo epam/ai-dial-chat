@@ -20,7 +20,10 @@ base/theme styles once at the host root.
 The fixture at `tools/scheduled-tasks-consumer-fixture` proves this boundary
 against packed artifacts, rather than workspace aliases. It imports scheduler
 and catalog public entries only; host adapters provide resolved deployment
-records, callbacks, labels, and a configured scheduler client. UI Kit base and
+records, callbacks, labels, and a configured scheduler client. The parent uses
+the same field for desktop dropdowns and mobile sheets, supplying its favorites
+panel through `renderPanel`; `renderOverlay` wraps that panel without replacing it.
+UI Kit base and
 theme styles remain singleton host imports, while the scheduler stylesheet
 includes its builder-form structural dependency.
 

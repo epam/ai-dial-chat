@@ -1,103 +1,20 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { DeploymentSelectorField } from '../DeploymentSelectorField';
 
-vi.mock('@epam/ai-dial-chat-shared', () => ({
-  mergeClasses: (...classes: (string | undefined)[]) =>
-    classes.filter(Boolean).join(' '),
-}));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  Dropdown: ({
-    children,
-    renderOverlay,
-  }: {
-    children: ReactNode;
-    renderOverlay: () => ReactNode;
-  }) => (
+const renderField = (
+  props: Partial<ComponentProps<typeof DeploymentSelectorField>> = {},
+) =>
+  render(
     <>
-      {children}
-      {renderOverlay()}
-    </>
-  ),
-  GhostButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button onClick={onClick}>{label}</button>
-  ),
-  Highlight: ({ text }: { text: string }) => <>{text}</>,
-  Input: ({
-    value,
-    placeholder,
-    onKeyDown,
-    ...props
-  }: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input
-      value={value}
-      placeholder={placeholder}
-      onKeyDown={onKeyDown}
-      readOnly
-      {...props}
-    />
-  ),
-  MenuItem: ({
-    label,
-    onClick,
-    ...props
-  }: {
-    label: ReactNode;
-    onClick: () => void;
-  }) => (
-    <button onClick={onClick} {...props}>
-      {label}
-    </button>
-  ),
-  Search: ({
-    value,
-    onChange,
-    ...props
-  }: {
-    value: string;
-    onChange: (value?: string) => void;
-  }) => (
-    <input
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      {...props}
-    />
-  ),
-}));
-
-describe('DeploymentSelectorField', () => {
-  it('selects a resolved record and preserves an unavailable selected id', () => {
-    const onSelect = vi.fn();
-    render(
-      <DeploymentSelectorField
-        selectedId="removed"
-        records={[{ id: 'model', label: 'Model' }]}
-        placeholder="Choose"
-        labels={{
-          searchPlaceholder: 'Search',
-          searchAriaLabel: 'Search models',
-          emptyLabel: 'Empty',
-          errorLabel: 'Error',
-        }}
-        onSelect={onSelect}
-      />,
-    );
-
-    expect(screen.getByRole<HTMLInputElement>('combobox').value).toBe(
-      'removed',
-    );
-    fireEvent.click(screen.getByRole('option', { name: 'Model' }));
-    expect(onSelect).toHaveBeenCalledWith('model');
-  });
-
-  it('keeps Browse available when records are empty', () => {
-    const onBrowse = vi.fn();
-    render(
+      <span id="model-label">Model</span>
       <DeploymentSelectorField
         selectedId={null}
-        records={[]}
+        records={[{ id: 'model', label: 'Model A' }]}
         placeholder="Choose"
+        labelledById="model-label"
         labels={{
           searchPlaceholder: 'Search',
           searchAriaLabel: 'Search models',
@@ -106,36 +23,111 @@ describe('DeploymentSelectorField', () => {
           browseLabel: 'Browse',
         }}
         onSelect={vi.fn()}
-        onBrowse={onBrowse}
-      />,
-    );
+        {...props}
+      />
+    </>,
+  );
 
-    expect(screen.getByText('Nothing here')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Browse' }));
-    expect(onBrowse).toHaveBeenCalledOnce();
+describe('DeploymentSelectorField', () => {
+  it('selects a resolved record and preserves an unavailable selected id', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+    renderField({ selectedId: 'removed', onSelect });
+    const trigger = screen.getByRole<HTMLInputElement>('combobox');
+    expect(trigger.value).toBe('removed');
+    expect(screen.queryByRole('option')).toBeNull();
+    await user.click(trigger);
+    await user.click(await screen.findByRole('option', { name: 'Model A' }));
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('model');
+    expect(screen.queryByRole('option')).toBeNull();
+    await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
   });
 
-  it('opens from the keyboard and returns focus to its combobox after selection', () => {
-    render(
-      <DeploymentSelectorField
-        selectedId={null}
-        records={[{ id: 'model', label: 'Model' }]}
-        placeholder="Choose"
-        labels={{
-          searchPlaceholder: 'Search',
-          searchAriaLabel: 'Search models',
-          emptyLabel: 'Empty',
-          errorLabel: 'Error',
-        }}
-        onSelect={vi.fn()}
-      />,
-    );
+  it('keeps Browse available when records are empty', async () => {
+    const onBrowse = vi.fn();
+    const user = userEvent.setup();
+    renderField({ records: [], onBrowse });
+    await user.click(screen.getByRole('combobox'));
+    expect(await screen.findByText('Nothing here')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Browse' }));
+    expect(onBrowse).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Nothing here')).toBeNull();
+  });
 
-    const combobox = screen.getByRole('combobox');
-    combobox.focus();
-    fireEvent.keyDown(combobox, { key: 'Enter' });
-    expect(combobox.getAttribute('aria-expanded')).toBe('true');
-    fireEvent.click(screen.getByRole('option', { name: 'Model' }));
-    expect(combobox.matches(':focus')).toBe(true);
+  it('opens from the keyboard and returns focus after selection', async () => {
+    const user = userEvent.setup();
+    renderField();
+    await user.tab();
+    const trigger = screen.getByRole('combobox');
+    await user.keyboard('{Enter}');
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    await user.click(await screen.findByRole('option', { name: 'Model A' }));
+    await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('renders record icons and descriptions in searchable options', async () => {
+    const user = userEvent.setup();
+    renderField({
+      records: [
+        {
+          id: 'model',
+          label: 'Model A',
+          description: 'For longer tasks',
+          icon: <span>Model icon</span>,
+        },
+      ],
+    });
+    await user.click(screen.getByRole('combobox'));
+    const option = await screen.findByRole('option', {
+      name: 'Model A For longer tasks',
+    });
+    expect(within(option).getByText('Model icon')).toBeTruthy();
+    expect(within(option).getByText('For longer tasks')).toBeTruthy();
+  });
+
+  it.each([false, true])(
+    'uses the custom panel with a custom overlay=%s',
+    async (customOverlay) => {
+      const user = userEvent.setup();
+      renderField({
+        renderPanel: (close) => <button onClick={close}>Host panel</button>,
+        ariaHasPopup: customOverlay ? 'dialog' : 'listbox',
+        renderOverlay: customOverlay
+          ? (panel, open) =>
+              open && (
+                <div role="dialog" aria-label="Choose model">
+                  {panel}
+                </div>
+              )
+          : undefined,
+      });
+      const trigger = screen.getByRole('combobox');
+      await user.click(trigger);
+      expect(
+        await screen.findByRole('button', { name: 'Host panel' }),
+      ).toBeTruthy();
+      expect(screen.queryByRole('option')).toBeNull();
+      if (customOverlay) {
+        expect(
+          within(screen.getByRole('dialog')).getByText('Host panel'),
+        ).toBeTruthy();
+        expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+      }
+      await user.click(screen.getByRole('button', { name: 'Host panel' }));
+      expect(screen.queryByText('Host panel')).toBeNull();
+      await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
+    },
+  );
+
+  it('does not open a disabled custom overlay from the trailing affordance', async () => {
+    const user = userEvent.setup();
+    renderField({
+      isDisabled: true,
+      iconAfter: <span>Open picker</span>,
+      renderOverlay: (panel, open) => open && <div role="dialog">{panel}</div>,
+    });
+    await user.click(screen.getByText('Open picker'));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

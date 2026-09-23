@@ -18,6 +18,7 @@ import {
   ScheduledTasksSortKey,
 } from '@epam/ai-dial-scheduled-tasks';
 import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/validation';
+import { Popup } from '@epam/ai-dial-ui-kit';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@epam/ai-dial-scheduled-tasks/styles.css';
@@ -226,6 +227,34 @@ const Fixture = () => {
           instructionsMarkdown="Packed instructions"
           runs={[]}
           renderInstructions={(text) => <p>{text}</p>}
+        />
+      </section>
+      <section aria-label="Host picker composition">
+        <span id="host-picker-label">Host model</span>
+        <DeploymentSelectorField
+          selectedId={deploymentId}
+          selectedLabel="Host model"
+          records={[]}
+          placeholder="Choose model"
+          labelledById="host-picker-label"
+          ariaHasPopup="dialog"
+          labels={{
+            searchPlaceholder: 'Search',
+            searchAriaLabel: 'Search',
+            emptyLabel: 'Empty',
+            errorLabel: 'Error',
+          }}
+          onSelect={setDeploymentId}
+          renderPanel={(close) => (
+            <button type="button" onClick={close}>
+              Host panel action
+            </button>
+          )}
+          renderOverlay={(panel, open, close) => (
+            <Popup open={open} header="Host models" onClose={close}>
+              {panel}
+            </Popup>
+          )}
         />
       </section>
       <ScheduledTaskDeleteConfirmation

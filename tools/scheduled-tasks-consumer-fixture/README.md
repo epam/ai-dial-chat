@@ -16,7 +16,8 @@ machine does not already have it.
 Checks include runtime validation import, request preparation, trigger
 description, responsive 3/2/1 columns, matching skeleton height, tertiary
 form border, absence of global builder class leakage, instructions placeholder,
-deployment selection, Browse and deletion close, and narrow form overflow.
+deployment selection, Browse and deletion close, custom panel/sheet composition
+at mobile and desktop widths with keyboard focus restoration, and narrow form overflow.
 UI Kit and other peer dependencies are provided by the host workspace.
 
 For an already packed and built fixture, rerun only the acceptance checks:
