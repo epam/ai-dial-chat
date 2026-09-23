@@ -24,7 +24,7 @@ export const ScheduledTaskCardSkeleton: FC<ScheduledTaskCardSkeletonProps> = ({
     <CardShell
       aria-hidden
       style={cssVars}
-      className={mergeClasses('h-[232px]', styles.card)}
+      className={mergeClasses('h-[var(--st-card-height,232px)]', styles.card)}
     >
       <Skeleton
         variant={SkeletonVariant.Rectangular}

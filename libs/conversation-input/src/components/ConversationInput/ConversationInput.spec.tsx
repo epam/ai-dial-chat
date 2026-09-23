@@ -1,3 +1,4 @@
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationInput } from './ConversationInput';
@@ -189,5 +190,30 @@ describe('ConversationInput — attachments', () => {
     });
 
     expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
+  });
+});
+
+describe('ConversationInput — attachment tray styles', () => {
+  it('forwards styles.attachmentTray to the composer tray', () => {
+    render(
+      <ConversationInput
+        pendingAttachments={[
+          {
+            id: 'report',
+            name: 'report.pdf',
+            file: new File([], 'report.pdf', { type: 'application/pdf' }),
+            type: AttachmentType.File,
+            contentType: 'application/pdf',
+            url: 'files/report.pdf',
+            status: RequestStatus.Idle,
+          },
+        ]}
+        styles={{ attachmentTray: { className: 'host-tray' } }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('list', { name: 'Attached files' }).classList,
+    ).toContain('host-tray');
   });
 });

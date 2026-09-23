@@ -1,3 +1,4 @@
+import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 import type {
   Attachment,
   AttachmentErrorReason,
@@ -47,6 +48,13 @@ export interface ConversationInputStyles {
   colors?: ConversationInputColors;
   /** Typography overrides for the welcome heading and input. */
   typography?: ConversationInputTypography;
+  /**
+   * Style overrides for the composer's attachment tray. Its `card` slot
+   * carries `AttachmentCardStyles` through to every tile, which is how a host
+   * sizes a tile or restyles its meta line without a descendant selector on
+   * `ATTACHMENT_INPUT_CLASS`.
+   */
+  attachmentTray?: AttachmentTrayStyles;
 }
 
 /** Props accepted by the `EditMessageInput` component. */
@@ -184,10 +192,19 @@ export interface ConversationInputProps {
   placeholder?: string;
   /**
    * How the action row arranges the textarea and the controls around it.
-   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` is ignored
-   * on mobile, where one line does not fit.
+   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` applies
+   * from the desktop breakpoint (1280px) up, unless
+   * `isInlineActionRowAllowedBelowDesktop` opts the narrower widths in.
    */
   actionRowLayout?: ActionRowLayout;
+  /**
+   * When `true`, `ActionRowLayout.Inline` also applies below the desktop
+   * breakpoint (1280px). Set it when the embedded composer is wide enough
+   * there — a phone-width one is not. Affects the action row alone: the add
+   * menu and model picker keep their bottom-sheet presentation. Defaults to
+   * `false`.
+   */
+  isInlineActionRowAllowedBelowDesktop?: boolean;
   /**
    * Message value. Sets the initial textarea content on mount and syncs the
    * textarea whenever the value changes.

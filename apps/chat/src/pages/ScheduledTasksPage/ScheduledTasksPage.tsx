@@ -23,6 +23,7 @@ import {
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   OfflineCredentialsGateStatus,
   useOfflineCredentialsGate,
@@ -63,6 +64,7 @@ const resolveBannerState = ({
 
 const ScheduledTasksPage: FC = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
@@ -76,9 +78,11 @@ const ScheduledTasksPage: FC = () => {
     setSortKey,
     isLoading,
     isLoadingMore,
+    loadMoreError,
     error,
     hasMore,
     loadMore,
+    retryLoadMore,
     refetch,
   } = useScheduledTasks(isEnabled);
 
@@ -193,14 +197,15 @@ const ScheduledTasksPage: FC = () => {
       loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),
       cardLabels: {
         newBadgeLabel: t(ScheduledTasksI18nKeys.CardNewBadgeLabel),
+        completedBadgeLabel: t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel),
       },
     }),
     [t],
   );
 
   const items = useMemo(
-    () => mapScheduledTaskDtosToItems(taskDtos, t),
-    [taskDtos, t],
+    () => mapScheduledTaskDtosToItems(taskDtos, t, language),
+    [taskDtos, t, language],
   );
 
   if (appConfigStatus !== UserConfigStatus.Ready) {
@@ -225,7 +230,9 @@ const ScheduledTasksPage: FC = () => {
       onRetry={refetch}
       hasMore={hasMore}
       isLoadingMore={isLoadingMore}
+      loadMoreError={loadMoreError}
       onLoadMore={loadMore}
+      onRetryLoadMore={retryLoadMore}
       onCardClick={handleCardClick}
       banner={
         <ScheduledTasksLoginBanner

@@ -1,3 +1,7 @@
+/* The scheduler is a composed surface: its documented stylesheet includes the
+ * structural styles supplied by its builder-form dependency. */
+import '@epam/ai-dial-builder-form/styles.css';
+
 export { ScheduledTasks } from './components/ScheduledTasks/ScheduledTasks';
 export type {
   ScheduledTasksProps,
@@ -18,6 +22,7 @@ export { ScheduledTaskCardGrid } from './components/ScheduledTaskCardGrid/Schedu
 export type {
   ScheduledTaskCardGridProps,
   ScheduledTaskCardGridLabels,
+  ScheduledTaskCardGridLayout,
 } from './models/scheduled-task-card-grid-props';
 export { ScheduledTaskCardSkeleton } from './components/ScheduledTaskCardSkeleton/ScheduledTaskCardSkeleton';
 export type {
@@ -26,6 +31,7 @@ export type {
   ScheduledTaskCardSkeletonColors,
 } from './models/scheduled-task-card-skeleton-props';
 export type { ScheduledTaskItem } from './models/scheduled-task-item';
+export { ScheduledTaskPresentationStatus } from './models/scheduled-task-item';
 export { ScheduledTasksSortKey } from './types/scheduled-tasks-sort-key';
 export { ScheduledTaskCreateForm } from './components/ScheduledTaskCreateForm/ScheduledTaskCreateForm';
 export type {
@@ -48,10 +54,13 @@ export type {
   ScheduledTaskDetailViewStyles,
   ScheduledTaskDetailViewColors,
   ScheduledTaskDetailViewTypography,
+  ScheduledTaskDetailViewLayout,
 } from './models/scheduled-task-detail-view-props';
 export type { ScheduledTaskRunItem } from './models/scheduled-task-run-item';
 export { ScheduledTaskRunStatus } from './types/scheduled-task-run-status';
 export { ScheduledTaskRunHistoryList } from './components/ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
+export { ScheduledTaskHistorySection } from './components/ScheduledTaskHistorySection/ScheduledTaskHistorySection';
+export type { ScheduledTaskHistorySectionStyles } from './models/scheduled-task-history-section-props';
 export type {
   ScheduledTaskRunHistoryListProps,
   ScheduledTaskRunHistoryListLabels,
@@ -60,6 +69,11 @@ export type {
   ScheduledTaskRunHistoryListTypography,
 } from './models/scheduled-task-run-history-list-props';
 export { ScheduledTaskDetailsSummary } from './components/ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
+export { ScheduledTaskDeleteConfirmation } from './components/ScheduledTaskDeleteConfirmation/ScheduledTaskDeleteConfirmation';
+export type {
+  ScheduledTaskDeleteConfirmationProps,
+  ScheduledTaskDeleteConfirmationStyles,
+} from './components/ScheduledTaskDeleteConfirmation/ScheduledTaskDeleteConfirmation';
 export type {
   ScheduledTaskDetailsSummaryProps,
   ScheduledTaskDetailsSummaryStyles,

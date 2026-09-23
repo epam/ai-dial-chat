@@ -1,4 +1,5 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import type { AttachmentCardStyles } from './attachment-card';
 
 /** Localised accessible labels for the `AttachmentTray` component. */
 export interface AttachmentTrayLabels {
@@ -18,6 +19,8 @@ export interface AttachmentTrayLabels {
 export interface AttachmentTrayStyles {
   /** Extra class name(s) merged onto the root element. */
   className?: string;
+  /** Colors, typography, and shape forwarded to every card in the tray. */
+  card?: AttachmentCardStyles;
 }
 
 /** Props accepted by the `AttachmentTray` component. */

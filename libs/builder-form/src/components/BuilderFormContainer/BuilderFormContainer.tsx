@@ -15,9 +15,12 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
   isCancelDisabled = false,
   isSubmitDisabled = false,
   isSubmitting = false,
+  backIcon,
+  className,
   left,
   children,
   metadata,
+  layout,
   styles: containerStyles,
 }) => {
   const { colors, header, cssVars } = containerStyles ?? {};
@@ -32,6 +35,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
       }}
       className={mergeClasses(
         'flex h-full w-full flex-col overflow-y-auto',
+        className,
         styles.container,
       )}
     >
@@ -43,9 +47,10 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
         isCancelDisabled={isCancelDisabled}
         isSubmitDisabled={isSubmitDisabled}
         isSubmitting={isSubmitting}
+        backIcon={backIcon}
         styles={header}
       />
-      <BuilderFormBody left={left} metadata={metadata}>
+      <BuilderFormBody left={left} metadata={metadata} layout={layout}>
         {children}
       </BuilderFormBody>
       {/*
@@ -60,7 +65,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
        */}
       <div
         className={mergeClasses(
-          'sticky bottom-0 z-10 flex items-center gap-2 p-3 desktop:hidden',
+          'sticky bottom-0 z-10 items-center gap-2 p-3',
           styles.footer,
         )}
       >

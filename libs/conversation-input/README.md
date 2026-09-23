@@ -72,6 +72,32 @@ keeps its content. A paste at or above the cap also reports through
 flag `false`), since there the pasted text lands inline rather than becoming an
 attachment.
 
+`styles.attachmentTray` themes the tray of pending attachments and, through its
+`card` slot, every tile in it — the same `AttachmentTrayStyles` /
+`AttachmentCardStyles` the tray takes on its own, so sizing a tile needs no
+descendant selector on `ATTACHMENT_INPUT_CLASS`. Both types come from
+[`@epam/ai-dial-attachment-input`](../attachment-input/README.md), which owns
+the components:
+
+```tsx
+import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
+
+<ConversationInput
+  onSend={handleSend}
+  styles={{
+    attachmentTray: {
+      className: 'gap-3',
+      card: {
+        className: 'size-[120px]',
+        typography: { metaClassName: 'dial-tiny-text' },
+      },
+    },
+  }}
+/>;
+```
+
+`Input` takes the same object as a top-level `attachmentTray` prop.
+
 `message` and `textInsertion` are two different ways to write into the textarea,
 and they are not interchangeable. `message` sets the value: the textarea resyncs
 to it whenever the string changes, or whenever `messageRevision` changes if the
@@ -231,6 +257,8 @@ CONVERSATION_INPUT_CLASS.actionRow; // 'dial-ci-action-row'
 | `dial-ci-tools-chips`           | The tool chips cell inside the action row                         |
 | `dial-ci-footer-actions`        | The trailing cluster: model selector, mic, and send/stop buttons  |
 | `dial-ci-model-selector-button` | The model selector trigger button, in every presentation          |
+| `dial-ci-model-selector-icon`   | The box wrapping the selected deployment's icon in the trigger    |
+| `dial-ci-model-selector-caret`  | The trigger's chevron                                             |
 
 `dial-ci-action-row` is absent when `hideActionBar` is set,
 `dial-ci-add-cluster` is absent when `hideAddButton` is set, and
@@ -276,14 +304,16 @@ those props keep working exactly as before.
 
 ### Replacing fragile selectors
 
-| Instead of                                       | Use                                 |
-| ------------------------------------------------ | ----------------------------------- |
-| `> div:has(textarea)`                            | `.dial-ci-action-row`               |
-| `div.ms-auto`                                    | `.dial-ci-footer-actions`           |
-| `button[class*='modelSelectorButton']`           | `.dial-ci-model-selector-button`    |
-| `div[role='menu']:has([class*='searchHeader_'])` | `.dial-ci-model-menu`               |
-| `[class*='searchHeader_']`                       | `.dial-ci-model-menu-search`        |
-| `[class*='selectedItem_']`                       | `.dial-ci-model-menu-item-selected` |
+| Instead of                                          | Use                                 |
+| --------------------------------------------------- | ----------------------------------- |
+| `> div:has(textarea)`                               | `.dial-ci-action-row`               |
+| `div.ms-auto`                                       | `.dial-ci-footer-actions`           |
+| `button[class*='modelSelectorButton']`              | `.dial-ci-model-selector-button`    |
+| `.dial-ci-model-selector-button > span:first-child` | `.dial-ci-model-selector-icon`      |
+| `.dial-ci-model-selector-button svg:last-child`     | `.dial-ci-model-selector-caret`     |
+| `div[role='menu']:has([class*='searchHeader_'])`    | `.dial-ci-model-menu`               |
+| `[class*='searchHeader_']`                          | `.dial-ci-model-menu-search`        |
+| `[class*='selectedItem_']`                          | `.dial-ci-model-menu-item-selected` |
 
 ### Stability
 
@@ -334,8 +364,22 @@ first line and the add button, tool chips, and footer actions wrap below it.
 actions on one line. Tool chips are variable-width, so they move to a row of
 their own above the action row rather than competing for the line.
 
-The layout is ignored on mobile, where one line does not fit — you do not need
-to branch on viewport yourself.
+The layout applies from the desktop breakpoint (1280px) up, because one line
+does not fit a phone — you do not need to branch on viewport yourself. An embed
+whose composer is already wide below that width opts the narrower widths in with
+`isInlineActionRowAllowedBelowDesktop`:
+
+```tsx
+<ConversationInput
+  actionRowLayout={ActionRowLayout.Inline}
+  isInlineActionRowAllowedBelowDesktop
+  onSend={handleSend}
+/>
+```
+
+The flag affects the action row alone. The add menu and the model picker keep
+their bottom-sheet presentation below 1280px, so it does not turn an embed into
+a desktop layout wholesale.
 
 Neither layout uses an `order-*` utility: each renders its children in the
 order they appear on screen, so the tab order always matches the visual order.
