@@ -137,7 +137,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconArrowLeft: ({ className }: { className?: string }) => (
+  IconArrowNarrowLeft: ({ className }: { className?: string }) => (
     <svg data-icon="back" className={className} />
   ),
   IconCircleCheck: () => <svg data-icon="success" />,

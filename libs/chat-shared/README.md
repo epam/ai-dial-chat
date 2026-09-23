@@ -18,7 +18,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.9`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.12`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -33,8 +33,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.9
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.2 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.12
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -621,13 +621,18 @@ import {
   buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
 
-// Merge conditional class names — the only supported way to compose classes
+// Merge conditional class names — the only supported way to compose classes.
+// Conflicting utilities collapse to the last one, including the workspace
+// theme's own `shadow-chat-button` against the stock shadow scale.
 const className = mergeClasses('base-class', isActive && 'active');
 
 // Map a *Colors object to CSS custom property declarations; undefined values are dropped
 const cssVars = buildCssVars({ '--cs-text': colors?.text });
 
-// Serialize a rendered <table>'s rows to CSV/TSV/Markdown, the format MarkdownTable's own copy actions use
+// Serialize a rendered <table>'s rows to CSV or Markdown, the formats MarkdownTable's own copy actions use.
+// A KaTeX-rendered cell comes back as the LaTeX it was built from, so the math survives a round trip.
+// In Markdown a pipe inside a formula is written as `\vert` / `\Vert`, which renders the same glyphs and
+// cannot split the row; CSV columns keep the bare source.
 const csv = serializeMarkdownTableRows(
   Array.from(tableElement.rows),
   MarkdownTableCopyFormat.Csv,

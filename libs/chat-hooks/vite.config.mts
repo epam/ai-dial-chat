@@ -16,7 +16,9 @@ const EXTERNAL_PEER_NAMES = [
   ...Object.keys(ownPackageJson.peerDependencies ?? {}),
 ];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => ({
+  // Published libraries must also run with React's production runtime.
+  oxc: command === 'build' ? { jsx: { development: false } } : undefined,
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/chat-hooks',
   resolve: {
@@ -66,6 +68,7 @@ export default defineConfig(() => ({
         sharing: 'src/entry-points/sharing.ts',
         attachments: 'src/entry-points/attachments.ts',
         utils: 'src/entry-points/utils.ts',
+        usage: 'src/entry-points/usage.ts',
         'mcp-apps': 'src/entry-points/mcp-apps.ts',
       },
       name: '@epam/ai-dial-chat-hooks',
@@ -94,6 +97,10 @@ export default defineConfig(() => ({
      * affects this lib's own production build.
      */
     alias: {
+      '@epam/ai-dial-scheduled-tasks/validation': path.resolve(
+        import.meta.dirname,
+        '../scheduled-tasks/src/validation/index.ts',
+      ),
       '@epam/ai-dial-chat-api-client': path.resolve(
         import.meta.dirname,
         '../chat-api-client/src/index.ts',
@@ -101,6 +108,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-attachment-input': path.resolve(
         import.meta.dirname,
         '../attachment-input/src/index.ts',
+      ),
+      '@epam/ai-dial-builder-form/styles.css': path.resolve(
+        import.meta.dirname,
+        '../builder-form/src/styles.css',
       ),
       '@epam/ai-dial-builder-form': path.resolve(
         import.meta.dirname,

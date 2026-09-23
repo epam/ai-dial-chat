@@ -4,7 +4,7 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Overview
 
-`@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a _configured_ REST client instance, i18n, or routing, and never renders a UI-kit component — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. A few hooks do import non-component symbols from `@epam/ai-dial-ui-kit` (enums such as `NotificationVariant`, constants such as `NOT_ALLOWED_SYMBOLS`, types such as `TabModel`) to describe values the host renders — that is a data/type dependency, not a rendering one. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
+`@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a _configured_ REST client instance, i18n, or routing, and never renders a UI-kit component — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. A few hooks do import non-component symbols from `@epam/ai-dial-ui-kit` (enums such as `NotificationVariant`, constants such as `NOT_ALLOWED_SYMBOLS`, types such as `FilterChipItem`) to describe values the host renders — that is a data/type dependency, not a rendering one. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
 
 ## Installation
 
@@ -60,12 +60,13 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.2
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.9
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.12
+- `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -130,6 +131,7 @@ whether you need to `npm install` it.
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                                                       |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                                                       |
 | `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                               |
+| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                       | —                                                                                       |
 | `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                                                       |
 
 Six of the peers above (`@epam/ai-dial-builder-form`, `@epam/ai-dial-catalog`,
@@ -1421,6 +1423,141 @@ const SkillCatalog = ({
 | `refetch`          | `() => Promise<void>`                  | Re-reads all namespaces and replaces the current state.                    |
 | `mergeSharedSkill` | `(item: SkillMetadataItemDto) => void` | Upserts a skill into `sharedWithMe` by `url`, appending it if not present. |
 
+## Usage Utilities
+
+Available from both `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/usage`.
+These adapters use display enums from `@epam/ai-dial-usage-dashboard` at runtime.
+It is an optional peer in the package manifest, but must be installed when loading
+either entry point; optional means hosts using other feature subpaths can omit it.
+The root retains its broader feature-peer requirements listed above.
+
+Three pure functions turning `useUsageData`'s already-fetched `UserLimitStatsResponseDto` into the normalized display models `@epam/ai-dial-usage-dashboard`'s `UsageLimitCardGroup` and `ModelLimitsSection` render. This is the narrow, explicitly justified DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation: the adaptation is driven entirely by the generated response's own shape (the unlimited sentinel, status thresholds, field names), fully characterized by an existing test suite, and consumed identically by every DIAL-Core-backed chat application this library serves. Every user-visible string is produced by a caller-supplied `t` function matching i18next's `TFunction` signature, and every host-specific concern (icon-URL construction, locale resolution, date/time formatting) arrives as a caller-supplied callback — none of the three functions imports `react-i18next`, an app context, or `Intl`.
+
+### mapUsageDataToDashboard
+
+Maps a `UserLimitStatsResponseDto` into the `cards` array for `UsageLimitCardGroup`, in Today / This week / This month order. A period is omitted when the response carries no usable stat for it.
+
+Requires a host-owned `formatResetTime(resetsAt)` callback, so that all `Date`/`Intl` work stays at the application edge. It receives each period's raw `resetsAt` and returns a `ResetTimeDisplay`, or `undefined` when the value is absent, unparseable, or `Intl` is unavailable — in which case the card carries no reset fields.
+
+```tsx
+import {
+  mapUsageDataToDashboard,
+  USAGE_DATA_I18N_KEYS,
+} from '@epam/ai-dial-chat-hooks/usage';
+import { UsageLimitCardGroup } from '@epam/ai-dial-usage-dashboard';
+
+// In your component:
+const formatResetTime = useCallback(
+  (resetsAt: string | undefined) =>
+    formatMyResetTime(resetsAt, activeLocale, t),
+  [activeLocale, t],
+);
+
+const cards = mapUsageDataToDashboard(usage, t, formatResetTime);
+// <UsageLimitCardGroup cards={cards} labels={labels} />
+```
+
+Keep `formatResetTime` referentially stable (for example with `useCallback`) — it is a dependency of the `useMemo` the function usually sits behind, so an unstable identity recomputes on every render.
+
+#### API
+
+**Parameters**:
+
+| Name              | Type                                     | Description                                                                |
+| ----------------- | ---------------------------------------- | -------------------------------------------------------------------------- |
+| `usage`           | `UserLimitStatsResponseDto \| undefined` | The already-fetched usage response, or `undefined` before it resolves.     |
+| `t`               | `(key: string, options?) => string`      | Translate callback matching i18next's `TFunction` signature.               |
+| `formatResetTime` | `FormatResetTime`                        | Host-owned callback formatting a raw `resetsAt` into a `ResetTimeDisplay`. |
+
+**Returns**: `UsageLimitCardData[]` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
+
+`USAGE_DATA_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`. Include those keys in your translation bundle.
+
+### mapUserUsageToModelLimits
+
+Maps `usage.deployments` into the `rows` array for `ModelLimitsSection`, joined with display metadata from a list of `DeploymentItemDto`. Only deployments that have nonzero usage in at least one displayed period are included. Requires two host-owned callbacks to keep URL construction and locale resolution out of this function:
+
+- `resolveIconUrl(iconUrl)` — resolves a deployment's raw `iconUrl` to the URL the avatar should load (typically the host's own icon-proxy endpoint).
+- `resolveDisplayName(name, locale)` — resolves a localized-text map or plain string to the display name for the active locale.
+
+Cost and Tokens cells use the same `total >= 2 ** 53` sentinel test. A sentinel Cost `total` produces an `Unlimited` cell showing attributed spend with no cap; a genuinely finite one produces a `Finite` cell whose status folds into the row's overall Status alongside finite Tokens statuses.
+
+```tsx
+import {
+  mapUserUsageToModelLimits,
+  USAGE_MODEL_LIMITS_I18N_KEYS,
+} from '@epam/ai-dial-chat-hooks/usage';
+import { ModelLimitsSection } from '@epam/ai-dial-usage-dashboard';
+
+const rows = mapUserUsageToModelLimits(
+  usage,
+  deploymentItems,
+  activeLocale,
+  t,
+  (iconUrl) => resolveMyIconUrl(iconUrl),
+  (name, locale) => resolveLocalizedText(name, locale),
+);
+// <ModelLimitsSection rows={rows} labels={labels} periodStatuses={periodStatuses} />
+```
+
+#### API
+
+**Parameters**:
+
+| Name                 | Type                                                                                      | Description                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `usage`              | `UserLimitStatsResponseDto \| undefined`                                                  | The already-fetched usage response.                                    |
+| `deploymentItems`    | `DeploymentItemDto[]`                                                                     | Enrichment-only model metadata; row order follows `usage.deployments`. |
+| `activeLocale`       | `string`                                                                                  | Passed to `resolveDisplayName`.                                        |
+| `t`                  | `(key: string, options?) => string`                                                       | Translate callback.                                                    |
+| `resolveIconUrl`     | `(iconUrl: string \| undefined) => string \| undefined`                                   | Host-owned icon URL resolver.                                          |
+| `resolveDisplayName` | `(name: string \| Record<string, string> \| undefined \| null, locale: string) => string` | Host-owned display-name resolver.                                      |
+
+**Returns**: `ModelLimitRow[]` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
+
+`USAGE_MODEL_LIMITS_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`.
+
+### mapOverallCostLimitsToPeriodStatuses
+
+Maps the top-level Cost budget fields from `UserLimitStatsResponseDto` (the same source `mapUsageDataToDashboard` uses for the aggregate cards) into the `periodStatuses` prop for `ModelLimitsSection`. Produces a `{ status, tooltipLabel? }` entry keyed `day`, `week`, and `month`.
+
+Pass the same `formatResetTime` callback used for the aggregate cards as an optional fourth argument to add each header's reset trio, read from the same top-level `*CostStats` stat that drives that header's status. A per-deployment `resetsAt` is never read for a header, and a top-level value is never reconciled against a differing per-deployment one. Omit the argument to produce statuses with no reset fields.
+
+```tsx
+import { mapOverallCostLimitsToPeriodStatuses } from '@epam/ai-dial-chat-hooks/usage';
+
+const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
+  usage,
+  activeLocale,
+  t,
+  formatResetTime,
+);
+// <ModelLimitsSection periodStatuses={periodStatuses} ... />
+```
+
+#### API
+
+**Parameters**:
+
+| Name              | Type                                     | Description                                                                                  |
+| ----------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `usage`           | `UserLimitStatsResponseDto \| undefined` | The already-fetched usage response.                                                          |
+| `activeLocale`    | `string`                                 | Used to lowercase the period label inside tooltip text.                                      |
+| `t`               | `(key: string, options?) => string`      | Translate callback.                                                                          |
+| `formatResetTime` | `FormatResetTime` (optional)             | Same callback as `mapUsageDataToDashboard`'s. Omit to produce statuses with no reset fields. |
+
+**Returns**: `ModelLimitPeriodStatuses` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
+
+### Supporting types
+
+- `ResetTimeDisplay` — `{ resetsAtMs, isoValue, label, ariaLabel }`, the structural shape `formatResetTime` returns. Field-for-field identical to `apps/chat/src/utils/usage-reset-time.ts`'s own `ResetTimeDisplay`, so a host's existing formatter satisfies this type with no adapter or cast.
+- `FormatResetTime` — `(resetsAt: string | undefined) => ResetTimeDisplay | undefined`
+
+When migrating the former `usage-dashboard` utility imports, use `ResetTimeDisplay`
+instead of `ResetTimeDisplayLike`. The three function names, translation-key constants,
+and `FormatResetTime` keep their names; only their owning package changes. See the
+[migration guidance](../usage-dashboard/README.md#breaking--dto-interpreting-utilities-removed).
+
 ## File Manager
 
 A domain-specific set of hooks (and their supporting types/utilities) implementing the DIAL file manager: browsing/search, upload, create/rename/move/copy/delete, sharing, and metadata, composed against an injected `DialFilesApi` port instead of a configured REST client or React context. `useDialFileManager` is the composed entry point most consumers reach for; the six sub-hooks it composes (`useDialFileListing`, `useDialFileMetadata`, `useDialFileMutations`, `useDialFileSharing`, `useDialFileUploadBatch`) and the two standalone hooks (`useDialFileManagerTabConfig`, `useGridEditingScroll`) are exported individually for hosts that need only part of the surface, or that render `@epam/ai-dial-react-file-manager`'s `DialFileManager` grid directly.
@@ -1557,9 +1694,9 @@ const { tabs } = useDialFileManagerTabConfig(
 
 #### API
 
-**Parameters**: `useDialFileManagerTabConfig(activeTab: DialFileManagerTabs, onTabChange: (tab: DialFileManagerTabs) => void, allTabs: TabModel[] | undefined, fileManagerTabs: string[] | undefined)`.
+**Parameters**: `useDialFileManagerTabConfig(activeTab: DialFileManagerTabs, onTabChange: (tab: DialFileManagerTabs) => void, allTabs: FilterChipItem<DialFileManagerTabs>[] | undefined, fileManagerTabs: string[] | undefined)`.
 
-**Returns** (`UseDialFileManagerTabConfigResult`): `{ tabs: ToolbarOptions['tabs'] }`.
+**Returns** (`UseDialFileManagerTabConfigResult`): `{ tabs: FileTreeOptions['tabs'] }` — the filter chips the file manager renders above its folder tree.
 
 ### useFileAttachmentPicker
 
@@ -2737,6 +2874,41 @@ const fileName = buildPromptExportFileName(promptDto.name, 'ai_dial');
 ```
 
 ## Scheduled-Task Utilities
+
+### Scheduled-task contracts
+
+Import scheduled-task utilities from the focused subpath. The scheduler facade
+accepts an already configured generated client: hosts retain the base URL,
+authentication, CSRF, retries, and notification policy.
+
+```ts
+import {
+  createScheduledTasksApiClient,
+  describeScheduledTaskTrigger,
+  prepareScheduledTaskCreateBody,
+  useScheduledTasks,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const scheduler = createScheduledTasksApiClient(configuredClient);
+const prepared = prepareScheduledTaskCreateBody(values, { now: new Date() });
+const descriptor = describeScheduledTaskTrigger(trigger);
+const state = useScheduledTasks(scheduler, {
+  enabled: true,
+  pageSize: 20,
+  debounceMs: 300,
+});
+```
+
+`prepareScheduledTaskCreateBody` and `prepareScheduledTaskUpdateBody` return
+a discriminated success/failure result, so a host never sends a silently
+changed schedule. The older `mapFormValuesToCreateBody` and
+`mapFormValuesToUpdateBody` stay available for validated input only.
+
+`useScheduledTasks` defaults to a 20-item page and 300ms search debounce;
+`useScheduledTaskRuns` defaults to a 10-item page. Both cancel and ignore
+stale generations, distinguish `initialError` from `loadMoreError`, preserve
+loaded records after a page failure, and expose `retryLoadMore`. No hook
+constructs a client or reads application state.
 
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
@@ -3948,3 +4120,30 @@ consuming host back to a previous `@epam/ai-dial-chat-hooks` release:
 3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
    resolved version and integrity hash, rather than a partial mix of pre- and post-change
    versions.
+
+## Scheduler request lifetime and descriptions
+
+`useScheduledTasks` and `useScheduledTaskRuns` abort initial and next-page
+requests when their identity changes or they unmount. Generation checks also
+ignore results from transports that do not honor abort. A new generation
+clears old data, loading guards and errors. An incremental failure retains
+loaded records and its offset; `retryLoadMore` retries that page.
+
+`describeScheduledTaskTrigger(trigger, { timeZone, referenceDate })` is
+independent of editability. Defaults are UTC and the current date. A host
+displaying local time should explicitly pass
+`Intl.DateTimeFormat().resolvedOptions().timeZone`. The reference date
+determines the offset for the existing UTC-storage policy; this is not a
+timezone-aware future scheduler. Numeric weekday values use Monday = 0.
+Hourly `time` is the local minute; daily/weekly/monthly `time` is HH:mm.
+`EveryNMinutes` supplies `intervalMinutes`.
+
+The scheduler APIs are available from both the root barrel and the
+`/scheduled-tasks` entry; prefer the subpath for a focused dependency graph.
+An explicit wildcard or nonzero `second` is `Custom`, preserving the original
+expression instead of describing it as a single minute-level run.
+
+Additional cron constraints and supported scheduler expressions outside the
+simple categories stay `Custom` with their complete expression. Invalid
+numeric ranges/dates are `Invalid`. Monthly schedules crossing midnight stay Custom when the shifted day is not
+equivalent around short months; shifts wholly within days 1–28 remain Monthly. The host owns all localized text.

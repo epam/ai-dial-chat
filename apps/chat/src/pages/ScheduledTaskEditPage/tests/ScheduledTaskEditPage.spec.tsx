@@ -307,7 +307,7 @@ describe('ScheduledTaskEditPage', () => {
     renderEditPage();
 
     expect(
-      await screen.findByText('scheduledTasks.edit.unsupportedTriggerMessage'),
+      await screen.findByText('scheduledTasks.edit.invalidScheduleLabel'),
     ).toBeTruthy();
     expect(screen.queryByText(/displayName:/)).not.toBeTruthy();
   });
@@ -317,7 +317,7 @@ describe('ScheduledTaskEditPage', () => {
     renderEditPage();
 
     expect(
-      await screen.findByText('scheduledTasks.edit.unsupportedTriggerMessage'),
+      await screen.findByText('scheduledTasks.edit.invalidScheduleLabel'),
     ).toBeTruthy();
   });
 

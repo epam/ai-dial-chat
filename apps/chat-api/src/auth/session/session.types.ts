@@ -1,6 +1,6 @@
 export interface SessionPayload {
-  /** Schema version — always 1 */
-  v: 1;
+  /** Schema version — v1 sessions require a new login. */
+  v: 2;
   /** Unique session ID (UUID) */
   sid: string;
   /** Registered provider ID */
@@ -15,8 +15,10 @@ export interface SessionPayload {
   it?: string;
   /** Access-token expiry — Unix timestamp (seconds) */
   at_exp: number;
-  /** Refresh-token expiry — Unix timestamp (seconds) */
-  rt_exp: number;
+  /** Rolling session expiry, renewed after a successful refresh — Unix seconds. */
+  session_exp: number;
+  /** Provider-reported refresh-token expiry, when known — Unix seconds. */
+  rt_exp?: number;
   /** Cookie issue time — Unix timestamp (seconds) */
   iat: number;
   /** CSRF token — random UUID created on login and kept stable across refresh */

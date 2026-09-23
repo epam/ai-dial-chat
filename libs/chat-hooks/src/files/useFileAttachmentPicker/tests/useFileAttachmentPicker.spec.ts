@@ -133,7 +133,7 @@ describe('useFileAttachmentPicker', () => {
       ),
     );
 
-    expect(result.current.tabs?.map((tab) => tab.id)).toEqual([
+    expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
       DialFileManagerTabs.MyFiles,
     ]);
   });

@@ -43,6 +43,8 @@ export interface SidebarPanelStyles {
   className?: string;
   /** CSS class applied to the header element. */
   headerClassName?: string;
+  /** Extra class name(s) merged onto the header's end (right) action cluster. */
+  headerActionsClassName?: string;
   /** CSS custom properties applied to the panel `<aside>` element. */
   cssVars?: CSSProperties;
 }

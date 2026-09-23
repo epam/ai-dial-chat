@@ -85,3 +85,59 @@ describe('SidebarPanel — public class names', () => {
     ).toContain(SIDEBAR_CLASS.aside);
   });
 });
+
+describe('SidebarPanel — host style hooks', () => {
+  it('merges headerClassName onto the header bar, replacing its own height', () => {
+    render(
+      <SidebarPanel
+        {...defaultProps}
+        title="Conversations"
+        styles={{ headerClassName: 'h-[64px]' }}
+      >
+        <span />
+      </SidebarPanel>,
+    );
+
+    const header = screen
+      .getByText('Conversations')
+      .closest(`.${SIDEBAR_CLASS.header}`);
+
+    expect(header?.classList).toContain('h-[64px]');
+    expect(header?.classList).not.toContain('h-12');
+  });
+
+  it('merges headerActionsClassName onto the cluster holding the end actions', () => {
+    render(
+      <SidebarPanel
+        {...defaultProps}
+        rightActions={<button type="button" aria-label="Download" />}
+        styles={{ headerActionsClassName: 'gap-4' }}
+      >
+        <span />
+      </SidebarPanel>,
+    );
+
+    const cluster = screen.getByRole('button', {
+      name: 'Download',
+    }).parentElement;
+
+    expect(cluster?.classList).toContain('gap-4');
+    /* The close button shares the cluster, so it is the trailing group. */
+    expect(cluster?.querySelectorAll('button')).toHaveLength(2);
+  });
+
+  it('leaves the action cluster untouched when the host passes no class', () => {
+    render(
+      <SidebarPanel
+        {...defaultProps}
+        rightActions={<button type="button" aria-label="Download" />}
+      >
+        <span />
+      </SidebarPanel>,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Download' }).parentElement?.className,
+    ).toBe('flex items-center gap-1');
+  });
+});

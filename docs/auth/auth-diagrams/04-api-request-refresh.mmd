@@ -9,16 +9,23 @@ sequenceDiagram
     participant API as Downstream API
 
     SPA->>BFF: GET /api/conversations (cookie)
-    BFF->>BFF: Decrypt session cookie
-    alt access_token still valid
-        BFF->>API: GET /conversations<br/>Authorization: Bearer at
-    else access_token expired, refresh_token valid
-        BFF->>IDP: POST /token (refresh_token, rotation)
-        IDP-->>BFF: new access_token + new refresh_token
-        BFF->>BFF: Re-encrypt session<br/>(Set-Cookie on response)
-        BFF->>API: GET /conversations<br/>Authorization: Bearer at'
-    else refresh_token expired
-        BFF-->>SPA: 401 (auth required)
+    BFF->>BFF: Decrypt and validate v2 session<br/>Check effective deadline
+    alt legacy, invalid, or expired session
+        BFF-->>SPA: Clear session cookies<br/>401
+    else session deadline valid
+        opt refresh_token present and access_token or session near expiry
+            BFF->>IDP: POST /token (refresh_token, rotation)
+            IDP-->>BFF: new tokens or refresh error
+            BFF->>BFF: Check existing session_exp before renewal<br/>On success, session_exp = now + maxAge<br/>Update provider expiry if known<br/>Recheck deadline
+        end
+        alt deadline elapsed
+            BFF-->>SPA: Clear session cookies<br/>401
+        else refresh failed
+            BFF-->>SPA: 401 (allow frontend recovery probe)
+        else authentication succeeds
+            BFF->>BFF: Reissue cookie only after successful refresh<br/>Absorbed race keeps cookies unchanged<br/>Max-Age = remaining effective lifetime
+            BFF->>API: GET /conversations<br/>Authorization: Bearer at
+            API-->>BFF: 200 payload
+            BFF-->>SPA: 200 payload
+        end
     end
-    API-->>BFF: 200 payload
-    BFF-->>SPA: 200 payload

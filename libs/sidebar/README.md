@@ -67,6 +67,26 @@ import { SidebarPanel, SidebarOrientation } from '@epam/ai-dial-sidebar';
 </SidebarPanel>;
 ```
 
+The header bar is `h-12` and its trailing actions sit in one cluster. Both
+take a class through `styles`, merged after the panel's own utilities, so a
+`h-*` or `gap-*` you pass wins over the default without `!important`:
+
+```tsx
+<SidebarPanel
+  isOpen={isOpen}
+  title="Conversations"
+  orientation={SidebarOrientation.Left}
+  labels={{ ariaLabel: 'Conversations', closeLabel: 'Close' }}
+  rightActions={<NewChatButton />}
+  styles={{
+    headerClassName: 'h-[64px]',
+    headerActionsClassName: 'gap-2',
+  }}
+>
+  {children}
+</SidebarPanel>
+```
+
 ### PanelEmpty
 
 Empty-state block shown when a panel has no items at all.
@@ -109,6 +129,10 @@ SIDEBAR_CLASS.aside; // 'dial-sb-aside'
 These classes carry no declarations of their own, so they change nothing until
 you style them, and they are additive to the `className`, `headerClassName`, and
 `styles` props, which keep working exactly as before.
+
+A class on `.dial-sb-header` competes at equal specificity with the header's own
+`h-12` utility, so reach for `styles.headerClassName` when you are replacing a
+utility the panel already sets and keep the class for everything else.
 
 `dial-sb-aside` is on the region, **not** on the wrapper around it. The wrapper
 is where `styles.className` lands, which is how the libs built on this panel

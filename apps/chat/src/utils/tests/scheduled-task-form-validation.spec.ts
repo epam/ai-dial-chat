@@ -3,6 +3,7 @@ import {
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import { describe, expect, it } from 'vitest';
+import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import { validateScheduledTaskForm } from '../scheduled-task-form-validation';
 
 const t = ((key: string) => key) as Parameters<
@@ -19,6 +20,29 @@ const baseValues: ScheduledTaskCreateFormValues = {
 };
 
 describe('validateScheduledTaskForm', () => {
+  it('reports a start-date error for a malformed recurring start date', () => {
+    const errors = validateScheduledTaskForm(
+      {
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        startDate: 'invalid',
+      },
+      t,
+    );
+    expect(errors.startDate).toBe(
+      ScheduledTasksI18nKeys.CreateStartDateInvalid,
+    );
+    expect(errors.runAt).toBeUndefined();
+  });
+
+  it('reports the run-at error for a malformed one-time date', () => {
+    const errors = validateScheduledTaskForm(
+      { ...baseValues, runAt: 'invalid' },
+      t,
+    );
+    expect(errors.runAt).toBe(ScheduledTasksI18nKeys.CreateRunAtRequired);
+  });
+
   it('returns no errors for valid one-time repeat values', () => {
     expect(validateScheduledTaskForm(baseValues, t)).toEqual({});
   });

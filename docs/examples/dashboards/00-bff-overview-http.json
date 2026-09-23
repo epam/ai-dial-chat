@@ -254,15 +254,15 @@
         "name": "scrape_job",
         "label": "Scrape-health job (configure)",
         "type": "textbox",
-        "query": "__configure_bff_scrape_job__",
+        "query": "dial-chat-metrics",
         "hide": 0,
         "options": [],
         "current": {
           "selected": true,
-          "text": "__configure_bff_scrape_job__",
-          "value": "__configure_bff_scrape_job__"
+          "text": "dial-chat-metrics",
+          "value": "dial-chat-metrics"
         },
-        "description": "Exact Prometheus scrape job for this BFF. Required for the up panel; avoids showing unrelated targets when the metric Job selector is All."
+        "description": "Exact Prometheus scrape job for this BFF, as it appears on the up series rather than on the application metrics. The default dial-chat-metrics matches the reference deployment; other deployments relabel the job, and Prometheus Operator targets carry names such as <namespace>/<service-monitor>. Confirm the value with group by (job, pod, instance) (up{namespace=\"<namespace>\"}). Required for the up panel; avoids showing unrelated targets when the metric Job selector is All."
       }
     ]
   },
@@ -1309,7 +1309,7 @@
     },
     {
       "title": "Configured Prometheus target scrape health (up)",
-      "description": "Configure the separate Scrape-health job variable with the exact BFF job. This panel ignores Route/Method and the metric Job selector. No matching up series means unknown/not configured, not healthy. Value 1 means scrape success only, not application or ingress availability. On Grafana versions using legacy interpolation, job names containing quotes need verified custom string escaping.",
+      "description": "Configure the separate Scrape-health job variable with the exact BFF job, taken from the up series and not from the metric Job selector; the two names differ in most deployments. This panel ignores Route/Method and the metric Job selector. No matching up series means unknown/not configured, not healthy. Value 1 means scrape success only, not application or ingress availability. On Grafana versions using legacy interpolation, job names containing quotes need verified custom string escaping.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",

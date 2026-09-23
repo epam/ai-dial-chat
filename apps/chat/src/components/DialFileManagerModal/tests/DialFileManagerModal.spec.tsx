@@ -10,7 +10,7 @@ import {
   DialFileNodeType,
   FileManagerColumnKey,
 } from '@epam/ai-dial-react-file-manager';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { NotificationVariant, type FilterChipItem } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useCallback, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -43,14 +43,10 @@ const { mockShowNotification } = vi.hoisted(() => ({
  * forwards, how it renders the composed result — stays covered end to end
  * without duplicating the hook's own test suite.
  */
-const ALL_TABS = [
-  { id: DialFileManagerTabs.MyFiles, label: 'My Files', disabled: false },
-  { id: DialFileManagerTabs.Shared, label: 'Shared with Me', disabled: false },
-  {
-    id: DialFileManagerTabs.Organization,
-    label: 'Organization',
-    disabled: false,
-  },
+const ALL_TABS: FilterChipItem<DialFileManagerTabs>[] = [
+  { value: DialFileManagerTabs.MyFiles, label: 'My Files' },
+  { value: DialFileManagerTabs.Shared, label: 'Shared with Me' },
+  { value: DialFileManagerTabs.Organization, label: 'Organization' },
 ];
 
 let currentControllerResult: UseDialFileManagerResult;
@@ -122,7 +118,7 @@ const fakeUseFileAttachmentPicker = (
 
   const tabs = ALL_TABS.filter(
     (tab) =>
-      options.allowedTabs == null || options.allowedTabs.includes(tab.id),
+      options.allowedTabs == null || options.allowedTabs.includes(tab.value),
   );
 
   return {
@@ -200,6 +196,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       gridOptions,
       uploadEnabled,
       toolbarOptions,
+      treeOptions,
       bulkActionsToolbarOptions,
       filesLoading,
       allowedFileTypes,
@@ -231,10 +228,12 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         visibleColumns?: FileManagerColumnKey[];
       };
       uploadEnabled?: boolean;
-      toolbarOptions?: {
-        tabs?: Array<{ id: string; label: string }>;
+      treeOptions?: {
+        tabs?: Array<{ value: string; label: string }>;
         activeTab?: string;
         onTabChange?: (id: DialFileManagerTabs) => void;
+      };
+      toolbarOptions?: {
         showHiddenFilesToggle?: boolean;
         hiddenFilesSwitcherLabel?: string;
         showHiddenFilesLabel?: string;
@@ -302,8 +301,8 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         data-hidden-files-label={toolbarOptions?.hiddenFilesSwitcherLabel}
         data-show-hidden-files-label={toolbarOptions?.showHiddenFilesLabel}
         data-hide-hidden-files-label={toolbarOptions?.hideHiddenFilesLabel}
-        data-active-tab={toolbarOptions?.activeTab}
-        data-tab-count={toolbarOptions?.tabs?.length}
+        data-active-tab={treeOptions?.activeTab}
+        data-tab-count={treeOptions?.tabs?.length}
         data-has-delete={String(
           Actions.Delete in (gridOptions?.actionLabels ?? {}),
         )}
@@ -364,12 +363,12 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       >
         {selectedPaths?.size
           ? null
-          : toolbarOptions?.tabs?.map((tab) => (
+          : treeOptions?.tabs?.map((tab) => (
               <button
-                key={tab.id}
+                key={tab.value}
                 type="button"
                 onClick={() =>
-                  toolbarOptions.onTabChange?.(tab.id as DialFileManagerTabs)
+                  treeOptions.onTabChange?.(tab.value as DialFileManagerTabs)
                 }
               >
                 {tab.label}
@@ -377,9 +376,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
             ))}
         <button
           type="button"
-          onClick={() =>
-            toolbarOptions?.onTabChange?.(DialFileManagerTabs.Shared)
-          }
+          onClick={() => treeOptions?.onTabChange?.(DialFileManagerTabs.Shared)}
         >
           Invoke tab-change handler
         </button>
@@ -1013,7 +1010,7 @@ describe('DialFileManagerModal', () => {
 });
 
 describe('DialFileManagerModal — tab navigation', () => {
-  it('renders three tabs in the toolbar', () => {
+  it('renders three tabs beside the folder tree', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-tab-count')).toBe('3');
@@ -1032,7 +1029,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
   });
 
-  it('passes the activeTab from useFileAttachmentPicker to toolbarOptions', () => {
+  it('passes the activeTab from useFileAttachmentPicker to treeOptions', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-active-tab')).toBe(

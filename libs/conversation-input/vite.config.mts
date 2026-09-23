@@ -8,14 +8,6 @@ import * as path from 'path';
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/conversation-input',
-  resolve: {
-    alias: {
-      '@epam/ai-dial-attachment-input': path.resolve(
-        import.meta.dirname,
-        '../attachment-input/src/index.ts',
-      ),
-    },
-  },
   plugins: [
     createLibTailwindUtilities({ root: import.meta.dirname }),
     react(),
@@ -65,15 +57,26 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'jsdom',
     /*
-     * Resolve chat-shared from source for tests only: its published bundle
-     * imports `.scss` modules that are not emitted to `dist`, which vitest
-     * cannot load. Kept out of the shared `resolve.alias` so it never
-     * affects this lib's own production build.
+     * Resolve the sibling packages from source for tests only. chat-shared's
+     * published bundle imports `.scss` modules that are not emitted to
+     * `dist`, which vitest cannot load.
+     *
+     * Both are kept out of a shared `resolve.alias`, which would also apply
+     * to the production build: `vite-plugin-dts` follows build aliases when
+     * it emits declarations, so a type imported from one of these packages
+     * lands in the published `.d.ts` as a relative path into this repo
+     * (`../../../attachment-input/src/index.ts`) that no consumer can
+     * resolve. The runtime bundle never needed the alias either — both
+     * packages are `external`.
      */
     alias: {
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../chat-shared/src/index.ts',
+      ),
+      '@epam/ai-dial-attachment-input': path.resolve(
+        import.meta.dirname,
+        '../attachment-input/src/index.ts',
       ),
     },
     setupFiles: ['./src/test-setup.ts'],
