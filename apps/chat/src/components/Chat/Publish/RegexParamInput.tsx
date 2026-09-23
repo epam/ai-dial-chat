@@ -54,7 +54,7 @@ export function RegexParamInput({
     },
     [onRegExChange, onValidityChange],
   );
-  
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key !== 'Enter') return;
