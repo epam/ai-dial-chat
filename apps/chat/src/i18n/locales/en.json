@@ -1079,11 +1079,7 @@
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
       "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version format is invalid (example: 0.0.1)",
-      "themeUrlLabel": "Theme URL",
-      "themeUrlPlaceholder": "https://themes.example.com",
-      "themeUrlCaption": "Optional. Applies this application's own colours and logo while it is open.",
-      "themeUrlInvalid": "Enter a valid https:// URL"
+      "versionInvalid": "Version format is invalid (example: 0.0.1)"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",

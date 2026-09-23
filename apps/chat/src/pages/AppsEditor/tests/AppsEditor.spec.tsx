@@ -13,7 +13,6 @@ import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { updateApplication } from '../../../server-api/applications';
-import { getDeploymentDetails } from '../../../server-api/deployments';
 import type { TriggerSaveGeneralPayload } from '../../../types/apps-editor';
 import AppsEditor from '../AppsEditor';
 
@@ -45,7 +44,6 @@ const settingsStepTriggerSave =
   vi.fn<(general?: TriggerSaveGeneralPayload) => void>();
 const generalFormSubmit = vi.fn();
 const generalFormGetValues = vi.fn<() => TriggerSaveGeneralPayload>();
-const generalFormGetThemeUrl = vi.fn<() => string | undefined>();
 
 vi.mock('../SettingsStep', () => ({
   default: forwardRef(function MockSettingsStep(
@@ -95,14 +93,9 @@ vi.mock('../GeneralForm', () => ({
     useImperativeHandle(ref, () => ({
       submit: generalFormSubmit,
       getValues: generalFormGetValues,
-      getThemeUrl: generalFormGetThemeUrl,
     }));
     return <div>general-form</div>;
   }),
-}));
-
-vi.mock('../../../server-api/deployments', () => ({
-  getDeploymentDetails: vi.fn(),
 }));
 
 vi.mock('../../../context/DeploymentsContext');
@@ -137,10 +130,6 @@ describe('AppsEditor', () => {
     latestGeneralFormProps = null;
     shouldSettingsAutoReady = true;
     generalFormGetValues.mockReset().mockReturnValue({ name: 'My App' });
-    generalFormGetThemeUrl.mockReset().mockReturnValue(undefined);
-    vi.mocked(getDeploymentDetails)
-      .mockReset()
-      .mockResolvedValue({} as never);
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
@@ -822,107 +811,5 @@ describe('AppsEditor', () => {
     expect(
       Number(screen.getByText('settings-step').dataset.previewResetKey),
     ).toBe(keyBefore);
-  });
-
-  /*
-   * The theme URL rides the follow-up PATCH that already runs after the
-   * embedded editor's own save — the only point in the edit path where the
-   * host writes to DIAL Core itself.
-   */
-  describe('theme URL on the edit path', () => {
-    /*
-     * GeneralForm is only mounted once the General step has been visited, so
-     * these walk through it rather than deep-linking to Settings.
-     */
-    const advanceToSettings = async () => {
-      renderEditor('step=general&schema=quickapps2-schema&appId=abc');
-      act(() => {
-        latestGeneralFormProps?.onCreated('abc', 'My App', undefined);
-      });
-      await userEvent.click(
-        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
-      );
-      await act(async () => {
-        await latestSettingsStepProps.onSaveSuccess?.(true);
-      });
-    };
-
-    it('carries the current theme url on the follow-up update', async () => {
-      generalFormGetThemeUrl.mockReturnValue('https://themes.example.com');
-
-      await advanceToSettings();
-
-      expect(updateApplication).toHaveBeenCalledWith(
-        'abc',
-        expect.objectContaining({ themeUrl: 'https://themes.example.com' }),
-      );
-    });
-
-    it('carries an empty string when the author cleared the field', async () => {
-      generalFormGetThemeUrl.mockReturnValue('');
-
-      await advanceToSettings();
-
-      expect(updateApplication).toHaveBeenCalledWith(
-        'abc',
-        expect.objectContaining({ themeUrl: '' }),
-      );
-    });
-
-    /*
-     * Deep-linking straight to Settings never mounts GeneralForm, so the host
-     * has no theme URL to assert. Omitting the field is what preserves the
-     * stored value — sending '' here would silently delete it.
-     */
-    it('omits the theme url when the General step was never visited', async () => {
-      generalFormGetThemeUrl.mockReturnValue('https://themes.example.com');
-      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
-
-      await userEvent.click(
-        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
-      );
-      await act(async () => {
-        await latestSettingsStepProps.onSaveSuccess?.(true);
-      });
-
-      expect(updateApplication).toHaveBeenCalledWith(
-        'abc',
-        expect.objectContaining({ themeUrl: undefined }),
-      );
-    });
-  });
-
-  describe('theme URL prefill', () => {
-    it('fetches deployment details and passes the stored value to the form', async () => {
-      vi.mocked(getDeploymentDetails).mockResolvedValue({
-        applicationDetails: {
-          catalogProperties: { themeUrl: 'https://stored.example.com' },
-        },
-      } as never);
-
-      renderEditor('step=general&schema=quickapps2-schema&appId=abc');
-
-      await waitFor(() =>
-        expect(getDeploymentDetails).toHaveBeenCalledWith('abc'),
-      );
-    });
-
-    it('makes no details request when creating a new app', async () => {
-      renderEditor('step=general&schema=quickapps2-schema&isCreating=1');
-
-      expect(await screen.findByText('general-form')).toBeTruthy();
-      expect(getDeploymentDetails).not.toHaveBeenCalled();
-    });
-
-    it('renders the form anyway when the details request fails', async () => {
-      vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('boom'));
-
-      renderEditor('step=general&schema=quickapps2-schema&appId=abc');
-
-      await waitFor(() =>
-        expect(getDeploymentDetails).toHaveBeenCalledWith('abc'),
-      );
-      expect(screen.getByText('general-form')).toBeTruthy();
-    });
   });
 });

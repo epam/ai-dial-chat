@@ -111,22 +111,6 @@ export class EnvironmentVariables {
   @IsNumber()
   THEMES_SERVICE_TIMEOUT_MS?: number = 5000;
 
-  /*
-   * Comma-separated exact `https://host[:port]` origins that a per-application
-   * theme URL may point at. Fetching a URL an application author supplies is
-   * SSRF by construction, so this list — not the URL's shape — is what bounds
-   * the outbound request.
-   *
-   * This is also the feature's only switch: unset or empty, every remote theme
-   * request is rejected, so a stored theme URL simply never applies. Entries
-   * are parsed and validated in ThemeService; a malformed one is dropped with
-   * a warning rather than failing boot, so one bad entry cannot take the
-   * deployment down.
-   */
-  @IsOptional()
-  @IsString()
-  THEMES_ALLOWED_ORIGINS?: string;
-
   // Auth / session
   @IsNotEmpty()
   @IsString()

@@ -4429,122 +4429,6 @@
         "tags": ["themes"]
       }
     },
-    "/api/v1/themes/remote": {
-      "get": {
-        "description": "Fetches `<themeUrl>/config.json` from an external themes host, provided its origin is listed in THEMES_ALLOWED_ORIGINS. Redirects are not followed, the response is size-capped, and colour keys that are not safe as CSS custom property names are dropped. Results are cached for 5 minutes.",
-        "operationId": "getRemoteTheme",
-        "parameters": [
-          {
-            "name": "themeUrl",
-            "required": true,
-            "in": "query",
-            "description": "Base URL of an allow-listed external themes host. The service requests `<themeUrl>/config.json`; a query string or fragment is ignored.",
-            "schema": {
-              "example": "https://themes.contoso.example.com",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the remote theme configuration",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ThemeConfigResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "themeUrl is malformed, is not https, or its origin is not allow-listed. No outbound request is made.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "example": {
-                    "statusCode": 400,
-                    "message": "themeUrl origin is not allowed",
-                    "error": "Bad Request"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No authenticated session"
-          },
-          "404": {
-            "description": "The host serves no configuration at that location"
-          },
-          "502": {
-            "description": "The host redirected, returned an error, or returned an oversized or malformed body"
-          },
-          "503": {
-            "description": "The host is unreachable or the request timed out"
-          }
-        },
-        "summary": "Get a remote theme configuration",
-        "tags": ["themes"]
-      }
-    },
-    "/api/v1/themes/remote/icon": {
-      "get": {
-        "description": "Fetches a single image from an allow-listed external themes host. The icon name is validated against the same allowlist as the built-in icon endpoint, so path traversal is rejected before the outbound request is made. Results are cached for 5 minutes.",
-        "operationId": "getRemoteThemeIcon",
-        "parameters": [
-          {
-            "name": "themeUrl",
-            "required": true,
-            "in": "query",
-            "description": "Base URL of an allow-listed external themes host. The service requests `<themeUrl>/config.json`; a query string or fragment is ignored.",
-            "schema": {
-              "example": "https://themes.contoso.example.com",
-              "type": "string"
-            }
-          },
-          {
-            "name": "iconName",
-            "required": true,
-            "in": "query",
-            "description": "Icon filename (alphanumeric, dash, underscore, and dot only)",
-            "schema": {
-              "example": "contoso-dark.svg",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the icon",
-            "content": {
-              "image/svg+xml": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"10\"/></svg>"
-              }
-            }
-          },
-          "400": {
-            "description": "themeUrl is not allow-listed, or iconName failed validation (including a path traversal attempt)"
-          },
-          "401": {
-            "description": "No authenticated session"
-          },
-          "404": {
-            "description": "Icon not found on the host"
-          },
-          "502": {
-            "description": "The host redirected, returned an error, or returned an oversized body"
-          },
-          "503": {
-            "description": "The host is unreachable or the request timed out"
-          }
-        },
-        "summary": "Get a remote theme icon",
-        "tags": ["themes"]
-      }
-    },
     "/api/v1/share": {
       "post": {
         "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — conversation, or prompt) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
@@ -7213,11 +7097,6 @@
               "tool_sets": []
             }
           },
-          "themeUrl": {
-            "type": "string",
-            "example": "https://themes.contoso.example.com",
-            "description": "Base URL of a themes host whose theme is applied while this application is open. Must be an absolute https:// URL. Send an empty string to clear it."
-          },
           "locales": {
             "type": "array",
             "items": {
@@ -7318,11 +7197,6 @@
               "tool_sets": []
             },
             "description": "When supplied, fully replaces the stored Settings-step configuration (application_properties). Omit, or send null, to leave it unchanged."
-          },
-          "themeUrl": {
-            "type": "string",
-            "example": "https://themes.contoso.example.com",
-            "description": "Base URL of a themes host whose theme is applied while this application is open. Must be an absolute https:// URL. Send an empty string to clear it; omit to leave unchanged."
           },
           "locales": {
             "type": "array",
@@ -7870,11 +7744,6 @@
             "type": "string",
             "description": "Model parameter count for catalog display",
             "example": "100B"
-          },
-          "themeUrl": {
-            "type": "string",
-            "description": "Base URL of a themes host whose theme the host applies while this application is open. Set through the apps editor's Theme URL field.",
-            "example": "https://themes.contoso.example.com"
           }
         }
       },

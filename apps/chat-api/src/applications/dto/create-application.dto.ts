@@ -7,7 +7,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  IsUrl,
   Matches,
   ValidateIf,
   ValidateNested,
@@ -83,32 +82,6 @@ export class CreateApplicationBodyDto {
   @IsObject()
   @IsOptional()
   applicationProperties?: Record<string, unknown>;
-
-  /*
-   * Stored in DIAL Core's `catalog_properties`, NOT `application_properties`:
-   * the Settings-step schema editor replaces `application_properties`
-   * wholesale on every save, so a General-step field kept there would be
-   * destroyed the first time the author opens Settings.
-   *
-   * Only the URL's shape is checked here. Whether its origin is allowed is a
-   * read-time concern (`THEMES_ALLOWED_ORIGINS`), deliberately not enforced on
-   * write — an operator narrowing the allowlist must not make stored
-   * applications unsaveable.
-   */
-  @ApiPropertyOptional({
-    example: 'https://themes.contoso.example.com',
-    description:
-      'Base URL of a themes host whose theme is applied while this application is open. ' +
-      'Must be an absolute https:// URL. Send an empty string to clear it.',
-  })
-  @IsString()
-  @IsOptional()
-  @ValidateIf((_o, value) => value !== '')
-  @IsUrl(
-    { protocols: ['https'], require_protocol: true },
-    { message: 'themeUrl must be an https URL' },
-  )
-  themeUrl?: string;
 
   /*
    * Additional (non-primary) locale translations for `name`/`description`.

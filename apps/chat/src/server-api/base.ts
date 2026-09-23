@@ -1,15 +1,6 @@
 export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
-  /*
-   * Versioned and authenticated, unlike the two above: these proxy an
-   * application-supplied themes host rather than the operator's configured
-   * one. The icon URL is built by hand for an `<img src>`, the way
-   * `resolveCatalogIconUrl` builds THEME_ICON — there is no generated method
-   * for a binary response.
-   */
-  THEMES_REMOTE = '/api/v1/themes/remote',
-  THEMES_REMOTE_ICON = '/api/v1/themes/remote/icon',
   CHAT_COMPLETIONS = '/api/v1/chat/completions',
   CONVERSATIONS = '/api/v1/conversations',
   MODELS = '/api/v1/models',

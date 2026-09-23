@@ -23,7 +23,6 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { updateApplication } from '../../server-api/applications';
-import { getDeploymentDetails } from '../../server-api/deployments';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import {
   EntityOperation,
@@ -130,44 +129,6 @@ const AppsEditor: FC = () => {
     [deployments, isEditingExistingApp, existingAppId],
   );
 
-  /*
-   * `existingDeployment` comes from the deployments *list*, which carries no
-   * `catalogProperties`, so the stored theme URL needs its own details
-   * request. It is only used to prefill the field and to theme the editor, so
-   * a failure degrades to an empty field rather than blocking the form.
-   */
-  const [storedThemeUrl, setStoredThemeUrl] = useState<string | undefined>(
-    undefined,
-  );
-
-  useEffect(() => {
-    if (!existingAppId) {
-      setStoredThemeUrl(undefined);
-      return;
-    }
-
-    let isCancelled = false;
-
-    const loadThemeUrl = async () => {
-      try {
-        const details = await getDeploymentDetails(existingAppId);
-        if (isCancelled) return;
-        setStoredThemeUrl(
-          details.applicationDetails?.catalogProperties?.themeUrl ?? '',
-        );
-      } catch {
-        if (isCancelled) return;
-        setStoredThemeUrl('');
-      }
-    };
-
-    void loadThemeUrl();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [existingAppId]);
-
   const generalFormInitialValues = useMemo<
     GeneralFormInitialValues | undefined
   >(
@@ -190,10 +151,9 @@ const AppsEditor: FC = () => {
               existingDeployment.description,
               PRIMARY_LOCALE,
             ),
-            themeUrl: storedThemeUrl,
           }
         : undefined,
-    [existingDeployment, storedThemeUrl],
+    [existingDeployment],
   );
 
   useEffect(() => {
@@ -337,16 +297,6 @@ const AppsEditor: FC = () => {
             topics: generalValues?.topics,
             locales: generalValues?.locales,
             primaryLocale: generalValues?.primaryLocale,
-            /*
-             * This PATCH's position after the embedded editor's own save is
-             * what makes it the only viable home for the theme URL: that
-             * editor writes the application resource itself and knows nothing
-             * about `catalog_properties`, so the value has to be re-asserted
-             * afterwards — the same mechanism the `skills_supported` hack
-             * above relies on. `undefined` — which is what a never-mounted
-             * General step yields — leaves a stored value alone.
-             */
-            themeUrl: generalFormRef.current?.getThemeUrl(),
           });
         } catch {
           setIsSaving(false);

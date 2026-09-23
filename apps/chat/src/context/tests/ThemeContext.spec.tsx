@@ -252,6 +252,13 @@ describe('ThemeContext', () => {
       );
     });
 
+    /*
+     * These two wait on `themes` rather than on `currentTheme`. `light` is
+     * already the initial state, so waiting for it resolves before the
+     * configuration has even loaded and the assertion below runs against a
+     * provider that has done nothing yet — which is exactly how this test
+     * passed in isolation and failed under a full-suite run.
+     */
     it('falls back to light when the stored id is gone', async () => {
       mockGetFromLocalStorage.mockReturnValue('contoso-night');
 
@@ -260,9 +267,10 @@ describe('ThemeContext', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.currentTheme).toBe('light');
+        expect(result.current.themes).toEqual(mockThemeConfig.themes);
       });
 
+      expect(result.current.currentTheme).toBe('light');
       expect(mockApplyThemeColors).toHaveBeenCalledWith(
         document.documentElement,
         mockThemeConfig.themes[1],
@@ -278,9 +286,10 @@ describe('ThemeContext', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.currentTheme).toBe('light');
+        expect(result.current.themes).toEqual(mockThemeConfig.themes);
       });
 
+      expect(result.current.currentTheme).toBe('light');
       expect(mockSetToLocalStorage).not.toHaveBeenCalled();
     });
 

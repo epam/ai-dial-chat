@@ -18,7 +18,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { ErrorMessageNotification, Input } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
   memo,
@@ -59,14 +59,6 @@ export interface GeneralFormHandle {
    * `display_version`; excludes the backend `version` field.
    */
   getValues: () => TriggerSaveGeneralPayload;
-  /**
-   * The current theme URL, trimmed, or `undefined` when empty.
-   *
-   * Deliberately separate from `getValues`: that payload is the postMessage
-   * wire contract with the embedded QuickApps editor, which knows nothing
-   * about themes. The host persists this through its own follow-up PATCH.
-   */
-  getThemeUrl: () => string | undefined;
 }
 
 export interface GeneralFormInitialValues {
@@ -76,8 +68,6 @@ export interface GeneralFormInitialValues {
   version?: string;
   topics?: string[];
   otherLocales?: DeploymentCreationFormValues['otherLocales'];
-  /** Kept outside `DeploymentCreationFormValues` so the shared builder-form lib stays unaware of themes. */
-  themeUrl?: string;
 }
 
 interface Props {
@@ -124,53 +114,12 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   const [submitError, setSubmitError] = useState('');
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const hasSeededInitialValuesRef = useRef(false);
-  const [themeUrl, setThemeUrl] = useState('');
-  const [themeUrlError, setThemeUrlError] = useState('');
 
   useEffect(() => {
     if (hasSeededInitialValuesRef.current || !initialValues) return;
     hasSeededInitialValuesRef.current = true;
     setValues(normalizeFormValues(initialValues));
   }, [initialValues]);
-
-  /*
-   * The theme URL gets its own guard rather than riding the one above. The
-   * other initial values come from the deployments list, which the host has
-   * on mount; the theme URL comes from a separate deployment-details request
-   * that resolves later, by which time the shared guard has already latched.
-   * Seeding is still once-only, and is skipped once the author has typed, so
-   * a late response cannot overwrite an edit in progress.
-   */
-  const hasSeededThemeUrlRef = useRef(false);
-  const hasEditedThemeUrlRef = useRef(false);
-
-  useEffect(() => {
-    if (hasSeededThemeUrlRef.current || hasEditedThemeUrlRef.current) return;
-    if (initialValues?.themeUrl == null) return;
-    hasSeededThemeUrlRef.current = true;
-    setThemeUrl(initialValues.themeUrl);
-  }, [initialValues?.themeUrl]);
-
-  const handleThemeUrlChange = (next?: string) => {
-    hasEditedThemeUrlRef.current = true;
-    setThemeUrl(next ?? '');
-    setThemeUrlError('');
-  };
-
-  /*
-   * Shape only. Whether the origin is allow-listed is server-side operator
-   * configuration; surfacing it here would leak deployment topology, and a
-   * rejected origin is already a harmless no-op at load time.
-   */
-  const validateThemeUrl = (value: string): boolean => {
-    const trimmed = value.trim();
-    if (trimmed === '') return true;
-    try {
-      return new URL(trimmed).protocol === 'https:';
-    } catch {
-      return false;
-    }
-  };
 
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
 
@@ -265,23 +214,11 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
     setErrors({});
-    setThemeUrlError('');
-
-    /*
-     * Checked alongside the shared library's field validation, not instead of
-     * it: a bad theme URL blocks submission exactly as a bad name or version
-     * does, and both sets of errors surface together.
-     */
-    const isThemeUrlValid = validateThemeUrl(themeUrl);
-    if (!isThemeUrlValid) {
-      setThemeUrlError(t(AppsEditorI18nKeys.GeneralFormThemeUrlInvalid));
-    }
-
     const codes = validateDeploymentCreationFields(values, {
       validateNamePattern: true,
       validateVersionPattern: SEMVER_VERSION_PATTERN,
     });
-    if (codes.name || codes.version || !isThemeUrlValid) {
+    if (codes.name || codes.version) {
       let nameError: string | undefined;
       if (codes.name === DeploymentCreationFieldErrorCode.Required) {
         nameError = t(EditorI18nKeys.NameRequired);
@@ -328,11 +265,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         applicationProperties,
         locales,
         primaryLocale: locales ? PRIMARY_LOCALE : undefined,
-        /*
-         * Omitted entirely while the feature is off, so turning the flag off
-         * never clears a value an operator previously allowed.
-         */
-        themeUrl: themeUrl.trim() || undefined,
       });
       onCreated(
         result.id,
@@ -344,15 +276,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    isSubmitting,
-    values,
-    appId,
-    t,
-    onCreated,
-    schemaId,
-    themeUrl,
-  ]);
+  }, [isSubmitting, values, appId, t, onCreated, schemaId]);
 
   const getValues = useCallback((): TriggerSaveGeneralPayload => {
     const locales = composeLocalePayload(values.otherLocales, PRIMARY_LOCALE);
@@ -367,18 +291,10 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     };
   }, [values]);
 
-  /*
-   * Returns `''` rather than `undefined` when the author cleared a stored
-   * value: the update endpoint reads an empty string as "delete the key",
-   * where omitting the field means "leave it alone".
-   */
-  const getThemeUrl = useCallback((): string => themeUrl.trim(), [themeUrl]);
-
-  useImperativeHandle(
-    ref,
-    () => ({ submit: handleSubmit, getValues, getThemeUrl }),
-    [handleSubmit, getValues, getThemeUrl],
-  );
+  useImperativeHandle(ref, () => ({ submit: handleSubmit, getValues }), [
+    handleSubmit,
+    getValues,
+  ]);
 
   const previewItem = useMemo<CatalogItem>(
     () => ({
@@ -415,22 +331,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             labels={labels}
             availableLocaleOptions={localeOptions}
           />
-          {/*
-            Rendered beside the shared form rather than inside it: a themes
-            host is host knowledge, and `@epam/ai-dial-builder-form` has no
-            business learning about it for one consumer.
-          */}
-          <Input
-              labelProps={{
-                label: t(AppsEditorI18nKeys.GeneralFormThemeUrlLabel),
-              }}
-              value={themeUrl}
-              placeholder={t(AppsEditorI18nKeys.GeneralFormThemeUrlPlaceholder)}
-              caption={t(AppsEditorI18nKeys.GeneralFormThemeUrlCaption)}
-              error={themeUrlError || undefined}
-              invalid={!!themeUrlError}
-              onChange={handleThemeUrlChange}
-            />
           <AvatarPickerModal
             isOpen={isAvatarPickerOpen}
             onClose={() => setIsAvatarPickerOpen(false)}
