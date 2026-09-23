@@ -128,7 +128,8 @@ export class EnvironmentVariables {
   AUTH_SESSION_PREV_SECRET?: string;
 
   @IsOptional()
-  @Transform(({ value }) => parseInt(value, 10))
+  // Preserve fractional or malformed values so validation rejects them.
+  @Transform(({ value }) => Number(value))
   @IsInt()
   @Min(1)
   @Max(2147483647)
