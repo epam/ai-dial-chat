@@ -47,6 +47,7 @@ const configStub = {
   get: (key: string) => {
     const values: Record<string, unknown> = {
       AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
+      AUTH_SESSION_MAX_AGE_SECONDS: 2592000,
       CORS_ORIGIN: 'http://localhost:4207',
       AUTH_COOKIE_SECURE: true,
       OVERLAY_ENABLED: false,
@@ -57,13 +58,14 @@ const configStub = {
 
 const sessionPayload = (overrides: Partial<SessionPayload> = {}) =>
   ({
-    v: 1,
+    v: 2,
     sid: 'sid-1',
     providerId: PROVIDER,
     sub: 'user-1',
     at: 'access-token',
     rt: 'refresh-token',
     at_exp: Math.floor(Date.now() / 1000) + 3600,
+    session_exp: Math.floor(Date.now() / 1000) + 86400,
     rt_exp: Math.floor(Date.now() / 1000) + 86400,
     iat: Math.floor(Date.now() / 1000),
     csrf: 'csrf-1',
@@ -475,9 +477,12 @@ describe('auth and session metrics', () => {
     const buildRefreshService = (
       client: Record<string, unknown>,
     ): RefreshServiceClass =>
-      new RefreshService({
-        getProvider: vi.fn().mockReturnValue({ client, config: {} }),
-      } as unknown as ProviderRegistryService);
+      new RefreshService(
+        {
+          getProvider: vi.fn().mockReturnValue({ client, config: {} }),
+        } as unknown as ProviderRegistryService,
+        configStub,
+      );
 
     const invalidGrant = () =>
       Object.assign(new Error('invalid_grant'), { error: 'invalid_grant' });
@@ -539,6 +544,51 @@ describe('auth and session metrics', () => {
         'dial.chat.auth.outcome': 'invalid_grant',
       });
       expect((point?.value as Histogram).count).toBe(1);
+    });
+
+    it('records a post-deadline exchange as session_expired, not refreshed', async () => {
+      const start = Math.floor(Date.now() / 1000);
+      const refreshedBefore =
+        (
+          (
+            await pointFor('dial.chat.auth.refresh.duration', {
+              'dial.chat.auth.outcome': 'refreshed',
+            })
+          )?.value as Histogram | undefined
+        )?.count ?? 0;
+      let clock: ReturnType<typeof vi.spyOn> | undefined;
+      const service = buildRefreshService({
+        refresh: vi.fn().mockImplementation(async () => {
+          /* The exchange itself succeeds, but only after the session deadline. */
+          clock = vi.spyOn(Date, 'now').mockReturnValue((start + 120) * 1000);
+          return { access_token: 'new-at', expires_at: start + 3600 };
+        }),
+      });
+
+      try {
+        await expect(
+          service.refresh(
+            sessionPayload({ sid: 'refresh-late', session_exp: start + 5 }),
+          ),
+        ).rejects.toThrow(UnauthorizedException);
+      } finally {
+        clock?.mockRestore();
+      }
+
+      const point = await pointFor('dial.chat.auth.refresh.duration', {
+        'dial.chat.auth.outcome': 'session_expired',
+      });
+      expect((point?.value as Histogram).count).toBe(1);
+      /* The unusable token set must not also read as a successful refresh. */
+      const refreshedAfter =
+        (
+          (
+            await pointFor('dial.chat.auth.refresh.duration', {
+              'dial.chat.auth.outcome': 'refreshed',
+            })
+          )?.value as Histogram | undefined
+        )?.count ?? 0;
+      expect(refreshedAfter).toBe(refreshedBefore);
     });
 
     it('records any other exchange failure as upstream_error', async () => {

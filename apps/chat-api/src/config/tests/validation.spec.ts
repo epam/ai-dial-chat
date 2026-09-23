@@ -8,6 +8,24 @@ const baseConfig: Record<string, unknown> = {
 };
 
 describe('validate', () => {
+  it('defaults the rolling session lifetime to thirty days and accepts an override', () => {
+    expect(validate({ ...baseConfig }).AUTH_SESSION_MAX_AGE_SECONDS).toBe(
+      2592000,
+    );
+    expect(
+      validate({ ...baseConfig, AUTH_SESSION_MAX_AGE_SECONDS: '3600' })
+        .AUTH_SESSION_MAX_AGE_SECONDS,
+    ).toBe(3600);
+  });
+
+  it.each(['', '0', '-1', '1.5', '3600seconds', 'Infinity', '2147483648'])(
+    'rejects invalid session lifetime %s',
+    (AUTH_SESSION_MAX_AGE_SECONDS) => {
+      expect(() =>
+        validate({ ...baseConfig, AUTH_SESSION_MAX_AGE_SECONDS }),
+      ).toThrow(/AUTH_SESSION_MAX_AGE_SECONDS/);
+    },
+  );
   it('defaults CSP rollout to report-only and accepts explicit enforcement', () => {
     expect(validate({ ...baseConfig }).CSP_MODE).toBe('report-only');
     expect(validate({ ...baseConfig, CSP_MODE: 'enforce' }).CSP_MODE).toBe(

@@ -538,6 +538,7 @@ Encrypted session cookie (`HttpOnly`, `Secure`, `SameSite`). Payload:
 
 ```typescript
 interface SessionPayload {
+  v: 2;
   sid: string; // session ID
   sub: string; // user subject
   providerId: string;
@@ -545,17 +546,25 @@ interface SessionPayload {
   at: string; // access token
   csrf: string; // CSRF token
   bucket: string; // user storage bucket
-  rt_exp: number; // refresh token expiry (unix ms)
-  at_exp: number; // access token expiry (unix ms)
+  rt: string; // refresh token, empty when absent
+  session_exp: number; // rolling session expiry (Unix seconds)
+  rt_exp?: number; // provider-reported refresh expiry when known (Unix seconds)
+  at_exp: number; // access token expiry (Unix seconds)
 }
 ```
 
 `SessionGuard` (applied globally):
 
-1. Decrypts session cookie
-2. If `at_exp < now + 60s` → call `RefreshService.refresh()`
-3. Sets `req.user` from session payload
-4. Routes decorated with `@Public()` bypass guard
+1. Delegates cookie authentication to `CookieSessionStrategy`, which decrypts the cookie and rejects legacy/expired sessions on the server.
+2. If a refresh token exists and either access-token or effective session expiry is less than 60 seconds away, calls `RefreshService.refresh()`. Successful exchanges renew the session deadline; absorbed races do not renew or rewrite cookies.
+3. Rechecks the effective deadline after asynchronous work and sets `req.user` from the session payload. Expired sessions return 401 and clear their cookies.
+4. Routes decorated with `@Public()` bypass the guard; `OptionalSessionGuard` can enrich public requests only with a currently valid identity, without refresh.
+
+The default rolling session lifetime is 30 days, configured by
+`AUTH_SESSION_MAX_AGE_SECONDS`. Known refresh expiry, or access expiry when no
+refresh token exists, can shorten it. Upgrading to payload v2 requires a new login
+for existing sessions. Provider metadata and rotation details live in the
+[auth lifetime policy](auth/auth-bff-encrypted-cookie.md#35-session-lifetime-policy).
 
 ### CSRF protection
 

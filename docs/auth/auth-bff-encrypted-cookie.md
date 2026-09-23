@@ -46,13 +46,14 @@ The session is a JWE (`alg: dir`, `enc: A256GCM`) whose plaintext payload is:
 
 ```json
 {
-  "v": 1,
+  "v": 2,
   "sid": "0d3e6a…",
   "providerId": "keycloak",
   "sub": "user-123",
   "at": "<access_token>",
   "rt": "<refresh_token>",
   "at_exp": 1715600000,
+  "session_exp": 1718188400,
   "rt_exp": 1715686400,
   "iat": 1715596400,
   "claims": { "roles": ["admin"], "email": "u@x.io" }
@@ -67,7 +68,7 @@ The session is a JWE (`alg: dir`, `enc: A256GCM`) whose plaintext payload is:
 | `Secure`   | `true` by default                                     | HTTPS only; local HTTP smoke mode disables it together with HSTS and CSP `upgrade-insecure-requests`         |
 | `SameSite` | `Lax` by default; `None` for secure overlay embedding | Blocks most CSRF in the normal app; allows cross-site iframe requests only when overlay embedding is enabled |
 | `Path`     | `/`                                                   | One cookie for whole app                                                                                     |
-| `Max-Age`  | `rt_exp`                                              | Lives as long as the refresh token                                                                           |
+| `Max-Age`  | Remaining effective session lifetime                  | Server enforces the same deadline; see §3.5                                                                  |
 | `Name`     | `__Host-chat.sess`                                    | `__Host-` prefix locks host/path; runtime drops this prefix when `AUTH_COOKIE_SECURE=false`                  |
 
 ### 3.3 Size Considerations
@@ -84,6 +85,78 @@ Each chunk uses the same `HttpOnly`, `Secure`, resolved `SameSite`, `Path=/`, an
 - Active key + 1–2 previous keys for rotation without forced logout.
 - 32-byte random secrets from env or KMS.
 - Recommended library: [`jose`](https://github.com/panva/jose) (`CompactEncrypt` / `compactDecrypt`) — standards-based, supports key rotation, no extra deps. Alternative: [`iron-session`](https://github.com/vvo/iron-session) ergonomic wrapper.
+
+---
+
+### 3.5 Session Lifetime Policy
+
+All payload timestamps use Unix **seconds**. Login and successful token refresh set
+`session_exp = now + AUTH_SESSION_MAX_AGE_SECONDS` (default **2592000 seconds / 30 days**).
+The setting is a positive integer up to 2147483647; invalid values fail startup.
+The requested `offline_access` scope does not select a session lifetime.
+Configuration changes apply to new logins and successful renewals; an already-issued
+cookie retains its deadline until renewal.
+
+The effective deadline is:
+
+| Tokens available                  | Effective deadline         |
+| --------------------------------- | -------------------------- |
+| Refresh token with known expiry   | `min(session_exp, rt_exp)` |
+| Refresh token with unknown expiry | `session_exp`              |
+| No refresh token                  | `min(session_exp, at_exp)` |
+
+`rt_exp` is optional and contains only a supported provider-reported deadline.
+For Keycloak, a positive integer `refresh_expires_in` in the token response is
+added to the exchange start time, conservatively excluding network latency.
+Keycloak zero denotes no advertised bound; missing or unusable metadata is
+unknown. This extension is not assumed for other providers, and refresh tokens
+are not decoded as JWTs. The provider can still reject or revoke a token earlier.
+
+Required cookie authentication triggers refresh when the access token or effective
+session deadline is less than 60 seconds away. A successful exchange renews
+`session_exp` and `iat`, after verifying that the existing session deadline has not
+already elapsed. New Keycloak expiry metadata updates `rt_exp`; a replacement
+refresh token without a known expiry
+clears the previous token's deadline. If the same token is retained and no new
+expiry metadata is available, its known deadline is preserved. Without a refresh
+token, the proactive 60-second refresh window is skipped: authorization lasts
+until the earlier of access-token or session expiry.
+
+`CookieSessionStrategy` rejects invalid, legacy, or expired sessions before any
+refresh/bucket calls, then rechecks expiration after asynchronous work. Equality
+with the deadline is expired. Required authentication responds with 401 and
+clears base/chunked cookies. Upstream refresh failures do not clear cookies: the
+frontend recovery probe must be able to observe a winning pod’s rotated cookie.
+An absorbed refresh race authorizes only while the old access token and session
+remain valid, without renewing or rewriting the cookie, including after lazy bucket
+resolution. Bucket-only cookie rewrites also preserve the current session deadline.
+Optional authentication returns no user without
+refresh or cookie mutation, and also rejects expired access tokens. Cookie
+`maxAge` in Express is the remaining effective lifetime in milliseconds; the
+browser's `Max-Age` attribute is in seconds. `SessionService.decrypt` itself only
+decodes ciphertext so legacy/expired cookies can still be processed for logout.
+
+**Upgrade:** normal authorization requires v2 payloads. V1 sessions require login
+again because they lack an explicit application session deadline and their `rt_exp`
+was fabricated from scopes. Deploy auth replicas together to avoid mixed enforcement.
+Existing login transaction cookies retain their original ten-minute window.
+Rollback restores the old expiration behavior; coordinate session invalidation
+if reverting. No server-side session data needs migration.
+
+This is a rolling Chat session lifetime: successful renewals can keep an active
+session alive beyond 30 days from login. There is no separate absolute limit from
+the original login time. Renewal is driven by protected requests, not a background
+timer; optional authentication never renews a session. The IdP may immediately
+authenticate a new login using its
+existing SSO session. Already-authorized streaming responses are not terminated
+by a timer at this deadline; subsequent requests must pass authorization again.
+
+The default and rolling policy match [NextAuth’s session configuration](https://next-auth.js.org/configuration/options#session),
+which the legacy Chat used without overriding `maxAge`. The renewal trigger is
+adapted to the BFF: NextAuth reissues its JWT from the session handler, whereas this
+BFF renews after a successful token exchange. This avoids rewriting token-bearing
+cookies on every API request. OAuth-token expiry is separate from the application
+session deadline; `offline_access` never implies a specific lifetime.
 
 ---
 

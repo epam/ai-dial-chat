@@ -13,13 +13,14 @@ const OTHER_HEX = 'c'.repeat(64);
 const COOKIE_NAME = '__Host-chat.sess';
 
 const samplePayload: SessionPayload = {
-  v: 1,
+  v: 2,
   sid: 'test-sid',
   providerId: 'keycloak',
   sub: 'user-1',
   at: 'access-token',
   rt: 'refresh-token',
   at_exp: 9999999999,
+  session_exp: 9999999999,
   rt_exp: 9999999999,
   iat: 1715596400,
   csrf: 'csrf-token',

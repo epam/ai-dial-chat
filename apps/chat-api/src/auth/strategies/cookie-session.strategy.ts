@@ -10,12 +10,17 @@ import type { EnvironmentVariables } from '../../config/environment.config';
 import { AuthSource } from '../auth-source.enum';
 import { BucketService } from '../bucket/bucket.service';
 import {
+  clearCookieValue,
   getCookieOptions,
   getSessionCookieName,
   readCookieValue,
   setCookieValue,
 } from '../cookies/cookie-options';
 import { RefreshService } from '../refresh/refresh.service';
+import {
+  getSessionCookieMaxAge,
+  InvalidSessionException,
+} from '../session/session-expiration';
 import { SessionService } from '../session/session.service';
 import type { SessionPayload, SessionUser } from '../session/session.types';
 import type { AuthStrategy } from './auth-strategy.interface';
@@ -44,12 +49,32 @@ export class CookieSessionStrategy implements AuthStrategy {
   }
 
   async authenticate(req: Request, res: Response): Promise<SessionUser> {
+    try {
+      return await this.authenticateSession(req, res);
+    } catch (err) {
+      if (err instanceof InvalidSessionException) {
+        clearCookieValue(
+          res,
+          getSessionCookieName(this.config),
+          getCookieOptions(this.config),
+          req.cookies as Record<string, string> | undefined,
+        );
+      }
+      throw err;
+    }
+  }
+
+  private async authenticateSession(
+    req: Request,
+    res: Response,
+  ): Promise<SessionUser> {
     let payload: SessionPayload;
     try {
       payload = await this.session.decryptFromRequest(req);
     } catch {
-      throw new UnauthorizedException();
+      throw new InvalidSessionException('Invalid session');
     }
+    const remainingLifetime = getSessionCookieMaxAge(payload);
 
     /*
      * Keep the CSRF token stable across access-token refreshes. Rotating it
@@ -58,23 +83,32 @@ export class CookieSessionStrategy implements AuthStrategy {
      */
     const csrfForCurrentRequest = payload.csrf;
 
+    let refreshRaceAbsorbed = false;
     const now = Math.floor(Date.now() / 1000);
-    if (payload.at_exp < now + 60) {
+    const accessTokenNearExpiry = payload.at_exp < now + 60;
+    const sessionNearExpiry = remainingLifetime < 60000;
+    /* Renew before either the access token or the effective session deadline expires. */
+    if (payload.rt && (accessTokenNearExpiry || sessionNearExpiry)) {
       try {
-        payload = await this.refresh.refresh(payload);
-        const newToken = await this.session.encrypt(payload);
-        const cookieName = getSessionCookieName(this.config);
-        setCookieValue(
-          res,
-          cookieName,
-          newToken,
-          {
-            ...getCookieOptions(this.config),
-            maxAge: (payload.rt_exp - now) * 1000,
-          },
-          req.cookies as Record<string, string> | undefined,
-        );
-        res.setHeader('X-CSRF-Token', payload.csrf);
+        const result = await this.refresh.refresh(payload);
+        payload = result.payload;
+        refreshRaceAbsorbed = !result.refreshed;
+        if (result.refreshed) {
+          const newToken = await this.session.encrypt(payload);
+          const cookieName = getSessionCookieName(this.config);
+          const cookieMaxAge = getSessionCookieMaxAge(payload);
+          setCookieValue(
+            res,
+            cookieName,
+            newToken,
+            {
+              ...getCookieOptions(this.config),
+              maxAge: cookieMaxAge,
+            },
+            req.cookies as Record<string, string> | undefined,
+          );
+          res.setHeader('X-CSRF-Token', payload.csrf);
+        }
       } catch (err) {
         if (err instanceof UnauthorizedException) {
           throw err;
@@ -88,19 +122,23 @@ export class CookieSessionStrategy implements AuthStrategy {
       try {
         const { bucket } = await this.bucket.getUserBucket(payload.at);
         payload = { ...payload, bucket };
-        const newToken = await this.session.encrypt(payload);
-        const cookieName = getSessionCookieName(this.config);
-        setCookieValue(
-          res,
-          cookieName,
-          newToken,
-          {
-            ...getCookieOptions(this.config),
-            maxAge: (payload.rt_exp - Math.floor(Date.now() / 1000)) * 1000,
-          },
-          req.cookies as Record<string, string> | undefined,
-        );
+        if (!refreshRaceAbsorbed) {
+          const newToken = await this.session.encrypt(payload);
+          const cookieName = getSessionCookieName(this.config);
+          const cookieMaxAge = getSessionCookieMaxAge(payload);
+          setCookieValue(
+            res,
+            cookieName,
+            newToken,
+            {
+              ...getCookieOptions(this.config),
+              maxAge: cookieMaxAge,
+            },
+            req.cookies as Record<string, string> | undefined,
+          );
+        }
       } catch (err) {
+        if (err instanceof UnauthorizedException) throw err;
         this.logger.error('Lazy bucket resolution failed', err);
         throw new ServiceUnavailableException(
           'Unable to resolve user bucket — DIAL Core unavailable',
@@ -108,6 +146,16 @@ export class CookieSessionStrategy implements AuthStrategy {
       }
     }
 
+    /* Guard: throws if the session deadline crossed zero during async bucket resolution. */
+    getSessionCookieMaxAge(payload);
+    if (
+      refreshRaceAbsorbed &&
+      payload.at_exp <= Math.floor(Date.now() / 1000)
+    ) {
+      throw new UnauthorizedException(
+        'Access token expired during refresh recovery',
+      );
+    }
     return {
       sid: payload.sid,
       sub: payload.sub,
@@ -130,6 +178,10 @@ export class CookieSessionStrategy implements AuthStrategy {
     let payload: SessionPayload;
     try {
       payload = await this.session.decryptFromRequest(req);
+      getSessionCookieMaxAge(payload);
+      if (payload.at_exp <= Math.floor(Date.now() / 1000)) {
+        return null;
+      }
     } catch {
       return null;
     }
