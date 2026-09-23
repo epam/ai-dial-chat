@@ -53,6 +53,9 @@ export interface ScheduledTaskRunHistoryListStyles {
   colors?: ScheduledTaskRunHistoryListColors;
   /** Typography class overrides. */
   typography?: ScheduledTaskRunHistoryListTypography;
+  rowMinHeight?: string;
+  rowHoverBackground?: string;
+  rowFocusBackground?: string;
 }
 
 /** Props for the {@link ScheduledTaskRunHistoryList} component. */

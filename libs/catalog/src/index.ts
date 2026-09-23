@@ -155,6 +155,13 @@ export type {
   AppIdentityTypography,
 } from './models/app-identity-styles';
 export { CATALOG_CLASS } from './constants/public-class-names';
+export { DeploymentSelectorField } from './components/DeploymentSelectorField/DeploymentSelectorField';
+export type {
+  DeploymentSelectorDisplayRecord,
+  DeploymentSelectorExtraOption,
+  DeploymentSelectorFieldLabels,
+  DeploymentSelectorFieldProps,
+} from './components/DeploymentSelectorField/DeploymentSelectorField';
 
 export { ApplicationCredentials } from './components/ApplicationCredentials/ApplicationCredentials';
 export type {

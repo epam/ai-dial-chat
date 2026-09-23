@@ -4,7 +4,7 @@ import {
   type DialFile,
   type DialFileAcceptType,
   type FileManagerGridRow,
-  type ToolbarOptions,
+  type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
 import { Popup, PopupSize, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, type FC } from 'react';
@@ -41,8 +41,8 @@ export interface FileManagerAttachModalProps {
   isAnyOperationInProgress: boolean;
   /** Currently active tab. */
   activeTab: DialFileManagerTabs;
-  /** Tab configuration for the toolbar. */
-  tabs: ToolbarOptions['tabs'];
+  /** Filter chips scoping the tree and the grid, rendered above the folder tree. */
+  tabs: FileTreeOptions['tabs'];
   /**
    * Called when the user switches tabs.
    * The host is responsible for resetting `selectedPaths` to an empty set.
@@ -303,7 +303,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
           </div>
         }
       >
-        <div className="flex min-h-0 flex-col">
+        <div className="flex h-full min-h-0 flex-col">
           <DialFileManagerShell
             controller={controller}
             labels={shellLabels}

@@ -233,7 +233,7 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconArrowLeft: () => <svg />,
+  IconArrowNarrowLeft: () => <svg />,
 }));
 
 const baseValues: ScheduledTaskCreateFormValues = {

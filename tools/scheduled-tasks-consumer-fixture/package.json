@@ -1,0 +1,7 @@
+{
+  "name": "scheduled-tasks-consumer-fixture",
+  "description": "Packed-package consumer fixture for the Scheduled Tasks public contract",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0"
+}

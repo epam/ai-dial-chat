@@ -4,7 +4,7 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Overview
 
-`@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a _configured_ REST client instance, i18n, or routing, and never renders a UI-kit component — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. A few hooks do import non-component symbols from `@epam/ai-dial-ui-kit` (enums such as `NotificationVariant`, constants such as `NOT_ALLOWED_SYMBOLS`, types such as `TabModel`) to describe values the host renders — that is a data/type dependency, not a rendering one. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
+`@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a _configured_ REST client instance, i18n, or routing, and never renders a UI-kit component — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. A few hooks do import non-component symbols from `@epam/ai-dial-ui-kit` (enums such as `NotificationVariant`, constants such as `NOT_ALLOWED_SYMBOLS`, types such as `FilterChipItem`) to describe values the host renders — that is a data/type dependency, not a rendering one. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
 
 ## Installation
 
@@ -60,12 +60,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.2
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.9
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.12
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -1557,9 +1557,9 @@ const { tabs } = useDialFileManagerTabConfig(
 
 #### API
 
-**Parameters**: `useDialFileManagerTabConfig(activeTab: DialFileManagerTabs, onTabChange: (tab: DialFileManagerTabs) => void, allTabs: TabModel[] | undefined, fileManagerTabs: string[] | undefined)`.
+**Parameters**: `useDialFileManagerTabConfig(activeTab: DialFileManagerTabs, onTabChange: (tab: DialFileManagerTabs) => void, allTabs: FilterChipItem<DialFileManagerTabs>[] | undefined, fileManagerTabs: string[] | undefined)`.
 
-**Returns** (`UseDialFileManagerTabConfigResult`): `{ tabs: ToolbarOptions['tabs'] }`.
+**Returns** (`UseDialFileManagerTabConfigResult`): `{ tabs: FileTreeOptions['tabs'] }` — the filter chips the file manager renders above its folder tree.
 
 ### useFileAttachmentPicker
 
@@ -2737,6 +2737,41 @@ const fileName = buildPromptExportFileName(promptDto.name, 'ai_dial');
 ```
 
 ## Scheduled-Task Utilities
+
+### Scheduled-task contracts
+
+Import scheduled-task utilities from the focused subpath. The scheduler facade
+accepts an already configured generated client: hosts retain the base URL,
+authentication, CSRF, retries, and notification policy.
+
+```ts
+import {
+  createScheduledTasksApiClient,
+  describeScheduledTaskTrigger,
+  prepareScheduledTaskCreateBody,
+  useScheduledTasks,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const scheduler = createScheduledTasksApiClient(configuredClient);
+const prepared = prepareScheduledTaskCreateBody(values, { now: new Date() });
+const descriptor = describeScheduledTaskTrigger(trigger);
+const state = useScheduledTasks(scheduler, {
+  enabled: true,
+  pageSize: 20,
+  debounceMs: 300,
+});
+```
+
+`prepareScheduledTaskCreateBody` and `prepareScheduledTaskUpdateBody` return
+a discriminated success/failure result, so a host never sends a silently
+changed schedule. The older `mapFormValuesToCreateBody` and
+`mapFormValuesToUpdateBody` stay available for validated input only.
+
+`useScheduledTasks` defaults to a 20-item page and 300ms search debounce;
+`useScheduledTaskRuns` defaults to a 10-item page. Both cancel and ignore
+stale generations, distinguish `initialError` from `loadMoreError`, preserve
+loaded records after a page failure, and expose `retryLoadMore`. No hook
+constructs a client or reads application state.
 
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
@@ -3948,3 +3983,30 @@ consuming host back to a previous `@epam/ai-dial-chat-hooks` release:
 3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
    resolved version and integrity hash, rather than a partial mix of pre- and post-change
    versions.
+
+## Scheduler request lifetime and descriptions
+
+`useScheduledTasks` and `useScheduledTaskRuns` abort initial and next-page
+requests when their identity changes or they unmount. Generation checks also
+ignore results from transports that do not honor abort. A new generation
+clears old data, loading guards and errors. An incremental failure retains
+loaded records and its offset; `retryLoadMore` retries that page.
+
+`describeScheduledTaskTrigger(trigger, { timeZone, referenceDate })` is
+independent of editability. Defaults are UTC and the current date. A host
+displaying local time should explicitly pass
+`Intl.DateTimeFormat().resolvedOptions().timeZone`. The reference date
+determines the offset for the existing UTC-storage policy; this is not a
+timezone-aware future scheduler. Numeric weekday values use Monday = 0.
+Hourly `time` is the local minute; daily/weekly/monthly `time` is HH:mm.
+`EveryNMinutes` supplies `intervalMinutes`.
+
+The scheduler APIs are available from both the root barrel and the
+`/scheduled-tasks` entry; prefer the subpath for a focused dependency graph.
+An explicit wildcard or nonzero `second` is `Custom`, preserving the original
+expression instead of describing it as a single minute-level run.
+
+Additional cron constraints and supported scheduler expressions outside the
+simple categories stay `Custom` with their complete expression. Invalid
+numeric ranges/dates are `Invalid`. Monthly schedules crossing midnight stay Custom when the shifted day is not
+equivalent around short months; shifts wholly within days 1–28 remain Monthly. The host owns all localized text.

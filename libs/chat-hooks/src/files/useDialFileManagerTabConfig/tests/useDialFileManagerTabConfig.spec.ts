@@ -1,13 +1,13 @@
 import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
-import type { TabModel } from '@epam/ai-dial-ui-kit';
+import type { FilterChipItem } from '@epam/ai-dial-ui-kit';
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useDialFileManagerTabConfig } from '../useDialFileManagerTabConfig';
 
-const ALL_TABS: TabModel[] = [
-  { id: DialFileManagerTabs.MyFiles, label: 'My files' },
-  { id: DialFileManagerTabs.Shared, label: 'Shared' },
-  { id: DialFileManagerTabs.Organization, label: 'Organization' },
+const ALL_TABS: FilterChipItem<DialFileManagerTabs>[] = [
+  { value: DialFileManagerTabs.MyFiles, label: 'My files' },
+  { value: DialFileManagerTabs.Shared, label: 'Shared' },
+  { value: DialFileManagerTabs.Organization, label: 'Organization' },
 ];
 
 describe('useDialFileManagerTabConfig', () => {
@@ -23,7 +23,7 @@ describe('useDialFileManagerTabConfig', () => {
       ),
     );
 
-    expect(result.current.tabs?.map((tab) => tab.id)).toEqual([
+    expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
       'my_files',
       'shared',
       'organization',
@@ -43,7 +43,7 @@ describe('useDialFileManagerTabConfig', () => {
       ),
     );
 
-    expect(result.current.tabs?.map((tab) => tab.id)).toEqual([
+    expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
       'my_files',
       'organization',
     ]);
@@ -102,7 +102,7 @@ describe('useDialFileManagerTabConfig', () => {
       ),
     );
 
-    expect(result.current.tabs?.map((tab) => tab.id)).toEqual(['my_files']);
+    expect(result.current.tabs?.map((tab) => tab.value)).toEqual(['my_files']);
     expect(onTabChange).not.toHaveBeenCalled();
   });
 
@@ -118,7 +118,7 @@ describe('useDialFileManagerTabConfig', () => {
       ),
     );
 
-    expect(result.current.tabs?.map((tab) => tab.id)).toEqual([
+    expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
       'my_files',
       'shared',
       'organization',

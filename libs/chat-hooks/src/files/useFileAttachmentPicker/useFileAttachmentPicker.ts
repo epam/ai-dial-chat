@@ -8,7 +8,7 @@ import {
   DialFileNodeType,
   useDialFileManagerTabs,
   type DialFileAcceptType,
-  type ToolbarOptions,
+  type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
 import { useCallback, useMemo, useState } from 'react';
 import { mimeTypesToDialFileAcceptTypes } from '../attachment-types';
@@ -55,7 +55,7 @@ export interface UseFileAttachmentPickerResult {
   /** Active tab. */
   activeTab: DialFileManagerTabs;
   /** Tab list filtered to `allowedTabs`; forward to `FileManagerAttachModal`'s `tabs` prop. */
-  tabs: ToolbarOptions['tabs'];
+  tabs: FileTreeOptions['tabs'];
   /** Switches the active tab and clears the current selection. */
   onTabChange: (tab: DialFileManagerTabs) => void;
   /** Currently selected paths. */

@@ -172,3 +172,74 @@ describe('ModelSelectorControl — public class names', () => {
     ).toHaveLength(0);
   });
 });
+
+describe('ModelSelectorControl — trigger icon and caret classes', () => {
+  /*
+   * The trigger is located by its accessible name in every presentation, so a
+   * class landing on the menu, a row, or the wrong presentation's chip fails.
+   */
+  const readTriggerParts = (trigger: Element) => ({
+    iconWrap: trigger.querySelector(
+      `.${CONVERSATION_INPUT_CLASS.modelSelectorIcon}`,
+    ),
+    caret: trigger.querySelector(
+      `.${CONVERSATION_INPUT_CLASS.modelSelectorCaret}`,
+    ),
+  });
+
+  it('marks the icon wrap and the caret inside the desktop trigger', () => {
+    renderControl();
+
+    const { iconWrap, caret } = readTriggerParts(
+      screen.getByLabelText(/Select model/),
+    );
+
+    expect(iconWrap).toBeTruthy();
+    expect(caret).toBeTruthy();
+  });
+
+  it('marks them inside the chip rendered for a host-supplied overlay', () => {
+    renderControl({ modelPickerOverlay: () => <span>overlay content</span> });
+
+    const { iconWrap, caret } = readTriggerParts(
+      screen.getByLabelText(/Select model/),
+    );
+
+    expect(iconWrap).toBeTruthy();
+    expect(caret).toBeTruthy();
+  });
+
+  it('marks them inside the mobile trigger', () => {
+    renderControl({ isMobile: true });
+
+    const { iconWrap, caret } = readTriggerParts(
+      screen.getByLabelText(/Select model/),
+    );
+
+    expect(iconWrap).toBeTruthy();
+    expect(caret).toBeTruthy();
+  });
+
+  it('keeps the caret decorative so the trigger keeps its own name', () => {
+    renderControl();
+
+    const { caret } = readTriggerParts(screen.getByLabelText(/Select model/));
+
+    expect(caret?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('emits one icon wrap and one caret per trigger', () => {
+    renderControl();
+
+    expect(
+      document.querySelectorAll(
+        `.${CONVERSATION_INPUT_CLASS.modelSelectorIcon}`,
+      ),
+    ).toHaveLength(1);
+    expect(
+      document.querySelectorAll(
+        `.${CONVERSATION_INPUT_CLASS.modelSelectorCaret}`,
+      ),
+    ).toHaveLength(1);
+  });
+});
