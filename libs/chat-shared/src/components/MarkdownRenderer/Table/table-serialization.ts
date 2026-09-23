@@ -72,10 +72,12 @@ const getCellValues = (
   Array.from(row.cells).map((cell) => readCellText(cell, wrapFormula));
 
 /* An unescaped pipe ends the cell, so a formula such as `\left|x\right|` would
-   split one column into three. GFM turns `\|` back into a literal pipe when it
-   parses the table, so the LaTeX survives the round trip intact. */
+   split one column into three. Backslashes are escaped first so existing escapes
+   remain literal and cannot interfere with pipe escaping. GFM then turns `\|`
+   back into a literal pipe when it parses the table, so the LaTeX survives the
+   round trip intact. */
 const escapeMarkdownCell = (value: string): string =>
-  value.replace(/\|/g, '\\|');
+  value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 
 const serializeCsvRow = (row: HTMLTableRowElement): string =>
   getCellValues(row, keepTexSource)
