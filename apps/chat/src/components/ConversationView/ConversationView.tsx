@@ -580,16 +580,18 @@ const ConversationView: FC<Props> = ({
    */
   const effectiveDeploymentIds = useMemo<(string | undefined)[]>(() => {
     /* Single linear pass — copying the accumulator per message was O(n²) on long conversations. */
+    const result: (string | undefined)[] = [];
     let activeId = initialModelId;
-    return messages.map((msg) => {
+    for (const msg of messages) {
       if (
         isStatusMessage(msg) &&
         msg.custom_content?.event_type === StatusEvent.ModelChanged
       ) {
         activeId = msg.custom_content.new_deployment_id;
       }
-      return msg.deploymentId ?? activeId;
-    });
+      result.push(msg.deploymentId ?? activeId);
+    }
+    return result;
   }, [messages, initialModelId]);
 
   const messageHistory = useMemo(
