@@ -29,39 +29,44 @@ export const validateScheduledTaskTime = (
 /** Minimum lead time a one-shot `runAt` must be ahead of "now" to be accepted. */
 export const RUN_AT_MIN_LEAD_MS = 60_000;
 
+const VALIDATION_ERROR_KEYS: Record<
+  ScheduledTaskValidationErrorCode,
+  EditorI18nKeys | ScheduledTasksI18nKeys
+> = {
+  [ScheduledTaskValidationErrorCode.DisplayNameRequired]:
+    EditorI18nKeys.NameRequired,
+  [ScheduledTaskValidationErrorCode.ModelRequired]:
+    ScheduledTasksI18nKeys.CreateModelRequired,
+  [ScheduledTaskValidationErrorCode.PromptRequired]:
+    ScheduledTasksI18nKeys.CreatePromptRequired,
+  [ScheduledTaskValidationErrorCode.DescriptionTooLong]:
+    ScheduledTasksI18nKeys.CreateDescriptionMaxLengthError,
+  [ScheduledTaskValidationErrorCode.RunAtInvalid]:
+    ScheduledTasksI18nKeys.CreateRunAtRequired,
+  [ScheduledTaskValidationErrorCode.TimeInvalid]:
+    ScheduledTasksI18nKeys.CreateTimeInvalid,
+  [ScheduledTaskValidationErrorCode.MinuteInvalid]:
+    ScheduledTasksI18nKeys.CreateMinuteInvalid,
+  [ScheduledTaskValidationErrorCode.DayOfWeekInvalid]:
+    ScheduledTasksI18nKeys.CreateDayOfWeekRequired,
+  [ScheduledTaskValidationErrorCode.DayOfMonthInvalid]:
+    ScheduledTasksI18nKeys.CreateDayOfMonthRequired,
+  [ScheduledTaskValidationErrorCode.StartDateInvalid]:
+    ScheduledTasksI18nKeys.CreateStartDateInvalid,
+  [ScheduledTaskValidationErrorCode.EndDateInvalid]:
+    ScheduledTasksI18nKeys.CreateEndDateBeforeStartError,
+};
+
 /** Translates shared validation codes at the application edge. */
 export const mapScheduledTaskValidationErrors = (
   errors: ScheduledTaskValidationErrors,
   t: TFunction,
 ): ScheduledTaskCreateFormErrors =>
   Object.fromEntries(
-    Object.entries(errors).map(([field, code]) => {
-      const message =
-        code === ScheduledTaskValidationErrorCode.DisplayNameRequired
-          ? t(EditorI18nKeys.NameRequired)
-          : code === ScheduledTaskValidationErrorCode.ModelRequired
-            ? t(ScheduledTasksI18nKeys.CreateModelRequired)
-            : code === ScheduledTaskValidationErrorCode.PromptRequired
-              ? t(ScheduledTasksI18nKeys.CreatePromptRequired)
-              : code === ScheduledTaskValidationErrorCode.DescriptionTooLong
-                ? t(ScheduledTasksI18nKeys.CreateDescriptionMaxLengthError)
-                : code === ScheduledTaskValidationErrorCode.MinuteInvalid
-                  ? t(ScheduledTasksI18nKeys.CreateMinuteInvalid)
-                  : code === ScheduledTaskValidationErrorCode.DayOfWeekInvalid
-                    ? t(ScheduledTasksI18nKeys.CreateDayOfWeekRequired)
-                    : code ===
-                        ScheduledTaskValidationErrorCode.DayOfMonthInvalid
-                      ? t(ScheduledTasksI18nKeys.CreateDayOfMonthRequired)
-                      : code === ScheduledTaskValidationErrorCode.TimeInvalid
-                        ? t(ScheduledTasksI18nKeys.CreateTimeInvalid)
-                        : code ===
-                            ScheduledTaskValidationErrorCode.EndDateInvalid
-                          ? t(
-                              ScheduledTasksI18nKeys.CreateEndDateBeforeStartError,
-                            )
-                          : t(ScheduledTasksI18nKeys.CreateRunAtRequired);
-      return [field, message];
-    }),
+    Object.entries(errors).map(([field, code]) => [
+      field,
+      t(VALIDATION_ERROR_KEYS[code]),
+    ]),
   );
 
 /**

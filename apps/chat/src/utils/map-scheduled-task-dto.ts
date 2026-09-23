@@ -66,11 +66,12 @@ export const buildScheduleLabel = (
 export const mapScheduledTaskDtoToItem = (
   task: ScheduledTaskDto,
   t: TFunction,
+  locale?: string,
 ): ScheduledTaskItem => ({
   id: task.id,
   displayName: task.displayName,
   descriptionPreview: task.description,
-  scheduleLabel: buildScheduleLabel(task, t),
+  scheduleLabel: buildScheduleLabel(task, t, locale),
   isActive: task.isActive,
 });
 
@@ -78,8 +79,9 @@ export const mapScheduledTaskDtoToItem = (
 export const mapScheduledTaskDtosToItems = (
   tasks: ScheduledTaskDto[],
   t: TFunction,
+  locale?: string,
 ): ScheduledTaskItem[] =>
-  tasks.map((task) => mapScheduledTaskDtoToItem(task, t));
+  tasks.map((task) => mapScheduledTaskDtoToItem(task, t, locale));
 
 /**
  * Maps a failed delete request's HTTP status to the localized error message

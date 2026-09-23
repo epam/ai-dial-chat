@@ -28,3 +28,7 @@ body,
   block-size: 620px;
   min-inline-size: 0;
 }
+
+.fixture-delete.fixture-delete {
+  max-width: 440px;
+}

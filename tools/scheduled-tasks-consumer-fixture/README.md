@@ -9,9 +9,18 @@ npm exec nx run scheduled-tasks-consumer-fixture:test
 ```
 
 The target builds and packs dependencies using the release manifest transform,
-builds the host, checks its isolated strict TypeScript configuration, and runs
-headless Chromium against the built host. Install Playwright Chromium if the
-machine does not already have it.
+checks runtime imports and the isolated strict TypeScript configuration. It runs
+with the workspace test suite and does not require a browser.
+
+For browser acceptance checks, build the host and run headless Chromium:
+
+```sh
+npm exec playwright install -- --with-deps chromium
+npm exec nx run scheduled-tasks-consumer-fixture:test-browser
+```
+
+CI runs `test-browser` in the packed browser consumers job after installing
+Chromium and its system dependencies.
 
 Checks include runtime validation import, request preparation, trigger
 description, responsive 3/2/1 columns, matching skeleton height, tertiary

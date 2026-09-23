@@ -23,6 +23,7 @@ import {
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import {
   OfflineCredentialsGateStatus,
   useOfflineCredentialsGate,
@@ -63,6 +64,7 @@ const resolveBannerState = ({
 
 const ScheduledTasksPage: FC = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
@@ -202,8 +204,8 @@ const ScheduledTasksPage: FC = () => {
   );
 
   const items = useMemo(
-    () => mapScheduledTaskDtosToItems(taskDtos, t),
-    [taskDtos, t],
+    () => mapScheduledTaskDtosToItems(taskDtos, t, language),
+    [taskDtos, t, language],
   );
 
   if (appConfigStatus !== UserConfigStatus.Ready) {

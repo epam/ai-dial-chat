@@ -414,6 +414,7 @@ export enum ScheduledTasksI18nKeys {
   CreateMinuteInvalid = 'scheduledTasks.create.minuteInvalid',
   CreateStartDateLabel = 'scheduledTasks.create.startDateLabel',
   CreateStartDatePlaceholder = 'scheduledTasks.create.startDatePlaceholder',
+  CreateStartDateInvalid = 'scheduledTasks.create.startDateInvalid',
   CreateEndDateLabel = 'scheduledTasks.create.endDateLabel',
   CreateEndDatePlaceholder = 'scheduledTasks.create.endDatePlaceholder',
   CreateEndDateBeforeStartError = 'scheduledTasks.create.endDateBeforeStartError',

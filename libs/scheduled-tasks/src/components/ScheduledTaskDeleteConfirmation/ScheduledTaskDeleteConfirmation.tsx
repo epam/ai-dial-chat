@@ -2,6 +2,8 @@ import { ButtonAppearance, ButtonVariant, Popup } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
 
 export interface ScheduledTaskDeleteConfirmationStyles {
+  /** CSS class applied to the popup container, for example to constrain its width. */
+  popupClassName?: string;
   titleClassName?: string;
   actionClassName?: string;
 }
@@ -51,6 +53,7 @@ export const ScheduledTaskDeleteConfirmation: FC<
   return (
     <Popup
       open={open}
+      className={styles?.popupClassName}
       header={<span className={styles?.titleClassName}>{title}</span>}
       onClose={close}
       mainButtons={[

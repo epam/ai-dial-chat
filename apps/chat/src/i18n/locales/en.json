@@ -737,6 +737,7 @@
       "minuteInvalid": "Enter a minute between 0 and 59",
       "startDateLabel": "Start date",
       "startDatePlaceholder": "Pick start date",
+      "startDateInvalid": "Enter a valid start date",
       "endDateLabel": "End date",
       "endDatePlaceholder": "Pick end date",
       "endDateBeforeStartError": "End date must be after start date",

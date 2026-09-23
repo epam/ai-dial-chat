@@ -5,6 +5,7 @@ import {
   ButtonsI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
+import styles from './ScheduledTaskDeleteModal.module.scss';
 
 interface Props {
   /** Whether the dialog is open. */
@@ -42,6 +43,7 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
   return (
     <ScheduledTaskDeleteConfirmation
       open={open}
+      styles={{ popupClassName: styles.modal }}
       taskName={taskName}
       title={t(ScheduledTasksI18nKeys.DetailDeleteConfirmTitle)}
       body={

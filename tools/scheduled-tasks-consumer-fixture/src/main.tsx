@@ -259,6 +259,7 @@ const Fixture = () => {
       </section>
       <ScheduledTaskDeleteConfirmation
         open={deleteOpen}
+        styles={{ popupClassName: 'fixture-delete' }}
         taskName="Packed task"
         title="Delete task"
         body="This action cannot be undone."

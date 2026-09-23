@@ -36,6 +36,31 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
+  it('uses the supplied locale for dates and weekdays throughout list mapping', () => {
+    const dateTask = buildDto();
+    const weeklyTask = buildDto({
+      trigger: {
+        cron: { fields: { hour: '9', minute: '0', day_of_week: 'Monday' } },
+      },
+    });
+    const items = mapScheduledTaskDtosToItems(
+      [dateTask, weeklyTask],
+      fakeT,
+      'fr',
+    );
+    expect(items[0].scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleOnceAt}:${JSON.stringify({
+        date: new Intl.DateTimeFormat('fr', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(new Date('2026-07-24T09:00:00.000Z')),
+      })}`,
+    );
+    expect(items[1].scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: 'lundi', time: '09:00' })}`,
+    );
+  });
+
   it('formats a weekly cron trigger via the weekly translation key', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({

@@ -164,8 +164,8 @@ const ScheduledTaskDetailPage: FC = () => {
   }, [taskModel, deploymentItems, language]);
 
   const repeatsLabel = useMemo(
-    () => (task ? buildScheduleLabel(task, t) : undefined),
-    [task, t],
+    () => (task ? buildScheduleLabel(task, t, language) : undefined),
+    [task, t, language],
   );
 
   const cronWindow = task?.trigger.cron;

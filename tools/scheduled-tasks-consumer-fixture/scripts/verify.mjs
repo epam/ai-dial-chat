@@ -1,39 +1,18 @@
+import './verify-package.mjs';
 import assert from 'node:assert/strict';
-import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/validation';
-import { execFileSync } from 'node:child_process';
-import { realpathSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { preview } from 'vite';
 import { chromium } from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const require = createRequire(resolve(root, 'package.json'));
-for (const name of ['scheduled-tasks', 'catalog', 'chat-hooks']) {
-  const entry = realpathSync(require.resolve('@epam/ai-dial-' + name));
-  assert(
-    entry.startsWith(realpathSync(resolve(root, 'node_modules'))),
-    'Must load an installed tarball: ' + entry,
-  );
-}
-assert.equal(typeof validateScheduledTaskFormValues, 'function');
-execFileSync(
-  process.execPath,
-  [
-    require.resolve('typescript/bin/tsc'),
-    '-p',
-    resolve(root, 'tsconfig.consumer.json'),
-  ],
-  { stdio: 'inherit' },
-);
-
-const server = await preview({
-  configFile: resolve(root, 'vite.config.mts'),
-  preview: { host: '127.0.0.1', port: 0, open: false },
-});
 const browser = await chromium.launch({ headless: true });
+let server;
 try {
+  server = await preview({
+    configFile: resolve(root, 'vite.config.mts'),
+    preview: { host: '127.0.0.1', port: 0, open: false },
+  });
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1100 },
   });
@@ -113,6 +92,13 @@ try {
   await form.getByRole('combobox').first().click();
   await page.getByRole('button', { name: 'Browse', exact: true }).click();
   await page.getByRole('dialog').waitFor();
+  const popupWidth = await page
+    .getByRole('dialog')
+    .evaluate((element) => element.getBoundingClientRect().width);
+  assert(
+    popupWidth > 0 && popupWidth <= 440,
+    `Delete popup width: ${popupWidth}`,
+  );
   await page
     .getByRole('button', { name: 'Cancel', exact: true })
     .last()
@@ -263,7 +249,9 @@ try {
   );
 } finally {
   await browser.close();
-  await new Promise((done, reject) =>
-    server.httpServer.close((error) => (error ? reject(error) : done())),
-  );
+  if (server) {
+    await new Promise((done, reject) =>
+      server.httpServer.close((error) => (error ? reject(error) : done())),
+    );
+  }
 }

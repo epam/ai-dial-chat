@@ -179,7 +179,8 @@ import {
 
 Controlled deletion presentation that leaves mutations, routing, notifications,
 and translated copy to the host. `isDeleting` prevents duplicate confirmation
-and dismissal callbacks.
+and dismissal callbacks. Use `styles.popupClassName` to apply a host popup width
+or other container styling.
 
 ```tsx
 import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
@@ -299,7 +300,7 @@ can be imported without mounting UI. The packed consumer's test target checks
 real installed types, imports, CSS, grid sizing and interactions:
 
 ```sh
-npm exec nx run scheduled-tasks-consumer-fixture:test
+npm exec nx run scheduled-tasks-consumer-fixture:test-browser
 ```
 
 Responsive visibility and spacing in scheduler surfaces and their builder shell

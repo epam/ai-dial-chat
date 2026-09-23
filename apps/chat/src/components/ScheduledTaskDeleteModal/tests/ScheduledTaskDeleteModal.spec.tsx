@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import ScheduledTaskDeleteModal from '../ScheduledTaskDeleteModal';
+import styles from '../ScheduledTaskDeleteModal.module.scss';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
@@ -13,11 +14,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
      translation keys. */
   Popup: ({
     open,
+    className,
     header,
     children,
     mainButtons,
   }: {
     open: boolean;
+    className?: string;
     header: React.ReactNode;
     children?: React.ReactNode;
     mainButtons?: {
@@ -27,7 +30,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     }[];
   }) =>
     open ? (
-      <div role="dialog" aria-labelledby="delete-dialog-title">
+      <div
+        role="dialog"
+        className={className}
+        aria-labelledby="delete-dialog-title"
+      >
         <h2 id="delete-dialog-title">{header}</h2>
         {children}
         {mainButtons?.map((button, index) => (
@@ -65,6 +72,9 @@ describe('ScheduledTaskDeleteModal', () => {
         name: 'scheduledTasks.detail.deleteConfirmTitle',
       }),
     ).toBeTruthy();
+    expect(screen.getByRole('dialog').classList.contains(styles.modal)).toBe(
+      true,
+    );
     expect(screen.getByText('Daily summary')).toBeTruthy();
     /* The test Trans mock renders the i18nKey itself. */
     expect(
