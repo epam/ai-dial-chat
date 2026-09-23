@@ -1,9 +1,11 @@
-import { useUsageData } from '@epam/ai-dial-chat-hooks';
-import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   mapOverallCostLimitsToPeriodStatuses,
   mapUsageDataToDashboard,
   mapUserUsageToModelLimits,
+  useUsageData,
+} from '@epam/ai-dial-chat-hooks';
+import { Spinner } from '@epam/ai-dial-ui-kit';
+import {
   ModelLimitsSection,
   UsageLimitCardGroup,
 } from '@epam/ai-dial-usage-dashboard';

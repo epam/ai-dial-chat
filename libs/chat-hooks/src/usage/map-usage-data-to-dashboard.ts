@@ -3,18 +3,19 @@ import type {
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { formatCost } from '@epam/ai-dial-chat-shared';
-import type { UsageLimitCardData } from '../models/usage-limit-card-props';
-import { UsageLimitStatus } from '../models/usage-limit-card-props';
+import type { UsageLimitCardData } from '@epam/ai-dial-usage-dashboard';
+import { UsageLimitStatus } from '@epam/ai-dial-usage-dashboard';
 
 /** A translate function compatible with i18next's `TFunction`. */
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 /**
  * One reset time, already parsed and formatted by the host. Declared
- * structurally here so the library never imports an application type; the host
- * passes a value that satisfies this shape.
+ * structurally here so this library never imports an application type; the
+ * host passes a value that satisfies this shape (e.g. `apps/chat`'s own
+ * `ResetTimeDisplay`).
  */
-export interface ResetTimeDisplayLike {
+export interface ResetTimeDisplay {
   /** Exclusive end of the period as an epoch ms value, for the host's boundary scheduling. */
   resetsAtMs: number;
   /** Machine-readable instant for a `<time dateTime>` attribute. */
@@ -28,7 +29,31 @@ export interface ResetTimeDisplayLike {
 /** Formats a raw `resetsAt` into display strings, or returns `undefined` when it cannot be formatted. */
 export type FormatResetTime = (
   resetsAt: string | undefined,
-) => ResetTimeDisplayLike | undefined;
+) => ResetTimeDisplay | undefined;
+
+/**
+ * i18n key strings that the consuming app's translation bundle must define for
+ * `mapUsageDataToDashboard` to produce correctly translated strings. The
+ * values are the default key paths used by AI DIAL Chat.
+ */
+export const USAGE_DATA_I18N_KEYS = {
+  /** Title for the current-UTC-day card (e.g. `'Today'`). */
+  todayTitle: 'usage.todayTitle',
+  /** Accessible period description for the current-UTC-day card. */
+  todayPeriodDescription: 'usage.todayPeriodDescription',
+  /** Title for the current-UTC-week card (e.g. `'This week'`). */
+  thisWeekTitle: 'usage.thisWeekTitle',
+  /** Accessible period description for the current-UTC-week card. */
+  thisWeekPeriodDescription: 'usage.thisWeekPeriodDescription',
+  /** Title for the current-UTC-month card (e.g. `'This month'`). */
+  thisMonthTitle: 'usage.thisMonthTitle',
+  /** Accessible period description for the current-UTC-month card. */
+  thisMonthPeriodDescription: 'usage.thisMonthPeriodDescription',
+  /** Aria label when there is no limit. Receives `{ used: string }`. */
+  unlimitedProgressAriaLabel: 'usage.unlimitedProgressAriaLabel',
+  /** Aria label for a progress bar with a finite limit. Receives `{ used: string, total: string, percent: number }`. */
+  progressAriaLabel: 'usage.progressAriaLabel',
+} as const;
 
 /** Upstream sentinel (`Long.MAX_VALUE` exceeds this): a `total` at or above it means "unlimited". */
 const UNLIMITED_TOTAL_THRESHOLD = 2 ** 53;
@@ -56,7 +81,7 @@ const getStatus = (usedPercent: number): UsageLimitStatus => {
  * fields absent rather than present-and-undefined.
  */
 const buildResetFields = (
-  reset: ResetTimeDisplayLike | undefined,
+  reset: ResetTimeDisplay | undefined,
 ): Pick<
   UsageLimitCardData,
   'resetLabel' | 'resetIsoValue' | 'resetAriaLabel'
@@ -76,7 +101,7 @@ const mapStatsToCardData = (
   title: string,
   periodDescription: string,
   t: Translate,
-  reset: ResetTimeDisplayLike | undefined,
+  reset: ResetTimeDisplay | undefined,
 ): UsageLimitCardData => {
   const used = Math.max(0, stats.used);
   const usedLabel = formatCost(used);
@@ -121,30 +146,6 @@ const mapStatsToCardData = (
     ...resetFields,
   };
 };
-
-/**
- * i18n key strings that the consuming app's translation bundle must define for
- * `mapUsageDataToDashboard` to produce correctly translated strings. The
- * values are the default key paths used by AI DIAL Chat.
- */
-export const USAGE_DATA_I18N_KEYS = {
-  /** Title for the current-UTC-day card (e.g. `'Today'`). */
-  todayTitle: 'usage.todayTitle',
-  /** Accessible period description for the current-UTC-day card. */
-  todayPeriodDescription: 'usage.todayPeriodDescription',
-  /** Title for the current-UTC-week card (e.g. `'This week'`). */
-  thisWeekTitle: 'usage.thisWeekTitle',
-  /** Accessible period description for the current-UTC-week card. */
-  thisWeekPeriodDescription: 'usage.thisWeekPeriodDescription',
-  /** Title for the current-UTC-month card (e.g. `'This month'`). */
-  thisMonthTitle: 'usage.thisMonthTitle',
-  /** Accessible period description for the current-UTC-month card. */
-  thisMonthPeriodDescription: 'usage.thisMonthPeriodDescription',
-  /** Aria label when there is no limit. Receives `{ used: string }`. */
-  unlimitedProgressAriaLabel: 'usage.unlimitedProgressAriaLabel',
-  /** Aria label for a progress bar with a finite limit. Receives `{ used: string, total: string, percent: number }`. */
-  progressAriaLabel: 'usage.progressAriaLabel',
-} as const;
 
 /**
  * Maps a `UserLimitStatsResponseDto` into `UsageLimitCardGroup`'s `cards` prop,
