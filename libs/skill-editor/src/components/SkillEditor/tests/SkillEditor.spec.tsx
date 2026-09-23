@@ -319,6 +319,27 @@ describe('SkillEditor', () => {
     expect(screen.getByDisplayValue('my-skill')).toBeTruthy();
   });
 
+  it('renders no retry action beside a submitError the host did not mark retryable', () => {
+    renderEditor({ submitError: 'A skill with this name already exists' });
+
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+  });
+
+  it('offers a retry beside submitError and keeps the typed values for it', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onRetrySubmit = vi.fn();
+    renderEditor({
+      initialValues: { name: 'my-skill' },
+      submitError: 'The service is temporarily unavailable. Please try again.',
+      onRetrySubmit,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(onRetrySubmit).toHaveBeenCalledOnce();
+    expect(screen.getByDisplayValue('my-skill')).toBeTruthy();
+  });
+
   it('submits the current field values', async () => {
     const user = userEvent.setup({ delay: null });
     const onSubmit = vi.fn();

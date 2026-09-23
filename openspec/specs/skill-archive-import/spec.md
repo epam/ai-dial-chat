@@ -133,6 +133,8 @@ Every extracted, normalized entry path SHALL be validated against the same relat
 
 The system SHALL reject, per entry, before decompressing its content: encrypted entries, symbolic-link entries, and any entry that is neither a regular file nor a directory.
 
+An entry the ZIP reader itself refuses — while enumerating the central directory as well as while opening the entry's stream, for example one marked with strong encryption or compressed by a method the reader does not implement — SHALL likewise be answered with `422 Unprocessable Entity`. A reader-level refusal SHALL NOT surface as `500 Internal Server Error`: the defect is in the uploaded archive, not in the service.
+
 #### Scenario: Path traversal is rejected
 - **WHEN** an archive entry's path contains a `..` segment or an absolute path
 - **THEN** the response is `400 Bad Request` and no file is written
@@ -140,6 +142,10 @@ The system SHALL reject, per entry, before decompressing its content: encrypted 
 #### Scenario: Encrypted entry is rejected
 - **WHEN** an archive contains a password-protected (encrypted) entry
 - **THEN** the response is `422 Unprocessable Entity` and no Skill is created
+
+#### Scenario: An entry the ZIP reader refuses is rejected, not a server error
+- **WHEN** an archive contains an entry the reader will not enumerate or open, such as one marked with strong encryption
+- **THEN** the response is `422 Unprocessable Entity`, never `500 Internal Server Error`
 
 #### Scenario: Symbolic link entry is rejected
 - **WHEN** an archive contains an entry whose Unix external file attributes mark it as a symbolic link
