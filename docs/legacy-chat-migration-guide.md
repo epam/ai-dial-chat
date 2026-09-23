@@ -33,6 +33,8 @@ API, never a rebuild of the frontend image.
    If the provider uses a private CA, configure its trust bundle before startup
    as described in [Private certificate authorities](#private-certificate-authorities).
 2. Port environment variables — see [Environment variables](#environment-variables).
+   For external PDF or Office previews, configure the trusted document origins
+   as described in [External document previews](#external-document-previews).
 3. Re-register the OIDC redirect URI and the post-logout redirect URI with every
    identity provider. Both moved in 1.0 — the callback path gained the `/v1` API
    version segment — see [Authentication](#authentication).
@@ -124,11 +126,31 @@ configuration still works:
 ### Worth setting in 1.0
 
 These have no legacy counterpart but change user-visible behaviour:
-`AUTH_COOKIE_SECURE`, `OVERLAY_SANDBOX_ENABLED`, `RESPONSES_API_ENABLED`,
+`AUTH_COOKIE_SECURE`, `ALLOWED_CONNECT_ORIGINS`, `OVERLAY_SANDBOX_ENABLED`, `RESPONSES_API_ENABLED`,
 `SCHEDULED_TASKS_ENABLED` / `_ROLES`, `LIVE_CHAT_INTERACTION_ENABLED` / `_ROLES`,
 `FILE_MANAGER_AVAILABLE_TABS`, `UTILITY_MODEL` with
 `LLM_CONVERSATION_NAMING_ENABLED`, `ASR_ENABLED_ROLES`, `ANNOUNCEMENTS`,
 `CHAT_VERSION`, and the `ARCHIVE_*` / `SKILL_*` transfer limits.
+
+### External document previews
+
+The legacy `development-old` chat did not set `connect-src` or `default-src` in
+its application CSP, so that policy did not restrict external document fetches.
+The new chat defaults to `connect-src 'self' blob:`. To preserve external PDF and
+Office previews, set trusted document origins on `chat-api`:
+
+```dotenv
+ALLOWED_CONNECT_ORIGINS=https://documents.example.com
+```
+
+This is a new setting, not a renamed legacy variable. Adding a portal to
+`ALLOWED_IFRAME_ORIGINS` does not authorize document fetches from that portal.
+The connection allowlist applies in both CSP modes; switching to `report-only`
+alone does not remove the enforced connection restriction. Restart `chat-api`
+and reload the chat page or overlay iframe after changing it. Remote-server CORS
+and authorization still apply. See the authoritative
+[CSP configuration reference](../apps/chat-api/README.md#content-security-policy)
+for origin syntax, redirect destinations, and reverse-proxy requirements.
 
 ## Authentication
 
