@@ -13,6 +13,7 @@ export * from './models/tool-menu-item';
 export * from './models/custom-visualizer';
 export * from './models/application-visualizer';
 export * from './models/entity';
+export * from './models/locale';
 export * from './types/attachment';
 export * from './types/entity-type';
 export * from './types/mime-type';

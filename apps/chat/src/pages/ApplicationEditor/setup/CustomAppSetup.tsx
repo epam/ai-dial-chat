@@ -14,32 +14,23 @@ import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MIME_TYPE_REGEX } from '../../../constants/custom-apps';
 import { CustomAppI18nKeys } from '../../../constants/translation-keys';
-import type {
-  CustomAppFormData,
-  CustomAppFormErrors,
-} from '../../../models/custom-apps';
+import type { ApplicationSetupProps } from '../../../models/application-editor';
+import type { CustomAppFormData } from '../../../models/custom-apps';
 
-interface Props {
-  form: CustomAppFormData;
-  errors: CustomAppFormErrors;
-  onChange: (patch: Partial<CustomAppFormData>) => void;
-  onCompletionUrlBlur: () => void;
-}
+type Props = ApplicationSetupProps<CustomAppFormData>;
 
-const CustomAppSettingsForm: FC<Props> = ({
-  form,
+const CustomAppSetup: FC<Props> = ({
+  value: form,
   errors,
   onChange,
-  onCompletionUrlBlur,
+  onFieldBlur,
 }) => {
   const { t } = useTranslation();
 
   /*
    * Validity of these two fields is a pure function of the current value, so
-   * they are derived on every render instead of being cached in local state.
-   * The form unmounts whenever the wizard switches back to the General step;
-   * state-held errors would be dropped while the invalid value — owned by the
-   * parent — survives, leaving the field silently unhighlighted on return.
+   * they are derived on every render instead of being cached in local state,
+   * so the highlight always matches the value the page owns.
    */
   const featuresDataError = useMemo(
     () =>
@@ -69,6 +60,11 @@ const CustomAppSettingsForm: FC<Props> = ({
       onChange({ featuresData: value });
     },
     [onChange],
+  );
+
+  const handleCompletionUrlBlur = useCallback(
+    () => onFieldBlur('completionUrl'),
+    [onFieldBlur],
   );
 
   const handleCompletionUrlChange = useCallback(
@@ -133,7 +129,7 @@ const CustomAppSettingsForm: FC<Props> = ({
         id="custom-app-completion-url"
         value={form.completionUrl}
         onChange={handleCompletionUrlChange}
-        onBlur={onCompletionUrlBlur}
+        onBlur={handleCompletionUrlBlur}
         labelProps={{
           label: t(CustomAppI18nKeys.CompletionUrlLabel),
           required: true,
@@ -146,4 +142,4 @@ const CustomAppSettingsForm: FC<Props> = ({
   );
 };
 
-export default memo(CustomAppSettingsForm);
+export default memo(CustomAppSetup);

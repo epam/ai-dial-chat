@@ -1,22 +1,14 @@
+import type {
+  LocaleOption,
+  LocalizedTextEntry,
+} from '@epam/ai-dial-chat-shared';
+import type { MetadataField } from './metadata-field';
+
 /** One additional (non-primary) locale's name/description translation, edited via the "Add locale" popup. */
-export interface DeploymentCreationFormLocaleEntry {
-  /** Stable client-side id for list rendering; not part of the persisted locale map. */
-  id: string;
-  /** Locale code this entry translates into (e.g. `'de'`). */
-  language: string;
-  /** Translated name for this locale. */
-  name: string;
-  /** Translated description for this locale. */
-  description: string;
-}
+export type DeploymentCreationFormLocaleEntry = LocalizedTextEntry;
 
 /** A selectable language option for an additional-locale row. */
-export interface DeploymentCreationFormLocaleOption {
-  /** Locale code (e.g. `'de'`). */
-  code: string;
-  /** Display label for the option (e.g. `'DE'`). */
-  label: string;
-}
+export type DeploymentCreationFormLocaleOption = LocaleOption;
 
 /** Field values shared by Quick App and Toolset creation's General step. */
 export interface DeploymentCreationFormValues {
@@ -40,6 +32,8 @@ export interface DeploymentCreationFormFieldErrors {
   name?: string;
   /** Error message for the version field. */
   version?: string;
+  /** Error message for the description field. */
+  description?: string;
 }
 
 /** Label and placeholder text for a single field, supplied by the host app. */
@@ -144,4 +138,16 @@ export interface DeploymentCreationFormProps {
   styles?: DeploymentCreationFormStyles;
   /** Selectable language options for additional-locale rows. Defaults to an empty list (no locales addable). */
   availableLocaleOptions?: DeploymentCreationFormLocaleOption[];
+  /**
+   * Fields to render, always in the fixed order Avatar, Name + Version,
+   * Description, Locales, Tags. Defaults to every field. When `Version` is
+   * absent, Name takes the full row.
+   */
+  fields?: readonly MetadataField[];
+  /** Renders the name field read-only, e.g. when the entity cannot be renamed after creation. */
+  isNameReadOnly?: boolean;
+  /** Helper text rendered under the name field. */
+  nameCaption?: string;
+  /** Marks the description field as required. The host still owns the validation. */
+  isDescriptionRequired?: boolean;
 }

@@ -1,4 +1,4 @@
-import type { DeploymentCreationFormLocaleEntry } from '@epam/ai-dial-builder-form';
+import type { LocalizedTextEntry } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
   appendLocaleCode,
@@ -77,8 +77,8 @@ describe('resolveLocalizedText', () => {
 });
 
 const makeEntry = (
-  overrides: Partial<DeploymentCreationFormLocaleEntry> = {},
-): DeploymentCreationFormLocaleEntry => ({
+  overrides: Partial<LocalizedTextEntry> = {},
+): LocalizedTextEntry => ({
   id: 'locale-row-1',
   language: 'de',
   name: 'Mein Toolset',

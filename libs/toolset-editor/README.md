@@ -151,10 +151,11 @@ whole; an omitted group falls back to the library's English defaults.
 
 ### `GeneralForm`
 
-The Metadata field set on its own, for editors that need it without the
-toolset Setup section (the Custom App editor's General step is the in-repo
-consumer). It wraps `DeploymentCreationForm` and the `AvatarPickerModal` from
-`@epam/ai-dial-builder-form`.
+**Deprecated** — render `MetadataForm` from `@epam/ai-dial-builder-form`
+instead. `GeneralForm` keeps its props for existing callers (the Custom App
+editor's General step) and is now a thin wrapper over `MetadataForm`: it adds
+the toolset-flavoured default labels and resolves the picked avatar through
+`dialFileToAttachment` from `@epam/ai-dial-chat-hooks`.
 
 ```tsx
 import { GeneralForm } from '@epam/ai-dial-toolset-editor';

@@ -7,7 +7,8 @@ Presentational building blocks shared by DIAL's builder/editor form pages — th
 - `BuilderFormContainer` — a full-height scrollable form page shell with a header and a three-column body;
 - `EditorLayout` and `EditorSection` — a two-column editor shell with a header row and a bordered card wrapper for named field groups;
 - `AddAvatar` and `AvatarPickerModal` — the avatar preview control and the host-wired file-manager modal behind it;
-- `DeploymentCreationForm`, `DeploymentLocalesField`, and `validateDeploymentCreationFields` — the shared General-step field set (avatar, name, description, version, topics, per-locale translations) and its validation.
+- `DeploymentCreationForm`, `DeploymentLocalesField`, and `validateDeploymentCreationFields` — the shared General-step field set (avatar, name, description, version, topics, per-locale translations) and its validation;
+- `EntityEditor`, `MetadataForm`, and `useMetadataForm` — the standard entity editor page (header, Metadata column, Setup column), the Metadata field set with its avatar picker, and the headless state that decides when a metadata error shows.
 
 Extracting these blocks keeps every builder page visually identical and lets a single fix reach all of them. Quick Apps, Toolsets, and other deployment kinds all open with the same first step — identify the thing being created — so the field order, validation rules, and the "Add locale" popup are owned once instead of drifting apart between editors.
 
@@ -235,9 +236,77 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
 />;
 ```
 
+### EntityEditor
+
+The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` title, Cancel and a primary button in the header, a "Metadata" `EditorSection` in the 360px left column and a "Setup" `EditorSection` in the right column. `title`, `onBack`, `onCancel`, `onSubmit`, `submitLabel`, and `metadata` are required.
+
+- `isSubmitting` disables Cancel and the primary button and announces `labels.savingStatusLabel`.
+- `isSubmitDisabled` disables only the primary button. Use it for a host-owned readiness reason (an embedded editor that is not ready to save), not for validation — a submit attempt with invalid fields should show the errors instead.
+- `extraActions` render before Cancel; `hideStandardActions` hides Cancel and the primary button so only they remain (e.g. while a preview is open).
+- `metadataFooter` renders below the Metadata section in the left column.
+- `setup` fills the Setup section; without it the left column takes the full width. `setupTitle` replaces the section heading.
+- `alert` renders in a `role="alert"` region above the Setup section (above Metadata when there is no Setup).
+
+```tsx
+import { EntityEditor, MetadataForm } from '@epam/ai-dial-builder-form';
+
+<EntityEditor
+  title="Create toolset"
+  onBack={handleBack}
+  onCancel={handleBack}
+  onSubmit={handleSubmit}
+  submitLabel="Create"
+  isSubmitting={isSaving}
+  alert={submitError}
+  metadata={
+    <MetadataForm values={values} errors={errors} onChange={handleChange} />
+  }
+  setup={<ToolsetSettings />}
+  labels={{ backAriaLabel: 'Back to catalog' }}
+/>;
+```
+
+### MetadataForm
+
+`DeploymentCreationForm` plus the avatar picker, with English default labels. `values`, `errors`, and `onChange` are required.
+
+`fields` (a list of `MetadataField`) narrows the rendered fields; the order never changes. The Avatar field renders only when `avatarPicker` is supplied. Every value in it is host-resolved: the storage `bucket`, the host's `FileManagerModal`, `resolveIconUrl` for the preview, and `resolveAttachedIconUrl`, which turns the picked file into the icon value to store (return `undefined` to leave the icon unchanged). The lib never builds storage paths itself.
+
+```tsx
+import { MetadataField, MetadataForm } from '@epam/ai-dial-builder-form';
+
+// Full field set with the avatar picker
+<MetadataForm
+  values={values}
+  errors={errors}
+  onChange={handleChange}
+  onNameBlur={handleNameBlur}
+  availableLocaleOptions={localeOptions}
+  avatarPicker={{
+    bucket,
+    FileManagerModal,
+    resolveIconUrl,
+    resolveAttachedIconUrl: (result) => toIconUrl(result.files[0]),
+    allowedMimeTypes: ['image/png', 'image/jpeg', 'image/svg+xml'],
+    maxFileSizeBytes: 1024 * 1024,
+  }}
+/>;
+
+// Name and Description only
+<MetadataForm
+  values={values}
+  errors={errors}
+  onChange={handleChange}
+  fields={[MetadataField.Name, MetadataField.Description]}
+  isDescriptionRequired
+/>;
+```
+
 ### DeploymentCreationForm
 
 Renders the whole shared General-step field set. `values`, `errors`, `onChange`, `onAddAvatarClick`, and `labels` are required. The avatar field never opens a file picker itself — `onAddAvatarClick` is the host's hook to open its own file manager/upload flow, and the host reports the result back through `onChange({ iconUrl })`. `iconPreviewUrl` is the URL to actually render in the preview box; the host resolves it from `values.iconUrl` (which may be a DIAL file id rather than a directly displayable URL). Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.
+
+`fields` renders a subset (Avatar, Name + Version, Description, Locales, Tags, in that fixed order); Name takes the full row when Version is hidden. `isNameReadOnly`, `nameCaption`, `isDescriptionRequired`, and `errors.description` cover editors whose name is fixed after creation or whose description is required. When errors first appear, focus moves to the first invalid field — Name, then Version, then Description. `labels.topics.placeholder` falls back to `'Add tags, comma separated'`.
 
 ```tsx
 import { DeploymentCreationForm } from '@epam/ai-dial-builder-form';
@@ -330,6 +399,40 @@ dot-separated numeric segments (`0.0.1`, `2.0`) — for a host that needs a
 stricter version format. All three are exported so a host can pre-filter
 input with the same rule the validator applies.
 
+## Hooks
+
+### useMetadataForm
+
+Headless metadata state: values, touched fields, and validation through `validateDeploymentCreationFields`. An error is visible once its field has been touched (`markTouched`, typically on blur), and every error is visible after `attemptSubmit()`, which returns whether the values are valid. `initialValues` seed the form once per `reseedKey`, so a host re-render never overwrites the user's edits. It returns error codes, not messages.
+
+```tsx
+import {
+  MetadataField,
+  MetadataForm,
+  SEMVER_VERSION_PATTERN,
+  useMetadataForm,
+} from '@epam/ai-dial-builder-form';
+
+const metadata = useMetadataForm({
+  initialValues,
+  validationOptions: { validateVersionPattern: SEMVER_VERSION_PATTERN },
+  reseedKey: appId,
+});
+
+const handleSubmit = () => {
+  if (!metadata.attemptSubmit()) return;
+  void save(metadata.values);
+};
+
+<MetadataForm
+  values={metadata.values}
+  errors={toMessages(metadata.visibleErrorCodes)}
+  onChange={metadata.setValues}
+  onNameBlur={() => metadata.markTouched(MetadataField.Name)}
+  onVersionBlur={() => metadata.markTouched(MetadataField.Version)}
+/>;
+```
+
 ## Enums
 
 ```tsx
@@ -338,6 +441,17 @@ import { DeploymentCreationFieldErrorCode } from '@epam/ai-dial-builder-form';
 DeploymentCreationFieldErrorCode.Required; // field left empty
 DeploymentCreationFieldErrorCode.InvalidFormat; // value fails its pattern
 DeploymentCreationFieldErrorCode.TooLong; // value exceeds its maximum length
+```
+
+```tsx
+import { MetadataField } from '@epam/ai-dial-builder-form';
+
+MetadataField.Avatar;
+MetadataField.Name;
+MetadataField.Version;
+MetadataField.Description;
+MetadataField.Locales;
+MetadataField.Tags;
 ```
 
 ## Types
@@ -378,6 +492,14 @@ import type {
   AddAvatarProps,
   AddAvatarColors,
   AddAvatarStyles,
+  EntityEditorProps,
+  EntityEditorLabels,
+  EntityEditorStyles,
+  MetadataFormProps,
+  MetadataFormLabels,
+  MetadataFormAvatarPicker,
+  UseMetadataFormOptions,
+  UseMetadataFormResult,
 } from '@epam/ai-dial-builder-form';
 ```
 
@@ -399,10 +521,12 @@ they are hashed at build time — nor through DOM order or ARIA attributes, whic
 are structure and accessibility contracts rather than styling ones. Selected
 elements therefore carry a stable public class.
 
-| Key       | Class                       | Element                                                    |
-| --------- | --------------------------- | ---------------------------------------------------------- |
-| `layout`  | `dial-builder-form-layout`  | The editor layout root, holding the header and the columns |
-| `section` | `dial-builder-form-section` | Every `EditorSection` box, titled or not                   |
+| Key               | Class                                | Element                                                        |
+| ----------------- | ------------------------------------ | -------------------------------------------------------------- |
+| `layout`          | `dial-builder-form-layout`           | The editor layout root, holding the header and the columns     |
+| `section`         | `dial-builder-form-section`          | Every `EditorSection` box, titled or not                       |
+| `metadataSection` | `dial-builder-form-metadata-section` | The Metadata section `EntityEditor` renders in the left column |
+| `setupSection`    | `dial-builder-form-setup-section`    | The Setup section `EntityEditor` renders in the right column   |
 
 ```tsx
 import { BUILDER_FORM_CLASS } from '@epam/ai-dial-builder-form';

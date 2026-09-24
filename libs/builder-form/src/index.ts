@@ -33,6 +33,24 @@ export { AddAvatar } from './components/AddAvatar/AddAvatar';
 export { AvatarPickerModal } from './components/AvatarPickerModal/AvatarPickerModal';
 export { DeploymentCreationForm } from './components/DeploymentCreationForm/DeploymentCreationForm';
 export { DeploymentLocalesField } from './components/DeploymentLocalesField/DeploymentLocalesField';
+export { EntityEditor } from './components/EntityEditor/EntityEditor';
+export { MetadataForm } from './components/MetadataForm/MetadataForm';
+export { useMetadataForm } from './hooks/useMetadataForm';
+export { MetadataField } from './models/metadata-field';
+export type {
+  EntityEditorLabels,
+  EntityEditorProps,
+  EntityEditorStyles,
+} from './models/entity-editor-props';
+export type {
+  MetadataFormAvatarPicker,
+  MetadataFormLabels,
+  MetadataFormProps,
+} from './models/metadata-form-props';
+export type {
+  UseMetadataFormOptions,
+  UseMetadataFormResult,
+} from './models/use-metadata-form';
 export type { DeploymentLocalesFieldProps } from './components/DeploymentLocalesField/DeploymentLocalesField';
 export type {
   AvatarPickerFileManagerModalProps,

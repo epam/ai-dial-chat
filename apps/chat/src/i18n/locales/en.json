@@ -1217,6 +1217,8 @@
     }
   },
   "customApp": {
+    "createTitle": "Create custom app",
+    "editTitle": "Edit custom app",
     "settings": {
       "completionUrlLabel": "Chat completion URL",
       "completionUrlRequired": "Chat completion URL is required",

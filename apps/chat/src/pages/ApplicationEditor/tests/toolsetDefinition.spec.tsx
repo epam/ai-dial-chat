@@ -16,12 +16,13 @@ import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import * as toolsetsApi from '../../../server-api/toolsets';
+import { ApplicationEditorKind } from '../../../types/application-editor';
 import {
   EntityOperation,
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
-import ToolsetEditorPage from '../ToolsetEditor';
+import ApplicationEditorPage from '../ApplicationEditorPage';
 
 vi.mock('../../../server-api/toolsets', () => ({
   createToolset: vi.fn(),
@@ -214,14 +215,19 @@ const renderPage = (initialEntry: string = ROUTES.ToolsetEditor) =>
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
-        <Route path={ROUTES.ToolsetEditor} element={<ToolsetEditorPage />} />
+        <Route
+          path={ROUTES.ToolsetEditor}
+          element={
+            <ApplicationEditorPage kind={ApplicationEditorKind.Toolset} />
+          }
+        />
         <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
         <Route path="/previous" element={<div>Previous screen</div>} />
       </Routes>
     </MemoryRouter>,
   );
 
-describe('ToolsetEditorPage', () => {
+describe('ApplicationEditorPage — toolset', () => {
   const user = userEvent.setup({ delay: null });
 
   beforeEach(() => {

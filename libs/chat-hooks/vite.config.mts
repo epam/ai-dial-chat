@@ -109,14 +109,6 @@ export default defineConfig(({ command }) => ({
         import.meta.dirname,
         '../attachment-input/src/index.ts',
       ),
-      '@epam/ai-dial-builder-form/styles.css': path.resolve(
-        import.meta.dirname,
-        '../builder-form/src/styles.css',
-      ),
-      '@epam/ai-dial-builder-form': path.resolve(
-        import.meta.dirname,
-        '../builder-form/src/index.ts',
-      ),
       '@epam/ai-dial-catalog': path.resolve(
         import.meta.dirname,
         '../catalog/src/index.ts',

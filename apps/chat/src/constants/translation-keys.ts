@@ -1244,6 +1244,8 @@ export enum NotificationI18nKeys {
 }
 
 export enum CustomAppI18nKeys {
+  CreateTitle = 'customApp.createTitle',
+  EditTitle = 'customApp.editTitle',
   // General form placeholders
   NamePlaceholder = 'customApp.general.namePlaceholder',
   DescriptionPlaceholder = 'customApp.general.descriptionPlaceholder',
