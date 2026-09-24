@@ -14,6 +14,7 @@ import {
   getQuickAppConversationStarters,
   isQuickAppSchema,
   referenceAttachmentToPdfCanvasContent,
+  normalizeResponseFormat,
   shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
@@ -361,6 +362,10 @@ const ConversationView: FC<Props> = ({
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  /* Applies to existing messages as well as new ones, which is what the
+     chat-settings hint promises — the format is a property of the
+     conversation, not of the message it was chosen before. */
+  const responseFormat = normalizeResponseFormat(conversation.responseFormat);
   const mcpAppCache = useMcpAppResponseCache(conversation.id);
   const mcpAppHostAdapter = useMcpAppHostAdapter('fullscreen');
   const { closePanel } = useConversationPanel();
@@ -573,27 +578,21 @@ const ConversationView: FC<Props> = ({
    * For each message, resolve the deployment active at that point in the conversation.
    * Scans status messages in order so messages before a model change get the initial model icon.
    */
-  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
-    () =>
-      messages.reduce<{
-        ids: (string | undefined)[];
-        activeId: string | undefined;
-      }>(
-        (acc, msg) => {
-          const nextId =
-            isStatusMessage(msg) &&
-            msg.custom_content?.event_type === StatusEvent.ModelChanged
-              ? msg.custom_content.new_deployment_id
-              : acc.activeId;
-          return {
-            ids: [...acc.ids, msg.deploymentId ?? nextId],
-            activeId: nextId,
-          };
-        },
-        { ids: [], activeId: initialModelId },
-      ).ids,
-    [messages, initialModelId],
-  );
+  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(() => {
+    /* Single linear pass — copying the accumulator per message was O(n²) on long conversations. */
+    const result: (string | undefined)[] = [];
+    let activeId = initialModelId;
+    for (const msg of messages) {
+      if (
+        isStatusMessage(msg) &&
+        msg.custom_content?.event_type === StatusEvent.ModelChanged
+      ) {
+        activeId = msg.custom_content.new_deployment_id;
+      }
+      result.push(msg.deploymentId ?? activeId);
+    }
+    return result;
+  }, [messages, initialModelId]);
 
   const messageHistory = useMemo(
     () =>
@@ -848,6 +847,11 @@ const ConversationView: FC<Props> = ({
     [openAttachmentCanvas],
   );
 
+  const clearPendingDialAttachments = useCallback(
+    () => setPendingDialAttachments([]),
+    [],
+  );
+
   const handleMessageAttachmentClick = useCallback(
     (attachment: DisplayAttachment, messageIndex: number) => {
       /*
@@ -906,6 +910,7 @@ const ConversationView: FC<Props> = ({
                     totalCount={messages.length}
                     isAssistantTyping={isAssistantTyping}
                     isCompactTypography={isMobile}
+                    responseFormat={responseFormat}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
                     onStartEdit={isReadOnly ? undefined : handleStartEdit}
@@ -987,9 +992,7 @@ const ConversationView: FC<Props> = ({
                       !isAttachmentsAllowed || !isInputFilesEnabled
                     }
                     fileAccept={fileAccept}
-                    onAttachmentClick={(attachment) =>
-                      handleMessageAttachmentClick(attachment, index)
-                    }
+                    onAttachmentClick={handleMessageAttachmentClick}
                     selectedAttachmentKey={selectedAttachmentKey}
                     onDialFileSystemClick={
                       isAttachmentsAllowed
@@ -1006,7 +1009,7 @@ const ConversationView: FC<Props> = ({
                     }
                     onPendingAttachmentsConsumed={
                       isEditActive && isThisMessageEditing
-                        ? () => setPendingDialAttachments([])
+                        ? clearPendingDialAttachments
                         : undefined
                     }
                     onMessageTooLong={handleMessageTooLong}

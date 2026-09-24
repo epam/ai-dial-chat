@@ -269,6 +269,7 @@ describe('ConversationMessageItem — inline citations', () => {
     if (type === 'text/html') {
       expect(onAttachmentClick).toHaveBeenCalledWith(
         expect.objectContaining({ url, contentType: type }),
+        1,
       );
     } else {
       expect(mockOpenCanvas).toHaveBeenCalledWith(
@@ -780,6 +781,7 @@ describe('ConversationMessageItem — inline citations', () => {
     expect(mockOpenCanvas).not.toHaveBeenCalled();
     expect(onAttachmentClick).toHaveBeenCalledWith(
       expect.objectContaining({ url: 'files/account/uploads/export.csv' }),
+      1,
     );
   });
 

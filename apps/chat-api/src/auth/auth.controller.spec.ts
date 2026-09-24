@@ -318,6 +318,18 @@ describe('AuthController (integration)', () => {
       expect(res.headers.location).toContain('keycloak.example.com');
     });
 
+    it('still accepts a callbackUrl on the auth callback base origin when CORS_ORIGIN is unset', async () => {
+      configOverride = { CORS_ORIGIN: undefined };
+      const callbackUrl = encodeURIComponent(
+        `${CALLBACK_BASE}/conversation?x=1`,
+      );
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/auth/login/keycloak?callbackUrl=${callbackUrl}`)
+        .expect(302);
+
+      expect(res.headers.location).toContain('keycloak.example.com');
+    });
+
     it('passes provider audience to authorization request when configured', async () => {
       await app?.close();
       providerConfigOverride = { audience: 'https://dial-core.example.com' };
