@@ -14,7 +14,12 @@ describe('Input — skill mention highlighting', () => {
       />,
     );
 
-    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    /* The textarea is aria-hidden while a mention is active — the mirror's
+       un-hidden ChatSkill chip carries the accessible name instead — so the
+       role query must opt into hidden elements here. */
+    const textarea = screen.getByRole('textbox', {
+      hidden: true,
+    }) as HTMLTextAreaElement;
     expect(textarea.value).toBe('/report please summarize /report again');
     expect(textarea.className).toContain('textareaMentionMode');
 
@@ -47,9 +52,10 @@ describe('Input — skill mention highlighting', () => {
     );
 
     expect(screen.getByText('/report')).toBeTruthy();
-    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe(
-      '/report مرحبا',
-    );
+    expect(
+      (screen.getByRole('textbox', { hidden: true }) as HTMLTextAreaElement)
+        .value,
+    ).toBe('/report مرحبا');
   });
 });
 
@@ -65,7 +71,9 @@ describe('Input — whole-mention Backspace', () => {
         onChange={onChange}
       />,
     );
-    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    const textarea = screen.getByRole('textbox', {
+      hidden: true,
+    }) as HTMLTextAreaElement;
     textarea.setSelectionRange(13, 13);
 
     fireEvent.keyDown(textarea, { key: 'Backspace' });
@@ -84,7 +92,9 @@ describe('Input — whole-mention Backspace', () => {
         onBackspaceAtCaret={onBackspaceAtCaret}
       />,
     );
-    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    const textarea = screen.getByRole('textbox', {
+      hidden: true,
+    }) as HTMLTextAreaElement;
     textarea.setSelectionRange(9, 9);
 
     const notPrevented = fireEvent.keyDown(textarea, { key: 'Backspace' });

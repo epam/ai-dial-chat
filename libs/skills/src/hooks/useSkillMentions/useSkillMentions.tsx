@@ -115,9 +115,7 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
   const orderedSkills = useMemo<RequestSkill[] | undefined>(() => {
     if (anchors.length === 0) return undefined;
 
-    return [...anchors]
-      .sort((a, b) => a.start - b.start)
-      .map((anchor) => ({ url: anchor.url }));
+    return anchors.map((anchor) => ({ url: anchor.url }));
   }, [anchors]);
 
   const reset = useCallback(() => {

@@ -127,7 +127,7 @@ describe('reconcileAnchors', () => {
 
 describe('insertAnchor', () => {
   it('inserts a new anchor at the caret', () => {
-    const result = insertAnchor([], 0, 'skills/bucket/abc', 'abc');
+    const result = insertAnchor([], 0, 'skills/bucket/abc', 'abc', true);
 
     expect(result).toEqual([
       { url: 'skills/bucket/abc', name: 'abc', start: 0, length: 4 },
@@ -136,7 +136,7 @@ describe('insertAnchor', () => {
 
   it('shifts an existing later anchor by the inserted run length', () => {
     const existing = [anchor({ start: 5, length: 4, name: 'csd' })];
-    const result = insertAnchor(existing, 0, 'skills/bucket/abc', 'abc');
+    const result = insertAnchor(existing, 0, 'skills/bucket/abc', 'abc', true);
 
     /* '/abc ' is 5 characters. */
     expect(result).toEqual([
@@ -147,7 +147,7 @@ describe('insertAnchor', () => {
 
   it('keeps an earlier anchor untouched and orders the result by start', () => {
     const existing = [anchor({ start: 0, length: 4, name: 'abc' })];
-    const result = insertAnchor(existing, 5, 'skills/bucket/csd', 'csd');
+    const result = insertAnchor(existing, 5, 'skills/bucket/csd', 'csd', true);
 
     expect(result).toEqual([
       anchor({ start: 0, length: 4, name: 'abc' }),

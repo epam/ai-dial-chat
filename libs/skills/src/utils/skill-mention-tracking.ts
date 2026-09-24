@@ -77,16 +77,15 @@ export const reconcileAnchors = (
 /**
  * Inserts a new mention anchor at `atIndex` and shifts every anchor at or
  * after that index by the inserted `/{name}` run's length — plus one more
- * when `hasTrailingSpace` (default `true`, matching every caller that always
- * appended one before the trailing space became conditional) — keeping the
- * result ordered by `start` (left-to-right reading order).
+ * when `hasTrailingSpace` — keeping the result ordered by `start`
+ * (left-to-right reading order).
  */
 export const insertAnchor = (
   anchors: SkillMentionAnchor[],
   atIndex: number,
   url: string,
   name: string,
-  hasTrailingSpace = true,
+  hasTrailingSpace: boolean,
 ): SkillMentionAnchor[] => {
   const mentionLength = name.length + 1; // '/' + name
   const insertedTextLength = mentionLength + (hasTrailingSpace ? 1 : 0);

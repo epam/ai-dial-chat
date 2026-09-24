@@ -77,6 +77,7 @@ export const renderHighlightedText = (
 
   sortedRanges.forEach((range, index) => {
     pushText(cursor, range.start);
+    if (range.start + range.length <= cursor) return;
     const rangeText = text.slice(range.start, range.start + range.length);
     segments.push(
       range.render ? (
@@ -97,7 +98,7 @@ export const renderHighlightedText = (
         </span>
       ),
     );
-    cursor = range.start + range.length;
+    cursor = Math.max(cursor, range.start + range.length);
   });
 
   pushText(cursor, text.length);

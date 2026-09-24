@@ -21,7 +21,6 @@ import {
   ClipboardEvent,
   forwardRef,
   KeyboardEvent,
-  type ReactNode,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -772,6 +771,14 @@ export const Input = forwardRef<InputHandle, InputProps>(
          */
         placeholder={placeholder}
         aria-label={ariaLabel}
+        /*
+         * When a mention is active, the mirror's `ChatSkill` chip (rendered
+         * un-hidden, see `renderHighlightedText`/`HighlightedTextRange.render`)
+         * already exposes the mention's name and description to assistive
+         * tech, with its own focus stop and tooltip. Hiding the textarea's
+         * raw `/{name}` text avoids announcing that same mention twice.
+         */
+        aria-hidden={hasActiveMentions ? true : undefined}
         disabled={isInputDisabled}
         readOnly={isVoiceActive}
         rows={1}

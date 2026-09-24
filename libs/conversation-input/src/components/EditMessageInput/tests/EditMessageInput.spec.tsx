@@ -153,7 +153,12 @@ describe('EditMessageInput — skill mentions', () => {
       />,
     );
 
-    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    /* The textarea is aria-hidden while a mention is active — the mirror's
+       un-hidden ChatSkill chip carries the accessible name instead — so the
+       role query must opt into hidden elements here. */
+    const textarea = screen.getByRole('textbox', {
+      hidden: true,
+    }) as HTMLTextAreaElement;
     expect(textarea.value).toBe('hello /report world');
     expect(screen.getByText('/report')).toBeTruthy();
   });

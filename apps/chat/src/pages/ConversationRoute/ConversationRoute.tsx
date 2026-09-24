@@ -171,7 +171,6 @@ const ConversationRoute: FC = () => {
     isSkillUnsupported,
     selectSkillByUrl,
     resetSkillMentions,
-    seedSkillMentions,
   } = useSkillSelectorOverlay({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
@@ -396,45 +395,40 @@ const ConversationRoute: FC = () => {
       const attachmentDtos = attachmentsToDtos(attachments || []);
       const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
       const skillsForSend = selectedSkills;
-      resetSkillMentions();
-      try {
-        const conversation = await apiCreateConversation(
-          message,
-          selectedItemId,
-          attachmentDtos,
-          hasToolConfig ? toolConfigurationValue : undefined,
-          undefined,
-          skillsForSend,
-        );
-        // TODO: remove in next release
-        const isolatedName =
-          isIsolatedView && isolatedModelId
-            ? `isolated_${sanitizeIsolatedModelId(isolatedModelId)}`
-            : null;
-        if (isolatedName) {
-          await renameConversation(
-            getConversationPath(conversation.id),
-            isolatedName,
-          );
-        }
-        const savedConversation = {
-          ...conversation,
-          ...(isolatedName ? { name: isolatedName } : {}),
-          prompt: chatSettingsValues.systemPrompt,
-          temperature: chatSettingsValues.temperature,
-          responseFormat: chatSettingsValues.responseFormat,
-        } as ConversationResponseDto;
-        await saveConversation(
+      const conversation = await apiCreateConversation(
+        message,
+        selectedItemId,
+        attachmentDtos,
+        hasToolConfig ? toolConfigurationValue : undefined,
+        undefined,
+        skillsForSend,
+      );
+      // TODO: remove in next release
+      const isolatedName =
+        isIsolatedView && isolatedModelId
+          ? `isolated_${sanitizeIsolatedModelId(isolatedModelId)}`
+          : null;
+      if (isolatedName) {
+        await renameConversation(
           getConversationPath(conversation.id),
-          savedConversation,
+          isolatedName,
         );
-        navigate(getConversationRoute(conversation.id), {
-          state: { conversation: savedConversation },
-        });
-      } catch (err) {
-        seedSkillMentions(message, skillsForSend);
-        throw err;
       }
+      const savedConversation = {
+        ...conversation,
+        ...(isolatedName ? { name: isolatedName } : {}),
+        prompt: chatSettingsValues.systemPrompt,
+        temperature: chatSettingsValues.temperature,
+        responseFormat: chatSettingsValues.responseFormat,
+      } as ConversationResponseDto;
+      await saveConversation(
+        getConversationPath(conversation.id),
+        savedConversation,
+      );
+      navigate(getConversationRoute(conversation.id), {
+        state: { conversation: savedConversation },
+      });
+      resetSkillMentions();
     },
     [
       navigate,
@@ -444,7 +438,6 @@ const ConversationRoute: FC = () => {
       isolatedModelId,
       selectedSkills,
       resetSkillMentions,
-      seedSkillMentions,
     ],
   );
 
