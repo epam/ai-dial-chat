@@ -11,6 +11,7 @@ import {
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
+import { usePdfPreviewLoader } from '../../hooks/attachment/usePdfPreviewLoader';
 import { SkillFilePreviewState } from '../../types/skill-file-preview';
 import { ThemeId } from '../../types/theme-id';
 import { configurePdfWorker } from '../../utils/pdf';
@@ -37,6 +38,7 @@ interface Props {
  */
 export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
   const { t } = useTranslation();
+  const loadPdf = usePdfPreviewLoader();
   const { currentTheme } = useTheme();
   const { content, fileName } = useAttachmentCanvas();
 
@@ -85,6 +87,7 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
             : CodeBlockTheme.Light
         }
         configurePdfWorker={configurePdfWorker}
+        loadPdf={loadPdf}
         hidePdfToolbar
       />
     </div>

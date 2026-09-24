@@ -155,6 +155,11 @@ import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
 
 Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults. Forwards the table copy/download labels and `tableDownloadFilename` to `AttachmentCanvas` for the `MarkdownTable` content type.
 
+Pass `loadPdf?: (url: string) => Promise<Blob>` to provide a host-owned PDF
+loader. It is forwarded to the viewer, just as on `AttachmentCanvas` and
+`AttachmentCanvasBody`. Without it, PDF loading uses the browser's default
+fetch behavior. The host owns request credentials and external-service policy.
+
 ```tsx
 import {
   AttachmentCanvasProvider,

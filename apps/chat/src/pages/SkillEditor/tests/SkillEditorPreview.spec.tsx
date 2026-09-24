@@ -34,6 +34,10 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'light' }),
 }));
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));

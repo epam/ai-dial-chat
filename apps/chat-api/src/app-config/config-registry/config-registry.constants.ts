@@ -276,6 +276,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'OVERLAY_ENABLED',
   },
   {
+    key: 'documents.allowedConnectOrigins',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'External connection origins permitted by CSP. PDF previews may use browser credentials for matching HTTP(S) origins.',
+    owner: 'chat-team',
+    envVar: 'ALLOWED_CONNECT_ORIGINS',
+  },
+  {
     key: 'overlay.allowedOrigins',
     type: 'config',
     valueType: 'json',

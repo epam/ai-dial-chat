@@ -684,6 +684,7 @@ describe('CatalogView', () => {
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],
+        allowedConnectOrigins: [],
         enabledUiFeatures: null,
         announcementHtml: null,
         announcementTitle: null,

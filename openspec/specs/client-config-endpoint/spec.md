@@ -61,6 +61,17 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 - **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `DIAL_CORE_EXTERNAL_URL` is not set
 - **THEN** the response is `200 OK` with `config.dialCoreExternalUrl=null`
 
+#### Scenario: External connection origins
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called with
+  `ALLOWED_CONNECT_ORIGINS` configured
+- **THEN** the `200 OK` JSON response includes `config.allowedConnectOrigins`
+  as a string array preserving the configured exact origins and wildcard patterns
+- **AND** an unset value resolves to `[]`; the field is optional in the generated
+  response contract so clients can default to `[]` against an older backend
+- **AND** the public endpoint, required `appId` query, `400` validation responses,
+  private no-store HTTP header, and 60-second server cache remain unchanged
+
 #### Scenario: Always returns 200 even on resolution failure
 
 - **WHEN** all providers fail to resolve a non-critical key
