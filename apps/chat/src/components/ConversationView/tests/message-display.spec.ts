@@ -3,9 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { getInputMessageHistory } from '../utils/message-display';
 
 const MESSAGES: Message[] = [
-  { role: MessageRole.User, content: 'first question' },
-  { role: MessageRole.Assistant, content: 'first answer' },
-  { role: MessageRole.User, content: 'second question' },
+  {
+    role: MessageRole.User,
+    content: 'first question',
+    timestamp: '2024-01-01T00:00:00Z',
+  },
+  {
+    role: MessageRole.Assistant,
+    content: 'first answer',
+    timestamp: '2024-01-01T00:00:01Z',
+  },
+  {
+    role: MessageRole.User,
+    content: 'second question',
+    timestamp: '2024-01-01T00:00:02Z',
+  },
 ];
 
 describe('getInputMessageHistory', () => {
