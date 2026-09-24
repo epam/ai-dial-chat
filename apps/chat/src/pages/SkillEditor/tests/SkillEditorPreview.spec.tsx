@@ -17,6 +17,9 @@ import {
 } from '../../../server-api/skills.api';
 import SkillEditor from '../SkillEditor';
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ status: 'ready', config: {} }),
+}));
 vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
   useSearchParams: () => [mockSearchParams, vi.fn()],

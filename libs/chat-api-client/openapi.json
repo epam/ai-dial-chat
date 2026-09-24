@@ -6497,6 +6497,58 @@
         "summary": "Submit offline-credentials OAuth authorization code",
         "tags": ["offline-credentials"]
       }
+    },
+    "/api/v1/text-refinement": {
+      "post": {
+        "description": "Rewrite one field using a server-owned prompt and the caller credentials. Does not save or cache drafts. Scheduled-task purposes require scheduled-task access.",
+        "operationId": "refineText",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefineTextRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Complete refined text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefineTextResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid purpose, text, length or unknown body fields"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "CSRF, feature or model permission denied"
+          },
+          "413": {
+            "description": "Global request body limit exceeded"
+          },
+          "429": {
+            "description": "DIAL Core quota or rate limit exceeded"
+          },
+          "502": {
+            "description": "Upstream failure or invalid/incomplete output"
+          },
+          "503": {
+            "description": "Model unconfigured, network unavailable or 30-second deadline exceeded"
+          }
+        },
+        "summary": "Refine an authoring draft",
+        "tags": ["text-refinement"]
+      }
     }
   },
   "info": {
@@ -6766,6 +6818,11 @@
             "description": "Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.",
             "nullable": true,
             "example": "new-year"
+          },
+          "aiTextRefinementAvailable": {
+            "type": "boolean",
+            "description": "Whether a text refinement model is configured. Missing means unavailable.",
+            "example": false
           },
           "appVersion": {
             "type": "string",
@@ -12590,6 +12647,51 @@
           }
         },
         "required": ["success"]
+      },
+      "TextRefinementPurpose": {
+        "type": "string",
+        "enum": [
+          "skill-description",
+          "skill-instructions",
+          "scheduled-task-description",
+          "scheduled-task-instructions"
+        ],
+        "description": "Server-owned rewriting purpose"
+      },
+      "RefineTextRequestDto": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "description": "Server-owned rewriting purpose",
+            "example": "skill-description",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TextRefinementPurpose"
+              }
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32000,
+            "description": "Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, either Instructions 32000.",
+            "example": "Use this skill to explain project documentation."
+          }
+        },
+        "required": ["purpose", "text"]
+      },
+      "RefineTextResponseDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32000,
+            "description": "Complete refined draft, bounded by the same purpose-specific Unicode limits as the input.",
+            "example": "Use this skill when you need an explanation of the project documentation."
+          }
+        },
+        "required": ["text"]
       }
     }
   }

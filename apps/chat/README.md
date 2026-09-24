@@ -475,3 +475,9 @@ The Quick Apps iframe receives
 `{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId: 'applications/public/my-agent' }`
 from that iframe opens the same host dialog; no credentials are sent through
 `postMessage`. See [the authentication flow](../../docs/auth/auth-bff-encrypted-cookie.md#proactive-application-credential-forms).
+
+## AI text refinement
+
+Skill and scheduled-task forms opt into Description and Instructions refinement only when the backend returns `config.aiTextRefinementAvailable: true`. The host selects one of four purposes and passes a stable callback, cancellation signal, and translated labels to the libraries. Fields remain editable during requests; editing the active field cancels it. Save waits for refinement, and Undo is local to the current draft.
+
+Run `npm exec -- nx run @epam/chat:test-refinement-browser` for Chromium checks of both forms at 360/900/1280/1920px, in LTR and Arabic RTL, using deterministic callbacks without a live model. Geometry evidence is written to `tmp/text-refinement-browser/geometry.json`.

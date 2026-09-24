@@ -1,4 +1,5 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
@@ -39,6 +40,8 @@ import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
+import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
+import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import {
   createSkill,
   downloadSkill,
@@ -73,6 +76,13 @@ const CANVAS_SCOPE_SEPARATOR = '#';
 
 const SkillEditorPage: FC = () => {
   const { t } = useTranslation();
+  const onRefineDescription = useTextRefinementCallback(
+    TextRefinementPurpose.SkillDescription,
+  );
+  const onRefineInstructions = useTextRefinementCallback(
+    TextRefinementPurpose.SkillInstructions,
+  );
+  const refinementLabels = useTextRefinementLabels();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useUser();
@@ -328,6 +338,7 @@ const SkillEditorPage: FC = () => {
 
   const labels = useMemo<SkillEditorLabels>(
     () => ({
+      ...refinementLabels,
       filesHeading: t(SkillEditorI18nKeys.FilesHeading),
       filesTreeAriaLabel: t(SkillEditorI18nKeys.FilesTreeAriaLabel),
       addUploadLabel: t(SkillEditorI18nKeys.AddUploadLabel),
@@ -376,7 +387,7 @@ const SkillEditorPage: FC = () => {
       dropOverlayTitle: t(SkillEditorI18nKeys.DropOverlayTitle),
       dropOverlaySubtitle: t(SkillEditorI18nKeys.DropOverlaySubtitle),
     }),
-    [t, isEditMode, loadState],
+    [t, isEditMode, loadState, refinementLabels],
   );
 
   if (!bucket) {
@@ -408,6 +419,9 @@ const SkillEditorPage: FC = () => {
       </span>
 
       <SkillEditorForm
+        key={`${bucket}/${skillPath ?? NEW_SKILL_CANVAS_SCOPE}`}
+        onRefineDescription={onRefineDescription}
+        onRefineInstructions={onRefineInstructions}
         initialValues={loadedValues}
         files={files}
         selectedPath={selectedPath}

@@ -1547,5 +1547,14 @@
     "signedOut": "You are not logged in.",
     "sharedCredentials": "Shared credentials are available. You can also log in with your own credentials.",
     "confirmLogout": "Log out of your personal credentials for this service?"
+  },
+  "textRefinement": {
+    "action": "Refine with AI",
+    "undo": "Undo",
+    "error": "Could not refine this text. Please try again.",
+    "pending": "Refining text",
+    "success": "Text refined. Undo is available.",
+    "restored": "Original text restored.",
+    "unchanged": "No changes were needed."
   }
 }

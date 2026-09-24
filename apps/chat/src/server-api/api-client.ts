@@ -16,6 +16,7 @@ import {
   ScheduledTasksApi,
   ShareApi,
   SkillsApi,
+  TextRefinementApi,
   ToolsetsApi,
   TranscriptionApi,
   UserApi,
@@ -96,6 +97,7 @@ export const rateApi = new RateApi(config);
 export const toolsetsApi = new ToolsetsApi(config);
 export const shareApi = new ShareApi(config);
 export const skillsApi = new SkillsApi(config);
+export const textRefinementApi = new TextRefinementApi(config);
 export const publishApi = new PublishApi(config);
 export const promptsApi = new PromptsApi(config);
 export const clientChannelApi = new ClientChannelApi(config);

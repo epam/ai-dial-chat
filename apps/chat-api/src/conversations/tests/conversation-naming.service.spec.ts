@@ -53,8 +53,10 @@ describe('ConversationNamingService', () => {
   let mockConversationPersistence: Mocked<ConversationPersistencePort>;
   let mockConfigService: Pick<ConfigService<EnvironmentVariables>, 'get'>;
   let mockDialClient: DialClientService;
+  let namingPrompt: string | undefined;
 
   beforeEach(() => {
+    namingPrompt = undefined;
     mockAppConfigService = {
       isEnabled: vi.fn().mockResolvedValue(true),
     };
@@ -68,6 +70,7 @@ describe('ConversationNamingService', () => {
     };
     mockConfigService = {
       get: vi.fn((key: string) => {
+        if (key === 'CONVERSATION_NAMING_SYSTEM_PROMPT') return namingPrompt;
         if (key === 'DIAL_CORE_URL') return 'http://localhost:3000';
         if (key === 'UTILITY_MODEL') return 'utility-model';
         if (key === 'DIAL_API_KEY') return 'dial-api-key';
@@ -98,6 +101,56 @@ describe('ConversationNamingService', () => {
       },
     } as never);
   });
+
+  it.each([
+    undefined,
+    '',
+    ' \t\n ',
+    '  Return only a title.\nPreserve العربية.\n',
+  ])(
+    'uses the configured prompt or default in both naming flows (%j)',
+    async (prompt) => {
+      namingPrompt = prompt;
+      await service['runMaybeRenameAfterFirstReply'](
+        'gpt-4o__Hello',
+        'test-token',
+        'test-bucket',
+        makeConversation(),
+      );
+      await service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket');
+      const send = vi.mocked(mockDialClient.client.sendChatCompletionRequest);
+      expect(send).toHaveBeenCalledTimes(2);
+      for (const [index, headers] of [
+        { 'Api-Key': 'dial-api-key' },
+        { Authorization: 'Bearer test-token' },
+      ].entries()) {
+        expect(send).toHaveBeenNthCalledWith(
+          index + 1,
+          'utility-model',
+          expect.objectContaining({
+            body: {
+              messages: [
+                {
+                  role: 'system',
+                  content: prompt?.trim()
+                    ? prompt
+                    : CONVERSATION_NAMING_SYSTEM_PROMPT,
+                },
+                {
+                  role: 'user',
+                  content: expect.stringContaining(
+                    'How does Docker networking work?',
+                  ),
+                },
+              ],
+              stream: false,
+            },
+            headers,
+          }),
+        );
+      }
+    },
+  );
 
   it('renames the conversation after a successful LLM response', async () => {
     await service['runMaybeRenameAfterFirstReply'](

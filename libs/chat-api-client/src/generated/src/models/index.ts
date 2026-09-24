@@ -945,6 +945,12 @@ export interface Check200Response {
  */
 export interface ClientConfigDto {
   /**
+   * Whether a text refinement model is configured. Missing means unavailable.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  aiTextRefinementAvailable?: boolean;
+  /**
    * Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.
    * @type {string}
    * @memberof ClientConfigDto
@@ -5678,6 +5684,39 @@ export type RateMessageDtoRateEnum =
 /**
  *
  * @export
+ * @interface RefineTextRequestDto
+ */
+export interface RefineTextRequestDto {
+  /**
+   * Server-owned rewriting purpose
+   * @type {TextRefinementPurpose}
+   * @memberof RefineTextRequestDto
+   */
+  purpose: TextRefinementPurpose;
+  /**
+   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, either Instructions 32000.
+   * @type {string}
+   * @memberof RefineTextRequestDto
+   */
+  text: string;
+}
+
+/**
+ *
+ * @export
+ * @interface RefineTextResponseDto
+ */
+export interface RefineTextResponseDto {
+  /**
+   * Complete refined draft, bounded by the same purpose-specific Unicode limits as the input.
+   * @type {string}
+   * @memberof RefineTextResponseDto
+   */
+  text: string;
+}
+/**
+ *
+ * @export
  * @interface RenameConversationBodyDto
  */
 export interface RenameConversationBodyDto {
@@ -6736,6 +6775,20 @@ export interface StopCompletionDto {
    */
   path: string;
 }
+
+/**
+ * Server-owned rewriting purpose
+ * @export
+ */
+export const TextRefinementPurpose = {
+  SkillDescription: 'skill-description',
+  SkillInstructions: 'skill-instructions',
+  ScheduledTaskDescription: 'scheduled-task-description',
+  ScheduledTaskInstructions: 'scheduled-task-instructions',
+} as const;
+export type TextRefinementPurpose =
+  (typeof TextRefinementPurpose)[keyof typeof TextRefinementPurpose];
+
 /**
  *
  * @export

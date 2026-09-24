@@ -14,6 +14,14 @@ import { CustomVisualizerDto } from './custom-visualizer.dto';
  * has to be registered explicitly or the reference dangles. */
 @ApiExtraModels(ApplicationVisualizerDto)
 export class ClientConfigDto {
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      'Whether a text refinement model is configured. Missing means unavailable.',
+    example: false,
+  })
+  aiTextRefinementAvailable?: boolean;
+
   @ApiProperty({
     description:
       'Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.',
