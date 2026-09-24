@@ -55,6 +55,11 @@ tooltip), and the "Browse" button. When `favorites` is empty, the list area is
 replaced with an empty-state hint; the header and "Browse" button still
 render.
 
+The panel is built for the conversation input's Add-menu overlay, which mounts
+it inside a `role="menu"` container: every row and the "Browse" action are
+`role="menuitem"`, so the desktop submenu's ArrowUp/ArrowDown/Home/End move
+between them, and the list wrappers are `role="none"`.
+
 Each row with a non-empty `description` is wrapped in the ui-kit
 `InteractiveTooltip` (`asChild`, so the row stays the focus and click target).
 The tooltip is uncontrolled: the kit opens it on hover or keyboard focus and

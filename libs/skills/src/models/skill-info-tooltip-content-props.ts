@@ -11,4 +11,10 @@ export interface SkillInfoTooltipContentProps {
   viewDetailsLabel?: string;
   /** Called when the "View details" button is clicked. Unused while `unsupportedMessage` is set. */
   onViewDetails?: () => void;
+  /**
+   * `tabIndex` of the "View details" button. Pass `-1` to keep it out of the
+   * Tab sequence (still clickable) where the tooltip hangs off a list row and
+   * Tab should move from row to row. Unset keeps the button's default.
+   */
+  viewDetailsTabIndex?: number;
 }
