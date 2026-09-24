@@ -71,6 +71,7 @@ export class AppConfigService {
     );
 
     const features: Record<string, boolean> = {};
+    let activeEventId: string | null = null;
     let asrModelId: string | null = null;
     let transcribeSizeLimitBytes = 5 * 1024 * 1024;
     let defaultDeploymentId: string | null = null;
@@ -106,6 +107,8 @@ export class AppConfigService {
           ? def.key.slice('features.'.length)
           : def.key;
         features[shortKey] = resolved === true;
+      } else if (def.key === 'ui.activeEventId') {
+        activeEventId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'asr.modelId') {
         asrModelId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'asr.transcribeSizeLimitBytes') {
@@ -187,6 +190,7 @@ export class AppConfigService {
       features,
       config: {
         appVersion,
+        activeEventId,
         asrModelId,
         transcribeSizeLimitBytes,
         defaultDeploymentId,

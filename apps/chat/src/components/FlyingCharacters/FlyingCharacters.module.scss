@@ -1,0 +1,58 @@
+@keyframes character-flight {
+  0% {
+    opacity: 0;
+    transform: translate3d(var(--flight-start-x), var(--flight-start-y), 0)
+      rotate(-8deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(48vw, var(--flight-mid-y), 0) rotate(6deg);
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--flight-end-x), var(--flight-end-y), 0)
+      rotate(-5deg);
+  }
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Decorative paths use physical screen coordinates in either reading direction. */
+.flight {
+  position: absolute;
+  left: 0;
+  top: 0;
+  inline-size: var(--flight-size);
+  animation: character-flight var(--flight-duration) ease-in-out
+    var(--flight-delay) both;
+}
+
+.facing {
+  display: block;
+  transform: scaleX(var(--flight-facing));
+
+  > svg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    filter: drop-shadow(0 2px 3px #17162126);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flight {
+    animation: none;
+    transform: translate3d(var(--flight-rest-x), var(--flight-rest-y), 0);
+  }
+}

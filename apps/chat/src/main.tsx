@@ -10,6 +10,7 @@ import NotificationContainer from './components/Notification/NotificationContain
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import AppConfigProvider from './context/AppConfigContext';
 import { UserProvider } from './context/auth/UserContext';
+import { CelebrationProvider } from './context/CelebrationContext';
 import { ClientChannelProvider } from './context/ClientChannelContext';
 import { ConversationPanelProvider } from './context/ConversationPanelContext';
 import { ConversationsProvider } from './context/ConversationsContext';
@@ -53,50 +54,52 @@ root.render(
             <ThemeProvider>
               <AppConfigProvider>
                 <UiFeaturesProvider>
-                  <SourcesSidebarProvider>
-                    <AttachmentCanvasProvider>
-                      <ConversationPanelProvider>
-                        <Suspense fallback={null}>
-                          <Routes>
-                            <Route path="/login" element={<LoginPage />} />
-                            <Route
-                              path="/overlay-close"
-                              element={<OverlayClose />}
-                            />
-                            <Route
-                              path="*"
-                              element={
-                                <OverlayModeGate>
-                                  <RequireAuth>
-                                    <GenerationProvider>
-                                      <ClientChannelProvider>
-                                        <UserConfigProvider>
-                                          <DeploymentsProvider>
-                                            {/* TODO: remove in next release */}
-                                            <IsolatedModelViewProvider>
-                                              <FavoriteApplicationsProvider>
-                                                <PromptsProvider>
-                                                  <SkillsProvider>
-                                                    <ConversationsProvider>
-                                                      <App />
-                                                    </ConversationsProvider>
-                                                  </SkillsProvider>
-                                                </PromptsProvider>
-                                              </FavoriteApplicationsProvider>
-                                            </IsolatedModelViewProvider>
-                                          </DeploymentsProvider>
-                                        </UserConfigProvider>
-                                      </ClientChannelProvider>
-                                    </GenerationProvider>
-                                  </RequireAuth>
-                                </OverlayModeGate>
-                              }
-                            />
-                          </Routes>
-                        </Suspense>
-                      </ConversationPanelProvider>
-                    </AttachmentCanvasProvider>
-                  </SourcesSidebarProvider>
+                  <CelebrationProvider>
+                    <SourcesSidebarProvider>
+                      <AttachmentCanvasProvider>
+                        <ConversationPanelProvider>
+                          <Suspense fallback={null}>
+                            <Routes>
+                              <Route path="/login" element={<LoginPage />} />
+                              <Route
+                                path="/overlay-close"
+                                element={<OverlayClose />}
+                              />
+                              <Route
+                                path="*"
+                                element={
+                                  <OverlayModeGate>
+                                    <RequireAuth>
+                                      <GenerationProvider>
+                                        <ClientChannelProvider>
+                                          <UserConfigProvider>
+                                            <DeploymentsProvider>
+                                              {/* TODO: remove in next release */}
+                                              <IsolatedModelViewProvider>
+                                                <FavoriteApplicationsProvider>
+                                                  <PromptsProvider>
+                                                    <SkillsProvider>
+                                                      <ConversationsProvider>
+                                                        <App />
+                                                      </ConversationsProvider>
+                                                    </SkillsProvider>
+                                                  </PromptsProvider>
+                                                </FavoriteApplicationsProvider>
+                                              </IsolatedModelViewProvider>
+                                            </DeploymentsProvider>
+                                          </UserConfigProvider>
+                                        </ClientChannelProvider>
+                                      </GenerationProvider>
+                                    </RequireAuth>
+                                  </OverlayModeGate>
+                                }
+                              />
+                            </Routes>
+                          </Suspense>
+                        </ConversationPanelProvider>
+                      </AttachmentCanvasProvider>
+                    </SourcesSidebarProvider>
+                  </CelebrationProvider>
                 </UiFeaturesProvider>
               </AppConfigProvider>
             </ThemeProvider>
