@@ -244,8 +244,43 @@ Base text input with auto-resize and keyboard shortcut handling. Use directly wh
 
 `commandMenu` (on both `Input` and `ConversationInput`) mounts a host-injected slash-command menu. When provided, typing the configured `triggerPrefix` as the first character of an empty textarea opens an overlay above the input — as does pasting into an empty textarea a value that is exactly the prefix, or the prefix plus a whitespace-free query (`/` and `/test` trigger; `/s sdf`, multi-line content, or any paste into a non-empty textarea insert as a regular paste and open nothing). The menu stays open while the value keeps matching the prefix followed by a query with no whitespace or second prefix character, and closes on unmatch, Escape, or an outside click; selection typically goes through `ctx.close({ consumeQuery: true })`, which removes the `/query` text from the textarea.
 
+While the menu is open the textarea drives it as a list autocomplete, with focus staying in the textarea. ArrowDown/ArrowUp move an active option through the menu's `role="option"` elements, wrapping at both ends, instead of navigating message history; the textarea exposes it through `aria-activedescendant` and points `aria-controls` at `ctx.listboxId`. Enter clicks the active option, so an option's `onClick` is its one selection path for mouse and keyboard, and with no option active Enter does nothing — the `/query` is never sent while the menu is open. Shift+Enter still inserts a newline, which closes the menu. The textarea keeps its `textbox` role and carries `aria-autocomplete="list"` whenever `commandMenu` is set. To take part, the menu renders a `role="listbox"` element with `id={ctx.listboxId}`, gives each option a unique `id`, and marks the one equal to `ctx.activeOptionId` with `aria-selected="true"` and a visible highlight; `ctx.activeOptionId` resets whenever the query changes.
+
 ```tsx
-import { Input } from '@epam/ai-dial-conversation-input';
+import {
+  Input,
+  type CommandMenuConfig,
+} from '@epam/ai-dial-conversation-input';
+
+const commandMenu: CommandMenuConfig = {
+  triggerPrefix: '/',
+  menuLabel: 'Skills',
+  renderMenu: ({ query, close, listboxId, activeOptionId }) => (
+    <ul role="listbox" id={listboxId} aria-label="Skills">
+      {skills
+        .filter((skill) => skill.name.includes(query))
+        .map((skill) => {
+          const id = `${listboxId}-${skill.id}`;
+          return (
+            <li
+              key={skill.id}
+              id={id}
+              role="option"
+              aria-selected={id === activeOptionId}
+              onClick={() => {
+                close({ consumeQuery: true });
+                selectSkill(skill.id);
+              }}
+            >
+              {skill.name}
+            </li>
+          );
+        })}
+    </ul>
+  ),
+};
+
+<Input commandMenu={commandMenu} onSend={handleSend} />;
 ```
 
 ### ChatSettingsModal

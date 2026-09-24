@@ -137,7 +137,14 @@ export interface MenuOverlayConfig {
   title: string;
   /** Icon node rendered to the left of the menu-item label. */
   icon: ReactNode;
-  /** Renders the overlay panel content. Receives a callback the panel calls to close the whole menu once selection is complete. */
+  /**
+   * Renders the overlay panel content. Receives a callback the panel calls to
+   * close the whole menu once selection is complete. The content is mounted
+   * inside a `role="menu"` container — the desktop submenu panel or the mobile
+   * sheet's wrapper — so selectable rows should be `role="menuitem"`: those
+   * are the rows the desktop submenu's ArrowUp/ArrowDown/Home/End navigation
+   * moves between.
+   */
   renderOverlay: (onClose: () => void) => ReactNode;
   /** Accessible label for the back arrow in the mobile stacked bottom sheet. Defaults to `'Back'`. */
   backLabel?: string;
@@ -153,9 +160,32 @@ export interface CommandMenuContext {
    * text is never sent); the default close leaves the text untouched.
    */
   close: (options?: { consumeQuery?: boolean }) => void;
+  /**
+   * Id the menu puts on its `role="listbox"` element. The textarea references
+   * it through `aria-controls` while the menu is open.
+   */
+  listboxId: string;
+  /**
+   * Id of the option the keyboard currently has active, or `null` when none
+   * is. The textarea moves it through the menu's `role="option"` elements
+   * with ArrowDown/ArrowUp (wrapping at the ends) and exposes it through
+   * `aria-activedescendant`; the menu marks the matching option with
+   * `aria-selected="true"` and a visible highlight. Enter clicks the active
+   * option, so an option's `onClick` is its selection path for mouse and
+   * keyboard alike. Options must carry unique `id`s; one with
+   * `aria-disabled="true"` is skipped. Reset whenever the query changes.
+   */
+  activeOptionId: string | null;
 }
 
-/** Host-injected slash-command menu: an overlay opened by entering a trigger prefix into an empty textarea — typed or pasted. */
+/**
+ * Host-injected slash-command menu: an overlay opened by entering a trigger
+ * prefix into an empty textarea — typed or pasted. While it is open the
+ * textarea drives it as a list autocomplete: ArrowDown/ArrowUp move the
+ * active option (instead of navigating message history), Enter takes the
+ * active option and never sends the message, and Escape closes the menu
+ * keeping the text.
+ */
 export interface CommandMenuConfig {
   /** Prefix that opens the menu when entered into an empty textarea (e.g. `'/'`) — typed as its first character, or arriving in a paste whose result is the prefix alone or with a whitespace-free query. */
   triggerPrefix: string;

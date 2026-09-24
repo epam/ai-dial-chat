@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { CommandMenuConfig } from '../../models/Input';
 
 /*
@@ -14,6 +14,15 @@ const isCommandValue = (value: string, prefix: string): boolean => {
   const query = value.slice(prefix.length);
   return !/\s/.test(query) && !query.includes(prefix);
 };
+
+/* Options the keyboard can land on: every `role="option"` not marked disabled. */
+const OPTION_SELECTOR = '[role="option"]:not([aria-disabled="true"])';
+
+/** Direction the active option moves in on an arrow key. */
+export enum CommandMenuOptionStep {
+  Next = 'next',
+  Previous = 'previous',
+}
 
 /** Parameters accepted by the `useCommandMenu` hook. */
 export interface UseCommandMenuParams {
@@ -99,5 +108,82 @@ export const useCommandMenu = ({ config, message }: UseCommandMenuParams) => {
     setIsDismissed(true);
   }, []);
 
-  return { isMenuOpen, query, dismiss, handleValueChange };
+  /*
+   * Keyboard navigation over the rendered menu: the options are read from the
+   * overlay's DOM rather than from the host's data, because the host alone
+   * decides what it lists (filtering, sections) — the contract is only that
+   * each option carries `role="option"` and a unique `id`. Focus never leaves
+   * the textarea; the active option is exposed via `aria-activedescendant`.
+   */
+  const listboxId = useId();
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const [activeOptionId, setActiveOptionId] = useState<string | null>(null);
+
+  /*
+   * A new query re-filters the list, so an option made active under the
+   * previous query no longer points at what the user is looking at; closing
+   * drops it too, so a reopened menu starts with nothing active.
+   */
+  useEffect(() => {
+    setActiveOptionId(null);
+  }, [isMenuOpen, query]);
+
+  const getOptions = useCallback(
+    (): HTMLElement[] =>
+      Array.from(
+        overlayRef.current?.querySelectorAll<HTMLElement>(OPTION_SELECTOR) ??
+          [],
+      ),
+    [],
+  );
+
+  /*
+   * Moves the active option one step, wrapping around at both ends. From no
+   * active option, Next lands on the first option and Previous on the last.
+   */
+  const moveActiveOption = useCallback(
+    (step: CommandMenuOptionStep) => {
+      const options = getOptions();
+      if (options.length === 0) {
+        setActiveOptionId(null);
+        return;
+      }
+
+      const currentIndex = options.findIndex(
+        (option) => option.id === activeOptionId,
+      );
+      const nextIndex =
+        step === CommandMenuOptionStep.Next
+          ? (currentIndex + 1) % options.length
+          : (currentIndex <= 0 ? options.length : currentIndex) - 1;
+
+      const nextOption = options[nextIndex];
+      setActiveOptionId(nextOption.id);
+      /* jsdom has no layout, so `scrollIntoView` may be missing there. */
+      nextOption.scrollIntoView?.({ block: 'nearest' });
+    },
+    [getOptions, activeOptionId],
+  );
+
+  /*
+   * The active option's element while it is still rendered — a row removed
+   * since it became active (e.g. unfavorited) no longer counts.
+   */
+  const getActiveOption = useCallback(
+    (): HTMLElement | null =>
+      getOptions().find((option) => option.id === activeOptionId) ?? null,
+    [getOptions, activeOptionId],
+  );
+
+  return {
+    isMenuOpen,
+    query,
+    dismiss,
+    handleValueChange,
+    listboxId,
+    overlayRef,
+    activeOptionId: isMenuOpen ? activeOptionId : null,
+    moveActiveOption,
+    getActiveOption,
+  };
 };

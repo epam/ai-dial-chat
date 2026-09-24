@@ -48,7 +48,7 @@ describe('FavoritePromptsPanel', () => {
   it('shows the "Browse" button even when there are no favorites', () => {
     renderPanel({ favorites: [] });
 
-    expect(screen.getByRole('button', { name: 'Browse' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Browse' })).toBeTruthy();
   });
 
   it('renders a favorite row with its name and a pressed star toggle', () => {
@@ -105,7 +105,7 @@ describe('FavoritePromptsPanel', () => {
     const onBrowse = vi.fn();
     renderPanel({ onBrowse });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
 
     expect(onBrowse).toHaveBeenCalledOnce();
   });
@@ -122,7 +122,7 @@ describe('FavoritePromptsPanel', () => {
      * user-event's hover on the inner row button never reaches it — dispatch
      * the enter event directly instead.
      */
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Summarizer' }));
+    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: 'Summarizer' }));
 
     expect(await screen.findByText('Summarizes long text')).toBeTruthy();
   });

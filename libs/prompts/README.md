@@ -30,7 +30,7 @@ import '@epam/ai-dial-prompts/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.15`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.18`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -54,6 +54,11 @@ Renders the header, the favorite rows (icon, name, filled star, description
 tooltip), and the "Browse" button. When `favorites` is empty, the list area is
 replaced with an empty-state hint; the header and "Browse" button still
 render.
+
+The panel is built for the conversation input's Add-menu overlay, which mounts
+it inside a `role="menu"` container: every row and the "Browse" action are
+`role="menuitem"`, so the desktop submenu's ArrowUp/ArrowDown/Home/End move
+between them, and the list wrappers are `role="none"`.
 
 Each row with a non-empty `description` is wrapped in the ui-kit
 `InteractiveTooltip` (`asChild`, so the row stays the focus and click target).

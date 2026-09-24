@@ -48,7 +48,7 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.15`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.18`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -189,6 +189,24 @@ the exact same panel.
 
 `onViewDetails` fires when the tooltip's "View details" button is clicked.
 
+Passing `listboxId` switches the panel to listbox mode — the shape a text
+field's list autocomplete drives, as the conversation input's `commandMenu`
+does: the list becomes a `role="listbox"` with that `id`, named by the
+header, and each row a `role="option"` whose `id` derives from `listboxId`
+and the item id. The row matching `activeOptionId` carries
+`aria-selected="true"` and the row highlight. Rows stay tabbable, while each
+row's star and its tooltip's "View details" leave the Tab sequence (both stay
+clickable), so Tab moves from row to row. `useSkillSelectorOverlay` forwards
+both from the command-menu context; the Add-menu panel keeps the star and
+"View details" in the Tab sequence.
+
+`isMenu` is for a host that mounts the panel inside a `role="menu"` container,
+as the conversation input's Add-menu overlay does: the rows and the "Browse"
+action become `role="menuitem"` (the list wrappers `role="none"`), so the
+desktop submenu's ArrowUp/ArrowDown/Home/End move between them.
+`useSkillSelectorOverlay` sets it on the Add-menu panel; without it (and
+without `listboxId`) the rows are `role="button"`.
+
 Clicking a row's star plays a short exit animation first, so
 `onToggleFavorite` fires ~180 ms after the click rather than synchronously.
 The list's height animates to match once the row is gone.
@@ -216,6 +234,10 @@ While `unsupportedMessage` is set, the content is that message alone — no
 description paragraph and no "View details" button. That state is why
 `onViewDetails` is optional: the unsupported branch renders no button, so
 the callback goes unused there.
+
+`viewDetailsTabIndex` sets the "View details" button's `tabIndex`; pass `-1`
+to keep it clickable but out of the Tab sequence, as `FavoriteSkillsPanel`
+does in listbox mode.
 
 ### `SkillDetailsSidePanel`
 
@@ -348,7 +370,8 @@ Owns the Skills Add-menu flow's state. `skillMenuOverlay` is the entry for
 the `menuOverlays` prop of `ConversationInput`/`Input`; `commandMenu` is the
 `/`-prefix command-menu config for the input's `commandMenu` prop — the same
 favorites panel in search mode over the typed query, with
-`labels.emptyQueryHintLabel` as its empty-query hint. Both entries are
+`labels.emptyQueryHintLabel` as its empty-query hint, rendered in listbox
+mode so ArrowDown/ArrowUp and Enter in the input pick a skill. Both entries are
 `undefined` while `isEnabled` is `false` or `isSkillsSupported` is `false`
 (the current deployment does not support skills), so the host omits the
 menu item and the slash dropdown entirely; the hook renders
