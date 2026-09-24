@@ -114,6 +114,31 @@ document fetches SHALL remain subject to remote-server CORS and authorization.
 - **THEN** startup validation rejects the configuration and identifies
   `ALLOWED_CONNECT_ORIGINS`
 
+### Requirement: PDF credentials follow the existing connection allowlist
+
+The chat app SHALL supply its PDF viewers with a host-owned loader that uses
+`credentials: 'include'` only for external HTTP(S) URLs matching
+`ALLOWED_CONNECT_ORIGINS`, received through `config.allowedConnectOrigins`.
+Matching SHALL include exact origins and leading `*.` subdomain patterns, with
+scheme and port boundaries. No additional environment variable or service-specific
+domain SHALL be required. The attachment library SHALL accept the loader through
+the optional `loadPdf` callback without reading configuration or owning auth policy.
+
+#### Scenario: Allowed external PDF
+
+- **WHEN** an external PDF URL matches the configured connection allowlist
+- **THEN** the loader requests it with browser-managed credentials and
+  `redirect: 'error'`, rejecting redirects before following them
+- **AND** the external server must support credentialed CORS for the chat origin
+  and the browser must permit the relevant session cookies
+
+#### Scenario: Other PDF sources
+
+- **WHEN** the URL is same-origin, a blob URL, or an external origin absent from
+  the allowlist, or the allowlist is empty
+- **THEN** the loader retains `credentials: 'same-origin'` and normal redirect behavior
+- **AND** a wildcard entry does not match its bare parent domain or a different port
+
 ### Requirement: WebAssembly permission follows its execution context
 
 Only chat HTML and the bundled PDF worker response SHALL carry WebAssembly

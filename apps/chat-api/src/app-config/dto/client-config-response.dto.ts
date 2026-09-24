@@ -133,6 +133,15 @@ export class ClientConfigDto {
   })
   overlayAllowedOrigins!: string[];
 
+  @ApiPropertyOptional({
+    description:
+      'Trusted HTTP(S) connection origins from ALLOWED_CONNECT_ORIGINS, including leading *. subdomain patterns. PDF previews use browser credentials for matching external origins and reject redirects. Empty by default; upstream credentialed CORS and browser cookie policy still apply.',
+    type: [String],
+    default: [],
+    example: ['https://documents.example.com'],
+  })
+  allowedConnectOrigins?: string[];
+
   @ApiProperty({
     description:
       'When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.',

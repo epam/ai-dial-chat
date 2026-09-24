@@ -48,6 +48,18 @@ describe('AppConfigService', () => {
   });
 
   describe('getClientConfig', () => {
+    it('exposes the configured external connection origins', async () => {
+      const origins = [
+        'https://documents.example.com',
+        'https://*.example.org',
+      ];
+      const { service } = makeService(async (key) =>
+        key === 'documents.allowedConnectOrigins' ? origins : undefined,
+      );
+      expect(
+        (await service.getClientConfig(ctx)).config.allowedConnectOrigins,
+      ).toEqual(origins);
+    });
     it.each([undefined, '', '  ', 'refinement-model', ' refinement-model '])(
       'exposes only refinement availability for model %s',
       async (model) => {
@@ -114,6 +126,7 @@ describe('AppConfigService', () => {
       ]);
       expect(result.config.overlayEnabled).toBe(false);
       expect(result.config.overlayAllowedOrigins).toEqual([]);
+      expect(result.config.allowedConnectOrigins).toEqual([]);
       expect(result.config.enabledUiFeatures).toBeNull();
       expect(result.config.announcementHtml).toBeNull();
       expect(result.config.footerHtmlMessage).toBe('');
