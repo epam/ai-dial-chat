@@ -47,6 +47,7 @@ import {
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useCelebration } from '../../context/CelebrationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -61,6 +62,7 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { resolveLocalizedText } from '../../utils/locale';
+import CelebrationDecor from '../CelebrationDecor/CelebrationDecor';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
@@ -184,6 +186,8 @@ const NewConversationComposer: FC<Props> = ({
     config: { welcomeScreenDescription },
   } = useAppConfig();
   const { showErrorNotification, showSuccessNotification } = useNotification();
+  const { isEnabled: isCelebrationEnabled, consumeSecretPhrase } =
+    useCelebration();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -410,6 +414,10 @@ const NewConversationComposer: FC<Props> = ({
   const handleSend = useCallback(
     async (text: string, attachments: Attachment[]) => {
       if (isSending || !selectedDeploymentId) return;
+      /* The active event's secret phrase celebrates instead of
+         starting a conversation. A no-op unless an event is ready, so the phrase
+         otherwise sends as an ordinary message. */
+      if (consumeSecretPhrase(text)) return;
       setIsSending(true);
       try {
         await onCreateConversation(text, attachments, chatSettingsValues);
@@ -428,6 +436,7 @@ const NewConversationComposer: FC<Props> = ({
     [
       isSending,
       selectedDeploymentId,
+      consumeSecretPhrase,
       onCreateConversation,
       chatSettingsValues,
       showErrorNotification,
@@ -458,6 +467,7 @@ const NewConversationComposer: FC<Props> = ({
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
+        {isCelebrationEnabled && <CelebrationDecor />}
         <ConversationInput
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}

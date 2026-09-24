@@ -1376,3 +1376,22 @@ export enum UsageI18nKeys {
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
 }
+
+export enum HalloweenI18nKeys {
+  ToastTitle = 'halloween.toastTitle',
+  SpidersToastMessage = 'halloween.spidersToastMessage',
+  GhostToastMessage = 'halloween.ghostToastMessage',
+  WebToastMessage = 'halloween.webToastMessage',
+  BatsToastMessage = 'halloween.batsToastMessage',
+  CatToastMessage = 'halloween.catToastMessage',
+  WitchesToastMessage = 'halloween.witchesToastMessage',
+  PumpkinLabel = 'halloween.pumpkinLabel',
+}
+
+export enum NewYearI18nKeys {
+  ToastTitle = 'newYear.toastTitle',
+  SnowToastMessage = 'newYear.snowToastMessage',
+  ConfettiToastMessage = 'newYear.confettiToastMessage',
+  SleighToastMessage = 'newYear.sleighToastMessage',
+  GiftLabel = 'newYear.giftLabel',
+}

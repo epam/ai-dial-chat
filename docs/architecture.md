@@ -235,13 +235,17 @@ Current implementation uses **React Context** with no external state library. Th
 | `ActiveScheduledTaskContext`  | Scheduled task currently being viewed or edited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UserConfigContext`           | Per-user preferences persisted through `/api/v1/user-config`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CelebrationContext`          | Start-page event selection from `config.activeEventId` (`UI_EVENT`), lazy event loading, random scene playback, per-scene cleanup and optional secret phrase interception. Halloween and New Year supply independent event modules; navigation cancels playback. Decoration stays click-through, honors reduced motion and persists no state. The hook is inert outside its optional provider.                                                                                                                                                                                                                       |
 | `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
 
 - `createContext<T | undefined>(undefined)`
 - `useMemo` on context value to prevent consumer re-renders
-- Guard consumer hook throws a clear error when used outside the provider
+- Guard consumer hook throws a clear error when used outside the provider —
+  the one exception is `CelebrationContext`, whose default value is an inert,
+  disabled easter egg, so a decorative feature cannot break a tree that skips
+  its provider
 
 ### API layer
 

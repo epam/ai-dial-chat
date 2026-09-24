@@ -252,6 +252,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'SKILL_USAGE_ENABLED',
   },
   {
+    key: 'ui.activeEventId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Active start-page celebration module ID selected by UI_EVENT. Missing or none disables celebrations. The frontend owns the event registry and ignores IDs it does not support; adding an event does not require a backend enum change.',
+    owner: 'chat-team',
+    envVar: 'UI_EVENT',
+  },
+  {
     key: 'overlay.enabled',
     type: 'config',
     valueType: 'boolean',
