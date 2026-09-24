@@ -96,7 +96,12 @@ describe('ThemeContext', () => {
     });
   });
 
-  it.skip('should apply first theme from config when no localStorage value', async () => {
+  /*
+   * The fixture lists `dark` first on purpose: the default must be light
+   * whatever order the themes host uses, so a fixture led by `light` could
+   * not tell a correct default from one that just took `themes[0]`.
+   */
+  it('should apply the light theme when no localStorage value', async () => {
     mockGetFromLocalStorage.mockReturnValue(null);
 
     const { result } = renderHook(() => useTheme(), {
@@ -111,12 +116,12 @@ describe('ThemeContext', () => {
     await waitFor(() => {
       expect(mockApplyThemeColors).toHaveBeenCalledWith(
         document.documentElement,
-        mockThemeConfig.themes[0],
+        mockThemeConfig.themes[1],
       );
     });
   });
 
-  it.skip('should read theme from localStorage on initialization', async () => {
+  it('should read theme from localStorage on initialization', async () => {
     mockGetFromLocalStorage.mockReturnValue('light');
 
     const { result } = renderHook(() => useTheme(), {
@@ -191,6 +196,190 @@ describe('ThemeContext', () => {
     });
   });
 
+  /*
+   * The stored preference used to be read only as a truthiness gate, so a user
+   * who picked a theme got whatever the configuration listed first on their
+   * next load. These cover the resolution order that replaced it.
+   */
+  describe('restoring the stored preference', () => {
+    const customThemeConfig: ThemeConfiguration = {
+      ...mockThemeConfig,
+      themes: [
+        ...mockThemeConfig.themes,
+        {
+          id: 'contoso-night',
+          displayName: 'Contoso Night',
+          colors: { 'primary-color': '#101010' },
+          'app-logo': 'https://example.com/logo-contoso.svg',
+        },
+      ],
+    };
+
+    it('restores a stored theme that the configuration still contains', async () => {
+      mockGetFromLocalStorage.mockReturnValue('dark');
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.selectedTheme).toBe('dark');
+        expect(result.current.currentTheme).toBe('dark');
+      });
+
+      expect(mockApplyThemeColors).toHaveBeenCalledWith(
+        document.documentElement,
+        mockThemeConfig.themes[0],
+      );
+    });
+
+    it('restores a stored custom theme id', async () => {
+      mockGet.mockResolvedValue(customThemeConfig);
+      mockGetFromLocalStorage.mockReturnValue('contoso-night');
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.selectedTheme).toBe('contoso-night');
+        expect(result.current.currentTheme).toBe('contoso-night');
+      });
+
+      expect(mockApplyThemeColors).toHaveBeenCalledWith(
+        document.documentElement,
+        customThemeConfig.themes[2],
+      );
+    });
+
+    /*
+     * These two wait on `themes` rather than on `currentTheme`. `light` is
+     * already the initial state, so waiting for it resolves before the
+     * configuration has even loaded and the assertion below runs against a
+     * provider that has done nothing yet — which is exactly how this test
+     * passed in isolation and failed under a full-suite run.
+     */
+    it('falls back to light when the stored id is gone', async () => {
+      mockGetFromLocalStorage.mockReturnValue('contoso-night');
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.themes).toEqual(mockThemeConfig.themes);
+      });
+
+      expect(result.current.currentTheme).toBe('light');
+      expect(mockApplyThemeColors).toHaveBeenCalledWith(
+        document.documentElement,
+        mockThemeConfig.themes[1],
+      );
+    });
+
+    it('does not overwrite the stored value when falling back', async () => {
+      const mockSetToLocalStorage = vi.mocked(localStorage.setToLocalStorage);
+      mockGetFromLocalStorage.mockReturnValue('contoso-night');
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.themes).toEqual(mockThemeConfig.themes);
+      });
+
+      expect(result.current.currentTheme).toBe('light');
+      expect(mockSetToLocalStorage).not.toHaveBeenCalled();
+    });
+
+    it('restores system and resolves it against the OS preference', async () => {
+      /*
+       * `system` is never an entry in the configuration, so it has to be
+       * admitted by id rather than by lookup. Both the resolver and the
+       * provider's own OS-change subscription read the media query, so both
+       * are stubbed here.
+       */
+      vi.mocked(applyThemeColors.getOsPreferredTheme).mockReturnValue('dark');
+      vi.stubGlobal(
+        'matchMedia',
+        vi.fn(() => ({
+          matches: true,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        })),
+      );
+      mockGetFromLocalStorage.mockReturnValue('system');
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.selectedTheme).toBe('system');
+        expect(result.current.currentTheme).toBe('dark');
+      });
+
+      vi.unstubAllGlobals();
+    });
+
+    /*
+     * `system` resolves to `light` or `dark` at runtime, so a configuration
+     * missing either one cannot honour it. Admitting it regardless meant the
+     * provider applied a theme id that was not in the configuration and fell
+     * through to no colours at all.
+     */
+    it('falls back to light when system is stored but dark is not configured', async () => {
+      vi.mocked(applyThemeColors.getOsPreferredTheme).mockReturnValue('dark');
+      mockGet.mockResolvedValue({
+        ...mockThemeConfig,
+        themes: [
+          mockThemeConfig.themes[1],
+          {
+            id: 'contoso-night',
+            displayName: 'Contoso Night',
+            colors: { 'primary-color': '#101010' },
+            'app-logo': '',
+          },
+        ],
+      });
+      mockGetFromLocalStorage.mockReturnValue('system');
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.themes).toHaveLength(2);
+      });
+
+      expect(result.current.currentTheme).toBe('light');
+      expect(mockApplyThemeColors).toHaveBeenCalledWith(
+        document.documentElement,
+        mockThemeConfig.themes[1],
+      );
+    });
+
+    it('applies nothing when the configuration has no themes', async () => {
+      mockGet.mockResolvedValue({ ...mockThemeConfig, themes: [] });
+      mockGetFromLocalStorage.mockReturnValue(null);
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(mockApplyThemeColors).toHaveBeenCalledWith(
+        document.documentElement,
+        undefined,
+      );
+      expect(result.current.currentTheme).toBe('light');
+    });
+  });
+
   it('should throw error when useTheme is used outside ThemeProvider', () => {
     // Suppress console.error for this test
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {
@@ -226,7 +415,7 @@ describe('ThemeContext', () => {
       wrapper: ThemeProvider,
     });
 
-    // Dark theme should use dark logo
+    // Light theme should use light logo
     await waitFor(() => {
       expect(result.current.currentTheme).toBe('light');
       expect(result.current.currentThemeLogo).toBe('logo-light.svg');

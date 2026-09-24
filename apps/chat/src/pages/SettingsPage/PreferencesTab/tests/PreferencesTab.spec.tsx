@@ -87,6 +87,21 @@ vi.mock(
 );
 
 /*
+ * The option set itself is `useThemeOptions`' own concern and is covered by its
+ * spec; mocking the hook keeps these tests about the row the tab decides to
+ * render, and keeps the tab out of `ThemeProvider`'s network fetch.
+ */
+const themeMock = vi.hoisted(() => ({
+  options: [] as { value: string; label: string }[],
+  selectedTheme: 'light',
+  setTheme: vi.fn(),
+}));
+
+vi.mock('../../../../hooks/theme/useThemeOptions', () => ({
+  useThemeOptions: () => themeMock,
+}));
+
+/*
  * The global test-setup mock returns the bare key and drops interpolation
  * params, which would make the modifier assertion below vacuous. Interpolate
  * here so the test actually proves the modifier reaches the label.
@@ -154,6 +169,8 @@ describe('PreferencesTab', () => {
     deploymentsMock.isLoading = false;
     languageMock.supported = [{ code: 'en', nativeName: 'English' }];
     languageMock.language = 'en';
+    themeMock.options = [];
+    themeMock.selectedTheme = 'light';
     vi.mocked(
       keyboardShortcutModule.useKeyboardShortcutPreference,
     ).mockReturnValue({
@@ -285,11 +302,116 @@ describe('PreferencesTab', () => {
     expect(screen.getByText(BasicI18nKeys.Empty)).toBeTruthy();
   });
 
-  /*
-   * THEME SELECTOR — the theme row is commented out in PreferencesTab, parked for
-   * an upcoming theming feature. Its tests are removed rather than skipped: a
-   * permanently-skipped block rots silently. Re-add them alongside the row.
-   */
+  describe('theme row', () => {
+    const lightAndDark = [
+      { value: 'light', label: SettingsI18nKeys.ThemeLight },
+      { value: 'dark', label: SettingsI18nKeys.ThemeDark },
+    ];
+
+    it('is absent while the deployment serves a single theme', () => {
+      themeMock.options = [
+        { value: 'light', label: SettingsI18nKeys.ThemeLight },
+      ];
+
+      render(<PreferencesTab />);
+
+      expect(
+        screen.queryByRole('combobox', { name: SettingsI18nKeys.Theme }),
+      ).toBeNull();
+    });
+
+    it('is absent while no theme configuration has loaded', () => {
+      render(<PreferencesTab />);
+
+      expect(
+        screen.queryByRole('combobox', { name: SettingsI18nKeys.Theme }),
+      ).toBeNull();
+    });
+
+    it('renders one option per configured theme once there is a choice', () => {
+      themeMock.options = lightAndDark;
+
+      render(<PreferencesTab />);
+
+      const select = screen.getByRole('combobox', {
+        name: SettingsI18nKeys.Theme,
+      });
+      expect(select).toBeTruthy();
+      expect((select as HTMLSelectElement).value).toBe('light');
+      expect(
+        screen.getByRole('option', { name: SettingsI18nKeys.ThemeLight }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('option', { name: SettingsI18nKeys.ThemeDark }),
+      ).toBeTruthy();
+    });
+
+    it('renders a custom theme under its display name', () => {
+      themeMock.options = [
+        ...lightAndDark,
+        { value: 'contoso-night', label: 'Contoso Night' },
+      ];
+
+      render(<PreferencesTab />);
+
+      expect(
+        screen.getByRole('option', { name: 'Contoso Night' }),
+      ).toBeTruthy();
+    });
+
+    it('writes the chosen theme', async () => {
+      themeMock.options = lightAndDark;
+
+      render(<PreferencesTab />);
+
+      await userEvent.selectOptions(
+        screen.getByRole('combobox', { name: SettingsI18nKeys.Theme }),
+        'dark',
+      );
+
+      expect(themeMock.setTheme).toHaveBeenCalledWith('dark');
+    });
+
+    it('is hidden when the host hides user settings', () => {
+      themeMock.options = lightAndDark;
+      mockUiFeatures({ [OverlayFeature.HideUserSettings]: true });
+
+      render(<PreferencesTab />);
+
+      expect(
+        screen.queryByRole('combobox', { name: SettingsI18nKeys.Theme }),
+      ).toBeNull();
+    });
+
+    /*
+     * The theme row alone is enough of a row set — without it in `hasAnyRow`
+     * the tab would render the empty state next to a visible theme select.
+     */
+    it('suppresses the empty state when it is the only row', () => {
+      themeMock.options = lightAndDark;
+      mockUiFeatures({ [OverlayFeature.HideKeyboardShortcuts]: true });
+      appConfigMock.defaultDeploymentPinned = false;
+
+      render(<PreferencesTab />);
+
+      expect(
+        screen.getByRole('combobox', { name: SettingsI18nKeys.Theme }),
+      ).toBeTruthy();
+      expect(screen.queryByText(BasicI18nKeys.Empty)).toBeNull();
+    });
+
+    it('is held back with the other rows while visibility is resolving', () => {
+      themeMock.options = lightAndDark;
+      appConfigMock.status = UserConfigStatus.Loading;
+
+      render(<PreferencesTab />);
+
+      expect(
+        screen.queryByRole('combobox', { name: SettingsI18nKeys.Theme }),
+      ).toBeNull();
+      expect(screen.getByLabelText(BasicI18nKeys.Loading)).toBeTruthy();
+    });
+  });
 
   describe('language row', () => {
     it('is absent while only one locale is registered', () => {
