@@ -184,6 +184,12 @@ export function TargetAudienceFilterComponent({
 
   isSaveBtnDisabledRef.current = isSaveBtnDisabled;
 
+  const handleRegexEnter = useCallback(() => {
+    if (isSaveBtnDisabledRef.current) return;
+
+    handleSaveFilter();
+  }, [handleSaveFilter]);
+
   const handleTargetMenuOpenChange = useCallback((open: boolean) => {
     setTargetMenuOpen(open);
     if (open) {
@@ -301,6 +307,7 @@ export function TargetAudienceFilterComponent({
                   regEx={filterRegexParam}
                   onRegExChange={handleChangeFilterRegexParam}
                   onValidityChange={setIsRegexValid}
+                  onEnter={handleRegexEnter}
                   isInvalid={!isRegexValid}
                   className="rounded border border-primary"
                   inputRef={regexInputRef}
@@ -364,6 +371,7 @@ export function TargetAudienceFilterComponent({
           regEx={filterRegexParam}
           onRegExChange={handleChangeFilterRegexParam}
           onValidityChange={setIsRegexValid}
+          onEnter={handleRegexEnter}
           isInvalid={!isRegexValid}
           inputRef={regexInputRef}
         />
