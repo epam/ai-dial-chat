@@ -8,6 +8,46 @@ const baseConfig: Record<string, unknown> = {
 };
 
 describe('validate', () => {
+  it('defaults external connections to an empty allowlist', () => {
+    expect(validate({ ...baseConfig }).ALLOWED_CONNECT_ORIGINS).toEqual([]);
+    expect(
+      validate({ ...baseConfig, ALLOWED_CONNECT_ORIGINS: '' })
+        .ALLOWED_CONNECT_ORIGINS,
+    ).toEqual([]);
+  });
+
+  it('accepts comma-separated connection origins and subdomain patterns', () => {
+    expect(
+      validate({
+        ...baseConfig,
+        ALLOWED_CONNECT_ORIGINS:
+          ' https://documents.example.com, https://*.example.org:8443, http://localhost:4207, ',
+      }).ALLOWED_CONNECT_ORIGINS,
+    ).toEqual([
+      'https://documents.example.com',
+      'https://*.example.org:8443',
+      'http://localhost:4207',
+    ]);
+  });
+
+  it.each([
+    '*',
+    'https:',
+    'https://documents.example.com/file.pdf',
+    'https://documents.example.com?query=1',
+    'https://documents.example.com#fragment',
+    'https://user:password@documents.example.com',
+    'https://documents.example.com;script-src *',
+    'https://documents.example.com\r\nX-Injected: yes',
+    'https://documents.example.com https://other.example.com',
+    'https://*.example.*',
+    'javascript:alert(1)',
+  ])('rejects unsafe connection origin %s', (ALLOWED_CONNECT_ORIGINS) => {
+    expect(() => validate({ ...baseConfig, ALLOWED_CONNECT_ORIGINS })).toThrow(
+      /ALLOWED_CONNECT_ORIGINS/,
+    );
+  });
+
   it('defaults the rolling session lifetime to thirty days and accepts an override', () => {
     expect(validate({ ...baseConfig }).AUTH_SESSION_MAX_AGE_SECONDS).toBe(
       2592000,

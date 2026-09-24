@@ -82,6 +82,29 @@ the embedded chat emits before any host origin is known; they carry no
 payload. Every message that carries data — responses and all later events —
 is posted to the exact origin that completed the handshake.
 
+### External document previews
+
+If the embedded chat previews PDFs or Office documents hosted outside the chat
+origin, configure their trusted origins separately on `chat-api`:
+
+```dotenv
+OVERLAY_ENABLED=true
+ALLOWED_IFRAME_ORIGINS=https://portal.example.com
+ALLOWED_CONNECT_ORIGINS=https://documents.example.com
+```
+
+`ALLOWED_IFRAME_ORIGINS` controls embedding and iframe permissions; it does not
+permit the viewer's network requests. `ALLOWED_CONNECT_ORIGINS` extends CSP
+`connect-src` in both the enforced and report-only policies. If the portal also
+hosts the documents, list its origin in both settings. Restart `chat-api` and
+reload the iframe to receive the updated policy.
+
+Document requests originate from the chat iframe, so a cross-origin document
+server must allow the **chat origin**, not just the parent portal origin, through
+CORS. This setting does not change the document server's authorization. See the
+[CSP configuration reference](../apps/chat-api/README.md#content-security-policy)
+and [legacy migration notes](legacy-chat-migration-guide.md#external-document-previews).
+
 ### Authentication in the embedded chat
 
 External login remains the safe default. When there is no authenticated
