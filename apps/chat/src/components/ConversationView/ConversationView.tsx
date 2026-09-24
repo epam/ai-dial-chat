@@ -30,7 +30,6 @@ import {
   DisplayAttachment,
   formatFileSize,
   isStatusMessage,
-  MessageRole,
   StatusEvent,
   type Annotation,
   type Attachment,
@@ -110,6 +109,7 @@ import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOve
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
+import { getInputMessageHistory } from './utils/message-display';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -353,6 +353,9 @@ const ConversationView: FC<Props> = ({
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
+  const isInputHistoryNavigationDisabled = useUiFeature(
+    OverlayFeature.DisableInputHistoryNavigation,
+  );
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -595,9 +598,8 @@ const ConversationView: FC<Props> = ({
   }, [messages, initialModelId]);
 
   const messageHistory = useMemo(
-    () =>
-      messages.filter((m) => m.role === MessageRole.User).map((m) => m.content),
-    [messages],
+    () => getInputMessageHistory(messages, isInputHistoryNavigationDisabled),
+    [messages, isInputHistoryNavigationDisabled],
   );
 
   const tooltips = useMemo<MessageActionTooltips>(

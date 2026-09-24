@@ -179,6 +179,7 @@ const App: FC = () => {
     OverlayFeature.AttachmentsManager,
   );
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
+  const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
@@ -358,11 +359,16 @@ const App: FC = () => {
               <Route
                 path={ROUTES.Settings}
                 element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <SettingsPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
+                  isSettingsPageHidden ? (
+                    /* Keeps a direct /settings URL from bypassing the hidden entries. */
+                    <Navigate to={ROUTES.Root} replace />
+                  ) : (
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <SettingsPage />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  )
                 }
               />
               <Route

@@ -8,6 +8,7 @@ export enum ChatI18nKeys {
   GreetingEveningNoName = 'chat.greetingEveningNoName',
   GreetingNight = 'chat.greetingNight',
   GreetingNightNoName = 'chat.greetingNightNoName',
+  StreamErrorTitle = 'chat.streamErrorTitle',
   StreamError = 'chat.streamError',
   GenerationConflict = 'chat.generationConflict',
   CreateConversationError = 'chat.createConversationError',
@@ -75,6 +76,7 @@ export enum ApiI18nKeys {
 
 export enum ButtonsI18nKeys {
   Retry = 'buttons.retry',
+  TryAgain = 'buttons.tryAgain',
   Reload = 'buttons.reload',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
