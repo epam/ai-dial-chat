@@ -186,6 +186,23 @@ export enum OverlayFeature {
    * greeting for every agent alike.
    */
   ShowAgentDescription = 'show-agent-description',
+  /**
+   * Disables flipping through the conversation's previously sent messages
+   * with the Up/Down arrow keys in the chat input. The arrow keys then only
+   * move the caret, as in any other textarea.
+   */
+  DisableInputHistoryNavigation = 'disable-input-history-navigation',
+  /**
+   * Hides conversation export: the per-conversation "Export" entry and the
+   * conversations panel's "Export all" entry. Import stays available.
+   */
+  HideConversationExport = 'hide-conversation-export',
+  /**
+   * Hides the Settings page: its entry in the desktop user menu and on the
+   * mobile navigation sheet's profile page. A direct `/settings` URL
+   * redirects to `/`.
+   */
+  HideSettingsPage = 'hide-settings-page',
 }
 
 /**
