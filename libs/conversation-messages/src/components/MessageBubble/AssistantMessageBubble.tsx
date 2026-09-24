@@ -7,6 +7,7 @@ import {
   MDMessageViewer,
   mergeClasses,
   MessageRole,
+  ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, useMemo } from 'react';
@@ -33,6 +34,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   isStreaming,
   attachments,
   beforeContent,
+  responseFormat,
   afterContent,
   starters,
   onSelectStarter,
@@ -171,6 +173,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               <div className="cm-bubble-markdown min-w-0 max-w-full">
                 <MDMessageViewer
                   content={text ?? ''}
+                  isPlainText={responseFormat === ResponseFormat.PlainText}
                   isStreaming={isStreaming}
                   thinkingLabel={thinkingLabel}
                   components={markdownComponents}

@@ -32,6 +32,7 @@ import {
 } from './Table/MarkdownTable';
 import tableStyles from './Table/MarkdownTable.module.scss';
 import { MarkdownTaskCheckbox } from './TaskCheckbox/MarkdownTaskCheckbox';
+import { ThinkingShimmer } from './ThinkingShimmer';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */
 export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
@@ -693,8 +694,6 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     );
 
     const cssVars = buildCssVars({
-      '--cm-thinking-inverted': colors?.thinkingPrimary,
-      '--cm-thinking-secondary': colors?.thinkingSecondary,
       '--cm-markdown-border': colors?.border,
       '--cm-blockquote-border': colors?.blockquoteBorder,
       '--cm-blockquote-text': colors?.blockquoteText,
@@ -743,11 +742,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     );
 
     if (isStreaming && !displayedContent) {
-      return (
-        <span className={styles.thinking} style={cssVars}>
-          {thinkingLabel}
-        </span>
-      );
+      return <ThinkingShimmer label={thinkingLabel} colors={colors} />;
     }
 
     return (

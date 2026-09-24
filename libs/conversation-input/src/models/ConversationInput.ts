@@ -15,6 +15,7 @@ import type {
   InputColors,
   InputTypography,
   MenuOverlayConfig,
+  ModelMenuStyles,
   ModelSelectorLabels,
   SendOnEnter,
   TextInsertion,
@@ -55,6 +56,13 @@ export interface ConversationInputStyles {
    * `ATTACHMENT_INPUT_CLASS`.
    */
   attachmentTray?: AttachmentTrayStyles;
+  /**
+   * Styling hooks for the model menu in both presentations — the desktop
+   * dropdown and the mobile sheet — so a host restyles its panel, search row
+   * and selected row without a descendant selector on
+   * `CONVERSATION_INPUT_CLASS.modelMenu*`.
+   */
+  modelMenu?: ModelMenuStyles;
 }
 
 /** Props accepted by the `EditMessageInput` component. */

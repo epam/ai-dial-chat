@@ -18,7 +18,7 @@ import {
   ModelSelectorSkeletonLabel,
 } from '../components/ModelSelectorSkeleton/ModelSelectorSkeleton';
 import { CONVERSATION_INPUT_CLASS } from '../constants/public-class-names';
-import type { ModelSelectorLabels } from '../models/Input';
+import type { ModelMenuStyles, ModelSelectorLabels } from '../models/Input';
 import {
   buildDeploymentIcon,
   filterDeployments,
@@ -36,16 +36,8 @@ export interface UseModelSelectorOptions {
   onDeploymentChange?: (id: string) => void;
   /** Status labels for the selector dropdown. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /** Class applied to the sticky search header wrapper for theming. Defaults to a `--bg-layer-raised` background. */
-  searchHeaderClassName?: string;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: ModelSelectorColors;
-}
-
-/** Color overrides for the model-selector menu, applied as CSS custom properties. */
-interface ModelSelectorColors {
-  /** Sticky search header background. Fallback: `--bg-layer-raised`. */
-  searchHeaderBackground?: string;
+  /** Host styling hooks for the search header and deployment rows. Each class is merged after the default, never in place of it. */
+  styles?: ModelMenuStyles;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -72,8 +64,7 @@ export const useModelSelector = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  searchHeaderClassName = styles.searchHeader,
-  colors,
+  styles: menuStyles,
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -162,6 +153,8 @@ export const useModelSelector = ({
       mark: MenuItemMark.Check,
       checked: item.id === selectedDeploymentId,
       className: mergeClasses(
+        menuStyles?.itemClassName,
+        item.id === selectedDeploymentId && menuStyles?.selectedItemClassName,
         CONVERSATION_INPUT_CLASS.modelMenuItem,
         item.id === selectedDeploymentId &&
           CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
@@ -175,6 +168,8 @@ export const useModelSelector = ({
     selectedDeploymentId,
     modelSelectorLabels,
     onDeploymentChange,
+    menuStyles?.itemClassName,
+    menuStyles?.selectedItemClassName,
   ]);
 
   const menuHeader: ReactNode = useMemo(
@@ -182,11 +177,12 @@ export const useModelSelector = ({
       !isLoading && deployments && deployments.length > 0 ? (
         <div
           style={buildCssVars({
-            '--ms-search-header-bg': colors?.searchHeaderBackground,
+            '--ms-search-header-bg': menuStyles?.colors?.searchHeaderBackground,
           })}
           className={mergeClasses(
             'sticky top-0 z-10 pb-1 pe-2 pt-2',
-            searchHeaderClassName,
+            styles.searchHeader,
+            menuStyles?.searchHeaderClassName,
             CONVERSATION_INPUT_CLASS.modelMenuSearch,
           )}
         >
@@ -204,8 +200,8 @@ export const useModelSelector = ({
       isLoading,
       searchQuery,
       modelSelectorLabels,
-      searchHeaderClassName,
-      colors?.searchHeaderBackground,
+      menuStyles?.searchHeaderClassName,
+      menuStyles?.colors?.searchHeaderBackground,
     ],
   );
 

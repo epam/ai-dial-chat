@@ -64,8 +64,22 @@ A skill whose listing entry carries no `description` (older Core, the shared-wit
 
 The source label SHALL be Personal for `SkillSource.Personal`, Shared for `SkillSource.SharedWithMe`, and Public for `SkillSource.Public`, followed by decoded `parentPath` segments. Root-level skills contain only their source label.
 
+This requirement governs the `CatalogItem.folder` data, not how the List view lays it out. The catalog List view's Folder cell (`libs/catalog/src/components/ListView/Renders/FolderCellRenderer.tsx`) SHALL show the folder icon and only the deepest segment as visible text, and SHALL expose the full path — segments joined with ` / ` — in a hover tooltip and in a screen-reader-only node. A breadcrumb of every segment does not fit the column: each segment shrinks to an equal share and the row reads `Personal > ana… > f..`, so the deepest folder, which identifies the row, keeps the width.
+
 #### Scenario: Shared skill folder label
 
 - **WHEN** a shared skill has `parentPath: 'analysis/'`
 - **THEN** its folder is `[<Shared label>, 'analysis']`
+
+#### Scenario: Nested skill folder in the List view
+
+- **WHEN** a personal skill has `parentPath: 'analysis/finance/'` and the Skills tab is in List view
+- **THEN** its folder is `[<Personal label>, 'analysis', 'finance']`
+- **AND** the Folder cell shows `finance` as visible text
+- **AND** hovering the cell shows the tooltip `Personal / analysis / finance`, and the same path is announced to screen readers
+
+#### Scenario: Root-level skill folder in the List view
+
+- **WHEN** a personal skill has no `parentPath`
+- **THEN** the Folder cell shows `Personal` with no path tooltip
 

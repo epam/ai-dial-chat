@@ -66,12 +66,13 @@ vi.mock('@epam/ai-dial-source-panel', () => ({
     <div>
       {title && <h1>{title}</h1>}
       {additionalSections}
-      <button
-        type="button"
-        aria-label="Download all"
-        disabled={!onDownloadAll}
-        onClick={onDownloadAll}
-      />
+      {onDownloadAll && (
+        <button
+          type="button"
+          aria-label="Download all"
+          onClick={onDownloadAll}
+        />
+      )}
     </div>
   ),
 }));
@@ -238,19 +239,13 @@ describe('ConversationSourcesPanelContainer — download all', () => {
     vi.useRealTimers();
   });
 
-  it('renders the download-all button disabled when there is no downloadable attachment', () => {
+  it('hides the download-all button when there is no downloadable attachment', () => {
     mockUploaded = [
       makeAttachment('reference.pdf', { url: 'https://external.com/f.pdf' }),
     ];
     render(<ConversationSourcesPanelContainer />);
 
-    expect(
-      (
-        screen.getByRole('button', {
-          name: 'Download all',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
   });
 
   it('renders the download-all button enabled when a downloadable attachment is present', () => {
@@ -406,13 +401,7 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
 
     render(<ConversationSourcesPanelContainer />);
 
-    expect(
-      (
-        screen.getByRole('button', {
-          name: 'Download all',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
   });
 
   it('shows the "Show more" button only while hasMore is true, wired to loadMore', async () => {

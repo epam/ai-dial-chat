@@ -98,6 +98,36 @@ import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 
 `Input` takes the same object as a top-level `attachmentTray` prop.
 
+`styles.modelMenu` themes the model menu in both presentations — the desktop
+dropdown and the mobile bottom sheet — with one `ModelMenuStyles` object.
+`className` lands on the menu panel (also when `modelPickerOverlay` supplies
+its content), `searchHeaderClassName` on the search row, `itemClassName` on
+every deployment row and `selectedItemClassName` on the selected one, additive
+to `itemClassName`. Each is merged after the component's own classes, so a
+conflicting utility replaces the default instead of landing beside it.
+`colors.searchHeaderBackground` sets the search row background, which defaults
+to `--bg-layer-raised` on desktop and to transparent in the sheet:
+
+```tsx
+<ConversationInput
+  onSend={handleSend}
+  styles={{
+    modelMenu: {
+      className: 'rounded-xl',
+      itemClassName: 'rounded-lg',
+      selectedItemClassName: 'text-accent',
+      colors: { searchHeaderBackground: 'var(--bg-layer-0)' },
+    },
+  }}
+/>
+```
+
+On desktop the kit's check mark inherits the row's text colour, so a `text-*`
+utility in `selectedItemClassName` recolours the label and the check together.
+The host-supplied overlay's panel keeps its own `!w-[368px] !bg-layer-raised`,
+so overriding those needs an `!`-prefixed utility too. `Input` takes the same
+object as a top-level `modelMenu` prop.
+
 `message` and `textInsertion` are two different ways to write into the textarea,
 and they are not interchangeable. `message` sets the value: the textarea resyncs
 to it whenever the string changes, or whenever `messageRevision` changes if the
@@ -272,8 +302,8 @@ The model-selector menu carries its own set:
 | Class                              | Element                                         |
 | ---------------------------------- | ----------------------------------------------- |
 | `dial-ci-model-menu`               | The menu root, in all three presentations       |
-| `dial-ci-model-menu-search`        | The sticky search header inside the menu        |
-| `dial-ci-model-menu-item`          | Every deployment row                            |
+| `dial-ci-model-menu-search`        | The search row above the deployment list        |
+| `dial-ci-model-menu-item`          | Every deployment row, desktop and mobile        |
 | `dial-ci-model-menu-item-selected` | The selected row, **additive** to the row class |
 
 `dial-ci-model-menu` lands on three different presentations, so scope your rule
@@ -297,8 +327,13 @@ distinguish this menu from other kit menus:
 
 `dial-ci-model-menu-item` is emitted for deployment rows only — not for
 loading skeletons, nor for the single disabled row shown in the empty and error
-states. On mobile only the sheet root is marked; its rows are rendered by a
-separate virtualized list and carry no row class.
+states. The mobile sheet's rows come from a separate virtualized list and carry
+the same row and search classes. Their check is this package's own icon, not
+the kit's, so `dial-kit-menuitem-check` does not reach it; it is coloured
+`--text-accent`.
+
+Most of this no longer needs a stylesheet — `styles.modelMenu` reaches the
+same elements through props (see [ConversationInput](#conversationinput)).
 
 These classes carry no declarations of their own, so they change nothing until
 you style them, and they are additive to `className` and `inputClassName` —

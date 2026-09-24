@@ -1199,7 +1199,7 @@
     "failed": "Could not transcribe audio. Please try recording again.",
     "busy": "Speech recognition is temporarily unavailable. Please try again later.",
     "unavailable": "Voice input is not available.",
-    "tooLarge": "Audio exceeds the {{limit}} byte limit.",
+    "tooLarge": "Audio recording exceeds the {{maxSize}} limit. Please shorten the recording and try again.",
     "stopRecordingLabel": "Stop recording",
     "discardRecordingLabel": "Cancel pending recording"
   },

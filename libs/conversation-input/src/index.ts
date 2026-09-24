@@ -21,6 +21,8 @@ export type {
   InputProps,
   InputTypography,
   MenuOverlayConfig,
+  ModelMenuColors,
+  ModelMenuStyles,
   TextInsertion,
   ToolsChipLabels,
 } from './models/Input';
