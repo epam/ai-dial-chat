@@ -158,6 +158,36 @@ describe('validate', () => {
     ).not.toThrow();
   });
 
+  it('defaults AUTH_POST_LOGOUT_REDIRECT_URI to AUTH_CALLBACK_BASE_URL when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.AUTH_POST_LOGOUT_REDIRECT_URI).toBe(
+      baseConfig['AUTH_CALLBACK_BASE_URL'],
+    );
+  });
+
+  it('keeps an explicit AUTH_POST_LOGOUT_REDIRECT_URI over the AUTH_CALLBACK_BASE_URL default', () => {
+    const config = validate({
+      ...baseConfig,
+      AUTH_POST_LOGOUT_REDIRECT_URI: 'https://accounts.example.com/signed-out',
+    });
+    expect(config.AUTH_POST_LOGOUT_REDIRECT_URI).toBe(
+      'https://accounts.example.com/signed-out',
+    );
+  });
+
+  it('defaults CORS_ORIGIN to AUTH_CALLBACK_BASE_URL when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.CORS_ORIGIN).toBe(baseConfig['AUTH_CALLBACK_BASE_URL']);
+  });
+
+  it('keeps an explicit CORS_ORIGIN over the AUTH_CALLBACK_BASE_URL default', () => {
+    const config = validate({
+      ...baseConfig,
+      CORS_ORIGIN: 'https://chat.example.com',
+    });
+    expect(config.CORS_ORIGIN).toBe('https://chat.example.com');
+  });
+
   it('parses AUTH_COOKIE_SECURE=false as false', () => {
     const config = validate({
       ...baseConfig,

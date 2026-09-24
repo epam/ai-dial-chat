@@ -651,7 +651,7 @@ for existing sessions. Provider metadata and rotation details live in the
 
 - Skips `GET`, `HEAD`, `OPTIONS` (safe methods)
 - Skips `@Public()` routes
-- Validates `Origin` / `Referer` header against configured `CORS_ORIGIN`
+- Validates `Origin` / `Referer` header against configured `CORS_ORIGIN` (defaults to `AUTH_CALLBACK_BASE_URL` when `CORS_ORIGIN` is unset)
 - Validates `X-CSRF-Token` header matches `req.user.csrf`
 
 Frontend bootstraps the CSRF token from the `x-csrf-token` response header on `GET /api/v1/auth/me` and stores it in memory. The typed `post`/`put`/`del` helpers inject it automatically.

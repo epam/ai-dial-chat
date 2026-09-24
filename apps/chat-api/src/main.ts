@@ -167,7 +167,7 @@ async function bootstrap() {
   app.setGlobalPrefix(globalPrefix);
   app.enableCors(
     buildCorsOptionsDelegate({
-      origin: process.env.CORS_ORIGIN || 'http://localhost:4207',
+      origin: configService.get('CORS_ORIGIN', { infer: true }),
       credentials: true,
       exposedHeaders: [
         'X-CSRF-Token',

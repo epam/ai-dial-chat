@@ -79,7 +79,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  CORS_ORIGIN?: string = 'http://localhost:4207';
+  CORS_ORIGIN?: string;
 
   @IsNotEmpty()
   @IsString()
