@@ -739,14 +739,14 @@ export class SkillsController {
   }
 
   @Post('grouping-folders')
-  @HttpCode(200)
+  @HttpCode(201)
   @ApiOperation({
     operationId: 'createSkillGroupingFolder',
     summary: 'Create a grouping folder',
     description:
       'Proxies DIAL Core createSkillGroupingFolder. Accepts no conditional request headers — the verified SDK schema declares none for this operation.',
   })
-  @ApiResponse({ status: 200, type: SkillGroupingFolderResponseDto })
+  @ApiResponse({ status: 201, type: SkillGroupingFolderResponseDto })
   @ApiResponse({
     status: 400,
     description:
@@ -757,7 +757,6 @@ export class SkillsController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 404, description: 'Parent path not found' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

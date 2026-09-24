@@ -63,6 +63,17 @@ interface LoadedSkill {
 
 class InvalidSkillArchiveError extends Error {}
 
+/**
+ * The skill loaded, but carried no version tag to send back as `If-Match`.
+ * Deliberately not an {@link InvalidSkillArchiveError}: that one means this
+ * Core installation cannot serve the skill as one archive, which the
+ * per-file path recovers from. A missing tag is not recoverable that way —
+ * the per-file path can only offer the manifest *file*'s tag, and sending a
+ * file's tag as a whole-skill precondition is what made a save fail with
+ * `412` under a banner blaming a concurrent edit that never happened.
+ */
+class MissingSkillEtagError extends Error {}
+
 const resolveSkillFilePath = (
   item: SkillMetadataItemDto,
   skillPath: string,
@@ -93,7 +104,7 @@ const loadSkillArchive = async (
 ): Promise<LoadedSkill> => {
   const response = await client.downloadSkill(bucket, skillPath);
   const etag = response.headers.get('etag');
-  if (!etag) throw new InvalidSkillArchiveError('Skill ETag is missing');
+  if (!etag) throw new MissingSkillEtagError('Skill ETag is missing');
 
   try {
     const buffer = await response.arrayBuffer();
@@ -124,7 +135,7 @@ const loadSkillFiles = async (
       resolveSkillFilePath(item, skillPath) === SKILL_MANIFEST_FILE,
   );
   const etag = manifestResponse.headers.get('etag') ?? manifestItem?.etag;
-  if (!etag) throw new Error('Skill ETag is missing');
+  if (!etag) throw new MissingSkillEtagError('Skill ETag is missing');
 
   const fileItems = listing.items
     .filter((item) => item.nodeType === 'item')
@@ -234,6 +245,14 @@ export const useSkillEditorLoad = ({
         try {
           loadedSkill = await loadSkillArchive(client, bucket, skillPath);
         } catch (error) {
+          /*
+           * A skill served without a version tag is a load failure, not a
+           * reason to try the other route: the per-file path would answer
+           * with the manifest file's own tag, which a whole-skill save then
+           * rejects. Better a retryable error than a form that cannot save.
+           */
+          if (error instanceof MissingSkillEtagError) throw error;
+
           const status = getApiErrorStatus(error);
           if (!(error instanceof InvalidSkillArchiveError) && status !== 400) {
             throw error;

@@ -183,3 +183,78 @@ describe('useSkillEditorSubmit front-matter guard', () => {
     expect(client.createSkill).toHaveBeenCalledOnce();
   });
 });
+
+describe('useSkillEditorSubmit retryable failures', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /*  reads , and only when it looks like a Response. */
+  /* `getApiErrorStatus` reads `error.response`, and only when it looks like a Response. */
+  const rejectWith = (status: number) =>
+    Object.assign(new Error(`HTTP ${status}`), {
+      response: { status, json: () => Promise.resolve({}) },
+    });
+
+  it('offers a retry when the service is unavailable', async () => {
+    const { client, params } = makeHarness(false);
+    vi.mocked(client.createSkill).mockRejectedValueOnce(rejectWith(503));
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+
+    expect(result.current.submitError).toBe(messages.serviceUnavailable);
+    expect(result.current.isSubmitErrorRetryable).toBe(true);
+  });
+
+  it('re-sends the failed attempt and clears the error once it succeeds', async () => {
+    const { client, params } = makeHarness(false);
+    vi.mocked(client.createSkill).mockRejectedValueOnce(rejectWith(503));
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+
+    await act(async () => {
+      result.current.retrySubmit();
+    });
+
+    expect(client.createSkill).toHaveBeenCalledTimes(2);
+    expect(client.createSkill).toHaveBeenLastCalledWith(
+      'bucket-1',
+      'my-copy',
+      expect.stringContaining('name: my-copy'),
+      [],
+      [],
+    );
+    expect(result.current.submitError).toBeUndefined();
+    expect(result.current.isSubmitErrorRetryable).toBe(false);
+  });
+
+  it('offers no retry for a failure a re-send cannot clear', async () => {
+    const { client, params } = makeHarness(false);
+    vi.mocked(client.createSkill).mockRejectedValueOnce(rejectWith(413));
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+
+    expect(result.current.submitError).toBe(messages.archiveTooLarge);
+    expect(result.current.isSubmitErrorRetryable).toBe(false);
+  });
+
+  it('does nothing when retried before any submit', async () => {
+    const { client, params } = makeHarness(false);
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    await act(async () => {
+      result.current.retrySubmit();
+    });
+
+    expect(client.createSkill).not.toHaveBeenCalled();
+  });
+});

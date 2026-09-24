@@ -314,6 +314,12 @@ export interface SkillEditorProps {
   onCancel: () => void;
   /** Called when the retry button in the load-error state is activated. */
   onRetry?: () => void;
+  /**
+   * Called when the retry action beside `submitError` is activated. Supply it
+   * only for a failure a plain re-send can clear, such as an unavailable
+   * service; when omitted, the error renders as text with no action.
+   */
+  onRetrySubmit?: () => void;
   /** Text overrides. */
   labels?: SkillEditorLabels;
   /** Style overrides. */

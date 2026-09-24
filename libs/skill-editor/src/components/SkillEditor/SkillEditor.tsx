@@ -98,6 +98,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   backAriaLabel,
   title,
   onRetry,
+  onRetrySubmit,
   labels,
   styles: stylesProp,
   dir,
@@ -441,8 +442,14 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         rightContent={
           <div className="flex flex-1 flex-col gap-4 px-4 py-6 desktop:gap-5 desktop:px-8">
             {submitError != null && (
-              <div role="alert">
+              <div role="alert" className="flex items-center gap-2">
                 <ErrorText text={submitError} />
+                {onRetrySubmit != null && (
+                  <GhostButton
+                    label={t.retryLabel ?? 'Retry'}
+                    onClick={onRetrySubmit}
+                  />
+                )}
               </div>
             )}
             {conflict != null && (

@@ -5570,7 +5570,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -5588,9 +5588,6 @@
           },
           "403": {
             "description": "Forbidden"
-          },
-          "404": {
-            "description": "Parent path not found"
           },
           "502": {
             "description": "DIAL Core returned an error response"
