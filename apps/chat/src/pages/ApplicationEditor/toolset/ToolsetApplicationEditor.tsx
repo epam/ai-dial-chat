@@ -19,34 +19,30 @@ import {
   getDefaultToolsetForm,
   ToolsetEditor,
 } from '@epam/ai-dial-toolset-editor';
+import type { TFunction } from 'i18next';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
-import DialFileManagerModal from '../../components/DialFileManagerModal/DialFileManagerModal';
-import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import {
-  AVATAR_ALLOWED_MIME_TYPES,
-  AVATAR_MAX_FILE_SIZE_BYTES,
-} from '../../constants/files';
-import { ToolsetEditorQuery } from '../../constants/toolsets';
+import RouteFallback from '../../../components/RouteFallback/RouteFallback';
+import { ToolsetEditorQuery } from '../../../constants/toolsets';
 import {
   ApiI18nKeys,
   AuthI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
-  DialFileManagerI18nKeys,
   EditorI18nKeys,
   ToolsetEditorI18nKeys,
-} from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
-import { useUser } from '../../context/auth/UserContext';
-import { useDeployments } from '../../context/DeploymentsContext';
-import { useNotification } from '../../context/NotificationContext';
-import { useToolsetEditorOAuthLogin } from '../../hooks/toolsets/useToolsetEditorOAuthLogin';
-import { useOperationNotification } from '../../hooks/useOperationNotification';
-import { mcpAppsApiClient } from '../../server-api/mcp-apps';
+} from '../../../constants/translation-keys';
+import { useAppConfig } from '../../../context/AppConfigContext';
+import { useDeployments } from '../../../context/DeploymentsContext';
+import { useNotification } from '../../../context/NotificationContext';
+import { useApplicationAvatarPicker } from '../../../hooks/application-editor/useApplicationAvatarPicker';
+import { useMetadataLabels } from '../../../hooks/application-editor/useMetadataLabels';
+import { useToolsetEditorOAuthLogin } from '../../../hooks/toolsets/useToolsetEditorOAuthLogin';
+import { useOperationNotification } from '../../../hooks/useOperationNotification';
+import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import {
   createToolset,
   getToolset,
@@ -54,33 +50,46 @@ import {
   loginToolset,
   logoutToolset,
   updateToolset,
-} from '../../server-api/toolsets';
+} from '../../../server-api/toolsets';
 import {
   EntityOperation,
   NotifiableEntity,
-} from '../../types/entity-notification';
-import { ROUTES } from '../../types/routes';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
+} from '../../../types/entity-notification';
+import { ROUTES } from '../../../types/routes';
 import {
   buildAdditionalLocaleOptions,
-  buildLocaleFieldLabels,
   PRIMARY_LOCALE,
   resolveLocalizedText,
-} from '../../utils/locale';
+} from '../../../utils/locale';
 import {
   extractToolsetApiErrorMessage,
   fetchToolsetAuthSettings,
   formToToolsetBody,
   getToolsetRedirectUri,
   toolsetDtoToForm,
-} from '../../utils/toolsets';
+} from '../../../utils/toolsets';
 
-const ToolsetEditorPage: FC = () => {
+const getMetadataLabelOverrides = (t: TFunction) => ({
+  name: {
+    label: t(EditorI18nKeys.NameLabel),
+    placeholder: t(ToolsetEditorI18nKeys.NamePlaceholder),
+  },
+  description: {
+    label: t(EditorI18nKeys.DescriptionLabel),
+    placeholder: t(ToolsetEditorI18nKeys.DescriptionPlaceholder),
+  },
+  topics: {
+    label: t(EditorI18nKeys.TopicsLabel),
+    placeholder: t(ToolsetEditorI18nKeys.TopicsPlaceholder),
+  },
+});
+
+/** Host adapter for the toolset editor library: data loading, persistence, auth, and labels. */
+const ToolsetApplicationEditor: FC = () => {
   const { t } = useTranslation();
   const { showSuccessNotification, showErrorNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
   const { refetchToolsets } = useDeployments();
-  const { user } = useUser();
   const { config } = useAppConfig();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -264,7 +273,17 @@ const ToolsetEditorPage: FC = () => {
     [showErrorNotification],
   );
 
-  const bucket = user?.bucket ?? '';
+  const {
+    avatarPicker: {
+      bucket,
+      FileManagerModal,
+      resolveIconUrl,
+      allowedMimeTypes,
+      maxFileSizeBytes,
+    },
+    avatarPickerLabels,
+  } = useApplicationAvatarPicker();
+  const metadataFormLabels = useMetadataLabels(getMetadataLabelOverrides);
 
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
 
@@ -292,67 +311,8 @@ const ToolsetEditorPage: FC = () => {
         clientSecretRequired: t(ToolsetEditorI18nKeys.ClientSecretRequired),
       },
       general: {
-        form: {
-          name: {
-            label: t(EditorI18nKeys.NameLabel),
-            placeholder: t(ToolsetEditorI18nKeys.NamePlaceholder),
-          },
-          description: {
-            label: t(EditorI18nKeys.DescriptionLabel),
-            placeholder: t(ToolsetEditorI18nKeys.DescriptionPlaceholder),
-          },
-          iconUrl: {
-            label: t(EditorI18nKeys.AvatarLabel),
-            addAvatarLabel: t(EditorI18nKeys.AddAvatarButtonLabel),
-            captionText: t(EditorI18nKeys.AvatarCaption),
-          },
-          version: {
-            label: t(EditorI18nKeys.VersionLabel),
-            placeholder: t(EditorI18nKeys.VersionPlaceholder),
-          },
-          topics: {
-            label: t(EditorI18nKeys.TopicsLabel),
-            placeholder: t(ToolsetEditorI18nKeys.TopicsPlaceholder),
-          },
-          otherLocales: buildLocaleFieldLabels(t),
-          ariaLabel: t(EditorI18nKeys.StepGeneral),
-        },
-        avatarPicker: {
-          title: t(EditorI18nKeys.AddAvatarButtonLabel),
-          attachLabel: t(DialFileManagerI18nKeys.Attach),
-          emptyTitle: t(DialFileManagerI18nKeys.Empty),
-          emptyDescription: '',
-          errorMessage: t(DialFileManagerI18nKeys.Error),
-          retryLabel: t(DialFileManagerI18nKeys.Retry),
-          hiddenFilesLabel: t(DialFileManagerI18nKeys.HiddenFiles),
-          showHiddenFilesLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
-          hideHiddenFilesLabel: t(DialFileManagerI18nKeys.HideHiddenFiles),
-          getSelectionLabel: (count: number) =>
-            t(DialFileManagerI18nKeys.ItemsSelected, { count }),
-          uploadFilesLabel: t(DialFileManagerI18nKeys.Upload),
-          newFolderLabel: t(DialFileManagerI18nKeys.NewFolder),
-          downloadLabel: t(ButtonsI18nKeys.Download),
-          downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
-          deleteLabel: t(ButtonsI18nKeys.Delete),
-          deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
-          deleteConfirmTitleSingle: t(
-            DialFileManagerI18nKeys.DeleteConfirmTitleSingle,
-          ),
-          deleteConfirmTitleMultiple: t(
-            DialFileManagerI18nKeys.DeleteConfirmTitleMultiple,
-          ),
-          deleteConfirmSingleText: t(BasicI18nKeys.DeleteConfirmDescription),
-          deleteConfirmMultipleText: t(
-            DialFileManagerI18nKeys.DeleteConfirmBodyMultiple,
-          ),
-          deleteConfirmItemsLabel: t(
-            DialFileManagerI18nKeys.DeleteConfirmBodyItems,
-          ),
-          deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
-          deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
-          uploadProgressTitle: t(DialFileManagerI18nKeys.UploadProgressTitle),
-          cancelLabel: t(ButtonsI18nKeys.Cancel),
-        },
+        form: metadataFormLabels,
+        avatarPicker: avatarPickerLabels,
       },
       settings: {
         endpointLabel: t(ApiI18nKeys.EndpointLabel),
@@ -426,7 +386,7 @@ const ToolsetEditorPage: FC = () => {
         },
       },
     }),
-    [t],
+    [t, metadataFormLabels, avatarPickerLabels],
   );
 
   if (isLoading || !initialForm) {
@@ -450,14 +410,14 @@ const ToolsetEditorPage: FC = () => {
       onNotifySuccess={notifySuccess}
       onNotifyError={notifyError}
       bucket={bucket}
-      FileManagerModal={DialFileManagerModal}
-      resolveIconUrl={(url) => resolveCatalogIconUrl(url) ?? ''}
-      allowedMimeTypes={AVATAR_ALLOWED_MIME_TYPES}
-      maxFileSizeBytes={AVATAR_MAX_FILE_SIZE_BYTES}
+      FileManagerModal={FileManagerModal}
+      resolveIconUrl={resolveIconUrl}
+      allowedMimeTypes={allowedMimeTypes}
+      maxFileSizeBytes={maxFileSizeBytes}
       availableLocaleOptions={localeOptions}
       labels={labels}
     />
   );
 };
 
-export default memo(ToolsetEditorPage);
+export default memo(ToolsetApplicationEditor);
