@@ -98,6 +98,12 @@ export class EntityEditorHeader extends BaseElement {
     return this.getStepByTitle(EntityEditSteps.toolsetSettings);
   }
 
+  public getStepByTitleErrorIcon(title: string, index?: number): BaseElement {
+    return this.getStepByTitle(title, index).getChildElementBySelector(
+      IconSelectors.entityEditorStepErrorIcon,
+    );
+  }
+
   public async goOnGeneralInfoStepWithHeaderStepper(
     options: { isHttpMethodTriggered: boolean } = {
       isHttpMethodTriggered: true,

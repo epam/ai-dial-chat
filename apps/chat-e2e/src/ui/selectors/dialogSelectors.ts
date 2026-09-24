@@ -326,6 +326,7 @@ export const EntityEditorEntitySettingsPreviewSelectors = {
 export const AddEntityGeneralInfoFormSelector = {
   entityGeneralFormContainer: '[data-qa="entity-general-form"]',
   name: '#name',
+  nameContainer: '[data-qa="name"]',
   version: '#version',
   icon: '[data-qa="icon"]',
   addIcon: '[data-qa="add-icon"]',
@@ -338,6 +339,8 @@ export const AddEntityGeneralInfoFormSelector = {
   selectedTopicPillRemoveIcon: (topicName: string) =>
     `button[aria-label="Remove ${topicName}"]`, // Selector for the 'x' icon within the pill
   clearAllTopicsButton: '[data-qa="clear-dropdown-selection"]', // Selector for the main clear button within the container
+  fieldErrorLabel: (fieldSelector: string) =>
+    `${fieldSelector} + ${ErrorLabelSelectors.fieldError}`,
 };
 
 export const AddEntitySettingsFormSelector = {
