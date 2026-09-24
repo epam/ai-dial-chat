@@ -1,3 +1,4 @@
+import type { TextRefinementLabels } from '@epam/ai-dial-chat-shared';
 import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { SkillFileNodeKind } from '../types/skill-file-node-kind';
@@ -119,21 +120,7 @@ export interface SkillEditorFileActions {
 }
 
 /** Text overrides for `SkillEditor`. Every field has an English default. */
-export interface SkillEditorLabels {
-  /** Refinement copy. Defaults to 'Refine with AI'. */
-  refineWithAiLabel?: string;
-  /** Refinement copy. Defaults to 'Undo'. */
-  refineUndoLabel?: string;
-  /** Refinement copy. Defaults to 'Could not refine this text. Please try again.'. */
-  refineErrorLabel?: string;
-  /** Refinement copy. Defaults to 'Refining text'. */
-  refinePendingAriaLabel?: string;
-  /** Refinement copy. Defaults to 'Text refined. Undo is available.'. */
-  refineSuccessAriaLabel?: string;
-  /** Refinement copy. Defaults to 'Original text restored.'. */
-  refineUndoAriaLabel?: string;
-  /** Refinement copy. Defaults to 'No changes were needed.'. */
-  refineUnchangedAriaLabel?: string;
+export interface SkillEditorLabels extends TextRefinementLabels {
   /** Files pane heading. Defaults to `'Files'`. */
   filesHeading?: string;
   /** Accessible name of the file tree region. Defaults to `'Skill files'`. */
@@ -220,7 +207,7 @@ export interface SkillEditorConflict {
 
 /** CSS custom-property color overrides for `SkillEditor`. */
 export interface SkillEditorColors {
-  /** Refine/Undo and status text color. Defaults to --text-primary. */
+  /** Refinement status text color. Defaults to --text-primary. */
   refineActionText?: string;
   /** Refinement error color. Defaults to --text-error. */
   refineErrorText?: string;
@@ -234,8 +221,6 @@ export interface SkillEditorColors {
 
 /** Typography class overrides for `SkillEditor`. */
 export interface SkillEditorTypography {
-  /** Refine/Undo typography. Defaults to 'dial-small-text'. */
-  refineActionClassName?: string;
   /** Refinement feedback typography. Defaults to 'dial-small-text'. */
   refineFeedbackClassName?: string;
   /** Typography class applied to the "Files" and selected-file section headings. Defaults to `'dial-body-semi-text'`. */

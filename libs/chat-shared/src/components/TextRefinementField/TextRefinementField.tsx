@@ -1,35 +1,50 @@
 import {
-  mergeClasses,
-  TextRefinementState,
-  type TextRefinementResult,
-} from '@epam/ai-dial-chat-shared';
-import {
+  DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
+  ErrorText,
   GhostButton,
+  Label,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconSparkles } from '@tabler/icons-react';
 import { useRef, type FC, type ReactNode } from 'react';
-import type { SkillEditorLabels } from '../../models/skill-editor-props';
+import {
+  TextRefinementState,
+  type TextRefinementResult,
+} from '../../hooks/useTextRefinement';
+import type { TextRefinementLabels } from '../../models/text-refinement';
+import { mergeClasses } from '../../utils/merge-class';
 
-interface RefinementFieldProps {
-  enabled: boolean;
+/** Props for `TextRefinementField`. */
+export interface TextRefinementFieldProps {
+  /** When false, renders `children` alone — no label row, actions, or feedback. */
+  isEnabled: boolean;
+  /** Id of the labelled control; also the prefix for the label and error ids. */
   fieldId: string;
+  /** Visible field label; names the group. */
   label: string;
+  /** Class applied to the `<label>`, after the kit `Label` defaults. */
   labelClassName?: string;
+  /** Marks the label as required. */
   required?: boolean;
-  labels?: SkillEditorLabels;
+  /** Action, status, and error copy. */
+  labels?: TextRefinementLabels;
+  /** The field's `useTextRefinement` result. */
   refinement: TextRefinementResult;
+  /** Disables both actions. */
   disabled: boolean;
-  actionClassName: string;
-  feedbackClassName: string;
-  errorClassName: string;
+  /** Class applied to the status message and the error message. */
+  feedbackClassName?: string;
+  /** Class applied to the error message, after `feedbackClassName`. */
+  errorClassName?: string;
+  /** The refinable control, whose id must equal `fieldId`. */
   children: ReactNode;
 }
 
-/** Private label row and field-local refinement feedback. */
-export const RefinementField: FC<RefinementFieldProps> = ({
-  enabled,
+/** Label row with Refine/Undo actions and live feedback around one refinable field. */
+export const TextRefinementField: FC<TextRefinementFieldProps> = ({
+  isEnabled,
   fieldId,
   label,
   labelClassName,
@@ -37,13 +52,12 @@ export const RefinementField: FC<RefinementFieldProps> = ({
   labels,
   refinement,
   disabled,
-  actionClassName,
   feedbackClassName,
   errorClassName,
   children,
 }) => {
   const controls = useRef<HTMLDivElement>(null);
-  if (!enabled) return <>{children}</>;
+  if (!isEnabled) return <>{children}</>;
   const error = refinement.state === TextRefinementState.Error;
   const message = {
     [TextRefinementState.Idle]: '',
@@ -65,25 +79,19 @@ export const RefinementField: FC<RefinementFieldProps> = ({
       aria-describedby={error ? fieldId + '-refinement-error' : undefined}
     >
       <div className="flex min-w-0 flex-wrap items-center gap-x-3">
-        <label
+        <Label
           id={fieldId + '-label'}
           htmlFor={fieldId}
           className={labelClassName}
-        >
-          {label}
-          {required && <span aria-hidden> *</span>}
-        </label>
+          label={label}
+          required={required}
+        />
         <div
           ref={controls}
           className="ms-auto flex min-w-0 flex-wrap items-center"
         >
           <GhostButton
-            type="button"
-            className={mergeClasses(
-              'min-h-[44px] min-w-[44px] whitespace-normal',
-              actionClassName,
-            )}
-            textClassName="[font:inherit]"
+            size={ElementSize.Small}
             label={labels?.refineWithAiLabel ?? 'Refine with AI'}
             disabled={disabled || !refinement.canRefine}
             onClick={() => {
@@ -92,11 +100,11 @@ export const RefinementField: FC<RefinementFieldProps> = ({
             iconBefore={
               refinement.isPending ? (
                 <span aria-hidden>
-                  <Spinner size={16} ariaLabel="" />
+                  <Spinner size={DIAL_ICON_SIZE.SM} ariaLabel="" />
                 </span>
               ) : (
                 <IconSparkles
-                  size={16}
+                  size={DIAL_ICON_SIZE.SM}
                   stroke={DIAL_KIT_ICON_STROKE}
                   aria-hidden
                 />
@@ -105,16 +113,12 @@ export const RefinementField: FC<RefinementFieldProps> = ({
           />
           {refinement.canUndo && (
             <GhostButton
-              type="button"
-              className={mergeClasses(
-                'min-h-[44px] min-w-[44px] whitespace-normal',
-                actionClassName,
-              )}
-              textClassName="[font:inherit]"
+              size={ElementSize.Small}
               label={labels?.refineUndoLabel ?? 'Undo'}
               disabled={disabled}
               onClick={() => {
                 refinement.undo();
+                /* GhostButton forwards no ref, so find the Refine action. */
                 controls.current
                   ?.querySelector<HTMLButtonElement>('button')
                   ?.focus();
@@ -128,14 +132,15 @@ export const RefinementField: FC<RefinementFieldProps> = ({
         {message}
       </div>
       {error && (
-        <div
+        <ErrorText
           role="alert"
           id={fieldId + '-refinement-error'}
           className={mergeClasses(feedbackClassName, errorClassName)}
-        >
-          {labels?.refineErrorLabel ??
-            'Could not refine this text. Please try again.'}
-        </div>
+          text={
+            labels?.refineErrorLabel ??
+            'Could not refine this text. Please try again.'
+          }
+        />
       )}
     </div>
   );
