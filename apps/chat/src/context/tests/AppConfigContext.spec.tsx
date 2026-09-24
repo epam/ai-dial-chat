@@ -61,6 +61,7 @@ describe('AppConfigContext', () => {
     ]);
     expect(result.current.config.overlayEnabled).toBe(false);
     expect(result.current.config.overlayAllowedOrigins).toEqual([]);
+    expect(result.current.config.allowedConnectOrigins).toEqual([]);
     expect(result.current.config.enabledUiFeatures).toBeNull();
     expect(result.current.config.announcementHtml).toBeNull();
     expect(result.current.config.customVisualizers).toEqual([]);
@@ -115,6 +116,7 @@ describe('AppConfigContext', () => {
         dialCoreExternalUrl: null,
         overlayEnabled: true,
         overlayAllowedOrigins: ['https://partner.example.com'],
+        allowedConnectOrigins: ['https://documents.example.com'],
       },
       metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
     } as unknown as ClientConfigResponseDto);
@@ -125,6 +127,9 @@ describe('AppConfigContext', () => {
     );
 
     expect(result.current.config.overlayEnabled).toBe(true);
+    expect(result.current.config.allowedConnectOrigins).toEqual([
+      'https://documents.example.com',
+    ]);
     expect(result.current.config.overlayAllowedOrigins).toEqual([
       'https://partner.example.com',
     ]);

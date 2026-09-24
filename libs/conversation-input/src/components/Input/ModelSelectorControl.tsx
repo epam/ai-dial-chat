@@ -70,6 +70,7 @@ export const ModelSelectorControl: FC<Props> = ({
     selectedVersion,
     menuItems,
     menuHeader,
+    menuStyle,
     onOpenChange: handleModelSelectorOpenChange,
   } = useModelSelector({
     deployments,
@@ -264,6 +265,7 @@ export const ModelSelectorControl: FC<Props> = ({
           menuStyles?.className,
           CONVERSATION_INPUT_CLASS.modelMenu,
         )}
+        listStyle={menuStyle}
         disabled={isDisabled}
         onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
       >

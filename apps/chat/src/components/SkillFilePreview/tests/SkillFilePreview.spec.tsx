@@ -4,6 +4,10 @@ import { SkillFilePreviewState } from '../../../types/skill-file-preview';
 import { configurePdfWorker } from '../../../utils/pdf';
 import { SkillFilePreview } from '../SkillFilePreview';
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
+}));
+
 const { attachmentCanvasBody } = vi.hoisted(() => ({
   attachmentCanvasBody: vi.fn((_props: Record<string, unknown>) => null),
 }));

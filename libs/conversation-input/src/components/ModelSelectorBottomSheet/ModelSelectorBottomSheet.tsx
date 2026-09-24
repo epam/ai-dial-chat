@@ -59,6 +59,10 @@ interface ModelRowData {
   itemClassName?: string;
   /** Host class on the selected row, additive to `itemClassName`. */
   selectedItemClassName?: string;
+  /** Whether the host set a selected-row background, carried by `--ci-sheet-selected-bg`. */
+  hasSelectedBackground: boolean;
+  /** Whether the host set a selected-row label color, carried by `--ci-sheet-selected-text`. */
+  hasSelectedText: boolean;
   /** Invoked when a row is tapped. */
   onSelect: (id: string) => void;
 }
@@ -74,6 +78,8 @@ const ModelRow = ({
   query,
   itemClassName,
   selectedItemClassName,
+  hasSelectedBackground,
+  hasSelectedText,
   onSelect,
 }: RowComponentProps<ModelRowData>) => {
   const item = items[index];
@@ -95,6 +101,8 @@ const ModelRow = ({
         className={mergeClasses(
           styles.item,
           'h-full w-full gap-3 px-4',
+          isSelected && hasSelectedBackground && styles.itemSelectedBackground,
+          isSelected && hasSelectedText && styles.itemSelectedText,
           itemClassName,
           isSelected && selectedItemClassName,
           CONVERSATION_INPUT_CLASS.modelMenuItem,
@@ -203,13 +211,18 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
     onClose();
   };
 
+  /* The shared `ModelMenuStyles` colors win over this sheet's own `colors`. */
+  const menuColors = menuStyles?.colors;
   const cssVars = buildCssVars({
     '--ci-sheet-divider': colors?.divider,
-    '--ci-sheet-text': colors?.itemText,
-    '--ci-sheet-item-hover': colors?.itemHoverBg,
+    '--ci-sheet-text': menuColors?.itemText ?? colors?.itemText,
+    '--ci-sheet-item-hover':
+      menuColors?.itemHoverBackground ?? colors?.itemHoverBg,
     '--ci-sheet-item-active': colors?.itemActiveBg,
-    '--ci-sheet-icon': colors?.itemIcon,
-    '--ci-check-icon': colors?.checkIcon,
+    '--ci-sheet-icon': menuColors?.itemText ?? colors?.itemIcon,
+    '--ci-check-icon': menuColors?.checkIcon ?? colors?.checkIcon,
+    '--ci-sheet-selected-bg': menuColors?.selectedItemBackground,
+    '--ci-sheet-selected-text': menuColors?.selectedItemText,
   });
 
   return (
@@ -287,6 +300,8 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
               query,
               itemClassName: menuStyles?.itemClassName,
               selectedItemClassName: menuStyles?.selectedItemClassName,
+              hasSelectedBackground: !!menuColors?.selectedItemBackground,
+              hasSelectedText: !!menuColors?.selectedItemText,
               onSelect: handleSelect,
             }}
           />

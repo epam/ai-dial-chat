@@ -105,6 +105,14 @@ CORS. This setting does not change the document server's authorization. See the
 [CSP configuration reference](../apps/chat-api/README.md#content-security-policy)
 and [legacy migration notes](legacy-chat-migration-guide.md#external-document-previews).
 
+For PDFs, matching external origins in `ALLOWED_CONNECT_ORIGINS` also enable
+browser-managed credentials. The document server must allow the exact chat
+origin with `Access-Control-Allow-Origin` and send
+`Access-Control-Allow-Credentials: true`; `*` is not sufficient. A valid session
+and browser permission to send its cookies are still required. These PDF
+requests reject redirects and require a direct document response. No additional
+environment variable is needed.
+
 ### Authentication in the embedded chat
 
 External login remains the safe default. When there is no authenticated

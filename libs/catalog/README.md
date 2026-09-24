@@ -491,6 +491,12 @@ hover that starts a lookup turn the button back into the trigger under the
 pointer that was reaching for it. The menu likewise stays put while it is
 open.
 
+`Unpublish` is released from that hold for an item `isUnpublishVisible`
+returns `true` for: `DetailsPanel` requests that item's publish history as
+soon as it shows it, and once the history has resolved the lone `Unpublish`
+of a published copy renders as a button like any other last action. An item
+the rule is absent for keeps the hold.
+
 ## Enums
 
 ```tsx

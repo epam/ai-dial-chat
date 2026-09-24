@@ -92,6 +92,16 @@ export interface ModelMenuColors {
    * scrolling items, and to transparent in the mobile sheet.
    */
   searchHeaderBackground?: string;
+  /** Label and icon color of every deployment row. Defaults to `--text-primary`. */
+  itemText?: string;
+  /** Background of a hovered deployment row. Defaults to `--bg-control-accent-alpha-hover` on desktop and `--bg-layer-raised` in the sheet. */
+  itemHoverBackground?: string;
+  /** Background of the selected deployment row at rest. Defaults to none. */
+  selectedItemBackground?: string;
+  /** Label color of the selected deployment row. Defaults to `itemText`. */
+  selectedItemText?: string;
+  /** Color of the check mark on the selected row. Defaults to the row's text color on desktop and `--text-accent` in the sheet. */
+  checkIcon?: string;
 }
 
 /**
