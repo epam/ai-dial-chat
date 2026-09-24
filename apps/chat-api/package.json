@@ -168,6 +168,7 @@
     "@opentelemetry/core": "^2.10.0",
     "@types/archiver": "^6.0.3",
     "@types/cookie-parser": "^1.4.10",
+    "@types/proxy-from-env": "^1.0.4",
     "@types/sanitize-html": "^2.13.0",
     "@types/yauzl": "^3.4.0"
   },
