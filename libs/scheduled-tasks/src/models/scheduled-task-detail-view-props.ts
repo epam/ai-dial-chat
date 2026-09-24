@@ -28,8 +28,8 @@ export interface ScheduledTaskDetailViewLabels {
   activeStatusLabel: string;
   /** Text shown next to the Active switch when `isActiveDisabled` is `true`, explaining why resuming is unavailable (e.g. a one-time schedule that already ran). Omit to hide. */
   isActiveDisabledReason?: string;
-  /** Label for the completed-state field in the Details section. Defaults to `'Status'`. */
-  completedFieldLabel?: string;
+  /** Label for the completed-state field in the Details section, e.g. "Status". */
+  completedFieldLabel: string;
   /** Announced via `aria-live` after a pause/resume mutation completes, separate from the switch's own accessible name. Empty string announces nothing. */
   activeStatusAnnouncement?: string;
   /** Title of the Configuration section. */

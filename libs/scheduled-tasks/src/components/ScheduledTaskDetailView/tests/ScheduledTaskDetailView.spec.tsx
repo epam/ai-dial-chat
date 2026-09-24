@@ -162,6 +162,7 @@ const labels: ScheduledTaskDetailViewLabels = {
   repeatsLabel: 'Repeats',
   activeWindowLabel: 'Active',
   activeStatusLabel: 'Active',
+  completedFieldLabel: 'Status',
   configurationTitle: 'Configuration',
   instructionsLabel: 'Instructions',
   retryLabel: 'Retry',

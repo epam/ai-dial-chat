@@ -8,8 +8,8 @@ interface ScheduledTaskDetailsSectionLabels {
   repeatsLabel: string;
   /** Label for the activity-window field, e.g. "Active". */
   activeWindowLabel: string;
-  /** Label for the completed-state field, e.g. "Status". Defaults to `'Status'`. */
-  completedFieldLabel?: string;
+  /** Label for the completed-state field, e.g. "Status". */
+  completedFieldLabel: string;
 }
 
 /** Props for the {@link ScheduledTaskDetailsSection} component. */

@@ -609,7 +609,7 @@ scheduled-tasks SHALL export ScheduledTaskDeleteConfirmation with controlled ope
 
 ### Requirement: Details summary shows the completed state for terminal tasks
 
-When the loaded task has `isCompleted: true` (a finished one-time schedule, or a recurring schedule whose activity window has closed), `ScheduledTaskDetailView` SHALL render a completed line in the details summary (label from a new `labels` entry with an English default, localized by the page via a new `ScheduledTasksI18nKeys` member). The completed line SHALL be informational text, not a control, and SHALL NOT replace or hide the existing summary fields (schedule, next run, timestamps).
+When the loaded task has `isCompleted: true` (a finished one-time schedule, or a recurring schedule whose activity window has closed), `ScheduledTaskDetailView` SHALL render a completed line in the details summary (label from a required `labels` entry, like the section's other field labels, localized by the page via a `ScheduledTasksI18nKeys` member — the lib carries no English fallback). The completed line SHALL be informational text, not a control, and SHALL NOT replace or hide the existing summary fields (schedule, next run, timestamps).
 
 #### Scenario: Completed task shows the completed line
 

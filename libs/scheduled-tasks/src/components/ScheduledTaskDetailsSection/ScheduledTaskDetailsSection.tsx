@@ -38,7 +38,7 @@ export const ScheduledTaskDetailsSection: FC<
         <span
           className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
         >
-          {labels.completedFieldLabel ?? 'Status'}
+          {labels.completedFieldLabel}
         </span>
         <p className={fieldValueClassName}>{completedLabel}</p>
       </div>
