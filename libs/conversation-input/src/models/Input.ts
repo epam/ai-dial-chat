@@ -84,6 +84,45 @@ export interface ModelSelectorLabels {
   unavailableTooltip?: string;
 }
 
+/** Color overrides for the model menu, applied as CSS custom properties. */
+export interface ModelMenuColors {
+  /**
+   * Background of the search row above the deployment list. Defaults to
+   * `--bg-layer-raised` in the desktop dropdown, where the row is sticky over
+   * scrolling items, and to transparent in the mobile sheet.
+   */
+  searchHeaderBackground?: string;
+  /** Label and icon color of every deployment row. Defaults to `--text-primary`. */
+  itemText?: string;
+  /** Background of a hovered deployment row. Defaults to `--bg-control-accent-alpha-hover` on desktop and `--bg-layer-raised` in the sheet. */
+  itemHoverBackground?: string;
+  /** Background of the selected deployment row at rest. Defaults to none. */
+  selectedItemBackground?: string;
+  /** Label color of the selected deployment row. Defaults to `itemText`. */
+  selectedItemText?: string;
+  /** Color of the check mark on the selected row. Defaults to the row's text color on desktop and `--text-accent` in the sheet. */
+  checkIcon?: string;
+}
+
+/**
+ * Styling hooks for the model menu, applied in both presentations: the desktop
+ * dropdown and the mobile bottom sheet. Every class is merged after the
+ * component's own, so a conflicting utility replaces the default rather than
+ * landing beside it.
+ */
+export interface ModelMenuStyles {
+  /** Class on the menu panel: the dropdown overlay on desktop, the sheet on mobile. Also applied when `modelPickerOverlay` supplies the content. */
+  className?: string;
+  /** Class on the search row above the deployment list. */
+  searchHeaderClassName?: string;
+  /** Class on every deployment row. */
+  itemClassName?: string;
+  /** Class on the currently selected deployment row, additive to `itemClassName`. */
+  selectedItemClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ModelMenuColors;
+}
+
 /** Labels for the tool chips rendered in the conversation input. */
 export interface ToolsChipLabels {
   /** Returns the accessible label for a chip's × button, which drops the tool from the input. Receives the tool label. Defaults to `"Remove {toolLabel}"`. */
@@ -187,6 +226,8 @@ export interface InputProps {
    * its `card` slot, for every tile in it.
    */
   attachmentTray?: AttachmentTrayStyles;
+  /** Styling hooks for the model menu: its panel, search row and deployment rows. */
+  modelMenu?: ModelMenuStyles;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
   /**

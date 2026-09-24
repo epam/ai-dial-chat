@@ -29,6 +29,8 @@ export interface AttachmentCanvasContainerProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. */
   tableDownloadFilename?: string;
+  /** Host-owned PDF loader. When omitted, the viewer fetches the URL with browser defaults. */
+  loadPdf?: (url: string) => Promise<Blob>;
   /**
    * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
    * host app. Called once, the first time a PDF attachment is opened, and
@@ -53,6 +55,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       maxWidth,
       codeBlockTheme,
       tableDownloadFilename,
+      loadPdf,
       configurePdfWorker,
     }) => {
       const {
@@ -183,6 +186,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           maxWidth={maxWidth}
           codeBlockTheme={codeBlockTheme}
           configurePdfWorker={configurePdfWorker}
+          loadPdf={loadPdf}
         />
       );
     },

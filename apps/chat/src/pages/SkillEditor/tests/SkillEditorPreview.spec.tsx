@@ -17,6 +17,9 @@ import {
 } from '../../../server-api/skills.api';
 import SkillEditor from '../SkillEditor';
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ status: 'ready', config: {} }),
+}));
 vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
   useSearchParams: () => [mockSearchParams, vi.fn()],
@@ -32,6 +35,10 @@ vi.mock('../../../context/auth/UserContext', () => ({
 
 vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'light' }),
+}));
+
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({

@@ -304,13 +304,17 @@ Current implementation uses **React Context** with no external state library. Th
 | `ActiveScheduledTaskContext`  | Scheduled task currently being viewed or edited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UserConfigContext`           | Per-user preferences persisted through `/api/v1/user-config`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CelebrationContext`          | Start-page event selection from `config.activeEventId` (`UI_EVENT`), lazy event loading, random scene playback, per-scene cleanup and optional secret phrase interception. Halloween and New Year supply independent event modules; navigation cancels playback. Decoration stays click-through, honors reduced motion and persists no state. The hook is inert outside its optional provider.                                                                                                                                                                                                                       |
 | `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
 
 - `createContext<T | undefined>(undefined)`
 - `useMemo` on context value to prevent consumer re-renders
-- Guard consumer hook throws a clear error when used outside the provider
+- Guard consumer hook throws a clear error when used outside the provider —
+  the one exception is `CelebrationContext`, whose default value is an inert,
+  disabled easter egg, so a decorative feature cannot break a tree that skips
+  its provider
 
 ### API layer
 
@@ -377,7 +381,12 @@ Configured at startup:
   a fresh style nonce and its required WebAssembly permission, while the PDF worker receives a
   separate worker policy. `CSP_MODE` controls report-only rollout versus strict
   enforcement. `ALLOWED_CONNECT_ORIGINS` extends `connect-src` for trusted external
-  document previews in both policies; remote-server CORS still applies.
+  document previews in both policies; remote-server CORS still applies. The same
+  list reaches the app through client config. The app supplies a PDF loader that
+  enables browser credentials for matching external HTTP(S) origins and rejects
+  their redirects; the attachment library receives only the loader callback.
+  See the [configuration reference](../apps/chat-api/README.md#content-security-policy)
+  for credentialed CORS and cookie requirements.
   Report-only mode accepts legacy HTML without the nonce marker with
   a startup warning; enforcement requires a nonce-aware build. See
   [CSP configuration](../apps/chat-api/README.md#content-security-policy).
@@ -429,6 +438,7 @@ apps/chat-api/src/
 ├── external-services/      # Application external-service metadata + signin/signout proxy
 ├── offline-credentials/    # Long-lived credentials for background runs
 ├── deployments/  models/   # Deployment and model listings
+├── text-refinement/        # Bounded draft rewriting with caller credentials
 ├── transcription/          # Speech-to-text proxy for voice input
 ├── rate/                   # Message like/dislike
 ├── user-config/            # Per-user preferences
@@ -464,6 +474,7 @@ Business controllers are versioned; three infrastructure controllers are deliber
 | `/api/v1/client-channel`            | Client-channel SSE relay                                  |
 | `/api/v1/external-services`         | External-service metadata and credentials                 |
 | `/api/v1/offline-credentials`       | Long-lived credentials for background runs                |
+| `/api/v1/text-refinement`           | Draft refinement without persistence                      |
 | `/api/v1/transcription`             | Speech-to-text                                            |
 | `/api/v1/rate`                      | Message rating                                            |
 | `/api/v1/user-config`               | Per-user preferences                                      |

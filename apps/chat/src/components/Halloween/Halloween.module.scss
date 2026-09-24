@@ -1,0 +1,550 @@
+/*
+ * Animations for the Halloween easter egg. Every one of them is opt-in
+ * chrome, so the whole file collapses to a static frame under
+ * `prefers-reduced-motion: reduce` — see the block at the bottom.
+ */
+
+/*
+ * The abseil. The element is as tall as the thread is long and starts fully
+ * above the viewport, so translating it down by its own height pays the
+ * thread out from the top edge — the anchor never moves, which is what makes
+ * it read as a thread rather than a falling stick. It hangs through the
+ * middle of the cycle, then climbs back out the way it came.
+ */
+@keyframes halloween-spider-drop {
+  0% {
+    transform: translate3d(0, -100%, 0);
+  }
+
+  32% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  68% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(0, -100%, 0);
+  }
+}
+
+/* Pivots at the top of the thread, so the spider swings like the weight on a
+   pendulum instead of sliding sideways. */
+@keyframes halloween-spider-sway {
+  from {
+    transform: rotate(calc(var(--spider-sway) * -1));
+  }
+
+  to {
+    transform: rotate(var(--spider-sway));
+  }
+}
+
+/*
+ * The flight path. Every offset is a custom property set per ghost by
+ * `buildHalloweenGhostFlight`, so one keyframe set draws every flock: the
+ * midpoint sits above the straight line between entry and exit, which is what
+ * turns a slide into a drift.
+ */
+@keyframes halloween-ghost-drift {
+  0% {
+    opacity: 0;
+    transform: translate3d(var(--ghost-from-x), var(--ghost-from-y), 0)
+      scale(var(--ghost-scale-from)) rotate(var(--ghost-tilt));
+  }
+
+  14% {
+    opacity: var(--ghost-opacity);
+  }
+
+  50% {
+    transform: translate3d(var(--ghost-mid-x), var(--ghost-mid-y), 0)
+      scale(var(--ghost-scale-mid)) rotate(calc(var(--ghost-tilt) * -1));
+  }
+
+  86% {
+    opacity: var(--ghost-opacity);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--ghost-to-x), var(--ghost-to-y), 0)
+      scale(var(--ghost-scale-to)) rotate(var(--ghost-tilt));
+  }
+}
+
+/* Applied to the inner element so the bob composes with the drift above
+   instead of fighting it for the same `transform`. */
+@keyframes halloween-ghost-bob {
+  from,
+  to {
+    transform: translate3d(0, -0.4rem, 0);
+  }
+
+  50% {
+    transform: translate3d(0, 0.4rem, 0);
+  }
+}
+
+.spiderDrop {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--spider-x, 50%);
+  height: var(--spider-depth, 40vh);
+  will-change: transform;
+  animation: halloween-spider-drop var(--spider-duration, 5s)
+    cubic-bezier(0.45, 0, 0.55, 1) var(--spider-delay, 0s) both;
+}
+
+.spiderSwing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  transform-origin: top center;
+  animation: halloween-spider-sway var(--spider-sway-duration, 2.4s) ease-in-out
+    infinite alternate;
+}
+
+.spiderThread {
+  flex: 1;
+  width: 1px;
+}
+
+.spiderBody {
+  transform: scale(var(--spider-scale, 1));
+  transform-origin: top center;
+}
+
+/*
+ * Physical `left`/`top` on purpose: this is the origin the per-ghost `vw`/`vh`
+ * translations are measured from, and each ghost picks its own entry side, so
+ * the flock is symmetric and must not flip with the writing direction.
+ */
+.ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: halloween-ghost-drift var(--ghost-duration, 6s)
+    cubic-bezier(0.37, 0, 0.63, 1) var(--ghost-delay, 0s) both;
+}
+
+.ghostBody {
+  display: block;
+  animation: halloween-ghost-bob var(--ghost-bob-duration, 2.2s) ease-in-out
+    infinite;
+}
+
+/*
+ * The perched spider. Creeping back is the slow default; bolting is the fast
+ * override, so being startled reads as a scurry and the return as the spider
+ * thinking better of it. The displacement itself is an inline transform, set
+ * per pointer move — only its pacing lives here.
+ */
+.cornerSpider {
+  transition: transform 1.25s cubic-bezier(0.33, 0, 0.24, 1);
+}
+
+.cornerSpiderFleeing {
+  transition-duration: 240ms;
+  transition-timing-function: cubic-bezier(0.22, 0.92, 0.3, 1);
+}
+
+@keyframes halloween-chuckle {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(0);
+  }
+  25%,
+  65% {
+    transform: rotate(3deg) translateY(-3px);
+  }
+  45%,
+  85% {
+    transform: rotate(-2deg) translateY(1px);
+  }
+}
+
+@keyframes halloween-candle {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  30%,
+  70% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes halloween-weave {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes halloween-weaver {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes halloween-web-fade {
+  0% {
+    opacity: 0;
+  }
+  12%,
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes halloween-web-escape {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  10%,
+  64% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  96% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--web-escape-x), var(--web-escape-y), 0);
+  }
+}
+
+.pumpkinButton.pumpkinButton {
+  inline-size: clamp(88px, 9vw, 132px);
+  block-size: clamp(88px, 9vw, 132px);
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+
+  &:hover,
+  &:focus-visible,
+  &:active {
+    background: transparent;
+
+    .pumpkinBody {
+      animation: halloween-chuckle 650ms ease-in-out infinite;
+    }
+
+    .pumpkinLight {
+      animation: halloween-candle 650ms ease-in-out infinite;
+      filter: drop-shadow(0 0 3px #ffc65b);
+    }
+
+    .pumpkinEyes {
+      transform: scaleY(0.7);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-primary, #161b2d);
+    outline-offset: 3px;
+  }
+}
+
+.pumpkin {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 5px 8px #5c260d33);
+}
+
+.pumpkinBody {
+  transform-origin: 80px 130px;
+}
+
+.pumpkinEyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 180ms ease;
+}
+
+.webNetwork {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 0.6;
+  animation: halloween-web-fade 14s ease-in-out both;
+}
+
+:global([dir='rtl']) .webNetwork {
+  transform: scaleX(-1);
+}
+
+.webBridge {
+  opacity: 0.24;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: halloween-weave 3.4s ease-in-out var(--web-delay) both;
+}
+
+.webPatch {
+  position: absolute;
+  inset-inline-start: var(--web-x);
+  inset-block-start: var(--web-y);
+  inline-size: var(--web-size);
+  aspect-ratio: 1;
+  color: var(--text-primary, #161b2d);
+  transform: translate(-50%, -50%);
+}
+
+:global([dir='rtl']) .webPatch {
+  transform: translate(50%, -50%);
+}
+
+.webDrawing,
+.webRunner {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.webDrawing {
+  animation: halloween-web-fade 14s ease-in-out both;
+}
+
+.webRunner {
+  animation: halloween-web-escape var(--web-run-duration)
+    cubic-bezier(0.45, 0, 0.7, 1) var(--web-delay) both;
+}
+
+.webSpoke,
+.webSilk {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: halloween-weave 0.8s linear var(--web-delay) both;
+}
+
+.webSilk {
+  animation-duration: var(--web-weave-duration);
+  animation-delay: calc(var(--web-delay) + 0.8s);
+}
+
+.webWeaver {
+  offset-distance: 0%;
+  offset-rotate: auto 90deg;
+  offset-anchor: 0px 0px;
+  animation: halloween-weaver var(--web-weave-duration) linear
+    calc(var(--web-delay) + 0.8s) both;
+}
+
+@keyframes halloween-wingbeat {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.35);
+  }
+}
+
+.batWing {
+  transform-origin: 40px 24px;
+  animation: halloween-wingbeat var(--wing-duration) ease-in-out infinite
+    alternate;
+}
+
+@keyframes halloween-cat-walk {
+  0% {
+    opacity: 0;
+    transform: translateX(-15vw);
+  }
+  12% {
+    opacity: 1;
+  }
+  35% {
+    transform: translateX(34vw);
+  }
+  55% {
+    transform: translateX(46vw);
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(115vw);
+  }
+}
+
+@keyframes halloween-tail {
+  from {
+    transform: rotate(-8deg);
+  }
+  to {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes halloween-cat-step {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes halloween-cat-blink {
+  0%,
+  42%,
+  48%,
+  100% {
+    transform: scaleY(1);
+  }
+  45% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes halloween-wisp-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10vh, 0) scale(0.5);
+  }
+  15% {
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate3d(var(--wisp-drift), -45vh, 0) scale(1);
+  }
+  80% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -110vh, 0) scale(0.4);
+  }
+}
+
+.catTraveler {
+  position: absolute;
+  left: 0;
+  bottom: 1.5rem;
+  inline-size: 68px;
+  animation: halloween-cat-walk 9s ease-in-out 0.3s both;
+}
+
+.catBody {
+  inline-size: 100%;
+  animation: halloween-cat-step 260ms ease-in-out infinite alternate;
+}
+
+.catTail {
+  transform-origin: 30px 62px;
+  animation: halloween-tail 1.1s ease-in-out infinite alternate;
+}
+
+.catEyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: halloween-cat-blink 3s ease-in-out infinite;
+}
+
+.wisp {
+  position: absolute;
+  left: var(--wisp-x);
+  top: 100%;
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: 50%;
+  background: var(--wisp-color);
+  box-shadow: 0 0 8px 3px var(--wisp-color);
+  animation: halloween-wisp-rise 7.5s ease-in-out var(--wisp-delay) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spiderDrop,
+  .spiderSwing,
+  .ghost,
+  .ghostBody,
+  .pumpkin,
+  .webNetwork,
+  .webBridge,
+  .webDrawing,
+  .webRunner,
+  .batWing,
+  .catTraveler,
+  .catBody,
+  .catTail,
+  .catEyes,
+  .wisp,
+  .webSpoke,
+  .webSilk,
+  .webWeaver,
+  .pumpkinButton.pumpkinButton:is(:hover, :focus-visible, :active) .pumpkinBody,
+  .pumpkinButton.pumpkinButton:is(:hover, :focus-visible, :active)
+    .pumpkinLight {
+    animation: none;
+  }
+
+  .catTraveler {
+    transform: translateX(45vw);
+  }
+
+  .wisp {
+    top: var(--wisp-rest-y);
+    opacity: 0.6;
+  }
+
+  .webBridge,
+  .webSpoke,
+  .webSilk {
+    stroke-dashoffset: 0;
+  }
+
+  .webWeaver {
+    offset-distance: 100%;
+  }
+
+  /* The spider never takes an offset in this mode — see
+     `HalloweenCornerSpider`, which cannot be overridden from here because the
+     displacement is an inline transform. Dropping the transition keeps the
+     rule honest either way. */
+  .cornerSpider,
+  .cornerSpiderFleeing,
+  .pumpkinEyes {
+    transition: none;
+  }
+
+  /* Un-animated, the spiders would hang above the top edge; show them already
+     paid out, which is the state the descent was heading for anyway. */
+  .spiderDrop {
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* Un-animated, a ghost would sit stacked at the layer's origin; park the
+     flock at the spread-out resting spots instead. */
+  .ghost {
+    opacity: var(--ghost-opacity);
+    transform: translate3d(var(--ghost-rest-x), var(--ghost-rest-y), 0)
+      scale(var(--ghost-scale-from));
+  }
+}

@@ -82,4 +82,26 @@ describe('CONFIG_DEFINITIONS', () => {
       envVar: 'DEFAULT_DEPLOYMENT_PINNED',
     });
   });
+
+  it('contains an open-ended client-visible event selection without a feature flag', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'ui.activeEventId',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'ui.activeEventId',
+      type: 'config',
+      valueType: 'string',
+      visibility: 'client',
+      defaultValue: null,
+      critical: false,
+      envVar: 'UI_EVENT',
+    });
+    expect(entry).not.toHaveProperty('allowedRolesEnvVar');
+    expect(
+      CONFIG_DEFINITIONS.some(
+        (definition) => definition.key === 'features.halloweenEnabled',
+      ),
+    ).toBe(false);
+  });
 });

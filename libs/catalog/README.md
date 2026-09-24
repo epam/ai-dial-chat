@@ -25,7 +25,7 @@ import '@epam/ai-dial-catalog/styles.css';
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.12 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.15 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -490,6 +490,12 @@ item with `onOpenUnpublish` that `isUnpublishVisible` does not reject) and
 hover that starts a lookup turn the button back into the trigger under the
 pointer that was reaching for it. The menu likewise stays put while it is
 open.
+
+`Unpublish` is released from that hold for an item `isUnpublishVisible`
+returns `true` for: `DetailsPanel` requests that item's publish history as
+soon as it shows it, and once the history has resolved the lone `Unpublish`
+of a published copy renders as a button like any other last action. An item
+the rule is absent for keeps the hold.
 
 ## Enums
 

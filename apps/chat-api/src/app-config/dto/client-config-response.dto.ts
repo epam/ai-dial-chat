@@ -14,6 +14,23 @@ import { CustomVisualizerDto } from './custom-visualizer.dto';
  * has to be registered explicitly or the reference dangles. */
 @ApiExtraModels(ApplicationVisualizerDto)
 export class ClientConfigDto {
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      'Whether a text refinement model is configured. Missing means unavailable.',
+    example: false,
+  })
+  aiTextRefinementAvailable?: boolean;
+
+  @ApiProperty({
+    description:
+      'Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.',
+    type: String,
+    nullable: true,
+    example: 'new-year',
+  })
+  activeEventId!: string | null;
+
   @ApiProperty({
     description:
       'Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.',
@@ -124,6 +141,15 @@ export class ClientConfigDto {
     example: ['https://partner.example.com'],
   })
   overlayAllowedOrigins!: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Trusted HTTP(S) connection origins from ALLOWED_CONNECT_ORIGINS, including leading *. subdomain patterns. PDF previews use browser credentials for matching external origins and reject redirects. Empty by default; upstream credentialed CORS and browser cookie policy still apply.',
+    type: [String],
+    default: [],
+    example: ['https://documents.example.com'],
+  })
+  allowedConnectOrigins?: string[];
 
   @ApiProperty({
     description:

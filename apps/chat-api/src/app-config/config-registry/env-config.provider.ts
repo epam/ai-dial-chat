@@ -32,6 +32,11 @@ export class EnvConfigProvider implements ConfigProvider {
       return undefined;
     }
 
+    if (key === 'ui.activeEventId') {
+      const eventId = this.configService.get('UI_EVENT', { infer: true });
+      return eventId === 'none' ? null : eventId;
+    }
+
     // features.asrEnabled is derived from ASR_MODEL presence, not a direct env var
     if (key === 'features.asrEnabled') {
       const asrModel = this.configService.get('ASR_MODEL', { infer: true });

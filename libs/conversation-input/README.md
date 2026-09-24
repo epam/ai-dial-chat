@@ -98,6 +98,55 @@ import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 
 `Input` takes the same object as a top-level `attachmentTray` prop.
 
+`styles.modelMenu` themes the model menu in both presentations — the desktop
+dropdown and the mobile bottom sheet — with one `ModelMenuStyles` object.
+`className` lands on the menu panel (also when `modelPickerOverlay` supplies
+its content), `searchHeaderClassName` on the search row, `itemClassName` on
+every deployment row and `selectedItemClassName` on the selected one, additive
+to `itemClassName`. Each is merged after the component's own classes, so a
+conflicting utility replaces the default instead of landing beside it.
+`colors` takes runtime values, in both presentations:
+
+| Field                    | Colours                       | Default                                                        |
+| ------------------------ | ----------------------------- | -------------------------------------------------------------- |
+| `searchHeaderBackground` | The search row                | `--bg-layer-raised` on desktop, transparent in the sheet       |
+| `itemText`               | Every row's label and icon    | `--text-primary`                                               |
+| `itemHoverBackground`    | A hovered row                 | `--bg-control-accent-alpha-hover` / `--bg-layer-raised`        |
+| `selectedItemBackground` | The selected row at rest      | None                                                           |
+| `selectedItemText`       | The selected row's label      | `itemText`                                                     |
+| `checkIcon`              | The selected row's check mark | The row's text colour on desktop, `--text-accent` in the sheet |
+
+A row colour that is not set leaves that part of the row exactly as the kit
+draws it. The desktop panel renders in a portal outside the composer, so these
+reach it as custom properties on the panel (`Dropdown.listStyle`) — CSS
+variables set on your own wrapper do not.
+
+```tsx
+<ConversationInput
+  onSend={handleSend}
+  styles={{
+    modelMenu: {
+      className: 'rounded-xl',
+      itemClassName: 'rounded-lg',
+      colors: {
+        searchHeaderBackground: 'var(--bg-layer-0)',
+        selectedItemBackground: 'var(--bg-control-accent-alpha)',
+        selectedItemText: 'var(--text-accent)',
+        checkIcon: 'var(--text-accent)',
+      },
+    },
+  }}
+/>
+```
+
+On desktop the kit's check mark inherits the row's text colour, so a `text-*`
+utility in `selectedItemClassName` recolours the label and the check together;
+`colors.checkIcon` recolours the check alone. The row colours do not reach a
+host-supplied `modelPickerOverlay`, whose content is the host's own.
+The host-supplied overlay's panel keeps its own `!w-[368px] !bg-layer-raised`,
+so overriding those needs an `!`-prefixed utility too. `Input` takes the same
+object as a top-level `modelMenu` prop.
+
 `message` and `textInsertion` are two different ways to write into the textarea,
 and they are not interchangeable. `message` sets the value: the textarea resyncs
 to it whenever the string changes, or whenever `messageRevision` changes if the
@@ -272,8 +321,8 @@ The model-selector menu carries its own set:
 | Class                              | Element                                         |
 | ---------------------------------- | ----------------------------------------------- |
 | `dial-ci-model-menu`               | The menu root, in all three presentations       |
-| `dial-ci-model-menu-search`        | The sticky search header inside the menu        |
-| `dial-ci-model-menu-item`          | Every deployment row                            |
+| `dial-ci-model-menu-search`        | The search row above the deployment list        |
+| `dial-ci-model-menu-item`          | Every deployment row, desktop and mobile        |
 | `dial-ci-model-menu-item-selected` | The selected row, **additive** to the row class |
 
 `dial-ci-model-menu` lands on three different presentations, so scope your rule
@@ -282,6 +331,17 @@ host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
 `role="dialog"`). The portal renders outside the composer's DOM subtree, which
 is why the menu needs a class of its own rather than a descendant selector from
 `dial-ci-wrapper`.
+
+The portal's stacking order comes from `@epam/ai-dial-ui-kit`'s `--z-overlay`
+token, not from this package. When your own overlay or sticky header sits above
+the menu, raise the kit's whole overlay ladder instead of overriding `z-[53]`
+or `[role='menu']`:
+
+```css
+:root {
+  --z-overlay: 1000; /* dropdowns sit at +1, tooltips at +2 and +3 */
+}
+```
 
 The selected row's **check mark has no class from this package**: it is drawn
 by `@epam/ai-dial-ui-kit` from the menu item's `mark`, so nothing here owns that
@@ -297,8 +357,13 @@ distinguish this menu from other kit menus:
 
 `dial-ci-model-menu-item` is emitted for deployment rows only — not for
 loading skeletons, nor for the single disabled row shown in the empty and error
-states. On mobile only the sheet root is marked; its rows are rendered by a
-separate virtualized list and carry no row class.
+states. The mobile sheet's rows come from a separate virtualized list and carry
+the same row and search classes. Their check is this package's own icon, not
+the kit's, so `dial-kit-menuitem-check` does not reach it; it is coloured
+`--text-accent` unless `styles.modelMenu.colors.checkIcon` sets it.
+
+Most of this no longer needs a stylesheet — `styles.modelMenu` reaches the
+same elements through props (see [ConversationInput](#conversationinput)).
 
 These classes carry no declarations of their own, so they change nothing until
 you style them, and they are additive to `className` and `inputClassName` —

@@ -11,14 +11,14 @@ import {
   MenuItemMark,
   Search,
 } from '@epam/ai-dial-ui-kit';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 import {
   MODEL_SELECTOR_SKELETON_ROW_COUNT,
   ModelSelectorSkeletonIcon,
   ModelSelectorSkeletonLabel,
 } from '../components/ModelSelectorSkeleton/ModelSelectorSkeleton';
 import { CONVERSATION_INPUT_CLASS } from '../constants/public-class-names';
-import type { ModelSelectorLabels } from '../models/Input';
+import type { ModelMenuStyles, ModelSelectorLabels } from '../models/Input';
 import {
   buildDeploymentIcon,
   filterDeployments,
@@ -36,16 +36,8 @@ export interface UseModelSelectorOptions {
   onDeploymentChange?: (id: string) => void;
   /** Status labels for the selector dropdown. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /** Class applied to the sticky search header wrapper for theming. Defaults to a `--bg-layer-raised` background. */
-  searchHeaderClassName?: string;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: ModelSelectorColors;
-}
-
-/** Color overrides for the model-selector menu, applied as CSS custom properties. */
-interface ModelSelectorColors {
-  /** Sticky search header background. Fallback: `--bg-layer-raised`. */
-  searchHeaderBackground?: string;
+  /** Host styling hooks for the search header and deployment rows. Each class is merged after the default, never in place of it. */
+  styles?: ModelMenuStyles;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -62,6 +54,8 @@ export interface UseModelSelectorResult {
   menuItems: DropdownItem[];
   /** Sticky search header rendered above the menu items. */
   menuHeader: ReactNode;
+  /** Custom properties carrying the host's row colours; pass to `Dropdown.listStyle`. */
+  menuStyle: CSSProperties;
   /** Should be passed to `DialDropdownIcon.onOpenChange` to reset the search on close. */
   onOpenChange: (isOpen: boolean) => void;
 }
@@ -72,8 +66,7 @@ export const useModelSelector = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  searchHeaderClassName = styles.searchHeader,
-  colors,
+  styles: menuStyles,
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -143,31 +136,43 @@ export const useModelSelector = ({
       }
       return [];
     }
-    return filterDeployments(deployments, searchQuery).map((item) => ({
-      key: item.id,
-      label: (
-        <Highlight
-          text={getDeploymentLabel(item)}
-          query={searchQuery}
-          maxLines={1}
-        />
-      ),
-      icon: buildDeploymentIcon(
-        item.iconUrl,
-        item.type,
-        item.displayName ?? item.id,
-      ),
-      /* The picked deployment is the menu's single choice, so the kit draws the
-         trailing check and announces the row as a radio item. */
-      mark: MenuItemMark.Check,
-      checked: item.id === selectedDeploymentId,
-      className: mergeClasses(
-        CONVERSATION_INPUT_CLASS.modelMenuItem,
-        item.id === selectedDeploymentId &&
-          CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
-      ),
-      onClick: () => onDeploymentChange?.(item.id),
-    }));
+    const colors = menuStyles?.colors;
+    return filterDeployments(deployments, searchQuery).map((item) => {
+      const isSelected = item.id === selectedDeploymentId;
+      return {
+        key: item.id,
+        label: (
+          <Highlight
+            text={getDeploymentLabel(item)}
+            query={searchQuery}
+            maxLines={1}
+          />
+        ),
+        icon: buildDeploymentIcon(
+          item.iconUrl,
+          item.type,
+          item.displayName ?? item.id,
+        ),
+        /* The picked deployment is the menu's single choice, so the kit draws
+           the trailing check and announces the row as a radio item. */
+        mark: MenuItemMark.Check,
+        checked: isSelected,
+        className: mergeClasses(
+          colors?.itemText && styles.itemText,
+          colors?.itemHoverBackground && styles.itemHover,
+          isSelected &&
+            colors?.selectedItemBackground &&
+            styles.selectedItemBackground,
+          isSelected && colors?.selectedItemText && styles.selectedItemText,
+          isSelected && colors?.checkIcon && styles.checkIcon,
+          menuStyles?.itemClassName,
+          isSelected && menuStyles?.selectedItemClassName,
+          CONVERSATION_INPUT_CLASS.modelMenuItem,
+          isSelected && CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+        ),
+        onClick: () => onDeploymentChange?.(item.id),
+      };
+    });
   }, [
     deployments,
     isLoading,
@@ -175,18 +180,38 @@ export const useModelSelector = ({
     selectedDeploymentId,
     modelSelectorLabels,
     onDeploymentChange,
+    menuStyles?.itemClassName,
+    menuStyles?.selectedItemClassName,
+    menuStyles?.colors,
   ]);
+
+  /*
+   * The dropdown panel renders in a portal, so the row colours travel as
+   * custom properties on the panel itself rather than on the composer.
+   */
+  const menuStyle = useMemo(
+    () =>
+      buildCssVars({
+        '--ms-item-text': menuStyles?.colors?.itemText,
+        '--ms-item-hover-bg': menuStyles?.colors?.itemHoverBackground,
+        '--ms-selected-item-bg': menuStyles?.colors?.selectedItemBackground,
+        '--ms-selected-item-text': menuStyles?.colors?.selectedItemText,
+        '--ms-check-icon': menuStyles?.colors?.checkIcon,
+      }),
+    [menuStyles?.colors],
+  );
 
   const menuHeader: ReactNode = useMemo(
     () =>
       !isLoading && deployments && deployments.length > 0 ? (
         <div
           style={buildCssVars({
-            '--ms-search-header-bg': colors?.searchHeaderBackground,
+            '--ms-search-header-bg': menuStyles?.colors?.searchHeaderBackground,
           })}
           className={mergeClasses(
             'sticky top-0 z-10 pb-1 pe-2 pt-2',
-            searchHeaderClassName,
+            styles.searchHeader,
+            menuStyles?.searchHeaderClassName,
             CONVERSATION_INPUT_CLASS.modelMenuSearch,
           )}
         >
@@ -204,8 +229,8 @@ export const useModelSelector = ({
       isLoading,
       searchQuery,
       modelSelectorLabels,
-      searchHeaderClassName,
-      colors?.searchHeaderBackground,
+      menuStyles?.searchHeaderClassName,
+      menuStyles?.colors?.searchHeaderBackground,
     ],
   );
 
@@ -220,6 +245,7 @@ export const useModelSelector = ({
     selectedVersion,
     menuItems,
     menuHeader,
+    menuStyle,
     onOpenChange: handleOpenChange,
   };
 };

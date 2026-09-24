@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.12 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.15 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -335,3 +335,28 @@ using a different desktop threshold do not expose duplicate titles/actions or
 show the Create label inside its mobile icon button. The packed fixture supports
 manual checks of skill selection/removal, focus and responsive RTL layouts;
 application scenarios belong in the separate e2e suite.
+
+## AI text refinement
+
+The form accepts optional `onRefineDescription` and `onRefineInstructions` callbacks, each `(value: string, signal: AbortSignal) => Promise<string>`. Each callback independently opts its field into refinement; omit it to hide the action. The host owns transport, availability, purpose selection, and translations. Instructions updates the controlled `prompt` field through `onFieldChange`; Description updates `description`. Remount the form with a draft/entity `key` when switching drafts, including equal-text entities.
+
+Both fields stay editable while pending. Editing the active field (including Markdown toolbar edits) aborts and invalidates its request. Both Refine actions and Save are disabled during a request; Cancel/Back abort before invoking the host. Late responses are ignored even if the callback ignores its signal. Repeated refinement retains the original baseline; Undo restores it exactly. Manual/external edits, callback removal, submission, and leaving the editor clear the baseline. Errors preserve text and allow retry. Identical output announces no change without writing the value.
+
+Optional label overrides (English defaults):
+
+| Label                      | Default                                       |
+| -------------------------- | --------------------------------------------- |
+| `refineWithAiLabel`        | Refine with AI                                |
+| `refineUndoLabel`          | Undo                                          |
+| `refineErrorLabel`         | Could not refine this text. Please try again. |
+| `refinePendingAriaLabel`   | Refining text                                 |
+| `refineSuccessAriaLabel`   | Text refined. Undo is available.              |
+| `refineUndoAriaLabel`      | Original text restored.                       |
+| `refineUnchangedAriaLabel` | No changes were needed.                       |
+
+`styles.colors.refineActionText` and `refineErrorText` set `--stcf-refine-action-text` and `--stcf-refine-error-text`; defaults use `--text-primary` / `--text-error` with standalone fallbacks `#161b2d` / `#8b2020`. `styles.typography.refineActionClassName` and `refineFeedbackClassName` default to `dial-small-text`. Direction is inherited; label rows wrap, buttons have at least 44px hit areas, and feedback uses live regions.
+
+| Public class key | Class                                  | Element                 |
+| ---------------- | -------------------------------------- | ----------------------- |
+| `refineAction`   | `dial-scheduled-tasks-refine-action`   | Refine and Undo buttons |
+| `refineFeedback` | `dial-scheduled-tasks-refine-feedback` | Field feedback          |
