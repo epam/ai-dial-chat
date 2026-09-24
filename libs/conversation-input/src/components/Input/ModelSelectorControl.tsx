@@ -12,6 +12,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, ReactNode, useState } from 'react';
+import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useModelSelector } from '../../hooks/useModelSelector';
 import type { ModelSelectorLabels } from '../../models/Input';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
@@ -110,6 +111,7 @@ export const ModelSelectorControl: FC<Props> = ({
             className={mergeClasses(
               'w-[50px]',
               styles.modelSelectorButton,
+              CONVERSATION_INPUT_CLASS.modelSelectorButton,
               disabledIconClassName,
             )}
           />
@@ -172,6 +174,7 @@ export const ModelSelectorControl: FC<Props> = ({
             className={mergeClasses(
               'flex min-w-0 items-center gap-1.5 rounded-full py-1.5 pe-2 ps-1.5',
               styles.modelSelectorButton,
+              CONVERSATION_INPUT_CLASS.modelSelectorButton,
               disabledIconClassName,
               isDisabled && styles.modelSelectorButtonDisabled,
             )}
@@ -236,6 +239,7 @@ export const ModelSelectorControl: FC<Props> = ({
             className={mergeClasses(
               'flex items-center gap-1 rounded-full p-1.5',
               styles.modelSelectorButton,
+              CONVERSATION_INPUT_CLASS.modelSelectorButton,
               isDisabled && styles.modelSelectorButtonDisabled,
             )}
           >

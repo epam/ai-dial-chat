@@ -209,6 +209,30 @@ import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 </BottomSheetShell>;
 ```
 
+## Public class names
+
+A few composer elements carry a stable `dial-ci-*` class in addition to their
+internal classes. Target those instead of hashed CSS-module names, DOM order, or
+ARIA attributes — all three change without notice. The names are exported so
+you never hardcode them:
+
+```tsx
+import { CONVERSATION_INPUT_CLASS } from '@epam/ai-dial-conversation-input';
+
+CONVERSATION_INPUT_CLASS.wrapper; // 'dial-ci-wrapper'
+```
+
+| Class                           | Element                                                  |
+| ------------------------------- | -------------------------------------------------------- |
+| `dial-ci-wrapper`               | The composer's outer bordered container                  |
+| `dial-ci-add-cluster`           | The add-attachment button wrapper                        |
+| `dial-ci-model-selector-button` | The model selector trigger button, in every presentation |
+
+`dial-ci-add-cluster` is absent when `hideAddButton` is set or the action bar is
+hidden. These classes carry no declarations of their own and are additive to
+`className` and `inputClassName`. Renaming one or moving it to a different
+element is a breaking change.
+
 ## Enums
 
 ```tsx
