@@ -353,6 +353,9 @@ const ConversationView: FC<Props> = ({
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
+  const isInputHistoryNavigationDisabled = useUiFeature(
+    OverlayFeature.DisableInputHistoryNavigation,
+  );
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -1100,7 +1103,9 @@ const ConversationView: FC<Props> = ({
                 discardRecordingLabel={t(
                   VoiceRecordingI18nKeys.DiscardRecordingLabel,
                 )}
-                messageHistory={messageHistory}
+                messageHistory={
+                  isInputHistoryNavigationDisabled ? undefined : messageHistory
+                }
                 sendOnEnter={sendOnEnter}
                 chatSettings={isChatSettingsEnabled ? chatSettings : undefined}
                 toolsMenuItems={toolsMenuItems}

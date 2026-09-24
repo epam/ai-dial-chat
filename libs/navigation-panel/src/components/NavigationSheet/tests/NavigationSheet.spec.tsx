@@ -133,6 +133,30 @@ describe('NavigationSheet', () => {
     expect(onLogout).toHaveBeenCalledOnce();
   });
 
+  it('omits the settings row when onSettings is not supplied', async () => {
+    const user = userEvent.setup();
+    renderSheet({ labels: { ...labels, settings: 'Settings' } });
+
+    await user.click(screen.getByRole('button', { name: 'Profile' }));
+    expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull();
+  });
+
+  it('closes the sheet and requests settings from the profile page', async () => {
+    const onClose = vi.fn();
+    const onSettings = vi.fn();
+    const user = userEvent.setup();
+    renderSheet({
+      onClose,
+      onSettings,
+      labels: { ...labels, settings: 'Settings' },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Profile' }));
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onSettings).toHaveBeenCalledOnce();
+  });
+
   it('drills into a settings group and applies the chosen option', async () => {
     const onSelect = vi.fn();
     const user = userEvent.setup();
