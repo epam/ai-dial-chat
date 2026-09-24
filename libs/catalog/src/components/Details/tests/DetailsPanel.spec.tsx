@@ -2479,6 +2479,56 @@ describe('DetailsPanel — Unpublish', () => {
     expect(getPublishHistory).toHaveBeenCalledTimes(2);
   });
 
+  it('requests the history up front for an item the host calls unpublishable', async () => {
+    const getPublishHistory = vi
+      .fn()
+      .mockResolvedValue([historyEntry(['Shared'])]);
+    renderPanel({
+      getPublishHistory,
+      onUnpublish: vi.fn(),
+      isUnpublishVisible: () => true,
+    });
+
+    expect(
+      await screen.findByRole('button', { name: 'UnpublishTrigger' }),
+    ).toBeTruthy();
+    expect(getPublishHistory).toHaveBeenCalledOnce();
+  });
+
+  it('requests the history up front again for the next unpublishable item', async () => {
+    const getPublishHistory = vi.fn().mockResolvedValue([]);
+    const props = {
+      getPublishHistory,
+      onUnpublish: vi.fn(),
+      isUnpublishVisible: () => true,
+    };
+    const { rerender } = renderPanel(props);
+    await waitFor(() => expect(getPublishHistory).toHaveBeenCalledOnce());
+
+    const nextItem = { ...item, id: `${item.id}-next` };
+    rerender(
+      <DetailsPanel
+        item={nextItem}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        {...props}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(getPublishHistory).toHaveBeenLastCalledWith(nextItem),
+    );
+  });
+
+  it('leaves the history unrequested until reached for when the host has no unpublish rule', () => {
+    const getPublishHistory = vi.fn().mockResolvedValue([]);
+    renderPanel({ getPublishHistory, onUnpublish: vi.fn() });
+
+    expect(getPublishHistory).not.toHaveBeenCalled();
+  });
+
   it('issues the history lookup once per item across the menu and the publish view', async () => {
     const getPublishHistory = vi
       .fn()

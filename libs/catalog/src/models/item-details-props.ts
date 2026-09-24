@@ -671,7 +671,9 @@ export interface DetailsPanelProps {
   /**
    * Additional caller-supplied rule for whether "Unpublish" is shown,
    * combined (AND) with the presence of `onUnpublish` and at least one
-   * resolved publish-history entry. Defaults to `true` when absent.
+   * resolved publish-history entry. Defaults to `true` when absent. An item
+   * it returns `true` for has its publish history requested as soon as the
+   * panel shows it, rather than when the Manage menu is reached for.
    */
   isUnpublishVisible?: (item: CatalogItem) => boolean;
   /**

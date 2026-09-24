@@ -105,8 +105,21 @@ its content), `searchHeaderClassName` on the search row, `itemClassName` on
 every deployment row and `selectedItemClassName` on the selected one, additive
 to `itemClassName`. Each is merged after the component's own classes, so a
 conflicting utility replaces the default instead of landing beside it.
-`colors.searchHeaderBackground` sets the search row background, which defaults
-to `--bg-layer-raised` on desktop and to transparent in the sheet:
+`colors` takes runtime values, in both presentations:
+
+| Field                    | Colours                       | Default                                                        |
+| ------------------------ | ----------------------------- | -------------------------------------------------------------- |
+| `searchHeaderBackground` | The search row                | `--bg-layer-raised` on desktop, transparent in the sheet       |
+| `itemText`               | Every row's label and icon    | `--text-primary`                                               |
+| `itemHoverBackground`    | A hovered row                 | `--bg-control-accent-alpha-hover` / `--bg-layer-raised`        |
+| `selectedItemBackground` | The selected row at rest      | None                                                           |
+| `selectedItemText`       | The selected row's label      | `itemText`                                                     |
+| `checkIcon`              | The selected row's check mark | The row's text colour on desktop, `--text-accent` in the sheet |
+
+A row colour that is not set leaves that part of the row exactly as the kit
+draws it. The desktop panel renders in a portal outside the composer, so these
+reach it as custom properties on the panel (`Dropdown.listStyle`) — CSS
+variables set on your own wrapper do not.
 
 ```tsx
 <ConversationInput
@@ -115,15 +128,21 @@ to `--bg-layer-raised` on desktop and to transparent in the sheet:
     modelMenu: {
       className: 'rounded-xl',
       itemClassName: 'rounded-lg',
-      selectedItemClassName: 'text-accent',
-      colors: { searchHeaderBackground: 'var(--bg-layer-0)' },
+      colors: {
+        searchHeaderBackground: 'var(--bg-layer-0)',
+        selectedItemBackground: 'var(--bg-control-accent-alpha)',
+        selectedItemText: 'var(--text-accent)',
+        checkIcon: 'var(--text-accent)',
+      },
     },
   }}
 />
 ```
 
 On desktop the kit's check mark inherits the row's text colour, so a `text-*`
-utility in `selectedItemClassName` recolours the label and the check together.
+utility in `selectedItemClassName` recolours the label and the check together;
+`colors.checkIcon` recolours the check alone. The row colours do not reach a
+host-supplied `modelPickerOverlay`, whose content is the host's own.
 The host-supplied overlay's panel keeps its own `!w-[368px] !bg-layer-raised`,
 so overriding those needs an `!`-prefixed utility too. `Input` takes the same
 object as a top-level `modelMenu` prop.
@@ -313,6 +332,17 @@ host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
 is why the menu needs a class of its own rather than a descendant selector from
 `dial-ci-wrapper`.
 
+The portal's stacking order comes from `@epam/ai-dial-ui-kit`'s `--z-overlay`
+token, not from this package. When your own overlay or sticky header sits above
+the menu, raise the kit's whole overlay ladder instead of overriding `z-[53]`
+or `[role='menu']`:
+
+```css
+:root {
+  --z-overlay: 1000; /* dropdowns sit at +1, tooltips at +2 and +3 */
+}
+```
+
 The selected row's **check mark has no class from this package**: it is drawn
 by `@epam/ai-dial-ui-kit` from the menu item's `mark`, so nothing here owns that
 element. The kit gives it `dial-kit-menuitem-check`, exported as
@@ -330,7 +360,7 @@ loading skeletons, nor for the single disabled row shown in the empty and error
 states. The mobile sheet's rows come from a separate virtualized list and carry
 the same row and search classes. Their check is this package's own icon, not
 the kit's, so `dial-kit-menuitem-check` does not reach it; it is coloured
-`--text-accent`.
+`--text-accent` unless `styles.modelMenu.colors.checkIcon` sets it.
 
 Most of this no longer needs a stylesheet — `styles.modelMenu` reaches the
 same elements through props (see [ConversationInput](#conversationinput)).
