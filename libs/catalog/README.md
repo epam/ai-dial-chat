@@ -25,7 +25,7 @@ import '@epam/ai-dial-catalog/styles.css';
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.12 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.15 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
