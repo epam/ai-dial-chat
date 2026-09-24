@@ -165,7 +165,10 @@ describe('Input — layout', () => {
       const textarea = screen.getByRole('textbox');
       const addButton = screen.getByLabelText('Add');
 
-      expect(getParent(getParent(textarea)).contains(addButton)).toBe(true);
+      /* Same row as the textarea cell, as in the desktop inline case above. */
+      expect(getParent(getTextareaCell(textarea)).contains(addButton)).toBe(
+        true,
+      );
     });
 
     it('ignores the opt-in while the layout is stacked', () => {

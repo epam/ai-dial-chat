@@ -68,9 +68,7 @@ import {
   type ReactNode,
   Suspense,
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -371,7 +369,7 @@ const ConversationView: FC<Props> = ({
     revision: inputContentRevision ?? 0,
   });
   useComposerSeedSource(inputContentRevision, () =>
-    seedComposerSeed(inputContent),
+    seedComposerSeed(inputContent ?? ''),
   );
   useComposerSeedSource(skillMessageRevision, () =>
     seedComposerSeed(skillMessage),
