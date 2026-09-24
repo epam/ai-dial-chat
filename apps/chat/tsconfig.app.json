@@ -1,8 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
+    "outDir": "out-tsc/app",
+    "tsBuildInfoFile": "out-tsc/app/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
     "lib": ["dom"],
     "types": [
@@ -46,16 +46,19 @@
   ],
   "references": [
     {
-      "path": "../../libs/builder-form/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/usage-dashboard/tsconfig.lib.json"
     },
     {
       "path": "../../libs/prompt-editor/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/builder-form/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/settings-panel/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/toolset-editor/tsconfig.lib.json"
     },
     {
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
@@ -101,9 +104,6 @@
     },
     {
       "path": "../../libs/chat-api-client/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/toolset-editor/tsconfig.lib.json"
     },
     {
       "path": "../../libs/publish-panel/tsconfig.lib.json"

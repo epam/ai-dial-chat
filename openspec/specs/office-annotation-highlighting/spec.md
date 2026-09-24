@@ -187,7 +187,7 @@ It SHALL:
 - Resolve the file URL through the injected resolvers — `resolveDialFileDownloadUrl` for a DIAL file id (`isDialFileId`), otherwise the source URL as-is — mirroring `annotationToPdfCanvasContent`. It SHALL return `null` when no URL resolves.
 - Gather same-source annotations per the requirement above, call `libs/quotations`'s `annotationToOfficeHighlightLocations` per annotation, and build one `OoxmlHighlight` per annotation that yields at least one location — translating each `OfficeHighlightLocation` into `OoxmlHighlightLocation` by assigning the matching `OoxmlHighlightKind` value (this translation is this mapper's responsibility; see the `message-annotations` capability's normalisation requirement) — dropping annotations that yield none.
 - Set `selectedHighlightId` to the clicked annotation's highlight id, and SHALL omit `selectedHighlightId` when the clicked annotation produced no highlight — never silently selecting a different annotation's highlight.
-- Derive highlight ids the same way the PDF path does, reusing `annotationHighlightId` (`annotation.index` when present, otherwise the position within the gathered list) so ids stay stable and comparable.
+- Derive highlight ids the same way the PDF path does, reusing `annotationHighlightId` — `annotation.index` when the wire supplied one, otherwise an id derived from the annotation's own identity (its `cit` tag id plus a digest of its selectors), falling back to the position within the gathered list only for an annotation carrying neither — so ids stay stable, comparable, and unique per annotation even when two Office ranges share one `cit` id.
 - Return content with `highlights` omitted (not an empty array) when no annotation yields a location, so the renderer takes its existing non-highlight path unchanged.
 
 The mapper SHALL remain a pure function of its arguments plus the injected resolvers, with no fetch and no DOM access.
@@ -224,6 +224,7 @@ The mapper SHALL remain a pure function of its arguments plus the injected resol
 
 - **WHEN** the source URL is a DIAL `files/…` id
 - **THEN** `resolveDialFileDownloadUrl` supplies `url`, and returning `undefined` from it makes the mapper return `null`
+
 
 ---
 

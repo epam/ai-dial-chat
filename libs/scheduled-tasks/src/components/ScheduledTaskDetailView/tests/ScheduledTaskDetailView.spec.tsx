@@ -137,7 +137,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconArrowLeft: ({ className }: { className?: string }) => (
+  IconArrowNarrowLeft: ({ className }: { className?: string }) => (
     <svg data-icon="back" className={className} />
   ),
   IconCircleCheck: () => <svg data-icon="success" />,
@@ -202,6 +202,20 @@ describe('ScheduledTaskDetailView — library isolation', () => {
 });
 
 describe('ScheduledTaskDetailView', () => {
+  it('passes the optional skill to Configuration and omits empty Instructions', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={{ ...labels, skillLabel: 'Skill' }}
+        onBack={vi.fn()}
+        displayName="Task"
+        runs={[]}
+        instructionsMarkdown=""
+        skillDisplayName="skills/public/deleted"
+      />,
+    );
+    expect(screen.getByText('skills/public/deleted')).toBeTruthy();
+    expect(screen.queryByText('Instructions')).toBeNull();
+  });
   it('renders the back control and title', () => {
     render(
       <ScheduledTaskDetailView

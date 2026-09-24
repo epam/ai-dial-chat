@@ -218,6 +218,9 @@ export enum CatalogI18nKeys {
   PublishFolderEmptyState = 'catalog.publishFolderEmptyState',
   PublishHistoryLoading = 'catalog.publishHistoryLoading',
   PublishHistoryError = 'catalog.publishHistoryError',
+  PublishCredentialsLabel = 'catalog.publish.credentialsLabel',
+  PublishCredentialsHint = 'catalog.publish.credentialsHint',
+  PublishHistorySharedCredentials = 'catalog.publish.historySharedCredentials',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
@@ -344,6 +347,7 @@ export enum PromptSelectorI18nKeys {
 }
 
 export enum SkillSelectorI18nKeys {
+  RemoveSkillLabel = 'skillSelector.removeSkillLabel',
   AddMenuLabel = 'skillSelector.addMenuLabel',
   EmptyHint = 'skillSelector.emptyHint',
   EmptyQueryHint = 'skillSelector.emptyQueryHint',
@@ -376,7 +380,9 @@ export enum ScheduledTasksI18nKeys {
   ListErrorLabel = 'scheduledTasks.list.errorLabel',
   ListRetryLabel = 'scheduledTasks.list.retryLabel',
   ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
+  ListLoadMoreErrorLabel = 'scheduledTasks.list.loadMoreErrorLabel',
   CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
+  CardCompletedBadgeLabel = 'scheduledTasks.card.completedBadgeLabel',
   CardEditActionLabel = 'scheduledTasks.card.editActionLabel',
   CardScheduleDailyAt = 'scheduledTasks.card.scheduleDailyAt',
   CardScheduleWeeklyAt = 'scheduledTasks.card.scheduleWeeklyAt',
@@ -409,6 +415,7 @@ export enum ScheduledTasksI18nKeys {
   CreateMinuteInvalid = 'scheduledTasks.create.minuteInvalid',
   CreateStartDateLabel = 'scheduledTasks.create.startDateLabel',
   CreateStartDatePlaceholder = 'scheduledTasks.create.startDatePlaceholder',
+  CreateStartDateInvalid = 'scheduledTasks.create.startDateInvalid',
   CreateEndDateLabel = 'scheduledTasks.create.endDateLabel',
   CreateEndDatePlaceholder = 'scheduledTasks.create.endDatePlaceholder',
   CreateEndDateBeforeStartError = 'scheduledTasks.create.endDateBeforeStartError',
@@ -419,6 +426,10 @@ export enum ScheduledTasksI18nKeys {
   CreateDescriptionMaxLengthError = 'scheduledTasks.create.descriptionMaxLengthError',
   CreateInstructionsLabel = 'scheduledTasks.create.instructionsLabel',
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
+  CreateSkillLabel = 'scheduledTasks.create.skillLabel',
+  CreateSkillPlaceholder = 'scheduledTasks.create.skillPlaceholder',
+  CreateInstructionsOrSkillRequired = 'scheduledTasks.create.instructionsOrSkillRequired',
+  CreateInstructionsOnlySubtitle = 'scheduledTasks.create.instructionsOnlySubtitle',
   CreateSubmittingLabel = 'scheduledTasks.create.submittingLabel',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',
   CreateErrorNotification = 'scheduledTasks.create.errorNotification',
@@ -444,6 +455,8 @@ export enum ScheduledTasksI18nKeys {
   DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',
   DetailDeleteConfirmTitle = 'scheduledTasks.detail.deleteConfirmTitle',
   DetailDeleteConfirmDescription = 'scheduledTasks.detail.deleteConfirmDescription',
+  DetailDeleteConsequenceConversationsAccessible = 'scheduledTasks.detail.deleteConsequenceConversationsAccessible',
+  DetailDeleteConsequenceCannotBeUndone = 'scheduledTasks.detail.deleteConsequenceCannotBeUndone',
   DetailDeleteConfirmingLabel = 'scheduledTasks.detail.deleteConfirmingLabel',
   DetailDeleteSuccess = 'scheduledTasks.detail.deleteSuccess',
   DetailDeleteNotFoundError = 'scheduledTasks.detail.deleteNotFoundError',
@@ -451,7 +464,8 @@ export enum ScheduledTasksI18nKeys {
   DetailDeleteGenericError = 'scheduledTasks.detail.deleteGenericError',
   DetailDeletedStateLabel = 'scheduledTasks.detail.deletedStateLabel',
   EditPageTitle = 'scheduledTasks.edit.pageTitle',
-  EditUnsupportedTriggerMessage = 'scheduledTasks.edit.unsupportedTriggerMessage',
+  EditLoadErrorLabel = 'scheduledTasks.edit.loadErrorLabel',
+  EditInvalidScheduleLabel = 'scheduledTasks.edit.invalidScheduleLabel',
   EditSuccessNotification = 'scheduledTasks.edit.successNotification',
   EditErrorNotification = 'scheduledTasks.edit.errorNotification',
   ConversationBannerLoadingLabel = 'scheduledTasks.conversationBanner.loadingLabel',
@@ -496,6 +510,7 @@ export enum DialFileManagerI18nKeys {
   UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
   MaxSizeOnly = 'dialFileManager.maxSizeOnly',
+  UploadFileTooLarge = 'dialFileManager.uploadFileTooLarge',
   AllTypes = 'dialFileManager.allTypes',
   UpToFiles = 'dialFileManager.upToFiles',
   AttachingHiddenFilesNotAllowed = 'dialFileManager.attachingHiddenFilesNotAllowed',
@@ -820,6 +835,8 @@ export enum AttachmentsI18nKeys {
   NoAttachmentsAllowedMessage = 'attachments.noAttachmentsAllowed.message',
   NetworkErrorTitle = 'attachments.networkError.title',
   NetworkErrorMessage = 'attachments.networkError.message',
+  FileTooLargeTitle = 'attachments.fileTooLarge.title',
+  FileTooLargeMessage = 'attachments.fileTooLarge.message',
 }
 
 export enum CitationsI18nKeys {
@@ -875,7 +892,6 @@ export enum AttachmentCanvasI18nKeys {
   VisualizerActionsAriaLabel = 'attachmentCanvas.visualizerActionsAriaLabel',
   VisualizerLoadingLabel = 'attachmentCanvas.visualizerLoadingLabel',
   VisualizerLoadErrorLabel = 'attachmentCanvas.visualizerLoadErrorLabel',
-  McpAppTitle = 'attachmentCanvas.mcpAppTitle',
   McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
   McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',
   PdfThumbnailsLabel = 'attachmentCanvas.pdfThumbnailsLabel',
@@ -895,6 +911,8 @@ export enum AnnouncementBannerI18nKeys {
   RegionAriaLabel = 'announcementBanner.regionAriaLabel',
   RegionAriaLabelWithTitle = 'announcementBanner.regionAriaLabelWithTitle',
   CloseLabel = 'announcementBanner.closeLabel',
+  ExpandLabel = 'announcementBanner.expandLabel',
+  CollapseLabel = 'announcementBanner.collapseLabel',
 }
 
 export enum AnnouncementsPopoverI18nKeys {
@@ -989,6 +1007,7 @@ export enum SkillEditorI18nKeys {
   BucketMissingTitle = 'skillEditor.bucketMissingTitle',
   BucketMissingMessage = 'skillEditor.bucketMissingMessage',
   ErrorRequired = 'skillEditor.error.required',
+  ErrorInstructionsFrontmatter = 'skillEditor.error.instructionsFrontmatter',
   ErrorNameInvalid = 'skillEditor.error.nameInvalid',
   ErrorNameConflict = 'skillEditor.error.nameConflict',
   ErrorPathInvalid = 'skillEditor.error.pathInvalid',
@@ -1143,6 +1162,9 @@ export enum ToolsetSigninI18nKeys {
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
+  AdminConsentRequired = 'toolsetSignin.adminConsentRequired',
+  OfflineUnavailable = 'toolsetSignin.offlineUnavailable',
+  DialNativeHint = 'toolsetSignin.dialNativeHint',
   ErrorPopupBlocked = 'toolsetSignin.errorPopupBlocked',
   ErrorDeclineFailed = 'toolsetSignin.errorDeclineFailed',
   ErrorRetry = 'toolsetSignin.errorRetry',
@@ -1392,4 +1414,13 @@ export enum NewYearI18nKeys {
   ConfettiToastMessage = 'newYear.confettiToastMessage',
   SleighToastMessage = 'newYear.sleighToastMessage',
   GiftLabel = 'newYear.giftLabel',
+}
+
+export enum ApplicationCredentialsI18nKeys {
+  Title = 'applicationCredentials.title',
+  LoadError = 'applicationCredentials.loadError',
+  SignedIn = 'applicationCredentials.signedIn',
+  SignedOut = 'applicationCredentials.signedOut',
+  SharedCredentials = 'applicationCredentials.sharedCredentials',
+  ConfirmLogout = 'applicationCredentials.confirmLogout',
 }

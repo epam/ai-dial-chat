@@ -76,6 +76,11 @@ import { CitationCard } from '@epam/ai-dial-quotations';
 
 Combines `CitationMarker` and `CitationCard` into a tooltip-based dropdown.
 
+Pass the optional `isPreviewable(annotation)` callback to control Preview for
+each active annotation. When it returns `false`, the card shows only
+"Open in browser"; without it, providing `onPreview` enables Preview as before.
+Availability is checked again when the user switches annotations within a card.
+
 ```tsx
 import {
   CitationDropdown,
@@ -116,6 +121,12 @@ Builds `react-markdown` component overrides for rendering citations: a `cit` ele
 While `isStreaming` is `true`, `processedContent` hides only complete supported `<cit data-id="…"></cit>` citation elements via `stripCitTagsWhileStreaming`. Partial or unsupported `cit` markup is escaped and displayed literally, so an HTML parser cannot swallow the streamed suffix.
 
 The hook owns no PDF-detection, attachment-DTO, or canvas-opening logic — that belongs in the host's `onPreview` implementation.
+
+Its callbacks also accept optional `isPreviewable(annotation)`, forwarded to
+`CitationDropdown`. The host supplies its source classification policy: DIAL Chat
+keeps Preview for DIAL files and supported external file sources, and hides it
+for ordinary external web pages such as `https://data.imf.org/en/datasets/IMF.RES:WEO`.
+The library does not interpret DIAL file paths or decide which viewers the host supports.
 
 ```tsx
 import { useCitationMarkdownComponents } from '@epam/ai-dial-quotations';
@@ -159,7 +170,8 @@ are omitted so quote-only streaming deltas preserve an earlier page.
 - `groupAnnotationsByCitId(annotations)` — groups `html_tag`-selector annotations by `target.selector.id`, one group per distinct tag id (never collapsing two ids that cite the same document)
 - `resolveMessageAnnotations(message)` — resolves annotations from either internal or raw wire format and repairs persisted `html_tag` sources whose historical PDF fallback conflicts with a recognized URL extension
 - `normalizeRawAnnotations(raw, attachments)` — **moved to `@epam/ai-dial-chat-shared`**, which owns the annotation model. It normalises raw API wire-format annotations (the legacy `attachment_index` + `pdf_region` shape and the `html_tag` + flat `body.source.url` shape, including DOCX/XLSX/PPTX MIME inference). `@epam/ai-dial-chat-hooks` needed it while streaming and nothing else from this package, so keeping it here made a conversation-only host install the whole citation stack ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719))
-- `annotationsToPdfHighlights(annotations)` — maps annotations with positive integer pages and finite coordinates to PDF viewer highlight entries; recognizes `pdf_bbox` selectors (`{ page, x1, y1, x2, y2 }`) and `pdf_region` selectors in either coordinate form (`bbox: { lt: [left, top], wh: [width, height] }` or the legacy `bbox: { left, top, width, height }`), converting a region to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`; zero-area boxes are supported
+- `annotationsToPdfHighlights(annotations)` — maps annotations with positive integer pages and finite coordinates to PDF viewer highlight entries; recognizes `pdf_bbox` selectors (`{ page, x1, y1, x2, y2 }`) and `pdf_region` selectors in either coordinate form (`bbox: { lt: [left, top], wh: [width, height] }` or the legacy `bbox: { left, top, width, height }`), converting a region to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`; zero-area boxes are supported; each highlight's `id` comes from `annotationHighlightId`
+- `annotationHighlightId(annotation, fallbackIndex)` — returns the highlight id for one annotation, the same id `annotationsToPdfHighlights` assigns it: `annotation.index` when the wire supplied one, otherwise an id derived from the annotation's own identity (its `cit` tag id plus a digest of its selectors), falling back to `fallbackIndex` only for an annotation carrying none of those. The id is opaque — compare it, never parse it — and a position-derived id is unique only within the list it came from, which is why it is the last resort
 - `getAnnotationPdfPage(annotation)` — returns the first positive integer page from its `pdf_bbox`/`pdf_region` body selectors, skipping malformed entries and invalid pages; returns `undefined` when no valid page exists
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display

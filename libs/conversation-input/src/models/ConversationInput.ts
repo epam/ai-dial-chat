@@ -1,3 +1,4 @@
+import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 import type {
   Attachment,
   AttachmentErrorReason,
@@ -8,11 +9,13 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type {
+  ActionRowLayout,
   ChatSettingsConfig,
   CommandMenuConfig,
   InputColors,
   InputTypography,
   MenuOverlayConfig,
+  ModelMenuStyles,
   ModelSelectorLabels,
   SendOnEnter,
   TextInsertion,
@@ -46,6 +49,20 @@ export interface ConversationInputStyles {
   colors?: ConversationInputColors;
   /** Typography overrides for the welcome heading and input. */
   typography?: ConversationInputTypography;
+  /**
+   * Style overrides for the composer's attachment tray. Its `card` slot
+   * carries `AttachmentCardStyles` through to every tile, which is how a host
+   * sizes a tile or restyles its meta line without a descendant selector on
+   * `ATTACHMENT_INPUT_CLASS`.
+   */
+  attachmentTray?: AttachmentTrayStyles;
+  /**
+   * Styling hooks for the model menu in both presentations — the desktop
+   * dropdown and the mobile sheet — so a host restyles its panel, search row
+   * and selected row without a descendant selector on
+   * `CONVERSATION_INPUT_CLASS.modelMenu*`.
+   */
+  modelMenu?: ModelMenuStyles;
 }
 
 /** Props accepted by the `EditMessageInput` component. */
@@ -182,6 +199,21 @@ export interface ConversationInputProps {
   /** Placeholder text shown inside the textarea when empty. */
   placeholder?: string;
   /**
+   * How the action row arranges the textarea and the controls around it.
+   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` applies
+   * from the desktop breakpoint (1280px) up, unless
+   * `isInlineActionRowAllowedBelowDesktop` opts the narrower widths in.
+   */
+  actionRowLayout?: ActionRowLayout;
+  /**
+   * When `true`, `ActionRowLayout.Inline` also applies below the desktop
+   * breakpoint (1280px). Set it when the embedded composer is wide enough
+   * there — a phone-width one is not. Affects the action row alone: the add
+   * menu and model picker keep their bottom-sheet presentation. Defaults to
+   * `false`.
+   */
+  isInlineActionRowAllowedBelowDesktop?: boolean;
+  /**
    * Message value. Sets the initial textarea content on mount and syncs the
    * textarea whenever the value changes.
    */
@@ -252,6 +284,8 @@ export interface ConversationInputProps {
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
   sendTooltip?: string;
+  /** Tooltip for an empty composer (no text, attachments, or inline-start slot). Defaults to sendTooltip. */
+  emptyMessageTooltip?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Accessible label for each attachment card's remove button. Defaults to `'Remove attachment'`. */

@@ -21,6 +21,22 @@
   );
 }
 
+.interactiveRow:hover {
+  background: var(--strhl-row-hover-bg, transparent);
+}
+
+.interactiveRow:focus-visible {
+  background: var(--strhl-row-focus-bg, var(--strhl-row-hover-bg, transparent));
+}
+
 .unreadDot {
   background: var(--strhl-unread-dot, var(--text-accent, #1d4ed8));
+}
+
+.rowLayout.rowLayout {
+  padding-inline-start: 0;
+
+  @media (min-width: 1280px) {
+    padding-inline-start: 20px;
+  }
 }

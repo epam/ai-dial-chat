@@ -7,11 +7,15 @@ import type {
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
 } from '@epam/ai-dial-chat-api-client';
+import { createScheduledTasksApiClient } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import type {
   ListScheduledTaskRunsParams,
   ListScheduledTasksParams,
 } from '../models/scheduled-tasks';
 import { scheduledTasksApi } from './api-client';
+
+/* The app owns generated-client configuration; chat-hooks owns scheduler API composition. */
+export const schedulerClient = createScheduledTasksApiClient(scheduledTasksApi);
 
 export const listScheduledTasks = ({
   limit,
@@ -20,42 +24,33 @@ export const listScheduledTasks = ({
   sort,
   signal,
 }: ListScheduledTasksParams = {}): Promise<ListScheduledTasksResponseDto> =>
-  scheduledTasksApi.listScheduledTasks(
-    { limit, offset, search, sort },
-    signal ? { signal } : undefined,
-  );
+  schedulerClient.listScheduledTasks({ limit, offset, search, sort, signal });
 
 export const createScheduledTask = (
   body: CreateScheduledTaskBodyDto,
 ): Promise<CreatedScheduledTaskDto> =>
-  scheduledTasksApi.createScheduledTask({ createScheduledTaskBodyDto: body });
+  schedulerClient.createScheduledTask(body);
 
 export const getScheduledTask = (
   scheduleId: string,
-): Promise<ScheduledTaskDto> =>
-  scheduledTasksApi.getScheduledTask({ scheduleId });
+): Promise<ScheduledTaskDto> => schedulerClient.getScheduledTask(scheduleId);
 
 export const updateScheduledTask = (
   scheduleId: string,
   body: UpdateScheduledTaskBodyDto,
 ): Promise<UpdatedScheduledTaskDto> =>
-  scheduledTasksApi.updateScheduledTask({
-    scheduleId,
-    updateScheduledTaskBodyDto: body,
-  });
+  schedulerClient.updateScheduledTask(scheduleId, body);
 
 export const pauseScheduledTask = (
   scheduleId: string,
-): Promise<ScheduledTaskDto> =>
-  scheduledTasksApi.pauseScheduledTask({ scheduleId });
+): Promise<ScheduledTaskDto> => schedulerClient.pauseScheduledTask(scheduleId);
 
 export const resumeScheduledTask = (
   scheduleId: string,
-): Promise<ScheduledTaskDto> =>
-  scheduledTasksApi.resumeScheduledTask({ scheduleId });
+): Promise<ScheduledTaskDto> => schedulerClient.resumeScheduledTask(scheduleId);
 
 export const deleteScheduledTask = (scheduleId: string): Promise<void> =>
-  scheduledTasksApi.deleteScheduledTask({ scheduleId });
+  schedulerClient.deleteScheduledTask(scheduleId);
 
 export const listScheduledTaskRuns = ({
   scheduleId,
@@ -63,7 +58,4 @@ export const listScheduledTaskRuns = ({
   offset,
   signal,
 }: ListScheduledTaskRunsParams): Promise<ListScheduledTaskRunsResponseDto> =>
-  scheduledTasksApi.listScheduledTaskRuns(
-    { scheduleId, limit, offset },
-    signal ? { signal } : undefined,
-  );
+  schedulerClient.listScheduledTaskRuns({ scheduleId, limit, offset, signal });

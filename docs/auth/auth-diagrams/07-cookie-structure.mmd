@@ -4,16 +4,17 @@
 
 flowchart TB
     subgraph Browser["Browser cookie jar"]
-        COOKIE["__Host-chat.sess<br/>HttpOnly · Secure · SameSite=Lax/None<br/>Max-Age = rt_exp"]
+        COOKIE["__Host-chat.sess<br/>HttpOnly · Secure · SameSite=Lax/None<br/>Max-Age = effective deadline minus now"]
     end
 
     subgraph Wire["Cookie value on the wire"]
-        JWE["JWE compact<br/>kid · iv · ciphertext · tag"]
+        JWE["JWE compact<br/>protected header · encrypted key (empty)<br/>iv · ciphertext · tag"]
     end
 
     subgraph Plain["Decrypted plaintext (server only)"]
-        P["{<br/>  v: 1,<br/>  sid: '0d3e6a...',<br/>  providerId: 'keycloak',<br/>  sub: 'user-123',<br/>  at: '...',<br/>  rt: '...',<br/>  at_exp, rt_exp, iat,<br/>  claims: { roles, email }<br/>}"]
+        P["{<br/>  v: 2,<br/>  sid: '0d3e6a...',<br/>  providerId: 'keycloak',<br/>  sub: 'user-123',<br/>  at: '...',<br/>  rt: '...',<br/>  session_exp, at_exp, optional rt_exp, iat,<br/>  claims: { roles, email }<br/>}"]
     end
 
     COOKIE -->|sent as-is to BFF| JWE
-    JWE -->|jose compactDecrypt<br/>active or previous key by kid| P
+    JWE -->|jose compactDecrypt<br/>try active then previous key| P
+    P --> CHECK["Server enforces effective deadline:<br/>RT known: min(session_exp, rt_exp)<br/>RT unknown: session_exp<br/>No RT: min(session_exp, at_exp)"]

@@ -14,6 +14,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApplicationExternalServiceDto,
   ExternalServiceAuthResultDto,
   ExternalServiceLogoutBodyDto,
   ExternalServiceSigninBodyDto,
@@ -23,6 +24,10 @@ import type {
 export interface GetExternalServiceRequest {
   appId: string;
   serviceId: string;
+}
+
+export interface ListExternalServicesRequest {
+  appId: string;
 }
 
 export interface SignInExternalServiceRequest {
@@ -99,6 +104,61 @@ export class ExternalServicesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<GetExternalServiceResponseDto> {
     const response = await this.getExternalServiceRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Reads the accessible application through DIAL Core, including inline services. Returns only public OAuth configuration and credential statuses; never secrets. Not cached so login/logout changes are immediately visible.
+   * List application external-service authentication metadata
+   */
+  async listExternalServicesRaw(
+    requestParameters: ListExternalServicesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Array<ApplicationExternalServiceDto>>> {
+    if (requestParameters['appId'] == null) {
+      throw new runtime.RequiredError(
+        'appId',
+        'Required parameter "appId" was null or undefined when calling listExternalServices().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/external-services/{appId}`;
+    urlPath = urlPath.replace(
+      `{${'appId'}}`,
+      encodeURIComponent(String(requestParameters['appId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<Array<ApplicationExternalServiceDto>>(
+      response,
+    );
+  }
+
+  /**
+   * Reads the accessible application through DIAL Core, including inline services. Returns only public OAuth configuration and credential statuses; never secrets. Not cached so login/logout changes are immediately visible.
+   * List application external-service authentication metadata
+   */
+  async listExternalServices(
+    requestParameters: ListExternalServicesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Array<ApplicationExternalServiceDto>> {
+    const response = await this.listExternalServicesRaw(
       requestParameters,
       initOverrides,
     );

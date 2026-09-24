@@ -1,43 +1,28 @@
-import {
-  isMimeTypeAllowed,
-  mimeTypesToExtensionLabels,
-} from '@epam/ai-dial-attachment-input';
+import { mimeTypesToExtensionLabels } from '@epam/ai-dial-attachment-input';
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
   mimeTypesToAttachmentExtensionLabels,
-  mimeTypesToDialFileAcceptTypes,
-  useDialFileManager,
-  useDialFileManagerTabConfig,
+  useFileAttachmentPicker,
 } from '@epam/ai-dial-chat-hooks';
 import {
   formatFileSize,
   isHiddenPath,
   type AttachResult,
   type FileManagerAttachModalLabels,
-  type FileManagerSelectableNode,
 } from '@epam/ai-dial-chat-shared';
 import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
-import {
-  DialFileNodeType,
-  type DialFile,
-  type FileManagerGridRow,
+import type {
+  DialFile,
+  FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
-  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
-import {
-  memo,
-  useCallback,
-  useMemo,
-  useState,
-  type FC,
-  type ReactNode,
-} from 'react';
+import { memo, useCallback, useMemo, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
@@ -144,50 +129,25 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   const {
+    controller: hookResult,
     activeTab,
-    handleTabChange: handleTabChangeRaw,
-    tabs: allTabs,
-  } = useDialFileManagerTabs(tabLabels, DialFileManagerTabs.MyFiles);
-
-  const [selectedPaths, setSelectedPaths] = useState(() => new Set<string>());
-
-  /*
-   * A plain passthrough: FileManagerAttachModal already re-applies
-   * isRowSelectable to every selection change, so non-selectable items
-   * (e.g. a folder auto-selected on creation when the model cannot attach
-   * folders) never reach this handler.
-   */
-  const handleSelectedPathsChange = useCallback((paths: Set<string>) => {
-    // Defensive clone: the no-predicate branch of FileManagerAttachModal
-    // forwards the upstream package's Set reference unchanged.
-    setSelectedPaths(new Set(paths));
-  }, []);
-
-  const handleTabChange = useCallback(
-    (tab: DialFileManagerTabs) => {
-      setSelectedPaths(new Set());
-      handleTabChangeRaw(tab);
-    },
-    [handleTabChangeRaw],
-  );
-
-  const rootLabel =
-    tabLabels[activeTab] || tabLabels[DialFileManagerTabs.MyFiles];
-
-  const { tabs } = useDialFileManagerTabConfig(
-    activeTab,
-    handleTabChange,
-    allTabs,
-    fileManagerTabs,
-  );
-
-  const hookResult = useDialFileManager({
-    ...hostOptions,
+    tabs,
+    onTabChange: handleTabChange,
+    selectedPaths,
+    onSelectedPathsChange: handleSelectedPathsChange,
+    isRowSelectable,
+    isFileTypeAllowed,
+    allowedFileTypes,
+  } = useFileAttachmentPicker({
+    fileManagerOptions: hostOptions,
     bucket,
-    activeTab,
-    rootLabel,
-    variant: DialFileManagerVariant.Attach,
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
+    tabLabels,
+    allowedTabs: fileManagerTabs,
+    initialTab: DialFileManagerTabs.MyFiles,
+    allowedTypes,
+    maxSelectableFileSize,
+    canAttachFolders,
   });
 
   const { isAnyOperationInProgress } = hookResult;
@@ -212,14 +172,6 @@ const DialFileManagerModal: FC<Props> = ({
     [showErrorNotification, t],
   );
 
-  const isFileTypeAllowed = useCallback(
-    (contentType: string): boolean => {
-      if (allowedTypes == null || allowedTypes.length === 0) return true;
-      return isMimeTypeAllowed(contentType, allowedTypes);
-    },
-    [allowedTypes],
-  );
-
   const getDisabledTooltip = useCallback(
     (row: FileManagerGridRow) => {
       if (isHiddenPath(row.path)) {
@@ -228,43 +180,6 @@ const DialFileManagerModal: FC<Props> = ({
       return undefined;
     },
     [t],
-  );
-
-  const isRowSelectable = useCallback(
-    (node: { data?: FileManagerSelectableNode | null }) => {
-      const row = node.data;
-      if (row == null) return false;
-
-      if (isHiddenPath(row.path)) return false;
-
-      if (row.nodeType === DialFileNodeType.FOLDER) {
-        return canAttachFolders;
-      }
-
-      if (row.nodeType === DialFileNodeType.ITEM) {
-        if (
-          allowedTypes != null &&
-          allowedTypes.length > 0 &&
-          row.contentType != null &&
-          !isMimeTypeAllowed(row.contentType, allowedTypes)
-        ) {
-          return false;
-        }
-
-        if (
-          maxSelectableFileSize != null &&
-          row.contentLength != null &&
-          row.contentLength > maxSelectableFileSize
-        ) {
-          return false;
-        }
-
-        return true;
-      }
-
-      return false;
-    },
-    [canAttachFolders, allowedTypes, maxSelectableFileSize],
   );
 
   const headerDescription = useMemo(() => {
@@ -348,10 +263,14 @@ const DialFileManagerModal: FC<Props> = ({
     });
   }, [allowedTypes, allowedTypesLabel, t]);
 
-  const allowedFileTypes = useMemo(
-    () => mimeTypesToDialFileAcceptTypes(allowedTypes),
-    [allowedTypes],
-  );
+  const oversizedUploadMessage = useMemo(() => {
+    if (maxSelectableFileSize == null || maxSelectableFileSize <= 0) {
+      return undefined;
+    }
+    return t(DialFileManagerI18nKeys.UploadFileTooLarge, {
+      maxSize: formatFileSize(maxSelectableFileSize),
+    });
+  }, [maxSelectableFileSize, t]);
 
   const resolveFolderPath = useCallback(
     (file: DialFile): string | null => {
@@ -597,6 +516,7 @@ const DialFileManagerModal: FC<Props> = ({
       unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
       allowedFileTypes={allowedFileTypes}
       autoSelectUploadedItems={autoSelectUploadedItems}
+      oversizedUploadMessage={oversizedUploadMessage}
     />
   );
 };

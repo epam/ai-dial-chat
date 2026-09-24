@@ -1,5 +1,20 @@
 # @epam/ai-dial-chat-shared
 
+## Skill capability predicate
+
+`isSkillSelectionUnsupported(skillUrl, isSkillsSupported)` returns true when a
+nonblank reference exists and support is not explicitly `true`. It accepts an
+optional/null reference and optional boolean, with no deployment, metadata,
+feature-flag, or UI dependency. Chat selection and scheduled-task validation
+use this same predicate.
+
+```ts
+import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
+
+isSkillSelectionUnsupported('skills/public/report', false); // true
+isSkillSelectionUnsupported(undefined, false); // false
+```
+
 Shared domain models, utilities, and UI components used across all AI DIAL Chat libraries.
 
 ## Overview
@@ -18,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.7`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.15`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -33,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.7
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.2 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.15
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -309,7 +324,9 @@ to drop the body copy (`p`, `strong`) one step while leaving headings, code, and
 tables untouched. The component is memoised, so pass a stable reference rather
 than an inline object. It forwards the code-block and table action labels to
 `MarkdownRenderer`. Pass `urlTransform` to rewrite markdown `href`/`src` values
-the same way as `MarkdownRenderer`.
+the same way as `MarkdownRenderer`. Pass `isPlainText` to render the body
+through `PlainTextRenderer` instead — the conversation's `plain_text` response
+format — in which case the markdown-only props are ignored.
 
 ```tsx
 import {
@@ -322,6 +339,35 @@ import {
   isStreaming={isStreaming}
   classNames={isMobile ? COMPACT_MARKDOWN_CLASS_NAMES : undefined}
   urlTransform={resolveMarkdownUrl}
+/>;
+```
+
+### PlainTextRenderer
+
+Renders a chat message body verbatim, for a conversation whose response format
+is `plain_text`: no Markdown pipeline, no raw HTML, no syntax highlighting, so
+a table, a heading, or `**bold**` reaches the reader exactly as the model wrote
+it and can be pasted into an e-mail or a ticket unchanged. Newlines and runs of
+whitespace are preserved. `classNames` takes the same object a Markdown message
+is styled with — only its `p` entry is read — so both formats stay on one type
+scale. `isStreaming` reveals appended content gradually and shows
+`thinkingLabel` until the first token arrives, matching `MarkdownRenderer`.
+
+Reach for `MDMessageViewer` with `isPlainText` rather than this component
+directly when the format is a per-conversation setting: the viewer picks the
+renderer and keeps one call site.
+
+```tsx
+import {
+  DEFAULT_MARKDOWN_CLASS_NAMES,
+  PlainTextRenderer,
+} from '@epam/ai-dial-chat-shared';
+
+<PlainTextRenderer
+  content={message.content}
+  isStreaming={isStreaming}
+  classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
+  thinkingLabel={t('Thinking')}
 />;
 ```
 
@@ -602,6 +648,8 @@ import {
   extractInitials,
   pickAvatarColor,
   isAudioTranscriptionSupported,
+  getBaseMimeType,
+  normalizeMimeType,
   ensureDownloadFilename,
   downloadTextFile,
   triggerBlobDownload,
@@ -619,13 +667,18 @@ import {
   buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
 
-// Merge conditional class names — the only supported way to compose classes
+// Merge conditional class names — the only supported way to compose classes.
+// Conflicting utilities collapse to the last one, including the workspace
+// theme's own `shadow-chat-button` against the stock shadow scale.
 const className = mergeClasses('base-class', isActive && 'active');
 
 // Map a *Colors object to CSS custom property declarations; undefined values are dropped
 const cssVars = buildCssVars({ '--cs-text': colors?.text });
 
-// Serialize a rendered <table>'s rows to CSV/TSV/Markdown, the format MarkdownTable's own copy actions use
+// Serialize a rendered <table>'s rows to CSV or Markdown, the formats MarkdownTable's own copy actions use.
+// A KaTeX-rendered cell comes back as the LaTeX it was built from, so the math survives a round trip.
+// In Markdown a pipe inside a formula is written as `\vert` / `\Vert`, which renders the same glyphs and
+// cannot split the row; CSV columns keep the bare source.
 const csv = serializeMarkdownTableRows(
   Array.from(tableElement.rows),
   MarkdownTableCopyFormat.Csv,
@@ -655,6 +708,10 @@ formatUnitPrice('0.000003', 'token'); // '$3/M tokens'
 // Derive an avatar's initials and its deterministic color from a name
 const initials = extractInitials(user.displayName);
 const { background, foreground } = pickAvatarColor(user.displayName);
+
+// Canonicalize a MIME type before comparing it — case and parameters dropped, aliases resolved
+getBaseMimeType('Application/JSON; charset=utf-8'); // 'application/json'
+normalizeMimeType('text/json'); // 'application/json'
 
 // Ensure a download filename carries a file extension; derives one from the url path or MIME type when absent
 ensureDownloadFilename(
@@ -689,6 +746,7 @@ resolvePromptParams('Reply in {{language|Spanish}}.', {}); // 'Reply in Spanish.
 
 ```tsx
 import {
+  MIME_TYPE_ALIASES,
   MIME_TYPE_EXT_MAP,
   MIME_TYPE_WILDCARD,
   MIME_TYPE_AUDIO_PREFIX,
@@ -707,21 +765,22 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
-| Constant                                     | Purpose                                                               |
-| -------------------------------------------- | --------------------------------------------------------------------- |
-| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names        |
-| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists      |
-| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types       |
-| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders         |
-| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step     |
-| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                   |
-| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field  |
-| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh` |
-| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to    |
-| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap  |
-| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview    |
-| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap    |
-| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box               |
+| Constant                                     | Purpose                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| `MIME_TYPE_ALIASES`                          | Non-canonical MIME spelling → canonical type, read by `normalizeMimeType` |
+| `MIME_TYPE_EXT_MAP`                          | MIME type → file extension, for labels and download file names            |
+| `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists          |
+| `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types           |
+| `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders             |
+| `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step         |
+| `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                       |
+| `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field      |
+| `RESIZABLE_TEXTAREA_CLASS_NAME`              | `className` for a resizable `Textarea`, capping drag height at `50vh`     |
+| `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`    | Custom property `useAvailableHeightCap` writes the measured cap to        |
+| `MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME`      | `className` capping `MarkdownEditor`'s drag bar at that measured cap      |
+| `MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME`    | `className` restoring list markers in the `MarkdownEditor` preview        |
+| `SELECT_LIST_MAX_HEIGHT_PX`                  | `344`, the design's maximum select-list length, for a measured cap        |
+| `SELECT_LIST_MAX_HEIGHT_CLASS_NAME`          | `max-h-[344px]`, the same cap for an options scroll box                   |
 
 ## Stylesheet
 

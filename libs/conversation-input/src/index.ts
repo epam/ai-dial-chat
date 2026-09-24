@@ -11,7 +11,7 @@ export type {
   ConversationInputTypography,
   EditMessageInputProps,
 } from './models/ConversationInput';
-export { SendOnEnter } from './models/Input';
+export { ActionRowLayout, SendOnEnter } from './models/Input';
 export type { TranscribeAudio } from './models/Voice';
 export type {
   ChatSettingsValues,
@@ -21,6 +21,8 @@ export type {
   InputProps,
   InputTypography,
   MenuOverlayConfig,
+  ModelMenuColors,
+  ModelMenuStyles,
   TextInsertion,
   ToolsChipLabels,
 } from './models/Input';

@@ -209,6 +209,9 @@ const SkillEditorPage: FC = () => {
   const submitMessages = useMemo<SkillEditorSubmitMessages>(
     () => ({
       required: t(SkillEditorI18nKeys.ErrorRequired),
+      instructionsFrontmatter: t(
+        SkillEditorI18nKeys.ErrorInstructionsFrontmatter,
+      ),
       nameInvalid: t(SkillEditorI18nKeys.ErrorNameInvalid),
       nameConflict: t(SkillEditorI18nKeys.ErrorNameConflict),
       archiveTooLarge: t(SkillEditorI18nKeys.ErrorArchiveTooLarge),
@@ -224,22 +227,47 @@ const SkillEditorPage: FC = () => {
     [t],
   );
 
-  const { phase, errors, submitError, conflict, clearConflict, handleSubmit } =
-    useSkillEditorSubmit({
-      bucket,
-      isEditMode,
-      files,
-      filesContentRef,
-      frontmatterRef,
-      loadedPathRef,
-      etagRef,
-      returnUrl,
-      refetchSkills,
-      client: skillEditorSubmitClient,
-      messages: submitMessages,
-      onNavigate: navigate,
-      onNotify: showNotification,
+  const {
+    phase,
+    errors,
+    submitError,
+    isSubmitErrorRetryable,
+    retrySubmit,
+    conflict,
+    clearConflict,
+    handleSubmit,
+    handleValuesChange,
+  } = useSkillEditorSubmit({
+    bucket,
+    isEditMode,
+    files,
+    filesContentRef,
+    frontmatterRef,
+    loadedPathRef,
+    etagRef,
+    returnUrl,
+    refetchSkills,
+    client: skillEditorSubmitClient,
+    messages: submitMessages,
+    onNavigate: navigate,
+    onNotify: showNotification,
+  });
+
+  /*
+   * A skill stored with two frontmatter blocks (created before the editor
+   * refused them) seeds an Instructions body that still opens with a fence.
+   * The library deliberately stays silent while seeding, so run the check
+   * once per loaded skill here — otherwise the message would only appear
+   * after the user's first keystroke or a rejected Save.
+   */
+  useEffect(() => {
+    if (loadState !== SkillEditorLoadState.Loaded || !loadedValues) return;
+    handleValuesChange({
+      name: loadedValues.name ?? '',
+      description: loadedValues.description ?? '',
+      instructions: loadedValues.instructions ?? '',
     });
+  }, [loadState, loadedValues, handleValuesChange]);
 
   // Warn on a full page unload while there are unsaved changes — the
   // in-app Cancel/Back guards below cover in-app navigation.
@@ -393,10 +421,12 @@ const SkillEditorPage: FC = () => {
         isSubmitting={phase === 'submitting'}
         errors={errors}
         submitError={submitError}
+        onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}
         conflict={conflict}
         onReloadLatest={handleReloadLatestClick}
         isNameReadOnly={isEditMode}
         onDirtyChange={setIsDirty}
+        onValuesChange={handleValuesChange}
         fileActions={fileActions}
         supportingFileContent={
           <SkillFilePreview state={previewState} onRetry={retryPreview} />

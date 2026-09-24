@@ -5,9 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listScheduledTasks } from '../../../server-api/scheduled-tasks.api';
 import { useScheduledTasks } from '../useScheduledTasks';
 
-vi.mock('../../../server-api/scheduled-tasks.api', () => ({
-  listScheduledTasks: vi.fn(),
-}));
+vi.mock('../../../server-api/scheduled-tasks.api', () => {
+  const listScheduledTasks = vi.fn();
+  return {
+    listScheduledTasks,
+    schedulerClient: { listScheduledTasks },
+  };
+});
 
 describe('useScheduledTasks', () => {
   beforeEach(() => {

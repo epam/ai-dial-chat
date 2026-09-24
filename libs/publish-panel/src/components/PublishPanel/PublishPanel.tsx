@@ -4,6 +4,7 @@ import {
   ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Checkbox,
   Input,
   Notification,
   NotificationType,
@@ -48,6 +49,10 @@ export interface PublishPanelLabels {
   authorPlaceholder?: string;
   /** Helper text below the display-author field. Default explains the value is shown as the publication's author. */
   authorHint?: string;
+  /** Label for the credentials opt-in. Default: `'Publish with my credentials'`. */
+  credentialsLabel?: string;
+  /** Caption below the credentials opt-in, stating what ticking it does. Default explains members will use the resource without authorising and that the credential itself is never shown to them. */
+  credentialsHint?: string;
   /** Label above the publish history list. Default: `'Versions history'`. */
   historyLabel?: string;
   /** Warning callout body shown when the folder already has this version; `{version}` and `{folder}` are replaced, with the folder name rendered bold. */
@@ -74,6 +79,8 @@ export interface PublishPanelLabels {
   historyLoadingLabel?: string;
   /** Message shown when publish history failed to load. */
   historyErrorLabel?: string;
+  /** Label marking a history entry that carried shared credentials. Default: `'Shared credentials'`. */
+  historySharedCredentialsLabel?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
   /** Version tag text in the entity-header summary row; `{version}` is replaced. Default: `'Version {version} · current'`. */
@@ -152,6 +159,19 @@ export interface PublishPanelProps {
   author: string;
   /** Called with the next author value on every edit. */
   onAuthorChange: (author: string) => void;
+  /**
+   * Whether the publication should carry the publisher's own credentials.
+   * Only rendered when `onPublishCredentialsChange` is supplied. Default:
+   * `false`.
+   */
+  publishCredentials?: boolean;
+  /**
+   * Called with the next value when the credentials opt-in is toggled.
+   * Supplying it is what renders the control at all — a host with no use for
+   * it gets exactly the panel it had before. The panel holds no state of its
+   * own for the value.
+   */
+  onPublishCredentialsChange?: (value: boolean) => void;
   /** Current access rules, combined with AND. */
   rules: PublicationRule[];
   /** Called with the full next rules array on add, remove, or clear. */
@@ -198,6 +218,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   allowReplace = true,
   author,
   onAuthorChange,
+  publishCredentials = false,
+  onPublishCredentialsChange,
   rules,
   onRulesChange,
   ruleSourceOptions,
@@ -245,8 +267,9 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
-    // TODO: will implement later — historyLoadingLabel, historyErrorLabel are
-    // unused while the versions history section below is commented out.
+    // TODO: will implement later — historyLoadingLabel, historyErrorLabel,
+    // historySharedCredentialsLabel are unused while the versions history
+    // section below is commented out.
     rootFolderLabel = 'Organization',
     summaryVersionLabel,
     accessRulesLabels,
@@ -255,6 +278,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     authorLabel = 'Author',
     authorPlaceholder = 'Author name',
     authorHint = 'Shown as the publication’s author. Defaults to you — replace it to credit a team instead.',
+    credentialsLabel = 'Publish with my credentials',
+    credentialsHint = 'Members will use this without signing in themselves. Your credential itself is never shown to them.',
   } = labels;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -410,6 +435,21 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           />
         </div>
 
+        {/* The consequence of ticking this lives in the caption, not the
+            label alone: the kit wires the caption as the control's accessible
+            description, so nothing here hand-rolls `aria-describedby`. */}
+        {onPublishCredentialsChange != null && (
+          <div className="mt-4">
+            <Checkbox
+              labelProps={{ label: credentialsLabel }}
+              caption={credentialsHint}
+              isSelected={publishCredentials}
+              onChange={onPublishCredentialsChange}
+              disabled={isSubmitting}
+            />
+          </div>
+        )}
+
         {/* Nested inside the destination-folder block, and tighter than the
             inter-section gap, so the rules read as scoped to the selection
             above rather than as an independent control. */}
@@ -448,6 +488,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             currentVersion={resource.version}
             loadingLabel={historyLoadingLabel}
             errorLabel={historyErrorLabel}
+            sharedCredentialsLabel={historySharedCredentialsLabel}
           />
         </div>
       )} */}

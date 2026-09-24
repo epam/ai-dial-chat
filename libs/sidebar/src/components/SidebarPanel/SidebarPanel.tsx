@@ -47,6 +47,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     titleClassName,
     className,
     headerClassName,
+    headerActionsClassName,
   } = panelStyles ?? {};
 
   const panelCssVars = useMemo(
@@ -242,6 +243,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
           <Header
             title={title}
             className={headerClassName}
+            actionsClassName={headerActionsClassName}
             titleClassName={titleClassName}
             leftActions={leftActions}
             rightActions={

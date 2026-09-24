@@ -1,5 +1,6 @@
 import {
   navigateToolsetOAuthPopup,
+  OAuthResourceKind,
   openToolsetOAuthPopup,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
@@ -14,6 +15,7 @@ import {
   signInExternalService,
   signOutExternalService,
 } from '../../../server-api/external-services';
+import { getOfflineCredentials } from '../../../server-api/offline-credentials';
 import { ROUTES } from '../../../types/routes';
 import {
   ExternalServiceLoginOutcomeType,
@@ -29,6 +31,7 @@ vi.mock('../../../server-api/external-services', () => ({
     None: 'NONE',
     ApiKey: 'API_KEY',
     OAuth: 'OAUTH',
+    DialNative: 'DIAL_NATIVE',
   },
   ExternalServiceCredentialsLevel: {
     Global: 'GLOBAL',
@@ -38,6 +41,10 @@ vi.mock('../../../server-api/external-services', () => ({
   getExternalService: vi.fn(),
   signInExternalService: vi.fn(),
   signOutExternalService: vi.fn(),
+}));
+
+vi.mock('../../../server-api/offline-credentials', () => ({
+  getOfflineCredentials: vi.fn(),
 }));
 
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
@@ -116,6 +123,172 @@ describe('useExternalServiceLogin', () => {
       expect(outcome).toEqual({
         type: ExternalServiceLoginOutcomeType.Failure,
       });
+    });
+  });
+
+  describe('DIAL_NATIVE login', () => {
+    const connect = {
+      clientId: 'offline-client',
+      authorizationEndpoint: 'https://identity.example.com/authorize',
+      scopes: ['openid', 'offline_access'],
+    };
+    const params = {
+      appId: APP_ID,
+      serviceId: 'dial-native',
+      credentialsLevel: ExternalServiceCredentialsLevel.User,
+      authenticationType: ExternalServiceAuthType.DialNative,
+      forceStale: true,
+    };
+    let popup: Window;
+
+    beforeEach(() => {
+      popup = { close: vi.fn() } as unknown as Window;
+      vi.mocked(openToolsetOAuthPopup).mockReturnValue(popup);
+      vi.mocked(getExternalService).mockResolvedValue({
+        displayName: 'DIAL',
+        authenticationType: ExternalServiceAuthType.DialNative,
+        appLevelAuthStatus: 'SIGNED_IN',
+      });
+      vi.mocked(getOfflineCredentials).mockResolvedValue({
+        available: true,
+        connected: false,
+        connect,
+      });
+      vi.mocked(navigateToolsetOAuthPopup).mockReturnValue({
+        type: ToolsetOAuthInitiationResultType.Started,
+        popup,
+        flowId: 'offline-flow',
+      });
+      vi.mocked(waitForToolsetOAuthResult).mockResolvedValue({
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: 'offline-credentials',
+        credentialsLevel: 'USER' as never,
+      });
+    });
+
+    it('opens offline OAuth synchronously and confirms connected status without per-service signin/signout', async () => {
+      vi.mocked(getOfflineCredentials)
+        .mockResolvedValueOnce({ available: true, connected: false, connect })
+        .mockResolvedValueOnce({ available: true, connected: true });
+      const { result } = renderHook(() => useExternalServiceLogin());
+
+      const pending = result.current.login(params);
+      expect(openToolsetOAuthPopup).toHaveBeenCalledOnce();
+      expect(openToolsetOAuthPopup).toHaveBeenCalledBefore(
+        vi.mocked(getExternalService),
+      );
+      expect(await pending).toEqual({
+        type: ExternalServiceLoginOutcomeType.Success,
+      });
+      expect(navigateToolsetOAuthPopup).toHaveBeenCalledWith(
+        popup,
+        expect.objectContaining({ clientId: connect.clientId }),
+        'offline-credentials',
+        ROUTES.ToolsetSignIn,
+        'USER',
+        OAuthResourceKind.OfflineCredentials,
+      );
+      expect(getOfflineCredentials).toHaveBeenCalledTimes(2);
+      expect(getExternalService).toHaveBeenCalledTimes(2);
+      expect(signInExternalService).not.toHaveBeenCalled();
+      expect(signOutExternalService).not.toHaveBeenCalled();
+    });
+
+    it.each(['SIGNED_OUT', undefined])(
+      'does not grant success without confirmed administrator consent (%s)',
+      async (appLevelAuthStatus) => {
+        vi.mocked(getExternalService).mockResolvedValue({
+          displayName: 'DIAL',
+          authenticationType: ExternalServiceAuthType.DialNative,
+          appLevelAuthStatus,
+        });
+        const { result } = renderHook(() => useExternalServiceLogin());
+        expect((await result.current.login(params)).type).toBe(
+          appLevelAuthStatus === 'SIGNED_OUT'
+            ? ExternalServiceLoginOutcomeType.AdminConsentRequired
+            : ExternalServiceLoginOutcomeType.Failure,
+        );
+        expect(popup.close).toHaveBeenCalledOnce();
+        expect(getOfflineCredentials).not.toHaveBeenCalled();
+        expect(signInExternalService).not.toHaveBeenCalled();
+        expect(signOutExternalService).not.toHaveBeenCalled();
+      },
+    );
+
+    it('reuses an existing offline connection without revoking credentials', async () => {
+      vi.mocked(getOfflineCredentials).mockResolvedValue({
+        available: true,
+        connected: true,
+      });
+      const { result } = renderHook(() => useExternalServiceLogin());
+      expect((await result.current.login(params)).type).toBe(
+        ExternalServiceLoginOutcomeType.Success,
+      );
+      expect(popup.close).toHaveBeenCalledOnce();
+      expect(navigateToolsetOAuthPopup).not.toHaveBeenCalled();
+      expect(signOutExternalService).not.toHaveBeenCalled();
+    });
+
+    it('reports unavailable offline access and closes the reserved popup', async () => {
+      vi.mocked(getOfflineCredentials).mockResolvedValue({
+        available: false,
+        connected: false,
+      });
+      const { result } = renderHook(() => useExternalServiceLogin());
+      expect((await result.current.login(params)).type).toBe(
+        ExternalServiceLoginOutcomeType.OfflineUnavailable,
+      );
+      expect(popup.close).toHaveBeenCalledOnce();
+      expect(navigateToolsetOAuthPopup).not.toHaveBeenCalled();
+    });
+
+    it('does not trust popup success when offline credentials remain disconnected', async () => {
+      const { result } = renderHook(() => useExternalServiceLogin());
+      expect((await result.current.login(params)).type).toBe(
+        ExternalServiceLoginOutcomeType.Failure,
+      );
+      expect(signInExternalService).not.toHaveBeenCalled();
+    });
+
+    it('checks administrator consent again after offline login', async () => {
+      vi.mocked(getOfflineCredentials)
+        .mockResolvedValueOnce({ available: true, connected: false, connect })
+        .mockResolvedValueOnce({ available: true, connected: true });
+      vi.mocked(getExternalService)
+        .mockResolvedValueOnce({
+          displayName: 'DIAL',
+          authenticationType: ExternalServiceAuthType.DialNative,
+          appLevelAuthStatus: 'SIGNED_IN',
+        })
+        .mockResolvedValueOnce({
+          displayName: 'DIAL',
+          authenticationType: ExternalServiceAuthType.DialNative,
+          appLevelAuthStatus: 'SIGNED_OUT',
+        });
+      const { result } = renderHook(() => useExternalServiceLogin());
+      expect((await result.current.login(params)).type).toBe(
+        ExternalServiceLoginOutcomeType.AdminConsentRequired,
+      );
+    });
+
+    it('handles a blocked popup without starting a request', async () => {
+      vi.mocked(openToolsetOAuthPopup).mockReturnValue(null);
+      const { result } = renderHook(() => useExternalServiceLogin());
+      expect((await result.current.login(params)).type).toBe(
+        ExternalServiceLoginOutcomeType.PopupBlocked,
+      );
+      expect(getOfflineCredentials).not.toHaveBeenCalled();
+    });
+
+    it('closes the popup when fetching offline settings fails', async () => {
+      vi.mocked(getOfflineCredentials).mockRejectedValueOnce(
+        new Error('unavailable'),
+      );
+      const { result } = renderHook(() => useExternalServiceLogin());
+      expect((await result.current.login(params)).type).toBe(
+        ExternalServiceLoginOutcomeType.Failure,
+      );
+      expect(popup.close).toHaveBeenCalledOnce();
     });
   });
 

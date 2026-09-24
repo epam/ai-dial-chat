@@ -8,6 +8,7 @@ export enum CspMode {
 export const CSP_NONCE_PLACEHOLDER = '__DIAL_CSP_NONCE__';
 
 interface CspOptions {
+  allowedConnectOrigins?: string[];
   nonce?: string;
   allowWasm?: boolean;
   allowInlineStyles?: boolean;
@@ -108,11 +109,20 @@ export const buildPermissionsPolicyHeader = (
  * external identity provider does not sever the opener's WindowProxy and
  * make an active popup look closed. The popup clears its own `window.opener`
  * before that navigation, preserving reverse-tabnabbing protection.
+ *
+ * `referrerPolicy` is overridden from Helmet's `no-referrer` default to
+ * `strict-origin-when-cross-origin` (the modern browser default). This app's
+ * pages embed sandboxed origins (e.g. the MCP app sandbox) in an iframe, and
+ * that sandbox validates the iframe navigation's `Referer` header against its
+ * own host-origin allowlist. `no-referrer` would strip the header entirely,
+ * making every such embed fail with a 403 in the sandbox regardless of how
+ * correctly its allowlist is configured.
  */
 export const createHelmetOptions = (
   allowedIframeOrigins: string[],
   secureTransport = true,
   {
+    allowedConnectOrigins = [],
     nonce,
     allowWasm = false,
     allowInlineStyles = false,
@@ -121,6 +131,7 @@ export const createHelmetOptions = (
   }: CspOptions = {},
 ): HelmetOptions => ({
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   contentSecurityPolicy: {
     reportOnly,
     directives: {
@@ -146,7 +157,7 @@ export const createHelmetOptions = (
       workerSrc: ["'self'", 'blob:'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
       mediaSrc: ["'self'", 'blob:'],
-      connectSrc: ["'self'", 'blob:'],
+      connectSrc: ["'self'", 'blob:', ...allowedConnectOrigins],
       frameSrc: buildFrameSrcDirective(allowedIframeOrigins),
       frameAncestors: buildFrameAncestorsDirective(allowedIframeOrigins),
       upgradeInsecureRequests: secureTransport ? [] : null,

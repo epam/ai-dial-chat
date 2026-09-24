@@ -10,7 +10,9 @@ import type { EnvironmentVariables } from '../../config/environment.config';
 import { initializeRuntimeMetrics } from '../../telemetry/runtime-metrics';
 import {
   ConversationGenerationService,
+  GenerationCancelReason,
   GenerationStatus,
+  type GenerationLease,
 } from '../conversation-generation.service';
 import {
   ConversationMessageDto,
@@ -43,10 +45,10 @@ const makeMessage = (content: string): ConversationMessageDto => ({
 });
 
 const makeConfigService = (
-  maxGenerationDurationMs?: number,
+  overrides: Partial<EnvironmentVariables> = {},
 ): ConfigService<EnvironmentVariables> =>
   ({
-    get: vi.fn().mockReturnValue(maxGenerationDurationMs),
+    get: vi.fn((key: keyof EnvironmentVariables) => overrides[key]),
   }) as unknown as ConfigService<EnvironmentVariables>;
 
 describe('ConversationGenerationService', () => {
@@ -61,10 +63,17 @@ describe('ConversationGenerationService', () => {
   });
 
   describe('register', () => {
-    it('returns an AbortController for a new generation', () => {
-      const controller = service.register(OWNER_KEY, PATH, GENERATION_ID);
-      expect(controller).toBeInstanceOf(AbortController);
+    it('returns a lease carrying an AbortController for a new generation', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      expect(lease.abortController).toBeInstanceOf(AbortController);
       expect(service.getStatus(OWNER_KEY, PATH)).toBe(GenerationStatus.Active);
+    });
+
+    it('mints a distinct operationId for each registration', () => {
+      const first = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(first);
+      const second = service.register(OWNER_KEY, PATH, 'gen-2');
+      expect(second.operationId).not.toBe(first.operationId);
     });
 
     it('throws ConflictException when a generation is already active for the same owner+path', () => {
@@ -89,23 +98,23 @@ describe('ConversationGenerationService', () => {
       const first = service.register(OWNER_KEY, PATH, GENERATION_ID);
       const second = service.register(OTHER_OWNER_KEY, PATH, 'gen-2');
 
-      expect(second).not.toBe(first);
+      expect(second.operationId).not.toBe(first.operationId);
       expect(service.getStatus(OWNER_KEY, PATH)).toBe(GenerationStatus.Active);
       expect(service.getStatus(OTHER_OWNER_KEY, PATH)).toBe(
         GenerationStatus.Active,
       );
 
-      service.complete(OTHER_OWNER_KEY, PATH, 'gen-2');
+      service.complete(second);
 
       expect(service.getStatus(OWNER_KEY, PATH)).toBe(GenerationStatus.Active);
-      expect(first.signal.aborted).toBe(false);
+      expect(first.abortController.signal.aborted).toBe(false);
     });
 
     it('returns false and aborts nothing when abort is called under a non-owning key', () => {
-      const controller = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
 
       expect(service.abort(OTHER_OWNER_KEY, PATH, GENERATION_ID)).toBe(false);
-      expect(controller.signal.aborted).toBe(false);
+      expect(lease.abortController.signal.aborted).toBe(false);
       expect(service.getStatus(OWNER_KEY, PATH)).toBe(GenerationStatus.Active);
     });
 
@@ -122,34 +131,23 @@ describe('ConversationGenerationService', () => {
     });
 
     it('returns undefined after the generation has already finished', () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
-      service.complete(OWNER_KEY, PATH, GENERATION_ID);
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(lease);
       expect(service.attach(OWNER_KEY, PATH)).toBeUndefined();
     });
   });
 
   describe('seedAssembledMessage / applyChunk', () => {
     it('applyChunk updates the retained snapshot and emits the raw chunk to attached listeners', () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
-      service.seedAssembledMessage(
-        OWNER_KEY,
-        PATH,
-        GENERATION_ID,
-        makeMessage(''),
-      );
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.seedAssembledMessage(lease, makeMessage(''));
 
       const attachment = service.attach(OWNER_KEY, PATH)!;
       const onChunk = vi.fn();
       attachment.emitter.on('chunk', onChunk);
 
       const rawChunk = { choices: [{ delta: { content: 'Hi' } }] };
-      service.applyChunk(
-        OWNER_KEY,
-        PATH,
-        GENERATION_ID,
-        rawChunk,
-        makeMessage('Hi'),
-      );
+      service.applyChunk(lease, rawChunk, makeMessage('Hi'));
 
       expect(onChunk).toHaveBeenCalledExactlyOnceWith(rawChunk);
       expect(service.attach(OWNER_KEY, PATH)?.assembledMessage.content).toBe(
@@ -157,29 +155,57 @@ describe('ConversationGenerationService', () => {
       );
     });
 
-    it('ignores applyChunk for a stale generationId', () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
-      service.applyChunk(
-        OWNER_KEY,
-        PATH,
-        'stale-gen',
-        {},
-        makeMessage('ignored'),
-      );
+    it('ignores seedAssembledMessage/applyChunk for a lease whose entry was replaced', () => {
+      const staleLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(staleLease);
+      service.register(OWNER_KEY, PATH, 'gen-2');
+
+      service.seedAssembledMessage(staleLease, makeMessage('stale'));
+      service.applyChunk(staleLease, {}, makeMessage('stale'));
+
       expect(service.attach(OWNER_KEY, PATH)?.assembledMessage.content).toBe(
         '',
       );
     });
   });
 
+  describe('getCancellation / getAssembledMessage', () => {
+    it('reports no cancellation and the current message for an untouched lease', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.seedAssembledMessage(lease, makeMessage('hello'));
+
+      expect(service.getCancellation(lease)).toEqual({ requested: false });
+      expect(service.getAssembledMessage(lease)?.content).toBe('hello');
+    });
+
+    it('reports the cancel reason once abort() runs', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.abort(OWNER_KEY, PATH, GENERATION_ID);
+
+      expect(service.getCancellation(lease)).toEqual({
+        requested: true,
+        reason: GenerationCancelReason.UserStop,
+      });
+    });
+
+    it('returns undefined for both once the lease is stale', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(lease);
+      service.register(OWNER_KEY, PATH, 'gen-2');
+
+      expect(service.getCancellation(lease)).toBeUndefined();
+      expect(service.getAssembledMessage(lease)).toBeUndefined();
+    });
+  });
+
   describe('complete', () => {
     it('emits a done terminal event, clears listeners, and removes the registry entry', () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
       const attachment = service.attach(OWNER_KEY, PATH)!;
       const onTerminal = vi.fn();
       attachment.emitter.on('terminal', onTerminal);
 
-      service.complete(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(lease);
 
       expect(onTerminal).toHaveBeenCalledExactlyOnceWith({ type: 'done' });
       expect(attachment.emitter.listenerCount('terminal')).toBe(0);
@@ -188,13 +214,13 @@ describe('ConversationGenerationService', () => {
   });
 
   describe('error', () => {
-    it('emits an error terminal event carrying the message when the generation was not stopped', () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
+    it('emits an error terminal event carrying the message when no cancellation was requested', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
       const attachment = service.attach(OWNER_KEY, PATH)!;
       const onTerminal = vi.fn();
       attachment.emitter.on('terminal', onTerminal);
 
-      service.error(OWNER_KEY, PATH, GENERATION_ID, 'boom');
+      service.error(lease, 'boom');
 
       expect(onTerminal).toHaveBeenCalledExactlyOnceWith({
         type: 'error',
@@ -202,16 +228,35 @@ describe('ConversationGenerationService', () => {
       });
     });
 
-    it('emits a stopped terminal event when abort() marked the entry Stopped first', () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
+    it('emits a stopped terminal event when abort() ran first', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
       const attachment = service.attach(OWNER_KEY, PATH)!;
       const onTerminal = vi.fn();
       attachment.emitter.on('terminal', onTerminal);
 
       expect(service.abort(OWNER_KEY, PATH, GENERATION_ID)).toBe(true);
-      service.error(OWNER_KEY, PATH, GENERATION_ID);
+      service.error(lease);
 
       expect(onTerminal).toHaveBeenCalledExactlyOnceWith({ type: 'stopped' });
+    });
+
+    it('emits an error, not stopped, for a stale-expiry cancellation', () => {
+      vi.useFakeTimers();
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const attachment = service.attach(OWNER_KEY, PATH)!;
+      const onTerminal = vi.fn();
+      attachment.emitter.on('terminal', onTerminal);
+
+      vi.setSystemTime(Date.now() + 31 * 60 * 1000 + 1000);
+      service.register(OTHER_OWNER_KEY, 'another-path', 'gen-2');
+
+      service.error(lease, '');
+
+      expect(onTerminal).toHaveBeenCalledExactlyOnceWith({
+        type: 'error',
+        message: '',
+      });
+      vi.useRealTimers();
     });
   });
 
@@ -243,19 +288,19 @@ describe('ConversationGenerationService', () => {
      * caller's OIDC subject, so the key must never be logged verbatim
      * (`generation-principal-ownership`).
      */
-    it('identifies an evicted stale entry by path and digest, never by owner key or subject', () => {
+    it('identifies an expired stale entry by path and digest, never by owner key or subject', () => {
       const warn = vi
         .spyOn(Logger.prototype, 'warn')
         .mockImplementation(() => undefined);
 
       service.register(HEADER_OWNER_KEY, PATH, GENERATION_ID);
-      vi.setSystemTime(Date.now() + 30 * 60 * 1000 + 1);
+      vi.setSystemTime(Date.now() + 31 * 60 * 1000 + 1000);
       /* Any register() sweeps stale entries before doing its own work. */
       service.register(OTHER_OWNER_KEY, 'another-path', 'gen-2');
 
       expect(warn).toHaveBeenCalledOnce();
       const line = String(warn.mock.calls[0][0]);
-      expect(line).toContain('Evicting stale generation entry');
+      expect(line).toContain('Expiring stale generation entry');
       expect(line).toContain(PATH);
       expect(line).not.toContain(SUBJECT);
       expect(line).not.toContain(HEADER_OWNER_KEY);
@@ -269,7 +314,9 @@ describe('ConversationGenerationService', () => {
       const warn = vi
         .spyOn(Logger.prototype, 'warn')
         .mockImplementation(() => undefined);
-      const timed = new ConversationGenerationService(makeConfigService(1000));
+      const timed = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+      );
 
       timed.register(HEADER_OWNER_KEY, PATH, GENERATION_ID);
       vi.advanceTimersByTime(1001);
@@ -284,6 +331,108 @@ describe('ConversationGenerationService', () => {
 
       timed.onModuleDestroy();
       warn.mockRestore();
+    });
+  });
+
+  describe('stale expiry cancels, never removes', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('aborts a stale still-running entry without removing it, clearing its timer, or decrementing tracking', async () => {
+      const reader = new TestMetricReader();
+      const meterProvider = new MeterProvider({ readers: [reader] });
+      const stopMetrics = initializeRuntimeMetrics(
+        meterProvider.getMeter('test'),
+      );
+
+      const timed = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 45 * 60 * 1000 }),
+      );
+      const lease = timed.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      vi.setSystemTime(Date.now() + 46 * 60 * 1000 + 1000);
+      /* A later register() from any principal triggers the sweep. */
+      timed.register(OTHER_OWNER_KEY, 'another-path', 'gen-2');
+
+      /* Not removed: still owned, still returns 409 for this owner+path. */
+      expect(() => timed.register(OWNER_KEY, PATH, 'gen-3')).toThrow(
+        ConflictException,
+      );
+      /* Cancellation was requested and the AbortController was aborted. */
+      expect(lease.abortController.signal.aborted).toBe(true);
+      expect(timed.getCancellation(lease)).toEqual({
+        requested: true,
+        reason: GenerationCancelReason.StaleExpiry,
+      });
+      /* Not double-counted away: the entry is still retained on the gauge. */
+      const { resourceMetrics } = await reader.collect();
+      const total = resourceMetrics.scopeMetrics
+        .flatMap((scope) => scope.metrics)
+        .filter(
+          (metric) => metric.descriptor.name === 'dial.chat.generations.active',
+        )
+        .filter((metric) => metric.dataPointType === DataPointType.GAUGE)
+        .flatMap((metric) => metric.dataPoints)
+        .reduce((sum, point) => sum + point.value, 0);
+      expect(total).toBe(2);
+
+      timed.onModuleDestroy();
+      stopMetrics();
+      await meterProvider.shutdown();
+    });
+
+    it('does not re-request cancellation for an entry that already has a reason', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.abort(OWNER_KEY, PATH, GENERATION_ID);
+      const abortSpy = vi.spyOn(lease.abortController, 'abort');
+
+      vi.setSystemTime(Date.now() + 31 * 60 * 1000 + 1000);
+      service.register(OTHER_OWNER_KEY, 'another-path', 'gen-2');
+
+      expect(abortSpy).not.toHaveBeenCalled();
+    });
+
+    it('leaves the worker to finalize a stale-cancelled entry, releasing it exactly once', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      vi.setSystemTime(Date.now() + 31 * 60 * 1000 + 1000);
+      service.register(OTHER_OWNER_KEY, 'another-path', 'gen-2');
+
+      expect(lease.abortController.signal.aborted).toBe(true);
+      service.error(lease, '');
+
+      expect(service.getStatus(OWNER_KEY, PATH)).toBeUndefined();
+      /* A later register for the same owner+path now succeeds. */
+      expect(() => service.register(OWNER_KEY, PATH, 'gen-3')).not.toThrow();
+    });
+  });
+
+  describe('a present entry is always a conflict', () => {
+    it('rejects a new registration while a stopped generation’s partial save is still pending', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.abort(OWNER_KEY, PATH, GENERATION_ID);
+
+      expect(() => service.register(OWNER_KEY, PATH, 'gen-2')).toThrow(
+        ConflictException,
+      );
+      /* The stopped entry keeps its key and its ability to finish its save. */
+      expect(service.getStatus(OWNER_KEY, PATH)).toBe(GenerationStatus.Stopped);
+
+      service.error(lease);
+      expect(() => service.register(OWNER_KEY, PATH, 'gen-2')).not.toThrow();
+    });
+
+    it('rejects a new registration for an entry that is finalizing', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.beginFinalizing(lease);
+
+      expect(() => service.register(OWNER_KEY, PATH, 'gen-2')).toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -305,55 +454,153 @@ describe('ConversationGenerationService', () => {
      * bounds a stalled upstream stream that nothing else terminates.
      */
     it('aborts the entry AbortController once MAX_GENERATION_DURATION_MS elapses while still Active', () => {
-      service = new ConversationGenerationService(makeConfigService(1000));
-      const abortController = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+      );
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
 
       vi.advanceTimersByTime(999);
-      expect(abortController.signal.aborted).toBe(false);
+      expect(lease.abortController.signal.aborted).toBe(false);
 
       vi.advanceTimersByTime(1);
-      expect(abortController.signal.aborted).toBe(true);
+      expect(lease.abortController.signal.aborted).toBe(true);
+      expect(service.getCancellation(lease)).toEqual({
+        requested: true,
+        reason: GenerationCancelReason.MaxDuration,
+      });
     });
 
     it('falls back to the default duration (30 minutes) when MAX_GENERATION_DURATION_MS is not configured', () => {
-      service = new ConversationGenerationService(makeConfigService(undefined));
-      const abortController = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service = new ConversationGenerationService(makeConfigService());
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
 
       vi.advanceTimersByTime(30 * 60 * 1000 - 1);
-      expect(abortController.signal.aborted).toBe(false);
+      expect(lease.abortController.signal.aborted).toBe(false);
 
       vi.advanceTimersByTime(1);
-      expect(abortController.signal.aborted).toBe(true);
+      expect(lease.abortController.signal.aborted).toBe(true);
     });
 
-    it('never fires once the generation completes normally', () => {
-      service = new ConversationGenerationService(makeConfigService(1000));
-      const abortController = service.register(OWNER_KEY, PATH, GENERATION_ID);
+    it.each([
+      ['below the stale threshold', 10 * 60 * 1000],
+      ['equal to the stale threshold floor', 30 * 60 * 1000],
+      ['above the stale threshold floor', 45 * 60 * 1000],
+    ])(
+      'still fires when MAX_GENERATION_DURATION_MS is %s',
+      (_label, maxDurationMs) => {
+        service = new ConversationGenerationService(
+          makeConfigService({ MAX_GENERATION_DURATION_MS: maxDurationMs }),
+        );
+        const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
 
-      service.complete(OWNER_KEY, PATH, GENERATION_ID);
+        vi.advanceTimersByTime(maxDurationMs - 1);
+        expect(lease.abortController.signal.aborted).toBe(false);
+
+        vi.advanceTimersByTime(1);
+        expect(lease.abortController.signal.aborted).toBe(true);
+        /* The stale sweep must not have pre-empted this timer. */
+        expect(service.getCancellation(lease)?.reason).toBe(
+          GenerationCancelReason.MaxDuration,
+        );
+      },
+    );
+
+    it('never fires once the generation completes normally', () => {
+      service = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+      );
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      service.complete(lease);
       vi.advanceTimersByTime(1000);
 
-      expect(abortController.signal.aborted).toBe(false);
+      expect(lease.abortController.signal.aborted).toBe(false);
     });
 
     it('never fires once the generation errors', () => {
-      service = new ConversationGenerationService(makeConfigService(1000));
-      const abortController = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+      );
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
 
-      service.error(OWNER_KEY, PATH, GENERATION_ID, 'boom');
+      service.error(lease, 'boom');
       vi.advanceTimersByTime(1000);
 
-      expect(abortController.signal.aborted).toBe(false);
+      expect(lease.abortController.signal.aborted).toBe(false);
     });
 
     it('never fires once the generation is stopped by the user', () => {
-      service = new ConversationGenerationService(makeConfigService(1000));
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+      );
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
 
       service.abort(OWNER_KEY, PATH, GENERATION_ID);
-      // abort() already aborts synchronously; advancing time must not
-      // trigger a second, redundant abort attempt on a cleared timer.
+      service.error(lease);
       expect(() => vi.advanceTimersByTime(1000)).not.toThrow();
+      expect(lease.abortController.signal.aborted).toBe(true);
+    });
+
+    it('cannot abort a later generation that reused the same key and client generationId', () => {
+      service = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+      );
+      const firstLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(firstLease);
+      const secondLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      vi.advanceTimersByTime(1000);
+
+      expect(firstLease.abortController.signal.aborted).toBe(false);
+      expect(secondLease.abortController.signal.aborted).toBe(true);
+    });
+  });
+
+  describe('a throwing terminal listener does not block other listeners or cleanup', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it.each([
+      ['complete', (lease: GenerationLease) => service.complete(lease)],
+      ['error', (lease: GenerationLease) => service.error(lease, 'boom')],
+    ])('for %s', (_label, settle) => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const attachment = service.attach(OWNER_KEY, PATH)!;
+      const subscriberError = new Error('Subscriber failed');
+      const throwingSubscriber = vi.fn(() => {
+        throw subscriberError;
+      });
+      const healthySubscriber = vi.fn();
+      const disconnectedSubscriber = vi.fn();
+      attachment.emitter.on('terminal', throwingSubscriber);
+      attachment.emitter.on('terminal', healthySubscriber);
+      attachment.emitter.on('terminal', disconnectedSubscriber);
+      attachment.emitter.off('terminal', disconnectedSubscriber);
+      const logError = vi
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      try {
+        expect(() => settle(lease)).not.toThrow();
+
+        expect(throwingSubscriber).toHaveBeenCalledOnce();
+        expect(healthySubscriber).toHaveBeenCalledOnce();
+        expect(disconnectedSubscriber).not.toHaveBeenCalled();
+        expect(logError).toHaveBeenCalledExactlyOnceWith(
+          'Failed to notify generation subscriber',
+          subscriberError.stack,
+        );
+        expect(attachment.emitter.eventNames()).toEqual([]);
+        expect(service.getStatus(OWNER_KEY, PATH)).toBeUndefined();
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        logError.mockRestore();
+      }
     });
   });
 
@@ -362,16 +609,85 @@ describe('ConversationGenerationService', () => {
       const onWarning = vi.fn();
       process.on('warning', onWarning);
       try {
-        service.register(OWNER_KEY, PATH, GENERATION_ID);
+        const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
         const attachment = service.attach(OWNER_KEY, PATH)!;
         for (let i = 0; i < 20; i += 1) {
           attachment.emitter.on('chunk', vi.fn());
         }
-        service.applyChunk(OWNER_KEY, PATH, GENERATION_ID, {}, makeMessage(''));
+        service.applyChunk(lease, {}, makeMessage(''));
         expect(onWarning).not.toHaveBeenCalled();
       } finally {
         process.off('warning', onWarning);
       }
+    });
+  });
+
+  describe('finalization bound — subscriber release without ownership release', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('releases subscribers, timer, and tracking on a never-settling write, but retains the registry key', async () => {
+      const reader = new TestMetricReader();
+      const meterProvider = new MeterProvider({ readers: [reader] });
+      const stopMetrics = initializeRuntimeMetrics(
+        meterProvider.getMeter('test'),
+      );
+      const timed = new ConversationGenerationService(
+        makeConfigService({ GENERATION_FINALIZE_TIMEOUT_MS: 5000 }),
+      );
+      const lease = timed.register(OWNER_KEY, PATH, GENERATION_ID);
+      const attachment = timed.attach(OWNER_KEY, PATH)!;
+      const onTerminal = vi.fn();
+      attachment.emitter.on('terminal', onTerminal);
+
+      timed.beginFinalizing(lease);
+      vi.advanceTimersByTime(5000);
+
+      expect(onTerminal).toHaveBeenCalledOnce();
+      expect(attachment.emitter.eventNames()).toEqual([]);
+      expect(vi.getTimerCount()).toBe(0);
+      /* Ownership is retained: a new register for this owner+path still 409s. */
+      expect(() => timed.register(OWNER_KEY, PATH, 'gen-2')).toThrow(
+        ConflictException,
+      );
+
+      const { resourceMetrics } = await reader.collect();
+      const settling = resourceMetrics.scopeMetrics
+        .flatMap((scope) => scope.metrics)
+        .find(
+          (metric) => metric.descriptor.name === 'dial.chat.generations.active',
+        )
+        ?.dataPoints.find(
+          (point) => point.attributes.state === 'settling',
+        )?.value;
+      expect(settling).toBe(1);
+
+      /* The real write eventually settles — resolve() calls complete(). */
+      timed.complete(lease);
+      expect(() => timed.register(OWNER_KEY, PATH, 'gen-2')).not.toThrow();
+
+      timed.onModuleDestroy();
+      stopMetrics();
+      await meterProvider.shutdown();
+    });
+
+    it('does not cancel or duplicate the write when it later succeeds', () => {
+      const timed = new ConversationGenerationService(
+        makeConfigService({ GENERATION_FINALIZE_TIMEOUT_MS: 5000 }),
+      );
+      const lease = timed.register(OWNER_KEY, PATH, GENERATION_ID);
+      timed.beginFinalizing(lease);
+      vi.advanceTimersByTime(5000);
+
+      expect(lease.abortController.signal.aborted).toBe(false);
+      timed.complete(lease);
+      expect(timed.getStatus(OWNER_KEY, PATH)).toBeUndefined();
+      timed.onModuleDestroy();
     });
   });
 
@@ -405,9 +721,11 @@ describe('ConversationGenerationService', () => {
           .filter((metric) => metric.dataPointType === DataPointType.GAUGE)
           .flatMap((metric) => metric.dataPoints),
       );
-      expect(dataPoints).toHaveLength(1);
-      expect(dataPoints[0].attributes).toEqual({});
-      return dataPoints[0].value;
+      expect(dataPoints.length).toBeGreaterThan(0);
+      return dataPoints.reduce(
+        (sum, point) => sum + (point.value as number),
+        0,
+      );
     };
 
     const getAttachment = (ownerKey = OWNER_KEY) => {
@@ -421,47 +739,49 @@ describe('ConversationGenerationService', () => {
     it('counts concurrent retained generations until each completes or errors', async () => {
       expect(await collectGenerationCount()).toBe(0);
 
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
-      service.register(OTHER_OWNER_KEY, PATH, 'gen-2');
+      const first = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const second = service.register(OTHER_OWNER_KEY, PATH, 'gen-2');
       expect(await collectGenerationCount()).toBe(2);
 
-      service.complete(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(first);
       expect(await collectGenerationCount()).toBe(1);
 
-      service.error(OTHER_OWNER_KEY, PATH, 'gen-2', 'upstream failed');
-      service.error(OTHER_OWNER_KEY, PATH, 'gen-2');
-      service.complete(OWNER_KEY, PATH, GENERATION_ID);
+      service.error(second, 'upstream failed');
       expect(await collectGenerationCount()).toBe(0);
     });
 
-    it('does not count conflicting registrations or finish a mismatched generation', async () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
+    it('does not count conflicting registrations or finish a stale lease', async () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
       expect(() => service.register(OWNER_KEY, PATH, 'gen-2')).toThrow(
         ConflictException,
       );
-      service.complete(OWNER_KEY, PATH, 'gen-2');
-      service.error(OWNER_KEY, PATH, 'gen-2');
+      service.complete(lease);
+      /* The lease is now stale; re-settling it is a no-op. */
+      service.complete(lease);
+      service.error(lease);
 
-      expect(await collectGenerationCount()).toBe(1);
+      expect(await collectGenerationCount()).toBe(0);
     });
 
     it('keeps a stopped generation counted while final persistence is pending', async () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
       service.abort(OWNER_KEY, PATH, GENERATION_ID);
 
       expect(await collectGenerationCount()).toBe(1);
-      service.error(OWNER_KEY, PATH, GENERATION_ID);
+      service.error(lease);
       expect(await collectGenerationCount()).toBe(0);
     });
 
     it('keeps a timed-out generation counted until it leaves the registry', async () => {
-      service = new ConversationGenerationService(makeConfigService(1000));
-      const controller = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+      );
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
       vi.advanceTimersByTime(1000);
 
-      expect(controller.signal.aborted).toBe(true);
+      expect(lease.abortController.signal.aborted).toBe(true);
       expect(await collectGenerationCount()).toBe(1);
-      service.error(OWNER_KEY, PATH, GENERATION_ID);
+      service.error(lease);
       expect(await collectGenerationCount()).toBe(0);
     });
 
@@ -475,33 +795,34 @@ describe('ConversationGenerationService', () => {
       expect(await collectGenerationCount()).toBe(1);
     });
 
-    it('stops counting a stale entry when a later registration evicts it', async () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
-      vi.setSystemTime(Date.now() + 30 * 60 * 1000 + 1);
+    it('keeps a stale entry counted while its worker is still finalizing', async () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      vi.setSystemTime(Date.now() + 31 * 60 * 1000 + 1000);
 
-      service.register(OTHER_OWNER_KEY, PATH, 'gen-2');
+      /* register() for a different owner sweeps but must not remove the entry. */
+      service.register(OTHER_OWNER_KEY, 'another-path', 'gen-2');
 
-      expect(service.getStatus(OWNER_KEY, PATH)).toBeUndefined();
-      expect(await collectGenerationCount()).toBe(1);
-      service.complete(OWNER_KEY, PATH, GENERATION_ID);
+      expect(service.getStatus(OWNER_KEY, PATH)).toBe(GenerationStatus.Active);
+      expect(await collectGenerationCount()).toBe(2);
+      service.error(lease, '');
       expect(await collectGenerationCount()).toBe(1);
     });
 
-    it('counts a replacement once when a stopped generation is overwritten', async () => {
-      service.register(OWNER_KEY, PATH, GENERATION_ID);
+    it('rejects a registration attempt while a stopped generation’s save is pending, keeping one entry', async () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
       service.abort(OWNER_KEY, PATH, GENERATION_ID);
-      service.register(OWNER_KEY, PATH, 'gen-2');
+      expect(() => service.register(OWNER_KEY, PATH, 'gen-2')).toThrow(
+        ConflictException,
+      );
 
       expect(await collectGenerationCount()).toBe(1);
-      service.error(OWNER_KEY, PATH, GENERATION_ID);
-      expect(await collectGenerationCount()).toBe(1);
-      service.complete(OWNER_KEY, PATH, 'gen-2');
+      service.error(lease);
       expect(await collectGenerationCount()).toBe(0);
     });
 
     it('releases retained generations, timers, and listeners on module shutdown', async () => {
-      const controller = service.register(OWNER_KEY, PATH, GENERATION_ID);
-      const secondController = service.register(OTHER_OWNER_KEY, PATH, 'gen-2');
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const secondLease = service.register(OTHER_OWNER_KEY, PATH, 'gen-2');
       service.abort(OTHER_OWNER_KEY, PATH, 'gen-2');
       const attachment = getAttachment();
       const onTerminal = vi.fn(() => service.attach(OWNER_KEY, PATH));
@@ -513,8 +834,8 @@ describe('ConversationGenerationService', () => {
       service.onModuleDestroy();
       service.onModuleDestroy();
 
-      expect(controller.signal.aborted).toBe(true);
-      expect(secondController.signal.aborted).toBe(true);
+      expect(lease.abortController.signal.aborted).toBe(true);
+      expect(secondLease.abortController.signal.aborted).toBe(true);
       expect(onTerminal).toHaveBeenCalledExactlyOnceWith({ type: 'stopped' });
       expect(onTerminal.mock.results[0].value).toBeDefined();
       expect(secondOnTerminal).toHaveBeenCalledExactlyOnceWith({
@@ -528,8 +849,8 @@ describe('ConversationGenerationService', () => {
     });
 
     it('notifies and cleans up every shutdown attachment even when one subscriber throws', async () => {
-      const controller = service.register(OWNER_KEY, PATH, GENERATION_ID);
-      const secondController = service.register(OTHER_OWNER_KEY, PATH, 'gen-2');
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const secondLease = service.register(OTHER_OWNER_KEY, PATH, 'gen-2');
       const attachment = getAttachment();
       const secondAttachment = getAttachment(OTHER_OWNER_KEY);
       const subscriberError = new Error('Subscriber failed');
@@ -564,11 +885,11 @@ describe('ConversationGenerationService', () => {
           type: 'stopped',
         });
         expect(logError).toHaveBeenCalledExactlyOnceWith(
-          'Failed to notify generation subscriber during shutdown',
+          'Failed to notify generation subscriber',
           subscriberError.stack,
         );
-        expect(controller.signal.aborted).toBe(true);
-        expect(secondController.signal.aborted).toBe(true);
+        expect(lease.abortController.signal.aborted).toBe(true);
+        expect(secondLease.abortController.signal.aborted).toBe(true);
         expect(attachment.emitter.eventNames()).toEqual([]);
         expect(secondAttachment.emitter.eventNames()).toEqual([]);
         expect(service.attach(OWNER_KEY, PATH)).toBeUndefined();
@@ -578,6 +899,113 @@ describe('ConversationGenerationService', () => {
       } finally {
         logError.mockRestore();
       }
+    });
+  });
+
+  describe('race matrix — overlapping cleanup paths settle an entry exactly once', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it.each([
+      [
+        'stop then error',
+        (lease: GenerationLease) => {
+          service.abort(OWNER_KEY, PATH, GENERATION_ID);
+          service.error(lease);
+        },
+      ],
+      [
+        'expiry then error',
+        (lease: GenerationLease) => {
+          vi.setSystemTime(Date.now() + 31 * 60 * 1000 + 1000);
+          /* Triggers the sweep; settle it too so it doesn't leak into assertions. */
+          const sweepTrigger = service.register(
+            OTHER_OWNER_KEY,
+            'another-path',
+            'gen-x',
+          );
+          service.complete(sweepTrigger);
+          service.error(lease, '');
+        },
+      ],
+      [
+        'max-duration timeout then error',
+        (lease: GenerationLease) => {
+          vi.advanceTimersByTime(1000);
+          service.error(lease, '');
+        },
+      ],
+      [
+        'complete then repeated complete',
+        (lease: GenerationLease) => {
+          service.complete(lease);
+          service.complete(lease);
+        },
+      ],
+      [
+        'error then repeated error',
+        (lease: GenerationLease) => {
+          service.error(lease, 'boom');
+          service.error(lease, 'boom');
+        },
+      ],
+      [
+        'shutdown after stop',
+        (_lease: GenerationLease) => {
+          service.abort(OWNER_KEY, PATH, GENERATION_ID);
+          service.onModuleDestroy();
+        },
+      ],
+    ])(
+      '%s delivers exactly one terminal event and releases once',
+      (_label, run) => {
+        service = new ConversationGenerationService(
+          makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+        );
+        const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+        const attachment = service.attach(OWNER_KEY, PATH)!;
+        const onTerminal = vi.fn();
+        const disconnected = vi.fn();
+        attachment.emitter.on('terminal', onTerminal);
+        attachment.emitter.on('terminal', disconnected);
+        attachment.emitter.off('terminal', disconnected);
+
+        run(lease);
+
+        expect(onTerminal).toHaveBeenCalledOnce();
+        expect(disconnected).not.toHaveBeenCalled();
+        expect(service.getStatus(OWNER_KEY, PATH)).toBeUndefined();
+        expect(vi.getTimerCount()).toBe(0);
+        service.onModuleDestroy();
+      },
+    );
+
+    it('a late callback from a generation whose client generationId was reused by a new one is a no-op', () => {
+      const firstLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(firstLease);
+      const secondLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const attachment = service.attach(OWNER_KEY, PATH)!;
+      const onTerminal = vi.fn();
+      attachment.emitter.on('terminal', onTerminal);
+
+      /* The old lease's late callbacks must never touch the replacement. */
+      service.complete(firstLease);
+      service.error(firstLease, 'late');
+      service.seedAssembledMessage(firstLease, makeMessage('late'));
+      service.applyChunk(firstLease, {}, makeMessage('late'));
+
+      expect(onTerminal).not.toHaveBeenCalled();
+      expect(service.getStatus(OWNER_KEY, PATH)).toBe(GenerationStatus.Active);
+      expect(service.attach(OWNER_KEY, PATH)?.assembledMessage.content).toBe(
+        '',
+      );
+
+      service.complete(secondLease);
     });
   });
 });

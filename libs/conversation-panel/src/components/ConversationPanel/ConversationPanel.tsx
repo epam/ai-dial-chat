@@ -76,6 +76,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       typography,
       newChatButton: newChatButtonColors,
       searchWrapperClassName,
+      headerClassName,
+      headerActionsClassName,
+      newChatButtonClassName,
     } = panelStyles ?? {};
 
     const {
@@ -413,7 +416,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           bodyClassName: 'flex flex-col overflow-hidden p-0 gap-3',
           cssVars,
           titleClassName: typography?.fontClassName,
-          headerClassName: 'h-[64px]',
+          headerClassName: mergeClasses('h-[64px]', headerClassName),
+          headerActionsClassName,
           className: mergeClasses(
             isOpen ? 'w-[324px] mobile:w-full' : 'w-0',
             className,
@@ -426,6 +430,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           onClick={onNewChat}
           labelClassName={typography?.newChatLabelClassName}
           colors={newChatButtonColors}
+          className={newChatButtonClassName}
         />
 
         <div
@@ -468,7 +473,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                 : ''}
         </span>
 
-        <div className="flex-1 overflow-hidden py-1 pe-3 ps-2">
+        <div className="flex-1 overflow-hidden px-3 py-1">
           {isLoading ? (
             <div className="flex flex-col gap-3 px-2 py-3">
               {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (

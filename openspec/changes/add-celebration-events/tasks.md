@@ -27,3 +27,11 @@
 - Documentation validation and strict OpenSpec validation passed. Production output contains separate Halloween, New Year and shared FlyingCharacters chunks.
 - Isolated component previews passed at 360, 900, 1280 and 1920 widths, including light/dark themes and RTL. Reduced-motion checks found no running animations for snow, confetti, sleighs, witches or bats; effects allow interaction with the underlying interface and do not create horizontal overflow.
 - verify:changed and the single verify:full run stop at existing type errors in chat-shared FileManager ToolbarOptions.tabs and chat-api auth-metrics tests. A separate app typecheck has existing ScheduledTaskCreate/EditPage label and UsageTab export/type errors; no event-related type errors remain. Unrelated files were not changed to bypass those failures.
+
+## Integration with development (2026-09-24)
+
+- Merged development at c9c2f0753 in an isolated worktree. Preserved both sets of additions in environment-validation tests, translation keys and English translations.
+- Updated two development test fixtures for activeEventId and removed an unsupported Testing Library query option. Loaded the small generic decoration wrapper eagerly so its own chunk cannot bypass event error isolation; event artwork remains lazy.
+- Focused frontend/event/configuration/composer/catalog tests and 289 backend tests passed. Frontend, backend and generated-client builds, lint for 36 projects, changed-file formatting, documentation validation and strict OpenSpec validation passed. Official OpenAPI regeneration produced no drift.
+- The original type-check blockers above have been resolved by development. Full-workspace type checks, including the scheduled-tasks consumer fixture, passed after restoring local dependencies and giving the fixture registry access.
+- Clean npm ci encountered an upstream ETARGET for development's webpack-cli@7.2.3. Verification used a separate copy of installed dependencies, with all 1,854 installed non-optional package versions matching the merged lockfile and UI Kit's updated tarball verified against its integrity hash.

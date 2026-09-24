@@ -194,6 +194,34 @@ describe('ScheduledTasks', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
+  it('keeps loaded cards visible and retries only a failed later page', async () => {
+    const onRetryLoadMore = vi.fn();
+    renderScheduledTasks({
+      items: [buildItem()],
+      loadMoreError: new Error('later page failed'),
+      onRetryLoadMore,
+      labels: {
+        title: 'Scheduled tasks',
+        subtitle: 'Automate recurring tasks with scheduled runs.',
+        createButtonLabel: 'New task',
+        searchPlaceholder: 'Search scheduled tasks...',
+        searchAriaLabel: 'Search scheduled tasks by name',
+        clearSearchLabel: 'Clear scheduled tasks search',
+        sortLabel: 'Sort',
+        sortOptions: [],
+        emptyStateLabel: 'No scheduled tasks yet',
+        noResultsLabel: 'No results',
+        errorLabel: 'Something went wrong',
+        loadMoreErrorLabel: 'Could not load more',
+        retryLabel: 'Retry more',
+      },
+    });
+
+    expect(screen.getByText('Competitor Updates')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Retry more' }));
+    expect(onRetryLoadMore).toHaveBeenCalledOnce();
+  });
+
   it('renders the empty state when the source item list is empty', () => {
     renderScheduledTasks({ items: [] });
 

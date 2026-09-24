@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
+    "outDir": "out-tsc/lib",
     "types": [
       "node",
       "@nx/react/typings/cssmodule.d.ts",
@@ -12,7 +12,7 @@
     "jsx": "react-jsx",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
+    "tsBuildInfoFile": "out-tsc/lib/tsconfig.lib.tsbuildinfo",
     "ignoreDeprecations": "6.0"
   },
   "exclude": [
@@ -44,9 +44,6 @@
   ],
   "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
   "references": [
-    {
-      "path": "../chat-api-client/tsconfig.lib.json"
-    },
     {
       "path": "../chat-shared/tsconfig.lib.json"
     }

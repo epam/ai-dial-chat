@@ -170,13 +170,13 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       maxWidth={maxWidth}
       onResizeStop={onResizeStop}
       rightActions={
-        hasFilesOrSources && (
+        hasFilesOrSources &&
+        onDownloadAll && (
           <GhostIconButton
             icon={<IconDownload {...BASE_LG_ICON_PROPS} />}
             aria-label={labels.downloadAllLabel}
             tooltipProps={{ tooltip: labels.downloadAllLabel }}
             onClick={onDownloadAll}
-            disabled={!onDownloadAll}
           />
         )
       }

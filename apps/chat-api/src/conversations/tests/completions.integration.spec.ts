@@ -17,9 +17,11 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
 import type { SessionUser } from '../../auth/session/session.types';
+import { SSE_RELEASE_TIMEOUT_MS } from '../../common/utils/sse';
 import {
   ConversationGenerationService,
   GenerationStatus,
+  type GenerationLease,
 } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
@@ -428,6 +430,10 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
     authSource: AuthSource.Cookie,
   } as unknown as ExpressRequest;
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('detaches the response once buffered output exceeds SSE_COMPLETION_MAX_BUFFERED_BYTES, while the generator keeps running to completion', async () => {
     const pendingCallbacks: Array<() => void> = [];
     const res = new Writable({
@@ -468,18 +474,43 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
       mockGenerationService as unknown as ConversationGenerationService,
     );
 
-    await controller.streamCompletion(
+    /*
+     * Only `setTimeout` is faked, so the bounded release below can be
+     * advanced without a 15s test while `setImmediate` stays real for the
+     * poll loop.
+     */
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    const stalled = res as unknown as Writable;
+    const handled = controller.streamCompletion(
       TEST_REQUEST,
       res,
       VALID_COMPLETION_BODY as unknown as SendCompletionDto,
       undefined,
     );
 
+    while (!stalled.writableEnded) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    await vi.advanceTimersByTimeAsync(SSE_RELEASE_TIMEOUT_MS);
+    await handled;
+
     expect(reachedNaturalEnd).toBe(true);
     // Fewer writes actually reached the underlying stream than were yielded
     // (plus the init comment) — proof that the response was detached instead
     // of continuing to buffer every chunk without bound.
     expect(pendingCallbacks.length).toBeLessThan(totalChunks + 1);
+
+    /*
+     * Detaching is only half the contract: the handler owns terminating a
+     * response that is slow rather than closed, so the response must reach a
+     * terminal state instead of being left open with its backlog buffered.
+     * The stalled `write` above never calls back, so `'finish'` cannot fire
+     * and the release falls through to its bounded `res.destroy()`.
+     * `completion-response-lifecycle.spec.ts` covers the rest of the state
+     * machine, including the graceful branch.
+     */
+    expect(stalled.writableEnded).toBe(true);
+    expect(stalled.destroyed).toBe(true);
   });
 });
 
@@ -708,6 +739,7 @@ describe('generation ownership isolation (real registry)', () => {
   let app: INestApplication;
   let generationService: ConversationGenerationService;
   let principal: { user: SessionUser; authSource: AuthSource };
+  let currentLease: GenerationLease | undefined;
 
   const headerUser = (
     providerId: string,
@@ -758,7 +790,7 @@ describe('generation ownership isolation (real registry)', () => {
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
-        generationService.register(
+        currentLease = generationService.register(
           args[9] as string,
           args[0] as string,
           args[3] as string,
@@ -879,7 +911,7 @@ describe('generation ownership isolation (real registry)', () => {
 
     const attachPromise = attachToGeneration();
     setTimeout(() => {
-      generationService.complete('h:provider-1:subject-1', PATH, GEN_ID);
+      generationService.complete(currentLease!);
     }, 20);
     const attachRes = await attachPromise.expect(200);
     expect(attachRes.text).toContain('"type":"snapshot"');

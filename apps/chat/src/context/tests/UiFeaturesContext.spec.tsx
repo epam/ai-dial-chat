@@ -25,6 +25,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       mcpAppSandboxUrl: null,
       mcpAppTheme: null,
       mcpAppUserAgent: null,
+      mcpAppHostName: null,
       fileManagerTabs: [],
       overlayEnabled: false,
       overlayAllowedOrigins: [],
@@ -38,6 +39,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       customVisualizers: [],
       applicationVisualizers: {},
       publicationFilterSources: ['title', 'role', 'dial_roles'],
+      maxAttachmentFileSizeBytes: 536_870_912,
     },
   } satisfies AppConfigState);
 

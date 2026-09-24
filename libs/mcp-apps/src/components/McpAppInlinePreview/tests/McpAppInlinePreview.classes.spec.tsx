@@ -61,6 +61,7 @@ const cache: McpAppResponseCache = {
 
 const hostAdapter: McpAppHostAdapter = {
   hostContext: {} as McpAppHostAdapter['hostContext'],
+  hostInfo: { name: 'host', version: '1.0.0' },
   sandboxUrl: 'https://sandbox.example',
   fetchResourceHtml: vi.fn(async () => response.html),
   callTool: vi.fn(async () => ({
@@ -79,6 +80,7 @@ const renderPreview = () =>
       expandAriaLabel="Expand"
       reloadAriaLabel="Reload"
       loadErrorLabel="Could not load the app"
+      openedInCanvasLabel="Opened in canvas"
     />,
   );
 
@@ -107,6 +109,7 @@ describe('McpAppInlinePreview — public class names', () => {
         expandAriaLabel="Expand"
         reloadAriaLabel="Reload"
         loadErrorLabel="Could not load the app"
+        openedInCanvasLabel="Opened in canvas"
         colors={{
           previewBackground: 'rgb(1, 2, 3)',
           previewBorder: 'rgb(4, 5, 6)',

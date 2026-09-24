@@ -699,7 +699,7 @@ describe('annotationsToPdfHighlights', () => {
     expect(highlights[1].id).toBe('1');
   });
 
-  it('uses array position as id when annotation.index is absent', () => {
+  it('derives distinct ids from the annotations themselves when annotation.index is absent', () => {
     const annotations: Annotation[] = [
       {
         body: {
@@ -722,9 +722,14 @@ describe('annotationsToPdfHighlights', () => {
 
     const highlights = annotationsToPdfHighlights(annotations);
 
+    /* Without an `index`, the id comes from the annotation's own identity
+       rather than its array position, so two citations of one page stay
+       distinguishable (issue #8907). Ids must also survive being interpolated
+       into the viewer's `[data-term-id="<id>"]` selectors. */
     expect(highlights).toHaveLength(2);
-    expect(highlights[0].id).toBe('0');
-    expect(highlights[1].id).toBe('1');
+    expect(highlights[0].id).not.toBe(highlights[1].id);
+    expect(highlights[0].id).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(highlights[1].id).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 
   it('skips annotations with no pdf_bbox selectors', () => {

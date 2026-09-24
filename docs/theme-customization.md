@@ -33,8 +33,8 @@ the themes host takes up to 5 minutes (plus that host's own cache) to appear.
 
 When `THEMES_CONFIG_URL` is unset, the configuration request fails, the
 application logs the failure and continues with its built-in palette: the
-light-theme hex fallbacks compiled into `tailwind.config.js`. The user menu then
-offers no theme entries at all.
+light-theme hex fallbacks compiled into `tailwind.config.js`. The Preferences
+tab then shows no theme row at all.
 
 ### Configuration file format
 
@@ -93,22 +93,38 @@ page; it is independent of the light/dark theme choice.
 
 ### Theme ids and the theme picker
 
-The picker in the user menu is driven by the ids present in the configuration:
+The picker lives on **Settings → Preferences** and offers **every theme in the
+configuration**, in the order the file lists them — whatever ids they use:
 
-| Configured ids     | Picker shows            |
-| ------------------ | ----------------------- |
-| `light` and `dark` | Light, Dark, and System |
-| only one of them   | just that one entry     |
-| neither            | no theme entries        |
+| Configured themes                | Picker shows                           |
+| -------------------------------- | -------------------------------------- |
+| `light` and `dark`               | Light, Dark, System                    |
+| `light`, `dark`, `contoso-night` | Light, Dark, Contoso Night, System     |
+| `light` and `contoso-night`      | Light, Contoso Night (no System entry) |
+| one theme only                   | no picker at all                       |
+| none                             | no picker at all                       |
 
-`System` is offered only when both `light` and `dark` exist; it follows
-`prefers-color-scheme` and re-resolves when the OS setting changes. The
-selection is stored in the browser's local storage, so it is per user and per
-device.
+The row is hidden entirely below two options: a select whose only action is to
+reselect the current value is noise, not a choice.
 
-Ids other than `light`, `dark`, and `system` can be present in the file, but the
-picker has no entry for them. They are reachable only through the overlay's
-`theme` option (see below).
+`System` is not a theme in the file — it is a synthetic entry that follows
+`prefers-color-scheme`, so it is offered only when **both** `light` and `dark`
+are configured, and it re-resolves when the OS setting changes. A stored
+`system` preference is likewise honoured only while both still exist; if one is
+removed from the configuration the user falls back to `light` rather than to a
+theme that is not there.
+
+Labels come from the application's translations for `light`, `dark`, and
+`system`. Any other id is labelled with its own `displayName` from the
+configuration file (falling back to the raw id when `displayName` is empty) —
+those labels are **not** translatable, which is the trade-off for supporting
+arbitrary ids.
+
+The selection is stored in the browser's local storage, so it is per user and
+per device, and it survives a reload. A user who has never chosen gets `light`,
+regardless of which theme the file lists first. A deployment that configures no
+`light` theme therefore renders in the built-in Tailwind light palette until the
+user picks something.
 
 ### Logos and icons
 
@@ -398,6 +414,13 @@ Inside this application the middle tier resolves, so libs pick up the deployment
 theme automatically. In a project without these tokens the hex fallback applies,
 and a host can still override individual values through each component's
 `styles={{ colors, typography }}` prop.
+
+For composed surfaces, import the library's documented stylesheet once rather
+than a private dependency stylesheet. For example,
+`@epam/ai-dial-scheduled-tasks/styles.css` includes the structural
+builder-form CSS needed by its form while UI Kit base/theme CSS remains a
+singleton host import. This preserves the same token cascade without coupling
+an embedding app to the scheduler's private composition.
 
 The chain is exactly three tiers. The middle tier names the current token only —
 it does not carry the pre-0.14 aliases that `tailwind.config.js` keeps for its

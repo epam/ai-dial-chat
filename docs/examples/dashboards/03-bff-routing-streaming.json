@@ -418,7 +418,7 @@
     },
     {
       "title": "Unrecognized Responses event types / second",
-      "description": "Unexpected event types, not necessarily failed generations. Missing series may mean no events or missing telemetry. Current label sanitizes/truncates strings but is not a finite allowlist.",
+      "description": "Unexpected event types, not necessarily failed generations. An empty panel is the ordinary state: the counter is created on its first unrecognized event, and a deployment that never routes to the Responses API can never produce one. Any series here means the upstream Responses protocol emitted a type the adapter does not handle. Current label sanitizes/truncates strings but is not a finite allowlist.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -437,7 +437,7 @@
           },
           "unit": "ops",
           "min": 0,
-          "noValue": "No samples",
+          "noValue": "No unrecognized events",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",

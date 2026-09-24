@@ -16,18 +16,6 @@ export default defineConfig(() => ({
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
     }),
   ],
-  resolve: {
-    /*
-     * Resolve chat-shared from source: its published bundle imports `.scss`
-     * modules that are not emitted to `dist`, which vitest cannot load.
-     */
-    alias: {
-      '@epam/ai-dial-chat-shared': path.resolve(
-        import.meta.dirname,
-        '../chat-shared/src/index.ts',
-      ),
-    },
-  },
   build: {
     outDir: './dist',
     emptyOutDir: true,
@@ -36,10 +24,13 @@ export default defineConfig(() => ({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        'parameters-popup': 'src/entry-points/parameters-popup.ts',
+      },
       name: '@epam/ai-dial-prompts',
-      fileName: 'index',
       formats: ['es' as const],
+      cssFileName: 'index',
     },
     rolldownOptions: {
       external: [
@@ -59,12 +50,16 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'jsdom',
     /*
-     * Resolve catalog from source for tests only: its published bundle
-     * imports `.scss` modules that are not emitted to `dist`, which vitest
-     * cannot load. Kept out of the shared `resolve.alias` so it never
+     * Resolve workspace peers from source for tests only: their published
+     * bundles import `.scss` modules that are not emitted to `dist`, which
+     * vitest cannot load. Kept out of the shared `resolve.alias` so it never
      * affects this lib's own production build.
      */
     alias: {
+      '@epam/ai-dial-chat-shared': path.resolve(
+        import.meta.dirname,
+        '../chat-shared/src/index.ts',
+      ),
       '@epam/ai-dial-catalog': path.resolve(
         import.meta.dirname,
         '../catalog/src/index.ts',

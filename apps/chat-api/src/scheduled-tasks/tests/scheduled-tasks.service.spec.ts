@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ForbiddenException,
   ConflictException,
   Logger,
   NotFoundException,
@@ -8,8 +9,190 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ScheduledTasksService } from '../scheduled-tasks.service';
+import { ScheduledTaskErrorCode } from '../types/scheduled-task-error-code.enum';
 
 let fetchMock: ReturnType<typeof vi.fn>;
+
+describe('scheduled task skill persistence and validation', () => {
+  const body = {
+    displayName: 'Skill task',
+    model: 'model',
+    prompt: '',
+    trigger: { date: '2026-12-01T09:00:00Z' },
+    skillUrl: 'skills/public/report',
+  };
+  const setup = (support: boolean | undefined = true) => {
+    let saved = {
+      id: 'task',
+      display_name: body.displayName,
+      trigger: body.trigger,
+      properties: {
+        payload: {
+          model: body.model,
+          messages: [
+            {
+              role: 'user',
+              content: '',
+              custom_content: { skills: [{ url: body.skillUrl }] },
+            },
+          ],
+        },
+      },
+    };
+    fetchMock = vi.fn((_url, init) => {
+      if (init.method !== 'GET') saved = { ...saved, ...JSON.parse(init.body) };
+      return Promise.resolve({ ok: true, json: async () => saved });
+    });
+    const cache = makeCacheManager();
+    const deployments = {
+      resolveDeploymentItem: vi
+        .fn()
+        .mockResolvedValue({ features: { skillsSupported: support } }),
+    };
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler') as never,
+      cache as never,
+      deployments as never,
+    );
+    return { service, cache, deployments };
+  };
+
+  it.each(['model', 'applications/bucket/agent'])(
+    'round-trips a skill-only task for %s with the session identity',
+    async (model) => {
+      const { service, deployments } = setup();
+      expect(
+        await service.createScheduledTask(
+          'user',
+          'token',
+          { ...body, model },
+          'bucket',
+        ),
+      ).toMatchObject({ prompt: '', skillUrl: body.skillUrl });
+      expect(deployments.resolveDeploymentItem).toHaveBeenCalledWith(
+        model,
+        'token',
+        'bucket',
+      );
+      expect(await service.getScheduledTask('token', 'task')).toMatchObject({
+        skillUrl: body.skillUrl,
+      });
+      expect(
+        await service.updateScheduledTask('user', 'token', 'task', {
+          ...body,
+          skillUrl: undefined,
+        }),
+      ).toMatchObject({ skillUrl: body.skillUrl });
+      expect(
+        await service.updateScheduledTask('user', 'token', 'task', {
+          ...body,
+          skillUrl: 'skills/public/other',
+        }),
+      ).toMatchObject({ skillUrl: 'skills/public/other' });
+      expect(
+        await service.updateScheduledTask('user', 'token', 'task', {
+          ...body,
+          prompt: 'Instructions',
+          skillUrl: null,
+        }),
+      ).toMatchObject({ prompt: 'Instructions', skillUrl: undefined });
+      const sent = JSON.parse(fetchMock.mock.calls.at(-1)![1].body);
+      expect(sent.properties.payload.messages[0]).not.toHaveProperty(
+        'custom_content',
+      );
+    },
+  );
+
+  it.each([false, undefined])(
+    'rejects unsupported or missing capability %s without mutation',
+    async (support) => {
+      const { service, deployments, cache } = setup();
+      deployments.resolveDeploymentItem.mockResolvedValue({
+        features: { skillsSupported: support },
+      });
+      await expect(
+        service.createScheduledTask('user', 'token', body),
+      ).rejects.toMatchObject({
+        response: {
+          code: ScheduledTaskErrorCode.SkillUnsupported,
+          field: 'skillUrl',
+        },
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+      await expect(
+        service.updateScheduledTask('user', 'token', 'task', {
+          ...body,
+          skillUrl: undefined,
+        }),
+      ).rejects.toMatchObject({
+        response: { code: ScheduledTaskErrorCode.SkillUnsupported },
+      });
+      expect(
+        fetchMock.mock.calls.every(([, init]) => init.method === 'GET'),
+      ).toBe(true);
+      expect(cache.set).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects empty content on create and removal of the only content on update', async () => {
+    const { service, cache, deployments } = setup();
+    await expect(
+      service.createScheduledTask('user', 'token', {
+        ...body,
+        prompt: '  ',
+        skillUrl: null,
+      }),
+    ).rejects.toMatchObject({
+      response: { code: ScheduledTaskErrorCode.InstructionsOrSkillRequired },
+    });
+    await expect(
+      service.updateScheduledTask('user', 'token', 'task', {
+        ...body,
+        skillUrl: null,
+      }),
+    ).rejects.toMatchObject({
+      response: { code: ScheduledTaskErrorCode.InstructionsOrSkillRequired },
+    });
+    expect(deployments.resolveDeploymentItem).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
+  });
+
+  it('does not require deployment lookup for instructions only', async () => {
+    const { service, deployments } = setup();
+    await service.createScheduledTask('user', 'token', {
+      ...body,
+      prompt: 'Instructions',
+      skillUrl: undefined,
+    });
+    expect(deployments.resolveDeploymentItem).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    null,
+    new NotFoundException(),
+    new ForbiddenException(),
+    new BadGatewayException(),
+    new ServiceUnavailableException(),
+  ])('preserves lookup failures without mutation: %s', async (failure) => {
+    const { service, deployments, cache } = setup();
+    if (failure) deployments.resolveDeploymentItem.mockRejectedValue(failure);
+    else deployments.resolveDeploymentItem.mockResolvedValue(null);
+    const result = service.createScheduledTask('user', 'token', body);
+    if (
+      !failure ||
+      failure instanceof NotFoundException ||
+      failure instanceof ForbiddenException
+    ) {
+      await expect(result).rejects.toMatchObject({
+        response: { code: ScheduledTaskErrorCode.DeploymentUnavailable },
+        status: failure?.getStatus() ?? 404,
+      });
+    } else await expect(result).rejects.toBe(failure);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
+  });
+});
 
 const makeConfigService = (
   schedulerAppId?: string,
@@ -63,6 +246,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService(undefined) as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await expect(
@@ -86,6 +270,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.getScheduledTask('token', 'sched_123');
@@ -115,6 +300,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token');
@@ -136,6 +322,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', {
@@ -165,6 +352,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', {
@@ -187,6 +375,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', { search: '' });
@@ -213,6 +402,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await service.listScheduledTasks('user-1', 'token', {
@@ -235,6 +425,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token');
@@ -255,6 +446,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', {
@@ -287,6 +479,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', { search: 'daily' });
@@ -305,6 +498,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token', { search: 'daily' });
@@ -341,6 +535,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     const result = await service.listScheduledTasks('user-1', 'token');
@@ -382,6 +577,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.createScheduledTask('user-1', 'token', {
@@ -418,6 +614,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app', 10_000, '') as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await expect(
@@ -436,6 +633,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app', 10_000, '') as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await expect(
@@ -463,6 +661,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app', 10_000, '') as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await expect(
@@ -483,6 +682,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await service.listScheduledTasks('user-1', 'token');
@@ -510,6 +710,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       cacheManager as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     await expect(
@@ -538,6 +739,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await service.listScheduledTaskRuns('token', 'sched_123', {
@@ -560,6 +762,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await service.listScheduledTaskRuns('token', 'sched_123');
@@ -611,6 +814,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       const result = await service.listScheduledTaskRuns('token', 'sched_123');
@@ -635,6 +839,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       const result = await service.listScheduledTaskRuns('token', 'sched_123');
@@ -651,6 +856,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await service.listScheduledTaskRuns('token', 'sched_123');
@@ -664,6 +870,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService(undefined) as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -691,6 +898,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       const result = await service.pauseScheduledTask(
@@ -732,6 +940,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       const result = await service.resumeScheduledTask(
@@ -760,6 +969,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await service.pauseScheduledTask('user-1', 'token', 'sched_123');
@@ -782,6 +992,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -806,6 +1017,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -835,6 +1047,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       const result = await service.resumeScheduledTask(
@@ -857,6 +1070,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService(undefined) as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -877,6 +1091,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await service.deleteScheduledTask('user-1', 'token', 'sched_123');
@@ -903,6 +1118,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -922,6 +1138,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -945,6 +1162,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -968,6 +1186,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -986,6 +1205,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService('scheduler-app') as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -998,6 +1218,7 @@ describe('ScheduledTasksService', () => {
         makeDialClient(),
         makeConfigService(undefined) as never,
         makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
       );
 
       await expect(
@@ -1028,6 +1249,7 @@ describe('ScheduledTasksService', () => {
       makeDialClient(),
       makeConfigService('scheduler-app', 25) as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
     const request = service

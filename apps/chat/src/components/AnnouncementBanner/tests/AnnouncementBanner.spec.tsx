@@ -1,7 +1,7 @@
 import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import AnnouncementBanner from '../AnnouncementBanner';
@@ -260,6 +260,113 @@ describe('AnnouncementBanner — structured layout', () => {
     const paragraph = screen.getByRole('paragraph');
     expect(paragraph.className).toContain('text-start');
     expect(paragraph.className).not.toContain('text-center');
+  });
+});
+
+describe('AnnouncementBanner — expanding clipped text', () => {
+  const VISIBLE_WIDTH = 100;
+  const EXPAND_NAME = 'announcementBanner.expandLabel';
+  const COLLAPSE_NAME = 'announcementBanner.collapseLabel';
+
+  /* jsdom lays nothing out, so every element reports zero for both widths and
+     the banner would never consider its text clipped. Stubbing the pair on the
+     prototype is the only way to reach the disclosure control from a unit
+     test. */
+  const stubWidths = (scrollWidth: number) => {
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+      configurable: true,
+      get: () => VISIBLE_WIDTH,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
+      configurable: true,
+      get: () => scrollWidth,
+    });
+  };
+
+  beforeEach(() => {
+    resetState();
+    mockAppConfigState.announcementTitle = 'Welcome to the new DIAL Chat';
+    mockAppConfigState.announcementDescription =
+      'Our first release — a cleaner UI and faster answers.';
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(HTMLElement.prototype, 'clientWidth');
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollWidth');
+  });
+
+  it('offers no disclosure control while the whole text is visible', () => {
+    stubWidths(VISIBLE_WIDTH);
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('button', { name: EXPAND_NAME })).toBeNull();
+  });
+
+  it('offers a disclosure control once the text is clipped', () => {
+    stubWidths(VISIBLE_WIDTH * 3);
+    render(<AnnouncementBanner />);
+
+    const toggle = screen.getByRole('button', { name: EXPAND_NAME });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-controls')).toBe(
+      screen.getByRole('paragraph').id,
+    );
+  });
+
+  it('reveals the full text when the control is used', async () => {
+    stubWidths(VISIBLE_WIDTH * 3);
+    render(<AnnouncementBanner />);
+
+    await userEvent.click(screen.getByRole('button', { name: EXPAND_NAME }));
+
+    /* Clipping is what hides the text, so the fix is the absence of the class
+       that clips — there is no semantic query for "no longer truncated". */
+    expect(
+      screen.getByText('Welcome to the new DIAL Chat').className,
+    ).not.toContain('truncate');
+    expect(
+      screen.getByText('Our first release — a cleaner UI and faster answers.')
+        .className,
+    ).not.toContain('truncate');
+  });
+
+  it('reports the expanded state and offers the way back', async () => {
+    stubWidths(VISIBLE_WIDTH * 3);
+    render(<AnnouncementBanner />);
+
+    await userEvent.click(screen.getByRole('button', { name: EXPAND_NAME }));
+
+    const toggle = screen.getByRole('button', { name: COLLAPSE_NAME });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    await userEvent.click(toggle);
+
+    expect(
+      screen.getByText('Welcome to the new DIAL Chat').className,
+    ).toContain('truncate');
+  });
+
+  /* Expanded text no longer overflows, so a fresh measurement would report
+     nothing hidden and take the control away mid-interaction — leaving the
+     banner stuck open. */
+  it('keeps the control available after expanding', async () => {
+    stubWidths(VISIBLE_WIDTH * 3);
+    render(<AnnouncementBanner />);
+
+    await userEvent.click(screen.getByRole('button', { name: EXPAND_NAME }));
+    stubWidths(VISIBLE_WIDTH);
+
+    expect(screen.getByRole('button', { name: COLLAPSE_NAME })).toBeTruthy();
+  });
+
+  it('renders no disclosure control in the legacy layout, which wraps', () => {
+    stubWidths(VISIBLE_WIDTH * 3);
+    mockAppConfigState.announcementTitle = null;
+    mockAppConfigState.announcementDescription = null;
+    mockAppConfigState.announcementHtml = 'A long legacy announcement message';
+    render(<AnnouncementBanner />);
+
+    expect(screen.queryByRole('button', { name: EXPAND_NAME })).toBeNull();
   });
 });
 

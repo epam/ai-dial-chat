@@ -70,6 +70,20 @@ describe('getApiErrorMessage', () => {
 });
 
 describe('getApiErrorDetails', () => {
+  it('preserves a domain code without consuming the response', async () => {
+    const response = new Response(
+      JSON.stringify({
+        message: 'Unsupported',
+        code: 'scheduledTaskSkillUnsupported',
+      }),
+      { status: 400 },
+    );
+    await expect(getApiErrorDetails({ response })).resolves.toMatchObject({
+      status: 400,
+      code: 'scheduledTaskSkillUnsupported',
+    });
+    expect(response.bodyUsed).toBe(false);
+  });
   it('resolves message and traceId from a generated-client ResponseError-shaped body', async () => {
     const response = new Response(
       JSON.stringify({

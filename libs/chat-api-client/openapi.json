@@ -1775,6 +1775,60 @@
         "tags": ["client-channel"]
       }
     },
+    "/api/v1/external-services/{appId}": {
+      "get": {
+        "description": "Reads the accessible application through DIAL Core, including inline services. Returns only public OAuth configuration and credential statuses; never secrets. Not cached so login/logout changes are immediately visible.",
+        "operationId": "listExternalServices",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "External services, or an empty list when none are configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationExternalServiceDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application identifier"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "No access to the application or liveChatInteraction is disabled"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "502": {
+            "description": "DIAL Core returned an invalid response"
+          },
+          "503": {
+            "description": "DIAL Core unavailable"
+          }
+        },
+        "summary": "List application external-service authentication metadata",
+        "tags": ["external-services"]
+      }
+    },
     "/api/v1/external-services/{appId}/{serviceId}": {
       "get": {
         "description": "Returns an application external service's display metadata and authentication type by proxying DIAL Core (GET /v1/applications/{appId}/external-services/{id}) using the caller's session access token.",
@@ -5516,7 +5570,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -5534,9 +5588,6 @@
           },
           "403": {
             "description": "Forbidden"
-          },
-          "404": {
-            "description": "Parent path not found"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -5624,7 +5675,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher's own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -5946,7 +5997,7 @@
         "tags": ["scheduled-tasks"]
       },
       "post": {
-        "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.",
+        "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt or skill, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.",
         "operationId": "createScheduledTask",
         "parameters": [],
         "requestBody": {
@@ -5971,13 +6022,37 @@
             }
           },
           "400": {
-            "description": "Validation error — missing or invalid fields"
+            "description": "Validation error — missing or invalid fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+            "description": "Feature disabled or selected model is inaccessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Selected model is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6041,7 +6116,7 @@
         "tags": ["scheduled-tasks"]
       },
       "put": {
-        "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.",
+        "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Omitting skillUrl preserves the saved reference; null removes it. Invalidates the scheduled tasks list cache on success.",
         "operationId": "updateScheduledTask",
         "parameters": [
           {
@@ -6078,16 +6153,37 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid scheduleId or body fields"
+            "description": "Validation error — invalid scheduleId or body fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+            "description": "Feature disabled or selected model is inaccessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "404": {
-            "description": "Scheduled task not found"
+            "description": "Scheduled task or selected model not found; deployment errors carry scheduledTaskDeploymentUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6343,7 +6439,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6389,7 +6485,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission, or the scheduledTasksEnabled feature is not enabled"
+            "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
             "description": "DIAL Core returned an error response or rejected sign-in"
@@ -6716,6 +6812,11 @@
             "description": "Host application identifier sent to MCP App Views in hostContext.userAgent. Null when MCP_APP_USER_AGENT is not configured — defaults to \"ai-dial-chat\" on the client.",
             "nullable": true
           },
+          "mcpAppHostName": {
+            "type": "string",
+            "description": "Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to \"ai-dial-chat\" on the client.",
+            "nullable": true
+          },
           "fileManagerTabs": {
             "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
             "example": ["my_files", "shared", "organization"],
@@ -6814,6 +6915,11 @@
             "items": {
               "type": "string"
             }
+          },
+          "maxAttachmentFileSizeBytes": {
+            "type": "number",
+            "description": "Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.",
+            "example": 536870912
           }
         },
         "required": [
@@ -6830,7 +6936,8 @@
           "customVisualizers",
           "applicationVisualizers",
           "customVariables",
-          "publicationFilterSources"
+          "publicationFilterSources",
+          "maxAttachmentFileSizeBytes"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -9115,11 +9222,22 @@
           },
           "name": {
             "type": "string",
-            "description": "Stage title"
+            "description": "Stage title. `null` on the chunk that opens the stage, before the name streams in"
           },
           "content": {
             "type": "string",
             "description": "Stage text content"
+          },
+          "status": {
+            "type": "string",
+            "description": "Terminal state of the stage. Absent or `null` while the stage is still running",
+            "enum": ["completed", "failed"],
+            "nullable": true
+          },
+          "tag": {
+            "type": "string",
+            "description": "Short source/category label shown beside the stage name (e.g. `MCP`)",
+            "example": "MCP"
           },
           "attachments": {
             "description": "Files produced or referenced by this stage",
@@ -9505,6 +9623,68 @@
         },
         "required": ["id", "result"]
       },
+      "ApplicationExternalServiceDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "FinHub API"
+          },
+          "description": {
+            "type": "string",
+            "example": "Financial data lookup service"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH", "DIAL_NATIVE"],
+            "example": "API_KEY"
+          },
+          "userLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "appLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator."
+          },
+          "globalAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_OUT",
+            "description": "GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "clientId": {
+            "type": "string",
+            "example": "my-client-id"
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/authorize"
+          },
+          "scopesSupported": {
+            "example": ["read", "write"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "codeChallenge": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "codeChallengeMethod": {
+            "type": "string",
+            "example": "S256"
+          },
+          "id": {
+            "type": "string",
+            "description": "External-service identifier within the application",
+            "example": "finhub-api2"
+          }
+        },
+        "required": ["displayName", "authenticationType", "id"]
+      },
       "GetExternalServiceResponseDto": {
         "type": "object",
         "properties": {
@@ -9518,13 +9698,18 @@
           },
           "authenticationType": {
             "type": "string",
-            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "enum": ["NONE", "API_KEY", "OAUTH", "DIAL_NATIVE"],
             "example": "API_KEY"
           },
           "userLevelAuthStatus": {
             "type": "string",
             "example": "SIGNED_IN",
             "description": "USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one."
+          },
+          "appLevelAuthStatus": {
+            "type": "string",
+            "example": "SIGNED_IN",
+            "description": "APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator."
           },
           "globalAuthStatus": {
             "type": "string",
@@ -11229,7 +11414,9 @@
           "modelId": {
             "type": "string",
             "description": "Model deployment ID that produced the response",
-            "example": "anthropic.claude-v3-sonnet"
+            "example": "anthropic.claude-v3-sonnet",
+            "maxLength": 256,
+            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
           },
           "rate": {
             "type": "number",
@@ -11712,6 +11899,11 @@
             "items": {
               "$ref": "#/components/schemas/PublishRuleDto"
             }
+          },
+          "publishCredentials": {
+            "type": "boolean",
+            "description": "Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.",
+            "example": true
           }
         },
         "required": ["folderPath"]
@@ -11836,6 +12028,11 @@
           "publishedBy": {
             "type": "string",
             "example": "user@example.com"
+          },
+          "publishCredentials": {
+            "type": "boolean",
+            "description": "Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.",
+            "example": true
           }
         },
         "required": [
@@ -11844,7 +12041,8 @@
           "folderPath",
           "version",
           "publishedAt",
-          "publishedBy"
+          "publishedBy",
+          "publishCredentials"
         ]
       },
       "PublishRulesResultDto": {
@@ -11957,6 +12155,10 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox"
+          },
+          "skillUrl": {
+            "type": "string",
+            "example": "skills/public/daily-summary"
           }
         },
         "required": ["id", "displayName", "trigger"]
@@ -12016,7 +12218,14 @@
           },
           "prompt": {
             "type": "string",
-            "example": "Summarize my inbox"
+            "example": "Summarize my inbox",
+            "description": "Instructions; may be empty when the effective task has a skill."
+          },
+          "skillUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "skills/public/daily-summary",
+            "description": "DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it."
           },
           "description": {
             "type": "string",
@@ -12083,9 +12292,59 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox"
+          },
+          "skillUrl": {
+            "type": "string",
+            "example": "skills/public/daily-summary"
           }
         },
         "required": ["id", "displayName", "trigger"]
+      },
+      "ScheduledTaskErrorCode": {
+        "type": "string",
+        "enum": [
+          "scheduledTaskSkillUnsupported",
+          "scheduledTaskInstructionsOrSkillRequired",
+          "scheduledTaskDeploymentUnavailable"
+        ]
+      },
+      "ScheduledTaskValidationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 400
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request"
+          },
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScheduledTaskErrorCode"
+              }
+            ]
+          },
+          "field": {
+            "type": "string",
+            "example": "skillUrl"
+          }
+        },
+        "required": ["statusCode", "message", "error"]
       },
       "ScheduledTaskRunDto": {
         "type": "object",
@@ -12174,7 +12433,14 @@
           },
           "prompt": {
             "type": "string",
-            "example": "Summarize my inbox"
+            "example": "Summarize my inbox",
+            "description": "Instructions; may be empty when the effective task has a skill."
+          },
+          "skillUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "skills/public/daily-summary",
+            "description": "DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it."
           },
           "description": {
             "type": "string",
@@ -12241,6 +12507,10 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox"
+          },
+          "skillUrl": {
+            "type": "string",
+            "example": "skills/public/daily-summary"
           }
         },
         "required": ["id", "displayName", "trigger"]

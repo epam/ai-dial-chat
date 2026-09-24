@@ -72,6 +72,62 @@ keeps its content. A paste at or above the cap also reports through
 flag `false`), since there the pasted text lands inline rather than becoming an
 attachment.
 
+`styles.attachmentTray` themes the tray of pending attachments and, through its
+`card` slot, every tile in it — the same `AttachmentTrayStyles` /
+`AttachmentCardStyles` the tray takes on its own, so sizing a tile needs no
+descendant selector on `ATTACHMENT_INPUT_CLASS`. Both types come from
+[`@epam/ai-dial-attachment-input`](../attachment-input/README.md), which owns
+the components:
+
+```tsx
+import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
+
+<ConversationInput
+  onSend={handleSend}
+  styles={{
+    attachmentTray: {
+      className: 'gap-3',
+      card: {
+        className: 'size-[120px]',
+        typography: { metaClassName: 'dial-tiny-text' },
+      },
+    },
+  }}
+/>;
+```
+
+`Input` takes the same object as a top-level `attachmentTray` prop.
+
+`styles.modelMenu` themes the model menu in both presentations — the desktop
+dropdown and the mobile bottom sheet — with one `ModelMenuStyles` object.
+`className` lands on the menu panel (also when `modelPickerOverlay` supplies
+its content), `searchHeaderClassName` on the search row, `itemClassName` on
+every deployment row and `selectedItemClassName` on the selected one, additive
+to `itemClassName`. Each is merged after the component's own classes, so a
+conflicting utility replaces the default instead of landing beside it.
+`colors.searchHeaderBackground` sets the search row background, which defaults
+to `--bg-layer-raised` on desktop and to transparent in the sheet:
+
+```tsx
+<ConversationInput
+  onSend={handleSend}
+  styles={{
+    modelMenu: {
+      className: 'rounded-xl',
+      itemClassName: 'rounded-lg',
+      selectedItemClassName: 'text-accent',
+      colors: { searchHeaderBackground: 'var(--bg-layer-0)' },
+    },
+  }}
+/>
+```
+
+On desktop the kit's check mark inherits the row's text colour, so a `text-*`
+utility in `selectedItemClassName` recolours the label and the check together.
+The host-supplied overlay's panel keeps its own `!w-[368px] !bg-layer-raised`,
+so overriding those needs an `!`-prefixed utility too. `Input` takes the same
+object as a top-level `modelMenu` prop.
+
 `message` and `textInsertion` are two different ways to write into the textarea,
 and they are not interchangeable. `message` sets the value: the textarea resyncs
 to it whenever the string changes, or whenever `messageRevision` changes if the
@@ -115,9 +171,25 @@ adjacent buttons stay distinguishable to assistive technology. `uploadingLabel`
 its upload is still in flight.
 
 `sendLabel` (default `'Send message'`) is the send button's accessible name.
-`sendTooltip` is a separate, optional string shown as a hover tooltip on the
-send button — useful for explaining why it's currently inactive (e.g. `'Type a
-message first'`). No tooltip renders when it is left unset.
+`sendTooltip` is an optional hover tooltip. `emptyMessageTooltip` optionally
+replaces it when the composer has no non-whitespace text, attachments, or
+inline-start slot (such as a selected skill). Other reasons for disabling send,
+such as a missing model or blocked attachment, do not select the empty hint.
+
+When `emptyMessageTooltip` is omitted, `sendTooltip` is used in every state,
+preserving existing callers. An explicit empty string suppresses the tooltip for
+an empty composer. If both props are omitted, no tooltip renders. The accessible
+label and send behavior are unaffected.
+
+```tsx
+<ConversationInput
+  sendTooltip="Send message"
+  emptyMessageTooltip="Type a message first"
+/>
+```
+
+Hosts supply localized strings through these props. The parent chat keeps its
+existing `sendTooltip` prop without opting into `emptyMessageTooltip`.
 
 ### EditMessageInput
 
@@ -140,6 +212,8 @@ import { EditMessageInput } from '@epam/ai-dial-conversation-input';
 `Input` and `ConversationInput` accept `onTranscribeAudio?: TranscribeAudio`, where the exported type is `(file: File, signal: AbortSignal) => Promise<string>`. The microphone button (label and tooltip `Dictate`, overridden with `micLabel`) uses this callback with the complete recording after Stop. The library carries no HTTP or provider details; the host owns upload, provider selection, and size validation of the complete file.
 
 One recorder collects all audio until Stop, including pauses. No upload or recognition starts during capture. All recorder blobs, including the final event, form one file with the actual browser MIME type. Sampled silent recordings and recordings shorter than 100 ms are skipped in dictation mode.
+
+New recording filenames use the shared MIME extension mapping: WebM audio uses `.weba`, Ogg audio uses `.oga`, and MP4 audio uses `.m4a`. Codec parameters are ignored only when choosing the extension; the file keeps the browser's MIME type and captured bytes. This applies to both attachment and dictation delivery. Existing stored recordings keep their original names.
 
 Stop finalizes the file and releases the microphone before awaiting recognition. A nonempty result is appended once to the existing draft through `onChange`, with a separating space when needed. The waveform and voice controls replace the textarea while recording or processing, and send/model controls are hidden. The draft remains in memory; no keyboard text entry is available in either voice mode. A polite status region announces the recognized text; the editable draft receives focus once a dictation session ends, including a silent or too-short capture that produced no text. Discard aborts pending work and ignores late results. Cancellation and errors preserve the original draft. On failure, the voice panel closes, the editable draft receives focus, and an inline alert displays the error. A new recording can start without first dismissing the failed session and clears the previous error. No audio is added to the message attachment tray.
 
@@ -212,19 +286,24 @@ CONVERSATION_INPUT_CLASS.actionRow; // 'dial-ci-action-row'
 | `dial-ci-action-row`            | The row holding the textarea, add button, tool chips, and actions |
 | `dial-ci-textarea-wrap`         | The textarea cell inside the action row                           |
 | `dial-ci-add-cluster`           | The add-attachment button wrapper                                 |
+| `dial-ci-tools-chips`           | The tool chips cell inside the action row                         |
 | `dial-ci-footer-actions`        | The trailing cluster: model selector, mic, and send/stop buttons  |
 | `dial-ci-model-selector-button` | The model selector trigger button, in every presentation          |
+| `dial-ci-model-selector-icon`   | The box wrapping the selected deployment's icon in the trigger    |
+| `dial-ci-model-selector-caret`  | The trigger's chevron                                             |
 
-`dial-ci-action-row` is absent when `hideActionBar` is set, and
-`dial-ci-add-cluster` is absent when `hideAddButton` is set.
+`dial-ci-action-row` is absent when `hideActionBar` is set,
+`dial-ci-add-cluster` is absent when `hideAddButton` is set, and
+`dial-ci-tools-chips` is absent unless `toolsMenuItems` yields at least one
+visible tool and `onToolToggle` is supplied.
 
 The model-selector menu carries its own set:
 
 | Class                              | Element                                         |
 | ---------------------------------- | ----------------------------------------------- |
 | `dial-ci-model-menu`               | The menu root, in all three presentations       |
-| `dial-ci-model-menu-search`        | The sticky search header inside the menu        |
-| `dial-ci-model-menu-item`          | Every deployment row                            |
+| `dial-ci-model-menu-search`        | The search row above the deployment list        |
+| `dial-ci-model-menu-item`          | Every deployment row, desktop and mobile        |
 | `dial-ci-model-menu-item-selected` | The selected row, **additive** to the row class |
 
 `dial-ci-model-menu` lands on three different presentations, so scope your rule
@@ -234,15 +313,27 @@ host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
 is why the menu needs a class of its own rather than a descendant selector from
 `dial-ci-wrapper`.
 
-The selected row's **check mark has no class here**: it is drawn by
-`@epam/ai-dial-ui-kit` from the menu item's `mark`, so nothing in this package
-owns that element. Style it by descending from the row:
-`.dial-ci-model-menu-item-selected svg`.
+The selected row's **check mark has no class from this package**: it is drawn
+by `@epam/ai-dial-ui-kit` from the menu item's `mark`, so nothing here owns that
+element. The kit gives it `dial-kit-menuitem-check`, exported as
+`DIAL_KIT_CLASS.menuItemCheck` — target that, scoped to the row when you need to
+distinguish this menu from other kit menus:
+
+```css
+.dial-ci-model-menu-item-selected .dial-kit-menuitem-check {
+  color: var(--text-accent);
+}
+```
 
 `dial-ci-model-menu-item` is emitted for deployment rows only — not for
 loading skeletons, nor for the single disabled row shown in the empty and error
-states. On mobile only the sheet root is marked; its rows are rendered by a
-separate virtualized list and carry no row class.
+states. The mobile sheet's rows come from a separate virtualized list and carry
+the same row and search classes. Their check is this package's own icon, not
+the kit's, so `dial-kit-menuitem-check` does not reach it; it is coloured
+`--text-accent`.
+
+Most of this no longer needs a stylesheet — `styles.modelMenu` reaches the
+same elements through props (see [ConversationInput](#conversationinput)).
 
 These classes carry no declarations of their own, so they change nothing until
 you style them, and they are additive to `className` and `inputClassName` —
@@ -250,14 +341,16 @@ those props keep working exactly as before.
 
 ### Replacing fragile selectors
 
-| Instead of                                       | Use                                 |
-| ------------------------------------------------ | ----------------------------------- |
-| `> div:has(textarea)`                            | `.dial-ci-action-row`               |
-| `div.ms-auto`                                    | `.dial-ci-footer-actions`           |
-| `button[class*='modelSelectorButton']`           | `.dial-ci-model-selector-button`    |
-| `div[role='menu']:has([class*='searchHeader_'])` | `.dial-ci-model-menu`               |
-| `[class*='searchHeader_']`                       | `.dial-ci-model-menu-search`        |
-| `[class*='selectedItem_']`                       | `.dial-ci-model-menu-item-selected` |
+| Instead of                                          | Use                                 |
+| --------------------------------------------------- | ----------------------------------- |
+| `> div:has(textarea)`                               | `.dial-ci-action-row`               |
+| `div.ms-auto`                                       | `.dial-ci-footer-actions`           |
+| `button[class*='modelSelectorButton']`              | `.dial-ci-model-selector-button`    |
+| `.dial-ci-model-selector-button > span:first-child` | `.dial-ci-model-selector-icon`      |
+| `.dial-ci-model-selector-button svg:last-child`     | `.dial-ci-model-selector-caret`     |
+| `div[role='menu']:has([class*='searchHeader_'])`    | `.dial-ci-model-menu`               |
+| `[class*='searchHeader_']`                          | `.dial-ci-model-menu-search`        |
+| `[class*='selectedItem_']`                          | `.dial-ci-model-menu-item-selected` |
 
 ### Stability
 
@@ -282,6 +375,53 @@ import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 SendOnEnter.Enter; // Enter submits; Shift+Enter inserts a newline
 SendOnEnter.MetaEnter; // ⌘/Ctrl+Enter submits; bare Enter inserts a newline
 ```
+
+```tsx
+import { ActionRowLayout } from '@epam/ai-dial-conversation-input';
+
+ActionRowLayout.Stacked; // textarea on its own line, controls wrap below (default)
+ActionRowLayout.Inline; // add button, textarea and footer actions share one line
+```
+
+### Action row layout
+
+`actionRowLayout` chooses how `Input` and `ConversationInput` arrange the
+textarea and the controls around it. It defaults to `ActionRowLayout.Stacked`,
+which is the layout the composer has always had: the textarea takes the whole
+first line and the add button, tool chips, and footer actions wrap below it.
+
+```tsx
+<ConversationInput
+  actionRowLayout={ActionRowLayout.Inline}
+  onSend={handleSend}
+/>
+```
+
+`ActionRowLayout.Inline` puts the add button, the textarea, and the footer
+actions on one line. Tool chips are variable-width, so they move to a row of
+their own above the action row rather than competing for the line.
+
+The layout applies from the desktop breakpoint (1280px) up, because one line
+does not fit a phone — you do not need to branch on viewport yourself. An embed
+whose composer is already wide below that width opts the narrower widths in with
+`isInlineActionRowAllowedBelowDesktop`:
+
+```tsx
+<ConversationInput
+  actionRowLayout={ActionRowLayout.Inline}
+  isInlineActionRowAllowedBelowDesktop
+  onSend={handleSend}
+/>
+```
+
+The flag affects the action row alone. The add menu and the model picker keep
+their bottom-sheet presentation below 1280px, so it does not turn an embed into
+a desktop layout wholesale.
+
+Neither layout uses an `order-*` utility: each renders its children in the
+order they appear on screen, so the tab order always matches the visual order.
+If you were previously reordering the row from the host with container queries,
+drop that override — it desynchronises focus order from what the user sees.
 
 ## Building
 

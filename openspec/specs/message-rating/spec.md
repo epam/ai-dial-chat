@@ -11,6 +11,8 @@ Rating assistant messages: the BFF endpoint, the optimistic toggle, the negative
 
 `POST /api/v1/rate` SHALL accept a JSON body with `conversationId`, `responseId`, `modelId`, a `rate` field, and an optional `comment`. `rate` SHALL be `1` (like), `-1` (dislike), or `null` (clear a previously sent rating). It SHALL proxy the rating to the DIAL Core endpoint `POST /v1/{modelId}/rate` using the authenticated session's access token as a Bearer credential and SHALL include `X-CONVERSATION-ID: <conversationId>` in that outbound BFF-to-DIAL-Core request. On success it SHALL return HTTP 204 No Content. Invalid request bodies SHALL return HTTP 400.
 
+`modelId` is `conversation.model.id` as set at conversation creation, which for a custom app or quick app is a multi-segment DIAL Core resource path (e.g. `applications/<bucket>/My%20App__1.0`) rather than a bare model id (e.g. `gpt-4o`). The BFF SHALL interpolate `modelId` into the outbound URL path **raw**, with no `encodeURIComponent` (or equivalent) applied to the whole string — matching how `@epam/ai-dial-typescript-sdk`'s own generated URL builders (e.g. `sendChatCompletionRequestUrl`) interpolate `deployment_name`. Encoding the entire string would turn a multi-segment id's literal `/` separators into `%2F` and 404 against DIAL Core, breaking rating for any conversation created against a custom app while leaving bare model ids (which contain no such characters) unaffected. `RateMessageDto.modelId` SHALL be validated with `@MaxLength(256)` and `@Matches(DEPLOYMENT_ID_PATTERN)` (the same allowlist regex used for `deploymentId` elsewhere, from `apps/chat-api/src/common/validators/deployment-id.pattern.ts`) so that a value flowing unencoded into a URL path stays constrained to safe characters.
+
 The outbound JSON body sent to DIAL Core SHALL conform exactly to DIAL Core's own `RateRequest` schema — `{ responseId, rate: boolean }` — and SHALL NOT include `conversationId` or `modelId` as body fields (DIAL Core has no such properties on `RateRequest`; `modelId` selects the URL path segment and `conversationId` drives the `X-CONVERSATION-ID` header only). The BFF SHALL map the browser-facing `rate` value to DIAL Core's boolean as follows: `1` (like) maps to `rate: true`; `-1` (dislike) and `null` (clear) both map to `rate: false`, since DIAL Core has no third state to represent "cleared" separately from "disliked".
 
 The generated `RateApi.rateMessage` method, authentication, authorization, rate limit, and cache behavior SHALL remain unchanged. This change introduces no UI, i18n, RTL, accessibility, feature-flag, or telemetry event changes.
@@ -24,6 +26,11 @@ The generated `RateApi.rateMessage` method, authentication, authorization, rate 
 
 - **WHEN** an authenticated user rates a message with `conversationId: "bucket/gpt-4o__Hello__uuid"`
 - **THEN** the BFF calls `POST /v1/{modelId}/rate` with `X-CONVERSATION-ID: bucket/gpt-4o__Hello__uuid`
+
+#### Scenario: Custom app deployment id preserves its path segments
+
+- **WHEN** an authenticated user rates a message with `modelId: "applications/bucket/My%20App__1.0"`
+- **THEN** the BFF calls `POST /v1/applications/bucket/My%20App__1.0/rate` on DIAL Core, with the literal `/` separators intact and no additional percent-encoding applied to the id
 
 #### Scenario: Like forwards a boolean true to DIAL Core
 
@@ -48,6 +55,11 @@ The generated `RateApi.rateMessage` method, authentication, authorization, rate 
 #### Scenario: Invalid rate value returns 400
 
 - **WHEN** `rate` is a value other than `1`, `-1`, or `null`
+- **THEN** the endpoint returns HTTP 400
+
+#### Scenario: modelId with characters outside the deployment-id allowlist returns 400
+
+- **WHEN** `modelId` contains a character not permitted by `DEPLOYMENT_ID_PATTERN` (or exceeds 256 characters)
 - **THEN** the endpoint returns HTTP 400
 
 #### Scenario: DIAL Core error is propagated
@@ -169,13 +181,13 @@ In read-only conversations, the Like and Dislike buttons SHALL NOT be rendered.
 
 ### Requirement: Negative feedback modal
 
-When the user clicks Dislike on an assistant message that is **not already disliked** in a read-write conversation, the `ConversationPage` SHALL open a `NegativeFeedbackModal` instead of immediately calling the rate API. The modal collects a required feedback category and an optional free-text comment before the rating is submitted.
+When the user clicks Dislike on an assistant message that is **not already disliked** in a read-write conversation, the host page SHALL open a `NegativeFeedbackModal` instead of immediately calling the rate API. The modal collects a required feedback category and an optional free-text comment before the rating is submitted. This applies to every host that renders `ConversationView` with rating enabled — both `apps/chat/src/pages/Conversation/Conversation.tsx` (`ConversationPage`) and the App Editor's `apps/chat/src/pages/AppsEditor/AppPreviewChat.tsx` (preview chat) SHALL wire `onDislikeMessage` to open the modal rather than rating immediately, so the preview's rating UX has no reduced functionality relative to a normal conversation.
 
 In read-only conversations, the Dislike button is not rendered, so the modal cannot be triggered.
 
-**Component:** `apps/chat/src/components/ConversationView/NegativeFeedbackModal.tsx`
+**Component:** `apps/chat/src/components/ConversationView/Rate/NegativeFeedbackModal.tsx`
 
-**State:** `ConversationPage` holds `pendingDislikeMessageIndex: number | null` (same pattern as `pendingDeleteIndex`). `handleRateMessage` signature MUST be extended to `(messageIndex: number, rating: MessageRating | null, comment?: string)`, forwarding `comment` to `rateMessage`.
+**State:** each host page holds `pendingDislikeMessageIndex: number | null` (same pattern as `pendingDeleteIndex`). `handleRateMessage` signature MUST be extended to `(messageIndex: number, rating: MessageRating | null, comment?: string)`, forwarding `comment` to `rateMessage`.
 
 **Modal contents:**
 - Title: **"Send negative feedback"**
@@ -205,6 +217,11 @@ In read-only conversations, the Dislike button is not rendered, so the modal can
 
 - **WHEN** the user clicks Dislike on an assistant message currently rated Like
 - **THEN** the `NegativeFeedbackModal` opens and no API call is made yet
+
+#### Scenario: App Editor preview chat opens the same modal on Dislike
+
+- **WHEN** the user clicks Dislike on an assistant message in the App Editor's preview chat (`AppPreviewChat`)
+- **THEN** the `NegativeFeedbackModal` opens and no API call is made, matching `ConversationPage`'s behavior
 
 #### Scenario: Submit with category and comment sends combined string
 

@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "../../dist/libs/chat-hooks",
-    "tsBuildInfoFile": "../../dist/libs/chat-hooks/tsconfig.lib.tsbuildinfo",
+    "outDir": "out-tsc/lib",
+    "tsBuildInfoFile": "out-tsc/lib/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "jsx": "react-jsx",
     "module": "esnext",
@@ -23,6 +23,9 @@
     },
     {
       "path": "../share/tsconfig.lib.json"
+    },
+    {
+      "path": "../usage-dashboard/tsconfig.lib.json"
     },
     {
       "path": "../scheduled-tasks/tsconfig.lib.json"

@@ -26,6 +26,11 @@ export const RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE =
  * ref, wrapped around the editor; custom properties inherit, so the cap reaches
  * the `.w-md-editor` box that carries the dragged height. The `70vh` fallback
  * only applies before the first measurement, or if the ref is left unattached.
+ *
+ * The fullscreen state is excluded. There the editor is no longer a field in a
+ * form but `@uiw/react-md-editor`'s own overlay, sized against the viewport,
+ * and a cap measured from the form's scroller would clamp it to a band across
+ * the top of the screen instead of the full height the command promises.
  */
 export const MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME =
-  '[&_.w-md-editor]:max-h-[var(--resizable-field-max-height,70vh)]';
+  '[&_.w-md-editor:not(.w-md-editor-fullscreen)]:max-h-[var(--resizable-field-max-height,70vh)]';

@@ -31,6 +31,12 @@ type SharedSkillItem = DialMetadataBase & { permissions?: string[] };
 
 const PUBLIC_BUCKET = 'public';
 const CATALOG_PAGE_SIZE = 1000;
+/**
+ * Upstream pages one listing request consumes before answering with what it
+ * has. Bounds the work a bucket full of non-skill storage objects can cost,
+ * at the price of a short page in that pathological case.
+ */
+const MAX_UPSTREAM_PAGES_PER_REQUEST = 20;
 
 export interface SkillListQuery {
   token?: string;
@@ -64,7 +70,60 @@ export class SkillsListingService {
     };
   }
 
+  /**
+   * Answers one page of skills, following DIAL Core's cursor past pages that
+   * hold no skill at all.
+   *
+   * Core's cursor walks storage objects — a version folder's `SKILL.md`, an
+   * asset file, a `.dial-resource` marker — while this listing shows only
+   * the skills among them, so an upstream page routinely maps to nothing.
+   * Forwarded verbatim that reached a caller as an empty first page for a
+   * bucket that demonstrably had content, and the common "page until a page
+   * comes back empty" loop stopped there and showed nothing.
+   *
+   * Each upstream page asks for only the items still missing from the
+   * caller's `limit`, so the walk can never answer with more than was asked
+   * for, and `nextToken` continues from the last upstream page consumed.
+   */
   async listSkills(
+    bucket: string,
+    path: string,
+    query: SkillListQuery,
+    accessToken: string,
+  ): Promise<SkillListResponseDto> {
+    const items: SkillMetadataItemDto[] = [];
+    const visitedTokens = new Set<string>();
+    let token = query.token;
+    let nextToken: string | undefined;
+
+    for (let page = 0; page < MAX_UPSTREAM_PAGES_PER_REQUEST; page += 1) {
+      const remaining =
+        query.limit == null ? undefined : query.limit - items.length;
+      if (remaining != null && remaining <= 0) break;
+
+      const upstream = await this.listSkillPage(
+        bucket,
+        path,
+        { ...query, token, limit: remaining },
+        accessToken,
+      );
+      items.push(...upstream.items);
+      nextToken = upstream.nextToken;
+
+      if (nextToken == null) break;
+      /* A cursor that repeats would otherwise spin until the page cap. */
+      if (visitedTokens.has(nextToken)) break;
+      visitedTokens.add(nextToken);
+      token = nextToken;
+
+      if (query.limit == null && items.length > 0) break;
+    }
+
+    return { bucket, path, items, nextToken };
+  }
+
+  /** One upstream `listSkillMetadata` call, mapped and error-translated. */
+  private async listSkillPage(
     bucket: string,
     path: string,
     query: SkillListQuery,
@@ -174,7 +233,7 @@ export class SkillsListingService {
     let token: string | undefined;
 
     do {
-      const page = await this.listSkills(
+      const page = await this.listSkillPage(
         bucket,
         '',
         { recursive: true, limit: CATALOG_PAGE_SIZE, token },

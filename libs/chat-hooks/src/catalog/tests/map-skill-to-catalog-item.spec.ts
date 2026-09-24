@@ -144,7 +144,10 @@ describe('mapSkillToCatalogItem', () => {
   });
 
   it('prefixes a nested folder path with the Personal label', () => {
-    const item = mapPersonal({ parentPath: 'analysis/finance/' });
+    const item = mapPersonal({
+      parentPath: 'analysis/finance/',
+      url: 'skills/my-bucket/analysis/finance/revenue-skill',
+    });
 
     expect(item.folder).toEqual(['Personal', 'analysis', 'finance']);
   });
@@ -159,10 +162,49 @@ describe('mapSkillToCatalogItem', () => {
     expect(item.folder).toEqual(['Organization']);
   });
 
-  it('decodes percent-encoded folder segments', () => {
-    const item = mapPersonal({ parentPath: 'my%20folder/' });
+  it('decodes a folder whose parentPath arrived percent-encoded (Issue #8882)', () => {
+    const item = mapPersonal({
+      parentPath: 'test%20folder/',
+      url: 'skills/my-bucket/test%20folder/revenue-skill',
+    });
+
+    expect(item.folder).toEqual(['Personal', 'test folder']);
+  });
+
+  it('preserves a folder literally named with a percent escape (Issue #8974)', () => {
+    const item = mapPersonal({
+      parentPath: 'test%20folder/',
+      url: 'skills/my-bucket/test%2520folder/revenue-skill',
+    });
+
+    expect(item.folder).toEqual(['Personal', 'test%20folder']);
+  });
+
+  it('keeps a literal percent sign in a folder name', () => {
+    const item = mapPersonal({
+      parentPath: '100%/',
+      url: 'skills/my-bucket/100%25/revenue-skill',
+    });
+
+    expect(item.folder).toEqual(['Personal', '100%']);
+  });
+
+  it('keeps a folder name containing a raw space intact', () => {
+    const item = mapPersonal({
+      parentPath: 'my folder/',
+      url: 'skills/my-bucket/my%20folder/revenue-skill',
+    });
 
     expect(item.folder).toEqual(['Personal', 'my folder']);
+  });
+
+  it('falls back to the verbatim parentPath when the url shape does not match', () => {
+    const item = mapPersonal({
+      parentPath: 'test%20folder/',
+      url: 'skills/my-bucket/revenue-skill',
+    });
+
+    expect(item.folder).toEqual(['Personal', 'test%20folder']);
   });
 
   it('carries the metadata timestamps through for sorting', () => {

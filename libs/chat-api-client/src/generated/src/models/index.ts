@@ -434,6 +434,98 @@ export interface ApplicationDto {
 /**
  *
  * @export
+ * @interface ApplicationExternalServiceDto
+ */
+export interface ApplicationExternalServiceDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  authenticationType: ApplicationExternalServiceDtoAuthenticationTypeEnum;
+  /**
+   * USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  userLevelAuthStatus?: string;
+  /**
+   * APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  appLevelAuthStatus?: string;
+  /**
+   * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  globalAuthStatus?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationExternalServiceDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  codeChallenge?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  codeChallengeMethod?: string;
+  /**
+   * External-service identifier within the application
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  id: string;
+}
+
+/**
+ * @export
+ */
+export const ApplicationExternalServiceDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+  DialNative: 'DIAL_NATIVE',
+} as const;
+export type ApplicationExternalServiceDtoAuthenticationTypeEnum =
+  (typeof ApplicationExternalServiceDtoAuthenticationTypeEnum)[keyof typeof ApplicationExternalServiceDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
  * @interface ApplicationSchemaSummaryDto
  */
 export interface ApplicationSchemaSummaryDto {
@@ -907,6 +999,12 @@ export interface ClientConfigDto {
    */
   mcpAppUserAgent?: string | null;
   /**
+   * Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to "ai-dial-chat" on the client.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppHostName?: string | null;
+  /**
    * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
@@ -990,6 +1088,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   publicationFilterSources: Array<string>;
+  /**
+   * Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  maxAttachmentFileSizeBytes: number;
 }
 
 /**
@@ -1948,11 +2052,17 @@ export interface CreateScheduledTaskBodyDto {
    */
   model: string;
   /**
-   *
+   * Instructions; may be empty when the effective task has a skill.
    * @type {string}
    * @memberof CreateScheduledTaskBodyDto
    */
   prompt: string;
+  /**
+   * DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  skillUrl?: string | null;
   /**
    *
    * @type {string}
@@ -2112,6 +2222,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**
@@ -4094,6 +4210,12 @@ export interface GetExternalServiceResponseDto {
    */
   userLevelAuthStatus?: string;
   /**
+   * APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  appLevelAuthStatus?: string;
+  /**
    * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
    * @type {string}
    * @memberof GetExternalServiceResponseDto
@@ -4138,6 +4260,7 @@ export const GetExternalServiceResponseDtoAuthenticationTypeEnum = {
   None: 'NONE',
   ApiKey: 'API_KEY',
   Oauth: 'OAUTH',
+  DialNative: 'DIAL_NATIVE',
 } as const;
 export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
   (typeof GetExternalServiceResponseDtoAuthenticationTypeEnum)[keyof typeof GetExternalServiceResponseDtoAuthenticationTypeEnum];
@@ -5265,6 +5388,12 @@ export interface PublishCatalogEntityDto {
    * @memberof PublishCatalogEntityDto
    */
   rules?: Array<PublishRuleDto>;
+  /**
+   * Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.
+   * @type {boolean}
+   * @memberof PublishCatalogEntityDto
+   */
+  publishCredentials?: boolean;
 }
 /**
  *
@@ -5364,6 +5493,12 @@ export interface PublishHistoryEntryDto {
    * @memberof PublishHistoryEntryDto
    */
   publishedBy: string;
+  /**
+   * Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.
+   * @type {boolean}
+   * @memberof PublishHistoryEntryDto
+   */
+  publishCredentials: boolean;
 }
 
 /**
@@ -5939,6 +6074,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**
@@ -5950,6 +6091,19 @@ export const ScheduledTaskDtoTriggerTypeEnum = {
 } as const;
 export type ScheduledTaskDtoTriggerTypeEnum =
   (typeof ScheduledTaskDtoTriggerTypeEnum)[keyof typeof ScheduledTaskDtoTriggerTypeEnum];
+
+/**
+ *
+ * @export
+ */
+export const ScheduledTaskErrorCode = {
+  ScheduledTaskSkillUnsupported: 'scheduledTaskSkillUnsupported',
+  ScheduledTaskInstructionsOrSkillRequired:
+    'scheduledTaskInstructionsOrSkillRequired',
+  ScheduledTaskDeploymentUnavailable: 'scheduledTaskDeploymentUnavailable',
+} as const;
+export type ScheduledTaskErrorCode =
+  (typeof ScheduledTaskErrorCode)[keyof typeof ScheduledTaskErrorCode];
 
 /**
  *
@@ -6007,6 +6161,50 @@ export const ScheduledTaskRunDtoStatusEnum = {
 export type ScheduledTaskRunDtoStatusEnum =
   (typeof ScheduledTaskRunDtoStatusEnum)[keyof typeof ScheduledTaskRunDtoStatusEnum];
 
+/**
+ *
+ * @export
+ * @interface ScheduledTaskValidationErrorDto
+ */
+export interface ScheduledTaskValidationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {ScheduledTaskValidationErrorDtoMessage}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  message: ScheduledTaskValidationErrorDtoMessage;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {ScheduledTaskErrorCode}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  code?: ScheduledTaskErrorCode;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  field?: string;
+}
+
+/**
+ * @type ScheduledTaskValidationErrorDtoMessage
+ *
+ * @export
+ */
+export type ScheduledTaskValidationErrorDtoMessage = Array<string> | string;
 /**
  *
  * @export
@@ -6472,7 +6670,7 @@ export interface StageDto {
    */
   index?: number;
   /**
-   * Stage title
+   * Stage title. `null` on the chunk that opens the stage, before the name streams in
    * @type {string}
    * @memberof StageDto
    */
@@ -6484,12 +6682,35 @@ export interface StageDto {
    */
   content?: string;
   /**
+   * Terminal state of the stage. Absent or `null` while the stage is still running
+   * @type {string}
+   * @memberof StageDto
+   */
+  status?: StageDtoStatusEnum | null;
+  /**
+   * Short source/category label shown beside the stage name (e.g. `MCP`)
+   * @type {string}
+   * @memberof StageDto
+   */
+  tag?: string;
+  /**
    * Files produced or referenced by this stage
    * @type {Array<StageAttachmentDto>}
    * @memberof StageDto
    */
   attachments?: Array<StageAttachmentDto>;
 }
+
+/**
+ * @export
+ */
+export const StageDtoStatusEnum = {
+  Completed: 'completed',
+  Failed: 'failed',
+} as const;
+export type StageDtoStatusEnum =
+  (typeof StageDtoStatusEnum)[keyof typeof StageDtoStatusEnum];
+
 /**
  *
  * @export
@@ -7462,11 +7683,17 @@ export interface UpdateScheduledTaskBodyDto {
    */
   model: string;
   /**
-   *
+   * Instructions; may be empty when the effective task has a skill.
    * @type {string}
    * @memberof UpdateScheduledTaskBodyDto
    */
   prompt: string;
+  /**
+   * DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  skillUrl?: string | null;
   /**
    *
    * @type {string}
@@ -7602,6 +7829,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**

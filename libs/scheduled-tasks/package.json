@@ -11,6 +11,12 @@
   "exports": {
     "./package.json": "./package.json",
     "./styles.css": "./dist/index.css",
+    "./validation": {
+      "@epam/source": "./src/validation.ts",
+      "types": "./dist/validation.d.ts",
+      "import": "./dist/validation.js",
+      "default": "./dist/validation.js"
+    },
     ".": {
       "@epam/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
@@ -26,7 +32,7 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.15.0-dev.7",
+    "@epam/ai-dial-ui-kit": "^0.15.0-dev.15",
     "react": "^19.2.8"
   },
   "nx": {

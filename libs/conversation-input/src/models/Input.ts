@@ -1,3 +1,4 @@
+import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 import type {
   Attachment,
   AttachmentErrorReason,
@@ -17,6 +18,14 @@ export enum SendOnEnter {
   Enter = 'enter',
   /** ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline. */
   MetaEnter = 'meta-enter',
+}
+
+/** Controls how the `Input` component arranges the textarea and the controls around it. */
+export enum ActionRowLayout {
+  /** Textarea occupies its own line; the add button, tool chips, and footer actions wrap below it. */
+  Stacked = 'stacked',
+  /** Add button, textarea, and footer actions share one line; tool chips move to their own row above. Applies below the desktop breakpoint only when the host opts in. */
+  Inline = 'inline',
 }
 
 /** CSS custom-property overrides for the `Input` component. */
@@ -73,6 +82,35 @@ export interface ModelSelectorLabels {
   closeLabel?: string;
   /** Tooltip shown when the selected deployment is no longer available (e.g. removed from the catalog). Defaults to `'This deployment is no longer available'`. */
   unavailableTooltip?: string;
+}
+
+/** Color overrides for the model menu, applied as CSS custom properties. */
+export interface ModelMenuColors {
+  /**
+   * Background of the search row above the deployment list. Defaults to
+   * `--bg-layer-raised` in the desktop dropdown, where the row is sticky over
+   * scrolling items, and to transparent in the mobile sheet.
+   */
+  searchHeaderBackground?: string;
+}
+
+/**
+ * Styling hooks for the model menu, applied in both presentations: the desktop
+ * dropdown and the mobile bottom sheet. Every class is merged after the
+ * component's own, so a conflicting utility replaces the default rather than
+ * landing beside it.
+ */
+export interface ModelMenuStyles {
+  /** Class on the menu panel: the dropdown overlay on desktop, the sheet on mobile. Also applied when `modelPickerOverlay` supplies the content. */
+  className?: string;
+  /** Class on the search row above the deployment list. */
+  searchHeaderClassName?: string;
+  /** Class on every deployment row. */
+  itemClassName?: string;
+  /** Class on the currently selected deployment row, additive to `itemClassName`. */
+  selectedItemClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ModelMenuColors;
 }
 
 /** Labels for the tool chips rendered in the conversation input. */
@@ -173,6 +211,13 @@ export interface InputProps {
   colors?: InputColors;
   /** Typography overrides applied as CSS custom properties. */
   typography?: InputTypography;
+  /**
+   * Style overrides for the attachment tray inside the composer and, through
+   * its `card` slot, for every tile in it.
+   */
+  attachmentTray?: AttachmentTrayStyles;
+  /** Styling hooks for the model menu: its panel, search row and deployment rows. */
+  modelMenu?: ModelMenuStyles;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
   /**
@@ -195,6 +240,8 @@ export interface InputProps {
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
   sendTooltip?: string;
+  /** Tooltip for an empty composer (no text, attachments, or inline-start slot). Defaults to sendTooltip. */
+  emptyMessageTooltip?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
@@ -273,6 +320,21 @@ export interface InputProps {
    * `EditMessageInput` where the action row lives outside the bordered box.
    */
   hideActionBar?: boolean;
+  /**
+   * How the action row arranges the textarea and the controls around it.
+   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` applies
+   * from the desktop breakpoint (1280px) up, unless
+   * `isInlineActionRowAllowedBelowDesktop` opts the narrower widths in.
+   */
+  actionRowLayout?: ActionRowLayout;
+  /**
+   * When `true`, `ActionRowLayout.Inline` also applies below the desktop
+   * breakpoint (1280px). Set it when the embedded composer is wide enough
+   * there — a phone-width one is not. Affects the action row alone: the add
+   * menu and model picker keep their bottom-sheet presentation. Defaults to
+   * `false`.
+   */
+  isInlineActionRowAllowedBelowDesktop?: boolean;
   /**
    * When provided, replaces the default send/stop/model-selector area with custom content.
    * Receives `canSend` (textarea has non-empty trimmed content) and `onSend` (triggers the

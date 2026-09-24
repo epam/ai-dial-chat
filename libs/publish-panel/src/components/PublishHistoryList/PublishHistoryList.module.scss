@@ -10,6 +10,21 @@
   color: var(--phl-badge-text, var(--text-accent, #1d4ed8)) !important;
 }
 
+.sharedCredentialsBadge {
+  border-color: var(
+    --phl-shared-creds-border,
+    var(--stroke-tertiary, #e0e6f0)
+  ) !important;
+  background: var(
+    --phl-shared-creds-bg,
+    var(--bg-layer-sunken, #eef1f7)
+  ) !important;
+  color: var(
+    --phl-shared-creds-text,
+    var(--text-secondary, #57647a)
+  ) !important;
+}
+
 .version {
   color: var(--phl-version-text, var(--text-primary, #161b2d));
 }

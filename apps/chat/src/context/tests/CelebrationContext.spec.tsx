@@ -255,7 +255,7 @@ describe('CelebrationContext with the Halloween module', () => {
     'plays and announces the %s scene',
     async (name, count, message) => {
       await renderProvider(true);
-      await userEvent.click(screen.getByRole('button', { name, exact: true }));
+      await userEvent.click(screen.getByRole('button', { name }));
       await waitFor(() => expect(queryDrawings()).toHaveLength(count));
       expect(showSuccessNotification).toHaveBeenLastCalledWith({
         title: 'halloween.toastTitle',

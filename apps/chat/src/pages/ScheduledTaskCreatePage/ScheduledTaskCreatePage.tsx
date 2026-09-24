@@ -1,5 +1,6 @@
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
-import { mapFormValuesToCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+import { prepareScheduledTaskCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
@@ -7,25 +8,38 @@ import {
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import { EditorThemes } from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useId, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import DeploymentSelectorFieldTrigger from '../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import ScheduledTaskSkillField from '../../components/ScheduledTaskSkillField/ScheduledTaskSkillField';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import {
-  ButtonsI18nKeys,
-  EditorI18nKeys,
   ScheduledTasksI18nKeys,
+  SkillSelectorI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
+import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { validateScheduledTaskForm } from '../../utils/scheduled-task-form-validation';
+import {
+  mapScheduledTaskValidationErrors,
+  mapScheduledTaskApiError,
+} from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
 
 const MAX_ASCII_CONTROL_CODE = 31;
@@ -68,6 +82,9 @@ const ScheduledTaskCreatePage: FC = () => {
   const { t } = useTranslation();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
+  const isSkillSelectionEnabled = useFeatureFlag('skillUsageEnabled');
+  const skillLabelId = useId();
+  const skillErrorId = useId();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { showSuccessNotification, showErrorNotification } = useNotification();
@@ -81,6 +98,20 @@ const ScheduledTaskCreatePage: FC = () => {
     useState<ScheduledTaskCreateFormValues>(DEFAULT_VALUES);
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
+  /* A capability change invalidates a prior server rejection. Local validation
+   * below continues to block a selected skill until support is confirmed. */
+  useEffect(() => {
+    setErrors((previous) =>
+      previous.skillUrl ? { ...previous, skillUrl: undefined } : previous,
+    );
+  }, [isSkillsSupported]);
+  const effectiveErrors = {
+    ...errors,
+    skillUrl: isSkillSelectionUnsupported(values?.skillUrl, isSkillsSupported)
+      ? t(SkillSelectorI18nKeys.UnsupportedTooltipLabel)
+      : errors.skillUrl,
+  };
 
   const returnUrl = useMemo(
     () =>
@@ -88,65 +119,7 @@ const ScheduledTaskCreatePage: FC = () => {
     [searchParams],
   );
 
-  const labels = useMemo(
-    () => ({
-      pageTitle: t(ScheduledTasksI18nKeys.CreatePageTitle),
-      backButtonLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
-      detailsSectionTitle: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
-      detailsSectionSubtitle: t(
-        ScheduledTasksI18nKeys.CreateDetailsSectionSubtitle,
-      ),
-      configurationSectionTitle: t(
-        ScheduledTasksI18nKeys.CreateConfigurationSectionTitle,
-      ),
-      configurationSectionSubtitle: t(
-        ScheduledTasksI18nKeys.CreateConfigurationSectionSubtitle,
-      ),
-      displayNameLabel: t(EditorI18nKeys.NameLabel),
-      displayNameRequired: t(EditorI18nKeys.NameRequired),
-      runAtLabel: t(ScheduledTasksI18nKeys.CreateRunAtLabel),
-      repeatLabel: t(ScheduledTasksI18nKeys.CreateRepeatLabel),
-      repeatOptions: [
-        {
-          key: ScheduledTaskRepeat.OneTime,
-          label: t(ScheduledTasksI18nKeys.CreateRepeatOneTime),
-        },
-        {
-          key: ScheduledTaskRepeat.Hourly,
-          label: t(ScheduledTasksI18nKeys.CreateRepeatHourly),
-        },
-        {
-          key: ScheduledTaskRepeat.Daily,
-          label: t(ScheduledTasksI18nKeys.CreateRepeatDaily),
-        },
-        {
-          key: ScheduledTaskRepeat.Weekly,
-          label: t(ScheduledTasksI18nKeys.CreateRepeatWeekly),
-        },
-        {
-          key: ScheduledTaskRepeat.Monthly,
-          label: t(ScheduledTasksI18nKeys.CreateRepeatMonthly),
-        },
-      ],
-      timeLabel: t(ScheduledTasksI18nKeys.CreateTimeLabel),
-      dayOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDayOfWeekLabel),
-      dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
-      minuteLabel: t(ScheduledTasksI18nKeys.CreateMinuteLabel),
-      startDateLabel: t(ScheduledTasksI18nKeys.CreateStartDateLabel),
-      startDatePlaceholder: t(
-        ScheduledTasksI18nKeys.CreateStartDatePlaceholder,
-      ),
-      endDateLabel: t(ScheduledTasksI18nKeys.CreateEndDateLabel),
-      endDatePlaceholder: t(ScheduledTasksI18nKeys.CreateEndDatePlaceholder),
-      modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
-      descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
-      instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
-      cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
-      createButtonLabel: t(ButtonsI18nKeys.Create),
-      submittingLabel: t(ScheduledTasksI18nKeys.CreateSubmittingLabel),
-    }),
-    [t],
-  );
+  const labels = useScheduledTaskFormLabels('create', isSkillSelectionEnabled);
 
   const handleFieldChange = useCallback(
     <K extends keyof ScheduledTaskCreateFormValues>(
@@ -155,8 +128,9 @@ const ScheduledTaskCreatePage: FC = () => {
     ) => {
       setValues((prev) => ({ ...prev, [field]: value }));
       setErrors((prev) => {
-        if (!(field in prev)) return prev;
         const next = { ...prev };
+        if (field === 'modelId' || field === 'skillUrl') delete next.skillUrl;
+        if (field === 'prompt' || field === 'skillUrl') delete next.prompt;
         delete next[field as keyof ScheduledTaskCreateFormErrors];
         return next;
       });
@@ -178,21 +152,30 @@ const ScheduledTaskCreatePage: FC = () => {
   }, [navigate, returnUrl]);
 
   const handleSubmit = useCallback(async () => {
-    const nextErrors = validateScheduledTaskForm(values, t);
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
+    const prepared = prepareScheduledTaskCreateBody(values, {
+      now: new Date(),
+      isSkillsSupported,
+    });
+    if (!prepared.ok) {
+      setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await createScheduledTask(mapFormValuesToCreateBody(values));
+      await createScheduledTask(prepared.body);
       showSuccessNotification({
         message: t(ScheduledTasksI18nKeys.CreateSuccessNotification),
       });
       navigate(returnUrl, { state: { refresh: true } });
     } catch (error) {
-      const { traceId } = await getApiErrorDetails(error);
+      const { traceId, code } = await getApiErrorDetails(error);
+      const fieldErrors = mapScheduledTaskApiError(code, t);
+      if (fieldErrors) {
+        setErrors(fieldErrors);
+        setIsSubmitting(false);
+        return;
+      }
       showErrorNotification({
         message: t(ScheduledTasksI18nKeys.CreateErrorNotification),
         requestId: traceId,
@@ -201,6 +184,7 @@ const ScheduledTaskCreatePage: FC = () => {
     }
   }, [
     values,
+    isSkillsSupported,
     showSuccessNotification,
     showErrorNotification,
     t,
@@ -220,7 +204,22 @@ const ScheduledTaskCreatePage: FC = () => {
     <ScheduledTaskCreateForm
       labels={labels}
       values={values}
-      errors={errors}
+      errors={effectiveErrors}
+      skillLabelId={skillLabelId}
+      skillErrorId={skillErrorId}
+      skillSelector={
+        isSkillSelectionEnabled ? (
+          <ScheduledTaskSkillField
+            value={values.skillUrl}
+            onChange={(value) => handleFieldChange('skillUrl', value)}
+            isSkillsSupported={isSkillsSupported}
+            isDisabled={isSubmitting}
+            isInvalid={Boolean(effectiveErrors.skillUrl)}
+            labelledById={skillLabelId}
+            describedById={effectiveErrors.skillUrl ? skillErrorId : undefined}
+          />
+        ) : undefined
+      }
       modelSelector={
         <DeploymentSelectorFieldTrigger
           selectedId={values.modelId || null}
@@ -229,6 +228,7 @@ const ScheduledTaskCreatePage: FC = () => {
           labelledById={modelLabelId}
           isDisabled={isSubmitting}
           isInvalid={Boolean(errors.modelId)}
+          panelClassName="desktop:min-w-[320px] [--ds-search-inline:12px]"
         />
       }
       modelLabelId={modelLabelId}

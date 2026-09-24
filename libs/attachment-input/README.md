@@ -79,6 +79,26 @@ import { AttachmentTray } from '@epam/ai-dial-attachment-input';
 />;
 ```
 
+`styles.className` lands on the tray row and `styles.card` carries an
+`AttachmentCardStyles` through to every tile, so a host sizes or restyles the
+tiles through the tray it already renders instead of a descendant selector on
+`dial-ai-attachment-tile`:
+
+```tsx
+<AttachmentTray
+  attachments={attachments}
+  onRemove={handleRemove}
+  styles={{
+    className: 'gap-3',
+    card: {
+      className: 'size-[120px]',
+      typography: { metaClassName: 'dial-tiny-text' },
+      colors: { border: 'var(--stroke-tertiary)' },
+    },
+  }}
+/>
+```
+
 ### AttachmentGroup
 
 Renders a sent message's attachments — image tiles plus file rows — with a header action that downloads everything downloadable at once. Collapses beyond `ATTACHMENT_COLLAPSE_THRESHOLD` items.
@@ -171,7 +191,8 @@ import {
   ATTACHMENT_COLLAPSE_THRESHOLD,
 } from '@epam/ai-dial-attachment-input';
 
-// Check if a file type is permitted (an empty allowlist permits nothing)
+// Check if a file type is permitted (an empty allowlist permits nothing).
+// Both sides are canonicalized, so a declared 'text/json' permits 'application/json'.
 const isAllowed = isMimeTypeAllowed(file.type, allowedMimeTypes);
 
 // Convert MIME types to a human-readable extension label string

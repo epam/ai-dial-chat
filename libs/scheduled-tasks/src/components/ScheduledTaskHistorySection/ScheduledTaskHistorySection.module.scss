@@ -8,3 +8,9 @@
 .subtitleText {
   color: var(--stdv-subtitle-text, var(--text-secondary, #57647a));
 }
+
+.cardLayout.cardLayout {
+  @media (min-width: 1280px) {
+    width: var(--st-history-width, 360px);
+  }
+}

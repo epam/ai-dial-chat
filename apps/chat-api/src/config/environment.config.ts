@@ -50,6 +50,21 @@ export class EnvironmentVariables {
   CSP_REPORT_URI?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0);
+  })
+  @Matches(IFRAME_ORIGIN_PATTERN, {
+    each: true,
+    message:
+      'Each ALLOWED_CONNECT_ORIGINS entry must be an HTTP(S) origin (scheme://host[:port]) or a single leading-wildcard-label origin, without paths, queries, or fragments',
+  })
+  ALLOWED_CONNECT_ORIGINS?: string[] = [];
+
+  @IsOptional()
   @IsEnum(ApplicationLogLevel)
   LOG_LEVEL?: ApplicationLogLevel;
 
@@ -64,7 +79,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  CORS_ORIGIN?: string = 'http://localhost:4207';
+  CORS_ORIGIN?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -85,6 +100,10 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   MCP_APP_USER_AGENT?: string;
+
+  @IsOptional()
+  @IsString()
+  MCP_APP_HOST_NAME?: string;
 
   @IsOptional()
   @IsString()
@@ -122,6 +141,14 @@ export class EnvironmentVariables {
       'AUTH_SESSION_PREV_SECRET must be a 64-character hex string (32 bytes)',
   })
   AUTH_SESSION_PREV_SECRET?: string;
+
+  @IsOptional()
+  // Preserve fractional or malformed values so validation rejects them.
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  @Min(1)
+  @Max(2147483647)
+  AUTH_SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
   @IsOptional()
   @IsString()
@@ -960,4 +987,18 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   MAX_GENERATION_DURATION_MS?: number = 1_800_000;
+
+  /*
+   * Bounds subscriber and resource release, never ownership (see
+   * openspec/specs/generation-registry/spec.md): if a generation's terminal
+   * write has not settled this long after being dispatched, attach
+   * subscribers are released and the entry moves to the retained `settling`
+   * state, still owning its registry key so a replacement is never admitted
+   * over an unsettled write.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  GENERATION_FINALIZE_TIMEOUT_MS?: number = 60_000;
 }

@@ -17,7 +17,7 @@ import {
   Search,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlus } from '@tabler/icons-react';
+import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
 import {
   FC,
   useCallback,
@@ -92,6 +92,12 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   onCardClick,
   banner,
   styles: scheduledTasksStyles,
+  sortIcon,
+  className,
+  gridLayout,
+  cardStyles,
+  loadMoreError,
+  onRetryLoadMore,
 }) => {
   const { colors, typography } = scheduledTasksStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
@@ -181,7 +187,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     if (!scrollRoot) return;
 
     const checkVisibility = () => {
-      if (isLoadingMore || isLoading || !hasMore) return;
+      if (isLoadingMore || isLoading || loadMoreError || !hasMore) return;
       const rootRect = scrollRoot.getBoundingClientRect();
       const sentinelRect = sentinel.getBoundingClientRect();
       if (
@@ -202,7 +208,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
      * effect and re-checks the newly taller layout. Listing `items.length`
      * too would only force a redundant teardown/re-attach of the listener.
      */
-  }, [hasMore, isLoadingMore, isLoading, onLoadMore]);
+  }, [hasMore, isLoadingMore, isLoading, loadMoreError, onLoadMore]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -242,7 +248,17 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           skeletonStyles={{
             colors: { skeletonColor: colors?.skeletonColor },
           }}
+          cardStyles={cardStyles}
+          layout={gridLayout}
         />
+        {loadMoreError && (
+          <div role="alert" className="flex items-center gap-3">
+            <span className={mergeClasses(subtitleClassName, styles.subtitle)}>
+              {labels.loadMoreErrorLabel ?? labels.errorLabel}
+            </span>
+            <GhostButton label={labels.retryLabel} onClick={onRetryLoadMore} />
+          </div>
+        )}
 
         <div ref={sentinelRef} aria-hidden className="h-px w-full" />
       </div>
@@ -257,6 +273,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
       className={mergeClasses(
         'flex h-full w-full flex-col gap-6 overflow-y-auto px-8 py-4',
         styles.container,
+        className,
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -279,7 +296,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
            * the plus icon alone carries the action, centered. `aria-label`
            * keeps the accessible name stable at every width. */
           label={labels.createButtonLabel}
-          textClassName="hidden desktop:inline"
+          textClassName={styles.createButtonLabel}
           aria-label={labels.createButtonLabel}
           iconBefore={
             <IconPlus
@@ -325,6 +342,17 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
               label={activeSortLabel}
               variant={ButtonVariant.Primary}
               appearance={ButtonAppearance.Ghost}
+              iconBefore={
+                sortIcon === undefined ? (
+                  <IconArrowsSort
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                ) : (
+                  sortIcon
+                )
+              }
               className={styles.sortButton}
             />
           </div>
@@ -339,7 +367,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
       <div
         className={mergeClasses(
-          'mx-auto flex size-full w-full max-w-[1180px] flex-col',
+          'mx-auto flex size-full w-full min-w-0 flex-col',
           isCentered && 'items-center justify-center',
         )}
       >

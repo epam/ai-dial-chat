@@ -282,6 +282,16 @@ export interface SkillEditorProps {
    * returns to exactly that seeded state (`false`).
    */
   onDirtyChange?: (isDirty: boolean) => void;
+  /**
+   * Called with the complete current values whenever the user edits `name`,
+   * `description`, or `instructions` — including a paste into the Instructions
+   * editor. Not called for file-tree changes (reported through `fileActions`
+   * and `onDirtyChange`) and not called while seeding from `initialValues`,
+   * since seeding is not a user edit. The component derives no meaning from
+   * the values it reports; a host validating them feeds the result back
+   * through `errors`.
+   */
+  onValuesChange?: (values: SkillEditorValues) => void;
   /** File-tree mutation operations. */
   fileActions: SkillEditorFileActions;
   /** Called when the header back button is activated. */
@@ -304,6 +314,12 @@ export interface SkillEditorProps {
   onCancel: () => void;
   /** Called when the retry button in the load-error state is activated. */
   onRetry?: () => void;
+  /**
+   * Called when the retry action beside `submitError` is activated. Supply it
+   * only for a failure a plain re-send can clear, such as an unavailable
+   * service; when omitted, the error renders as text with no action.
+   */
+  onRetrySubmit?: () => void;
   /** Text overrides. */
   labels?: SkillEditorLabels;
   /** Style overrides. */

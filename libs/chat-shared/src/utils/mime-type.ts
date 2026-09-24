@@ -1,3 +1,4 @@
+import { MIME_TYPE_ALIASES } from '../constants/mime-types';
 import { AttachmentType } from '../types/attachment';
 import { MIMEType } from '../types/mime-type';
 
@@ -81,6 +82,21 @@ const EXTENSION_TO_MIME_TYPE: Record<string, MIMEType> = {
   mp3: MIMEType.MP3,
   wav: MIMEType.WAV,
   ogg: MIMEType.OGG,
+};
+
+/** Lowercases a MIME type and strips its parameters, e.g. `'Application/JSON; charset=utf-8'` -> `'application/json'`. */
+export const getBaseMimeType = (mimeType: string): string =>
+  mimeType.toLowerCase().split(';')[0].trim();
+
+/**
+ * Returns the canonical spelling of a MIME type: parameters stripped, lowercased,
+ * and known aliases resolved through `MIME_TYPE_ALIASES` (`'text/json'` ->
+ * `'application/json'`). Wildcards and unrecognized types are returned unchanged
+ * apart from that normalization.
+ */
+export const normalizeMimeType = (mimeType: string): string => {
+  const baseMimeType = getBaseMimeType(mimeType);
+  return MIME_TYPE_ALIASES[baseMimeType] ?? baseMimeType;
 };
 
 /** Strips a trailing `?query` string and/or `#fragment` from a URL or path. */

@@ -91,6 +91,45 @@ describe('conversation naming helpers', () => {
       const result = prepareEntityName('\u2066Hello\u2069world');
       expect(result).toBe('Hello world');
     });
+
+    it('should strip every character DIAL Core rejects in a resource name', () => {
+      /*
+       * Pins the backend list against `NOT_ALLOWED_SYMBOLS` in
+       * `@epam/ai-dial-ui-kit` and `PROHIBITED_CONVERSATION_NAME_CHARS_RE` in
+       * `libs/chat-shared`. The backslash is the one that was missing and
+       * stranded conversations.
+       */
+      for (const char of [
+        ':',
+        ';',
+        ',',
+        '=',
+        '/',
+        '\\',
+        '{',
+        '}',
+        '%',
+        '&',
+        '"',
+      ]) {
+        expect(prepareEntityName(`a${char}b`)).toBe('a b');
+      }
+    });
+
+    it('should strip tabs', () => {
+      expect(prepareEntityName('Hello\tworld')).toBe('Hello world');
+    });
+
+    it('should strip backslashes from a LaTeX-style first prompt', () => {
+      const result = prepareEntityName(
+        'Displayed LaTeX for \\frac{1}{1+x} and \\begin{bmatrix}1 & 2\\\\3 & 4\\end{bmatrix}',
+      );
+
+      expect(result).not.toContain('\\');
+      expect(result).toBe(
+        'Displayed LaTeX for  frac 1  1+x  and  begin bmatrix 1   2  3   4 end bmatrix',
+      );
+    });
   });
 
   describe('getConversationName', () => {

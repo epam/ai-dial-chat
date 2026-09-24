@@ -40,6 +40,7 @@ export const MIME_TYPE_EXT_MAP: Record<string, string> = {
   'application/typescript': 'ts',
   'application/xhtml+xml': 'xhtml',
   'application/xml': 'xml',
+  'application/yaml': 'yaml',
   'application/vnd.amazon.ebook': 'azw',
   'application/vnd.apple.installer+xml': 'mpkg',
   'application/vnd.ms-excel': 'xls',
@@ -119,3 +120,87 @@ export const MIME_TYPE_EXT_MAP: Record<string, string> = {
 export const MIME_TYPE_WILDCARD = '*/*';
 /** MIME type prefix shared by all audio content types. */
 export const MIME_TYPE_AUDIO_PREFIX = 'audio/';
+
+/**
+ * Maps non-canonical MIME type spellings to the canonical type they denote.
+ *
+ * Deployments declare their `inputAttachmentTypes` by hand, while DIAL Core
+ * stores the content type a browser or an upload client reported, so the two
+ * sides routinely disagree on which of several equivalent spellings to use for
+ * the same format (`text/json` vs `application/json`). Resolving both through
+ * this map before comparing them keeps a declared type matching the files it
+ * is meant to describe.
+ *
+ * Only aliases for one and the same format belong here — never a pair of
+ * distinct formats that happen to share an extension.
+ */
+export const MIME_TYPE_ALIASES: Record<string, string> = {
+  // JSON
+  'text/json': 'application/json',
+  'text/x-json': 'application/json',
+  'application/x-json': 'application/json',
+
+  // XML
+  'text/xml': 'application/xml',
+
+  // JavaScript / TypeScript
+  'application/javascript': 'text/javascript',
+  'application/x-javascript': 'text/javascript',
+  'application/typescript': 'text/typescript',
+
+  // Markdown
+  'text/x-markdown': 'text/markdown',
+  'application/markdown': 'text/markdown',
+
+  // CSV
+  'application/csv': 'text/csv',
+  'text/x-csv': 'text/csv',
+  'text/comma-separated-values': 'text/csv',
+
+  // YAML
+  'text/yaml': 'application/yaml',
+  'text/x-yaml': 'application/yaml',
+  'application/x-yaml': 'application/yaml',
+
+  // SQL
+  'text/sql': 'application/sql',
+  'text/x-sql': 'application/sql',
+
+  // PHP / Rust
+  'application/php': 'text/x-php',
+  'application/x-php': 'text/x-php',
+  'application/x-httpd-php': 'text/x-php',
+  'application/x-rust': 'text/x-rustsrc',
+
+  // Documents
+  'application/x-pdf': 'application/pdf',
+  'application/vnd.ms-word': 'application/msword',
+  'application/excel': 'application/vnd.ms-excel',
+  'application/x-excel': 'application/vnd.ms-excel',
+  'application/x-msexcel': 'application/vnd.ms-excel',
+  'application/powerpoint': 'application/vnd.ms-powerpoint',
+  'application/mspowerpoint': 'application/vnd.ms-powerpoint',
+
+  // Archives
+  'application/x-zip': 'application/zip',
+  'application/x-zip-compressed': 'application/zip',
+  'application/x-gzip': 'application/gzip',
+  'application/x-rar-compressed': 'application/vnd.rar',
+
+  // Images
+  'image/jpg': 'image/jpeg',
+  'image/pjpeg': 'image/jpeg',
+  'image/x-png': 'image/png',
+  'image/svg': 'image/svg+xml',
+  'image/icon': 'image/vnd.microsoft.icon',
+  'image/x-icon': 'image/vnd.microsoft.icon',
+
+  // Audio
+  'audio/mp3': 'audio/mpeg',
+  'audio/mpeg3': 'audio/mpeg',
+  'audio/x-mpeg-3': 'audio/mpeg',
+  'audio/wave': 'audio/wav',
+  'audio/x-wav': 'audio/wav',
+  'audio/vnd.wave': 'audio/wav',
+  'audio/x-m4a': 'audio/mp4',
+};

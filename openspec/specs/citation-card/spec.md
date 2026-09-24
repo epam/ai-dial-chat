@@ -44,10 +44,35 @@ interface CitationCardProps {
 interface CitationDropdownProps {
   group: AnnotationGroup;
   onPreview?: (annotation: Annotation) => void;
+  isPreviewable?: (annotation: Annotation) => boolean;
   onOpenInBrowser: (annotation: Annotation) => void;
 }
 ```
 `CitationDropdown` SHALL only invoke `citationCard.closePopup()` on preview (see next requirement) when `onPreview` is provided; when `onPreview` is absent, there is no preview action to wrap.
+
+`useCitationMarkdownComponents` SHALL accept an optional host-supplied
+`isPreviewable(annotation)` callback and forward it to `CitationDropdown`.
+The dropdown SHALL evaluate it for the active annotation and omit the card's
+`onPreview` when it returns `false`. Omitting the callback preserves existing
+preview behavior. The second button's MIME-based label SHALL use the active
+annotation's source rather than the first annotation in the group.
+
+The chat app SHALL supply the same external-source preview classification used
+by its Sources panel: DIAL file sources retain Preview, supported external files
+(including PDF, Office and `.html`/`.htm`) retain Preview, and ordinary external
+web pages without a supported file extension show only "Open in browser".
+DIAL-specific classification SHALL remain outside `libs/quotations`.
+
+#### Scenario: External web citation has only Open in browser
+
+- **WHEN** an inline citation references `https://data.imf.org/en/datasets/IMF.RES:WEO` with MIME type `text/html`
+- **THEN** its card has no Preview action and Open in browser opens the source URL in a new tab, on mobile and desktop
+
+#### Scenario: Switching citations re-evaluates preview availability
+
+- **WHEN** the user switches from a web-page annotation to a PDF annotation within one card
+- **THEN** Preview becomes available and the second action is Download
+- **AND** switching back restores the single Open in browser action
 
 **i18n keys**: `citations.popup.switcher`, `citations.popup.preview`, `citations.popup.openInBrowser`, `citations.popup.download`, `citations.popup.previousCitation`, `citations.popup.nextCitation`, `citations.popup.ariaLabel`.
 **RTL**: switcher chevron icons SHALL be mirrored with `rtl:scale-x-[-1]`; all layout uses logical flex properties.
@@ -114,7 +139,7 @@ The consuming app's message-item component SHALL wrap its return value in `<Cita
 
 `CitationDropdown` SHALL NOT clone, rebuild, or copy the `AnnotationGroup` it receives, nor the `Annotation` objects inside it. Downstream mappers identify the clicked annotation by reference identity (`annotationToOoxmlCanvasContent` compares `entry === annotation`; `annotationToPdfCanvasContent` resolves its group with `groups.find(g => g.annotations.includes(annotation))`), so occurrence scoping SHALL be achieved without touching citation data.
 
-`useCitationMarkdownComponents` SHALL NOT accept `citationCard` as a parameter; it reads `CitationCardContext` internally via `CitationDropdown`. The `markdownComponents` returned SHALL only depend on `groups`, `onPreview`, `onOpenInBrowser`, `buildLabels`, and `isCompactTypography` — never on any citation popup state — so that ReactMarkdown never unmounts the paragraph subtree in response to a citation state update, and so each occurrence's `useId` value survives every ordinary rerender.
+`useCitationMarkdownComponents` SHALL NOT accept `citationCard` as a parameter; it reads `CitationCardContext` internally via `CitationDropdown`. The `markdownComponents` returned SHALL depend on citation data, `onPreview`, `isPreviewable`, `onOpenInBrowser`, `buildLabels`, and presentation inputs — never on any citation popup state — so that ReactMarkdown never unmounts the paragraph subtree in response to a citation state update, and so each occurrence's `useId` value survives every ordinary rerender.
 
 #### Scenario: Opening a popup sets the open owner
 

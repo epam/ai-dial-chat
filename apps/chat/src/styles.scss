@@ -1,6 +1,7 @@
 @use 'tailwindcss/base';
 @use 'tailwindcss/components';
 @use 'tailwindcss/utilities';
+@use './styles/mcp-app-ui-vars';
 
 @layer base {
   html,

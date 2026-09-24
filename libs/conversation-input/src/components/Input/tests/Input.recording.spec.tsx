@@ -245,8 +245,12 @@ describe('Input while dictating', () => {
       expect(onUploadAttachment).toHaveBeenCalledOnce();
       expect(onUploadAttachment.mock.calls[0][0]).toEqual(
         expect.objectContaining({
-          name: expect.stringMatching(/\.webm$/),
-          file: expect.objectContaining({ type: 'audio/webm', size: 5 }),
+          name: expect.stringMatching(/\.weba$/),
+          file: expect.objectContaining({
+            name: expect.stringMatching(/\.weba$/),
+            type: 'audio/webm',
+            size: 5,
+          }),
         }),
       );
       expect(onTranscribeAudio).not.toHaveBeenCalled();

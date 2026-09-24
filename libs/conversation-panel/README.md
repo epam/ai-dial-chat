@@ -74,8 +74,11 @@ row. The list then stays on whichever tab is active — `FilterTab.All` unless
 `activeFilter` says otherwise — so every group remains visible; only the
 control disappears. `labels.filterLabels` stays required either way.
 
-The row renders each filter as a ui-kit `Tag` in its `TagAppearance.Selectable`
-appearance, so the chips take their colors from the active theme's tag tokens.
+The row is the ui-kit's `FilterChips`, which draws each filter as a `Tag` in
+its `TagAppearance.Selectable` appearance, so the chips take their colors from
+the active theme's tag tokens. This component only maps the panel's vocabulary
+onto it: `FilterTab` values, the host's `filterLabels`, and `hiddenSources` as
+an exclusion list.
 It is a named `role="group"` of toggle chips — the selected one carries
 `aria-pressed` — not a `tablist`, because the chips filter the list in place
 rather than switching between panels. `labels.filterLabels.groupAriaLabel` names
@@ -106,9 +109,42 @@ The New chat button is not on this list on purpose: it is a labelled button, so
 it reads the ui-kit's own `--radius-control` and stays in step with every other
 button in the host app.
 
+Its height and elevation are classes rather than properties, and
+`styles.newChatButtonClassName` is merged after them, so a `h-*` or `shadow-*`
+utility passed there replaces the default instead of landing beside it:
+
+```tsx
+<ConversationPanel
+  {...props}
+  styles={{ newChatButtonClassName: 'h-[44px] shadow-md' }}
+/>
+```
+
+Colors stay on `styles.newChatButton` (`background`, `text`, `focusOutline`),
+which sets them as custom properties.
+
 `styles.searchWrapperClassName` remains for anything else the search wrapper
 needs; a `rounded-*` utility passed there still wins over `--cp-search-radius`,
 since a host's utilities are emitted after this package's stylesheet.
+
+### Header
+
+The panel renders a 64 px header inside `SidebarPanel`. `styles.headerClassName`
+is merged after that height and `styles.headerActionsClassName` onto the cluster
+holding `headerActions` and the panel toggle, so a `h-*` or `gap-*` passed here
+replaces the default rather than competing with it at equal specificity — which
+is what a rule on `.dial-sb-header` does:
+
+```tsx
+<ConversationPanel
+  {...props}
+  headerActions={<CollapseButton />}
+  styles={{
+    headerClassName: 'h-[56px] px-4',
+    headerActionsClassName: 'gap-2',
+  }}
+/>
+```
 
 ## Public class names
 

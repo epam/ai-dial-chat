@@ -16,7 +16,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   isInputDisabled = false,
   ...inputProps
 }) => {
-  const { colors, typography } = stylesProp ?? {};
+  const { colors, typography, attachmentTray, modelMenu } = stylesProp ?? {};
 
   const cssVars = buildCssVars({
     '--ci-welcome-color': colors?.welcomeText,
@@ -71,6 +71,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           className={inputClassName}
           colors={colors?.input}
           typography={typography?.input}
+          attachmentTray={attachmentTray}
+          modelMenu={modelMenu}
         />
       </div>
     </div>

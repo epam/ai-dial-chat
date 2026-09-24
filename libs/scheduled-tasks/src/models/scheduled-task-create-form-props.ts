@@ -34,8 +34,10 @@ export interface ScheduledTaskCreateFormValues {
   modelId: string;
   /** Optional human-readable summary sent to the BFF as `description` (max 500 characters). */
   description?: string;
-  /** Prompt text sent to the BFF as `prompt` (required). */
+  /** Prompt text; may be empty when a skill is selected. */
   prompt: string;
+  /** Optional selected skill reference, independent of its display metadata. */
+  skillUrl?: string;
 }
 
 /** Validation error messages keyed by {@link ScheduledTaskCreateFormValues} field. */
@@ -62,6 +64,8 @@ export interface ScheduledTaskCreateFormErrors {
   description?: string;
   /** Error shown under the prompt field. */
   prompt?: string;
+  /** Error shown under the skill field, or at form level when the slot is hidden. */
+  skillUrl?: string;
 }
 
 /** Localized labels used by the {@link ScheduledTaskCreateForm} component. */
@@ -84,12 +88,14 @@ export interface ScheduledTaskCreateFormLabels {
   displayNameRequired: string;
   /** Run-at field label (shown when `repeat` is "oneTime"). */
   runAtLabel: string;
+  /** Time-of-day field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
+  timeLabel: string;
+  /** Validation message shown under the time field when its visible draft is not a complete `HH:mm` value. */
+  timeInvalidLabel: string;
   /** Accessible label for the Repeat dropdown. */
   repeatLabel: string;
   /** Options rendered in the Repeat dropdown. */
   repeatOptions: ScheduledTaskRepeatOption[];
-  /** Time field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
-  timeLabel: string;
   /** Day-of-week field label (shown when `repeat` is "weekly"). */
   dayOfWeekLabel: string;
   /** Day-of-month field label (shown when `repeat` is "monthly"). */
@@ -110,6 +116,10 @@ export interface ScheduledTaskCreateFormLabels {
   descriptionLabel: string;
   /** Accessible label for the Instructions markdown editor. */
   instructionsLabel: string;
+  /** Optional label above the host-composed skill selector. */
+  skillLabel?: string;
+  /** Optional placeholder forwarded to the Instructions editor. */
+  instructionsPlaceholder?: string;
   /** Label for the Cancel action. */
   cancelButtonLabel: string;
   /** Label for the Save action (submits the create form). */
@@ -155,6 +165,8 @@ export interface ScheduledTaskCreateFormStyles {
   colors?: ScheduledTaskCreateFormColors;
   /** Typography class overrides. */
   typography?: ScheduledTaskCreateFormTypography;
+  /** Layout values scoped to this form instance. */
+  layout?: { detailsWidth?: string; columnGap?: string };
 }
 
 /** Props for the {@link ScheduledTaskCreateForm} component. */
@@ -178,6 +190,12 @@ export interface ScheduledTaskCreateFormProps {
    * linked without a literal id that could collide across form instances.
    */
   modelLabelId: string;
+  /** Optional host-composed skill control, rendered above Instructions. */
+  skillSelector?: ReactNode;
+  /** ID of the skill label; also pass to the control's aria-labelledby. */
+  skillLabelId?: string;
+  /** ID of the skill error; also pass to the control's aria-describedby. */
+  skillErrorId?: string;
   /** Called with the changed field key and its new value whenever any field is edited. */
   onFieldChange: <K extends keyof ScheduledTaskCreateFormValues>(
     field: K,
@@ -193,6 +211,10 @@ export interface ScheduledTaskCreateFormProps {
   isSubmitting?: boolean;
   /** Color theme applied to the Instructions markdown editor. Defaults to the editor's own default (`EditorThemes.light`). */
   markdownEditorTheme?: EditorThemes;
+  /** Optional replacement for the default back icon. */
+  backIcon?: ReactNode;
+  /** Additional class name on the form root. */
+  className?: string;
   /** Style overrides. */
   styles?: ScheduledTaskCreateFormStyles;
 }

@@ -1,3 +1,7 @@
+import {
+  MIME_TYPE_EXT_MAP,
+  normalizeMimeType,
+} from '@epam/ai-dial-chat-shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TranscribeAudio } from '../models/Voice';
 
@@ -193,7 +197,11 @@ export const useVoiceRecorder = ({
             blob.size &&
             (!transcribe || (hasAudio && (!sampled || hasSpeech)))
           ) {
-            const extension = mimeType.split(';')[0].split('/')[1] ?? 'webm';
+            const baseMimeType = normalizeMimeType(mimeType);
+            const extension =
+              MIME_TYPE_EXT_MAP[baseMimeType] ??
+              baseMimeType.split('/')[1] ??
+              'webm';
             const file = new File(
               [blob],
               'voice-' + crypto.randomUUID() + '.' + extension,

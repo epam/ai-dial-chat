@@ -43,6 +43,10 @@ export interface BuilderFormContainerProps {
   isSubmitDisabled?: boolean;
   /** When `true`, the submit action shows a spinner and reports `aria-busy` on both surfaces. Defaults to `false`. */
   isSubmitting?: boolean;
+  /** Optional replacement for the header's default back icon. */
+  backIcon?: ReactNode;
+  /** Additional class name for the container root. */
+  className?: string;
   /** Body's start-edge column. Full width on mobile, a fixed-width column on desktop. */
   left?: ReactNode;
   /** Body's main column, filling the space left by `left` and `metadata`. */
@@ -51,4 +55,6 @@ export interface BuilderFormContainerProps {
   metadata?: ReactNode;
   /** Style overrides. */
   styles?: BuilderFormContainerStyles;
+  /** Optional container-responsive body sizing. */
+  layout?: import('./builder-form-body-props').BuilderFormBodyProps['layout'];
 }

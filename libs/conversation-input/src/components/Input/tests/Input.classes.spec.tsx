@@ -10,7 +10,8 @@
  * the wrong node fails rather than passes. Hence the rule exemption below.
  */
 /* eslint-disable testing-library/no-container, testing-library/no-node-access */
-import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
+import type { DeploymentItem, ToolMenuItem } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_INPUT_CLASS } from '../../../constants/public-class-names';
@@ -28,6 +29,10 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 
 const makeDeployments = (): DeploymentItem[] => [
   { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+];
+
+const makeTools = (): ToolMenuItem[] => [
+  { id: 'web-search', label: 'Web search', icon: null, isSelected: false },
 ];
 
 /*
@@ -91,6 +96,28 @@ describe('Input — public class names', () => {
         CONVERSATION_INPUT_CLASS.addCluster,
       ),
     ).toBeTruthy();
+  });
+
+  it('marks the tool chips cell', () => {
+    render(<Input toolsMenuItems={makeTools()} onToolToggle={vi.fn()} />);
+
+    const chipsCell = closestWithClass(
+      screen.getByRole('button', { name: 'Web search' }),
+      CONVERSATION_INPUT_CLASS.toolsChips,
+    );
+
+    expect(chipsCell).toBeTruthy();
+    expect(
+      closestWithClass(chipsCell!, CONVERSATION_INPUT_CLASS.actionRow),
+    ).toBeTruthy();
+  });
+
+  it('omits the tool chips cell when no tools are shown', () => {
+    const { container } = render(<Input />);
+
+    expect(
+      container.querySelectorAll(`.${CONVERSATION_INPUT_CLASS.toolsChips}`),
+    ).toHaveLength(0);
   });
 
   it('marks the footer actions cluster', () => {
@@ -175,5 +202,48 @@ describe('Input — public class names', () => {
     } finally {
       document.documentElement.dir = 'ltr';
     }
+  });
+});
+
+describe('Input — attachment tray style forwarding', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue(false);
+  });
+
+  const attachment = {
+    id: 'report',
+    name: 'report.pdf',
+    file: new File([], 'report.pdf', { type: 'application/pdf' }),
+    type: AttachmentType.File,
+    contentType: 'application/pdf',
+    url: 'files/report.pdf',
+    status: RequestStatus.Idle,
+  };
+
+  it('forwards the tray class onto the tray found by its role', () => {
+    render(
+      <Input
+        initialAttachments={[attachment]}
+        attachmentTray={{ className: 'host-tray' }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('list', { name: 'Attached files' }).classList,
+    ).toContain('host-tray');
+  });
+
+  it('forwards the nested card styles onto every tile in the tray', () => {
+    render(
+      <Input
+        initialAttachments={[attachment]}
+        attachmentTray={{ card: { className: 'host-tile' } }}
+      />,
+    );
+
+    expect(
+      closestWithClass(screen.getByText('report'), 'host-tile'),
+    ).toBeTruthy();
   });
 });

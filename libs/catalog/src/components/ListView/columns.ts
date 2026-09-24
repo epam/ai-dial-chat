@@ -52,7 +52,8 @@ const resolveColumnVisibility = (
 };
 
 /**
- * Column definitions for the catalog ag-grid list view. A stable module-level constant so ag-grid never sees a new array/closures on each render.
+ * Builds column definitions for the catalog list. The caller memoizes them
+ * by type and visibility so scrolling does not reconfigure the grid.
  *
  * Name, Folder and Tags all flex, so spare width is shared instead of going to
  * Name alone: entity names are short, and letting Name absorb every free pixel

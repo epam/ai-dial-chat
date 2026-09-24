@@ -6,6 +6,7 @@
  */
 export * from '../components/MarkdownRenderer/MarkdownRenderer';
 export * from '../components/MarkdownRenderer/MDMessageViewer';
+export * from '../components/MarkdownRenderer/PlainTextRenderer';
 export * from '../components/MarkdownRenderer/markdown-class-names';
 export * from '../components/MarkdownRenderer/CodeBlock/CodeBlock';
 export { restrainedSyntaxTheme } from '../components/MarkdownRenderer/CodeBlock/syntax-theme';

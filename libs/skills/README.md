@@ -48,10 +48,76 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.7`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.15`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
+
+### `SkillSelectorField`
+
+Controlled field for forms whose selected skill belongs to the host draft.
+It uses the same UI-kit input as model/agent fields and opens a searchable
+favorites dropdown. Browse opens the catalog; the trailing clear button removes
+the current selection without opening either popup. The field owns only popup
+visibility and the search query. A missing
+`displayName` falls back to the full reference. Browsing requires explicit
+`isSkillsSupported`; an unsupported selection remains removable.
+`isDisabled` disables both actions. `isInvalid`, `labelledById`, and
+`describedById` connect host validation to the control. The host renders inline
+errors and provides feature gating, metadata, and catalog content.
+
+Pass host-resolved `favorites` (`FavoriteSkillItem[]`), optional
+`onToggleFavorite` and `onViewDetails` callbacks, and translated
+`labels.panelLabels`, `labels.searchPlaceholder`, and `labels.clearSearchLabel`.
+Omitted favorites show the empty hint and Browse. Omitted action callbacks hide
+their star/details actions. `renderOverlay(panel, isOpen, onClose)` can replace
+the dropdown with a host-owned mobile sheet using the same panel.
+
+```tsx
+import { useState } from 'react';
+import { SkillSelectorField } from '@epam/ai-dial-skills';
+
+function SkillFieldExample() {
+  const [value, onChange] = useState<string>();
+  return (
+    <>
+      <span id="example-skill-label">Skill</span>
+      <SkillSelectorField
+        value={value}
+        onChange={onChange}
+        favorites={[{ id: 'skills/public/report', name: 'Report' }]}
+        isSkillsSupported
+        labelledById="example-skill-label"
+        labels={{
+          placeholder: 'Choose a skill',
+          modalTitle: 'Use skill',
+          removeSkillLabel: 'Remove skill',
+          unsupportedTooltipLabel:
+            'Selected model does not support skills. Remove the skill or select different model to proceed.',
+        }}
+        renderCatalogContent={(select) => (
+          <button onClick={() => select('skills/public/report')}>Report</button>
+        )}
+      />
+    </>
+  );
+}
+```
+
+Public types: `SkillSelectorFieldProps`, `SkillSelectorFieldLabels`, and
+`SkillSelectorFieldStyles`. `styles` supports colors (`text`, `background`,
+`border`, `error`), `typography.fontClassName`, `triggerClassName`, and `cssVars`.
+`SKILLS_CLASS.selectorField` is the stable root class
+`dial-skills-selector-field`. The existing stylesheet export includes its theme.
+
+`FavoriteSkillsPanel` also accepts `className` and `rowClassName` for layout
+composition. Its optional favorite/details callbacks hide their actions when
+omitted. The form field uses full-width panels and 44px minimum-height rows.
+
+The chat overlay's compatibility signal also depends on the selected reference,
+independently of catalog loading or deletion; unresolved selections keep a
+fallback chip and remain removable. The existing `isEnabled` gate still hides
+the chat flow and its outgoing selection when disabled.
 
 ### `ChatSkill`
 
@@ -203,6 +269,35 @@ open, wrapped in a `Suspense` with a `null` fallback, so a lazily loaded
 picker (e.g. a catalog view chunk) loads in place on first open. The shell
 never selects or navigates itself — it hands `onSelect` and `onClose` to
 `renderContent` and forwards a selection to `onSelect`.
+
+### `SkillArchiveUploadDialog`
+
+```tsx
+import { SkillArchiveUploadDialog } from '@epam/ai-dial-skills';
+
+<SkillArchiveUploadDialog
+  isOpen={isDialogOpen}
+  errorText={selectionError}
+  accept=".zip,.md"
+  labels={{
+    dialogTitle: 'Upload skill',
+    dropZoneLabel: 'Drag and drop it or click here to upload',
+    dropZoneMobileLabel: 'Click here to upload',
+    formatsLabel: 'File formats .zip and SKILL.md',
+    fileInputAriaLabel: 'Upload a skill ZIP archive or a SKILL.md file',
+    closeAriaLabel: 'Close',
+  }}
+  onClose={closeDialog}
+  onFilesSelected={handleFilesSelected}
+  onFilesRejected={handleFilesRejected}
+/>;
+```
+
+Presentation for a skill-archive upload: a `Popup` with a drop area showing the accepted formats
+and any local rejection message. It has no dependency on an import controller — wire
+`onFilesSelected`/`onFilesRejected` to `@epam/ai-dial-chat-hooks`' `useSkillArchiveImport` (or an
+equivalent host controller). Every label falls back to an English default, so `labels` may be
+omitted entirely for an English-only host.
 
 ## Hooks
 

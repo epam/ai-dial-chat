@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.7 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.15 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -22,11 +22,20 @@ external to preserve the editor's dynamic boundary in consuming applications.
 
 ## Peer Dependencies
 
+Import `@epam/ai-dial-scheduled-tasks/styles.css` once in the host. It includes
+the structural CSS required by `@epam/ai-dial-builder-form`; import UI Kit
+base/theme styles once at the host root.
+
 - `react`
 - `@epam/ai-dial-ui-kit`
 - `@epam/ai-dial-chat-shared`
 
 ## Components
+
+The optional `className`, icon, `styles`, and layout props are per-instance.
+Typed values take precedence over the package's CSS-variable fallbacks, which
+then use host theme tokens. Omitting an icon retains the default; `null` hides
+it while preserving the control's accessible name and keyboard behaviour.
 
 ### ScheduledTasks
 
@@ -75,6 +84,10 @@ import {
 
 A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, and optional location breadcrumb and "new" badge. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
 
+`item.presentationStatus` takes precedence over the legacy `isActive` flag;
+when omitted, `isActive` retains its existing behavior. Supply
+`labels.completedBadgeLabel` for localized completed-state copy.
+
 ```tsx
 import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
@@ -94,9 +107,9 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control itself is a fully-composed `modelSelector` element the host renders — the lib only wraps it with the field's required label and error message. This component holds no state of its own.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", or "monthly"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
 
-`isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty, so the affordance is the only thing that separates "submitting" from "not ready".
+`isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty or the time draft is invalid, so the affordance is the only thing that separates "submitting" from "not ready".
 
 ```tsx
 import {
@@ -162,6 +175,66 @@ import {
 />;
 ```
 
+### ScheduledTaskDeleteConfirmation
+
+Controlled deletion presentation that leaves mutations, routing, notifications,
+and translated copy to the host. `isDeleting` prevents duplicate confirmation
+and dismissal callbacks. Use `styles.popupClassName` to apply a host popup width
+or other container styling.
+
+```tsx
+import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskDeleteConfirmation
+  open={isDeleteOpen}
+  taskName={task.displayName}
+  title="Delete task"
+  body="This action cannot be undone."
+  cancelLabel="Cancel"
+  confirmLabel="Delete"
+  isDeleting={isDeleting}
+  onClose={closeDelete}
+  onConfirm={deleteTask}
+/>;
+```
+
+## Validation entry point
+
+### Optional skill configuration
+
+`ScheduledTaskCreateForm` accepts `skillSelector?: ReactNode`, `skillLabelId`,
+`skillErrorId`, and `labels.skillLabel`. The slot appears above Instructions;
+the host passes the same IDs as the control's `labelledById` / `describedById`.
+`values.skillUrl?: string` holds the selection and `errors.skillUrl?: string`
+holds a localized error. Errors stay visible even when the slot is hidden.
+Model remains in Details. Selection and catalog integration belong to the host;
+`SkillSelectorField` from the skills package can supply the control.
+
+Instructions only, skill only, or both satisfy the content requirement. Save is
+disabled for empty content or a skill error. Pass `isSkillsSupported: true` to
+`validateScheduledTaskFormValues` only when support is explicitly confirmed for
+the draft model. Omitted/false support rejects any selected reference, even
+without resolved metadata. Codes `SkillUnsupported` and
+`InstructionsOrSkillRequired` are translated by the host; `PromptRequired`
+remains exported for compatibility. Revalidate on model or selection changes
+and use checked request preparation before submission.
+
+`ScheduledTaskConfigurationSection` and `ScheduledTaskDetailsSummary` accept
+optional `skillLabel` / `skillDisplayName`. `ScheduledTaskDetailView` accepts
+`skillDisplayName` and `labels.skillLabel`. Supply a resolved name or the full
+reference as fallback. Skill appears before Instructions as plain text; absent
+skills and empty instructions render no field. Libraries perform no lookup.
+
+Use the pure validation entry before an app submits a task. It returns typed
+error codes rather than translated text, and accepts an injected clock for
+deterministic validation.
+
+```ts
+import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/validation';
+
+const errors = validateScheduledTaskFormValues(values, { now: new Date() });
+```
+
 ## Public class names
 
 A host embedding this package cannot style it through its CSS-module locals —
@@ -192,3 +265,73 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Constants
+
+### TIME_OF_DAY_PATTERN
+
+24-hour `HH:mm` time-of-day pattern matching the `Calendar` time control's value shape. The create form's blur validation uses it internally; it is exported so a host's submit-time validation and the lib's field agree on what a valid time is.
+
+```ts
+import { TIME_OF_DAY_PATTERN } from '@epam/ai-dial-scheduled-tasks';
+
+TIME_OF_DAY_PATTERN.test('09:30'); // true
+TIME_OF_DAY_PATTERN.test('9:5'); // false
+```
+
+### DESCRIPTION_MAX_LENGTH
+
+Maximum length of the create form's description field: `500` characters.
+
+```ts
+import { DESCRIPTION_MAX_LENGTH } from '@epam/ai-dial-scheduled-tasks';
+```
+
+## Review corrections: layout, history and package boundaries
+
+Import UI Kit base/theme CSS once and the public scheduler stylesheet:
+
+```ts
+import '@epam/ai-dial-ui-kit/styles.css';
+import '@epam/ai-dial-scheduled-tasks/styles.css';
+```
+
+The scheduler stylesheet includes the **built CSS Modules** of builder-form.
+Do not import builder source styles: compiling a module as plain CSS loses
+the class names used by the published JavaScript.
+
+- `gridLayout` (or CardGrid's `layout`) supports `maxColumns` (3),
+  `minCardWidth` (320px), `maxWidth` (1180px), `gap` (20px) and
+  `cardHeight` (232px). Columns respond to the available container width;
+  skeletons inherit the same height.
+- Card colors `pausedTitleText` and `completedTitleText` override
+  `titleText` for that status only. CardGrid accepts every card badge label.
+- Form `styles.layout.detailsWidth` and `columnGap` configure the shared
+  builder layout. The scheduler uses two wrapping columns without an empty
+  third column. Generic builder forms retain their existing default layout.
+- Detail columns wrap when their requested sizes cannot fit. Existing mobile
+  tabs remain. History width excludes its surrounding 24px padding.
+- Detail accepts `runsLoadMoreError` and `onRunsRetryLoadMore`; the standalone
+  HistorySection accepts `loadMoreError` and `onRetryLoadMore`. These show a
+  footer error without replacing loaded runs. `historyLoadMoreErrorLabel`
+  defaults to `historyErrorLabel`.
+- Delete confirmation `cancelAppearance` defaults to UI Kit
+  `ButtonAppearance.Ghost`. Existing title/action class settings still apply.
+- Scheduler forms/details default to a narrow back arrow; explicit
+  `backIcon` replaces it, and `null` hides it.
+
+The `/validation` subpath ships its own JavaScript and declaration entry and
+can be imported without mounting UI. The packed consumer's test target checks
+installed tarball resolution, the runtime validation import, and isolated
+TypeScript compatibility:
+
+```sh
+npm exec -- nx run scheduled-tasks-consumer-fixture:test
+```
+
+Responsive visibility and spacing in scheduler surfaces and their builder shell
+use scoped CSS with the package's 1280px desktop threshold. Host utility styles
+using a different desktop threshold do not expose duplicate titles/actions or
+show the Create label inside its mobile icon button. The packed fixture supports
+manual checks of skill selection/removal, focus and responsive RTL layouts;
+application scenarios belong in the separate e2e suite.

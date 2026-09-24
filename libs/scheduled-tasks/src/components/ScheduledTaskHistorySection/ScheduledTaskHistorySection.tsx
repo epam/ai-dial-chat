@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostButton } from '@epam/ai-dial-ui-kit';
-import { type FC } from 'react';
+import { type CSSProperties, type FC } from 'react';
 import type { ScheduledTaskHistorySectionProps } from '../../models/scheduled-task-history-section-props';
 import { ScheduledTaskHistorySectionVariant } from '../../types/scheduled-task-history-section-variant';
 import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
@@ -23,12 +23,15 @@ export const ScheduledTaskHistorySection: FC<
   skeletonCount = 6,
   error,
   onRetry,
+  loadMoreError,
+  onRetryLoadMore,
   hasMore = false,
   onLoadMore,
   onRunClick,
   runTimestampClassName = 'dial-small-text',
   sectionTitleClassName = 'dial-body-semi-text',
   colors,
+  styles: historyStyles,
 }) => {
   const isCard = variant === ScheduledTaskHistorySectionVariant.Card;
 
@@ -43,16 +46,28 @@ export const ScheduledTaskHistorySection: FC<
         styles.historyCard,
       )
     : 'pt-2';
-  const footer =
-    onLoadMore && hasMore && labels.historyShowMoreLabel ? (
-      <li className={footerClassName}>
+  const footer = loadMoreError ? (
+    <li className={footerClassName}>
+      <p role="alert">
+        {labels.historyLoadMoreErrorLabel ?? labels.historyErrorLabel}
+      </p>
+      {onRetryLoadMore && (
         <GhostButton
-          label={labels.historyShowMoreLabel}
-          onClick={onLoadMore}
+          label={labels.historyRetryLabel}
+          onClick={onRetryLoadMore}
           disabled={isLoadingMore}
         />
-      </li>
-    ) : undefined;
+      )}
+    </li>
+  ) : onLoadMore && hasMore && labels.historyShowMoreLabel ? (
+    <li className={footerClassName}>
+      <GhostButton
+        label={labels.historyShowMoreLabel}
+        onClick={onLoadMore}
+        disabled={isLoadingMore}
+      />
+    </li>
+  ) : undefined;
 
   const nextRun = nextRunLabel ? (
     <p className={mergeClasses(runTimestampClassName, styles.subtitleText)}>
@@ -84,7 +99,13 @@ export const ScheduledTaskHistorySection: FC<
         unreadIndicatorLabel: labels.unreadIndicatorLabel,
       }}
       footer={footer}
-      styles={{ typography: { runTimestampClassName }, colors }}
+      styles={{
+        typography: { runTimestampClassName },
+        colors: historyStyles?.colors ?? colors,
+        rowMinHeight: historyStyles?.rowMinHeight,
+        rowHoverBackground: historyStyles?.rowHoverBackground,
+        rowFocusBackground: historyStyles?.rowFocusBackground,
+      }}
     />
   );
 
@@ -92,9 +113,15 @@ export const ScheduledTaskHistorySection: FC<
     return (
       <div
         className={mergeClasses(
-          'flex max-h-[70vh] w-full flex-col overflow-y-auto rounded-xl shadow-md desktop:w-[360px]',
+          'flex max-h-[var(--st-history-max-height,70vh)] w-full max-w-full flex-col overflow-y-auto rounded-xl shadow-md',
           styles.historyCard,
+          styles.cardLayout,
         )}
+        style={
+          {
+            '--st-history-max-height': historyStyles?.maxHeight,
+          } as CSSProperties
+        }
       >
         <div
           className={mergeClasses(

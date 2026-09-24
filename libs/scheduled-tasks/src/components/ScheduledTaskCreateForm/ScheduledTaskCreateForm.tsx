@@ -7,16 +7,20 @@ import {
   useAvailableHeightCap,
 } from '@epam/ai-dial-chat-shared';
 import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   Input,
   Textarea,
   Calendar,
   CalendarMode,
+  type CalendarValue,
   Label,
   NumberInput,
   Spinner,
   Select,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
+import { IconArrowNarrowLeft } from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
  * it here, rather than eagerly from the host app's entry point, keeps this
@@ -25,18 +29,26 @@ import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
  */
 import '@uiw/react-markdown-preview/markdown.css';
 import '@uiw/react-md-editor/markdown-editor.css';
-import { lazy, Suspense, useId, type FC } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useId,
+  useState,
+  type FC,
+  type FocusEventHandler,
+} from 'react';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
 import {
   calendarValueToDateValue,
   calendarValueToDayOfWeek,
-  calendarValueToRunAt,
   dateValueToCalendarValue,
   dayOfWeekToCalendarValue,
-  runAtToCalendarValue,
+  TIME_OF_DAY_PATTERN,
 } from '../../utils/calendar-value';
+import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField/ScheduledTaskRunAtField';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
 const MarkdownEditor = lazy(async () => {
@@ -47,12 +59,13 @@ const MarkdownEditor = lazy(async () => {
 /**
  * Presentational create-task form: a back-navigable header (Cancel/Save
  * actions) and a two-column Details/Configuration body. Details holds
- * display name, description, the schedule fields, and the Model or Agent
- * field; Configuration holds the markdown Instructions editor. Field values
- * and validation errors are supplied by the host app, and the Model or
- * Agent field's control is a fully-composed `modelSelector` element the host
- * renders; this component holds no state of its own and performs no
- * routing, i18n, or network calls.
+ * display name, description, the schedule fields (including the masked
+ * time-of-day picker with the viewer's timezone hint and blur validation),
+ * and the Model or Agent field; Configuration holds the markdown
+ * Instructions editor. Field values and validation errors are supplied by
+ * the host app, and the Model or Agent field's control (`modelSelector`) is
+ * a fully-composed host-rendered element; this component performs no
+ * routing, i18n, or network calls of its own.
  */
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   labels,
@@ -60,17 +73,23 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   errors,
   modelSelector,
   modelLabelId,
+  skillSelector,
+  skillLabelId,
+  skillErrorId,
   onFieldChange,
   onBack,
   onCancel,
   onSubmit,
   isSubmitting = false,
   markdownEditorTheme,
+  backIcon,
+  className,
   styles: formStyles,
 }) => {
   const instructionsEditorId = useId();
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
-  const { colors, typography } = formStyles ?? {};
+  const [timeBlurError, setTimeBlurError] = useState<string>();
+  const { colors, typography, layout } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
     typography?.sectionTitleClassName ?? 'dial-body-semi-text';
@@ -86,11 +105,57 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     '--stcf-error-text': colors?.instructionsErrorText,
   });
 
+  /*
+   * The masked time input only reports complete `HH:mm` values through
+   * onChange, so a cleared or half-typed draft never reaches `values.time` —
+   * the blur pass below validates the visible draft instead.
+   */
+  const handleTimeBlur: FocusEventHandler<HTMLInputElement> = (event) => {
+    const errorLabel = TIME_OF_DAY_PATTERN.test(event.target.value)
+      ? undefined
+      : labels.timeInvalidLabel;
+
+    setTimeBlurError(errorLabel);
+    onFieldChange('time', event.target.value);
+  };
+
+  const handleTimeChange = (value: CalendarValue) => {
+    setTimeBlurError(undefined);
+    onFieldChange('time', typeof value === 'string' ? value : '');
+  };
+
+  const isTimeFieldShown =
+    values.repeat !== ScheduledTaskRepeat.OneTime &&
+    values.repeat !== ScheduledTaskRepeat.Hourly;
+
+  /*
+   * A blur error describes the time field's visible draft. When a repeat
+   * switch hides the field, that draft is gone — reset the error so a
+   * later switch back cannot re-show a stale error under the (valid)
+   * controlled value and silently block Save.
+   */
+  useEffect(() => {
+    if (!isTimeFieldShown) {
+      setTimeBlurError(undefined);
+    }
+  }, [isTimeFieldShown]);
+
+  const timeError = isTimeFieldShown
+    ? (timeBlurError ?? errors.time)
+    : undefined;
+
+  const handleRunAtChange = (value: string) => onFieldChange('runAt', value);
+
   const isCreateDisabled =
     isSubmitting ||
     !values.displayName.trim() ||
     !values.modelId ||
-    !values.prompt.trim();
+    (!values.prompt.trim() && !values.skillUrl?.trim()) ||
+    Boolean(errors.skillUrl) ||
+    /* An empty shown time blocks Save immediately, like the other required
+     * fields — the blur error alone would only catch it on blur or submit. */
+    (isTimeFieldShown && !values.time) ||
+    Boolean(timeError);
 
   return (
     <BuilderFormContainer
@@ -107,6 +172,24 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
       isCancelDisabled={isSubmitting}
       isSubmitDisabled={isCreateDisabled}
       isSubmitting={isSubmitting}
+      backIcon={
+        backIcon === undefined ? (
+          <IconArrowNarrowLeft
+            size={DIAL_ICON_SIZE.LG}
+            stroke={DIAL_KIT_ICON_STROKE}
+            aria-hidden
+            className="rtl:scale-x-[-1]"
+          />
+        ) : (
+          backIcon
+        )
+      }
+      layout={{
+        sideColumnWidth: layout?.detailsWidth,
+        columnGap: layout?.columnGap,
+        reserveEndColumn: false,
+      }}
+      className={className}
       styles={{
         colors: { background: colors?.background },
         header: {
@@ -120,8 +203,9 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           role="group"
           aria-label={labels.detailsSectionTitle}
           className={mergeClasses(
-            'flex flex-1 flex-col gap-5 border-e px-4 py-6 desktop:px-8',
+            'flex flex-1 flex-col gap-5 border-e py-6',
             styles.detailsColumn,
+            styles.formColumn,
           )}
         >
           <div className="flex flex-col gap-1">
@@ -195,55 +279,38 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             />
 
             {values.repeat === ScheduledTaskRepeat.OneTime && (
-              <div className="flex flex-col gap-1">
-                <Calendar
-                  id="scheduled-task-run-at"
-                  mode={CalendarMode.DateTime}
-                  value={runAtToCalendarValue(values.runAt)}
-                  onChange={(value) =>
-                    onFieldChange('runAt', calendarValueToRunAt(value))
-                  }
-                  labelProps={{ label: labels.runAtLabel, required: true }}
-                  invalid={Boolean(errors.runAt)}
-                />
-                {errors.runAt && (
-                  <p
-                    className={mergeClasses(
-                      instructionsErrorClassName,
-                      styles.instructionsError,
-                    )}
-                  >
-                    {errors.runAt}
-                  </p>
-                )}
-              </div>
+              <ScheduledTaskRunAtField
+                label={labels.runAtLabel}
+                value={values.runAt ?? ''}
+                onChange={handleRunAtChange}
+                error={errors.runAt}
+                errorClassName={instructionsErrorClassName}
+              />
             )}
 
             {values.repeat !== ScheduledTaskRepeat.OneTime && (
               <>
-                {values.repeat !== ScheduledTaskRepeat.Hourly && (
+                {isTimeFieldShown && (
                   <div className="flex flex-col gap-1">
                     <Calendar
                       id="scheduled-task-time"
                       mode={CalendarMode.Time}
                       value={values.time}
-                      onChange={(value) =>
-                        onFieldChange(
-                          'time',
-                          typeof value === 'string' ? value : '',
-                        )
-                      }
+                      onChange={handleTimeChange}
+                      onBlur={handleTimeBlur}
                       labelProps={{ label: labels.timeLabel, required: true }}
-                      invalid={Boolean(errors.time)}
+                      invalid={Boolean(timeError)}
+                      disabled={isSubmitting}
+                      showTimezone
                     />
-                    {errors.time && (
+                    {timeError && (
                       <p
                         className={mergeClasses(
                           instructionsErrorClassName,
                           styles.instructionsError,
                         )}
                       >
-                        {errors.time}
+                        {timeError}
                       </p>
                     )}
                   </div>
@@ -314,12 +381,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     error={errors.minute}
                   />
                 )}
-                {/* The two date fields pair on one row at mobile, where the
-                 * column is full-width and the short pickers fit side by
-                 * side; from the desktop breakpoint up (tablet included) the
-                 * Details column is narrow, so each field takes its own
-                 * full-width row. */}
-                <div className="flex flex-row gap-3 desktop:flex-col">
+                {/* The two date fields always share one row. */}
+                <div className="flex flex-row gap-3">
                   <div className="flex flex-1 flex-col gap-1">
                     <Calendar
                       id="scheduled-task-start-date"
@@ -383,7 +446,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
       <div
         role="group"
         aria-label={labels.configurationSectionTitle}
-        className="flex flex-1 flex-col gap-5 px-4 py-6 desktop:px-8"
+        className={mergeClasses(
+          'flex flex-1 flex-col gap-5 py-6',
+          styles.formColumn,
+        )}
       >
         <div className="flex flex-col gap-1">
           <h2 className={sectionTitleClassName}>
@@ -399,6 +465,30 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           </p>
         </div>
 
+        {skillSelector != null && (
+          <div className="flex w-full min-w-0 max-w-[996px] flex-col gap-1">
+            <span id={skillLabelId} className={instructionsLabelClassName}>
+              {labels.skillLabel}
+            </span>
+            {skillSelector}
+          </div>
+        )}
+        <div
+          id={skillErrorId}
+          aria-live="polite"
+          className={errors.skillUrl ? undefined : 'sr-only'}
+        >
+          {errors.skillUrl && (
+            <p
+              className={mergeClasses(
+                instructionsErrorClassName,
+                styles.instructionsError,
+              )}
+            >
+              {errors.skillUrl}
+            </p>
+          )}
+        </div>
         <div className="flex flex-1 flex-col gap-1">
           {/*
            * A real <label for>, not a span: the markdown editor renders a plain
@@ -414,6 +504,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           <div
             ref={instructionsCapRef}
             className={mergeClasses(
+              'w-full max-w-[996px]',
               MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
               MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
             )}
@@ -425,6 +516,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 onChange={(value) => onFieldChange('prompt', value)}
                 height={480}
                 theme={markdownEditorTheme}
+                placeholder={labels.instructionsPlaceholder}
               />
             </Suspense>
           </div>

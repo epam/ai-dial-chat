@@ -11,6 +11,8 @@ export const ScheduledTaskDetailsSummary: FC<
   ScheduledTaskDetailsSummaryProps
 > = ({
   modelLabel,
+  skillLabel,
+  skillDisplayName,
   instructionsLabel,
   modelDisplayName,
   instructionsMarkdown,
@@ -38,6 +40,14 @@ export const ScheduledTaskDetailsSummary: FC<
         </div>
       )}
 
+      {skillDisplayName && (
+        <div className="flex min-w-0 flex-col gap-2">
+          <span className={fieldLabelClassName}>{skillLabel}</span>
+          <p className={`${fieldValueClassName} whitespace-normal break-all`}>
+            {skillDisplayName}
+          </p>
+        </div>
+      )}
       {instructionsMarkdown && (
         <div className="flex flex-col gap-2">
           <span className={fieldLabelClassName}>{instructionsLabel}</span>

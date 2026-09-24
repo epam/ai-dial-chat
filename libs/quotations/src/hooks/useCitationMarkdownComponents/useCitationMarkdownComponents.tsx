@@ -20,6 +20,8 @@ import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 export interface UseCitationMarkdownComponentsCallbacks {
   /** Called when a citation marker's preview action is invoked, with the clicked annotation and its group. */
   onPreview(annotation: Annotation, group: AnnotationGroup): void;
+  /** Whether the host can preview an annotation. Defaults to allowing preview. */
+  isPreviewable?(annotation: Annotation): boolean;
   /** Called when a citation marker's open-in-browser action is invoked. */
   onOpenInBrowser(annotation: Annotation): void;
   /** Builds the translated label bundles used by a given citation group's card and marker. */
@@ -36,6 +38,12 @@ export interface UseCitationMarkdownComponentsCallbacks {
  * catch-all variant (`{ type: string; [key: string]: unknown }`) also
  * satisfies `type === 'html_tag'` and would otherwise widen `.id` to `unknown`.
  */
+/*
+ * Shared empty map for messages without citations: a fresh `{}` per render would
+ * break the memo on MarkdownRenderer and re-parse every assistant message.
+ */
+const NO_CITATION_COMPONENTS: Components = {};
+
 const citTagId = (group: AnnotationGroup): string | undefined => {
   const selector = group.primaryAnnotation.target?.selector;
   return selector?.type === 'html_tag'
@@ -87,7 +95,7 @@ export const useCitationMarkdownComponents = (
   isStreaming = false,
   isCompactTypography = false,
 ): { processedContent: string; markdownComponents: Components } => {
-  const { onPreview, onOpenInBrowser, buildLabels } = callbacks;
+  const { onPreview, isPreviewable, onOpenInBrowser, buildLabels } = callbacks;
 
   const processedContent = useMemo(() => {
     if (isStreaming) return stripCitTagsWhileStreaming(content);
@@ -113,6 +121,7 @@ export const useCitationMarkdownComponents = (
           key={`citation-${group.groupKey}`}
           group={group}
           onPreview={(annotation) => onPreview(annotation, group)}
+          isPreviewable={isPreviewable}
           onOpenInBrowser={onOpenInBrowser}
           cardLabels={cardLabels}
           markerLabels={markerLabels}
@@ -146,7 +155,7 @@ export const useCitationMarkdownComponents = (
     } as Components;
 
     if (groups.length === 0) {
-      return hasCitElement ? citComponent : {};
+      return hasCitElement ? citComponent : NO_CITATION_COMPONENTS;
     }
 
     return {
@@ -173,6 +182,7 @@ export const useCitationMarkdownComponents = (
   }, [
     groups,
     onPreview,
+    isPreviewable,
     onOpenInBrowser,
     buildLabels,
     isCompactTypography,

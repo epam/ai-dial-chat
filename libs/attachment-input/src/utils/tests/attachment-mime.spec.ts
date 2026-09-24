@@ -42,6 +42,14 @@ describe('mimeTypesToExtensionLabels', () => {
     );
   });
 
+  it('labels an aliased MIME type from its canonical entry', () => {
+    expect(mimeTypesToExtensionLabels(['text/json'])).toBe('JSON');
+    expect(mimeTypesToExtensionLabels(['image/jpg'])).toBe('JPEG');
+    expect(mimeTypesToExtensionLabels(['application/x-zip-compressed'])).toBe(
+      'ZIP',
+    );
+  });
+
   it('returns an empty string for an empty array', () => {
     expect(mimeTypesToExtensionLabels([])).toBe('');
   });
@@ -86,5 +94,41 @@ describe('isMimeTypeAllowed', () => {
   it('returns true when allowedTypes contains "*/*"', () => {
     expect(isMimeTypeAllowed('application/pdf', ['*/*'])).toBe(true);
     expect(isMimeTypeAllowed('audio/webm', ['*/*'])).toBe(true);
+  });
+
+  it('matches a stored content type against an aliased declared type', () => {
+    /* Issue #8939: a deployment declaring `text/json` must accept the
+       `application/json` DIAL Core stores for a .json file. */
+    expect(isMimeTypeAllowed('application/json', ['text/json'])).toBe(true);
+    expect(isMimeTypeAllowed('text/json', ['application/json'])).toBe(true);
+  });
+
+  it.each([
+    ['application/xml', 'text/xml'],
+    ['text/javascript', 'application/javascript'],
+    ['application/zip', 'application/x-zip-compressed'],
+    ['image/jpeg', 'image/jpg'],
+    ['audio/mpeg', 'audio/mp3'],
+    ['application/msword', 'application/vnd.ms-word'],
+  ])('matches %s against the declared alias %s', (contentType, declared) => {
+    expect(isMimeTypeAllowed(contentType, [declared])).toBe(true);
+  });
+
+  it('ignores letter case and parameters on both sides', () => {
+    expect(
+      isMimeTypeAllowed('Application/JSON; charset=utf-8', ['TEXT/JSON']),
+    ).toBe(true);
+  });
+
+  it('still matches a literal text subtype against a text wildcard', () => {
+    expect(isMimeTypeAllowed('text/json', ['text/*'])).toBe(true);
+  });
+
+  it('matches an aliased type against the wildcard of its canonical major type', () => {
+    expect(isMimeTypeAllowed('text/json', ['application/*'])).toBe(true);
+  });
+
+  it('does not treat distinct formats sharing an extension as aliases', () => {
+    expect(isMimeTypeAllowed('video/mp2t', ['text/typescript'])).toBe(false);
   });
 });

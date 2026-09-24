@@ -32,6 +32,8 @@ export interface ScheduledTaskDetailViewLabels {
   configurationTitle: string;
   /** Label for the instructions field. */
   instructionsLabel: string;
+  /** Label of the optional skill field in Configuration. */
+  skillLabel?: string;
   /** Label for the page-level retry action shown alongside `error`. */
   retryLabel: string;
   /** Title of the History panel. */
@@ -40,6 +42,8 @@ export interface ScheduledTaskDetailViewLabels {
   historyEmptyLabel: string;
   /** Message shown alongside the retry action when `runsError` is set. */
   historyErrorLabel: string;
+  /** Next-page failure message; falls back to historyErrorLabel. */
+  historyLoadMoreErrorLabel?: string;
   /** Label for the History retry action. */
   historyRetryLabel: string;
   /** Announced via `aria-live` while a load-more runs fetch is in flight. */
@@ -101,6 +105,13 @@ export interface ScheduledTaskDetailViewStyles {
   typography?: ScheduledTaskDetailViewTypography;
 }
 
+export interface ScheduledTaskDetailViewLayout {
+  detailsWidth?: string;
+  historyWidth?: string;
+  historyMaxHeight?: string;
+  configurationMinWidth?: string;
+}
+
 /** Props for the {@link ScheduledTaskDetailView} component. */
 export interface ScheduledTaskDetailViewProps {
   /** Localized labels. */
@@ -141,6 +152,8 @@ export interface ScheduledTaskDetailViewProps {
   activeWindowLabel?: string;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
+  /** Resolved skill name or full saved reference; omit to hide the field. */
+  skillDisplayName?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
   /** Pre-formatted "Next run" label shown under the History title, e.g. "Next run: Jul 31 at 9:00 AM". Omit to hide (e.g. when the schedule is paused or inactive). */
@@ -157,6 +170,10 @@ export interface ScheduledTaskDetailViewProps {
   runsError?: Error | null;
   /** Called when the user activates the History retry action shown alongside `runsError`. */
   onRunsRetry?: () => void;
+  /** Next-page failure, displayed beneath existing runs. */
+  runsLoadMoreError?: Error | null;
+  /** Retries the failed history page. */
+  onRunsRetryLoadMore?: () => void;
   /** Whether another page of `runs` is available beyond what has been loaded so far. Defaults to `false`. */
   runsHasMore?: boolean;
   /** Called when the user activates the "Show more" button, rendered below the loaded runs while `runsHasMore` is `true`. Omit to hide the button entirely. */
@@ -165,4 +182,12 @@ export interface ScheduledTaskDetailViewProps {
   onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** Style overrides. */
   styles?: ScheduledTaskDetailViewStyles;
+  /** Additional class names on the view root. */
+  className?: string;
+  /** Replacement for the directional default back icon. `null` hides it. */
+  backIcon?: ReactNode | null;
+  /** Desktop column and history sizing. */
+  layout?: ScheduledTaskDetailViewLayout;
+  /** Forwarded history presentation settings. */
+  historyStyles?: import('./scheduled-task-history-section-props').ScheduledTaskHistorySectionStyles;
 }

@@ -16,18 +16,6 @@ export default defineConfig(() => ({
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
     }),
   ],
-  resolve: {
-    /*
-     * Resolve chat-shared from source: its published bundle imports `.scss`
-     * modules that are not emitted to `dist`, which vitest cannot load.
-     */
-    alias: {
-      '@epam/ai-dial-chat-shared': path.resolve(
-        import.meta.dirname,
-        '../chat-shared/src/index.ts',
-      ),
-    },
-  },
   build: {
     outDir: './dist',
     emptyOutDir: true,
@@ -66,6 +54,10 @@ export default defineConfig(() => ({
      * affects this lib's own production build.
      */
     alias: {
+      '@epam/ai-dial-chat-shared': path.resolve(
+        import.meta.dirname,
+        '../chat-shared/src/index.ts',
+      ),
       '@epam/ai-dial-catalog': path.resolve(
         import.meta.dirname,
         '../catalog/src/index.ts',

@@ -59,6 +59,8 @@ export enum PublicationResourceAction {
 interface PublicationResourceLike {
   action?: string;
   sourceUrl?: string;
+  /** Core's own flag: this resource was published together with the publisher's credential for it. */
+  publishCredentials?: boolean;
 }
 
 /** The subset of `Publication` this module reasons about. */
@@ -99,6 +101,21 @@ const isSameResourceUrl = (
   );
 };
 
+/*
+ * The resource a publication publishes `sourceUrl` by, or `undefined`. Shared
+ * so `getPublicationSourceAction` and `getPublicationSourceCredentials` read
+ * the same resource, as both their docs promise.
+ */
+const findPublishingResource = (
+  publication: PublicationLike,
+  sourceUrl: string,
+): PublicationResourceLike | undefined =>
+  publication.resources?.find(
+    (resource) =>
+      isSameResourceUrl(resource.sourceUrl, sourceUrl) &&
+      resource.action !== PublicationResourceAction.Delete,
+  );
+
 /**
  * The action a publication applies to `sourceUrl`, or `null` when the
  * publication does not reference it at all.
@@ -121,14 +138,28 @@ export const getPublicationSourceAction = (
   if (resources.length === 0) {
     return null;
   }
-  const publishing = resources.find(
-    (resource) => resource.action !== PublicationResourceAction.Delete,
-  );
+  const publishing = findPublishingResource(publication, sourceUrl);
   return publishing
     ? ((publishing.action as PublicationResourceAction | undefined) ??
         PublicationResourceAction.Add)
     : PublicationResourceAction.Delete;
 };
+
+/**
+ * Whether the publication asked DIAL Core to publish `sourceUrl` together with
+ * the publisher's own credential for it, read off the same resource
+ * `getPublicationSourceAction` matches.
+ *
+ * Defaults to `false`: a publication predating the field, or one that does not
+ * reference the source at all, requested nothing. This reports what the
+ * publication *requested* — Core is the authority on whether a credential was
+ * actually copied, and this module holds no publish state of its own.
+ */
+export const getPublicationSourceCredentials = (
+  publication: PublicationLike,
+  sourceUrl: string,
+): boolean =>
+  findPublishingResource(publication, sourceUrl)?.publishCredentials === true;
 
 /**
  * Whether `publication` publishes `sourceUrl`.

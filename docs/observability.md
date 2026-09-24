@@ -81,16 +81,16 @@ even when its backend supports PromQL.
 
 Configure the dashboard variables before interpreting the panels:
 
-| Variable                             | Configuration and scope                                                                                                                                                                                                                                      |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `datasource`                         | The Prometheus data source selected during import.                                                                                                                                                                                                           |
-| `cluster`, `namespace`, `job`, `pod` | Deployment labels supplied by scraping or collection. Select the backend workload and its metric job. The application does not add these Kubernetes labels. `All` uses a regex matcher and can include series without the selected label.                    |
-| `http_route`, `http_method`          | HTTP filters where present. In dashboard 00, route applies to terminal measurements only: arrival and active instruments have no route label. Method values come from the arrival counter, independently of the route selection.                             |
-| `route`, `method`                    | Dashboard 01's filters for the legacy handler histogram; its method choices are scoped to the selected route.                                                                                                                                                |
-| `generation_api`                     | Generation API filter where present. Capability-resolution failures have no API label and are intentionally queried separately.                                                                                                                              |
-| `auth_provider`                      | Dashboard 05's identity-provider filter. Its values come from the login counter, so the list is empty until the first login redirect. Only the login, callback, and refresh instruments carry that attribute; the authorization and logout panels ignore it. |
-| `scrape_job`                         | Dashboard 00's explicit Prometheus job for scrape health. Replace `__configure_bff_scrape_job__` with the exact backend scrape job. The `up` query uses this value instead of the application-metric `job` selection, and ignores HTTP route/method filters. |
-| `tempo_datasource`, `trace_service`  | Optional Tempo data source and actual OpenTelemetry `service.name` for dashboard 00's trace link. The default service name is `@epam/chat-api`; use the deployment's `OTEL_SERVICE_NAME` override when configured.                                           |
+| Variable                             | Configuration and scope                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `datasource`                         | The Prometheus data source selected during import.                                                                                                                                                                                                                                                                           |
+| `cluster`, `namespace`, `job`, `pod` | Deployment labels supplied by scraping or collection. Select the backend workload and its metric job. The application does not add these Kubernetes labels. `All` uses a regex matcher and can include series without the selected label.                                                                                    |
+| `http_route`, `http_method`          | HTTP filters where present. In dashboard 00, route applies to terminal measurements only: arrival and active instruments have no route label. Method values come from the arrival counter, independently of the route selection.                                                                                             |
+| `route`, `method`                    | Dashboard 01's filters for the legacy handler histogram; its method choices are scoped to the selected route.                                                                                                                                                                                                                |
+| `generation_api`                     | Generation API filter where present. Capability-resolution failures have no API label and are intentionally queried separately.                                                                                                                                                                                              |
+| `auth_provider`                      | Dashboard 05's identity-provider filter. Its values come from the login counter, so the list is empty until the first login redirect. Only the login, callback, and refresh instruments carry that attribute; the authorization and logout panels ignore it.                                                                 |
+| `scrape_job`                         | Dashboard 00's explicit Prometheus job for scrape health. It defaults to `dial-chat-metrics`, the reference deployment's job; replace it when the deployment scrapes the backend under another job. The `up` query uses this value instead of the application-metric `job` selection, and ignores HTTP route/method filters. |
+| `tempo_datasource`, `trace_service`  | Optional Tempo data source and actual OpenTelemetry `service.name` for dashboard 00's trace link. The default service name is `@epam/chat-api`; use the deployment's `OTEL_SERVICE_NAME` override when configured.                                                                                                           |
 
 Variable choices are derived from application series and are not a complete inventory of desired
 or unavailable pods. The examples assume the application's emitted scope label
@@ -110,6 +110,33 @@ legacy formatter requires an appropriate special-character setting or a custom e
 The runtime memory panel uses bytes and leaves stacking disabled. Its five series overlap and
 must remain separate. Multi-value variables use regex selectors; preserve that behavior when
 adapting the queries. See [Prometheus template variables](https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/).
+
+### If the scrape-health panel shows No samples
+
+This panel is the one place where the job name does not come from the dashboard's own `job`
+selector, so a working dashboard can still leave it empty. The `job` label on the application
+metrics and the `job` label on `up` describe different things: the first is whatever the
+collection path attaches to the exported series, the second names the Prometheus scrape
+configuration. Prometheus Operator, for example, labels its targets `<namespace>/<service-monitor>`
+while the application metrics keep an unrelated job value. Copying the value out of the `job`
+selector therefore produces no `up` series.
+
+Resolve the name from `up` itself. First locate the backend:
+
+```promql
+group by (namespace, pod, instance, job) (dial_chat_generations_active{otel_scope_name="dial-chat-api"})
+```
+
+Then find the target that scrapes it, matching on `instance` or `pod`:
+
+```promql
+group by (job, pod, instance) (up{namespace="<namespace>"})
+```
+
+Put that `job` value in the textbox. If an exact job still yields nothing, remove the
+`cluster`, `namespace`, and `pod` matchers from the panel query: a statically configured target
+carries none of those labels. A data source that receives metrics through OTLP or remote write
+has no `up` series at all, and the panel cannot apply there.
 
 ### If every panel shows No samples
 
@@ -241,7 +268,12 @@ generation.
 Capability resolution records `resolved` with the selected API, or `failed` without an API label.
 Filtering failures by `generation_api` would lose them. Unrecognized Responses events are counted
 by a sanitized event type, truncated to 64 characters, without event payloads. The length limit
-does not impose a finite bound on the number of distinct event-type values. See the
+does not impose a finite bound on the number of distinct event-type values. That counter is
+created on its first recorded event, so an empty panel is its ordinary state, and a deployment
+whose capability resolution never selects the Responses API cannot produce one at all. Its panel
+in dashboard 03 therefore reads `No unrecognized events` rather than the `No samples` used
+elsewhere; any series it does show means the upstream emitted an event type the adapter does not
+handle. See the
 [Responses adapter](../apps/chat-api/src/conversations/generation/responses.adapter.ts) and
 [Responses integration](responses-api-integration.md).
 
@@ -307,9 +339,10 @@ concurrent requests on different replicas each perform their own exchange.
 
 | `dial_chat_auth_outcome` (refresh) | Meaning                                                                                                                                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `refreshed`                        | The identity provider returned a new token set.                                                                                                                                       |
+| `refreshed`                        | The identity provider returned a new token set and the session passed the deadline check before renewal.                                                                              |
 | `race_absorbed`                    | `invalid_grant` arrived while the access token was still valid — a lost refresh-token rotation race, absorbed without forcing a logout. Neither a refresh success nor a session loss. |
-| `invalid_grant`                    | `invalid_grant` with an already-expired access token: the session cannot be recovered.                                                                                                |
+| `invalid_grant`                    | `invalid_grant` after access-token or session expiry: the session cannot be recovered.                                                                                                |
+| `session_expired`                  | The exchange returned a token set, but finished after the session deadline: nothing is renewed and the request fails.                                                                 |
 | `upstream_error`                   | Any other failure of the exchange, including an unresolvable provider.                                                                                                                |
 
 `dial_chat_auth_authorization_total` counts one `SessionGuard` decision per guarded request.
@@ -347,7 +380,7 @@ does not exist. Do not reconcile the two families as one population.
 | ------------------------------ | ------------------------------ | ----------------------------------------- | --------------------------------------------------------------------- |
 | `dial.chat.process.memory`     | `dial_chat_process_memory`     | ObservableGauge / bytes (`B`)             | `kind`: `rss`, `heap_used`, `heap_total`, `external`, `array_buffers` |
 | `dial.chat.sse.active`         | `dial_chat_sse_active`         | ObservableGauge / count, no declared unit | `kind`: `client_channel`, `conversation_watch`, `generation_attach`   |
-| `dial.chat.generations.active` | `dial_chat_generations_active` | ObservableGauge / count, no declared unit | None                                                                  |
+| `dial.chat.generations.active` | `dial_chat_generations_active` | ObservableGauge / count, no declared unit | `state`: `active`, `cancel_requested`, `finalizing`, `settling`       |
 
 One `process.memoryUsage()` call supplies all five memory values per collection in the Node
 process serving Nest requests. `heap_used` and `heap_total` describe used and allocated JavaScript
@@ -363,12 +396,99 @@ subscription until cleanup, including time after its handler returns. These are 
 operations, not a direct count of browser connections. Normal completion-response delivery is
 not part of this gauge.
 
-The generation gauge counts entries physically retained in the generation registry, including
-stopped or aborted entries awaiting persistence. Completion, error, stale eviction, replacement,
-and shutdown release removed entries. Shutdown also emits a stopped terminal event to permit
-attachment cleanup. Tasks that outlive removal of their registry entry are outside this count.
-The gauges retain only counts, without per-user or per-conversation labels. See
-[runtime instruments](../apps/chat-api/src/telemetry/runtime-metrics.ts).
+The generation gauge counts entries retained by one process, with four `state` series emitted
+on every collection, including zero values. Normal completion can move directly from `active`
+to `finalizing`; cancellation and a finalization timeout introduce the other states:
+
+| `state`            | Meaning                                                                                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `active`           | An admitted entry before cancellation or terminal finalization, including capability/history lookup and the start-state save. It does not prove that an upstream stream is running.                 |
+| `cancel_requested` | User stop, maximum duration, or stale handling requested cancellation. The worker and its registry ownership remain until settlement.                                                               |
+| `finalizing`       | The worker entered its single terminal-save attempt and is waiting for it to resolve or reject.                                                                                                     |
+| `settling`         | The finalization timeout expired. Existing attachment listeners were notified and removed and timers cleared; the pending write, registry entry, assembled snapshot, and gauge contribution remain. |
+
+`released` is not emitted: releasing a registry key removes that entry's contribution. A normal
+settlement follows a resolved or rejected terminal save; preflight failure can release an entry
+without a terminal save. Shutdown also clears entries, notifying subscribers when terminal cleanup has not already run,
+without waiting for or proving the outcome of an in-flight write. Stale expiry and maximum duration
+request cancellation rather than removing entries. The gauge has no cancellation-reason label.
+See the [registry implementation](../apps/chat-api/src/conversations/conversation-generation.service.ts)
+and [runtime instruments](../apps/chat-api/src/telemetry/runtime-metrics.ts).
+
+The dashboard generation legends include `state`. For a total per scraped process, sum these
+mutually exclusive state counts while preserving target identity, for example:
+
+```promql
+sum by (cluster, namespace, job, pod, instance) (
+  dial_chat_generations_active{otel_scope_name="dial-chat-api"}
+)
+```
+
+Choose one ingestion path to avoid duplicate counting. Unlike overlapping memory kinds,
+generation state counts can be summed. A rolling deployment can contain older unlabeled series;
+inspect each process's revision and raw labels before comparing state-specific totals.
+
+**Finalization timeout is a cleanup boundary, not a persistence deadline.**
+`GENERATION_FINALIZE_TIMEOUT_MS` starts when `beginFinalizing()` runs immediately before the
+terminal-save call. On expiry, a `settling` entry still rejects another start for the same
+principal and conversation path **in that process** with `409`. Its write is not cancelled,
+retried, or duplicated by this timeout, and the worker and originating completion handler can
+remain awaiting it. The timeout does not cover capability/history lookup, the start-state save,
+or an upstream operation that does not settle after cancellation. The separate maximum-duration
+timer requests cancellation; it is not a hard upper bound on total task lifetime. Defaults are
+listed in the [backend environment reference](../apps/chat-api/README.md#environment-variables).
+
+Admission, leases, stop, attach, and these counts are process-local. They provide no distributed
+lock, cross-pod ownership transfer, or storage-side fencing. Restart clears the in-memory
+registry but does not establish whether an outstanding remote write committed. Recovery of a
+retained key occurs when the write settles or the process exits. **A falling gauge, including a
+`settling` entry disappearing, never proves durable persistence.** Read the conversation back
+from storage to check the expected terminal content.
+
+There is also a current late-attachment limit: `attach()` accepts any retained entry, including
+`settling`. An attachment created after the timeout's terminal notification does not receive a
+replayed terminal event and is not covered by that already-fired cleanup timer. Do not treat
+this timeout as a bound for every future attachment or for all retained memory. The gauges
+retain only counts; the registry itself still retains its entry and snapshot. These limits are
+separate from the [registry contract](../openspec/specs/generation-registry/spec.md) and
+[persistence contract](../openspec/specs/backend-owned-generation-persistence/spec.md).
+
+### Completion-response termination
+
+The originating conversation completion handler records
+`dial.chat.completion.response.terminations` (Counter, unit `{response}`), exposed
+as `dial_chat_completion_response_terminations_total`. Its only application
+attribute is the bounded `reason` value:
+
+| Reason                   | Interpretation                                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `completed`              | The handler ended the response after consuming the generator. This can include a failure after stream headers were committed. |
+| `client_closed`          | The handler observed a client close and left the response untouched.                                                          |
+| `backpressure_ended`     | The detached response was released without the helper taking its forced-destroy outcome.                                      |
+| `backpressure_destroyed` | The release helper took its forced-destroy fallback.                                                                          |
+
+Recording happens in controller finalization, not when backpressure first occurs.
+Ordinary pre-stream rejections do not contribute, but an observed disconnect
+during a failing preflight can still produce `client_closed`. This counter is
+therefore not an exact count of responses that successfully entered streaming.
+The controller keeps consuming backend-owned generation and its terminal
+persistence attempt before releasing the detached response. The current
+`SSE_RELEASE_TIMEOUT_MS` bound is 15 seconds **from the start of response release**;
+it does not bound generation or persistence. Attach responses use the same release
+helper but do not contribute to this originating-completion counter.
+
+Neither `completed` nor `backpressure_ended` proves successful generation,
+successful persistence, or that a browser received all output. A rising
+`backpressure_destroyed` rate shows that forced release is being used; it does not
+alone establish a leak or an incorrectly configured timeout. Correlate it with
+HTTP active requests, terminal transport outcomes and per-process memory.
+The existing HTTP active metric counts unfinished response lifecycles; telemetry
+does not retain response objects to aggregate their buffered bytes.
+
+The supplied dashboards do not yet include a panel for this counter. See the
+[instrument](../apps/chat-api/src/conversations/streaming/completion-response-metrics.ts),
+[controller](../apps/chat-api/src/conversations/conversation.controller.ts), and
+[release helper](../apps/chat-api/src/common/utils/sse.ts).
 
 ## Read rates, latency, and missing data correctly
 
@@ -463,6 +583,17 @@ observed application arrivals because traffic may be rejected before reaching No
 generated internally. Use the deployment's verified ingress, Kubernetes, and synthetic-check
 contracts when adding availability panels.
 
+### Auth and session monitoring
+
+Use the [Auth and sessions dashboard](examples/dashboards/05-bff-auth-sessions.json)
+for login/callback outcomes, refresh exchanges and latency, coalesced requests,
+authorization rejections, and logout results. The refresh outcome panel includes
+`session_expired` when an exchange finishes after the session deadline.
+Routine login, session validation, renewal, and refresh-race recovery emit metrics
+without per-event logs. Warnings and errors remain for operational failures;
+`auth.refresh.failed` contains only the session ID, provider ID, and outcome,
+without token values or raw provider errors.
+
 ## Investigation workflow
 
 1. **Check the collection path.** Confirm the SDK and intended exporters are enabled, read the
@@ -485,3 +616,41 @@ contracts when adding availability panels.
    range, then inspect exported spans and correlated logs. Treat missing backend data, sampling,
    and absent searchable attributes as collection limits rather than evidence that an operation
    did not occur.
+
+## Operational validation of generation lifecycle limits
+
+Use controlled traffic and read back the affected conversations. Run each workload separately
+so memory and state changes can be attributed to it:
+
+1. **Start and completion** — watch `active` then `finalizing`, and verify release after the
+   terminal save settles. A short intermediate state may fall between collection samples.
+2. **User stop and maximum duration** — exercise each cancellation cause separately. Check
+   `cancel_requested` and finalization, the stored user-stop versus non-user-error marker, and
+   that a second start on the same process and key receives `409` while ownership remains.
+3. **Reconnect** — watch `dial_chat_sse_active{kind="generation_attach"}` separately from registry
+   counts. Include a late attachment after a finalization timeout when evaluating the documented
+   late-attachment limitation.
+4. **Delayed terminal persistence** — delay a save past `GENERATION_FINALIZE_TIMEOUT_MS` and
+   verify that `settling` stays counted, existing subscribers are released, and the same-process
+   key remains occupied. Resolve and reject separate controlled writes, then check release and
+   storage independently. The timeout must not be interpreted as remote-write cancellation.
+5. **Stale sweep** — use controlled clock/timer fixtures to isolate stale cancellation. The sweep
+   runs only on `register()` and its threshold is `max(30 min, MAX_GENERATION_DURATION_MS) + 1 min`.
+   Under normal timer execution, the maximum-duration timer requests cancellation first; simply
+   leaving a live generation idle is not an independent reproduction of the stale-sweep path.
+
+For every workload, record the application revision, retained counts by state, attachment count,
+and process RSS, heap, and external memory without stacking memory kinds. Check the expected
+return to baseline through a quiet period. A deliberately unsettled write is expected to retain
+its entry; its continued presence is not evidence of a dashboard defect. These checks describe
+acceptance work and do not claim that a production workload or OOM investigation has passed.
+
+## Rollback
+
+The [archived migration plan](../openspec/changes/archive/2026-09-21-fix-generation-eviction-lifecycle/design.md)
+describes the drain procedure. Stop admitting new completions and account for **all four**
+non-released states before reverting. `finalizing` and `settling` identify pending terminal
+writes, but `active` and `cancel_requested` still represent owned work too. Do not infer a drained
+process from one state reaching zero. A never-settling write prevents a clean drain; restarting
+clears local ownership without confirming the remote write's result. Reverting restores the
+older admission behavior and its replacement risk.

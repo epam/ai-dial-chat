@@ -271,6 +271,11 @@
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publishHistoryLoading": "Loading history…",
     "publishHistoryError": "Failed to load publish history.",
+    "publish": {
+      "credentialsLabel": "Publish with my credentials",
+      "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them.",
+      "historySharedCredentials": "Shared credentials"
+    },
     "skillsLoadError": "Failed to load skills",
     "tab": {
       "models": "Models",
@@ -318,7 +323,8 @@
     "modalTitle": "Use skill",
     "noMatchingSkillsLabel": "No matching skills",
     "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
-    "viewDetailsLabel": "View details"
+    "viewDetailsLabel": "View details",
+    "removeSkillLabel": "Remove skill"
   },
   "notFound": {
     "eyebrow": "404",
@@ -628,6 +634,10 @@
     "networkError": {
       "title": "Network unavailable",
       "message": "Some files were not uploaded because your internet connection was lost.\n Please try again:\n"
+    },
+    "fileTooLarge": {
+      "title": "File too large",
+      "message": "Max file size is {{maxSize}}. Please upload a smaller file."
     }
   },
   "chatSettings": {
@@ -687,10 +697,12 @@
       "noResultsLabel": "No results",
       "errorLabel": "Failed to load scheduled tasks",
       "retryLabel": "Retry",
-      "loadingMoreLabel": "Loading more scheduled tasks…"
+      "loadingMoreLabel": "Loading more scheduled tasks…",
+      "loadMoreErrorLabel": "Failed to load more scheduled tasks"
     },
     "card": {
       "newBadgeLabel": "NEW",
+      "completedBadgeLabel": "Completed",
       "editActionLabel": "Edit",
       "scheduleDailyAt": "Every day at {{time}}",
       "scheduleWeeklyAt": "Every {{day}} at {{time}}",
@@ -726,6 +738,7 @@
       "minuteInvalid": "Enter a minute between 0 and 59",
       "startDateLabel": "Start date",
       "startDatePlaceholder": "Pick start date",
+      "startDateInvalid": "Enter a valid start date",
       "endDateLabel": "End date",
       "endDatePlaceholder": "Pick end date",
       "endDateBeforeStartError": "End date must be after start date",
@@ -738,7 +751,11 @@
       "promptRequired": "Instructions are required",
       "submittingLabel": "Creating",
       "successNotification": "Scheduled task created",
-      "errorNotification": "Failed to create the scheduled task"
+      "errorNotification": "Failed to create the scheduled task",
+      "skillLabel": "Skill",
+      "skillPlaceholder": "Choose a skill",
+      "instructionsOrSkillRequired": "Choose a skill or write instructions.",
+      "instructionsOnlySubtitle": "Write custom instructions for this task."
     },
     "detail": {
       "repeatsLabel": "Repeats",
@@ -761,8 +778,10 @@
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
       "activeStatusUpdateError": "Failed to update the task's active status",
-      "deleteConfirmTitle": "Confirm Deleting Task",
-      "deleteConfirmDescription": "Are you sure you want to delete the task \"{{taskName}}\"? All run conversations will still be accessible.",
+      "deleteConfirmTitle": "Delete task",
+      "deleteConfirmDescription": "Are you sure you want to delete <bold>{{taskName}}</bold>? This action is permanent and cannot be undone.",
+      "deleteConsequenceConversationsAccessible": "All run conversations will still be accessible",
+      "deleteConsequenceCannotBeUndone": "Cannot be undone",
       "deleteConfirmingLabel": "Deleting…",
       "deleteSuccess": "Scheduled task deleted",
       "deleteNotFoundError": "This task has already been deleted or could not be found",
@@ -772,6 +791,8 @@
     },
     "edit": {
       "pageTitle": "Edit scheduled task",
+      "loadErrorLabel": "Failed to load the scheduled task",
+      "invalidScheduleLabel": "This task's schedule can't be edited here yet.",
       "unsupportedTriggerMessage": "This task's schedule can't be edited here yet.",
       "successNotification": "Scheduled task updated",
       "errorNotification": "Failed to update the scheduled task"
@@ -838,6 +859,7 @@
     "noPermissionToCreate": "You don't have permission to create items in this folder",
     "maxSizeSupportedTypes": "Maximum size: {{maxSize}}. Supported types: {{allowedExtensions}}",
     "maxSizeOnly": "Maximum size: {{maxSize}}",
+    "uploadFileTooLarge": "Max file size is {{maxSize}}.",
     "allTypes": "all",
     "upToFiles_one": "Up to {{count}} file",
     "upToFiles_other": "Up to {{count}} files",
@@ -904,7 +926,7 @@
       "shared": "Shared with Me"
     },
     "myFiles": {
-      "treeHeader": "Folder tree",
+      "treeHeader": "File storage",
       "emptyStateTitle": "No files yet",
       "emptyStateDescription": "Upload files to your personal storage"
     },
@@ -959,7 +981,6 @@
     "visualizerActionsAriaLabel": "Visualizer actions",
     "visualizerLoadingLabel": "Loading visualizer",
     "visualizerLoadErrorLabel": "Failed to load visualizer",
-    "mcpAppTitle": "MCP App",
     "mcpAppLoadErrorLabel": "Failed to load MCP App",
     "mcpAppForbiddenErrorLabel": "You don't have permission to access this MCP App",
     "pdfThumbnailsLabel": "Thumbnails",
@@ -977,7 +998,9 @@
   "announcementBanner": {
     "regionAriaLabel": "Announcement",
     "regionAriaLabelWithTitle": "Announcement: {{title}}",
-    "closeLabel": "Close announcement"
+    "closeLabel": "Close announcement",
+    "expandLabel": "Show the full announcement",
+    "collapseLabel": "Collapse the announcement"
   },
   "announcementsPopover": {
     "pillLabel_one": "+{{count}} announcement",
@@ -1157,6 +1180,9 @@
     "apiKeyLabel": "API key",
     "apiKeyPlaceholder": "Enter API key",
     "errorLoginFailed": "Failed to log in. Please try again.",
+    "adminConsentRequired": "A DIAL administrator must approve this application's access before you can continue. Contact your administrator, then retry.",
+    "offlineUnavailable": "Offline access is not configured for your account. Contact your administrator.",
+    "dialNativeHint": "Connect your account for offline access. An administrator must separately approve this application's access.",
     "errorPopupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again.",
     "errorDeclineFailed": "Failed to decline. Please try again.",
     "errorRetry": "Retry",
@@ -1173,7 +1199,7 @@
     "failed": "Could not transcribe audio. Please try recording again.",
     "busy": "Speech recognition is temporarily unavailable. Please try again later.",
     "unavailable": "Voice input is not available.",
-    "tooLarge": "Audio exceeds the {{limit}} byte limit.",
+    "tooLarge": "Audio recording exceeds the {{maxSize}} limit. Please shorten the recording and try again.",
     "stopRecordingLabel": "Stop recording",
     "discardRecordingLabel": "Cancel pending recording"
   },
@@ -1277,6 +1303,7 @@
     "bucketMissingMessage": "We couldn't determine your storage location. Please sign in again or try later.",
     "error": {
       "required": "This field is required.",
+      "instructionsFrontmatter": "Remove the \"---\" front matter block from the start of the instructions — the skill's name and description belong in the fields above. To keep fields like display_name from the original skill, upload its SKILL.md file instead.",
       "nameInvalid": "Use only letters, digits, and hyphens.",
       "nameConflict": "A skill with this name already exists.",
       "pathInvalid": "Enter a valid relative path.",
@@ -1512,5 +1539,13 @@
     "confettiToastMessage": "Here's to a bright new year! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "sleighToastMessage": "Special delivery from the night sky. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "giftLabel": "New Year gift"
+  },
+  "applicationCredentials": {
+    "title": "Application credentials",
+    "loadError": "Failed to load application credentials.",
+    "signedIn": "You are logged in.",
+    "signedOut": "You are not logged in.",
+    "sharedCredentials": "Shared credentials are available. You can also log in with your own credentials.",
+    "confirmLogout": "Log out of your personal credentials for this service?"
   }
 }

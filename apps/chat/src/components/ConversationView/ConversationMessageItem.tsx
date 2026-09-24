@@ -11,6 +11,8 @@ import {
   annotationToOoxmlCanvasContent,
   annotationToPdfCanvasContent,
   attachmentDtosToDisplayAttachments,
+  isDialFileId,
+  isExternalSourcePreviewable,
   messageHasStages,
   openAnnotationAttachment,
   referenceAttachmentToPdfCanvasContent,
@@ -30,6 +32,7 @@ import {
   type DisplayAttachment,
   type MessageRating,
   type Message as MessageType,
+  type ResponseFormat,
   type RequestSkill,
   type StarterOption,
   type UploadedAttachmentResult,
@@ -126,6 +129,15 @@ const COMPACT_MESSAGE_TEXT_STYLES = {
   typography: { fontClassName: 'dial-small-paragraph-text' },
 };
 
+const isCitationPreviewable = (annotation: Annotation): boolean => {
+  const attachment = annotation.body?.source?.attachment;
+  return (
+    attachment != null &&
+    (isDialFileId(attachment.url) ||
+      isExternalSourcePreviewable(attachment.type, attachment.url))
+  );
+};
+
 interface Props {
   msg: MessageType;
   index: number;
@@ -197,13 +209,21 @@ interface Props {
   isTextAttachmentsAllowed?: boolean;
   /** Renders message text one type-scale step down. The host sets it on narrow viewports. */
   isCompactTypography?: boolean;
+  /** The conversation's response format. `ResponseFormat.PlainText` renders the body verbatim instead of as Markdown. */
+  responseFormat?: ResponseFormat;
   maximumAttachmentsAmount?: number;
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   hideAttachFile?: boolean;
   /** `accept` attribute value forwarded to the edit-message native file picker. */
   fileAccept?: string;
-  /** When provided, called instead of the default download action when an attachment card is activated. */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /**
+   * When provided, called instead of the default download action when an attachment card is activated.
+   * Receives this item's `index` so the list can pass one stable callback and keep the row memoized.
+   */
+  onAttachmentClick?: (
+    attachment: DisplayAttachment,
+    messageIndex: number,
+  ) => void;
   /** Called when user selects "DIAL file system" from the edit-message attach menu. When absent, the menu item is not rendered. */
   onDialFileSystemClick?: () => void;
   /** Label for the "DIAL file system" menu item. */
@@ -289,6 +309,7 @@ const ConversationMessageItem: FC<Props> = ({
   isAttachmentsEnabled,
   isTextAttachmentsAllowed,
   isCompactTypography = false,
+  responseFormat,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   hideAttachFile,
@@ -332,7 +353,14 @@ const ConversationMessageItem: FC<Props> = ({
   const { handleAttachmentClick: handleDownload } = useAttachmentAction({
     resolveDownloadUrl: resolveDialFileDownloadUrl,
   });
-  const handleAttachmentClick = onAttachmentClickProp ?? handleDownload;
+  const handleIndexedAttachmentClick = useCallback(
+    (attachment: DisplayAttachment) =>
+      onAttachmentClickProp?.(attachment, index),
+    [onAttachmentClickProp, index],
+  );
+  const handleAttachmentClick = onAttachmentClickProp
+    ? handleIndexedAttachmentClick
+    : handleDownload;
   const handleDownloadAll = useCallback(
     (attachmentsToDownload: DisplayAttachment[]) => {
       attachmentsToDownload.forEach(handleDownload);
@@ -427,6 +455,7 @@ const ConversationMessageItem: FC<Props> = ({
   const citationCallbacks = useMemo(
     () => ({
       onPreview: handleCitationPreview,
+      isPreviewable: isCitationPreviewable,
       onOpenInBrowser: handleCitationOpenInBrowser,
       buildLabels: buildCitationLabels,
     }),
@@ -686,6 +715,7 @@ const ConversationMessageItem: FC<Props> = ({
             msg.streamErrorMessage != null ? 'w-full' : undefined,
           ),
         }}
+        responseFormat={responseFormat}
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
@@ -830,35 +860,27 @@ const ConversationMessageItem: FC<Props> = ({
                     )}
                   />
                 ))}
-              {mcpAppMatch &&
-                onOpenApp &&
-                (isMcpAppOpenedInCanvas ? (
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
-                  >
-                    <span className="dial-body-text text-primary">
-                      {openedInCanvasLabel}
-                    </span>
-                  </div>
-                ) : (
-                  <McpAppInlinePreview
-                    match={mcpAppMatch}
-                    toolCall={mcpAppToolCallSeed}
-                    cache={mcpAppCache}
-                    cacheKey={mcpAppCanvasKey(index)}
-                    hostAdapter={mcpAppHostAdapter}
-                    onExpand={() =>
-                      onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
-                    }
-                    expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
-                    reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
-                    loadErrorLabel={t(
-                      AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
-                    )}
-                  />
-                ))}
+              {mcpAppMatch && onOpenApp && (
+                <McpAppInlinePreview
+                  match={mcpAppMatch}
+                  toolCall={mcpAppToolCallSeed}
+                  cache={mcpAppCache}
+                  cacheKey={mcpAppCanvasKey(index)}
+                  hostAdapter={mcpAppHostAdapter}
+                  onExpand={() =>
+                    onOpenApp(mcpAppMatch, mcpAppKey, mcpAppToolCallSeed)
+                  }
+                  expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
+                  reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
+                  loadErrorLabel={t(
+                    AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
+                  )}
+                  isOpenedInCanvas={isMcpAppOpenedInCanvas}
+                  openedInCanvasLabel={
+                    openedInCanvasLabel ?? 'Opened in canvas'
+                  }
+                />
+              )}
               {msg.streamErrorMessage != null && (
                 <div className="w-full">
                   <ErrorMessageNotification

@@ -63,7 +63,13 @@ export const useRowWindow = (
     const update = () => {
       const viewportHeight = scrollEl.clientHeight;
       /* Hidden or not laid out yet: keep whatever window is already up. */
-      if (viewportHeight === 0) return;
+      if (
+        viewportHeight === 0 ||
+        container.clientWidth === 0 ||
+        getComputedStyle(container).visibility === 'hidden'
+      ) {
+        return;
+      }
 
       const containerTop = container.getBoundingClientRect().top;
       const viewportTop = scrollEl.getBoundingClientRect().top;

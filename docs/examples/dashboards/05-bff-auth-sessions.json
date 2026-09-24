@@ -628,7 +628,7 @@
     },
     {
       "title": "Refresh exchanges / second by outcome",
-      "description": "Real token exchanges only. race_absorbed is a lost refresh-token rotation race with a still-valid access token: the session survived, so it is neither a success nor a logout. invalid_grant is an unrecoverable session; upstream_error is any other exchange failure.",
+      "description": "Real token exchanges only. race_absorbed is a lost refresh-token rotation race with a still-valid access token: the session survived, so it is neither a success nor a logout. invalid_grant is an unrecoverable session; session_expired means the exchange returned tokens after the session deadline, so the session was not renewed; upstream_error is any other exchange failure.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",

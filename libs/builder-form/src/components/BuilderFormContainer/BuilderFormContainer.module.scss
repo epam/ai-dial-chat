@@ -5,9 +5,15 @@
 /* Mobile-only sticky action footer: pinned over the scrolling form, so it
  * needs an opaque background (the container background token, so it blends
  * with the page) and an elevation shadow, exactly as specified. The footer
- * is desktop:hidden, and at the desktop breakpoint the header's border-b is
+ * is hidden by a scoped desktop rule; the header's bottom border is
  * the divider instead. */
-.footer {
+.footer.footer {
+  display: flex;
+
+  @media (min-width: 1280px) {
+    display: none;
+  }
+
   background: var(--bfc-bg, var(--bg-layer-base, #f5f7fa));
   box-shadow:
     0 2px 12px 0 var(--shadow-xs-2, #161b2d08),

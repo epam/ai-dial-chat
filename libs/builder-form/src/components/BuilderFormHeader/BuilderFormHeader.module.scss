@@ -1,8 +1,26 @@
 /* Set the color for every side at once: the divider is drawn below the row
  * at desktop and above it at mobile, so only the side with a non-zero width
- * from the utility classes shows. */
-.header {
+ * from the scoped responsive rules shows. */
+.header.header {
+  border-block-start-width: 1px;
+  border-block-end-width: 0;
+  padding-inline: 16px;
+
+  @media (min-width: 1280px) {
+    border-block-start-width: 0;
+    border-block-end-width: 1px;
+    padding-inline: 32px;
+  }
+
   border-color: var(--bfh-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.actions.actions {
+  display: none;
+
+  @media (min-width: 1280px) {
+    display: flex;
+  }
 }
 
 .title {

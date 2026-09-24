@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
   PayloadTooLargeException,
@@ -43,6 +44,8 @@ const UNIX_SYMLINK_TYPE = 0xa000;
 const UNIX_REGULAR_FILE_TYPE = 0x8000;
 const UNIX_DIRECTORY_TYPE = 0x4000;
 const ENCRYPTED_BIT_FLAG = 0x1;
+/** Marks the stream destroyed by the abort listener, so it is not mistaken for an archive defect. */
+const ABORT_STREAM_ERROR = 'SKILL_ARCHIVE_IMPORT_ABORTED';
 /** Guards against directory-entry amplification before any extraction (design.md D4), mirroring the Files domain's identical guard. */
 const ENTRY_COUNT_CEILING_MULTIPLIER = 10;
 
@@ -132,6 +135,41 @@ export class SkillsArchiveExtractionService {
     }
   }
 
+  /**
+   * Translates an error yauzl raised about a single entry into the status
+   * the archive contract uses. yauzl reports an entry it cannot decode by
+   * rejecting with a plain `Error` — while walking the central directory
+   * (`strong encryption is not supported`) as well as while opening a read
+   * stream (`entry is encrypted, ...`, `unsupported compression method: N`).
+   * Left alone those leave the request as a `500`, though each one is a
+   * defect in the uploaded archive, which the contract answers with `422`.
+   * Exceptions this service raised itself pass through untouched.
+   */
+  private rethrowAsArchiveEntryError(err: unknown): never {
+    if (err instanceof HttpException) throw err;
+
+    const message = err instanceof Error ? err.message : String(err);
+
+    if (message === ABORT_STREAM_ERROR) {
+      throw new ServiceUnavailableException('Skill archive import aborted');
+    }
+    if (message.includes('encrypt')) {
+      throw new UnprocessableEntityException(
+        'Archive contains an encrypted entry, which is not supported',
+      );
+    }
+    if (message.includes('unsupported compression method')) {
+      throw new UnprocessableEntityException(
+        'Archive contains an entry with an unsupported compression method',
+      );
+    }
+
+    this.logger.warn(`Unreadable entry in uploaded skill archive: ${message}`);
+    throw new UnprocessableEntityException(
+      'Archive contains an entry that cannot be read',
+    );
+  }
+
   private async openArchive(archivePath: string): Promise<yauzl.ZipFile> {
     try {
       /*
@@ -139,11 +177,19 @@ export class SkillsArchiveExtractionService {
        * is the sole zip-slip authority, matching the Files domain's rationale.
        * autoClose: false — keep the descriptor open past eachEntry() so the
        * second pass can openReadStreamPromise() on the collected entries.
+       * validateEntrySizes: false — yauzl otherwise asserts each entry's
+       * bytes against the uncompressed size the archive declares, and aborts
+       * the stream the moment they diverge. An entry that under-declares its
+       * size would then fail on yauzl's assertion rather than on the
+       * per-file limit, so the limit could never be reached and the caller
+       * saw a raw stream error. readEntry() counts the bytes it actually
+       * receives, which is the only figure a zip bomb cannot forge.
        */
       return await yauzl.openPromise(archivePath, {
         lazyEntries: true,
         decodeStrings: false,
         autoClose: false,
+        validateEntrySizes: false,
       });
     } catch (err) {
       this.logger.warn(
@@ -166,43 +212,54 @@ export class SkillsArchiveExtractionService {
     }
 
     const collected: CollectedEntry[] = [];
-    for await (const entry of zipfile.eachEntry()) {
-      const rawPath = this.decodeEntryName(entry.fileName);
-      if (this.isIgnorableJunkEntry(rawPath)) continue;
+    /*
+     * eachEntry() walks the central directory, and yauzl rejects there for
+     * an entry it refuses outright — strong encryption is the case that
+     * reaches this service, and it fires before the per-entry checks below
+     * ever run.
+     */
+    try {
+      for await (const entry of zipfile.eachEntry()) {
+        const rawPath = this.decodeEntryName(entry.fileName);
+        if (this.isIgnorableJunkEntry(rawPath)) continue;
 
-      const { isDirectory, safeRelativePath } = resolveSkillEntryPath(rawPath);
-      if (isDirectory) continue;
+        const { isDirectory, safeRelativePath } =
+          resolveSkillEntryPath(rawPath);
+        if (isDirectory) continue;
 
-      if ((entry.generalPurposeBitFlag & ENCRYPTED_BIT_FLAG) !== 0) {
-        throw new UnprocessableEntityException(
-          'Archive contains an encrypted entry, which is not supported',
-        );
+        if ((entry.generalPurposeBitFlag & ENCRYPTED_BIT_FLAG) !== 0) {
+          throw new UnprocessableEntityException(
+            'Archive contains an encrypted entry, which is not supported',
+          );
+        }
+
+        const unixType =
+          (entry.externalFileAttributes >>> 16) & UNIX_FILE_TYPE_MASK;
+        if (unixType === UNIX_SYMLINK_TYPE) {
+          throw new UnprocessableEntityException(
+            'Archive contains a symbolic link entry, which is not supported',
+          );
+        }
+        if (
+          unixType !== 0 &&
+          unixType !== UNIX_REGULAR_FILE_TYPE &&
+          unixType !== UNIX_DIRECTORY_TYPE
+        ) {
+          throw new UnprocessableEntityException(
+            'Archive contains an unsupported entry type',
+          );
+        }
+
+        if (safeRelativePath == null) {
+          throw new BadRequestException(
+            `Invalid path in archive entry: ${rawPath}`,
+          );
+        }
+
+        collected.push({ entry, rawPath: safeRelativePath });
       }
-
-      const unixType =
-        (entry.externalFileAttributes >>> 16) & UNIX_FILE_TYPE_MASK;
-      if (unixType === UNIX_SYMLINK_TYPE) {
-        throw new UnprocessableEntityException(
-          'Archive contains a symbolic link entry, which is not supported',
-        );
-      }
-      if (
-        unixType !== 0 &&
-        unixType !== UNIX_REGULAR_FILE_TYPE &&
-        unixType !== UNIX_DIRECTORY_TYPE
-      ) {
-        throw new UnprocessableEntityException(
-          'Archive contains an unsupported entry type',
-        );
-      }
-
-      if (safeRelativePath == null) {
-        throw new BadRequestException(
-          `Invalid path in archive entry: ${rawPath}`,
-        );
-      }
-
-      collected.push({ entry, rawPath: safeRelativePath });
+    } catch (err) {
+      this.rethrowAsArchiveEntryError(err);
     }
 
     return collected;
@@ -301,8 +358,9 @@ export class SkillsArchiveExtractionService {
 
   /**
    * Streams one entry with incremental per-file and running-total limit
-   * enforcement (design.md D6) — the ZIP's declared uncompressed-size
-   * metadata is never trusted alone, closing the classic zip-bomb vector.
+   * enforcement (design.md D6) — the size the archive declares for an entry
+   * is never consulted, only the bytes actually received, closing the
+   * classic zip-bomb vector.
    */
   private async readEntry(
     zipfile: yauzl.ZipFile,
@@ -317,12 +375,18 @@ export class SkillsArchiveExtractionService {
     const maxFileBytes = this.getFileUploadMaxBytes();
     const maxTotalBytes = this.getUploadMaxTotalBytes();
 
-    const stream = await zipfile.openReadStreamPromise(entry);
+    let stream: Awaited<ReturnType<yauzl.ZipFile['openReadStreamPromise']>>;
+    try {
+      stream = await zipfile.openReadStreamPromise(entry);
+    } catch (err) {
+      this.rethrowAsArchiveEntryError(err);
+    }
+
     const chunks: Buffer[] = [];
     let readBytes = 0;
 
     const abortRead = (): void => {
-      stream.destroy(new Error('SKILL_ARCHIVE_IMPORT_ABORTED'));
+      stream.destroy(new Error(ABORT_STREAM_ERROR));
     };
     signal?.addEventListener('abort', abortRead, { once: true });
 
@@ -346,6 +410,13 @@ export class SkillsArchiveExtractionService {
 
         chunks.push(buffer);
       }
+    } catch (err) {
+      /*
+       * Destroying the stream on abort surfaces here before the post-loop
+       * `signal.aborted` check below can run, so the abort marker has to be
+       * recognised as well as a genuine decode failure.
+       */
+      this.rethrowAsArchiveEntryError(err);
     } finally {
       signal?.removeEventListener('abort', abortRead);
       stream.destroy();
