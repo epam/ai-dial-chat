@@ -40,6 +40,7 @@ export interface AppConfigState {
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
+    allowedConnectOrigins: string[];
     enabledUiFeatures: string[] | null;
     announcementHtml: string | null;
     announcementTitle: string | null;
@@ -71,6 +72,7 @@ const INITIAL_STATE: AppConfigState = {
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
+    allowedConnectOrigins: [],
     enabledUiFeatures: null,
     announcementHtml: null,
     announcementTitle: null,
@@ -119,6 +121,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
+            allowedConnectOrigins: response.config?.allowedConnectOrigins ?? [],
             enabledUiFeatures: response.config?.enabledUiFeatures ?? null,
             announcementHtml: response.config?.announcementHtml ?? null,
             announcementTitle: response.config?.announcementTitle ?? null,

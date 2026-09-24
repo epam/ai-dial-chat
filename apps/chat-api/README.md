@@ -663,6 +663,28 @@ any trusted redirect destinations as well. Restart the backend and reload the
 chat document (the iframe in overlay mode) after changing this setting. Reverse
 proxies adding their own CSP must also permit these origins.
 
+PDF previews also use browser-managed credentials for external HTTP(S) URLs
+matching `ALLOWED_CONNECT_ORIGINS`. The existing list is exposed as
+`config.allowedConnectOrigins` in `GET /api/v1/client-config`; no additional
+environment variable is needed. Same-origin and blob requests keep their default
+credential scope. Credentialed external PDF requests reject redirects: the URL
+must return the document directly. This prevents credentials from being used at
+an unchecked redirect destination and prevents a login redirect from being
+treated as a PDF.
+
+The document server must return `Access-Control-Allow-Origin` with the exact
+chat origin and `Access-Control-Allow-Credentials: true`, including for public
+PDFs loaded through this credentialed path. A wildcard CORS origin is not
+compatible with credentialed fetch. For overlay mode, the origin is the chat
+iframe's origin. Existing login sessions, cookie `SameSite` attributes, and
+browser restrictions on third-party cookies still govern whether cookies are
+sent. This setting does not create a session or forward DIAL access tokens.
+
+Use HTTPS outside local development. An allowed HTTP origin can receive
+non-Secure cookies over an unencrypted connection. CORS controls access to the
+response; it does not protect cookies in transit or prevent a simple GET request
+from sending them before the response headers are checked.
+
 `CSP_MODE` accepts `report-only` (default) or `enforce`. Report-only mode keeps
 the existing HTML policy enforced and adds the stricter candidate in
 `Content-Security-Policy-Report-Only`. It still permits inline CSS in the enforced

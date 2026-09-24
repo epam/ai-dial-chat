@@ -28,6 +28,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       fileManagerTabs: [],
       overlayEnabled: false,
       overlayAllowedOrigins: [],
+      allowedConnectOrigins: [],
       announcementHtml: null,
       announcementTitle: null,
       announcementDescription: null,

@@ -16,6 +16,13 @@ function makeProvider(envOverrides: Partial<EnvironmentVariables> = {}) {
 }
 
 describe('EnvConfigProvider', () => {
+  it('resolves external connection origins from the existing CSP configuration', async () => {
+    const origins = ['https://documents.example.com', 'https://*.example.org'];
+    const { provider } = makeProvider({ ALLOWED_CONNECT_ORIGINS: origins });
+    expect(
+      await provider.resolve('documents.allowedConnectOrigins', ctx),
+    ).toEqual(origins);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });
