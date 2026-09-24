@@ -68,7 +68,10 @@ import {
 import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
+import {
+  conversationStreamTransport,
+  logConversationStreamError,
+} from '../../utils/conversation-stream-transport';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -319,6 +322,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     overlay,
     onStopError: handleStopError,
     generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
+    onStreamError: logConversationStreamError,
   });
 
   /*

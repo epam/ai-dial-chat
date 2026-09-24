@@ -464,6 +464,7 @@ export class ResponsesAdapter {
       return {
         outcome: 'error',
         error: new Error(terminalSignal?.message ?? GENERIC_TRUNCATED_MESSAGE),
+        displayMessage: terminalSignal?.message,
         assembledMessage,
       };
     } catch (err) {
