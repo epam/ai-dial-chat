@@ -1631,6 +1631,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   llmNamingDone?: boolean;
+  /**
+   * Open, feature-keyed container for conversation-level view state. Currently defines exactly one key, `annotations`, holding the pool of html_tag citation annotations accumulated across the conversation. Any other key is opaque and preserved as-is.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ConversationResponseDto
+   */
+  customViewState?: { [key: string]: unknown };
 }
 
 /**

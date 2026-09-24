@@ -145,6 +145,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
+### Conversation custom view state
+
+`Conversation.customViewState?: Record<string, unknown>` is an open, feature-keyed container for conversation-level view state that rides the existing save/read of the conversation. It is absent on every conversation that has none. A host reads and writes individual keys of this record at the application edge; the model itself imposes no schema on the keys.
+
 ### Annotation selectors
 
 `Annotation.body.selector` is an `AnnotationSelector | AnnotationSelector[]`, a discriminated union with an open forward-compatible branch. `TextCharacterRangeSelector`, `PdfBBoxSelector`, and `HtmlTagSelector` target text ranges, PDF regions, and inline `<cit>` markers respectively. `DocxRangeSelector`, `PptxRangeSelector`, and `ExcelRcRangeSelector` target Office document citations.
