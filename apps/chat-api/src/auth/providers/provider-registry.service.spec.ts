@@ -100,13 +100,34 @@ describe('ProviderRegistryService', () => {
     expect(discoverSpy).not.toHaveBeenCalled();
   });
 
-  it('missing AUTH_POST_LOGOUT_REDIRECT_URI throws on init when a provider is configured', async () => {
+  it('missing AUTH_POST_LOGOUT_REDIRECT_URI still throws on init as a defensive invariant', async () => {
+    /*
+     * In production, config/validation.ts#validate() backfills
+     * AUTH_POST_LOGOUT_REDIRECT_URI from AUTH_CALLBACK_BASE_URL before
+     * ConfigService is ever constructed, so this service never actually
+     * observes it unset. This test exercises that invariant directly at this
+     * layer (bypassing validate()) to prove requireField's guard still fires
+     * if that upstream default is ever removed or bypassed.
+     */
     const module = await buildModule({
       ...KEYCLOAK_ENV,
       AUTH_POST_LOGOUT_REDIRECT_URI: undefined,
     });
     await expect(module.init()).rejects.toThrow(
       /AUTH_POST_LOGOUT_REDIRECT_URI is missing/,
+    );
+  });
+
+  it('applies the AUTH_CALLBACK_BASE_URL-derived default once already backfilled by validate()', async () => {
+    const module = await buildModule({
+      ...KEYCLOAK_ENV,
+      AUTH_CALLBACK_BASE_URL: 'https://app.example.com',
+      AUTH_POST_LOGOUT_REDIRECT_URI: 'https://app.example.com',
+    });
+    await module.init();
+    const svc = module.get(ProviderRegistryService);
+    expect(svc.getProvider('keycloak').config.postLogoutRedirectUri).toBe(
+      'https://app.example.com',
     );
   });
 

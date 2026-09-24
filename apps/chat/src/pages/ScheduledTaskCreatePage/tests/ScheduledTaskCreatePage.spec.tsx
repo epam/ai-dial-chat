@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
@@ -10,6 +10,27 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskCreatePage from '../ScheduledTaskCreatePage';
+vi.mock(
+  '../../../components/ScheduledTaskSkillField/ScheduledTaskSkillField',
+  () => ({
+    default: ({
+      value,
+      onChange,
+      isSkillsSupported,
+    }: {
+      value?: string;
+      onChange: (value: string | undefined) => void;
+      isSkillsSupported: boolean;
+    }) => (
+      <input
+        aria-label="skillUrl"
+        aria-invalid={!isSkillsSupported}
+        value={value ?? ''}
+        onChange={(event) => onChange(event.target.value || undefined)}
+      />
+    ),
+  }),
+);
 
 vi.mock(
   '../../../context/AppConfigContext',
@@ -17,8 +38,14 @@ vi.mock(
 );
 
 const useDeploymentsMock = vi.fn();
+const TestSkillSupportContext = createContext<boolean | undefined>(undefined);
 vi.mock('../../../context/DeploymentsContext', () => ({
-  useDeployments: () => useDeploymentsMock(),
+  useDeployments: () => {
+    const support = useContext(TestSkillSupportContext);
+    return support === undefined
+      ? useDeploymentsMock()
+      : { items: [{ id: 'gpt-4o', features: { skillsSupported: support } }] };
+  },
 }));
 
 const showNotificationMock = vi.fn();
@@ -56,6 +83,7 @@ vi.mock(
         >
           <option value="" />
           <option value="gpt-4o">GPT-4o</option>
+          <option value="unsupported">Unsupported</option>
         </select>
         <output aria-label="triggerLabelledById">{labelledById}</output>
       </>
@@ -77,6 +105,7 @@ interface FormProps {
     runAt?: string;
   };
   errors: Record<string, string | undefined>;
+  skillSelector?: ReactNode;
   modelSelector: ReactNode;
   modelLabelId: string;
   onFieldChange: (field: string, value: unknown) => void;
@@ -100,6 +129,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     labels,
     values,
     errors,
+    skillSelector,
     modelSelector,
     modelLabelId,
     onFieldChange,
@@ -117,6 +147,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       />
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
+      {skillSelector}
+      {errors.skillUrl && <span>{errors.skillUrl}</span>}
       <textarea
         aria-label="prompt"
         value={values.prompt}
@@ -164,7 +196,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {errors.description && <span>{errors.description}</span>}
       {errors.endDate && <span>{errors.endDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
-      <button onClick={onSubmit} disabled={isSubmitting}>
+      <button
+        onClick={onSubmit}
+        disabled={isSubmitting || Boolean(errors.skillUrl)}
+      >
         {labels.createButtonLabel}
       </button>
     </div>
@@ -199,11 +234,138 @@ const fillValidForm = async () => {
 };
 
 describe('ScheduledTaskCreatePage', () => {
+  it('allows retry with the same draft after support recovers from a server rejection', async () => {
+    createScheduledTaskMock.mockRejectedValueOnce({
+      response: new Response(
+        JSON.stringify({ code: 'scheduledTaskSkillUnsupported' }),
+        { status: 400 },
+      ),
+    });
+    const page = (support = true) => (
+      <TestSkillSupportContext value={support}>
+        <MemoryRouter>
+          <ScheduledTaskCreatePage />
+        </MemoryRouter>
+      </TestSkillSupportContext>
+    );
+    const view = render(page());
+    await fillValidForm();
+    fireEvent.change(screen.getByLabelText('skillUrl'), {
+      target: { value: 'skills/public/report' },
+    });
+    const submit = screen.getByRole('button', { name: 'buttons.create' });
+    await userEvent.click(submit);
+    await screen.findByText('skillSelector.unsupportedTooltipLabel');
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    view.rerender(page());
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+
+    view.rerender(page(false));
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    view.rerender(page(true));
+    expect(
+      screen.queryByText('skillSelector.unsupportedTooltipLabel'),
+    ).toBeNull();
+    expect((submit as HTMLButtonElement).disabled).toBe(false);
+
+    createScheduledTaskMock.mockResolvedValueOnce({ id: 'task' });
+    await userEvent.click(submit);
+    expect(createScheduledTaskMock).toHaveBeenCalledTimes(2);
+    expect(createScheduledTaskMock.mock.calls[1][0]).toEqual(
+      createScheduledTaskMock.mock.calls[0][0],
+    );
+  });
+
+  it('saves skill-only content and rejects model switches immediately without losing the selection', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'task' });
+    renderAtRoute('/scheduled-tasks/new');
+    await fillValidForm();
+    fireEvent.change(screen.getByLabelText('skillUrl'), {
+      target: { value: 'skills/public/report' },
+    });
+    fireEvent.change(screen.getByLabelText('prompt'), {
+      target: { value: '' },
+    });
+    await userEvent.selectOptions(
+      screen.getByLabelText('modelId'),
+      'unsupported',
+    );
+    expect(
+      screen.getByText('skillSelector.unsupportedTooltipLabel'),
+    ).toBeTruthy();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect((screen.getByLabelText('skillUrl') as HTMLInputElement).value).toBe(
+      'skills/public/report',
+    );
+    await userEvent.selectOptions(screen.getByLabelText('modelId'), 'gpt-4o');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+    await vi.waitFor(() =>
+      expect(createScheduledTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skillUrl: 'skills/public/report',
+          prompt: '',
+        }),
+      ),
+    );
+  });
+
+  it('retains the draft and localizes a server capability rejection', async () => {
+    createScheduledTaskMock.mockRejectedValue({
+      response: new Response(
+        JSON.stringify({
+          code: 'scheduledTaskSkillUnsupported',
+          message: 'Unsupported',
+        }),
+        { status: 400 },
+      ),
+    });
+    renderAtRoute('/scheduled-tasks/new');
+    await fillValidForm();
+    fireEvent.change(screen.getByLabelText('skillUrl'), {
+      target: { value: 'skills/public/report' },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+    expect(
+      await screen.findByText('skillSelector.unsupportedTooltipLabel'),
+    ).toBeTruthy();
+    expect(
+      (screen.getByLabelText('displayName') as HTMLInputElement).value,
+    ).toBe('Daily summary');
+    expect((screen.getByLabelText('prompt') as HTMLInputElement).value).toBe(
+      'Summarize my inbox',
+    );
+  });
+
+  it('hides the entire selector when skill usage is disabled', () => {
+    useFeatureFlagMock.mockImplementation(
+      (key) => key === 'scheduledTasksEnabled',
+    );
+    renderAtRoute('/scheduled-tasks/new');
+    expect(screen.queryByLabelText('skillUrl')).toBeNull();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     useFeatureFlagMock.mockReturnValue(true);
     useDeploymentsMock.mockReturnValue({
-      items: [{ id: 'gpt-4o', displayName: 'GPT-4o' }],
+      items: [
+        {
+          id: 'gpt-4o',
+          displayName: 'GPT-4o',
+          features: { skillsSupported: true },
+        },
+        {
+          id: 'unsupported',
+          displayName: 'Unsupported',
+          features: { skillsSupported: false },
+        },
+      ],
     });
     useThemeMock.mockReturnValue({ currentTheme: 'light' });
     useAppConfigMock.mockReturnValue({ status: 'ready' });

@@ -83,4 +83,9 @@ export class ScheduledTaskDto {
   @IsOptional()
   @IsString()
   prompt?: string;
+
+  @ApiPropertyOptional({ example: 'skills/public/daily-summary' })
+  @IsOptional()
+  @IsString()
+  skillUrl?: string;
 }

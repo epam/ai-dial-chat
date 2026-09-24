@@ -323,7 +323,8 @@
     "modalTitle": "Use skill",
     "noMatchingSkillsLabel": "No matching skills",
     "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
-    "viewDetailsLabel": "View details"
+    "viewDetailsLabel": "View details",
+    "removeSkillLabel": "Remove skill"
   },
   "notFound": {
     "eyebrow": "404",
@@ -750,7 +751,11 @@
       "promptRequired": "Instructions are required",
       "submittingLabel": "Creating",
       "successNotification": "Scheduled task created",
-      "errorNotification": "Failed to create the scheduled task"
+      "errorNotification": "Failed to create the scheduled task",
+      "skillLabel": "Skill",
+      "skillPlaceholder": "Choose a skill",
+      "instructionsOrSkillRequired": "Choose a skill or write instructions.",
+      "instructionsOnlySubtitle": "Write custom instructions for this task."
     },
     "detail": {
       "repeatsLabel": "Repeats",

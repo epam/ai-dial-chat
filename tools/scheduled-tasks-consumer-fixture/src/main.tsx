@@ -6,6 +6,8 @@ import {
 import {
   describeScheduledTaskTrigger,
   prepareScheduledTaskCreateBody,
+  prepareScheduledTaskUpdateBody,
+  mapScheduledTaskDtoToFormValues,
 } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   ScheduledTaskCreateForm,
@@ -18,7 +20,9 @@ import {
   ScheduledTasksSortKey,
 } from '@epam/ai-dial-scheduled-tasks';
 import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/validation';
+import { SkillSelectorField } from '@epam/ai-dial-skills';
 import { Popup } from '@epam/ai-dial-ui-kit';
+import '@epam/ai-dial-skills/styles.css';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@epam/ai-dial-scheduled-tasks/styles.css';
@@ -44,7 +48,32 @@ const prepared = prepareScheduledTaskCreateBody(
 if (!validation.prompt || !prepared.ok || descriptor.time !== '09:00')
   throw new Error('Packed scheduler contracts failed');
 
+const skillDraft = { ...values, skillUrl: 'skills/public/report' };
+const skillPrepared = prepareScheduledTaskCreateBody(skillDraft, {
+  now: new Date(),
+  isSkillsSupported: true,
+});
+const removed = prepareScheduledTaskUpdateBody(
+  { ...values, prompt: 'Instructions' },
+  { now: new Date() },
+);
+if (
+  !skillPrepared.ok ||
+  skillPrepared.body.prompt !== '' ||
+  !removed.ok ||
+  removed.body.skillUrl !== null
+)
+  throw new Error('Packed skill preparation failed');
+const hydrated = mapScheduledTaskDtoToFormValues({
+  id: 'task',
+  ...skillPrepared.body,
+  skillUrl: skillDraft.skillUrl,
+});
+if (!hydrated.ok || hydrated.values.skillUrl !== skillDraft.skillUrl)
+  throw new Error('Packed skill hydration failed');
+
 const Fixture = () => {
+  const [skillUrl, setSkillUrl] = useState<string>();
   const [sortKey, setSortKey] = useState(ScheduledTasksSortKey.FirstToRun);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deploymentId, setDeploymentId] = useState<string | null>('model-a');
@@ -145,6 +174,7 @@ const Fixture = () => {
             repeatOptions: [{ key: ScheduledTaskRepeat.Daily, label: 'Daily' }],
             timeLabel: 'Time',
             instructionsLabel: 'Instructions',
+            skillLabel: 'Skill',
             instructionsPlaceholder: 'Write instructions',
             runAtLabel: 'Run at',
             dayOfWeekLabel: 'Day of week',
@@ -160,17 +190,50 @@ const Fixture = () => {
             description: '',
             modelId: deploymentId ?? '',
             prompt: '',
+            skillUrl,
             repeat: ScheduledTaskRepeat.Daily,
             time: '09:00',
           }}
           styles={{ layout: { detailsWidth: '280px', columnGap: '24px' } }}
-          errors={{}}
+          errors={
+            skillUrl && deploymentId !== 'model-a'
+              ? { skillUrl: 'Unsupported model' }
+              : {}
+          }
+          skillLabelId="fixture-skill-label"
+          skillErrorId="fixture-skill-error"
+          skillSelector={
+            <SkillSelectorField
+              value={skillUrl}
+              onChange={setSkillUrl}
+              isSkillsSupported={deploymentId === 'model-a'}
+              labelledById="fixture-skill-label"
+              favorites={[{ id: 'skills/public/report', name: 'Report' }]}
+              describedById="fixture-skill-error"
+              labels={{
+                placeholder: 'Choose skill',
+                modalTitle: 'Use skill',
+                removeSkillLabel: 'Remove skill',
+                unsupportedTooltipLabel: 'Unsupported model',
+              }}
+              renderCatalogContent={(select) => (
+                <button
+                  onClick={() =>
+                    select('skills/public/' + 'long-reference-'.repeat(18))
+                  }
+                >
+                  Select long skill
+                </button>
+              )}
+            />
+          }
           modelLabelId="fixture-model-label"
           modelSelector={
             <DeploymentSelectorField
               selectedId={deploymentId}
               records={records}
               placeholder="Choose a model"
+              labelledById="fixture-model-label"
               labels={{
                 searchPlaceholder: 'Search models',
                 searchAriaLabel: 'Search models',
@@ -204,6 +267,7 @@ const Fixture = () => {
             repeatsLabel: 'Repeats',
             activeWindowLabel: 'Active window',
             instructionsLabel: 'Instructions',
+            skillLabel: 'Skill',
             historyEmptyLabel: 'No runs',
             historyErrorLabel: 'Could not load runs',
             historyRetryLabel: 'Retry',
@@ -225,6 +289,7 @@ const Fixture = () => {
           modelLabel="Model A"
           repeatsLabel="Daily"
           instructionsMarkdown="Packed instructions"
+          skillDisplayName={skillUrl}
           runs={[]}
           renderInstructions={(text) => <p>{text}</p>}
         />

@@ -202,6 +202,20 @@ describe('ScheduledTaskDetailView — library isolation', () => {
 });
 
 describe('ScheduledTaskDetailView', () => {
+  it('passes the optional skill to Configuration and omits empty Instructions', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={{ ...labels, skillLabel: 'Skill' }}
+        onBack={vi.fn()}
+        displayName="Task"
+        runs={[]}
+        instructionsMarkdown=""
+        skillDisplayName="skills/public/deleted"
+      />,
+    );
+    expect(screen.getByText('skills/public/deleted')).toBeTruthy();
+    expect(screen.queryByText('Instructions')).toBeNull();
+  });
   it('renders the back control and title', () => {
     render(
       <ScheduledTaskDetailView

@@ -2052,11 +2052,17 @@ export interface CreateScheduledTaskBodyDto {
    */
   model: string;
   /**
-   *
+   * Instructions; may be empty when the effective task has a skill.
    * @type {string}
    * @memberof CreateScheduledTaskBodyDto
    */
   prompt: string;
+  /**
+   * DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  skillUrl?: string | null;
   /**
    *
    * @type {string}
@@ -2216,6 +2222,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**
@@ -6062,6 +6074,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**
@@ -6073,6 +6091,19 @@ export const ScheduledTaskDtoTriggerTypeEnum = {
 } as const;
 export type ScheduledTaskDtoTriggerTypeEnum =
   (typeof ScheduledTaskDtoTriggerTypeEnum)[keyof typeof ScheduledTaskDtoTriggerTypeEnum];
+
+/**
+ *
+ * @export
+ */
+export const ScheduledTaskErrorCode = {
+  ScheduledTaskSkillUnsupported: 'scheduledTaskSkillUnsupported',
+  ScheduledTaskInstructionsOrSkillRequired:
+    'scheduledTaskInstructionsOrSkillRequired',
+  ScheduledTaskDeploymentUnavailable: 'scheduledTaskDeploymentUnavailable',
+} as const;
+export type ScheduledTaskErrorCode =
+  (typeof ScheduledTaskErrorCode)[keyof typeof ScheduledTaskErrorCode];
 
 /**
  *
@@ -6130,6 +6161,50 @@ export const ScheduledTaskRunDtoStatusEnum = {
 export type ScheduledTaskRunDtoStatusEnum =
   (typeof ScheduledTaskRunDtoStatusEnum)[keyof typeof ScheduledTaskRunDtoStatusEnum];
 
+/**
+ *
+ * @export
+ * @interface ScheduledTaskValidationErrorDto
+ */
+export interface ScheduledTaskValidationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {ScheduledTaskValidationErrorDtoMessage}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  message: ScheduledTaskValidationErrorDtoMessage;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {ScheduledTaskErrorCode}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  code?: ScheduledTaskErrorCode;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  field?: string;
+}
+
+/**
+ * @type ScheduledTaskValidationErrorDtoMessage
+ *
+ * @export
+ */
+export type ScheduledTaskValidationErrorDtoMessage = Array<string> | string;
 /**
  *
  * @export
@@ -7608,11 +7683,17 @@ export interface UpdateScheduledTaskBodyDto {
    */
   model: string;
   /**
-   *
+   * Instructions; may be empty when the effective task has a skill.
    * @type {string}
    * @memberof UpdateScheduledTaskBodyDto
    */
   prompt: string;
+  /**
+   * DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  skillUrl?: string | null;
   /**
    *
    * @type {string}
@@ -7748,6 +7829,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**

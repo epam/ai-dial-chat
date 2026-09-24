@@ -36,6 +36,19 @@ vi.mock('../../../hooks/useUiFeature', () => ({
   useUiFeature: () => false,
 }));
 
+/*
+ * `useThemeOptions` reaches ThemeProvider, which this suite does not mount.
+ * An empty option set also keeps the theme row out of the way of the tab
+ * assertions below; PreferencesTab's own spec covers the row.
+ */
+vi.mock('../../../hooks/theme/useThemeOptions', () => ({
+  useThemeOptions: () => ({
+    options: [],
+    selectedTheme: 'light',
+    setTheme: vi.fn(),
+  }),
+}));
+
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();

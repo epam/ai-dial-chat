@@ -19,6 +19,7 @@ import type {
   ListScheduledTaskRunsResponseDto,
   ListScheduledTasksResponseDto,
   ScheduledTaskDto,
+  ScheduledTaskValidationErrorDto,
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
 } from '../models/index';
@@ -66,7 +67,7 @@ export interface UpdateScheduledTaskRequest {
  */
 export class ScheduledTasksApi extends runtime.BaseAPI {
   /**
-   * Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.
+   * Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt or skill, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.
    * Create a scheduled task
    */
   async createScheduledTaskRaw(
@@ -103,7 +104,7 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.
+   * Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt or skill, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.
    * Create a scheduled task
    */
   async createScheduledTask(
@@ -447,7 +448,7 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
   }
 
   /**
-   * Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Updates an existing DIAL Scheduler schedule for the authenticated session user. Omitting skillUrl preserves the saved reference; null removes it. Invalidates the scheduled tasks list cache on success.
    * Update a scheduled task
    */
   async updateScheduledTaskRaw(
@@ -495,7 +496,7 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
   }
 
   /**
-   * Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.
+   * Updates an existing DIAL Scheduler schedule for the authenticated session user. Omitting skillUrl preserves the saved reference; null removes it. Invalidates the scheduled tasks list cache on success.
    * Update a scheduled task
    */
   async updateScheduledTask(

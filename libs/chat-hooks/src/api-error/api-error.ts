@@ -6,6 +6,8 @@ interface ApiErrorBody {
 
 /** Normalized shape returned by {@link getApiErrorDetails}. */
 export interface ApiErrorDetails {
+  /** Stable domain error code supplied by the API, when present. */
+  code?: string;
   /** HTTP status code carried by the error, when available. */
   status?: number;
   /** Resolved human-readable error message, or `null` when none could be resolved. */
@@ -112,11 +114,11 @@ export const getApiErrorMessage = async (
   return null;
 };
 
-/** Normalizes any API error into a `{ status?, message, traceId? }` shape. */
+/** Normalizes any API error into a `{ status?, message, traceId?, code? }` shape. */
 /*
  * Duck-types any error carrying a `response`-shaped `Response` — a generated
  * `@epam/ai-dial-chat-api-client` `ResponseError` or a host's own raw-fetch
- * request-error class — into one `{ status?, message, traceId? }` shape.
+ * request-error class — into one `{ status?, message, traceId?, code? }` shape.
  *
  * Resolution order: parse a `traceparent` from the JSON error body first; if the body has no
  * valid `traceparent` (or the body can't be parsed as JSON), fall back to the response's
@@ -135,6 +137,7 @@ export const getApiErrorDetails = async (
   let message: string | null = null;
   let bodyTraceId: string | undefined;
   let jsonBodyFailed = false;
+  let code: string | undefined;
 
   if (response) {
     try {
@@ -143,6 +146,7 @@ export const getApiErrorDetails = async (
       const body = await responseForBody.json();
       message = resolveMessageFromBody(body);
       if (isRecord(body)) {
+        code = typeof body.code === 'string' ? body.code : undefined;
         bodyTraceId = extractTraceId(body.traceparent);
       }
     } catch {
@@ -167,5 +171,5 @@ export const getApiErrorDetails = async (
         : undefined,
     );
 
-  return { status, message, traceId };
+  return { status, message, traceId, ...(code ? { code } : {}) };
 };

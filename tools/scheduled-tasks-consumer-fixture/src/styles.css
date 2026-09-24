@@ -18,6 +18,7 @@ body,
 
 .fixture-shell {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   margin: 0 auto;
   max-inline-size: 1120px;
