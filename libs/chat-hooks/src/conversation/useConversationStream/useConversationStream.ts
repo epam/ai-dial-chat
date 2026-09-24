@@ -19,6 +19,7 @@ import { safeDecodeURI } from '../../shared/string-utils';
 import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
   GenerationConflictError,
+  StreamUpstreamError,
 } from '../create-chat-stream-api';
 import { applyChunkToMessages } from './apply-chunk';
 import {
@@ -135,7 +136,29 @@ export interface UseConversationStreamParams {
    * {@link DEFAULT_GENERATION_CONFLICT_MESSAGE}.
    */
   generationConflictMessage?: string;
+  /**
+   * Receives the original error of every failed stream. The hook shows only
+   * host-supplied or upstream-supplied text on the message bubble and hides
+   * transport detail (e.g. `Failed to fetch`), so this is where the host can
+   * still log or report the raw error.
+   */
+  onStreamError?: (error: Error) => void;
 }
+
+/*
+ * Picks the text written to `streamErrorMessage`. Only a conflict (host copy)
+ * or an upstream DIAL Core error (upstream copy) is displayable; any other
+ * error is transport detail and becomes '' so the host renders its localized
+ * fallback (issue #8979).
+ */
+const resolveStreamErrorMessage = (
+  error: Error,
+  generationConflictMessage: string,
+): string => {
+  if (error instanceof GenerationConflictError) return generationConflictMessage;
+  if (error instanceof StreamUpstreamError) return error.message;
+  return '';
+};
 
 /** Return value of {@link useConversationStream}. */
 export interface UseConversationStreamResult {
@@ -179,7 +202,13 @@ export const useConversationStream = ({
   overlay,
   onStopError,
   generationConflictMessage = DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  onStreamError,
 }: UseConversationStreamParams): UseConversationStreamResult => {
+  /* Read through a ref so a new callback identity never re-creates `startStream`. */
+  const onStreamErrorRef = useRef(onStreamError);
+  useEffect(() => {
+    onStreamErrorRef.current = onStreamError;
+  }, [onStreamError]);
   /*
    * Paths with an in-flight generation. A Set (not a boolean) so concurrent
    * generations across conversations each track their own streaming state.
@@ -391,6 +420,7 @@ export const useConversationStream = ({
           }
         },
         onError: (error: Error) => {
+          onStreamErrorRef.current?.(error);
           const currentBuffer =
             bufferedGenerationsRef.current.get(conversationPath);
           const buffered =
@@ -408,15 +438,15 @@ export const useConversationStream = ({
            * and never over the generation that superseded this one. */
           if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
           /*
-           * A conflict is an expected state, not a transport failure: another
-           * tab of this session is already generating into this conversation,
-           * so it gets the host-supplied explanation rather than the raw
-           * error text (issue #8688).
+           * A conflict is an expected state (another tab is already
+           * generating, issue #8688) and gets the host-supplied explanation;
+           * an upstream DIAL Core error keeps its own text; every other error
+           * is transport detail and falls back to the host's localized copy.
            */
-          const streamErrorMessage =
-            error instanceof GenerationConflictError
-              ? generationConflictMessage
-              : error.message;
+          const streamErrorMessage = resolveStreamErrorMessage(
+            error,
+            generationConflictMessage,
+          );
           setConversation((prev) => {
             if (!prev) return prev;
             const restored =
