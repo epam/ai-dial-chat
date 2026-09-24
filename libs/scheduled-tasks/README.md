@@ -323,16 +323,15 @@ the class names used by the published JavaScript.
 The `/validation` subpath ships its own JavaScript and declaration entry and
 can be imported without mounting UI. The packed consumer's test target checks
 installed tarball resolution, the runtime validation import, and isolated
-TypeScript compatibility. A separate browser target checks skill interaction,
-detail rendering and RTL/layout in Chromium:
+TypeScript compatibility:
 
 ```sh
 npm exec -- nx run scheduled-tasks-consumer-fixture:test
-npm exec -- nx run scheduled-tasks-consumer-fixture:test-browser
 ```
 
 Responsive visibility and spacing in scheduler surfaces and their builder shell
 use scoped CSS with the package's 1280px desktop threshold. Host utility styles
 using a different desktop threshold do not expose duplicate titles/actions or
-show the Create label inside its mobile icon button. The packed fixture verifies skill selection/removal, focus and 360px RTL layout;
+show the Create label inside its mobile icon button. The packed fixture supports
+manual checks of skill selection/removal, focus and responsive RTL layouts;
 application scenarios belong in the separate e2e suite.

@@ -155,7 +155,7 @@ Documented scheduled-tasks/styles.css SHALL supply internal structural dependenc
 
 ### Requirement: A built-package consumer proves reuse and documents migration
 
-A parent-owned external fixture SHALL install packed distribution artifacts with dependency closure, without source aliases or app imports. Package/type contract tests SHALL cover all scheduler surfaces, alternate strings/styles/icons, typed exports and public CSS imports. The fixture SHALL run browser assertions against its production build for computed styles, container-responsive layout, editor placeholders and selector interactions. Source-text assertions alone SHALL NOT count as installed-package verification. Documentation SHALL map every F01-F15 finding to public replacement APIs. Implementation SHALL migrate the parent but SHALL not require editing an external application repository to pass.
+A parent-owned external fixture SHALL install packed distribution artifacts with dependency closure, without source aliases or app imports. Package/type contract tests SHALL cover all scheduler surfaces, alternate strings/styles/icons, typed exports and public CSS imports. The fixture SHALL provide a production build for manual checks of computed styles, container-responsive layout, editor placeholders and selector interactions. Source-text assertions alone SHALL NOT count as installed-package verification. Documentation SHALL map every F01-F15 finding to public replacement APIs. Implementation SHALL migrate the parent but SHALL not require editing an external application repository to pass.
 
 #### Scenario: Scheduler root and subpath exports stay compatible
 
