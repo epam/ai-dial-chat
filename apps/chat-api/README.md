@@ -243,6 +243,30 @@ setting is read at Core startup, so restart DIAL Core after changing it.
 | `CUSTOM_VISUALIZERS`                    | `[]`                           | JSON array of MIME → visualizer iframe mappings: `[{ "title": "my-viz", "url": "https://viz.example.com", "contentType": "application/x-my-viz,application/x-my-viz-v2" }]`. An attachment whose MIME type matches an entry opens in the Attachment Canvas rendered by that visualizer's iframe instead of the default preview; `contentType` accepts a comma-separated MIME list. `title` is the postMessage namespace and MUST equal the `appName` passed to `ChatVisualizerConnector` inside the visualizer app — a mismatch loads the iframe but never sends it data. Registering a URL grants that origin in-app iframe privileges (downloads, popups, modals, clipboard, fullscreen), so list only vetted visualizers. Registering it here does **not** by itself let the browser load it: CSP `frame-src` is built from `ALLOWED_IFRAME_ORIGINS` alone, so each visualizer URL's origin must also be listed there or the iframe is blocked and the canvas never renders. Mind the coupling — that same list also feeds `frame-ancestors`, so adding a visualizer origin additionally permits that origin to embed this app. Unset means the feature is dark. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config. |
 | `APPLICATION_VISUALIZERS`               | `{}`                           | JSON **object** (not an array) keyed by application id — the effective deployment id of a message: `{"my-app":{"title":"my-viz","url":"https://viz.example.com","contentType":"application/x-my-viz","height":600,"mobileHeight":400}}`. Every attachment an entry claims is delivered to one iframe together via `SEND_GROUPED_VISUALIZE_DATA`, rendered inline in the message with an expand-to-canvas control, rather than one iframe per attachment. Unlike `CUSTOM_VISUALIZERS`, `contentType` is **optional**: when set it claims only those MIME types and the message's other attachments stay ordinary tiles; when omitted it claims every attachment that carries a URL. An entry **takes precedence over `CUSTOM_VISUALIZERS`** for the attachments it claims. The same `ALLOWED_IFRAME_ORIGINS` requirement and `title`/`appName` contract as `CUSTOM_VISUALIZERS` apply. `passAuthInfo` and `passExplicitToken` are accepted for parity with legacy Chat 0.x and are inert — auth is server-side and the browser holds no access token. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails.                                                                                                               |
 
+#### Built-in prompt overrides
+
+These optional server-only variables replace the complete built-in instruction for their operation:
+
+| Variable                                             | Operation                                           | Default  |
+| ---------------------------------------------------- | --------------------------------------------------- | -------- |
+| `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT`           | Refine a skill description                          | Built-in |
+| `TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT`          | Refine skill instructions                           | Built-in |
+| `TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT`  | Refine a scheduled task description                 | Built-in |
+| `TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT` | Refine scheduled task instructions                  | Built-in |
+| `CONVERSATION_NAMING_SYSTEM_PROMPT`                  | Automatic naming and the Rename conversation action | Built-in |
+| `TRANSCRIPTION_PROMPT`                               | Dedicated audio transcription via `ASR_MODEL`       | Built-in |
+
+Unset, empty, and whitespace-only values retain the existing defaults. Nonblank overrides preserve their whitespace, Markdown, Unicode, and line breaks. They are not appended to the defaults, and placeholders are not interpolated. Prompt settings do not change model selection, authorization, feature availability, timeouts, or response validation. Refinement and naming still use `UTILITY_MODEL`; transcription uses `ASR_MODEL`.
+
+Quote multiline values in `apps/chat-api/.env`, for example:
+
+```dotenv
+CONVERSATION_NAMING_SYSTEM_PROMPT="Create a concise conversation title.
+Return only the title, in the language of the conversation."
+```
+
+Double-quoted `\n` escapes also produce line breaks. Restart the backend after changing a value. Remove an override and restart to restore its default. Keep the operation's expected output format in custom prompts: refinement returns only rewritten text, naming only a title, and transcription only recognized speech. These settings are consumed by the backend and are not added to browser configuration.
+
 #### Outbound DIAL Core client identity
 
 Every request from Chat API to DIAL Core carries
@@ -1158,6 +1182,6 @@ Uses the existing `UTILITY_MODEL` deployment with caller credentials, a 30-secon
 
 `POST /api/v1/text-refinement` accepts only `{ purpose, text }` and returns `{ text }` with HTTP 200 and `Cache-Control: no-store`. It uses authentication and cookie-session CSRF protection; scheduled-task purposes also require the existing scheduled-tasks feature decision. There is no persistence, caching, retry, service credential fallback, or draft-body logging.
 
-Supports `skill-description` (4000 Unicode code points for input and output), `skill-instructions` (32000), `scheduled-task-description` (500), and `scheduled-task-instructions` (32000). Server-owned prompts preserve language, intent, constraints, code, and placeholders. Input and output whitespace is preserved. Blank, oversized, malformed, or incomplete results are rejected rather than truncated.
+Supports `skill-description` (4000 Unicode code points for input and output), `skill-instructions` (32000), `scheduled-task-description` (500), and `scheduled-task-instructions` (32000). Default server-owned prompts instruct the model to preserve language, intent, constraints, code, and placeholders; operators can replace them using the [built-in prompt overrides](#built-in-prompt-overrides). Input and output whitespace is preserved. Blank, oversized, malformed, or incomplete results are rejected rather than truncated.
 
 Errors: 400 invalid input; 401 authentication; 403 CSRF/feature/model permission; 413 global body-size limit; 429 upstream quota; 502 upstream failure or unusable output; 503 model absent, network failure, or deadline exceeded. Generated method: `TextRefinementApi.refineText`.

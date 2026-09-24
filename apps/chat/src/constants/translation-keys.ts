@@ -982,6 +982,16 @@ export enum PromptEditorI18nKeys {
   ContentLoadingAriaLabel = 'promptEditor.contentLoadingAriaLabel',
 }
 
+export enum TextRefinementI18nKeys {
+  Action = 'textRefinement.action',
+  Undo = 'textRefinement.undo',
+  Error = 'textRefinement.error',
+  Pending = 'textRefinement.pending',
+  Success = 'textRefinement.success',
+  Restored = 'textRefinement.restored',
+  Unchanged = 'textRefinement.unchanged',
+}
+
 export enum SkillEditorI18nKeys {
   Title = 'skillEditor.title',
   BackAriaLabel = 'skillEditor.backAriaLabel',

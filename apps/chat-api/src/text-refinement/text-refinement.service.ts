@@ -14,6 +14,7 @@ import { FeatureFlagsService } from '../app-config/feature-flags/feature-flags.s
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import type { SessionUser } from '../auth/session/session.types';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { resolvePrompt } from '../common/utils/resolve-prompt';
 import { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
 import {
@@ -73,7 +74,7 @@ export class TextRefinementService {
     const model = this.config.get('UTILITY_MODEL', { infer: true })?.trim();
     if (!model)
       throw new ServiceUnavailableException('Text refinement is unavailable');
-    const prompt = {
+    const defaultPrompt = {
       [TextRefinementPurpose.SkillDescription]: SKILL_DESCRIPTION_PROMPT,
       [TextRefinementPurpose.SkillInstructions]: SKILL_INSTRUCTIONS_PROMPT,
       [TextRefinementPurpose.ScheduledTaskDescription]:
@@ -81,6 +82,20 @@ export class TextRefinementService {
       [TextRefinementPurpose.ScheduledTaskInstructions]:
         SCHEDULED_TASK_INSTRUCTIONS_PROMPT,
     }[dto.purpose];
+    const promptKey = {
+      [TextRefinementPurpose.SkillDescription]:
+        'TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT',
+      [TextRefinementPurpose.SkillInstructions]:
+        'TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT',
+      [TextRefinementPurpose.ScheduledTaskDescription]:
+        'TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT',
+      [TextRefinementPurpose.ScheduledTaskInstructions]:
+        'TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT',
+    } as const;
+    const prompt = resolvePrompt(
+      this.config.get(promptKey[dto.purpose], { infer: true }),
+      defaultPrompt,
+    );
 
     const controller = new AbortController();
     const abort = () => controller.abort();

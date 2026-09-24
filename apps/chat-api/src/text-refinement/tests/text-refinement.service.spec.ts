@@ -8,7 +8,10 @@ import {
   TEXT_REFINEMENT_LIMITS,
   TextRefinementPurpose,
 } from '../dto/refine-text.dto';
+import { SCHEDULED_TASK_DESCRIPTION_PROMPT } from '../prompts/scheduled-task-description.prompt';
+import { SCHEDULED_TASK_INSTRUCTIONS_PROMPT } from '../prompts/scheduled-task-instructions.prompt';
 import { SKILL_DESCRIPTION_PROMPT } from '../prompts/skill-description.prompt';
+import { SKILL_INSTRUCTIONS_PROMPT } from '../prompts/skill-instructions.prompt';
 import { TextRefinementService } from '../text-refinement.service';
 
 const user = {
@@ -35,11 +38,16 @@ describe('TextRefinementService', () => {
   const send = vi.fn();
   const enabled = vi.fn();
   let config: ConfigService;
+  let configValues: Record<string, unknown>;
 
   beforeEach(async () => {
-    config = new ConfigService({
+    configValues = {
       UTILITY_MODEL: 'provider/refiner',
-    });
+    };
+    config = new ConfigService(configValues);
+    vi.spyOn(config, 'get').mockImplementation(
+      (key: string) => configValues[key],
+    );
     send.mockReset().mockResolvedValue(completion());
     enabled.mockReset().mockResolvedValue(true);
     const module = await Test.createTestingModule({
@@ -64,6 +72,77 @@ describe('TextRefinementService', () => {
   });
   const refine = (signal = new AbortController().signal) =>
     service.refineText(dto, user, signal);
+
+  describe.each([
+    [
+      TextRefinementPurpose.SkillDescription,
+      'TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT',
+      SKILL_DESCRIPTION_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.SkillInstructions,
+      'TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT',
+      SKILL_INSTRUCTIONS_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.ScheduledTaskDescription,
+      'TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT',
+      SCHEDULED_TASK_DESCRIPTION_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.ScheduledTaskInstructions,
+      'TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT',
+      SCHEDULED_TASK_INSTRUCTIONS_PROMPT,
+    ],
+  ] as const)('%s prompt configuration', (purpose, key, defaultPrompt) => {
+    it.each([
+      undefined,
+      '',
+      ' \t\n ',
+      '  ## تعليمات\nKeep {{name}} and $VALUE.\n',
+    ])('uses the override or default for %j', async (override) => {
+      configValues[key] = override;
+      await service.refineText(
+        { ...dto, purpose },
+        user,
+        new AbortController().signal,
+      );
+      expect(send).toHaveBeenCalledWith(
+        'provider/refiner',
+        expect.objectContaining({
+          body: {
+            messages: [
+              {
+                role: 'system',
+                content: override?.trim() ? override : defaultPrompt,
+              },
+              { role: 'user', content: dto.text },
+            ],
+            stream: false,
+          },
+          headers: { Authorization: 'Bearer caller-secret' },
+        }),
+      );
+    });
+
+    it('does not apply its override to another purpose', async () => {
+      configValues[key] = 'Custom prompt for this purpose only';
+      const otherPurpose =
+        purpose === TextRefinementPurpose.SkillDescription
+          ? TextRefinementPurpose.SkillInstructions
+          : TextRefinementPurpose.SkillDescription;
+      await service.refineText(
+        { ...dto, purpose: otherPurpose },
+        user,
+        new AbortController().signal,
+      );
+      expect(send.mock.calls[0][1].body.messages[0].content).toBe(
+        otherPurpose === TextRefinementPurpose.SkillDescription
+          ? SKILL_DESCRIPTION_PROMPT
+          : SKILL_INSTRUCTIONS_PROMPT,
+      );
+    });
+  });
 
   it.each(Object.values(TextRefinementPurpose))(
     'uses an isolated prompt and exact text for %s',
@@ -154,13 +233,15 @@ describe('TextRefinementService', () => {
   it.each([undefined, '', '  '])(
     'rejects unavailable utility model %s without invoking DIAL',
     async (model) => {
-      vi.spyOn(config, 'get').mockReturnValue(model);
+      configValues['UTILITY_MODEL'] = model;
+      configValues['TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT'] =
+        'Custom prompt';
       await expect(refine()).rejects.toMatchObject({ status: 503 });
       expect(send).not.toHaveBeenCalled();
     },
   );
   it('uses the shared utility model with surrounding whitespace removed', async () => {
-    vi.spyOn(config, 'get').mockReturnValue(' provider/shared-utility ');
+    configValues['UTILITY_MODEL'] = ' provider/shared-utility ';
     await refine();
     expect(send).toHaveBeenCalledWith(
       'provider/shared-utility',
