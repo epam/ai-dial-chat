@@ -655,10 +655,24 @@ describe('ResponsesAdapter', () => {
       expect(result.outcome).toBe('error');
       if (result.outcome === 'error') {
         expect((result.error as Error).message).toBe('Model overloaded');
+        expect(result.displayMessage).toBe('Model overloaded');
         expect(result.assembledMessage.content).toBe('');
       }
       expect(res.getWritten()).not.toContain('[DONE]');
       expect(mockDialClient.client.createResponse).toHaveBeenCalledOnce();
+    });
+
+    it('exposes no user-facing text when the stream ends without a terminal signal', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      const { result } = await relay(adapter, mockDialClient, [
+        'data: {"type":"response.output_text.delta","delta":"Partial"}\n\n',
+      ]);
+
+      expect(result.outcome).toBe('error');
+      if (result.outcome === 'error') {
+        expect(result.displayMessage).toBeUndefined();
+        expect(result.assembledMessage.content).toBe('Partial');
+      }
     });
 
     it('preserves partial text when response.failed arrives after text deltas', async () => {

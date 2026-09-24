@@ -28,6 +28,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationTransferErrorCode,
   FilterTab,
+  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
@@ -113,6 +114,7 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
+import { CELEBRATION_HISTORY_CLASS } from '../../utils/celebration-history';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -1278,7 +1280,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           getActions={getActions}
           onActionMenuOpen={handleActionMenuOpen}
           onToggle={isMobile ? onClose : undefined}
-          className={panelClassName}
+          className={mergeClasses(CELEBRATION_HISTORY_CLASS, panelClassName)}
           isOverlay={isMobile}
           styles={PANEL_STYLES}
           onMoveConversation={handleMoveConversation}

@@ -9,6 +9,7 @@ Halloween currently owns the provider, trigger logic, icon overrides and scene l
 - Add New Year with a gift trigger, seasonal icon, snow, confetti and flying sleigh scenes; reuse a shared flight effect across events.
 - Add optional `UI_EVENT` deployment configuration and `config.activeEventId` to the existing client-config response. **BREAKING:** remove `HALLOWEEN_ENABLED` and `features.halloweenEnabled`; `UI_EVENT` is the sole selector and `none` explicitly disables effects.
 - Keep one event active at a time, lazy loading, start-page-only scope, click-through decoration, keyboard support, RTL, reduced motion and translated notifications.
+- Extend Halloween with a ghost train, a clawed portal that visually borrows history rows, ravens, candy rain, invisible paw prints and dancing skeletons. Borrowed rows return automatically; conversation data and requests never change.
 
 ## Capabilities
 

@@ -1329,6 +1329,72 @@ describe('ConversationStreamingService', () => {
       expect(assistantMsg.content).toBe('');
     });
 
+    it('persists no raw error text when the upstream stream is terminated mid-response', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      const errorSpy = vi.spyOn(service['logger'], 'error');
+      const terminated = new TypeError('terminated');
+
+      const encoder = new TextEncoder();
+      const mockStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"choices":[{"index":0,"finish_reason":null,"delta":{"role":"assistant","content":"Partial"}}]}\n\n',
+            ),
+          );
+        },
+        pull(controller) {
+          controller.error(terminated);
+        },
+      });
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(mockStream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const errorSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { content?: string; streamErrorMessage?: string }[];
+      };
+      const assistantMsg = errorSave.messages.at(-1);
+      expect(assistantMsg?.streamErrorMessage).toBe('');
+      expect(assistantMsg?.content).toBe('Partial');
+      expect(JSON.stringify(errorSave)).not.toContain('terminated');
+      expect(mockGenerationService.error).toHaveBeenCalledWith(
+        expect.anything(),
+        '',
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        'DIAL Core streamCompletion failed',
+        terminated,
+      );
+    });
+
     it('writes SSE chunks to res and saves conversation on completion', async () => {
       vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,

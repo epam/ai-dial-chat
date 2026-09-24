@@ -203,5 +203,7 @@ export type GenerationRelayOutcome =
   | {
       outcome: 'error';
       error: unknown;
+      /** User-facing upstream text; unset for transport/runtime failures. */
+      displayMessage?: string;
       assembledMessage: ConversationMessageDto;
     };
