@@ -5,7 +5,10 @@ import {
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
-import { decomposeLocalizedFields } from '@epam/ai-dial-chat-hooks';
+import {
+  composeLocalePayload,
+  decomposeLocalizedFields,
+} from '@epam/ai-dial-chat-hooks';
 import type { TFunction } from 'i18next';
 import {
   AppsEditorI18nKeys,
@@ -17,6 +20,7 @@ import type {
   ApplicationEditorPageDefinition,
   ApplicationSetupValues,
 } from '../models/application-editor';
+import type { TriggerSaveGeneralPayload } from '../types/apps-editor';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 
 /** Erases a kind's setup type so it can sit in the shared registry. */
@@ -70,3 +74,19 @@ export const resolveReturnUrl = (
   raw: string | null,
   fallback: string,
 ): string => (raw?.startsWith('/') && !raw.startsWith('//') ? raw : fallback);
+
+/** Returns the trimmed Metadata payload a quick app's embedded editor persists on save; carries `display_version`, never the backend `version`. */
+export const toTriggerSaveGeneral = (
+  metadata: DeploymentCreationFormValues,
+): TriggerSaveGeneralPayload => {
+  const locales = composeLocalePayload(metadata.otherLocales, PRIMARY_LOCALE);
+  return {
+    name: metadata.name.trim(),
+    description: metadata.description.trim() || undefined,
+    iconUrl: metadata.iconUrl.trim() || undefined,
+    topics: metadata.topics.length > 0 ? metadata.topics : undefined,
+    display_version: metadata.version.trim() || undefined,
+    locales,
+    primaryLocale: locales ? PRIMARY_LOCALE : undefined,
+  };
+};

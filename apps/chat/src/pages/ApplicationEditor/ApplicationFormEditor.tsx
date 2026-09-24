@@ -5,7 +5,14 @@ import {
   useMetadataForm,
 } from '@epam/ai-dial-builder-form';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
-import { ConfirmationPopup, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  ConfirmationPopup,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostButton,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import type { FC } from 'react';
 import {
   memo,
@@ -29,10 +36,13 @@ import { useEditedApplication } from '../../hooks/application-editor/useEditedAp
 import { useMetadataLabels } from '../../hooks/application-editor/useMetadataLabels';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import type {
+  ApplicationEditorContext,
   ApplicationEditorFormDefinition,
   ApplicationSetupErrors,
+  ApplicationSetupHandle,
   ApplicationSetupValues,
 } from '../../models/application-editor';
+import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import {
@@ -51,13 +61,15 @@ type SetupErrors = ApplicationSetupErrors<Record<string, unknown>>;
 const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { refetchDeployments } = useDeployments();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { refetchDeployments, schemas } = useDeployments();
   const { showErrorNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
 
   const appId = searchParams.get(definition.idQueryParam) ?? '';
   const isEditMode = Boolean(appId);
+  const isMetadataFirst =
+    definition.createStrategy === ApplicationCreateStrategy.MetadataFirst;
   const returnUrl = useMemo(
     () =>
       resolveReturnUrl(
@@ -66,7 +78,17 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
       ),
     [searchParams, definition.returnUrlQueryParam],
   );
+  const context = useMemo<ApplicationEditorContext>(
+    () => ({ searchParams, schemas, t }),
+    [searchParams, schemas, t],
+  );
 
+  /*
+   * Set by a metadata-first create. Keeping it as the re-seed key stops the
+   * Metadata from being re-seeded when the new deployment later shows up in
+   * the list, so edits typed after Create survive.
+   */
+  const [createdAppId, setCreatedAppId] = useState('');
   const { deployment, isResolving } = useEditedApplication(appId);
   const metadataInitialValues = useMemo(
     () =>
@@ -78,7 +100,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const metadata = useMetadataForm({
     initialValues: metadataInitialValues,
     validationOptions: definition.metadataValidation,
-    reseedKey: deployment?.id,
+    reseedKey: createdAppId || deployment?.id,
   });
 
   const [setup, setSetup] = useState<ApplicationSetupValues>(
@@ -88,8 +110,11 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const [isLoadingSetup, setIsLoadingSetup] = useState(
     isEditMode && Boolean(definition.loadSetup),
   );
+  const [isSetupReady, setIsSetupReady] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const setupRef = useRef<ApplicationSetupHandle>(null);
 
   // Read once by the load below, which must not re-run when the deployment list updates.
   const deploymentRef = useRef(deployment);
@@ -182,13 +207,48 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
+  const switchToCreatedApp = useCallback(
+    (newAppId: string) => {
+      setCreatedAppId(newAppId);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set(definition.idQueryParam, newAppId);
+          return next;
+        },
+        { replace: true },
+      );
+      // Best-effort: brings the new deployment into the list for the preview and the catalog.
+      void refetchDeployments().catch(() => undefined);
+    },
+    [definition.idQueryParam, refetchDeployments, setSearchParams],
+  );
+
   const persist = useCallback(async () => {
     setIsSaving(true);
     try {
-      if (isEditMode) {
+      if (!isEditMode) {
+        const result = await definition.create(metadata.values, setup, context);
+        if (isMetadataFirst) {
+          const newAppId = result?.id;
+          if (!newAppId) throw new Error('Created application has no id');
+          notifyOperationSuccess(
+            definition.notifiableEntity,
+            EntityOperation.Created,
+            { name: metadata.values.name },
+          );
+          switchToCreatedApp(newAppId);
+          return;
+        }
+      } else if (definition.update) {
         await definition.update(appId, metadata.values, setup);
       } else {
-        await definition.create(metadata.values, setup);
+        try {
+          await setupRef.current?.save(metadata.values);
+        } catch {
+          // The Setup component shows its own save error inline.
+          return;
+        }
       }
       await refetchDeployments();
       notifyOperationSuccess(
@@ -214,8 +274,10 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     }
   }, [
     appId,
+    context,
     definition,
     isEditMode,
+    isMetadataFirst,
     metadata.values,
     navigate,
     notifyOperationSuccess,
@@ -223,6 +285,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     returnUrl,
     setup,
     showErrorNotification,
+    switchToCreatedApp,
     t,
   ]);
 
@@ -251,6 +314,52 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
 
   const handleConfirmClose = useCallback(() => setIsConfirmOpen(false), []);
 
+  const handlePreviewToggle = useCallback(async () => {
+    if (isPreviewing) {
+      setIsPreviewing(false);
+      return;
+    }
+    const startPreview = setupRef.current?.startPreview;
+    if (!startPreview) return;
+
+    setIsSaving(true);
+    try {
+      await startPreview(metadata.values);
+      setIsPreviewing(true);
+    } catch {
+      // The Setup component shows its own save error inline.
+    } finally {
+      setIsSaving(false);
+    }
+  }, [isPreviewing, metadata.values]);
+
+  const { preview: previewKey, exitPreview: exitPreviewKey } =
+    definition.messageKeys;
+  const extraActions =
+    isEditMode && previewKey && exitPreviewKey ? (
+      <GhostButton
+        label={t(isPreviewing ? exitPreviewKey : previewKey)}
+        iconBefore={
+          isPreviewing ? (
+            <IconEyeOff
+              size={DIAL_ICON_SIZE.SM}
+              stroke={DIAL_KIT_ICON_STROKE}
+              aria-hidden
+            />
+          ) : (
+            <IconEye
+              size={DIAL_ICON_SIZE.SM}
+              stroke={DIAL_KIT_ICON_STROKE}
+              aria-hidden
+            />
+          )
+        }
+        aria-pressed={isPreviewing}
+        disabled={!isPreviewing && !isSetupReady}
+        onClick={() => void handlePreviewToggle()}
+      />
+    ) : undefined;
+
   const isLoading = isLoadingSetup || isResolving;
   const isBusy = isSaving || isLoading;
   const overlayLabel = t(
@@ -258,17 +367,20 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
       ? definition.messageKeys.savingOverlay
       : definition.messageKeys.loadingOverlay,
   );
+  const title =
+    definition.getTitle?.(context, isEditMode) ??
+    t(
+      isEditMode
+        ? definition.messageKeys.editTitle
+        : definition.messageKeys.createTitle,
+    );
   const { Setup, confirmation } = definition;
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 flex-col" inert={isBusy}>
         <EntityEditor
-          title={t(
-            isEditMode
-              ? definition.messageKeys.editTitle
-              : definition.messageKeys.createTitle,
-          )}
+          title={title}
           onBack={handleCancel}
           onCancel={handleCancel}
           onSubmit={handleSubmit}
@@ -276,6 +388,9 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
             isEditMode ? ButtonsI18nKeys.Save : ButtonsI18nKeys.Create,
           )}
           isSubmitting={isSaving}
+          isSubmitDisabled={isEditMode && !isSetupReady}
+          extraActions={extraActions}
+          hideStandardActions={isPreviewing}
           labels={{
             backAriaLabel: t(ToolsetEditorI18nKeys.BackAriaLabel),
             savingStatusLabel: t(ToolsetEditorI18nKeys.SavingStatus),
@@ -293,15 +408,21 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
               avatarPicker={avatarPicker}
               availableLocaleOptions={localeOptions}
               labels={metadataLabels}
+              focusRequestKey={metadata.submitAttemptCount}
             />
           }
           setup={
             <Setup
+              ref={setupRef}
               value={setup}
               errors={setupErrors}
               onChange={handleSetupChange}
               onFieldBlur={handleSetupFieldBlur}
               isEditMode={isEditMode}
+              appId={appId || undefined}
+              metadata={metadata.values}
+              isPreviewing={isPreviewing}
+              onReadyChange={setIsSetupReady}
             />
           }
         />

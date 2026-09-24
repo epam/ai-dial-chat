@@ -27,27 +27,27 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ApplicationCredentials } from '../../components/ApplicationCredentials/ApplicationCredentials';
+import { ApplicationCredentials } from '../../../components/ApplicationCredentials/ApplicationCredentials';
 import {
   ApplicationCredentialsI18nKeys,
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
-} from '../../constants/translation-keys';
-import { useFeatureFlag } from '../../context/AppConfigContext';
-import { useUser } from '../../context/auth/UserContext';
-import { useTheme } from '../../context/ThemeContext';
-import { useUiFeature } from '../../hooks/useUiFeature';
-import { getDeploymentDetails } from '../../server-api/deployments';
-import { getToolset, logoutToolset } from '../../server-api/toolsets';
+} from '../../../constants/translation-keys';
+import { useFeatureFlag } from '../../../context/AppConfigContext';
+import { useUser } from '../../../context/auth/UserContext';
+import { useTheme } from '../../../context/ThemeContext';
+import { useUiFeature } from '../../../hooks/useUiFeature';
+import { getDeploymentDetails } from '../../../server-api/deployments';
+import { getToolset, logoutToolset } from '../../../server-api/toolsets';
 import type {
   ToolsetLoginResultPayload,
   ToolsetLogoutResultPayload,
   TriggerSaveGeneralPayload,
   TriggerSaveMessage,
-} from '../../types/apps-editor';
-import { AppsEditorEvent } from '../../types/apps-editor';
-import { ROUTES } from '../../types/routes';
-import { toolsetDtoToForm } from '../../utils/toolsets';
+} from '../../../types/apps-editor';
+import { AppsEditorEvent } from '../../../types/apps-editor';
+import { ROUTES } from '../../../types/routes';
+import { toolsetDtoToForm } from '../../../utils/toolsets';
 
 export interface AppEditorIframeHandle {
   triggerSave: (general?: TriggerSaveGeneralPayload) => void;

@@ -273,4 +273,38 @@ describe('DeploymentCreationForm', () => {
       screen.getByPlaceholderText('Add tags, comma separated'),
     ).toBeTruthy();
   });
+
+  it('does not move focus when an error appears while the focus request key is unchanged', () => {
+    const { rerender } = renderComponent(undefined, {}, vi.fn(), vi.fn(), {
+      focusRequestKey: 0,
+    });
+    rerender(
+      <DeploymentCreationForm
+        values={baseValues}
+        errors={{ name: 'Name is required' }}
+        onChange={vi.fn()}
+        onAddAvatarClick={vi.fn()}
+        labels={labels}
+        focusRequestKey={0}
+      />,
+    );
+    expect(screen.getByLabelText('Name').matches(':focus')).toBe(false);
+  });
+
+  it('moves focus to the first invalid field each time the focus request key changes', () => {
+    const { rerender } = renderComponent(undefined, {}, vi.fn(), vi.fn(), {
+      focusRequestKey: 0,
+    });
+    rerender(
+      <DeploymentCreationForm
+        values={baseValues}
+        errors={{ version: 'Invalid version' }}
+        onChange={vi.fn()}
+        onAddAvatarClick={vi.fn()}
+        labels={labels}
+        focusRequestKey={1}
+      />,
+    );
+    expect(screen.getByLabelText('Version').matches(':focus')).toBe(true);
+  });
 });

@@ -40,6 +40,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   isNameReadOnly = false,
   nameCaption,
   isDescriptionRequired = false,
+  focusRequestKey,
 }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const versionInputRef = useRef<HTMLInputElement>(null);
@@ -51,14 +52,10 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   const showsVersion = shows(MetadataField.Version);
 
   const hasErrors = !!(errors.name || errors.version || errors.description);
+  const lastFocusRequestKeyRef = useRef(focusRequestKey);
 
-  /*
-   * Only steal focus on the transition from no errors to some errors (a
-   * submit attempt), not on every keystroke that adds/removes one field's
-   * error while the user is still typing.
-   */
   useEffect(() => {
-    if (hasErrors && !hadErrorsRef.current) {
+    const focusFirstInvalid = () => {
       if (errors.name) {
         nameInputRef.current?.focus();
       } else if (errors.version) {
@@ -66,10 +63,38 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
       } else if (errors.description) {
         descriptionRef.current?.focus();
       }
+    };
+
+    /*
+     * With a focus request key the host says exactly when a submit happened,
+     * so an error that appears on blur never pulls focus back from the field
+     * the user just moved to.
+     */
+    if (focusRequestKey !== undefined) {
+      if (focusRequestKey !== lastFocusRequestKeyRef.current) {
+        lastFocusRequestKeyRef.current = focusRequestKey;
+        focusFirstInvalid();
+      }
+      return;
+    }
+
+    /*
+     * Without one, only steal focus on the transition from no errors to some
+     * errors (a submit attempt), not on every keystroke that adds/removes one
+     * field's error while the user is still typing.
+     */
+    if (hasErrors && !hadErrorsRef.current) {
+      focusFirstInvalid();
     }
 
     hadErrorsRef.current = hasErrors;
-  }, [hasErrors, errors.name, errors.version, errors.description]);
+  }, [
+    focusRequestKey,
+    hasErrors,
+    errors.name,
+    errors.version,
+    errors.description,
+  ]);
 
   return (
     <div

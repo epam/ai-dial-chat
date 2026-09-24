@@ -1074,6 +1074,9 @@ export enum SkillArchiveImportI18nKeys {
 }
 
 export enum AppsEditorI18nKeys {
+  CreateTitle = 'appsEditor.createTitle',
+  EditTitle = 'appsEditor.editTitle',
+  DefaultTypeName = 'appsEditor.defaultTypeName',
   GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
   GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
   GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
@@ -1231,6 +1234,10 @@ export enum NotificationI18nKeys {
   RequestIdCopyAriaLabel = 'notification.requestId.copyAriaLabel',
   RequestIdCopiedStatus = 'notification.requestId.copiedStatus',
   RequestIdCopyFailedStatus = 'notification.requestId.copyFailedStatus',
+}
+
+export enum ApplicationEditorI18nKeys {
+  SetupPendingCreate = 'applicationEditor.setupPendingCreate',
 }
 
 export enum CustomAppI18nKeys {

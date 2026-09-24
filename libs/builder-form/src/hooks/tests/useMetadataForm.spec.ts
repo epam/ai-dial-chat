@@ -140,4 +140,18 @@ describe('useMetadataForm', () => {
     expect(result.current.attemptSubmit).toBe(attemptSubmit);
     expect(result.current.reset).toBe(reset);
   });
+
+  it('counts every submit attempt, valid or not', () => {
+    const { result } = renderMetadataForm();
+    expect(result.current.submitAttemptCount).toBe(0);
+
+    act(() => {
+      result.current.attemptSubmit();
+    });
+    act(() => {
+      result.current.attemptSubmit();
+    });
+
+    expect(result.current.submitAttemptCount).toBe(2);
+  });
 });

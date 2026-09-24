@@ -78,7 +78,6 @@ const ScheduledTaskDetailPage = lazy(
 const ScheduledTaskEditPage = lazy(
   () => import('../pages/ScheduledTaskEditPage/ScheduledTaskEditPage'),
 );
-const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ApplicationEditorPage = lazy(
   () => import('../pages/ApplicationEditor/ApplicationEditorPage'),
 );
@@ -421,7 +420,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <AppsEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.QuickApp}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }

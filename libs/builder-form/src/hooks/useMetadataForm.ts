@@ -18,6 +18,7 @@ interface MetadataFormState {
   baseline: DeploymentCreationFormValues;
   touched: Partial<Record<MetadataField, boolean>>;
   hasAttemptedSubmit: boolean;
+  submitAttemptCount: number;
 }
 
 const createState = (
@@ -29,6 +30,7 @@ const createState = (
   baseline: values,
   touched: {},
   hasAttemptedSubmit: false,
+  submitAttemptCount: 0,
 });
 
 /**
@@ -104,9 +106,11 @@ export const useMetadataForm = ({
   );
 
   const attemptSubmit = useCallback(() => {
-    setState((prev) =>
-      prev.hasAttemptedSubmit ? prev : { ...prev, hasAttemptedSubmit: true },
-    );
+    setState((prev) => ({
+      ...prev,
+      hasAttemptedSubmit: true,
+      submitAttemptCount: prev.submitAttemptCount + 1,
+    }));
     return hasNoMetadataErrors(errorCodesRef.current);
   }, []);
 
@@ -132,10 +136,12 @@ export const useMetadataForm = ({
       errorCodes,
       visibleErrorCodes,
       attemptSubmit,
+      submitAttemptCount: state.submitAttemptCount,
       isDirty,
       reset,
     }),
     [
+      state.submitAttemptCount,
       state.values,
       setValues,
       state.touched,

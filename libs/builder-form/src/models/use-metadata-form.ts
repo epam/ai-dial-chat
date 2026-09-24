@@ -31,6 +31,8 @@ export interface UseMetadataFormResult {
   visibleErrorCodes: DeploymentCreationFormErrorCodes;
   /** Makes every error visible and returns whether the values are valid. */
   attemptSubmit: () => boolean;
+  /** Number of submit attempts; pass it as `MetadataForm.focusRequestKey` to focus the first invalid field on each one. */
+  submitAttemptCount: number;
   /** Whether `values` differ from the last seeded or reset values. */
   isDirty: boolean;
   /** Replaces the values and the dirty baseline, and clears touched state. Defaults to the current `initialValues`. */

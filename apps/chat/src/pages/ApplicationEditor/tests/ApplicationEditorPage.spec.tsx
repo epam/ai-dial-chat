@@ -181,6 +181,7 @@ describe('ApplicationEditorPage', () => {
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Fake app' }),
       { endpoint: 'https://x.test' },
+      expect.objectContaining({ searchParams: expect.any(URLSearchParams) }),
     );
     expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
       NotifiableEntity.CustomApp,
@@ -243,7 +244,7 @@ describe('ApplicationEditorPage', () => {
 });
 
 describe('APPLICATION_EDITOR_DEFINITIONS', () => {
-  it('registers the toolset and custom app kinds, with only the toolset rendering its own page', async () => {
+  it('registers every kind, with only the toolset rendering its own page', async () => {
     const { APPLICATION_EDITOR_DEFINITIONS } =
       await vi.importActual<typeof import('../definitions')>('../definitions');
     const definitions = APPLICATION_EDITOR_DEFINITIONS as Partial<
@@ -252,10 +253,12 @@ describe('APPLICATION_EDITOR_DEFINITIONS', () => {
 
     const toolset = definitions[ApplicationEditorKind.Toolset];
     const customApp = definitions[ApplicationEditorKind.CustomApp];
+    const quickApp = definitions[ApplicationEditorKind.QuickApp];
 
     expect(toolset && isApplicationEditorPageDefinition(toolset)).toBe(true);
     expect(customApp && isApplicationEditorPageDefinition(customApp)).toBe(
       false,
     );
+    expect(quickApp && isApplicationEditorPageDefinition(quickApp)).toBe(false);
   });
 });

@@ -3,9 +3,12 @@ import type {
   DeploymentCreationFormValidationOptions,
   DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
-import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ApplicationSchemaSummaryDto,
+  DeploymentItemDto,
+} from '@epam/ai-dial-chat-api-client';
 import type { ParseKeys, TFunction } from 'i18next';
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentType, ReactNode, Ref } from 'react';
 import type {
   ApplicationCreateStrategy,
   ApplicationEditorKind,
@@ -29,7 +32,35 @@ export interface ApplicationSetupProps<TSetup> {
   onFieldBlur: (field: Extract<keyof TSetup, string>) => void;
   /** Whether an existing application is being edited. */
   isEditMode: boolean;
+  /** Id of the edited application; `undefined` until it exists. */
+  appId?: string;
+  /** Current Metadata values, read-only for the Setup component. */
+  metadata: DeploymentCreationFormValues;
+  /** Whether the header's preview mode is on. */
+  isPreviewing: boolean;
+  /** Reports whether the Setup can be saved right now; `false` disables the primary button in edit mode. */
+  onReadyChange: (isReady: boolean) => void;
+  /** Handle a kind whose Setup saves itself exposes to the page. */
+  ref?: Ref<ApplicationSetupHandle>;
 }
+
+/** Imperative handle a Setup component exposes when it persists its own configuration. */
+export interface ApplicationSetupHandle {
+  /** Persists the Setup together with the given Metadata; rejects when the save fails. */
+  save: (metadata: DeploymentCreationFormValues) => Promise<void>;
+  /** Saves the Setup for a preview; resolves once the preview can open. */
+  startPreview?: (metadata: DeploymentCreationFormValues) => Promise<void>;
+}
+
+/** Page context a definition can read to resolve kind-specific values. */
+export interface ApplicationEditorContext {
+  searchParams: URLSearchParams;
+  schemas: ApplicationSchemaSummaryDto[];
+  t: TFunction;
+}
+
+/** What a kind's `create` resolves to; `MetadataFirst` kinds must return the new id. */
+export type ApplicationCreateResult = { id?: string } | void;
 
 /** A key of the app's translation resources. */
 export type ApplicationEditorI18nKey = ParseKeys<'translation'>;
@@ -56,6 +87,9 @@ export interface ApplicationEditorMessageKeys {
   loadFailed: ApplicationEditorI18nKey;
   savingOverlay: ApplicationEditorI18nKey;
   loadingOverlay: ApplicationEditorI18nKey;
+  /** Header Preview toggle labels; set only by kinds that support a preview. */
+  preview?: ApplicationEditorI18nKey;
+  exitPreview?: ApplicationEditorI18nKey;
 }
 
 /** An application kind rendered through the shared Metadata | Setup page. */
@@ -68,6 +102,8 @@ export interface ApplicationEditorFormDefinition<TSetup> {
   /** Query param holding the URL to return to. */
   returnUrlQueryParam: string;
   messageKeys: ApplicationEditorMessageKeys;
+  /** Resolves the title when it needs interpolation, e.g. the schema's display name; defaults to the plain title keys. */
+  getTitle?: (ctx: ApplicationEditorContext, isEditMode: boolean) => string;
   /** Pattern checks applied to the Metadata section. */
   metadataValidation: DeploymentCreationFormValidationOptions;
   /** Per-field Metadata label overrides, e.g. kind-specific placeholders. */
@@ -94,9 +130,10 @@ export interface ApplicationEditorFormDefinition<TSetup> {
   create: (
     metadata: DeploymentCreationFormValues,
     setup: TSetup,
-  ) => Promise<unknown>;
-  /** Updates the application. Calls `apps/chat/src/server-api` wrappers only. */
-  update: (
+    ctx: ApplicationEditorContext,
+  ) => Promise<ApplicationCreateResult>;
+  /** Updates the application; absent when the Setup handle saves an edited application. */
+  update?: (
     appId: string,
     metadata: DeploymentCreationFormValues,
     setup: TSetup,
@@ -108,6 +145,9 @@ export interface ApplicationEditorPageDefinition {
   kind: ApplicationEditorKind;
   renderPage: () => ReactNode;
 }
+
+/** Setup values of a kind whose configuration lives outside the page, e.g. in an embedded editor. */
+export type EmptyApplicationSetup = Record<string, never>;
 
 /** Setup values as the page handles them once a kind's own type is erased. */
 export type ApplicationSetupValues = object;

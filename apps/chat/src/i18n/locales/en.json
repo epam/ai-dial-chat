@@ -1080,7 +1080,13 @@
       "deleteAriaLabel": "Delete locale"
     }
   },
+  "applicationEditor": {
+    "setupPendingCreate": "Create the application to configure its setup."
+  },
   "appsEditor": {
+    "createTitle": "Create {{type}}",
+    "editTitle": "Edit {{type}}",
+    "defaultTypeName": "quick app",
     "exitPreviewButton": "Exit preview",
     "savingOverlay": "Saving in progress…",
     "previewChat": {

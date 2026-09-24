@@ -39,40 +39,40 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import ConversationView from '../../components/ConversationView/ConversationView';
-import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
+import ConversationView from '../../../components/ConversationView/ConversationView';
+import NegativeFeedbackModal from '../../../components/ConversationView/Rate/NegativeFeedbackModal';
 import NewConversationComposer, {
   type NewConversationChatSettings,
-} from '../../components/NewConversationComposer/NewConversationComposer';
-import { useSkillSelectorOverlay } from '../../components/SkillSelector/useSkillSelectorOverlay';
-import StarterButtons from '../../components/StarterButtons/StarterButtons';
+} from '../../../components/NewConversationComposer/NewConversationComposer';
+import { useSkillSelectorOverlay } from '../../../components/SkillSelector/useSkillSelectorOverlay';
+import StarterButtons from '../../../components/StarterButtons/StarterButtons';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   RateI18nKeys,
-} from '../../constants/translation-keys';
-import { useUser } from '../../context/auth/UserContext';
-import { useClientChannel } from '../../context/ClientChannelContext';
-import { useDeployments } from '../../context/DeploymentsContext';
-import { useGeneration } from '../../context/GenerationContext';
-import { useNotification } from '../../context/NotificationContext';
-import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
+} from '../../../constants/translation-keys';
+import { useUser } from '../../../context/auth/UserContext';
+import { useClientChannel } from '../../../context/ClientChannelContext';
+import { useDeployments } from '../../../context/DeploymentsContext';
+import { useGeneration } from '../../../context/GenerationContext';
+import { useNotification } from '../../../context/NotificationContext';
+import { useAudioTranscription } from '../../../hooks/conversation/useAudioTranscription';
 import {
   conversationsApi as configuredConversationsApi,
   filesApi as configuredFilesApi,
   rateApi as configuredRateApi,
-} from '../../server-api/api-client';
-import { CompletionMode } from '../../server-api/chat-stream.api';
+} from '../../../server-api/api-client';
+import { CompletionMode } from '../../../server-api/chat-stream.api';
 import {
   createConversation as apiCreateConversation,
   deleteConversation as apiDeleteConversation,
   saveConversation,
-} from '../../server-api/conversations.api';
-import { getDeploymentDetails } from '../../server-api/deployments';
-import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
+} from '../../../server-api/conversations.api';
+import { getDeploymentDetails } from '../../../server-api/deployments';
+import { buildNetworkUploadErrorNotification } from '../../../utils/attachment-network-error-notification';
+import { conversationStreamTransport } from '../../../utils/conversation-stream-transport';
+import { resolveCatalogIconUrl } from '../../../utils/icon-path';
 
 /*
  * Normalizes a deployment ID that may contain raw spaces (from app creation

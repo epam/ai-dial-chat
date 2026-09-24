@@ -25,6 +25,7 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
   isNameReadOnly,
   nameCaption,
   isDescriptionRequired,
+  focusRequestKey,
   labels,
 }) => {
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
@@ -82,6 +83,7 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
         isNameReadOnly={isNameReadOnly}
         nameCaption={nameCaption}
         isDescriptionRequired={isDescriptionRequired}
+        focusRequestKey={focusRequestKey}
       />
       {avatarPicker && (
         <AvatarPickerModal

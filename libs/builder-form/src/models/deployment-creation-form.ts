@@ -150,4 +150,10 @@ export interface DeploymentCreationFormProps {
   nameCaption?: string;
   /** Marks the description field as required. The host still owns the validation. */
   isDescriptionRequired?: boolean;
+  /**
+   * Changes on every submit attempt; each change moves focus to the first
+   * invalid field. When set, errors appearing for any other reason (e.g. on
+   * blur) never move focus. When unset, focus moves when errors first appear.
+   */
+  focusRequestKey?: number;
 }

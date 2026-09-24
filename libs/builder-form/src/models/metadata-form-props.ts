@@ -63,6 +63,8 @@ export interface MetadataFormProps {
   nameCaption?: string;
   /** Marks the Description field as required. Defaults to `false`. */
   isDescriptionRequired?: boolean;
+  /** Changes on every submit attempt to move focus to the first invalid field; see `DeploymentCreationFormProps.focusRequestKey`. */
+  focusRequestKey?: number;
   /** Pre-translated labels; each group falls back to English defaults. */
   labels?: MetadataFormLabels;
 }

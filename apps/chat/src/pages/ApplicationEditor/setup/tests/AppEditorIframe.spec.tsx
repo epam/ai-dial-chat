@@ -9,37 +9,37 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as AppConfigContextModule from '../../../context/AppConfigContext';
-import * as UserContextModule from '../../../context/auth/UserContext';
-import * as ThemeContextModule from '../../../context/ThemeContext';
-import * as deploymentsApi from '../../../server-api/deployments';
-import * as toolsetsApi from '../../../server-api/toolsets';
-import { AppsEditorEvent } from '../../../types/apps-editor';
-import { AuthStatus } from '../../../types/auth-status';
+import * as AppConfigContextModule from '../../../../context/AppConfigContext';
+import * as UserContextModule from '../../../../context/auth/UserContext';
+import * as ThemeContextModule from '../../../../context/ThemeContext';
+import * as deploymentsApi from '../../../../server-api/deployments';
+import * as toolsetsApi from '../../../../server-api/toolsets';
+import { AppsEditorEvent } from '../../../../types/apps-editor';
+import { AuthStatus } from '../../../../types/auth-status';
 import type { AppEditorIframeHandle } from '../AppEditorIframe';
 import AppEditorIframe from '../AppEditorIframe';
 
-vi.mock('../../../context/AppConfigContext', () => ({
+vi.mock('../../../../context/AppConfigContext', () => ({
   useFeatureFlag: vi.fn(() => true),
 }));
-vi.mock('../../../hooks/useUiFeature', () => ({
+vi.mock('../../../../hooks/useUiFeature', () => ({
   useUiFeature: vi.fn(() => true),
 }));
 vi.mock(
-  '../../../components/ApplicationCredentials/ApplicationCredentials',
+  '../../../../components/ApplicationCredentials/ApplicationCredentials',
   () => ({
     ApplicationCredentials: ({ appId }: { appId: string }) => (
       <div>Credentials for {appId}</div>
     ),
   }),
 );
-vi.mock('../../../context/auth/UserContext');
-vi.mock('../../../context/ThemeContext');
-vi.mock('../../../server-api/toolsets', () => ({
+vi.mock('../../../../context/auth/UserContext');
+vi.mock('../../../../context/ThemeContext');
+vi.mock('../../../../server-api/toolsets', () => ({
   getToolset: vi.fn(),
   logoutToolset: vi.fn(),
 }));
-vi.mock('../../../server-api/deployments', () => ({
+vi.mock('../../../../server-api/deployments', () => ({
   getDeploymentDetails: vi.fn(),
 }));
 

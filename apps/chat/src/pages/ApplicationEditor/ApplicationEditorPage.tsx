@@ -12,6 +12,7 @@ interface Props {
 const ApplicationEditorPage: FC<Props> = ({ kind }) => {
   const definition = APPLICATION_EDITOR_DEFINITIONS[kind];
 
+  // Guards an unknown kind at runtime, e.g. a stale route.
   if (!definition) return null;
 
   if (isApplicationEditorPageDefinition(definition)) {

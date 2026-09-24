@@ -2,36 +2,36 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
-import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
-import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import * as conversationsApi from '../../../server-api/conversations.api';
-import * as deploymentsServerApi from '../../../server-api/deployments';
+import * as DeploymentsContextModule from '../../../../context/DeploymentsContext';
+import { useAppConfig as mockUseAppConfig } from '../../../../context/tests/app-config-context-mock';
+import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
+import * as conversationsApi from '../../../../server-api/conversations.api';
+import * as deploymentsServerApi from '../../../../server-api/deployments';
 import AppPreviewChat from '../AppPreviewChat';
 
 vi.mock(
-  '../../../context/AppConfigContext',
-  async () => import('../../../context/tests/app-config-context-mock'),
+  '../../../../context/AppConfigContext',
+  async () => import('../../../../context/tests/app-config-context-mock'),
 );
 mockUseAppConfig.mockReturnValue({
   config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
 });
 
-vi.mock('../../../context/auth/UserContext', () => ({
+vi.mock('../../../../context/auth/UserContext', () => ({
   useUser: () => ({
     user: { bucket: 'bucket' },
   }),
 }));
 
-vi.mock('../../../context/NotificationContext', () => ({
+vi.mock('../../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(vi.fn()),
 }));
 
-vi.mock('../../../context/DeploymentsContext');
+vi.mock('../../../../context/DeploymentsContext');
 
 /* The real hook needs SkillsProvider/FavoriteApplicationsContext, which this
  * harness does not mount; the stub mirrors its flag-off shape. */
-vi.mock('../../../components/SkillSelector/useSkillSelectorOverlay', () => ({
+vi.mock('../../../../components/SkillSelector/useSkillSelectorOverlay', () => ({
   useSkillSelectorOverlay: () => ({
     skillMenuOverlay: undefined,
     commandMenu: undefined,
@@ -51,7 +51,7 @@ const clientChannelMocks = vi.hoisted(() => ({
   waitForChannel: vi.fn(),
 }));
 
-vi.mock('../../../context/ClientChannelContext', () => ({
+vi.mock('../../../../context/ClientChannelContext', () => ({
   useClientChannel: () => ({
     channelId: null,
     pendingEvents: [],
@@ -62,7 +62,7 @@ vi.mock('../../../context/ClientChannelContext', () => ({
   }),
 }));
 
-vi.mock('../../../hooks/conversation/useAudioTranscription', () => ({
+vi.mock('../../../../hooks/conversation/useAudioTranscription', () => ({
   useAudioTranscription: () => ({
     isAudioMessageSupported: false,
     isVoiceRecordingSupported: false,
@@ -100,7 +100,7 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   };
 });
 
-vi.mock('../../../context/GenerationContext', () => ({
+vi.mock('../../../../context/GenerationContext', () => ({
   useGeneration: () => ({
     startGeneration: vi.fn(() => new AbortController()),
     completeGeneration: vi.fn(),
@@ -108,28 +108,28 @@ vi.mock('../../../context/GenerationContext', () => ({
   }),
 }));
 
-vi.mock('../../../server-api/conversations.api', () => ({
+vi.mock('../../../../server-api/conversations.api', () => ({
   createConversation: vi.fn(),
   deleteConversation: vi.fn(),
   saveConversation: vi.fn(),
 }));
 
-vi.mock('../../../server-api/deployments', () => ({
+vi.mock('../../../../server-api/deployments', () => ({
   getDeploymentDetails: vi.fn(),
 }));
 
-vi.mock('../../../server-api/api-client', () => ({
+vi.mock('../../../../server-api/api-client', () => ({
   conversationsApi: {},
   filesApi: {},
   rateApi: {},
 }));
 
-vi.mock('../../../components/ConversationView/ConversationView', () => ({
+vi.mock('../../../../components/ConversationView/ConversationView', () => ({
   default: () => <div>conversation-view</div>,
 }));
 
 vi.mock(
-  '../../../components/NewConversationComposer/NewConversationComposer',
+  '../../../../components/NewConversationComposer/NewConversationComposer',
   () => ({
     default: ({
       children,
@@ -154,7 +154,7 @@ vi.mock(
   }),
 );
 
-vi.mock('../../../components/StarterButtons/StarterButtons', () => ({
+vi.mock('../../../../components/StarterButtons/StarterButtons', () => ({
   default: ({
     starters,
     onSelect,

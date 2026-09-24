@@ -405,6 +405,8 @@ input with the same rule the validator applies.
 
 Headless metadata state: values, touched fields, and validation through `validateDeploymentCreationFields`. An error is visible once its field has been touched (`markTouched`, typically on blur), and every error is visible after `attemptSubmit()`, which returns whether the values are valid. `initialValues` seed the form once per `reseedKey`, so a host re-render never overwrites the user's edits. It returns error codes, not messages.
 
+Pass `submitAttemptCount` to `MetadataForm`'s `focusRequestKey`: focus then moves to the first invalid field on each submit attempt, and an error that appears on blur never pulls focus back from the field the user just moved to.
+
 ```tsx
 import {
   MetadataField,
@@ -430,6 +432,7 @@ const handleSubmit = () => {
   onChange={metadata.setValues}
   onNameBlur={() => metadata.markTouched(MetadataField.Name)}
   onVersionBlur={() => metadata.markTouched(MetadataField.Version)}
+  focusRequestKey={metadata.submitAttemptCount}
 />;
 ```
 
