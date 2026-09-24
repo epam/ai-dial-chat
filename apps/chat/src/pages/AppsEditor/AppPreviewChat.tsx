@@ -75,7 +75,10 @@ import {
 } from '../../server-api/conversations.api';
 import { getDeploymentDetails } from '../../server-api/deployments';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
+import {
+  conversationStreamTransport,
+  logConversationStreamError,
+} from '../../utils/conversation-stream-transport';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 
 /*
@@ -254,6 +257,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       channel,
       onStopError: handleStopError,
       generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
+      onStreamError: logConversationStreamError,
     });
 
   /*

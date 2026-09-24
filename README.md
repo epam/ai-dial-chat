@@ -87,7 +87,7 @@ which covers:
   and the four `OverlayRequestErrorCode` values
 - Changed method signatures, response payloads, and the narrowed
   `OverlayChatMessage` / `OverlayConversation` shapes
-- All 44 `OverlayFeature` flags: legacy → new names, flags that became
+- All 48 `OverlayFeature` flags: legacy → new names, flags that became
   unconditional, flags with no successor yet, and the default-on baseline
 - `ChatOverlayManager` options and the widget chrome it now owns
 

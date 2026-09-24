@@ -1,4 +1,10 @@
-## ADDED Requirements
+# celebration-events Specification
+
+## Purpose
+
+A shared start-page celebration runtime that loads one configured seasonal event, handles decorative scenes and secret phrases, and isolates their lifecycle from ordinary chat.
+
+## Requirements
 
 ### Requirement: Event modules plug into one shared runtime
 

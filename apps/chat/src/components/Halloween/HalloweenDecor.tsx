@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostIconButton } from '@epam/ai-dial-ui-kit';
+import { ButtonAppearance, IconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -70,7 +70,8 @@ const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
         </div>
       </div>
       <div className="absolute bottom-2 end-2 desktop:bottom-4 desktop:end-4">
-        <GhostIconButton
+        <IconButton
+          appearance={ButtonAppearance.Link}
           className={styles.pumpkinButton}
           icon={<HalloweenPumpkin />}
           aria-label={t(HalloweenI18nKeys.PumpkinLabel)}

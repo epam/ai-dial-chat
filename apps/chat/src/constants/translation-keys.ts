@@ -8,6 +8,7 @@ export enum ChatI18nKeys {
   GreetingEveningNoName = 'chat.greetingEveningNoName',
   GreetingNight = 'chat.greetingNight',
   GreetingNightNoName = 'chat.greetingNightNoName',
+  StreamErrorTitle = 'chat.streamErrorTitle',
   StreamError = 'chat.streamError',
   GenerationConflict = 'chat.generationConflict',
   CreateConversationError = 'chat.createConversationError',
@@ -75,6 +76,7 @@ export enum ApiI18nKeys {
 
 export enum ButtonsI18nKeys {
   Retry = 'buttons.retry',
+  TryAgain = 'buttons.tryAgain',
   Reload = 'buttons.reload',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
@@ -1416,6 +1418,12 @@ export enum HalloweenI18nKeys {
   CatToastMessage = 'halloween.catToastMessage',
   WitchesToastMessage = 'halloween.witchesToastMessage',
   PumpkinLabel = 'halloween.pumpkinLabel',
+  TrainToastMessage = 'halloween.trainToastMessage',
+  PortalToastMessage = 'halloween.portalToastMessage',
+  RavensToastMessage = 'halloween.ravensToastMessage',
+  CandyToastMessage = 'halloween.candyToastMessage',
+  FootprintsToastMessage = 'halloween.footprintsToastMessage',
+  SkeletonsToastMessage = 'halloween.skeletonsToastMessage',
 }
 
 export enum NewYearI18nKeys {

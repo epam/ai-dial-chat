@@ -19,6 +19,7 @@ export const NavigationSheet: FC<NavigationSheetProps> = memo(
     profile,
     groups,
     onLogout,
+    onSettings,
     footer,
     styles: sheetStyles,
   }) => {
@@ -59,6 +60,8 @@ export const NavigationSheet: FC<NavigationSheetProps> = memo(
           profileLabel={labels.profile}
           logOutLabel={labels.logOut}
           onLogout={onLogout}
+          settingsLabel={labels.settings}
+          onSettings={onSettings}
           profile={profile}
           groups={groups}
           footer={footer}

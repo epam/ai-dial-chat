@@ -28,6 +28,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   ConversationTransferErrorCode,
   FilterTab,
+  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
@@ -113,6 +114,7 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
+import { CELEBRATION_HISTORY_CLASS } from '../../utils/celebration-history';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -193,6 +195,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   );
   const isConversationsFilterHidden = useUiFeature(
     OverlayFeature.HideConversationsFilter,
+  );
+  const isConversationExportHidden = useUiFeature(
+    OverlayFeature.HideConversationExport,
   );
   const {
     conversations: items,
@@ -793,8 +798,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         ],
       };
 
+      const exportActions = isConversationExportHidden ? [] : [exportAction];
+
       if (isReadonlyItem) {
-        const readonlyActions = [pinAction, duplicateAction, exportAction];
+        const readonlyActions = [pinAction, duplicateAction, ...exportActions];
         if (rawItem?.sharedWithMe) {
           readonlyActions.push({
             key: 'unshare',
@@ -831,7 +838,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             ),
         },
         duplicateAction,
-        exportAction,
+        ...exportActions,
         ...(isConversationsSharingEnabled
           ? [
               {
@@ -977,6 +984,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       panelActiveConversationId,
       isConversationsSharingEnabled,
       isConversationsPublishingEnabled,
+      isConversationExportHidden,
       getPublishHistory,
       navigate,
       onDuplicateReadonly,
@@ -1272,14 +1280,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           getActions={getActions}
           onActionMenuOpen={handleActionMenuOpen}
           onToggle={isMobile ? onClose : undefined}
-          className={panelClassName}
+          className={mergeClasses(CELEBRATION_HISTORY_CLASS, panelClassName)}
           isOverlay={isMobile}
           styles={PANEL_STYLES}
           onMoveConversation={handleMoveConversation}
           headerActions={
             <ConversationPanelMenu
               activeConversationId={activeConversationId}
-              onExportAll={handleExportAll}
+              onExportAll={
+                isConversationExportHidden ? undefined : handleExportAll
+              }
               onImport={handleImportClick}
             />
           }

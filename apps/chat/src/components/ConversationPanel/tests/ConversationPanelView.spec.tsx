@@ -548,7 +548,9 @@ const openDeleteAllPopup = () => {
 beforeEach(() => {
   vi.clearAllMocks();
   mockUseIsMobile.mockReturnValue(false);
-  vi.mocked(useUiFeature).mockReturnValue(true);
+  vi.mocked(useUiFeature).mockImplementation(
+    (feature) => feature !== OverlayFeature.HideConversationExport,
+  );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
   vi.mocked(useNotification).mockReturnValue(
@@ -1369,6 +1371,17 @@ describe('ConversationPanelView — export/import notification mapping', () => {
 });
 
 describe('ConversationPanelView — export', () => {
+  it('hides the row Export item and Export all when hide-conversation-export is on', () => {
+    vi.mocked(useUiFeature).mockReturnValue(true);
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.queryByText(EXPORT_LABEL)).toBeNull();
+    openDropdown();
+    expect(screen.queryByRole('button', { name: EXPORT_ALL_LABEL })).toBeNull();
+    expect(
+      screen.getAllByRole('button', { name: DELETE_ALL_LABEL }),
+    ).toHaveLength(1);
+  });
+
   it('row action list contains an Export item (submenu trigger, no onClick of its own)', () => {
     render(<ConversationPanelView {...defaultProps} />);
     expect(screen.getByText(EXPORT_LABEL)).toBeTruthy();

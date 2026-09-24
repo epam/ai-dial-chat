@@ -539,33 +539,6 @@ The `CONFIG_DEFINITIONS` registry SHALL include a `features.skillUsageEnabled` e
 - **WHEN** all `FeatureKey` enum values are compared to `CONFIG_DEFINITIONS`
 - **THEN** `FeatureKey.SkillUsageEnabled` has a matching `type='feature'` entry with the identical key string
 
-### Requirement: Registry contains the halloweenEnabled client feature key
-
-The `CONFIG_DEFINITIONS` registry SHALL include a `features.halloweenEnabled` entry: `type='feature'`, `valueType='boolean'`, `visibility='client'`, `defaultValue=false`, `critical=false`, `envVar='HALLOWEEN_ENABLED'`, and no `allowedRolesEnvVar` (role-based rollout is out of scope). Its `visibility='client'` classification SHALL put it in `AppConfigService.getClientConfig`'s `features` map, because it gates frontend UI.
-
-`EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`) SHALL gain the validated boolean `HALLOWEEN_ENABLED` (default `false`) using the same raw-source-value `@Transform` as `SKILL_USAGE_ENABLED`, so the literal string `"false"` parses to `false`. The `FeatureKey` enum SHALL gain `HalloweenEnabled = 'features.halloweenEnabled'` (its string value matching the registry key exactly), per the feature-flags-service requirement that every feature key be declared in the enum before use.
-
-This is deliberately a `features.*` capability flag rather than an `OverlayFeature` member in `uiFeatures.enabledUiFeatures`. The latter's replace semantics would force an operator who wants only the easter egg to also re-list every key in `DEFAULT_ENABLED_UI_FEATURES`, and the easter egg is not an embed surface a host needs to compose.
-
-**Feature flag:** the entry declares `features.halloweenEnabled`, consumed by the frontend via `useFeatureFlag('halloweenEnabled')` — see `halloween-easter-egg`.
-
-**RTL impact:** None at this layer. **i18n impact:** None (the flag carries no user-visible text).
-
-#### Scenario: Registry contains the halloweenEnabled feature key with client visibility
-
-- **WHEN** the registry is imported
-- **THEN** it MUST contain an entry with `key='features.halloweenEnabled'`, `type='feature'`, `valueType='boolean'`, `visibility='client'`, `critical=false`, `envVar='HALLOWEEN_ENABLED'`, `defaultValue=false`, and no `allowedRolesEnvVar`
-
-#### Scenario: Flag is exposed to the client and off by default
-
-- **WHEN** the client-config endpoint is called on a deployment that has not set `HALLOWEEN_ENABLED`
-- **THEN** the response's `features` map contains `halloweenEnabled: false`
-
-#### Scenario: Literal "false" parses to false
-
-- **WHEN** the deployment sets `HALLOWEEN_ENABLED=false` in the environment
-- **THEN** the resolved `features.halloweenEnabled` value is `false`, not `true`
-
 ### Requirement: Client-owned variables have a generic environment entry
 
 The registry SHALL declare `customVariables` as a non-critical, client-visible JSON config entry sourced from `CUSTOM_CLIENT_VARIABLES`, defaulting to an empty object. The environment schema SHALL accept an optional string. EnvConfigProvider SHALL parse this string as JSON and accept only a non-null, non-array object. The BFF SHALL NOT register or interpret individual client-owned keys.
@@ -599,3 +572,19 @@ The `CONFIG_DEFINITIONS` registry SHALL include an `attachments.maxFileSizeBytes
 - **WHEN** `FILE_UPLOAD_MAX_BYTES` is not set
 - **THEN** the key resolves to the registry's `defaultValue` of `536870912`, matching `MulterModule`'s own hardcoded fallback in `files.module.ts`
 - **AND** invalid nonblank values produce a diagnostic without logging the payload or parser error text
+
+### Requirement: UI_EVENT selects one decorative event
+
+UI_EVENT SHALL be an optional validated lowercase kebab-case identifier. An absent value or `none` SHALL resolve to null; other valid identifiers SHALL be exposed as config.activeEventId:string|null by existing GET /api/v1/client-config. Unknown valid IDs SHALL be allowed through the API and result in no decoration when absent from the frontend registry. HALLOWEEN_ENABLED and features.halloweenEnabled SHALL be removed with no fallback. There SHALL be no new role-gating flag or scheduling behavior. Existing endpoint authentication, status codes, configuration cache and refresh behavior SHALL be retained. Swagger and the generated AppConfigApi.getClientConfig response model SHALL reflect the new config field; callers SHALL continue using the normal method through the existing app adapter.
+
+#### Scenario: Event explicitly selected
+- **WHEN** UI_EVENT is halloween or new-year
+- **THEN** GET /api/v1/client-config returns the corresponding string in config.activeEventId
+
+#### Scenario: Old configuration only
+- **WHEN** only the removed HALLOWEEN_ENABLED variable is set
+- **THEN** config.activeEventId is null and no seasonal decoration is enabled
+
+#### Scenario: Explicit off
+- **WHEN** UI_EVENT is none
+- **THEN** config.activeEventId is null
