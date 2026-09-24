@@ -1728,11 +1728,11 @@ describe('ConversationMessageItem — stream error banner (issue #8979)', () => 
       </div>,
     );
 
-    const retry = screen.getByRole('button', {
-      name: ButtonsI18nKeys.TryAgain,
-    });
-    const row = retry.parentElement;
-    expect(row?.className).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
-    expect(row?.className).not.toMatch(/\btext-(left|right)\b/);
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+    ).toBeTruthy();
+    const alertMarkup = screen.getByRole('alert').innerHTML;
+    expect(alertMarkup).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
+    expect(alertMarkup).not.toMatch(/\btext-(left|right)\b/);
   });
 });
