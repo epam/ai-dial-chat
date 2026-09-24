@@ -1318,6 +1318,7 @@ describe('ScheduledTasksService — isCompleted derivation', () => {
       makeDialClient(),
       makeConfigService('scheduler-app') as never,
       makeCacheManager() as never,
+      { resolveDeploymentItem: vi.fn() } as never,
     );
 
   it('marks a one-time schedule with a terminal success run as completed', async () => {
