@@ -867,6 +867,13 @@ export class EnvironmentVariables {
   SKILL_USAGE_ENABLED?: boolean = false;
 
   @IsOptional()
+  @IsString()
+  @Matches(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/, {
+    message: 'UI_EVENT must be a lowercase kebab-case event ID or none',
+  })
+  UI_EVENT?: string;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)

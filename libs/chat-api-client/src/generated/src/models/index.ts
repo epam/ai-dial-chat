@@ -951,6 +951,12 @@ export interface ClientConfigDto {
    */
   aiTextRefinementAvailable?: boolean;
   /**
+   * Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  activeEventId: string | null;
+  /**
    * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.
    * @type {string}
    * @memberof ClientConfigDto
