@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
-  HALLOWEEN_CLICK_BURSTS,
   HALLOWEEN_GHOST_COUNT,
   HALLOWEEN_BURST_DURATION_MS,
   HALLOWEEN_WEB_COUNT,
@@ -16,7 +15,6 @@ import {
   buildHalloweenSpiderDrop,
   isHalloweenSecretPhrase,
   nextHalloweenSpiderOffset,
-  pickHalloweenBurst,
 } from '../halloween';
 
 describe('isHalloweenSecretPhrase', () => {
@@ -308,32 +306,6 @@ describe('Halloween scene layout', () => {
         ).toBeLessThan(HALLOWEEN_BURST_DURATION_MS);
         expect(flight['--flight-start-x']).not.toBe(flight['--flight-end-x']);
       });
-    },
-  );
-});
-
-describe('random pumpkin scenes', () => {
-  afterEach(() => vi.restoreAllMocks());
-
-  it('can pick every scene on the first click', () => {
-    const random = vi.spyOn(Math, 'random');
-    const scenes = HALLOWEEN_CLICK_BURSTS.map((_, index) => {
-      random.mockReturnValue((index + 0.5) / HALLOWEEN_CLICK_BURSTS.length);
-      return pickHalloweenBurst();
-    });
-    expect(new Set(scenes)).toEqual(new Set(HALLOWEEN_CLICK_BURSTS));
-  });
-
-  it.each(HALLOWEEN_CLICK_BURSTS)(
-    'excludes the previous scene: %s',
-    (previous) => {
-      const random = vi.spyOn(Math, 'random');
-      const scenes = Array.from({ length: 4 }, (_, index) => {
-        random.mockReturnValue((index + 0.5) / 4);
-        return pickHalloweenBurst(previous);
-      });
-      expect(scenes).not.toContain(previous);
-      expect(new Set(scenes).size).toBe(4);
     },
   );
 });

@@ -1,12 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostIconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useRef } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HalloweenI18nKeys } from '../../constants/translation-keys';
-import { useHalloween } from '../../context/HalloweenContext';
-import { HalloweenBurst } from '../../types/halloween';
-import { pickHalloweenBurst } from '../../utils/halloween';
+import type { CelebrationDecorationProps } from '../../types/celebration';
 import styles from './Halloween.module.scss';
 import HalloweenCornerSpider from './HalloweenCornerSpider';
 import HalloweenPumpkin from './HalloweenPumpkin';
@@ -45,31 +43,9 @@ const Cobweb: FC<CobwebProps> = ({ className }) => (
   </svg>
 );
 
-/**
- * Seasonal chrome for the empty-chat screen while the `halloweenEnabled`
- * feature flag is on: a faint cobweb in each top corner with a spider perched
- * on it that scurries off when the pointer reaches it, and a pumpkin that
- * randomly releases ghosts, web weaving, bats, a cat or flying witches.
- *
- * Renders nothing when the feature is off, so the call site needs no gate of
- * its own. The webs and their spiders sit in an `aria-hidden`,
- * pointer-transparent layer, so the corners stay click-through. The pumpkin is a real
- * labelled button, kept outside that layer so it stays reachable by keyboard.
- */
-const HalloweenDecor: FC = () => {
+/** Halloween artwork; eligibility and scene selection belong to the shared runtime. */
+const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
   const { t } = useTranslation();
-  const { isEnabled, celebrate } = useHalloween();
-  const previousBurst = useRef<HalloweenBurst | undefined>(undefined);
-
-  const handlePumpkinClick = useCallback(() => {
-    const burst = pickHalloweenBurst(previousBurst.current);
-    previousBurst.current = burst;
-    celebrate(burst);
-  }, [celebrate]);
-
-  if (!isEnabled) {
-    return null;
-  }
 
   return (
     <>
@@ -98,7 +74,7 @@ const HalloweenDecor: FC = () => {
           className={styles.pumpkinButton}
           icon={<HalloweenPumpkin />}
           aria-label={t(HalloweenI18nKeys.PumpkinLabel)}
-          onClick={handlePumpkinClick}
+          onClick={onActivate}
         />
       </div>
     </>

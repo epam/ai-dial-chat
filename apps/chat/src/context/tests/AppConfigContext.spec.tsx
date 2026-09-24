@@ -52,6 +52,7 @@ describe('AppConfigContext', () => {
     mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
     const { result } = renderHook(() => useAppConfig(), { wrapper });
     expect(result.current.status).toBe(UserConfigStatus.Loading);
+    expect(result.current.config.activeEventId).toBeNull();
     expect(result.current.config.dialCoreExternalUrl).toBeNull();
     expect(result.current.config.fileManagerTabs).toEqual([
       'my_files',
@@ -78,6 +79,30 @@ describe('AppConfigContext', () => {
     expect(result.current.config.dialCoreExternalUrl).toBe(
       'https://dial.example.com',
     );
+  });
+
+  it.each(['halloween', 'new-year', 'product-launch-2027', null])(
+    'preserves the event selection %s from client-config',
+    async (activeEventId) => {
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: { ...READY_RESPONSE.config, activeEventId },
+      });
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.activeEventId).toBe(activeEventId);
+    },
+  );
+
+  it('disables celebrations when a backend response omits event selection', async () => {
+    mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+    expect(result.current.config.activeEventId).toBeNull();
   });
 
   it('populates overlayEnabled/overlayAllowedOrigins from a successful API call', async () => {

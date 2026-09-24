@@ -1385,3 +1385,11 @@ export enum HalloweenI18nKeys {
   WitchesToastMessage = 'halloween.witchesToastMessage',
   PumpkinLabel = 'halloween.pumpkinLabel',
 }
+
+export enum NewYearI18nKeys {
+  ToastTitle = 'newYear.toastTitle',
+  SnowToastMessage = 'newYear.snowToastMessage',
+  ConfettiToastMessage = 'newYear.confettiToastMessage',
+  SleighToastMessage = 'newYear.sleighToastMessage',
+  GiftLabel = 'newYear.giftLabel',
+}

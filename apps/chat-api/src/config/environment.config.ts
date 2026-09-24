@@ -816,16 +816,11 @@ export class EnvironmentVariables {
   SKILL_USAGE_ENABLED?: boolean = false;
 
   @IsOptional()
-  @Transform(({ obj, key }) => {
-    /* Same raw-source-value read as SKILL_USAGE_ENABLED above, so an env var
-     * explicitly set to "false"/"0"/"no" parses to `false`. */
-    const raw = (obj as Record<string, unknown>)[key];
-    if (raw == null) return undefined;
-    if (typeof raw === 'boolean') return raw;
-    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  @IsString()
+  @Matches(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/, {
+    message: 'UI_EVENT must be a lowercase kebab-case event ID or none',
   })
-  @IsBoolean()
-  HALLOWEEN_ENABLED?: boolean = false;
+  UI_EVENT?: string;
 
   @IsOptional()
   @Transform(({ value }) => {

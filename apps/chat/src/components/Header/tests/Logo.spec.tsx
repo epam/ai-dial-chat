@@ -5,9 +5,11 @@ import * as ThemeContext from '../../../context/ThemeContext';
 import * as iconPathUtils from '../../../utils/icon-path';
 import Logo from '../Logo';
 
-const halloween = vi.hoisted(() => ({ isEnabled: false }));
-vi.mock('../../../context/HalloweenContext', () => ({
-  useHalloween: () => halloween,
+const celebration = vi.hoisted(() => ({
+  event: null as { iconUrl: string } | null,
+}));
+vi.mock('../../../context/CelebrationContext', () => ({
+  useCelebration: () => celebration,
 }));
 
 vi.mock('../../../context/ThemeContext');
@@ -19,7 +21,7 @@ describe('Logo', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    halloween.isEnabled = false;
+    celebration.event = null;
   });
 
   it('should render logo with correct theme', () => {
@@ -53,7 +55,7 @@ describe('Logo', () => {
     expect(mockGetIconPath).toHaveBeenCalledWith(mockLogoName);
   });
 
-  it('replaces the existing mobile icon and restores it when Halloween is disabled', () => {
+  it('replaces the existing mobile icon and restores it when the event is disabled', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
       selectedTheme: 'dark',
@@ -63,14 +65,14 @@ describe('Logo', () => {
       isLoading: false,
     });
     mockGetIconPath.mockReturnValue('/theme/favicon.svg');
-    halloween.isEnabled = true;
+    celebration.event = { iconUrl: '/events/test-icon.svg' };
     const { rerender } = render(<Logo />);
     /* The existing icon is a decorative CSS background inside the logo link. */
     // eslint-disable-next-line testing-library/no-node-access
     const icon = screen.getByRole('link').firstElementChild as HTMLElement;
-    expect(icon.style.backgroundImage).toContain('halloween-logo.svg');
+    expect(icon.style.backgroundImage).toContain('/events/test-icon.svg');
     expect(screen.getAllByRole('link')).toHaveLength(1);
-    halloween.isEnabled = false;
+    celebration.event = null;
     /* The mocked hook has no React subscription; remount to apply its value. */
     rerender(<Logo key="normal" />);
     const restoredLink = screen.getByRole('link');

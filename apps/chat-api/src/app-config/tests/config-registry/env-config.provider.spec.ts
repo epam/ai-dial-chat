@@ -342,26 +342,23 @@ describe('EnvConfigProvider', () => {
     });
   });
 
-  describe('features.halloweenEnabled', () => {
-    it('returns true when HALLOWEEN_ENABLED is true', async () => {
-      const { provider } = makeProvider({ HALLOWEEN_ENABLED: true });
-      expect(await provider.resolve('features.halloweenEnabled', ctx)).toBe(
-        true,
-      );
+  describe('ui.activeEventId', () => {
+    it.each(['halloween', 'new-year', 'product-launch-2027'])(
+      'returns the configured event ID %s without a backend allowlist',
+      async (eventId) => {
+        const { provider } = makeProvider({ UI_EVENT: eventId });
+        expect(await provider.resolve('ui.activeEventId', ctx)).toBe(eventId);
+      },
+    );
+
+    it('explicitly disables celebrations when UI_EVENT is none', async () => {
+      const { provider } = makeProvider({ UI_EVENT: 'none' });
+      expect(await provider.resolve('ui.activeEventId', ctx)).toBeNull();
     });
 
-    it('returns false when HALLOWEEN_ENABLED is false', async () => {
-      const { provider } = makeProvider({ HALLOWEEN_ENABLED: false });
-      expect(await provider.resolve('features.halloweenEnabled', ctx)).toBe(
-        false,
-      );
-    });
-
-    it('returns undefined when HALLOWEEN_ENABLED is absent (falls through to the registry default of false)', async () => {
-      const { provider } = makeProvider({ HALLOWEEN_ENABLED: undefined });
-      expect(
-        await provider.resolve('features.halloweenEnabled', ctx),
-      ).toBeUndefined();
+    it('uses the registry null default when UI_EVENT is absent', async () => {
+      const { provider } = makeProvider();
+      expect(await provider.resolve('ui.activeEventId', ctx)).toBeUndefined();
     });
   });
 

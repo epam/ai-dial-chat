@@ -79,11 +79,17 @@ value. This is the single most common way a theme "half applies".
 
 ### Seasonal start-page branding
 
-With `HALLOWEEN_ENABLED=true`, only the start page replaces the existing favicon
-slot in the desktop navigation rail and mobile header with a bundled Halloween
-icon. It adds no logo block to the welcome area and leaves the theme wordmark
-unchanged. Leaving the start page restores the configured favicon. If no favicon
-slot is configured, no new one is introduced.
+`UI_EVENT=halloween` or `UI_EVENT=new-year` selects a bundled celebration on the
+start page. `UI_EVENT=none` or an omitted value disables it. Unknown event IDs
+leave the normal interface intact. The former `HALLOWEEN_ENABLED` setting has
+been removed; use `UI_EVENT=halloween` instead.
+
+The selected event replaces the existing favicon slot in desktop navigation
+and the mobile header. It adds no logo block to the welcome area and leaves
+the theme wordmark and browser-tab favicon unchanged. Leaving the start page
+restores the configured icon. If no favicon slot is configured, no new one is
+introduced. Event artwork loads only when its module is selected on the start
+page; it is independent of the light/dark theme choice.
 
 ### Theme ids and the theme picker
 

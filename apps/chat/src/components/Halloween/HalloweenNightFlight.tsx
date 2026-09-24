@@ -4,18 +4,14 @@ import {
   buildHalloweenBatFlight,
   buildHalloweenWitchFlight,
 } from '../../utils/halloween';
+import FlyingCharacters from '../FlyingCharacters/FlyingCharacters';
 import styles from './Halloween.module.scss';
 
 /** A small bat with articulated wings and warm pinprick eyes. */
 const Bat: FC = () => {
   const id = useId();
   return (
-    <svg
-      viewBox="0 0 80 48"
-      className={styles.nightCharacter}
-      aria-hidden="true"
-      focusable="false"
-    >
+    <svg viewBox="0 0 80 48" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id={`${id}-wing`} x2="0.3" y2="1">
           <stop stopColor="#83718c" />
@@ -69,12 +65,7 @@ const Bat: FC = () => {
 const Witch: FC = () => {
   const id = useId();
   return (
-    <svg
-      viewBox="0 0 112 80"
-      className={styles.nightCharacter}
-      aria-hidden="true"
-      focusable="false"
-    >
+    <svg viewBox="0 0 112 80" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id={`${id}-cloak`} x2="0.8" y2="1">
           <stop stopColor="#9782ad" />
@@ -153,15 +144,7 @@ const HalloweenNightFlight: FC<Props> = ({ burst }) => {
     [isWitch],
   );
   return (
-    <>
-      {flights.map((style, index) => (
-        <span key={index} style={style} className={styles.nightFlight}>
-          <span className={styles.nightFacing}>
-            {isWitch ? <Witch /> : <Bat />}
-          </span>
-        </span>
-      ))}
-    </>
+    <FlyingCharacters flights={flights} Character={isWitch ? Witch : Bat} />
   );
 };
 

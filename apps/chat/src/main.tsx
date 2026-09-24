@@ -10,13 +10,13 @@ import NotificationContainer from './components/Notification/NotificationContain
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import AppConfigProvider from './context/AppConfigContext';
 import { UserProvider } from './context/auth/UserContext';
+import { CelebrationProvider } from './context/CelebrationContext';
 import { ClientChannelProvider } from './context/ClientChannelContext';
 import { ConversationPanelProvider } from './context/ConversationPanelContext';
 import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
 import { FavoriteApplicationsProvider } from './context/FavoriteApplicationsContext';
 import { GenerationProvider } from './context/GenerationContext';
-import { HalloweenProvider } from './context/HalloweenContext';
 import { IsolatedModelViewProvider } from './context/IsolatedModelViewContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { OverlayModeGate } from './context/overlay/OverlayContext';
@@ -54,7 +54,7 @@ root.render(
             <ThemeProvider>
               <AppConfigProvider>
                 <UiFeaturesProvider>
-                  <HalloweenProvider>
+                  <CelebrationProvider>
                     <SourcesSidebarProvider>
                       <AttachmentCanvasProvider>
                         <ConversationPanelProvider>
@@ -99,7 +99,7 @@ root.render(
                         </ConversationPanelProvider>
                       </AttachmentCanvasProvider>
                     </SourcesSidebarProvider>
-                  </HalloweenProvider>
+                  </CelebrationProvider>
                 </UiFeaturesProvider>
               </AppConfigProvider>
             </ThemeProvider>

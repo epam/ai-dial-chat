@@ -42,6 +42,18 @@ describe('AppConfigService', () => {
   });
 
   describe('getClientConfig', () => {
+    it.each(['halloween', 'new-year', 'product-launch-2027', null, undefined])(
+      'returns the resolved event selection %s without a legacy feature flag',
+      async (eventId) => {
+        const { service } = makeService(async (key) =>
+          key === 'ui.activeEventId' ? eventId : undefined,
+        );
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.activeEventId).toBe(eventId ?? null);
+        expect(result.features).not.toHaveProperty('halloweenEnabled');
+      },
+    );
+
     it('keeps client-owned variables in their own namespace without overriding built-in config', async () => {
       const custom = {
         defaultDeploymentId: 'custom-only',

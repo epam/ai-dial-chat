@@ -252,16 +252,16 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'SKILL_USAGE_ENABLED',
   },
   {
-    key: 'features.halloweenEnabled',
-    type: 'feature',
-    valueType: 'boolean',
+    key: 'ui.activeEventId',
+    type: 'config',
+    valueType: 'string',
     visibility: 'client',
-    defaultValue: false,
+    defaultValue: null,
     critical: false,
     description:
-      'Client-visible Halloween switch, off by default. Only the start page (/) shows a seasonal navigation icon, corner spiders and a large pumpkin with a silent visual chuckle. Pumpkin clicks randomly choose ghosts, a connected web across almost the whole screen and visible history, bats, a cat with wisps, or flying witches, without consecutive repeats. Every celebration notification reveals the secret chat phrase. The secret phrase "trick or treat" drops spiders instead of creating a conversation there; existing chats and editor previews send normally. Effects clear on navigation and persist no data.',
+      'Active start-page celebration module ID selected by UI_EVENT. Missing or none disables celebrations. The frontend owns the event registry and ignores IDs it does not support; adding an event does not require a backend enum change.',
     owner: 'chat-team',
-    envVar: 'HALLOWEEN_ENABLED',
+    envVar: 'UI_EVENT',
   },
   {
     key: 'overlay.enabled',

@@ -47,7 +47,7 @@ import {
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
-import { useHalloween } from '../../context/HalloweenContext';
+import { useCelebration } from '../../context/CelebrationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -82,10 +82,10 @@ const AgentDescription = lazy(async () => {
   return { default: module.default };
 });
 
-/* Lazy for the same reason — `halloweenEnabled` is off by default, and the
+/* Lazy for the same reason — event decoration is off by default, and the
    decor carries its own stylesheet. */
-const HalloweenDecor = lazy(async () => {
-  const module = await import('../Halloween/HalloweenDecor');
+const CelebrationDecor = lazy(async () => {
+  const module = await import('../CelebrationDecor/CelebrationDecor');
   return { default: module.default };
 });
 
@@ -199,7 +199,8 @@ const NewConversationComposer: FC<Props> = ({
     config: { welcomeScreenDescription },
   } = useAppConfig();
   const { showErrorNotification, showSuccessNotification } = useNotification();
-  const { isEnabled: isHalloweenEnabled, consumeSecretPhrase } = useHalloween();
+  const { isEnabled: isCelebrationEnabled, consumeSecretPhrase } =
+    useCelebration();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -432,8 +433,8 @@ const NewConversationComposer: FC<Props> = ({
   const handleSend = useCallback(
     async (text: string, attachments: Attachment[]) => {
       if (isSending || !selectedDeploymentId) return;
-      /* The Halloween easter egg's secret phrase celebrates instead of
-         starting a conversation. A no-op unless the flag is on, so the phrase
+      /* The active event's secret phrase celebrates instead of
+         starting a conversation. A no-op unless an event is ready, so the phrase
          otherwise sends as an ordinary message. */
       if (consumeSecretPhrase(text)) return;
       setIsSending(true);
@@ -485,9 +486,9 @@ const NewConversationComposer: FC<Props> = ({
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
-        {isHalloweenEnabled && (
+        {isCelebrationEnabled && (
           <Suspense fallback={null}>
-            <HalloweenDecor />
+            <CelebrationDecor />
           </Suspense>
         )}
         <ConversationInput

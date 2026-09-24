@@ -6,13 +6,6 @@ import { HalloweenBurst } from '../types/halloween';
  */
 
 /**
- * Short `useFeatureFlag` key for the easter egg, matching the registry's
- * `features.halloweenEnabled` entry (`HALLOWEEN_ENABLED`) minus its
- * `features.` prefix.
- */
-export const HALLOWEEN_FEATURE_FLAG = 'halloweenEnabled';
-
-/**
  * The phrase that triggers `HalloweenBurst.Spiders` when typed into the
  * conversation input, already normalized the way
  * `isHalloweenSecretPhrase` normalizes its input.

@@ -17,9 +17,9 @@ import {
   it,
   vi,
 } from 'vitest';
+import CelebrationDecor from '../../components/CelebrationDecor/CelebrationDecor';
 import {
   HALLOWEEN_BURST_DURATION_MS,
-  HALLOWEEN_FEATURE_FLAG,
   HALLOWEEN_WEB_COUNT,
   HALLOWEEN_BAT_COUNT,
   HALLOWEEN_WITCH_COUNT,
@@ -29,8 +29,9 @@ import {
 } from '../../constants/halloween';
 import en from '../../i18n/locales/en.json';
 import { HalloweenBurst } from '../../types/halloween';
-import { useFeatureFlag } from '../AppConfigContext';
-import { HalloweenProvider, useHalloween } from '../HalloweenContext';
+import { UserConfigStatus } from '../../types/user-config-status';
+import { useAppConfig } from '../AppConfigContext';
+import { CelebrationProvider, useCelebration } from '../CelebrationContext';
 import { useNotification } from '../NotificationContext';
 
 vi.mock('../../hooks/breakpoint/useBreakpoint', () => ({
@@ -54,7 +55,7 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-const mockUseFeatureFlag = vi.mocked(useFeatureFlag);
+const mockUseAppConfig = vi.mocked(useAppConfig);
 const mockUseNotification = vi.mocked(useNotification);
 const showSuccessNotification = vi.fn();
 
@@ -77,7 +78,7 @@ const queryGhosts = queryDrawings;
 const querySpiders = queryDrawings;
 
 const Triggers: FC = () => {
-  const { isEnabled, celebrate, consumeSecretPhrase } = useHalloween();
+  const { isEnabled, celebrate, consumeSecretPhrase } = useCelebration();
 
   return (
     <>
@@ -120,27 +121,39 @@ const Triggers: FC = () => {
   );
 };
 
-const renderProvider = (isEnabled: boolean, path = '/') => {
-  mockUseFeatureFlag.mockImplementation(
-    (key) => key === HALLOWEEN_FEATURE_FLAG && isEnabled,
-  );
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <HalloweenProvider>
-        <Triggers />
-      </HalloweenProvider>
-    </MemoryRouter>,
-  );
+const setActiveEvent = (activeEventId: string | null) => {
+  mockUseAppConfig.mockReturnValue({
+    status: UserConfigStatus.Ready,
+    features: {},
+    config: { activeEventId },
+  } as ReturnType<typeof useAppConfig>);
 };
 
-describe('HalloweenContext', () => {
+const renderProvider = async (isEnabled: boolean, path = '/') => {
+  setActiveEvent(isEnabled ? 'halloween' : null);
+  const view = render(
+    <MemoryRouter initialEntries={[path]}>
+      <CelebrationProvider>
+        <Triggers />
+      </CelebrationProvider>
+    </MemoryRouter>,
+  );
+  if (isEnabled && path === '/') {
+    await waitFor(() =>
+      expect(screen.getByTestId('enabled').textContent).toBe('true'),
+    );
+  }
+  return view;
+};
+
+describe('CelebrationContext with the Halloween module', () => {
   afterEach(() => vi.useRealTimers());
   /* The celebration layer is lazily imported by the provider. Resolving the
      module up front keeps the assertions below off the module graph's
      first-load latency, which under a full-suite run outlasts any reasonable
      query timeout. */
   beforeAll(async () => {
-    await import('../../components/Halloween/HalloweenBurstOverlay');
+    await import('../../celebrations/halloween');
   });
 
   beforeEach(() => {
@@ -161,7 +174,7 @@ describe('HalloweenContext', () => {
   it.each(['/conversations/existing', '/apps-editor', '/catalog'])(
     'does not intercept messages or celebrate on %s',
     async (path) => {
-      renderProvider(true, path);
+      await renderProvider(true, path);
       await userEvent.click(screen.getByRole('button', { name: 'say phrase' }));
       await userEvent.click(
         screen.getByRole('button', { name: 'wake the ghosts' }),
@@ -174,7 +187,7 @@ describe('HalloweenContext', () => {
   );
 
   it('removes an active effect on navigation and does not resume it on return', async () => {
-    renderProvider(true);
+    await renderProvider(true);
     await userEvent.click(
       screen.getByRole('button', { name: 'wake the ghosts' }),
     );
@@ -186,24 +199,26 @@ describe('HalloweenContext', () => {
     );
     expect(queryDrawings()).toHaveLength(0);
     await userEvent.click(screen.getByRole('link', { name: 'back to start' }));
-    expect(screen.getByTestId('enabled').textContent).toBe('true');
+    await waitFor(() =>
+      expect(screen.getByTestId('enabled').textContent).toBe('true'),
+    );
     expect(queryDrawings()).toHaveLength(0);
   });
 
-  it('clears an active celebration when the feature flag turns off', async () => {
-    const { rerender } = renderProvider(true);
+  it('clears an active celebration when the configured event is removed', async () => {
+    const { rerender } = await renderProvider(true);
     await userEvent.click(
       screen.getByRole('button', { name: 'wake the ghosts' }),
     );
     await waitFor(() =>
       expect(queryGhosts()).toHaveLength(HALLOWEEN_GHOST_COUNT),
     );
-    mockUseFeatureFlag.mockReturnValue(false);
+    setActiveEvent(null);
     rerender(
       <MemoryRouter>
-        <HalloweenProvider>
+        <CelebrationProvider>
           <Triggers />
-        </HalloweenProvider>
+        </CelebrationProvider>
       </MemoryRouter>,
     );
     expect(screen.getByTestId('enabled').textContent).toBe('false');
@@ -211,7 +226,7 @@ describe('HalloweenContext', () => {
   });
 
   it('replaces ghosts with weaving across a viewport portal', async () => {
-    renderProvider(true);
+    await renderProvider(true);
     await userEvent.click(
       screen.getByRole('button', { name: 'wake the ghosts' }),
     );
@@ -239,7 +254,7 @@ describe('HalloweenContext', () => {
   ] as const)(
     'plays and announces the %s scene',
     async (name, count, message) => {
-      renderProvider(true);
+      await renderProvider(true);
       await userEvent.click(screen.getByRole('button', { name, exact: true }));
       await waitFor(() => expect(queryDrawings()).toHaveLength(count));
       expect(showSuccessNotification).toHaveBeenLastCalledWith({
@@ -250,7 +265,7 @@ describe('HalloweenContext', () => {
   );
 
   it('clears the effect after its lifetime, restarting the timer for a new trigger', async () => {
-    renderProvider(true);
+    await renderProvider(true);
     await userEvent.click(
       screen.getByRole('button', { name: 'wake the ghosts' }),
     );
@@ -267,9 +282,9 @@ describe('HalloweenContext', () => {
     expect(queryDrawings()).toHaveLength(0);
   });
 
-  describe('with the halloweenEnabled flag off', () => {
+  describe('without a configured event', () => {
     it('reports itself disabled and lets the secret phrase through', async () => {
-      renderProvider(false);
+      await renderProvider(false);
       await userEvent.click(screen.getByRole('button', { name: 'say phrase' }));
 
       expect(screen.getByTestId('enabled').textContent).toBe('false');
@@ -279,7 +294,7 @@ describe('HalloweenContext', () => {
     });
 
     it('ignores an explicit celebrate call', async () => {
-      renderProvider(false);
+      await renderProvider(false);
       await userEvent.click(
         screen.getByRole('button', { name: 'wake the ghosts' }),
       );
@@ -289,9 +304,9 @@ describe('HalloweenContext', () => {
     });
   });
 
-  describe('with the halloweenEnabled flag on', () => {
+  describe('with Halloween selected', () => {
     it('consumes the secret phrase, drops the spiders, and notifies', async () => {
-      renderProvider(true);
+      await renderProvider(true);
       await userEvent.click(screen.getByRole('button', { name: 'say phrase' }));
 
       expect(lastConsumeResult).toBe(true);
@@ -305,7 +320,7 @@ describe('HalloweenContext', () => {
     });
 
     it('leaves an ordinary message alone', async () => {
-      renderProvider(true);
+      await renderProvider(true);
       await userEvent.click(screen.getByRole('button', { name: 'say hello' }));
 
       expect(lastConsumeResult).toBe(false);
@@ -313,7 +328,7 @@ describe('HalloweenContext', () => {
     });
 
     it('releases a whole flock of ghosts, not one', async () => {
-      renderProvider(true);
+      await renderProvider(true);
       await userEvent.click(
         screen.getByRole('button', { name: 'wake the ghosts' }),
       );
@@ -328,7 +343,7 @@ describe('HalloweenContext', () => {
     });
 
     it('gives each ghost its own flight path', async () => {
-      renderProvider(true);
+      await renderProvider(true);
       await userEvent.click(
         screen.getByRole('button', { name: 'wake the ghosts' }),
       );
@@ -345,7 +360,7 @@ describe('HalloweenContext', () => {
     });
 
     it('draws more than one kind of ghost', async () => {
-      renderProvider(true);
+      await renderProvider(true);
       await userEvent.click(
         screen.getByRole('button', { name: 'wake the ghosts' }),
       );
@@ -370,7 +385,7 @@ describe('HalloweenContext', () => {
     ] as const)(
       'names the chat secret phrase in every toast: %s',
       async (button, message) => {
-        renderProvider(true);
+        await renderProvider(true);
         await userEvent.click(screen.getByRole('button', { name: button }));
         expect(mockT).toHaveBeenCalledWith(`halloween.${message}`, {
           phrase: HALLOWEEN_SECRET_PHRASE,
@@ -381,7 +396,7 @@ describe('HalloweenContext', () => {
     );
 
     it('keeps every drawing out of the accessibility tree', async () => {
-      renderProvider(true);
+      await renderProvider(true);
       await userEvent.click(screen.getByRole('button', { name: 'say phrase' }));
       await waitFor(() =>
         expect(querySpiders()).toHaveLength(HALLOWEEN_SPIDER_COUNT),
@@ -398,5 +413,68 @@ describe('HalloweenContext', () => {
         expect(drawing.closest('[aria-hidden="true"]')).not.toBeNull(),
       );
     });
+  });
+
+  it('loads New Year through the same decor slot and consumes only its own phrase', async () => {
+    setActiveEvent('new-year');
+    const NewYearTriggers: FC = () => {
+      const { consumeSecretPhrase } = useCelebration();
+      return (
+        <>
+          <CelebrationDecor />
+          <button
+            type="button"
+            onClick={() => {
+              lastConsumeResult = consumeSecretPhrase('Happy New Year!');
+            }}
+          >
+            new year phrase
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              lastConsumeResult = consumeSecretPhrase('trick or treat');
+            }}
+          >
+            other event phrase
+          </button>
+        </>
+      );
+    };
+    render(
+      <MemoryRouter>
+        <CelebrationProvider>
+          <NewYearTriggers />
+        </CelebrationProvider>
+      </MemoryRouter>,
+    );
+    const gift = await screen.findByRole('button', {
+      name: 'newYear.giftLabel',
+    });
+    expect(
+      screen.queryByRole('button', { name: 'halloween.pumpkinLabel' }),
+    ).toBeNull();
+    await userEvent.click(gift);
+    expect(showSuccessNotification).toHaveBeenLastCalledWith({
+      title: 'newYear.toastTitle',
+      message: expect.stringMatching(
+        /^newYear\.(snow|confetti|sleigh)ToastMessage$/,
+      ),
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'new year phrase' }),
+    );
+    expect(lastConsumeResult).toBe(true);
+    expect(showSuccessNotification).toHaveBeenLastCalledWith({
+      title: 'newYear.toastTitle',
+      message: 'newYear.confettiToastMessage',
+    });
+    expect(mockT).toHaveBeenCalledWith('newYear.confettiToastMessage', {
+      phrase: 'happy new year',
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'other event phrase' }),
+    );
+    expect(lastConsumeResult).toBe(false);
   });
 });

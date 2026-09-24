@@ -83,20 +83,25 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
-  it('contains the client-visible features.halloweenEnabled entry', () => {
+  it('contains an open-ended client-visible event selection without a feature flag', () => {
     const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'features.halloweenEnabled',
+      (definition) => definition.key === 'ui.activeEventId',
     );
 
     expect(entry).toMatchObject({
-      key: 'features.halloweenEnabled',
-      type: 'feature',
-      valueType: 'boolean',
+      key: 'ui.activeEventId',
+      type: 'config',
+      valueType: 'string',
       visibility: 'client',
-      defaultValue: false,
+      defaultValue: null,
       critical: false,
-      envVar: 'HALLOWEEN_ENABLED',
+      envVar: 'UI_EVENT',
     });
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
+    expect(
+      CONFIG_DEFINITIONS.some(
+        (definition) => definition.key === 'features.halloweenEnabled',
+      ),
+    ).toBe(false);
   });
 });

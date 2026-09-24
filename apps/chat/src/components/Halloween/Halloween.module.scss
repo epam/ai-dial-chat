@@ -356,28 +356,6 @@
     calc(var(--web-delay) + 0.8s) both;
 }
 
-@keyframes halloween-night-flight {
-  0% {
-    opacity: 0;
-    transform: translate3d(var(--flight-start-x), var(--flight-start-y), 0)
-      rotate(-8deg);
-  }
-  12% {
-    opacity: 1;
-  }
-  50% {
-    transform: translate3d(48vw, var(--flight-mid-y), 0) rotate(6deg);
-  }
-  88% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(var(--flight-end-x), var(--flight-end-y), 0)
-      rotate(-5deg);
-  }
-}
-
 @keyframes halloween-wingbeat {
   from {
     transform: scaleY(1);
@@ -385,29 +363,6 @@
   to {
     transform: scaleY(0.35);
   }
-}
-
-/* Flights and the cat use physical origins: their paths cross the viewport
-   in screen coordinates and stay independent of the reading direction. */
-.nightFlight {
-  position: absolute;
-  left: 0;
-  top: 0;
-  inline-size: var(--flight-size);
-  animation: halloween-night-flight var(--flight-duration) ease-in-out
-    var(--flight-delay) both;
-}
-
-.nightFacing {
-  display: block;
-  transform: scaleX(var(--flight-facing));
-}
-
-.nightCharacter {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
-  filter: drop-shadow(0 2px 3px #17162126);
 }
 
 .batWing {
@@ -535,7 +490,6 @@
   .webBridge,
   .webDrawing,
   .webRunner,
-  .nightFlight,
   .batWing,
   .catTraveler,
   .catBody,
@@ -549,10 +503,6 @@
   .pumpkinButton.pumpkinButton:is(:hover, :focus-visible, :active)
     .pumpkinLight {
     animation: none;
-  }
-
-  .nightFlight {
-    transform: translate3d(var(--flight-rest-x), var(--flight-rest-y), 0);
   }
 
   .catTraveler {

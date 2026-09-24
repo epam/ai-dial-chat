@@ -16,6 +16,15 @@ import { CustomVisualizerDto } from './custom-visualizer.dto';
 export class ClientConfigDto {
   @ApiProperty({
     description:
+      'Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.',
+    type: String,
+    nullable: true,
+    example: 'new-year',
+  })
+  activeEventId!: string | null;
+
+  @ApiProperty({
+    description:
       'Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.',
     type: String,
     example: '0.45.0',

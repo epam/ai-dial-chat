@@ -1,7 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { HalloweenBurst } from '../../types/halloween';
 import {
@@ -21,14 +20,7 @@ interface Props {
   burst: HalloweenBurst;
 }
 
-/**
- * The full-viewport celebration layer of the Halloween easter egg, portaled to
- * `document.body` so no scroll container clips it.
- *
- * Purely decorative: the layer is `aria-hidden` and never takes pointer
- * events, and the announcement a screen-reader user gets is the notification
- * `HalloweenProvider` raises alongside it.
- */
+/** Scene artwork only; the shared celebration runtime supplies its viewport layer. */
 const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
   const isMobile = useIsMobile();
   const webLayout = useMemo(
@@ -50,11 +42,8 @@ const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
     [isGhostFlight],
   );
 
-  return createPortal(
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[70] select-none overflow-hidden"
-    >
+  return (
+    <>
       {webLayout && (
         <svg
           viewBox="0 0 1000 1000"
@@ -104,8 +93,7 @@ const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
           </span>
         </span>
       ))}
-    </div>,
-    document.body,
+    </>
   );
 };
 

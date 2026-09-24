@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
 import {
-  HALLOWEEN_CLICK_BURSTS,
   HALLOWEEN_GHOST_COUNT,
   HALLOWEEN_WEB_COUNT,
   HALLOWEEN_MOBILE_WEB_COUNT,
@@ -10,25 +9,13 @@ import {
   HALLOWEEN_SECRET_PHRASE,
   HALLOWEEN_SPIDER_COUNT,
 } from '../constants/halloween';
-import { HalloweenBurst, HalloweenGhostVariant } from '../types/halloween';
+import { HalloweenGhostVariant } from '../types/halloween';
+import { matchesCelebrationPhrase } from './celebration';
+import { buildFlyingCharacterPaths } from './flying-characters';
 
-/**
- * Collapses anything that is not a latin letter into single spaces, so
- * "Trick-or-Treat!" and "trick  or  treat" both reach the stored phrase.
- */
-const normalizePhrase = (text: string): string =>
-  text
-    .toLowerCase()
-    .replace(/[^a-z]+/g, ' ')
-    .trim();
-
-/**
- * Whether `text` is the Halloween easter egg's secret phrase, ignoring case,
- * punctuation, and surrounding whitespace. Deliberately an exact match on the
- * whole input: a message that merely mentions the phrase still sends normally.
- */
+/** The Halloween module's phrase, using the shared exact-match rules. */
 export const isHalloweenSecretPhrase = (text: string): boolean =>
-  normalizePhrase(text) === HALLOWEEN_SECRET_PHRASE;
+  matchesCelebrationPhrase(text, [HALLOWEEN_SECRET_PHRASE]);
 
 /** A random float in `[min, max)`. */
 const between = (min: number, max: number): number =>
@@ -196,14 +183,6 @@ export const nextHalloweenSpiderOffset = ({
   };
 };
 
-/** Draw independently on each click, excluding the previous pumpkin scene. */
-export const pickHalloweenBurst = (
-  previous?: HalloweenBurst,
-): HalloweenBurst => {
-  const choices = HALLOWEEN_CLICK_BURSTS.filter((burst) => burst !== previous);
-  return choices[Math.floor(Math.random() * choices.length)];
-};
-
 interface HalloweenWebNode extends Point {
   delay: number;
   style: CSSProperties;
@@ -302,32 +281,27 @@ export const buildHalloweenWebLayout = (
   return { webs, strands };
 };
 
-/** Shared flight coordinates for the two broom/wing scenes; sizes stay modest. */
-const buildNightFlights = (count: number, isWitch: boolean): CSSProperties[] =>
-  Array.from({ length: count }, (_, index) => {
-    const fliesRight = index % 2 === 0;
-    const height = 12 + ((index * 17) % 62);
-    return {
-      '--flight-start-x': fliesRight ? '-22vw' : '115vw',
-      '--flight-end-x': fliesRight ? '115vw' : '-22vw',
-      '--flight-start-y': `${height}vh`,
-      '--flight-mid-y': `${Math.max(3, height - 18)}vh`,
-      '--flight-end-y': `${Math.min(84, height + 8)}vh`,
-      '--flight-rest-x': `${8 + (index / count) * 78}vw`,
-      '--flight-rest-y': `${height}vh`,
-      '--flight-facing': fliesRight ? 1 : -1,
-      '--flight-size': `${isWitch ? 76 + (index % 3) * 12 : 30 + (index % 4) * 5}px`,
-      '--flight-delay': `${(index * (isWitch ? 0.62 : 0.18)).toFixed(2)}s`,
-      '--flight-duration': `${isWitch ? 7.5 : 5.8}s`,
-      '--wing-duration': `${0.24 + (index % 4) * 0.04}s`,
-    } as CSSProperties;
-  });
-
 export const buildHalloweenBatFlight = (): CSSProperties[] =>
-  buildNightFlights(HALLOWEEN_BAT_COUNT, false);
+  buildFlyingCharacterPaths({
+    count: HALLOWEEN_BAT_COUNT,
+    sizesPx: [30, 35, 40, 45],
+    durationSeconds: 5.8,
+    staggerSeconds: 0.18,
+  }).map(
+    (style, index) =>
+      ({
+        ...style,
+        '--wing-duration': `${0.24 + (index % 4) * 0.04}s`,
+      }) as CSSProperties,
+  );
 
 export const buildHalloweenWitchFlight = (): CSSProperties[] =>
-  buildNightFlights(HALLOWEEN_WITCH_COUNT, true);
+  buildFlyingCharacterPaths({
+    count: HALLOWEEN_WITCH_COUNT,
+    sizesPx: [76, 88, 100],
+    durationSeconds: 7.5,
+    staggerSeconds: 0.62,
+  });
 
 /** Dim little lights rise from separate columns, leaving the UI readable. */
 export const buildHalloweenWisps = (): CSSProperties[] =>

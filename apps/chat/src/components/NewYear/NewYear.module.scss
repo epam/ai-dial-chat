@@ -1,0 +1,115 @@
+.garland {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  inline-size: 100%;
+  block-size: 40px;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.giftButton.giftButton {
+  inline-size: 80px;
+  block-size: 80px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 20px;
+
+  &:focus-visible {
+    outline: 2px solid var(--text-primary, #161b2d);
+    outline-offset: 2px;
+  }
+
+  svg {
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+  }
+
+  &:enabled:is(:hover, :focus-visible, :active) {
+    background: transparent;
+
+    .giftLid {
+      transform: translateY(-5px) rotate(-3deg);
+    }
+  }
+}
+
+.giftLid {
+  transform-origin: 50px 40px;
+  transition: transform 300ms ease;
+}
+
+.particleLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* These decorative paths follow viewport coordinates equally in LTR and RTL. */
+.particle {
+  position: absolute;
+  left: var(--particle-x);
+  top: 0;
+  inline-size: var(--particle-size);
+  block-size: var(--particle-size);
+  background: var(--particle-color);
+  animation: new-year-fall var(--particle-duration) linear var(--particle-delay)
+    both;
+}
+
+.snowflake {
+  border-radius: 50%;
+  box-shadow: 0 0 3px #607e9240;
+}
+
+.confetti {
+  border-radius: 1px;
+  block-size: calc(var(--particle-size) * 1.7);
+}
+
+@keyframes new-year-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+  }
+  12%,
+  84% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--particle-drift), 108vh, 0)
+      rotate(var(--particle-turn));
+  }
+}
+
+@media (min-width: 1280px) {
+  .garland {
+    block-size: 55px;
+  }
+
+  .giftButton.giftButton {
+    inline-size: 104px;
+    block-size: 104px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giftLid {
+    transition: none;
+  }
+
+  .giftButton.giftButton:enabled:is(:hover, :focus-visible, :active) .giftLid {
+    transform: none;
+  }
+
+  .particle {
+    animation: none;
+    top: var(--particle-rest-y);
+    opacity: 0.65;
+  }
+}

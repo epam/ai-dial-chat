@@ -1505,5 +1505,12 @@
     "catToastMessage": "A little familiar is chasing the lights. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "witchesToastMessage": "The witches are taking the scenic route. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "pumpkinLabel": "Halloween pumpkin"
+  },
+  "newYear": {
+    "toastTitle": "Happy New Year!",
+    "snowToastMessage": "A little winter magic. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "confettiToastMessage": "Here's to a bright new year! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "sleighToastMessage": "Special delivery from the night sky. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "giftLabel": "New Year gift"
   }
 }

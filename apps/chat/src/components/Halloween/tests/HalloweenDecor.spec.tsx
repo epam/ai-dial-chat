@@ -8,23 +8,9 @@ import {
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HALLOWEEN_SPIDER_RETURN_MS } from '../../../constants/halloween';
-import { useHalloween } from '../../../context/HalloweenContext';
-import { HalloweenBurst } from '../../../types/halloween';
 import HalloweenDecor from '../HalloweenDecor';
 
-vi.mock('../../../context/HalloweenContext', () => ({
-  useHalloween: vi.fn(),
-}));
-
-const mockUseHalloween = vi.mocked(useHalloween);
-const celebrate = vi.fn();
-
-const mockHalloween = (isEnabled: boolean) =>
-  mockUseHalloween.mockReturnValue({
-    isEnabled,
-    celebrate,
-    consumeSecretPhrase: vi.fn(),
-  });
+const onActivate = vi.fn();
 
 const clickPumpkin = () =>
   userEvent.click(
@@ -87,16 +73,8 @@ describe('HalloweenDecor', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  it('renders nothing while the feature is off', () => {
-    mockHalloween(false);
-    const { container } = render(<HalloweenDecor />);
-
-    expect(container.innerHTML).toBe('');
-  });
-
-  it('renders the pumpkin as a labelled button while the feature is on', () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+  it('renders the pumpkin as a labelled button when mounted', () => {
+    render(<HalloweenDecor onActivate={onActivate} />);
 
     expect(
       screen.getByRole('button', { name: 'halloween.pumpkinLabel' }),
@@ -104,8 +82,7 @@ describe('HalloweenDecor', () => {
   });
 
   it('hangs a web and a spider in each top corner', () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+    render(<HalloweenDecor onActivate={onActivate} />);
 
     /* Two webs, two spiders, and the pumpkin. */
     expect(queryDrawings()).toHaveLength(5);
@@ -113,8 +90,7 @@ describe('HalloweenDecor', () => {
   });
 
   it('keeps the decoration out of the accessibility tree', () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+    render(<HalloweenDecor onActivate={onActivate} />);
 
     queryDrawings().forEach((drawing) =>
       // eslint-disable-next-line testing-library/no-node-access
@@ -123,8 +99,7 @@ describe('HalloweenDecor', () => {
   });
 
   it('bolts when the pointer closes in, and leaves the far corner alone', async () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+    render(<HalloweenDecor onActivate={onActivate} />);
     const [near, far] = queryCornerSpiders();
     perch(near, 100, 100);
     perch(far, 900, 100);
@@ -142,8 +117,7 @@ describe('HalloweenDecor', () => {
   });
 
   it('never flips a spider, so both flee in screen coordinates', () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+    render(<HalloweenDecor onActivate={onActivate} />);
 
     /* The webs are mirrored to face their corner. A mirror on the corner
        itself would take the spider with it and invert its inline transform —
@@ -156,8 +130,7 @@ describe('HalloweenDecor', () => {
   });
 
   it('bolts the same way in either corner', async () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+    render(<HalloweenDecor onActivate={onActivate} />);
     const [start, end] = queryCornerSpiders();
     perch(start, 100, 100);
     perch(end, 900, 100);
@@ -175,8 +148,7 @@ describe('HalloweenDecor', () => {
   });
 
   it('keeps giving ground while the pointer chases it', async () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+    render(<HalloweenDecor onActivate={onActivate} />);
     const [spider] = queryCornerSpiders();
     perch(spider, 100, 100);
     fireEvent(window, new Event('resize'));
@@ -196,8 +168,7 @@ describe('HalloweenDecor', () => {
 
   it('creeps back to its perch once the pointer leaves it alone', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+    render(<HalloweenDecor onActivate={onActivate} />);
     const [spider] = queryCornerSpiders();
     perch(spider, 100, 100);
     fireEvent(window, new Event('resize'));
@@ -214,9 +185,8 @@ describe('HalloweenDecor', () => {
     vi.useRealTimers();
   });
 
-  it('supports random scenes from the keyboard', async () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+  it('activates the event from Enter and Space', async () => {
+    render(<HalloweenDecor onActivate={onActivate} />);
     const user = userEvent.setup();
     await user.tab();
     // eslint-disable-next-line testing-library/no-node-access
@@ -225,27 +195,12 @@ describe('HalloweenDecor', () => {
     );
     await user.keyboard('{Enter}');
     await user.keyboard(' ');
-    expect(celebrate).toHaveBeenNthCalledWith(1, HalloweenBurst.Ghost);
-    expect(celebrate).toHaveBeenNthCalledWith(2, HalloweenBurst.Web);
+    expect(onActivate).toHaveBeenCalledTimes(2);
   });
 
-  it('plays the selected scene on a single click', async () => {
-    mockHalloween(true);
-    render(<HalloweenDecor />);
+  it('delegates a click to the shared runtime', async () => {
+    render(<HalloweenDecor onActivate={onActivate} />);
     await clickPumpkin();
-
-    expect(celebrate).toHaveBeenCalledExactlyOnceWith(HalloweenBurst.Ghost);
-  });
-
-  it('can start with witches and never repeats a scene on consecutive clicks', async () => {
-    vi.mocked(Math.random).mockReturnValue(0.99);
-    mockHalloween(true);
-    render(<HalloweenDecor />);
-    for (let i = 0; i < 6; i += 1) await clickPumpkin();
-    const scenes = celebrate.mock.calls.map(([burst]) => burst);
-    expect(scenes[0]).toBe(HalloweenBurst.Witches);
-    scenes.slice(1).forEach((scene, index) => {
-      expect(scene).not.toBe(scenes[index]);
-    });
+    expect(onActivate).toHaveBeenCalledOnce();
   });
 });
