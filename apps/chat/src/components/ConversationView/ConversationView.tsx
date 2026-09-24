@@ -30,7 +30,6 @@ import {
   DisplayAttachment,
   formatFileSize,
   isStatusMessage,
-  MessageRole,
   StatusEvent,
   type Annotation,
   type Attachment,
@@ -110,6 +109,7 @@ import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOve
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
+import { getInputMessageHistory } from './utils/message-display';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -598,9 +598,8 @@ const ConversationView: FC<Props> = ({
   }, [messages, initialModelId]);
 
   const messageHistory = useMemo(
-    () =>
-      messages.filter((m) => m.role === MessageRole.User).map((m) => m.content),
-    [messages],
+    () => getInputMessageHistory(messages, isInputHistoryNavigationDisabled),
+    [messages, isInputHistoryNavigationDisabled],
   );
 
   const tooltips = useMemo<MessageActionTooltips>(
@@ -1103,9 +1102,7 @@ const ConversationView: FC<Props> = ({
                 discardRecordingLabel={t(
                   VoiceRecordingI18nKeys.DiscardRecordingLabel,
                 )}
-                messageHistory={
-                  isInputHistoryNavigationDisabled ? undefined : messageHistory
-                }
+                messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}
                 chatSettings={isChatSettingsEnabled ? chatSettings : undefined}
                 toolsMenuItems={toolsMenuItems}
