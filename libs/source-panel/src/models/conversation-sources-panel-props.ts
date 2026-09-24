@@ -76,7 +76,7 @@ export interface ConversationSourcesPanelProps {
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Called when the user clicks a source link. When omitted, the link navigates normally. */
   onSourceClick?: (source: QuotationSource) => void;
-  /** Called when the user activates the download-all button; omit to disable the button. */
+  /** Called when the user activates the download-all button; omit to hide the button. */
   onDownloadAll?: () => void;
   /** Whether the viewport is in mobile breakpoint (disables resizing). */
   isMobile: boolean;

@@ -21,31 +21,9 @@ import {
   SUPPORTED_LANGUAGES,
   useLanguage,
 } from '../../../hooks/language/useLanguage';
+import { useThemeOptions } from '../../../hooks/theme/useThemeOptions';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { UserConfigStatus } from '../../../types/user-config-status';
-
-/*
- * THEME SELECTOR — parked for an upcoming theming feature, not dead code.
- * Kept commented rather than deleted so the row can be switched back on in one
- * piece once more than one theme ships. Its i18n keys (`settings.theme`,
- * `themeLight`, `themeDark`, `themeSystem`) and `useThemeOptions` are already
- * in place; re-enabling means restoring the four blocks marked "THEME SELECTOR"
- * in this file plus the imports below.
- *
- * import { useThemeOptions } from '../../../hooks/theme/useThemeOptions';
- * import { ThemeId } from '../../../types/theme-id';
- *
- * Theme labels come from i18n keyed by ThemeId rather than from the server's
- * displayName, so a shipped theme stays translated. A theme the backend serves
- * under some other id has no key to translate, so it falls back to its own
- * displayName.
- *
- * const THEME_LABEL_KEYS: Record<string, SettingsI18nKeys> = {
- *   [ThemeId.Light]: SettingsI18nKeys.ThemeLight,
- *   [ThemeId.Dark]: SettingsI18nKeys.ThemeDark,
- *   [ThemeId.System]: SettingsI18nKeys.ThemeSystem,
- * };
- */
 
 const PreferencesTab: FC = () => {
   const { t } = useTranslation();
@@ -60,6 +38,7 @@ const PreferencesTab: FC = () => {
   const { items: deploymentItems, isLoading: isDeploymentsLoading } =
     useDeployments();
   const { language, changeLanguage } = useLanguage();
+  const { options: themeOptions, selectedTheme, setTheme } = useThemeOptions();
   const { status: appConfigStatus } = useAppConfig();
   const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
 
@@ -91,24 +70,11 @@ const PreferencesTab: FC = () => {
     deploymentItems.length > 0;
   const isLanguageRowShown =
     !isUserSettingsHidden && SUPPORTED_LANGUAGES.length > 1;
-
   /*
-   * THEME SELECTOR — see the note at the top of this file.
-   *
-   * const { themes, selectedTheme, setTheme } = useThemeOptions();
-   * const isThemeRowShown = !isUserSettingsHidden && (themes?.length ?? 0) > 1;
-   * const themeOptions = useMemo(
-   *   () =>
-   *     (themes ?? []).map((theme) => {
-   *       const labelKey = THEME_LABEL_KEYS[theme.id];
-   *       return {
-   *         value: theme.id,
-   *         label: labelKey ? t(labelKey) : theme.displayName,
-   *       };
-   *     }),
-   *   [t, themes],
-   * );
+   * One option is not a choice — a deployment serving a single theme gets no
+   * row rather than a select the user can only reselect the current value in.
    */
+  const isThemeRowShown = !isUserSettingsHidden && themeOptions.length > 1;
 
   /*
    * `i18n.language` can be a regional code (`en-US`) while the options are base
@@ -149,7 +115,10 @@ const PreferencesTab: FC = () => {
   );
 
   const hasAnyRow =
-    isLanguageRowShown || isKeyboardRowShown || isDefaultAgentRowShown;
+    isThemeRowShown ||
+    isLanguageRowShown ||
+    isKeyboardRowShown ||
+    isDefaultAgentRowShown;
 
   return (
     <div className="flex size-full min-h-0 flex-col">
@@ -173,18 +142,14 @@ const PreferencesTab: FC = () => {
         {!isResolvingRows && !hasAnyRow && (
           <NoDataContent title={t(BasicI18nKeys.Empty)} />
         )}
-        {/*
-          THEME SELECTOR — see the note at the top of this file.
-
-          {isThemeRowShown && (
-            <Select
-              labelProps={{ label: t(SettingsI18nKeys.Theme) }}
-              options={themeOptions}
-              value={selectedTheme}
-              onChange={(next) => setTheme(next as string)}
-            />
-          )}
-        */}
+        {!isResolvingRows && isThemeRowShown && (
+          <Select
+            labelProps={{ label: t(SettingsI18nKeys.Theme) }}
+            options={themeOptions}
+            value={selectedTheme}
+            onChange={(next) => setTheme(next as string)}
+          />
+        )}
         {!isResolvingRows && isLanguageRowShown && (
           <Select
             labelProps={{ label: t(SettingsI18nKeys.Language) }}

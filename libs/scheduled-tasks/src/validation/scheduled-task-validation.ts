@@ -1,3 +1,4 @@
+import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
 import { DESCRIPTION_MAX_LENGTH } from '../constants/scheduled-task-create-form';
 import type { ScheduledTaskCreateFormValues } from '../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
@@ -8,6 +9,10 @@ export enum ScheduledTaskValidationErrorCode {
   DisplayNameRequired = 'displayNameRequired',
   ModelRequired = 'modelRequired',
   PromptRequired = 'promptRequired',
+  /** Neither instructions nor a skill was provided. */
+  InstructionsOrSkillRequired = 'instructionsOrSkillRequired',
+  /** A selected skill requires explicit capability support. */
+  SkillUnsupported = 'skillUnsupported',
   DescriptionTooLong = 'descriptionTooLong',
   RunAtInvalid = 'runAtInvalid',
   TimeInvalid = 'timeInvalid',
@@ -27,6 +32,8 @@ export type ScheduledTaskValidationErrors = Partial<
 export interface ScheduledTaskValidationOptions {
   now: Date;
   minimumLeadMs?: number;
+  /** Explicit capability of the draft's selected model; omitted means unsupported. */
+  isSkillsSupported?: boolean;
 }
 
 const DEFAULT_MINIMUM_LEAD_MS = 60_000;
@@ -62,6 +69,7 @@ export const validateScheduledTaskFormValues = (
   {
     now,
     minimumLeadMs = DEFAULT_MINIMUM_LEAD_MS,
+    isSkillsSupported,
   }: ScheduledTaskValidationOptions,
 ): ScheduledTaskValidationErrors => {
   const errors: ScheduledTaskValidationErrors = {};
@@ -72,8 +80,12 @@ export const validateScheduledTaskFormValues = (
   if (!values.modelId.trim()) {
     errors.modelId = ScheduledTaskValidationErrorCode.ModelRequired;
   }
-  if (!values.prompt.trim()) {
-    errors.prompt = ScheduledTaskValidationErrorCode.PromptRequired;
+  if (!values.prompt.trim() && !values.skillUrl?.trim()) {
+    errors.prompt =
+      ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired;
+  }
+  if (isSkillSelectionUnsupported(values.skillUrl, isSkillsSupported)) {
+    errors.skillUrl = ScheduledTaskValidationErrorCode.SkillUnsupported;
   }
   if ((values.description?.trim().length ?? 0) > DESCRIPTION_MAX_LENGTH) {
     errors.description = ScheduledTaskValidationErrorCode.DescriptionTooLong;

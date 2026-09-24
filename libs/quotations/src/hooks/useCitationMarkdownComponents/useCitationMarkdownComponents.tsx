@@ -38,6 +38,12 @@ export interface UseCitationMarkdownComponentsCallbacks {
  * catch-all variant (`{ type: string; [key: string]: unknown }`) also
  * satisfies `type === 'html_tag'` and would otherwise widen `.id` to `unknown`.
  */
+/*
+ * Shared empty map for messages without citations: a fresh `{}` per render would
+ * break the memo on MarkdownRenderer and re-parse every assistant message.
+ */
+const NO_CITATION_COMPONENTS: Components = {};
+
 const citTagId = (group: AnnotationGroup): string | undefined => {
   const selector = group.primaryAnnotation.target?.selector;
   return selector?.type === 'html_tag'
@@ -149,7 +155,7 @@ export const useCitationMarkdownComponents = (
     } as Components;
 
     if (groups.length === 0) {
-      return hasCitElement ? citComponent : {};
+      return hasCitElement ? citComponent : NO_CITATION_COMPONENTS;
     }
 
     return {

@@ -1,6 +1,7 @@
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { prepareScheduledTaskCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
 import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
@@ -8,23 +9,39 @@ import {
   ScheduledTaskRepeat,
 } from '@epam/ai-dial-scheduled-tasks';
 import { EditorThemes } from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useId, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import DeploymentSelectorFieldTrigger from '../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import ScheduledTaskSkillField from '../../components/ScheduledTaskSkillField/ScheduledTaskSkillField';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
-import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
+import {
+  ScheduledTasksI18nKeys,
+  SkillSelectorI18nKeys,
+} from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
+import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { mapScheduledTaskValidationErrors } from '../../utils/scheduled-task-form-validation';
+import {
+  mapScheduledTaskValidationErrors,
+  mapScheduledTaskApiError,
+} from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
 
 const MAX_ASCII_CONTROL_CODE = 31;
@@ -74,6 +91,9 @@ const ScheduledTaskCreatePage: FC = () => {
 
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
+  const isSkillSelectionEnabled = useFeatureFlag('skillUsageEnabled');
+  const skillLabelId = useId();
+  const skillErrorId = useId();
   const navigate = useNavigate();
   const { key: draftKey } = useLocation();
   const [searchParams] = useSearchParams();
@@ -88,6 +108,20 @@ const ScheduledTaskCreatePage: FC = () => {
     useState<ScheduledTaskCreateFormValues>(DEFAULT_VALUES);
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
+  /* A capability change invalidates a prior server rejection. Local validation
+   * below continues to block a selected skill until support is confirmed. */
+  useEffect(() => {
+    setErrors((previous) =>
+      previous.skillUrl ? { ...previous, skillUrl: undefined } : previous,
+    );
+  }, [isSkillsSupported]);
+  const effectiveErrors = {
+    ...errors,
+    skillUrl: isSkillSelectionUnsupported(values?.skillUrl, isSkillsSupported)
+      ? t(SkillSelectorI18nKeys.UnsupportedTooltipLabel)
+      : errors.skillUrl,
+  };
 
   const returnUrl = useMemo(
     () =>
@@ -95,7 +129,7 @@ const ScheduledTaskCreatePage: FC = () => {
     [searchParams],
   );
 
-  const labels = useScheduledTaskFormLabels('create');
+  const labels = useScheduledTaskFormLabels('create', isSkillSelectionEnabled);
 
   const handleFieldChange = useCallback(
     <K extends keyof ScheduledTaskCreateFormValues>(
@@ -104,8 +138,9 @@ const ScheduledTaskCreatePage: FC = () => {
     ) => {
       setValues((prev) => ({ ...prev, [field]: value }));
       setErrors((prev) => {
-        if (!(field in prev)) return prev;
         const next = { ...prev };
+        if (field === 'modelId' || field === 'skillUrl') delete next.skillUrl;
+        if (field === 'prompt' || field === 'skillUrl') delete next.prompt;
         delete next[field as keyof ScheduledTaskCreateFormErrors];
         return next;
       });
@@ -129,6 +164,7 @@ const ScheduledTaskCreatePage: FC = () => {
   const handleSubmit = useCallback(async () => {
     const prepared = prepareScheduledTaskCreateBody(values, {
       now: new Date(),
+      isSkillsSupported,
     });
     if (!prepared.ok) {
       setErrors(mapScheduledTaskValidationErrors(prepared.errors, t));
@@ -143,7 +179,13 @@ const ScheduledTaskCreatePage: FC = () => {
       });
       navigate(returnUrl, { state: { refresh: true } });
     } catch (error) {
-      const { traceId } = await getApiErrorDetails(error);
+      const { traceId, code } = await getApiErrorDetails(error);
+      const fieldErrors = mapScheduledTaskApiError(code, t);
+      if (fieldErrors) {
+        setErrors(fieldErrors);
+        setIsSubmitting(false);
+        return;
+      }
       showErrorNotification({
         message: t(ScheduledTasksI18nKeys.CreateErrorNotification),
         requestId: traceId,
@@ -152,6 +194,7 @@ const ScheduledTaskCreatePage: FC = () => {
     }
   }, [
     values,
+    isSkillsSupported,
     showSuccessNotification,
     showErrorNotification,
     t,
@@ -175,7 +218,22 @@ const ScheduledTaskCreatePage: FC = () => {
       onRefineInstructions={onRefineInstructions}
       labels={labels}
       values={values}
-      errors={errors}
+      errors={effectiveErrors}
+      skillLabelId={skillLabelId}
+      skillErrorId={skillErrorId}
+      skillSelector={
+        isSkillSelectionEnabled ? (
+          <ScheduledTaskSkillField
+            value={values.skillUrl}
+            onChange={(value) => handleFieldChange('skillUrl', value)}
+            isSkillsSupported={isSkillsSupported}
+            isDisabled={isSubmitting}
+            isInvalid={Boolean(effectiveErrors.skillUrl)}
+            labelledById={skillLabelId}
+            describedById={effectiveErrors.skillUrl ? skillErrorId : undefined}
+          />
+        ) : undefined
+      }
       modelSelector={
         <DeploymentSelectorFieldTrigger
           selectedId={values.modelId || null}

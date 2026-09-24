@@ -39,6 +39,55 @@ describe('buildScheduledTaskChatCompletionUrl', () => {
 });
 
 describe('toUpstreamSchedulePayload', () => {
+  it.each([
+    'skills/public/my report',
+    'skills/public/my%20report',
+    'skills/public/\u062a\u0642\u0631\u064a\u0631',
+  ])('encodes and reads a message-level skill: %s', (skillUrl) => {
+    const payload = toUpstreamSchedulePayload(
+      {
+        displayName: 'Skill task',
+        model: 'model',
+        prompt: '',
+        skillUrl,
+        trigger: { date: '2026-12-01T09:00:00Z' },
+      },
+      DIAL_CORE_URL,
+      DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
+    );
+    const expectedUrl = skillUrl
+      .split('/')
+      .map((part) => encodeURIComponent(decodeURIComponent(part)))
+      .join('/');
+    expect(payload.properties.payload.messages).toEqual([
+      {
+        role: 'user',
+        content: '',
+        custom_content: { skills: [{ url: expectedUrl }] },
+      },
+    ]);
+    expect(payload.properties.payload).not.toHaveProperty('custom_content');
+    const mapped = fromUpstreamSchedule({ id: 'task', ...payload });
+    expect(mapped).toMatchObject({ prompt: '', skillUrl: expectedUrl });
+    expect(
+      toUpstreamSchedulePayload(
+        { ...mapped, model: 'model', prompt: '', trigger: mapped.trigger },
+        DIAL_CORE_URL,
+        DIAL_API_VERSION,
+        SCHEDULER_SERVICE_ID,
+      ).properties.payload,
+    ).toEqual(payload.properties.payload);
+  });
+
+  it('does not invent a skill for a sparse list row', () => {
+    expect(
+      fromUpstreamSchedule({
+        id: 'task',
+        display_name: 'Task',
+      } as UpstreamScheduleResponse).skillUrl,
+    ).toBeUndefined();
+  });
   it('builds the fixed chat_completion body for a date trigger, using the configured service_id', () => {
     const body: CreateScheduledTaskBodyDto = {
       displayName: 'Daily summary',

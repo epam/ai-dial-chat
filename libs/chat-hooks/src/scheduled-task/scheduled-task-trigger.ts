@@ -157,18 +157,21 @@ export const mapFormValuesToCreateBody = (
     trigger,
     model: values.modelId,
     prompt: values.prompt.trim(),
+    ...(values.skillUrl ? { skillUrl: values.skillUrl } : {}),
     ...(trimmedDescription ? { description: trimmedDescription } : {}),
   };
 };
 
 /**
- * Maps validated edit-form values to the `PUT /api/v1/scheduled-tasks/:scheduleId`
- * request body. `UpdateScheduledTaskBodyDto` has the same shape as
- * `CreateScheduledTaskBodyDto`, so this reuses the same trigger-building logic.
+ * Maps a complete, validated edit draft to an update body. An unset skill
+ * emits null to remove the saved reference; hydrate from detail before editing.
  */
 export const mapFormValuesToUpdateBody = (
   values: ScheduledTaskCreateFormValues,
-): UpdateScheduledTaskBodyDto => mapFormValuesToCreateBody(values);
+): UpdateScheduledTaskBodyDto => ({
+  ...mapFormValuesToCreateBody(values),
+  skillUrl: values.skillUrl || null,
+});
 
 /**
  * Converts a UTC ISO instant to the local `YYYY-MM-DDTHH:mm` string the
@@ -296,7 +299,11 @@ const parseCronFields = (
 export const mapScheduledTaskDtoToFormValues = (
   dto: ScheduledTaskDto,
 ): ScheduledTaskDtoMappingResult => {
-  if (!dto.model || !dto.prompt) {
+  if (
+    !dto.model ||
+    typeof dto.prompt !== 'string' ||
+    (!dto.prompt.trim() && !dto.skillUrl)
+  ) {
     return {
       ok: false,
       reason: UnsupportedTriggerReason.MissingRequiredFields,
@@ -315,11 +322,12 @@ export const mapScheduledTaskDtoToFormValues = (
 
   const base: Pick<
     ScheduledTaskCreateFormValues,
-    'displayName' | 'modelId' | 'prompt' | 'description'
+    'displayName' | 'modelId' | 'prompt' | 'description' | 'skillUrl'
   > = {
     displayName: dto.displayName,
     modelId: dto.model,
     prompt: dto.prompt,
+    ...(dto.skillUrl ? { skillUrl: dto.skillUrl } : {}),
     ...(dto.description ? { description: dto.description } : {}),
   };
 

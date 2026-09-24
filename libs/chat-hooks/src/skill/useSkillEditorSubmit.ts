@@ -152,6 +152,10 @@ export interface UseSkillEditorSubmitResult {
   errors: SkillEditorErrors;
   /** General submit-time error, distinct from a stale-edit `conflict`. */
   submitError: string | undefined;
+  /** Whether `submitError` was caused by something a plain re-send can clear, rather than by the submission itself. */
+  isSubmitErrorRetryable: boolean;
+  /** Re-submits the values of the attempt that produced `submitError`. No-op before the first submit. */
+  retrySubmit: () => void;
   /** Present when the last save hit a stale-ETag conflict. */
   conflict: { message: string } | undefined;
   /** Clears `conflict`, e.g. once the host has reloaded the latest skill. */
@@ -189,9 +193,11 @@ export const useSkillEditorSubmit = ({
 }: UseSkillEditorSubmitParams): UseSkillEditorSubmitResult => {
   const [errors, setErrors] = useState<SkillEditorErrors>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
+  const [isSubmitErrorRetryable, setIsSubmitErrorRetryable] = useState(false);
   const [conflict, setConflict] = useState<{ message: string } | undefined>();
   const [phase, setPhase] = useState<SubmitPhase>('idle');
   const lastAttemptRef = useRef<LastAttempt | null>(null);
+  const lastValuesRef = useRef<SkillEditorValues | null>(null);
 
   const applyUploadErrorStatus = useCallback(
     async (err: unknown) => {
@@ -214,7 +220,14 @@ export const useSkillEditorSubmit = ({
           setSubmitError(messages.archiveTooLarge);
           return;
         case 503:
+          /*
+           * Nothing about the submission was wrong, so the message is only
+           * half the answer — the form still holds everything needed to send
+           * it again, and the caller is offered a retry rather than being
+           * left to find the Save button again.
+           */
           setSubmitError(messages.serviceUnavailable);
+          setIsSubmitErrorRetryable(true);
           return;
         case 400: {
           /*
@@ -444,7 +457,9 @@ export const useSkillEditorSubmit = ({
 
       setErrors({});
       setSubmitError(undefined);
+      setIsSubmitErrorRetryable(false);
       setConflict(undefined);
+      lastValuesRef.current = values;
 
       if (isEditMode) {
         await handleSubmitEdit(values);
@@ -455,10 +470,23 @@ export const useSkillEditorSubmit = ({
     [phase, bucket, messages, isEditMode, handleSubmitEdit, handleSubmitCreate],
   );
 
+  /*
+   * Re-submits the values the failed attempt carried. `handleSubmit`
+   * fingerprints them and reuses the payload it already built, so a retry
+   * costs no rebuild of the manifest or the file blobs.
+   */
+  const retrySubmit = useCallback(() => {
+    const values = lastValuesRef.current;
+    if (values == null) return;
+    void handleSubmit(values);
+  }, [handleSubmit]);
+
   return {
     phase,
     errors,
     submitError,
+    isSubmitErrorRetryable,
+    retrySubmit,
     conflict,
     clearConflict: () => setConflict(undefined),
     handleSubmit,

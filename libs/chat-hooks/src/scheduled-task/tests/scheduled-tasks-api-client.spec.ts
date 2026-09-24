@@ -13,6 +13,37 @@ const configuredClient = {
 };
 
 describe('createScheduledTasksApiClient', () => {
+  it('retains skills and explicit removal across the configured operation boundary', async () => {
+    const api = createScheduledTasksApiClient(configuredClient);
+    const body = {
+      displayName: 'Report',
+      model: 'model',
+      prompt: '',
+      skillUrl: 'skills/public/report',
+      trigger: { date: '2026-12-01T09:00:00Z' },
+    };
+    configuredClient.createScheduledTask.mockResolvedValue({
+      id: 'task',
+      ...body,
+    });
+    expect(await api.createScheduledTask(body)).toMatchObject({
+      skillUrl: body.skillUrl,
+      prompt: '',
+    });
+    await api.updateScheduledTask('task', {
+      ...body,
+      prompt: 'Instructions',
+      skillUrl: null,
+    });
+    expect(configuredClient.updateScheduledTask).toHaveBeenCalledWith({
+      scheduleId: 'task',
+      updateScheduledTaskBodyDto: {
+        ...body,
+        prompt: 'Instructions',
+        skillUrl: null,
+      },
+    });
+  });
   it('forwards list parameters and the abort signal to the configured client', async () => {
     configuredClient.listScheduledTasks.mockResolvedValue({
       items: [],

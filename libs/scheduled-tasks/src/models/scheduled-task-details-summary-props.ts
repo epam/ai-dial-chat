@@ -16,6 +16,10 @@ export interface ScheduledTaskDetailsSummaryStyles {
 
 /** Props for the {@link ScheduledTaskDetailsSummary} component. */
 export interface ScheduledTaskDetailsSummaryProps {
+  /** Localized label of the optional skill field. */
+  skillLabel?: string;
+  /** Resolved skill name or full saved reference; omit to hide the field. */
+  skillDisplayName?: string;
   /** Label for the model field, e.g. "Model". */
   modelLabel: string;
   /** Label for the instructions field, e.g. "Instructions". */

@@ -1,8 +1,11 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
+  BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +16,7 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
+import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
@@ -31,6 +35,7 @@ import {
   type UpstreamScheduleRun,
 } from './scheduled-tasks.mapper';
 import { ScheduleAction } from './types/schedule-action.enum';
+import { ScheduledTaskErrorCode } from './types/scheduled-task-error-code.enum';
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
 const LIST_CACHE_EPOCH_TTL_MS = 24 * 60 * 60 * 1000;
@@ -68,6 +73,7 @@ export class ScheduledTasksService {
     private readonly dialClient: DialClientService,
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly deploymentsService: DeploymentsService,
   ) {
     this.schedulerAppId = configService.get('SCHEDULER_APP_ID', {
       infer: true,
@@ -350,7 +356,9 @@ export class ScheduledTasksService {
     userSub: string,
     accessToken: string,
     body: CreateScheduledTaskBodyDto,
+    bucket = '',
   ): Promise<ScheduledTaskDto> {
+    await this.validateConfiguration(body, accessToken, bucket);
     const payload = toUpstreamSchedulePayload(
       body,
       this.dialClient.baseUrl,
@@ -419,12 +427,20 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
     body: UpdateScheduledTaskBodyDto,
+    bucket = '',
   ): Promise<ScheduledTaskDto> {
+    const serviceId = this.getSchedulerServiceId();
+    const saved = await this.getScheduledTask(accessToken, scheduleId);
+    const effectiveBody = {
+      ...body,
+      skillUrl: body.skillUrl === undefined ? saved.skillUrl : body.skillUrl,
+    };
+    await this.validateConfiguration(effectiveBody, accessToken, bucket);
     const payload = toUpstreamSchedulePayload(
-      body,
+      effectiveBody,
       this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
-      this.getSchedulerServiceId(),
+      serviceId,
     );
 
     const result = await this.fetchUpstream(
@@ -437,6 +453,63 @@ export class ScheduledTasksService {
 
     await this.invalidateListCache(userSub);
     return fromUpstreamSchedule(result);
+  }
+
+  private async validateConfiguration(
+    body: CreateScheduledTaskBodyDto,
+    accessToken: string,
+    bucket: string,
+  ): Promise<void> {
+    if (!body.prompt.trim() && !body.skillUrl) {
+      throw new BadRequestException({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: ScheduledTaskErrorCode.InstructionsOrSkillRequired,
+        field: 'prompt',
+        message: 'Choose a skill or write instructions.',
+      });
+    }
+    if (!body.skillUrl) return;
+
+    const unavailable = {
+      code: ScheduledTaskErrorCode.DeploymentUnavailable,
+      field: 'model',
+      message: 'Selected model is unavailable.',
+    };
+    let deployment;
+    try {
+      deployment = await this.deploymentsService.resolveDeploymentItem(
+        body.model,
+        accessToken,
+        bucket,
+      );
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw new ForbiddenException({
+          ...unavailable,
+          statusCode: 403,
+          error: 'Forbidden',
+        });
+      }
+      if (!(error instanceof NotFoundException)) throw error;
+    }
+    if (!deployment) {
+      throw new NotFoundException({
+        ...unavailable,
+        statusCode: 404,
+        error: 'Not Found',
+      });
+    }
+    if (deployment.features?.skillsSupported !== true) {
+      throw new BadRequestException({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: ScheduledTaskErrorCode.SkillUnsupported,
+        field: 'skillUrl',
+        message:
+          'Selected model does not support skills. Remove the skill or select different model to proceed.',
+      });
+    }
   }
 
   /*

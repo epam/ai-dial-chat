@@ -1009,14 +1009,14 @@ describe('SkillsController (integration)', () => {
   });
 
   describe('POST /api/v1/skills/grouping-folders', () => {
-    it('returns 200 and delegates to the service', async () => {
+    it('returns 201 and delegates to the service', async () => {
       service.createSkillGroupingFolder.mockResolvedValue({
         etag: '"folder-etag"',
       });
 
       const res = await request(app.getHttpServer())
         .post('/api/v1/skills/grouping-folders?bucket=my-bucket&path=team-a/')
-        .expect(200);
+        .expect(201);
 
       expect(res.body).toEqual({ etag: '"folder-etag"' });
       expect(service.createSkillGroupingFolder).toHaveBeenCalledWith(

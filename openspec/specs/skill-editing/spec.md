@@ -21,9 +21,16 @@ A non-empty `id` SHALL switch the page to edit mode. A full `skills/{ownerBucket
 
 #### Scenario: Whole-skill ZIP is incompatible with the Core installation
 
-- **WHEN** the canonical whole-skill download returns `400` as a grouping folder, or returns an archive without a usable ETag/root manifest
+- **WHEN** the canonical whole-skill download returns `400` as a grouping folder, or returns an archive whose body cannot be unpacked into a root manifest
 - **THEN** the editor loads `SKILL.md`, recursive file metadata, and every supporting file through the granular skill-file endpoints
 - **AND** it derives supporting-file paths relative to `{skillPath}/files`, preserves the resource ETag for update, and never sends the technical `files` prefix back as part of a file path
+
+A **missing ETag** is not one of these cases and SHALL NOT trigger the granular path, which can only offer the manifest *file*'s own ETag — sending that as a whole-skill `If-Match` makes the save fail with `412` under a conflict banner blaming an edit nobody made. It is a load failure, per "Edit load requires an ETag and never falls back to an empty create form" below.
+
+#### Scenario: A missing ETag does not fall back to the granular path
+
+- **WHEN** the whole-skill download returns a readable archive with no `ETag` header
+- **THEN** the editor does not call the granular skill-file endpoints, and shows the retryable load-error state
 
 #### Scenario: Development StrictMode does not abort an active ZIP stream
 

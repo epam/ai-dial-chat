@@ -9,6 +9,12 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ConversationSourcesPanelContainer from '../ConversationSourcesPanel';
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: () => ({ skills: [], publicSkills: [], sharedWithMe: [] }),
+}));
+vi.mock('../../../server-api/skills.api', () => ({
+  getSkillMetadata: vi.fn().mockRejectedValue(new Error('Unavailable')),
+}));
 
 const mockNavigate = vi.fn();
 vi.mock('react-router', () => ({
@@ -60,12 +66,13 @@ vi.mock('@epam/ai-dial-source-panel', () => ({
     <div>
       {title && <h1>{title}</h1>}
       {additionalSections}
-      <button
-        type="button"
-        aria-label="Download all"
-        disabled={!onDownloadAll}
-        onClick={onDownloadAll}
-      />
+      {onDownloadAll && (
+        <button
+          type="button"
+          aria-label="Download all"
+          onClick={onDownloadAll}
+        />
+      )}
     </div>
   ),
 }));
@@ -232,19 +239,13 @@ describe('ConversationSourcesPanelContainer — download all', () => {
     vi.useRealTimers();
   });
 
-  it('renders the download-all button disabled when there is no downloadable attachment', () => {
+  it('hides the download-all button when there is no downloadable attachment', () => {
     mockUploaded = [
       makeAttachment('reference.pdf', { url: 'https://external.com/f.pdf' }),
     ];
     render(<ConversationSourcesPanelContainer />);
 
-    expect(
-      (
-        screen.getByRole('button', {
-          name: 'Download all',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
   });
 
   it('renders the download-all button enabled when a downloadable attachment is present', () => {
@@ -264,6 +265,24 @@ describe('ConversationSourcesPanelContainer — download all', () => {
 });
 
 describe('ConversationSourcesPanelContainer — scheduled-task sections', () => {
+  it('shows a saved skill fallback in task Details', async () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.taskState = 'success';
+    activeScheduledTaskMock.task = {
+      id: 'schedule-1',
+      displayName: 'Task',
+      prompt: '',
+      skillUrl: 'skills/public/deleted',
+    } as ScheduledTaskDto;
+    render(<ConversationSourcesPanelContainer />);
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'scheduledTasks.create.detailsSectionTitle',
+      }),
+    );
+    expect(screen.getByText('skills/public/deleted')).toBeTruthy();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mockUploaded = [];
@@ -382,13 +401,7 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
 
     render(<ConversationSourcesPanelContainer />);
 
-    expect(
-      (
-        screen.getByRole('button', {
-          name: 'Download all',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
   });
 
   it('shows the "Show more" button only while hasMore is true, wired to loadMore', async () => {

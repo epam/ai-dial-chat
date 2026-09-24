@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.12 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.15 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -107,7 +107,7 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Every other field, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", or "monthly"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", or "monthly"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
 
 `isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty or the time draft is invalid, so the affordance is the only thing that separates "submitting" from "not ready".
 
@@ -199,6 +199,31 @@ import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
 ```
 
 ## Validation entry point
+
+### Optional skill configuration
+
+`ScheduledTaskCreateForm` accepts `skillSelector?: ReactNode`, `skillLabelId`,
+`skillErrorId`, and `labels.skillLabel`. The slot appears above Instructions;
+the host passes the same IDs as the control's `labelledById` / `describedById`.
+`values.skillUrl?: string` holds the selection and `errors.skillUrl?: string`
+holds a localized error. Errors stay visible even when the slot is hidden.
+Model remains in Details. Selection and catalog integration belong to the host;
+`SkillSelectorField` from the skills package can supply the control.
+
+Instructions only, skill only, or both satisfy the content requirement. Save is
+disabled for empty content or a skill error. Pass `isSkillsSupported: true` to
+`validateScheduledTaskFormValues` only when support is explicitly confirmed for
+the draft model. Omitted/false support rejects any selected reference, even
+without resolved metadata. Codes `SkillUnsupported` and
+`InstructionsOrSkillRequired` are translated by the host; `PromptRequired`
+remains exported for compatibility. Revalidate on model or selection changes
+and use checked request preparation before submission.
+
+`ScheduledTaskConfigurationSection` and `ScheduledTaskDetailsSummary` accept
+optional `skillLabel` / `skillDisplayName`. `ScheduledTaskDetailView` accepts
+`skillDisplayName` and `labels.skillLabel`. Supply a resolved name or the full
+reference as fallback. Skill appears before Instructions as plain text; absent
+skills and empty instructions render no field. Libraries perform no lookup.
 
 Use the pure validation entry before an app submits a task. It returns typed
 error codes rather than translated text, and accepts an injected clock for
@@ -298,18 +323,18 @@ the class names used by the published JavaScript.
 The `/validation` subpath ships its own JavaScript and declaration entry and
 can be imported without mounting UI. The packed consumer's test target checks
 installed tarball resolution, the runtime validation import, and isolated
-TypeScript compatibility without a browser:
+TypeScript compatibility:
 
 ```sh
-npm exec nx run scheduled-tasks-consumer-fixture:test
+npm exec -- nx run scheduled-tasks-consumer-fixture:test
 ```
 
 Responsive visibility and spacing in scheduler surfaces and their builder shell
 use scoped CSS with the package's 1280px desktop threshold. Host utility styles
 using a different desktop threshold do not expose duplicate titles/actions or
-show the Create label inside its mobile icon button. Browser interactions and
-visual layout are outside the packed fixture's automated checks; application
-scenarios belong in the separate e2e suite.
+show the Create label inside its mobile icon button. The packed fixture supports
+manual checks of skill selection/removal, focus and responsive RTL layouts;
+application scenarios belong in the separate e2e suite.
 
 ## AI text refinement
 

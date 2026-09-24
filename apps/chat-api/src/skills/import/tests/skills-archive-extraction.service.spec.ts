@@ -40,6 +40,58 @@ const buildZipBuffer = (entries: ZipEntry[]): Promise<Buffer> =>
     void archive.finalize();
   });
 
+const EOCD_SIGNATURE = 0x06054b50;
+const CENTRAL_SIGNATURE = 0x02014b50;
+/* Field offsets within a central directory file header (APPNOTE 4.3.12). */
+const GENERAL_PURPOSE_FLAG_OFFSET = 8;
+const UNCOMPRESSED_SIZE_OFFSET = 24;
+const FILE_NAME_LENGTH_OFFSET = 28;
+const CENTRAL_HEADER_FIXED_SIZE = 46;
+
+/**
+ * Applies `patch` to the `index`-th central directory file header. The
+ * directory is located through the end-of-central-directory record and then
+ * walked record by record, rather than by scanning for the signature bytes,
+ * which can also occur inside compressed file data.
+ */
+const patchCentralDirectoryEntry = (
+  buffer: Buffer,
+  index: number,
+  patch: (patched: Buffer, headerOffset: number) => void,
+): Buffer => {
+  const patched = Buffer.from(buffer);
+
+  let eocdOffset = -1;
+  for (let offset = patched.length - 22; offset >= 0; offset -= 1) {
+    if (patched.readUInt32LE(offset) === EOCD_SIGNATURE) {
+      eocdOffset = offset;
+      break;
+    }
+  }
+  if (eocdOffset < 0) throw new Error('Test archive has no EOCD record');
+
+  let headerOffset = patched.readUInt32LE(eocdOffset + 16);
+  for (let entry = 0; entry < index; entry += 1) {
+    const nameLength = patched.readUInt16LE(
+      headerOffset + FILE_NAME_LENGTH_OFFSET,
+    );
+    const extraLength = patched.readUInt16LE(
+      headerOffset + FILE_NAME_LENGTH_OFFSET + 2,
+    );
+    const commentLength = patched.readUInt16LE(
+      headerOffset + FILE_NAME_LENGTH_OFFSET + 4,
+    );
+    headerOffset +=
+      CENTRAL_HEADER_FIXED_SIZE + nameLength + extraLength + commentLength;
+  }
+  if (patched.readUInt32LE(headerOffset) !== CENTRAL_SIGNATURE) {
+    throw new Error(`Test archive has no central directory entry ${index}`);
+  }
+
+  patch(patched, headerOffset);
+  return patched;
+};
+
 /**
  * Flips the encrypted bit (bit 0 of the general-purpose bit flag) in the
  * central directory header only — `SkillsArchiveExtractionService` rejects
@@ -48,18 +100,38 @@ const buildZipBuffer = (entries: ZipEntry[]): Promise<Buffer> =>
  * file header's actual compressed bytes untouched) exercises the rejection
  * without producing a stream yauzl would fail to decode.
  */
-const markFirstEntryEncrypted = (buffer: Buffer): Buffer => {
-  const patched = Buffer.from(buffer);
-  const CENTRAL_SIGNATURE = 0x02014b50;
-  for (let offset = 0; offset < patched.length - 4; offset += 1) {
-    if (patched.readUInt32LE(offset) === CENTRAL_SIGNATURE) {
-      const flagOffset = offset + 8;
-      patched.writeUInt16LE(patched.readUInt16LE(flagOffset) | 0x1, flagOffset);
-      break;
+const markFirstEntryEncrypted = (buffer: Buffer): Buffer =>
+  patchCentralDirectoryEntry(buffer, 0, (patched, headerOffset) => {
+    const flagOffset = headerOffset + GENERAL_PURPOSE_FLAG_OFFSET;
+    patched.writeUInt16LE(patched.readUInt16LE(flagOffset) | 0x1, flagOffset);
+  });
+
+/**
+ * Flips the strong-encryption bit (bit 6) instead. yauzl refuses such an
+ * entry while walking the central directory, so the service never reaches
+ * its own bit-0 check — the path a real password-protected archive takes.
+ */
+const markFirstEntryStronglyEncrypted = (buffer: Buffer): Buffer =>
+  patchCentralDirectoryEntry(buffer, 0, (patched, headerOffset) => {
+    const flagOffset = headerOffset + GENERAL_PURPOSE_FLAG_OFFSET;
+    patched.writeUInt16LE(patched.readUInt16LE(flagOffset) | 0x40, flagOffset);
+  });
+
+/** Deflated (not stored) archive, so an entry's declared size can be patched independently of its compressed bytes. */
+const buildDeflatedArchive = (entries: ZipEntry[]): Promise<Buffer> =>
+  new Promise((resolvePromise, reject) => {
+    const archive = archiver('zip');
+    const chunks: Buffer[] = [];
+    archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+    archive.on('error', reject);
+    archive.on('end', () => resolvePromise(Buffer.concat(chunks)));
+    for (const entry of entries) {
+      archive.append(Buffer.from(entry.content ?? 'content'), {
+        name: entry.name,
+      });
     }
-  }
-  return patched;
-};
+    void archive.finalize();
+  });
 
 const withArchiveFile = async <T>(
   buffer: Buffer,
@@ -296,20 +368,52 @@ describe('SkillsArchiveExtractionService', () => {
     // size-consistency check (`compressedSize === uncompressedSize`) would
     // otherwise reject this synthetically-flagged entry for the wrong
     // reason before the encryption check is ever reached.
-    const buffer = await new Promise<Buffer>((resolvePromise, reject) => {
-      const archive = archiver('zip');
-      const chunks: Buffer[] = [];
-      archive.on('data', (chunk: Buffer) => chunks.push(chunk));
-      archive.on('error', reject);
-      archive.on('end', () => resolvePromise(Buffer.concat(chunks)));
-      archive.append(Buffer.from(VALID_MANIFEST), { name: 'SKILL.md' });
-      void archive.finalize();
-    });
+    const buffer = await buildDeflatedArchive([
+      { name: 'SKILL.md', content: VALID_MANIFEST },
+    ]);
     const encryptedBuffer = markFirstEntryEncrypted(buffer);
 
     await expect(
       withArchiveFile(encryptedBuffer, (path) => service.extract(path)),
     ).rejects.toBeInstanceOf(UnprocessableEntityException);
+  });
+
+  it('rejects a strongly encrypted entry that yauzl refuses to enumerate', async () => {
+    const service = makeService();
+    const buffer = await buildDeflatedArchive([
+      { name: 'SKILL.md', content: VALID_MANIFEST },
+    ]);
+
+    await expect(
+      withArchiveFile(markFirstEntryStronglyEncrypted(buffer), (path) =>
+        service.extract(path),
+      ),
+    ).rejects.toBeInstanceOf(UnprocessableEntityException);
+  });
+
+  it('rejects an entry that under-declares its size and unpacks past the per-file limit', async () => {
+    const service = makeService({ SKILL_FILE_UPLOAD_MAX_BYTES: 1024 });
+    const buffer = await buildDeflatedArchive([
+      { name: 'SKILL.md', content: VALID_MANIFEST },
+      { name: 'big.txt', content: 'x'.repeat(4096) },
+    ]);
+
+    /*
+     * The classic zip-bomb shape: the archive claims one byte where the
+     * entry really holds 4 KiB. The limit has to be decided by the bytes
+     * that arrive, not by the figure the archive states about itself.
+     */
+    const lying = patchCentralDirectoryEntry(
+      buffer,
+      1,
+      (patched, headerOffset) => {
+        patched.writeUInt32LE(1, headerOffset + UNCOMPRESSED_SIZE_OFFSET);
+      },
+    );
+
+    await expect(
+      withArchiveFile(lying, (path) => service.extract(path)),
+    ).rejects.toBeInstanceOf(PayloadTooLargeException);
   });
 
   it('rejects a symbolic link entry', async () => {

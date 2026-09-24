@@ -40,6 +40,8 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   onToggleFavorite,
   onBrowse,
   onViewDetails,
+  className,
+  rowClassName,
   searchQuery,
   labels = {},
   colors,
@@ -119,7 +121,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   const handleToggleFavorite = (id: string) => {
     setLeavingIds((prev) => new Set(prev).add(id));
     const timeout = setTimeout(() => {
-      onToggleFavorite(id);
+      onToggleFavorite?.(id);
       setLeavingIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -134,10 +136,12 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
     const row = (
       <div
         role="button"
+        aria-label={item.name}
         tabIndex={0}
         className={mergeClasses(
           'flex cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 transition-colors',
           styles.row,
+          rowClassName,
         )}
         onClick={() => onSelect(item)}
         onKeyDown={(e) => handleKeyDown(e, item)}
@@ -160,22 +164,24 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
             {item.name}
           </span>
         )}
-        <ToggleIconButton
-          icon={
-            <IconStarFilled
-              size={DIAL_ICON_SIZE.SM}
-              className={styles.star}
-              aria-hidden
-            />
-          }
-          aria-label={removeFromFavoritesLabel}
-          /* Every row in this panel is a favorite, so the star is always on. */
-          isSelected
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleFavorite(item.id);
-          }}
-        />
+        {onToggleFavorite && (
+          <ToggleIconButton
+            icon={
+              <IconStarFilled
+                size={DIAL_ICON_SIZE.SM}
+                className={styles.star}
+                aria-hidden
+              />
+            }
+            aria-label={removeFromFavoritesLabel}
+            /* Every row in this panel is a favorite, so the star is always on. */
+            isSelected
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleFavorite(item.id);
+            }}
+          />
+        )}
       </div>
     );
 
@@ -193,19 +199,23 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
          * and renders nothing on touch-only devices, where tapping the row
          * still selects the skill.
          */}
-        <InteractiveTooltip
-          asChild
-          contentClassName="max-w-[550px]"
-          content={
-            <SkillInfoTooltipContent
-              description={item.description}
-              viewDetailsLabel={viewDetailsLabel}
-              onViewDetails={() => onViewDetails(item)}
-            />
-          }
-        >
-          {row}
-        </InteractiveTooltip>
+        {onViewDetails ? (
+          <InteractiveTooltip
+            asChild
+            contentClassName="max-w-[550px]"
+            content={
+              <SkillInfoTooltipContent
+                description={item.description}
+                viewDetailsLabel={viewDetailsLabel}
+                onViewDetails={() => onViewDetails(item)}
+              />
+            }
+          >
+            {row}
+          </InteractiveTooltip>
+        ) : (
+          row
+        )}
       </li>
     );
   };
@@ -258,6 +268,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
     <div
       className={mergeClasses(
         'flex w-full flex-col desktop:w-[280px]',
+        className,
         SKILLS_CLASS.favoritesPanel,
       )}
       style={cssVars}

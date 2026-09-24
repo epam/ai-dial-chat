@@ -15,6 +15,7 @@ import { IconCheck } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useEffect, useState } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
+import type { ModelMenuStyles } from '../../models/Input';
 import { buildDeploymentIcon, filterDeployments } from '../../utils/deployment';
 import type { BottomSheetShellColors } from '../BottomSheetShell/BottomSheetShell';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
@@ -54,6 +55,10 @@ interface ModelRowData {
   labelClassName: string;
   /** Current search query — used to highlight matches in item labels. */
   query: string;
+  /** Host class on every row. */
+  itemClassName?: string;
+  /** Host class on the selected row, additive to `itemClassName`. */
+  selectedItemClassName?: string;
   /** Invoked when a row is tapped. */
   onSelect: (id: string) => void;
 }
@@ -67,6 +72,8 @@ const ModelRow = ({
   selectedDeploymentId,
   labelClassName,
   query,
+  itemClassName,
+  selectedItemClassName,
   onSelect,
 }: RowComponentProps<ModelRowData>) => {
   const item = items[index];
@@ -85,7 +92,14 @@ const ModelRow = ({
         /* The check icon alone is invisible to assistive tech, so the row that
            holds the applied deployment reports itself as the current one. */
         aria-current={isSelected ? 'true' : undefined}
-        className={mergeClasses(styles.item, 'h-full w-full gap-3 px-4')}
+        className={mergeClasses(
+          styles.item,
+          'h-full w-full gap-3 px-4',
+          itemClassName,
+          isSelected && selectedItemClassName,
+          CONVERSATION_INPUT_CLASS.modelMenuItem,
+          isSelected && CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+        )}
         iconBefore={<span className={styles.itemIcon}>{modelIcon}</span>}
         label={
           <span className="flex flex-1 items-center justify-between gap-2">
@@ -146,6 +160,8 @@ export interface ModelSelectorBottomSheetProps {
   labelClassName?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: ModelSelectorBottomSheetColors;
+  /** Host styling hooks shared with the desktop menu: panel, search row and rows. */
+  menuStyles?: ModelMenuStyles;
 }
 
 /** Mobile bottom-sheet model selector with search and a virtualized deployment list. */
@@ -165,6 +181,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   titleClassName = 'dial-body-semi-text',
   labelClassName = 'dial-small-text',
   colors,
+  menuStyles,
 }) => {
   const [query, setQuery] = useState('');
 
@@ -205,6 +222,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
       titleClassName={titleClassName}
       className={mergeClasses(
         'max-h-[80dvh]',
+        menuStyles?.className,
         CONVERSATION_INPUT_CLASS.modelMenu,
       )}
       colors={colors?.shell}
@@ -213,7 +231,18 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
         {/* Search */}
         {hasDeployments && !isLoading && (
           <>
-            <div className="flex-shrink-0 px-4 py-[10px]">
+            <div
+              style={buildCssVars({
+                '--ci-sheet-search-bg':
+                  menuStyles?.colors?.searchHeaderBackground,
+              })}
+              className={mergeClasses(
+                'flex-shrink-0 px-4 py-[10px]',
+                styles.search,
+                menuStyles?.searchHeaderClassName,
+                CONVERSATION_INPUT_CLASS.modelMenuSearch,
+              )}
+            >
               <Search
                 value={query}
                 placeholder={searchPlaceholder}
@@ -256,6 +285,8 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
               selectedDeploymentId,
               labelClassName,
               query,
+              itemClassName: menuStyles?.itemClassName,
+              selectedItemClassName: menuStyles?.selectedItemClassName,
               onSelect: handleSelect,
             }}
           />

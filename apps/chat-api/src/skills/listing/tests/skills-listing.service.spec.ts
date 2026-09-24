@@ -289,6 +289,93 @@ describe('SkillsListingService', () => {
     });
   });
 
+  /*
+   * DIAL Core's cursor walks storage objects while this listing shows only
+   * skills, so an upstream page can map to nothing. These cover the walk
+   * that keeps such a page from reaching the caller.
+   */
+  describe('listSkills — upstream pages holding no skill', () => {
+    const page = (items: unknown[], nextToken?: string) => ({
+      error: undefined,
+      response: { status: 200 },
+      data: { items, nextToken },
+    });
+
+    it('follows the cursor past empty pages instead of answering with an empty first page', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listSkillMetadata
+        .mockResolvedValueOnce(page([], 'page-2'))
+        .mockResolvedValueOnce(page([], 'page-3'))
+        .mockResolvedValueOnce(page([skillItem], 'page-4'));
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items).toHaveLength(1);
+      expect(result.nextToken).toBe('page-4');
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledTimes(3);
+    });
+
+    it('never answers with more items than the requested limit', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listSkillMetadata
+        .mockResolvedValueOnce(page([], 'page-2'))
+        .mockResolvedValueOnce(page([skillItem], 'page-3'))
+        .mockResolvedValueOnce(page([skillItem], 'page-4'));
+
+      const result = await service.listSkills(
+        'my-bucket',
+        '',
+        { limit: 2 },
+        'token',
+      );
+
+      expect(result.items).toHaveLength(2);
+      /* Each upstream page asks only for what the limit still lacks. */
+      expect(sdkClient.listSkillMetadata).toHaveBeenNthCalledWith(
+        1,
+        'my-bucket',
+        '',
+        expect.objectContaining({
+          params: { query: { token: undefined, limit: 2, recursive: false } },
+        }),
+      );
+      expect(sdkClient.listSkillMetadata).toHaveBeenNthCalledWith(
+        3,
+        'my-bucket',
+        '',
+        expect.objectContaining({
+          params: { query: { token: 'page-3', limit: 1, recursive: false } },
+        }),
+      );
+    });
+
+    it('stops when the cursor repeats a token', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listSkillMetadata.mockResolvedValue(page([], 'same-token'));
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items).toEqual([]);
+      expect(result.nextToken).toBe('same-token');
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledTimes(2);
+    });
+
+    it('bounds the number of upstream pages one request consumes', async () => {
+      const { service, sdkClient } = makeService();
+      let pageNumber = 0;
+      sdkClient.listSkillMetadata.mockImplementation(() => {
+        pageNumber += 1;
+        return Promise.resolve(page([], `page-${pageNumber}`));
+      });
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items).toEqual([]);
+      expect(result.nextToken).toBe('page-20');
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledTimes(20);
+    });
+  });
+
   describe('listCatalogSkills', () => {
     it('returns personal, writable shared, and read-only public skills', async () => {
       const { service, sdkClient } = makeService({

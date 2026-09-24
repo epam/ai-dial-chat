@@ -241,6 +241,8 @@ const SkillEditorPage: FC = () => {
     phase,
     errors,
     submitError,
+    isSubmitErrorRetryable,
+    retrySubmit,
     conflict,
     clearConflict,
     handleSubmit,
@@ -433,6 +435,7 @@ const SkillEditorPage: FC = () => {
         isSubmitting={phase === 'submitting'}
         errors={errors}
         submitError={submitError}
+        onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}
         conflict={conflict}
         onReloadLatest={handleReloadLatestClick}
         isNameReadOnly={isEditMode}

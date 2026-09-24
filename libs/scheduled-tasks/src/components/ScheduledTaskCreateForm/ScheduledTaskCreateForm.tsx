@@ -78,6 +78,9 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   errors,
   modelSelector,
   modelLabelId,
+  skillSelector,
+  skillLabelId,
+  skillErrorId,
   onFieldChange,
   onBack,
   onCancel,
@@ -206,7 +209,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     isRefining ||
     !values.displayName.trim() ||
     !values.modelId ||
-    !values.prompt.trim() ||
+    (!values.prompt.trim() && !values.skillUrl?.trim()) ||
+    Boolean(errors.skillUrl) ||
     /* An empty shown time blocks Save immediately, like the other required
      * fields — the blur error alone would only catch it on blur or submit. */
     (isTimeFieldShown && !values.time) ||
@@ -549,6 +553,30 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           </p>
         </div>
 
+        {skillSelector != null && (
+          <div className="flex w-full min-w-0 max-w-[996px] flex-col gap-1">
+            <span id={skillLabelId} className={instructionsLabelClassName}>
+              {labels.skillLabel}
+            </span>
+            {skillSelector}
+          </div>
+        )}
+        <div
+          id={skillErrorId}
+          aria-live="polite"
+          className={errors.skillUrl ? undefined : 'sr-only'}
+        >
+          {errors.skillUrl && (
+            <p
+              className={mergeClasses(
+                instructionsErrorClassName,
+                styles.instructionsError,
+              )}
+            >
+              {errors.skillUrl}
+            </p>
+          )}
+        </div>
         <RefinementField
           enabled={Boolean(onRefineInstructions)}
           fieldId={instructionsEditorId}

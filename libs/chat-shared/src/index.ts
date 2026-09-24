@@ -72,3 +72,4 @@ export * from './hooks/useTextRefinement';
  */
 export * from './file-manager/index';
 export { CHAT_SHARED_CLASS } from './constants/public-class-names';
+export { isSkillSelectionUnsupported } from './utils/is-skill-selection-unsupported';

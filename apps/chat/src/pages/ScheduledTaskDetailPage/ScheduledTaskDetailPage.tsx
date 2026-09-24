@@ -34,6 +34,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
+import { useScheduledTaskSkillDisplayName } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayName';
 import { useStaleGuard } from '../../hooks/useStaleGuard';
 import {
   deleteScheduledTask,
@@ -63,6 +64,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const { conversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
+  const skillDisplayName = useScheduledTaskSkillDisplayName(task?.skillUrl);
   const [isTaskLoading, setIsTaskLoading] = useState(true);
   const [taskError, setTaskError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
@@ -211,6 +213,7 @@ const ScheduledTaskDetailPage: FC = () => {
         ScheduledTasksI18nKeys.CreateConfigurationSectionTitle,
       ),
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
+      skillLabel: t(ScheduledTasksI18nKeys.CreateSkillLabel),
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       historyTitle: t(ScheduledTasksI18nKeys.DetailHistoryTitle),
       historyEmptyLabel: t(ScheduledTasksI18nKeys.DetailHistoryEmptyLabel),
@@ -392,6 +395,7 @@ const ScheduledTaskDetailPage: FC = () => {
         activeWindowLabel={activeWindowLabel}
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
+        skillDisplayName={skillDisplayName}
         runs={runItems}
         runsIsLoading={runsIsLoading}
         runsIsLoadingMore={runsIsLoadingMore}
