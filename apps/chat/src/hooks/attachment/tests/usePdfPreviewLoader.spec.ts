@@ -98,7 +98,7 @@ describe('usePdfPreviewLoader', () => {
     vi.stubGlobal(
       'URL',
       class extends NativeURL {
-        get origin() {
+        override get origin() {
           return super.origin.replace('*', '%2A');
         }
       },
