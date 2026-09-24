@@ -26,6 +26,15 @@ describe('getIconMimeType', () => {
     expect(getIconMimeType('favicon')).toBeUndefined();
     expect(getIconMimeType('favicon.bmpx')).toBeUndefined();
   });
+
+  it('reads the extension from the file name, not a dotted directory', () => {
+    expect(getIconMimeType('https://cdn.example.com/assets.svg/logo')).toBe(
+      undefined,
+    );
+    expect(getIconMimeType('https://cdn.example.com/v2.0/logo.png')).toBe(
+      'image/png',
+    );
+  });
 });
 
 describe('getIconPath', () => {

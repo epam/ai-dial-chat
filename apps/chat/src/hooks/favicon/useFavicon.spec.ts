@@ -183,6 +183,23 @@ describe('useFavicon', () => {
     expect(mockLink.type).toBe('image/png');
   });
 
+  it('ignores a stale preload that finishes after the URL changed', () => {
+    document.head.appendChild(mockLink);
+    const { rerender } = renderHook(({ url }) => useFavicon(url), {
+      initialProps: { url: 'old.png' },
+    });
+    // Captured before cleanup nulls it, as a browser may already have queued it
+    const staleOnload = imageInstances[0].onload;
+
+    rerender({ url: 'new.svg' });
+    imageInstances[1].onload?.call(imageInstances[1], new Event('load'));
+    staleOnload?.call(imageInstances[0], new Event('load'));
+
+    expect(imageInstances[0].onload).toBeNull();
+    expect(mockLink.href).toContain('new.svg');
+    expect(mockLink.type).toBe('image/svg+xml');
+  });
+
   it('should preload image before updating link', () => {
     document.head.appendChild(mockLink);
     const faviconUrl = 'https://example.com/favicon.png';

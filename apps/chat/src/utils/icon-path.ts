@@ -21,7 +21,9 @@ const ICON_MIME_TYPES: Record<string, string> = {
  * query string or fragment), or `undefined` when the extension is unknown.
  */
 export const getIconMimeType = (iconName?: string): string | undefined => {
-  const extension = iconName?.split(/[?#]/)[0].split('.').pop()?.toLowerCase();
+  const fileName = iconName?.split(/[?#]/)[0].split('/').pop();
+  if (!fileName?.includes('.')) return undefined;
+  const extension = fileName.split('.').pop()?.toLowerCase();
   return extension ? ICON_MIME_TYPES[extension] : undefined;
 };
 

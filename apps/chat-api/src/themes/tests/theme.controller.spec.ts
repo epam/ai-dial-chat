@@ -123,9 +123,10 @@ describe('ThemeController (integration)', () => {
         .get('/themes/icon?iconName=favicon.svg')
         .expect(200);
 
-      const csp = response.headers['content-security-policy'];
-      expect(csp).toContain("default-src 'none'");
-      expect(csp).toContain('sandbox');
+      // Full string, so a change to the policy is a deliberate test update
+      expect(response.headers['content-security-policy']).toBe(
+        "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+      );
     });
 
     it('does not add the SVG CSP to raster icons', async () => {
