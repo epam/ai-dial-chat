@@ -604,12 +604,9 @@ export class ScheduledTasksService {
         LIST_CACHE_EPOCH_TTL_MS,
       );
     } catch (err) {
-      handleDialFetchError(
-        err,
-        `invalidate scheduled tasks list cache (sub: ${userSub})`,
-        this.logger,
-        0,
-        { swallow: true },
+      this.logger.error(
+        'Failed to invalidate scheduled tasks list cache',
+        err instanceof Error ? err.stack : String(err),
       );
     }
   }

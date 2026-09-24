@@ -443,6 +443,7 @@ elements therefore carry a stable public class.
 
 | Key              | Class                         | Element                                                                |
 | ---------------- | ----------------------------- | ---------------------------------------------------------------------- |
+| `selectorField`  | `dial-skills-selector-field`  | The `SkillSelectorField` root, which carries the themed CSS variables  |
 | `favoritesPanel` | `dial-skills-favorites-panel` | The `FavoriteSkillsPanel` root, which carries the themed CSS variables |
 | `chip`           | `dial-skills-chip`            | The `/name` chip a `ChatSkill` renders inside the composer             |
 

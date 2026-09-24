@@ -699,6 +699,32 @@ describe('ScheduledTasksService', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
+  it.each([new Error('Cache unavailable'), 'Cache unavailable', null])(
+    'logs cache invalidation failure without rejecting a successful deletion: %s',
+    async (error) => {
+      fetchMock.mockResolvedValue({ ok: true });
+      const cacheManager = makeCacheManager();
+      cacheManager.set.mockRejectedValueOnce(error);
+      const logError = vi
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+      const service = new ScheduledTasksService(
+        makeDialClient(),
+        makeConfigService('scheduler-app') as never,
+        cacheManager as never,
+        { resolveDeploymentItem: vi.fn() } as never,
+      );
+
+      await expect(
+        service.deleteScheduledTask('user-1', 'token', 'sched_123'),
+      ).resolves.toBeUndefined();
+      expect(logError).toHaveBeenCalledWith(
+        'Failed to invalidate scheduled tasks list cache',
+        error instanceof Error ? error.stack : String(error),
+      );
+    },
+  );
+
   it('does not invalidate the list cache when update fails', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
