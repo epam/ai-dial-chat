@@ -3,6 +3,7 @@ import {
   AttachmentType,
   MessageRole,
   RequestStatus,
+  ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import {
   act,
@@ -753,5 +754,74 @@ describe('StatusMessageBubble', () => {
      */
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     expect(container.querySelector('svg')).not.toBeNull();
+  });
+});
+
+describe('AssistantMessageBubble — response format', () => {
+  it('renders markdown by default', () => {
+    render(<AssistantMessageBubble text={TABLE_MARKDOWN} />);
+
+    expect(screen.getByRole('table')).toBeTruthy();
+  });
+
+  it('renders the body verbatim when the format is plain text', () => {
+    render(
+      <AssistantMessageBubble
+        text={TABLE_MARKDOWN}
+        responseFormat={ResponseFormat.PlainText}
+      />,
+    );
+
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(findMessageParagraph(TABLE_MARKDOWN)).toBeTruthy();
+  });
+
+  it('forwards the format through the role-switching MessageBubble', () => {
+    render(
+      <MessageBubble
+        role={MessageRole.Assistant}
+        text="**bold**"
+        responseFormat={ResponseFormat.PlainText}
+      />,
+    );
+
+    expect(findMessageParagraph('**bold**')).toBeTruthy();
+  });
+
+  it('keeps the plain-text body inside the markdown wrapper the indent targets', () => {
+    /* The overlaid slot is measured by a ResizeObserver, absent in jsdom. */
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {
+          // No-op in JSDOM.
+        }
+        unobserve() {
+          // No-op in JSDOM.
+        }
+        disconnect() {
+          // No-op in JSDOM.
+        }
+      },
+    );
+
+    render(
+      <AssistantMessageBubble
+        text="plain body"
+        beforeContent={<span>slot</span>}
+        responseFormat={ResponseFormat.PlainText}
+      />,
+    );
+
+    /*
+     * The first-line indent selector is
+     * `.cm-bubble-markdown > div > *:first-child`, so the plain-text body has
+     * to keep the element shape a markdown body has. Only the DOM shape can
+     * show that.
+     */
+    const body = findMessageParagraph('plain body');
+    expect(body.parentElement?.parentElement?.className).toContain(
+      'cm-bubble-markdown',
+    );
   });
 });
