@@ -64,7 +64,7 @@ describe what happens to a legacy deployment's variables. The source of truth is
 | `DIAL_API_HOST`             | `DIAL_CORE_URL`                                            | Internal URL, never exposed to browsers.                                                                                                 |
 | `NEXTAUTH_SECRET`           | `AUTH_SESSION_SECRET`                                      | Must be 64 hex characters (32 bytes) — generate a new one rather than reusing the old.                                                   |
 | `NEXTAUTH_URL`              | `AUTH_CALLBACK_BASE_URL`                                   | Public base URL of the **API**, used to build OIDC redirect URIs. The callback path changed too — see [Authentication](#authentication). |
-| `APP_BASE_ORIGIN`           | `CORS_ORIGIN`                                              | Origin of the browser application; also used by the CSRF origin check.                                                                   |
+| `APP_BASE_ORIGIN`           | `CORS_ORIGIN`                                              | Origin of the browser application; also used by the CSRF origin check. Defaults to `AUTH_CALLBACK_BASE_URL` when not set.                |
 | `IS_IFRAME`                 | `OVERLAY_ENABLED`                                          | `ALLOWED_IFRAME_ORIGINS` keeps its name and now also gates incoming `postMessage`.                                                       |
 | `ENABLED_FEATURES`          | `ENABLED_UI_FEATURES`                                      | Same replace semantics; several flag names changed — see below.                                                                          |
 | `THEMES_CONFIG_HOST`        | `THEMES_CONFIG_URL`                                        | Add `THEMES_SERVICE_TIMEOUT_MS` if 5 s is too tight.                                                                                     |
@@ -81,9 +81,9 @@ describe what happens to a legacy deployment's variables. The source of truth is
 `AUTH_{PROVIDER}_*` variable (Auth0, Azure AD, GitLab, Google, Keycloak, PingID,
 Cognito, Okta) keep their names and meaning.
 
-Two additions apply to all providers in 1.0: `AUTH_POST_LOGOUT_REDIRECT_URI` is
-required once any provider is configured, and each provider can now override
-roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
+Two additions apply to all providers in 1.0: `AUTH_POST_LOGOUT_REDIRECT_URI`
+defaults to `AUTH_CALLBACK_BASE_URL` when not set explicitly, and each provider
+can now override roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
 `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`. Azure B2C is newly supported.
 
 ### Carried over with fields dropped
@@ -185,11 +185,13 @@ Practical consequences for a migration:
   Keycloak answers the authorization request with `Invalid parameter:
 redirect_uri`.
 
-- **Register `AUTH_POST_LOGOUT_REDIRECT_URI` with the provider as well.** It is
-  required in 1.0 once any provider is configured, and federated logout sends the
-  browser there through the IdP, so it must be in the client's post-logout
-  allow-list (Keycloak: _Valid post logout redirect URIs_). Unlike the callback it
-  points at the **application** origin, not the API.
+- **Register the post-logout redirect URI with the provider as well.** In 1.0
+  this is `AUTH_POST_LOGOUT_REDIRECT_URI` when set, or `AUTH_CALLBACK_BASE_URL`
+  otherwise, and federated logout sends the browser there through the IdP, so
+  it must be in the client's post-logout allow-list (Keycloak: _Valid post
+  logout redirect URIs_). Unlike the callback it points at the **application**
+  origin, not the API — set `AUTH_POST_LOGOUT_REDIRECT_URI` explicitly when
+  that differs from `AUTH_CALLBACK_BASE_URL`.
 - **Allow Chat's toolset OAuth callback in DIAL Core.** When toolset OAuth is
   used and more than one client can start sign-in for the same toolset, add the
   1.0 callback URI to Core's `toolsets.security.allowedRedirectUris`, preserving

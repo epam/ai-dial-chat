@@ -56,21 +56,24 @@ Create or update `apps/chat-api/.env.local` (or the workspace-root `.env.local`)
 ```bash
 PORT=5000
 API_PREFIX=api
-CORS_ORIGIN=http://localhost:4207
 
 AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=http://localhost:4207
-AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:4207
 AUTH_KEYCLOAK_CLIENT_ID=your-client-id
 AUTH_KEYCLOAK_SECRET=<client-secret>
 AUTH_KEYCLOAK_HOST=your-idp.example.com/realms/your-realm
 AUTH_KEYCLOAK_ADMIN_ROLE_NAMES=admin
 ```
 
+`CORS_ORIGIN` and `AUTH_POST_LOGOUT_REDIRECT_URI` are left unset here: both default to
+`AUTH_CALLBACK_BASE_URL`, which is exactly the value this local setup needs since the SPA
+and API share the `localhost:4207` origin through the Vite proxy. Set either explicitly
+only when it must differ from `AUTH_CALLBACK_BASE_URL`.
+
 > **Callback URL vs. OIDC callback base**
 > `AUTH_CALLBACK_BASE_URL` is used to build the OIDC `redirect_uri` registered in the provider.
 > The final app landing page is controlled by `callbackUrl` on `/api/v1/auth/login/*`.
-> In local dev, `CORS_ORIGIN=http://localhost:4207` is also the default app return origin when `callbackUrl` is omitted.
+> In local dev, `CORS_ORIGIN` (defaulted from `AUTH_CALLBACK_BASE_URL` to `http://localhost:4207`) is also the default app return origin when `callbackUrl` is omitted.
 
 The provider must register this redirect URI in its client configuration:
 
