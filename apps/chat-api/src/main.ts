@@ -32,6 +32,7 @@ import {
 } from './config/csp';
 import { EnvironmentVariables } from './config/environment.config';
 import { resolveLogLevels } from './config/log-levels';
+import { configureProxyAgents } from './net/proxy-agent.setup';
 import {
   createOpenApiConfig,
   openApiDocumentOptions,
@@ -65,6 +66,14 @@ const flattenValidationErrors = (
 
 async function bootstrap() {
   const runtimeEnvironment = process.env;
+
+  /*
+   * Must run before `NestFactory.create(AppModule)`: `ProviderRegistryService.onModuleInit()`
+   * performs OIDC discovery during that call, and behind a corporate proxy that discovery
+   * request never completes without a proxy agent already installed.
+   */
+  configureProxyAgents();
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new NestOtelLogger(
       resolveLogLevels(
