@@ -1595,3 +1595,142 @@ describe('ConversationMessageItem — application visualizer sizing and fallback
     expect(screen.getByTitle('unresolvable')).toBeTruthy();
   });
 });
+
+describe('ConversationMessageItem — stream error banner (issue #8979)', () => {
+  const failedMessage = (streamErrorMessage: string): Message => ({
+    role: MessageRole.Assistant,
+    content: 'Partial answer',
+    timestamp: '2024-01-01T00:00:02Z',
+    streamErrorMessage,
+  });
+
+  const renderFailed = (
+    streamErrorMessage: string,
+    props: Partial<ComponentProps<typeof ConversationMessageItem>> = {},
+  ) =>
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={failedMessage(streamErrorMessage)}
+        index={3}
+        onRegenerateMessage={vi.fn()}
+        {...props}
+      />,
+    );
+
+  it('shows the title and the localized fallback when the error carries no text', () => {
+    renderFailed('');
+
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
+    expect(alert.textContent).toContain(ChatI18nKeys.StreamError);
+  });
+
+  it('shows upstream error text under the same title', () => {
+    renderFailed('Rate limit exceeded');
+
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
+    expect(alert.textContent).toContain('Rate limit exceeded');
+    expect(screen.queryByText(ChatI18nKeys.StreamError)).toBeNull();
+  });
+
+  it('renders no error banner for a successful message', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: 'Done',
+          timestamp: '2024-01-01T00:00:02Z',
+        }}
+        onRegenerateMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+    ).toBeNull();
+  });
+
+  it('regenerates the failed message when Try again is clicked', async () => {
+    const onRegenerateMessage = vi.fn();
+    renderFailed('', { onRegenerateMessage });
+
+    const alert = screen.getByRole('alert');
+    const retry = screen.getByRole('button', {
+      name: ButtonsI18nKeys.TryAgain,
+    });
+    expect(alert.contains(retry)).toBe(true);
+
+    await userEvent.click(retry);
+
+    expect(onRegenerateMessage).toHaveBeenCalledOnce();
+    expect(onRegenerateMessage).toHaveBeenCalledWith(3);
+  });
+
+  it('regenerates the failed message when Try again is activated with the keyboard', async () => {
+    const onRegenerateMessage = vi.fn();
+    renderFailed('', { onRegenerateMessage });
+
+    screen.getByRole('button', { name: ButtonsI18nKeys.TryAgain }).focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(onRegenerateMessage).toHaveBeenCalledWith(3);
+  });
+
+  it('hides Try again when hide-regenerate-assistant-message is enabled', () => {
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) => feature === OverlayFeature.HideRegenerateAssistantMessage,
+    );
+    renderFailed('');
+
+    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+    ).toBeNull();
+  });
+
+  it('hides Try again when no regenerate handler is provided', () => {
+    renderFailed('', { onRegenerateMessage: undefined });
+
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+    ).toBeNull();
+  });
+
+  it('disables Try again while the assistant is typing', async () => {
+    const onRegenerateMessage = vi.fn();
+    renderFailed('', { onRegenerateMessage, isAssistantTyping: true });
+
+    const retry = screen.getByRole('button', {
+      name: ButtonsI18nKeys.TryAgain,
+    }) as HTMLButtonElement;
+    expect(retry.disabled).toBe(true);
+
+    await userEvent.click(retry);
+
+    expect(onRegenerateMessage).not.toHaveBeenCalled();
+  });
+
+  it('keeps Try again reachable in a right-to-left layout without physical-direction classes', () => {
+    render(
+      <div dir="rtl">
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={failedMessage('')}
+          index={3}
+          onRegenerateMessage={vi.fn()}
+        />
+      </div>,
+    );
+
+    const retry = screen.getByRole('button', {
+      name: ButtonsI18nKeys.TryAgain,
+    });
+    const row = retry.parentElement;
+    expect(row?.className).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
+    expect(row?.className).not.toMatch(/\btext-(left|right)\b/);
+  });
+});
