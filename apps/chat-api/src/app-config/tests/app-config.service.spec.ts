@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import packageJson from '../../../package.json';
 import { AppConfigService } from '../app-config.service';
@@ -18,6 +19,7 @@ const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
 
 function makeService(
   resolveImpl: (key: string) => Promise<unknown | undefined>,
+  model?: string,
 ) {
   const compositeProvider = {
     resolve: vi.fn(resolveImpl),
@@ -30,7 +32,11 @@ function makeService(
     }),
   };
   return {
-    service: new AppConfigService(compositeProvider, cacheManager as never),
+    service: new AppConfigService(
+      compositeProvider,
+      cacheManager as never,
+      new ConfigService({ UTILITY_MODEL: model }),
+    ),
     cacheManager,
     compositeProvider,
   };
@@ -42,6 +48,18 @@ describe('AppConfigService', () => {
   });
 
   describe('getClientConfig', () => {
+    it.each(['halloween', 'new-year', 'product-launch-2027', null, undefined])(
+      'returns the resolved event selection %s without a legacy feature flag',
+      async (eventId) => {
+        const { service } = makeService(async (key) =>
+          key === 'ui.activeEventId' ? eventId : undefined,
+        );
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.activeEventId).toBe(eventId ?? null);
+        expect(result.features).not.toHaveProperty('halloweenEnabled');
+      },
+    );
+
     it('exposes the configured external connection origins', async () => {
       const origins = [
         'https://documents.example.com',
@@ -54,6 +72,18 @@ describe('AppConfigService', () => {
         (await service.getClientConfig(ctx)).config.allowedConnectOrigins,
       ).toEqual(origins);
     });
+    it.each([undefined, '', '  ', 'refinement-model', ' refinement-model '])(
+      'exposes only refinement availability for model %s',
+      async (model) => {
+        const { service } = makeService(async () => undefined, model);
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.aiTextRefinementAvailable).toBe(
+          Boolean(model?.trim()),
+        );
+        expect(JSON.stringify(result)).not.toContain('refinement-model');
+      },
+    );
+
     it('keeps client-owned variables in their own namespace without overriding built-in config', async () => {
       const custom = {
         defaultDeploymentId: 'custom-only',
@@ -1211,10 +1241,14 @@ describe('AppConfigService', () => {
       const compositeProvider = {
         resolve: vi.fn(async () => 'test-value'),
       } as unknown as CompositeConfigProvider;
-      const service = new AppConfigService(compositeProvider, {
-        get: vi.fn(),
-        set: vi.fn(),
-      } as never);
+      const service = new AppConfigService(
+        compositeProvider,
+        {
+          get: vi.fn(),
+          set: vi.fn(),
+        } as never,
+        new ConfigService(),
+      );
 
       const result = await service.resolveValue('asr.modelId', ctx);
 

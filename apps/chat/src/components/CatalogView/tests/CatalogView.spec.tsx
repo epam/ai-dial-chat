@@ -687,6 +687,7 @@ describe('CatalogView', () => {
       status: UserConfigStatus.Ready,
       features: {},
       config: {
+        activeEventId: null,
         appVersion: '0.0.1',
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,

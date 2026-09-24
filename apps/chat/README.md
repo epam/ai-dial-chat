@@ -38,6 +38,55 @@ The app uses automatic chunk splitting, UI Kit `/grid` and `/editors` imports,
 the shared `/file-manager` entry and a lazy conversation publishing panel.
 Heavy feature engines load when their features are activated.
 
+## Celebration events
+
+Set `UI_EVENT=halloween` or `UI_EVENT=new-year` on chat-api to select an event.
+`none` or an omitted value disables events. The former `HALLOWEEN_ENABLED`
+setting and `features.halloweenEnabled` flag are removed. Deploy the frontend
+and backend together when migrating that setting. Event selection uses the
+existing client-config refresh lifecycle; it is not a calendar scheduler.
+
+Only `/` renders event decoration and intercepts its optional secret phrase.
+Existing conversations send text normally. The current modules are:
+
+| Event       | Click scenes                              | Secret phrase                         |
+| ----------- | ----------------------------------------- | ------------------------------------- |
+| `halloween` | Ghosts, connected web, bats, cat, witches | `trick or treat` → descending spiders |
+| `new-year`  | Snow, confetti, flying sleighs            | `happy new year` → confetti           |
+
+### Adding an event
+
+Use [the New Year definition](src/celebrations/new-year.ts) as the example and
+implement the [CelebrationEvent contract](src/types/celebration.ts):
+
+1. Add event components and resources in the app. The `Decoration` component
+   receives `onActivate`; it does not import the provider or select scenes.
+2. Export a default definition with `id`, optional `iconUrl`, `Decoration`,
+   `scenes`, `clickSceneIds` and `notificationTitleKey`. Every scene supplies
+   an `id`, `Component`, `durationMs` and typed `notificationKey`. Its duration
+   must include delayed arrivals and departures. An optional `secretTrigger`
+   supplies `phrases`, `hintPhrase` and a valid `sceneId`.
+3. Add one dynamic import to [the event registry](src/celebrations/registry.ts).
+   New IDs require no backend enum, provider, header or composer changes.
+4. Add translated labels/messages. Scenes for an event with a secret phrase
+   include `{{phrase}}` in their notification; the runtime interpolates the
+   module's `hintPhrase`. Phrases match the entire normalized input and support
+   non-Latin characters; omitting a trigger leaves all text untouched.
+5. Reuse [FlyingCharacters](src/components/FlyingCharacters/FlyingCharacters.tsx)
+   and [flight paths](src/utils/flying-characters.ts) where appropriate. Every
+   custom animation supplies a visible static frame under reduced motion,
+   stays decorative and non-interactive, and supports the mobile/desktop
+   breakpoints and RTL. A scene renders artwork inside the shared viewport
+   layer rather than creating its own portal.
+
+The shared provider owns one active scene, random selection without consecutive
+repeats when alternatives exist, replacement and cleanup. Event changes and
+navigation cancel playback and pending imports. Loading, unknown IDs and module
+failures leave the ordinary chat available; no input is intercepted until the
+selected module is ready. Missing providers are intentionally inert. Seasonal
+icons replace existing navigation/header slots only, preserving theme wordmarks
+and the browser-tab favicon. No event state is persisted.
+
 ## Content Security Policy
 
 Production HTML is served by `chat-api` with a fresh style nonce. Vite inserts
@@ -426,3 +475,9 @@ The Quick Apps iframe receives
 `{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId: 'applications/public/my-agent' }`
 from that iframe opens the same host dialog; no credentials are sent through
 `postMessage`. See [the authentication flow](../../docs/auth/auth-bff-encrypted-cookie.md#proactive-application-credential-forms).
+
+## AI text refinement
+
+Skill and scheduled-task forms opt into Description and Instructions refinement only when the backend returns `config.aiTextRefinementAvailable: true`. The host selects one of four purposes and passes a stable callback, cancellation signal, and translated labels to the libraries. Fields remain editable during requests; editing the active field cancels it. Save waits for refinement, and Undo is local to the current draft.
+
+Run `npm exec -- nx run @epam/chat:test-refinement-browser` for Chromium checks of both forms at 360/900/1280/1920px, in LTR and Arabic RTL, using deterministic callbacks without a live model. Geometry evidence is written to `tmp/text-refinement-browser/geometry.json`.

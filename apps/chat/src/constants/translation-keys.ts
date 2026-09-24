@@ -982,6 +982,16 @@ export enum PromptEditorI18nKeys {
   ContentLoadingAriaLabel = 'promptEditor.contentLoadingAriaLabel',
 }
 
+export enum TextRefinementI18nKeys {
+  Action = 'textRefinement.action',
+  Undo = 'textRefinement.undo',
+  Error = 'textRefinement.error',
+  Pending = 'textRefinement.pending',
+  Success = 'textRefinement.success',
+  Restored = 'textRefinement.restored',
+  Unchanged = 'textRefinement.unchanged',
+}
+
 export enum SkillEditorI18nKeys {
   Title = 'skillEditor.title',
   BackAriaLabel = 'skillEditor.backAriaLabel',
@@ -1395,6 +1405,25 @@ export enum UsageI18nKeys {
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
+}
+
+export enum HalloweenI18nKeys {
+  ToastTitle = 'halloween.toastTitle',
+  SpidersToastMessage = 'halloween.spidersToastMessage',
+  GhostToastMessage = 'halloween.ghostToastMessage',
+  WebToastMessage = 'halloween.webToastMessage',
+  BatsToastMessage = 'halloween.batsToastMessage',
+  CatToastMessage = 'halloween.catToastMessage',
+  WitchesToastMessage = 'halloween.witchesToastMessage',
+  PumpkinLabel = 'halloween.pumpkinLabel',
+}
+
+export enum NewYearI18nKeys {
+  ToastTitle = 'newYear.toastTitle',
+  SnowToastMessage = 'newYear.snowToastMessage',
+  ConfettiToastMessage = 'newYear.confettiToastMessage',
+  SleighToastMessage = 'newYear.sleighToastMessage',
+  GiftLabel = 'newYear.giftLabel',
 }
 
 export enum ApplicationCredentialsI18nKeys {

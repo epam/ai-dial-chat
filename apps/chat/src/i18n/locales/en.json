@@ -1523,6 +1523,23 @@
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"
   },
+  "halloween": {
+    "toastTitle": "🎃 Happy Halloween!",
+    "spidersToastMessage": "The house picked trick! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "ghostToastMessage": "The ghosts are awake! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "webToastMessage": "Tiny spiders are weaving one big web! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "batsToastMessage": "The bats are out for a moonlit flight. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "catToastMessage": "A little familiar is chasing the lights. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "witchesToastMessage": "The witches are taking the scenic route. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "pumpkinLabel": "Halloween pumpkin"
+  },
+  "newYear": {
+    "toastTitle": "Happy New Year!",
+    "snowToastMessage": "A little winter magic. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "confettiToastMessage": "Here's to a bright new year! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "sleighToastMessage": "Special delivery from the night sky. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "giftLabel": "New Year gift"
+  },
   "applicationCredentials": {
     "title": "Application credentials",
     "loadError": "Failed to load application credentials.",
@@ -1530,5 +1547,14 @@
     "signedOut": "You are not logged in.",
     "sharedCredentials": "Shared credentials are available. You can also log in with your own credentials.",
     "confirmLogout": "Log out of your personal credentials for this service?"
+  },
+  "textRefinement": {
+    "action": "Refine with AI",
+    "undo": "Undo",
+    "error": "Could not refine this text. Please try again.",
+    "pending": "Refining text",
+    "success": "Text refined. Undo is available.",
+    "restored": "Original text restored.",
+    "unchanged": "No changes were needed."
   }
 }

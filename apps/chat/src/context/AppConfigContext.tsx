@@ -28,6 +28,8 @@ export interface AppConfigState {
   status: UserConfigStatus;
   features: Record<string, boolean>;
   config: {
+    activeEventId: string | null;
+    aiTextRefinementAvailable?: boolean;
     appVersion: string;
     asrModelId: string | null;
     transcribeSizeLimitBytes: number;
@@ -60,6 +62,8 @@ const INITIAL_STATE: AppConfigState = {
   status: UserConfigStatus.Loading,
   features: {},
   config: {
+    activeEventId: null,
+    aiTextRefinementAvailable: false,
     appVersion: '',
     asrModelId: null,
     transcribeSizeLimitBytes: DEFAULT_TRANSCRIBE_SIZE_LIMIT,
@@ -106,6 +110,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
           status: UserConfigStatus.Ready,
           features: (response.features ?? {}) as Record<string, boolean>,
           config: {
+            activeEventId: response.config?.activeEventId ?? null,
+            aiTextRefinementAvailable:
+              response.config?.aiTextRefinementAvailable ?? false,
             appVersion: response.config?.appVersion ?? '',
             asrModelId: response.config?.asrModelId ?? null,
             transcribeSizeLimitBytes:
