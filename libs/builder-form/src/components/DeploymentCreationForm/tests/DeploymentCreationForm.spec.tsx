@@ -1,11 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { Ref } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormLabels,
+  DeploymentCreationFormProps,
   DeploymentCreationFormValues,
 } from '../../../models/deployment-creation-form';
+import { MetadataField } from '../../../models/metadata-field';
 import { DeploymentCreationForm } from '../DeploymentCreationForm';
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
@@ -16,22 +19,31 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     labelProps,
     error,
     placeholder,
+    inputRef,
+    readOnly,
+    caption,
   }: {
     value?: string;
     onChange?: (v?: string) => void;
     labelProps?: { label?: string };
     error?: string;
     placeholder?: string;
+    inputRef?: Ref<HTMLInputElement>;
+    readOnly?: boolean;
+    caption?: string;
   }) => (
     <>
       <label>
         {labelProps?.label}
         <input
+          ref={inputRef}
           value={value ?? ''}
           placeholder={placeholder}
+          readOnly={readOnly}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
+      {caption && <p>{caption}</p>}
       {error && <p role="alert">{error}</p>}
     </>
   ),
@@ -40,20 +52,29 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     onChange,
     labelProps,
     placeholder,
+    error,
+    ref,
   }: {
     value?: string;
     onChange?: (v: string) => void;
-    labelProps?: { label?: string };
+    labelProps?: { label?: string; required?: boolean };
     placeholder?: string;
+    error?: string;
+    ref?: Ref<HTMLTextAreaElement>;
   }) => (
-    <label>
-      {labelProps?.label}
-      <textarea
-        value={value ?? ''}
-        placeholder={placeholder}
-        onChange={(e) => onChange?.(e.target.value)}
-      />
-    </label>
+    <>
+      <label>
+        {labelProps?.label}
+        {labelProps?.required && ' *'}
+        <textarea
+          ref={ref}
+          value={value ?? ''}
+          placeholder={placeholder}
+          onChange={(e) => onChange?.(e.target.value)}
+        />
+      </label>
+      {error && <p role="alert">{error}</p>}
+    </>
   ),
   TagInput: ({
     labelProps,
@@ -116,6 +137,7 @@ const renderComponent = (
   errors: DeploymentCreationFormFieldErrors = {},
   onChange = vi.fn(),
   onAddAvatarClick = vi.fn(),
+  extraProps: Partial<DeploymentCreationFormProps> = {},
 ) =>
   render(
     <DeploymentCreationForm
@@ -124,6 +146,7 @@ const renderComponent = (
       onChange={onChange}
       onAddAvatarClick={onAddAvatarClick}
       labels={labels}
+      {...extraProps}
     />,
   );
 
@@ -179,5 +202,74 @@ describe('DeploymentCreationForm', () => {
   it('renders no error when none is passed', () => {
     renderComponent();
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('renders only the requested fields, with Name alone on its row', () => {
+    renderComponent(undefined, {}, vi.fn(), vi.fn(), {
+      fields: [MetadataField.Name, MetadataField.Description],
+    });
+    expect(screen.getByLabelText('Name')).toBeTruthy();
+    expect(screen.getByLabelText('Description')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Add avatar' })).toBeNull();
+    expect(screen.queryByLabelText('Version')).toBeNull();
+    expect(screen.queryByLabelText('Topics')).toBeNull();
+    expect(screen.queryByText('Locales')).toBeNull();
+  });
+
+  it('marks Description required, renders a name caption and a read-only Name', () => {
+    renderComponent(undefined, {}, vi.fn(), vi.fn(), {
+      isDescriptionRequired: true,
+      isNameReadOnly: true,
+      nameCaption: 'Lowercase letters and hyphens',
+    });
+    expect(screen.getByText('Lowercase letters and hyphens')).toBeTruthy();
+    expect((screen.getByLabelText('Name') as HTMLInputElement).readOnly).toBe(
+      true,
+    );
+    expect(screen.getByLabelText('Description *')).toBeTruthy();
+  });
+
+  it('surfaces a description error', () => {
+    renderComponent(undefined, { description: 'Description is required' });
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Description is required',
+    );
+  });
+
+  it('moves focus to Description when it is the only field that becomes invalid', () => {
+    const { rerender } = renderComponent();
+    rerender(
+      <DeploymentCreationForm
+        values={baseValues}
+        errors={{ description: 'Description is required' }}
+        onChange={vi.fn()}
+        onAddAvatarClick={vi.fn()}
+        labels={labels}
+      />,
+    );
+    expect(screen.getByLabelText('Description').matches(':focus')).toBe(true);
+  });
+
+  it('moves focus to Name first when Name and Description become invalid together', () => {
+    const { rerender } = renderComponent();
+    rerender(
+      <DeploymentCreationForm
+        values={baseValues}
+        errors={{ name: 'Name is required', description: 'Required' }}
+        onChange={vi.fn()}
+        onAddAvatarClick={vi.fn()}
+        labels={labels}
+      />,
+    );
+    expect(screen.getByLabelText('Name').matches(':focus')).toBe(true);
+  });
+
+  it('falls back to the default tags placeholder when the host omits one', () => {
+    renderComponent(undefined, {}, vi.fn(), vi.fn(), {
+      labels: { ...labels, topics: { label: 'Tags' } },
+    });
+    expect(
+      screen.getByPlaceholderText('Add tags, comma separated'),
+    ).toBeTruthy();
   });
 });
