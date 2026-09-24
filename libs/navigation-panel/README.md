@@ -57,7 +57,7 @@ Without `renderLink` each item is wrapped in a plain `<a href={item.href}>`, so 
 
 ### UserMenu
 
-Avatar trigger plus dropdown: identity row, one submenu per settings group, divider, log-out entry. The host owns the log-out confirmation flow — `onLogout` only signals intent.
+Avatar trigger plus dropdown: identity row, one submenu per settings group, divider, log-out entry. The host owns the log-out confirmation flow — `onLogout` only signals intent. Pass `onSettings` with `labels.settings` to add a Settings entry between the divider and Log out; omit both to hide it.
 
 ```tsx
 <UserMenu
@@ -74,8 +74,10 @@ Avatar trigger plus dropdown: identity row, one submenu per settings group, divi
     trigger: t(AuthI18nKeys.SignedInAs, { email }),
     avatarAlt: t(AuthI18nKeys.UserAvatar),
     logOut: t(ButtonsI18nKeys.LogOut),
+    settings: t(BasicI18nKeys.Settings),
   }}
   onLogout={openLogoutConfirmation}
+  onSettings={() => navigate(ROUTES.Settings)}
 />
 ```
 
