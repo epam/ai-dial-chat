@@ -1,4 +1,10 @@
-import { ChangeEvent, RefObject, useCallback, useEffect } from 'react';
+import {
+  ChangeEvent,
+  KeyboardEvent,
+  RefObject,
+  useCallback,
+  useEffect,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -12,6 +18,7 @@ interface RegexParamInputProps {
   regEx: string;
   onRegExChange: (regExp: string) => void;
   onValidityChange?: (valid: boolean) => void;
+  onEnter?: () => void;
   isInvalid?: boolean;
   className?: string;
   inputRef?: RefObject<HTMLInputElement | null>;
@@ -32,6 +39,7 @@ export function RegexParamInput({
   regEx,
   onRegExChange,
   onValidityChange,
+  onEnter,
   isInvalid,
   className,
   inputRef,
@@ -45,6 +53,17 @@ export function RegexParamInput({
       onValidityChange?.(isValidRegex(value));
     },
     [onRegExChange, onValidityChange],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== 'Enter') return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      onEnter?.();
+    },
+    [onEnter],
   );
 
   useEffect(() => {
@@ -67,6 +86,7 @@ export function RegexParamInput({
           placeholder={t(ChatI18nKeys.EnterRegularExpression) || ''}
           value={regEx}
           onChange={handleRegExChange}
+          onKeyDown={handleKeyDown}
         />
       </div>
       {isInvalid && regEx.length > 0 && (
