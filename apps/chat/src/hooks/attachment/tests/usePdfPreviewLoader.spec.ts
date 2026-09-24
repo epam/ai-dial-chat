@@ -93,6 +93,27 @@ describe('usePdfPreviewLoader', () => {
     expect(fetchMock.mock.lastCall?.[1].credentials).toBe('same-origin');
   });
 
+  it('matches wildcard patterns when the browser percent-encodes asterisks in URL origins', async () => {
+    const NativeURL = URL;
+    vi.stubGlobal(
+      'URL',
+      class extends NativeURL {
+        get origin() {
+          return super.origin.replace('*', '%2A');
+        }
+      },
+    );
+    setOrigins(['https://*.REPORTS.example.org:443']);
+    const { result } = renderHook(() => usePdfPreviewLoader());
+    const url = 'https://one.reports.example.org/report.pdf';
+
+    expect(await result.current(url)).toBe(pdf);
+    expect(fetchMock).toHaveBeenCalledWith(url, {
+      credentials: 'include',
+      redirect: 'error',
+    });
+  });
+
   it('preserves same-origin requests even if the app origin is allowlisted', async () => {
     setOrigins([window.location.origin]);
     const { result } = renderHook(() => usePdfPreviewLoader());

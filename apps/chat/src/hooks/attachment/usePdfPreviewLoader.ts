@@ -9,7 +9,19 @@ export const usePdfPreviewLoader = (): ((url: string) => Promise<Blob>) => {
     () =>
       (config.allowedConnectOrigins ?? []).flatMap((origin) => {
         try {
-          return [new URL(origin).origin];
+          /*
+           * Some browsers serialize a wildcard hostname's * as %2A. Normalize
+           * only the base origin, then restore the pattern for the matcher.
+           */
+          const isWildcard = /^https?:\/\/\*\./.test(origin);
+          const normalized = new URL(
+            isWildcard ? origin.replace('://*.', '://') : origin,
+          );
+          return [
+            isWildcard
+              ? `${normalized.protocol}//*.${normalized.host}`
+              : normalized.origin,
+          ];
         } catch {
           return [];
         }

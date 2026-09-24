@@ -652,6 +652,11 @@ iframe's origin. Existing login sessions, cookie `SameSite` attributes, and
 browser restrictions on third-party cookies still govern whether cookies are
 sent. This setting does not create a session or forward DIAL access tokens.
 
+Use HTTPS outside local development. An allowed HTTP origin can receive
+non-Secure cookies over an unencrypted connection. CORS controls access to the
+response; it does not protect cookies in transit or prevent a simple GET request
+from sending them before the response headers are checked.
+
 `CSP_MODE` accepts `report-only` (default) or `enforce`. Report-only mode keeps
 the existing HTML policy enforced and adds the stricter candidate in
 `Content-Security-Policy-Report-Only`. It still permits inline CSS in the enforced
