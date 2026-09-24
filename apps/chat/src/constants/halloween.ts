@@ -6,7 +6,7 @@ import { HalloweenBurst } from '../types/halloween';
  */
 
 /**
- * The phrase that triggers `HalloweenBurst.Spiders` when typed into the
+ * The phrase that triggers a secret scene when typed into the
  * conversation input, already normalized the way
  * `isHalloweenSecretPhrase` normalizes its input.
  */
@@ -63,6 +63,15 @@ export const HALLOWEEN_CLICK_BURSTS = [
   HalloweenBurst.Skeletons,
 ] as const;
 
+/** Message-only surprises; pumpkin clicks never sample this pool. */
+export const HALLOWEEN_SECRET_BURSTS = [
+  HalloweenBurst.Spiders,
+  HalloweenBurst.Cauldron,
+  HalloweenBurst.Mimic,
+  HalloweenBurst.Bowling,
+  HalloweenBurst.Mummy,
+] as const;
+
 /** Deadlines include the borrowed rows returning and all delayed exits. */
 export const HALLOWEEN_SCENE_DURATIONS: Partial<
   Record<HalloweenBurst, number>
@@ -73,6 +82,10 @@ export const HALLOWEEN_SCENE_DURATIONS: Partial<
   [HalloweenBurst.Candy]: 11000,
   [HalloweenBurst.Footprints]: 12000,
   [HalloweenBurst.Skeletons]: 10000,
+  [HalloweenBurst.Cauldron]: 9000,
+  [HalloweenBurst.Mimic]: 9000,
+  [HalloweenBurst.Bowling]: 9000,
+  [HalloweenBurst.Mummy]: 13000,
 };
 
 export const HALLOWEEN_WEB_COUNT = 80;

@@ -1163,6 +1163,8 @@ const SourcesPanel = ({ messages }: { messages: Message[] }) => {
 
 **Returns** (`UseConversationSourcesResult`): `{ uploaded: DisplayAttachment[], generated: DisplayAttachment[], sources: QuotationSource[] }`.
 
+`sources` gets one entry per distinct URL. A reference-only attachment keeps its `reference_url` as is. For a citation annotation on a `.pdf` file, the hook appends the cited page from its `pdf_bbox`/`pdf_region` selector (`files/bucket/doc.pdf#page=12`). This applies only when the URL has no fragment yet. As a result, each cited page of a document is a separate source, and two citations of the same page collapse into one.
+
 ### useChatSettingsFormConfig
 
 Assembles the config object a chat-settings popover/modal consumes: feature flags derived from deployment features, the current `responseFormat`/`systemPrompt`/`temperature` values, the save handler, and the form labels. Works in two modes — `'local'` (an in-flight composer that holds values in state) and `'conversation'` (a persisted `Conversation` patched on save). Headless: the host supplies translated labels via `labels` and a save toast via `onSaved`.

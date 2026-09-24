@@ -768,6 +768,7 @@ show-agent-description
 disable-input-history-navigation
 hide-conversation-export
 hide-settings-page
+show-header-logo
 ```
 
 `hide-navigation-menu` removes the mobile navigation menu in full â the
@@ -840,6 +841,13 @@ profile page. A direct `/settings` URL redirects to `/`. The preferences the
 page edits keep their stored values. Use it when the host owns user
 preferences itself; `hide-user-settings` instead keeps the page and removes
 only the language and keyboard-shortcut controls.
+
+`show-header-logo` renders the theme logo in the desktop top bar, centered
+between the conversation-panel and new-chat buttons and the sources toggle, so
+an embed that hides the navigation rail still carries the brand. It uses the
+theme's full `logo` image; a theme that defines only a `favicon` shows nothing
+there. The mobile header already shows the logo whenever `header` is on, and
+this key does not change it.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is

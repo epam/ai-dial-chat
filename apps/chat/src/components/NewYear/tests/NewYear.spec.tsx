@@ -105,7 +105,9 @@ describe('New Year event contract', () => {
     const sceneIds = newYear.scenes.map((scene) => scene.id);
     expect(new Set(sceneIds).size).toBe(sceneIds.length);
     newYear.clickSceneIds.forEach((id) => expect(sceneIds).toContain(id));
-    expect(sceneIds).toContain(newYear.secretTrigger?.sceneId);
+    newYear.secretTrigger?.sceneIds.forEach((id) =>
+      expect(sceneIds).toContain(id),
+    );
     newYear.scenes.forEach(({ notificationKey }) => {
       const key = notificationKey.replace(
         'newYear.',
