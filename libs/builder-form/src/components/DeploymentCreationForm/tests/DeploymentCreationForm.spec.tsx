@@ -207,13 +207,14 @@ describe('DeploymentCreationForm', () => {
   it('renders only the requested fields, with Name alone on its row', () => {
     renderComponent(undefined, {}, vi.fn(), vi.fn(), {
       fields: [MetadataField.Name, MetadataField.Description],
+      availableLocaleOptions: [{ code: 'de', label: 'DE' }],
     });
     expect(screen.getByLabelText('Name')).toBeTruthy();
     expect(screen.getByLabelText('Description')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Add avatar' })).toBeNull();
     expect(screen.queryByLabelText('Version')).toBeNull();
     expect(screen.queryByLabelText('Topics')).toBeNull();
-    expect(screen.queryByText('Locales')).toBeNull();
+    expect(screen.queryByText('Add locales')).toBeNull();
   });
 
   it('marks Description required, renders a name caption and a read-only Name', () => {

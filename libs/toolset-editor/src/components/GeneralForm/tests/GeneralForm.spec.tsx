@@ -1,3 +1,5 @@
+import type { AvatarPickerFileManagerModalProps } from '@epam/ai-dial-builder-form';
+import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import { DialFileNodeType, type DialFile } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -8,30 +10,25 @@ import type {
 } from '../../../models/toolset-form';
 import { GeneralForm } from '../GeneralForm';
 
-vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-builder-form')>();
-  return {
-    ...actual,
-    AvatarPickerModal: ({
-      onAttach,
-    }: {
-      onAttach: (result: { files: unknown[]; folderPaths: string[] }) => void;
-    }) => (
-      <button
-        type="button"
-        onClick={() =>
-          onAttach({ files: [mockAvatarFile.file], folderPaths: [] })
-        }
-      >
-        attach-avatar
-      </button>
-    ),
-  };
-});
-
-/* Set per-test; read at click time by the AvatarPickerModal stub above. */
+/* Set per-test; read at click time by the file-manager stub below. */
 const mockAvatarFile = { file: undefined as unknown };
+
+/* Stands in for the host file manager the avatar picker renders; attaching reports mockAvatarFile. */
+const AttachingFileManagerModal = ({
+  onAttach,
+}: AvatarPickerFileManagerModalProps) => (
+  <button
+    type="button"
+    onClick={() =>
+      onAttach({
+        files: mockAvatarFile.file ? [mockAvatarFile.file] : [],
+        folderPaths: [],
+      } as unknown as AttachResult)
+    }
+  >
+    attach-avatar
+  </button>
+);
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
@@ -256,7 +253,7 @@ describe('GeneralForm', () => {
         form={makeForm()}
         errors={{}}
         bucket="bucket"
-        FileManagerModal={() => null}
+        FileManagerModal={AttachingFileManagerModal}
         resolveIconUrl={(url) => url}
         allowedMimeTypes={['image/png']}
         maxFileSizeBytes={1024}
@@ -281,7 +278,7 @@ describe('GeneralForm', () => {
         form={makeForm()}
         errors={{}}
         bucket="bucket"
-        FileManagerModal={() => null}
+        FileManagerModal={AttachingFileManagerModal}
         resolveIconUrl={(url) => url}
         allowedMimeTypes={['image/png']}
         maxFileSizeBytes={1024}
