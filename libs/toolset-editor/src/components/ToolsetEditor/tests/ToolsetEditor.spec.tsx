@@ -1,3 +1,4 @@
+import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
 import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -16,48 +17,74 @@ import { ToolsetEditor } from '../ToolsetEditor';
 vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-builder-form')>();
+  /* The real shell renders its actions twice (header + mobile bar); the stub
+     renders them once and stamps the section classes it is handed, so class
+     assertions still prove what ToolsetEditor passes in. */
   return {
     ...actual,
-    EditorLayout: ({
+    EntityEditor: ({
       title,
-      actions,
-      leftContent,
-      rightContent,
-    }: {
-      title?: string;
-      actions?: unknown;
-      leftContent?: unknown;
-      rightContent?: unknown;
-    }) => (
+      onCancel,
+      onSubmit,
+      submitLabel,
+      isSubmitting,
+      isSubmitDisabled,
+      metadata,
+      setup,
+      metadataSectionClassName,
+      setupSectionClassName,
+      labels,
+    }: EntityEditorProps) => (
       <div>
         <h1>{title}</h1>
-        <div>{actions as never}</div>
-        <div>{leftContent as never}</div>
-        <div>{rightContent as never}</div>
-      </div>
-    ),
-    /* The real section renders its title and merges `className` onto its
-       root; the stub has to do both, or a class assertion on it proves
-       nothing. */
-    EditorSection: ({
-      children,
-      title,
-      className,
-    }: {
-      children?: unknown;
-      title?: unknown;
-      className?: string;
-    }) => (
-      <div className={className}>
-        <h2>{title as never}</h2>
-        {children as never}
+        <button type="button" disabled={isSubmitting} onClick={onCancel}>
+          {labels?.cancelLabel ?? 'Cancel'}
+        </button>
+        <button
+          type="button"
+          disabled={isSubmitting || isSubmitDisabled}
+          onClick={onSubmit}
+        >
+          {submitLabel}
+        </button>
+        <div className={metadataSectionClassName}>
+          <h2>{labels?.metadataTitle}</h2>
+          {metadata}
+        </div>
+        <div className={setupSectionClassName}>
+          <h2>{labels?.setupTitle}</h2>
+          {setup}
+        </div>
       </div>
     ),
   };
 });
 
 vi.mock('../../GeneralForm/GeneralForm', () => ({
-  GeneralForm: () => <div />,
+  GeneralForm: ({
+    form,
+    errors,
+    onChange,
+  }: {
+    form: ToolsetFormData;
+    errors: { name?: string; version?: string };
+    onChange: (patch: Partial<ToolsetFormData>) => void;
+  }) => (
+    <div>
+      <span>{`metadata-name-${form.name}`}</span>
+      {errors.name && <p role="alert">{errors.name}</p>}
+      {errors.version && <p role="alert">{errors.version}</p>}
+      <button type="button" onClick={() => onChange({ name: '' })}>
+        clear-name
+      </button>
+      <button type="button" onClick={() => onChange({ name: 'Renamed' })}>
+        rename
+      </button>
+      <button type="button" onClick={() => onChange({ version: 'v 1' })}>
+        type-invalid-version
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock('../../SettingsForm/SettingsForm', () => ({
@@ -621,6 +648,116 @@ describe('ToolsetEditor', () => {
 const closestWithClass = (from: Element, className: string): Element | null =>
   // eslint-disable-next-line testing-library/no-node-access -- see above
   from.closest(`.${className}`);
+
+describe('ToolsetEditor — shared editor shell', () => {
+  const user = userEvent.setup({ delay: null });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    onPersist.mockResolvedValue(NEW_TOOLSET_ID);
+    onPostSaveLogin.mockResolvedValue(undefined);
+    onToolsetsChanged.mockResolvedValue(undefined);
+  });
+
+  it('renders the Metadata and Setup section headings with the default labels', () => {
+    renderEditor();
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Metadata' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Setup' }),
+    ).toBeTruthy();
+  });
+
+  it('uses host-supplied section titles and action labels', () => {
+    renderEditor({
+      labels: {
+        layout: {
+          metadataSectionTitle: 'Metadaten',
+          setupSectionTitle: 'Einrichtung',
+          cancelLabel: 'Abbrechen',
+          createLabel: 'Erstellen',
+        },
+      },
+    });
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Metadaten' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Einrichtung' }),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Abbrechen' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Erstellen' })).toBeTruthy();
+  });
+
+  it('shows no metadata error until the user edits the field', async () => {
+    renderEditor();
+
+    expect(screen.queryByRole('alert')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'clear-name' }));
+
+    expect(screen.getByRole('alert').textContent).toBe('Name is required');
+  });
+
+  it('shows the invalid-version error only for the edited version field', async () => {
+    renderEditor();
+
+    await user.click(
+      screen.getByRole('button', { name: 'type-invalid-version' }),
+    );
+
+    const alerts = screen.getAllByRole('alert');
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0].textContent).toContain('Version may only contain');
+  });
+
+  it('clears the metadata error once the field becomes valid again', async () => {
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'clear-name' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'rename' }));
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByText('metadata-name-Renamed')).toBeTruthy();
+  });
+
+  it('persists the edited metadata together with the Setup fields', async () => {
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'rename' }));
+    await user.click(
+      screen.getByRole('button', { name: 'fill-api-key-toolset' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+
+    await waitFor(() =>
+      expect(onPersist).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Renamed',
+          endpoint: 'https://example.com/mcp',
+        }),
+        '',
+      ),
+    );
+  });
+
+  it('re-seeds the metadata and clears its errors when the host supplies a new initialForm identity', async () => {
+    const { rerender } = renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'clear-name' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+
+    rerender(<ToolsetEditor {...makeProps()} />);
+
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+    expect(screen.getByText('metadata-name-My toolset')).toBeTruthy();
+  });
+});
 
 describe('ToolsetEditor — public class names', () => {
   it('stamps both editor columns', () => {
