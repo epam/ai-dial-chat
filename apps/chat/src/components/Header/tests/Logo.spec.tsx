@@ -5,6 +5,11 @@ import * as ThemeContext from '../../../context/ThemeContext';
 import * as iconPathUtils from '../../../utils/icon-path';
 import Logo from '../Logo';
 
+const halloween = vi.hoisted(() => ({ isEnabled: false }));
+vi.mock('../../../context/HalloweenContext', () => ({
+  useHalloween: () => halloween,
+}));
+
 vi.mock('../../../context/ThemeContext');
 vi.mock('../../../utils/icon-path');
 
@@ -14,6 +19,7 @@ describe('Logo', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    halloween.isEnabled = false;
   });
 
   it('should render logo with correct theme', () => {
@@ -45,6 +51,32 @@ describe('Logo', () => {
       `url(${mockIconPath})`,
     );
     expect(mockGetIconPath).toHaveBeenCalledWith(mockLogoName);
+  });
+
+  it('replaces the existing mobile icon and restores it when Halloween is disabled', () => {
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      currentThemeFavicon: 'favicon.svg',
+      themes: [],
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+    mockGetIconPath.mockReturnValue('/theme/favicon.svg');
+    halloween.isEnabled = true;
+    const { rerender } = render(<Logo />);
+    /* The existing icon is a decorative CSS background inside the logo link. */
+    // eslint-disable-next-line testing-library/no-node-access
+    const icon = screen.getByRole('link').firstElementChild as HTMLElement;
+    expect(icon.style.backgroundImage).toContain('halloween-logo.svg');
+    expect(screen.getAllByRole('link')).toHaveLength(1);
+    halloween.isEnabled = false;
+    /* The mocked hook has no React subscription; remount to apply its value. */
+    rerender(<Logo key="normal" />);
+    const restoredLink = screen.getByRole('link');
+    // eslint-disable-next-line testing-library/no-node-access
+    const restoredIcon = restoredLink.firstElementChild as HTMLElement;
+    expect(restoredIcon.style.backgroundImage).toContain('/theme/favicon.svg');
   });
 
   it('should return null when logo is not available', () => {

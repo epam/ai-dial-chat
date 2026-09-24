@@ -9,6 +9,7 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
+import halloweenLogoUrl from '../../assets/halloween-logo.svg?no-inline';
 import {
   AuthI18nKeys,
   BasicI18nKeys,
@@ -17,6 +18,7 @@ import {
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useHalloween } from '../../context/HalloweenContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
@@ -43,6 +45,7 @@ interface Props {
  */
 const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const { t } = useTranslation();
+  const { isEnabled: isHalloweenEnabled } = useHalloween();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { status, user } = useUser();
@@ -70,7 +73,9 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           logo={
             currentThemeFavicon
               ? {
-                  iconUrl: getIconPath(currentThemeFavicon),
+                  iconUrl: isHalloweenEnabled
+                    ? halloweenLogoUrl
+                    : getIconPath(currentThemeFavicon),
                   ariaLabel: t(ChatI18nKeys.Logo),
                 }
               : undefined

@@ -16,6 +16,7 @@ import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
 import { FavoriteApplicationsProvider } from './context/FavoriteApplicationsContext';
 import { GenerationProvider } from './context/GenerationContext';
+import { HalloweenProvider } from './context/HalloweenContext';
 import { IsolatedModelViewProvider } from './context/IsolatedModelViewContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { OverlayModeGate } from './context/overlay/OverlayContext';
@@ -53,50 +54,52 @@ root.render(
             <ThemeProvider>
               <AppConfigProvider>
                 <UiFeaturesProvider>
-                  <SourcesSidebarProvider>
-                    <AttachmentCanvasProvider>
-                      <ConversationPanelProvider>
-                        <Suspense fallback={null}>
-                          <Routes>
-                            <Route path="/login" element={<LoginPage />} />
-                            <Route
-                              path="/overlay-close"
-                              element={<OverlayClose />}
-                            />
-                            <Route
-                              path="*"
-                              element={
-                                <OverlayModeGate>
-                                  <RequireAuth>
-                                    <GenerationProvider>
-                                      <ClientChannelProvider>
-                                        <UserConfigProvider>
-                                          <DeploymentsProvider>
-                                            {/* TODO: remove in next release */}
-                                            <IsolatedModelViewProvider>
-                                              <FavoriteApplicationsProvider>
-                                                <PromptsProvider>
-                                                  <SkillsProvider>
-                                                    <ConversationsProvider>
-                                                      <App />
-                                                    </ConversationsProvider>
-                                                  </SkillsProvider>
-                                                </PromptsProvider>
-                                              </FavoriteApplicationsProvider>
-                                            </IsolatedModelViewProvider>
-                                          </DeploymentsProvider>
-                                        </UserConfigProvider>
-                                      </ClientChannelProvider>
-                                    </GenerationProvider>
-                                  </RequireAuth>
-                                </OverlayModeGate>
-                              }
-                            />
-                          </Routes>
-                        </Suspense>
-                      </ConversationPanelProvider>
-                    </AttachmentCanvasProvider>
-                  </SourcesSidebarProvider>
+                  <HalloweenProvider>
+                    <SourcesSidebarProvider>
+                      <AttachmentCanvasProvider>
+                        <ConversationPanelProvider>
+                          <Suspense fallback={null}>
+                            <Routes>
+                              <Route path="/login" element={<LoginPage />} />
+                              <Route
+                                path="/overlay-close"
+                                element={<OverlayClose />}
+                              />
+                              <Route
+                                path="*"
+                                element={
+                                  <OverlayModeGate>
+                                    <RequireAuth>
+                                      <GenerationProvider>
+                                        <ClientChannelProvider>
+                                          <UserConfigProvider>
+                                            <DeploymentsProvider>
+                                              {/* TODO: remove in next release */}
+                                              <IsolatedModelViewProvider>
+                                                <FavoriteApplicationsProvider>
+                                                  <PromptsProvider>
+                                                    <SkillsProvider>
+                                                      <ConversationsProvider>
+                                                        <App />
+                                                      </ConversationsProvider>
+                                                    </SkillsProvider>
+                                                  </PromptsProvider>
+                                                </FavoriteApplicationsProvider>
+                                              </IsolatedModelViewProvider>
+                                            </DeploymentsProvider>
+                                          </UserConfigProvider>
+                                        </ClientChannelProvider>
+                                      </GenerationProvider>
+                                    </RequireAuth>
+                                  </OverlayModeGate>
+                                }
+                              />
+                            </Routes>
+                          </Suspense>
+                        </ConversationPanelProvider>
+                      </AttachmentCanvasProvider>
+                    </SourcesSidebarProvider>
+                  </HalloweenProvider>
                 </UiFeaturesProvider>
               </AppConfigProvider>
             </ThemeProvider>

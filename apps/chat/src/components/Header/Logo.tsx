@@ -1,6 +1,8 @@
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import halloweenLogoUrl from '../../assets/halloween-logo.svg?no-inline';
 import { ChatI18nKeys } from '../../constants/translation-keys';
+import { useHalloween } from '../../context/HalloweenContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getIconPath } from '../../utils/icon-path';
 
@@ -9,6 +11,7 @@ import { getIconPath } from '../../utils/icon-path';
  */
 const Logo: FC = () => {
   const { t } = useTranslation();
+  const { isEnabled: isHalloweenEnabled } = useHalloween();
   const { currentThemeLogo, currentThemeFavicon } = useTheme();
 
   if (!currentThemeLogo && !currentThemeFavicon) {
@@ -20,7 +23,7 @@ const Logo: FC = () => {
       {currentThemeFavicon && (
         <span
           style={{
-            backgroundImage: `url(${getIconPath(currentThemeFavicon)})`,
+            backgroundImage: `url(${isHalloweenEnabled ? halloweenLogoUrl : getIconPath(currentThemeFavicon)})`,
           }}
           className="h-[32px] w-[32px] bg-contain bg-center bg-no-repeat desktop:hidden"
         />

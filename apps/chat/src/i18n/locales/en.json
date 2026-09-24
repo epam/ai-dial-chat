@@ -1495,5 +1495,15 @@
     "noLimitLabel": "No limit",
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"
+  },
+  "halloween": {
+    "toastTitle": "🎃 Happy Halloween!",
+    "spidersToastMessage": "The house picked trick! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "ghostToastMessage": "The ghosts are awake! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "webToastMessage": "Tiny spiders are weaving one big web! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "batsToastMessage": "The bats are out for a moonlit flight. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "catToastMessage": "A little familiar is chasing the lights. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "witchesToastMessage": "The witches are taking the scenic route. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "pumpkinLabel": "Halloween pumpkin"
   }
 }

@@ -252,6 +252,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'SKILL_USAGE_ENABLED',
   },
   {
+    key: 'features.halloweenEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Client-visible Halloween switch, off by default. Only the start page (/) shows a seasonal navigation icon, corner spiders and a large pumpkin with a silent visual chuckle. Pumpkin clicks randomly choose ghosts, a connected web across almost the whole screen and visible history, bats, a cat with wisps, or flying witches, without consecutive repeats. Every celebration notification reveals the secret chat phrase. The secret phrase "trick or treat" drops spiders instead of creating a conversation there; existing chats and editor previews send normally. Effects clear on navigation and persist no data.',
+    owner: 'chat-team',
+    envVar: 'HALLOWEEN_ENABLED',
+  },
+  {
     key: 'overlay.enabled',
     type: 'config',
     valueType: 'boolean',

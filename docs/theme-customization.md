@@ -77,6 +77,14 @@ nothing reads — the theme still loads, and the misspelled color silently has n
 effect. A recognized key that a theme omits falls back to the built-in light
 value. This is the single most common way a theme "half applies".
 
+### Seasonal start-page branding
+
+With `HALLOWEEN_ENABLED=true`, only the start page replaces the existing favicon
+slot in the desktop navigation rail and mobile header with a bundled Halloween
+icon. It adds no logo block to the welcome area and leaves the theme wordmark
+unchanged. Leaving the start page restores the configured favicon. If no favicon
+slot is configured, no new one is introduced.
+
 ### Theme ids and the theme picker
 
 The picker in the user menu is driven by the ids present in the configuration:

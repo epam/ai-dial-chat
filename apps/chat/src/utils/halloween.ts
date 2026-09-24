@@ -1,0 +1,344 @@
+import type { CSSProperties } from 'react';
+import {
+  HALLOWEEN_CLICK_BURSTS,
+  HALLOWEEN_GHOST_COUNT,
+  HALLOWEEN_WEB_COUNT,
+  HALLOWEEN_MOBILE_WEB_COUNT,
+  HALLOWEEN_BAT_COUNT,
+  HALLOWEEN_WITCH_COUNT,
+  HALLOWEEN_WISP_COUNT,
+  HALLOWEEN_SECRET_PHRASE,
+  HALLOWEEN_SPIDER_COUNT,
+} from '../constants/halloween';
+import { HalloweenBurst, HalloweenGhostVariant } from '../types/halloween';
+
+/**
+ * Collapses anything that is not a latin letter into single spaces, so
+ * "Trick-or-Treat!" and "trick  or  treat" both reach the stored phrase.
+ */
+const normalizePhrase = (text: string): string =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z]+/g, ' ')
+    .trim();
+
+/**
+ * Whether `text` is the Halloween easter egg's secret phrase, ignoring case,
+ * punctuation, and surrounding whitespace. Deliberately an exact match on the
+ * whole input: a message that merely mentions the phrase still sends normally.
+ */
+export const isHalloweenSecretPhrase = (text: string): boolean =>
+  normalizePhrase(text) === HALLOWEEN_SECRET_PHRASE;
+
+/** A random float in `[min, max)`. */
+const between = (min: number, max: number): number =>
+  min + Math.random() * (max - min);
+
+/** One abseiling spider of a `HalloweenBurst.Spiders` celebration. */
+export interface HalloweenSpiderDrop {
+  /** Custom properties consumed by `.spiderDrop` in `Halloween.module.scss`. */
+  style: CSSProperties;
+}
+
+/**
+ * Lays out one drop. Each spider gets its own column, thread length, size,
+ * pace, sway and start delay, so they arrive as a scatter rather than a
+ * curtain. `--spider-depth` is both the thread's length and the distance the
+ * pair travels, which is what keeps the thread anchored to the top edge for
+ * the whole descent.
+ *
+ * Called once per burst rather than per render: the layer re-renders on every
+ * ancestor state change, and re-rolling the offsets would restart each
+ * spider's descent halfway down.
+ */
+export const buildHalloweenSpiderDrop = (): HalloweenSpiderDrop[] =>
+  Array.from({ length: HALLOWEEN_SPIDER_COUNT }, (_, index) => {
+    /* One spider per column, jittered inside it, so nine threads spread
+       across the viewport instead of clumping wherever chance puts them. */
+    const columnWidth = 92 / HALLOWEEN_SPIDER_COUNT;
+
+    return {
+      style: {
+        '--spider-x': `${(4 + index * columnWidth + between(0, columnWidth * 0.6)).toFixed(1)}%`,
+        '--spider-depth': `${between(18, 72).toFixed(1)}vh`,
+        '--spider-scale': between(0.6, 1.25).toFixed(2),
+        '--spider-sway': `${between(4, 11).toFixed(1)}deg`,
+        '--spider-sway-duration': `${between(1.8, 3.2).toFixed(2)}s`,
+        '--spider-duration': `${between(4.6, 6.4).toFixed(2)}s`,
+        '--spider-delay': `${between(0, 1.8).toFixed(2)}s`,
+      } as CSSProperties,
+    };
+  });
+
+const GHOST_VARIANTS = Object.values(HalloweenGhostVariant);
+
+/** One ghost of a `HalloweenBurst.Ghost` celebration, with its flight path. */
+export interface HalloweenGhostFlight {
+  variant: HalloweenGhostVariant;
+  /** Custom properties consumed by `.ghost` in `Halloween.module.scss`. */
+  style: CSSProperties;
+}
+
+/**
+ * Lays out one flock. Every ghost gets its own entry edge, arc, size, tilt and
+ * pace, so the flock reads as individuals rather than a row: it enters from
+ * off-screen left or right at a random height, curves upward across the
+ * viewport, and leaves past the opposite edge.
+ *
+ * `--ghost-rest-*` is where the ghost sits when animations are suppressed for
+ * reduced motion — spread across the viewport instead of stacked at the
+ * origin, which is where an un-animated element would otherwise sit.
+ *
+ * Distances are in `vw`/`vh` so a flight crosses the viewport at any size, and
+ * the path is deliberately direction-agnostic (each ghost picks its own side),
+ * so nothing here needs to flip under RTL.
+ */
+export const buildHalloweenGhostFlight = (): HalloweenGhostFlight[] =>
+  Array.from({ length: HALLOWEEN_GHOST_COUNT }, (_, index) => {
+    const isEnteringFromLeft = index % 2 === 0;
+    const fromX = isEnteringFromLeft ? between(-40, -22) : between(112, 130);
+    const toX = isEnteringFromLeft ? between(112, 130) : between(-40, -22);
+    const fromY = between(6, 82);
+    /* Clamped so a ghost that drifts up still crosses the viewport rather
+       than skimming above it. */
+    const toY = Math.min(Math.max(fromY + between(-34, 22), -8), 88);
+    /* Pulling the midpoint above the straight line turns the flight into an
+       arc — the difference between drifting and sliding. */
+    const midY = (fromY + toY) / 2 - between(8, 24);
+    const scale = between(0.55, 1.15);
+
+    return {
+      variant: GHOST_VARIANTS[index % GHOST_VARIANTS.length],
+      style: {
+        '--ghost-from-x': `${fromX.toFixed(1)}vw`,
+        '--ghost-from-y': `${fromY.toFixed(1)}vh`,
+        '--ghost-mid-x': `${between(42, 58).toFixed(1)}vw`,
+        '--ghost-mid-y': `${midY.toFixed(1)}vh`,
+        '--ghost-to-x': `${toX.toFixed(1)}vw`,
+        '--ghost-to-y': `${toY.toFixed(1)}vh`,
+        /* Evenly spaced columns so the reduced-motion flock does not overlap. */
+        '--ghost-rest-x': `${(8 + index * (76 / HALLOWEEN_GHOST_COUNT)).toFixed(1)}vw`,
+        '--ghost-rest-y': `${fromY.toFixed(1)}vh`,
+        '--ghost-scale-from': scale.toFixed(2),
+        '--ghost-scale-mid': (scale * between(1.05, 1.3)).toFixed(2),
+        '--ghost-scale-to': (scale * between(0.7, 0.95)).toFixed(2),
+        '--ghost-tilt': `${between(-14, 14).toFixed(1)}deg`,
+        '--ghost-opacity': between(0.5, 0.85).toFixed(2),
+        '--ghost-duration': `${between(5.2, 8).toFixed(2)}s`,
+        '--ghost-delay': `${between(0, 1.6).toFixed(2)}s`,
+        '--ghost-bob-duration': `${between(1.6, 2.8).toFixed(2)}s`,
+      } as CSSProperties,
+    };
+  });
+
+/** A point in viewport pixels. */
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface SpiderFleeInput {
+  /** Where the spider sits when undisturbed, in viewport pixels. */
+  perch: Point;
+  /** The pointer, in viewport pixels. */
+  pointer: Point;
+  /** The spider's current displacement from its perch. */
+  offset: Point;
+  /** How close the pointer gets before the spider bolts. */
+  fleeRadius: number;
+  /** How far the spider bolts per nudge. */
+  fleeStep: number;
+  /** How far the spider may stray from its perch. */
+  maxOffset: number;
+}
+
+/**
+ * The spider's next displacement from its perch, or `null` when the pointer
+ * is far enough away that it has no reason to move.
+ *
+ * It bolts straight along the line away from the pointer, which is what makes
+ * a chase work: the cursor pushes and the spider gives ground. Clamping the
+ * result to `maxOffset` is a circle, not a box, so a spider herded against
+ * the boundary keeps whatever part of the push runs along it and slides round
+ * instead of stopping dead. A push aimed exactly at the centre has no such
+ * component and does hold it against the leash, which is the one way to
+ * corner it.
+ *
+ * A pointer exactly on the spider has no direction to flee along, so it
+ * breaks the tie diagonally rather than dividing by zero.
+ */
+export const nextHalloweenSpiderOffset = ({
+  perch,
+  pointer,
+  offset,
+  fleeRadius,
+  fleeStep,
+  maxOffset,
+}: SpiderFleeInput): Point | null => {
+  const position = { x: perch.x + offset.x, y: perch.y + offset.y };
+  const awayX = position.x - pointer.x;
+  const awayY = position.y - pointer.y;
+  const distance = Math.hypot(awayX, awayY);
+  if (distance > fleeRadius) return null;
+
+  const isTie = distance < 1;
+  const stepX = isTie ? fleeStep * Math.SQRT1_2 : (awayX / distance) * fleeStep;
+  const stepY = isTie ? fleeStep * Math.SQRT1_2 : (awayY / distance) * fleeStep;
+
+  const nextX = offset.x + stepX;
+  const nextY = offset.y + stepY;
+  const strayed = Math.hypot(nextX, nextY);
+  if (strayed <= maxOffset) return { x: nextX, y: nextY };
+
+  return {
+    x: (nextX / strayed) * maxOffset,
+    y: (nextY / strayed) * maxOffset,
+  };
+};
+
+/** Draw independently on each click, excluding the previous pumpkin scene. */
+export const pickHalloweenBurst = (
+  previous?: HalloweenBurst,
+): HalloweenBurst => {
+  const choices = HALLOWEEN_CLICK_BURSTS.filter((burst) => burst !== previous);
+  return choices[Math.floor(Math.random() * choices.length)];
+};
+
+interface HalloweenWebNode extends Point {
+  delay: number;
+  style: CSSProperties;
+}
+
+interface HalloweenWebStrand {
+  from: number;
+  to: number;
+  path: string;
+  style: CSSProperties;
+}
+
+/** A connected silk mesh in viewport percentages, with small weaving spiders. */
+export const buildHalloweenWebLayout = (
+  isMobile: boolean,
+): {
+  webs: HalloweenWebNode[];
+  strands: HalloweenWebStrand[];
+} => {
+  const count = isMobile ? HALLOWEEN_MOBILE_WEB_COUNT : HALLOWEEN_WEB_COUNT;
+  const columns = isMobile ? 6 : 10;
+  const rows = count / columns;
+  const arrivalOrder = Array.from({ length: count }, (_, index) => index);
+  for (let i = count - 1; i > 0; i -= 1) {
+    const other = Math.floor(Math.random() * (i + 1));
+    [arrivalOrder[i], arrivalOrder[other]] = [
+      arrivalOrder[other],
+      arrivalOrder[i],
+    ];
+  }
+  /* Keep a little silk near every edge, but scatter the interior widely
+     enough that the underlying coverage grid does not read as a pattern. */
+  const positionInCell = (cell: number, total: number) =>
+    cell === 0
+      ? between(0.15, 0.55)
+      : cell === total - 1
+        ? between(0.45, 0.85)
+        : between(0.08, 0.92);
+  const webs = Array.from({ length: count }, (_, cell) => {
+    const column = cell % columns;
+    const row = Math.floor(cell / columns);
+    const x = (column + positionInCell(column, columns)) * (100 / columns);
+    const y = (row + positionInCell(row, rows)) * (100 / rows);
+    const delay = (arrivalOrder[cell] / (count - 1)) * 4.2;
+    const escapesUp = Math.random() < 0.5;
+    return {
+      x,
+      y,
+      delay,
+      style: {
+        '--web-x': `${x}%`,
+        '--web-y': `${y}%`,
+        '--web-size': isMobile
+          ? `clamp(40px, ${between(12, 16).toFixed(1)}vw, 68px)`
+          : `clamp(64px, ${between(5, 9).toFixed(1)}vw, 108px)`,
+        '--web-delay': `${delay.toFixed(2)}s`,
+        '--web-rotation': `${between(-180, 180).toFixed(1)}deg`,
+        '--web-weave-duration': `${between(2.8, 4.1).toFixed(2)}s`,
+        '--web-run-duration': `${between(8.8, 9.6).toFixed(2)}s`,
+        '--web-escape-x': `${between(-55, 55).toFixed(1)}vw`,
+        '--web-escape-y': escapesUp ? '-120vh' : '120vh',
+      } as CSSProperties,
+    };
+  });
+  const strands: HalloweenWebStrand[] = [];
+  const connect = (from: number, to: number) => {
+    const a = webs[from];
+    const b = webs[to];
+    /* Vary the number and sag of threads, while retaining common anchors. */
+    const threadCount = Math.floor(between(2, 5));
+    const path = Array.from({ length: threadCount }, (_, thread) => {
+      const bend = (thread - (threadCount - 1) / 2) * between(0.5, 1.6);
+      const cx = (a.x + b.x) * 5 - (b.y - a.y) * bend * 1.4;
+      const cy = (a.y + b.y) * 5 + (b.x - a.x) * bend * 1.4;
+      return `M${a.x * 10} ${a.y * 10} Q${cx} ${cy} ${b.x * 10} ${b.y * 10}`;
+    }).join(' ');
+    strands.push({
+      from,
+      to,
+      path,
+      style: {
+        '--web-delay': `${Math.min(a.delay, b.delay).toFixed(2)}s`,
+      } as CSSProperties,
+    });
+  };
+  webs.forEach((_, cell) => {
+    if (cell % columns < columns - 1) connect(cell, cell + 1);
+    if (cell + columns < count) {
+      connect(cell, cell + columns);
+      if (cell % columns < columns - 1) {
+        if (Math.random() < 0.5) connect(cell, cell + columns + 1);
+        else connect(cell + 1, cell + columns);
+      }
+    }
+  });
+  return { webs, strands };
+};
+
+/** Shared flight coordinates for the two broom/wing scenes; sizes stay modest. */
+const buildNightFlights = (count: number, isWitch: boolean): CSSProperties[] =>
+  Array.from({ length: count }, (_, index) => {
+    const fliesRight = index % 2 === 0;
+    const height = 12 + ((index * 17) % 62);
+    return {
+      '--flight-start-x': fliesRight ? '-22vw' : '115vw',
+      '--flight-end-x': fliesRight ? '115vw' : '-22vw',
+      '--flight-start-y': `${height}vh`,
+      '--flight-mid-y': `${Math.max(3, height - 18)}vh`,
+      '--flight-end-y': `${Math.min(84, height + 8)}vh`,
+      '--flight-rest-x': `${8 + (index / count) * 78}vw`,
+      '--flight-rest-y': `${height}vh`,
+      '--flight-facing': fliesRight ? 1 : -1,
+      '--flight-size': `${isWitch ? 76 + (index % 3) * 12 : 30 + (index % 4) * 5}px`,
+      '--flight-delay': `${(index * (isWitch ? 0.62 : 0.18)).toFixed(2)}s`,
+      '--flight-duration': `${isWitch ? 7.5 : 5.8}s`,
+      '--wing-duration': `${0.24 + (index % 4) * 0.04}s`,
+    } as CSSProperties;
+  });
+
+export const buildHalloweenBatFlight = (): CSSProperties[] =>
+  buildNightFlights(HALLOWEEN_BAT_COUNT, false);
+
+export const buildHalloweenWitchFlight = (): CSSProperties[] =>
+  buildNightFlights(HALLOWEEN_WITCH_COUNT, true);
+
+/** Dim little lights rise from separate columns, leaving the UI readable. */
+export const buildHalloweenWisps = (): CSSProperties[] =>
+  Array.from(
+    { length: HALLOWEEN_WISP_COUNT },
+    (_, index) =>
+      ({
+        '--wisp-x': `${5 + (index / HALLOWEEN_WISP_COUNT) * 90}vw`,
+        '--wisp-rest-y': `${18 + (index % 6) * 11}vh`,
+        '--wisp-delay': `${(index * 0.16).toFixed(2)}s`,
+        '--wisp-drift': `${index % 2 === 0 ? 32 : -32}px`,
+        '--wisp-color': ['#e8bd70', '#b6a0ff', '#83d6bb'][index % 3],
+      }) as CSSProperties,
+  );
