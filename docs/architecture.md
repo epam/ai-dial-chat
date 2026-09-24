@@ -311,7 +311,9 @@ Configured at startup:
   WebAssembly. App-owned frontend middleware gives chat HTML a fresh style nonce
   and its required WebAssembly permission, while the PDF worker receives a
   separate worker policy. `CSP_MODE` controls report-only rollout versus strict
-  enforcement. Report-only mode accepts legacy HTML without the nonce marker with
+  enforcement. `ALLOWED_CONNECT_ORIGINS` extends `connect-src` for trusted external
+  document previews in both policies; remote-server CORS still applies.
+  Report-only mode accepts legacy HTML without the nonce marker with
   a startup warning; enforcement requires a nonce-aware build. See
   [CSP configuration](../apps/chat-api/README.md#content-security-policy).
 - `ValidationPipe` — whitelist + `forbidNonWhitelisted` + `transform`

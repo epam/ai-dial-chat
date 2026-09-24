@@ -128,8 +128,15 @@ async function bootstrap() {
   });
 
   // Security headers middleware
+  const allowedConnectOrigins = configService.get('ALLOWED_CONNECT_ORIGINS', {
+    infer: true,
+  });
   app.use(
-    helmet(createHelmetOptions(allowedIframeOrigins ?? [], secureTransport)),
+    helmet(
+      createHelmetOptions(allowedIframeOrigins ?? [], secureTransport, {
+        allowedConnectOrigins,
+      }),
+    ),
   );
 
   /*
@@ -175,6 +182,7 @@ async function bootstrap() {
   app.use(
     await createFrontendMiddleware({
       allowedIframeOrigins: allowedIframeOrigins ?? [],
+      allowedConnectOrigins,
       secureTransport,
       cspMode: configService.get('CSP_MODE', { infer: true }),
       reportUri: configService.get('CSP_REPORT_URI', { infer: true }),

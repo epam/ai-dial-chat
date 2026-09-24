@@ -8,6 +8,7 @@ export enum CspMode {
 export const CSP_NONCE_PLACEHOLDER = '__DIAL_CSP_NONCE__';
 
 interface CspOptions {
+  allowedConnectOrigins?: string[];
   nonce?: string;
   allowWasm?: boolean;
   allowInlineStyles?: boolean;
@@ -113,6 +114,7 @@ export const createHelmetOptions = (
   allowedIframeOrigins: string[],
   secureTransport = true,
   {
+    allowedConnectOrigins = [],
     nonce,
     allowWasm = false,
     allowInlineStyles = false,
@@ -146,7 +148,7 @@ export const createHelmetOptions = (
       workerSrc: ["'self'", 'blob:'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
       mediaSrc: ["'self'", 'blob:'],
-      connectSrc: ["'self'", 'blob:'],
+      connectSrc: ["'self'", 'blob:', ...allowedConnectOrigins],
       frameSrc: buildFrameSrcDirective(allowedIframeOrigins),
       frameAncestors: buildFrameAncestorsDirective(allowedIframeOrigins),
       upgradeInsecureRequests: secureTransport ? [] : null,
