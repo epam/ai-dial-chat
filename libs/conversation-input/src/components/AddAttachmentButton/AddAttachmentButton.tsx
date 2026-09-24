@@ -349,6 +349,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       matchReferenceWidth={false}
       placement="bottom-start"
       listClassName={listClassName}
+      overlayContentClassName="flex flex-col gap-1"
       items={menuItems}
       open={hasMenuOverlays ? isDesktopMenuOpen : undefined}
       onOpenChange={hasMenuOverlays ? setIsDesktopMenuOpen : undefined}
@@ -426,10 +427,17 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               onClose={() => setOpenMenuOverlayKey(null)}
               style={style}
             >
-              {overlay.renderOverlay(
-                () => setOpenMenuOverlayKey(null),
-                getCaretPosition?.() ?? 0,
-              )}
+              {/*
+               * The same `role="menu"` container the desktop submenu panel
+               * provides, so an overlay's `menuitem` rows sit inside a menu in
+               * both presentations.
+               */}
+              <div role="menu" aria-label={overlay.title}>
+                {overlay.renderOverlay(
+                  () => setOpenMenuOverlayKey(null),
+                  getCaretPosition?.() ?? 0,
+                )}
+              </div>
             </BottomSheetShell>
           ))}
           {chatSettings != null && (

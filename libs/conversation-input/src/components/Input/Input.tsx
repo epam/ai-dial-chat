@@ -31,7 +31,10 @@ import {
 } from 'react';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useAttachments } from '../../hooks/useAttachments';
-import { useCommandMenu } from '../../hooks/useCommandMenu/useCommandMenu';
+import {
+  CommandMenuOptionStep,
+  useCommandMenu,
+} from '../../hooks/useCommandMenu/useCommandMenu';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useMentionSelectionMirror } from '../../hooks/useMentionSelectionMirror';
 import { useMessageState } from '../../hooks/useMessageState';
@@ -223,11 +226,21 @@ export const Input = forwardRef<InputHandle, InputProps>(
       textareaRef,
     });
 
-    const { isMenuOpen, query, activeWordStart, dismiss, handleValueChange } =
-      useCommandMenu({
-        config: commandMenu,
-        message,
-      });
+    const {
+      isMenuOpen,
+      query,
+      activeWordStart,
+      dismiss,
+      handleValueChange,
+      listboxId: commandMenuListboxId,
+      overlayRef: commandMenuOverlayRef,
+      activeOptionId: activeCommandOptionId,
+      moveActiveOption: moveActiveCommandOption,
+      getActiveOption: getActiveCommandOption,
+    } = useCommandMenu({
+      config: commandMenu,
+      message,
+    });
 
     /*
      * The command menu's empty-query hint: while the menu is open the value is
@@ -616,11 +629,59 @@ export const Input = forwardRef<InputHandle, InputProps>(
       }
     };
 
+    const isSendGesture = (e: KeyboardEvent<HTMLTextAreaElement>) =>
+      sendOnEnter === SendOnEnter.MetaEnter
+        ? (e.metaKey || e.ctrlKey) && !e.shiftKey
+        : !e.shiftKey && !e.metaKey && !e.ctrlKey;
+
+    /*
+     * The open command menu behaves as a list autocomplete, so it takes the
+     * keys an autocomplete owns before the textarea's own handling: the
+     * arrows move the active option instead of navigating message history
+     * (the trigger word is single-line, so there is no line to move to), and
+     * Enter takes the active option instead of sending the message — with no
+     * option active it does nothing rather than send. Shift+Enter and, in
+     * MetaEnter mode, a bare Enter with nothing active keep inserting a
+     * newline, which closes the menu. Returns whether the key was consumed.
+     */
+    const handleCommandMenuKeyDown = (
+      e: KeyboardEvent<HTMLTextAreaElement>,
+    ): boolean => {
+      if (!isMenuOpen || e.nativeEvent.isComposing) return false;
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        moveActiveCommandOption(
+          e.key === 'ArrowDown'
+            ? CommandMenuOptionStep.Next
+            : CommandMenuOptionStep.Previous,
+        );
+        return true;
+      }
+
+      if (e.key !== 'Enter' || e.shiftKey) return false;
+
+      const activeOption = getActiveCommandOption();
+      if (activeOption != null) {
+        e.preventDefault();
+        activeOption.click();
+        return true;
+      }
+
+      if (isSendGesture(e)) {
+        e.preventDefault();
+        return true;
+      }
+
+      return false;
+    };
+
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (isVoiceActive) return;
       /* Serves the undo owed by an insertion the browser could not put on its own
        undo stack; a no-op whenever the browser can undo the edit itself. */
       if (handleUndoKeyDown(e)) return;
+      if (handleCommandMenuKeyDown(e)) return;
       if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
           const cursorPos = e.currentTarget.selectionStart ?? 0;
@@ -670,12 +731,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       const isEnterKey = e.key === 'Enter';
       if (!isEnterKey) return;
 
-      const shouldSend =
-        sendOnEnter === SendOnEnter.MetaEnter
-          ? (e.metaKey || e.ctrlKey) && !e.shiftKey
-          : !e.shiftKey && !e.metaKey && !e.ctrlKey;
-
-      if (shouldSend) {
+      if (isSendGesture(e)) {
         e.preventDefault();
         if (!isStreaming && canSend && hasModelSelected && !isInputDisabled) {
           handleSend();
@@ -772,6 +828,16 @@ export const Input = forwardRef<InputHandle, InputProps>(
         placeholder={placeholder}
         aria-label={ariaLabel}
         /*
+         * The list-autocomplete wiring of the command menu. The textarea keeps
+         * its implicit `textbox` role — ARIA allows no `combobox` role on a
+         * `<textarea>`, and `aria-expanded` is not a textbox attribute — so the
+         * relationship is carried by `aria-autocomplete`, `aria-controls`, and
+         * `aria-activedescendant`, all of which a textbox supports.
+         */
+        aria-autocomplete={commandMenu == null ? undefined : 'list'}
+        aria-controls={isMenuOpen ? commandMenuListboxId : undefined}
+        aria-activedescendant={activeCommandOptionId ?? undefined}
+        /*
          * When a mention is active, the mirror's `ChatSkill` chip (rendered
          * un-hidden, see `renderHighlightedText`/`HighlightedTextRange.render`)
          * already exposes the mention's name and description to assistive
@@ -830,17 +896,25 @@ export const Input = forwardRef<InputHandle, InputProps>(
               matchReferenceWidth={false}
               outsidePressIgnoreRef={textareaRef}
               renderOverlay={() => {
-                const menu = commandMenu.renderMenu({
-                  query,
-                  caretPosition: activeWordStart ?? 0,
-                  close: handleCloseCommandMenu,
-                });
-                if (commandMenu.menuLabel == null) {
-                  return menu;
-                }
+                /*
+                 * The wrapper is always rendered: its ref scopes the
+                 * keyboard's option lookup to this menu. It becomes a
+                 * labeled group only when the host names the menu region.
+                 */
+                const hasMenuLabel = commandMenu.menuLabel != null;
                 return (
-                  <div role="group" aria-label={commandMenu.menuLabel}>
-                    {menu}
+                  <div
+                    ref={commandMenuOverlayRef}
+                    role={hasMenuLabel ? 'group' : undefined}
+                    aria-label={commandMenu.menuLabel}
+                  >
+                    {commandMenu.renderMenu({
+                      query,
+                      caretPosition: activeWordStart ?? 0,
+                      close: handleCloseCommandMenu,
+                      listboxId: commandMenuListboxId,
+                      activeOptionId: activeCommandOptionId,
+                    })}
                   </div>
                 );
               }}

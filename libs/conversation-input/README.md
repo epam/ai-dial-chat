@@ -250,8 +250,43 @@ Base text input with auto-resize and keyboard shortcut handling. Use directly wh
 
 `activeMentions` (on `Input`, `ConversationInput`, and `EditMessageInput`) highlights ranges of the current `message` as styled runs — e.g. a host-tracked skill mention's `/{name}` text — without altering the text itself: the textarea's own text renders transparent (the caret stays visible and normally colored) and a non-interactive mirror underneath renders the identical text with each range styled, so a highlighted run stays pixel-aligned with the real characters underneath it. A range's `isUnsupported: true` renders it in an error style instead of the default highlight — e.g. a mention selected on a deployment that doesn't support it. `onBackspaceAtCaret(caretPosition)` lets the host ask, on every Backspace, whether a tracked range ends exactly at the caret; returning `{ start, length }` makes `Input` delete that whole range as one native edit (so undo still reverts it) instead of the default single-character deletion. `caretPositionOverride` places the caret once, the next time `messageRevision` bumps and the resulting `message` value takes effect — useful right after the host pushes a new `message` that spliced text in at a known position (e.g. inserting a mention) and wants the caret to land after it rather than wherever the browser defaults to.
 
+While the menu is open the textarea drives it as a list autocomplete, with focus staying in the textarea. ArrowDown/ArrowUp move an active option through the menu's `role="option"` elements, wrapping at both ends, instead of navigating message history; the textarea exposes it through `aria-activedescendant` and points `aria-controls` at `ctx.listboxId`. Enter clicks the active option, so an option's `onClick` is its one selection path for mouse and keyboard, and with no option active Enter does nothing — the `/query` is never sent while the menu is open. Shift+Enter still inserts a newline, which closes the menu. The textarea keeps its `textbox` role and carries `aria-autocomplete="list"` whenever `commandMenu` is set. To take part, the menu renders a `role="listbox"` element with `id={ctx.listboxId}`, gives each option a unique `id`, and marks the one equal to `ctx.activeOptionId` with `aria-selected="true"` and a visible highlight; `ctx.activeOptionId` resets whenever the query changes.
+
 ```tsx
-import { Input } from '@epam/ai-dial-conversation-input';
+import {
+  Input,
+  type CommandMenuConfig,
+} from '@epam/ai-dial-conversation-input';
+
+const commandMenu: CommandMenuConfig = {
+  triggerPrefix: '/',
+  menuLabel: 'Skills',
+  renderMenu: ({ query, close, listboxId, activeOptionId }) => (
+    <ul role="listbox" id={listboxId} aria-label="Skills">
+      {skills
+        .filter((skill) => skill.name.includes(query))
+        .map((skill) => {
+          const id = `${listboxId}-${skill.id}`;
+          return (
+            <li
+              key={skill.id}
+              id={id}
+              role="option"
+              aria-selected={id === activeOptionId}
+              onClick={() => {
+                close({ consumeQuery: true });
+                selectSkill(skill.id);
+              }}
+            >
+              {skill.name}
+            </li>
+          );
+        })}
+    </ul>
+  ),
+};
+
+<Input commandMenu={commandMenu} onSend={handleSend} />;
 ```
 
 ### ChatSettingsModal

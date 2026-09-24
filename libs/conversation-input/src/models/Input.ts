@@ -151,6 +151,10 @@ export interface MenuOverlayConfig {
    * caret offset at the moment the overlay opened (0 when it cannot be
    * determined) — e.g. so a selection made here can splice text in at that
    * exact position via `message`/`messageRevision`/`caretPositionOverride`.
+   * The content is mounted inside a `role="menu"` container — the desktop
+   * submenu panel or the mobile sheet's wrapper — so selectable rows should
+   * be `role="menuitem"`: those are the rows the desktop submenu's
+   * ArrowUp/ArrowDown/Home/End navigation moves between.
    */
   renderOverlay: (onClose: () => void, caretPosition: number) => ReactNode;
   /** Accessible label for the back arrow in the mobile stacked bottom sheet. Defaults to `'Back'`. */
@@ -169,9 +173,32 @@ export interface CommandMenuContext {
    * text is never sent); the default close leaves the text untouched.
    */
   close: (options?: { consumeQuery?: boolean }) => void;
+  /**
+   * Id the menu puts on its `role="listbox"` element. The textarea references
+   * it through `aria-controls` while the menu is open.
+   */
+  listboxId: string;
+  /**
+   * Id of the option the keyboard currently has active, or `null` when none
+   * is. The textarea moves it through the menu's `role="option"` elements
+   * with ArrowDown/ArrowUp (wrapping at the ends) and exposes it through
+   * `aria-activedescendant`; the menu marks the matching option with
+   * `aria-selected="true"` and a visible highlight. Enter clicks the active
+   * option, so an option's `onClick` is its selection path for mouse and
+   * keyboard alike. Options must carry unique `id`s; one with
+   * `aria-disabled="true"` is skipped. Reset whenever the query changes.
+   */
+  activeOptionId: string | null;
 }
 
-/** Host-injected slash-command menu: an overlay opened by entering a trigger prefix as its own word anywhere in the textarea. */
+/**
+ * Host-injected slash-command menu: an overlay opened by entering a trigger
+ * prefix as its own word anywhere in the textarea. While it is open the
+ * textarea drives it as a list autocomplete: ArrowDown/ArrowUp move the
+ * active option (instead of navigating message history), Enter takes the
+ * active option and never sends the message, and Escape closes the menu
+ * keeping the text.
+ */
 export interface CommandMenuConfig {
   /** Prefix that opens the menu when it starts a whitespace-delimited word (e.g. `'/'`) — typed as the word's first character, or arriving in a paste that produces such a word. */
   triggerPrefix: string;

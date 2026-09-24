@@ -290,6 +290,8 @@ export const useSkillSelectorOverlay = ({
     (onClose: () => void, caretPosition: number): ReactNode => (
       <FavoriteSkillsPanel
         favorites={favoriteSkillItems}
+        /* The Add menu mounts overlays inside a `role="menu"` container. */
+        isMenu
         onSelect={(item) => {
           insertAndPush(item.id, item.name, caretPosition);
           onClose();
@@ -347,10 +349,18 @@ export const useSkillSelectorOverlay = ({
             triggerPrefix: '/',
             menuLabel: addMenuLabel,
             emptyQueryHint: emptyQueryHintLabel,
-            renderMenu: ({ query, caretPosition, close }) => (
+            renderMenu: ({
+              query,
+              caretPosition,
+              close,
+              listboxId,
+              activeOptionId,
+            }) => (
               <FavoriteSkillsPanel
                 favorites={favoriteSkillItems}
                 searchQuery={query}
+                listboxId={listboxId}
+                activeOptionId={activeOptionId}
                 onSelect={(item) => {
                   close({ consumeQuery: true });
                   insertAndPush(item.id, item.name, caretPosition);
