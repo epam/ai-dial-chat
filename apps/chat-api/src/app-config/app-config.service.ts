@@ -82,6 +82,7 @@ export class AppConfigService {
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
+    let allowedConnectOrigins: string[] = [];
     let enabledUiFeatures: string[] | null = null;
     let announcementHtml: string | null = null;
     let announcementTitle: string | null = null;
@@ -131,6 +132,8 @@ export class AppConfigService {
         overlayEnabled = resolved === true;
       } else if (def.key === 'overlay.allowedOrigins') {
         overlayAllowedOrigins = Array.isArray(resolved) ? resolved : [];
+      } else if (def.key === 'documents.allowedConnectOrigins') {
+        allowedConnectOrigins = Array.isArray(resolved) ? resolved : [];
       } else if (def.key === 'announcement.html') {
         announcementHtml = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'announcement.title') {
@@ -195,6 +198,7 @@ export class AppConfigService {
         fileManagerTabs,
         overlayEnabled,
         overlayAllowedOrigins,
+        allowedConnectOrigins,
         announcementHtml,
         announcementTitle,
         announcementDescription,

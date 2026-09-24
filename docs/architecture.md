@@ -376,7 +376,12 @@ Configured at startup:
   a fresh style nonce and its required WebAssembly permission, while the PDF worker receives a
   separate worker policy. `CSP_MODE` controls report-only rollout versus strict
   enforcement. `ALLOWED_CONNECT_ORIGINS` extends `connect-src` for trusted external
-  document previews in both policies; remote-server CORS still applies.
+  document previews in both policies; remote-server CORS still applies. The same
+  list reaches the app through client config. The app supplies a PDF loader that
+  enables browser credentials for matching external HTTP(S) origins and rejects
+  their redirects; the attachment library receives only the loader callback.
+  See the [configuration reference](../apps/chat-api/README.md#content-security-policy)
+  for credentialed CORS and cookie requirements.
   Report-only mode accepts legacy HTML without the nonce marker with
   a startup warning; enforcement requires a nonce-aware build. See
   [CSP configuration](../apps/chat-api/README.md#content-security-policy).
