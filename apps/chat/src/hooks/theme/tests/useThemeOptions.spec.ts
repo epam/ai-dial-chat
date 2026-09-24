@@ -19,7 +19,10 @@ describe('useThemeOptions', () => {
   const mockUseTheme = vi.mocked(ThemeContextModule.useTheme);
   const setTheme = vi.fn();
 
-  const renderWithThemes = (themes?: Theme[], selectedTheme = ThemeId.Light) => {
+  const renderWithThemes = (
+    themes?: Theme[],
+    selectedTheme = ThemeId.Light,
+  ) => {
     mockUseTheme.mockReturnValue({
       themes,
       selectedTheme,
