@@ -70,7 +70,6 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `react` ^19.2.8
 - `@epam/ai-dial-attachment-canvas` \*
 - `@epam/ai-dial-attachment-input` \*
-- `@epam/ai-dial-builder-form` \*
 - `@epam/ai-dial-catalog` \*
 - `@epam/ai-dial-chat-overlay` \*
 - `@epam/ai-dial-chat-shared` \*
@@ -128,30 +127,30 @@ kinds still need the package installed for `tsc`/the bundler to resolve the spec
 building that entry; the distinction is about what the code does with the import, not about
 whether you need to `npm install` it.
 
-| Entry point               | Runtime peers beyond `react`                                                                                                                        | Type-only peers                                                                         |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                      | `@epam/ai-dial-builder-form`, `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
-| `./viewport-layout`       | —                                                                                                                                                   | —                                                                                       |
-| `./scroll-anchoring`      | —                                                                                                                                                   | —                                                                                       |
-| `./conversation`          | `@epam/ai-dial-chat-shared`                                                                                                                         | `@epam/ai-dial-publish-panel`                                                           |
-| `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                                                       |
-| `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                                                       |
-| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                                                            |
-| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                                                       |
-| `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`                                                             |
-| `./source-content`        | —                                                                                                                                                   | —                                                                                       |
-| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                                                       |
-| `./skills-state`          | —                                                                                                                                                   | —                                                                                       |
-| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | —                                                                                       |
-| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                                                       |
-| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                                                       |
-| `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                                                       |
-| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                                                       |
-| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                               |
-| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                                                       |
-| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                                                       |
+| Entry point               | Runtime peers beyond `react`                                                                                                                        | Type-only peers                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                      | `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
+| `./viewport-layout`       | —                                                                                                                                                   | —                                                         |
+| `./scroll-anchoring`      | —                                                                                                                                                   | —                                                         |
+| `./conversation`          | `@epam/ai-dial-chat-shared`                                                                                                                         | `@epam/ai-dial-publish-panel`                             |
+| `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                         |
+| `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
+| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                              |
+| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                         |
+| `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`                               |
+| `./source-content`        | —                                                                                                                                                   | —                                                         |
+| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                         |
+| `./skills-state`          | —                                                                                                                                                   | —                                                         |
+| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | —                                                         |
+| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
+| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                         |
+| `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                         |
+| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                         |
+| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`                               |
+| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                         |
+| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                         |
 
-Six of the peers above (`@epam/ai-dial-builder-form`, `@epam/ai-dial-catalog`,
+Five of the peers above (`@epam/ai-dial-catalog`,
 `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-publish-panel`,
 `@epam/ai-dial-scheduled-tasks`, `@epam/ai-dial-skill-editor`) were already declared in
 `package.json#peerDependencies` but missing from this section before this table was added.

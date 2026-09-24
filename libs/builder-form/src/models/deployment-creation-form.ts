@@ -1,24 +1,14 @@
+import type {
+  LocaleOption,
+  LocalizedTextEntry,
+} from '@epam/ai-dial-chat-shared';
 import type { MetadataField } from './metadata-field';
 
 /** One additional (non-primary) locale's name/description translation, edited via the "Add locale" popup. */
-export interface DeploymentCreationFormLocaleEntry {
-  /** Stable client-side id for list rendering; not part of the persisted locale map. */
-  id: string;
-  /** Locale code this entry translates into (e.g. `'de'`). */
-  language: string;
-  /** Translated name for this locale. */
-  name: string;
-  /** Translated description for this locale. */
-  description: string;
-}
+export type DeploymentCreationFormLocaleEntry = LocalizedTextEntry;
 
 /** A selectable language option for an additional-locale row. */
-export interface DeploymentCreationFormLocaleOption {
-  /** Locale code (e.g. `'de'`). */
-  code: string;
-  /** Display label for the option (e.g. `'DE'`). */
-  label: string;
-}
+export type DeploymentCreationFormLocaleOption = LocaleOption;
 
 /** Field values shared by Quick App and Toolset creation's General step. */
 export interface DeploymentCreationFormValues {
