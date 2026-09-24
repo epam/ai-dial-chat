@@ -203,6 +203,12 @@ export enum OverlayFeature {
    * redirects to `/`.
    */
   HideSettingsPage = 'hide-settings-page',
+  /**
+   * Renders the theme logo in the desktop top bar, centered between the
+   * conversation controls and the sources toggle. The mobile header shows the
+   * logo regardless of this key; `Header` still gates that surface.
+   */
+  ShowHeaderLogo = 'show-header-logo',
 }
 
 /**

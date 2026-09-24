@@ -14,6 +14,9 @@ vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../Header/SourcesSidebarToggle', () => ({
   default: () => <div />,
 }));
+vi.mock('../../Header/Logo', () => ({
+  default: () => <a href="/" aria-label="Logo" />,
+}));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24 },
@@ -100,5 +103,20 @@ describe('ChatLayout', () => {
     expect(
       screen.queryByRole('button', { name: ButtonsI18nKeys.NewChat }),
     ).toBeNull();
+  });
+  it('renders the logo in the top bar when show-header-logo is enabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.ShowHeaderLogo,
+    );
+    renderChatLayout();
+    expect(screen.getByRole('link', { name: 'Logo' })).toBeTruthy();
+  });
+
+  it('omits the logo when show-header-logo is disabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.ShowHeaderLogo,
+    );
+    renderChatLayout();
+    expect(screen.queryByRole('link', { name: 'Logo' })).toBeNull();
   });
 });
