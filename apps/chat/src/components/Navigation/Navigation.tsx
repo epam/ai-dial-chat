@@ -54,6 +54,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const isNavigationMenuHidden = useUiFeature(
     OverlayFeature.HideNavigationMenu,
   );
+  const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
   const items = useNavigationItems();
   const profile = useNavigationUserProfile();
   const { languageGroup, keyboardGroup } = useNavigationMenuGroups();
@@ -62,6 +63,9 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const isUserMenuShown = isAuthenticated && !isUserMenuHidden;
 
   const handleSelectItem = (item: NavigationPanelItem) => navigate(item.id);
+  const handleOpenSettings = isSettingsPageHidden
+    ? undefined
+    : () => navigate(ROUTES.Settings);
 
   return (
     <>
@@ -94,7 +98,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
                   settings: t(BasicI18nKeys.Settings),
                 }}
                 onLogout={openLogout}
-                onSettings={() => navigate(ROUTES.Settings)}
+                onSettings={handleOpenSettings}
               />
             )
           }
@@ -112,6 +116,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           profile={profile}
           groups={keyboardGroup ? [keyboardGroup] : undefined}
           onLogout={openLogout}
+          onSettings={handleOpenSettings}
           footer={<FooterMessage />}
           labels={{
             title: t(NavigationI18nKeys.Menu),
@@ -119,6 +124,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
             back: t(NavigationI18nKeys.Back),
             profile: t(NavigationI18nKeys.Profile),
             logOut: t(ButtonsI18nKeys.LogOut),
+            settings: t(BasicI18nKeys.Settings),
           }}
         />
       )}

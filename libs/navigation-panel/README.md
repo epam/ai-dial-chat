@@ -57,7 +57,7 @@ Without `renderLink` each item is wrapped in a plain `<a href={item.href}>`, so 
 
 ### UserMenu
 
-Avatar trigger plus dropdown: identity row, one submenu per settings group, divider, log-out entry. The host owns the log-out confirmation flow — `onLogout` only signals intent.
+Avatar trigger plus dropdown: identity row, one submenu per settings group, divider, log-out entry. The host owns the log-out confirmation flow — `onLogout` only signals intent. Pass `onSettings` with `labels.settings` to add a Settings entry between the divider and Log out; omit both to hide it.
 
 ```tsx
 <UserMenu
@@ -74,14 +74,16 @@ Avatar trigger plus dropdown: identity row, one submenu per settings group, divi
     trigger: t(AuthI18nKeys.SignedInAs, { email }),
     avatarAlt: t(AuthI18nKeys.UserAvatar),
     logOut: t(ButtonsI18nKeys.LogOut),
+    settings: t(BasicI18nKeys.Settings),
   }}
   onLogout={openLogoutConfirmation}
+  onSettings={() => navigate(ROUTES.Settings)}
 />
 ```
 
 ### NavigationSheet
 
-The mobile counterpart. `onSelectItem` fires after the sheet closes so the host can navigate.
+The mobile counterpart. `onSelectItem` fires after the sheet closes so the host can navigate. Pass `onSettings` with `labels.settings` to add a Settings row to the profile page, above Log out — the sheet closes first, then the host navigates, the same entry `UserMenu` offers on desktop.
 
 ```tsx
 <NavigationSheet
@@ -92,6 +94,7 @@ The mobile counterpart. `onSelectItem` fires after the sheet closes so the host 
   profile={profile}
   groups={[keyboardGroup]}
   onLogout={openLogoutConfirmation}
+  onSettings={() => navigate(ROUTES.Settings)}
   footer={<FooterMessage />}
   labels={{
     title: t(NavigationI18nKeys.Menu),
@@ -99,6 +102,7 @@ The mobile counterpart. `onSelectItem` fires after the sheet closes so the host 
     back: t(NavigationI18nKeys.Back),
     profile: t(NavigationI18nKeys.Profile),
     logOut: t(ButtonsI18nKeys.LogOut),
+    settings: t(BasicI18nKeys.Settings),
   }}
 />
 ```

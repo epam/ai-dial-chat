@@ -194,6 +194,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const isConversationsFilterHidden = useUiFeature(
     OverlayFeature.HideConversationsFilter,
   );
+  const isConversationExportHidden = useUiFeature(
+    OverlayFeature.HideConversationExport,
+  );
   const {
     conversations: items,
     isLoading,
@@ -794,8 +797,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         ],
       };
 
+      const exportActions = isConversationExportHidden ? [] : [exportAction];
+
       if (isReadonlyItem) {
-        const readonlyActions = [pinAction, duplicateAction, exportAction];
+        const readonlyActions = [pinAction, duplicateAction, ...exportActions];
         if (rawItem?.sharedWithMe) {
           readonlyActions.push({
             key: 'unshare',
@@ -832,7 +837,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             ),
         },
         duplicateAction,
-        exportAction,
+        ...exportActions,
         ...(isConversationsSharingEnabled
           ? [
               {
@@ -978,6 +983,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       panelActiveConversationId,
       isConversationsSharingEnabled,
       isConversationsPublishingEnabled,
+      isConversationExportHidden,
       getPublishHistory,
       navigate,
       onDuplicateReadonly,
@@ -1280,7 +1286,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           headerActions={
             <ConversationPanelMenu
               activeConversationId={activeConversationId}
-              onExportAll={handleExportAll}
+              onExportAll={
+                isConversationExportHidden ? undefined : handleExportAll
+              }
               onImport={handleImportClick}
             />
           }
