@@ -236,9 +236,9 @@ describe('ConversationInput — model menu styles', () => {
     /* The panel carries no role of its own, so the row is found by role and
        walked up to it. */
     expect(
-      // eslint-disable-next-line testing-library/no-node-access
       screen
         .getByRole('menuitemradio', { name: 'GPT-4o' })
+        // eslint-disable-next-line testing-library/no-node-access
         .closest(`.${CONVERSATION_INPUT_CLASS.modelMenu}`)?.classList,
     ).toContain('host-menu');
   });

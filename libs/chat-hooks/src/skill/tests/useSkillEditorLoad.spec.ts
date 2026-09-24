@@ -17,7 +17,9 @@ const MANIFEST = [
 
 const makeResponse = (body: string, etag?: string): Response =>
   ({
-    headers: { get: (name: string) => (name === 'etag' ? (etag ?? null) : null) },
+    headers: {
+      get: (name: string) => (name === 'etag' ? (etag ?? null) : null),
+    },
     text: () => Promise.resolve(body),
     arrayBuffer: () => Promise.resolve(new TextEncoder().encode(body).buffer),
   }) as unknown as Response;
