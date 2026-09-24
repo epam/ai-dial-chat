@@ -821,6 +821,26 @@ BFF. This does not replace authentication, CSRF validation or sandbox isolation.
 The current matchers hardcode `/api`; changing the global prefix requires
 reviewing these matchers too.
 
+## Corporate proxy support
+
+Outbound HTTP(S) calls this app makes to the internet — OIDC discovery,
+token, and JWKS requests to identity providers; the themes service
+(`THEMES_CONFIG_URL`); and an externally-reachable DIAL Core — honor the
+standard `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment variables
+(lowercase variants are also read). Set them when the deployment can only
+reach the internet through a corporate proxy:
+
+```
+HTTP_PROXY=http://proxy.example.com:8080
+HTTPS_PROXY=http://proxy.example.com:8080
+NO_PROXY=localhost,127.0.0.1,.internal
+```
+
+When neither `HTTP_PROXY` nor `HTTPS_PROXY` is set, no proxy agent is
+installed and requests go out directly, as before. `NO_PROXY` is only
+consulted when a proxy variable is set, and excludes matching hosts from
+proxying. See `src/net/proxy-agent.setup.ts`.
+
 ## MCP Apps Configuration
 
 The BFF exposes these values through `GET /api/v1/client-config`. They configure
