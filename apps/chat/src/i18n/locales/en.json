@@ -1531,7 +1531,13 @@
     "batsToastMessage": "The bats are out for a moonlit flight. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "catToastMessage": "A little familiar is chasing the lights. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "witchesToastMessage": "The witches are taking the scenic route. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
-    "pumpkinLabel": "Halloween pumpkin"
+    "pumpkinLabel": "Halloween pumpkin",
+    "trainToastMessage": "The midnight express is passing through! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "portalToastMessage": "A portal is borrowing a couple of chats — they will be right back! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "ravensToastMessage": "The ravens have spotted something in the night. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "candyToastMessage": "Treats for everyone! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "footprintsToastMessage": "Someone invisible is tiptoeing through the chat. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "skeletonsToastMessage": "The skeletons have found their rhythm. Send \"{{phrase}}\" in the start-page chat for a secret surprise."
   },
   "newYear": {
     "toastTitle": "Happy New Year!",

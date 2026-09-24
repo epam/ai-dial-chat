@@ -55,7 +55,25 @@ export const HALLOWEEN_CLICK_BURSTS = [
   HalloweenBurst.Bats,
   HalloweenBurst.Cat,
   HalloweenBurst.Witches,
+  HalloweenBurst.Train,
+  HalloweenBurst.Portal,
+  HalloweenBurst.Ravens,
+  HalloweenBurst.Candy,
+  HalloweenBurst.Footprints,
+  HalloweenBurst.Skeletons,
 ] as const;
+
+/** Deadlines include the borrowed rows returning and all delayed exits. */
+export const HALLOWEEN_SCENE_DURATIONS: Partial<
+  Record<HalloweenBurst, number>
+> = {
+  [HalloweenBurst.Train]: 12000,
+  [HalloweenBurst.Portal]: 10000,
+  [HalloweenBurst.Ravens]: 11000,
+  [HalloweenBurst.Candy]: 11000,
+  [HalloweenBurst.Footprints]: 12000,
+  [HalloweenBurst.Skeletons]: 10000,
+};
 
 export const HALLOWEEN_WEB_COUNT = 80;
 export const HALLOWEEN_MOBILE_WEB_COUNT = 54;

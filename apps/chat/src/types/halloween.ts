@@ -15,6 +15,12 @@ export enum HalloweenBurst {
   Cat = 'cat',
   /** Witches fly across the sky on broomsticks. */
   Witches = 'witches',
+  Train = 'train',
+  Portal = 'portal',
+  Ravens = 'ravens',
+  Candy = 'candy',
+  Footprints = 'footprints',
+  Skeletons = 'skeletons',
 }
 
 /**
