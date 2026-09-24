@@ -60,6 +60,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   activeWindowLabel,
   nextRunLabel,
   instructionsMarkdown,
+  skillDisplayName,
   renderInstructions,
   runs,
   runsIsLoading = false,
@@ -147,6 +148,8 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   const configurationSection = (
     <ScheduledTaskConfigurationSection
       instructionsLabel={labels.instructionsLabel}
+      skillLabel={labels.skillLabel}
+      skillDisplayName={skillDisplayName}
       instructionsMarkdown={instructionsMarkdown}
       renderInstructions={renderInstructions}
       fieldLabelClassName={fieldLabelClassName}

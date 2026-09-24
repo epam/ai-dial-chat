@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'package.json'));
-for (const name of ['scheduled-tasks', 'catalog', 'chat-hooks']) {
+for (const name of ['scheduled-tasks', 'catalog', 'chat-hooks', 'skills']) {
   const entry = realpathSync(require.resolve('@epam/ai-dial-' + name));
   assert(
     entry.startsWith(realpathSync(resolve(root, 'node_modules'))),

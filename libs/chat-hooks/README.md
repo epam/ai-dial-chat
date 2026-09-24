@@ -1,5 +1,22 @@
 # @epam/ai-dial-chat-hooks
 
+## Scheduled task skills
+
+The existing root and `./scheduled-tasks` preparation/mapping exports carry
+optional `skillUrl`. Pass `{ now, isSkillsSupported }` to checked create/update
+preparation; skill-bearing drafts require support strictly equal to `true`.
+Create omits an unset reference; update emits `null` for a cleared selection.
+Unchecked update mapping therefore expects a complete, hydrated draft.
+`mapScheduledTaskDtoToFormValues` accepts empty instructions when a saved skill
+exists. A missing prompt still fails mapping. Hydrate edits from detail GET,
+since upstream list rows may omit the completion payload.
+
+`createScheduledTasksApiClient` continues to accept an already configured
+generated client and delegates normal operations without creating transport or
+auth state. `getApiErrorDetails` now preserves an optional string `code` from
+the response, alongside status/message/trace ID, without consuming a clonable
+response. Hosts translate scheduled-task domain codes and retain their drafts.
+
 Framework-level React hooks extracted from AI DIAL Chat, published so teams building custom chat interfaces on top of the AI DIAL backend can reuse proven chat-UI behavior without depending on the full AI DIAL Chat application.
 
 ## Overview
@@ -131,7 +148,7 @@ whether you need to `npm install` it.
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                                                       |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                                                       |
 | `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                               |
-| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                       | —                                                                                       |
+| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                                                       |
 | `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                                                       |
 
 Six of the peers above (`@epam/ai-dial-builder-form`, `@epam/ai-dial-catalog`,

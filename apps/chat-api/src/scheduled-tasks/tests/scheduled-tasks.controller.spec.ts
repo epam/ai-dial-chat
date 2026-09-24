@@ -15,9 +15,17 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import { ScheduledTasksController } from '../scheduled-tasks.controller';
+import {
+  fromUpstreamSchedule,
+  toUpstreamSchedulePayload,
+} from '../scheduled-tasks.mapper';
 import { ScheduledTasksService } from '../scheduled-tasks.service';
 
-const TEST_USER = { sub: 'user-1', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-1',
+  at: 'test-access-token',
+  bucket: 'test-bucket',
+};
 
 const validCreateBody = {
   displayName: 'Daily summary',
@@ -205,6 +213,128 @@ describe('ScheduledTasksController (integration)', () => {
   });
 
   describe('POST /api/v1/scheduled-tasks', () => {
+    it.each(['\u044f'.repeat(200), '\u062a'.repeat(1024), 'a '.repeat(512)])(
+      'accepts a saved encoded reference on update for path %#',
+      async (path) => {
+        const body = {
+          ...validCreateBody,
+          prompt: '',
+          skillUrl: `skills/public/${path}`,
+        };
+        const saved = fromUpstreamSchedule({
+          id: mockSchedule.id,
+          ...toUpstreamSchedulePayload(
+            body,
+            'http://core',
+            '2024-10-21',
+            'scheduler',
+          ),
+        });
+        service.createScheduledTask.mockResolvedValue(saved);
+        service.getScheduledTask.mockResolvedValue(saved);
+        service.updateScheduledTask.mockResolvedValue(saved);
+
+        await request(app.getHttpServer())
+          .post('/api/v1/scheduled-tasks')
+          .send(body)
+          .expect(201);
+        const detail = await request(app.getHttpServer())
+          .get(`/api/v1/scheduled-tasks/${saved.id}`)
+          .expect(200);
+        await request(app.getHttpServer())
+          .put(`/api/v1/scheduled-tasks/${saved.id}`)
+          .send({ ...body, skillUrl: detail.body.skillUrl })
+          .expect(200);
+        expect(service.updateScheduledTask).toHaveBeenCalledWith(
+          TEST_USER.sub,
+          TEST_USER.at,
+          saved.id,
+          expect.objectContaining({ skillUrl: saved.skillUrl }),
+          TEST_USER.bucket,
+        );
+      },
+    );
+
+    it.each(['a'.repeat(1025), encodeURIComponent('\u044f'.repeat(1025))])(
+      'rejects a path over the decoded length limit %# on create and update',
+      async (path) => {
+        const body = { ...validCreateBody, skillUrl: `skills/public/${path}` };
+        await request(app.getHttpServer())
+          .post('/api/v1/scheduled-tasks')
+          .send(body)
+          .expect(400);
+        await request(app.getHttpServer())
+          .put('/api/v1/scheduled-tasks/sched_123')
+          .send(body)
+          .expect(400);
+        expect(service.createScheduledTask).not.toHaveBeenCalled();
+        expect(service.updateScheduledTask).not.toHaveBeenCalled();
+      },
+    );
+
+    it('returns a typed capability rejection without changing its code or field', async () => {
+      const error = {
+        statusCode: 400,
+        error: 'Bad Request',
+        code: 'scheduledTaskSkillUnsupported',
+        field: 'skillUrl',
+        message:
+          'Selected model does not support skills. Remove the skill or select different model to proceed.',
+      };
+      service.createScheduledTask.mockRejectedValue(
+        new BadRequestException(error),
+      );
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send({ ...validCreateBody, skillUrl: 'skills/public/report' })
+        .expect(400);
+      expect(response.body).toEqual(error);
+    });
+    it.each([
+      '',
+      '  ',
+      'https://external/skill',
+      'skills/public/../secret',
+      'skills/public/%2e%2e/secret',
+      'skills/public/%2fsecret',
+      'skills/public/%00secret',
+      'skills/public/a\nb',
+      'skills/public/   ',
+      42,
+      {},
+    ])('rejects invalid skill reference %j', async (skillUrl) => {
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send({ ...validCreateBody, skillUrl })
+        .expect(400);
+      expect(service.createScheduledTask).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      'skills/public/daily report',
+      'skills/public/daily%20report',
+      'skills/public/\u062a\u0642\u0631\u064a\u0631',
+    ])(
+      'accepts skill-only DTO %s and passes the session bucket',
+      async (skillUrl) => {
+        service.createScheduledTask.mockResolvedValue({
+          ...mockSchedule,
+          prompt: '',
+          skillUrl,
+        });
+        const response = await request(app.getHttpServer())
+          .post('/api/v1/scheduled-tasks')
+          .send({ ...validCreateBody, prompt: '', skillUrl })
+          .expect(201);
+        expect(response.body.skillUrl).toBe(skillUrl);
+        expect(service.createScheduledTask).toHaveBeenCalledWith(
+          TEST_USER.sub,
+          TEST_USER.at,
+          expect.objectContaining({ prompt: '', skillUrl }),
+          TEST_USER.bucket,
+        );
+      },
+    );
     it('returns 201 with the created schedule', async () => {
       service.createScheduledTask.mockResolvedValue(mockSchedule);
 
@@ -218,6 +348,7 @@ describe('ScheduledTasksController (integration)', () => {
         TEST_USER.sub,
         TEST_USER.at,
         expect.objectContaining(validCreateBody),
+        TEST_USER.bucket,
       );
     });
 
@@ -308,6 +439,7 @@ describe('ScheduledTasksController (integration)', () => {
         TEST_USER.sub,
         TEST_USER.at,
         expect.objectContaining(body),
+        TEST_USER.bucket,
       );
     });
 
@@ -333,6 +465,7 @@ describe('ScheduledTasksController (integration)', () => {
         TEST_USER.sub,
         TEST_USER.at,
         expect.objectContaining(body),
+        TEST_USER.bucket,
       );
     });
 
@@ -392,6 +525,7 @@ describe('ScheduledTasksController (integration)', () => {
         TEST_USER.sub,
         TEST_USER.at,
         expect.objectContaining(body),
+        TEST_USER.bucket,
       );
     });
 
@@ -632,6 +766,7 @@ describe('ScheduledTasksController (integration)', () => {
         TEST_USER.at,
         'sched_123',
         expect.objectContaining(validCreateBody),
+        TEST_USER.bucket,
       );
     });
 

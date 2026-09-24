@@ -32,6 +32,8 @@ export interface ScheduledTaskDetailViewLabels {
   configurationTitle: string;
   /** Label for the instructions field. */
   instructionsLabel: string;
+  /** Label of the optional skill field in Configuration. */
+  skillLabel?: string;
   /** Label for the page-level retry action shown alongside `error`. */
   retryLabel: string;
   /** Title of the History panel. */
@@ -150,6 +152,8 @@ export interface ScheduledTaskDetailViewProps {
   activeWindowLabel?: string;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
+  /** Resolved skill name or full saved reference; omit to hide the field. */
+  skillDisplayName?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
   /** Pre-formatted "Next run" label shown under the History title, e.g. "Next run: Jul 31 at 9:00 AM". Omit to hide (e.g. when the schedule is paused or inactive). */

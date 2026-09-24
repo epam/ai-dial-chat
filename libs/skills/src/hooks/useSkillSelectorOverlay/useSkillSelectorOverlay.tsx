@@ -1,4 +1,5 @@
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
+import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
   MenuOverlayConfig,
@@ -103,7 +104,10 @@ export const useSkillSelectorOverlay = ({
     () =>
       selectedSkillId == null
         ? null
-        : (skillByUrl.get(selectedSkillId) ?? null),
+        : (skillByUrl.get(selectedSkillId) ?? {
+            url: selectedSkillId,
+            name: selectedSkillId,
+          }),
     [skillByUrl, selectedSkillId],
   );
 
@@ -111,7 +115,10 @@ export const useSkillSelectorOverlay = ({
    * A skill selected on a deployment that does not support skills: the chip
    * renders in its error state and hosts fold this into send-disabled.
    */
-  const isSkillUnsupported = selectedSkill != null && !isSkillsSupported;
+  const isSkillUnsupported = isSkillSelectionUnsupported(
+    selectedSkillId,
+    isSkillsSupported,
+  );
 
   const selectSkill = useCallback((skillId: string) => {
     setSelectedSkillId(skillId);

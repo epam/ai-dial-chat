@@ -36,12 +36,16 @@ export interface FavoriteSkillsPanelProps {
   favorites: FavoriteSkillItem[];
   /** Called when a row is activated (click, Enter, or Space). */
   onSelect: (item: FavoriteSkillItem) => void;
-  /** Called with a skill's id when its row's star button is clicked to remove it from favorites. */
-  onToggleFavorite: (id: string) => void;
+  /** Removes a favorite by id; omitted hides the star action. */
+  onToggleFavorite?: (id: string) => void;
   /** Called when the "Browse" button is clicked. */
   onBrowse: () => void;
-  /** Called when a row tooltip's "View details" button is clicked. */
-  onViewDetails: (item: FavoriteSkillItem) => void;
+  /** Opens skill details; omitted hides the details tooltip. */
+  onViewDetails?: (item: FavoriteSkillItem) => void;
+  /** Additional classes applied to the panel root. */
+  className?: string;
+  /** Additional classes applied to each favorite row. */
+  rowClassName?: string;
   /**
    * When provided, the panel enters search mode: rows are filtered to names
    * containing this string case-insensitively and matched names render with a

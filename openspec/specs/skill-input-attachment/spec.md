@@ -495,3 +495,48 @@ Sending SHALL be disabled while this state holds: the send button SHALL remain m
 - **WHEN** the chip is in the error state and the user removes the skill with the Backspace-at-position-0 gesture
 - **THEN** the chip disappears and sending follows the ordinary sendable-content rules for the remaining draft
 
+Selection SHALL be determined by the stored skill reference, not a successful catalog lookup. The overlay SHALL consume the shared pure capability predicate under its existing enabled-flow gate. An unresolved selected reference SHALL retain a fallback chip, unsupported state, and removal gesture.
+
+#### Scenario: Unresolved selected reference blocks unsupported sending
+
+- **WHEN** the enabled chat flow has a selected URL absent from every catalog pool and deployment support is not true
+- **THEN** the fallback chip displays the same unsupported message and sending remains disabled until removal or a supporting deployment is selected
+
+### Requirement: Controlled skill field is reusable outside chat inputs
+
+`@epam/ai-dial-skills` SHALL export `SkillSelectorField` and its props with controlled `value?: string`, `onChange`, optional resolved `displayName`, `isSkillsSupported`, disabled/invalid state, label/error IDs, injected labels, and `renderCatalogContent(onSelect, onClose)`. It SHALL accept host-resolved `favorites`, optional favorite/details callbacks, and `renderOverlay` for mobile presentation. It SHALL own popup/focus state and the search query only, reuse the existing skills catalog modal, and never import application providers or construct network requests. It SHALL display the saved reference while metadata is unavailable, replace selection rather than append, and provide an explicit accessible remove action. Browse entry points SHALL be disabled when deployment support is not true; an existing selected value SHALL remain removable.
+
+`@epam/ai-dial-chat-shared` SHALL export a pure `isSkillSelectionUnsupported(skillUrl, isSkillsSupported)` predicate; the controlled field, chat overlay hook, and scheduler validator SHALL use it. The predicate SHALL depend on reference presence and strict support, not resolved metadata or feature flags. The chat hook SHALL apply its existing enabled-flow gate around the result. Existing overlay API signatures SHALL remain compatible.
+
+#### Scenario: Controlled external hydration
+
+- **WHEN** a host changes the field value from one saved reference to another while catalog data is unavailable
+- **THEN** the displayed selection follows the new prop immediately without waiting for a second selection state to synchronize
+
+#### Scenario: Choose a favorite or browse the catalog
+
+- **WHEN** the supported field is activated
+- **THEN** an input styled consistently with the model/agent selector opens searchable host-supplied favorites, an empty-state hint when appropriate, and a Browse action
+- **AND** selecting a favorite replaces the controlled reference and closes the panel; Browse opens the existing skill-only catalog
+- **AND** search matches use the shared `Highlight` component and no matches are announced as a live status
+
+#### Scenario: Clear without opening the picker
+
+- **WHEN** the trailing clear button is activated
+- **THEN** `onChange(undefined)` removes the selection without opening the dropdown or catalog
+- **AND** clearing remains available when the model cannot use skills, unless the entire field is disabled
+
+#### Scenario: Mobile picker presentation
+
+- **WHEN** a host supplies `renderOverlay` for a mobile sheet
+- **THEN** the same favorites, search, Browse, and selection behavior is rendered in that sheet, with keyboard dismissal and focus return
+
+#### Scenario: Unsupported reference remains removable
+
+- **WHEN** a selected reference has no catalog item and support is false
+- **THEN** the field reports unsupported state, displays the reference, disables browsing, and still supports removal
+
+#### Scenario: Keyboard and search behavior is retained
+
+- **WHEN** a user browses and filters catalog skills using the keyboard
+- **THEN** the injected catalog retains its shared `Highlight` matched-text rendering and selection semantics, Escape restores focus, and selection invokes `onChange` once with one reference

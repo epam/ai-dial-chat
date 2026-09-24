@@ -123,6 +123,13 @@ The detail page SHALL render a Details section showing the task's description, a
 - **WHEN** the task's `model` id has no matching entry in the deployments context
 - **THEN** the Details section displays the raw model id string as the "Model or Agent" value, without throwing
 
+The Configuration section SHALL render an optional Skill field above Instructions using a host-resolved display name or full raw reference. It SHALL hide Skill only when no reference is saved, and hide empty Instructions for a skill-only task. The existing Model location and schedule formatting remain unchanged.
+
+#### Scenario: Read-only skill is independent of metadata availability
+
+- **WHEN** a saved skill cannot be resolved
+- **THEN** Configuration displays the raw reference and retains the rest of the task without a broken link or error screen
+
 ### Requirement: History panel paginates runs via a "Show more" button inside its own scroll container
 
 The detail page SHALL render a History panel listing the task's runs, fetched via a `useScheduledTaskRuns(scheduleId, enabled)` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskRuns.ts`) exposing `{ items, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }`, mirroring the shape of the existing `useScheduledTasks` hook. The hook SHALL call `listScheduledTaskRuns({ scheduleId, limit: 10, offset: 0 })` for the initial page, and `loadMore()` SHALL, only when `hasMore && !isLoadingMore && !isLoading`, fetch the next page at `offset = items.length` and append the results deduplicated by `id`, with no client-side re-sorting (server order is `created_at desc`). `hasMore` SHALL be derived from `items.length < count` when `count` is present in the response, falling back to a non-null `next` field, or — when the upstream response omits both `count` and `next` — to a full-page-size heuristic (the just-fetched page had exactly `limit` items), so pagination does not permanently stop after the first page purely because upstream didn't echo a total. The hook SHALL use `AbortController` to cancel any in-flight request when `scheduleId` changes or the hook unmounts.
@@ -587,3 +594,29 @@ scheduled-tasks SHALL export ScheduledTaskDeleteConfirmation with controlled ope
 
 - **WHEN** a task name contains markup-like characters
 - **THEN** the name is rendered as text/React content and never executed as HTML.
+
+### Requirement: Skill display covers reusable summaries and the active Configuration view
+
+`ScheduledTaskDetailsSummary` and `ScheduledTaskConfigurationSection` SHALL accept optional localized `skillLabel` and resolved `skillDisplayName`; `ScheduledTaskDetailView` SHALL forward its optional skill value and label to Configuration. The host SHALL pass the skill's resolved display name or full raw reference, independent of catalog loading/failure and of `skillUsageEnabled`. No skill SHALL produce no Skill field. Values SHALL be plain text, without a details link. Libraries SHALL perform no lookup or navigation.
+
+The full detail page SHALL render Skill above Instructions in Configuration on desktop and in the mobile Configuration tab, preserving Model in Details. The conversation sources panel SHALL pass the same saved-task metadata to the reusable summary, ordered Model, Skill, Instructions. Skill-only tasks SHALL render without an empty Instructions block or an empty Configuration section. Lookup failure SHALL NOT replace task content with an error screen. The existing detail task state remains the source of truth; no new context is added.
+
+#### Scenario: Present skill resolves to a readable name
+
+- **WHEN** task detail or its conversation sources panel has a saved skill and readable metadata
+- **THEN** Skill displays the name above Instructions in the relevant reusable surface
+
+#### Scenario: Deleted unreadable or loading skill metadata
+
+- **WHEN** the saved reference cannot be resolved because it is deleted, unreadable, loading, or lookup failed
+- **THEN** the full reference is displayed as text, other task metadata remains visible, and no broken details link appears
+
+#### Scenario: No skill preserves the established view
+
+- **WHEN** a task has instructions and no skill
+- **THEN** no Skill label or empty placeholder is rendered and existing Model/Instructions content is unchanged
+
+#### Scenario: Skill-only task on mobile and RTL
+
+- **WHEN** a skill-only task is viewed in a narrow RTL Configuration tab
+- **THEN** the Skill field remains visible, wraps its name/reference, inherits direction, and no empty instructions field is shown

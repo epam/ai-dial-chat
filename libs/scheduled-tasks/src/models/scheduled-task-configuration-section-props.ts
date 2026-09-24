@@ -2,6 +2,10 @@ import type { ReactNode } from 'react';
 
 /** Props for the {@link ScheduledTaskConfigurationSection} component. */
 export interface ScheduledTaskConfigurationSectionProps {
+  /** Localized label of the optional skill field. */
+  skillLabel?: string;
+  /** Resolved skill name or full saved reference; omit to hide the field. */
+  skillDisplayName?: string;
   /** Label for the instructions field. */
   instructionsLabel: string;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via `MDMessageViewer` otherwise. Omit to hide the field entirely. */

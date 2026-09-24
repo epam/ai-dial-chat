@@ -149,6 +149,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run browser-observed packed/source parity
         run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-browser-parity
+      - name: Verify packed scheduled-task skill selection and layout
+        run: npm exec -- nx run scheduled-tasks-consumer-fixture:test-browser
 
   publish_lib_coherent_release:
     # Checks that packed libraries from one release install together and
