@@ -323,7 +323,7 @@ describe('Celebration runtime', () => {
         secretTrigger: {
           phrases: ['magic please'],
           hintPhrase: 'magic please',
-          sceneId: 'long',
+          sceneIds: ['long'],
         },
       }),
     );
@@ -337,21 +337,102 @@ describe('Celebration runtime', () => {
     expect(screen.queryByTestId('long-scene')).toBeNull();
   });
 
-  it('does not swallow a secret message if its scene is unavailable', async () => {
-    mockLoadEvent.mockResolvedValue(
-      makeEvent({
-        secretTrigger: {
-          phrases: ['magic please'],
-          hintPhrase: 'magic please',
-          sceneId: 'missing',
-        },
-      }),
-    );
+  it.each([{ sceneIds: [] }, { sceneIds: ['missing'] }])(
+    'does not swallow a secret message with no playable scene ($sceneIds)',
+    async ({ sceneIds }) => {
+      mockLoadEvent.mockResolvedValue(
+        makeEvent({
+          secretTrigger: {
+            phrases: ['magic please'],
+            hintPhrase: 'magic please',
+            sceneIds,
+          },
+        }),
+      );
+      render(<Harness />);
+      await expectEventLoaded();
+      fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+      expect(consumed).toBe(false);
+      expect(showSuccessNotification).not.toHaveBeenCalled();
+    },
+  );
+
+  const secretEvent = () =>
+    makeEvent({
+      secretTrigger: {
+        phrases: ['magic please'],
+        hintPhrase: 'magic please',
+        sceneIds: ['missing', 'short', 'short', 'long'],
+      },
+    });
+
+  it('selects different secret scenes despite intervening clicks', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    mockLoadEvent.mockResolvedValue(secretEvent());
     render(<Harness />);
     await expectEventLoaded();
     fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    expect(consumed).toBe(true);
+    expect(screen.getByTestId('short-scene')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'long' }));
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    expect(consumed).toBe(true);
+    expect(screen.getByTestId('long-scene')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    expect(screen.getByTestId('short-scene')).toBeTruthy();
+    expect(showSuccessNotification).toHaveBeenCalledTimes(4);
+  });
+
+  it('can select the last valid secret scene on the first message', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+    mockLoadEvent.mockResolvedValue(secretEvent());
+    render(<Harness />);
+    await expectEventLoaded();
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    expect(screen.getByTestId('long-scene')).toBeTruthy();
+  });
+
+  it('restarts a singleton secret scene and replaces its cleanup deadline', async () => {
+    const event = secretEvent();
+    if (event.secretTrigger)
+      event.secretTrigger.sceneIds = ['missing', 'short', 'short'];
+    mockLoadEvent.mockResolvedValue(event);
+    render(<Harness />);
+    await expectEventLoaded();
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    const first = screen.getByTestId('short-scene');
+    act(() => vi.advanceTimersByTime(100));
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    expect(consumed).toBe(true);
+    expect(screen.getByTestId('short-scene')).not.toBe(first);
+    act(() => vi.advanceTimersByTime(199));
+    expect(screen.getByTestId('short-scene')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.queryByTestId('short-scene')).toBeNull();
+  });
+
+  it('clears secret history on navigation and configured event changes', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    mockLoadEvent.mockResolvedValue(secretEvent());
+    const { rerender } = render(<Harness />);
+    await expectEventLoaded();
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    expect(screen.getByTestId('short-scene')).toBeTruthy();
+    fireEvent.click(screen.getByRole('link', { name: 'open conversation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
     expect(consumed).toBe(false);
-    expect(showSuccessNotification).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('short-scene')).toBeNull();
+    fireEvent.click(screen.getByRole('link', { name: 'back to start' }));
+    await expectEventLoaded();
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    expect(screen.getByTestId('short-scene')).toBeTruthy();
+    mockLoadEvent.mockResolvedValue({ ...secretEvent(), id: 'second-event' });
+    setConfig('second-event');
+    rerender(<Harness />);
+    await expectEventLoaded('second-event');
+    fireEvent.click(screen.getByRole('button', { name: 'secret' }));
+    expect(screen.getByTestId('short-scene')).toBeTruthy();
   });
 
   it('contains a broken scene and can play a later scene', async () => {

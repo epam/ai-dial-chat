@@ -27,10 +27,10 @@ existing client-config refresh lifecycle; it is not a calendar scheduler.
 Only `/` renders event decoration and intercepts its optional secret phrase.
 Existing conversations send text normally. The current modules are:
 
-| Event       | Click scenes                                                                                                                | Secret phrase                         |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `halloween` | Ghosts, connected web, bats, cat, witches, ghost train, portal, ravens, candy rain, invisible paw prints, dancing skeletons | `trick or treat` → descending spiders |
-| `new-year`  | Snow, confetti, flying sleighs                                                                                              | `happy new year` → confetti           |
+| Event       | Click scenes                                                                                                                | Secret phrase                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `halloween` | Ghosts, connected web, bats, cat, witches, ghost train, portal, ravens, candy rain, invisible paw prints, dancing skeletons | `trick or treat` → random descending spiders, cauldron, mimic, pumpkin bowling or mummy |
+| `new-year`  | Snow, confetti, flying sleighs                                                                                              | `happy new year` → confetti                                                             |
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes
@@ -38,6 +38,35 @@ conversation data. Interaction, scrolling, resizing, navigation or enabling redu
 motion cancels the borrowing immediately. With closed or empty history, only the
 portal artwork appears. Reduced motion shows a static rift and leaves history alone.
 Every scene notification includes a hint for the event's secret chat phrase.
+
+The four new message-only surprises interact with the existing page through
+inert visual copies. A mummy walks in from the side, braces against the chat input
+and strains twice without moving it, then slowly pushes it completely offscreen.
+The input returns at the end; its draft and focus are preserved throughout.
+A cauldron pulls two chats into its brew and releases them as bubbles; a toothy
+mimic curls a shaded tongue in front of and behind two neighboring chats and pulls
+them into its mouth, keeping them attached to the tongue tip, then chews and spits them back. A pumpkin
+rolls into the visible history and scatters only the rows whose visible titles
+its body touches (up to six), starting each row's motion at contact, before they regroup.
+Original layout and conversation data never change. Copies disappear and originals
+return immediately on typing, composition, clicking, focus changes, scrolling,
+resizing, source changes, navigation or reduced motion. Unavailable or unusually
+large targets fall back to artwork alone. The mummy can use a focused composer;
+history scenes skip focused rows. The mummy animates for twelve seconds and
+unmounts after thirteen; the other three animate for eight and unmount after nine.
+Repeated secret messages select randomly without consecutive repeats, independently
+of pumpkin clicks. The new scenes are exclusive to messages and show a static
+illustration with reduced motion enabled.
+
+Descending spiders can now borrow up to three visible welcome-page elements:
+the greeting, model selector, attachment control and sometimes a history row.
+They descend, weave fine curved silk strands around their prizes, then climb above the viewport carrying
+the copies. Each carrier and its cargo share a transform. Originals retain layout
+and focus and return within eleven seconds; interaction cancels the theft
+immediately. Focused or expanded controls are skipped. Missing targets keep the
+decorative spider drop; reduced motion leaves the page untouched and shows static
+spiders. Existing public selectors provide all targets without changes to core
+page components or libraries.
 
 ### Adding an event
 
@@ -50,7 +79,10 @@ implement the [CelebrationEvent contract](src/types/celebration.ts):
    `scenes`, `clickSceneIds` and `notificationTitleKey`. Every scene supplies
    an `id`, `Component`, `durationMs` and typed `notificationKey`. Its duration
    must include delayed arrivals and departures. An optional `secretTrigger`
-   supplies `phrases`, `hintPhrase` and a valid `sceneId`.
+   supplies `phrases`, `hintPhrase` and `sceneIds`. The runtime samples distinct
+   valid IDs without consecutive repeats, independently of click selection.
+   A singleton pool can repeat; an empty or entirely invalid pool leaves messages
+   untouched. Both selection histories reset on navigation or event changes.
 3. Add one dynamic import to [the event registry](src/celebrations/registry.ts).
    New IDs require no backend enum, provider, header or composer changes.
 4. Add translated labels/messages. Scenes for an event with a secret phrase
