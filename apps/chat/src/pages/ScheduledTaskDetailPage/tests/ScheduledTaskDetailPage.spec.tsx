@@ -18,6 +18,12 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskDetailPage from '../ScheduledTaskDetailPage';
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: () => ({ skills: [], publicSkills: [], sharedWithMe: [] }),
+}));
+vi.mock('../../../server-api/skills.api', () => ({
+  getSkillMetadata: vi.fn().mockRejectedValue(new Error('Unavailable')),
+}));
 
 vi.mock(
   '../../../context/AppConfigContext',
@@ -96,6 +102,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onRetry,
     description,
     modelLabel,
+    skillDisplayName,
     repeatsLabel,
     activeWindowLabel,
     nextRunLabel,
@@ -131,6 +138,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onRetry?: () => void;
     description?: string;
     modelLabel?: string;
+    skillDisplayName?: string;
     repeatsLabel?: string;
     activeWindowLabel?: string;
     nextRunLabel?: string;
@@ -152,6 +160,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {isDeleted && <span>{labels.deletedStateLabel}</span>}
       <span>description:{description}</span>
       <span>modelLabel:{modelLabel}</span>
+      <span>skill:{skillDisplayName}</span>
       <span>repeatsLabel:{repeatsLabel}</span>
       <span>activeWindowLabel:{activeWindowLabel}</span>
       <span>nextRunLabel:{nextRunLabel}</span>
@@ -299,6 +308,18 @@ const renderDetailPage = (scheduleId = 'sched_123') =>
   );
 
 describe('ScheduledTaskDetailPage', () => {
+  it('passes a deleted skill reference to the read-only detail without failing the page', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Task',
+      prompt: '',
+      skillUrl: 'skills/public/deleted',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+    });
+    renderDetailPage();
+    expect(await screen.findByText('skill:skills/public/deleted')).toBeTruthy();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     useAppConfigMock.mockReturnValue({ status: 'ready' });

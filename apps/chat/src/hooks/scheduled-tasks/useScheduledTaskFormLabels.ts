@@ -8,7 +8,10 @@ import {
 } from '../../constants/translation-keys';
 
 /** Keeps create/edit form copy and repeat options identical at the app edge. */
-export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
+export const useScheduledTaskFormLabels = (
+  mode: 'create' | 'edit',
+  isSkillSelectionEnabled = false,
+) => {
   const { t } = useTranslation();
   return useMemo(
     () => ({
@@ -26,8 +29,11 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
         ScheduledTasksI18nKeys.CreateConfigurationSectionTitle,
       ),
       configurationSectionSubtitle: t(
-        ScheduledTasksI18nKeys.CreateConfigurationSectionSubtitle,
+        isSkillSelectionEnabled
+          ? ScheduledTasksI18nKeys.CreateConfigurationSectionSubtitle
+          : ScheduledTasksI18nKeys.CreateInstructionsOnlySubtitle,
       ),
+      skillLabel: t(ScheduledTasksI18nKeys.CreateSkillLabel),
       displayNameLabel: t(EditorI18nKeys.NameLabel),
       displayNameRequired: t(EditorI18nKeys.NameRequired),
       runAtLabel: t(ScheduledTasksI18nKeys.CreateRunAtLabel),
@@ -79,6 +85,6 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           : ButtonsI18nKeys.Saving,
       ),
     }),
-    [mode, t],
+    [mode, t, isSkillSelectionEnabled],
   );
 };

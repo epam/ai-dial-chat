@@ -34,6 +34,7 @@ import { ListScheduledTaskRunsQueryDto } from './dto/list-scheduled-task-runs-qu
 import { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task-runs.dto';
 import { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
 import { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
+import { ScheduledTaskValidationErrorDto } from './dto/scheduled-task-validation-error.dto';
 import { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import {
   UpdateScheduledTaskBodyDto,
@@ -116,7 +117,7 @@ export class ScheduledTasksController {
     summary: 'Create a scheduled task',
     description:
       'Creates a DIAL Scheduler schedule that runs a chat completion on the given model ' +
-      'and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. ' +
+      'and prompt or skill, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. ' +
       'Invalidates the scheduled tasks list cache on success.',
   })
   @ApiBody({ type: CreateScheduledTaskBodyDto })
@@ -128,12 +129,13 @@ export class ScheduledTasksController {
   @ApiResponse({
     status: 400,
     description: 'Validation error — missing or invalid fields',
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
-    description:
-      'The scheduledTasksEnabled feature is not enabled for this user',
+    description: 'Feature disabled or selected model is inaccessible',
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({
     status: 502,
@@ -144,12 +146,22 @@ export class ScheduledTasksController {
     description:
       'DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured',
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Selected model is unavailable',
+    type: ScheduledTaskValidationErrorDto,
+  })
   createScheduledTask(
     @Req() req: Request,
     @Body() body: CreateScheduledTaskBodyDto,
   ): Promise<CreatedScheduledTaskDto> {
-    const { sub, at } = req.user as SessionUser;
-    return this.scheduledTasksService.createScheduledTask(sub, at, body);
+    const { sub, at, bucket } = req.user as SessionUser;
+    return this.scheduledTasksService.createScheduledTask(
+      sub,
+      at,
+      body,
+      bucket,
+    );
   }
 
   @Get(':scheduleId')
@@ -343,6 +355,7 @@ export class ScheduledTasksController {
     summary: 'Update a scheduled task',
     description:
       'Updates an existing DIAL Scheduler schedule for the authenticated session user. ' +
+      'Omitting skillUrl preserves the saved reference; null removes it. ' +
       'Invalidates the scheduled tasks list cache on success.',
   })
   @ApiBody({ type: UpdateScheduledTaskBodyDto })
@@ -354,14 +367,20 @@ export class ScheduledTasksController {
   @ApiResponse({
     status: 400,
     description: 'Validation error — invalid scheduleId or body fields',
+    type: ScheduledTaskValidationErrorDto,
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
     status: 403,
-    description:
-      'The scheduledTasksEnabled feature is not enabled for this user',
+    description: 'Feature disabled or selected model is inaccessible',
+    type: ScheduledTaskValidationErrorDto,
   })
-  @ApiResponse({ status: 404, description: 'Scheduled task not found' })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Scheduled task or selected model not found; deployment errors carry scheduledTaskDeploymentUnavailable',
+    type: ScheduledTaskValidationErrorDto,
+  })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -376,12 +395,13 @@ export class ScheduledTasksController {
     @Param() params: GetScheduledTaskDto,
     @Body() body: UpdateScheduledTaskBodyDto,
   ): Promise<UpdatedScheduledTaskDto> {
-    const { sub, at } = req.user as SessionUser;
+    const { sub, at, bucket } = req.user as SessionUser;
     return this.scheduledTasksService.updateScheduledTask(
       sub,
       at,
       params.scheduleId,
       body,
+      bucket,
     );
   }
 

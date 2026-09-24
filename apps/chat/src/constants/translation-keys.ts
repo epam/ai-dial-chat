@@ -347,6 +347,7 @@ export enum PromptSelectorI18nKeys {
 }
 
 export enum SkillSelectorI18nKeys {
+  RemoveSkillLabel = 'skillSelector.removeSkillLabel',
   AddMenuLabel = 'skillSelector.addMenuLabel',
   EmptyHint = 'skillSelector.emptyHint',
   EmptyQueryHint = 'skillSelector.emptyQueryHint',
@@ -425,6 +426,10 @@ export enum ScheduledTasksI18nKeys {
   CreateDescriptionMaxLengthError = 'scheduledTasks.create.descriptionMaxLengthError',
   CreateInstructionsLabel = 'scheduledTasks.create.instructionsLabel',
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
+  CreateSkillLabel = 'scheduledTasks.create.skillLabel',
+  CreateSkillPlaceholder = 'scheduledTasks.create.skillPlaceholder',
+  CreateInstructionsOrSkillRequired = 'scheduledTasks.create.instructionsOrSkillRequired',
+  CreateInstructionsOnlySubtitle = 'scheduledTasks.create.instructionsOnlySubtitle',
   CreateSubmittingLabel = 'scheduledTasks.create.submittingLabel',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',
   CreateErrorNotification = 'scheduledTasks.create.errorNotification',

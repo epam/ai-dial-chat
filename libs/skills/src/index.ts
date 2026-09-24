@@ -33,3 +33,9 @@ export type {
   UseSkillSelectorOverlayResult,
 } from './models/skill-selector-overlay';
 export { SKILLS_CLASS } from './constants/public-class-names';
+export { SkillSelectorField } from './components/SkillSelectorField/SkillSelectorField';
+export type {
+  SkillSelectorFieldProps,
+  SkillSelectorFieldLabels,
+  SkillSelectorFieldStyles,
+} from './models/skill-selector-field-props';

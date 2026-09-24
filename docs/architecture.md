@@ -471,6 +471,24 @@ Business controllers are versioned; three infrastructure controllers are deliber
 | `/api/themes`                       | Theme configuration and icons — unversioned               |
 | `/api/health`                       | Health check — unversioned                                |
 
+#### Scheduled tasks
+
+Scheduled-task create/update accepts an optional nullable `skillUrl` alongside
+the required-string prompt. PUT reads authoritative detail before merging:
+omission preserves a skill, null removes it. The scheduled-tasks service resolves
+session-scoped deployment capabilities through the deployments facade before
+saving a skill-bearing task. The mapper writes the encoded reference into the
+first user message's `custom_content.skills` in the Scheduler completion payload;
+this repository contains no task-run worker. Sparse lists need not include that
+payload. See the [API contract](../apps/chat-api/README.md#scheduled-task-skill-contract).
+
+Reusable selection lives in `skills` (`SkillSelectorField`), validation and
+presentation in `scheduled-tasks`, and checked request mapping in `chat-hooks`.
+Both chat and scheduled-task validation use the pure `chat-shared` skill-support
+predicate. App adapters own feature flags, catalogs, metadata resolution and
+deployment data. Task execution belongs to the external Scheduler and uses the
+existing offline-credentials flow.
+
 #### Auth (`/api/v1/auth`)
 
 | Method | Path                                 | Description                                                             |

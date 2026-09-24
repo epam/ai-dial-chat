@@ -23,7 +23,11 @@
           "target": "build"
         },
         {
-          "projects": ["@epam/ai-dial-catalog", "@epam/ai-dial-chat-hooks"],
+          "projects": [
+            "@epam/ai-dial-catalog",
+            "@epam/ai-dial-chat-hooks",
+            "@epam/ai-dial-skills"
+          ],
           "target": "build"
         }
       ]

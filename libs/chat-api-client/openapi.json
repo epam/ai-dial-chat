@@ -5997,7 +5997,7 @@
         "tags": ["scheduled-tasks"]
       },
       "post": {
-        "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.",
+        "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt or skill, using the OAuth external-service id configured via SCHEDULER_SERVICE_ID. Invalidates the scheduled tasks list cache on success.",
         "operationId": "createScheduledTask",
         "parameters": [],
         "requestBody": {
@@ -6022,13 +6022,37 @@
             }
           },
           "400": {
-            "description": "Validation error — missing or invalid fields"
+            "description": "Validation error — missing or invalid fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+            "description": "Feature disabled or selected model is inaccessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Selected model is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -6092,7 +6116,7 @@
         "tags": ["scheduled-tasks"]
       },
       "put": {
-        "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.",
+        "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Omitting skillUrl preserves the saved reference; null removes it. Invalidates the scheduled tasks list cache on success.",
         "operationId": "updateScheduledTask",
         "parameters": [
           {
@@ -6129,16 +6153,37 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid scheduleId or body fields"
+            "description": "Validation error — invalid scheduleId or body fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+            "description": "Feature disabled or selected model is inaccessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "404": {
-            "description": "Scheduled task not found"
+            "description": "Scheduled task or selected model not found; deployment errors carry scheduledTaskDeploymentUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskValidationErrorDto"
+                }
+              }
+            }
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -12103,6 +12148,10 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox"
+          },
+          "skillUrl": {
+            "type": "string",
+            "example": "skills/public/daily-summary"
           }
         },
         "required": ["id", "displayName", "trigger"]
@@ -12162,7 +12211,14 @@
           },
           "prompt": {
             "type": "string",
-            "example": "Summarize my inbox"
+            "example": "Summarize my inbox",
+            "description": "Instructions; may be empty when the effective task has a skill."
+          },
+          "skillUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "skills/public/daily-summary",
+            "description": "DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it."
           },
           "description": {
             "type": "string",
@@ -12229,9 +12285,59 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox"
+          },
+          "skillUrl": {
+            "type": "string",
+            "example": "skills/public/daily-summary"
           }
         },
         "required": ["id", "displayName", "trigger"]
+      },
+      "ScheduledTaskErrorCode": {
+        "type": "string",
+        "enum": [
+          "scheduledTaskSkillUnsupported",
+          "scheduledTaskInstructionsOrSkillRequired",
+          "scheduledTaskDeploymentUnavailable"
+        ]
+      },
+      "ScheduledTaskValidationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 400
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request"
+          },
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScheduledTaskErrorCode"
+              }
+            ]
+          },
+          "field": {
+            "type": "string",
+            "example": "skillUrl"
+          }
+        },
+        "required": ["statusCode", "message", "error"]
       },
       "ScheduledTaskRunDto": {
         "type": "object",
@@ -12320,7 +12426,14 @@
           },
           "prompt": {
             "type": "string",
-            "example": "Summarize my inbox"
+            "example": "Summarize my inbox",
+            "description": "Instructions; may be empty when the effective task has a skill."
+          },
+          "skillUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "skills/public/daily-summary",
+            "description": "DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it."
           },
           "description": {
             "type": "string",
@@ -12387,6 +12500,10 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox"
+          },
+          "skillUrl": {
+            "type": "string",
+            "example": "skills/public/daily-summary"
           }
         },
         "required": ["id", "displayName", "trigger"]

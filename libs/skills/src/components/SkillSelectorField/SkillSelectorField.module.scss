@@ -1,0 +1,24 @@
+.background {
+  background: var(--ssf-bg);
+}
+
+.border {
+  border-color: var(--ssf-border);
+}
+
+.value {
+  color: var(--ssf-text);
+}
+
+.clear {
+  margin-block: -0.5rem;
+}
+
+.invalid {
+  color: var(--ssf-error, var(--text-error, #9c2222));
+  border-color: var(--ssf-error, var(--text-error, #9c2222));
+
+  input {
+    color: var(--ssf-error, var(--text-error, #9c2222));
+  }
+}

@@ -9,6 +9,12 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ConversationSourcesPanelContainer from '../ConversationSourcesPanel';
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: () => ({ skills: [], publicSkills: [], sharedWithMe: [] }),
+}));
+vi.mock('../../../server-api/skills.api', () => ({
+  getSkillMetadata: vi.fn().mockRejectedValue(new Error('Unavailable')),
+}));
 
 const mockNavigate = vi.fn();
 vi.mock('react-router', () => ({
@@ -264,6 +270,24 @@ describe('ConversationSourcesPanelContainer — download all', () => {
 });
 
 describe('ConversationSourcesPanelContainer — scheduled-task sections', () => {
+  it('shows a saved skill fallback in task Details', async () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.taskState = 'success';
+    activeScheduledTaskMock.task = {
+      id: 'schedule-1',
+      displayName: 'Task',
+      prompt: '',
+      skillUrl: 'skills/public/deleted',
+    } as ScheduledTaskDto;
+    render(<ConversationSourcesPanelContainer />);
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'scheduledTasks.create.detailsSectionTitle',
+      }),
+    );
+    expect(screen.getByText('skills/public/deleted')).toBeTruthy();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mockUploaded = [];

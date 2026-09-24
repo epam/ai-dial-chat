@@ -1,5 +1,31 @@
 # Chat API
 
+## Scheduled task skill contract
+
+Scheduled-task POST/PUT bodies accept optional nullable `skillUrl`, validated
+as a DIAL `skills/{bucket}/{path}` resource reference. The 1024-character path
+limit is measured after percent-decoding, so a saved encoded Unicode reference
+remains valid on update. Raw-reference safety checks still apply. `prompt` remains a
+required string; it may be empty when an effective skill exists. POST
+omission/null means no skill. PUT first reads authoritative detail: omission
+preserves the saved reference, null removes it, and a string replaces it.
+
+Skill-bearing writes resolve model/agent capabilities with the session token
+and bucket through DeploymentsService's lookup facade and require
+`features.skillsSupported === true`. Rejections use codes
+`scheduledTaskSkillUnsupported`, `scheduledTaskInstructionsOrSkillRequired`,
+or `scheduledTaskDeploymentUnavailable`; failed validation never mutates a
+schedule or invalidates its list cache.
+
+The mapper encodes the resource exactly as chat and writes it to
+`properties.payload.messages[0].custom_content.skills: [{ url }]` in the
+Scheduler completion payload. Detail/create/update responses expose optional
+`skillUrl`; sparse list responses may omit it. There is no local Scheduler
+worker. The Scheduler integration contract covers persistence, explicit removal,
+and forwarding skills with optional instructions through the existing offline
+execution flow, as defined in the
+[change design](../../openspec/changes/archive/2026-09-24-add-scheduled-task-skills/design.md).
+
 NestJS backend-for-frontend for the AI DIAL Chat platform. It terminates
 authentication, brokers every call to DIAL Core, exposes a versioned REST API to
 the SPA, and serves the built frontend in production.

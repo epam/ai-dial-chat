@@ -312,6 +312,39 @@ const getCancelButtons = () =>
   screen.getAllByRole('button', { name: 'Cancel' });
 
 describe('ScheduledTaskCreateForm', () => {
+  it('renders an opaque skill slot and allows skill-only saves unless invalid, including hidden skills', () => {
+    const props = buildFormProps({
+      values: {
+        ...baseValues,
+        displayName: 'Task',
+        modelId: 'model',
+        skillUrl: 'skills/public/report',
+      },
+      skillLabelId: 'skill-label',
+      skillErrorId: 'skill-error',
+      skillSelector: <button aria-labelledby="skill-label">Pick</button>,
+    });
+    props.labels.skillLabel = 'Skill';
+    const { rerender } = render(<ScheduledTaskCreateForm {...props} />);
+    expect(screen.getByRole('button', { name: 'Skill' })).toBeTruthy();
+    expect(
+      (screen.getAllByRole('button', { name: 'Save' })[0] as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+    rerender(
+      <ScheduledTaskCreateForm
+        {...props}
+        skillSelector={undefined}
+        errors={{ skillUrl: 'Unsupported' }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Skill' })).toBeNull();
+    expect(screen.getByText('Unsupported')).toBeTruthy();
+    expect(
+      (screen.getAllByRole('button', { name: 'Save' })[0] as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
   it('renders the action pair in both the header and the mobile sticky footer', async () => {
     await renderForm();
 

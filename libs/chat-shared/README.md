@@ -1,5 +1,20 @@
 # @epam/ai-dial-chat-shared
 
+## Skill capability predicate
+
+`isSkillSelectionUnsupported(skillUrl, isSkillsSupported)` returns true when a
+nonblank reference exists and support is not explicitly `true`. It accepts an
+optional/null reference and optional boolean, with no deployment, metadata,
+feature-flag, or UI dependency. Chat selection and scheduled-task validation
+use this same predicate.
+
+```ts
+import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
+
+isSkillSelectionUnsupported('skills/public/report', false); // true
+isSkillSelectionUnsupported(undefined, false); // false
+```
+
 Shared domain models, utilities, and UI components used across all AI DIAL Chat libraries.
 
 ## Overview
