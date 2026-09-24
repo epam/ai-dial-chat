@@ -10,10 +10,27 @@ import {
 } from '../../utils/halloween';
 import styles from './Halloween.module.scss';
 import HalloweenCatScene from './HalloweenCatScene';
+import {
+  HalloweenTrain,
+  HalloweenRavens,
+  HalloweenCandy,
+  HalloweenFootprints,
+  HalloweenSkeletons,
+} from './HalloweenExtras';
 import HalloweenGhost from './HalloweenGhost';
 import HalloweenNightFlight from './HalloweenNightFlight';
+import HalloweenPortal from './HalloweenPortal';
 import HalloweenSpider from './HalloweenSpider';
 import HalloweenWeb from './HalloweenWeb';
+
+const extraScenes: Partial<Record<HalloweenBurst, FC>> = {
+  [HalloweenBurst.Train]: HalloweenTrain,
+  [HalloweenBurst.Portal]: HalloweenPortal,
+  [HalloweenBurst.Ravens]: HalloweenRavens,
+  [HalloweenBurst.Candy]: HalloweenCandy,
+  [HalloweenBurst.Footprints]: HalloweenFootprints,
+  [HalloweenBurst.Skeletons]: HalloweenSkeletons,
+};
 
 interface Props {
   /** Which celebration to play. */
@@ -22,6 +39,7 @@ interface Props {
 
 /** Scene artwork only; the shared celebration runtime supplies its viewport layer. */
 const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
+  const ExtraScene = extraScenes[burst];
   const isMobile = useIsMobile();
   const webLayout = useMemo(
     () =>
@@ -44,6 +62,7 @@ const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
 
   return (
     <>
+      {ExtraScene && <ExtraScene />}
       {webLayout && (
         <svg
           viewBox="0 0 1000 1000"

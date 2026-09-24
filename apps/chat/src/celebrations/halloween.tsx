@@ -5,6 +5,7 @@ import {
   HALLOWEEN_BURST_DURATION_MS,
   HALLOWEEN_CLICK_BURSTS,
   HALLOWEEN_SECRET_PHRASE,
+  HALLOWEEN_SCENE_DURATIONS,
 } from '../constants/halloween';
 import { HalloweenI18nKeys } from '../constants/translation-keys';
 import type { CelebrationEvent } from '../types/celebration';
@@ -17,6 +18,12 @@ const messages: Record<HalloweenBurst, HalloweenI18nKeys> = {
   [HalloweenBurst.Bats]: HalloweenI18nKeys.BatsToastMessage,
   [HalloweenBurst.Cat]: HalloweenI18nKeys.CatToastMessage,
   [HalloweenBurst.Witches]: HalloweenI18nKeys.WitchesToastMessage,
+  [HalloweenBurst.Train]: HalloweenI18nKeys.TrainToastMessage,
+  [HalloweenBurst.Portal]: HalloweenI18nKeys.PortalToastMessage,
+  [HalloweenBurst.Ravens]: HalloweenI18nKeys.RavensToastMessage,
+  [HalloweenBurst.Candy]: HalloweenI18nKeys.CandyToastMessage,
+  [HalloweenBurst.Footprints]: HalloweenI18nKeys.FootprintsToastMessage,
+  [HalloweenBurst.Skeletons]: HalloweenI18nKeys.SkeletonsToastMessage,
 };
 
 const halloween: CelebrationEvent = {
@@ -26,7 +33,7 @@ const halloween: CelebrationEvent = {
   scenes: Object.values(HalloweenBurst).map((burst) => ({
     id: burst,
     Component: () => <HalloweenBurstOverlay burst={burst} />,
-    durationMs: HALLOWEEN_BURST_DURATION_MS,
+    durationMs: HALLOWEEN_SCENE_DURATIONS[burst] ?? HALLOWEEN_BURST_DURATION_MS,
     notificationKey: messages[burst],
   })),
   clickSceneIds: HALLOWEEN_CLICK_BURSTS,

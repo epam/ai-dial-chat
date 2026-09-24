@@ -27,10 +27,17 @@ existing client-config refresh lifecycle; it is not a calendar scheduler.
 Only `/` renders event decoration and intercepts its optional secret phrase.
 Existing conversations send text normally. The current modules are:
 
-| Event       | Click scenes                              | Secret phrase                         |
-| ----------- | ----------------------------------------- | ------------------------------------- |
-| `halloween` | Ghosts, connected web, bats, cat, witches | `trick or treat` → descending spiders |
-| `new-year`  | Snow, confetti, flying sleighs            | `happy new year` → confetti           |
+| Event       | Click scenes                                                                                                                | Secret phrase                         |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `halloween` | Ghosts, connected web, bats, cat, witches, ghost train, portal, ravens, candy rain, invisible paw prints, dancing skeletons | `trick or treat` → descending spiders |
+| `new-year`  | Snow, confetti, flying sleighs                                                                                              | `happy new year` → confetti           |
+
+The Halloween portal briefly pulls visual copies of up to two adjacent, visible
+conversation-history rows into its claw, then restores the rows. It never changes
+conversation data. Interaction, scrolling, resizing, navigation or enabling reduced
+motion cancels the borrowing immediately. With closed or empty history, only the
+portal artwork appears. Reduced motion shows a static rift and leaves history alone.
+Every scene notification includes a hint for the event's secret chat phrase.
 
 ### Adding an event
 

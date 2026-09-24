@@ -27,6 +27,12 @@ Non-goals: runtime event editor, calendar scheduling, multiple simultaneous even
 - Translated phrases can collide with real requests → exact matching only, active/loaded event on start page only, no substring matching.
 - Many decorative SVG nodes → preserve bounded counts and avoid loading inactive event bundles.
 
+## Additional Halloween scenes
+
+Keep all six new scenes within the compiled Halloween module. SVG/CSS supplies the train, perched ravens, candy, paw prints and skeletons; bounded randomized positions are stable for each playback. Every notification retains the secret phrase. Motion preferences resolve to static art.
+
+The portal opens at a randomized viewport position and reaches toward up to two fully visible history rows. An app-owned history class and conversation links identify candidates without adding Halloween knowledge to a library. Snapshot clones are inert, aria-hidden and pointer-transparent in the existing celebration layer. Short Web Animations temporarily fade the original rows while the copies travel into the portal; cancelling animations restores original styles without modifying layout, data, focus order, routes or API state. Focus/pointer interaction, scrolling, resizing, visibility changes, removed/recycled rows, preference changes and scene unmount cancel the illusion immediately. No visible rows or reduced motion means a decorative portal only. Prefer copies to moving actual DOM nodes (React/virtual-list ownership) or deleting/reinserting conversations (data mutation).
+
 ## Migration Plan
 
 Implement config and regenerated DTO first, then runtime/Halloween conversion, shared flight/New Year, and integration/docs. Deploy both app and API with UI_EVENT set explicitly. Roll back together and restore the old flag only if rolling back code. No stored data migration exists.
