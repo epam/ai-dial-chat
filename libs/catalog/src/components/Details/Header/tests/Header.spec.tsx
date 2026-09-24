@@ -428,15 +428,15 @@ describe('Header', () => {
       expect(onRequestPublishHistory).toHaveBeenCalled();
     });
 
-    it('shows Unpublish once the lookup resolves to a folder', async () => {
+    it('shows Unpublish once the lookup resolves to a folder', () => {
       renderPublishedCopy({
         isPublishHistoryResolved: true,
         hasPublishedFolders: true,
       });
 
-      await openManage();
-
+      /* The copy's only action, so it lands in the row rather than a menu of one. */
       expect(screen.getByRole('button', { name: 'Unpublish' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
       expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
     });
 
@@ -2044,6 +2044,59 @@ describe('Header — the last action standing', () => {
 
     expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+  });
+
+  it('promotes a lone Unpublish once the history for an unpublishable copy has resolved', async () => {
+    const onOpenUnpublish = vi.fn();
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), isMyApp: false }}
+        isPublishVisible={() => false}
+        isUnpublishVisible={() => true}
+        onOpenUnpublish={onOpenUnpublish}
+        isPublishHistoryResolved
+        hasPublishedFolders
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+    expect(onOpenUnpublish).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the menu for a lone Unpublish when the host supplies no unpublish rule', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), isMyApp: false }}
+        isPublishVisible={() => false}
+        onOpenUnpublish={vi.fn()}
+        isPublishHistoryResolved
+        hasPublishedFolders
+      />,
+    );
+
+    /* Without a rule nothing resolves the history up front, so the entry
+     * could still be settling under a hover and the trigger holds. */
+    expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+  });
+
+  it('keeps the menu when Unpublish resolves alongside another action', async () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Toolset), isMyApp: false }}
+        isPublishVisible={() => false}
+        isUnpublishVisible={() => true}
+        onOpenUnpublish={vi.fn()}
+        onDownload={vi.fn()}
+        isPublishHistoryResolved
+        hasPublishedFolders
+      />,
+    );
+
+    await openManage();
+    expect(screen.getByRole('button', { name: 'Unpublish' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
   });
 
   it('keeps the menu for an entry the count later rules out, rather than swapping surface mid-hover', async () => {

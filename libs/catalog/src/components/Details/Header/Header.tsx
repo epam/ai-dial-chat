@@ -202,7 +202,9 @@ interface HeaderProps {
    * `onOpenUnpublish`. Defaults to `true` when absent. When the entry ends up
    * shown, it replaces "Publish" rather than joining it. Supplying it also
    * keeps the Manage trigger rendered for an item it returns `true` for while
-   * `isPublishHistoryResolved` is still `false`.
+   * `isPublishHistoryResolved` is still `false`, and lets a lone "Unpublish"
+   * render as its own button once history resolves — so the host should
+   * resolve history for such an item without waiting for hover.
    */
   isUnpublishVisible?: (item: CatalogItem) => boolean;
   /**
@@ -759,9 +761,20 @@ export const Header: FC<HeaderProps> = ({
    * decision has to hold still — gating on the pending state instead would
    * turn the button back into a kebab under the pointer that was reaching
    * for it, the hover having settled the lookup on the way in.
+   *
+   * "Unpublish" is released from that hold once the history has settled for
+   * an item the host affirmatively calls unpublishable, because the details
+   * panel resolves those up front rather than on hover. That is what lets an
+   * Organization copy, whose only action is "Unpublish", show it as a button
+   * (GH #8989). A host with no unpublish rule gets no up-front lookup, so its
+   * items keep the hold.
    */
+  const isUnpublishRuleAffirmed = isUnpublishVisible?.(item);
   const mayGainUnpublishEntry =
-    !isReadonly && !!onOpenUnpublish && (isUnpublishVisible?.(item) ?? true);
+    !isReadonly &&
+    !!onOpenUnpublish &&
+    (isUnpublishRuleAffirmed == null ||
+      (isUnpublishRuleAffirmed && !isPublishHistoryResolved));
   const mayGainRevokeShareEntry =
     !isReadonly &&
     !!onRevokeShare &&

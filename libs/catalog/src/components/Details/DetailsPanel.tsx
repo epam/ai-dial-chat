@@ -485,9 +485,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   /*
    * Publish history is fetched at most once per item and shared by the publish
    * sub-view and the Manage menu's Unpublish gate, so opening Publish after
-   * opening the menu issues no second request. It is never fetched on panel
-   * open or item render: most items are never unpublished, and the request is
-   * only worth making when the user reaches for one of those surfaces.
+   * opening the menu issues no second request. For most items it is not
+   * fetched on panel open or item render: most items are never unpublished,
+   * and the request is only worth making when the user reaches for one of
+   * those surfaces. The exception is an item the host has said is
+   * unpublishable — see the effect after the per-item reset below.
    */
   const requestPublishHistory = useCallback(() => {
     if (
@@ -634,6 +636,22 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     // Reset publish-flow-local state only when the displayed item changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
+
+  /*
+   * An item the host affirmatively calls unpublishable — a published copy the
+   * caller may remove — resolves its history up front. Whether "Unpublish"
+   * joins the Manage menu decides whether the header shows a menu at all or
+   * promotes a lone action to a button, and that decision has to be settled
+   * before the pointer arrives rather than flip under it (GH #8989, where an
+   * Organization copy's only action sat behind `...`). Declared after the
+   * reset above so a new item's request is not cleared in the same commit.
+   */
+  const shouldPrefetchPublishHistory =
+    !isReadonly && !!onUnpublish && isUnpublishVisible?.(item) === true;
+
+  useEffect(() => {
+    if (shouldPrefetchPublishHistory) requestPublishHistory();
+  }, [shouldPrefetchPublishHistory, requestPublishHistory]);
 
   const handleOpenCredentialsManagement = useCallback(
     () => setIsCredentialsManagementOpen(true),
