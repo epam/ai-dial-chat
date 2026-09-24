@@ -607,6 +607,20 @@ scheduled-tasks SHALL export ScheduledTaskDeleteConfirmation with controlled ope
 - **WHEN** a task name contains markup-like characters
 - **THEN** the name is rendered as text/React content and never executed as HTML.
 
+### Requirement: Details summary shows the completed state for terminal tasks
+
+When the loaded task has `isCompleted: true` (a finished one-time schedule, or a recurring schedule whose activity window has closed), `ScheduledTaskDetailView` SHALL render a completed line in the details summary (label from a new `labels` entry with an English default, localized by the page via a new `ScheduledTasksI18nKeys` member). The completed line SHALL be informational text, not a control, and SHALL NOT replace or hide the existing summary fields (schedule, next run, timestamps).
+
+#### Scenario: Completed task shows the completed line
+
+- **WHEN** the detail page loads a task with `isCompleted: true`
+- **THEN** the details summary renders the localized completed line alongside the existing fields
+
+#### Scenario: Non-completed task shows no completed line
+
+- **WHEN** the detail page loads a task with `isCompleted: false` or omitted
+- **THEN** the details summary renders exactly as before this change, with no completed line
+
 ### Requirement: Skill display covers reusable summaries and the active Configuration view
 
 `ScheduledTaskDetailsSummary` and `ScheduledTaskConfigurationSection` SHALL accept optional localized `skillLabel` and resolved `skillDisplayName`; `ScheduledTaskDetailView` SHALL forward its optional skill value and label to Configuration. The host SHALL pass the skill's resolved display name or full raw reference, independent of catalog loading/failure and of `skillUsageEnabled`. No skill SHALL produce no Skill field. Values SHALL be plain text, without a details link. Libraries SHALL perform no lookup or navigation.
