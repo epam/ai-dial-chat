@@ -450,8 +450,16 @@ export class ScheduledTasksService {
         );
         /*
          * Completion enrichment runs inside the cache wrapper, so a cached
-         * page pays no runs calls; checks fire in parallel and only for the
-         * page's candidate items (one-time schedules with no next run).
+         * page pays no runs calls. Checks fire in parallel and only for the
+         * page's candidate items (one-time schedules with no next run) —
+         * one `runs?limit=1` call per candidate, so a cache miss costs up to
+         * `limit` concurrent upstream calls (page size 20 in this app, hard
+         * cap 100 via the DTO validation), at most once per 30s cache window
+         * per query variant. No concurrency cap by design: the burst is
+         * page-bounded, cron schedules never qualify, and a failed check
+         * degrades per-item instead of failing the list. When DIAL Scheduler
+         * gains an authoritative state field (or a batch runs endpoint),
+         * replace this fan-out here in one place.
          */
         const mappedTasks = items.map(fromUpstreamSchedule);
         const completions = await Promise.all(

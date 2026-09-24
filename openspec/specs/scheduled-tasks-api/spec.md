@@ -841,6 +841,7 @@ No new endpoint, role, telemetry, or cache SHALL be introduced. Existing session
 - **THEN** opening detail/edit loads that skill and does not treat the list omission as a removal
 
 #### Scenario: Encoded reference matches chat
+The runs checks in `listScheduledTasks` SHALL execute inside the existing `withCachedDialRequest` wrapper (30s TTL, the existing `{limit, offset, search, sort}` cache-key family, existing invalidation on create/update/pause/resume/delete), issued in parallel only for the page's candidate items — at most one `runs?limit=1` call per candidate item, so a cache miss costs no more concurrent upstream calls than the page's `limit` (hard cap 100). No separate cache SHALL be introduced for the enrichment. No concurrency limiter is required while the burst is page-bounded; when DIAL Scheduler gains an authoritative state field or a batch runs endpoint, the fan-out SHALL be replaced in this one location.
 
 - **WHEN** a selected resource has spaces, Unicode, or already-encoded segments
 - **THEN** the Scheduler completion reference matches chat's encoding without double encoding and resolves to the same resource after read/edit
