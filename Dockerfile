@@ -3,11 +3,11 @@
 # ─────────────────────────────────────────────
 # Stage 0: install the patched package manager used by all stages
 # ─────────────────────────────────────────────
-FROM node:24.17-alpine AS node-base
+FROM node:24.21-alpine3.24 AS node-base
 
 # npm 12.0.x still bundles vulnerable brace-expansion, ip-address, and tar.
 RUN apk upgrade --no-cache libcrypto3 libssl3 \
-    && npm install --global npm@11.19.1
+    && npm install --global npm@11.20.0
 
 # ─────────────────────────────────────────────
 # Stage 1: install all workspace dependencies
