@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useFavicon } from './useFavicon';
 
 // Mock getIconPath
-vi.mock('../../utils/icon-path', () => ({
+vi.mock('../../utils/icon-path', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../utils/icon-path')>()),
   getIconPath: vi.fn(
     (url) => `/api/theme-icon?iconName=${encodeURIComponent(url || '')}`,
   ),
@@ -137,6 +138,49 @@ describe('useFavicon', () => {
     expect(imageInstances).toHaveLength(2);
     imageInstances[1].onload?.call(imageInstances[1], new Event('load'));
     expect(mockLink.href).toContain(encodeURIComponent(url2));
+  });
+
+  it('sets the link type to image/svg+xml for an SVG favicon', () => {
+    mockLink.type = 'image/x-icon';
+    document.head.appendChild(mockLink);
+
+    renderHook(() => useFavicon('chat-favicon.svg'));
+    imageInstances[0].onload?.call(imageInstances[0], new Event('load'));
+
+    expect(mockLink.type).toBe('image/svg+xml');
+    expect(mockLink.href).toContain('chat-favicon.svg');
+  });
+
+  it('switches the link type when the favicon format changes', () => {
+    document.head.appendChild(mockLink);
+
+    const { rerender } = renderHook(({ url }) => useFavicon(url), {
+      initialProps: { url: 'favicon.svg' },
+    });
+    imageInstances[0].onload?.call(imageInstances[0], new Event('load'));
+    expect(mockLink.type).toBe('image/svg+xml');
+
+    rerender({ url: 'favicon.png' });
+    imageInstances[1].onload?.call(imageInstances[1], new Event('load'));
+    expect(mockLink.type).toBe('image/png');
+  });
+
+  it('drops the type hint for an unknown favicon extension', () => {
+    document.head.appendChild(mockLink);
+
+    renderHook(() => useFavicon('favicon'));
+    imageInstances[0].onload?.call(imageInstances[0], new Event('load'));
+
+    expect(mockLink.hasAttribute('type')).toBe(false);
+  });
+
+  it('keeps the link type when the favicon fails to load', () => {
+    document.head.appendChild(mockLink);
+
+    renderHook(() => useFavicon('broken.svg'));
+    imageInstances[0].onerror?.call(imageInstances[0], new Event('error'));
+
+    expect(mockLink.type).toBe('image/png');
   });
 
   it('should preload image before updating link', () => {

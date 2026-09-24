@@ -130,11 +130,19 @@ user picks something.
 
 The application reads exactly three image fields:
 
-| Field                    | Used for                                           |
-| ------------------------ | -------------------------------------------------- |
-| `images.chat-logo-light` | Header logo while the resolved theme is not `dark` |
-| `images.chat-logo-dark`  | Header logo while the resolved theme is `dark`     |
-| `images.chat-favicon`    | Browser tab favicon (PNG, 32×32 recommended)       |
+| Field                    | Used for                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `images.chat-logo-light` | Header logo while the resolved theme is not `dark`                                                                |
+| `images.chat-logo-dark`  | Header logo while the resolved theme is `dark`                                                                    |
+| `images.chat-favicon`    | Browser tab favicon, brand icon on the Sign In page, and the navigation icon slot (SVG, or PNG 32×32 recommended) |
+
+Every image is served through `/api/themes/icon`, which derives the
+`Content-Type` from the file extension. The favicon `<link>` gets a matching
+`type` (`image/svg+xml` for `.svg`), so an SVG favicon works in browsers that
+support SVG favicons; older Safari releases do not render an SVG favicon — use
+a PNG if they matter. SVG responses carry their own sandboxed
+`Content-Security-Policy` (`default-src 'none'; sandbox`), so scripts inside an
+SVG never run, even when the file is opened directly.
 
 The remaining fields carried by the configuration contract — `themes[].app-logo`,
 `images.favicon`, `images.default-addon`, `images.default-model` — are accepted

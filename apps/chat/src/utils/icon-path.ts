@@ -6,6 +6,25 @@ export const getIconPath = (iconName?: string): string => {
   return `${ApiEndpoints.THEME_ICON}?iconName=${encodeURIComponent(iconName || '')}`;
 };
 
+const ICON_MIME_TYPES: Record<string, string> = {
+  svg: 'image/svg+xml',
+  png: 'image/png',
+  ico: 'image/x-icon',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+};
+
+/**
+ * Returns the MIME type implied by an icon file name's extension (ignoring any
+ * query string or fragment), or `undefined` when the extension is unknown.
+ */
+export const getIconMimeType = (iconName?: string): string | undefined => {
+  const extension = iconName?.split(/[?#]/)[0].split('.').pop()?.toLowerCase();
+  return extension ? ICON_MIME_TYPES[extension] : undefined;
+};
+
 const isAbsoluteUrl = (url: string): boolean => {
   const lower = url.toLowerCase();
   return (

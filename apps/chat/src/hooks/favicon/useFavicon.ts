@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getIconPath } from '../../utils/icon-path';
+import { getIconMimeType, getIconPath } from '../../utils/icon-path';
 
 /**
  * Custom hook to manage dynamic favicon based on URL.
@@ -8,7 +8,7 @@ import { getIconPath } from '../../utils/icon-path';
  * - Error handling for failed loads
  * - Cache-busting to force reload on theme changes
  *
- * @param faviconUrl - URL to the favicon image (typically PNG format)
+ * @param faviconUrl - Theme icon name of the favicon (SVG, PNG, ICO, …)
  *
  * @example
  * ```tsx
@@ -42,7 +42,18 @@ export const useFavicon = (faviconUrl?: string) => {
     const img = new Image();
 
     img.onload = () => {
-      // Image loaded successfully, update favicon
+      /*
+       * Image loaded successfully, update favicon. The `type` must follow the
+       * new icon: index.html ships `image/x-icon`, and a stale hint on an SVG
+       * or PNG icon may make the browser skip it. An unknown extension drops
+       * the hint so the browser sniffs the response instead.
+       */
+      const mimeType = getIconMimeType(faviconUrl);
+      if (mimeType) {
+        link.type = mimeType;
+      } else {
+        link.removeAttribute('type');
+      }
       link.href = urlWithCache;
       console.info(`Favicon updated to: ${faviconUrl}`);
     };
