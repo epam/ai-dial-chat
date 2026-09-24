@@ -1,3 +1,4 @@
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
@@ -30,6 +31,7 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
+import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import {
   getScheduledTask,
   updateScheduledTask,
@@ -41,6 +43,13 @@ import NotFoundPage from '../NotFound/NotFound';
 
 const ScheduledTaskEditPage: FC = () => {
   const { t } = useTranslation();
+  const onRefineDescription = useTextRefinementCallback(
+    TextRefinementPurpose.ScheduledTaskDescription,
+  );
+  const onRefineInstructions = useTextRefinementCallback(
+    TextRefinementPurpose.ScheduledTaskInstructions,
+  );
+
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
@@ -250,6 +259,9 @@ const ScheduledTaskEditPage: FC = () => {
 
   return (
     <ScheduledTaskCreateForm
+      key={scheduleId}
+      onRefineDescription={onRefineDescription}
+      onRefineInstructions={onRefineInstructions}
       labels={labels}
       values={values}
       errors={errors}

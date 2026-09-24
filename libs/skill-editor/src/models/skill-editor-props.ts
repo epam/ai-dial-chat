@@ -120,6 +120,20 @@ export interface SkillEditorFileActions {
 
 /** Text overrides for `SkillEditor`. Every field has an English default. */
 export interface SkillEditorLabels {
+  /** Refinement copy. Defaults to 'Refine with AI'. */
+  refineWithAiLabel?: string;
+  /** Refinement copy. Defaults to 'Undo'. */
+  refineUndoLabel?: string;
+  /** Refinement copy. Defaults to 'Could not refine this text. Please try again.'. */
+  refineErrorLabel?: string;
+  /** Refinement copy. Defaults to 'Refining text'. */
+  refinePendingAriaLabel?: string;
+  /** Refinement copy. Defaults to 'Text refined. Undo is available.'. */
+  refineSuccessAriaLabel?: string;
+  /** Refinement copy. Defaults to 'Original text restored.'. */
+  refineUndoAriaLabel?: string;
+  /** Refinement copy. Defaults to 'No changes were needed.'. */
+  refineUnchangedAriaLabel?: string;
   /** Files pane heading. Defaults to `'Files'`. */
   filesHeading?: string;
   /** Accessible name of the file tree region. Defaults to `'Skill files'`. */
@@ -206,6 +220,10 @@ export interface SkillEditorConflict {
 
 /** CSS custom-property color overrides for `SkillEditor`. */
 export interface SkillEditorColors {
+  /** Refine/Undo and status text color. Defaults to --text-primary. */
+  refineActionText?: string;
+  /** Refinement error color. Defaults to --text-error. */
+  refineErrorText?: string;
   /** Color of the "Files" and selected-file section headings. Defaults to `--text-primary`. */
   title?: string;
   /** Color of the hand-rendered Instructions field label. Defaults to `--text-secondary`. */
@@ -216,6 +234,10 @@ export interface SkillEditorColors {
 
 /** Typography class overrides for `SkillEditor`. */
 export interface SkillEditorTypography {
+  /** Refine/Undo typography. Defaults to 'dial-small-text'. */
+  refineActionClassName?: string;
+  /** Refinement feedback typography. Defaults to 'dial-small-text'. */
+  refineFeedbackClassName?: string;
   /** Typography class applied to the "Files" and selected-file section headings. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** Typography class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text'`. */
@@ -234,6 +256,13 @@ export interface SkillEditorStyles {
 
 /** Props for `SkillEditor`. */
 export interface SkillEditorProps {
+  /** Optional Description rewrite callback; omission hides its action. */
+  onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
+  /** Optional Instructions rewrite callback; omission hides its action. */
+  onRefineInstructions?: (
+    value: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
   /**
    * Values to seed the fields with. Changing this object's identity re-seeds
    * the form, so hosts that load asynchronously should memoise it and only

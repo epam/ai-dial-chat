@@ -58,6 +58,7 @@ export * from './components/MarkdownRenderer/Table/TableHeader';
 export * from './entry-points/markdown';
 export * from './hooks/useAvailableHeightCap';
 export * from './hooks/useIsMobile';
+export * from './hooks/useTextRefinement';
 
 /*
  * Explicit `/index` avoids a declaration-resolution collision with this

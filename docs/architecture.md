@@ -426,6 +426,7 @@ apps/chat-api/src/
 ├── external-services/      # Application external-service metadata + signin/signout proxy
 ├── offline-credentials/    # Long-lived credentials for background runs
 ├── deployments/  models/   # Deployment and model listings
+├── text-refinement/        # Bounded draft rewriting with caller credentials
 ├── transcription/          # Speech-to-text proxy for voice input
 ├── rate/                   # Message like/dislike
 ├── user-config/            # Per-user preferences
@@ -461,6 +462,7 @@ Business controllers are versioned; three infrastructure controllers are deliber
 | `/api/v1/client-channel`            | Client-channel SSE relay                                  |
 | `/api/v1/external-services`         | External-service metadata and credentials                 |
 | `/api/v1/offline-credentials`       | Long-lived credentials for background runs                |
+| `/api/v1/text-refinement`           | Draft refinement without persistence                      |
 | `/api/v1/transcription`             | Speech-to-text                                            |
 | `/api/v1/rate`                      | Message rating                                            |
 | `/api/v1/user-config`               | Per-user preferences                                      |

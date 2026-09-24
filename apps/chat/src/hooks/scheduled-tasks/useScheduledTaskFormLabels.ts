@@ -6,12 +6,15 @@ import {
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
+import { useTextRefinementLabels } from '../useTextRefinementLabels';
 
 /** Keeps create/edit form copy and repeat options identical at the app edge. */
 export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
   const { t } = useTranslation();
+  const refinementLabels = useTextRefinementLabels();
   return useMemo(
     () => ({
+      ...refinementLabels,
       pageTitle: t(
         mode === 'create'
           ? ScheduledTasksI18nKeys.CreatePageTitle
@@ -79,6 +82,6 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           : ButtonsI18nKeys.Saving,
       ),
     }),
-    [mode, t],
+    [mode, t, refinementLabels],
   );
 };

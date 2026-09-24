@@ -195,3 +195,28 @@ SKILL_EDITOR_CLASS.root; // 'dial-skill-editor-root'
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## AI text refinement
+
+The form accepts optional `onRefineDescription` and `onRefineInstructions` callbacks, each `(value: string, signal: AbortSignal) => Promise<string>`. Each callback independently opts its field into refinement; omit it to hide the action. The host owns transport, availability, purpose selection, and translations. Success and Undo call `onValuesChange` and participate in dirty tracking. Changing `initialValues` identity cancels requests and resets Undo, even for equal text.
+
+Both fields stay editable while pending. Editing the active field (including Markdown toolbar edits) aborts and invalidates its request. Both Refine actions and Save are disabled during a request; Cancel/Back abort before invoking the host. Late responses are ignored even if the callback ignores its signal. Repeated refinement retains the original baseline; Undo restores it exactly. Manual/external edits, callback removal, submission, and leaving the editor clear the baseline. Errors preserve text and allow retry. Identical output announces no change without writing the value.
+
+Optional label overrides (English defaults):
+
+| Label                      | Default                                       |
+| -------------------------- | --------------------------------------------- |
+| `refineWithAiLabel`        | Refine with AI                                |
+| `refineUndoLabel`          | Undo                                          |
+| `refineErrorLabel`         | Could not refine this text. Please try again. |
+| `refinePendingAriaLabel`   | Refining text                                 |
+| `refineSuccessAriaLabel`   | Text refined. Undo is available.              |
+| `refineUndoAriaLabel`      | Original text restored.                       |
+| `refineUnchangedAriaLabel` | No changes were needed.                       |
+
+`styles.colors.refineActionText` and `refineErrorText` set `--se-refine-action-text` and `--se-refine-error-text`; defaults use `--text-primary` / `--text-error` with standalone fallbacks `#161b2d` / `#8b2020`. `styles.typography.refineActionClassName` and `refineFeedbackClassName` default to `dial-small-text`. Direction is inherited; label rows wrap, buttons have at least 44px hit areas, and feedback uses live regions.
+
+| Public class key | Class                               | Element                 |
+| ---------------- | ----------------------------------- | ----------------------- |
+| `refineAction`   | `dial-skill-editor-refine-action`   | Refine and Undo buttons |
+| `refineFeedback` | `dial-skill-editor-refine-feedback` | Field feedback          |

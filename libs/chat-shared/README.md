@@ -69,6 +69,53 @@ above is genuinely optional for a host that imports anything else from this pack
 entries limit resolution to their own peer sets; they do not remove peers required by
 that feature.
 
+## Text refinement lifecycle
+
+`useTextRefinement({ value, onChange, onRefine?, disabled?, resetKey? })` owns one field's request, feedback, and session-local Undo baseline. `onRefine` is a host-supplied `(value: string, signal: AbortSignal) => Promise<string>` callback; transport and purpose selection stay in the host. `disabled` defaults to false. Change `resetKey` on draft identity changes even if text is equal.
+
+The result exposes `state` (`TextRefinementState`), `isPending`, `canRefine`, `canUndo`, `refine()`, `undo()`, and `reset()`. Public types are `TextRefinementCallback`, `UseTextRefinementOptions`, and `TextRefinementResult`. The host must acknowledge changes through its controlled `value`, and coordinate multiple fields so only one request runs per form and submission is blocked while pending.
+
+Successful changes retain the original baseline across repeated refinements. Undo restores it exactly; manual/external value changes, reset, callback removal, disabling, and unmount invalidate the session state. Identical output does not write a value. Errors and blank output preserve text and any existing baseline; cancellation is silent. Late results cannot overwrite a replaced draft, even if the callback ignores cancellation. No baseline persists after leaving the editing session.
+
+```tsx
+import { useState } from 'react';
+import {
+  useTextRefinement,
+  type TextRefinementCallback,
+} from '@epam/ai-dial-chat-shared';
+
+function RefinableDraft({ onRefine }: { onRefine: TextRefinementCallback }) {
+  const [value, setValue] = useState('Original draft');
+  const refinement = useTextRefinement({ value, onChange: setValue, onRefine });
+  return (
+    <div>
+      <textarea
+        aria-label="Draft"
+        value={value}
+        onChange={(event) => {
+          refinement.reset();
+          setValue(event.target.value);
+        }}
+      />
+      <button
+        type="button"
+        disabled={!refinement.canRefine}
+        onClick={refinement.refine}
+      >
+        Refine
+      </button>
+      <button
+        type="button"
+        disabled={!refinement.canUndo || refinement.isPending}
+        onClick={refinement.undo}
+      >
+        Undo
+      </button>
+    </div>
+  );
+}
+```
+
 ## Optional file-manager entry
 
 `DialFileManagerShell` and `FileManagerAttachModal` are imported from

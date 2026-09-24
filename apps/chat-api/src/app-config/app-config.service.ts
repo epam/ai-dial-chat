@@ -5,8 +5,10 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { resolveAppVersion } from '../common/utils/app-version';
+import { EnvironmentVariables } from '../config/environment.config';
 import { normalizeAnnouncements } from './announcements.normalizer';
 import type { AppConfigEvalContext } from './app-config.types';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
@@ -40,6 +42,7 @@ export class AppConfigService {
   constructor(
     private readonly compositeProvider: CompositeConfigProvider,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
 
   async resolveValue(
@@ -183,6 +186,9 @@ export class AppConfigService {
       appId: context.appId,
       features,
       config: {
+        aiTextRefinementAvailable: Boolean(
+          this.configService.get('UTILITY_MODEL', { infer: true })?.trim(),
+        ),
         appVersion,
         asrModelId,
         transcribeSizeLimitBytes,

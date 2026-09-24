@@ -1,3 +1,4 @@
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import { prepareScheduledTaskCreateBody } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
@@ -9,7 +10,7 @@ import {
 import { EditorThemes } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useId, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import DeploymentSelectorFieldTrigger from '../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
@@ -18,6 +19,7 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
+import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
@@ -63,9 +65,17 @@ const resolveReturnUrl = (candidate: string | null): string => {
 
 const ScheduledTaskCreatePage: FC = () => {
   const { t } = useTranslation();
+  const onRefineDescription = useTextRefinementCallback(
+    TextRefinementPurpose.ScheduledTaskDescription,
+  );
+  const onRefineInstructions = useTextRefinementCallback(
+    TextRefinementPurpose.ScheduledTaskInstructions,
+  );
+
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
+  const { key: draftKey } = useLocation();
   const [searchParams] = useSearchParams();
   const { showSuccessNotification, showErrorNotification } = useNotification();
   const { currentTheme } = useTheme();
@@ -159,6 +169,10 @@ const ScheduledTaskCreatePage: FC = () => {
 
   return (
     <ScheduledTaskCreateForm
+      key={draftKey}
+
+      onRefineDescription={onRefineDescription}
+      onRefineInstructions={onRefineInstructions}
       labels={labels}
       values={values}
       errors={errors}

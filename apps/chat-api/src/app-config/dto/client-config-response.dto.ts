@@ -14,6 +14,14 @@ import { CustomVisualizerDto } from './custom-visualizer.dto';
  * has to be registered explicitly or the reference dangles. */
 @ApiExtraModels(ApplicationVisualizerDto)
 export class ClientConfigDto {
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      'Whether a text refinement model is configured. Missing means unavailable.',
+    example: false,
+  })
+  aiTextRefinementAvailable?: boolean;
+
   @ApiProperty({
     description:
       'Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.',
