@@ -67,6 +67,7 @@ export const CelebrationProvider: FC<Props> = ({ children }) => {
   } | null>(null);
   const tokenRef = useRef(0);
   const previousClick = useRef<string | undefined>(undefined);
+  const previousSecret = useRef<string | undefined>(undefined);
   const event =
     loaded?.event.id === selectedId && loaded?.locationKey === location.key
       ? loaded.event
@@ -77,6 +78,7 @@ export const CelebrationProvider: FC<Props> = ({ children }) => {
     setLoaded(null);
     setActive(null);
     previousClick.current = undefined;
+    previousSecret.current = undefined;
     if (selectedId) {
       const load = async () => {
         try {
@@ -139,12 +141,18 @@ export const CelebrationProvider: FC<Props> = ({ children }) => {
     (text: string) => {
       const trigger = event?.secretTrigger;
       if (
+        !event ||
         !trigger ||
-        !event?.scenes.some((scene) => scene.id === trigger.sceneId) ||
         !matchesCelebrationPhrase(text, trigger.phrases)
       )
         return false;
-      celebrate(trigger.sceneId);
+      const validIds = trigger.sceneIds.filter((id) =>
+        event.scenes.some((scene) => scene.id === id),
+      );
+      const id = pickCelebrationScene(validIds, previousSecret.current);
+      if (id === undefined) return false;
+      previousSecret.current = id;
+      celebrate(id);
       return true;
     },
     [event, celebrate],

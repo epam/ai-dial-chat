@@ -5,6 +5,7 @@ import {
   HALLOWEEN_BURST_DURATION_MS,
   HALLOWEEN_CLICK_BURSTS,
   HALLOWEEN_SECRET_PHRASE,
+  HALLOWEEN_SECRET_BURSTS,
   HALLOWEEN_SCENE_DURATIONS,
 } from '../constants/halloween';
 import { HalloweenI18nKeys } from '../constants/translation-keys';
@@ -24,6 +25,10 @@ const messages: Record<HalloweenBurst, HalloweenI18nKeys> = {
   [HalloweenBurst.Candy]: HalloweenI18nKeys.CandyToastMessage,
   [HalloweenBurst.Footprints]: HalloweenI18nKeys.FootprintsToastMessage,
   [HalloweenBurst.Skeletons]: HalloweenI18nKeys.SkeletonsToastMessage,
+  [HalloweenBurst.Cauldron]: HalloweenI18nKeys.CauldronToastMessage,
+  [HalloweenBurst.Mimic]: HalloweenI18nKeys.MimicToastMessage,
+  [HalloweenBurst.Bowling]: HalloweenI18nKeys.BowlingToastMessage,
+  [HalloweenBurst.Mummy]: HalloweenI18nKeys.MummyToastMessage,
 };
 
 const halloween: CelebrationEvent = {
@@ -41,7 +46,7 @@ const halloween: CelebrationEvent = {
   secretTrigger: {
     phrases: [HALLOWEEN_SECRET_PHRASE],
     hintPhrase: HALLOWEEN_SECRET_PHRASE,
-    sceneId: HalloweenBurst.Spiders,
+    sceneIds: HALLOWEEN_SECRET_BURSTS,
   },
 };
 

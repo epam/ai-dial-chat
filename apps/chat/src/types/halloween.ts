@@ -21,6 +21,10 @@ export enum HalloweenBurst {
   Candy = 'candy',
   Footprints = 'footprints',
   Skeletons = 'skeletons',
+  Cauldron = 'cauldron',
+  Mimic = 'mimic',
+  Bowling = 'bowling',
+  Mummy = 'mummy',
 }
 
 /**

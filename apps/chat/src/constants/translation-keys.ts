@@ -1424,6 +1424,10 @@ export enum HalloweenI18nKeys {
   CandyToastMessage = 'halloween.candyToastMessage',
   FootprintsToastMessage = 'halloween.footprintsToastMessage',
   SkeletonsToastMessage = 'halloween.skeletonsToastMessage',
+  CauldronToastMessage = 'halloween.cauldronToastMessage',
+  MimicToastMessage = 'halloween.mimicToastMessage',
+  BowlingToastMessage = 'halloween.bowlingToastMessage',
+  MummyToastMessage = 'halloween.mummyToastMessage',
 }
 
 export enum NewYearI18nKeys {

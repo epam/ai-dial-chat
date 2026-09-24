@@ -25,6 +25,6 @@ export interface CelebrationEvent {
   secretTrigger?: {
     phrases: readonly string[];
     hintPhrase: string;
-    sceneId: string;
+    sceneIds: readonly string[];
   };
 }
