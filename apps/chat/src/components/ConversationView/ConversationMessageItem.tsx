@@ -32,6 +32,7 @@ import {
   type DisplayAttachment,
   type MessageRating,
   type Message as MessageType,
+  type ResponseFormat,
   type RequestSkill,
   type StarterOption,
   type UploadedAttachmentResult,
@@ -208,13 +209,21 @@ interface Props {
   isTextAttachmentsAllowed?: boolean;
   /** Renders message text one type-scale step down. The host sets it on narrow viewports. */
   isCompactTypography?: boolean;
+  /** The conversation's response format. `ResponseFormat.PlainText` renders the body verbatim instead of as Markdown. */
+  responseFormat?: ResponseFormat;
   maximumAttachmentsAmount?: number;
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   hideAttachFile?: boolean;
   /** `accept` attribute value forwarded to the edit-message native file picker. */
   fileAccept?: string;
-  /** When provided, called instead of the default download action when an attachment card is activated. */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /**
+   * When provided, called instead of the default download action when an attachment card is activated.
+   * Receives this item's `index` so the list can pass one stable callback and keep the row memoized.
+   */
+  onAttachmentClick?: (
+    attachment: DisplayAttachment,
+    messageIndex: number,
+  ) => void;
   /** Called when user selects "DIAL file system" from the edit-message attach menu. When absent, the menu item is not rendered. */
   onDialFileSystemClick?: () => void;
   /** Label for the "DIAL file system" menu item. */
@@ -300,6 +309,7 @@ const ConversationMessageItem: FC<Props> = ({
   isAttachmentsEnabled,
   isTextAttachmentsAllowed,
   isCompactTypography = false,
+  responseFormat,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   hideAttachFile,
@@ -343,7 +353,14 @@ const ConversationMessageItem: FC<Props> = ({
   const { handleAttachmentClick: handleDownload } = useAttachmentAction({
     resolveDownloadUrl: resolveDialFileDownloadUrl,
   });
-  const handleAttachmentClick = onAttachmentClickProp ?? handleDownload;
+  const handleIndexedAttachmentClick = useCallback(
+    (attachment: DisplayAttachment) =>
+      onAttachmentClickProp?.(attachment, index),
+    [onAttachmentClickProp, index],
+  );
+  const handleAttachmentClick = onAttachmentClickProp
+    ? handleIndexedAttachmentClick
+    : handleDownload;
   const handleDownloadAll = useCallback(
     (attachmentsToDownload: DisplayAttachment[]) => {
       attachmentsToDownload.forEach(handleDownload);
@@ -698,6 +715,7 @@ const ConversationMessageItem: FC<Props> = ({
             msg.streamErrorMessage != null ? 'w-full' : undefined,
           ),
         }}
+        responseFormat={responseFormat}
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }

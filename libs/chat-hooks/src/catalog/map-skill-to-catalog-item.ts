@@ -13,7 +13,10 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
 import { formatCalendarDate } from '../shared/formatting';
-import { stripSurroundingSlashes } from '../shared/string-utils';
+import {
+  safeDecodeURIComponent,
+  stripSurroundingSlashes,
+} from '../shared/string-utils';
 import { SKILL_MANIFEST_FILE } from '../skill/skill';
 import type { SkillAboutDetails } from '../skill/skill-manifest';
 import { SKILL_MANIFEST_MAX_BYTES, SkillSource } from '../skill/skill-types';
@@ -26,18 +29,34 @@ const SOURCE_FOLDER_LABEL: Record<SkillSource, keyof DeploymentFolderLabels> = {
 };
 
 /*
- * `parentPath` is not decoded. DIAL Core returns `name`/`parentPath` as plain
- * text and percent-encodes only `url`, so decoding here rewrote a folder whose
- * name legitimately contains a percent escape — `test%20folder` was displayed
- * as `test folder` (Issue #8974).
+ * Folder segments come from `url`, not `parentPath`. DIAL Core always
+ * percent-encodes `url` (`skills/{bucket}/{...folders}/{name}`), so decoding
+ * its folder segments yields the real name either way: a published folder
+ * whose `parentPath` arrived encoded (`test%20folder` → `test folder`,
+ * Issue #8882) and a folder literally named `test%20folder`, whose `url`
+ * carries `test%2520folder` (Issue #8974). Decoding `parentPath` itself could
+ * not tell those two apart. When the `url` shape does not line up with
+ * `parentPath`, `parentPath` is shown verbatim.
  */
-const resolveSkillFolder = (
+const resolveSkillFolderSegments = (
+  url: string,
   parentPath: string | undefined,
+): string[] => {
+  const parentSegments = (parentPath ?? '').split('/').filter(Boolean);
+  const urlFolderSegments = url.split('/').filter(Boolean).slice(2, -1);
+
+  return urlFolderSegments.length === parentSegments.length
+    ? urlFolderSegments.map(safeDecodeURIComponent)
+    : parentSegments;
+};
+
+const resolveSkillFolder = (
+  skill: SkillMetadataItemDto,
   source: SkillSource,
   folderLabels: DeploymentFolderLabels,
 ): string[] => [
   folderLabels[SOURCE_FOLDER_LABEL[source]],
-  ...(parentPath ?? '').split('/').filter(Boolean),
+  ...resolveSkillFolderSegments(skill.url, skill.parentPath),
 ];
 
 /** Parameters for {@link mapSkillToCatalogItem}. */
@@ -89,7 +108,7 @@ export const mapSkillToCatalogItem = (
     isMyApp: isPersonal && (skill.isMy ?? true),
     sharedWithMe: skill.sharedWithMe ?? source === SkillSource.SharedWithMe,
     isEditable: !isPublic && (skill.canEdit ?? isPersonal),
-    folder: resolveSkillFolder(skill.parentPath, source, folderLabels),
+    folder: resolveSkillFolder(skill, source, folderLabels),
   };
 };
 

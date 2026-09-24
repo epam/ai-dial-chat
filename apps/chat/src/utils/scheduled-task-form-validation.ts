@@ -1,3 +1,4 @@
+import { ScheduledTaskErrorCode } from '@epam/ai-dial-chat-api-client';
 import {
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
@@ -12,6 +13,7 @@ import type { TFunction } from 'i18next';
 import {
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
+  SkillSelectorI18nKeys,
 } from '../constants/translation-keys';
 
 /**
@@ -31,7 +33,7 @@ export const RUN_AT_MIN_LEAD_MS = 60_000;
 
 const VALIDATION_ERROR_KEYS: Record<
   ScheduledTaskValidationErrorCode,
-  EditorI18nKeys | ScheduledTasksI18nKeys
+  EditorI18nKeys | ScheduledTasksI18nKeys | SkillSelectorI18nKeys
 > = {
   [ScheduledTaskValidationErrorCode.DisplayNameRequired]:
     EditorI18nKeys.NameRequired,
@@ -39,6 +41,10 @@ const VALIDATION_ERROR_KEYS: Record<
     ScheduledTasksI18nKeys.CreateModelRequired,
   [ScheduledTaskValidationErrorCode.PromptRequired]:
     ScheduledTasksI18nKeys.CreatePromptRequired,
+  [ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired]:
+    ScheduledTasksI18nKeys.CreateInstructionsOrSkillRequired,
+  [ScheduledTaskValidationErrorCode.SkillUnsupported]:
+    SkillSelectorI18nKeys.UnsupportedTooltipLabel,
   [ScheduledTaskValidationErrorCode.DescriptionTooLong]:
     ScheduledTasksI18nKeys.CreateDescriptionMaxLengthError,
   [ScheduledTaskValidationErrorCode.RunAtInvalid]:
@@ -68,6 +74,24 @@ export const mapScheduledTaskValidationErrors = (
       t(VALIDATION_ERROR_KEYS[code]),
     ]),
   );
+
+/** Maps stable BFF validation codes to the same localized form messages. */
+export const mapScheduledTaskApiError = (
+  code: string | undefined,
+  t: TFunction,
+): ScheduledTaskCreateFormErrors | undefined => {
+  if (code === ScheduledTaskErrorCode.ScheduledTaskSkillUnsupported)
+    return mapScheduledTaskValidationErrors(
+      { skillUrl: ScheduledTaskValidationErrorCode.SkillUnsupported },
+      t,
+    );
+  if (code === ScheduledTaskErrorCode.ScheduledTaskInstructionsOrSkillRequired)
+    return mapScheduledTaskValidationErrors(
+      { prompt: ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired },
+      t,
+    );
+  return undefined;
+};
 
 /**
  * Validates create/edit form values against the same rules the BFF enforces

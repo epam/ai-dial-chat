@@ -1,5 +1,20 @@
 # @epam/ai-dial-chat-shared
 
+## Skill capability predicate
+
+`isSkillSelectionUnsupported(skillUrl, isSkillsSupported)` returns true when a
+nonblank reference exists and support is not explicitly `true`. It accepts an
+optional/null reference and optional boolean, with no deployment, metadata,
+feature-flag, or UI dependency. Chat selection and scheduled-task validation
+use this same predicate.
+
+```ts
+import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
+
+isSkillSelectionUnsupported('skills/public/report', false); // true
+isSkillSelectionUnsupported(undefined, false); // false
+```
+
 Shared domain models, utilities, and UI components used across all AI DIAL Chat libraries.
 
 ## Overview
@@ -309,7 +324,9 @@ to drop the body copy (`p`, `strong`) one step while leaving headings, code, and
 tables untouched. The component is memoised, so pass a stable reference rather
 than an inline object. It forwards the code-block and table action labels to
 `MarkdownRenderer`. Pass `urlTransform` to rewrite markdown `href`/`src` values
-the same way as `MarkdownRenderer`.
+the same way as `MarkdownRenderer`. Pass `isPlainText` to render the body
+through `PlainTextRenderer` instead — the conversation's `plain_text` response
+format — in which case the markdown-only props are ignored.
 
 ```tsx
 import {
@@ -322,6 +339,35 @@ import {
   isStreaming={isStreaming}
   classNames={isMobile ? COMPACT_MARKDOWN_CLASS_NAMES : undefined}
   urlTransform={resolveMarkdownUrl}
+/>;
+```
+
+### PlainTextRenderer
+
+Renders a chat message body verbatim, for a conversation whose response format
+is `plain_text`: no Markdown pipeline, no raw HTML, no syntax highlighting, so
+a table, a heading, or `**bold**` reaches the reader exactly as the model wrote
+it and can be pasted into an e-mail or a ticket unchanged. Newlines and runs of
+whitespace are preserved. `classNames` takes the same object a Markdown message
+is styled with — only its `p` entry is read — so both formats stay on one type
+scale. `isStreaming` reveals appended content gradually and shows
+`thinkingLabel` until the first token arrives, matching `MarkdownRenderer`.
+
+Reach for `MDMessageViewer` with `isPlainText` rather than this component
+directly when the format is a per-conversation setting: the viewer picks the
+renderer and keeps one call site.
+
+```tsx
+import {
+  DEFAULT_MARKDOWN_CLASS_NAMES,
+  PlainTextRenderer,
+} from '@epam/ai-dial-chat-shared';
+
+<PlainTextRenderer
+  content={message.content}
+  isStreaming={isStreaming}
+  classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
+  thinkingLabel={t('Thinking')}
 />;
 ```
 

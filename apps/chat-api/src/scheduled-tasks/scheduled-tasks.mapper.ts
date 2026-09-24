@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { StringUtils } from '../common/utils/string-utils';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
 import type {
@@ -44,7 +45,11 @@ interface UpstreamSchedulePayload {
     retry: null;
     timeout: null;
     payload: {
-      messages: { role: 'user'; content: string }[];
+      messages: {
+        role: 'user';
+        content: string;
+        custom_content?: { skills: { url: string }[] };
+      }[];
       model: string;
     };
   };
@@ -70,7 +75,11 @@ export interface UpstreamScheduleResponse {
   properties?: {
     payload?: {
       model?: string;
-      messages?: { role: string; content: string }[];
+      messages?: {
+        role: string;
+        content: string;
+        custom_content?: { skills?: { url: string }[] };
+      }[];
     };
   };
   [key: string]: unknown;
@@ -151,7 +160,19 @@ export const toUpstreamSchedulePayload = (
     retry: null,
     timeout: null,
     payload: {
-      messages: [{ role: 'user', content: body.prompt }],
+      messages: [
+        {
+          role: 'user',
+          content: body.prompt,
+          ...(body.skillUrl
+            ? {
+                custom_content: {
+                  skills: [{ url: encodeDialResourcePath(body.skillUrl) }],
+                },
+              }
+            : {}),
+        },
+      ],
       model: body.model,
     },
   },
@@ -201,6 +222,9 @@ export const fromUpstreamSchedule = (
   description: upstream.description,
   model: upstream.properties?.payload?.model,
   prompt: upstream.properties?.payload?.messages?.[0]?.content,
+  skillUrl:
+    upstream.properties?.payload?.messages?.[0]?.custom_content?.skills?.[0]
+      ?.url,
 });
 
 export interface UpstreamScheduleRun {

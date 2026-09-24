@@ -10,6 +10,18 @@ The system SHALL expose `GET /api/v1/skills` accepting `bucket` (required), `pat
 - **operationId**: `listSkills`.
 - **Response DTO**: `SkillListResponseDto { bucket, path, items: SkillMetadataItemDto[], nextToken? }`, mapping DIAL Core's `MetadataBase` (`ResourceFolderMetadata | ResourceItemMetadata | ComplexResourceItemMetadata`, discriminated by `nodeType: 'FOLDER' | 'ITEM'`) into lowercased `nodeType: 'folder' | 'item'`, mirroring `ListFilesItemDto`'s existing normalization convention (`apps/chat-api/src/files/dto/list-files.dto.ts`).
 
+DIAL Core's pagination cursor advances over storage objects (a version folder's `SKILL.md`, an asset file, a `.dial-resource` marker) while this listing exposes only the skills among them, so an upstream page can map to no items at all. The system SHALL therefore follow the cursor past such pages within a single request rather than forwarding an empty page, requesting from each upstream page only the number of items still missing from `limit`, so the response never carries more items than were asked for. The returned `nextToken` SHALL be the token of the last upstream page consumed. The number of upstream pages one request consumes SHALL be bounded, and the system SHALL stop when the upstream cursor repeats a token.
+
+#### Scenario: Upstream pages holding no skill are walked through
+
+- **WHEN** DIAL Core answers the first two pages with only non-skill storage objects and the third with a skill
+- **THEN** the system returns `200 OK` with that skill and the third page's `nextToken`, never an empty first page for a bucket that has skills
+
+#### Scenario: The walk never exceeds the requested limit
+
+- **WHEN** a caller passes `limit=2` and the upstream pages yield one skill each
+- **THEN** the system asks each upstream page only for the items the limit still lacks, and returns exactly two items
+
 Each mapped `SkillMetadataItemDto` for `nodeType: 'item'` SHALL carry `description?: string`, sourced from the upstream item metadata's `attributes` map (DIAL Core PR #1970 — manifest-derived attributes on complex resource items, including recursive listing children). The `attributes` field SHALL be read defensively off the raw upstream item (`'attributes' in item`), since the installed `@epam/ai-dial-typescript-sdk`'s `MetadataBase` schema may not declare it; an absent `attributes` map, or a `description` value that is not a string, SHALL map to `description: undefined` — never throw. Folder entries SHALL NOT carry `description`.
 
 #### Scenario: List skills at bucket root

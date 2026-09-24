@@ -30,6 +30,18 @@ Define the public validation, request lifecycle, presentation and stylesheet con
 - **WHEN** a valid daily draft retains an old hourly-minute value and has empty description
 - **THEN** validation succeeds; a description above 500 characters instead returns its own error.
 
+Validation options SHALL additionally accept `isSkillsSupported?: boolean`. Skill-bearing values require explicit true; instruction-only callers remain compatible without that option. The pure shared `isSkillSelectionUnsupported` predicate SHALL determine capability errors from the reference, not metadata. `SkillUnsupported` SHALL identify `skillUrl`; `InstructionsOrSkillRequired` SHALL identify `prompt` when both content alternatives are absent. Stable codes SHALL be string-enum members translated by the host.
+
+#### Scenario: Configuration validation matrix
+
+- **WHEN** support is true/false/undefined, skill is present/absent, and prompt is nonblank/empty/whitespace
+- **THEN** instruction-only is valid regardless of support, a present skill requires explicit true, a supported skill permits blank prompt, and neither content alternative is invalid
+
+#### Scenario: Default options fail closed only for a skill
+
+- **WHEN** an existing host omits the support option
+- **THEN** instruction-only behavior is preserved and adding a skill returns `SkillUnsupported`
+
 ### Requirement: Checked preparation never silently changes schedule frequency
 
 `@epam/ai-dial-chat-hooks/scheduled-tasks` SHALL export checked create/update body preparation using the shared validator before existing conversion. Failure SHALL return field error codes without a body. Success SHALL preserve the existing UTC, weekday, description and activity-window semantics. Existing unchecked mapper signatures SHALL remain compatible and document their validated-input precondition.
@@ -43,6 +55,13 @@ Define the public validation, request lifecycle, presentation and stylesheet con
 
 - **WHEN** valid weekly, monthly, hourly or one-time values are prepared in supported timezones
 - **THEN** the result has the selected frequency and matches the existing conversion, including non-whole-hour offsets and activity boundaries.
+
+Checked create/update preparation SHALL pass capability options into shared validation and preserve a selected skill reference. Create SHALL omit an unset skill; update from a complete hydrated draft SHALL serialize an unset/cleared value as `null`. Reverse mapping SHALL accept empty-string prompt with a skill and SHALL not depend on catalog metadata. No invalid combination SHALL produce a request body.
+
+#### Scenario: Skill-only checked preparation round-trips
+
+- **WHEN** a supported skill-only draft is prepared, persisted, and mapped back
+- **THEN** its reference and empty prompt survive with the established schedule semantics
 
 ### Requirement: Schedule description depends only on trigger data
 
@@ -136,7 +155,7 @@ Documented scheduled-tasks/styles.css SHALL supply internal structural dependenc
 
 ### Requirement: A built-package consumer proves reuse and documents migration
 
-A parent-owned external fixture SHALL install packed distribution artifacts with dependency closure, without source aliases or app imports. Package/type contract tests SHALL cover all scheduler surfaces, alternate strings/styles/icons, typed exports and public CSS imports. The fixture SHALL run browser assertions against its production build for computed styles, container-responsive layout, editor placeholders and selector interactions. Source-text assertions alone SHALL NOT count as installed-package verification. Documentation SHALL map every F01-F15 finding to public replacement APIs. Implementation SHALL migrate the parent but SHALL not require editing an external application repository to pass.
+A parent-owned external fixture SHALL install packed distribution artifacts with dependency closure, without source aliases or app imports. Package/type contract tests SHALL cover all scheduler surfaces, alternate strings/styles/icons, typed exports and public CSS imports. The fixture SHALL provide a production build for manual checks of computed styles, container-responsive layout, editor placeholders and selector interactions. Source-text assertions alone SHALL NOT count as installed-package verification. Documentation SHALL map every F01-F15 finding to public replacement APIs. Implementation SHALL migrate the parent but SHALL not require editing an external application repository to pass.
 
 #### Scenario: Scheduler root and subpath exports stay compatible
 
@@ -172,3 +191,19 @@ A parent-owned external fixture SHALL install packed distribution artifacts with
 
 - **WHEN** a cron includes `second: '*'` or a nonzero second expression
 - **THEN** the descriptor returns Custom with the original expression; an explicit zero second may use a supported minute-level description.
+
+### Requirement: Skill support is consumable through built library contracts
+
+The reusable selector SHALL be exported by `@epam/ai-dial-skills`; form/summary/detail values, labels and errors by `@epam/ai-dial-scheduled-tasks`; pure validation by its `/validation` entry; DTO mapping and checked preparation by both the root `@epam/ai-dial-chat-hooks` and `/scheduled-tasks` entry. Existing optional-free instruction-only callers SHALL remain compatible. Public props and host wiring SHALL be documented in each affected README with correct exports and complete examples.
+
+The existing packed `tools/scheduled-tasks-consumer-fixture` SHALL exercise skill selection/removal, shared validation, preparation, skill-only hydration, and read-only fallback using built artifacts without source aliases or app providers. Hand-authored libs SHALL NOT acquire API routes, client setup, app context imports, flags, auth, storage, i18n, navigation, or deployment objects. The existing `chat-hooks` configured-client exception SHALL remain narrow. Styles SHALL ship through existing public stylesheet contracts.
+
+#### Scenario: External host composes the whole flow
+
+- **WHEN** a consumer installs the built packages and passes a skill value, support boolean, labels, catalog renderer, and callbacks
+- **THEN** its form and detail render and its checked preparation works without importing `apps/chat` or copying capability/content rules
+
+#### Scenario: Existing host remains compatible
+
+- **WHEN** a host omits all new optional props and submits an instruction-only task
+- **THEN** existing code typechecks and the established form/validation behavior remains available

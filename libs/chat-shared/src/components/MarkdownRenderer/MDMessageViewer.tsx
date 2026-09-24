@@ -6,12 +6,20 @@ import {
   MarkdownRenderer,
   type MarkdownRendererClassNames,
 } from './MarkdownRenderer';
+import { PlainTextRenderer } from './PlainTextRenderer';
 import type { MarkdownTableActionLabels } from './Table/MarkdownTable';
 
 /** Props for the {@link MDMessageViewer} markdown renderer. */
 interface MDMessageViewerProps {
   /** Raw markdown string to render. */
   content: string;
+  /**
+   * Renders `content` verbatim as escaped plain text instead of running the
+   * Markdown pipeline — the conversation's `plain_text` response format.
+   * Markdown-only props (`components`, `urlTransform`, the code-block and
+   * table labels) do not apply while it is set. Defaults to `false`.
+   */
+  isPlainText?: boolean;
   /** Enables gradual reveal for appended streaming content. */
   isStreaming?: boolean;
   /**
@@ -51,10 +59,11 @@ interface MDMessageViewerProps {
   classNames?: MarkdownRendererClassNames;
 }
 
-/** Renders assistant message content as formatted markdown. */
+/** Renders assistant message content as formatted markdown, or as escaped plain text when `isPlainText` is set. */
 export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
   ({
     content,
+    isPlainText,
     isStreaming,
     thinkingLabel,
     components,
@@ -67,21 +76,29 @@ export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
     tableOnOpenInCanvas,
     tableScrollRegionAriaLabel,
     classNames = DEFAULT_MARKDOWN_CLASS_NAMES,
-  }) => (
-    <MarkdownRenderer
-      content={content}
-      isStreaming={isStreaming}
-      thinkingLabel={thinkingLabel}
-      components={components}
-      urlTransform={urlTransform}
-      codeBlockCopyLabel={codeBlockCopyLabel}
-      codeBlockCopiedLabel={codeBlockCopiedLabel}
-      codeBlockTheme={codeBlockTheme}
-      tableActionLabels={tableActionLabels}
-      tableDownloadFilename={tableDownloadFilename}
-      tableOnOpenInCanvas={tableOnOpenInCanvas}
-      tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
-      classNames={classNames}
-    />
-  ),
+  }) =>
+    isPlainText ? (
+      <PlainTextRenderer
+        content={content}
+        isStreaming={isStreaming}
+        thinkingLabel={thinkingLabel}
+        classNames={classNames}
+      />
+    ) : (
+      <MarkdownRenderer
+        content={content}
+        isStreaming={isStreaming}
+        thinkingLabel={thinkingLabel}
+        components={components}
+        urlTransform={urlTransform}
+        codeBlockCopyLabel={codeBlockCopyLabel}
+        codeBlockCopiedLabel={codeBlockCopiedLabel}
+        codeBlockTheme={codeBlockTheme}
+        tableActionLabels={tableActionLabels}
+        tableDownloadFilename={tableDownloadFilename}
+        tableOnOpenInCanvas={tableOnOpenInCanvas}
+        tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+        classNames={classNames}
+      />
+    ),
 );

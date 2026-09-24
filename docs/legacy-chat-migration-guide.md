@@ -33,6 +33,8 @@ API, never a rebuild of the frontend image.
    If the provider uses a private CA, configure its trust bundle before startup
    as described in [Private certificate authorities](#private-certificate-authorities).
 2. Port environment variables — see [Environment variables](#environment-variables).
+   For external PDF or Office previews, configure the trusted document origins
+   as described in [External document previews](#external-document-previews).
 3. Re-register the OIDC redirect URI and the post-logout redirect URI with every
    identity provider. Both moved in 1.0 — the callback path gained the `/v1` API
    version segment — see [Authentication](#authentication).
@@ -62,7 +64,7 @@ describe what happens to a legacy deployment's variables. The source of truth is
 | `DIAL_API_HOST`             | `DIAL_CORE_URL`                                            | Internal URL, never exposed to browsers.                                                                                                 |
 | `NEXTAUTH_SECRET`           | `AUTH_SESSION_SECRET`                                      | Must be 64 hex characters (32 bytes) — generate a new one rather than reusing the old.                                                   |
 | `NEXTAUTH_URL`              | `AUTH_CALLBACK_BASE_URL`                                   | Public base URL of the **API**, used to build OIDC redirect URIs. The callback path changed too — see [Authentication](#authentication). |
-| `APP_BASE_ORIGIN`           | `CORS_ORIGIN`                                              | Origin of the browser application; also used by the CSRF origin check.                                                                   |
+| `APP_BASE_ORIGIN`           | `CORS_ORIGIN`                                              | Origin of the browser application; also used by the CSRF origin check. Defaults to `AUTH_CALLBACK_BASE_URL` when not set.                |
 | `IS_IFRAME`                 | `OVERLAY_ENABLED`                                          | `ALLOWED_IFRAME_ORIGINS` keeps its name and now also gates incoming `postMessage`.                                                       |
 | `ENABLED_FEATURES`          | `ENABLED_UI_FEATURES`                                      | Same replace semantics; several flag names changed — see below.                                                                          |
 | `THEMES_CONFIG_HOST`        | `THEMES_CONFIG_URL`                                        | Add `THEMES_SERVICE_TIMEOUT_MS` if 5 s is too tight.                                                                                     |
@@ -79,9 +81,9 @@ describe what happens to a legacy deployment's variables. The source of truth is
 `AUTH_{PROVIDER}_*` variable (Auth0, Azure AD, GitLab, Google, Keycloak, PingID,
 Cognito, Okta) keep their names and meaning.
 
-Two additions apply to all providers in 1.0: `AUTH_POST_LOGOUT_REDIRECT_URI` is
-required once any provider is configured, and each provider can now override
-roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
+Two additions apply to all providers in 1.0: `AUTH_POST_LOGOUT_REDIRECT_URI`
+defaults to `AUTH_CALLBACK_BASE_URL` when not set explicitly, and each provider
+can now override roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
 `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`. Azure B2C is newly supported.
 
 ### Carried over with fields dropped
@@ -124,11 +126,31 @@ configuration still works:
 ### Worth setting in 1.0
 
 These have no legacy counterpart but change user-visible behaviour:
-`AUTH_COOKIE_SECURE`, `OVERLAY_SANDBOX_ENABLED`, `RESPONSES_API_ENABLED`,
+`AUTH_COOKIE_SECURE`, `ALLOWED_CONNECT_ORIGINS`, `OVERLAY_SANDBOX_ENABLED`, `RESPONSES_API_ENABLED`,
 `SCHEDULED_TASKS_ENABLED` / `_ROLES`, `LIVE_CHAT_INTERACTION_ENABLED` / `_ROLES`,
 `FILE_MANAGER_AVAILABLE_TABS`, `UTILITY_MODEL` with
 `LLM_CONVERSATION_NAMING_ENABLED`, `ASR_ENABLED_ROLES`, `ANNOUNCEMENTS`,
 `CHAT_VERSION`, and the `ARCHIVE_*` / `SKILL_*` transfer limits.
+
+### External document previews
+
+The legacy `development-old` chat did not set `connect-src` or `default-src` in
+its application CSP, so that policy did not restrict external document fetches.
+The new chat defaults to `connect-src 'self' blob:`. To preserve external PDF and
+Office previews, set trusted document origins on `chat-api`:
+
+```dotenv
+ALLOWED_CONNECT_ORIGINS=https://documents.example.com
+```
+
+This is a new setting, not a renamed legacy variable. Adding a portal to
+`ALLOWED_IFRAME_ORIGINS` does not authorize document fetches from that portal.
+The connection allowlist applies in both CSP modes; switching to `report-only`
+alone does not remove the enforced connection restriction. Restart `chat-api`
+and reload the chat page or overlay iframe after changing it. Remote-server CORS
+and authorization still apply. See the authoritative
+[CSP configuration reference](../apps/chat-api/README.md#content-security-policy)
+for origin syntax, redirect destinations, and reverse-proxy requirements.
 
 ## Authentication
 
@@ -163,11 +185,13 @@ Practical consequences for a migration:
   Keycloak answers the authorization request with `Invalid parameter:
 redirect_uri`.
 
-- **Register `AUTH_POST_LOGOUT_REDIRECT_URI` with the provider as well.** It is
-  required in 1.0 once any provider is configured, and federated logout sends the
-  browser there through the IdP, so it must be in the client's post-logout
-  allow-list (Keycloak: _Valid post logout redirect URIs_). Unlike the callback it
-  points at the **application** origin, not the API.
+- **Register the post-logout redirect URI with the provider as well.** In 1.0
+  this is `AUTH_POST_LOGOUT_REDIRECT_URI` when set, or `AUTH_CALLBACK_BASE_URL`
+  otherwise, and federated logout sends the browser there through the IdP, so
+  it must be in the client's post-logout allow-list (Keycloak: _Valid post
+  logout redirect URIs_). Unlike the callback it points at the **application**
+  origin, not the API — set `AUTH_POST_LOGOUT_REDIRECT_URI` explicitly when
+  that differs from `AUTH_CALLBACK_BASE_URL`.
 - **Allow Chat's toolset OAuth callback in DIAL Core.** When toolset OAuth is
   used and more than one client can start sign-in for the same toolset, add the
   1.0 callback URI to Core's `toolsets.security.allowedRedirectUris`, preserving

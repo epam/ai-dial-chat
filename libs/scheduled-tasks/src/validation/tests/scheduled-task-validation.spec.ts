@@ -18,6 +18,29 @@ const values: ScheduledTaskCreateFormValues = {
 };
 
 describe('validateScheduledTaskFormValues', () => {
+  it.each([true, false, undefined])(
+    'validates the complete content matrix with support %s',
+    (isSkillsSupported) => {
+      for (const skillUrl of [undefined, 'skills/public/report']) {
+        for (const prompt of ['', 'Instructions']) {
+          const errors = validateScheduledTaskFormValues(
+            { ...values, skillUrl, prompt },
+            { now, isSkillsSupported },
+          );
+          expect(errors.skillUrl).toBe(
+            skillUrl && isSkillsSupported !== true
+              ? ScheduledTaskValidationErrorCode.SkillUnsupported
+              : undefined,
+          );
+          expect(errors.prompt).toBe(
+            !prompt && !skillUrl
+              ? ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired
+              : undefined,
+          );
+        }
+      }
+    },
+  );
   it('reports required common fields as stable codes', () => {
     expect(
       validateScheduledTaskFormValues(
@@ -27,7 +50,7 @@ describe('validateScheduledTaskFormValues', () => {
     ).toEqual({
       displayName: ScheduledTaskValidationErrorCode.DisplayNameRequired,
       modelId: ScheduledTaskValidationErrorCode.ModelRequired,
-      prompt: ScheduledTaskValidationErrorCode.PromptRequired,
+      prompt: ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired,
     });
   });
 

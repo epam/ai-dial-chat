@@ -660,6 +660,23 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     setPendingDislikeMessageIndex(null);
   }, []);
 
+  /* Stable props so memo(ConversationView) skips re-rendering long message lists. */
+  const toolsChipLabels = useMemo(
+    () => ({
+      removeLabel: (label: string) => t(ToolsI18nKeys.RemoveTool, { label }),
+    }),
+    [t],
+  );
+
+  const topContent = useMemo(
+    () =>
+      activeScheduledTaskStatus ===
+      ActiveScheduledTaskStatus.TaskConversation ? (
+        <ScheduledTaskConversationBanner />
+      ) : undefined,
+    [activeScheduledTaskStatus],
+  );
+
   if (isFetching)
     return (
       <div className="flex size-full items-center justify-center">
@@ -710,15 +727,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
-          toolsChipLabels={{
-            removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
-          }}
-          topContent={
-            activeScheduledTaskStatus ===
-            ActiveScheduledTaskStatus.TaskConversation ? (
-              <ScheduledTaskConversationBanner />
-            ) : undefined
-          }
+          toolsChipLabels={toolsChipLabels}
+          topContent={topContent}
         />
       </div>
 

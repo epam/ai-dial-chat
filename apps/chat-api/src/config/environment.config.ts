@@ -50,6 +50,21 @@ export class EnvironmentVariables {
   CSP_REPORT_URI?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0);
+  })
+  @Matches(IFRAME_ORIGIN_PATTERN, {
+    each: true,
+    message:
+      'Each ALLOWED_CONNECT_ORIGINS entry must be an HTTP(S) origin (scheme://host[:port]) or a single leading-wildcard-label origin, without paths, queries, or fragments',
+  })
+  ALLOWED_CONNECT_ORIGINS?: string[] = [];
+
+  @IsOptional()
   @IsEnum(ApplicationLogLevel)
   LOG_LEVEL?: ApplicationLogLevel;
 
@@ -64,7 +79,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  CORS_ORIGIN?: string = 'http://localhost:4207';
+  CORS_ORIGIN?: string;
 
   @IsNotEmpty()
   @IsString()

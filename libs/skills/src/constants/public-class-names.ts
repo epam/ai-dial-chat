@@ -9,6 +9,8 @@
  * renaming one or moving it to a different element — both are breaking changes.
  */
 export const SKILLS_CLASS = {
+  /** Controlled skill selector root carrying theme overrides. */
+  selectorField: 'dial-skills-selector-field',
   /** The favorite-skills panel root, which carries the themed CSS variables. */
   favoritesPanel: 'dial-skills-favorites-panel',
   /**

@@ -20,6 +20,25 @@ const values: ScheduledTaskCreateFormValues = {
 const options = { now: new Date('2026-09-22T10:00:00.000Z') };
 
 describe('scheduled task request preparation', () => {
+  it('prepares skill-only content only with support and emits null for a cleared edit', () => {
+    const draft = { ...values, prompt: '', skillUrl: 'skills/public/report' };
+    expect(prepareScheduledTaskCreateBody(draft, options).ok).toBe(false);
+    expect(
+      prepareScheduledTaskCreateBody(draft, {
+        ...options,
+        isSkillsSupported: true,
+      }),
+    ).toMatchObject({
+      ok: true,
+      body: { prompt: '', skillUrl: draft.skillUrl },
+    });
+    expect(prepareScheduledTaskUpdateBody(values, options)).toMatchObject({
+      ok: true,
+      body: { skillUrl: null },
+    });
+    const create = prepareScheduledTaskCreateBody(values, options);
+    if (create.ok) expect(create.body).not.toHaveProperty('skillUrl');
+  });
   it('fails closed instead of serializing an empty monthly day', () => {
     expect(
       prepareScheduledTaskCreateBody({ ...values, dayOfMonth: '' }, options),

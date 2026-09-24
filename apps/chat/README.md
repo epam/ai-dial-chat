@@ -1,5 +1,27 @@
 # Chat Application
 
+## Scheduled task skills
+
+Create/edit compose the reusable skills field into the scheduled-task form.
+The field matches the model/agent input: search and favorites open in a desktop
+dropdown or mobile bottom sheet, Browse opens the skill catalog, and the trailing
+clear button removes the selected skill. Favorites come from the existing
+personal, shared, and public skills collections and favorites context.
+Task-form favorite rows omit the hover tooltip and View details action.
+`skillUsageEnabled` gates selection; existing references remain in the draft
+when selection is hidden. Support comes from the draft model's deployment
+entry, independent of chat's active model. Missing/false support blocks saving
+a skill and immediately shows the shared chat message. Typed BFF validation
+errors preserve the form; deployment-not-found errors do not replace it with
+the missing-task page. A change in deployment skill support clears a stale
+server capability error and revalidates the current draft, allowing retry when
+support recovers without requiring the user to reselect the model or skill.
+
+Detail and conversation task summaries show a resolved skill name, falling
+back to its full reference while metadata loads or cannot be read. They remain
+visible when skill selection is disabled. These lookups belong to app adapters;
+the libraries receive resolved values and callbacks.
+
 The AI DIAL Chat frontend — a React 19 single-page application served by
 `apps/chat-api`. It is the user-facing surface for conversations, the entity
 catalog, prompts, skills, scheduled tasks, publishing, sharing, and file

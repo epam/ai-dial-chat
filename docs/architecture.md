@@ -234,10 +234,11 @@ in the `libs/chat-hooks/src/usage` adapters `map-usage-data-to-dashboard.ts` and
 cards, rows, and period statuses those adapters produce. The tab also arms a timer for the earliest
 displayed boundary and re-fetches when it elapses, so post-reset figures always come from a fresh
 DIAL Core response — nothing is ever zeroed locally.
-`PreferencesTab` hosts the language, keyboard-shortcut and "Default agent for new chats"
-preferences. A theme row is implemented but **commented out**, parked for an
-upcoming theming feature — which is why `useThemeOptions` and the
-`settings.theme*` i18n keys exist with no live caller. The "Default agent for
+`PreferencesTab` hosts the theme, language, keyboard-shortcut and "Default agent for new chats"
+preferences. The theme row is driven by `useThemeOptions`, which derives its options from whatever
+`GET /api/themes` returns rather than from a fixed light/dark/system list: one entry per configured
+theme, plus a synthetic `System` entry only where both `light` and `dark` exist. It is hidden below
+two options. The "Default agent for
 new chats" row renders only while `DEFAULT_DEPLOYMENT_PINNED` is on, since the
 pin is what gives its "Default agent" option something to refer to; in a default
 deployment (flag off) only the keyboard-shortcut row is visible. All three of
@@ -375,7 +376,9 @@ Configured at startup:
   etc.). Generic responses do not allow WebAssembly. App-owned frontend middleware gives chat HTML
   a fresh style nonce and its required WebAssembly permission, while the PDF worker receives a
   separate worker policy. `CSP_MODE` controls report-only rollout versus strict
-  enforcement. Report-only mode accepts legacy HTML without the nonce marker with
+  enforcement. `ALLOWED_CONNECT_ORIGINS` extends `connect-src` for trusted external
+  document previews in both policies; remote-server CORS still applies.
+  Report-only mode accepts legacy HTML without the nonce marker with
   a startup warning; enforcement requires a nonce-aware build. See
   [CSP configuration](../apps/chat-api/README.md#content-security-policy).
 - `ValidationPipe` — whitelist + `forbidNonWhitelisted` + `transform`
@@ -468,6 +471,24 @@ Business controllers are versioned; three infrastructure controllers are deliber
 | `/api/apps`                         | App metadata — unversioned                                |
 | `/api/themes`                       | Theme configuration and icons — unversioned               |
 | `/api/health`                       | Health check — unversioned                                |
+
+#### Scheduled tasks
+
+Scheduled-task create/update accepts an optional nullable `skillUrl` alongside
+the required-string prompt. PUT reads authoritative detail before merging:
+omission preserves a skill, null removes it. The scheduled-tasks service resolves
+session-scoped deployment capabilities through the deployments facade before
+saving a skill-bearing task. The mapper writes the encoded reference into the
+first user message's `custom_content.skills` in the Scheduler completion payload;
+this repository contains no task-run worker. Sparse lists need not include that
+payload. See the [API contract](../apps/chat-api/README.md#scheduled-task-skill-contract).
+
+Reusable selection lives in `skills` (`SkillSelectorField`), validation and
+presentation in `scheduled-tasks`, and checked request mapping in `chat-hooks`.
+Both chat and scheduled-task validation use the pure `chat-shared` skill-support
+predicate. App adapters own feature flags, catalogs, metadata resolution and
+deployment data. Task execution belongs to the external Scheduler and uses the
+existing offline-credentials flow.
 
 #### Auth (`/api/v1/auth`)
 
@@ -649,7 +670,7 @@ for existing sessions. Provider metadata and rotation details live in the
 
 - Skips `GET`, `HEAD`, `OPTIONS` (safe methods)
 - Skips `@Public()` routes
-- Validates `Origin` / `Referer` header against configured `CORS_ORIGIN`
+- Validates `Origin` / `Referer` header against configured `CORS_ORIGIN` (defaults to `AUTH_CALLBACK_BASE_URL` when `CORS_ORIGIN` is unset)
 - Validates `X-CSRF-Token` header matches `req.user.csrf`
 
 Frontend bootstraps the CSRF token from the `x-csrf-token` response header on `GET /api/v1/auth/me` and stores it in memory. The typed `post`/`put`/`del` helpers inject it automatically.
