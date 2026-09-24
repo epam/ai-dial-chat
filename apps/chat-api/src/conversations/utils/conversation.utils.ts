@@ -7,11 +7,27 @@ import {
 import type { CompoundNextToken } from '../types/conversation.types';
 
 /*
- * Strips characters unsafe in DIAL Core resource names: path separators (/ %),
- * null bytes, and Unicode bidi codepoints that can spoof filenames (CWE-116).
+ * Strips characters unsafe in DIAL Core resource names. Three groups:
+ *
+ *   1. DIAL Core's own reject list for a resource name -- `:;,=/{}%&\"` plus
+ *      the backslash. It must stay in sync with `NOT_ALLOWED_SYMBOLS` in
+ *      `@epam/ai-dial-ui-kit` and with
+ *      `PROHIBITED_CONVERSATION_NAME_CHARS_RE` in `libs/chat-shared`, which is
+ *      what the rename input applies on the client. Leaving the backslash out
+ *      let a LaTeX-style first prompt (`\frac{1}{1+x}`) produce a title Core
+ *      rejects with 400 on every later read, delete and export, stranding the
+ *      conversation.
+ *   2. Tab, which the client-side list also strips.
+ *   3. The null byte and the Unicode bidi codepoints that can spoof
+ *      filenames (CWE-116). Backend-only hardening -- the client list does
+ *      not carry these, so the two lists are equal only on groups 1 and 2.
+ *
+ * This backend copy is duplicated rather than imported because `chat-shared`
+ * is a browser/React library that a Nest process must not pull in; the tests
+ * in `tests/conversation-naming.spec.ts` pin the two lists together.
  */
 const notAllowedSymbolsRegex =
-  /[:;,=/{}%&"\0\u200E\u200F\u202A-\u202E\u2066-\u2069]/gu;
+  /[:;,=/\\{}%&"\t\0\u200E\u200F\u202A-\u202E\u2066-\u2069]/gu;
 const MAX_ENTITY_BYTES = 255;
 const CONVERSATION_NAME_SEPARATOR = '__';
 const UUID_PART_LENGTHS = [8, 4, 4, 4, 12] as const;
