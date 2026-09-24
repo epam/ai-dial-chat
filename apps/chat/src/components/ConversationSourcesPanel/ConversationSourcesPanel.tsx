@@ -18,8 +18,10 @@ import type {
 import {
   MDMessageViewer,
   AttachmentType,
+  MIMEType,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
+import { parsePdfPageReference } from '@epam/ai-dial-quotations';
 import {
   ScheduledTaskDetailsSummary,
   ScheduledTaskRunHistoryList,
@@ -253,6 +255,34 @@ const ConversationSourcesPanelContainer: FC = () => {
         !isExternalSourcePreviewable(contentType, url)
       ) {
         window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      /* A `…pdf#page=N` source goes through the canvas's reference-PDF
+       * resolver (it only runs for `referenceUrl` with no `url`), which keeps
+       * the page; the generic PDF path strips the fragment and opens page 1. */
+      const pageReference = parsePdfPageReference(url);
+      if (pageReference?.page != null) {
+        const pageAttachment: DisplayAttachment = {
+          id: url,
+          name: title,
+          contentType: MIMEType.PDF,
+          type: AttachmentType.File,
+          status: RequestStatus.Idle,
+          referenceUrl: url,
+        };
+        if (await openAttachmentCanvas(pageAttachment)) {
+          handleClose();
+          return;
+        }
+        if (isDialFileId(pageReference.baseUrl)) {
+          downloadAttachment({
+            ...pageAttachment,
+            referenceUrl: undefined,
+            url: pageReference.baseUrl,
+          });
+        } else {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
         return;
       }
       const resolvedContentType = resolveExternalSourceContentType(
