@@ -1,11 +1,42 @@
-# conversation-input-usage-limits Specification
+## REMOVED Requirements
 
-## Purpose
+### Requirement: Monthly deployment usage
 
-The day, week, and month deployment-usage trigger and popover surfaced in the
-conversation input.
+**Reason**: The popover now reports day, week, and month token limits, so a single-period model no
+longer describes the data. Replaced by "Period deployment usage" below.
 
-## Requirements
+**Migration**: `mapDeploymentLimitsToInput` returns `CatalogItemLimits | undefined` instead of
+`MonthlyUsageLimit | undefined`, and `MonthlyUsageLimit` is deleted from
+`@epam/ai-dial-chat-hooks`'s public exports. The only in-repo consumer,
+`apps/chat/src/hooks/useDeploymentUsageLimits.ts`, is updated in the same change. An external
+consumer that imported `MonthlyUsageLimit` reads `limits.groups[0].rows` and selects the month row
+instead.
+
+---
+
+### Requirement: Monthly usage trigger
+
+**Reason**: The trigger's error state and percentage were derived from the month alone, which is the
+defect this change fixes. Replaced by "Period usage trigger" below.
+
+**Migration**: `USAGE_LIMIT_THRESHOLD_PERCENT` is removed from
+`apps/chat/src/components/UsageLimitsControl/UsageLimitsControl.tsx`; the 75%/100% thresholds in
+`CatalogLimitStatus` replace it.
+
+---
+
+### Requirement: Monthly usage popover
+
+**Reason**: The popover rendered exactly one progress bar and one remaining-tokens line. Replaced by
+"Period usage popover" below.
+
+**Migration**: The i18n keys `conversationInput.usageLimits.tokensRemaining` and
+`conversationInput.usageLimits.progressAriaLabel` are removed along with the single-bar rendering.
+`conversationInput.usageLimits.popoverTitle` and `conversationInput.usageLimits.error` are unchanged.
+
+---
+
+## ADDED Requirements
 
 ### Requirement: Period deployment usage
 
@@ -94,28 +125,6 @@ the last known limits and SHALL NOT affect message entry or sending.
 
 - **WHEN** an earlier deployment's request resolves after the selected deployment has changed
 - **THEN** its result is ignored
-
----
-
-### Requirement: Isolated Conversation Input integration
-
-`@epam/ai-dial-conversation-input` SHALL expose an optional
-`usageLimitsSlot?: ReactNode` and render it in the action row near the model
-selector. Omitting the slot SHALL preserve the existing layout.
-
-Both `NewConversationComposer` and `ConversationView` SHALL compose the
-app-owned usage control into this slot. The library SHALL NOT own deployment
-APIs, DTOs, selection state, translations, or usage policy.
-
-#### Scenario: Slot is provided
-
-- **WHEN** a composer supplies the usage control
-- **THEN** it appears in the Conversation Input action row
-
-#### Scenario: Slot is omitted
-
-- **WHEN** a consumer does not supply the slot
-- **THEN** Conversation Input behaves as before
 
 ---
 

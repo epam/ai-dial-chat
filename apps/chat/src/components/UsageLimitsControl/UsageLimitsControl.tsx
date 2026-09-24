@@ -1,51 +1,43 @@
+import { CatalogLimitStatus, LimitsTab } from '@epam/ai-dial-catalog';
+import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
 import {
   type CSSProperties,
   type FC,
   memo,
+  useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ConversationInputI18nKeys } from '../../constants/translation-keys';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { useDeploymentUsageLimits } from '../../hooks/useDeploymentUsageLimits';
+import { findWorstCappedRow } from '../../utils/usage-limits';
+import { formatUsageResetTime } from '../../utils/usage-reset-time';
 import styles from './UsageLimitsControl.module.scss';
-
-export interface UsageLimitsLabels {
-  /** Builds the trigger label with the current monthly value. */
-  triggerAriaLabel: (params: { value: string }) => string;
-  /** Popover title. */
-  popoverTitle: string;
-  /** Non-blocking request error. */
-  error: string;
-  /** Builds the remaining-token text from a locale-formatted number. */
-  tokensRemaining: (params: { count: string }) => string;
-  /** Builds the monthly progress bar accessible label. */
-  progressAriaLabel: (params: { used: string; total: string }) => string;
-}
 
 interface Props {
   /** ID of the currently selected deployment. */
   deploymentId: string | undefined;
   /** Whether the selected deployment is currently generating a response. */
   isGenerationInProgress?: boolean;
-  /** Localized strings for the trigger and popover. */
-  labels: UsageLimitsLabels;
 }
-
-export const USAGE_LIMIT_THRESHOLD_PERCENT = 90;
-
-const numberFormatter = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 6,
-});
 
 const UsageLimitsControl: FC<Props> = ({
   deploymentId,
   isGenerationInProgress = false,
-  labels,
 }) => {
-  const { limit, isLoading, hasError, refresh } =
+  /* Widened to the plain key/params signature `formatUsageResetTime` and the
+     labels callbacks take, matching `UsageTab`'s own cast. */
+  const { t } = useTranslation() as {
+    t: (key: string, params?: Record<string, unknown>) => string;
+  };
+  const { language: activeLocale } = useLanguage();
+  const { limitsDto, isLoading, hasError, refresh } =
     useDeploymentUsageLimits(deploymentId);
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
@@ -54,6 +46,47 @@ const UsageLimitsControl: FC<Props> = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const wasGenerationInProgressRef = useRef(isGenerationInProgress);
   const hasPendingGenerationRefreshRef = useRef(false);
+
+  const labels = useMemo(
+    () => ({
+      tokenGroup: t(ConversationInputI18nKeys.TokenGroup),
+      tokensPerDay: t(ConversationInputI18nKeys.TokensPerDay),
+      tokensPerWeek: t(ConversationInputI18nKeys.TokensPerWeek),
+      tokensPerMonth: t(ConversationInputI18nKeys.TokensPerMonth),
+      followsCostLimit: t(ConversationInputI18nKeys.FollowsCostLimit),
+      formatSpentCaption: (amount: string) =>
+        t(ConversationInputI18nKeys.SpentLabel, { amount }),
+      formatValueLabel: (used: string, total: string) =>
+        t(ConversationInputI18nKeys.Value, { used, total }),
+      formatProgressAriaLabel: (params: {
+        label: string;
+        used: string;
+        total: string;
+      }) => t(ConversationInputI18nKeys.ProgressAriaLabel, params),
+      formatFollowsCostLimitAriaLabel: (params: {
+        label: string;
+        used: string;
+      }) => t(ConversationInputI18nKeys.FollowsCostLimitAriaLabel, params),
+    }),
+    [t],
+  );
+
+  /*
+   * Kept `useCallback`-stable: it feeds the `useMemo` below, so an unstable
+   * identity would remap on every render.
+   */
+  const formatResetTime = useCallback(
+    (resetsAt: string | undefined) =>
+      formatUsageResetTime(resetsAt, activeLocale, t),
+    [activeLocale, t],
+  );
+
+  const limits = useMemo(
+    () => mapDeploymentLimitsToInput(limitsDto, labels, formatResetTime),
+    [limitsDto, labels, formatResetTime],
+  );
+
+  const worstRow = useMemo(() => findWorstCappedRow(limits), [limits]);
 
   useEffect(() => {
     if (wasGenerationInProgressRef.current && !isGenerationInProgress) {
@@ -105,18 +138,28 @@ const UsageLimitsControl: FC<Props> = ({
     };
   }, [isOpen]);
 
-  if (!deploymentId || limit == null) {
+  if (!deploymentId || limits == null) {
     return null;
   }
 
-  const isThresholdReached = limit.usedPercent >= USAGE_LIMIT_THRESHOLD_PERCENT;
-  const formattedUsed = numberFormatter.format(limit.used);
-  const formattedTotal = numberFormatter.format(limit.total);
-  const formattedRemaining = numberFormatter.format(limit.remaining);
-  const triggerValue = `${limit.usedPercent}%`;
+  const isLimitReached = limits.status === CatalogLimitStatus.LimitReached;
+  const isRunningLow = limits.status === CatalogLimitStatus.RunningLow;
+  const triggerValue = `${worstRow?.usedPercent ?? 0}%`;
   const ringStyle = {
-    '--usage-percent': limit.usedPercent,
+    '--usage-percent': worstRow?.usedPercent ?? 0,
   } as CSSProperties;
+
+  /*
+   * Sets both the percentage text and, through `currentColor`, the ring's
+   * filled arc — so the text token is the one that has to be legible.
+   * `text-warning-icon` is the icon-weight yellow and would be unreadable as
+   * text.
+   */
+  const getStatusTextClass = () => {
+    if (isLimitReached) return 'text-error';
+    if (isRunningLow) return 'text-warning';
+    return 'text-secondary';
+  };
 
   const handleTriggerClick = () => {
     if (isOpen) {
@@ -137,15 +180,16 @@ const UsageLimitsControl: FC<Props> = ({
         ref={triggerRef}
         type="button"
         className={mergeClasses(
-          'group flex min-h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 text-secondary transition-colors',
+          'group flex min-h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 transition-colors',
           'hover:border-primary hover:bg-layer-sunken focus-visible:bg-layer-sunken focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-primary',
           'mobile:min-h-11 mobile:min-w-11',
           isOpen && 'border-primary bg-layer-sunken',
-          isThresholdReached && 'text-error',
+          getStatusTextClass(),
         )}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        aria-label={labels.triggerAriaLabel({
+        aria-label={t(ConversationInputI18nKeys.TriggerAriaLabel, {
+          label: worstRow?.label ?? labels.tokenGroup,
           value: triggerValue,
         })}
         onClick={handleTriggerClick}
@@ -164,7 +208,6 @@ const UsageLimitsControl: FC<Props> = ({
           aria-hidden
           className={mergeClasses(
             'inline-block size-3.5 shrink-0 rounded-full',
-            isThresholdReached ? 'text-error' : 'text-secondary',
             styles.percentageRing,
           )}
           style={ringStyle}
@@ -177,32 +220,19 @@ const UsageLimitsControl: FC<Props> = ({
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="absolute bottom-full end-0 z-50 mb-2 flex w-64 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-none"
+          className="absolute bottom-full end-0 z-50 mb-2 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-none"
         >
           <p id={titleId} className="dial-small-semi-text text-primary">
-            {labels.popoverTitle}
+            {t(ConversationInputI18nKeys.PopoverTitle)}
           </p>
 
           {hasError && (
             <p className="dial-tiny-text text-error" aria-live="polite">
-              {labels.error}
+              {t(ConversationInputI18nKeys.Error)}
             </p>
           )}
 
-          <ProgressBar
-            value={limit.usedPercent}
-            max={100}
-            size={ElementSize.Small}
-            className="w-full"
-            aria-label={labels.progressAriaLabel({
-              used: formattedUsed,
-              total: formattedTotal,
-            })}
-          />
-
-          <p className="dial-tiny-text text-secondary">
-            {labels.tokensRemaining({ count: formattedRemaining })}
-          </p>
+          <LimitsTab limits={limits} />
         </div>
       )}
     </div>

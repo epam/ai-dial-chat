@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import type { UsageLimitProgressRow } from '../../../../models/item-details-data';
 import { LimitsTab } from '../Limits/Limits';
 import styles from '../Limits/Limits.module.scss';
 
@@ -416,5 +417,89 @@ describe('LimitsTab', () => {
     );
 
     expect(screen.getByText('View full usage limits')).toBeTruthy();
+  });
+
+  const renderRow = (row: UsageLimitProgressRow) =>
+    render(
+      <LimitsTab
+        limits={{ groups: [{ label: 'Token limits', rows: [row] }] }}
+      />,
+    );
+
+  describe('reset line', () => {
+    it('renders the visible instant and the spoken expansion when the full trio is supplied', () => {
+      renderRow({
+        label: 'Today',
+        used: 12,
+        total: 20,
+        valueLabel: '12 / 20',
+        resetLabel: 'Resets Sep 16, 2026, 2:00 AM GMT+2',
+        resetIsoValue: '2026-09-16T00:00:00Z',
+        resetAriaLabel:
+          'Usage resets Sep 16, 2026, 2:00 AM Central European Summer Time',
+      });
+
+      const time = screen.getByText('Resets Sep 16, 2026, 2:00 AM GMT+2');
+      expect(time.tagName).toBe('TIME');
+      expect(time.getAttribute('dateTime')).toBe('2026-09-16T00:00:00Z');
+      /* The visible line is hidden from the accessibility tree so the spoken
+         sibling, which names the timezone in full, is what is announced. */
+      expect(time.getAttribute('aria-hidden')).toBe('true');
+      expect(time.getAttribute('aria-label')).toBeNull();
+      expect(
+        screen.getByText(
+          'Usage resets Sep 16, 2026, 2:00 AM Central European Summer Time',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('leaves the visible line as its own accessible name when no spoken expansion is supplied', () => {
+      renderRow({
+        label: 'Today',
+        used: 12,
+        total: 20,
+        resetLabel: 'Resets Sep 16, 2026, 2:00 AM GMT+2',
+        resetIsoValue: '2026-09-16T00:00:00Z',
+      });
+
+      const time = screen.getByText('Resets Sep 16, 2026, 2:00 AM GMT+2');
+      expect(time.tagName).toBe('TIME');
+      expect(time.getAttribute('aria-hidden')).toBeNull();
+    });
+
+    it('renders no reset element for a row that carries none of the three fields', () => {
+      renderRow({
+        label: 'Today',
+        used: 12,
+        total: 20,
+        valueLabel: '12 / 20',
+        captionLabel: '$1.20 spent',
+      });
+
+      expect(screen.queryByText(/^Resets /)).toBeNull();
+      expect(screen.getByText('$1.20 spent')).toBeTruthy();
+      expect(screen.getByRole('progressbar')).toBeTruthy();
+    });
+
+    it('renders the reset line on an unlimited row alongside its note', () => {
+      renderRow({
+        label: 'This month',
+        used: 4200,
+        total: Number.MAX_SAFE_INTEGER,
+        isUnlimited: true,
+        valueLabel: '4.2K',
+        noteLabel: 'Follows cost limit',
+        resetLabel: 'Resets Oct 1, 2026, 2:00 AM GMT+2',
+        resetIsoValue: '2026-10-01T00:00:00Z',
+      });
+
+      expect(screen.queryByRole('progressbar')).toBeNull();
+      expect(screen.getByText('Follows cost limit')).toBeTruthy();
+      expect(
+        screen
+          .getByText('Resets Oct 1, 2026, 2:00 AM GMT+2')
+          .getAttribute('dateTime'),
+      ).toBe('2026-10-01T00:00:00Z');
+    });
   });
 });

@@ -1,11 +1,10 @@
-import type { MonthlyUsageLimit } from '@epam/ai-dial-chat-hooks';
+import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDeploymentUsageLimits } from '../../../hooks/useDeploymentUsageLimits';
 import type { UseDeploymentUsageLimitsResult } from '../../../hooks/useDeploymentUsageLimits';
 import UsageLimitsControl from '../UsageLimitsControl';
-import type { UsageLimitsLabels } from '../UsageLimitsControl';
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
@@ -16,16 +15,19 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       value,
       max,
       'aria-label': ariaLabel,
+      'aria-valuetext': ariaValueText,
     }: {
       value: number;
       max: number;
-      'aria-label': string;
+      'aria-label'?: string;
+      'aria-valuetext'?: string;
     }) => (
       <div
         role="progressbar"
         aria-label={ariaLabel}
         aria-valuenow={value}
         aria-valuemax={max}
+        aria-valuetext={ariaValueText}
       />
     ),
   };
@@ -37,31 +39,36 @@ vi.mock('../../../hooks/useDeploymentUsageLimits', () => ({
 
 const mockUseDeploymentUsageLimits = vi.mocked(useDeploymentUsageLimits);
 
-const labels: UsageLimitsLabels = {
-  triggerAriaLabel: ({ value }) => `Monthly token usage: ${value}`,
-  popoverTitle: 'Usage Limit',
-  error: 'Could not load usage limits',
-  tokensRemaining: ({ count }) => `${count} tokens remaining`,
-  progressAriaLabel: ({ used, total }) =>
-    `Monthly token usage: ${used} of ${total} tokens used`,
-};
+/* The global `react-i18next` mock returns each key verbatim, so period rows are
+   identified by their key rather than by translated English. */
+const DAY_LABEL = 'conversationInput.usageLimits.tokensPerDay';
+const WEEK_LABEL = 'conversationInput.usageLimits.tokensPerWeek';
+const MONTH_LABEL = 'conversationInput.usageLimits.tokensPerMonth';
+const RESET_LABEL = 'usage.resetsAtLabel';
+const ERROR_LABEL = 'conversationInput.usageLimits.error';
+const TITLE_LABEL = 'conversationInput.usageLimits.popoverTitle';
+const TRIGGER_LABEL = 'conversationInput.usageLimits.triggerAriaLabel';
 
-const defaultLimit: MonthlyUsageLimit = {
-  used: 2500,
-  total: 10000,
-  remaining: 7500,
-  usedPercent: 25,
+const threePeriodsDto: DeploymentLimitsResponseDto = {
+  dayTokenStats: { used: 20, total: 100 },
+  weekTokenStats: { used: 30, total: 200 },
+  monthTokenStats: { used: 40, total: 400 },
 };
 
 const defaultHookResult: UseDeploymentUsageLimitsResult = {
-  limit: defaultLimit,
+  limitsDto: threePeriodsDto,
   isLoading: false,
   hasError: false,
   refresh: vi.fn(),
 };
 
-const renderControl = (deploymentId: string | undefined) =>
-  render(<UsageLimitsControl deploymentId={deploymentId} labels={labels} />);
+const renderControl = (deploymentId: string | undefined = 'gpt-4o') =>
+  render(<UsageLimitsControl deploymentId={deploymentId} />);
+
+const openPopover = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByRole('button'));
+  return screen.getByRole('dialog');
+};
 
 describe('UsageLimitsControl', () => {
   beforeEach(() => {
@@ -72,274 +79,230 @@ describe('UsageLimitsControl', () => {
   });
 
   afterEach(() => {
-    document.documentElement.dir = '';
     vi.clearAllMocks();
   });
 
-  it('renders nothing without a deployment or monthly limit', () => {
-    const { container, rerender } = renderControl(undefined);
-    expect(container.innerHTML).toBe('');
+  it('renders one row per configured period', async () => {
+    const user = userEvent.setup();
+    renderControl();
 
+    await openPopover(user);
+
+    expect(screen.getByText(DAY_LABEL)).toBeTruthy();
+    expect(screen.getByText(WEEK_LABEL)).toBeTruthy();
+    expect(screen.getByText(MONTH_LABEL)).toBeTruthy();
+    expect(screen.getAllByRole('progressbar')).toHaveLength(3);
+  });
+
+  it('renders nothing when no deployment is selected', () => {
+    render(<UsageLimitsControl deploymentId={undefined} />);
+
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('renders nothing when no period carries a usable limit', () => {
     mockUseDeploymentUsageLimits.mockReturnValue({
       ...defaultHookResult,
-      limit: undefined,
+      limitsDto: { minuteTokenStats: { used: 1, total: 10 } },
     });
-    rerender(<UsageLimitsControl deploymentId="gpt-4o" labels={labels} />);
-    expect(container.innerHTML).toBe('');
+
+    renderControl();
+
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('shows a ring-only trigger at rest with an accessible percentage', () => {
-    renderControl('gpt-4o');
+  describe('trigger', () => {
+    it('reports the worst capped period, not the month', () => {
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        limitsDto: {
+          dayTokenStats: { used: 90, total: 100 },
+          monthTokenStats: { used: 10, total: 100 },
+        },
+      });
 
-    const trigger = screen.getByRole('button', {
-      name: 'Monthly token usage: 25%',
+      renderControl();
+
+      expect(screen.getByText('90%')).toBeTruthy();
+      expect(screen.getByRole('button').getAttribute('aria-label')).toBe(
+        TRIGGER_LABEL,
+      );
     });
-    const percentage = screen.getByText('25%');
 
-    expect(trigger.getAttribute('aria-expanded')).toBe('false');
-    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
-    expect(percentage.className).toContain('dial-tiny-text');
-    expect(percentage.className).toContain('opacity-0');
-    expect(percentage.nextElementSibling?.getAttribute('aria-hidden')).not.toBe(
-      null,
-    );
+    it('takes the error state when a capped period has reached its limit while the month is low', () => {
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        limitsDto: {
+          dayTokenStats: { used: 100, total: 100 },
+          monthTokenStats: { used: 10, total: 100 },
+        },
+      });
+
+      renderControl();
+
+      expect(screen.getByRole('button').className).toContain('text-error');
+    });
+
+    it('takes the warning state while a capped period is running low', () => {
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        limitsDto: { dayTokenStats: { used: 80, total: 100 } },
+      });
+
+      renderControl();
+
+      const trigger = screen.getByRole('button');
+      expect(trigger.className).toContain('text-warning');
+      expect(trigger.className).not.toContain('text-error');
+    });
+
+    it('stays neutral while every capped period is comfortable', () => {
+      renderControl();
+
+      const trigger = screen.getByRole('button');
+      expect(trigger.className).toContain('text-secondary');
+      expect(trigger.className).not.toContain('text-error');
+    });
   });
 
-  it('uses one rounded capsule for hover and focus reveal', () => {
-    renderControl('gpt-4o');
+  describe('reset line', () => {
+    it('shows a reset line for a period that carries one', async () => {
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        limitsDto: {
+          dayTokenStats: {
+            used: 20,
+            total: 100,
+            resetsAt: '2026-09-16T00:00:00Z',
+          },
+        },
+      });
+      const user = userEvent.setup();
+      renderControl();
 
-    const trigger = screen.getByRole('button', {
-      name: 'Monthly token usage: 25%',
+      await openPopover(user);
+
+      const time = screen.getByText(RESET_LABEL);
+      expect(time.tagName).toBe('TIME');
+      expect(time.getAttribute('dateTime')).toBe('2026-09-16T00:00:00Z');
     });
 
-    expect(trigger.className).toContain('rounded-full');
-    expect(trigger.className).toContain('border-transparent');
-    expect(trigger.className).toContain('hover:border-primary');
-    expect(trigger.className).toContain('focus-visible:outline-primary');
-    expect(screen.getByText('25%').className).toContain(
-      'group-hover:opacity-100',
-    );
+    it('shows no reset line for a period that carries none', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      await openPopover(user);
+
+      expect(screen.queryByText(RESET_LABEL)).toBeNull();
+      expect(screen.getAllByRole('progressbar')).toHaveLength(3);
+    });
+
+    it('renders the rows unchanged when the timestamp cannot be parsed', async () => {
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        limitsDto: {
+          dayTokenStats: { used: 20, total: 100, resetsAt: 'not-a-date' },
+        },
+      });
+      const user = userEvent.setup();
+      renderControl();
+
+      await openPopover(user);
+
+      expect(screen.queryByText(RESET_LABEL)).toBeNull();
+      expect(screen.getByRole('progressbar')).toBeTruthy();
+      expect(screen.getByText(DAY_LABEL)).toBeTruthy();
+    });
   });
 
-  it('uses the error palette at and above the 90% threshold', () => {
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      limit: {
-        ...defaultLimit,
-        usedPercent: 90,
-      },
-    });
-    const { unmount } = renderControl('gpt-4o');
+  describe('popover', () => {
+    it('refreshes limits when opened', async () => {
+      const refresh = vi.fn();
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        refresh,
+      });
+      const user = userEvent.setup();
+      renderControl();
 
-    expect(
-      screen.getByRole('button', {
-        name: 'Monthly token usage: 90%',
-      }).className,
-    ).toContain('text-error');
+      await openPopover(user);
 
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      limit: {
-        ...defaultLimit,
-        usedPercent: 89,
-      },
-    });
-    unmount();
-    renderControl('gpt-4o');
-
-    expect(
-      screen.getByRole('button', {
-        name: 'Monthly token usage: 89%',
-      }).className,
-    ).not.toContain('text-error');
-  });
-
-  it('opens a minimal monthly popover and refreshes data', async () => {
-    const refresh = vi.fn();
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      refresh,
-    });
-    renderControl('gpt-4o');
-
-    await userEvent.click(
-      screen.getByRole('button', {
-        name: 'Monthly token usage: 25%',
-      }),
-    );
-
-    const dialog = screen.getByRole('dialog');
-    expect(dialog).toBeTruthy();
-    expect(dialog.getAttribute('aria-modal')).toBeNull();
-    expect(screen.getByText('Usage Limit')).toBeTruthy();
-    expect(screen.getAllByRole('progressbar')).toHaveLength(1);
-    expect(
-      screen.getByRole('progressbar', {
-        name: 'Monthly token usage: 2,500 of 10,000 tokens used',
-      }),
-    ).toBeTruthy();
-    expect(screen.getByText('7,500 tokens remaining')).toBeTruthy();
-    expect(refresh).toHaveBeenCalledOnce();
-    expect(screen.getByText('25%').className).toContain('opacity-100');
-  });
-
-  it('keeps refreshed content visible without a loading indicator', async () => {
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      isLoading: true,
-    });
-    renderControl('gpt-4o');
-
-    await userEvent.click(
-      screen.getByRole('button', {
-        name: 'Monthly token usage: 25%',
-      }),
-    );
-
-    expect(screen.queryByRole('status')).toBeNull();
-    expect(screen.getAllByRole('progressbar')).toHaveLength(1);
-    expect(screen.getByText('7,500 tokens remaining')).toBeTruthy();
-    expect(screen.getByText('25%').className).toContain('opacity-100');
-  });
-
-  it('refreshes limits when generation completes', () => {
-    const refresh = vi.fn();
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      refresh,
-    });
-    const { rerender } = render(
-      <UsageLimitsControl
-        deploymentId="gpt-4o"
-        isGenerationInProgress
-        labels={labels}
-      />,
-    );
-
-    rerender(
-      <UsageLimitsControl
-        deploymentId="gpt-4o"
-        isGenerationInProgress={false}
-        labels={labels}
-      />,
-    );
-
-    expect(refresh).toHaveBeenCalledOnce();
-  });
-
-  it('waits for an active limits request before refreshing after generation', () => {
-    const refresh = vi.fn();
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      isLoading: true,
-      refresh,
-    });
-    const { rerender } = render(
-      <UsageLimitsControl
-        deploymentId="gpt-4o"
-        isGenerationInProgress
-        labels={labels}
-      />,
-    );
-
-    rerender(
-      <UsageLimitsControl
-        deploymentId="gpt-4o"
-        isGenerationInProgress={false}
-        labels={labels}
-      />,
-    );
-    expect(refresh).not.toHaveBeenCalled();
-
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      refresh,
-    });
-    rerender(
-      <UsageLimitsControl
-        deploymentId="gpt-4o"
-        isGenerationInProgress={false}
-        labels={{ ...labels }}
-      />,
-    );
-
-    expect(refresh).toHaveBeenCalledOnce();
-  });
-
-  it('shows refresh errors without disabling adjacent input', async () => {
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      hasError: true,
-    });
-    render(
-      <>
-        <input aria-label="Message" />
-        <UsageLimitsControl deploymentId="gpt-4o" labels={labels} />
-      </>,
-    );
-
-    await userEvent.click(
-      screen.getByRole('button', {
-        name: 'Monthly token usage: 25%',
-      }),
-    );
-
-    expect(screen.getByText('Could not load usage limits')).toBeTruthy();
-    expect(
-      (screen.getByRole('textbox', { name: 'Message' }) as HTMLInputElement)
-        .disabled,
-    ).toBe(false);
-  });
-
-  it('closes on Escape and restores trigger focus', async () => {
-    renderControl('gpt-4o');
-    const trigger = screen.getByRole('button', {
-      name: 'Monthly token usage: 25%',
+      expect(refresh).toHaveBeenCalledOnce();
     });
 
-    await userEvent.click(trigger);
-    await userEvent.keyboard('{Escape}');
+    it('closes and returns focus to the trigger on Escape', async () => {
+      const user = userEvent.setup();
+      renderControl();
+      const trigger = screen.getByRole('button');
 
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(trigger.matches(':focus')).toBe(true);
-  });
+      await openPopover(user);
+      await user.keyboard('{Escape}');
 
-  it('closes when the user points outside the popover', async () => {
-    render(
-      <>
-        <div>Outside</div>
-        <UsageLimitsControl deploymentId="gpt-4o" labels={labels} />
-      </>,
-    );
-    const trigger = screen.getByRole('button', {
-      name: 'Monthly token usage: 25%',
-    });
-    await userEvent.click(trigger);
-
-    await userEvent.pointer({
-      keys: '[MouseLeft]',
-      target: screen.getByText('Outside'),
-    });
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-    await waitFor(() => {
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
       expect(trigger.matches(':focus')).toBe(true);
     });
+
+    it('announces a failed refresh politely while keeping the rows visible', async () => {
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        hasError: true,
+      });
+      const user = userEvent.setup();
+      renderControl();
+
+      await openPopover(user);
+
+      const error = screen.getByText(ERROR_LABEL);
+      expect(error.getAttribute('aria-live')).toBe('polite');
+      expect(screen.getAllByRole('progressbar')).toHaveLength(3);
+    });
+
+    it('labels the dialog with its title', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      const dialog = await openPopover(user);
+
+      expect(screen.getByText(TITLE_LABEL).id).toBe(
+        dialog.getAttribute('aria-labelledby'),
+      );
+    });
+
+    it('anchors the panel with logical properties so it flips under RTL', async () => {
+      const user = userEvent.setup();
+      document.documentElement.setAttribute('dir', 'rtl');
+      renderControl();
+
+      try {
+        const dialog = await openPopover(user);
+
+        expect(dialog.className).toContain('end-0');
+        expect(dialog.className).not.toMatch(/(^|\s)(left|right)-/);
+      } finally {
+        document.documentElement.removeAttribute('dir');
+      }
+    });
   });
 
-  it('uses logical placement and mobile-safe dimensions', async () => {
-    document.documentElement.dir = 'rtl';
-    renderControl('gpt-4o');
+  describe('generation lifecycle', () => {
+    it('refreshes once when an active generation ends', () => {
+      const refresh = vi.fn();
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        refresh,
+      });
 
-    const trigger = screen.getByRole('button', {
-      name: 'Monthly token usage: 25%',
+      const { rerender } = render(
+        <UsageLimitsControl deploymentId="gpt-4o" isGenerationInProgress />,
+      );
+      rerender(
+        <UsageLimitsControl
+          deploymentId="gpt-4o"
+          isGenerationInProgress={false}
+        />,
+      );
+
+      expect(refresh).toHaveBeenCalledOnce();
     });
-    expect(trigger.className).toContain('mobile:min-h-11');
-    expect(trigger.className).not.toMatch(/\b(?:ml|mr|left|right)-/);
-
-    await userEvent.click(trigger);
-    const dialog = screen.getByRole('dialog');
-    expect(dialog.className).toContain('end-0');
-    expect(dialog.className).toContain('max-w-[calc(100vw-2rem)]');
   });
 });

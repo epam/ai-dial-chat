@@ -52,6 +52,30 @@ export const LimitRow: FC<LimitRowProps> = ({
             {row.captionLabel}
           </span>
         )}
+
+        {/* Rendered for an unlimited row too — an unconfigured limit still
+            accumulates against a period that rolls over. */}
+        {row.resetLabel != null && (
+          <>
+            {/* `aria-label` is not reliably supported on a bare `<time>`, so the
+                spoken form — which names the timezone in full rather than as an
+                offset — is carried by a visually-hidden sibling instead. */}
+            <time
+              dateTime={row.resetIsoValue}
+              aria-hidden={row.resetAriaLabel != null || undefined}
+              className={mergeClasses(
+                'break-words',
+                captionClassName,
+                styles.resetLabel,
+              )}
+            >
+              {row.resetLabel}
+            </time>
+            {row.resetAriaLabel != null && (
+              <span className="sr-only">{row.resetAriaLabel}</span>
+            )}
+          </>
+        )}
       </div>
 
       {isCapped(row) ? (

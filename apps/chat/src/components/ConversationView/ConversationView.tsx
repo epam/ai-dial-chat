@@ -77,7 +77,6 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
-  ConversationInputI18nKeys,
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
@@ -636,20 +635,6 @@ const ConversationView: FC<Props> = ({
     itemCount: items.length,
   });
 
-  const usageLimitsLabels = useMemo(
-    () => ({
-      triggerAriaLabel: ({ value }: { value: string }) =>
-        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
-      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
-      error: t(ConversationInputI18nKeys.Error),
-      tokensRemaining: ({ count }: { count: string }) =>
-        t(ConversationInputI18nKeys.TokensRemaining, { count }),
-      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
-        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
-    }),
-    [t],
-  );
-
   const formatStatusModelChangedBody = useCallback(
     (from: string, to: string) =>
       t(ConversationI18nKeys.StatusModelChangedBody, {
@@ -1161,7 +1146,6 @@ const ConversationView: FC<Props> = ({
                       selectedDeployment?.id ?? activeDeploymentId ?? undefined
                     }
                     isGenerationInProgress={isAssistantTyping}
-                    labels={usageLimitsLabels}
                   />
                 }
               />

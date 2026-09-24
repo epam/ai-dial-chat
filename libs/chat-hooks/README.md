@@ -2679,12 +2679,37 @@ const api = kind && buildConnectApi(baseUrl, toolsetId, kind);
 
 ### mapDeploymentLimitsToInput
 
-Maps a deployment's monthly token-limit response into a display-ready `MonthlyUsageLimit` (`used`/`total`/`remaining`/`usedPercent`), or `undefined` when the backend reports no usable limit.
+Maps a deployment's day, week, and month token-limit stats into display-ready `CatalogItemLimits` for a conversation-input usage affordance — one "token limits" group of `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across the capped ones — or `undefined` when no period reports a usable limit. `minuteTokenStats` is deliberately not mapped: a rolling-minute counter changes between two openings of a popover for reasons the viewer cannot attribute to their own actions.
+
+Each row carries a "spent" caption built from the sibling cost stat for the same period, and a row whose total is effectively unlimited (`total >= Number.MAX_SAFE_INTEGER`) gets a "follows cost limit" note instead of a progress bar. Labels and value/aria formatters are injected through a `ConversationInputLimitsLabels` object so the function stays i18n-free.
+
+Pass `formatResetTime` to add each period's reset line. The function never parses or formats a timestamp itself: it hands the raw `resetsAt` to the callback and stores only the strings it returns, as a present-or-all-absent trio. Omit the callback, or return `undefined` from it, and the row renders without a reset line.
 
 ```ts
-import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
+import {
+  mapDeploymentLimitsToInput,
+  type ConversationInputLimitsLabels,
+} from '@epam/ai-dial-chat-hooks';
 
-const usage = mapDeploymentLimitsToInput(deploymentLimitsDto);
+const labels: ConversationInputLimitsLabels = {
+  tokenGroup: 'Token limits',
+  tokensPerDay: 'Today',
+  tokensPerWeek: 'This week',
+  tokensPerMonth: 'This month',
+  followsCostLimit: 'Follows cost limit',
+  formatSpentCaption: (amount) => `${amount} spent`,
+  formatValueLabel: (used, total) => `${used} / ${total}`,
+  formatProgressAriaLabel: ({ label, used, total }) =>
+    `${label}: ${used} of ${total} used`,
+  formatFollowsCostLimitAriaLabel: ({ label, used }) =>
+    `${label}: ${used} used. Follows cost limit.`,
+};
+
+const limits = mapDeploymentLimitsToInput(
+  deploymentLimitsDto,
+  labels,
+  formatResetTime,
+);
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits

@@ -155,7 +155,8 @@ const resolveStreamErrorMessage = (
   error: Error,
   generationConflictMessage: string,
 ): string => {
-  if (error instanceof GenerationConflictError) return generationConflictMessage;
+  if (error instanceof GenerationConflictError)
+    return generationConflictMessage;
   if (error instanceof StreamUpstreamError) return error.message;
   return '';
 };

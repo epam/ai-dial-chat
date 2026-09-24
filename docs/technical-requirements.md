@@ -16,32 +16,39 @@ This document defines functional and non-functional requirements for the initial
 
 ### FR-1 — Conversation Input (`@epam/ai-dial-conversation-input`)
 
-| ID     | Requirement                                                                                                                    | Priority |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| FR-1.1 | User can type a message and send it via the Send button or `Enter` key                                                         | Must     |
-| FR-1.2 | `Shift+Enter` inserts a newline without sending                                                                                | Must     |
-| FR-1.3 | Send button is disabled when the input is empty or a response is streaming                                                     | Must     |
-| FR-1.4 | User can attach files to a message; attached files are displayed as chips before sending                                       | Should   |
-| FR-1.5 | User can remove an attached file chip before sending                                                                           | Should   |
-| FR-1.6 | Input supports slash commands (e.g. `/help`) with a dropdown picker                                                            | Could    |
-| FR-1.7 | Input supports `@mention` syntax with a dropdown picker                                                                        | Could    |
-| FR-1.8 | Conversation Input shows the selected deployment's finite or unlimited monthly token allowance through a compact usage control | Should   |
-| FR-1.9 | Finite limits reveal a percentage; unlimited limits reveal `Unlimited`; both open a one-bar `Usage Limit` popover              | Should   |
+| ID     | Requirement                                                                                                                | Priority |
+| ------ | -------------------------------------------------------------------------------------------------------------------------- | -------- |
+| FR-1.1 | User can type a message and send it via the Send button or `Enter` key                                                     | Must     |
+| FR-1.2 | `Shift+Enter` inserts a newline without sending                                                                            | Must     |
+| FR-1.3 | Send button is disabled when the input is empty or a response is streaming                                                 | Must     |
+| FR-1.4 | User can attach files to a message; attached files are displayed as chips before sending                                   | Should   |
+| FR-1.5 | User can remove an attached file chip before sending                                                                       | Should   |
+| FR-1.6 | Input supports slash commands (e.g. `/help`) with a dropdown picker                                                        | Could    |
+| FR-1.7 | Input supports `@mention` syntax with a dropdown picker                                                                    | Could    |
+| FR-1.8 | Conversation Input shows the selected deployment's day, week, and month token allowances through a compact usage control   | Should   |
+| FR-1.9 | The trigger reveals the worst capped period's percentage and opens a `Usage Limit` popover listing every configured period | Should   |
 
 #### Token-usage limits control
 
 The app-owned `UsageLimitsControl` is passed to the isolated Conversation Input
-library through `usageLimitsSlot`. It reads only `monthTokenStats`. At rest the
-trigger shows a compact circular ring; hover, keyboard focus, and the open state
-reveal either the finite percentage or the localized `Unlimited` value at the
-ring's inline-start side inside one rounded capsule.
+library through `usageLimitsSlot`. It reads `dayTokenStats`, `weekTokenStats`,
+and `monthTokenStats`; `minuteTokenStats` is deliberately not shown, being a
+rolling-minute counter the user cannot act on. At rest the trigger shows a
+compact circular ring; hover, keyboard focus, and the open state reveal the
+percentage at the ring's inline-start side inside one rounded capsule.
 
-For finite limits the popover shows one monthly `DialProgressBar` and
-`N tokens remaining`. For unlimited limits it follows the Catalog convention:
-the row remains visible, the progress bar uses the normalized `used` and raw
-`total`, and the value is `Unlimited`. Opening the popover refreshes data
-silently without replacing its content with a loader. At 90% finite usage the
-ring and percentage use the theme error color.
+The popover body is `LimitsTab` from `@epam/ai-dial-catalog`, so the chat and
+the catalog details panel render usage rows through one component. Each
+configured period gets a row with its own progress bar, used/total figures, a
+`$X spent` caption from the sibling cost stat, and — when DIAL Core supplies a
+`resetsAt` — a reset line. A period whose total is the unlimited sentinel keeps
+its row and shows a `Follows cost limit` note instead of a bar. Opening the
+popover refreshes data silently without replacing its content with a loader.
+
+The ring's percentage comes from the worst capped row, and its accessible name
+names that row's period. Its color follows the group's `CatalogLimitStatus`:
+the theme error color once any capped period has reached its limit, the theme
+warning color from 75%, and the secondary color below that.
 
 ### FR-2 — Message Feed (`@epam/ai-dial-conversation-messages`)
 

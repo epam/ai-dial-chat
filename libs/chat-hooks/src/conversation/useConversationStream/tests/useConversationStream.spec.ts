@@ -752,13 +752,16 @@ describe('useConversationStream', () => {
       new TypeError('Failed to fetch'),
       new Error('Stream request failed with status 502'),
       new TypeError('terminated'),
-    ])('hides the transport error "%s" behind the host fallback', async (error) => {
-      const view = await renderAndFail(error);
+    ])(
+      'hides the transport error "%s" behind the host fallback',
+      async (error) => {
+        const view = await renderAndFail(error);
 
-      expect(view.current.conversation?.messages[1]?.streamErrorMessage).toBe(
-        '',
-      );
-    });
+        expect(view.current.conversation?.messages[1]?.streamErrorMessage).toBe(
+          '',
+        );
+      },
+    );
 
     it('stops streaming after a transport error', async () => {
       const view = await renderAndFail(new TypeError('Failed to fetch'));

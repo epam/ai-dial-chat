@@ -1234,7 +1234,14 @@ export enum ConversationInputI18nKeys {
   TriggerAriaLabel = 'conversationInput.usageLimits.triggerAriaLabel',
   PopoverTitle = 'conversationInput.usageLimits.popoverTitle',
   Error = 'conversationInput.usageLimits.error',
-  TokensRemaining = 'conversationInput.usageLimits.tokensRemaining',
+  TokenGroup = 'conversationInput.usageLimits.tokenGroup',
+  TokensPerDay = 'conversationInput.usageLimits.tokensPerDay',
+  TokensPerWeek = 'conversationInput.usageLimits.tokensPerWeek',
+  TokensPerMonth = 'conversationInput.usageLimits.tokensPerMonth',
+  SpentLabel = 'conversationInput.usageLimits.spentLabel',
+  Value = 'conversationInput.usageLimits.value',
+  FollowsCostLimit = 'conversationInput.usageLimits.followsCostLimit',
+  FollowsCostLimitAriaLabel = 'conversationInput.usageLimits.followsCostLimitAriaLabel',
   ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
 }
 
