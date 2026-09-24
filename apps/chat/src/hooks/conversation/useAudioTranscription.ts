@@ -5,7 +5,10 @@ import {
   useTranscribeAudio,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
+import {
+  formatFileSize,
+  isAudioTranscriptionSupported,
+} from '@epam/ai-dial-chat-shared';
 import type { TranscribeAudio } from '@epam/ai-dial-conversation-input';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -75,7 +78,9 @@ export const useAudioTranscription = ({
             case AudioTranscriptionErrorReason.TooLarge:
               throw new Error(
                 t(VoiceRecordingI18nKeys.TooLarge, {
-                  limit: error.limitBytes,
+                  maxSize: formatFileSize(
+                    error.limitBytes ?? transcribeSizeLimitBytes,
+                  ),
                 }),
               );
             case AudioTranscriptionErrorReason.Busy:
@@ -89,7 +94,7 @@ export const useAudioTranscription = ({
         throw new Error(t(VoiceRecordingI18nKeys.Failed));
       }
     },
-    [isAudioMessageSupported, transcribe, t],
+    [isAudioMessageSupported, transcribe, transcribeSizeLimitBytes, t],
   );
 
   return {
