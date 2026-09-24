@@ -327,8 +327,7 @@ the class names used by the published JavaScript.
   `minCardWidth` (320px), `maxWidth` (1180px), `gap` (20px) and
   `cardHeight` (232px). Columns respond to the available container width;
   skeletons inherit the same height.
-- Card colors `pausedTitleText` and `completedTitleText` override
-  `titleText` for that status only. CardGrid accepts every card badge label.
+- CardGrid accepts every card badge label.
 - Form `styles.layout.detailsWidth` and `columnGap` configure the shared
   builder layout. The scheduler uses two wrapping columns without an empty
   third column. Generic builder forms retain their existing default layout.

@@ -288,9 +288,10 @@ const ScheduledTaskDetailPage: FC = () => {
         : t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
   }
 
-  const completedLabel = task?.isCompleted
-    ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
-    : undefined;
+  const completedLabel =
+    task?.isCompleted === true
+      ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
+      : undefined;
 
   const handleActiveChange = useCallback(
     async (nextActive: boolean) => {
