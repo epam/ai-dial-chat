@@ -32,6 +32,7 @@
     "streamErrorTitle": "Couldn't finish this response",
     "streamError": "Something went wrong while generating the response. Try again in a moment.",
     "generationConflict": "A response is already being generated in this conversation, possibly in another browser tab. Wait for it to finish or stop it before sending another message.",
+    "generationPersistenceError": "The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.",
     "createConversationError": "Failed to create the conversation. Please try again.",
     "conversationNotFound": "The conversation was not found.",
     "isolatedModelNotFoundTitle": "Model not available",

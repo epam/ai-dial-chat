@@ -160,6 +160,7 @@ describe('ConversationStreamingService', () => {
       register: vi.fn().mockReturnValue(makeLease()),
       abort: vi.fn().mockReturnValue(true),
       complete: vi.fn(),
+      persistenceFailed: vi.fn(),
       error: vi.fn(),
       beginFinalizing: vi.fn(),
       getCancellation: vi.fn().mockReturnValue({ requested: false }),
@@ -2007,8 +2008,10 @@ describe('ConversationStreamingService', () => {
 
       expect(saveConversationSpy).toHaveBeenCalledTimes(2);
       /* The worker is demonstrably finished, so ownership still releases. */
-      expect(mockGenerationService.complete).toHaveBeenCalledOnce();
+      expect(mockGenerationService.persistenceFailed).toHaveBeenCalledOnce();
+      expect(mockGenerationService.complete).not.toHaveBeenCalled();
       expect(mockGenerationService.error).not.toHaveBeenCalled();
+      expect(res.getWritten()).toContain('conversation_save_failed');
     });
   });
 

@@ -1637,6 +1637,31 @@ describe('ConversationMessageItem — stream error banner (issue #8979)', () => 
     expect(screen.queryByText(ChatI18nKeys.StreamError)).toBeNull();
   });
 
+  it.each([
+    { mobile: false, direction: 'ltr' },
+    { mobile: true, direction: 'ltr' },
+    { mobile: false, direction: 'rtl' },
+    { mobile: true, direction: 'rtl' },
+  ])(
+    'keeps an unsaved answer beside its accessible warning ($mobile, $direction)',
+    ({ mobile, direction }) => {
+      isMobileMock = mobile;
+      const warning =
+        'The response could not be saved. Copy it before continuing.';
+      render(
+        <div dir={direction}>
+          <ConversationMessageItem
+            {...defaultProps}
+            msg={failedMessage(warning)}
+            index={3}
+          />
+        </div>,
+      );
+      expect(screen.getByText('Partial answer')).toBeTruthy();
+      expect(screen.getByRole('alert').textContent).toContain(warning);
+    },
+  );
+
   it('renders no error banner for a successful message', () => {
     render(
       <ConversationMessageItem
