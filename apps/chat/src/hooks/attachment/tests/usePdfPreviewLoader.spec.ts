@@ -95,11 +95,15 @@ describe('usePdfPreviewLoader', () => {
 
   it('matches wildcard patterns when the browser percent-encodes asterisks in URL origins', async () => {
     const NativeURL = URL;
+    /*
+     * Simulate browser origin serialization: passing a raw wildcard to URL
+     * would encode it as %2A and prevent the allowlist matcher from recognizing it.
+     */
     vi.stubGlobal(
       'URL',
       class extends NativeURL {
         override get origin() {
-          return super.origin.replace('*', '%2A');
+          return super.origin.replaceAll('*', '%2A');
         }
       },
     );
