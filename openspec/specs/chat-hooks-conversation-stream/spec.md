@@ -154,8 +154,8 @@ backend's save) fires.
   fires afterward
 
 ### Requirement: A superseded generation never touches shared state
-Once a newer generation has been started for a path, the terminal callbacks of
-the older generation on that path SHALL NOT clear the path's streaming state,
+The terminal callbacks of an older generation on a path SHALL NOT, once a newer
+generation has been started for that path, clear the path's streaming state,
 report a generation end to the overlay, write a stream error into the
 conversation, or replace conversation state with the reload they fetched. The
 reload is re-checked after its round trip, because the newer generation can
