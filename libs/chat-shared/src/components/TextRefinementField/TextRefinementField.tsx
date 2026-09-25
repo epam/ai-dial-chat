@@ -1,4 +1,5 @@
 import {
+  CaptionText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ElementSize,
@@ -128,8 +129,9 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
         </div>
       </div>
       <div aria-busy={refinement.isPending}>{children}</div>
-      <div role="status" aria-live="polite" className={feedbackClassName}>
-        {message}
+      {/* The live region stays mounted: CaptionText renders nothing for empty text. */}
+      <div role="status" aria-live="polite">
+        <CaptionText text={message} className={feedbackClassName} />
       </div>
       {error && (
         <ErrorText

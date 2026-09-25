@@ -1,6 +1,7 @@
 import { EditorLayout } from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
+  MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
@@ -17,6 +18,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   EditorThemes,
+  ElementSize,
   ErrorText,
   GhostButton,
   Input,
@@ -74,6 +76,16 @@ type MarkdownEditorComponent = ComponentType<{
   ariaLabel?: string;
 }>;
 
+/*
+ * Instructions are the bulk of a skill, so the editor fills the pane down to
+ * the bottom of the screen. The gap matches the pane's `py-6`, so the filled
+ * editor ends on the pane's padding.
+ */
+const INSTRUCTIONS_EDITOR_BOTTOM_GAP = 24;
+
+/* The kit editor's default height; filling never shrinks the field below it. */
+const INSTRUCTIONS_EDITOR_MIN_HEIGHT = 300;
+
 const LazyMarkdown = lazy(async () => {
   const { MarkdownEditor } = await LazyMarkdownEditor();
   return { default: MarkdownEditor as MarkdownEditorComponent };
@@ -121,7 +133,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const descriptionId = useId();
   const instructionsId = useId();
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
-  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
+  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>({
+    bottomGap: INSTRUCTIONS_EDITOR_BOTTOM_GAP,
+    minHeight: INSTRUCTIONS_EDITOR_MIN_HEIGHT,
+  });
   const valuesRef = useRef(values);
   const updateValues = (patch: Partial<SkillEditorValues>) => {
     const next = { ...valuesRef.current, ...patch };
@@ -373,10 +388,11 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           {t.filesHeading ?? 'Files'}
         </span>
         <NeutralButton
-          label={t.addUploadLabel ?? 'Upload from device'}
+          label={t.addUploadLabel ?? 'Add'}
           iconBefore={
             <IconPlus size={16} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
           }
+          size={ElementSize.Small}
           onClick={() => {
             setDroppedFiles(undefined);
             setIsUploadDialogOpen(true);
@@ -630,6 +646,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                       ref={instructionsCapRef}
                       className={mergeClasses(
                         MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+                        MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
                         MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
                       )}
                     >

@@ -846,6 +846,48 @@ describe('CatalogView', () => {
     expect(mockSetSearchParams).not.toHaveBeenCalled();
   });
 
+  /* A freshly created skill can reach the catalog after the param is cleared. */
+  it('keeps initialDetailsItemId after the itemId param is cleared while the item is not listed yet', () => {
+    mockSearchParams = new URLSearchParams({
+      itemId: 'skills/bucket/new-skill',
+    });
+    const { rerender } = render(<CatalogView />);
+
+    mockSearchParams = new URLSearchParams();
+    rerender(<CatalogView />);
+
+    expect(screen.getByLabelText('Initial details item id').textContent).toBe(
+      'skills/bucket/new-skill',
+    );
+  });
+
+  it('releases initialDetailsItemId once the item is listed', () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      restoreDefaultSelection: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      selectedDeploymentDetails: null,
+      isDeploymentDetailsLoading: false,
+      mergeSharedItem: vi.fn(),
+    });
+    mockSearchParams = new URLSearchParams({ itemId: 'gpt-4o' });
+
+    render(<CatalogView />);
+
+    expect(screen.getByLabelText('Initial details item id').textContent).toBe(
+      '',
+    );
+  });
+
   describe('sort/filter persistence wiring', () => {
     it('passes the persisted sortKey, filterTopics, and isMyAppsActive through to Catalog', () => {
       vi.mocked(useDeployments).mockReturnValue({
