@@ -55,7 +55,9 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
    * Status resolution: the pill takes a pre-resolved status/text pair, so the
    * card maps each status to its text and typography class here. Enum-keyed,
    * so adding a status member without an entry fails to compile — no inline
-   * per-status branches.
+   * per-status branches. Built per render, unlike the pill's module-scope
+   * presentation record, because the values are per-render props (the item's
+   * schedule label and the caller's labels/typography classes), not static.
    */
   const status = getScheduledTaskStatus(item);
   const statusSources: Record<

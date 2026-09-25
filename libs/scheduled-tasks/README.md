@@ -289,6 +289,10 @@ getScheduledTaskStatus({ isActive: true }); // ScheduledTaskStatus.Scheduled
 
 String enum of card visual statuses: `Scheduled = 'scheduled'` (schedule pill), `Paused = 'paused'` ("Paused" badge), `Completed = 'completed'` ("Completed" badge). Returned by `getScheduledTaskStatus`.
 
+### ScheduledTaskPresentationStatus
+
+String enum of host-supplied status overrides — the optional `presentationStatus` input on `ScheduledTaskItem`, not a duplicate of `ScheduledTaskStatus`: `Active = 'active'`, `Paused = 'paused'`, `Completed = 'completed'`. `getScheduledTaskStatus` maps it onto `ScheduledTaskStatus` (`Active` → `Scheduled`), and it wins over the derived `isCompleted`/`isActive` fields. Reach for it only when the host's own status source disagrees with what those fields derive.
+
 ## Constants
 
 ### TIME_OF_DAY_PATTERN

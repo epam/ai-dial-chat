@@ -96,6 +96,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     isActive,
     isActiveUpdating,
     isActiveDisabled,
+    activeDisabledReason,
     onActiveChange,
     displayName,
     isLoading,
@@ -124,8 +125,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       deletedStateLabel: string;
       activeStatusLabel: string;
       activeStatusAnnouncement?: string;
-      isActiveDisabledReason?: string;
-      completedFieldLabel?: string;
+      completedFieldLabel: string;
     };
     onBack: () => void;
     onEdit?: () => void;
@@ -136,6 +136,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     isActive?: boolean;
     isActiveUpdating?: boolean;
     isActiveDisabled?: boolean;
+    activeDisabledReason?: string;
     onActiveChange?: (nextActive: boolean) => void;
     displayName: string;
     isLoading?: boolean;
@@ -170,8 +171,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <span>repeatsLabel:{repeatsLabel}</span>
       <span>activeWindowLabel:{activeWindowLabel}</span>
       {completedLabel && <span>completedLabel:{completedLabel}</span>}
-      {labels.isActiveDisabledReason && (
-        <span>disabledReason:{labels.isActiveDisabledReason}</span>
+      {activeDisabledReason && (
+        <span>disabledReason:{activeDisabledReason}</span>
       )}
       <span>nextRunLabel:{nextRunLabel}</span>
       <span>runs:{runs.length}</span>

@@ -1158,15 +1158,13 @@ describe('ScheduledTaskDetailView — completed state', () => {
   it('renders no Active switch when isCompleted is true, even with isActive supplied', () => {
     render(
       <ScheduledTaskDetailView
-        labels={{
-          ...labels,
-          isActiveDisabledReason: 'Already ran — cannot be rescheduled',
-        }}
+        labels={labels}
         onBack={vi.fn()}
         displayName="One-time report"
         isCompleted
         isActive={false}
         isActiveDisabled
+        activeDisabledReason="Already ran — cannot be rescheduled"
         runs={[]}
       />,
     );
@@ -1180,14 +1178,12 @@ describe('ScheduledTaskDetailView — completed state', () => {
   it('renders the disabled-switch reason next to the Active switch when isActiveDisabled is true', () => {
     render(
       <ScheduledTaskDetailView
-        labels={{
-          ...labels,
-          isActiveDisabledReason: 'Already ran — cannot be rescheduled',
-        }}
+        labels={labels}
         onBack={vi.fn()}
         displayName="One-time report"
         isActive={false}
         isActiveDisabled
+        activeDisabledReason="Already ran — cannot be rescheduled"
         runs={[]}
       />,
     );
@@ -1201,13 +1197,11 @@ describe('ScheduledTaskDetailView — completed state', () => {
   it('renders no reason text when the switch is togglable', () => {
     render(
       <ScheduledTaskDetailView
-        labels={{
-          ...labels,
-          isActiveDisabledReason: 'Already ran — cannot be rescheduled',
-        }}
+        labels={labels}
         onBack={vi.fn()}
         displayName="One-time report"
         isActive={true}
+        activeDisabledReason="Already ran — cannot be rescheduled"
         runs={[]}
       />,
     );
@@ -1218,7 +1212,7 @@ describe('ScheduledTaskDetailView — completed state', () => {
     expect(screen.getByRole('switch')).toHaveProperty('disabled', false);
   });
 
-  it('renders no reason text when isActiveDisabledReason is omitted', () => {
+  it('renders no reason text when activeDisabledReason is omitted', () => {
     render(
       <ScheduledTaskDetailView
         labels={labels}

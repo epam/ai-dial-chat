@@ -26,8 +26,6 @@ export interface ScheduledTaskDetailViewLabels {
   activeWindowLabel: string;
   /** Accessible name and visible label of the header's Active switch. Distinct from `activeWindowLabel`, which describes the cron activity date window. Shown only when `isActive` is defined and `isCompleted`/`isDeleted` are not `true`. */
   activeStatusLabel: string;
-  /** Text shown next to the Active switch when `isActiveDisabled` is `true`, explaining why resuming is unavailable (e.g. a one-time schedule that already ran). Omit to hide. */
-  isActiveDisabledReason?: string;
   /** Label for the completed-state field in the Details section, e.g. "Status". */
   completedFieldLabel: string;
   /** Announced via `aria-live` after a pause/resume mutation completes, separate from the switch's own accessible name. Empty string announces nothing. */
@@ -138,6 +136,8 @@ export interface ScheduledTaskDetailViewProps {
   isActiveUpdating?: boolean;
   /** When `true`, the Active switch renders disabled (e.g. a completed one-time schedule that cannot be resumed), independent of `isActiveUpdating`. Defaults to `false`. */
   isActiveDisabled?: boolean;
+  /** Pre-formatted reason text shown next to the Active switch when `isActiveDisabled` is `true`, explaining why resuming is unavailable (e.g. a one-time schedule that already ran). Per-task value, not a stable label. Omit to hide. */
+  activeDisabledReason?: string;
   /** Called with the newly requested value when the user toggles the Active switch. The component performs no network call or optimistic update itself. */
   onActiveChange?: (nextActive: boolean) => void;
   /** Task title shown in the header and used as the page's accessible name. */

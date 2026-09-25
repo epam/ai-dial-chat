@@ -167,12 +167,23 @@ export class ScheduledTasksService {
   }
 
   /*
+   * Shared parse-and-compare tail of the two terminal-state predicates below:
+   * whether an optional ISO date string resolves to a moment that is not in
+   * the future. An absent or unparseable date never counts as passed — the
+   * list shape that omits the nested `trigger` degrades to not-terminal.
+   * Uses this server's clock, keeping skew/timezone handling in one place.
+   */
+  private isPastDate(date?: string): boolean {
+    const dateMs = date ? new Date(date).getTime() : NaN;
+    return !Number.isNaN(dateMs) && dateMs <= Date.now();
+  }
+
+  /*
    * Completion candidate gate, first two clauses of the derivation for
    * one-time (date-trigger) schedules: nothing left to run. The gate is an OR
    * so it is path-independent — list responses that omit the nested `trigger`
    * rely on `nextRunTime` alone; responses that carry `trigger` have both arms
-   * and they agree wherever both are computable. The clock comparison uses
-   * this server's clock, keeping skew/timezone handling in one place.
+   * and they agree wherever both are computable.
    */
   private isCompletionCandidate(task: ScheduledTaskDto): boolean {
     if (task.triggerType !== ScheduleTriggerType.Date) {
@@ -181,9 +192,7 @@ export class ScheduledTasksService {
     if (task.nextRunTime == null) {
       return true;
     }
-    const triggerDate = task.trigger?.date;
-    const triggerDateMs = triggerDate ? new Date(triggerDate).getTime() : NaN;
-    return !Number.isNaN(triggerDateMs) && triggerDateMs <= Date.now();
+    return this.isPastDate(task.trigger?.date);
   }
 
   /*
@@ -203,9 +212,7 @@ export class ScheduledTasksService {
     if (task.nextRunTime != null) {
       return false;
     }
-    const endDate = task.trigger?.cron?.endDate;
-    const endDateMs = endDate ? new Date(endDate).getTime() : NaN;
-    return !Number.isNaN(endDateMs) && endDateMs <= Date.now();
+    return this.isPastDate(task.trigger?.cron?.endDate);
   }
 
   /** Newest run of a schedule (the runs endpoint's documented order is newest-first). */

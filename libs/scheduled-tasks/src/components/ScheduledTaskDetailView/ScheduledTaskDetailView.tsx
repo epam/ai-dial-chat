@@ -50,6 +50,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   isActive,
   isActiveUpdating = false,
   isActiveDisabled = false,
+  activeDisabledReason,
   onActiveChange,
   displayName,
   isLoading = false,
@@ -280,14 +281,14 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
                 disabled={isActiveUpdating || isActiveDisabled || isDeleting}
                 onChange={(value) => onActiveChange?.(value)}
               />
-              {isActiveDisabled && labels.isActiveDisabledReason && (
+              {isActiveDisabled && activeDisabledReason && (
                 <span
                   className={mergeClasses(
                     fieldValueClassName,
                     styles.subtitleText,
                   )}
                 >
-                  {labels.isActiveDisabledReason}
+                  {activeDisabledReason}
                 </span>
               )}
             </>

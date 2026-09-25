@@ -280,18 +280,17 @@ const ScheduledTaskDetailPage: FC = () => {
    * control. Only computed while the switch renders; a completed task hides
    * the switch, so it gets no reason.
    */
-  let isActiveDisabledReason: string | undefined;
+  let activeDisabledReason: string | undefined;
   if (isActiveDisabled && !isTaskCompleted) {
-    isActiveDisabledReason =
+    activeDisabledReason =
       task?.triggerType === 'date'
         ? t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted)
         : t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
   }
 
-  const completedLabel =
-    task?.isCompleted === true
-      ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
-      : undefined;
+  const completedLabel = isTaskCompleted
+    ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
+    : undefined;
 
   const handleActiveChange = useCallback(
     async (nextActive: boolean) => {
@@ -404,7 +403,7 @@ const ScheduledTaskDetailPage: FC = () => {
   return (
     <>
       <ScheduledTaskDetailView
-        labels={{ ...labels, isActiveDisabledReason }}
+        labels={labels}
         onBack={handleBack}
         onEdit={task && !isTaskDeleted ? handleEdit : undefined}
         onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
@@ -414,6 +413,7 @@ const ScheduledTaskDetailPage: FC = () => {
         isActive={isTaskDeleted ? undefined : task?.isActive}
         isActiveUpdating={isActiveUpdating}
         isActiveDisabled={isActiveDisabled}
+        activeDisabledReason={activeDisabledReason}
         onActiveChange={isTaskDeleted ? undefined : handleActiveChange}
         displayName={task?.displayName ?? ''}
         isLoading={isTaskLoading}
