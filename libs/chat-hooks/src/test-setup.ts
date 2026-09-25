@@ -35,3 +35,46 @@ if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
     );
   };
 }
+
+/*
+ * Pin the runtime default locale to 'en' for `new Intl.NumberFormat(...)` /
+ * `new Intl.DateTimeFormat(...)` calls that pass no locale. The limits mappers
+ * create such formatters at module load, so the pin has to run in this setup
+ * file, before any module under test is imported; explicit locales ('fr',
+ * 'de-DE', …) pass through untouched. Without it, assertions on formatted
+ * token counts flip with the host machine's locale — a 'uk' default renders
+ * `1,9 млн` instead of `1.9M`. Note:
+ * `Number.prototype.toLocaleString` and `Date.prototype.toLocaleDateString`
+ * use the engine intrinsics, not the `Intl` global, so they are NOT covered
+ * by this pin.
+ *
+ * The wrappers are plain functions (not classes) because Intl constructors
+ * are legal to call without `new`, and a class constructor would throw there.
+ * A function returning the real instance covers both call styles;
+ * `setPrototypeOf` keeps the statics (`supportedLocalesOf`) reachable.
+ */
+const RealNumberFormat = Intl.NumberFormat;
+
+const PinnedNumberFormat = function (
+  locale?: Intl.LocalesArgument,
+  options?: Intl.NumberFormatOptions,
+) {
+  return new RealNumberFormat(locale ?? 'en', options);
+} as unknown as typeof Intl.NumberFormat;
+
+Object.setPrototypeOf(PinnedNumberFormat, RealNumberFormat);
+
+globalThis.Intl.NumberFormat = PinnedNumberFormat;
+
+const RealDateTimeFormat = Intl.DateTimeFormat;
+
+const PinnedDateTimeFormat = function (
+  locale?: Intl.LocalesArgument,
+  options?: Intl.DateTimeFormatOptions,
+) {
+  return new RealDateTimeFormat(locale ?? 'en', options);
+} as unknown as typeof Intl.DateTimeFormat;
+
+Object.setPrototypeOf(PinnedDateTimeFormat, RealDateTimeFormat);
+
+globalThis.Intl.DateTimeFormat = PinnedDateTimeFormat;

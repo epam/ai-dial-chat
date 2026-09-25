@@ -18,11 +18,15 @@ describe('formatPublishedDate', () => {
   });
 
   it('returns an exact date for a timestamp exactly a week old', () => {
-    expect(formatPublishedDate(NOW - 7 * DAY_MS, NOW)).toBe('Jun 29, 2026');
+    expect(formatPublishedDate(NOW - 7 * DAY_MS, NOW, 'en-US')).toBe(
+      'Jun 29, 2026',
+    );
   });
 
   it('returns an exact date for a timestamp months old', () => {
-    expect(formatPublishedDate(NOW - 90 * DAY_MS, NOW)).toBe('Apr 7, 2026');
+    expect(formatPublishedDate(NOW - 90 * DAY_MS, NOW, 'en-US')).toBe(
+      'Apr 7, 2026',
+    );
   });
 
   it('formats the exact date using the provided locale', () => {
