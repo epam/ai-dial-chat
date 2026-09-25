@@ -3,14 +3,15 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useReducedMotion } from '../../hooks/celebration/useReducedMotion';
 import { HalloweenBurst } from '../../types/halloween';
 import { loadHalloweenAnchorClasses } from '../../utils/halloween';
-import { animateCat } from '../../utils/halloween-cat-animation';
-import { buildCatPlan, type CatPlan } from '../../utils/halloween-cat-plan';
-import { getCatTargets } from '../../utils/halloween-cat-targets';
-import HalloweenCat from './HalloweenCat';
-import styles from './HalloweenCatScene.module.scss';
+import { animateBats } from '../../utils/halloween-bat-animation';
+import { buildBatPlan, type BatPlan } from '../../utils/halloween-bat-plan';
+import { getBatTargets } from '../../utils/halloween-bat-targets';
+import HalloweenBat from './HalloweenBat';
+import styles from './HalloweenBats.module.scss';
+import HalloweenNightFlight from './HalloweenNightFlight';
 
-/** A curious cat tests gravity using reversible copies of nearby controls. */
-const HalloweenCatScene: FC = () => {
+/** A sleepy bat and two overenthusiastic helpers, entirely in the decoration layer. */
+const HalloweenBats: FC = () => {
   const isMobile = useIsMobile();
   const reducedMotion = useReducedMotion();
   const [initial] = useState(() => ({ isMobile, reducedMotion }));
@@ -21,13 +22,12 @@ const HalloweenCatScene: FC = () => {
       typeof Element !== 'undefined' &&
       typeof Element.prototype.animate === 'function',
   );
-  const [plan, setPlan] = useState<CatPlan | null>(null);
+  const [plan, setPlan] = useState<BatPlan | null>(null);
   const [ended, setEnded] = useState(false);
   const stopped = useRef(false);
   const hostRef = useRef<HTMLDivElement>(null);
   const copiesRef = useRef<HTMLDivElement>(null);
-  const actorRef = useRef<HTMLDivElement>(null);
-  const facingRef = useRef<HTMLDivElement>(null);
+  const actorRefs = useRef<(HTMLDivElement | null)[]>([]);
   const stopScene = useCallback(() => {
     stopped.current = true;
     setEnded(true);
@@ -56,6 +56,7 @@ const HalloweenCatScene: FC = () => {
     const handleVisibility = () => {
       if (document.hidden) cancel();
     };
+    /* Deferred public-class imports must not let a cancelled scene start later. */
     const events = [
       'pointerdown',
       'keydown',
@@ -71,7 +72,12 @@ const HalloweenCatScene: FC = () => {
     const prepare = async () => {
       const { composer, starterList } = await loadHalloweenAnchorClasses();
       if (disposed || stopped.current) return;
-      setPlan(buildCatPlan(getCatTargets(composer, starterList), isMobile));
+      setPlan(
+        buildBatPlan(
+          getBatTargets(composer, starterList, isMobile ? 3 : 5),
+          isMobile,
+        ),
+      );
     };
     prepare();
     return () => {
@@ -92,19 +98,18 @@ const HalloweenCatScene: FC = () => {
       !supportsMotion ||
       !plan?.active ||
       !hostRef.current ||
-      !copiesRef.current ||
-      !actorRef.current ||
-      !facingRef.current
+      !copiesRef.current
     )
       return;
     let disposed = false;
-    const stop = animateCat(
+    const stop = animateBats(
       plan,
       {
         host: hostRef.current,
         copies: copiesRef.current,
-        actor: actorRef.current,
-        facing: facingRef.current,
+        actors: actorRefs.current.filter(
+          (actor): actor is HTMLDivElement => !!actor,
+        ),
       },
       () => {
         if (!disposed) stopScene();
@@ -123,48 +128,41 @@ const HalloweenCatScene: FC = () => {
       className={styles.scene}
       aria-hidden="true"
       inert
-      data-halloween-scene={HalloweenBurst.Cat}
+      data-halloween-scene={HalloweenBurst.Bats}
       data-ready={stationary || !!plan}
       data-ended={ended || changed}
       data-stationary={stationary}
     >
       <div ref={copiesRef} className={styles.copies} />
-      {!stationary && plan?.active && plan.floor && (
-        <div
-          className={styles.floor}
-          data-cat-floor
-          style={{
-            left: plan.floor.x,
-            top: plan.floor.y,
-            width: plan.floor.width,
-          }}
-        />
-      )}
-      {!stationary && plan?.active ? (
-        <div
-          ref={actorRef}
-          className={styles.actor}
-          data-cat-actor
-          style={{ transform: `translate(${plan.rest.x}px, ${plan.rest.y}px)` }}
-        >
-          <div
-            className={styles.art}
-            style={{ width: plan.size, height: (plan.size * 140) / 160 }}
-          >
-            <div ref={facingRef} className={styles.facing}>
-              <HalloweenCat />
+      {!stationary && plan?.active
+        ? plan.actors.map((actor, index) => (
+            <div
+              key={index}
+              ref={(node) => {
+                actorRefs.current[index] = node;
+              }}
+              className={styles.actor}
+              data-bat-actor={index}
+              data-bat-sleeper={actor.sleeper}
+              style={{
+                transform: `translate(${actor.rest.x}px, ${actor.rest.y}px)`,
+              }}
+            >
+              <div
+                className={styles.art}
+                style={{ width: actor.size, height: actor.size * 0.8 }}
+              >
+                <HalloweenBat sleeper={actor.sleeper} />
+              </div>
             </div>
-          </div>
-        </div>
-      ) : (
-        (stationary || plan) && (
-          <div className={styles.fallback} data-cat-fallback>
-            <HalloweenCat />
-          </div>
-        )
-      )}
+          ))
+        : (stationary || plan) && (
+            <div className={styles.fallback} data-bat-fallback="true">
+              <HalloweenNightFlight burst={HalloweenBurst.Bats} />
+            </div>
+          )}
     </div>
   );
 };
 
-export default HalloweenCatScene;
+export default HalloweenBats;

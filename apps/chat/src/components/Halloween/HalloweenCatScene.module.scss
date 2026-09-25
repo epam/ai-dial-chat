@@ -1,0 +1,189 @@
+/* Character movement follows physical viewport geometry in either direction. */
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+  user-select: none;
+  contain: layout style;
+}
+
+.scene[data-ready='false'],
+.scene[data-ended='true'] {
+  visibility: hidden;
+}
+
+.actor,
+.copies,
+.art {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: auto;
+}
+
+.copies {
+  z-index: 1;
+}
+
+.floor {
+  position: absolute;
+  block-size: 4px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #9186a080, transparent 72%);
+  transform: translateY(-50%);
+}
+
+.actor {
+  z-index: 2;
+  inline-size: 0;
+  block-size: 0;
+  opacity: 0;
+  transform-origin: 0 0;
+}
+
+.art {
+  /* The SVG's foot anchor (80,120) is the actor's world-space origin. */
+  aspect-ratio: 8 / 7;
+  transform: translate(-50%, -85.7142857%);
+}
+
+.facing {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  transform: scaleX(var(--cat-facing, 1));
+  transform-origin: center;
+}
+
+.art,
+.fallback {
+  svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+  }
+
+  [data-cat-part] {
+    transform-box: view-box;
+  }
+
+  [data-cat-part='arm'] {
+    transform-origin: 100px 72px;
+  }
+
+  [data-cat-part='forearm'] {
+    transform-origin: 100px 96px;
+  }
+
+  [data-cat-part='head'] {
+    transform-origin: 100px 49px;
+  }
+
+  [data-cat-part='tail'] {
+    transform-origin: 59px 98px;
+  }
+
+  [data-cat-part='hind-leg'] {
+    transform-origin: 66px 99px;
+  }
+
+  [data-cat-part='far-leg'] {
+    transform-origin: 87px 82px;
+  }
+
+  [data-cat-part='eyes'] {
+    transform-origin: 103px 46px;
+  }
+
+  [data-cat-part='pupils'] {
+    transform-origin: 105px 46px;
+  }
+
+  [data-cat-part='ears'] {
+    transform-origin: 100px 35px;
+  }
+
+  [data-cat-part='tongue'] {
+    transform-origin: 113px 61px;
+  }
+}
+
+.fallback {
+  position: absolute;
+  inset-block-end: 24px;
+  inset-inline-start: 44%;
+  inline-size: 120px;
+  aspect-ratio: 8 / 7;
+  animation: crossing 9s linear both;
+
+  [data-cat-part='tail'] {
+    animation: tail-sway 1.8s ease-in-out infinite alternate;
+  }
+
+  [data-cat-part='hind-leg'],
+  [data-cat-part='arm'] {
+    animation: step 0.62s ease-in-out infinite alternate;
+  }
+
+  [data-cat-part='far-leg'] {
+    animation: step 0.62s ease-in-out infinite alternate-reverse;
+  }
+
+  [data-cat-part='eyes'] {
+    animation: blink 4s linear infinite;
+  }
+}
+
+.scene[data-ended='true'] .fallback,
+.scene[data-ended='true'] .fallback *,
+.scene[data-stationary='true'] .fallback,
+.scene[data-stationary='true'] .fallback * {
+  animation: none;
+}
+
+@keyframes crossing {
+  0% {
+    transform: translateX(calc(-100vw - 140px));
+    opacity: 0;
+  }
+  8%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100vw + 140px));
+    opacity: 0;
+  }
+}
+
+@keyframes tail-sway {
+  from {
+    transform: rotate(-9deg);
+  }
+  to {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes step {
+  from {
+    transform: rotate(-9deg);
+  }
+  to {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes blink {
+  0%,
+  42%,
+  48%,
+  100% {
+    transform: scaleY(1);
+  }
+  45% {
+    transform: scaleY(0.06);
+  }
+}

@@ -9,6 +9,8 @@ interface SnapshotAnimationOptions {
   restoreAt: number;
   frames: (rect: DOMRect, index: number) => Keyframe[];
   decorateCopy?: (copy: HTMLElement, index: number) => void;
+  /** Cropped fragments can mask just their cutout instead of hiding the whole source. */
+  hideOriginal?: boolean;
   onStop?: () => void;
   /** Align snapshots with another actor after all copies have been prepared. */
   startTime?: number;
@@ -191,7 +193,7 @@ export const animateCelebrationSnapshots = (
           { duration: options.durationMs, fill: 'both' },
         ),
       );
-      {
+      if (options.hideOriginal !== false) {
         const opacity = getComputedStyle(element).opacity;
         const hideAt =
           typeof options.hideAt === 'function'

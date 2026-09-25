@@ -2,15 +2,22 @@ import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useReducedMotion } from '../../hooks/celebration/useReducedMotion';
 import { HalloweenBurst } from '../../types/halloween';
-import { loadHalloweenAnchorClasses } from '../../utils/halloween';
-import { animateCat } from '../../utils/halloween-cat-animation';
-import { buildCatPlan, type CatPlan } from '../../utils/halloween-cat-plan';
-import { getCatTargets } from '../../utils/halloween-cat-targets';
-import HalloweenCat from './HalloweenCat';
-import styles from './HalloweenCatScene.module.scss';
+import {
+  buildHalloweenGhostFlight,
+  loadHalloweenAnchorClasses,
+} from '../../utils/halloween';
+import { animateGhosts } from '../../utils/halloween-ghost-animation';
+import {
+  buildGhostPlan,
+  type GhostPlan,
+} from '../../utils/halloween-ghost-plan';
+import { getGhostTargets } from '../../utils/halloween-ghost-targets';
+import flightStyles from './Halloween.module.scss';
+import HalloweenGhost from './HalloweenGhost';
+import styles from './HalloweenGhosts.module.scss';
 
-/** A curious cat tests gravity using reversible copies of nearby controls. */
-const HalloweenCatScene: FC = () => {
+/** Possessed visual copies and one failed scare, owned entirely by the decoration layer. */
+const HalloweenGhosts: FC = () => {
   const isMobile = useIsMobile();
   const reducedMotion = useReducedMotion();
   const [initial] = useState(() => ({ isMobile, reducedMotion }));
@@ -21,13 +28,15 @@ const HalloweenCatScene: FC = () => {
       typeof Element !== 'undefined' &&
       typeof Element.prototype.animate === 'function',
   );
-  const [plan, setPlan] = useState<CatPlan | null>(null);
+  const [flights] = useState(buildHalloweenGhostFlight);
+  const [plan, setPlan] = useState<GhostPlan | null>(null);
   const [ended, setEnded] = useState(false);
   const stopped = useRef(false);
   const hostRef = useRef<HTMLDivElement>(null);
   const copiesRef = useRef<HTMLDivElement>(null);
-  const actorRef = useRef<HTMLDivElement>(null);
-  const facingRef = useRef<HTMLDivElement>(null);
+  const faceRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const actorRefs = useRef<(HTMLDivElement | null)[]>([]);
   const stopScene = useCallback(() => {
     stopped.current = true;
     setEnded(true);
@@ -56,6 +65,7 @@ const HalloweenCatScene: FC = () => {
     const handleVisibility = () => {
       if (document.hidden) cancel();
     };
+    /* Cancel even during deferred class imports, before there are snapshots. */
     const events = [
       'pointerdown',
       'keydown',
@@ -71,7 +81,12 @@ const HalloweenCatScene: FC = () => {
     const prepare = async () => {
       const { composer, starterList } = await loadHalloweenAnchorClasses();
       if (disposed || stopped.current) return;
-      setPlan(buildCatPlan(getCatTargets(composer, starterList), isMobile));
+      setPlan(
+        buildGhostPlan(
+          getGhostTargets(composer, starterList, isMobile ? 3 : 5),
+          isMobile,
+        ),
+      );
     };
     prepare();
     return () => {
@@ -92,19 +107,20 @@ const HalloweenCatScene: FC = () => {
       !supportsMotion ||
       !plan?.active ||
       !hostRef.current ||
-      !copiesRef.current ||
-      !actorRef.current ||
-      !facingRef.current
+      !copiesRef.current
     )
       return;
     let disposed = false;
-    const stop = animateCat(
+    const stop = animateGhosts(
       plan,
       {
         host: hostRef.current,
         copies: copiesRef.current,
-        actor: actorRef.current,
-        facing: facingRef.current,
+        actors: actorRefs.current.filter(
+          (actor): actor is HTMLDivElement => !!actor,
+        ),
+        faceTemplate: faceRef.current,
+        pumpkinGlow: glowRef.current,
       },
       () => {
         if (!disposed) stopScene();
@@ -117,54 +133,81 @@ const HalloweenCatScene: FC = () => {
   }, [changed, ended, plan, reducedMotion, stopScene, supportsMotion]);
 
   const stationary = reducedMotion || !supportsMotion;
+  const pumpkin = plan?.pumpkin?.rect;
   return (
     <div
       ref={hostRef}
       className={styles.scene}
       aria-hidden="true"
       inert
-      data-halloween-scene={HalloweenBurst.Cat}
+      data-halloween-scene={HalloweenBurst.Ghost}
       data-ready={stationary || !!plan}
       data-ended={ended || changed}
       data-stationary={stationary}
     >
       <div ref={copiesRef} className={styles.copies} />
-      {!stationary && plan?.active && plan.floor && (
+      <div className={styles.templates}>
+        <div ref={faceRef} className={styles.possessedFace}>
+          <span className={styles.eye}>
+            <span data-ghost-pupil="true" />
+          </span>
+          <span className={styles.eye}>
+            <span data-ghost-pupil="true" />
+          </span>
+        </div>
+      </div>
+      {pumpkin && (
         <div
-          className={styles.floor}
-          data-cat-floor
+          ref={glowRef}
+          className={styles.pumpkinGlow}
           style={{
-            left: plan.floor.x,
-            top: plan.floor.y,
-            width: plan.floor.width,
+            left: pumpkin.left,
+            top: pumpkin.top,
+            width: pumpkin.width,
+            height: pumpkin.height,
           }}
         />
       )}
-      {!stationary && plan?.active ? (
-        <div
-          ref={actorRef}
-          className={styles.actor}
-          data-cat-actor
-          style={{ transform: `translate(${plan.rest.x}px, ${plan.rest.y}px)` }}
-        >
-          <div
-            className={styles.art}
-            style={{ width: plan.size, height: (plan.size * 140) / 160 }}
-          >
-            <div ref={facingRef} className={styles.facing}>
-              <HalloweenCat />
+      {!stationary && plan?.active
+        ? plan.actors.map((actor, index) => (
+            <div
+              key={index}
+              ref={(node) => {
+                actorRefs.current[index] = node;
+              }}
+              className={styles.actor}
+              data-ghost-actor={index}
+              data-ghost-leader={actor.leader}
+              style={{
+                transform: `translate(${actor.rest.x}px, ${actor.rest.y}px)`,
+              }}
+            >
+              <div
+                className={styles.art}
+                style={{ width: actor.size, height: (actor.size * 88) / 64 }}
+              >
+                <div className={styles.cloth} data-ghost-cloth="true">
+                  <HalloweenGhost variant={actor.variant} expressive />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ) : (
-        (stationary || plan) && (
-          <div className={styles.fallback} data-cat-fallback>
-            <HalloweenCat />
-          </div>
-        )
-      )}
+          ))
+        : (stationary || plan) &&
+          flights.map((ghost, index) => (
+            <span
+              key={index}
+              className={flightStyles.ghost}
+              style={ghost.style}
+              data-ghost-fallback="true"
+            >
+              <HalloweenGhost
+                variant={ghost.variant}
+                className={flightStyles.ghostBody}
+              />
+            </span>
+          ))}
     </div>
   );
 };
 
-export default HalloweenCatScene;
+export default HalloweenGhosts;

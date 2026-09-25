@@ -19,6 +19,12 @@ export const HALLOWEEN_SECRET_PHRASE = 'trick or treat';
  */
 export const HALLOWEEN_BURST_DURATION_MS = 14000;
 
+/** Room for the crosswind scene's pauses, deceleration and lazy departure. */
+export const HALLOWEEN_BAT_SCENE_DURATION_MS = 17500;
+
+/** Time for an unhurried walk, a long sit, paced pushes, falling prizes and grooming. */
+export const HALLOWEEN_CAT_SCENE_DURATION_MS = 25000;
+
 /** Spiders dropped per `HalloweenBurst.Spiders`, each on its own thread. */
 export const HALLOWEEN_SPIDER_COUNT = 9;
 
@@ -79,9 +85,11 @@ export const HALLOWEEN_SECRET_BURSTS = [
 export const HALLOWEEN_SCENE_DURATIONS: Partial<
   Record<HalloweenBurst, number>
 > = {
+  [HalloweenBurst.Bats]: HALLOWEEN_BAT_SCENE_DURATION_MS + 500,
+  [HalloweenBurst.Cat]: HALLOWEEN_CAT_SCENE_DURATION_MS + 500,
   [HalloweenBurst.Train]: 12000,
   [HalloweenBurst.Portal]: 10000,
-  [HalloweenBurst.Ravens]: 11000,
+  [HalloweenBurst.Ravens]: 13000,
   [HalloweenBurst.Candy]: 11000,
   [HalloweenBurst.Footprints]: 12000,
   [HalloweenBurst.Skeletons]: 10000,
