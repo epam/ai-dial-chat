@@ -42,17 +42,17 @@ jobs:
       packages: write
       security-events: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
       - name: Calculate version
         id: semantic_versioning
-        uses: epam/ai-dial-ci/actions/semantic_versioning@4.11.0
+        uses: epam/ai-dial-ci/actions/semantic_versioning@4.12.0
         with:
           promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we check it on the step
       - if: ${{ hashFiles('apps/mcp-app-sandbox/Dockerfile') != '' }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.11.0
+        uses: epam/ai-dial-ci/actions/build_docker@4.12.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
