@@ -96,15 +96,19 @@ optional, and the attachments an entry does not claim keep rendering as ordinary
 tiles. An existing value can be copied over as-is — invalid entries are dropped
 with a log rather than failing boot.
 
+`borderless` and `withoutTitle` still work: `borderless` drops the inline
+frame's border, background, and header divider, and `withoutTitle` hides the
+header's title text while keeping the expand-to-canvas button.
+
 Three field groups no longer do anything, and are accepted only so a copied
 configuration still works:
 
 - `passAuthInfo` / `passExplicitToken`, with the `accessToken` they fed. 1.0
   auth is server-side; the browser holds an encrypted session cookie and never
   an access token, and legacy's `ALLOW_TOKEN_IN_SESSION` is itself gone.
-- `expanded` / `borderless` / `withoutTitle` — the inline attachment chrome
-  these configured has no successor, the same reason the paired
-  `ATTACHMENT_TYPES_*` variables were dropped.
+- `expanded` — it opened the collapsible attachments section, which 1.0 does
+  not have, the same reason the paired `ATTACHMENT_TYPES_*` variables were
+  dropped. It is logged as an unrecognized field and otherwise ignored.
 - `logInHint` / `providerId`, which only mattered for the auth forwarding above.
 
 `ALLOW_VISUALIZER_SEND_MESSAGES` was not ported (see the dropped table below).

@@ -1424,6 +1424,33 @@ describe('ConversationMessageItem — application visualizers', () => {
     expect(screen.getByTitle('my-viz')).toBeTruthy();
   });
 
+  it('hides the inline header title when the entry sets withoutTitle', () => {
+    applicationVisualizersMock = registryWith({ withoutTitle: true });
+
+    renderItem();
+
+    expect(screen.queryByText('my-viz')).toBeNull();
+    expect(screen.getByTitle('my-viz')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'attachmentCanvas.expandAppLabel' }),
+    ).toBeTruthy();
+  });
+
+  it('renders the inline frame without its border when the entry sets borderless', () => {
+    applicationVisualizersMock = registryWith({ borderless: true });
+
+    renderItem();
+
+    // eslint-disable-next-line testing-library/no-node-access -- the frame root is a presentational wrapper with no accessible role to query
+    const frame = screen
+      .getByRole('toolbar', {
+        name: 'attachmentCanvas.visualizerActionsAriaLabel',
+      })
+      .closest('.overflow-hidden');
+
+    expect(frame?.classList.contains('border')).toBe(false);
+  });
+
   it('renders no inline visualizer when the registry is empty', () => {
     renderItem();
 

@@ -257,7 +257,7 @@ import type {
 ```
 
 - `CustomVisualizer` — one MIME → visualizer mapping. `contentType` is **required** and accepts a comma-separated MIME list. One attachment per iframe.
-- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together.
+- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together. Optional `borderless` and `withoutTitle` tell the host to render the inline frame without its border chrome, or without its header title text.
 - `GroupedAttachmentsData` / `GroupedAttachmentItem` — the grouped payload the host builds from the claimed attachments. Each item's `url` is absolute, resolved by the host before sending.
 
 In both types, `title` is the postMessage protocol namespace rather than a display label: the iframe-side application must be constructed with the identical string as its `appName`, so it must never be localised. `passAuthInfo` and `passExplicitToken` are accepted for configuration parity and are inert — auth is server-side and the browser holds no access token.

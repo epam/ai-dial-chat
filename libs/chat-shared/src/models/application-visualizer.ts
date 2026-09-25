@@ -45,6 +45,10 @@ export interface ApplicationVisualizer {
   passAuthInfo?: boolean;
   /** Whether the host should pass an explicit access token. Accepted for operator-configuration parity; inert, because 1.0 auth is server-side and the browser holds no access token. */
   passExplicitToken?: boolean;
+  /** When `true`, the host renders the inline frame without its border, rounded corners, background, and header divider. */
+  borderless?: boolean;
+  /** When `true`, the host hides the inline frame's header title text; the header actions stay visible. */
+  withoutTitle?: boolean;
 }
 
 /** The `APPLICATION_VISUALIZERS` registry: application id → grouped visualizer entry. */

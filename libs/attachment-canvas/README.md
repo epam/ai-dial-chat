@@ -406,12 +406,19 @@ header carrying the entry title and an expand-to-canvas button, wrapping a
 `height`/`mobileHeight`, and passes the same content object to the canvas when
 `onExpand` fires, so expanding never rebuilds the payload.
 
+`isBorderless` drops the frame's border, rounded corners, background, and header
+divider; `isTitleHidden` omits the header title text while keeping the expand
+button. Both default to `false`; the host maps them from the registry entry's
+`borderless` and `withoutTitle`.
+
 ```tsx
 import { InlineGroupedVisualizer } from '@epam/ai-dial-attachment-canvas';
 
 <InlineGroupedVisualizer
   content={groupedContent}
   height={isMobile ? (entry.mobileHeight ?? 400) : (entry.height ?? 600)}
+  isBorderless={entry.borderless === true}
+  isTitleHidden={entry.withoutTitle === true}
   onExpand={() => openCanvas(groupedContent)}
   expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
   errorLabel={t(AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel)}
