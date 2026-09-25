@@ -5,6 +5,7 @@ import {
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
   useAvailableHeightCap,
+  TextRefinementField,
   useTextRefinement,
   type TextRefinementCallback,
 } from '@epam/ai-dial-chat-shared';
@@ -52,7 +53,6 @@ import {
   dayOfWeekToCalendarValue,
   TIME_OF_DAY_PATTERN,
 } from '../../utils/calendar-value';
-import { RefinementField } from '../RefinementField/RefinementField';
 import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField/ScheduledTaskRunAtField';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
@@ -151,11 +151,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   });
 
   const refinementStyles = {
-    actionClassName: mergeClasses(
-      styles.refineAction,
-      typography?.refineActionClassName ?? 'dial-small-text',
-      SCHEDULED_TASKS_CLASS.refineAction,
-    ),
     feedbackClassName: mergeClasses(
       styles.refineFeedback,
       typography?.refineFeedbackClassName ?? 'dial-small-text',
@@ -302,8 +297,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             error={errors.displayName}
           />
 
-          <RefinementField
-            enabled={Boolean(onRefineDescription)}
+          <TextRefinementField
+            isEnabled={Boolean(onRefineDescription)}
             fieldId={descriptionId}
             label={labels.descriptionLabel}
             labels={labels}
@@ -332,7 +327,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   : undefined
               }
             />
-          </RefinementField>
+          </TextRefinementField>
 
           <div className="flex flex-col gap-1">
             <Label
@@ -577,8 +572,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             </p>
           )}
         </div>
-        <RefinementField
-          enabled={Boolean(onRefineInstructions)}
+        <TextRefinementField
+          isEnabled={Boolean(onRefineInstructions)}
           fieldId={instructionsEditorId}
           labelClassName={instructionsLabelClassName}
           label={labels.instructionsLabel}
@@ -634,7 +629,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               </p>
             )}
           </div>
-        </RefinementField>
+        </TextRefinementField>
       </div>
     </BuilderFormContainer>
   );

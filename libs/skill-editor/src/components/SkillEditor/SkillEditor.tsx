@@ -5,6 +5,7 @@ import {
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
   useAvailableHeightCap,
+  TextRefinementField,
   useTextRefinement,
   type TextRefinementCallback,
 } from '@epam/ai-dial-chat-shared';
@@ -19,6 +20,7 @@ import {
   ErrorText,
   GhostButton,
   Input,
+  Label,
   NeutralButton,
   PrimaryButton,
   Spinner,
@@ -57,7 +59,6 @@ import type {
 import { SKILL_MANIFEST_PATH } from '../../types/skill-editor-defaults';
 import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
 import { buildDialFileTree } from '../../utils/file-tree';
-import { RefinementField } from '../RefinementField/RefinementField';
 import { SkillFileDropOverlay } from '../SkillFileDropOverlay/SkillFileDropOverlay';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog/SkillFileUploadDialog';
 import styles from './SkillEditor.module.scss';
@@ -292,11 +293,6 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   });
 
   const refinementStyles = {
-    actionClassName: mergeClasses(
-      styles.refineAction,
-      typography.refineActionClassName ?? 'dial-small-text',
-      SKILL_EDITOR_CLASS.refineAction,
-    ),
     feedbackClassName: mergeClasses(
       styles.refineFeedback,
       typography.refineFeedbackClassName ?? 'dial-small-text',
@@ -570,8 +566,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                   invalid={!!errors?.name}
                   disabled={isNameReadOnly}
                 />
-                <RefinementField
-                  enabled={Boolean(onRefineDescription)}
+                <TextRefinementField
+                  isEnabled={Boolean(onRefineDescription)}
                   fieldId={descriptionId}
                   required
                   label={t.descriptionLabel ?? 'Description'}
@@ -603,9 +599,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                     error={errors?.description}
                     invalid={!!errors?.description}
                   />
-                </RefinementField>
-                <RefinementField
-                  enabled={Boolean(onRefineInstructions)}
+                </TextRefinementField>
+                <TextRefinementField
+                  isEnabled={Boolean(onRefineInstructions)}
                   fieldId={instructionsId}
                   required
                   labelClassName={mergeClasses(
@@ -620,20 +616,15 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 >
                   <div className="flex flex-1 flex-col gap-2">
                     {!onRefineInstructions && (
-                      <label
+                      <Label
                         htmlFor={instructionsId}
-                        className="flex items-center gap-0.5"
-                      >
-                        <span
-                          className={mergeClasses(
-                            styles.helperText,
-                            helperTextClassName,
-                          )}
-                        >
-                          {t.instructionsLabel ?? 'Instructions'}
-                        </span>
-                        <span className="dial-tiny-text text-error">*</span>
-                      </label>
+                        className={mergeClasses(
+                          styles.helperText,
+                          helperTextClassName,
+                        )}
+                        label={t.instructionsLabel ?? 'Instructions'}
+                        required
+                      />
                     )}
                     <div
                       ref={instructionsCapRef}
@@ -671,7 +662,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                       <ErrorText text={errors.instructions} />
                     )}
                   </div>
-                </RefinementField>
+                </TextRefinementField>
               </>
             ) : (
               selectedNode?.kind === SkillFileNodeKind.File &&

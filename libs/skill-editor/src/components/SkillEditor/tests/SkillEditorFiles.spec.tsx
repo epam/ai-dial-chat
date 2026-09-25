@@ -63,6 +63,22 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  Label: ({
+    id,
+    htmlFor,
+    label,
+    required,
+  }: {
+    id?: string;
+    htmlFor?: string;
+    label?: ReactNode;
+    required?: boolean;
+  }) => (
+    <label id={id} htmlFor={htmlFor}>
+      {label}
+      {required && ' *'}
+    </label>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },

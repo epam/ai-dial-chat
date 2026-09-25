@@ -17,8 +17,6 @@ export const SCHEDULED_TASKS_CLASS = {
   card: 'dial-scheduled-tasks-card',
   /** The responsive grid the cards are laid out in. */
   cardGrid: 'dial-scheduled-tasks-card-grid',
-  /** Refine and Undo buttons. */
-  refineAction: 'dial-scheduled-tasks-refine-action',
   /** Field-local refinement feedback. */
   refineFeedback: 'dial-scheduled-tasks-refine-feedback',
 } as const;

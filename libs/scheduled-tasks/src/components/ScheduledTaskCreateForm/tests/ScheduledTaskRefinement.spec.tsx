@@ -35,7 +35,8 @@ const deferred = () => {
   });
   return { promise, resolve, reject };
 };
-const group = (name: string) => within(screen.getByRole('group', { name }));
+const group = (name: string) =>
+  within(screen.getByRole('group', { name: new RegExp('^' + name) }));
 const action = (name = 'Description') =>
   group(name).getByRole<HTMLButtonElement>('button', {
     name: 'Refine with AI',
@@ -265,7 +266,7 @@ describe('text refinement authoring', () => {
     ).toContain('Could not refine this text. Please try again.');
     expect(
       screen
-        .getByRole('group', { name: 'Description' })
+        .getByRole('group', { name: /^Description/ })
         .getAttribute('aria-describedby'),
     ).toBe(
       group('Description').getByText(
@@ -310,7 +311,6 @@ describe('text refinement authoring', () => {
           styles={{
             colors: { refineActionText: '#111111', refineErrorText: '#880000' },
             typography: {
-              refineActionClassName: 'custom-action',
               refineFeedbackClassName: 'custom-feedback',
             },
           }}
@@ -326,9 +326,6 @@ describe('text refinement authoring', () => {
     expect(group('Description').getByRole('status').textContent).toContain(
       '\u062a\u0645 \u0627\u0644\u062a\u062d\u0633\u064a\u0646',
     );
-    expect(button.className).toContain('custom-action');
-    expect(button.className).toContain('refine-action');
-    expect(button.className).toContain('min-h-[44px]');
     /* Focus and inherited ARIA/direction/layout hooks have no semantic query. */
     // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
     expect(container.querySelector('[dir="rtl"]')).not.toBeNull();

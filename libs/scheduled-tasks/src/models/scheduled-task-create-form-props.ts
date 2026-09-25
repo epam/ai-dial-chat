@@ -1,3 +1,4 @@
+import type { TextRefinementLabels } from '@epam/ai-dial-chat-shared';
 import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
@@ -69,21 +70,7 @@ export interface ScheduledTaskCreateFormErrors {
 }
 
 /** Localized labels used by the {@link ScheduledTaskCreateForm} component. */
-export interface ScheduledTaskCreateFormLabels {
-  /** Refinement copy. Defaults to 'Refine with AI'. */
-  refineWithAiLabel?: string;
-  /** Refinement copy. Defaults to 'Undo'. */
-  refineUndoLabel?: string;
-  /** Refinement copy. Defaults to 'Could not refine this text. Please try again.'. */
-  refineErrorLabel?: string;
-  /** Refinement copy. Defaults to 'Refining text'. */
-  refinePendingAriaLabel?: string;
-  /** Refinement copy. Defaults to 'Text refined. Undo is available.'. */
-  refineSuccessAriaLabel?: string;
-  /** Refinement copy. Defaults to 'Original text restored.'. */
-  refineUndoAriaLabel?: string;
-  /** Refinement copy. Defaults to 'No changes were needed.'. */
-  refineUnchangedAriaLabel?: string;
+export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   /** Page/header title, e.g. "New task". */
   pageTitle: string;
   /** Accessible label for the header's back control. */
@@ -147,7 +134,7 @@ export interface ScheduledTaskCreateFormLabels {
  * as CSS custom properties with app theme fallbacks.
  */
 export interface ScheduledTaskCreateFormColors {
-  /** Refine/Undo and status text color. Defaults to --text-primary. */
+  /** Refinement status text color. Defaults to --text-primary. */
   refineActionText?: string;
   /** Refinement error color. Defaults to --text-error. */
   refineErrorText?: string;
@@ -165,8 +152,6 @@ export interface ScheduledTaskCreateFormColors {
 
 /** Typography overrides for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormTypography {
-  /** Refine/Undo typography. Defaults to 'dial-small-text'. */
-  refineActionClassName?: string;
   /** Refinement feedback typography. Defaults to 'dial-small-text'. */
   refineFeedbackClassName?: string;
   /** CSS class applied to the title. Defaults to `'dial-h1-text'`. */

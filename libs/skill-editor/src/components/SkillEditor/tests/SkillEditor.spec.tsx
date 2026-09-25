@@ -123,6 +123,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  Label: ({
+    id,
+    htmlFor,
+    label,
+    required,
+  }: {
+    id?: string;
+    htmlFor?: string;
+    label?: ReactNode;
+    required?: boolean;
+  }) => (
+    <label id={id} htmlFor={htmlFor}>
+      {label}
+      {required && ' *'}
+    </label>
+  ),
   Input: ({
     labelProps,
     value,

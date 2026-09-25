@@ -1,4 +1,5 @@
 export * from './models/annotation';
+export * from './models/text-refinement';
 export * from './models/conversation-transfer';
 export * from './models/conversation-classification';
 export * from './models/chat';
@@ -55,6 +56,7 @@ export * from './components/FeaturedChip/FeaturedChip';
 export * from './components/EntityHeader/EntityHeader';
 export * from './components/ResourceSummary/ResourceSummary';
 export * from './components/MarkdownRenderer/Table/TableHeader';
+export * from './components/TextRefinementField/TextRefinementField';
 export * from './entry-points/markdown';
 export * from './hooks/useAvailableHeightCap';
 export * from './hooks/useIsMobile';

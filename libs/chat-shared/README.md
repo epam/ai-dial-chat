@@ -644,6 +644,50 @@ inline after the name instead, or pass `children` to render arbitrary content
 in the row instead of the entity header. The legacy top-level `colors` prop is
 still accepted; new consumers should use `styles.colors`.
 
+### TextRefinementField
+
+Label row with kit `GhostButton` "Refine with AI" / Undo actions, plus a polite
+status region and an error alert, around one field driven by
+[`useTextRefinement`](#text-refinement-lifecycle). The group is named by the
+label and described by the error while one is shown; Undo returns focus to the
+Refine action. With `isEnabled={false}` it renders `children` alone, so the
+host keeps its own label. Copy comes from `labels` (`TextRefinementLabels`),
+each key with an English default.
+
+```tsx
+import { useState } from 'react';
+import {
+  TextRefinementField,
+  useTextRefinement,
+  type TextRefinementCallback,
+} from '@epam/ai-dial-chat-shared';
+
+function DescriptionField({ onRefine }: { onRefine?: TextRefinementCallback }) {
+  const [value, setValue] = useState('');
+  const refinement = useTextRefinement({ value, onChange: setValue, onRefine });
+  return (
+    <TextRefinementField
+      isEnabled={Boolean(onRefine)}
+      fieldId="description"
+      label="Description"
+      required
+      refinement={refinement}
+      disabled={false}
+      labels={{ refineWithAiLabel: 'Refine with AI' }}
+    >
+      <textarea
+        id="description"
+        value={value}
+        onChange={(event) => {
+          refinement.reset();
+          setValue(event.target.value);
+        }}
+      />
+    </TextRefinementField>
+  );
+}
+```
+
 ## Hooks
 
 ### useAvailableHeightCap
