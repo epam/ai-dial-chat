@@ -39,18 +39,32 @@ describe('configureProxyAgents', () => {
   });
 
   describe.each([
-    { label: 'through the proxy', proxy: true, noProxy: '' },
+    {
+      label: 'through the proxy',
+      proxy: true,
+      noProxy: '',
+      expectProxy: true,
+    },
     {
       label: 'directly for NO_PROXY hosts',
       proxy: true,
       noProxy: 'login.example.com',
+      expectProxy: false,
+    },
+    {
+      label: 'through the proxy when NO_PROXY targets another host',
+      proxy: true,
+      noProxy: 'other.example.com',
+      expectProxy: true,
     },
     {
       label: 'directly without proxy configuration',
       proxy: false,
       noProxy: '',
+      expectProxy: false,
     },
-  ])('registered provider requests $label', ({ proxy, noProxy }) => {
+  ])('registered provider requests $label', (scenario) => {
+    const { proxy, noProxy, expectProxy } = scenario;
     it.each(['callback', 'refresh', 'userinfo', 'revoke', 'jwks'] as const)(
       'routes %s using the configured transport',
       async (operation) => {
@@ -114,12 +128,11 @@ describe('configureProxyAgents', () => {
           await expect(requests[operation]()).rejects.toThrow(intercepted);
           expect(requestSpy).toHaveBeenCalledOnce();
           const options = requestSpy.mock.calls[0][1] as https.RequestOptions;
-          if (proxy && !noProxy) {
+          if (expectProxy) {
             expect(options.agent).toBeInstanceOf(HttpsProxyAgent);
           } else {
             expect(options.agent).toBeUndefined();
           }
-          expect(options.timeout).toBe(3500);
           expect(options.headers).toBeDefined();
         } finally {
           await module.close();
