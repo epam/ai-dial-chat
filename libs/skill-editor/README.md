@@ -214,9 +214,8 @@ Optional label overrides (English defaults):
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 
-`styles.colors.refineActionText` and `refineErrorText` set `--se-refine-action-text` and `--se-refine-error-text`; defaults use `--text-primary` / `--text-error` with standalone fallbacks `#161b2d` / `#8b2020`. `styles.typography.refineActionClassName` and `refineFeedbackClassName` default to `dial-small-text`. Direction is inherited; label rows wrap, buttons have at least 44px hit areas, and feedback uses live regions.
+`styles.colors.refineActionText` and `refineErrorText` set `--se-refine-action-text` and `--se-refine-error-text`; defaults use `--text-primary` / `--text-error` with standalone fallbacks `#161b2d` / `#8b2020`. `refineActionText` colors the status feedback; the Refine and Undo buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` defaults to `dial-small-text`. Direction is inherited; label rows wrap, and feedback uses live regions.
 
-| Public class key | Class                               | Element                 |
-| ---------------- | ----------------------------------- | ----------------------- |
-| `refineAction`   | `dial-skill-editor-refine-action`   | Refine and Undo buttons |
-| `refineFeedback` | `dial-skill-editor-refine-feedback` | Field feedback          |
+| Public class key | Class                               | Element        |
+| ---------------- | ----------------------------------- | -------------- |
+| `refineFeedback` | `dial-skill-editor-refine-feedback` | Field feedback |
