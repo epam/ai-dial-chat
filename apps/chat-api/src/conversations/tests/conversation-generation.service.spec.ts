@@ -63,6 +63,20 @@ describe('ConversationGenerationService', () => {
   });
 
   describe('register', () => {
+    it('does not let a stale persistence failure terminate a newer generation', () => {
+      const oldLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(oldLease);
+      const newLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.seedAssembledMessage(newLease, makeMessage('new answer'));
+      const attachment = service.attach(OWNER_KEY, PATH);
+      const terminal = vi.fn();
+      attachment?.emitter.on('terminal', terminal);
+      service.persistenceFailed(oldLease);
+      expect(terminal).not.toHaveBeenCalled();
+      expect(service.attach(OWNER_KEY, PATH)?.assembledMessage.content).toBe(
+        'new answer',
+      );
+    });
     it('returns a lease carrying an AbortController for a new generation', () => {
       const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
       expect(lease.abortController).toBeInstanceOf(AbortController);

@@ -3,6 +3,7 @@ import {
   createChatStreamApi,
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
   GenerationConflictError,
+  GenerationPersistenceError,
   StreamUpstreamError,
 } from '../create-chat-stream-api';
 
@@ -105,6 +106,27 @@ describe('createChatStreamApi', () => {
 
     expect(error).toBeInstanceOf(GenerationConflictError);
     expect(error.message).toBe(DEFAULT_GENERATION_CONFLICT_MESSAGE);
+  });
+
+  it('reports persistence failure after upstream DONE without completing successfully or exposing raw error text', async () => {
+    const encoder = new TextEncoder();
+    fetchMock.mockResolvedValue(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(
+                'data: [DONE]\n\ndata: {"error":{"type":"conversation_save_failed","message":"private upstream detail"}}\n\n',
+              ),
+            );
+            controller.close();
+          },
+        }),
+      ),
+    );
+    const error = await failStreamRequest();
+    expect(error).toBeInstanceOf(GenerationPersistenceError);
+    expect(error.message).not.toContain('private upstream detail');
   });
 
   it('reports any other non-OK completion response as a plain transport error', async () => {
