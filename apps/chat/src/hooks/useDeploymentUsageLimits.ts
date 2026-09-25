@@ -1,13 +1,10 @@
-import {
-  mapDeploymentLimitsToInput,
-  type MonthlyUsageLimit,
-} from '@epam/ai-dial-chat-hooks';
+import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getDeploymentLimits } from '../server-api/deployment-limits';
 
 export interface UseDeploymentUsageLimitsResult {
-  /** Normalized monthly token limit for the selected deployment. */
-  limit: MonthlyUsageLimit | undefined;
+  /** Raw limits response for the selected deployment, or `undefined` before the first success. */
+  limitsDto: DeploymentLimitsResponseDto | undefined;
   /** `true` while a fetch is in flight. */
   isLoading: boolean;
   /** `true` after the most recent fetch rejected. */
@@ -17,16 +14,21 @@ export interface UseDeploymentUsageLimitsResult {
 }
 
 /**
- * Fetches the selected deployment's monthly token limit.
+ * Fetches the selected deployment's token limits.
  *
  * A monotonic request ID prevents a slower response for a previous deployment
  * from replacing the current value. Refresh failures preserve the last known
- * limit so the open popover can surface a non-blocking error.
+ * response so the open popover can surface a non-blocking error.
+ *
+ * The raw response is returned rather than a mapped display model: mapping
+ * needs the caller's translated labels and locale-bound reset formatter, and
+ * holding the mapped value in state here would leave it stale after a language
+ * change until the next fetch.
  */
 export const useDeploymentUsageLimits = (
   deploymentId: string | undefined,
 ): UseDeploymentUsageLimitsResult => {
-  const [limit, setLimit] = useState<MonthlyUsageLimit>();
+  const [limitsDto, setLimitsDto] = useState<DeploymentLimitsResponseDto>();
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -45,7 +47,7 @@ export const useDeploymentUsageLimits = (
 
     if (!deploymentId) {
       fetchIdRef.current += 1;
-      setLimit(undefined);
+      setLimitsDto(undefined);
       setIsLoading(false);
       setHasError(false);
       isLoadingRef.current = false;
@@ -53,7 +55,7 @@ export const useDeploymentUsageLimits = (
     }
 
     if (deploymentChanged) {
-      setLimit(undefined);
+      setLimitsDto(undefined);
     }
 
     const controller = new AbortController();
@@ -68,7 +70,7 @@ export const useDeploymentUsageLimits = (
       try {
         const dto = await getDeploymentLimits(deploymentId);
         if (cancelled || currentFetchId !== fetchIdRef.current) return;
-        setLimit(mapDeploymentLimitsToInput(dto));
+        setLimitsDto(dto);
       } catch {
         if (cancelled || currentFetchId !== fetchIdRef.current) return;
         setHasError(true);
@@ -88,5 +90,5 @@ export const useDeploymentUsageLimits = (
     };
   }, [deploymentId, refreshCounter]);
 
-  return { limit, isLoading, hasError, refresh };
+  return { limitsDto, isLoading, hasError, refresh };
 };

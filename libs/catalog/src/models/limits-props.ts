@@ -1,14 +1,17 @@
 import type { ReactNode } from 'react';
+import type { LimitRowLayout } from '../types/limit-row-layout';
 import type { CatalogItemLimits } from './item-details-data';
 
 /** Color overrides for `LimitsTab`, applied as CSS custom properties. */
-interface LimitsTabColors {
+export interface LimitsTabColors {
   /** Group heading text color. Fallback: `--text-secondary`. */
   sectionHeading?: string;
   /** Row label text color, and the secondary half of a value/note line. Fallback: `--text-secondary`. */
   label?: string;
   /** Emphasized value text color: the used-amount figure of a capped row, and a no-progress row's value. Fallback: `--text-primary`. */
   valuePrimary?: string;
+  /** Value text color of a row that has reached its limit, in the stacked layout. Fallback: `--text-error`. */
+  valueDanger?: string;
   /** Row divider line color. Fallback: `--stroke-tertiary`. */
   divider?: string;
   /** Progress-bar track color for capped rows. Fallback: `--bg-layer-sunken`. */
@@ -39,6 +42,8 @@ export interface LimitRowClassNames {
 export interface LimitsTabProps {
   /** Limits data to render. */
   limits?: CatalogItemLimits;
+  /** Row arrangement. Defaults to `LimitRowLayout.Inline`. */
+  layout?: LimitRowLayout;
   /** CSS class for a row's label. Defaults to `'dial-small-semi-text'`. */
   labelClassName?: string;
   /** CSS class for a row's secondary caption under the label (`row.captionLabel`). Defaults to `'dial-caption-text'`. */

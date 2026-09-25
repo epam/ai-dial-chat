@@ -12,7 +12,7 @@ export interface StageTypography {
   headingClassName?: string;
   /** CSS utility class applied to inline code elements. Defaults to `'dial-code-text rounded-md'`. */
   codeClassName?: string;
-  /** CSS utility class applied to fenced code blocks (`<pre>`). Defaults to `'dial-code-text'`. */
+  /** CSS utility class applied to fenced code blocks. Defaults to `'dial-code-text'`. */
   codeBlockClassName?: string;
   /** CSS utility class applied to count badges (e.g. `×N` collapsed group). Defaults to `'dial-tiny-text'`. */
   countFontClassName?: string;

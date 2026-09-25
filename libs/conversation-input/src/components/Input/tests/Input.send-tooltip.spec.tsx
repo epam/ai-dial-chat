@@ -115,10 +115,14 @@ describe.each([
     expect(await screen.findByText('Send message')).toBeTruthy();
   });
 
-  it('uses the regular tooltip for an inline skill without text', async () => {
+  it('uses the regular tooltip for a message that is only a mention', async () => {
     const user = userEvent.setup({ delay: null });
     render(
-      <Component {...tooltips} inlineStartSlot={<span>Selected skill</span>} />,
+      <Component
+        {...tooltips}
+        message="/skill "
+        activeMentions={[{ start: 0, length: 6 }]}
+      />,
     );
     await user.hover(screen.getByRole('button', { name: 'Send message' }));
     expect(await screen.findByText('Send message')).toBeTruthy();
