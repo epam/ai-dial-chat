@@ -33,9 +33,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     }) => (
       <div>
         {children}
-        {open &&
-          renderOverlay &&
-          createPortal(renderOverlay(), document.body)}
+        {open && renderOverlay && createPortal(renderOverlay(), document.body)}
       </div>
     ),
   };

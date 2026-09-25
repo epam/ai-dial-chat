@@ -16,6 +16,7 @@ export {
   reconcileAnchors,
 } from './utils/skill-mention-tracking';
 export type {
+  ChatSkillDetailsTrigger,
   ChatSkillLabels,
   ChatSkillProps,
 } from './models/chat-skill-props';

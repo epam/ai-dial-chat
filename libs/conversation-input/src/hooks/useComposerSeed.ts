@@ -28,9 +28,10 @@ export interface UseComposerSeedResult {
 export const useComposerSeed = (
   initial?: UseComposerSeedInitial,
 ): UseComposerSeedResult => {
-  const [seed, setSeed] = useState<{ text: string | undefined; revision: number }>(
-    { text: initial?.text, revision: initial?.revision ?? 0 },
-  );
+  const [seed, setSeed] = useState<{
+    text: string | undefined;
+    revision: number;
+  }>({ text: initial?.text, revision: initial?.revision ?? 0 });
 
   const seedMessage = useCallback((text: string) => {
     setSeed((prev) => ({ text, revision: prev.revision + 1 }));

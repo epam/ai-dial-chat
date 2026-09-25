@@ -158,7 +158,7 @@ describe('CelebrationContext with the Halloween module', () => {
      query timeout. */
   beforeAll(async () => {
     await import('../../celebrations/halloween');
-  });
+  }, 30_000);
 
   beforeEach(() => {
     vi.clearAllMocks();
