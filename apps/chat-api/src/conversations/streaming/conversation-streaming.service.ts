@@ -46,6 +46,7 @@ import {
   type DialStreamErrorPayload,
 } from '../utils/apply-chunk.server';
 import { buildConversationHistory } from '../utils/conversation-history-builder';
+import { mergeHtmlTagAnnotationsIntoViewState } from '../utils/conversation-view-state.server';
 import {
   buildConversationUrl,
   qualifySessionConversationPath,
@@ -599,12 +600,26 @@ export class ConversationStreamingService {
         | GenerationStatus.Error,
       partialMessage: ConversationMessageDto,
     ): Promise<void> => {
+      let customViewState = startConversation.customViewState;
+      try {
+        customViewState = mergeHtmlTagAnnotationsIntoViewState(
+          startConversation.customViewState,
+          partialMessage.custom_content?.annotations,
+        );
+      } catch (err) {
+        this.logger.warn(
+          'Failed to merge annotations into customViewState',
+          err,
+        );
+      }
+
       const finalConversation = {
         ...startConversation,
         messages: [
           ...startConversation.messages.slice(0, assistantMessageIndex),
           partialMessage,
         ],
+        ...(customViewState !== undefined ? { customViewState } : {}),
       };
       /*
        * Record that the terminal write has been dispatched before awaiting
