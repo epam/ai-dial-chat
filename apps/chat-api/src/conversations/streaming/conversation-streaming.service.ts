@@ -38,6 +38,7 @@ import {
   generationTimeToFirstDelta,
 } from '../generation/generation-metrics';
 import type { GenerationRelayTiming } from '../generation/generation.types';
+import { GENERATION_PERSISTENCE_ERROR } from '../generation/persistence-error';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import {
@@ -593,6 +594,7 @@ export class ConversationStreamingService {
       this.generationService.applyChunk(lease, rawChunk, message);
     };
 
+    let persistenceFailed = false;
     const finalize = async (
       status:
         | GenerationStatus.Done
@@ -637,6 +639,9 @@ export class ConversationStreamingService {
         );
       } catch (err) {
         this.logger.warn(`Failed to save ${status} conversation`, err);
+        persistenceFailed = true;
+        this.generationService.persistenceFailed(lease);
+        return;
       }
       if (status === GenerationStatus.Done) {
         this.generationService.complete(lease);
@@ -756,6 +761,9 @@ export class ConversationStreamingService {
           await finalize(GenerationStatus.Error, partialMsg);
           break;
         }
+      }
+      if (persistenceFailed) {
+        yield `data: ${JSON.stringify({ error: GENERATION_PERSISTENCE_ERROR })}\n\n`;
       }
     } finally {
       /*

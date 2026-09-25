@@ -9,6 +9,20 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' };
 /** Status the completion endpoint returns when the conversation is already generating. */
 const GENERATION_CONFLICT_STATUS = 409;
 
+/** Safe fallback for hosts that do not supply a translated persistence warning. */
+export const DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE =
+  'The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.';
+
+/** Identifies a failed terminal save independently of the model's generation outcome. */
+export class GenerationPersistenceError extends Error {
+  static readonly type = 'conversation_save_failed';
+
+  constructor() {
+    super(DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE);
+    this.name = 'GenerationPersistenceError';
+  }
+}
+
 /** Fallback text of a {@link GenerationConflictError} when no message is supplied. */
 export const DEFAULT_GENERATION_CONFLICT_MESSAGE =
   'A response is already being generated in this conversation. Wait for it to finish or stop it before sending another message.';
@@ -78,7 +92,11 @@ const parseSSELine = (
   try {
     const parsed = JSON.parse(data) as StreamChunk;
     if (parsed.error) {
-      onError(new StreamUpstreamError(parsed.error.message));
+      onError(
+        parsed.error.type === GenerationPersistenceError.type
+          ? new GenerationPersistenceError()
+          : new StreamUpstreamError(parsed.error.message),
+      );
       return;
     }
     onChunk(parsed);
