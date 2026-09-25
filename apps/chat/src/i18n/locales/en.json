@@ -473,7 +473,6 @@
       "revokeSuccess": "Shared access to \"{{name}}\" was revoked.",
       "revokeError": "Failed to revoke access to \"{{name}}\". Please try again."
     },
-    "taskBadgeLabel": "TASK",
     "unreadIndicatorLabel": "Unread"
   },
   "conversationPublish": {

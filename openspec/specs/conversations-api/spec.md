@@ -3,9 +3,7 @@
 ## Purpose
 
 Define the versioned conversation REST API, DIAL Core persistence contract, path handling, generated-client integration, and conversation lifecycle behavior used by the chat frontend.
-
 ## Requirements
-
 ### Requirement: POST /api/v1/conversations creates and persists a new conversation
 
 The backend SHALL expose `POST /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The controller MUST be versioned (`version: '1'`), annotated with `@ApiTags('conversations')`, and delegate all logic to `ConversationService`. The endpoint accepts a JSON body validated by `CreateConversationDto`. On success it returns HTTP 201 with the created `Conversation`. The service generates a UUID via `generateUUID()`, constructs a `Conversation` object using the provided `deploymentId` for `model.id` and `assistantModelId`, and persists it to DIAL Core via the SDK client.
@@ -572,3 +570,66 @@ The display-name resolution (`resolveListDisplayTitle`, also used by `getConvers
 - **GIVEN** the same manually-renamed conversation
 - **WHEN** `GET /api/v1/conversations/:id` is called for it
 - **THEN** the returned display title is `"New Title"`
+
+### Requirement: Conversation list items carry the DIAL Core creation time
+
+`ConversationListItemDto` (`apps/chat-api/src/conversations/dto/conversation-list.dto.ts`) SHALL include an optional field `createdAt?: number` — Unix epoch milliseconds of the resource's creation, documented with `@ApiPropertyOptional({ example: 1779206400000, description: ... })`.
+
+`ConversationListingService.listConversations` SHALL populate it from DIAL Core metadata (`ResourceItemMetadata.createdAt`) for user-bucket and public-bucket items when DIAL Core returns a finite number, and SHALL omit it otherwise. Items from `getSharedResources` SHALL omit `createdAt` (that payload carries no dates). The field is purely additive: item count, the `updatedAt`-descending sort, pagination, and every other field of `GET /api/v1/conversations/list` are unchanged.
+
+Example response item:
+
+```json
+{
+  "id": "conversations/bucket/.scheduler/s1/gpt-4__Daily%20digest__7f3c...",
+  "title": "Daily digest",
+  "createdAt": 1779206400000,
+  "updatedAt": 1779206460000,
+  "sharedWithMe": false,
+  "publishedWithMe": false,
+  "isPinned": false,
+  "isReadonly": false,
+  "isScheduledTask": true,
+  "scheduleId": "s1",
+  "runId": "7f3c...",
+  "isUnread": true
+}
+```
+
+Generated-client impact:
+- OpenAPI operationId: `listConversations` (unchanged)
+- SDK method: `ConversationsApi.listConversations({ limit?, nextToken? })` (unchanged)
+- Response type: `ConversationListResponseDto`, regenerated so `ConversationListItemDto.createdAt?: number` is available to `apps/chat` and `libs/chat-hooks`
+- Frontend callers keep using the normal (non-Raw) method via `apps/chat/src/server-api/conversations.api.ts`
+
+Authorization and error codes are unchanged (401 without a bearer token; 400 on invalid `limit`/`nextToken`; 502 on user-bucket DIAL Core failure).
+
+#### Scenario: User-bucket item exposes createdAt
+
+- **GIVEN** DIAL Core returns a user-bucket item with `createdAt: 1779206400000`
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the response item has `createdAt: 1779206400000`
+
+#### Scenario: Public-bucket item exposes createdAt
+
+- **GIVEN** DIAL Core returns a public-bucket item with `createdAt: 1779206400000`
+- **WHEN** the list is fetched
+- **THEN** that item has `createdAt: 1779206400000` and `publishedWithMe: true`
+
+#### Scenario: Missing creation time is omitted, not zeroed
+
+- **GIVEN** DIAL Core returns an item without `createdAt`
+- **WHEN** the list is fetched
+- **THEN** the response item has no `createdAt` property
+
+#### Scenario: Shared items carry no createdAt
+
+- **WHEN** the list includes an item from `getSharedResources`
+- **THEN** that item has no `createdAt` property and `updatedAt: 0`
+
+#### Scenario: Ordering is unchanged
+
+- **GIVEN** two items where the one with the later `createdAt` has the earlier `updatedAt`
+- **WHEN** the list is fetched
+- **THEN** items are still ordered by `updatedAt` descending
+

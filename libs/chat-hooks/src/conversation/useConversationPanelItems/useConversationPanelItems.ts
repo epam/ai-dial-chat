@@ -3,7 +3,7 @@ import type {
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { FilterTab } from '@epam/ai-dial-chat-shared';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { findDeploymentByIdOrReference } from '../../catalog/deployment-id';
 import { safeDecodeURIComponent } from '../../shared/string-utils';
 import { getModelIdFromConversationId } from '../get-model-id-from-conversation-id';
@@ -38,12 +38,13 @@ export interface UseConversationPanelItemsResolvers {
   /** Resolves the href to navigate to when the conversation row is clicked. */
   resolveHref: (panelConversationId: string) => string;
   /**
-   * Returns badge metadata for a scheduled-task conversation, or `undefined`
-   * when the item should not show a task badge.
+   * Returns the row presentation for a scheduled-task conversation — a
+   * host-rendered leading icon that replaces the deployment avatar, and the
+   * unread flag — or `undefined` for an ordinary conversation.
    */
-  resolveTaskBadge?: (
+  resolveTaskPresentation?: (
     item: ConversationListItemDto,
-  ) => { label: string; isUnread: boolean } | undefined;
+  ) => { leadingIcon?: ReactNode; isUnread: boolean } | undefined;
 }
 
 /** Parameters accepted by `useConversationPanelItems`. */
@@ -71,7 +72,7 @@ export const useConversationPanelItems = ({
   resolveIconUrl,
   resolveIconTooltip,
   resolveHref,
-  resolveTaskBadge,
+  resolveTaskPresentation,
 }: UseConversationPanelItemsParams) =>
   useMemo(
     () =>
@@ -92,7 +93,7 @@ export const useConversationPanelItems = ({
           ? safeDecodeURIComponent(modelId.split('/').pop() ?? modelId)
           : '';
 
-        const taskBadge = resolveTaskBadge?.(item);
+        const taskPresentation = resolveTaskPresentation?.(item);
 
         return {
           id,
@@ -103,11 +104,10 @@ export const useConversationPanelItems = ({
           isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: resolveHref(id),
-          ...(taskBadge != null
+          ...(taskPresentation != null
             ? {
-                showTaskBadge: true,
-                taskBadgeLabel: taskBadge.label,
-                isUnread: taskBadge.isUnread,
+                leadingIcon: taskPresentation.leadingIcon,
+                isUnread: taskPresentation.isUnread,
               }
             : {}),
         };
@@ -120,6 +120,6 @@ export const useConversationPanelItems = ({
       resolveIconUrl,
       resolveIconTooltip,
       resolveHref,
-      resolveTaskBadge,
+      resolveTaskPresentation,
     ],
   );

@@ -696,7 +696,6 @@ export enum ConversationPanelI18nKeys {
   RevokeSuccessTitle = 'conversationPanel.revoke.revokeSuccessTitle',
   RevokeSuccess = 'conversationPanel.revoke.revokeSuccess',
   RevokeError = 'conversationPanel.revoke.revokeError',
-  TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
   UnreadIndicatorLabel = 'conversationPanel.unreadIndicatorLabel',
 }
 

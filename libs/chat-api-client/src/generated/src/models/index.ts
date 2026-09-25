@@ -1250,6 +1250,12 @@ export interface ConversationListItemDto {
    */
   title: string;
   /**
+   * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  createdAt?: number;
+  /**
    * Unix epoch milliseconds of the last update.
    * @type {number}
    * @memberof ConversationListItemDto
