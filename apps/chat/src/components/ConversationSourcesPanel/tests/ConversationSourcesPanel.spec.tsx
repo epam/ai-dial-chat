@@ -97,11 +97,14 @@ vi.mock('@epam/ai-dial-source-panel', () => ({
   ),
 }));
 
+let mockSidebarConversationModelId: string | undefined;
+
 vi.mock('../../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => ({
     handleClose: mockHandleClose,
     isOpen: true,
     messages: [],
+    conversationModelId: mockSidebarConversationModelId,
   }),
 }));
 
@@ -130,7 +133,10 @@ vi.mock('../../../context/ActiveScheduledTaskContext', () => ({
 
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({
-    items: [{ id: 'gpt-5', displayName: 'GPT-5' }],
+    items: [
+      { id: 'gpt-5', displayName: 'GPT-5' },
+      { id: 'gpt-4o', displayName: 'GPT-4o' },
+    ],
   }),
 }));
 
@@ -252,6 +258,7 @@ describe('ConversationSourcesPanelContainer — download all', () => {
     mockUploaded = [];
     mockGenerated = [];
     mockConversations = [];
+    mockSidebarConversationModelId = undefined;
     resetActiveScheduledTaskMock();
   });
 
@@ -303,11 +310,36 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     );
     expect(screen.getByText('skills/public/deleted')).toBeTruthy();
   });
+
+  it('shows the deployment used for the run in Details, not the schedule current model', async () => {
+    activeScheduledTaskMock.status = 'task-conversation';
+    activeScheduledTaskMock.scheduleId = 'schedule-1';
+    activeScheduledTaskMock.runId = 'run-1';
+    activeScheduledTaskMock.taskState = 'success';
+    activeScheduledTaskMock.task = {
+      id: 'schedule-1',
+      displayName: 'Weekly digest',
+      model: 'gpt-5',
+      prompt: 'Do the thing',
+    } as ScheduledTaskDto;
+    mockSidebarConversationModelId = 'gpt-4o';
+
+    render(<ConversationSourcesPanelContainer />);
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'scheduledTasks.create.detailsSectionTitle',
+      }),
+    );
+
+    expect(screen.getByText('GPT-4o')).toBeTruthy();
+    expect(screen.queryByText('GPT-5')).toBeNull();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mockUploaded = [];
     mockGenerated = [];
     mockConversations = [];
+    mockSidebarConversationModelId = undefined;
     resetActiveScheduledTaskMock();
   });
 
@@ -729,6 +761,7 @@ describe('ConversationSourcesPanelContainer — source clicks', () => {
     mockGenerated = [];
     mockSources = [];
     mockConversations = [];
+    mockSidebarConversationModelId = undefined;
     resetActiveScheduledTaskMock();
     mockOpenAttachmentCanvas.mockResolvedValue(true);
     vi.spyOn(window, 'open').mockReturnValue(null);
