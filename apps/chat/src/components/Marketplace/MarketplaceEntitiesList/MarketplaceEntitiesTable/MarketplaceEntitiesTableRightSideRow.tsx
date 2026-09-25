@@ -28,6 +28,7 @@ import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/Marketpl
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
+import { TopicsTooltipContent } from '@/src/components/Marketplace/TopicsTooltipContent';
 
 import { DialLinkButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
@@ -121,20 +122,10 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
               ))}
               {!!hiddenTopics.length && (
                 <Tooltip
-                  triggerClassName="flex"
+                  triggerClassName="inline-flex self-start"
                   isTriggerClickable
                   isHoverDisabled
-                  tooltip={
-                    <div className="my-1 flex max-w-48 flex-wrap gap-2">
-                      {hiddenTopics.map((topic) => (
-                        <MarketplaceEntityTopic
-                          key={topic}
-                          topic={topic}
-                          className="max-w-full truncate"
-                        />
-                      ))}
-                    </div>
-                  }
+                  tooltip={<TopicsTooltipContent topics={hiddenTopics} />}
                   placement="top"
                   open={open}
                   onOpenChange={setOpen}
