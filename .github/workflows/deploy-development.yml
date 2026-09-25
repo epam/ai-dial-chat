@@ -34,9 +34,8 @@ jobs:
       DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
 
   trigger:
-    if: |
-      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development') ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
+    # Pause both automatic and manual deployments to the development-ng environments.
+    if: false
     strategy:
       fail-fast: false
       matrix:
