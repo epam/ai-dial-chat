@@ -217,12 +217,20 @@ apps/chat/src/
 
 Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `SettingsPage`, `NotFound`, and `auth/`.
 
-`SettingsPage` is always available — it is behind no feature flag. It renders a
-vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list declared
-in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum
-member plus one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
-`Preferences` is the tab selected on arrival, so `GET /api/v1/user/usage` is not requested until
-the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
+`SettingsPage` renders a vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list
+declared in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum member plus
+one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
+
+Each tab is a location. `ROUTES.SettingsTab` (`/settings/:tab`) is a single dynamic pattern rather
+than one route per tab, so adding a tab stays a config change; `app/settings-routes.tsx` registers
+it alongside the bare `ROUTES.Settings`, applying the `OverlayFeature.HideSettingsPage` gate to
+both so neither path mounts the lazy chunk while the page is hidden. `SettingsPage` reads the
+segment from the URL — it holds no selection state — resolves it against the ids the config
+returned, and redirects a bare, unknown, or withheld segment to the first configured tab. Build a
+concrete path with `buildSettingsTabPath` (`utils/routes.ts`) rather than interpolating the pattern.
+
+`Preferences` is the first configured tab and therefore the redirect target, so
+`GET /api/v1/user/usage` is not requested until the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
 boundaries, and DIAL Core reports each one's exclusive end as an optional `resetsAt` instant.
 `UsageTab` formats those at the application edge (`utils/usage-reset-time.ts` — the only place
 `Date`/`Intl` touch a reset time) and passes preformatted strings into `@epam/ai-dial-usage-dashboard`,

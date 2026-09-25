@@ -17,11 +17,14 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { ConversationInputI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useDeploymentUsageLimits } from '../../hooks/useDeploymentUsageLimits';
+import { SettingsTabs } from '../../types/settings-tabs';
 import { resolveLocalizedText } from '../../utils/locale';
+import { buildSettingsTabPath } from '../../utils/routes';
 import {
   findWorstCappedRow,
   getGaugeNeedleAngle,
@@ -262,7 +265,21 @@ const UsageLimitsControl: FC<Props> = ({
             </p>
           )}
 
-          <LimitsTab limits={limits} layout={LimitRowLayout.Stacked} />
+          <LimitsTab
+            limits={limits}
+            layout={LimitRowLayout.Stacked}
+            /* The popover lists only what needs attention, so this is the one
+               way to the whole picture from the conversation. */
+            footerNote={
+              <Link
+                to={buildSettingsTabPath(SettingsTabs.Usage)}
+                className="text-accent underline"
+                onClick={() => setIsOpen(false)}
+              >
+                {t(ConversationInputI18nKeys.FullUsageLink)}
+              </Link>
+            }
+          />
         </div>
       )}
     </div>

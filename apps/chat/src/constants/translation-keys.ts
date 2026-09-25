@@ -1241,6 +1241,7 @@ export enum ConversationInputI18nKeys {
   PeriodMonth = 'conversationInput.usageLimits.periodMonth',
   Value = 'conversationInput.usageLimits.value',
   ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
+  FullUsageLink = 'conversationInput.usageLimits.fullUsageLink',
 }
 
 export enum NotificationI18nKeys {

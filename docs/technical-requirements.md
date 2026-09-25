@@ -37,7 +37,8 @@ deliberately not shown, being rolling-minute counters the user cannot act on.
 
 Only limits at or past 75% of their cap are listed, and the trigger itself is
 absent while every limit is comfortable — the control warns rather than reports,
-and its presence is the signal. The complete picture lives on Settings → Usage. At rest the trigger shows a
+and its presence is the signal. The complete picture lives on Settings → Usage,
+which the popover links to directly at `/settings/usage`. At rest the trigger shows a
 compact dial — a circular face with a needle pivoting at its centre; hover,
 keyboard focus, and the open state reveal the percentage at the dial's
 inline-start side inside one rounded capsule.

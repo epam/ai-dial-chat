@@ -1,6 +1,8 @@
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useDeploymentUsageLimits } from '../../../hooks/useDeploymentUsageLimits';
@@ -70,8 +72,12 @@ const defaultHookResult: UseDeploymentUsageLimitsResult = {
   refresh: vi.fn(),
 };
 
+/* The footer link is a real `<Link>`, so every case needs a router. */
+const renderInRouter = (ui: ReactNode) =>
+  render(<MemoryRouter>{ui}</MemoryRouter>);
+
 const renderControl = (deploymentId: string | undefined = 'gpt-4o') =>
-  render(<UsageLimitsControl deploymentId={deploymentId} />);
+  renderInRouter(<UsageLimitsControl deploymentId={deploymentId} />);
 
 const openPopover = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(screen.getByRole('button'));
@@ -174,7 +180,7 @@ describe('UsageLimitsControl', () => {
   });
 
   it('renders nothing when no deployment is selected', () => {
-    render(<UsageLimitsControl deploymentId={undefined} />);
+    renderInRouter(<UsageLimitsControl deploymentId={undefined} />);
 
     expect(screen.queryByRole('button')).toBeNull();
   });
@@ -342,6 +348,21 @@ describe('UsageLimitsControl', () => {
       expect(screen.getAllByRole('progressbar')).toHaveLength(3);
     });
 
+    it('links to the Usage tab and dismisses itself on the way there', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      await openPopover(user);
+      const link = screen.getByRole('link', {
+        name: 'conversationInput.usageLimits.fullUsageLink',
+      });
+      expect(link.getAttribute('href')).toBe('/settings/usage');
+
+      await user.click(link);
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
     it('titles the popover with the selected deployment and labels the dialog with it', async () => {
       const user = userEvent.setup();
       renderControl();
@@ -391,14 +412,16 @@ describe('UsageLimitsControl', () => {
         refresh,
       });
 
-      const { rerender } = render(
+      const { rerender } = renderInRouter(
         <UsageLimitsControl deploymentId="gpt-4o" isGenerationInProgress />,
       );
       rerender(
-        <UsageLimitsControl
-          deploymentId="gpt-4o"
-          isGenerationInProgress={false}
-        />,
+        <MemoryRouter>
+          <UsageLimitsControl
+            deploymentId="gpt-4o"
+            isGenerationInProgress={false}
+          />
+        </MemoryRouter>,
       );
 
       expect(refresh).toHaveBeenCalledOnce();

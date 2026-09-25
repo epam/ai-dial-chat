@@ -127,6 +127,24 @@ exists precisely for it ("e.g. a link to a full usage-limits page" is its docume
 The link must close the popover on activation, or the user navigates with a dialog still mounted
 over the destination.
 
+### Decision 7 — The settings route pair lives in its own module, so the gate is testable
+
+Discovered during implementation: the repository has **no test for `app.tsx`'s route table at all**,
+and `App` is a 36-import component wired to a dozen contexts, so mounting it to assert two redirects
+would be disproportionate and brittle. The `settings-page-shell` scenarios about the disabled-flag
+redirect were, in practice, never covered.
+
+`renderSettingsRoutes(isSettingsPageHidden)` therefore lives in `apps/chat/src/app/settings-routes.tsx`
+and returns the `<Route>` elements `app.tsx` spreads into its `<Routes>`. It owns the lazy
+`SettingsPage` import, so the chunk boundary moves with it. A test mounts the returned routes in a
+`MemoryRouter` with the page mocked, and covers both paths in both flag states cheaply.
+
+Generating both paths from one array with one gate expression also makes the bypass this guards
+against structurally impossible: there is no place to add a settings path that skips the gate.
+
+*Alternative:* leave the gate inline in `app.tsx` and accept it stays untested, as it was before.
+Rejected — the spec asserts the behaviour, so something should hold it.
+
 ## Risks / Trade-offs
 
 1. **[Merge conflict with `add-settings-preferences-tab`]** → The two changes are disjoint by file:

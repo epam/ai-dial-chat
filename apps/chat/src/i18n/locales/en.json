@@ -1220,7 +1220,8 @@
       "periodWeek": "This week",
       "periodMonth": "This month",
       "value": "{{used}} / {{total}}",
-      "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
+      "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
+      "fullUsageLink": "See all usage"
     }
   },
   "customApp": {
