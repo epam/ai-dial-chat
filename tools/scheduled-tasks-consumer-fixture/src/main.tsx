@@ -256,6 +256,7 @@ const Fixture = () => {
           labels={{
             backAriaLabel: 'Back',
             activeStatusLabel: 'Active',
+            completedFieldLabel: 'Status',
             deleteButtonLabel: 'Delete',
             editButtonLabel: 'Edit',
             deletedStateLabel: 'Deleted',

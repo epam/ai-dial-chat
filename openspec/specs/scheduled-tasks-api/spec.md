@@ -668,16 +668,21 @@ On a successful upstream `204 No Content`, the endpoint SHALL respond `204 No Co
 
 ### Requirement: Scheduled task ownership and trigger-kind metadata
 
-`ScheduledTaskDto` SHALL include optional `serviceId` (upstream `service_id`), `triggerType` (upstream `trigger_type`, one of `cron`/`date`), `updatedAt` (upstream `updated_at`, ISO-8601), and `createdBy` (upstream `created_by`, the owning user's sub) fields, confirmed present on a live DIAL Scheduler list response. These are additive optional fields; mapping MUST NOT throw when any of them is absent. `triggerType` reflects which trigger variant the schedule uses even when the list endpoint's `trigger` object itself is absent (see the "List scheduled tasks" requirement above).
+`ScheduledTaskDto` SHALL include optional `serviceId` (upstream `service_id`), `triggerType` (one of `cron`/`date`), `updatedAt` (upstream `updated_at`, ISO-8601), and `createdBy` (upstream `created_by`, the owning user's sub) fields, confirmed present on a live DIAL Scheduler list response. These are additive optional fields; mapping MUST NOT throw when any of them is absent. `triggerType` reflects which trigger variant the schedule uses even when the list endpoint's `trigger` object itself is absent (see the "List scheduled tasks" requirement above). Upstream GET responses (observed live) carry the nested `trigger` object but no `trigger_type` — `fromUpstreamSchedule` SHALL therefore derive `triggerType` from the nested trigger shape (`trigger.cron` present → `cron`, `trigger.date` present → `date`) whenever `trigger_type` is absent, so both response shapes name the trigger kind. The completed-state derivation and the detail page's disabled-switch fallbacks both branch on `triggerType`, so a GET response must not silently lose it.
 
 #### Scenario: Upstream ownership/trigger-kind fields are mapped
 
 - **WHEN** an upstream schedule includes `service_id`, `trigger_type`, `updated_at`, and `created_by`
 - **THEN** the mapped `ScheduledTaskDto` includes `serviceId`, `triggerType`, `updatedAt`, and `createdBy` with the same values
 
+#### Scenario: GET response without trigger_type derives the kind from the nested trigger
+
+- **WHEN** an upstream GET response includes `trigger: { date: null, cron: { fields, end_date } }` and no `trigger_type` field
+- **THEN** the mapped `ScheduledTaskDto.triggerType` is `cron` (derived from the nested trigger), so downstream completed-state derivation behaves identically to a list response
+
 #### Scenario: Missing ownership/trigger-kind fields does not throw
 
-- **WHEN** an upstream schedule omits `service_id`, `trigger_type`, `updated_at`, and/or `created_by`
+- **WHEN** an upstream schedule omits `service_id`, `trigger_type`, `updated_at`, and/or `created_by` and its nested `trigger` names no variant
 - **THEN** the corresponding `ScheduledTaskDto` fields are `undefined`, and mapping does not throw
 
 ### Requirement: List response surfaces upstream pagination metadata
@@ -764,6 +769,69 @@ Both fields apply only to a `cron` (recurring) trigger and are optional; when un
 - **WHEN** `fromUpstreamSchedule` is called with an upstream object that has no `trigger` field (as returned by the list endpoint for individual items)
 - **THEN** it returns a `ScheduledTaskDto` with `trigger.cron` `undefined`, without throwing
 
+### Requirement: Scheduled task completed-state field
+
+`ScheduledTaskDto` SHALL include an optional `isCompleted: boolean` field, computed by `ScheduledTasksService` (not by `fromUpstreamSchedule`, which cannot see run history) on both the list and get paths. `isCompleted: true` means the schedule can no longer produce a future run, via exactly two terminal shapes:
+
+- **Expired recurring schedule:** `triggerType === 'cron'` AND `nextRunTime` is null AND `trigger.cron.endDate` is in the past. Unambiguous from the schedule fields alone — no runs call is issued. A cron schedule with no `endDate`, or with one still in the future, is merely paused, not terminal. When the response carries no `trigger.cron.endDate` (a list shape without the nested trigger), this shape is not detected and the task keeps today's Paused display.
+- **Finished one-time schedule:** `triggerType === 'date'` AND (`nextRunTime` is null OR `trigger.date` is in the past) — the candidate gate, an OR so it is path-independent — AND the newest run (fetched via `GET schedules/{scheduleId}/runs?limit=1`, newest first per the endpoint's documented ordering) exists with status `Success` or `Error`. `InProgress`, `Missed`, and an empty run list all yield `isCompleted: false` for candidates.
+
+Non-terminal schedules yield `isCompleted: false` with no runs call. Derivation SHALL use the BFF's server clock for the date comparisons. A failed runs call MUST NOT fail the parent list/get response: the affected item SHALL carry `isCompleted: undefined` (mapped by the frontend identically to `false`) and the failure SHALL be logged at warn. The field is a documented assumption alongside `isActive` (no authoritative upstream state field is confirmed); when one is confirmed, both derivations MUST be replaced in this same service/mapper location, not duplicated elsewhere.
+
+#### Scenario: One-time task whose run finished maps to isCompleted true
+
+- **WHEN** the upstream schedule has `trigger_type: "date"`, `next_run_time: null`, and its newest run has status `success` (or `error`)
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `true`
+
+#### Scenario: One-time task currently running maps to isCompleted false
+
+- **WHEN** the upstream schedule has `trigger_type: "date"`, `next_run_time: null`, and its newest run has status `in_progress`
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `false`
+
+#### Scenario: Paused one-time task that never ran maps to isCompleted false
+
+- **WHEN** the upstream schedule has `trigger_type: "date"`, `next_run_time: null` (paused before its date arrived, or the date passed while paused), and the runs list is empty (or the newest run has status `missed`)
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `false`, and no run-record-based completion is claimed
+
+#### Scenario: Recurring schedule whose activity window has closed maps to isCompleted true without a runs call
+
+- **WHEN** the upstream schedule has `trigger_type: "cron"`, `next_run_time: null`, and a `trigger.cron.end_date` in the past
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `true` and no runs check is issued for it
+
+#### Scenario: Recurring schedule with an open or unbounded window never reports completed
+
+- **WHEN** the upstream schedule has `trigger_type: "cron"` and either no `trigger.cron.end_date`, an `end_date` in the future, or a non-null `next_run_time`
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `false` and no runs check is issued for it
+
+#### Scenario: Future one-time task is not a candidate
+
+- **WHEN** the upstream schedule has `trigger_type: "date"` and a non-null `next_run_time` (or, on the get path, a `trigger.date` in the future)
+- **THEN** the mapped `ScheduledTaskDto.isCompleted` is `false` and no runs check is issued for it
+
+#### Scenario: Failed runs check degrades the list item, not the list
+
+- **WHEN** the runs check for a candidate item fails upstream during a list request
+- **THEN** the list response still succeeds, that item's `isCompleted` is `undefined`, and the failure is logged at warn
+
+#### Scenario: Get path computes the same field
+
+- **WHEN** `GET /api/v1/scheduled-tasks/{scheduleId}` is called for a one-time schedule whose date is past and whose newest run is terminal
+- **THEN** the returned `ScheduledTaskDto.isCompleted` is `true`, computed with the same rule as the list path
+
+### Requirement: Completed-state list enrichment is cached and bounded
+
+The runs checks in `listScheduledTasks` SHALL execute inside the existing `withCachedDialRequest` wrapper (30s TTL, the existing `{limit, offset, search, sort}` cache-key family, existing invalidation on create/update/pause/resume/delete), issued in parallel only for the page's candidate items — at most one `runs?limit=1` call per candidate item, so a cache miss costs no more concurrent upstream calls than the page's `limit` (hard cap 100). No separate cache SHALL be introduced for the enrichment. No concurrency limiter is required while the burst is page-bounded; when DIAL Scheduler gains an authoritative state field or a batch runs endpoint, the fan-out SHALL be replaced in this one location.
+
+#### Scenario: Cache hit skips the runs checks
+
+- **WHEN** `listScheduledTasks` is served from the 30s list cache
+- **THEN** no upstream runs calls are issued and `isCompleted` values come from the cached response
+
+#### Scenario: Candidate checks are parallel and limited to candidates
+
+- **WHEN** a cache-missed list page contains 20 cron schedules and 2 date-trigger schedules with null `next_run_time`
+- **THEN** exactly 2 upstream `runs?limit=1` calls are issued, in parallel, before the response is returned
+
 ### Requirement: Scheduled execution uses the ordinary completion skill contract
 
 The scheduled completion SHALL carry one selected skill in `properties.payload.messages[0].custom_content.skills`. Scheduler SHALL preserve this message-level extension in storage and detail responses and forward it to DIAL Core during execution. A skill-only task SHALL use empty-string message content. Execution SHALL use the existing offline-credentials identity to access the skill resource, without a separate skill execution API or local worker.
@@ -836,6 +904,7 @@ No new endpoint, role, telemetry, or cache SHALL be introduced. Existing session
 - **THEN** opening detail/edit loads that skill and does not treat the list omission as a removal
 
 #### Scenario: Encoded reference matches chat
+The runs checks in `listScheduledTasks` SHALL execute inside the existing `withCachedDialRequest` wrapper (30s TTL, the existing `{limit, offset, search, sort}` cache-key family, existing invalidation on create/update/pause/resume/delete), issued in parallel only for the page's candidate items — at most one `runs?limit=1` call per candidate item, so a cache miss costs no more concurrent upstream calls than the page's `limit` (hard cap 100). No separate cache SHALL be introduced for the enrichment. No concurrency limiter is required while the burst is page-bounded; when DIAL Scheduler gains an authoritative state field or a batch runs endpoint, the fan-out SHALL be replaced in this one location.
 
 - **WHEN** a selected resource has spaces, Unicode, or already-encoded segments
 - **THEN** the Scheduler completion reference matches chat's encoding without double encoding and resolves to the same resource after read/edit

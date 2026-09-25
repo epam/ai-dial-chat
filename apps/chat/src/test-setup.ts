@@ -107,3 +107,63 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => mockUseTranslationResult,
   Trans: MockTrans,
 }));
+
+/*
+ * Pin the runtime default locale to 'en' for `new Intl.NumberFormat(...)` /
+ * `new Intl.DateTimeFormat(...)` calls that pass no locale. Components and
+ * mappers create such formatters at module load, so the pin has to run in
+ * this setup file, before any module under test is imported; explicit locales
+ * ('fr', 'de-DE', …) pass through untouched. Without it, assertions on
+ * formatted numbers and dates flip with the host machine's locale — a 'uk'
+ * default renders `7 500` instead of `7,500`, and a localized weekday name
+ * instead of `Monday`. Note: `Number.prototype.toLocaleString` and
+ * `Date.prototype.toLocaleDateString` use the engine intrinsics, not the
+ * `Intl` global, so they are NOT covered by this pin.
+ *
+ * The wrappers are plain functions (not classes) because Intl constructors
+ * are legal to call without `new` (`Intl.DateTimeFormat()` in
+ * map-scheduled-task-dto.ts does exactly that), and a class constructor
+ * would throw there. A function returning the real instance covers both
+ * call styles; `setPrototypeOf` keeps the statics (`supportedLocalesOf`)
+ * reachable.
+ *
+ * A plain function's own `.prototype` is a fresh empty object, which would
+ * shadow the real `Intl.*.prototype` — hiding `resolvedOptions` and `format`
+ * from `vi.spyOn(Intl.*.prototype, ...)`. Assigning the real prototype onto
+ * the wrapper keeps that standard mocking idiom working.
+ */
+const RealNumberFormat = Intl.NumberFormat;
+
+const PinnedNumberFormat = function (
+  locale?: Intl.LocalesArgument,
+  options?: Intl.NumberFormatOptions,
+) {
+  return new RealNumberFormat(locale ?? 'en', options);
+} as unknown as typeof Intl.NumberFormat;
+
+Object.setPrototypeOf(PinnedNumberFormat, RealNumberFormat);
+/*
+ * Assigned via defineProperty because the Intl constructor types mark
+ * `prototype` as readonly, which rejects a plain assignment.
+ */
+Object.defineProperty(PinnedNumberFormat, 'prototype', {
+  value: RealNumberFormat.prototype,
+});
+
+globalThis.Intl.NumberFormat = PinnedNumberFormat;
+
+const RealDateTimeFormat = Intl.DateTimeFormat;
+
+const PinnedDateTimeFormat = function (
+  locale?: Intl.LocalesArgument,
+  options?: Intl.DateTimeFormatOptions,
+) {
+  return new RealDateTimeFormat(locale ?? 'en', options);
+} as unknown as typeof Intl.DateTimeFormat;
+
+Object.setPrototypeOf(PinnedDateTimeFormat, RealDateTimeFormat);
+Object.defineProperty(PinnedDateTimeFormat, 'prototype', {
+  value: RealDateTimeFormat.prototype,
+});
+
+globalThis.Intl.DateTimeFormat = PinnedDateTimeFormat;

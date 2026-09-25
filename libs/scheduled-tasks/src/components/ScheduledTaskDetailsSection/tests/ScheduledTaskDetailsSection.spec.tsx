@@ -8,6 +8,7 @@ const labels: ScheduledTaskDetailsSectionProps['labels'] = {
   modelLabel: 'Model or Agent',
   repeatsLabel: 'Repeats',
   activeWindowLabel: 'Active',
+  completedFieldLabel: 'Status',
 };
 
 const renderSection = (props?: Partial<ScheduledTaskDetailsSectionProps>) =>

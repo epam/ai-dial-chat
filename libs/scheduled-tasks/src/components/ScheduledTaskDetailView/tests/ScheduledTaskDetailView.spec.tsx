@@ -162,6 +162,7 @@ const labels: ScheduledTaskDetailViewLabels = {
   repeatsLabel: 'Repeats',
   activeWindowLabel: 'Active',
   activeStatusLabel: 'Active',
+  completedFieldLabel: 'Status',
   configurationTitle: 'Configuration',
   instructionsLabel: 'Instructions',
   retryLabel: 'Retry',
@@ -1119,5 +1120,113 @@ describe('ScheduledTaskDetailView', () => {
         }),
       ).toBeTruthy();
     });
+  });
+});
+
+describe('ScheduledTaskDetailView — completed state', () => {
+  it('renders the completed field in the Details section when completedLabel is supplied', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={{ ...labels, completedFieldLabel: 'Status' }}
+        onBack={vi.fn()}
+        displayName="One-time report"
+        isActive={false}
+        completedLabel="Completed"
+        runs={[]}
+      />,
+    );
+
+    expect(screen.getByText('Status')).toBeTruthy();
+    expect(screen.getByText('Completed')).toBeTruthy();
+  });
+
+  it('renders no completed field when completedLabel is omitted', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="One-time report"
+        isActive={false}
+        runs={[]}
+      />,
+    );
+
+    expect(screen.queryByText('Status')).toBeNull();
+    expect(screen.queryByText('Completed')).toBeNull();
+  });
+
+  it('renders no Active switch when isCompleted is true, even with isActive supplied', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="One-time report"
+        isCompleted
+        isActive={false}
+        isActiveDisabled
+        activeDisabledReason="Already ran — cannot be rescheduled"
+        runs={[]}
+      />,
+    );
+
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(
+      screen.queryByText('Already ran — cannot be rescheduled'),
+    ).toBeNull();
+  });
+
+  it('renders the disabled-switch reason next to the Active switch when isActiveDisabled is true', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="One-time report"
+        isActive={false}
+        isActiveDisabled
+        activeDisabledReason="Already ran — cannot be rescheduled"
+        runs={[]}
+      />,
+    );
+
+    expect(
+      screen.getByText('Already ran — cannot be rescheduled'),
+    ).toBeTruthy();
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+  });
+
+  it('renders no reason text when the switch is togglable', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="One-time report"
+        isActive={true}
+        activeDisabledReason="Already ran — cannot be rescheduled"
+        runs={[]}
+      />,
+    );
+
+    expect(
+      screen.queryByText('Already ran — cannot be rescheduled'),
+    ).toBeNull();
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', false);
+  });
+
+  it('renders no reason text when activeDisabledReason is omitted', () => {
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="One-time report"
+        isActive={false}
+        isActiveDisabled
+        runs={[]}
+      />,
+    );
+
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+    expect(
+      screen.queryByText('Already ran — cannot be rescheduled'),
+    ).toBeNull();
   });
 });

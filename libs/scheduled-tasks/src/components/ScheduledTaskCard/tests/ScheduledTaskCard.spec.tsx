@@ -61,7 +61,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconPlayerPause: () => <svg />,
+  IconPlayerPause: () => <svg data-icon="pause" />,
+  IconCheck: ({ 'aria-hidden': ariaHidden }: { 'aria-hidden'?: boolean }) => (
+    <svg data-icon="check" aria-hidden={ariaHidden} />
+  ),
 }));
 
 const buildItem = (
@@ -217,5 +220,95 @@ describe('ScheduledTaskCard — public class names', () => {
     expect(screen.getByRole('button').classList).toContain(
       SCHEDULED_TASKS_CLASS.card,
     );
+  });
+});
+
+describe('ScheduledTaskCard — completed state', () => {
+  it('renders the "Completed" badge instead of the schedule pill when isCompleted is true', () => {
+    render(<ScheduledTaskCard item={buildItem({ isCompleted: true })} />);
+
+    expect(screen.getByText('Completed')).toBeTruthy();
+    expect(screen.queryByText('Every Monday 12:00')).toBeNull();
+  });
+
+  it('renders exactly one status element — the Completed badge wins over Paused', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({ isCompleted: true, isActive: false })}
+      />,
+    );
+
+    expect(screen.getByText('Completed')).toBeTruthy();
+    // the badge shape, not the rounded-lg schedule pill — catches a status
+    // that resolves to undefined and silently falls into the pill branch
+    expect(screen.getByText('Completed').className).toContain('rounded-full');
+    expect(screen.queryByText('Paused')).toBeNull();
+    expect(screen.queryByText('Every Monday 12:00')).toBeNull();
+  });
+
+  it('shows the check icon hidden from assistive technology, with the label as the accessible text', () => {
+    const { container } = render(
+      <ScheduledTaskCard item={buildItem({ isCompleted: true })} />,
+    );
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- SVG carries no role; asserting the aria-hidden attribute directly
+    const checkIcon = container.querySelector('svg[data-icon="check"]');
+    expect(checkIcon?.getAttribute('aria-hidden')).toBe('true');
+    expect(screen.getByText('Completed')).toBeTruthy();
+  });
+
+  it('uses the completedBadgeLabel override when provided', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({ isCompleted: true })}
+        labels={{ completedBadgeLabel: 'Terminé' }}
+      />,
+    );
+
+    expect(screen.getByText('Terminé')).toBeTruthy();
+    expect(screen.queryByText('Completed')).toBeNull();
+  });
+
+  it('applies the completedBadgeClassName typography override to the badge text', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({ isCompleted: true })}
+        styles={{ typography: { completedBadgeClassName: 'dial-small-text' } }}
+      />,
+    );
+
+    expect(screen.getByText('Completed').className).toContain(
+      'dial-small-text',
+    );
+  });
+
+  it('sets the --stc-completed-text CSS variable from the completedBadgeText color override', () => {
+    const { container } = render(
+      <ScheduledTaskCard
+        item={buildItem({ isCompleted: true })}
+        styles={{ colors: { completedBadgeText: '#123456' } }}
+      />,
+    );
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- verifying the CSS custom property on the card root, which carries no role
+    const cardRoot = container.querySelector('article');
+    expect(cardRoot?.getAttribute('style')).toContain(
+      '--stc-completed-text: #123456',
+    );
+  });
+
+  it("renders exactly today's behavior when isCompleted is false or omitted", () => {
+    const { unmount } = render(
+      <ScheduledTaskCard
+        item={buildItem({ isCompleted: false, isActive: false })}
+      />,
+    );
+    expect(screen.getByText('Paused')).toBeTruthy();
+    expect(screen.queryByText('Completed')).toBeNull();
+    unmount();
+
+    render(<ScheduledTaskCard item={buildItem()} />);
+    expect(screen.getByText('Every Monday 12:00')).toBeTruthy();
+    expect(screen.queryByText('Completed')).toBeNull();
   });
 });

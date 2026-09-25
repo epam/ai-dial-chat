@@ -1,0 +1,29 @@
+.schedulePill {
+  background: var(--stc-pill-bg, var(--bg-layer-sunken, #eef1f7));
+  border-color: var(--stc-pill-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.scheduleLabel {
+  color: var(
+    --stc-schedule-label-text,
+    var(--text-control-disable-primary, #848e9c)
+  );
+}
+
+.pausedPill {
+  background: var(--stc-paused-bg, transparent);
+  border-color: var(--stc-paused-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.pausedLabel {
+  color: var(--stc-paused-text, var(--text-control-disable-primary, #848e9c));
+}
+
+.completedPill {
+  background: var(--stc-completed-bg, transparent);
+  border-color: var(--stc-completed-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.completedLabel {
+  color: var(--stc-completed-text, var(--text-secondary, #57647a));
+}
