@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { AttachmentCanvasContent } from '../../../models/attachment-canvas';
 import {
@@ -80,6 +81,22 @@ describe('AttachmentCanvas', () => {
     render(<AttachmentCanvas {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /close/i }));
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders host-supplied leftActions in the header', async () => {
+    const onBack = vi.fn();
+    render(
+      <AttachmentCanvas
+        {...defaultProps}
+        leftActions={
+          <button type="button" onClick={onBack}>
+            Open panel
+          </button>
+        }
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Open panel' }));
+    expect(onBack).toHaveBeenCalledOnce();
   });
 
   it('does not render a download button when onDownload is not provided', () => {

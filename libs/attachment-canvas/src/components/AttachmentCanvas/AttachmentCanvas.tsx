@@ -28,6 +28,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   onClose,
   content,
   fileName,
+  leftActions,
   labels: {
     ariaLabel,
     closeLabel = 'Close',
@@ -196,6 +197,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           panelStyles?.className,
         ),
       }}
+      leftActions={leftActions}
       rightActions={
         showHtmlToggle ||
         showCopyText ||

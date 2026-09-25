@@ -115,7 +115,7 @@ needed from the host.
 
 ### AttachmentCanvas
 
-Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required. When `content.type` is `McpApp` and `content.onReload` is set, the header shows a reload action (labelled by `labels.mcpAppReloadLabel`, default `'Reload'`) that lets the host re-fetch the resource and re-resolve the tool result from scratch — the lib has no cache of its own, so this is purely a signal for the app layer to bypass whatever cache it keeps. When content type is `MarkdownTable`, supply the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own copy-as-CSV/TXT/Markdown and download-as-CSV actions in an inline header above the table — the same header a Markdown table renders inline in chat. The panel's own header only ever shows its close button for this content type.
+Renders the active attachment content based on its type, inside a resizable side panel. `isOpen`, `onClose`, `content`, and `labels` are required. When `content.type` is `McpApp` and `content.onReload` is set, the header shows a reload action (labelled by `labels.mcpAppReloadLabel`, default `'Reload'`) that lets the host re-fetch the resource and re-resolve the tool result from scratch — the lib has no cache of its own, so this is purely a signal for the app layer to bypass whatever cache it keeps. When content type is `MarkdownTable`, supply the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own copy-as-CSV/TXT/Markdown and download-as-CSV actions in an inline header above the table — the same header a Markdown table renders inline in chat. The panel's own header only ever shows its close button for this content type. Pass `leftActions` to render host-supplied controls in the header before the title (e.g. a "back to list" button); the lib renders them as given and attaches no behavior of its own.
 
 ```tsx
 import {
@@ -153,7 +153,7 @@ import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
 
 ### AttachmentCanvasContainer
 
-Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults. Forwards the table copy/download labels and `tableDownloadFilename` to `AttachmentCanvas` for the `MarkdownTable` content type.
+Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults. Forwards the table copy/download labels and `tableDownloadFilename` to `AttachmentCanvas` for the `MarkdownTable` content type. `leftActions` is forwarded to `AttachmentCanvas` unchanged — use it for host navigation that the full-width mobile panel would otherwise cover.
 
 Pass `loadPdf?: (url: string) => Promise<Blob>` to provide a host-owned PDF
 loader. It is forwarded to the viewer, just as on `AttachmentCanvas` and
@@ -168,6 +168,7 @@ import {
 
 <AttachmentCanvasProvider>
   <AttachmentCanvasContainer
+    leftActions={isMobile ? <OpenSourcesButton /> : undefined}
     isMobile={isMobile}
     maxWidth={1200}
     configurePdfWorker={configurePdfWorker}

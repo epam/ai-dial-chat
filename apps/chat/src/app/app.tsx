@@ -32,6 +32,7 @@ import ConversationPanelView from '../components/ConversationPanel/ConversationP
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
+import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
 import Navigation from '../components/Navigation/Navigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -578,6 +579,7 @@ const App: FC = () => {
                 AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
               ),
             }}
+            leftActions={isMobile ? <SourcesSidebarToggle /> : undefined}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
             maxWidth={canvasMaxWidth}

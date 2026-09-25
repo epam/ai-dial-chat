@@ -2,7 +2,7 @@ import {
   copyToClipboard,
   type CodeBlockTheme,
 } from '@epam/ai-dial-chat-shared';
-import { memo, useCallback, type FC } from 'react';
+import { memo, useCallback, type FC, type ReactNode } from 'react';
 import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
 import type {
   AttachmentCanvasLabels,
@@ -19,6 +19,8 @@ import { AttachmentCanvas } from '../AttachmentCanvas/AttachmentCanvas';
 export interface AttachmentCanvasContainerProps {
   /** User-visible strings. All fields have English defaults. */
   labels?: AttachmentCanvasLabels;
+  /** Host-supplied controls rendered in the header before the title. */
+  leftActions?: ReactNode;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. Defaults to `false`. */
   isMobile?: boolean;
   /** Initial panel width in pixels. When omitted, SidebarPanel uses its own default. */
@@ -50,6 +52,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
   memo(
     ({
       labels,
+      leftActions,
       isMobile = false,
       defaultWidth,
       maxWidth,
@@ -131,6 +134,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           onClose={closeCanvas}
           content={content}
           fileName={fileName}
+          leftActions={leftActions}
           labels={{
             ariaLabel,
             closeLabel,
