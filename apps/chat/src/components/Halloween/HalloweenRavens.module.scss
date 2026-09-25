@@ -1,0 +1,97 @@
+/* Physical viewport coordinates keep the birds attached to measured LTR/RTL UI. */
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  contain: layout style;
+}
+
+.bird,
+.nest,
+.copies,
+.fallback,
+.edgeGap {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.bird {
+  inline-size: 0;
+  block-size: 0;
+  transform-origin: 0 0;
+  z-index: 3;
+}
+
+.art {
+  position: absolute;
+  left: calc(var(--raven-size) * -0.95);
+  top: calc(var(--raven-size) * -0.291667);
+  inline-size: var(--raven-size);
+  block-size: calc(var(--raven-size) * 0.916667);
+  transform-origin: 95% 31.818182%;
+  transform: scaleX(var(--raven-facing));
+
+  svg {
+    display: block;
+    inline-size: 100%;
+    overflow: visible;
+  }
+
+  [data-raven-wing] {
+    transform: rotate(-8deg) scaleY(0.32);
+  }
+}
+
+.ribbon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  transform-origin: 0 0;
+  opacity: 0;
+}
+
+.nest {
+  z-index: 2;
+  inline-size: 0;
+  block-size: 0;
+  transform-origin: 0 0;
+
+  > svg {
+    position: absolute;
+    left: calc(var(--nest-width) * -0.5);
+    top: calc(var(--nest-width) * -0.21);
+    inline-size: var(--nest-width);
+    overflow: visible;
+  }
+}
+
+.copies,
+.fallback {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.fallback {
+  opacity: 0;
+}
+
+.edgeGap {
+  block-size: 3px;
+  border-radius: 2px;
+  opacity: 0;
+}
+
+.scene[data-ready='false'] {
+  visibility: hidden;
+}
+
+.scene[data-animated='true'] {
+  .bird,
+  [data-raven-twig] {
+    opacity: 0;
+  }
+}

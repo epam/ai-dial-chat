@@ -51,21 +51,52 @@ The Halloween module and its artwork SHALL load on demand only when selected on 
 
 ### Requirement: The ghost celebration is a flock of individuals, not one sprite
 
-`buildHalloweenGhostFlight` SHALL lay out `HALLOWEEN_GHOST_COUNT` ghosts, each with its own entry edge, arc, size, tilt, opacity, pace and start delay, so the flock reads as individuals rather than a row moving as one body. A ghost SHALL enter from off-screen on one side at its own height, cross the viewport along an arc whose midpoint sits above the straight line between entry and exit, and leave past the opposite edge — entry and exit are always on opposite sides, so no ghost turns around mid-flight. Entry edges SHALL alternate, so ghosts cross in both directions.
+The Ghost celebration SHALL stage possession of distinct visible interface elements and an unsuccessful attempt to frighten the main pumpkin. Up to three mobile or five desktop small elements SHALL be selected across available history, welcome/starter and composer-control areas. Each target SHALL contain at most 60 descendants and SHALL NOT be clipped, hidden, focused, expanded, disabled, editable or contain an editable subtree. The composer itself SHALL NOT be cloned. Each borrowed visual copy SHALL float with attached expressive eyes while its real element keeps layout, focus and data.
 
-Each ghost SHALL be drawn as one of the `HalloweenGhostVariant` silhouettes, cycled so no two neighbours in the flock are alike, as inline SVG rather than an emoji — the variants differ in outline, face and tint, with translucent gradients, cloth folds and recessed eyes. Its vertical bob SHALL animate on an inner element, so it composes with the flight instead of competing for the same `transform`.
+Ghosts SHALL retain the distinct `HalloweenGhostVariant` SVG silhouettes, tints, translucent cloth folds and recessed faces. Each SHALL have its own arrival, possession point and departure. One brave ghost SHALL approach the existing pumpkin and try to frighten it; the pumpkin SHALL answer with a glowing grin. The brave ghost SHALL recoil and hide with its tail briefly exposed. Other ghosts SHALL peek out from their separate homes and escape along different routes with staggered departures. The interface SHALL be fully restored within twelve seconds, before the existing fourteen-second deadline.
 
-Offsets SHALL be expressed in `vw`/`vh` and passed as custom properties, so one keyframe set serves every flock and a flight crosses the viewport at any size. The paths are deliberately direction-agnostic — each ghost picks its own side — so the flock SHALL NOT flip under RTL.
+Missing pumpkin or eligible targets SHALL retain `buildHalloweenGhostFlight` as a decorative fallback: `HALLOWEEN_GHOST_COUNT` ghosts with distinct size, pace, tilt, opacity and delay, alternating entry edges, upward arcs and opposite-edge exits. Its viewport-relative CSS paths SHALL retain inner vertical bobbing and SHALL NOT flip in RTL. Consecutive ghosts SHALL use different variants.
+
+`HalloweenGhosts` SHALL own a stable per-activation measured/random plan and temporary artwork; CelebrationProvider SHALL continue owning selection, lifecycle and notifications. No shared cache or persistent state SHALL be added. The scene SHALL keep the existing `UI_EVENT=halloween` gate without `ENABLED_FEATURES`/roles additions, and reuse the existing translated Ghost toast with the secret-phrase hint. No API calls, new strings, telemetry, core-component changes or library changes SHALL be introduced.
+
+Playback SHALL use bounded visual copies and precomputed transforms/opacity on one timeline, with no layout reads or React updates per frame. Copies SHALL be inert, and all artwork SHALL be aria-hidden and pointer-transparent. Physical measured coordinates SHALL preserve attachment in LTR and RTL. Reduced motion or unsupported animation APIs SHALL show stationary, distributed ghosts without borrowing or pumpkin animation. Interaction, scrolling, resizing, source mutation, hidden documents, live motion changes, replacement and unmount SHALL stop pending work and restore originals immediately; canceled scenes SHALL NOT restart.
+
+#### Scenario: Separate possessions precede the failed scare
+
+- **WHEN** the scene starts with an eligible interface and pumpkin
+- **THEN** ghosts enter distinct elements whose copies float with attached eyes
+- **AND** the brave ghost attempts a scare, recoils from the pumpkin grin, hides with an exposed tail and joins the others in peeking and staggered escape
 
 #### Scenario: Every ghost flies its own path
 
-- **WHEN** a ghost celebration is laid out
-- **THEN** it contains `HALLOWEEN_GHOST_COUNT` ghosts, no two sharing a path, entering from both sides, each starting and ending off-screen
+- **WHEN** eligible possession anchors are unavailable
+- **THEN** the fallback contains `HALLOWEEN_GHOST_COUNT` ghosts with distinct paths, entering from both sides and starting and ending off-screen
 
 #### Scenario: The flock mixes silhouettes
 
 - **WHEN** a ghost celebration renders
-- **THEN** more than one silhouette is drawn, and no two consecutive ghosts share one
+- **THEN** more than one silhouette is drawn and consecutive ghosts differ
+
+#### Scenario: Small screens and RTL retain attachment
+
+- **WHEN** the scene runs on mobile or in RTL
+- **THEN** it chooses at most three mobile or five desktop homes from the actually visible interface, keeps eyes and ghosts attached to those homes and causes no horizontal overflow
+
+#### Scenario: Interruption restores the page
+
+- **WHEN** interaction, source changes, scrolling, resizing, hidden document, motion change, replacement or unmount interrupts playback
+- **THEN** copies and pending animations are removed and originals immediately recover their exact presentation without changing focus, drafts or data
+- **AND** the interrupted scene does not restart on later viewport or preference changes
+
+#### Scenario: Motion is suppressed
+
+- **WHEN** reduced motion is enabled or the animation API is unavailable
+- **THEN** stationary distributed ghosts appear without borrowing interface elements or animating the pumpkin
+
+#### Scenario: Work remains bounded
+
+- **WHEN** the page has long history or complex controls
+- **THEN** target discovery and copies respect candidate/descendant budgets, oversized and unsafe controls are skipped, and playback performs no repeated measurements or React frame updates
 
 ### Requirement: A corner spider keeps its distance from the pointer
 
@@ -201,7 +232,7 @@ Under reduced motion, complete webs and stationary spiders SHALL appear in their
 
 ### Requirement: Further clicks reveal other characters
 
-The bat scene SHALL release 16 small bats, with staggered curved flights and flapping wings. The cat scene SHALL show a small black cat crossing the bottom edge, with tail movement and soft floating wisps. The witch scene SHALL release five small witches on broomsticks, flying along arcs at different heights in both directions. Each scene SHALL announce its own translated notification and respect the same navigation, lifetime and click-through guarantees.
+The bat scene SHALL stage the three-bat crosswind story when a usable composer is available, with its own eighteen-second lifetime. When attachment space or the composer is unavailable it SHALL retain sixteen small bats with staggered curved flights and flapping wings. The cat scene SHALL stage the gravity-testing story on eligible interface anchors, with a decorative crossing cat as fallback. The witch scene SHALL release five small witches on broomsticks, flying along arcs at different heights in both directions. Each scene SHALL announce its own translated notification and respect the same navigation, configured-lifetime and click-through guarantees.
 
 Every added animation SHALL be disabled under reduced motion. Characters and wisps SHALL remain visible in separated static positions, not frozen off-screen. All character drawings SHALL be decorative SVG, with no sound.
 
@@ -210,6 +241,100 @@ Every added animation SHALL be disabled under reduced motion. Characters and wis
 - **WHEN** random pumpkin selection chooses bats, the cat or witches
 - **THEN** the corresponding characters play their scene and its translated notification announces the secret phrase
 - **AND** reduced motion displays separated static characters while navigation and scene deadlines still remove the effect
+
+### Requirement: Cat tests gravity on interface buttons
+
+HalloweenCatScene SHALL own one stable measured plan per activation. CelebrationProvider SHALL retain scene selection, notification and lifecycle, with a 25.5-second Cat lifetime enclosing 25 seconds of animation. The scene SHALL retain UI_EVENT=halloween and the existing cat toast/secret hint without additional ENABLED_FEATURES/role gating, translations, provider, endpoint, persistence, cache or telemetry.
+
+#### Scenario: Tentative nudge becomes deliberate mischief
+
+- **WHEN** a visible composer and two nearby safe small buttons are available
+- **THEN** an articulated black cat walks in on four legs, anticipates and jumps onto the composer edge, sits there looking at the viewer and down at its prize, then hops down beside the buttons
+- **AND** it moves each button gradually over two pushes; before every push it looks at the viewer, looks at the button while its paw pushes, then looks back at the viewer
+- **AND** it walks on four legs to the second button, one button rebounds and the cat recoils before sitting to groom its paw and leaving
+- **AND** the cat uses a seated drawing while sitting, pushing and grooming and a standing drawing with a diagonal gait while walking and jumping, swapping without either drawing turning translucent
+- **AND** button motion starts at physical paw contact, falls accelerate, and the cat anticipates jumps, absorbs landings and pauses naturally
+- **AND** originals return before natural scene disposal without altering draft, selection, focus, layout or application data
+
+#### Scenario: Work stays bounded and isolated
+
+- **WHEN** the cat scene prepares and plays
+- **THEN** it borrows at most two visible buttons of at most 60 descendants, 300×96px and 24000px² each, excluding focused, editable, disabled, expanded, hidden or clipped controls
+- **AND** the composer is an anchor only and is never copied or transformed
+- **AND** precomputed SVG and copy transforms share a timeline without per-frame measurements, React updates or changes to core components/libraries
+
+#### Scenario: Interruption restores the controls
+
+- **WHEN** user interaction, scrolling, resizing, hidden document, source changes, motion/viewport changes, replacement, unmount or setup failure interrupts the scene
+- **THEN** pending preparation, animations and copies stop and originals recover immediately
+- **AND** the activation cannot restart after cancellation
+- **WHEN** an unrelated notification portal appears or disappears without shifting anchors
+- **THEN** the story continues through its full timeline
+
+#### Scenario: Responsive fallback and accessibility
+
+- **WHEN** the scene runs on mobile or desktop in LTR or RTL
+- **THEN** measured physical geometry keeps paws and prizes aligned without page overflow, with inert, aria-hidden and pointer-transparent decoration
+- **WHEN** only one eligible button exists
+- **THEN** it receives the tentative push, deliberate fall and rebound
+- **WHEN** no reachable buttons or composer exists
+- **THEN** the decorative cat walk remains available
+- **WHEN** reduced motion is enabled or animation support is missing
+- **THEN** a stationary cat is visible without measuring or borrowing the page
+
+### Requirement: Bat crosswind story
+
+The Bats burst SHALL stage a 17.5-second three-bat crosswind story inside the existing decoration layer when a visible composer has sufficient space below it. CelebrationProvider SHALL retain activation ownership, the existing `UI_EVENT=halloween` gate and notification, and use an eighteen-second scene lifetime; there SHALL be no new `ENABLED_FEATURES`/role gate, provider, endpoint, persistence, telemetry or translations. The per-activation measured plan SHALL remain stable until disposed.
+
+#### Scenario: Failed wake-up attempt
+
+- **WHEN** the Bats story starts
+- **THEN** a sleepy bat grips the composer underside and folds its wings, while two helpers approach from opposite sides and fan it
+- **AND** it wraps up tighter, the helpers exchange looks and increase their effort
+- **AND** opposing currents catch the helpers in a vortex and carry them away separately
+- **AND** the sleeper opens one eye, yawns, crawls to and re-hangs on a nearby idle button when available (otherwise along the composer edge), then departs last
+- **AND** the live composer retains its focus, draft and position throughout
+
+#### Scenario: Smooth motion and readable pauses
+
+- **WHEN** bats approach, circle, settle and leave
+- **THEN** their paths carry momentum through intermediate flight points and decelerate before rests, without repeatedly stopping at orbit samples
+- **AND** wingbeat phase stays continuous as the pace changes, page surfaces react with damped motion and the extended scene lifetime includes the final departure
+
+#### Scenario: Wingbeats disturb nearby page surfaces
+
+- **WHEN** helpers fan selected nearby small surfaces with their wings
+- **THEN** only those surfaces rock around their edges, with stronger later gusts producing stronger motion
+- **AND** motion onset follows actual power strokes with a short distance-dependent delay, while distant elements stay still
+- **AND** the scene renders no beams, airflow streaks, particles or drawn vortex; separately jointed outer wings fold on recovery and spread during downstrokes while bodies gently lift and settle
+- **AND** there are at most three mobile/five desktop inert visual copies, each at most sixty descendants and 440×110/33000px², excluding focused/editable/disabled/expanded/hidden/clipped elements and overlapping relatives
+- **AND** originals return before the sleeper's departure without changing data or invoking UI actions
+
+#### Scenario: Safe interruption
+
+- **WHEN** input, focus, pointer, keyboard, external scroll, resize, hidden-tab, anchor change/removal, unmount or partial animation setup failure occurs
+- **THEN** every animation stops and every original is restored immediately
+- **AND** that activation does not restart after breakpoint or motion-preference changes
+
+#### Scenario: Notification dismissal does not interrupt the story
+
+- **WHEN** a notification or unrelated popup portal is inserted or removed without moving or resizing the measured anchors
+- **THEN** the current bat story continues to its natural completion
+- **AND** real anchor changes, layout shifts and user interaction still restore the interface immediately
+
+#### Scenario: Fallback and accessibility
+
+- **WHEN** reduced motion is requested or WAAPI is unavailable
+- **THEN** the scene is stationary and creates no page snapshots or measurements
+- **WHEN** a usable composer is missing or lacks attachment space
+- **THEN** the legacy decorative flight plays without borrowing UI
+- **AND** all scene content remains inert, aria-hidden and pointer-transparent in every case
+
+#### Scenario: Responsive bounded rendering
+
+- **WHEN** the story plays in LTR or RTL on mobile or desktop
+- **THEN** claws remain attached to measured physical anchors, strokes affect nearby measured targets and decoration creates no page overflow
+- **AND** actors, subtree scans and snapshots are bounded, with precomputed WAAPI motion and no per-frame DOM measurements or React renders
 
 ### Requirement: Halloween runs as a module of CelebrationProvider
 
@@ -286,3 +411,49 @@ The train SHALL support an optional supplied audio source. With no source, no me
 #### Scenario: Playback is unavailable or interrupted
 - **WHEN** browser playback rejects or the scene ends
 - **THEN** no unhandled error or background playback remains and the original pumpkin is restored
+
+### Requirement: Ravens build a nest from the interface
+
+`HalloweenBurst.Ravens` SHALL show five ravens on mobile and eight on desktop, owned by `HalloweenRavens` inside the existing celebration viewport layer. Birds SHALL land on visible UI, tear small fragments from separated headings, buttons and history rows and build a nest on the main pumpkin. Two ravens SHALL grip opposite ends of one visible conversation, first attempt small pulls, then brace and tug harder while its visual copy bends. One SHALL release; the other and the conversation SHALL recoil toward the nest. Collectors SHALL each use a unique source, deliver their piece at staggered times and immediately fly off along separate routes without gathering over the nest. The pumpkin SHALL shake and all borrowed UI SHALL be restored by twelve seconds, before a thirteen-second shared deadline.
+
+Flying birds SHALL turn toward their flight direction at route changes; grounded tugging SHALL preserve their grip-facing pose. The birds' beaks and the carried edges SHALL derive from the same geometry and timeline throughout contact. Target discovery SHALL use a bounded snapshot of visible existing DOM geometry in physical viewport coordinates, preserving attachment in LTR and RTL. Hidden, clipped, expanded or focused conversation controls SHALL NOT be borrowed. When no eligible conversation is visible, the birds SHALL fight over a decorative composer-border strip; when the pumpkin is absent the nest SHALL use a composer corner. With no usable interface, a stationary decorative flock SHALL remain available.
+
+The scene SHALL use at most one real conversation snapshot with at most five visual sections, at most three/six cropped fragments on mobile/desktop (76×32px each; at most 16 source descendants) and bounded SVG artwork. It SHALL NOT clone the composer, modify data, persist state, call APIs, add telemetry or require changes to core page components or libraries. Playback SHALL NOT read layout or update React state per frame. Actors and copies SHALL share one precomputed animation timeline. Performance SHALL be checked in a browser fixture with throttled CPU before adding a canvas renderer.
+
+All artwork SHALL be aria-hidden and pointer-transparent, and visual copies SHALL be inert. Reduced motion SHALL show stationary birds without borrowing elements or animating the pumpkin. Scene replacement, navigation, interaction, scrolling, resizing, hidden documents, target mutation and live motion-preference changes SHALL stop pending work and restore originals. The existing `UI_EVENT=halloween` gate, random click selection and `halloween.ravensToastMessage` secret-phrase hint SHALL remain unchanged; no new user-visible strings SHALL be introduced.
+
+CelebrationProvider SHALL continue to own scene selection, notifications and lifecycle. HalloweenRavens SHALL own only its per-activation measured plan and temporary visual copies; no shared memoized plan or cache is needed. The scene SHALL use the existing `UI_EVENT=halloween` selection without a separate `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES` gate.
+
+#### Scenario: Nest construction and tug of war share one story
+
+- **WHEN** the raven scene starts with a visible pumpkin, composer and eligible history row
+- **THEN** birds gather spatially separated fragments into a pumpkin nest while two others tug the same conversation with attached beaks
+- **AND** releasing one grip launches the other bird and its cargo toward the nest before the pumpkin shakes and the scene restores the interface
+
+#### Scenario: Mobile or empty history supplies a strip
+
+- **WHEN** no eligible history row is visible
+- **THEN** the birds tug a decorative strip at the composer instead, without opening history or changing input contents
+- **AND** mobile uses five birds and desktop uses eight without horizontal overflow
+
+#### Scenario: Interruption restores the borrowed interface
+
+- **WHEN** the user interacts, navigates, changes motion preference, scrolls, resizes, hides the document or the target changes during playback
+- **THEN** all scene-owned animations and copies are stopped and removed and original controls are immediately restored
+
+#### Scenario: Motion is reduced
+
+- **WHEN** reduced motion is enabled before the scene starts
+- **THEN** stationary ravens appear without a borrowed conversation, pumpkin shake or animation loop
+
+#### Scenario: Work is bounded and direction independent
+
+- **WHEN** the scene runs in either direction with a long history
+- **THEN** only bounded visible targets, one small row and at most six small fragment subtrees are measured/copied at setup
+- **AND** precomputed motion keeps grips attached with no per-frame layout reads or React updates
+
+#### Scenario: Collectors stay distributed
+
+- **WHEN** headings, controls and history entries are visible in different areas
+- **THEN** each collector tears a unique piece from its own source, with at least 96px between selected source centers
+- **AND** deliveries are staggered, with a short drop followed immediately by departure along different routes, so birds do not wait in a cluster

@@ -60,7 +60,9 @@ describe('additional Halloween scenes', () => {
     );
     expect(container.querySelectorAll('svg')).toHaveLength(mobile ? 18 : 32);
     rerender(<HalloweenBurstOverlay burst={HalloweenBurst.Ravens} />);
-    expect(container.querySelectorAll('svg')).toHaveLength(mobile ? 5 : 8);
+    expect(container.querySelectorAll('[data-raven-art]')).toHaveLength(
+      mobile ? 5 : 8,
+    );
   });
 });
 

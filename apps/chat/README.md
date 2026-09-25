@@ -99,6 +99,67 @@ A single canvas draws at most
 read only at scene setup; real controls retain their focus and behavior. Scrolling,
 resizing or hiding the tab stops the scene, and reduced motion shows a static web.
 
+Ghosts possess separate small interface elements: their inert visual copies
+float and grow eyes, while one brave ghost tries to frighten the main pumpkin.
+The pumpkin answers with a glowing grin; the ghost recoils and hides with its
+tail exposed before the flock peeks out and flees along staggered, separate paths.
+The scene borrows at most three elements on mobile and five on desktop, each
+with at most 60 descendants, without cloning the composer or changing drafts.
+Focused, expanded, editable, hidden and clipped controls are skipped. Original
+elements return within twelve seconds; interaction, source changes, scrolling,
+resizing, navigation and motion-preference changes stop the scene immediately.
+Missing anchors retain the decorative crossing flock. Reduced motion or missing
+animation support shows stationary ghosts without borrowing elements. Targeting
+and playback stay in the Halloween layer and work in both LTR and RTL.
+
+The cat tests gravity on nearby buttons: it walks in on four legs, jumps onto the
+composer and sits there glancing at the viewer and down at its prize, then hops
+down beside up to two small controls. It moves each button gradually over two
+paw pushes, looking at the viewer, at the button while pushing, and back at the
+viewer, until its prizes fall off their ledges. The last button rebounds,
+startling the cat before it sits to groom and leaves. A seated drawing sits,
+pushes and grooms; a standing drawing with a diagonal gait walks and jumps. Paw
+contact and falling copies share one 25-second timeline; the Cat scene unmounts
+after 25.5 seconds. Only safe idle buttons are copied (at most sixty descendants
+and 300×96/24000px² each).
+The composer stays live, preserving its draft, focus, selection and position.
+Interaction or real anchor changes restore controls immediately; unrelated toast
+portal removal leaves playback running. One eligible button keeps the same
+testing/rebound story; no usable anchors retain a decorative crossing cat.
+Reduced motion or missing animation support shows a stationary cat without
+borrowing UI. All targeting and animation remain in the Halloween layer.
+
+The bat scene stages a failed wake-up attempt: a sleepy bat hangs under the
+composer while two helpers fan it. Their wing downstrokes rock nearby small
+controls, cards or history rows after a short distance-dependent delay. Stronger
+opposing currents spin
+the helpers away separately; the sleeper opens one eye, yawns, crawls to a nearby
+idle button (or along the composer edge) and flies away last. The 17.5-second
+scene uses at most three mobile/five desktop visual copies with at most sixty
+descendants each. The composer remains untouched. Interaction or anchor changes
+restore originals immediately. Missing attachment space retains the old flight;
+reduced motion or missing animation support uses stationary bats. SVG and
+precomputed animations keep playback free of repeated layout measurements, in
+both LTR and RTL. Flight paths carry momentum through turns, approaches slow
+before landing, wingbeats change pace continuously and borrowed surfaces settle
+with damped motion. Jointed outer wings fold on recovery and spread on the power
+stroke, accompanied by a slight body lift. Airflow has no rays, streaks or drawn
+vortex. The scene unmounts after eighteen seconds.
+
+The raven scene tears small visual fragments from separated headings, buttons
+and history rows to build a nest on the main pumpkin. Each collector has its own
+pickup point and flight path, drops its piece briefly, then leaves in a separate
+direction without gathering over the nest. Two other birds tug opposite ends of
+a conversation, then one lets go and the other recoils into the nest with its
+prize. The pumpkin shakes and the borrowed row returns. With no eligible visible
+history, the pair uses a composer-border strip instead. Five birds on mobile and
+eight on desktop share precomputed motion with their cargo. Copies are limited
+to one small row in five visual sections and three/six small fragments from
+subtrees of at most 16 descendants; the composer is never cloned. Input, focus,
+scrolling, resizing, target changes or scene replacement cancel playback and
+restore the interface. Reduced motion shows stationary artwork. All targeting
+stays in the Halloween layer, using physical coordinates for both LTR and RTL.
+
 The Halloween train stops with an empty final wagon, picks up the main pumpkin
 and departs with smoke from its chimney and side vents. Boarding uses the pumpkin's
 actual screen position; its decorative copy rides behind the wagon front while
