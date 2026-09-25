@@ -840,7 +840,8 @@ desktop user menu and the Settings row on the mobile navigation sheet's
 profile page. A direct `/settings` URL redirects to `/`. The preferences the
 page edits keep their stored values. Use it when the host owns user
 preferences itself; `hide-user-settings` instead keeps the page and removes
-only the language and keyboard-shortcut controls.
+its controls — language, theme, keyboard shortcuts, and the default agent
+picker.
 
 `show-header-logo` renders the theme logo in the desktop top bar, centered
 between the conversation-panel and new-chat buttons and the sources toggle, so
