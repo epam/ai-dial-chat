@@ -126,6 +126,11 @@ vi.mock('react-i18next', () => ({
  * would throw there. A function returning the real instance covers both
  * call styles; `setPrototypeOf` keeps the statics (`supportedLocalesOf`)
  * reachable.
+ *
+ * A plain function's own `.prototype` is a fresh empty object, which would
+ * shadow the real `Intl.*.prototype` — hiding `resolvedOptions` and `format`
+ * from `vi.spyOn(Intl.*.prototype, ...)`. Assigning the real prototype onto
+ * the wrapper keeps that standard mocking idiom working.
  */
 const RealNumberFormat = Intl.NumberFormat;
 
@@ -137,6 +142,13 @@ const PinnedNumberFormat = function (
 } as unknown as typeof Intl.NumberFormat;
 
 Object.setPrototypeOf(PinnedNumberFormat, RealNumberFormat);
+/*
+ * Assigned via defineProperty because the Intl constructor types mark
+ * `prototype` as readonly, which rejects a plain assignment.
+ */
+Object.defineProperty(PinnedNumberFormat, 'prototype', {
+  value: RealNumberFormat.prototype,
+});
 
 globalThis.Intl.NumberFormat = PinnedNumberFormat;
 
@@ -150,5 +162,8 @@ const PinnedDateTimeFormat = function (
 } as unknown as typeof Intl.DateTimeFormat;
 
 Object.setPrototypeOf(PinnedDateTimeFormat, RealDateTimeFormat);
+Object.defineProperty(PinnedDateTimeFormat, 'prototype', {
+  value: RealDateTimeFormat.prototype,
+});
 
 globalThis.Intl.DateTimeFormat = PinnedDateTimeFormat;
