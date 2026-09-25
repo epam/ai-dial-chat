@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { validateSync } from 'class-validator';
-import { Issuer, type Client } from 'openid-client';
+import { custom, Issuer, type Client } from 'openid-client';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { buildProviderConfigs } from './provider-builders';
 import { AuthProviderId, ProviderConfig } from './provider.types';
@@ -142,6 +142,16 @@ export class ProviderRegistryService implements OnModuleInit {
           response_types: ['code'],
           token_endpoint_auth_method: 'client_secret_basic',
         });
+        /*
+         * openid-client v5 does not inherit the discovery HTTP hook on issuer
+         * or client instances. JWKS and token/userinfo/revocation requests
+         * need the same NO_PROXY-aware transport installed at bootstrap.
+         */
+        const httpOptions = Issuer[custom.http_options];
+        if (httpOptions) {
+          issuer[custom.http_options] = httpOptions;
+          client[custom.http_options] = httpOptions;
+        }
         this.clients.set(providerConfig.id, { client, config: providerConfig });
         this.logger.log(`Provider ${providerConfig.id} registered`);
       }),
