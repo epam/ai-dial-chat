@@ -47,6 +47,7 @@ export const useSkillSelectorOverlay = ({
   onToggleFavorite,
   labels,
   historyChipLabelClassName,
+  activeMentionDetailsTrigger,
   renderCatalogContent,
   detailsPanelComponent: DetailsPanelComponent,
 }: UseSkillSelectorOverlayOptions): UseSkillSelectorOverlayResult => {
@@ -144,6 +145,7 @@ export const useSkillSelectorOverlay = ({
             labelClassName={historyChipLabelClassName}
             description={skillByUrl.get(anchor.url)?.description}
             isUnsupported={!isSkillsSupported}
+            detailsTrigger={activeMentionDetailsTrigger}
             onViewDetails={setDetailsSkillId}
             labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
           />
@@ -154,6 +156,7 @@ export const useSkillSelectorOverlay = ({
       isSkillsSupported,
       skillByUrl,
       historyChipLabelClassName,
+      activeMentionDetailsTrigger,
       panelLabels,
     ],
   );

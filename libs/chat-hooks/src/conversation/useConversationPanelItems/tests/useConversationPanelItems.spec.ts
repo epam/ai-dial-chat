@@ -4,6 +4,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
+import { createElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   getConversationSource,
@@ -97,7 +98,7 @@ describe('useConversationPanelItems', () => {
     expect(resolveIconTooltip).toHaveBeenCalledWith(undefined, 'My Model');
   });
 
-  it('applies icon loading uniformly and omits optional task badge fields', () => {
+  it('applies icon loading uniformly and omits task presentation without a resolver', () => {
     const params = makeParams({
       items: [makeItem('one'), makeItem('two')],
       isDeploymentsLoading: true,
@@ -106,10 +107,44 @@ describe('useConversationPanelItems', () => {
 
     expect(result.current.every((item) => item.isIconLoading)).toBe(true);
     for (const item of result.current) {
-      expect(item.showTaskBadge).toBeUndefined();
-      expect(item.taskBadgeLabel).toBeUndefined();
+      expect(item.leadingIcon).toBeUndefined();
       expect(item.isUnread).toBeUndefined();
     }
+  });
+
+  it('copies the resolved task presentation onto the item unchanged', () => {
+    const leadingIcon = createElement('svg', { 'aria-hidden': true });
+    const params = makeParams({
+      items: [
+        makeItem('task', { isScheduledTask: true, isUnread: true }),
+        makeItem('chat'),
+      ],
+      resolveTaskPresentation: (item) =>
+        item.isScheduledTask
+          ? { leadingIcon, isUnread: item.isUnread ?? false }
+          : undefined,
+    });
+    const { result } = renderHook(() => useConversationPanelItems(params));
+
+    const [task, chat] = result.current;
+    expect(task.leadingIcon).toBe(leadingIcon);
+    expect(task.isUnread).toBe(true);
+    expect(task).not.toHaveProperty('showTaskBadge');
+    expect(chat.leadingIcon).toBeUndefined();
+    expect(chat.isUnread).toBeUndefined();
+  });
+
+  it('maps every run of a task, leaving any collapsing to the host', () => {
+    const run = (runId: string) =>
+      makeItem(`conversations/bucket/.scheduler/s1/model-1__Daily__${runId}`, {
+        isScheduledTask: true,
+        scheduleId: 's1',
+        runId,
+      });
+    const params = makeParams({ items: [run('a'), run('b'), run('c')] });
+    const { result } = renderHook(() => useConversationPanelItems(params));
+
+    expect(result.current).toHaveLength(3);
   });
 
   it('keeps the mapped array reference stable when inputs do not change', () => {

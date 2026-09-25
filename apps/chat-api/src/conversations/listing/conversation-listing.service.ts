@@ -226,6 +226,9 @@ export class ConversationListingService {
                 item.name ?? '',
                 isApplicationDeploymentPath(item.parentPath),
               ),
+              ...(Number.isFinite(item.createdAt)
+                ? { createdAt: item.createdAt }
+                : {}),
               updatedAt: item.updatedAt ?? 0,
               sharedWithMe:
                 overrides.sharedWithMe ?? item.sharedWithMe ?? false,

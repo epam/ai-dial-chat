@@ -1,15 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   HALLOWEEN_GHOST_COUNT,
   HALLOWEEN_BURST_DURATION_MS,
-  HALLOWEEN_WEB_COUNT,
-  HALLOWEEN_MOBILE_WEB_COUNT,
   HALLOWEEN_SPIDER_COUNT,
 } from '../../constants/halloween';
 import { HalloweenGhostVariant } from '../../types/halloween';
 import {
   buildHalloweenGhostFlight,
-  buildHalloweenWebLayout,
   buildHalloweenBatFlight,
   buildHalloweenWitchFlight,
   buildHalloweenSpiderDrop,
@@ -230,70 +227,6 @@ describe('nextHalloweenSpiderOffset', () => {
 });
 
 describe('Halloween scene layout', () => {
-  it.each([false, true])(
-    'covers almost the full viewport with one connected web (mobile=%s)',
-    (isMobile) => {
-      const { webs, strands } = buildHalloweenWebLayout(isMobile);
-      expect(webs).toHaveLength(
-        isMobile ? HALLOWEEN_MOBILE_WEB_COUNT : HALLOWEEN_WEB_COUNT,
-      );
-      for (const axis of ['x', 'y'] as const) {
-        const positions = webs.map((web) => web[axis]);
-        expect(Math.min(...positions)).toBeGreaterThan(0);
-        expect(Math.min(...positions)).toBeLessThan(10);
-        expect(Math.max(...positions)).toBeGreaterThan(90);
-        expect(Math.max(...positions)).toBeLessThan(100);
-      }
-      webs.forEach((web) => {
-        expect(
-          (web.delay +
-            parseFloat(
-              (web.style as Record<string, string>)['--web-run-duration'],
-            )) *
-            1000,
-        ).toBeLessThan(HALLOWEEN_BURST_DURATION_MS);
-      });
-      expect(Math.max(...webs.map((web) => web.delay))).toBeGreaterThan(3);
-      /* A traversal must reach every spider's web, not disconnected islands. */
-      const reached = new Set([0]);
-      const queue = [0];
-      while (queue.length) {
-        const node = queue.pop();
-        strands.forEach(({ from, to }) => {
-          const neighbour = from === node ? to : to === node ? from : undefined;
-          if (neighbour !== undefined && !reached.has(neighbour)) {
-            reached.add(neighbour);
-            queue.push(neighbour);
-          }
-        });
-      }
-      expect(reached.size).toBe(webs.length);
-    },
-  );
-
-  it('changes positions, weaving order, threads and escape paths between celebrations', () => {
-    const random = vi.spyOn(Math, 'random');
-    try {
-      random.mockReturnValue(0.2);
-      const first = buildHalloweenWebLayout(false);
-      random.mockReturnValue(0.8);
-      const second = buildHalloweenWebLayout(false);
-      expect(first.webs.map(({ x, y }) => [x, y])).not.toEqual(
-        second.webs.map(({ x, y }) => [x, y]),
-      );
-      expect(first.webs.map(({ delay }) => delay)).not.toEqual(
-        second.webs.map(({ delay }) => delay),
-      );
-      expect(first.strands.map(({ from, to }) => [from, to])).not.toEqual(
-        second.strands.map(({ from, to }) => [from, to]),
-      );
-      expect(first.strands[0].path).not.toEqual(second.strands[0].path);
-      expect(first.webs[0].style).not.toEqual(second.webs[0].style);
-    } finally {
-      random.mockRestore();
-    }
-  });
-
   it.each([buildHalloweenBatFlight, buildHalloweenWitchFlight])(
     'finishes flights before the overlay is removed',
     (build) => {

@@ -4,7 +4,10 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { ShareLinkAccess, type SharePopoverProps } from '@epam/ai-dial-share';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ShareI18nKeys } from '../../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ShareI18nKeys,
+} from '../../../constants/translation-keys';
 import { shareApi } from '../../../server-api/api-client';
 import SharePopoverContainer from '../SharePopoverContainer';
 
@@ -183,6 +186,28 @@ describe('SharePopoverContainer', () => {
 
     expect(mockSharePopover).toHaveBeenCalledWith(
       expect.objectContaining({ canEditAccess: true }),
+      undefined,
+    );
+  });
+
+  it('passes translated QR copy and download labels to SharePopover', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        item={makeItem(CatalogEntityType.Model)}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({
+          qrCopyButtonLabel: ButtonsI18nKeys.Copy,
+          qrCopiedButtonLabel: ShareI18nKeys.CopiedButtonLabel,
+          qrDownloadButtonLabel: ButtonsI18nKeys.Download,
+          qrDownloadFileName: ShareI18nKeys.QrDownloadFileName,
+        }),
+      }),
       undefined,
     );
   });

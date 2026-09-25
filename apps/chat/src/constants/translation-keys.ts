@@ -699,7 +699,6 @@ export enum ConversationPanelI18nKeys {
   RevokeSuccessTitle = 'conversationPanel.revoke.revokeSuccessTitle',
   RevokeSuccess = 'conversationPanel.revoke.revokeSuccess',
   RevokeError = 'conversationPanel.revoke.revokeError',
-  TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
   UnreadIndicatorLabel = 'conversationPanel.unreadIndicatorLabel',
 }
 
@@ -1212,6 +1211,7 @@ export enum ShareI18nKeys {
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',
   QrCodeAriaLabel = 'share.qrCodeAriaLabel',
+  QrDownloadFileName = 'share.qrDownloadFileName',
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',

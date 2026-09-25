@@ -3,9 +3,7 @@
 ## Purpose
 
 Reusable conversation-panel controller hooks and utilities exported by `@epam/ai-dial-chat-hooks`, covering item mapping, lookup maps, active-conversation sync, async-confirm dialog state, row-action state derivation, and a file-picker helper — all without any app-specific imports (no i18n, no routing, no application Contexts).
-
 ## Requirements
-
 ### Requirement: `useConversationPanelItems` maps conversation DTOs to panel items via injected resolvers
 
 `@epam/ai-dial-chat-hooks` SHALL export `useConversationPanelItems(params: { items:
@@ -13,10 +11,14 @@ ConversationListItemDto[]; deployments: DeploymentItemDto[]; isDeploymentsLoadin
 toPanelConversationId: (id: string) => string;
 resolveIconUrl: (deployment: DeploymentItemDto | undefined) => string | undefined; resolveIconTooltip:
 (deployment: DeploymentItemDto | undefined, fallback: string) => string; resolveHref: (conversationId:
-string) => string; resolveTaskBadge?: (item: ConversationListItemDto) => { label: string; isUnread:
-boolean } | undefined }): ConversationItem[]`. The hook SHALL NOT import `react-i18next`, an application
-Context, or an app routing module — every app-specific resolution (icon URL, localized tooltip text,
-route construction, task-badge presentation) SHALL be supplied through the resolver parameters.
+string) => string; resolveTaskPresentation?: (item: ConversationListItemDto) => { leadingIcon?: ReactNode;
+isUnread: boolean } | undefined }): ConversationItem[]`. The hook SHALL NOT import `react-i18next`, an application
+Context, an app routing module, or any UI-kit/icon component — every app-specific resolution (icon URL, localized
+tooltip text, route construction, task-row presentation including the rendered icon node) SHALL be supplied through
+the resolver parameters. When `resolveTaskPresentation` returns a value, the hook SHALL copy `leadingIcon` and
+`isUnread` onto the resulting `ConversationItem` unchanged; when it returns `undefined` or is omitted, both fields
+SHALL be absent. The hook maps exactly the `items` it is given — it does not group, collapse, or filter scheduled-task
+runs (that display rule belongs to the host; see `scheduled-task-conversation-grouping`).
 
 #### Scenario: Mapping produces one panel item per conversation
 - **WHEN** `items` has 3 entries
@@ -32,6 +34,16 @@ route construction, task-badge presentation) SHALL be supplied through the resol
 - **GIVEN** `isDeploymentsLoading` is `true`
 - **WHEN** the hook computes every item
 - **THEN** every item's `isIconLoading` is `true`
+
+#### Scenario: Task presentation is copied onto the item
+- **GIVEN** `resolveTaskPresentation` returns `{ leadingIcon: <span data-testid="task-icon" />, isUnread: true }` for one item
+- **WHEN** the hook maps that item
+- **THEN** the resulting `ConversationItem` has that same `leadingIcon` node and `isUnread: true`, and no `showTaskBadge`/`taskBadgeLabel` property
+
+#### Scenario: Several runs of one task are all mapped
+- **GIVEN** `items` contains three runs with the same `scheduleId`
+- **WHEN** the hook maps them
+- **THEN** it returns three `ConversationItem`s (collapsing is not the hook's job)
 
 #### Scenario: Result recomputes only when inputs change
 - **WHEN** the hook is called again with the same `items`/`deployments`/`isDeploymentsLoading` reference
@@ -170,7 +182,7 @@ value and remove the attribute when that value is omitted; it SHALL NOT decide b
 Every hook and utility introduced by this capability SHALL have zero imports from `apps/**`, zero direct
 `react-i18next` imports, zero React Router imports, zero application Context imports, zero feature-flag
 imports, and zero translation-key imports. Each SHALL work correctly when any optional capability
-(publishing, sharing, organization conversations, scheduled-task badges) it touches is absent from its
+(publishing, sharing, organization conversations, scheduled-task presentation) it touches is absent from its
 input.
 
 #### Scenario: Architecture guard — no app or i18n imports in controller hooks
@@ -179,6 +191,6 @@ input.
   application Context
 
 #### Scenario: Mapping hook works with no scheduled-task capability
-- **WHEN** `resolveTaskBadge` is omitted from `useConversationPanelItems`'s params
-- **THEN** every returned `ConversationItem` has `showTaskBadge`/`taskBadgeLabel`/`isUnread` all
-  `undefined`, with no error thrown
+- **WHEN** `resolveTaskPresentation` is omitted from `useConversationPanelItems`'s params
+- **THEN** every returned `ConversationItem` has `leadingIcon`/`isUnread` both `undefined`, with no error thrown
+

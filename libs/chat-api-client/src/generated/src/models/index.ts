@@ -651,6 +651,18 @@ export interface ApplicationVisualizerDto {
    * @memberof ApplicationVisualizerDto
    */
   passExplicitToken?: boolean;
+  /**
+   * When true, the inline frame renders without its border, rounded corners, background, and header divider. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  borderless?: boolean;
+  /**
+   * When true, the inline frame hides its header title text; the header actions stay visible. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  withoutTitle?: boolean;
 }
 /**
  *
@@ -1249,6 +1261,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   title: string;
+  /**
+   * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  createdAt?: number;
   /**
    * Unix epoch milliseconds of the last update.
    * @type {number}

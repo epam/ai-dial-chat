@@ -227,9 +227,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-trigger-icon': colors?.triggerIcon,
       '--cp-trigger-icon-idle': colors?.triggerIconIdle,
       '--cp-skeleton-color': colors?.skeletonColor,
-      '--cp-task-badge-border': colors?.taskBadgeBorder,
-      '--cp-task-badge-bg': colors?.taskBadgeBackground,
-      '--cp-task-badge-text': colors?.taskBadgeText,
       '--cp-unread-dot': colors?.unreadDot,
     });
 
@@ -355,7 +352,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
           itemIconBadgeClassName: panelStyles?.itemIconBadgeClassName,
-          taskBadgeClassName: panelStyles?.taskBadgeClassName,
         },
         draggingId,
         dragOverId,
@@ -381,7 +377,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         panelStyles?.itemIconBadgeClassName,
-        panelStyles?.taskBadgeClassName,
         draggingId,
         dragOverId,
         allowedDropGroups,

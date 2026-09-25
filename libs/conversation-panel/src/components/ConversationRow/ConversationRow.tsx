@@ -15,7 +15,7 @@ import {
   SkeletonVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconClock, IconDotsVertical } from '@tabler/icons-react';
+import { IconDotsVertical } from '@tabler/icons-react';
 import { useCallback, useRef, useState, type DragEvent, type FC } from 'react';
 import { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
@@ -46,8 +46,6 @@ export interface ConversationRowProps {
   itemTitleClassName?: string;
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** Typography class applied to the task pill badge. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
-  taskBadgeClassName?: string;
   /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
   unreadIndicatorLabel?: string;
   /** Group this row belongs to — required to enable drag-and-drop. */
@@ -87,7 +85,6 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
-  taskBadgeClassName = 'dial-caption-lead-semi-text',
   unreadIndicatorLabel = 'Unread',
   rowGroupKey,
   rows,
@@ -116,7 +113,11 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = item.isIconLoading ? (
+  const avatar = item.leadingIcon ? (
+    <span className="flex size-6 shrink-0 items-center justify-center">
+      {item.leadingIcon}
+    </span>
+  ) : item.isIconLoading ? (
     <Skeleton
       variant={SkeletonVariant.Circular}
       width={DIAL_ICON_SIZE.LG}
@@ -134,43 +135,27 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     />
   );
 
-  /*
-   * A fixed 12x12 slot is always reserved before the avatar so the avatar's horizontal position stays identical
-   * across rows whether or not the dot itself is rendered. The slot doubles as the row's start gutter — the
-   * button drops its own start padding (`ps-0`) so the two do not stack into a double indent.
-   */
-  const avatarWithUnreadIndicator = (
-    <span className="flex shrink-0 items-center gap-0.5">
-      <span className="relative flex size-3 shrink-0 items-center justify-center">
-        {item.isUnread && (
-          <>
-            <span
-              className={mergeClasses(
-                'size-[5.33px] rounded-full',
-                styles.unreadDot,
-              )}
-              aria-hidden
-            />
-            <span className="sr-only">{unreadIndicatorLabel}</span>
-          </>
-        )}
-      </span>
-      {avatar}
-    </span>
-  );
-
   const buttonPaddingEnd = getButtonPaddingEnd(hasActions, isMenuOpen);
 
-  const taskBadge = item.showTaskBadge ? (
-    <span
-      className={mergeClasses(
-        'flex h-5 shrink-0 items-center justify-center gap-0.5 rounded-full border pe-2 ps-1',
-        styles.taskBadge,
-        taskBadgeClassName,
-      )}
-    >
-      <IconClock size={12} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
-      {item.taskBadgeLabel}
+  /*
+   * The dot sits in a 24px trailing slot. Whenever the actions trigger is shown
+   * (hover, focus-within, open menu) the dot is hidden so the trigger takes that
+   * spot; the visually hidden label keeps announcing the unread state.
+   */
+  const unreadIndicator = item.isUnread ? (
+    <span className="flex size-6 shrink-0 items-center justify-center">
+      <span
+        className={mergeClasses(
+          'size-[7.11px] rounded-full',
+          styles.unreadDot,
+          hasActions &&
+            (isMenuOpen
+              ? 'opacity-0'
+              : 'group-focus-within/conversation:opacity-0 group-hover/conversation:opacity-0'),
+        )}
+        aria-hidden
+      />
+      <span className="sr-only">{unreadIndicatorLabel}</span>
     </span>
   ) : undefined;
 
@@ -236,23 +221,25 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         }}
       >
         <Button
-          iconBefore={avatarWithUnreadIndicator}
+          iconBefore={avatar}
           label={
             <Highlight
               text={item.title}
               query={searchQuery}
-              className={itemTitleClassName}
+              className={
+                item.isUnread ? 'dial-small-semi-text' : itemTitleClassName
+              }
               maxLines={1}
             />
           }
-          iconAfter={taskBadge}
+          iconAfter={unreadIndicator}
           textClassName="min-w-0 flex-1"
           aria-current={isActive ? 'page' : undefined}
           onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
             /* The row's corner radius comes from `styles.item` (--cp-row-radius). */
-            'h-8 w-full justify-start gap-2 py-2 ps-0 after:pointer-events-none',
+            'h-8 w-full justify-start gap-2 py-2 ps-3 after:pointer-events-none',
             buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,

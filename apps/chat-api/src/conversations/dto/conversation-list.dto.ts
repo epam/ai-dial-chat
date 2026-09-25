@@ -16,6 +16,13 @@ export class ConversationListItemDto {
   })
   title!: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.',
+    example: 1749600000000,
+  })
+  createdAt?: number;
+
   @ApiProperty({
     description: 'Unix epoch milliseconds of the last update.',
     example: 1749600000000,

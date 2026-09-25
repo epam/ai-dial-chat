@@ -77,12 +77,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.7
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.18
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.19
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -3447,7 +3447,7 @@ if (loadState === SkillEditorLoadState.Loading) {
 
 ### useSkillEditorSubmit
 
-Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself.
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook.
 
 `isSubmitErrorRetryable` is `true` only when `submitError` came from something a plain re-send can clear, such as an unavailable service; `retrySubmit` then re-sends the failed attempt's values, reusing the manifest and file blobs it already built. Pair the two to offer the action only where it can help — `onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}` on `SkillEditor`.
 
@@ -3492,6 +3492,7 @@ const {
   loadedPathRef,
   etagRef,
   returnUrl,
+  getCreateReturnUrl: (path) => `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
   refetchSkills,
   client,
   messages: {
@@ -3808,7 +3809,7 @@ Five hooks and two utility functions extracted from `ConversationPanelView.tsx` 
 
 ### useConversationPanelItems
 
-Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and task badges through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
+Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and scheduled-task row presentation through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
 
 ```tsx
 import { useConversationPanelItems } from '@epam/ai-dial-chat-hooks';
@@ -3826,9 +3827,9 @@ const conversations = useConversationPanelItems({
   resolveIconTooltip: (d: DeploymentItemDto | undefined, fallback: string) =>
     d?.displayName ?? fallback,
   resolveHref: (id) => `/chat/${id}`,
-  resolveTaskBadge: (item: ConversationListItemDto) =>
+  resolveTaskPresentation: (item: ConversationListItemDto) =>
     item.isScheduledTask
-      ? { label: 'Task', isUnread: item.isUnread ?? false }
+      ? { leadingIcon: taskIcon, isUnread: item.isUnread ?? false }
       : undefined,
 });
 ```
@@ -3837,18 +3838,20 @@ const conversations = useConversationPanelItems({
 
 **Parameters** (`UseConversationPanelItemsParams`):
 
-| Name                    | Type                                                                                   | Description                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `items`                 | `ConversationListItemDto[]`                                                            | Raw DTOs from the API.                                                   |
-| `deployments`           | `DeploymentItemDto[]`                                                                  | Current deployment catalogue used for icon/tooltip resolution.           |
-| `isDeploymentsLoading`  | `boolean`                                                                              | When `true`, all items are returned with `isIconLoading: true`.          |
-| `toPanelConversationId` | `(id: string) => string`                                                               | Maps a DTO `id` to the panel-space identifier.                           |
-| `resolveIconUrl`        | `(deployment?: DeploymentItemDto) => string \| undefined`                              | Returns the resolved icon URL for a deployment.                          |
-| `resolveIconTooltip`    | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`            | Returns the tooltip text for the icon.                                   |
-| `resolveHref`           | `(id: string) => string`                                                               | Converts a panel-space ID to a navigation href.                          |
-| `resolveTaskBadge`      | `(item: ConversationListItemDto) => { label: string; isUnread: boolean } \| undefined` | Optional; returns the badge descriptor for scheduled-task conversations. |
+| Name                      | Type                                                                                             | Description                                                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`                   | `ConversationListItemDto[]`                                                                      | Raw DTOs from the API.                                                                                                                                                                             |
+| `deployments`             | `DeploymentItemDto[]`                                                                            | Current deployment catalogue used for icon/tooltip resolution.                                                                                                                                     |
+| `isDeploymentsLoading`    | `boolean`                                                                                        | When `true`, all items are returned with `isIconLoading: true`.                                                                                                                                    |
+| `toPanelConversationId`   | `(id: string) => string`                                                                         | Maps a DTO `id` to the panel-space identifier.                                                                                                                                                     |
+| `resolveIconUrl`          | `(deployment?: DeploymentItemDto) => string \| undefined`                                        | Returns the resolved icon URL for a deployment.                                                                                                                                                    |
+| `resolveIconTooltip`      | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`                      | Returns the tooltip text for the icon.                                                                                                                                                             |
+| `resolveHref`             | `(id: string) => string`                                                                         | Converts a panel-space ID to a navigation href.                                                                                                                                                    |
+| `resolveTaskPresentation` | `(item: ConversationListItemDto) => { leadingIcon?: ReactNode; isUnread: boolean } \| undefined` | Optional; returns the row presentation for scheduled-task conversations. `leadingIcon` (a host-rendered, `aria-hidden` node) replaces the deployment avatar; `isUnread` drives the unread styling. |
 
-**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs.
+**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs. The hook maps every item it is given; collapsing a scheduled task's runs into one row is left to the host.
+
+`resolveTaskPresentation` replaced `resolveTaskBadge` (`{ label, isUnread }`) when the conversation panel dropped its TASK pill.
 
 ### getConversationSource
 
