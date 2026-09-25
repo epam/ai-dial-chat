@@ -17,31 +17,46 @@ tab stays a matter of an enum member and a config entry alone.
 
 `apps/chat/src/types/routes.ts` SHALL gain `SettingsTab` as a route **pattern**, matching the
 existing `ScheduledTaskDetail = '/scheduled-tasks/:scheduleId'` precedent, and SHALL NOT gain one
-member per tab. A helper SHALL build a concrete path from a `SettingsTabs` value so no call site
-interpolates the pattern itself.
+member per tab. The concrete path SHALL be built by `getSettingsTabRoute` in
+`apps/chat/src/constants/routes.ts`, beside the other route builders and following their
+`` `${ROUTES.Parent}/${segment}` `` shape, so no call site substitutes into the `:tab` pattern
+itself.
 
-When the `SettingsPageEnabled` feature flag resolves to `false`, **both** routes' `element` SHALL
-instead render `<Navigate to={ROUTES.Root} replace />`, matching the existing `FileManager`
-route-gating pattern, so that neither `SettingsPage` nor its lazy chunk ever mounts while the
-feature is disabled through any settings path.
+Both registrations SHALL be generated from one gated expression in
+`apps/chat/src/app/settings-routes.tsx`, which `app.tsx` spreads into its `<Routes>` and which owns
+the lazy `SettingsPage` import. Generating them together is what makes a settings path that bypasses
+the gate structurally impossible, and it gives the gate a test seam: `app.tsx` itself has no route
+test, and mounting it would drag in its whole provider tree.
 
-#### Scenario: Direct navigation to a tab path with the feature enabled
+No **environment** configuration redirects these routes away; that guard was removed along with the
+`isSettingsPageEnabled` flag. The host-driven overlay toggle is a separate axis and does gate them:
+when `OverlayFeature.HideSettingsPage` resolves to `true`, **both** routes' `element` SHALL instead
+render `<Navigate to={ROUTES.Root} replace />`, so that neither `SettingsPage` nor its lazy chunk
+ever mounts through any settings path while the host hides the page.
 
-- **WHEN** `SettingsPageEnabled` resolves to `true` and a signed-in user navigates directly to
-  `/settings/usage` (e.g. via URL bar or bookmark)
+#### Scenario: Direct navigation to a tab path
+
+- **WHEN** a signed-in user navigates directly to `/settings/usage` (e.g. via URL bar or bookmark)
+  and the host does not hide the Settings page
 - **THEN** the `SettingsPage` component loads (showing `RouteFallback` while its chunk downloads) and
   renders with the Usage tab active
 
-#### Scenario: Direct navigation to /settings with the feature enabled
+#### Scenario: Direct navigation to /settings
 
-- **WHEN** `SettingsPageEnabled` resolves to `true` and a signed-in user navigates directly to
-  `/settings`
+- **WHEN** a signed-in user navigates directly to `/settings` and the host does not hide the
+  Settings page
 - **THEN** the application redirects, replacing history, to the default tab's path
 
-#### Scenario: Direct navigation to a settings path with the feature disabled
+#### Scenario: No environment configuration redirects the routes away
 
-- **WHEN** `SettingsPageEnabled` resolves to `false` and a signed-in user navigates directly to
-  `/settings` or to `/settings/usage`
+- **WHEN** any combination of environment configuration is applied and a signed-in user opens
+  `/settings` or `/settings/usage`
+- **THEN** the page renders — no redirect to `ROUTES.Root` occurs on that account
+
+#### Scenario: The host hides the Settings page
+
+- **WHEN** `OverlayFeature.HideSettingsPage` resolves to `true` and a signed-in user navigates
+  directly to `/settings` or to `/settings/usage`
 - **THEN** the application redirects (replacing history) to `ROUTES.Root` and `SettingsPage` is not
   rendered
 

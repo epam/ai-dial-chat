@@ -53,7 +53,7 @@ None.
 3. Reloading on a tab's URL reopens that tab.
 4. `/settings` redirects to the default tab's canonical URL.
 5. `/settings/does-not-exist` redirects to the default tab rather than rendering an empty shell.
-6. With `SettingsPageEnabled` resolving to `false`, every settings path still redirects to
+6. With `OverlayFeature.HideSettingsPage` resolving to `true`, every settings path redirects to
    `ROUTES.Root` and no `SettingsPage` chunk mounts.
 7. The usage popover's footer link navigates to the Usage tab in one step.
 8. `npm run verify:full` and `npm run validate:docs` pass.

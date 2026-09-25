@@ -28,7 +28,7 @@ are the ones that would catch a bad merge.
 - [x] 2.1 Register `ROUTES.SettingsTab` alongside the existing `ROUTES.Settings` entry — in
       `apps/chat/src/app/settings-routes.tsx`, which `app.tsx` spreads into its `<Routes>` (design
       Decision 7) — reusing the same lazy `SettingsPage`, `RouteErrorBoundary`,
-      `Suspense`/`RouteFallback` wrapping, and applying the `SettingsPageEnabled` gate to **both**
+      `Suspense`/`RouteFallback` wrapping, and applying the `OverlayFeature.HideSettingsPage` gate to **both**
       entries so no settings path mounts the chunk while the flag is off.
 - [x] 2.2 Change the `ROUTES.Settings` element to `<Navigate replace />` to the default tab's path,
       keeping it behind the same flag gate.

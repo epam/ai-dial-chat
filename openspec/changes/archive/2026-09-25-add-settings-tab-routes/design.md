@@ -13,7 +13,7 @@ That last fact is what makes this change small: the enum value can be the path s
 no separate slug map is needed.
 
 The route is registered once in `apps/chat/src/app/app.tsx:360` at `ROUTES.Settings`, wrapped in
-`RouteErrorBoundary` + `Suspense`, and gated on the `SettingsPageEnabled` flag by swapping the
+`RouteErrorBoundary` + `Suspense`, and gated on `OverlayFeature.HideSettingsPage` by swapping the
 element for `<Navigate to={ROUTES.Root} replace />`.
 
 `useSearchParams`/route-param reading is already established in the app —
