@@ -30,6 +30,15 @@ vi.mock('../ConversationsContext', () => ({
 
 vi.mock('../../server-api/scheduled-tasks.api');
 
+const useScheduledTaskRunsMock = vi.fn();
+vi.mock('../../hooks/scheduled-tasks/useScheduledTaskRuns', () => ({
+  useScheduledTaskRuns: (
+    scheduleId: string,
+    enabled: boolean,
+    nextRunTime?: string | null,
+  ) => useScheduledTaskRunsMock(scheduleId, enabled, nextRunTime),
+}));
+
 const mockGetScheduledTask = vi.mocked(scheduledTasksApi.getScheduledTask);
 
 const taskConversation = (
@@ -62,6 +71,17 @@ beforeEach(() => {
       ReturnType<typeof scheduledTasksApi.getScheduledTask>
     >,
   );
+  useScheduledTaskRunsMock.mockReturnValue({
+    items: [],
+    isLoading: false,
+    isLoadingMore: false,
+    error: null,
+    loadMoreError: null,
+    hasMore: false,
+    loadMore: vi.fn(),
+    retryLoadMore: vi.fn(),
+    refetch: vi.fn(),
+  });
 });
 
 const renderActiveScheduledTask = () =>
@@ -147,6 +167,30 @@ describe('ActiveScheduledTaskContext', () => {
     expect(mockGetScheduledTask).toHaveBeenCalledWith('schedule-1');
     expect(result.current.task).toEqual(scheduledTask);
     expect(result.current.history).toBeDefined();
+  });
+
+  it("passes the loaded task's nextRunTime to useScheduledTaskRuns once resolved, undefined beforehand", async () => {
+    contextMocks.conversations = [taskConversation()];
+    mockGetScheduledTask.mockResolvedValue({
+      ...scheduledTask,
+      nextRunTime: '2026-07-31T09:00:00.000Z',
+    } as Awaited<ReturnType<typeof scheduledTasksApi.getScheduledTask>>);
+
+    renderActiveScheduledTask();
+
+    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith(
+      'schedule-1',
+      true,
+      undefined,
+    );
+
+    await waitFor(() =>
+      expect(useScheduledTaskRunsMock).toHaveBeenCalledWith(
+        'schedule-1',
+        true,
+        '2026-07-31T09:00:00.000Z',
+      ),
+    );
   });
 
   it('ignores a stale response after switching to a different scheduleId', async () => {

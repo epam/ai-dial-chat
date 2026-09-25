@@ -63,8 +63,11 @@ const getApiErrorDetailsMock = vi.fn();
 
 const useScheduledTaskRunsMock = vi.fn();
 vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskRuns', () => ({
-  useScheduledTaskRuns: (scheduleId: string, enabled: boolean) =>
-    useScheduledTaskRunsMock(scheduleId, enabled),
+  useScheduledTaskRuns: (
+    scheduleId: string,
+    enabled: boolean,
+    nextRunTime?: string | null,
+  ) => useScheduledTaskRunsMock(scheduleId, enabled, nextRunTime),
 }));
 
 const getApiErrorStatusMock = vi.fn();
@@ -360,7 +363,36 @@ describe('ScheduledTaskDetailPage', () => {
     expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
 
     expect(getScheduledTaskMock).toHaveBeenCalledWith('sched_123');
-    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith('sched_123', true);
+    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith(
+      'sched_123',
+      true,
+      undefined,
+    );
+  });
+
+  it("passes the loaded task's nextRunTime to useScheduledTaskRuns once resolved, undefined beforehand", async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+      nextRunTime: '2026-07-31T09:00:00.000Z',
+    });
+    renderDetailPage();
+
+    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith(
+      'sched_123',
+      true,
+      undefined,
+    );
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+
+    expect(useScheduledTaskRunsMock).toHaveBeenCalledWith(
+      'sched_123',
+      true,
+      '2026-07-31T09:00:00.000Z',
+    );
   });
 
   it('renders NotFoundPage when getScheduledTask resolves with a 404', async () => {
