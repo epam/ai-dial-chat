@@ -18,54 +18,59 @@ interface MockDropdownItem {
    renders them inline so assertions stay about content, not positioning. The
    submenu rows mirror the role and aria-checked the kit derives from
    `mark` + `checked`, so the test asserts the marking is delegated to it. */
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 16 },
-  DropdownItemType: { PlainText: 'plainText', Divider: 'divider' },
-  MenuItemMark: { Check: 'check', Highlight: 'highlight' },
-  Tooltip: ({ children }: { children: ReactNode }) => children,
-  EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
-  Dropdown: ({
-    children,
-    items,
-  }: {
-    children: ReactNode;
-    items: MockDropdownItem[];
-  }) => (
-    <>
-      {children}
-      <ul>
-        {items.map(({ children: subItems, ...item }) => (
-          <li key={item.key}>
-            <button type="button" onClick={item.onClick}>
-              {item.label}
-            </button>
-            {subItems && (
-              <ul>
-                {subItems.map((child) => (
-                  <li key={child.key}>
-                    <button
-                      type="button"
-                      role={
-                        child.mark === 'check' ? 'menuitemradio' : 'menuitem'
-                      }
-                      aria-checked={
-                        child.mark === 'check' ? !!child.checked : undefined
-                      }
-                      onClick={child.onClick}
-                    >
-                      {child.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-    </>
-  ),
-}));
+/* The trigger is the real kit `Button`, so its role, name and tooltip wiring are what a user gets. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { Button } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    Button,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    DIAL_ICON_SIZE: { SM: 16 },
+    DropdownItemType: { PlainText: 'plainText', Divider: 'divider' },
+    MenuItemMark: { Check: 'check', Highlight: 'highlight' },
+    EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+    Dropdown: ({
+      children,
+      items,
+    }: {
+      children: ReactNode;
+      items: MockDropdownItem[];
+    }) => (
+      <>
+        {children}
+        <ul>
+          {items.map(({ children: subItems, ...item }) => (
+            <li key={item.key}>
+              <button type="button" onClick={item.onClick}>
+                {item.label}
+              </button>
+              {subItems && (
+                <ul>
+                  {subItems.map((child) => (
+                    <li key={child.key}>
+                      <button
+                        type="button"
+                        role={
+                          child.mark === 'check' ? 'menuitemradio' : 'menuitem'
+                        }
+                        aria-checked={
+                          child.mark === 'check' ? !!child.checked : undefined
+                        }
+                        onClick={child.onClick}
+                      >
+                        {child.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </>
+    ),
+  };
+});
 
 const labels = {
   trigger: 'Signed in as john.doe@example.com',

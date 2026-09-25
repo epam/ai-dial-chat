@@ -1,6 +1,6 @@
 import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
-import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
+import { FileUploadStatus, HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
@@ -697,7 +697,7 @@ describe('useDialFileManager', () => {
     });
   });
 
-  it('updates upload percent and closes the upload modal after completion', async () => {
+  it('updates upload percent, keeps the settled row, and stops reporting busy after completion', async () => {
     const mockUploadFile = vi.mocked(filesApi.uploadFile);
     let finishUpload: (() => void) | undefined;
 
@@ -742,12 +742,18 @@ describe('useDialFileManager', () => {
     await waitFor(() =>
       expect(result.current.uploadBatchState?.files[0]?.percent).toBe(35),
     );
+    expect(result.current.isAnyOperationInProgress).toBe(true);
 
     await act(async () => {
       finishUpload?.();
     });
 
-    await waitFor(() => expect(result.current.uploadBatchState).toBeNull());
+    await waitFor(() =>
+      expect(result.current.uploadBatchState?.files[0]?.status).toBe(
+        FileUploadStatus.Completed,
+      ),
+    );
+    expect(result.current.isAnyOperationInProgress).toBe(false);
   });
 
   it('creates a folder using the name from the virtual path, not the marker file', async () => {

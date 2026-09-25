@@ -287,133 +287,15 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 `targetGroupKey` it landed in, and `afterId` — the item to insert after, or
 `null` for the top of that group.
 
-## ImportExportQueue
+## Export/import queue
 
-Floating queue panel that shows the status of in-flight or recently completed export/import jobs. Each row is identified by the **file** the job transfers — a file-type icon derived from the extension plus the file name, truncated with a tooltip — and ends in a fixed-footprint status slot: the UI kit `Spinner` while in progress, a check on success, a filled alert icon whose accessible name and tooltip carry the failure reason, or a `Canceled` label with the file name dimmed.
-
-Returns `null` when `jobs` is empty. Auto-closes 8 seconds after **every** job succeeds; a failed, in-progress, or canceled job suppresses the countdown. Prompts for confirmation before closing when any job is still in progress or has failed — a canceled job needs no confirmation, since the user already chose to stop that work.
-
-The `title` is rendered verbatim; the host composes any count into it (`t(key, { count: jobs.length })`).
-
-The panel is 370px wide but never wider than the viewport minus a 1rem gutter on each side, so it stays fully on screen at the 360px mobile floor. Position it with a matching 1rem inset (`bottom-4 end-4`) — a larger inset needs a tighter cap via `styles.rootClassName`.
-
-```tsx
-import {
-  ConversationTransferErrorCode,
-  ConversationTransferJobStatus,
-  ConversationTransferSubjectKind,
-  ConversationTransferUnitKind,
-} from '@epam/ai-dial-chat-shared';
-import {
-  ImportExportQueue,
-  type ImportExportQueueColors,
-  type ImportExportQueueLabels,
-  type ImportExportQueueProps,
-  type ImportExportQueueStyles,
-  type ImportExportQueueTypography,
-} from '@epam/ai-dial-conversation-panel';
-
-const labels: ImportExportQueueLabels = {
-  cancelJobAriaLabel: (fileName) => `Cancel ${fileName}`,
-  canceledLabel: 'Canceled',
-  jobErrorMessage: (code) =>
-    code === ConversationTransferErrorCode.FileTooLarge
-      ? 'Export failed. File is too large'
-      : 'Export failed. Please try again',
-  jobProgressAriaLabel: (fileName) => `Exporting ${fileName}`,
-  jobWarningMessage: () => 'Some attachments could not be exported.',
-  queueProgressAriaLabel: 'Export progress',
-  queueProgressValueText: (completed, total) =>
-    `${completed} of ${total} files done`,
-  collapseQueueAriaLabel: 'Collapse queue',
-  expandQueueAriaLabel: 'Expand queue',
-  closeQueueAriaLabel: 'Close queue',
-  closeQueueConfirmHeader: 'Cancel export?',
-  closeQueueConfirmDescriptionInProgress: 'Export is still in progress.',
-  closeQueueConfirmDescriptionFailed: 'Some exports failed.',
-  closeQueueConfirmDescriptionMixed: 'Some exports are in progress or failed.',
-  closeLabel: 'Close',
-  cancelLabel: 'Cancel',
-};
-
-<ImportExportQueue
-  title="Exporting 1 file"
-  jobs={[
-    {
-      id: 'job-1',
-      subject: {
-        kind: ConversationTransferSubjectKind.Single,
-        title: 'My chat',
-      },
-      status: ConversationTransferJobStatus.InProgress,
-      fileName: '2026-09-01_ai_dial_chat_with_attachments.dial',
-      progress: {
-        percent: 36,
-        units: {
-          completed: 3,
-          total: 10,
-          kind: ConversationTransferUnitKind.Attachment,
-        },
-      },
-    },
-  ]}
-  onClose={handleClose}
-  onCancel={handleCancel}
-  labels={labels}
-  styles={{
-    colors: { background: '#fff', text: '#161b2d' },
-    typography: { titleClassName: 'dial-small-semi-text' },
-  }}
-/>;
-```
-
-The component has no retry control. `retryJob` stays on `useConversationExport` / `useConversationImport` in `@epam/ai-dial-chat-hooks` for hosts that want to re-expose it.
-
-An `InProgress` row shows an indeterminate spinner, never its own percentage. The one place `progress.percent` is rendered is the **collapsed** queue: while collapsed with at least one job still in progress, a determinate progress bar sits under the header showing the mean percent across all jobs. Expanded, the per-row spinners already convey activity, so no bar is drawn.
-
-A job with status `Warning` — one that delivered its file but skipped part of it, such as an attachment that could not be downloaded — renders an amber icon named by `jobWarningMessage(job.warningCode, job.warningNames)`. It is not counted in the failed-count badge and raises no close confirmation, but it does suppress the success-only auto-close, so a warning is never dismissed before it is read.
-
-Import jobs provide unique skipped attachment names in `job.warningNames`. Use the optional second label argument to interpolate the host translation, and provide generic text when names are absent. The callback result is used for both the tooltip and accessible name. Existing callbacks that accept only the code continue to work.
-
-### ImportExportQueueLabels
-
-| Field                                    | Type                                                                               | Description                                                              |
-| ---------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `cancelJobAriaLabel`                     | `(fileName: string) => string`                                                     | Accessible name for cancelling an in-progress job                        |
-| `canceledLabel`                          | `string`                                                                           | Trailing text shown on a canceled row                                    |
-| `jobErrorMessage`                        | `(code: ConversationTransferErrorCode \| undefined) => string`                     | Tooltip and accessible name explaining why a job failed                  |
-| `jobProgressAriaLabel`                   | `(fileName: string) => string`                                                     | Accessible name for a row's in-progress spinner                          |
-| `jobWarningMessage`                      | `(code: ConversationTransferWarningCode \| undefined, names?: string[]) => string` | Tooltip and accessible name explaining what a warned job left out        |
-| `queueProgressAriaLabel`                 | `string`                                                                           | Accessible name for the collapsed queue's aggregate progress bar         |
-| `queueProgressValueText`                 | `(completed: number, total: number) => string`                                     | The aggregate bar's `aria-valuetext`, given settled and total job counts |
-| `collapseQueueAriaLabel`                 | `string`                                                                           | Accessible name for the collapse toggle                                  |
-| `expandQueueAriaLabel`                   | `string`                                                                           | Accessible name for the expand toggle                                    |
-| `closeQueueAriaLabel`                    | `string`                                                                           | Accessible name for the close button                                     |
-| `closeQueueConfirmHeader`                | `string`                                                                           | Heading of the close-confirmation dialog                                 |
-| `closeQueueConfirmDescriptionInProgress` | `string`                                                                           | Dialog description when jobs are in progress                             |
-| `closeQueueConfirmDescriptionFailed`     | `string`                                                                           | Dialog description when jobs have failed                                 |
-| `closeQueueConfirmDescriptionMixed`      | `string`                                                                           | Dialog description when jobs are both in-progress and failed             |
-| `closeLabel`                             | `string`                                                                           | Confirm button label in the dialog                                       |
-| `cancelLabel`                            | `string`                                                                           | Cancel button label in the dialog                                        |
-
-### ImportExportQueueStyles
-
-`styles?: ImportExportQueueStyles` groups all customization hooks. `colors?: ImportExportQueueColors` overrides the panel background, primary/secondary text, status icons (success, error, and warning), header divider, and failed-count badge through CSS custom properties. The aggregate progress bar has no entry: it is the UI kit's `ProgressBar`, which themes its own track and fill. `typography?: ImportExportQueueTypography` provides classes for the title, job file name, canceled label, and failed-count badge. `rootClassName` and `bodyClassName` target the queue root and scrollable job list; `cssVars` is the last-resort CSS-variable escape hatch.
-
-## Utilities
-
-### getTransferFileIcon
-
-Returns the Tabler icon component a transfer row shows for a file name: the
-archive icon for `.dial`/`.zip`, the JSON icon for `.json`, and a generic file
-icon for anything else. `ImportExportQueue` uses it per row; it is exported for
-hosts that render the same file identity elsewhere.
-
-```tsx
-import { getTransferFileIcon } from '@epam/ai-dial-conversation-panel';
-
-const FileIcon = getTransferFileIcon('2026-09-01_ai_dial_chat.dial');
-```
+The floating queue that shows export/import job progress is no longer part of
+this package: it is the UI kit's generic `TransferQueue`
+(`@epam/ai-dial-ui-kit` `^0.15.0-dev.20`). A host maps its
+`ConversationTransferJob`s (from `@epam/ai-dial-chat-shared`) onto
+`TransferQueueItem`s — `id`, `fileName` as `name`, the status, `progress.percent`
+as `percent`, and the translated failure or warning reason as `message` — and
+renders the kit component itself.
 
 ## RenameConversationPopup
 

@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.19`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.20`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.19
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.20
 - `@epam/ai-dial-react-file-manager` ^0.3.0-dev.7 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -264,7 +264,7 @@ In both types, `title` is the postMessage protocol namespace rather than a displ
 
 ### ConversationTransfer
 
-Types for the queued export/import job model. Consumed by `@epam/ai-dial-conversation-panel`'s `ImportExportQueue` component.
+Types for the queued export/import job model. The host maps these jobs onto the UI kit's `TransferQueue` items to render the export/import queue.
 
 ```tsx
 import {
@@ -879,7 +879,7 @@ import {
 
 ## Stylesheet
 
-The package ships Tailwind-generated CSS for its components (`DialFileManagerShell`, `OperationLoaderModal`, `UploadProgressModal`, etc.). Import it once in the host application's entry point:
+The package ships Tailwind-generated CSS for its components (`DialFileManagerShell`, `OperationLoaderModal`, etc.). Import it once in the host application's entry point:
 
 ```ts
 import '@epam/ai-dial-chat-shared/styles.css';
@@ -1050,15 +1050,24 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 // Call reset() when the data source changes (e.g. on a tab switch).
 ```
 
-### OperationLoaderModal / UploadProgressModal
+### OperationLoaderModal
 
-Internal modals already rendered by `DialFileManagerShell`. Exported for hosts that need to compose them independently outside the shell.
+Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell.
 
 ```tsx
-import {
-  OperationLoaderModal,
-  UploadProgressModal,
-} from '@epam/ai-dial-chat-shared';
+import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';
+```
+
+### Upload queue
+
+`DialFileManagerShell` shows uploads in the UI kit's `TransferQueue`, fixed to the bottom-end corner. Its heading comes from `labels.getUploadQueueTitle(count)` and its strings from `labels.uploadQueueLabels`. Closing it aborts whatever is still uploading. Two helpers are exported for hosts that render the queue themselves — `isUploadInProgress` from the root entry, and `toUploadQueueItems` from `./file-manager`, since it is a value import of the kit:
+
+```ts
+import { isUploadInProgress } from '@epam/ai-dial-chat-shared';
+import { toUploadQueueItems } from '@epam/ai-dial-chat-shared/file-manager';
+
+const items = toUploadQueueItems(uploadBatchState?.files ?? []);
+const isBusy = isUploadInProgress(uploadBatchState);
 ```
 
 ## Building

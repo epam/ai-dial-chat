@@ -31,8 +31,6 @@ const labels = {
   deleteConfirmItemsLabel: 'items?',
   deleteConfirmLabel: 'Delete',
   deleteCancelLabel: 'Cancel',
-  uploadProgressTitle: 'Uploading',
-  cancelLabel: 'Cancel',
 };
 
 const ATTACH_RESULT: AttachResult = {

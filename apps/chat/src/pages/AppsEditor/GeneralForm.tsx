@@ -194,8 +194,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       ),
       deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
       deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
-      uploadProgressTitle: t(DialFileManagerI18nKeys.UploadProgressTitle),
-      cancelLabel: t(ButtonsI18nKeys.Cancel),
     }),
     [t],
   );

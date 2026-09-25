@@ -786,6 +786,7 @@ describe('useDialFileMutations', () => {
         kind: 'fileMoved',
         name: 'draft.pdf',
         count: 1,
+        isFolder: false,
         destinationFolderName: 'My files/reports',
       });
     });
@@ -962,6 +963,7 @@ describe('useDialFileMutations', () => {
         kind: 'fileCopied',
         name: 'q1.pdf',
         count: 1,
+        isFolder: false,
         destinationFolderName: 'My files/archive',
       });
     });
@@ -1201,7 +1203,53 @@ describe('useDialFileMutations', () => {
       // Source and destination share the same parent folder — invalidated once.
       expect(invalidateFolders).toHaveBeenCalledWith(['reports/']);
       expect(onOperationSuccess).toHaveBeenCalledWith(
-        expect.objectContaining({ kind: 'fileCopied' }),
+        expect.objectContaining({ kind: 'fileDuplicated', isFolder: false }),
+      );
+    });
+
+    it('reports a multi-item same-folder copy as filesDuplicated with the first item node type', async () => {
+      const { result, onOperationSuccess, filesApi } = renderMutations();
+      vi.mocked(filesApi.copyFiles).mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'reports/',
+            destinationPath: 'reports (1)/',
+            success: true,
+          },
+          {
+            sourcePath: 'a.pdf',
+            destinationPath: 'a (1).pdf',
+            success: true,
+          },
+        ],
+      });
+
+      await act(async () => {
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/reports/',
+              destinationUrl: '/My files/reports (1)/',
+              nodeType: DialFileNodeType.FOLDER,
+            },
+            {
+              sourceUrl: '/My files/a.pdf',
+              destinationUrl: '/My files/a (1).pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files',
+        );
+      });
+
+      await waitFor(() =>
+        expect(onOperationSuccess).toHaveBeenCalledWith({
+          kind: 'filesDuplicated',
+          name: 'reports (1)',
+          count: 2,
+          isFolder: true,
+          destinationFolderName: 'My files',
+        }),
       );
     });
 

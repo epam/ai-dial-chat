@@ -5,7 +5,9 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   ArchiveItemDtoNodeTypeEnum,
+  CopyItemDtoNodeTypeEnum,
   DeleteItemDtoNodeTypeEnum,
+  MoveItemDtoNodeTypeEnum,
   RenameItemDtoNodeTypeEnum,
 } from '@epam/ai-dial-chat-api-client';
 import type {
@@ -571,13 +573,32 @@ export const useDialFileMutations = ({
               results,
             );
 
-            onOperationSuccess?.({
-              kind:
+            /* The Duplicate action is a copy into each item's own folder. */
+            const isDuplicate = dtos.every(
+              (dto) =>
+                getParentFolderPath(dto.sourcePath) ===
+                getParentFolderPath(dto.destinationPath),
+            );
+            let kind: FileOperationKind;
+            if (isDuplicate) {
+              kind =
+                successCount === 1
+                  ? FileOperationKind.FileDuplicated
+                  : FileOperationKind.FilesDuplicated;
+            } else {
+              kind =
                 successCount === 1
                   ? FileOperationKind.FileCopied
-                  : FileOperationKind.FilesCopied,
+                  : FileOperationKind.FilesCopied;
+            }
+
+            onOperationSuccess?.({
+              kind,
               name: firstSuccessfulItem?.destinationName,
               count: successCount,
+              isFolder:
+                firstSuccessfulItem?.dto.nodeType ===
+                CopyItemDtoNodeTypeEnum.Folder,
               destinationFolderName: formatOperationFolderName(
                 destinationFolder,
                 rootLabel,
@@ -736,6 +757,9 @@ export const useDialFileMutations = ({
                 : FileOperationKind.FilesMoved,
             name: firstSuccessfulItem?.destinationName,
             count: moveSuccessCount,
+            isFolder:
+              firstSuccessfulItem?.dto.nodeType ===
+              MoveItemDtoNodeTypeEnum.Folder,
             destinationFolderName: formatOperationFolderName(
               destinationFolder,
               rootLabel,

@@ -298,17 +298,17 @@ describe('updateEntry', () => {
   };
 
   it('returns null unchanged when prev is null', () => {
-    expect(updateEntry(null, 0, FileUploadStatus.Uploading)).toBeNull();
+    expect(updateEntry(null, '1', FileUploadStatus.Uploading)).toBeNull();
   });
 
-  it('patches only the entry at the given index with a status shorthand', () => {
-    const result = updateEntry(batch, 0, FileUploadStatus.Uploading);
+  it('patches only the entry with the given id with a status shorthand', () => {
+    const result = updateEntry(batch, '1', FileUploadStatus.Uploading);
     expect(result?.files[0].status).toBe(FileUploadStatus.Uploading);
     expect(result?.files[1].status).toBe(FileUploadStatus.Queued);
   });
 
   it('patches with a partial object', () => {
-    const result = updateEntry(batch, 1, { percent: 42 });
+    const result = updateEntry(batch, '2', { percent: 42 });
     expect(result?.files[1].percent).toBe(42);
     expect(result?.files[1].status).toBe(FileUploadStatus.Queued);
   });

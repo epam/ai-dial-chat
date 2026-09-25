@@ -49,10 +49,6 @@ export interface AvatarPickerModalLabels {
   deleteConfirmLabel: string;
   /** Label for the delete-confirmation cancel button. */
   deleteCancelLabel: string;
-  /** Title shown while an upload is in progress. */
-  uploadProgressTitle: string;
-  /** Label for the cancel button. */
-  cancelLabel: string;
 }
 
 /**
@@ -109,10 +105,6 @@ export interface AvatarPickerFileManagerModalProps {
   deleteConfirmLabel: string;
   /** Label for the delete-confirmation cancel button. */
   deleteCancelLabel: string;
-  /** Title shown while an upload is in progress. */
-  uploadProgressTitle: string;
-  /** Label for the cancel button. */
-  cancelLabel: string;
   /** MIME types selectable in the modal. Unset means no type restriction. */
   allowedTypes?: string[];
   /** Maximum size, in bytes, of a selectable file. */

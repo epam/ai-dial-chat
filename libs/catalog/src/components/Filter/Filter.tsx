@@ -4,6 +4,7 @@ import {
   SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
@@ -377,45 +378,46 @@ export const Filter: FC<FilterProps> = ({
         </div>
       )}
     >
-      <button
+      {/* No `variant`: the kit paints no colours of its own, so the
+          `--cat-filter-btn-*` custom properties keep theming the pill. */}
+      <Button
         ref={triggerRef}
-        type="button"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onKeyDown={handleTriggerKeyDown}
         style={cssVars}
+        iconBefore={
+          <IconFilter
+            size={DIAL_ICON_SIZE.SM}
+            stroke={DIAL_KIT_ICON_STROKE}
+            className={mergeClasses('shrink-0', styles.filterBtnFunnel)}
+            aria-hidden
+          />
+        }
+        label={buttonLabel}
+        textClassName={mergeClasses(
+          styles.filterBtnLabel,
+          typography?.filterButtonClassName ?? 'dial-small-semi-text',
+        )}
+        iconAfter={
+          <IconChevronDown
+            size={14}
+            stroke={DIAL_KIT_ICON_STROKE}
+            className={mergeClasses(
+              'shrink-0 transition-transform duration-150',
+              styles.filterBtnChevron,
+              isOpen && 'rotate-180',
+            )}
+            aria-hidden
+          />
+        }
         className={mergeClasses(
-          'flex h-12 shrink-0 cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-lg px-[18px]',
+          'h-12 shrink-0 gap-[7px] whitespace-nowrap !rounded-lg px-[18px]',
           styles.filterBtn,
           isActive && styles.filterBtnActive,
           isOpen && styles.filterBtnOpen,
         )}
-      >
-        <IconFilter
-          size={DIAL_ICON_SIZE.SM}
-          stroke={DIAL_KIT_ICON_STROKE}
-          className={mergeClasses('shrink-0', styles.filterBtnFunnel)}
-          aria-hidden
-        />
-        <span
-          className={mergeClasses(
-            styles.filterBtnLabel,
-            typography?.filterButtonClassName ?? 'dial-small-semi-text',
-          )}
-        >
-          {buttonLabel}
-        </span>
-        <IconChevronDown
-          size={14}
-          stroke={DIAL_KIT_ICON_STROKE}
-          className={mergeClasses(
-            'shrink-0 transition-transform duration-150',
-            styles.filterBtnChevron,
-            isOpen && 'rotate-180',
-          )}
-          aria-hidden
-        />
-      </button>
+      />
     </Dropdown>
   );
 };

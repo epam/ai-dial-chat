@@ -4,11 +4,11 @@ import {
   SELECT_LIST_MAX_HEIGHT_PX,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
   GhostIconButton,
-  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, ReactNode, useState } from 'react';
@@ -198,25 +198,30 @@ export const ModelSelectorControl: FC<Props> = ({
           CONVERSATION_INPUT_CLASS.modelMenu,
         )}
       >
-        <Tooltip tooltip={chipTooltip}>
-          <button
-            type="button"
-            aria-label={selectorAriaLabel}
-            aria-disabled={isDisabled || undefined}
-            className={mergeClasses(
-              'flex min-w-0 items-center gap-1.5 rounded-full py-1.5 pe-2 ps-1.5',
-              styles.modelSelectorButton,
-              disabledIconClassName,
-              isDisabled && styles.modelSelectorButtonDisabled,
-              CONVERSATION_INPUT_CLASS.modelSelectorButton,
-            )}
-            onClick={() => {
-              if (!isStreaming && !isDisabled) {
-                onPickerToggle?.();
-              }
-            }}
-          >
-            {iconNode}
+        {/* No `variant`: the `--ci-model-selector-*` properties keep the
+            colours. The geometry classes replace the kit's 40px height and
+            padding, and `!border-0` drops its transparent border so the chip
+            stays the size it was. */}
+        <Button
+          aria-label={selectorAriaLabel}
+          aria-disabled={isDisabled || undefined}
+          tooltipProps={{ tooltip: chipTooltip }}
+          className={mergeClasses(
+            'h-auto min-w-0 gap-1.5 !rounded-full !border-0 px-0 py-1.5 pe-2 ps-1.5',
+            styles.modelSelectorButton,
+            disabledIconClassName,
+            isDisabled && styles.modelSelectorButtonDisabled,
+            CONVERSATION_INPUT_CLASS.modelSelectorButton,
+          )}
+          onClick={() => {
+            if (!isStreaming && !isDisabled) {
+              onPickerToggle?.();
+            }
+          }}
+          iconBefore={iconNode}
+          iconAfter={caretIcon}
+          textClassName="min-w-0"
+          label={
             <span className="flex min-w-0 max-w-[180px] items-baseline gap-1">
               <span
                 className={mergeClasses(
@@ -237,9 +242,8 @@ export const ModelSelectorControl: FC<Props> = ({
                 </span>
               )}
             </span>
-            {caretIcon}
-          </button>
-        </Tooltip>
+          }
+        />
       </Dropdown>
     );
   }
@@ -268,22 +272,19 @@ export const ModelSelectorControl: FC<Props> = ({
         disabled={isDisabled}
         onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
       >
-        <Tooltip tooltip={selectedLabel}>
-          <button
-            type="button"
-            aria-label={selectorAriaLabel}
-            aria-disabled={isDisabled || undefined}
-            className={mergeClasses(
-              'flex items-center gap-1 rounded-full p-1.5',
-              styles.modelSelectorButton,
-              isDisabled && styles.modelSelectorButtonDisabled,
-              CONVERSATION_INPUT_CLASS.modelSelectorButton,
-            )}
-          >
-            {iconNode}
-            {caretIcon}
-          </button>
-        </Tooltip>
+        <Button
+          aria-label={selectorAriaLabel}
+          aria-disabled={isDisabled || undefined}
+          tooltipProps={{ tooltip: selectedLabel }}
+          iconBefore={iconNode}
+          iconAfter={caretIcon}
+          className={mergeClasses(
+            'h-auto gap-1 !rounded-full !border-0 p-1.5',
+            styles.modelSelectorButton,
+            isDisabled && styles.modelSelectorButtonDisabled,
+            CONVERSATION_INPUT_CLASS.modelSelectorButton,
+          )}
+        />
       </Dropdown>
     </div>
   );

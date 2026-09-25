@@ -145,6 +145,9 @@ export enum FileOperationKind {
   FilesCopied = 'filesCopied',
   FileMoved = 'fileMoved',
   FilesMoved = 'filesMoved',
+  /** A copy whose every item landed in its own source folder (Duplicate). */
+  FileDuplicated = 'fileDuplicated',
+  FilesDuplicated = 'filesDuplicated',
 }
 
 /**
@@ -159,13 +162,15 @@ export interface FileOperationSuccessEvent {
   name?: string;
   /** Number of items the operation covered, when applicable. */
   count?: number;
-  /** Destination folder name, for copy/move operations. */
+  /**
+   * Destination folder as a slash-joined virtual path starting at the root
+   * label (e.g. `My files/reports`), for copy/move/duplicate operations.
+   */
   destinationFolderName?: string;
   /**
-   * Whether the affected item is a folder rather than a file. Only set for
-   * `fileRenamed`, since it is the only kind whose current wording depends
-   * on the item's node type (a rename toast reads "Folder renamed" vs.
-   * "File renamed").
+   * Whether the affected item is a folder rather than a file. Set for rename,
+   * copy, move, and duplicate events; on a multi-item event it describes the
+   * first successfully affected item (the one `name` refers to).
    */
   isFolder?: boolean;
 }
@@ -274,7 +279,9 @@ export interface UseDialFileManagerResult {
   uploadBatchState: FileUploadBatchState | null;
   /** Upload: abort all in-flight and queued uploads. */
   cancelUpload: () => void;
-  /** Upload: dismiss the progress modal after the batch has settled. */
+  /** Upload: abort one queued or in-flight upload by its entry id. */
+  cancelUploadFile: (id: string) => void;
+  /** Upload: empty the upload queue. */
   clearUploadBatch: () => void;
 
   /** Folder creation: called when user confirms a new folder name. */
@@ -363,7 +370,7 @@ export interface UseDialFileManagerResult {
   /**
    * True while any mutating file-manager operation is in flight: the OR of
    * `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`,
-   * `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`.
+   * `isMoving`, `isUnsharing`, `isRemovingAccess`, and any upload still queued or running.
    *
    * Deliberately excludes three flags, each already fully contained by its own
    * scoped loading UI:
