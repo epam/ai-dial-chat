@@ -33,10 +33,16 @@ const GHOSTS: Record<
 interface Props {
   variant: HalloweenGhostVariant;
   className?: string;
+  /** The possession story animates these expression and gesture layers. */
+  expressive?: boolean;
 }
 
 /** A softly lit, translucent ghost with cloth folds and recessed eyes. */
-const HalloweenGhost: FC<Props> = ({ variant, className }) => {
+const HalloweenGhost: FC<Props> = ({
+  variant,
+  className,
+  expressive = false,
+}) => {
   const { body, face, tint } = GHOSTS[variant];
   const id = useId();
 
@@ -67,6 +73,18 @@ const HalloweenGhost: FC<Props> = ({ variant, className }) => {
           <path d={body} />
         </clipPath>
       </defs>
+      {expressive && (
+        <g
+          data-ghost-arms="true"
+          fill={`url(#${id}-cloth)`}
+          stroke={tint}
+          strokeWidth="0.65"
+          opacity="0"
+        >
+          <path d="M15 35Q10 27 9 16Q6 11 4 15Q1 19 3 29Q5 42 17 48Z" />
+          <path d="M49 35Q54 27 55 16Q58 11 60 15Q63 19 61 29Q59 42 47 48Z" />
+        </g>
+      )}
       <path
         d={body}
         fill={`url(#${id}-cloth)`}
@@ -94,7 +112,26 @@ const HalloweenGhost: FC<Props> = ({ variant, className }) => {
           strokeWidth="2"
           strokeLinecap="round"
         />
-        <path d={face} fill={`url(#${id}-face)`} />
+        <g data-ghost-calm-face={expressive ? 'true' : undefined}>
+          <path d={face} fill={`url(#${id}-face)`} />
+        </g>
+        {expressive && (
+          <g data-ghost-fright-face="true" opacity="0">
+            <ellipse cx="23" cy="35" rx="6" ry="8" fill="#f7f2ff" />
+            <ellipse cx="41" cy="35" rx="6" ry="8" fill="#f7f2ff" />
+            <ellipse cx="24" cy="36" rx="2.8" ry="4.8" fill="#28283c" />
+            <ellipse cx="40" cy="36" rx="2.8" ry="4.8" fill="#28283c" />
+            <ellipse
+              cx="32"
+              cy="53"
+              rx="5"
+              ry="8"
+              fill={`url(#${id}-face)`}
+              stroke={tint}
+              strokeWidth="0.6"
+            />
+          </g>
+        )}
       </g>
     </svg>
   );
