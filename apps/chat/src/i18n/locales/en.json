@@ -1047,6 +1047,7 @@
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
     "qrCodeAriaLabel": "QR code for the share link",
+    "qrDownloadFileName": "share-qr-code.png",
     "loadingLabel": "Creating share link…",
     "errorTitle": "Couldn't create the share link. Please try again.",
     "invitationAcceptError": "This share link is invalid or has expired."

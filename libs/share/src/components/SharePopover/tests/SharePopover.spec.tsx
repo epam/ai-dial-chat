@@ -1,11 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  cloneElement,
-  type ReactElement,
-  type ReactNode,
-  useState,
-} from 'react';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SHARE_CLASS } from '../../../constants/public-class-names';
 import type { SharePopoverProps } from '../../../models/share-popover-props';
@@ -35,39 +30,6 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
         },
       };
     },
-  };
-});
-
-/*
- * Mirrors the `Dropdown` mock convention used across this repo — renders
- * the trigger and (when open) the overlay content inline, so tests can
- * interact with real button/menu elements instead of Dropdown's own
- * floating/positioning internals. The child trigger is cloned with a click
- * handler that toggles `open`, standing in for the real component's default
- * click-to-open behavior.
- */
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  return {
-    ...actual,
-    Dropdown: ({
-      children,
-      open,
-      onOpenChange,
-      renderOverlay,
-    }: {
-      children: ReactElement<{ onClick?: () => void }>;
-      open?: boolean;
-      onOpenChange?: (next: boolean) => void;
-      renderOverlay?: () => ReactNode;
-    }) => (
-      <>
-        {cloneElement(children, {
-          onClick: () => onOpenChange?.(!open),
-        })}
-        {open && renderOverlay?.()}
-      </>
-    ),
   };
 });
 
@@ -177,13 +139,24 @@ describe('SharePopover', () => {
     expect(editOption.getAttribute('aria-checked')).toBe('true');
   });
 
+  it('moves focus to the first access option when the menu opens', async () => {
+    render(<SharePopover {...makeProps({ onClose })} />);
+
+    await user.click(screen.getByRole('button', { name: 'Can view' }));
+    const viewOption = screen.getByRole('menuitemradio', { name: 'Can view' });
+
+    await waitFor(() => expect(viewOption.matches(':focus')).toBe(true));
+  });
+
   it('moves focus between access menu options with Arrow keys', async () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 
     await user.click(screen.getByRole('button', { name: 'Can view' }));
     const viewOption = screen.getByRole('menuitemradio', { name: 'Can view' });
     const editOption = screen.getByRole('menuitemradio', { name: 'Can edit' });
-    viewOption.focus();
+    /* The menu places its initial focus a tick after opening; wait for it so
+       that deferred focus does not land after the first key press. */
+    await waitFor(() => expect(viewOption.matches(':focus')).toBe(true));
 
     await user.keyboard('{ArrowDown}');
     expect(editOption.matches(':focus')).toBe(true);
@@ -201,6 +174,7 @@ describe('SharePopover', () => {
     await user.click(screen.getByRole('button', { name: 'Can view' }));
     const viewOption = screen.getByRole('menuitemradio', { name: 'Can view' });
     const editOption = screen.getByRole('menuitemradio', { name: 'Can edit' });
+    await waitFor(() => expect(viewOption.matches(':focus')).toBe(true));
     editOption.focus();
 
     await user.tab();
@@ -456,5 +430,100 @@ describe('SharePopover — public class names', () => {
     render(<SharePopover {...makeProps()} />);
 
     expect(screen.getByRole('dialog').classList).toContain(SHARE_CLASS.popover);
+  });
+});
+
+describe('SharePopover — QR actions', () => {
+  const user = userEvent.setup({ delay: null });
+  const onClose = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows Copy and Download under the QR code only in the QR view', async () => {
+    render(<SharePopover {...makeProps({ onClose })} />);
+
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'QR' }));
+
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('renders no QR actions while the link is loading', () => {
+    render(
+      <SharePopover
+        {...makeProps({ onClose, url: undefined, isLoading: true })}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('renders no QR actions when the link could not be created', () => {
+    render(
+      <SharePopover
+        {...makeProps({
+          onClose,
+          url: undefined,
+          error: new Error('network down'),
+        })}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+  });
+
+  it('renders host-supplied QR action labels', async () => {
+    render(
+      <SharePopover
+        {...makeProps({
+          onClose,
+          labels: {
+            qrCopyButtonLabel: 'Kopieren',
+            qrDownloadButtonLabel: 'Herunterladen',
+          },
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'QR' }));
+
+    expect(screen.getByRole('button', { name: 'Kopieren' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Herunterladen' })).toBeTruthy();
+  });
+
+  it('reaches Copy and Download with Tab and wraps back to the header', async () => {
+    render(<SharePopover {...makeProps({ onClose })} />);
+    await user.click(screen.getByRole('button', { name: 'QR' }));
+
+    const copyButton = screen.getByRole('button', { name: 'Copy' });
+    const downloadButton = screen.getByRole('button', { name: 'Download' });
+
+    screen.getByRole('button', { name: 'Can view' }).focus();
+    await user.tab();
+    expect(copyButton.matches(':focus')).toBe(true);
+
+    await user.tab();
+    expect(downloadButton.matches(':focus')).toBe(true);
+
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Link' }).matches(':focus')).toBe(
+      true,
+    );
+  });
+
+  it('returns to the link view on Escape from Download without closing', async () => {
+    render(<SharePopover {...makeProps({ onClose })} />);
+    await user.click(screen.getByRole('button', { name: 'QR' }));
+
+    screen.getByRole('button', { name: 'Download' }).focus();
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('textbox', { name: 'Share link' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

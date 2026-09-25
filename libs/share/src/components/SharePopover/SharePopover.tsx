@@ -20,6 +20,7 @@ import {
 } from '../../utils/focus';
 import { AccessControl } from '../AccessControl/AccessControl';
 import { LinkView } from '../LinkView/LinkView';
+import { QrActions } from '../QrActions/QrActions';
 import { QrCode } from '../QrCode/QrCode';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import styles from './SharePopover.module.scss';
@@ -86,6 +87,10 @@ const SharePopover: FC<SharePopoverProps> = ({
     linkAriaLabel = 'Share link',
     expiryNote,
     qrCodeAriaLabel = 'QR code for the share link',
+    qrCopyButtonLabel = 'Copy',
+    qrCopiedButtonLabel = 'Copied',
+    qrDownloadButtonLabel = 'Download',
+    qrDownloadFileName = 'share-qr-code.png',
     loadingLabel = 'Creating share link…',
     errorTitle = 'Couldn’t create the share link. Please try again.',
     nestedItemsNote,
@@ -93,23 +98,19 @@ const SharePopover: FC<SharePopoverProps> = ({
 
   const [view, setView] = useState(SharePopoverView.Link);
   const { isCopied, copy } = useCodeCopy(url ?? '');
+  const qrSvgRef = useRef<SVGSVGElement>(null);
 
   const [isAccessOpen, setIsAccessOpen] = useState(false);
   const accessTriggerRef = useRef<HTMLButtonElement>(null);
-  const accessMenuRef = useRef<HTMLDivElement>(null);
 
+  /*
+   * Focus goes back to the trigger button itself: the kit's own return-focus
+   * targets its wrapper element, which is not focusable.
+   */
   const handleAccessOpenChange = (next: boolean) => {
     setIsAccessOpen(next);
     if (!next) accessTriggerRef.current?.focus();
   };
-
-  /* Focuses the currently-selected option once the menu opens. */
-  useEffect(() => {
-    if (!isAccessOpen) return;
-    accessMenuRef.current
-      ?.querySelector<HTMLButtonElement>('[aria-checked="true"]')
-      ?.focus();
-  }, [isAccessOpen]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -141,18 +142,16 @@ const SharePopover: FC<SharePopoverProps> = ({
   }, [view]);
 
   /*
-   * Traps Tab within the popover: while the access menu is open, cycles
-   * between its own two options (which live in a floating-ui portal, so
-   * they're outside `containerRef`'s DOM subtree and need their own
-   * boundary check); otherwise cycles within the popover's own controls.
+   * Traps Tab within the popover: inside the open access menu, cycles between
+   * its own options (which live in a floating-ui portal, so they're outside
+   * `containerRef`'s DOM subtree — the key event still reaches this handler
+   * through the React tree); otherwise cycles within the popover's own
+   * controls.
    */
   const trapTab = (e: KeyboardEvent<HTMLDivElement>) => {
-    const scope = isAccessOpen
-      ? Array.from(
-          accessMenuRef.current?.querySelectorAll<HTMLElement>(
-            '[role="menuitemradio"]',
-          ) ?? [],
-        )
+    const menu = (e.target as HTMLElement).closest('[role="menu"]');
+    const scope = menu
+      ? Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitemradio"]'))
       : getInteractiveElements(containerRef.current);
     if (scope.length === 0) return;
 
@@ -188,23 +187,6 @@ const SharePopover: FC<SharePopoverProps> = ({
     } else {
       onClose();
     }
-  };
-
-  const handleAccessMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-    e.preventDefault();
-    const items = Array.from(
-      accessMenuRef.current?.querySelectorAll<HTMLButtonElement>(
-        '[role="menuitemradio"]',
-      ) ?? [],
-    );
-    if (items.length === 0) return;
-    const currentIndex = items.indexOf(
-      document.activeElement as HTMLButtonElement,
-    );
-    const delta = e.key === 'ArrowDown' ? 1 : -1;
-    const nextIndex = (currentIndex + delta + items.length) % items.length;
-    items[nextIndex]?.focus();
   };
 
   return (
@@ -264,9 +246,7 @@ const SharePopover: FC<SharePopoverProps> = ({
             isOpen={isAccessOpen}
             onOpenChange={handleAccessOpenChange}
             onAccessChange={onAccessChange}
-            onMenuKeyDown={handleAccessMenuKeyDown}
             triggerRef={accessTriggerRef}
-            menuRef={accessMenuRef}
             titleClassName={typography?.anyoneTitleClassName}
             subtitleClassName={typography?.anyoneSubtitleClassName}
             accessTriggerLabelClassName={
@@ -296,7 +276,21 @@ const SharePopover: FC<SharePopoverProps> = ({
           )}
 
           {view === SharePopoverView.Qr ? (
-            <QrCode value={url} labels={{ ariaLabel: qrCodeAriaLabel }} />
+            <>
+              <QrCode
+                value={url}
+                labels={{ ariaLabel: qrCodeAriaLabel }}
+                svgRef={qrSvgRef}
+              />
+              <QrActions
+                url={url}
+                getSvg={() => qrSvgRef.current}
+                copyLabel={qrCopyButtonLabel}
+                copiedLabel={qrCopiedButtonLabel}
+                downloadLabel={qrDownloadButtonLabel}
+                downloadFileName={qrDownloadFileName}
+              />
+            </>
           ) : (
             <LinkView
               url={url}
