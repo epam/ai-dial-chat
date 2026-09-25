@@ -98,6 +98,7 @@
     "@nestjs/testing": "^11.0.0"
   },
   "overrides": {
-    "multer": "2.4.0"
+    "multer": "2.4.0",
+    "proxy-addr": "2.0.8"
   }
 }
