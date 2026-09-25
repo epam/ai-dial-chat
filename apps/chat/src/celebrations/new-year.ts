@@ -38,7 +38,7 @@ const newYear: CelebrationEvent = {
   secretTrigger: {
     phrases: ['happy new year'],
     hintPhrase: 'happy new year',
-    sceneId: NewYearScene.Confetti,
+    sceneIds: [NewYearScene.Confetti],
   },
 };
 

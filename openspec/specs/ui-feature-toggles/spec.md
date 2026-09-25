@@ -379,6 +379,24 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 - **WHEN** `isEnabled('hide-settings-page')` is `true`
 - **THEN** neither the desktop user menu nor the mobile profile page renders a Settings entry, and a direct `/settings` URL redirects to `/`
 
+### Requirement: show-header-logo renders the theme logo in the desktop top bar
+
+`ChatLayout`'s desktop top bar SHALL render the theme logo, centered between the start-side conversation controls and the end-side sources toggle, when `isEnabled('show-header-logo')` is `true`. Nothing SHALL render there when the key is off, and the bar's other controls SHALL keep their positions either way. The key SHALL NOT affect the mobile `Header`, which renders the logo whenever `header` is on, nor the desktop navigation rail. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+
+**Accessibility:** The logo reuses `Logo`'s existing labeled link; no new interactive control is introduced.
+
+**i18n impact:** None — the link's accessible name is the existing `ChatI18nKeys.Logo` string.
+
+#### Scenario: The logo renders in the desktop top bar when the key is on
+
+- **WHEN** `isEnabled('show-header-logo')` is `true` and the active theme defines a logo
+- **THEN** the desktop top bar renders the logo link between the conversation controls and the sources toggle
+
+#### Scenario: Nothing renders when the key is off
+
+- **WHEN** `isEnabled('show-header-logo')` is `false`
+- **THEN** the desktop top bar renders no logo, and the mobile header's logo is unaffected
+
 ### Requirement: Isolated-view override takes precedence over every other source
 
 `TODO: remove in next release.` `UiFeaturesContext` SHALL expose `applyIsolatedViewOverride(features: Set<OverlayFeature> | null)`, called only by `useIsolatedModelView` (see `isolated-model-view`). When set to a non-null value, the effective UI-feature set SHALL become exactly that set, taking precedence over the overlay override, the server `enabledUiFeatures` baseline, and the compiled defaults — none of those other sources SHALL be consulted while the isolated-view override is active. When `null` (the default, and the value whenever isolated view is not active), the existing three-level priority chain (overlay override → server baseline → compiled defaults) SHALL apply unchanged.

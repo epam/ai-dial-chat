@@ -168,7 +168,7 @@ describe('Logo', () => {
     expect((logoImage as HTMLElement).classList.contains('bg-contain')).toBe(
       true,
     );
-    expect((logoImage as HTMLElement).classList.contains('bg-right')).toBe(
+    expect((logoImage as HTMLElement).classList.contains('bg-center')).toBe(
       true,
     );
     expect((logoImage as HTMLElement).classList.contains('bg-no-repeat')).toBe(

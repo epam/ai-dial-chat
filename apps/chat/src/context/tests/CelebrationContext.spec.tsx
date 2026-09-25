@@ -20,6 +20,7 @@ import {
 import CelebrationDecor from '../../components/CelebrationDecor/CelebrationDecor';
 import {
   HALLOWEEN_BURST_DURATION_MS,
+  HALLOWEEN_SCENE_DURATIONS,
   HALLOWEEN_WEB_COUNT,
   HALLOWEEN_BAT_COUNT,
   HALLOWEEN_WITCH_COUNT,
@@ -147,7 +148,10 @@ const renderProvider = async (isEnabled: boolean, path = '/') => {
 };
 
 describe('CelebrationContext with the Halloween module', () => {
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
   /* The celebration layer is lazily imported by the provider. Resolving the
      module up front keeps the assertions below off the module graph's
      first-load latency, which under a full-suite run outlasts any reasonable
@@ -307,6 +311,7 @@ describe('CelebrationContext with the Halloween module', () => {
   describe('with Halloween selected', () => {
     it('consumes the secret phrase, drops the spiders, and notifies', async () => {
       await renderProvider(true);
+      vi.spyOn(Math, 'random').mockReturnValue(0);
       await userEvent.click(screen.getByRole('button', { name: 'say phrase' }));
 
       expect(lastConsumeResult).toBe(true);
@@ -386,6 +391,8 @@ describe('CelebrationContext with the Halloween module', () => {
       'names the chat secret phrase in every toast: %s',
       async (button, message) => {
         await renderProvider(true);
+        if (button === 'say phrase')
+          vi.spyOn(Math, 'random').mockReturnValue(0);
         await userEvent.click(screen.getByRole('button', { name: button }));
         expect(mockT).toHaveBeenCalledWith(`halloween.${message}`, {
           phrase: HALLOWEEN_SECRET_PHRASE,
@@ -397,6 +404,7 @@ describe('CelebrationContext with the Halloween module', () => {
 
     it('keeps every drawing out of the accessibility tree', async () => {
       await renderProvider(true);
+      vi.spyOn(Math, 'random').mockReturnValue(0);
       await userEvent.click(screen.getByRole('button', { name: 'say phrase' }));
       await waitFor(() =>
         expect(querySpiders()).toHaveLength(HALLOWEEN_SPIDER_COUNT),
@@ -413,6 +421,42 @@ describe('CelebrationContext with the Halloween module', () => {
         expect(drawing.closest('[aria-hidden="true"]')).not.toBeNull(),
       );
     });
+
+    it.each([
+      [0.25, HalloweenBurst.Cauldron, 'cauldronToastMessage'],
+      [0.45, HalloweenBurst.Mimic, 'mimicToastMessage'],
+      [0.65, HalloweenBurst.Bowling, 'bowlingToastMessage'],
+      [0.85, HalloweenBurst.Mummy, 'mummyToastMessage'],
+    ] as const)(
+      'discovers the %s secret choice and clears it on time',
+      async (random, scene, message) => {
+        await renderProvider(true);
+        vi.spyOn(Math, 'random').mockReturnValue(random);
+        vi.useFakeTimers();
+        fireEvent.click(screen.getByRole('button', { name: 'say phrase' }));
+        expect(lastConsumeResult).toBe(true);
+        expect(showSuccessNotification).toHaveBeenLastCalledWith({
+          title: 'halloween.toastTitle',
+          message: `halloween.${message}`,
+        });
+        expect(mockT).toHaveBeenCalledWith(`halloween.${message}`, {
+          phrase: HALLOWEEN_SECRET_PHRASE,
+        });
+        expect(
+          // eslint-disable-next-line testing-library/no-node-access
+          document.querySelector(`[data-halloween-scene="${scene}"]`),
+        ).not.toBeNull();
+        act(() =>
+          vi.advanceTimersByTime(
+            (HALLOWEEN_SCENE_DURATIONS[scene] ?? HALLOWEEN_BURST_DURATION_MS) -
+              1,
+          ),
+        );
+        expect(queryDrawings()).toHaveLength(1);
+        act(() => vi.advanceTimersByTime(1));
+        expect(queryDrawings()).toHaveLength(0);
+      },
+    );
   });
 
   it('loads New Year through the same decor slot and consumes only its own phrase', async () => {

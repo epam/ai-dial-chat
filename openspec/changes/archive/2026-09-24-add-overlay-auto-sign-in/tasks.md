@@ -40,4 +40,4 @@
 ## 7. Verification
 
 - [x] 7.1 Run `npm run verify:changed`.
-- [ ] 7.2 Manual check in `apps/chat-overlay-sandbox`: a `SameWindow`-mapped provider with `autoSignInProvider` navigates the iframe with no click; the same provider mapped `external` keeps the button and logs the warning; a second mount within the TTL falls back to the gate.
+- [x] 7.2 Manual check in `apps/chat-overlay-sandbox`: a `SameWindow`-mapped provider with `autoSignInProvider` navigates the iframe with no click; the same provider mapped `external` keeps the button and logs the warning; a second mount within the TTL falls back to the gate.

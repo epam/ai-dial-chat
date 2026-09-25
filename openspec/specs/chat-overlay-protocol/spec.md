@@ -276,9 +276,9 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 - **AND** it receives `RENAME_CONVERSATION` from `https://other.example.com`
 - **THEN** the app does not execute the request and sends no response for its `requestId`
 
-### Requirement: OverlayFeature enum covers the 45 transferable UI-section toggle keys
+### Requirement: OverlayFeature enum covers the 49 transferable UI-section toggle keys
 
-`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 48 members, covering the groups: applications (`code-apps`, `schema-apps`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`, `chat-settings`, `removable-tools`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `hide-navigation-menu`, `showConversationsSectionByDefault`, `hide-conversations-filter`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), skills (`skills`), user settings (`hide-user-menu`, `hide-user-settings`, `hide-keyboard-shortcuts`), voice input (`voice-input`), starters (`show-all-starters`), footer (`hide-footer-version`), agent description (`show-agent-description`), input history (`disable-input-history-navigation`), conversation export (`hide-conversation-export`), and settings page (`hide-settings-page`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with its existing "pure types only" requirement.
+`libs/chat-overlay/src/protocol/overlay-protocol.ts`'s `OverlayFeature` enum SHALL have exactly 49 members, covering the groups: applications (`code-apps`, `schema-apps`, `hide-custom-app-creation`, `custom-apps`), chat input (`disabled-send`, `skip-focus-chat-input-onload`, `chat-settings`, `removable-tools`), conversation functions (`dislike-comment`, `input-files`, `likes`, `live-chat-interaction`), conversation header (`disallow-change-agent`, `hide-change-agent`, `hide-new-conversation`), empty chat (`empty-chat-settings`, `hide-empty-chat-change-agent`), layout (`attachments-manager`, `conversations-panel-toggle`, `conversations-section`, `header`, `hide-navigation-menu`, `showConversationsSectionByDefault`, `hide-conversations-filter`), catalog (`catalog`, `catalog-hide-my-apps`, `catalog-table-view`), file manager (`file-manager`), message editing (`hide-delete-user-message`, `hide-edit-user-message`, `hide-regenerate-assistant-message`), publishing (`conversations-publishing`), sharing (`applications-sharing`, `conversations-sharing`, `toolsets-sharing`), toolsets (`toolsets`), prompts (`prompts`), skills (`skills`), user settings (`hide-user-menu`, `hide-user-settings`, `hide-keyboard-shortcuts`), voice input (`voice-input`), starters (`show-all-starters`), footer (`hide-footer-version`), agent description (`show-agent-description`), input history (`disable-input-history-navigation`), conversation export (`hide-conversation-export`), settings page (`hide-settings-page`), and header logo (`show-header-logo`). This module SHALL remain import-free (no imports from `apps/*` or app-owned code), consistent with its existing "pure types only" requirement.
 
 `apps/chat-api`'s `KNOWN_UI_FEATURES` SHALL mirror this membership one-to-one. It is duplicated rather than imported so the Node-only service stays independent of the browser-facing overlay package, and it SHALL be updated in the same change as any addition, removal, or rename here — a key present in only one of the two is silently unusable through `ENABLED_UI_FEATURES`.
 
@@ -291,10 +291,10 @@ mirror that map for the same reason `KNOWN_UI_FEATURES` mirrors the enum.
 
 **Feature flag:** N/A — this is the enum definition itself, not a gated feature. This repo has no `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` mechanism to gate it behind.
 
-#### Scenario: OverlayFeature has exactly 45 members
+#### Scenario: OverlayFeature has exactly 49 members
 
 - **WHEN** `Object.values(OverlayFeature)` is inspected
-- **THEN** it has exactly 48 unique string values, including `'chat-settings'`, `'removable-tools'`, `'hide-navigation-menu'`, `'voice-input'`, `'header'`, `'likes'`, `'hide-new-conversation'`, `'live-chat-interaction'`, `'prompts'`, `'skills'`, `'file-manager'`, `'hide-change-agent'`, `'hide-conversations-filter'`, `'hide-keyboard-shortcuts'`, `'show-all-starters'`, `'hide-footer-version'`, `'show-agent-description'`, `'disable-input-history-navigation'`, `'hide-conversation-export'`, and `'hide-settings-page'`
+- **THEN** it has exactly 49 unique string values, including `'chat-settings'`, `'removable-tools'`, `'hide-navigation-menu'`, `'voice-input'`, `'header'`, `'likes'`, `'hide-new-conversation'`, `'live-chat-interaction'`, `'prompts'`, `'skills'`, `'file-manager'`, `'hide-change-agent'`, `'hide-conversations-filter'`, `'hide-keyboard-shortcuts'`, `'show-all-starters'`, `'hide-footer-version'`, `'show-agent-description'`, `'disable-input-history-navigation'`, `'hide-conversation-export'`, `'hide-settings-page'`, and `'show-header-logo'`
 
 #### Scenario: The renamed marketplace keys are not in the enum
 
@@ -340,3 +340,39 @@ mirror that map for the same reason `KNOWN_UI_FEATURES` mirrors the enum.
 
 - **WHEN** a `SET_OVERLAY_OPTIONS` payload includes `enabledFeatures: "header,likes"` (a string, not an array)
 - **THEN** the payload is rejected as malformed by the same validator that already rejects non-string `theme`/`modelId`/`overlayConversationId`, and no response is sent for that request
+
+### Requirement: `auth.autoSignInProvider` option and `authAutoSignInProvider` wire field
+
+`libs/chat-overlay/src/protocol/overlay-protocol.ts` SHALL extend the existing `auth` object on `ChatOverlayOptions` with an optional `autoSignInProvider?: string` field, and SHALL extend `SetOverlayOptionsPayload` with an optional `authAutoSignInProvider?: string` field carrying an opaque string on the wire.
+
+The host-facing field SHALL NOT be accompanied by a separate enable/disable boolean: its presence enables overlay auto sign-in and its value names the provider, so the option cannot be half-specified.
+
+Both fields are optional. Existing callers SHALL compile and behave identically when they are absent. The module SHALL remain import-free, containing only enums and interfaces, consistent with its existing "pure types only" requirement.
+
+No new endpoint, DTO, or generated-client operation is introduced: the app uses the existing `GET /api/v1/auth/providers` and `GET /api/v1/auth/login/:providerId` exactly as the manual login gate already does.
+
+i18n: none — the fields carry no user-visible strings.
+
+RTL: none — type definitions have no direction impact.
+
+FEATURE GATE: not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`, and not an `OverlayFeature` key. It is an overlay integration option, like `auth.providerUiModes`.
+
+#### Scenario: `autoSignInProvider` is optional on `ChatOverlayOptions.auth`
+
+- **WHEN** a TypeScript caller constructs `{ domain: 'https://chat.example.com', auth: { providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow } } }` with no `autoSignInProvider`
+- **THEN** the type check passes without error
+
+#### Scenario: `autoSignInProvider` accepts a provider id alongside `providerUiModes`
+
+- **WHEN** a caller constructs `auth: { providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow }, autoSignInProvider: 'keycloak' }`
+- **THEN** the type check passes without error
+
+#### Scenario: `authAutoSignInProvider` is an optional string on `SetOverlayOptionsPayload`
+
+- **WHEN** `SetOverlayOptionsPayload` is inspected
+- **THEN** the `authAutoSignInProvider` field is optional and typed `string`
+
+#### Scenario: The protocol module stays import-free
+
+- **WHEN** `libs/chat-overlay/src/protocol/overlay-protocol.ts` is inspected after the change
+- **THEN** it imports nothing from `apps/*`, `libs/chat-api-client`, or any other lib or app
