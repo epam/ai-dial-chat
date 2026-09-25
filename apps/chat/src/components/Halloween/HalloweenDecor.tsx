@@ -69,7 +69,10 @@ const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
           <HalloweenCornerSpider className="end-[26%] top-[48%]" />
         </div>
       </div>
-      <div className="absolute bottom-2 end-2 desktop:bottom-4 desktop:end-4">
+      <div
+        data-halloween-pumpkin-anchor="true"
+        className="absolute bottom-2 end-2 desktop:bottom-4 desktop:end-4"
+      >
         <IconButton
           appearance={ButtonAppearance.Link}
           className={styles.pumpkinButton}
