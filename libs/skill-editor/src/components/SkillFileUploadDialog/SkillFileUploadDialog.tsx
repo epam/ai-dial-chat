@@ -1,13 +1,13 @@
 import { formatFileSize } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
+  ButtonVariant,
   DIAL_KIT_ICON_STROKE,
   ErrorText,
   FileDropzone,
-  GhostButton,
   GhostIconButton,
   Popup,
   PopupSize,
-  PrimaryButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconFileText, IconTrashX } from '@tabler/icons-react';
@@ -185,22 +185,23 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
       size={PopupSize.Sm}
       closeAriaLabel={t.uploadDialogCloseAriaLabel ?? 'Close'}
       onClose={onClose}
-      footer={
-        <div className="flex min-h-[44px] items-center justify-end gap-2 px-6 py-4">
-          <GhostButton
-            label={t.uploadCancelLabel ?? 'Cancel'}
-            onClick={onClose}
-          />
-          <PrimaryButton
-            label={t.uploadConfirmLabel ?? 'Add'}
-            iconBefore={
-              isCommitting ? <Spinner size={16} ariaLabel="" /> : undefined
-            }
-            onClick={() => void handleConfirm()}
-            disabled={!canConfirm}
-          />
-        </div>
-      }
+      mainButtons={[
+        {
+          label: t.uploadCancelLabel ?? 'Cancel',
+          variant: ButtonVariant.Primary,
+          appearance: ButtonAppearance.Ghost,
+          onClick: onClose,
+        },
+        {
+          label: t.uploadConfirmLabel ?? 'Add',
+          variant: ButtonVariant.Primary,
+          iconBefore: isCommitting ? (
+            <Spinner size={16} ariaLabel="" />
+          ) : undefined,
+          onClick: () => void handleConfirm(),
+          disabled: !canConfirm,
+        },
+      ]}
     >
       <div className="flex flex-col gap-4 px-6 py-4">
         <FileDropzone

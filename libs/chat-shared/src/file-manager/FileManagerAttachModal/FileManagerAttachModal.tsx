@@ -6,7 +6,7 @@ import {
   type FileManagerGridRow,
   type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
-import { Popup, PopupSize, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import { ButtonVariant, Popup, PopupSize } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, type FC } from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import type { AttachResult } from '../attach-result';
@@ -289,19 +289,17 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
         size={PopupSize.Lg}
         className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"
         onClose={onClose}
-        footer={
-          <div className="flex justify-end px-6 py-4">
-            <PrimaryButton
-              label={attachLabel}
-              disabled={
-                selectedFiles.length === 0 ||
-                isLoading ||
-                isAnyOperationInProgress
-              }
-              onClick={handleAttach}
-            />
-          </div>
-        }
+        mainButtons={[
+          {
+            label: attachLabel,
+            variant: ButtonVariant.Primary,
+            disabled:
+              selectedFiles.length === 0 ||
+              isLoading ||
+              isAnyOperationInProgress,
+            onClick: handleAttach,
+          },
+        ]}
       >
         <div className="flex h-full min-h-0 flex-col">
           <DialFileManagerShell

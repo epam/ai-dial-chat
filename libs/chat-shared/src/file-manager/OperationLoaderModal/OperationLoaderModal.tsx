@@ -1,4 +1,4 @@
-import { Popup, NeutralButton, Spinner } from '@epam/ai-dial-ui-kit';
+import { Popup, Spinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 
 /** Props for the operation-in-progress overlay modal (copy/move spinner). */
@@ -26,11 +26,7 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
     closeOnOutsideClick={false}
     hideClose
     onClose={onCancel}
-    footer={
-      <div className="flex justify-end gap-2 px-6 py-4">
-        <NeutralButton label={cancelLabel} onClick={onCancel} />
-      </div>
-    }
+    mainButtons={[{ label: cancelLabel, onClick: onCancel }]}
   >
     <div
       aria-live="polite"
