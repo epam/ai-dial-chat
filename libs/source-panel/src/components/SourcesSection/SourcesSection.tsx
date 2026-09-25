@@ -92,16 +92,17 @@ const SourcesSection: FC<SourcesSectionProps> = ({
                   'min-w-0 flex-1 justify-start',
                 )}
                 textClassName={mergeClasses(linkClassName, 'min-w-0 truncate')}
+                /*
+                 * `Highlight` renders through `EllipsisTooltip` even with an
+                 * empty query, so a truncated title always gets its full-name
+                 * tooltip on hover/focus — plain text would only be clipped.
+                 */
                 label={
-                  searchQuery ? (
-                    <Highlight
-                      text={source.title}
-                      query={searchQuery}
-                      maxLines={1}
-                    />
-                  ) : (
-                    source.title
-                  )
+                  <Highlight
+                    text={source.title}
+                    query={searchQuery}
+                    maxLines={1}
+                  />
                 }
                 aria-label={source.title}
                 onClick={
