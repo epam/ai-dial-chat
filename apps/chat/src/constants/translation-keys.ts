@@ -1240,9 +1240,6 @@ export enum ConversationInputI18nKeys {
   PeriodWeek = 'conversationInput.usageLimits.periodWeek',
   PeriodMonth = 'conversationInput.usageLimits.periodMonth',
   Value = 'conversationInput.usageLimits.value',
-  FollowsCostLimit = 'conversationInput.usageLimits.followsCostLimit',
-  NoLimit = 'conversationInput.usageLimits.noLimit',
-  UncappedAriaLabel = 'conversationInput.usageLimits.uncappedAriaLabel',
   ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
 }
 

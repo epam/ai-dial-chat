@@ -23,10 +23,6 @@ export interface ConversationInputLimitsLabels {
   periodWeek: string;
   /** Label for the current-UTC-month row, used by both groups. */
   periodMonth: string;
-  /** Note on a token row with no cap of its own, which the cost budget bounds instead. */
-  followsCostLimit: string;
-  /** Note on a cost row for a period the caller has no budget on. */
-  noLimit: string;
   /** Formats the combined used/total display value for a capped row. */
   formatValueLabel: (used: string, total: string) => string;
   /** Formats the ARIA label for a capped progress row. */
@@ -34,12 +30,6 @@ export interface ConversationInputLimitsLabels {
     label: string;
     used: string;
     total: string;
-  }) => string;
-  /** Formats the ARIA label for an uncapped row, which has no total to announce. */
-  formatUncappedAriaLabel: (params: {
-    label: string;
-    used: string;
-    note: string;
   }) => string;
 }
 
@@ -78,7 +68,12 @@ const COST_MAPPINGS: PeriodMapping[] = [
 /** Upstream sentinel: a `total` at or above this means the period carries no cap of its own. */
 const UNLIMITED_TOTAL_THRESHOLD = Number.MAX_SAFE_INTEGER;
 
-/** Usage ratio at/above which a capped row counts as running low, short of the limit itself. */
+/**
+ * Usage ratio at/above which a capped row counts as running low, and — since
+ * only rows at or past it are listed at all — the ratio at which a row becomes
+ * visible. It matches `CatalogLimitStatus`'s own running-low threshold, so the
+ * bar's warning fill and the row's presence are decided by one number.
+ */
 const RUNNING_LOW_RATIO = 0.75;
 
 /** Compact-notation magnitudes, largest first, so the first match wins. */
@@ -147,14 +142,12 @@ const buildResetFields = (
   };
 };
 
-/** How a group's figures are rendered and what an uncapped row in it is called. */
+/** How one group's figures are rendered. */
 interface GroupFormat {
   /** Compact display form, e.g. `1.6M` or `$12.35`. */
   format: (value: number) => string;
   /** Full form for `aria-label` text, e.g. `1,600,000` or `$12.35`. */
   formatFull: (value: number) => string;
-  /** Note shown on a row whose total is the uncapped sentinel. */
-  uncappedNote: string;
 }
 
 const mapLimitStatsToRow = (
@@ -168,38 +161,38 @@ const mapLimitStatsToRow = (
   const total = stats.total;
   const formattedUsed = groupFormat.format(used);
   const formattedTotal = groupFormat.format(total);
-  const fullUsed = groupFormat.formatFull(used);
-  const fullTotal = groupFormat.formatFull(total);
-  const isUnlimited = isUnlimitedTotal(total);
 
   return {
     label,
     used,
     total,
     ...buildResetFields(stats, formatResetTime),
-    ...(isUnlimited
-      ? { isUnlimited: true, noteLabel: groupFormat.uncappedNote }
-      : { usedLabel: formattedUsed, totalLabel: formattedTotal }),
-    valueLabel: isUnlimited
-      ? formattedUsed
-      : labels.formatValueLabel(formattedUsed, formattedTotal),
-    ariaLabel: isUnlimited
-      ? labels.formatUncappedAriaLabel({
-          label,
-          used: fullUsed,
-          note: groupFormat.uncappedNote,
-        })
-      : labels.formatProgressAriaLabel({
-          label,
-          used: fullUsed,
-          total: fullTotal,
-        }),
+    usedLabel: formattedUsed,
+    totalLabel: formattedTotal,
+    valueLabel: labels.formatValueLabel(formattedUsed, formattedTotal),
+    ariaLabel: labels.formatProgressAriaLabel({
+      label,
+      used: groupFormat.formatFull(used),
+      total: groupFormat.formatFull(total),
+    }),
   };
 };
 
 /** Ratio of `used` to `total` for a capped stat; `0` for an uncapped or otherwise unbounded one. */
 const getCappedRatio = (stats: LimitStatsDto): number =>
   isUnlimitedTotal(stats.total) ? 0 : Math.max(stats.used, 0) / stats.total;
+
+/*
+ * The popover is a warning, not a dashboard: a row only earns its place once it
+ * is close enough to its cap to be worth acting on. A deployment sitting at 2%
+ * of its token allowance alongside an account budget at 90% would otherwise
+ * bury the one figure that matters. Everything else lives on the Usage page.
+ *
+ * A row with no cap of its own has no ratio, so it never qualifies — which is
+ * why no "unlimited" row is rendered and no note for one is needed.
+ */
+const isWorthShowing = (stats: LimitStatsDto): boolean =>
+  getCappedRatio(stats) >= RUNNING_LOW_RATIO;
 
 /** Worst-case status across every capped stat, `LimitReached` outranking `RunningLow`. */
 const getOverallStatus = (
@@ -231,7 +224,7 @@ const buildGroup = (
 ): UsageLimitGroup | undefined => {
   const rows = mappings.flatMap((mapping) => {
     const stats = dto[mapping.key];
-    if (!isUsableLimitStats(stats)) {
+    if (!isUsableLimitStats(stats) || !isWorthShowing(stats)) {
       return [];
     }
 
@@ -271,7 +264,6 @@ export const mapDeploymentLimitsToInput = (
       format: (value) =>
         numberFormatter.format(truncateForCompactDisplay(value)),
       formatFull: (value) => fullNumberFormatter.format(value),
-      uncappedNote: labels.followsCostLimit,
     },
     formatResetTime,
     usableStats,
@@ -285,7 +277,6 @@ export const mapDeploymentLimitsToInput = (
     {
       format: formatCost,
       formatFull: formatCost,
-      uncappedNote: labels.noLimit,
     },
     formatResetTime,
     usableStats,

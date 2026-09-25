@@ -1220,9 +1220,6 @@
       "periodWeek": "This week",
       "periodMonth": "This month",
       "value": "{{used}} / {{total}}",
-      "followsCostLimit": "Follows cost limit",
-      "noLimit": "No limit",
-      "uncappedAriaLabel": "{{label}}: {{used}} used. {{note}}.",
       "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
     }
   },

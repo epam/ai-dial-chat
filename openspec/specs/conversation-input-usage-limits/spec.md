@@ -29,20 +29,29 @@ NOT be set on any row, and `labels` SHALL carry no spend-caption formatter.
 The function SHALL NOT map `minuteTokenStats`, `minuteCostStats`, `hourRequestStats`, or
 `dayRequestStats`.
 
-A stat SHALL produce a row only when its `total` and `used` are both finite and `total` is greater
-than `0`. A `total` at or above `Number.MAX_SAFE_INTEGER` SHALL set `isUnlimited: true` and a
-`noteLabel` naming why the row is uncapped — `labels.followsCostLimit` for a token row, whose
-spending is bounded by the cost budget instead, and `labels.noLimit` for a cost row, which has no
-budget at all. `used` SHALL be clamped to a minimum of `0`. When no stat qualifies, or `dto` is
-`undefined`, the function SHALL return `undefined` rather than a group with an empty `rows` array.
+**Only limits at or past the running-low mark are listed.** A stat SHALL produce a row only when its
+`total` and `used` are both finite, `total` is greater than `0`, and its used/total ratio is at or
+above `0.75` — the same threshold `CatalogLimitStatus` already uses for running-low, so one number
+decides both the bar's warning fill and whether the row exists.
+
+This is deliberate: the control sits beside the message input and its job is to warn, not to report.
+A deployment at `2%` of its token allowance listed beside an account budget at `90%` buries the one
+figure worth acting on. The complete picture lives on the Usage page, which the popover links to.
+
+A row whose `total` is at or above `Number.MAX_SAFE_INTEGER` has no cap and therefore no ratio, so
+it can never reach the threshold and SHALL never be listed. The function SHALL NOT emit an
+`isUnlimited` row, and `labels` SHALL carry no note or ARIA formatter for one.
+
+`used` SHALL be clamped to a minimum of `0`. When no stat qualifies, or `dto` is `undefined`, the
+function SHALL return `undefined` rather than a group with an empty `rows` array — which is what
+removes the trigger entirely while every limit is comfortable.
 
 Each row SHALL set `valueLabel` and `ariaLabel` through the injected formatter callbacks and SHALL
-NOT build either string from its own template literal. An uncapped row's `ariaLabel` SHALL come from
-`labels.formatUncappedAriaLabel`, which receives the row's `noteLabel` so the spoken form states why
-no total is announced.
+NOT build either string from its own template literal.
 
-The result's `status` SHALL be the worst case across every capped row of **both** groups, so a cost
-budget nearing its cap drives the trigger just as a token limit does —
+The result's `status` SHALL be the worst case across every listed row of **both** groups, so a cost
+budget nearing its cap drives the trigger just as a token limit does. Every listed row being at or
+past the running-low mark, the status SHALL never be absent when a result is produced —
 `CatalogLimitStatus.LimitReached` when any capped row's used/total ratio is at or above `1`,
 otherwise `CatalogLimitStatus.RunningLow` when any is at or above `0.75`, otherwise absent.
 
@@ -56,9 +65,9 @@ or import `react-i18next`, `i18next`'s `TFunction`, or any app translation-key e
 response for an earlier deployment never overwrites the current one. Refresh failures SHALL preserve
 the last known limits and SHALL NOT affect message entry or sending.
 
-#### Scenario: Three configured periods produce three rows
+#### Scenario: Three stretched periods produce three rows
 
-- **WHEN** `dto` carries usable `dayTokenStats`, `weekTokenStats`, and `monthTokenStats`
+- **WHEN** `dayTokenStats`, `weekTokenStats`, and `monthTokenStats` are each at or past `75%`
 - **THEN** the result contains one group with three rows in day, week, month order
 
 #### Scenario: Minute stats are never mapped
@@ -74,29 +83,43 @@ the last known limits and SHALL NOT affect message entry or sending.
 
 #### Scenario: Cost figures are currency-formatted
 
-- **WHEN** `dayCostStats` is `{ used: 0.0440118, total: 100 }`
-- **THEN** the row's `usedLabel`/`totalLabel` are `"$0.04"`/`"$100"`
-
-#### Scenario: A budget-free period is not described as following the cost limit
-
-- **WHEN** a cost stat's `total` is the uncapped sentinel
-- **THEN** the row's note is `labels.noLimit`, not `labels.followsCostLimit`
+- **WHEN** `dayCostStats` is `{ used: 90.5, total: 100 }`
+- **THEN** the row's `usedLabel`/`totalLabel` are `"$90.5"`/`"$100"`
 
 #### Scenario: A cost row can drive the status
 
-- **WHEN** the day cost row is at `100%` and every token row is comfortable
+- **WHEN** the day cost row is at `100%` and the token rows are at `80%`
 - **THEN** `status` is `CatalogLimitStatus.LimitReached`
 
 #### Scenario: A missing period is skipped without shifting the others
 
-- **WHEN** `dto` omits `weekTokenStats` but carries usable day and month stats
+- **WHEN** `dto` omits `weekTokenStats` but carries stretched day and month stats
 - **THEN** the result contains two rows, day before month, with no placeholder row
 
-#### Scenario: Unlimited total becomes a follows-cost-limit row
+#### Scenario: A comfortable period is not listed
+
+- **WHEN** the day stat is at `90%` and the week stat is at `5%`
+- **THEN** only the day row is emitted
+
+#### Scenario: The threshold is inclusive
+
+- **WHEN** a stat is at exactly `75%`
+- **THEN** its row is emitted, and a stat at `74%` produces none
+
+#### Scenario: A stretched account budget outlives a barely-used model
+
+- **WHEN** every token stat is at `2%` and `monthCostStats` is at `90%`
+- **THEN** the result carries the cost group alone, with the month row, and no token group
+
+#### Scenario: Comfortable everywhere removes the control
+
+- **WHEN** no stat reaches `75%`
+- **THEN** the function returns `undefined`, so no trigger is rendered at all
+
+#### Scenario: An uncapped period is never listed
 
 - **WHEN** `monthTokenStats.total` is `Number.MAX_SAFE_INTEGER`
-- **THEN** the month row has `isUnlimited: true` and `noteLabel` from `labels.followsCostLimit`, and
-  no capped progress values are rendered for it
+- **THEN** no row is emitted for it, having no ratio that could reach the threshold
 
 #### Scenario: No qualifying stat returns undefined
 
@@ -105,7 +128,7 @@ the last known limits and SHALL NOT affect message entry or sending.
 
 #### Scenario: Worst-case status wins
 
-- **WHEN** the day row is at `100%` and the month row is at `10%`
+- **WHEN** the day row is at `100%` and the month row is at `80%`
 - **THEN** `status` is `CatalogLimitStatus.LimitReached`
 
 #### Scenario: Reset strings are passed straight through
@@ -156,9 +179,10 @@ APIs, DTOs, selection state, translations, or usage policy.
 
 ### Requirement: Period usage trigger
 
-For a deployment with at least one usable token limit, the app SHALL show a compact, accessible
-usage trigger. It SHALL reveal a percentage on hover and keyboard focus and keep that value visible
-while the popover is open.
+The trigger SHALL be rendered only when at least one limit is at or past the running-low mark. While
+every limit is comfortable no trigger appears at all, so its presence is itself the signal that
+something needs attention. It SHALL reveal a percentage on hover and keyboard focus and keep that
+value visible while the popover is open.
 
 The percentage SHALL be the used/total ratio of the **worst capped row** — the row that determined
 the group's `CatalogLimitStatus` — not the month's. The trigger's accessible name SHALL name that
@@ -168,6 +192,16 @@ The trigger SHALL render that percentage as a dial: a circular face with a needl
 centre, aimed by a sweep that rests at the 7-o'clock mark for `0%`, passes straight up at `50%`, and
 stops at the 5-o'clock mark for `100%`. The needle angle SHALL be derived from the worst capped
 row's percentage alone.
+
+The sweep SHALL stay anchored to the absolute `0–100%` range even though, with the threshold rule
+above, the needle only ever occupies its final quarter. An angle that means the percentage it
+reports is worth more than a larger visible swing: re-mapping `75–100%` across the full sweep would
+draw `75%` as an empty dial.
+
+#### Scenario: No trigger while every limit is comfortable
+
+- **WHEN** no limit reaches `75%`
+- **THEN** no trigger is rendered
 
 The trigger's visual state SHALL be driven by the group's `status`:
 `CatalogLimitStatus.LimitReached` SHALL use the theme error state,
@@ -256,8 +290,8 @@ byte-identical label objects is the duplication this removes. Its remaining prop
 `deploymentId` and `isGenerationInProgress`.
 
 i18n keys under `conversationInput.usageLimits.*`: `tokenGroup`, `costGroup`, `periodDay`,
-`periodWeek`, `periodMonth`, `value`, `followsCostLimit`, `noLimit`, `uncappedAriaLabel`,
-`progressAriaLabel`, plus the pre-existing `popoverTitle`, `error`, and `triggerAriaLabel`. The
+`periodWeek`, `periodMonth`, `value`, `progressAriaLabel`, plus the pre-existing `popoverTitle`,
+`error`, and `triggerAriaLabel`. The
 three period labels SHALL be shared by both groups rather than duplicated per group, since they name
 a calendar period and not what is being metered. `triggerAriaLabel` SHALL name the reported period
 without naming tokens, the worst capped row now being a cost row as readily as a token one.

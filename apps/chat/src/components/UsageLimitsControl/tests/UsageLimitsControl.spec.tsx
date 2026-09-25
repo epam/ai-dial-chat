@@ -58,9 +58,9 @@ const TITLE_LABEL = 'conversationInput.usageLimits.popoverTitle';
 const TRIGGER_LABEL = 'conversationInput.usageLimits.triggerAriaLabel';
 
 const threePeriodsDto: DeploymentLimitsResponseDto = {
-  dayTokenStats: { used: 20, total: 100 },
-  weekTokenStats: { used: 30, total: 200 },
-  monthTokenStats: { used: 40, total: 400 },
+  dayTokenStats: { used: 80, total: 100 },
+  weekTokenStats: { used: 160, total: 200 },
+  monthTokenStats: { used: 320, total: 400 },
 };
 
 const defaultHookResult: UseDeploymentUsageLimitsResult = {
@@ -109,9 +109,9 @@ describe('UsageLimitsControl', () => {
     mockUseDeploymentUsageLimits.mockReturnValue({
       ...defaultHookResult,
       limitsDto: {
-        dayTokenStats: { used: 36494, total: 50000 },
-        dayCostStats: { used: 0.0440118, total: 100 },
-        monthCostStats: { used: 0.0796718, total: 500 },
+        dayTokenStats: { used: 45000, total: 50000 },
+        dayCostStats: { used: 90, total: 100 },
+        monthCostStats: { used: 450, total: 500 },
       },
     });
     const user = userEvent.setup();
@@ -136,8 +136,8 @@ describe('UsageLimitsControl', () => {
     mockUseDeploymentUsageLimits.mockReturnValue({
       ...defaultHookResult,
       limitsDto: {
-        dayTokenStats: { used: 36494, total: 50000 },
-        dayCostStats: { used: 0.0440118, total: 100 },
+        dayTokenStats: { used: 45000, total: 50000 },
+        dayCostStats: { used: 90, total: 100 },
       },
     });
     const user = userEvent.setup();
@@ -146,6 +146,31 @@ describe('UsageLimitsControl', () => {
     await openPopover(user);
 
     expect(screen.queryByText(/spent/)).toBeNull();
+  });
+
+  it('surfaces a stretched account budget while this model is barely used', async () => {
+    mockUseDeploymentUsageLimits.mockReturnValue({
+      ...defaultHookResult,
+      limitsDto: {
+        dayTokenStats: { used: 2, total: 100 },
+        weekTokenStats: { used: 2, total: 100 },
+        monthTokenStats: { used: 2, total: 100 },
+        monthCostStats: { used: 90, total: 100 },
+      },
+    });
+    const user = userEvent.setup();
+    renderControl();
+
+    await openPopover(user);
+
+    expect(
+      screen.queryByText('conversationInput.usageLimits.tokenGroup'),
+    ).toBeNull();
+    expect(
+      screen.getByText('conversationInput.usageLimits.costGroup'),
+    ).toBeTruthy();
+    expect(screen.getAllByRole('progressbar')).toHaveLength(1);
+    expect(screen.getByText('90%')).toBeTruthy();
   });
 
   it('renders nothing when no deployment is selected', () => {
@@ -157,7 +182,7 @@ describe('UsageLimitsControl', () => {
   it('renders nothing when no period carries a usable limit', () => {
     mockUseDeploymentUsageLimits.mockReturnValue({
       ...defaultHookResult,
-      limitsDto: { minuteTokenStats: { used: 1, total: 10 } },
+      limitsDto: { minuteTokenStats: { used: 9, total: 10 } },
     });
 
     renderControl();
@@ -171,7 +196,7 @@ describe('UsageLimitsControl', () => {
         ...defaultHookResult,
         limitsDto: {
           dayTokenStats: { used: 90, total: 100 },
-          monthTokenStats: { used: 10, total: 100 },
+          monthTokenStats: { used: 80, total: 100 },
         },
       });
 
@@ -188,7 +213,7 @@ describe('UsageLimitsControl', () => {
         ...defaultHookResult,
         limitsDto: {
           dayTokenStats: { used: 100, total: 100 },
-          monthTokenStats: { used: 10, total: 100 },
+          monthTokenStats: { used: 80, total: 100 },
         },
       });
 
@@ -210,12 +235,18 @@ describe('UsageLimitsControl', () => {
       expect(trigger.className).not.toContain('text-error');
     });
 
-    it('stays neutral while every capped period is comfortable', () => {
+    it('does not render at all while every limit is comfortable', () => {
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        limitsDto: {
+          dayTokenStats: { used: 2, total: 100 },
+          monthCostStats: { used: 1, total: 500 },
+        },
+      });
+
       renderControl();
 
-      const trigger = screen.getByRole('button');
-      expect(trigger.className).toContain('text-secondary');
-      expect(trigger.className).not.toContain('text-error');
+      expect(screen.queryByRole('button')).toBeNull();
     });
   });
 
@@ -225,7 +256,7 @@ describe('UsageLimitsControl', () => {
         ...defaultHookResult,
         limitsDto: {
           dayTokenStats: {
-            used: 20,
+            used: 90,
             total: 100,
             resetsAt: '2026-09-16T00:00:00Z',
           },
@@ -255,7 +286,7 @@ describe('UsageLimitsControl', () => {
       mockUseDeploymentUsageLimits.mockReturnValue({
         ...defaultHookResult,
         limitsDto: {
-          dayTokenStats: { used: 20, total: 100, resetsAt: 'not-a-date' },
+          dayTokenStats: { used: 90, total: 100, resetsAt: 'not-a-date' },
         },
       });
       const user = userEvent.setup();

@@ -2685,7 +2685,9 @@ Maps a deployment-limits response into display-ready `CatalogItemLimits` for a c
 
 The cost stats on a deployment-limits response are the caller's own budget and span every deployment, not the one that was queried — the same figures come back whichever deployment is asked. They are therefore listed as their own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
 
-Minute stats are deliberately not mapped: a rolling-minute counter changes between two openings of a popover for reasons the viewer cannot attribute to their own actions. A row whose total is the uncapped sentinel (`total >= Number.MAX_SAFE_INTEGER`) gets a note instead of a progress bar — `followsCostLimit` on a token row, whose spending the cost budget bounds instead, and `noLimit` on a cost row, which has no budget at all. Labels and value/aria formatters are injected through a `ConversationInputLimitsLabels` object so the function stays i18n-free.
+**Only limits at or past 75% of their cap are mapped** — the same threshold `CatalogLimitStatus` uses for running-low. The affordance this feeds is a warning, not a dashboard: a deployment at 2% of its token allowance listed beside an account budget at 90% buries the figure worth acting on. When nothing reaches the threshold the function returns `undefined`, which is how a host removes the affordance entirely. A period whose total is the uncapped sentinel (`total >= Number.MAX_SAFE_INTEGER`) has no ratio and is therefore never listed.
+
+Minute and request stats are not mapped either: a rolling-minute counter changes between two openings of a popover for reasons the viewer cannot attribute to their own actions. Labels and value/aria formatters are injected through a `ConversationInputLimitsLabels` object so the function stays i18n-free.
 
 Pass `formatResetTime` to add each period's reset line. The function never parses or formats a timestamp itself: it hands the raw `resetsAt` to the callback and stores only the strings it returns, as a present-or-all-absent trio. Omit the callback, or return `undefined` from it, and the row renders without a reset line.
 
@@ -2701,13 +2703,9 @@ const labels: ConversationInputLimitsLabels = {
   periodDay: 'Today',
   periodWeek: 'This week',
   periodMonth: 'This month',
-  followsCostLimit: 'Follows cost limit',
-  noLimit: 'No limit',
   formatValueLabel: (used, total) => `${used} / ${total}`,
   formatProgressAriaLabel: ({ label, used, total }) =>
     `${label}: ${used} of ${total} used`,
-  formatUncappedAriaLabel: ({ label, used, note }) =>
-    `${label}: ${used} used. ${note}.`,
 };
 
 const limits = mapDeploymentLimitsToInput(

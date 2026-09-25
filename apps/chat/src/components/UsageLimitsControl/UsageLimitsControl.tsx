@@ -64,8 +64,6 @@ const UsageLimitsControl: FC<Props> = ({
       periodDay: t(ConversationInputI18nKeys.PeriodDay),
       periodWeek: t(ConversationInputI18nKeys.PeriodWeek),
       periodMonth: t(ConversationInputI18nKeys.PeriodMonth),
-      followsCostLimit: t(ConversationInputI18nKeys.FollowsCostLimit),
-      noLimit: t(ConversationInputI18nKeys.NoLimit),
       formatValueLabel: (used: string, total: string) =>
         t(ConversationInputI18nKeys.Value, { used, total }),
       formatProgressAriaLabel: (params: {
@@ -73,11 +71,6 @@ const UsageLimitsControl: FC<Props> = ({
         used: string;
         total: string;
       }) => t(ConversationInputI18nKeys.ProgressAriaLabel, params),
-      formatUncappedAriaLabel: (params: {
-        label: string;
-        used: string;
-        note: string;
-      }) => t(ConversationInputI18nKeys.UncappedAriaLabel, params),
     }),
     [t],
   );
