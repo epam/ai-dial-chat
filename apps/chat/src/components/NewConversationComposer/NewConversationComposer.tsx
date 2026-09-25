@@ -40,7 +40,6 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
-  ConversationInputI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
@@ -406,20 +405,6 @@ const NewConversationComposer: FC<Props> = ({
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
 
-  const usageLimitsLabels = useMemo(
-    () => ({
-      triggerAriaLabel: ({ value }: { value: string }) =>
-        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
-      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
-      error: t(ConversationInputI18nKeys.Error),
-      tokensRemaining: ({ count }: { count: string }) =>
-        t(ConversationInputI18nKeys.TokensRemaining, { count }),
-      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
-        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
-    }),
-    [t],
-  );
-
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment);
@@ -619,7 +604,6 @@ const NewConversationComposer: FC<Props> = ({
               deploymentId={
                 selectedDeployment?.id ?? selectedDeploymentId ?? undefined
               }
-              labels={usageLimitsLabels}
             />
           }
         />

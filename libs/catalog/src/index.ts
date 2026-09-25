@@ -13,6 +13,7 @@ export {
 } from './types/details-confirmation';
 export { DeploymentSize } from './types/deployment-icon-size';
 export { CatalogViewMode } from './types/view-mode';
+export { LimitRowLayout } from './types/limit-row-layout';
 export {
   CatalogContentNodeType,
   CatalogContentPreviewType,
@@ -144,6 +145,9 @@ export type {
 
 export { ContentTab } from './components/Details/TabsContent/Content';
 export type { ContentTabProps } from './components/Details/TabsContent/Content';
+
+export { LimitsTab } from './components/Details/TabsContent/Limits/Limits';
+export type { LimitsTabColors, LimitsTabProps } from './models/limits-props';
 
 export { DetailsPanel } from './components/Details/DetailsPanel';
 

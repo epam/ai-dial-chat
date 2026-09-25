@@ -497,6 +497,82 @@ soon as it shows it, and once the history has resolved the lone `Unpublish`
 of a published copy renders as a button like any other last action. An item
 the rule is absent for keeps the hold.
 
+### LimitsTab
+
+The usage-limits list `DetailsPanel` renders on its `Limits` tab, exported so
+a host can render the same rows on another surface — the conversation input's
+usage popover in AI DIAL Chat is one. It takes a `CatalogItemLimits` value and
+renders `null` when `limits` is absent or every group has no rows.
+
+It is presentation-only: it parses and formats nothing, and it never sees a
+locale, a timezone, a raw timestamp, or a backend DTO. Every visible string on
+a row — the used/total figures, the value label, the spent caption, the reset
+line, and the `aria-valuetext` of each progress bar — is preformatted by the
+host. Capped rows get a progress bar whose fill turns warning at 75% of the
+limit and danger at 100%; a row with `isUnlimited` gets its `noteLabel`
+instead.
+
+```tsx
+import { LimitsTab } from '@epam/ai-dial-catalog';
+
+<LimitsTab
+  limits={{
+    groups: [
+      {
+        label: 'Token limits',
+        rows: [
+          {
+            label: 'Today',
+            used: 2500,
+            total: 10000,
+            usedLabel: '2.5K',
+            totalLabel: '10K',
+            valueLabel: '2.5K / 10K',
+            captionLabel: '$1.20 spent',
+            ariaLabel: 'Today: 2,500 of 10,000 used',
+            resetLabel: 'Resets Sep 16, 2026, 2:00 AM GMT+2',
+            resetIsoValue: '2026-09-16T00:00:00Z',
+            resetAriaLabel:
+              'Usage resets Sep 16, 2026, 2:00 AM Central European Summer Time',
+          },
+        ],
+      },
+    ],
+  }}
+  footerNote="View full usage limits"
+/>;
+```
+
+`resetLabel`, `resetIsoValue`, and `resetAriaLabel` are optional and behave as
+one trio: supply all three or none. When present the row renders a
+`<time dateTime={resetIsoValue}>` line under its label, hidden from the
+accessibility tree in favour of a visually-hidden sibling carrying
+`resetAriaLabel` — `<time>` has no implicit ARIA role, so `aria-label` on it is
+not reliably supported. Omit `resetAriaLabel` and the visible line stays its
+own accessible name. A row with none of the three renders exactly as it did
+before reset lines existed.
+
+`layout` (`LimitRowLayout`) picks the row arrangement and defaults to
+`LimitRowLayout.Inline`, which is what the catalog details panel renders: the
+label column sits beside a fixed-width column holding the used/total pair above
+a narrow progress bar. `LimitRowLayout.Stacked` puts the label and the value on
+one line, with a full-width progress bar and the reset caption beneath it, and
+colors the value with `valueDanger` once the row has reached its limit — the
+arrangement the AI DIAL Chat conversation-input popover uses in its narrow
+panel.
+
+```tsx
+import { LimitRowLayout, LimitsTab } from '@epam/ai-dial-catalog';
+
+<LimitsTab limits={limits} layout={LimitRowLayout.Stacked} />;
+```
+
+Typography and colors are overridable: `labelClassName`, `captionClassName`,
+`valueClassName`, `noteValueClassName`, `noteClassName`, `sectionClassName`,
+and `footerClassName` each default to a `dial-*-text` scale class, and
+`colors` (`LimitsTabColors`) maps to the CSS custom properties the stylesheet
+reads. See `LimitsTabProps` in the Types section.
+
 ## Enums
 
 ```tsx
@@ -512,6 +588,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
+  LimitRowLayout,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
@@ -941,8 +1018,20 @@ import type {
   ToolDefinition,
   PricingRow,
   UsageLimitRow,
+  UsageLimitGroup,
+  UsageLimitProgressRow,
+  CatalogItemLimits,
+  LimitsTabProps,
+  LimitsTabColors,
 } from '@epam/ai-dial-catalog';
 ```
+
+`UsageLimitProgressRow` is one row of a `LimitsTab` group: `label`, `used`, and
+`total` are required, and everything else is an optional preformatted display
+string — `valueLabel`, `usedLabel`, `totalLabel`, `ariaLabel`, `noteLabel`,
+`captionLabel`, plus the `resetLabel` / `resetIsoValue` / `resetAriaLabel`
+trio described under `LimitsTab`. `isUnlimited` marks a row whose `total` is a
+sentinel rather than a cap, so it renders its note instead of a progress bar.
 
 ## Utilities
 

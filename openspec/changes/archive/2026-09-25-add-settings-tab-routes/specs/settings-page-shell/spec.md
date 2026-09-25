@@ -1,44 +1,4 @@
-# settings-page-shell Specification
-
-## Purpose
-
-Defines the Settings page shell: the entry point in the `UserMenu` dropdown, the `/settings` route
-and its lazy loading, the extensible tab container that hosts settings sub-pages, and the RTL/i18n
-contract for the shell.
-
-## Requirements
-
-### Requirement: Settings entry point
-The system SHALL provide a "Settings" item, marked with the `IconSettings` icon from
-`@tabler/icons-react`, inside the existing `UserMenu` dropdown
-(`libs/navigation-panel/src/components/UserMenu/UserMenu.tsx`, driven by the host's `onSettings`
-and `labels.settings` props from `apps/chat/src/components/Navigation/Navigation.tsx`). Selecting
-it SHALL navigate to `ROUTES.Settings` (`/settings`) via `useNavigate()`. The item's accessible
-name SHALL come from an i18n key (not a hardcoded string).
-
-The item SHALL be included unconditionally for every authenticated user. The `SettingsPageEnabled`
-feature flag that previously gated it is **removed** — there is no flag, no `SETTINGS_PAGE_ENABLED`
-environment variable, and no `features.settingsPageEnabled` config-registry entry. The host SHALL
-always pass `onSettings` and `labels.settings`, so `UserMenu`'s existing "omit the item when the
-host passes no `onSettings`" behaviour is never exercised by this app.
-
-`UserMenu` remains suppressed as a whole by `OverlayFeature.HideUserMenu` and for unauthenticated
-users; those are unrelated to the removed flag.
-
-#### Scenario: Opening Settings from the user menu
-- **WHEN** a signed-in user opens the `UserMenu` dropdown and clicks/activates the "Settings" item
-- **THEN** the application navigates to `/settings` and renders the Settings page shell
-
-#### Scenario: Keyboard activation
-- **WHEN** a keyboard-only user tabs to the "Settings" item inside the open `UserMenu` and presses
-  Enter or Space
-- **THEN** the application navigates to `/settings`, identically to a mouse click
-
-#### Scenario: Gear icon is always present for an authenticated user
-- **WHEN** a signed-in user opens the `UserMenu` dropdown in any deployment
-- **THEN** the "Settings" item is present — no configuration can remove it
-
----
+## MODIFIED Requirements
 
 ### Requirement: Settings page route and lazy loading
 
@@ -104,6 +64,7 @@ ever mounts through any settings path while the host hides the page.
 
 - **WHEN** a user on `/settings/usage` reloads the page
 - **THEN** Settings reopens with the Usage tab active
+
 ---
 
 ### Requirement: Extensible tab container
@@ -163,15 +124,3 @@ current tab entry uses it.
 
 - **WHEN** each `SettingsTabs` member is turned into a path and resolved back
 - **THEN** the original member is recovered, which fails the moment a member is not URL-safe
----
-
-### Requirement: RTL and localization compliance for the Settings shell
-All layout in `SettingsPage` and its tab container SHALL use CSS logical properties / Tailwind logical
-utilities (e.g. `ps-*`, `pe-*`, `text-start`) instead of physical-direction utilities, and all
-user-visible strings SHALL go through `react-i18next` under a `settingsPage` namespace distinct from
-the existing `settings` namespace owned by `UserMenu`.
-
-#### Scenario: Rendering under an RTL locale
-- **WHEN** the active language is Arabic (`dir="rtl"` on `<html>`)
-- **THEN** the Settings page shell and tab container lay out mirrored correctly with no visual
-  breakage, using only logical-property-driven styles
