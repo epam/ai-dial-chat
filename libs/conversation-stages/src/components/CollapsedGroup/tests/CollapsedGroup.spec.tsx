@@ -112,7 +112,7 @@ describe('CollapsedGroup — collapsed states', () => {
     expect(screen.queryByText('2m 0s')).toBeNull();
   });
 
-  it('is expanded by default while running, showing progress through the live step', () => {
+  it('is expanded by default while running, showing the live step name', () => {
     render(
       <CollapsedGroup
         stages={[completed(0, 'Step 1'), running(1, 'Step 2')]}
@@ -121,7 +121,35 @@ describe('CollapsedGroup — collapsed states', () => {
     );
     const toggle = screen.getByRole('button');
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByText(/Step 2 of 2/)).toBeTruthy();
+    expect(within(toggle).getByText('Step 2')).toBeTruthy();
+  });
+
+  it('shows no step counter while running', () => {
+    render(
+      <CollapsedGroup
+        stages={[
+          completed(0, 'Search'),
+          completed(1, 'Read'),
+          running(2, 'Summarize'),
+        ]}
+        isStreaming
+      />,
+    );
+    expect(
+      within(screen.getByRole('button')).queryByText(/\d+ of \d+/),
+    ).toBeNull();
+  });
+
+  it('keeps the last stage name while streaming with every stage settled', () => {
+    render(
+      <CollapsedGroup
+        stages={[completed(0, 'Search'), completed(1, 'Summarize')]}
+        isStreaming
+      />,
+    );
+    expect(
+      within(screen.getByRole('button')).getByText('Summarize'),
+    ).toBeTruthy();
   });
 
   it('keeps a long live stage name on one truncated line', () => {
@@ -148,7 +176,7 @@ describe('CollapsedGroup — collapsed states', () => {
     );
     // role="status" implies aria-live="polite"; the Spinner mock also
     // renders one, so confirm the summary text is inside a status region.
-    const summaryText = screen.getByText(/Step 2 of 2/);
+    const summaryText = within(screen.getByRole('button')).getByText('Step 2');
     const isAnnounced = screen
       .getAllByRole('status')
       .some((status) => status.contains(summaryText));

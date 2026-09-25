@@ -22,7 +22,7 @@ import {
   cleanStageName,
   formatTotalDuration,
 } from '../../utils/stage-name';
-import { findLiveStage, stagePosition } from '../../utils/stage-progress';
+import { findLiveStage } from '../../utils/stage-progress';
 import { StagesPanel } from '../StagesPanel/StagesPanel';
 import styles from './CollapsedGroup.module.scss';
 
@@ -38,8 +38,6 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     executedLabel = 'Executed',
     stepsLabel = () => 'steps',
     failedCountLabel = (n: number) => `${n} failed`,
-    runningStepLabel = (current: number, total: number) =>
-      `Step ${current} of ${total}`,
     runningAriaLabel = 'Running',
     copyAriaLabel,
     failedAriaLabel,
@@ -112,14 +110,14 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   const totalDurationLabel =
     totalSeconds > 0 ? formatTotalDuration(totalSeconds) : undefined;
 
-  const liveStage = isStreaming ? findLiveStage(stages) : undefined;
-
   let summary;
   if (isStreaming) {
-    const position = liveStage
-      ? stagePosition(stages, liveStage)
-      : stages.length;
-    const liveName = liveStage ? cleanStageName(liveStage.name).name : '';
+    /* No "Step X of Y" counter: agents add stages mid-run, so the total keeps
+       growing and misleads users about how close the run is to finishing
+       (issue #9025). Between one stage settling and the next starting, keep
+       the last stage's name on screen. */
+    const liveStage = findLiveStage(stages) ?? stages[stages.length - 1];
+    const liveName = cleanStageName(liveStage.name).name;
     summary = (
       <span
         role="status"
@@ -129,21 +127,12 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         <span className="flex flex-none items-center">
           <Spinner size={14} ariaLabel={runningAriaLabel} />
         </span>
-        <span
-          className={mergeClasses(
-            'flex-none whitespace-nowrap',
-            summaryTypography.fontClassName,
-            styles.liveName,
-          )}
-        >
-          {runningStepLabel(position, stages.length)}
-        </span>
         {liveName && (
           <span
             className={mergeClasses(
               'min-w-0 max-w-[22rem] truncate',
               summaryTypography.fontClassName,
-              styles.executedLabel,
+              styles.liveName,
             )}
           >
             <EllipsisTooltip text={liveName} />
