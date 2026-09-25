@@ -2142,10 +2142,13 @@ describe('ConversationPanelView — revoke access', () => {
   };
 
   /* The default lookup resolves one recipient, so the menu entry carries the
-   * counted label; the confirmation's own button keeps the plain one. */
-  const openRevokeConfirmation = () => {
+   * counted label; the confirmation's own button keeps the plain one. The
+   * count arrives asynchronously after openRowMenu's own wait (which only
+   * confirms the request was issued), so the counted label must be awaited
+   * here rather than queried synchronously. */
+  const openRevokeConfirmation = async () => {
     fireEvent.click(
-      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      await screen.findByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
     );
     return screen.getByRole('dialog');
   };
@@ -2257,7 +2260,7 @@ describe('ConversationPanelView — revoke access', () => {
   it('clicking Revoke access opens confirmation without calling the revoke API', async () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
 
     expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
     expect(revokeSharedAccess).not.toHaveBeenCalled();
@@ -2273,7 +2276,7 @@ describe('ConversationPanelView — revoke access', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     const confirmButton = within(dialog).getByRole('button', {
       name: REVOKE_BUTTON,
     });
@@ -2299,7 +2302,7 @@ describe('ConversationPanelView — revoke access', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
     );
@@ -2324,7 +2327,7 @@ describe('ConversationPanelView — revoke access', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
     );
@@ -2345,7 +2348,7 @@ describe('ConversationPanelView — revoke access', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
     );
@@ -2360,7 +2363,7 @@ describe('ConversationPanelView — revoke access', () => {
   it('cancel closes the popup without calling the revoke API', async () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
     );
@@ -2374,7 +2377,7 @@ describe('ConversationPanelView — revoke access', () => {
     try {
       render(<ConversationPanelView {...defaultProps} />);
       await openRowMenu();
-      const dialog = openRevokeConfirmation();
+      const dialog = await openRevokeConfirmation();
       expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
       expect(
         within(dialog).getByRole('button', { name: REVOKE_BUTTON }),

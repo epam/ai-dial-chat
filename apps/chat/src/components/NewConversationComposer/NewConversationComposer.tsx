@@ -26,6 +26,7 @@ import {
 import type {
   CommandMenuConfig,
   ConversationInputStyles,
+  HighlightedTextRange,
   MenuOverlayConfig,
   TextInsertion,
   ToolsChipLabels,
@@ -117,26 +118,38 @@ interface Props {
    */
   inputInsertion?: TextInsertion;
   /**
+   * Called with the textarea's current value on every change (typing,
+   * deleting, pasting, undo/redo), passed through to `ConversationInput` —
+   * e.g. the host's skill-mention tracking reconciling live edits.
+   */
+  onChange?: (message: string) => void;
+  /**
    * Host-injected overlay entries for the `+` menu (e.g. the Prompts
    * selector), passed through to `ConversationInput`.
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Host-supplied content rendered inside the text area at its inline-start
-   * (e.g. the selected skill's `ChatSkill` element), passed through to
-   * `ConversationInput`.
+   * Ranges of `message` rendered as highlighted runs (e.g. tracked skill
+   * mentions), passed through to `ConversationInput`.
    */
-  inlineStartSlot?: ReactNode;
+  activeMentions?: HighlightedTextRange[];
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `inlineStartSlot` is present (the skill element's remove gesture),
+   * Looks up a highlighted range whose run ends exactly at the given caret
+   * position, without mutating state — the whole-mention Backspace gesture,
    * passed through to `ConversationInput`.
    */
-  onInlineStartRemove?: () => void;
+  onBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
   /**
-   * Whether the selected skill (rendered via `inlineStartSlot`) is
-   * unsupported by the current deployment — folded into the input's
-   * send-disabled state, matching `ConversationView`'s own fold.
+   * Caret offset to place the cursor at once `messageRevision` next bumps and
+   * `message` takes effect, passed through to `ConversationInput`.
+   */
+  caretPositionOverride?: number;
+  /**
+   * Whether the currently-mentioned skill(s) are unsupported by the current
+   * deployment — folded into the input's send-disabled state, matching
+   * `ConversationView`'s own fold.
    */
   isSkillUnsupported?: boolean;
   /**
@@ -174,9 +187,11 @@ const NewConversationComposer: FC<Props> = ({
   message,
   messageRevision,
   inputInsertion,
+  onChange,
   menuOverlays,
-  inlineStartSlot,
-  onInlineStartRemove,
+  activeMentions,
+  onBackspaceAtCaret,
+  caretPositionOverride,
   isSkillUnsupported = false,
   commandMenu,
   inputStyles,
@@ -588,9 +603,11 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
+          onChange={onChange}
           menuOverlays={menuOverlays}
-          inlineStartSlot={inlineStartSlot}
-          onInlineStartRemove={onInlineStartRemove}
+          activeMentions={activeMentions}
+          onBackspaceAtCaret={onBackspaceAtCaret}
+          caretPositionOverride={caretPositionOverride}
           commandMenu={commandMenu}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}

@@ -1,7 +1,7 @@
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
-import { isSkillSelectionUnsupported } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
+  HighlightedTextRange,
   MenuOverlayConfig,
 } from '@epam/ai-dial-conversation-input';
 import { BASE_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
@@ -25,14 +25,17 @@ import type {
   UseSkillSelectorOverlayOptions,
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
+import { matchSkillMentions } from '../../utils/skill-mention-matching';
 import { getSkillFallbackName } from '../../utils/skill-url';
+import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
 
 /**
  * Owns the Skills Add-menu flow: the favorites overlay, the "Use skill"
  * browse modal's open state, the skill details side panel's open state, and
- * the single selected skill rendered as the input's inline `ChatSkill`
- * element. The host injects the listing data, favorites state, labels, the
- * deployment-support signal, and the modal/panel components.
+ * every currently-mentioned skill tracked as a character-range anchor within
+ * the composer's draft text (via `useSkillMentions`). The host injects the
+ * listing data, favorites state, labels, the deployment-support signal, and
+ * the modal/panel components.
  */
 export const useSkillSelectorOverlay = ({
   isEnabled,
@@ -52,21 +55,33 @@ export const useSkillSelectorOverlay = ({
     backLabel = 'Back',
     catalogModalTitleLabel = 'Use skill',
     emptyQueryHintLabel = 'Type to filter',
-    unsupportedTooltipLabel = 'Selected model does not support skills. Remove the skill or select different model to proceed.',
     panelLabels,
   } = labels ?? {};
 
   /*
    * The entry-point gate: both the feature flag and the deployment's own
-   * support must hold. A selected skill, its removal gesture, and the
-   * details panel survive an unsupported deployment — only the ways in are
-   * hidden — so unlike `isEnabled` this never blanks the whole result.
+   * support must hold. Tracked mentions, their removal, and the details panel
+   * survive an unsupported deployment — only the ways in are hidden — so
+   * unlike `isEnabled` this never blanks the whole result.
    */
   const isSkillsEnabled = isEnabled && isSkillsSupported;
 
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [detailsSkillId, setDetailsSkillId] = useState<string | null>(null);
-  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
+  /*
+   * The caret position captured when "Use skill" is opened from either entry
+   * point (the add-menu's `onBrowse` or the slash-menu's, both of which carry
+   * the triggering word's start offset) — consumed once the modal itself
+   * reports a selection, since the modal's own `onSelect` carries no caret
+   * argument.
+   */
+  const [browseCaretPosition, setBrowseCaretPosition] = useState(0);
+  const [messageRevision, setMessageRevision] = useState(0);
+  const [caretPositionOverride, setCaretPositionOverride] = useState<
+    number | undefined
+  >(undefined);
+
+  const mentions = useSkillMentions();
 
   const allSkills = useMemo<SkillListingEntry[]>(
     () => [...skills, ...(sharedWithMe ?? []), ...(publicSkills ?? [])],
@@ -74,12 +89,18 @@ export const useSkillSelectorOverlay = ({
   );
 
   /*
-   * Url-keyed view of `allSkills` so per-url lookups (the selected skill,
-   * history entries) are O(1) instead of a linear scan per entry per render.
+   * Url-keyed view of `allSkills` so per-url lookups (a selection's name, a
+   * history entry's name/description) are O(1) instead of a linear scan per
+   * lookup per render.
    */
   const skillByUrl = useMemo<Map<string, SkillListingEntry>>(
     () => new Map(allSkills.map((skill) => [skill.url, skill])),
     [allSkills],
+  );
+
+  const resolveName = useCallback(
+    (url: string) => skillByUrl.get(url)?.name ?? getSkillFallbackName(url),
+    [skillByUrl],
   );
 
   /*
@@ -96,95 +117,148 @@ export const useSkillSelectorOverlay = ({
   );
 
   /*
-   * Resolved from `allSkills` on every render rather than captured at
-   * selection time, so a skill picked while the listing is still loading
-   * (e.g. via a one-shot route state) renders once the listing settles.
+   * A mention selected on a deployment that does not support skills: hosts
+   * fold this into send-disabled, and every active mention's `HighlightedTextRange`
+   * below also renders through `ChatSkill`'s own `isUnsupported` error styling
+   * — matching the chip once the message is sent and rendered from history.
    */
-  const selectedSkill = useMemo(
+  const isSkillUnsupported = mentions.anchors.length > 0 && !isSkillsSupported;
+
+  /*
+   * Live-composing mentions render through the exact same `ChatSkill`
+   * component as sent history (`renderHistorySkillSegments`/
+   * `renderHistorySkills` below), via `HighlightedTextRange.render` — not a
+   * bespoke highlight span — so hover tooltip, "View details", and the
+   * hover-only background all behave identically while typing and once sent.
+   */
+  const activeMentions = useMemo<HighlightedTextRange[]>(
     () =>
-      selectedSkillId == null
-        ? null
-        : (skillByUrl.get(selectedSkillId) ?? {
-            url: selectedSkillId,
-            name: selectedSkillId,
-          }),
-    [skillByUrl, selectedSkillId],
+      mentions.anchors.map((anchor) => ({
+        start: anchor.start,
+        length: anchor.length,
+        isUnsupported: !isSkillsSupported,
+        render: () => (
+          <ChatSkill
+            name={anchor.name}
+            path={anchor.url}
+            labelClassName={historyChipLabelClassName}
+            description={skillByUrl.get(anchor.url)?.description}
+            isUnsupported={!isSkillsSupported}
+            onViewDetails={setDetailsSkillId}
+            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+          />
+        ),
+      })),
+    [
+      mentions.anchors,
+      isSkillsSupported,
+      skillByUrl,
+      historyChipLabelClassName,
+      panelLabels,
+    ],
   );
 
   /*
-   * A skill selected on a deployment that does not support skills: the chip
-   * renders in its error state and hosts fold this into send-disabled.
+   * Performs a selection: splices the mention into the tracked draft, then
+   * pushes the result down through the composer's `message`/`messageRevision`
+   * channel (a one-shot value push, not a continuously controlled binding —
+   * see `UseSkillSelectorOverlayResult.message`'s doc) and positions the
+   * caret right after the inserted `/{name}` run, plus its trailing space
+   * when `insertMention` added one — so text typed immediately after a
+   * selection starts a new word rather than landing before an
+   * already-existing space (or gluing onto the mention when none was
+   * needed).
    */
-  const isSkillUnsupported = isSkillSelectionUnsupported(
-    selectedSkillId,
-    isSkillsSupported,
+  const insertAndPush = useCallback(
+    (url: string, name: string, caretPosition: number) => {
+      const addedTrailingSpace = mentions.insertMention(
+        url,
+        name,
+        caretPosition,
+      );
+      setMessageRevision((revision) => revision + 1);
+      setCaretPositionOverride(
+        caretPosition + 1 + name.length + (addedTrailingSpace ? 1 : 0),
+      );
+    },
+    [mentions],
   );
 
-  const selectSkill = useCallback((skillId: string) => {
-    setSelectedSkillId(skillId);
-  }, []);
+  const resetSkillMentions = useCallback(() => {
+    mentions.reset();
+    setMessageRevision((revision) => revision + 1);
+    setCaretPositionOverride(undefined);
+  }, [mentions]);
 
-  const removeSelectedSkill = useCallback(() => {
-    setSelectedSkillId(null);
-  }, []);
-
-  /*
-   * The selection id is the skill's resource URL, so it is exposed as the
-   * send-time path directly — even while the listing is still loading and
-   * `selectedSkill` has not resolved yet (the id came from a selection entry
-   * point, which always receives resource URLs).
-   */
-  const selectedSkillPath = selectedSkillId;
-
-  /*
-   * The send-time `custom_content.skills` payload: a single `{ url }` entry
-   * while a skill is selected, `undefined` otherwise so the field is omitted
-   * from the message entirely. Memoized on the selection id so hosts can hold
-   * it in `useCallback`/`memo` deps without the identity churning on every
-   * render (e.g. every streaming token re-rendering the conversation view).
-   */
-  const selectedSkills = useMemo<RequestSkill[] | undefined>(
-    () => (selectedSkillId == null ? undefined : [{ url: selectedSkillId }]),
-    [selectedSkillId],
-  );
-
-  /*
-   * The selected skill's inline form: the shared tooltip content, with the
-   * listing-sourced description — or, while the deployment does not support
-   * skills, the error state (error-colored label, message-only tooltip).
-   * Memoized so the element's identity stays stable across unrelated
-   * re-renders (streaming) and the input hosting it as `inlineStartSlot` is
-   * not needlessly re-rendered. The element carries no remove control —
-   * removal is the input's Backspace-at-start gesture via
-   * `removeSelectedSkill` (wired to `onInlineStartRemove`). "View details"
-   * opens the same side panel the rows' action opens.
-   */
-  const selectedSkillElement = useMemo<ReactNode>(
-    () =>
-      selectedSkill == null ? null : (
-        <ChatSkill
-          name={selectedSkill.name}
-          path={selectedSkill.url}
-          description={selectedSkill.description}
-          isUnsupported={isSkillUnsupported}
-          onViewDetails={setDetailsSkillId}
-          labels={{
-            viewDetailsLabel: panelLabels?.viewDetailsLabel,
-            unsupportedTooltipLabel,
-          }}
-        />
-      ),
-    [selectedSkill, isSkillUnsupported, panelLabels, unsupportedTooltipLabel],
+  const seedSkillMentions = useCallback(
+    (content: string, entries: RequestSkill[] | undefined) => {
+      mentions.seedFromMessage(content, entries, resolveName);
+      setMessageRevision((revision) => revision + 1);
+      setCaretPositionOverride(undefined);
+    },
+    [mentions, resolveName],
   );
 
   /*
-   * History display: one `ChatSkill` per `custom_content.skills` entry,
-   * sharing the rows' "View details" panel. The name and description come
-   * from the listing pools matched on the entry's url; a url no pool carries
-   * (e.g. a skill the viewer cannot read) falls back to its last non-empty
-   * segment with no description. The label class is host-supplied because
-   * the chip renders beside the bubble's first text line and its height
-   * should match that line.
+   * User-bubble history rendering: slices `content` into plain-text runs and
+   * `ChatSkill` elements at each mention's actual position, via
+   * `matchSkillMentions` (block 1). `resolvedMentions` is already ordered by
+   * `start` (see that function's own scan-cursor invariant), so a single
+   * left-to-right pass builds the segment array directly.
+   */
+  const renderHistorySkillSegments = useCallback(
+    (
+      content: string,
+      entries: RequestSkill[] | undefined,
+    ): ReactNode[] | null => {
+      if (entries == null || entries.length === 0) {
+        return null;
+      }
+
+      const resolvedMentions = matchSkillMentions(
+        content,
+        entries,
+        resolveName,
+      );
+      const segments: ReactNode[] = [];
+      let cursor = 0;
+
+      resolvedMentions.forEach((mention) => {
+        if (mention.start > cursor) {
+          segments.push(content.slice(cursor, mention.start));
+        }
+
+        const skillEntry = entries[mention.skillIndex];
+        const skill = skillByUrl.get(skillEntry.url);
+        const name = skill?.name ?? getSkillFallbackName(skillEntry.url);
+
+        segments.push(
+          <ChatSkill
+            key={`${skillEntry.url}-${mention.start}`}
+            name={name}
+            path={skillEntry.url}
+            labelClassName={historyChipLabelClassName}
+            description={skill?.description}
+            onViewDetails={setDetailsSkillId}
+            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+          />,
+        );
+        cursor = mention.start + mention.length;
+      });
+
+      if (cursor < content.length) {
+        segments.push(content.slice(cursor));
+      }
+
+      return segments;
+    },
+    [resolveName, skillByUrl, historyChipLabelClassName, panelLabels],
+  );
+
+  /*
+   * Assistant-bubble history rendering: every entry as a flat list of
+   * `ChatSkill` elements, ignoring text position — assistant text is
+   * model-generated markdown and never authors positioned mentions.
    */
   const renderHistorySkills = useCallback(
     (entries: RequestSkill[] | undefined): ReactNode => {
@@ -213,17 +287,18 @@ export const useSkillSelectorOverlay = ({
   );
 
   const renderOverlay = useCallback(
-    (onClose: () => void): ReactNode => (
+    (onClose: () => void, caretPosition: number): ReactNode => (
       <FavoriteSkillsPanel
         favorites={favoriteSkillItems}
         /* The Add menu mounts overlays inside a `role="menu"` container. */
         isMenu
         onSelect={(item) => {
-          selectSkill(item.id);
+          insertAndPush(item.id, item.name, caretPosition);
           onClose();
         }}
         onToggleFavorite={onToggleFavorite}
         onBrowse={() => {
+          setBrowseCaretPosition(caretPosition);
           onClose();
           setIsCatalogOpen(true);
         }}
@@ -235,7 +310,7 @@ export const useSkillSelectorOverlay = ({
         labels={panelLabels}
       />
     ),
-    [favoriteSkillItems, selectSkill, onToggleFavorite, panelLabels],
+    [favoriteSkillItems, insertAndPush, onToggleFavorite, panelLabels],
   );
 
   const skillMenuOverlay = useMemo<MenuOverlayConfig | undefined>(
@@ -263,7 +338,9 @@ export const useSkillSelectorOverlay = ({
    * in search mode over the typed query. Every action consumes the `/query`
    * text from the textarea first (`close({ consumeQuery: true })`), so it is
    * never sent — including "View details", which would otherwise leave a
-   * stale query behind while the side panel opens.
+   * stale query behind while the side panel opens. `caretPosition` is the
+   * triggering word's start offset — wherever in the message it was typed —
+   * so the mention is spliced in at the same spot the `/query` occupied.
    */
   const commandMenu = useMemo<CommandMenuConfig | undefined>(
     () =>
@@ -272,7 +349,13 @@ export const useSkillSelectorOverlay = ({
             triggerPrefix: '/',
             menuLabel: addMenuLabel,
             emptyQueryHint: emptyQueryHintLabel,
-            renderMenu: ({ query, close, listboxId, activeOptionId }) => (
+            renderMenu: ({
+              query,
+              caretPosition,
+              close,
+              listboxId,
+              activeOptionId,
+            }) => (
               <FavoriteSkillsPanel
                 favorites={favoriteSkillItems}
                 searchQuery={query}
@@ -280,11 +363,12 @@ export const useSkillSelectorOverlay = ({
                 activeOptionId={activeOptionId}
                 onSelect={(item) => {
                   close({ consumeQuery: true });
-                  selectSkill(item.id);
+                  insertAndPush(item.id, item.name, caretPosition);
                 }}
                 onToggleFavorite={onToggleFavorite}
                 onBrowse={() => {
                   close({ consumeQuery: true });
+                  setBrowseCaretPosition(caretPosition);
                   setIsCatalogOpen(true);
                 }}
                 onViewDetails={(item) => {
@@ -301,7 +385,7 @@ export const useSkillSelectorOverlay = ({
       addMenuLabel,
       emptyQueryHintLabel,
       favoriteSkillItems,
-      selectSkill,
+      insertAndPush,
       onToggleFavorite,
       panelLabels,
     ],
@@ -312,7 +396,7 @@ export const useSkillSelectorOverlay = ({
       isOpen={isCatalogOpen}
       onClose={() => setIsCatalogOpen(false)}
       onSelect={(id) => {
-        selectSkill(id);
+        insertAndPush(id, resolveName(id), browseCaretPosition);
         setIsCatalogOpen(false);
       }}
       title={catalogModalTitleLabel}
@@ -341,12 +425,17 @@ export const useSkillSelectorOverlay = ({
       commandMenu: undefined,
       skillCatalogModal: null,
       skillDetailsPanel: null,
-      selectedSkillElement: null,
-      selectedSkillPath: null,
-      selectedSkills: undefined,
+      message: '',
+      messageRevision: 0,
+      activeMentions: [],
+      onDraftChange: () => undefined,
+      onBackspaceAtCaret: () => undefined,
+      caretPositionOverride: undefined,
       isSkillUnsupported: false,
-      selectSkill: () => undefined,
-      removeSelectedSkill: () => undefined,
+      selectedSkills: undefined,
+      resetSkillMentions: () => undefined,
+      seedSkillMentions: () => undefined,
+      renderHistorySkillSegments: () => null,
       renderHistorySkills: () => null,
     };
   }
@@ -356,12 +445,17 @@ export const useSkillSelectorOverlay = ({
     commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillElement,
-    selectedSkillPath,
-    selectedSkills,
+    message: mentions.draft,
+    messageRevision,
+    activeMentions,
+    onDraftChange: mentions.onDraftChange,
+    onBackspaceAtCaret: mentions.onBackspaceAtCaret,
+    caretPositionOverride,
     isSkillUnsupported,
-    selectSkill,
-    removeSelectedSkill,
+    selectedSkills: mentions.orderedSkills,
+    resetSkillMentions,
+    seedSkillMentions,
+    renderHistorySkillSegments,
     renderHistorySkills,
   };
 };

@@ -1,5 +1,6 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
+import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
@@ -118,9 +119,15 @@ describe('useModelSelector — menuItems', () => {
       }),
     );
     expect(result.current.menuItems).toHaveLength(7);
-    expect(result.current.menuItems.every((item) => item.disabled)).toBe(true);
-    expect(result.current.menuItems.every((item) => item.icon)).toBe(true);
-    expect(result.current.menuItems.every((item) => item.label)).toBe(true);
+    expect(
+      result.current.menuItems.every((item: DropdownItem) => item.disabled),
+    ).toBe(true);
+    expect(
+      result.current.menuItems.every((item: DropdownItem) => item.icon),
+    ).toBe(true);
+    expect(
+      result.current.menuItems.every((item: DropdownItem) => item.label),
+    ).toBe(true);
   });
 
   it('prefers loading label over error and empty labels', () => {

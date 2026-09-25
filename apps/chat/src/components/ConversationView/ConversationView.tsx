@@ -41,9 +41,11 @@ import {
   type ToolMenuItem,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
-import type {
-  TextInsertion,
-  ToolsChipLabels,
+import {
+  useComposerSeed,
+  useComposerSeedSource,
+  type TextInsertion,
+  type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
@@ -301,29 +303,78 @@ const ConversationView: FC<Props> = ({
     commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillElement,
-    selectedSkillPath,
+    message: skillMessage,
+    messageRevision: skillMessageRevision,
+    activeMentions,
+    onDraftChange,
+    onBackspaceAtCaret,
+    caretPositionOverride,
     selectedSkills,
     isSkillUnsupported,
-    selectSkill,
-    removeSelectedSkill,
+    resetSkillMentions,
+    renderHistorySkillSegments,
     renderHistorySkills,
+  } = useSkillSelectorOverlay({
+    isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
+  });
+  /*
+   * A second, independent hook instance drives the edit surface's mention
+   * tracking. Sharing the composer's instance would make starting an edit
+   * overwrite whatever the user is drafting for their next message, since
+   * `seedSkillMentions` pushes into the same `message`/`messageRevision`
+   * channel the live composer above also consumes.
+   */
+  const {
+    skillMenuOverlay: editSkillMenuOverlay,
+    commandMenu: editCommandMenu,
+    skillCatalogModal: editSkillCatalogModal,
+    skillDetailsPanel: editSkillDetailsPanel,
+    message: editMessage,
+    messageRevision: editMessageRevision,
+    activeMentions: editActiveMentions,
+    onDraftChange: onEditDraftChange,
+    onBackspaceAtCaret: onEditBackspaceAtCaret,
+    caretPositionOverride: editCaretPositionOverride,
+    selectedSkills: editSelectedSkills,
+    resetSkillMentions: resetEditSkillMentions,
+    seedSkillMentions,
   } = useSkillSelectorOverlay({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
   const isSkillUsageEnabled = useFeatureFlag('skillUsageEnabled');
   /*
-   * The skills an edit send writes. While the flag is on, the shared
-   * selection IS the edited message's skill state (seeded on edit start),
-   * so it maps directly — an empty array means the user removed the skill.
-   * While the flag is off, `undefined` tells `handleEditMessage` to
-   * preserve the message's original skills untouched.
+   * The skills an edit send writes. While the flag is on, the edit instance's
+   * selection IS the edited message's mention state (seeded on edit start),
+   * so an empty array means the user removed every mention. While the flag
+   * is off, `undefined` tells `handleEditMessage` to preserve the message's
+   * original skills untouched.
    */
-  const editSkills = useMemo<RequestSkill[] | undefined>(() => {
-    if (!isSkillUsageEnabled) return undefined;
-    if (selectedSkillPath == null) return [];
-    return [{ url: selectedSkillPath }];
-  }, [isSkillUsageEnabled, selectedSkillPath]);
+  const editSkills = useMemo<RequestSkill[] | undefined>(
+    () => (isSkillUsageEnabled ? (editSelectedSkills ?? []) : undefined),
+    [isSkillUsageEnabled, editSelectedSkills],
+  );
+
+  /*
+   * Merges two independent "seed the composer once" sources into the one
+   * message/messageRevision pair ConversationInput accepts: this component's
+   * own `inputContent`/`inputContentRevision` props (overlay mode's external
+   * content injection) and the skill hook's own message/messageRevision push
+   * (a mention insertion).
+   */
+  const {
+    message: composerSeedText,
+    messageRevision: composerSeedRevision,
+    seedMessage: seedComposerSeed,
+  } = useComposerSeed({
+    text: inputContent,
+    revision: inputContentRevision ?? 0,
+  });
+  useComposerSeedSource(inputContentRevision, () =>
+    seedComposerSeed(inputContent ?? ''),
+  );
+  useComposerSeedSource(skillMessageRevision, () =>
+    seedComposerSeed(skillMessage),
+  );
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
    * below Prompts in the `+` menu; `undefined` when both are absent keeps
@@ -683,12 +734,12 @@ const ConversationView: FC<Props> = ({
       await onSend(message, attachments, selectedSkills);
       /*
        * Clear only after a successful send: a rejected onSend restores the
-       * draft, and the skill selection should survive with it for the retry.
+       * draft, and the mentions should survive with it for the retry.
        * No-op while the skill flag is off.
        */
-      removeSelectedSkill();
+      resetSkillMentions();
     },
-    [onSend, messages.length, armAnchor, selectedSkills, removeSelectedSkill],
+    [onSend, messages.length, armAnchor, selectedSkills, resetSkillMentions],
   );
 
   const handleRegenerateMessageWithAnchor = useCallback(
@@ -707,35 +758,34 @@ const ConversationView: FC<Props> = ({
   );
 
   /*
-   * Seeds the edit input with the edited message's skill state: the shared
-   * selection renders in `EditMessageInput`'s inline-start slot, so it must
-   * mirror the message being edited — its (first) skill when it carries one,
-   * none otherwise. Both setters are no-ops while the skill flag is off.
+   * Seeds the edit input with the edited message's full mention state:
+   * `seedSkillMentions` reconstructs every mention's position in the
+   * message's text, matching `custom_content.skills` in order. A no-op (empty
+   * mentions) while the skill flag is off.
    */
   const handleStartEdit = useCallback(
     (messageIndex: number) => {
-      const skillUrl = messages[messageIndex]?.custom_content?.skills?.[0]?.url;
-      if (skillUrl != null) {
-        selectSkill(skillUrl);
-      } else {
-        removeSelectedSkill();
-      }
+      const editedMessage = messages[messageIndex];
+      seedSkillMentions(
+        editedMessage?.content ?? '',
+        editedMessage?.custom_content?.skills,
+      );
       onStartEdit?.(messageIndex);
     },
-    [messages, onStartEdit, selectSkill, removeSelectedSkill],
+    [messages, onStartEdit, seedSkillMentions],
   );
 
   /*
-   * An edit session's selection never outlives it — otherwise the composer
-   * would silently attach the edited message's skill to the next message.
+   * An edit session's mentions never outlive it — otherwise the composer
+   * would silently attach the edited message's mentions to the next message.
    * No-op while the skill flag is off.
    */
   const handleCancelEdit = useCallback(
     (messageIndex: number) => {
-      removeSelectedSkill();
+      resetEditSkillMentions();
       onCancelEdit?.(messageIndex);
     },
-    [onCancelEdit, removeSelectedSkill],
+    [onCancelEdit, resetEditSkillMentions],
   );
 
   const handleEditMessageWithAnchor = useCallback(
@@ -771,8 +821,8 @@ const ConversationView: FC<Props> = ({
         newAttachments,
         editSkills,
       );
-      /* The edit session consumed the selection; the composer starts fresh. */
-      removeSelectedSkill();
+      /* The edit session consumed the mentions; the next edit starts fresh. */
+      resetEditSkillMentions();
     },
     [
       isAssistantTyping,
@@ -780,7 +830,7 @@ const ConversationView: FC<Props> = ({
       onEditMessage,
       armAnchor,
       editSkills,
-      removeSelectedSkill,
+      resetEditSkillMentions,
     ],
   );
 
@@ -927,8 +977,17 @@ const ConversationView: FC<Props> = ({
                     onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
                     onCancelEdit={handleCancelEdit}
                     onEditMessage={handleEditMessageWithAnchor}
-                    editInlineStartSlot={selectedSkillElement}
-                    onEditInlineStartRemove={removeSelectedSkill}
+                    editMessage={editMessage}
+                    editMessageRevision={editMessageRevision}
+                    editActiveMentions={editActiveMentions}
+                    onEditBackspaceAtCaret={onEditBackspaceAtCaret}
+                    editCaretPositionOverride={editCaretPositionOverride}
+                    onEditDraftChange={onEditDraftChange}
+                    editCommandMenu={editCommandMenu}
+                    editMenuOverlays={
+                      editSkillMenuOverlay ? [editSkillMenuOverlay] : undefined
+                    }
+                    renderHistorySkillSegments={renderHistorySkillSegments}
                     renderHistorySkills={renderHistorySkills}
                     onUploadAttachment={onUploadAttachment}
                     deploymentLookup={deploymentLookup}
@@ -1065,8 +1124,9 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
-                message={inputContent}
-                messageRevision={inputContentRevision}
+                message={composerSeedText}
+                messageRevision={composerSeedRevision}
+                onChange={onDraftChange}
                 textInsertion={inputInsertion}
                 onSend={handleSendWithAnchor}
                 onUploadAttachment={onUploadAttachment}
@@ -1154,8 +1214,9 @@ const ConversationView: FC<Props> = ({
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
                 menuOverlays={menuOverlays}
-                inlineStartSlot={selectedSkillElement}
-                onInlineStartRemove={removeSelectedSkill}
+                activeMentions={activeMentions}
+                onBackspaceAtCaret={onBackspaceAtCaret}
+                caretPositionOverride={caretPositionOverride}
                 commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
@@ -1264,6 +1325,8 @@ const ConversationView: FC<Props> = ({
       {promptParametersPopup}
       {skillCatalogModal}
       {skillDetailsPanel}
+      {editSkillCatalogModal}
+      {editSkillDetailsPanel}
     </>
   );
 };
