@@ -37,6 +37,8 @@ describe('useSkillSelectorOverlay', () => {
       query: '',
       caretPosition: 0,
       close,
+      listboxId: 'skill-menu-listbox',
+      activeOptionId: null,
     }) as ReactElement;
 
     act(() => {
@@ -65,6 +67,8 @@ describe('useSkillSelectorOverlay', () => {
         query: '',
         caretPosition: 0,
         close: vi.fn(),
+        listboxId: 'skill-menu-listbox',
+        activeOptionId: null,
       }) as ReactElement;
       getOnSelect(menu)({ id: abcSkill.url, name: abcSkill.name });
     });
@@ -112,6 +116,8 @@ describe('useSkillSelectorOverlay', () => {
         query: '',
         caretPosition: 0,
         close: vi.fn(),
+        listboxId: 'skill-menu-listbox',
+        activeOptionId: null,
       }) as ReactElement;
       getOnSelect(menu)({ id: abcSkill.url, name: abcSkill.name });
     });
@@ -140,6 +146,8 @@ describe('useSkillSelectorOverlay', () => {
         query: '',
         caretPosition: 0,
         close: vi.fn(),
+        listboxId: 'skill-menu-listbox',
+        activeOptionId: null,
       }) as ReactElement;
       getOnSelect(menu)({ id: abcSkill.url, name: abcSkill.name });
     });
