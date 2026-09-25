@@ -6813,16 +6813,16 @@
       "ClientConfigDto": {
         "type": "object",
         "properties": {
+          "aiTextRefinementAvailable": {
+            "type": "boolean",
+            "description": "Whether a text refinement model is configured. Missing means unavailable.",
+            "example": false
+          },
           "activeEventId": {
             "type": "string",
             "description": "Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.",
             "nullable": true,
             "example": "new-year"
-          },
-          "aiTextRefinementAvailable": {
-            "type": "boolean",
-            "description": "Whether a text refinement model is configured. Missing means unavailable.",
-            "example": false
           },
           "appVersion": {
             "type": "string",
@@ -10119,6 +10119,11 @@
             "type": "string",
             "description": "Human-readable conversation title (the resource `name` from DIAL Core).",
             "example": "My chat"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.",
+            "example": 1749600000000
           },
           "updatedAt": {
             "type": "number",
