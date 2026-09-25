@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useReducedMotion } from '../../hooks/celebration/useReducedMotion';
 import { HalloweenBurst } from '../../types/halloween';
+import { loadHalloweenAnchorClasses } from '../../utils/halloween';
 import { animateCat } from '../../utils/halloween-cat-animation';
 import { buildCatPlan, type CatPlan } from '../../utils/halloween-cat-plan';
 import { getCatTargets } from '../../utils/halloween-cat-targets';
@@ -68,24 +69,9 @@ const HalloweenCatScene: FC = () => {
     events.forEach((event) => window.addEventListener(event, interrupt, true));
     document.addEventListener('visibilitychange', handleVisibility);
     const prepare = async () => {
-      const [composer, starters] = await Promise.allSettled([
-        import('@epam/ai-dial-conversation-input'),
-        import('@epam/ai-dial-starter-buttons'),
-      ]);
+      const { composer, starterList } = await loadHalloweenAnchorClasses();
       if (disposed || stopped.current) return;
-      setPlan(
-        buildCatPlan(
-          getCatTargets(
-            composer.status === 'fulfilled'
-              ? composer.value.CONVERSATION_INPUT_CLASS.wrapper
-              : '',
-            starters.status === 'fulfilled'
-              ? starters.value.STARTER_BUTTONS_CLASS.list
-              : undefined,
-          ),
-          isMobile,
-        ),
-      );
+      setPlan(buildCatPlan(getCatTargets(composer, starterList), isMobile));
     };
     prepare();
     return () => {

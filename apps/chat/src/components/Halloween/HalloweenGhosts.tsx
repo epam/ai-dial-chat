@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useReducedMotion } from '../../hooks/celebration/useReducedMotion';
 import { HalloweenBurst } from '../../types/halloween';
-import { buildHalloweenGhostFlight } from '../../utils/halloween';
+import {
+  buildHalloweenGhostFlight,
+  loadHalloweenAnchorClasses,
+} from '../../utils/halloween';
 import { animateGhosts } from '../../utils/halloween-ghost-animation';
 import {
   buildGhostPlan,
@@ -76,22 +79,11 @@ const HalloweenGhosts: FC = () => {
     events.forEach((event) => window.addEventListener(event, interrupt, true));
     document.addEventListener('visibilitychange', handleVisibility);
     const prepare = async () => {
-      const [composer, starters] = await Promise.allSettled([
-        import('@epam/ai-dial-conversation-input'),
-        import('@epam/ai-dial-starter-buttons'),
-      ]);
+      const { composer, starterList } = await loadHalloweenAnchorClasses();
       if (disposed || stopped.current) return;
-      const composerClass =
-        composer.status === 'fulfilled'
-          ? composer.value.CONVERSATION_INPUT_CLASS.wrapper
-          : '';
-      const starterListClass =
-        starters.status === 'fulfilled'
-          ? starters.value.STARTER_BUTTONS_CLASS.list
-          : undefined;
       setPlan(
         buildGhostPlan(
-          getGhostTargets(composerClass, starterListClass, isMobile ? 3 : 5),
+          getGhostTargets(composer, starterList, isMobile ? 3 : 5),
           isMobile,
         ),
       );
