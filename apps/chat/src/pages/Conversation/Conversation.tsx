@@ -134,8 +134,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   useEffect(() => {
     toolIdsRef.current = toolIds;
   }, [toolIds]);
-  const { handleClose: handleCloseSourcesSidebar, setMessages } =
-    useSourcesSidebar();
+  const {
+    handleClose: handleCloseSourcesSidebar,
+    setMessages,
+    setConversationModelId,
+  } = useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const { status: activeScheduledTaskStatus } = useActiveScheduledTask();
@@ -239,7 +242,16 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
-  }, [conversation?.messages, setMessages]);
+    setConversationModelId(
+      conversation?.assistantModelId || conversation?.model.id,
+    );
+  }, [
+    conversation?.messages,
+    conversation?.assistantModelId,
+    conversation?.model.id,
+    setMessages,
+    setConversationModelId,
+  ]);
 
   /*
    * A DIAL app can switch a tool toggle per assistant message through its
@@ -282,8 +294,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     () => () => {
       handleCloseSourcesSidebar();
       setMessages([]);
+      setConversationModelId(undefined);
     },
-    [handleCloseSourcesSidebar, setMessages],
+    [handleCloseSourcesSidebar, setMessages, setConversationModelId],
   );
 
   const addStatusMessage = useCallback(
