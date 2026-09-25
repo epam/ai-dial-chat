@@ -816,7 +816,7 @@ govern it — an embed that shows the host's own product version reaches for thi
 key instead. Any footer HTML the operator configured keeps rendering.
 
 `show-agent-description` renders the selected agent's own `description` on the
-empty-chat screen, below the conversation starters, as markdown — links in it
+empty-chat screen, above the greeting and the input, as markdown — links in it
 are clickable. It reads the same text the catalog shows on the agent's card, so
 an embed that pins one agent can put its scope note or disclaimer in front of
 the user before the first message. Nothing renders when the agent has no
