@@ -18,7 +18,10 @@ const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
 ).length;
 
 function makeService(
-  resolveImpl: (key: string) => Promise<unknown | undefined>,
+  resolveImpl: (
+    key: string,
+    context?: AppConfigEvalContext,
+  ) => Promise<unknown | undefined>,
   model?: string,
 ) {
   const compositeProvider = {
@@ -1204,6 +1207,257 @@ describe('AppConfigService', () => {
         resolveCallsAfterFirst,
       );
       expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['mcpApps.sandboxUrl', 'mcpAppSandboxUrl'],
+      ['mcpApps.userAgent', 'mcpAppUserAgent'],
+      ['mcpApps.hostName', 'mcpAppHostName'],
+    ] as const)(
+      'surfaces a configured %s string and nulls a non-string value',
+      async (key, field) => {
+        const configured = makeService(async (k) =>
+          k === key ? 'configured-value' : undefined,
+        );
+        expect(
+          (await configured.service.getClientConfig(ctx)).config[field],
+        ).toBe('configured-value');
+
+        const wrongShape = makeService(async (k) =>
+          k === key ? 42 : undefined,
+        );
+        expect(
+          (await wrongShape.service.getClientConfig(ctx)).config[field],
+        ).toBeNull();
+
+        const unset = makeService(async () => undefined);
+        expect(
+          (await unset.service.getClientConfig(ctx)).config[field],
+        ).toBeNull();
+      },
+    );
+
+    it.each([
+      ['light', 'light'],
+      ['dark', 'dark'],
+      ['blue', null],
+      ['', null],
+      [true, null],
+      [undefined, null],
+    ])('maps an mcpApps.theme value of %j to %j', async (value, expected) => {
+      const { service } = makeService(async (key) =>
+        key === 'mcpApps.theme' ? value : undefined,
+      );
+      expect((await service.getClientConfig(ctx)).config.mcpAppTheme).toBe(
+        expected,
+      );
+    });
+
+    it.each([
+      ['  Start a <b>new</b> chat  ', 'Start a <b>new</b> chat'],
+      ['   ', null],
+      ['', null],
+      [5, null],
+      [undefined, null],
+    ])(
+      'maps a welcomeScreen.description value of %j to %j as plain text',
+      async (value, expected) => {
+        const { service } = makeService(async (key) =>
+          key === 'welcomeScreen.description' ? value : undefined,
+        );
+        expect(
+          (await service.getClientConfig(ctx)).config.welcomeScreenDescription,
+        ).toBe(expected);
+      },
+    );
+
+    it.each([
+      ['asr.transcribeSizeLimitBytes', 'transcribeSizeLimitBytes', 0, 0],
+      [
+        'asr.transcribeSizeLimitBytes',
+        'transcribeSizeLimitBytes',
+        '5',
+        5 * 1024 * 1024,
+      ],
+      ['attachments.maxFileSizeBytes', 'maxAttachmentFileSizeBytes', 0, 0],
+      [
+        'attachments.maxFileSizeBytes',
+        'maxAttachmentFileSizeBytes',
+        '5',
+        536_870_912,
+      ],
+      ['ui.activeEventId', 'activeEventId', 42, null],
+      ['asr.modelId', 'asrModelId', 42, null],
+      ['deployments.defaultDeploymentId', 'defaultDeploymentId', 42, null],
+      ['dialCore.externalUrl', 'dialCoreExternalUrl', 42, null],
+      [
+        'fileManager.availableTabs',
+        'fileManagerTabs',
+        'x',
+        ['my_files', 'shared', 'organization'],
+      ],
+      [
+        'fileManager.availableTabs',
+        'fileManagerTabs',
+        null,
+        ['my_files', 'shared', 'organization'],
+      ],
+      ['fileManager.availableTabs', 'fileManagerTabs', [1, null], [1, null]],
+      [
+        'publish.publicationFilterSources',
+        'publicationFilterSources',
+        'x',
+        ['title', 'role', 'dial_roles'],
+      ],
+      [
+        'publish.publicationFilterSources',
+        'publicationFilterSources',
+        [1, null],
+        [1, null],
+      ],
+      ['overlay.allowedOrigins', 'overlayAllowedOrigins', {}, []],
+      ['documents.allowedConnectOrigins', 'allowedConnectOrigins', {}, []],
+      ['customVisualizers', 'customVisualizers', {}, []],
+      ['overlay.enabled', 'overlayEnabled', 'true', false],
+      ['overlay.enabled', 'overlayEnabled', 1, false],
+      ['announcement.html', 'announcementHtml', '', ''],
+      ['announcement.html', 'announcementHtml', 5, null],
+      ['footer.html', 'footerHtmlMessage', 5, ''],
+    ] as const)(
+      'maps %s resolved as %j to the current %s policy',
+      async (key, field, value, expected) => {
+        const { service } = makeService(async (k) =>
+          k === key ? value : undefined,
+        );
+        expect((await service.getClientConfig(ctx)).config[field]).toEqual(
+          expected,
+        );
+      },
+    );
+
+    it('resolves app.version first, then every other client key once in registry order with the full context', async () => {
+      const fullCtx: AppConfigEvalContext = {
+        appId: 'chat-ui',
+        userId: 'user-1',
+        roles: ['viewer'],
+        environment: 'test',
+      };
+      const { service, compositeProvider } = makeService(async () => undefined);
+
+      await service.getClientConfig(fullCtx);
+
+      const calls = (
+        compositeProvider.resolve as never as {
+          mock: { calls: [string, AppConfigEvalContext][] };
+        }
+      ).mock.calls;
+      expect(calls.map(([key]) => key)).toEqual([
+        'app.version',
+        ...CONFIG_DEFINITIONS.filter(
+          (def) => def.visibility === 'client' && def.key !== 'app.version',
+        ).map((def) => def.key),
+      ]);
+      for (const [, callContext] of calls) {
+        expect(callContext).toBe(fullCtx);
+      }
+      const resolvedKeys = calls.map(([key]) => key);
+      expect(resolvedKeys).not.toContain('utility.modelId');
+      expect(resolvedKeys).not.toContain('features.llmConversationNaming');
+      expect(resolvedKeys).not.toContain('features.responsesApiEnabled');
+    });
+
+    it('keeps the response, config, and features key order', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+
+      expect(Object.keys(result)).toEqual([
+        'appId',
+        'features',
+        'config',
+        'metadata',
+      ]);
+      expect(Object.keys(result.config)).toEqual([
+        'aiTextRefinementAvailable',
+        'appVersion',
+        'activeEventId',
+        'asrModelId',
+        'transcribeSizeLimitBytes',
+        'defaultDeploymentId',
+        'dialCoreExternalUrl',
+        'mcpAppSandboxUrl',
+        'mcpAppTheme',
+        'mcpAppUserAgent',
+        'mcpAppHostName',
+        'fileManagerTabs',
+        'overlayEnabled',
+        'overlayAllowedOrigins',
+        'allowedConnectOrigins',
+        'announcementHtml',
+        'announcementTitle',
+        'announcementDescription',
+        'announcements',
+        'welcomeScreenDescription',
+        'footerHtmlMessage',
+        'enabledUiFeatures',
+        'customVisualizers',
+        'applicationVisualizers',
+        'customVariables',
+        'publicationFilterSources',
+        'maxAttachmentFileSizeBytes',
+      ]);
+      expect(Object.keys(result.features)).toEqual([
+        'footer',
+        'asrEnabled',
+        'skillUsageEnabled',
+        'liveChatInteraction',
+        'scheduledTasksEnabled',
+        'defaultDeploymentPinned',
+      ]);
+    });
+
+    it('keeps values resolved for one role set out of another caller response', async () => {
+      const { service } = makeService(async (key, context) => {
+        const isAdmin = context?.roles?.includes('admin') ?? false;
+        if (key === 'fileManager.availableTabs') {
+          return isAdmin ? ['my_files'] : undefined;
+        }
+        if (key === 'overlay.allowedOrigins') {
+          return isAdmin ? ['https://admin.example.com'] : undefined;
+        }
+        return undefined;
+      });
+
+      const [admin, viewer] = await Promise.all([
+        service.getClientConfig({ appId: 'chat-ui', roles: ['admin'] }),
+        service.getClientConfig({ appId: 'chat-ui', roles: ['viewer'] }),
+      ]);
+
+      expect(admin.config.fileManagerTabs).toEqual(['my_files']);
+      expect(admin.config.overlayAllowedOrigins).toEqual([
+        'https://admin.example.com',
+      ]);
+      expect(viewer.config.fileManagerTabs).toEqual([
+        'my_files',
+        'shared',
+        'organization',
+      ]);
+      expect(viewer.config.overlayAllowedOrigins).toEqual([]);
+      expect(viewer.config).not.toBe(admin.config);
+    });
+
+    it('serves a cache hit with the original metadata and no provider calls', async () => {
+      const { service, compositeProvider } = makeService(async () => undefined);
+
+      const first = await service.getClientConfig(ctx);
+      const callsAfterFirst = (
+        compositeProvider.resolve as never as {
+          mock: { calls: unknown[] };
+        }
+      ).mock.calls.length;
+      const second = await service.getClientConfig(ctx);
+
+      expect(second.metadata?.resolvedAt).toBe(first.metadata?.resolvedAt);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(callsAfterFirst);
     });
   });
 
