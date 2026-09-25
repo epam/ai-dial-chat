@@ -92,7 +92,10 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
     <Tooltip
       open={isOpen}
       onOpenChange={handleOpenChange}
-      triggerClassName="ms-1 inline-flex align-middle"
+      triggerClassName={mergeClasses(
+        'ms-1 inline-flex align-middle',
+        styles.trigger,
+      )}
       contentClassName={mergeClasses(
         '!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none',
         styles.content,
