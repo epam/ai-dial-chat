@@ -3,11 +3,11 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
-  MenuItem,
+  type DropdownItem,
   MenuItemMark,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconWorld } from '@tabler/icons-react';
-import { FC, type KeyboardEvent, type RefObject } from 'react';
+import { type CSSProperties, FC, type RefObject } from 'react';
 import { ShareLinkAccess } from '../../types/share';
 import styles from '../SharePopover/SharePopover.module.scss';
 
@@ -33,20 +33,16 @@ interface AccessControlProps {
   onOpenChange: (next: boolean) => void;
   /** Called when the user selects a different access level. */
   onAccessChange: (access: ShareLinkAccess[]) => void;
-  /** Arrow-key navigation handler for the open menu. */
-  onMenuKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
+  /** Inline style for the menu panel, which renders in a portal outside the popover — the channel for its custom properties. */
+  menuStyle?: CSSProperties;
   /** Ref attached to the dropdown trigger button, so focus can return to it on close. */
   triggerRef: RefObject<HTMLButtonElement | null>;
-  /** Ref attached to the menu container, so the popover's Tab-trap can find its items. */
-  menuRef: RefObject<HTMLDivElement | null>;
   /** CSS class applied to the primary row text. Defaults to `'dial-small-semi-text'`. */
   titleClassName?: string;
   /** CSS class applied to the secondary row text. Defaults to `'dial-small-text'`. */
   subtitleClassName?: string;
   /** CSS class applied to the access trigger label. Defaults to `'dial-small-semi-text'`. */
   accessTriggerLabelClassName?: string;
-  /** CSS class applied to each access menu item label. Defaults to `'dial-small-text'`. */
-  accessMenuItemLabelClassName?: string;
 }
 
 /** "Anyone with the link" row: icon, title/subtitle, and an optional Can view/Can edit access-level control. */
@@ -61,21 +57,35 @@ export const AccessControl: FC<AccessControlProps> = ({
   isOpen,
   onOpenChange,
   onAccessChange,
-  onMenuKeyDown,
+  menuStyle,
   triggerRef,
-  menuRef,
   titleClassName = 'dial-small-semi-text',
   subtitleClassName = 'dial-small-text',
   accessTriggerLabelClassName = 'dial-small-semi-text',
-  accessMenuItemLabelClassName = 'dial-small-text',
 }) => {
-  const accessOptions: { value: ShareLinkAccess; label: string }[] = [
-    { value: ShareLinkAccess.View, label: accessViewLabel },
-    { value: ShareLinkAccess.Edit, label: accessEditLabel },
-  ];
   const selectedAccess = access.includes(ShareLinkAccess.Edit)
     ? ShareLinkAccess.Edit
     : ShareLinkAccess.View;
+
+  /* One choice out of the list, which the design marks with a trailing check;
+     the kit renders a checked `Check` item as a `menuitemradio`. */
+  const accessItems: DropdownItem[] = [
+    { key: ShareLinkAccess.View, label: accessViewLabel },
+    { key: ShareLinkAccess.Edit, label: accessEditLabel },
+  ].map((item) => ({
+    ...item,
+    mark: MenuItemMark.Check,
+    checked: item.key === selectedAccess,
+    className: styles.accessMenuItem,
+  }));
+
+  const handleAccessItemClick = ({ key }: { key: string }) => {
+    onAccessChange(
+      key === ShareLinkAccess.Edit
+        ? [ShareLinkAccess.View, ShareLinkAccess.Edit]
+        : [ShareLinkAccess.View],
+    );
+  };
 
   return (
     <div className="flex items-center gap-2.5">
@@ -116,44 +126,10 @@ export const AccessControl: FC<AccessControlProps> = ({
           placement="bottom-end"
           open={isOpen}
           onOpenChange={onOpenChange}
-          renderOverlay={() => (
-            <div
-              ref={menuRef}
-              role="menu"
-              aria-label={accessAriaLabel}
-              tabIndex={-1}
-              className="min-w-[160px]"
-              onKeyDown={onMenuKeyDown}
-            >
-              {accessOptions.map((option) => {
-                const isChecked = selectedAccess === option.value;
-                return (
-                  /* One choice out of the list, which the design marks with a
-                     trailing check drawn by the kit's own menu row. */
-                  <MenuItem
-                    key={option.value}
-                    role="menuitemradio"
-                    aria-checked={isChecked}
-                    mark={MenuItemMark.Check}
-                    selected={isChecked}
-                    label={option.label}
-                    labelClassName={mergeClasses(
-                      accessMenuItemLabelClassName,
-                      styles.accessMenuItemLabel,
-                    )}
-                    onClick={() => {
-                      onAccessChange(
-                        option.value === ShareLinkAccess.Edit
-                          ? [ShareLinkAccess.View, ShareLinkAccess.Edit]
-                          : [ShareLinkAccess.View],
-                      );
-                      onOpenChange(false);
-                    }}
-                  />
-                );
-              })}
-            </div>
-          )}
+          items={accessItems}
+          listClassName="min-w-[160px]"
+          listStyle={menuStyle}
+          onItemClick={handleAccessItemClick}
         >
           <button
             ref={triggerRef}
@@ -172,10 +148,9 @@ export const AccessControl: FC<AccessControlProps> = ({
                 accessTriggerLabelClassName,
               )}
             >
-              {
-                accessOptions.find((option) => option.value === selectedAccess)
-                  ?.label
-              }
+              {selectedAccess === ShareLinkAccess.Edit
+                ? accessEditLabel
+                : accessViewLabel}
             </span>
             <IconChevronDown
               size={DIAL_ICON_SIZE.MD}

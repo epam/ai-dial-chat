@@ -421,6 +421,7 @@ describe('SkillsController (integration)', () => {
         'my-bucket',
         'team-a/docs-helper',
         TEST_USER.at,
+        TEST_USER.bucket,
       );
     });
 
@@ -470,6 +471,7 @@ describe('SkillsController (integration)', () => {
         'team-a/docs-helper',
         'SKILL.md',
         TEST_USER.at,
+        TEST_USER.bucket,
       );
     });
 

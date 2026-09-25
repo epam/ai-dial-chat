@@ -2,7 +2,14 @@
   font-family: var(--np-font-family, inherit);
 }
 
-.row {
+/*
+ * The rows are the kit's `MenuItem`, whose utilities (`text-primary`,
+ * `hover:bg-*`, the highlight tint) sit at the same specificity as a single
+ * class. The `li >` prefix lifts every row rule one step above them, so the
+ * `NavigationSheetColors` custom properties keep winning whichever stylesheet
+ * loads last. Unset, those properties fall back to the kit's own tokens.
+ */
+li > .row {
   color: var(--np-sheet-text, var(--text-primary, #161b2d));
 
   &:hover,
@@ -23,7 +30,7 @@
 
 /* The in-navigation state of the design's Menu-item spec: the same faint accent
    tint as a selected row, with the label and its icon in the accent colour. */
-.rowActive {
+li > .rowActive {
   color: var(--np-sheet-row-active-text, var(--text-accent, #1d4ed8));
   background: var(
     --np-sheet-row-active-bg,

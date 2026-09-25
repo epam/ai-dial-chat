@@ -1,7 +1,6 @@
 import {
   DialFileName,
   ElementSize,
-  NeutralButton,
   Popup,
   ProgressBar,
 } from '@epam/ai-dial-ui-kit';
@@ -62,11 +61,7 @@ export const UploadProgressModal: FC<UploadProgressModalProps> = ({
       closeOnOutsideClick={false}
       hideClose
       onClose={onCancel}
-      footer={
-        <div className="flex justify-end gap-2 px-6 py-4">
-          <NeutralButton label={cancelLabel} onClick={onCancel} />
-        </div>
-      }
+      mainButtons={[{ label: cancelLabel, onClick: onCancel }]}
       header={
         <div className="flex flex-col gap-2">
           <div>{uploadProgressTitle}</div>

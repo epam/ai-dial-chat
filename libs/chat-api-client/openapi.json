@@ -6702,6 +6702,16 @@
             "type": "boolean",
             "description": "Whether the host should pass an explicit access token. Accepted for schema parity; inert, because 1.0 auth is server-side and the browser holds no access token.",
             "example": false
+          },
+          "borderless": {
+            "type": "boolean",
+            "description": "When true, the inline frame renders without its border, rounded corners, background, and header divider. Carried over from legacy Chat 0.x.",
+            "example": false
+          },
+          "withoutTitle": {
+            "type": "boolean",
+            "description": "When true, the inline frame hides its header title text; the header actions stay visible. Carried over from legacy Chat 0.x.",
+            "example": false
           }
         },
         "required": ["title", "url"]

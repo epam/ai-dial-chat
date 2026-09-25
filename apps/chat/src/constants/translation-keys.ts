@@ -1208,6 +1208,7 @@ export enum ShareI18nKeys {
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',
   QrCodeAriaLabel = 'share.qrCodeAriaLabel',
+  QrDownloadFileName = 'share.qrDownloadFileName',
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',

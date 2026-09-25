@@ -36,8 +36,8 @@
   },
   "peerDependencies": {
     "react": "^19.2.8",
-    "@epam/ai-dial-ui-kit": "^0.15.0-dev.18",
-    "@epam/ai-dial-react-file-manager": "^0.3.0-dev.4",
+    "@epam/ai-dial-ui-kit": "^0.15.0-dev.19",
+    "@epam/ai-dial-react-file-manager": "^0.3.0-dev.7",
     "ag-grid-community": "^35.3.0"
   },
   "peerDependenciesMeta": {
