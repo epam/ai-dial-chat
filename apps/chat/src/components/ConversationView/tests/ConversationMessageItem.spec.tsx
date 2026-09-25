@@ -1441,12 +1441,11 @@ describe('ConversationMessageItem — application visualizers', () => {
 
     renderItem();
 
+    const toolbar = screen.getByRole('toolbar', {
+      name: 'attachmentCanvas.visualizerActionsAriaLabel',
+    });
     // eslint-disable-next-line testing-library/no-node-access -- the frame root is a presentational wrapper with no accessible role to query
-    const frame = screen
-      .getByRole('toolbar', {
-        name: 'attachmentCanvas.visualizerActionsAriaLabel',
-      })
-      .closest('.overflow-hidden');
+    const frame = toolbar.closest('.overflow-hidden');
 
     expect(frame?.classList.contains('border')).toBe(false);
   });
