@@ -112,6 +112,36 @@ describe('InlineGroupedVisualizer', () => {
     expect(screen.queryByTitle(' ')).toBeNull();
   });
 
+  it('hides the header title but keeps the actions and iframe name when isTitleHidden is set', () => {
+    renderComponent({ isTitleHidden: true });
+
+    expect(screen.queryByText('my-viz')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Expand app' })).toBeTruthy();
+    expect(screen.getByTitle('my-viz')).toBeTruthy();
+  });
+
+  it('draws the frame border by default', () => {
+    const { container } = renderComponent();
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the frame root is a presentational wrapper with no accessible role to query
+    expect(container.firstElementChild?.classList.contains('border')).toBe(
+      true,
+    );
+  });
+
+  it('drops the frame border and header divider when isBorderless is set', () => {
+    const { container } = renderComponent({ isBorderless: true });
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the frame root and header are presentational wrappers with no accessible role to query
+    const frame = container.firstElementChild;
+    // eslint-disable-next-line testing-library/no-node-access -- see above
+    const header = frame?.firstElementChild;
+
+    expect(frame?.classList.contains('border')).toBe(false);
+    expect(frame?.classList.contains('rounded-xl')).toBe(false);
+    expect(header?.classList.contains('border-b')).toBe(false);
+  });
+
   it('surfaces the error label when the grouped send rejects', async () => {
     readyMock.mockResolvedValue(undefined);
     sendMock.mockRejectedValue(new Error('timed out'));

@@ -524,6 +524,8 @@ const ConversationMessageItem: FC<Props> = ({
       height:
         (isMobile ? (entry.mobileHeight ?? entry.height) : entry.height) ??
         DEFAULT_VISUALIZER_HEIGHT,
+      isBorderless: entry.borderless === true,
+      isTitleHidden: entry.withoutTitle === true,
     };
   }, [
     effectiveDeploymentId,
@@ -839,6 +841,8 @@ const ConversationMessageItem: FC<Props> = ({
                   <InlineGroupedVisualizer
                     content={groupedVisualizer.content}
                     height={groupedVisualizer.height}
+                    isBorderless={groupedVisualizer.isBorderless}
+                    isTitleHidden={groupedVisualizer.isTitleHidden}
                     onExpand={handleExpandGroupedVisualizer}
                     expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
                     actionsGroupAriaLabel={t(
