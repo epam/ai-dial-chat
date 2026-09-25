@@ -26,7 +26,7 @@ export enum ROUTES {
   /**
    * Route pattern for one Settings tab, the segment being a `SettingsTabs`
    * value. A pattern, not a navigable URL — build one with
-   * `buildSettingsTabPath`.
+   * `getSettingsTabRoute`.
    */
   SettingsTab = '/settings/:tab',
   ScheduledTasks = '/scheduled-tasks',

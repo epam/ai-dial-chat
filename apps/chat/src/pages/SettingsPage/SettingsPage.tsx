@@ -2,10 +2,10 @@ import { SettingsPanel } from '@epam/ai-dial-settings-panel';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router';
+import { getSettingsTabRoute } from '../../constants/routes';
 import { BasicI18nKeys } from '../../constants/translation-keys';
 import { useSettingsTabConfig } from '../../hooks/useSettingsTabConfig';
 import { SettingsTabs } from '../../types/settings-tabs';
-import { buildSettingsTabPath } from '../../utils/routes';
 
 const SettingsPage: FC = () => {
   const { t } = useTranslation();
@@ -34,7 +34,7 @@ const SettingsPage: FC = () => {
   if (activeItem == null) {
     return (
       <Navigate
-        to={buildSettingsTabPath(defaultItem.id as SettingsTabs)}
+        to={getSettingsTabRoute(defaultItem.id as SettingsTabs)}
         replace
       />
     );
@@ -52,7 +52,7 @@ const SettingsPage: FC = () => {
         sectionLabel={t(BasicI18nKeys.Settings)}
         items={items}
         activeId={activeItem.id}
-        onSelect={(id) => navigate(buildSettingsTabPath(id as SettingsTabs))}
+        onSelect={(id) => navigate(getSettingsTabRoute(id as SettingsTabs))}
       />
       <div className="min-h-0 flex-1 overflow-y-auto">
         {ActiveTabComponent && <ActiveTabComponent />}

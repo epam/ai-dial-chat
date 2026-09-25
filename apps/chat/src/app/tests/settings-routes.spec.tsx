@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import type { FC } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
+import { getSettingsTabRoute } from '../../constants/routes';
 import { ROUTES } from '../../types/routes';
 import { SettingsTabs } from '../../types/settings-tabs';
-import { buildSettingsTabPath } from '../../utils/routes';
 import { renderSettingsRoutes } from '../settings-routes';
 
 const SETTINGS_MARKER = 'settings-page';
@@ -40,8 +40,8 @@ const currentPath = () =>
 
 const settingsPaths = [
   ROUTES.Settings,
-  buildSettingsTabPath(SettingsTabs.Usage),
-  buildSettingsTabPath(SettingsTabs.Preferences),
+  getSettingsTabRoute(SettingsTabs.Usage),
+  getSettingsTabRoute(SettingsTabs.Preferences),
 ];
 
 describe('renderSettingsRoutes', () => {

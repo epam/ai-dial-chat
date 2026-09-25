@@ -227,7 +227,8 @@ it alongside the bare `ROUTES.Settings`, applying the `OverlayFeature.HideSettin
 both so neither path mounts the lazy chunk while the page is hidden. `SettingsPage` reads the
 segment from the URL — it holds no selection state — resolves it against the ids the config
 returned, and redirects a bare, unknown, or withheld segment to the first configured tab. Build a
-concrete path with `buildSettingsTabPath` (`utils/routes.ts`) rather than interpolating the pattern.
+concrete path with `getSettingsTabRoute` (`constants/routes.ts`, beside the other route builders)
+rather than interpolating the pattern.
 
 `Preferences` is the first configured tab and therefore the redirect target, so
 `GET /api/v1/user/usage` is not requested until the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC

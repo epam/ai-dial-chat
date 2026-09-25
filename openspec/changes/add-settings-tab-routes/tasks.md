@@ -13,14 +13,15 @@ are the ones that would catch a bad merge.
       `apps/chat/src/types/routes.ts`, directly after the existing `Settings` member, with a JSDoc
       noting it is a pattern rather than a navigable URL — matching `ScheduledTaskDetail`. Do **not**
       add one member per tab.
-- [x] 1.2 Add a `buildSettingsTabPath(tab: SettingsTabs): string` helper beside the enum, returning
-      the concrete path for a tab. Give it JSDoc per the app conventions.
-- [x] 1.3 Add a spec at `apps/chat/src/types/tests/routes.spec.ts` (or the app's existing utils
-      tests folder, whichever matches where 1.2 landed) asserting that every `SettingsTabs` member
-      round-trips through `buildSettingsTabPath` and back to the same member — the guard that fails
-      if a future tab id is not URL-safe.
+- [x] 1.2 Add a `getSettingsTabRoute(tab: SettingsTabs): string` helper to
+      `apps/chat/src/constants/routes.ts`, beside the existing route builders and following their
+      `getXxxRoute` naming and interpolation shape. Give it JSDoc per the app conventions.
+- [x] 1.3 Extend `apps/chat/src/constants/tests/routes.spec.ts` with the settings-tab cases:
+      the tab lands in a path segment and never a query parameter, every tab nests under the
+      settings route, and every `SettingsTabs` member round-trips through `getSettingsTabRoute` and
+      back — the guard that fails if a future tab id is not URL-safe.
 
-  **Verification:** `npm run test:file -- <the spec file added in 1.3>`
+  **Verification:** `npm run test:file -- apps/chat/src/constants/tests/routes.spec.ts`
 
 ## 2. Routing the Settings shell
 
@@ -35,7 +36,7 @@ are the ones that would catch a bad merge.
       and read the tab from `useParams`, resolving it against the ids `useSettingsTabConfig`
       returned rather than against the `SettingsTabs` enum. Do not add an effect that mirrors the
       URL into state.
-- [x] 2.4 Make `onSelect` navigate to `buildSettingsTabPath(id)` with a normal push, so Back steps
+- [x] 2.4 Make `onSelect` navigate to `getSettingsTabRoute(id)` with a normal push, so Back steps
       between tabs.
 - [x] 2.5 Redirect an unresolvable segment with `<Navigate replace />` to the default tab's path,
       where the default is the first entry of `items`. Guard the empty-`items` case so it renders
@@ -64,7 +65,7 @@ are the ones that would catch a bad merge.
       `apps/chat/src/constants/translation-keys.ts`.
 - [x] 3.2 Pass a `footerNote` to `<LimitsTab>` in
       `apps/chat/src/components/UsageLimitsControl/UsageLimitsControl.tsx`: a `react-router` `<Link>`
-      to `buildSettingsTabPath(SettingsTabs.Usage)` carrying the translated label, closing the
+      to `getSettingsTabRoute(SettingsTabs.Usage)` carrying the translated label, closing the
       popover on activation.
 - [x] 3.3 Architecture guard: confirm `libs/catalog` gained nothing — no router import, no settings
       path, no new prop on `LimitsTab`. The link is an app-built `ReactNode` through the prop that

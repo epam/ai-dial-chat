@@ -63,23 +63,27 @@ Call sites that need a concrete URL build it through a small helper rather than 
 pattern inline:
 
 ```ts
-export const buildSettingsTabPath = (tab: SettingsTabs): string => `/settings/${tab}`;
+export const getSettingsTabRoute = (tab: SettingsTabs): string =>
+  `${ROUTES.Settings}/${tab}`;
 ```
 
 *Why:* `ROUTES` is a route *pattern* table — `ScheduledTaskDetail` is already a pattern, not a
 navigable URL. One member per tab would duplicate the enum that already exists, and would have to be
 extended for every future tab, which Decision 1 exists to avoid.
 
-*Where it lives:* beside the enum in `apps/chat/src/types/routes.ts`, or in
-`apps/chat/src/utils/` per the app's "helpers live in utils" rule. It reads one value from the
-routes module, so co-locating it with `ROUTES` keeps the pattern and its builder together.
+*Where it lives:* `apps/chat/src/constants/routes.ts`, which already holds `getConversationRoute`,
+`getScheduledTaskDetailRoute` and `getScheduledTaskEditRoute` — route builders have an established
+home, and its `getXxxRoute` naming and `` `${ROUTES.Parent}/${segment}` `` shape are the pattern to
+follow. Building by interpolation rather than by substituting into the `:tab` pattern also removes a
+silent failure mode: `':tabId'.replace(':tab', 'usage')` yields `'usageId'`, a wrong path with no
+leftover colon for a test to catch.
 
 ### Decision 3 — `SettingsPage` validates the segment and redirects, rather than rendering an empty shell
 
 `SettingsPage` reads `useParams<{ tab: string }>()` and resolves it against the ids
 `useSettingsTabConfig` actually returned — not against the `SettingsTabs` enum. A segment that names
 no configured tab, or names one the config withheld (a tab gated off by a flag), redirects with
-`<Navigate to={buildSettingsTabPath(defaultTab)} replace />`.
+`<Navigate to={getSettingsTabRoute(defaultTab)} replace />`.
 
 Validating against the live config rather than the enum matters: a tab can exist in the enum while
 its config entry is absent, and rendering `tabComponents[tab]` for that id yields `undefined` — the
@@ -94,7 +98,7 @@ the moment the config reorders.
 
 ### Decision 4 — Selecting a tab navigates; the URL is the only source of truth
 
-`onSelect` calls `navigate(buildSettingsTabPath(id))` instead of `setActiveTab`. The `useState` is
+`onSelect` calls `navigate(getSettingsTabRoute(id))` instead of `setActiveTab`. The `useState` is
 removed entirely rather than mirrored, so there is exactly one source of truth and no effect
 synchronising the two.
 
@@ -104,7 +108,7 @@ cost of tabs being locations.
 
 ### Decision 5 — `/settings` redirects rather than rendering the default tab
 
-`/settings` stays registered and renders `<Navigate to={buildSettingsTabPath(defaultTab)} replace />`
+`/settings` stays registered and renders `<Navigate to={getSettingsTabRoute(defaultTab)} replace />`
 under the same flag gate.
 
 *Why not render the default tab at `/settings` directly:* two URLs would then show the same tab, and
@@ -117,7 +121,7 @@ through `/settings/usage` either, and the gate is what guarantees the lazy chunk
 ### Decision 6 — The popover's link is an app-built `footerNote`
 
 `LimitsTab` already accepts `footerNote?: ReactNode` and renders it under the groups with a top
-border. `UsageLimitsControl` passes a `react-router` `<Link>` to `buildSettingsTabPath(SettingsTabs.Usage)`
+border. `UsageLimitsControl` passes a `react-router` `<Link>` to `getSettingsTabRoute(SettingsTabs.Usage)`
 carrying a translated label.
 
 *Isolation:* the lib gains nothing — no route, no `react-router`, no new prop. This is the
@@ -160,7 +164,7 @@ Rejected — the spec asserts the behaviour, so something should hold it.
 3. **[A tab id that is not URL-safe would silently produce a broken path]** → `SettingsTabs` members
    are lowercase ASCII today. The builder does not encode, so a future member with a space or slash
    would break. Mitigated by a test asserting every `SettingsTabs` member round-trips through
-   `buildSettingsTabPath` and back, which fails the moment someone adds an unsafe id.
+   `getSettingsTabRoute` and back, which fails the moment someone adds an unsafe id.
 
 4. **[The redirect could loop if the default tab itself fails to resolve]** → The default is taken
    from `items[0]`, and the redirect only fires when the segment does not match a configured id; a
