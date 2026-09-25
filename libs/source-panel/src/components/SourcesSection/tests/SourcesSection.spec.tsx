@@ -13,7 +13,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   GhostIconButton: ({ 'aria-label': ariaLabel }: { 'aria-label': string }) => (
     <button type="button" aria-label={ariaLabel} />
   ),
-  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
+  Highlight: ({ text, query }: { text: string; query: string }) => (
+    <span data-testid="highlight" data-query={query}>
+      {text}
+    </span>
+  ),
   LinkButton: ({
     href,
     target,
@@ -106,5 +110,32 @@ describe('SourcesSection', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Copy source' })).toBeTruthy();
+  });
+
+  it('renders the title through Highlight when there is no search query', () => {
+    render(
+      <SourcesSection
+        title="Sources"
+        sources={[makeSource('https://a.com', 'A very long document name')]}
+        copyLabel="Copy"
+      />,
+    );
+    const highlight = screen.getByTestId('highlight');
+    expect(highlight.textContent).toBe('A very long document name');
+    expect(highlight.getAttribute('data-query')).toBe('');
+  });
+
+  it('forwards the search query to Highlight', () => {
+    render(
+      <SourcesSection
+        title="Sources"
+        sources={[makeSource('https://a.com', 'A very long document name')]}
+        copyLabel="Copy"
+        searchQuery="long"
+      />,
+    );
+    expect(screen.getByTestId('highlight').getAttribute('data-query')).toBe(
+      'long',
+    );
   });
 });
