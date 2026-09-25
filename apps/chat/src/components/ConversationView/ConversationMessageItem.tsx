@@ -37,6 +37,11 @@ import {
   type StarterOption,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
+import type {
+  CommandMenuConfig,
+  HighlightedTextRange,
+  MenuOverlayConfig,
+} from '@epam/ai-dial-conversation-input';
 import {
   MessageBubble,
   type MessageActionAriaLabels,
@@ -254,24 +259,58 @@ interface Props {
   /** Called when the user pastes text that exceeds the max length while attachments are disabled. */
   onMessageTooLong?: (length: number, max: number) => void;
   /**
-   * Content rendered at the inline-start of the edit input's text area —
-   * the selected-skill `ChatSkill` element the host seeds from the edited
-   * message's `custom_content.skills`. Rendered only in the edit branch.
+   * The edit input's live draft text, seeded by the host from the edited
+   * message's content plus its tracked skill mentions. Forwarded to
+   * `EditMessageInput`'s `message`. Rendered only in the edit branch.
    */
-  editInlineStartSlot?: ReactNode;
+  editMessage?: string;
+  /** Token that forces `editMessage` to re-apply (e.g. after a mention is inserted mid-edit). Forwarded to `EditMessageInput`'s `messageRevision`. */
+  editMessageRevision?: number;
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `editInlineStartSlot` content is shown — the host's
-   * remove-selected-skill gesture. Forwarded to `EditMessageInput`'s
-   * `onInlineStartRemove`.
+   * Ranges of `editMessage` rendered as highlighted runs — the edited
+   * message's tracked skill mentions. Forwarded to `EditMessageInput`'s
+   * `activeMentions`.
    */
-  onEditInlineStartRemove?: () => void;
+  editActiveMentions?: HighlightedTextRange[];
   /**
-   * Renders a message's `custom_content.skills` entries as `ChatSkill`
-   * history elements for the bubble's `beforeContent` slot — name and
-   * description resolution and the "View details" details panel are owned by
-   * the host's skill selector wiring. Returns `null` while the skill-usage
-   * flag is off or the message carries no skills.
+   * Looks up a highlighted range whose run ends exactly at the given caret
+   * position, without mutating state — the whole-mention Backspace gesture.
+   * Forwarded to `EditMessageInput`'s `onBackspaceAtCaret`.
+   */
+  onEditBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
+  /** Caret offset to place the cursor at once `editMessageRevision` next bumps. Forwarded to `EditMessageInput`'s `caretPositionOverride`. */
+  editCaretPositionOverride?: number;
+  /**
+   * Called with the edit textarea's current value on every change — the
+   * host's skill-mention tracking reconciling live edits. Forwarded to
+   * `EditMessageInput`'s `onChange`.
+   */
+  onEditDraftChange?: (nextValue: string) => void;
+  /** Host-injected slash-command menu for adding a skill mid-edit. Forwarded to `EditMessageInput`'s `commandMenu`. */
+  editCommandMenu?: CommandMenuConfig;
+  /** Host-injected `+`-menu entries for adding a skill mid-edit. Forwarded to `EditMessageInput`'s `menuOverlays`. */
+  editMenuOverlays?: MenuOverlayConfig[];
+  /**
+   * Renders a user message's `content` and `custom_content.skills` as an
+   * ordered array interleaving plain-text runs and `ChatSkill` elements at
+   * each mention's actual text position, for `MessageBubble`'s `textSegments`
+   * prop. Returns `null` while the skill-usage flag is off or the message
+   * carries no skills.
+   */
+  renderHistorySkillSegments?: (
+    content: string,
+    skills: RequestSkill[] | undefined,
+  ) => ReactNode[] | null;
+  /**
+   * Renders a message's `custom_content.skills` entries as a flat list of
+   * `ChatSkill` history elements for the bubble's `beforeContent` slot (the
+   * assistant-message path, since assistant text never authors positioned
+   * mentions) — name and description resolution and the "View details"
+   * details panel are owned by the host's skill selector wiring. Returns
+   * `null` while the skill-usage flag is off or the message carries no
+   * skills.
    */
   renderHistorySkills?: (skills: RequestSkill[] | undefined) => ReactNode;
   /**
@@ -339,8 +378,15 @@ const ConversationMessageItem: FC<Props> = ({
   onPendingAttachmentsConsumed,
   selectedAttachmentKey,
   onMessageTooLong,
-  editInlineStartSlot,
-  onEditInlineStartRemove,
+  editMessage,
+  editMessageRevision,
+  editActiveMentions,
+  onEditBackspaceAtCaret,
+  editCaretPositionOverride,
+  onEditDraftChange,
+  editCommandMenu,
+  editMenuOverlays,
+  renderHistorySkillSegments,
   renderHistorySkills,
   fallbackCitationGroups = EMPTY_FALLBACK_CITATION_GROUPS,
 }) => {
@@ -644,7 +690,12 @@ const ConversationMessageItem: FC<Props> = ({
             <MessageBubble
               role={msg.role}
               text={msg.content}
-              beforeContent={renderHistorySkills?.(msg.custom_content?.skills)}
+              textSegments={
+                renderHistorySkillSegments?.(
+                  msg.content,
+                  msg.custom_content?.skills,
+                ) ?? undefined
+              }
               styles={{ ...messageTextStyles, className: 'justify-end' }}
               attachments={allDisplayAttachments}
               labels={{
@@ -663,7 +714,8 @@ const ConversationMessageItem: FC<Props> = ({
           }
         >
           <EditMessageInput
-            message={msg.content}
+            message={editMessage ?? msg.content}
+            messageRevision={editMessageRevision}
             initialAttachments={allDisplayAttachments}
             onCancel={() => onCancelEdit?.(index)}
             onSave={(text, kept, added) =>
@@ -689,8 +741,12 @@ const ConversationMessageItem: FC<Props> = ({
             onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
             onAttachmentClick={handleAttachmentClick}
             onMessageTooLong={onMessageTooLong}
-            inlineStartSlot={editInlineStartSlot}
-            onInlineStartRemove={onEditInlineStartRemove}
+            activeMentions={editActiveMentions}
+            onBackspaceAtCaret={onEditBackspaceAtCaret}
+            caretPositionOverride={editCaretPositionOverride}
+            onChange={onEditDraftChange}
+            commandMenu={editCommandMenu}
+            menuOverlays={editMenuOverlays}
           />
         </Suspense>
       </div>
@@ -750,13 +806,20 @@ const ConversationMessageItem: FC<Props> = ({
 
   const isUserMessage = msg.role === MessageRole.User;
 
-  const beforeContent = renderHistorySkills?.(msg.custom_content?.skills);
+  const textSegments = isUserMessage
+    ? (renderHistorySkillSegments?.(msg.content, msg.custom_content?.skills) ??
+      undefined)
+    : undefined;
+  const beforeContent = isUserMessage
+    ? undefined
+    : renderHistorySkills?.(msg.custom_content?.skills);
 
   return (
     <CitationCardProvider value={citationCard}>
       <MessageBubble
         role={msg.role}
         text={messageText}
+        textSegments={textSegments}
         beforeContent={beforeContent}
         styles={{
           ...messageTextStyles,

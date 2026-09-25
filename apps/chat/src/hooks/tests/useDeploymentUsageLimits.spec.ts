@@ -1,4 +1,3 @@
-import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
@@ -8,22 +7,7 @@ vi.mock('../../server-api/deployment-limits', () => ({
   getDeploymentLimits: vi.fn(),
 }));
 
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
-  return {
-    ...actual,
-    mapDeploymentLimitsToInput: vi.fn(() => ({
-      used: 2500,
-      total: 10000,
-      remaining: 7500,
-      usedPercent: 25,
-    })),
-  };
-});
-
 const mockGetDeploymentLimits = vi.mocked(getDeploymentLimits);
-const mockMapDeploymentLimitsToInput = vi.mocked(mapDeploymentLimitsToInput);
 
 describe('useDeploymentUsageLimits', () => {
   beforeEach(() => {
@@ -34,15 +18,15 @@ describe('useDeploymentUsageLimits', () => {
     const { result } = renderHook(() => useDeploymentUsageLimits(undefined));
 
     expect(result.current).toMatchObject({
-      limit: undefined,
+      limitsDto: undefined,
       isLoading: false,
       hasError: false,
     });
     expect(mockGetDeploymentLimits).not.toHaveBeenCalled();
   });
 
-  it('fetches and maps the monthly limit', async () => {
-    const dto = { monthTokenStats: { used: 2500, total: 10000 } };
+  it('returns the response for the selected deployment', async () => {
+    const dto = { dayTokenStats: { used: 2500, total: 10000 } };
     mockGetDeploymentLimits.mockResolvedValue(dto);
 
     const { result } = renderHook(() => useDeploymentUsageLimits('gpt-4o'));
@@ -51,8 +35,7 @@ describe('useDeploymentUsageLimits', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(mockGetDeploymentLimits).toHaveBeenCalledWith('gpt-4o');
-    expect(mockMapDeploymentLimitsToInput).toHaveBeenCalledWith(dto);
-    expect(result.current.limit?.usedPercent).toBe(25);
+    expect(result.current.limitsDto).toEqual(dto);
   });
 
   it('surfaces a non-blocking request error', async () => {
@@ -62,7 +45,7 @@ describe('useDeploymentUsageLimits', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.limit).toBeUndefined();
+    expect(result.current.limitsDto).toBeUndefined();
     expect(result.current.hasError).toBe(true);
   });
 
@@ -109,7 +92,7 @@ describe('useDeploymentUsageLimits', () => {
           }),
       );
 
-    const { rerender } = renderHook(
+    const { result, rerender } = renderHook(
       ({ id }: { id: string }) => useDeploymentUsageLimits(id),
       { initialProps: { id: 'first' } },
     );
@@ -118,10 +101,8 @@ describe('useDeploymentUsageLimits', () => {
     resolveFirst({ monthTokenStats: { used: 100, total: 1000 } });
     resolveSecond({ monthTokenStats: { used: 900, total: 1000 } });
 
-    await waitFor(() =>
-      expect(mockMapDeploymentLimitsToInput).toHaveBeenCalledTimes(1),
-    );
-    expect(mockMapDeploymentLimitsToInput).toHaveBeenCalledWith({
+    await waitFor(() => expect(result.current.limitsDto).toBeDefined());
+    expect(result.current.limitsDto).toEqual({
       monthTokenStats: { used: 900, total: 1000 },
     });
   });
@@ -155,18 +136,18 @@ describe('useDeploymentUsageLimits', () => {
     );
   });
 
-  it('preserves the last limit when a refresh fails', async () => {
+  it('preserves the last response when a refresh fails', async () => {
     mockGetDeploymentLimits.mockResolvedValueOnce({
       monthTokenStats: { used: 100, total: 1000 },
     });
 
     const { result } = renderHook(() => useDeploymentUsageLimits('gpt-4o'));
-    await waitFor(() => expect(result.current.limit).toBeDefined());
+    await waitFor(() => expect(result.current.limitsDto).toBeDefined());
 
     mockGetDeploymentLimits.mockRejectedValueOnce(new Error('Refresh failed'));
     act(() => result.current.refresh());
     await waitFor(() => expect(result.current.hasError).toBe(true));
 
-    expect(result.current.limit).toBeDefined();
+    expect(result.current.limitsDto).toBeDefined();
   });
 });

@@ -1,0 +1,272 @@
+## REMOVED Requirements
+
+### Requirement: Monthly deployment usage
+
+**Reason**: The popover now reports day, week, and month token limits, so a single-period model no
+longer describes the data. Replaced by "Period deployment usage" below.
+
+**Migration**: `mapDeploymentLimitsToInput` returns `CatalogItemLimits | undefined` instead of
+`MonthlyUsageLimit | undefined`, and `MonthlyUsageLimit` is deleted from
+`@epam/ai-dial-chat-hooks`'s public exports. The only in-repo consumer,
+`apps/chat/src/hooks/useDeploymentUsageLimits.ts`, is updated in the same change. An external
+consumer that imported `MonthlyUsageLimit` reads `limits.groups[0].rows` and selects the month row
+instead.
+
+---
+
+### Requirement: Monthly usage trigger
+
+**Reason**: The trigger's error state and percentage were derived from the month alone, which is the
+defect this change fixes. Replaced by "Period usage trigger" below.
+
+**Migration**: `USAGE_LIMIT_THRESHOLD_PERCENT` is removed from
+`apps/chat/src/components/UsageLimitsControl/UsageLimitsControl.tsx`; the 75%/100% thresholds in
+`CatalogLimitStatus` replace it.
+
+---
+
+### Requirement: Monthly usage popover
+
+**Reason**: The popover rendered exactly one progress bar and one remaining-tokens line. Replaced by
+"Period usage popover" below.
+
+**Migration**: The i18n keys `conversationInput.usageLimits.tokensRemaining` and
+`conversationInput.usageLimits.progressAriaLabel` are removed along with the single-bar rendering.
+`conversationInput.usageLimits.popoverTitle` and `conversationInput.usageLimits.error` are unchanged.
+
+---
+
+## ADDED Requirements
+
+### Requirement: Period deployment usage
+
+`@epam/ai-dial-chat-hooks` SHALL export
+`mapDeploymentLimitsToInput(dto: DeploymentLimitsResponseDto | undefined, labels:
+ConversationInputLimitsLabels, formatResetTime?: FormatResetTime): CatalogItemLimits | undefined`.
+
+The function SHALL map `dayTokenStats`, `weekTokenStats`, and `monthTokenStats` — in that order —
+into a single `UsageLimitGroup` labelled from `labels.tokenGroup`. It SHALL NOT map
+`minuteTokenStats`, `hourRequestStats`, or `dayRequestStats`.
+
+A stat SHALL produce a row only when its `total` and `used` are both finite and `total` is greater
+than `0`. A `total` at or above `Number.MAX_SAFE_INTEGER` SHALL set `isUnlimited: true` and
+`noteLabel` from `labels.followsCostLimit` instead of emitting a capped progress row. `used` SHALL be
+clamped to a minimum of `0`. When no stat qualifies, or `dto` is `undefined`, the function SHALL
+return `undefined` rather than a group with an empty `rows` array.
+
+For each emitted row the function SHALL set `captionLabel` from the matching sibling cost stat
+(`dayCostStats`, `weekCostStats`, `monthCostStats`) through `labels.formatSpentCaption`, reading only
+that stat's `used`. It SHALL set `valueLabel` and `ariaLabel` through the injected formatter
+callbacks and SHALL NOT build either string from its own template literal.
+
+The result's `status` SHALL be the worst case across every capped row —
+`CatalogLimitStatus.LimitReached` when any capped row's used/total ratio is at or above `1`,
+otherwise `CatalogLimitStatus.RunningLow` when any is at or above `0.75`, otherwise absent.
+
+When `formatResetTime` is supplied, the function SHALL call it with each stat's raw `resetsAt` and,
+on a defined result, set the row's `resetLabel`, `resetIsoValue`, and `resetAriaLabel` from it as a
+present-or-all-absent trio. The function SHALL NOT construct a `Date`, call a date/time `Intl` API,
+or import `react-i18next`, `i18next`'s `TFunction`, or any app translation-key enum.
+
+`apps/chat/src/hooks/useDeploymentUsageLimits.ts` SHALL continue to own the fetch: an
+`AbortController` plus a `cancelled` flag in the effect cleanup, and a monotonic request id so a
+response for an earlier deployment never overwrites the current one. Refresh failures SHALL preserve
+the last known limits and SHALL NOT affect message entry or sending.
+
+#### Scenario: Three configured periods produce three rows
+
+- **WHEN** `dto` carries usable `dayTokenStats`, `weekTokenStats`, and `monthTokenStats`
+- **THEN** the result contains one group with three rows in day, week, month order
+
+#### Scenario: Minute stats are never mapped
+
+- **WHEN** `dto` carries a usable `minuteTokenStats`
+- **THEN** no row is emitted for it, and its presence alone does not produce a result
+
+#### Scenario: A missing period is skipped without shifting the others
+
+- **WHEN** `dto` omits `weekTokenStats` but carries usable day and month stats
+- **THEN** the result contains two rows, day before month, with no placeholder row
+
+#### Scenario: Unlimited total becomes a follows-cost-limit row
+
+- **WHEN** `monthTokenStats.total` is `Number.MAX_SAFE_INTEGER`
+- **THEN** the month row has `isUnlimited: true` and `noteLabel` from `labels.followsCostLimit`, and
+  no capped progress values are rendered for it
+
+#### Scenario: No qualifying stat returns undefined
+
+- **WHEN** every token stat is absent, non-finite, or has a non-positive total
+- **THEN** the function returns `undefined`, not a group with an empty `rows` array
+
+#### Scenario: Worst-case status wins
+
+- **WHEN** the day row is at `100%` and the month row is at `10%`
+- **THEN** `status` is `CatalogLimitStatus.LimitReached`
+
+#### Scenario: Reset strings are passed straight through
+
+- **WHEN** `dayTokenStats.resetsAt` is present and `formatResetTime` returns a display object
+- **THEN** the day row carries `resetLabel`, `resetIsoValue`, and `resetAriaLabel` from that object,
+  and the raw `resetsAt` string appears nowhere else in the row
+
+#### Scenario: Reset formatting is declined
+
+- **WHEN** `formatResetTime` is omitted, or returns `undefined` for a stat
+- **THEN** that row carries none of the three reset fields and is otherwise unchanged
+
+#### Scenario: Architecture guard — no i18n, date, or translation-key import
+
+- **WHEN** `libs/chat-hooks`'s conversation-input limits mapper is linted and type-checked
+- **THEN** its source contains no `i18next`/`react-i18next` import, no app translation-key enum
+  import, no `new Date(...)`, and no date/time `Intl` constructor
+
+#### Scenario: Deployment changes during a request
+
+- **WHEN** an earlier deployment's request resolves after the selected deployment has changed
+- **THEN** its result is ignored
+
+---
+
+### Requirement: Period usage trigger
+
+For a deployment with at least one usable token limit, the app SHALL show a compact, accessible
+usage trigger. It SHALL reveal a percentage on hover and keyboard focus and keep that value visible
+while the popover is open.
+
+The percentage SHALL be the used/total ratio of the **worst capped row** — the row that determined
+the group's `CatalogLimitStatus` — not the month's. The trigger's accessible name SHALL name that
+row's period, so the number is never ambiguous across three periods.
+
+The trigger's visual state SHALL be driven by the group's `status`:
+`CatalogLimitStatus.LimitReached` SHALL use the theme error state,
+`CatalogLimitStatus.RunningLow` SHALL use the theme warning state, and an absent status SHALL use
+the default secondary state. `USAGE_LIMIT_THRESHOLD_PERCENT` SHALL NOT be reintroduced; the 75%/100%
+thresholds already encoded in `CatalogLimitStatus` are the single source of truth, so the ring, the
+rows' progress fills, and the catalog agree.
+
+Meaning SHALL NOT depend on color or hover alone: the percentage and the period SHALL both be
+present in the accessible name. The layout SHALL support LTR and RTL using logical properties only.
+
+#### Scenario: Daily limit reached while the month is comfortable
+
+- **WHEN** the day row is at `100%` and the month row is at `10%`
+- **THEN** the trigger uses the error state and reports the day figure, not the month's
+
+#### Scenario: Running low
+
+- **WHEN** the worst capped row is at `80%`
+- **THEN** the trigger uses the warning state and displays `80%`
+
+#### Scenario: No usable limit
+
+- **WHEN** `mapDeploymentLimitsToInput` returns `undefined` — including when every allowance is the
+  unlimited sentinel
+- **THEN** no usage control is rendered at all
+
+#### Scenario: Popover remains open
+
+- **WHEN** focus moves from the trigger into the open popover
+- **THEN** the trigger value remains visible
+
+#### Scenario: Accessible name states the period
+
+- **WHEN** a screen reader reads the trigger and the worst capped row is the day row
+- **THEN** the announced name contains both the percentage and the day period label
+
+---
+
+### Requirement: Period usage popover
+
+Activating the trigger by pointer or keyboard SHALL open a popover titled from
+`conversationInput.usageLimits.popoverTitle`. Its body SHALL be rendered by `LimitsTab` imported
+from `@epam/ai-dial-catalog`, passed the `CatalogItemLimits` value the mapper produced. The app
+SHALL NOT hand-roll a second row renderer, and SHALL NOT import `LimitRow` or `LimitGroupSection`.
+
+The popover SHALL be wide enough for `LimitRow`'s reserved value column alongside a label, a spent
+caption, and a reset line, and SHALL retain a viewport-relative maximum width so mobile layout does
+not overflow horizontally.
+
+The popover SHALL refresh limits on open without displaying a loading indicator, and the control
+SHALL refresh once when an active generation ends so the trigger reflects the latest usage without
+being opened. It SHALL support Escape, outside activation, trigger reactivation, and predictable
+focus return to the trigger. A failed refresh SHALL be announced through an `aria-live="polite"`
+region using `conversationInput.usageLimits.error` while the previously rendered rows remain visible.
+
+All visible and accessible text SHALL come from app-owned i18n. `UsageLimitsControl` SHALL resolve
+its own strings through `useTranslation` and its own locale through the app's language hook, and
+SHALL NOT accept a `labels` prop — it is an `apps/chat` component, and two call sites building
+byte-identical label objects is the duplication this removes. Its remaining props SHALL be
+`deploymentId` and `isGenerationInProgress`.
+
+New i18n keys under `conversationInput.usageLimits.*`: `tokenGroup`, `tokensPerDay`, `tokensPerWeek`,
+`tokensPerMonth`, `spentLabel`, `value`, `followsCostLimit`, `followsCostLimitAriaLabel`,
+`progressAriaLabel`. `triggerAriaLabel` is re-worded to name the reported period.
+`usage.resetsAtLabel` and `usage.resetsAtAriaLabel` are reused unchanged. Period labels SHALL use
+calendar wording (`Today`, `This week`, `This month`) and SHALL NOT describe the periods as trailing
+or rolling windows.
+
+No feature gate, new endpoint, cache, polling, telemetry, or boundary-triggered re-fetch SHALL be
+introduced. The control is not gated behind `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`; it is
+shown whenever the selected deployment has a usable limit.
+
+**RTL:** the popover uses logical properties only (`start-*`/`end-*`, `ms-*`/`me-*`,
+`ps-*`/`pe-*`) and contains no directional icon, so nothing is mirrored. **Memoisation:** the
+`CatalogItemLimits` value SHALL be produced inside a `useMemo`, and the `formatResetTime` callback
+SHALL be `useCallback`-stable on the active locale and `t`, so the memo does not recompute every
+render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`, the panel keeps
+`role="dialog"` with `aria-labelledby` pointing at its title, and every progress bar carries an
+`aria-valuetext` from its row's `ariaLabel`.
+
+#### Scenario: Three periods render as three rows
+
+- **WHEN** the user opens the popover for a deployment with day, week, and month limits
+- **THEN** the popover shows the title and three rows, each with its own progress bar, used/total
+  figures, and spent caption
+
+#### Scenario: Reset line appears per row
+
+- **WHEN** a row's stat carried a `resetsAt` that formatted successfully
+- **THEN** that row shows its reset line, and a row whose stat carried none shows no reset line and
+  raises no error
+
+#### Scenario: Silent refresh
+
+- **WHEN** limits refresh while the popover is open
+- **THEN** the current rows remain visible and no loader appears
+
+#### Scenario: Generation completes
+
+- **WHEN** an active generation ends
+- **THEN** the control refreshes the selected deployment's limits once and updates the trigger
+  without the popover being opened
+
+#### Scenario: Refresh fails
+
+- **WHEN** the refresh request rejects
+- **THEN** the error is announced politely, the last successful rows stay rendered, and the composer
+  remains usable
+
+#### Scenario: Keyboard dismissal returns focus
+
+- **WHEN** the user presses Escape with the popover open
+- **THEN** the popover closes and focus returns to the trigger
+
+#### Scenario: Call sites pass no labels
+
+- **WHEN** `ConversationView` and `NewConversationComposer` render the control into
+  `usageLimitsSlot`
+- **THEN** each passes only `deploymentId` and `isGenerationInProgress`, and neither builds a
+  `usageLimitsLabels` object
+
+#### Scenario: Mobile width does not overflow
+
+- **WHEN** the popover opens at mobile width with long period labels and reset lines
+- **THEN** its content wraps within the viewport-relative maximum width and the page does not scroll
+  horizontally
+
+#### Scenario: RTL layout mirrors through the cascade
+
+- **WHEN** the popover renders under `dir="rtl"`
+- **THEN** the panel anchors to the opposite edge through logical properties, with no physical
+  `left`/`right` class and no mirrored icon

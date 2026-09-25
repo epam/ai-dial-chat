@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*
  * Guard tests for this package's public `dial-*` class contract — see the
  * "Public class names" section of openspec/lib-styling-guide.md.
