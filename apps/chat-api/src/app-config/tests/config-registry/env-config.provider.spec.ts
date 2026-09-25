@@ -16,6 +16,13 @@ function makeProvider(envOverrides: Partial<EnvironmentVariables> = {}) {
 }
 
 describe('EnvConfigProvider', () => {
+  it('resolves external connection origins from the existing CSP configuration', async () => {
+    const origins = ['https://documents.example.com', 'https://*.example.org'];
+    const { provider } = makeProvider({ ALLOWED_CONNECT_ORIGINS: origins });
+    expect(
+      await provider.resolve('documents.allowedConnectOrigins', ctx),
+    ).toEqual(origins);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -339,6 +346,26 @@ describe('EnvConfigProvider', () => {
       expect(
         await provider.resolve('features.responsesApiEnabled', ctx),
       ).toBeUndefined();
+    });
+  });
+
+  describe('ui.activeEventId', () => {
+    it.each(['halloween', 'new-year', 'product-launch-2027'])(
+      'returns the configured event ID %s without a backend allowlist',
+      async (eventId) => {
+        const { provider } = makeProvider({ UI_EVENT: eventId });
+        expect(await provider.resolve('ui.activeEventId', ctx)).toBe(eventId);
+      },
+    );
+
+    it('explicitly disables celebrations when UI_EVENT is none', async () => {
+      const { provider } = makeProvider({ UI_EVENT: 'none' });
+      expect(await provider.resolve('ui.activeEventId', ctx)).toBeNull();
+    });
+
+    it('uses the registry null default when UI_EVENT is absent', async () => {
+      const { provider } = makeProvider();
+      expect(await provider.resolve('ui.activeEventId', ctx)).toBeUndefined();
     });
   });
 

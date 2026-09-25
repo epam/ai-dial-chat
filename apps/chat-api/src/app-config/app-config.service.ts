@@ -5,8 +5,10 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { resolveAppVersion } from '../common/utils/app-version';
+import { EnvironmentVariables } from '../config/environment.config';
 import { normalizeAnnouncements } from './announcements.normalizer';
 import type { AppConfigEvalContext } from './app-config.types';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
@@ -40,6 +42,7 @@ export class AppConfigService {
   constructor(
     private readonly compositeProvider: CompositeConfigProvider,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
 
   async resolveValue(
@@ -71,6 +74,7 @@ export class AppConfigService {
     );
 
     const features: Record<string, boolean> = {};
+    let activeEventId: string | null = null;
     let asrModelId: string | null = null;
     let transcribeSizeLimitBytes = 5 * 1024 * 1024;
     let defaultDeploymentId: string | null = null;
@@ -82,6 +86,7 @@ export class AppConfigService {
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
+    let allowedConnectOrigins: string[] = [];
     let enabledUiFeatures: string[] | null = null;
     let announcementHtml: string | null = null;
     let announcementTitle: string | null = null;
@@ -105,6 +110,8 @@ export class AppConfigService {
           ? def.key.slice('features.'.length)
           : def.key;
         features[shortKey] = resolved === true;
+      } else if (def.key === 'ui.activeEventId') {
+        activeEventId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'asr.modelId') {
         asrModelId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'asr.transcribeSizeLimitBytes') {
@@ -131,6 +138,8 @@ export class AppConfigService {
         overlayEnabled = resolved === true;
       } else if (def.key === 'overlay.allowedOrigins') {
         overlayAllowedOrigins = Array.isArray(resolved) ? resolved : [];
+      } else if (def.key === 'documents.allowedConnectOrigins') {
+        allowedConnectOrigins = Array.isArray(resolved) ? resolved : [];
       } else if (def.key === 'announcement.html') {
         announcementHtml = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'announcement.title') {
@@ -183,7 +192,11 @@ export class AppConfigService {
       appId: context.appId,
       features,
       config: {
+        aiTextRefinementAvailable: Boolean(
+          this.configService.get('UTILITY_MODEL', { infer: true })?.trim(),
+        ),
         appVersion,
+        activeEventId,
         asrModelId,
         transcribeSizeLimitBytes,
         defaultDeploymentId,
@@ -195,6 +208,7 @@ export class AppConfigService {
         fileManagerTabs,
         overlayEnabled,
         overlayAllowedOrigins,
+        allowedConnectOrigins,
         announcementHtml,
         announcementTitle,
         announcementDescription,

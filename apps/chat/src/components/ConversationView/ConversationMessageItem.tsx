@@ -64,7 +64,11 @@ import {
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
 import {
+  Button,
+  ButtonAppearance,
+  ButtonVariant,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
   ErrorMessageNotification,
 } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
@@ -601,6 +605,12 @@ const ConversationMessageItem: FC<Props> = ({
     );
   }, [groupedVisualizer, openCanvas, index]);
 
+  const isStreamErrorRetryShown =
+    onRegenerateMessage != null && !isRegenerateAssistantMessageHidden;
+  const handleStreamErrorRetry = useCallback(() => {
+    onRegenerateMessage?.(index);
+  }, [onRegenerateMessage, index]);
+
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
     if (attachment)
@@ -922,8 +932,24 @@ const ConversationMessageItem: FC<Props> = ({
               {msg.streamErrorMessage != null && (
                 <div className="w-full">
                   <ErrorMessageNotification
+                    title={t(ChatI18nKeys.StreamErrorTitle)}
                     message={
-                      msg.streamErrorMessage || t(ChatI18nKeys.StreamError)
+                      <span className="flex flex-wrap items-center justify-between gap-2 text-start">
+                        <span>
+                          {msg.streamErrorMessage ||
+                            t(ChatI18nKeys.StreamError)}
+                        </span>
+                        {isStreamErrorRetryShown && (
+                          <Button
+                            variant={ButtonVariant.Neutral}
+                            appearance={ButtonAppearance.Outlined}
+                            size={ElementSize.Small}
+                            label={t(ButtonsI18nKeys.TryAgain)}
+                            disabled={isAssistantTyping}
+                            onClick={handleStreamErrorRetry}
+                          />
+                        )}
+                      </span>
                     }
                   />
                 </div>

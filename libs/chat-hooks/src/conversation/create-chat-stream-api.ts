@@ -27,6 +27,20 @@ export class GenerationConflictError extends Error {
   }
 }
 
+/**
+ * Reported through `onError` when DIAL Core itself signals a failure with an
+ * in-band `{ error: { message } }` SSE chunk. Its `message` is upstream text
+ * intended for the user, unlike a transport failure (failed `fetch`, non-OK
+ * status, broken stream), whose message is technical detail. A custom
+ * transport raises this for any user-facing upstream error text.
+ */
+export class StreamUpstreamError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'StreamUpstreamError';
+  }
+}
+
 /** Callbacks {@link streamCompletion} reports streamed completion events through. */
 export interface ChatStreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -64,7 +78,7 @@ const parseSSELine = (
   try {
     const parsed = JSON.parse(data) as StreamChunk;
     if (parsed.error) {
-      onError(new Error(parsed.error.message));
+      onError(new StreamUpstreamError(parsed.error.message));
       return;
     }
     onChunk(parsed);

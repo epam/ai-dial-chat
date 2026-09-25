@@ -105,6 +105,14 @@ CORS. This setting does not change the document server's authorization. See the
 [CSP configuration reference](../apps/chat-api/README.md#content-security-policy)
 and [legacy migration notes](legacy-chat-migration-guide.md#external-document-previews).
 
+For PDFs, matching external origins in `ALLOWED_CONNECT_ORIGINS` also enable
+browser-managed credentials. The document server must allow the exact chat
+origin with `Access-Control-Allow-Origin` and send
+`Access-Control-Allow-Credentials: true`; `*` is not sufficient. A valid session
+and browser permission to send its cookies are still required. These PDF
+requests reject redirects and require a direct document response. No additional
+environment variable is needed.
+
 ### Authentication in the embedded chat
 
 External login remains the safe default. When there is no authenticated
@@ -685,7 +693,7 @@ integrations from typos and removed keys.
 
 ### Supported flags and defaults
 
-The new chat supports 45 flags.
+The new chat supports 48 flags.
 
 Enabled by default:
 
@@ -757,6 +765,10 @@ hide-navigation-menu
 show-all-starters
 hide-footer-version
 show-agent-description
+disable-input-history-navigation
+hide-conversation-export
+hide-settings-page
+show-header-logo
 ```
 
 `hide-navigation-menu` removes the mobile navigation menu in full â the
@@ -811,6 +823,31 @@ the user before the first message. Nothing renders when the agent has no
 description. This is separate from the operator-wide welcome-screen
 description, which renders under the greeting for every agent alike and is not
 governed by this key.
+
+`disable-input-history-navigation` turns off flipping through the
+conversation's previously sent messages with the Up/Down arrow keys in the
+chat input. The shell-style recall is unfamiliar to many chat users, so with
+the key on the arrow keys only move the caret, as in any other textarea.
+
+`hide-conversation-export` removes conversation export from the UI: the
+Export entry (with its "with attachments" / "without attachments" submenu) on
+every conversation's row menu, and "Export all" in the conversations panel
+menu. Import and Delete all stay. It hides the entry points only — it does
+not block the export API.
+
+`hide-settings-page` removes the Settings page: the Settings entry in the
+desktop user menu and the Settings row on the mobile navigation sheet's
+profile page. A direct `/settings` URL redirects to `/`. The preferences the
+page edits keep their stored values. Use it when the host owns user
+preferences itself; `hide-user-settings` instead keeps the page and removes
+only the language and keyboard-shortcut controls.
+
+`show-header-logo` renders the theme logo in the desktop top bar, centered
+between the conversation-panel and new-chat buttons and the sources toggle, so
+an embed that hides the navigation rail still carries the brand. It uses the
+theme's full `logo` image; a theme that defines only a `favicon` shows nothing
+there. The mobile header already shows the logo whenever `header` is on, and
+this key does not change it.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is
@@ -910,7 +947,7 @@ ENABLED_UI_FEATURES=header,conversations-section,likes,input-files
 
 This is also a complete replacement set, not an addition to the defaults. If
 the variable is absent or empty, the built-in baseline of 26 default-on flags
-out of the 45 supported is used. Entries the server does not recognize — including
+out of the 48 supported is used. Entries the server does not recognize — including
 the renamed and retired legacy strings listed above — are logged and dropped;
 if every entry is unrecognized, the built-in baseline is used instead. An overlay host may replace the server baseline with
 its own `enabledFeatures`; the server baseline is not a security ceiling.

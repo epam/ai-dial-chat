@@ -20,3 +20,11 @@
 .instructionsError {
   color: var(--stcf-error-text, var(--text-error, #ae2f2f));
 }
+
+.refineAction,
+.refineFeedback {
+  color: var(--stcf-refine-action-text, var(--text-primary, #161b2d));
+}
+.refineError {
+  color: var(--stcf-refine-error-text, var(--text-error, #8b2020));
+}

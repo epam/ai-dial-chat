@@ -8,6 +8,7 @@ export enum ChatI18nKeys {
   GreetingEveningNoName = 'chat.greetingEveningNoName',
   GreetingNight = 'chat.greetingNight',
   GreetingNightNoName = 'chat.greetingNightNoName',
+  StreamErrorTitle = 'chat.streamErrorTitle',
   StreamError = 'chat.streamError',
   GenerationConflict = 'chat.generationConflict',
   CreateConversationError = 'chat.createConversationError',
@@ -75,6 +76,7 @@ export enum ApiI18nKeys {
 
 export enum ButtonsI18nKeys {
   Retry = 'buttons.retry',
+  TryAgain = 'buttons.tryAgain',
   Reload = 'buttons.reload',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
@@ -982,6 +984,16 @@ export enum PromptEditorI18nKeys {
   ContentLoadingAriaLabel = 'promptEditor.contentLoadingAriaLabel',
 }
 
+export enum TextRefinementI18nKeys {
+  Action = 'textRefinement.action',
+  Undo = 'textRefinement.undo',
+  Error = 'textRefinement.error',
+  Pending = 'textRefinement.pending',
+  Success = 'textRefinement.success',
+  Restored = 'textRefinement.restored',
+  Unchanged = 'textRefinement.unchanged',
+}
+
 export enum SkillEditorI18nKeys {
   Title = 'skillEditor.title',
   BackAriaLabel = 'skillEditor.backAriaLabel',
@@ -1395,6 +1407,35 @@ export enum UsageI18nKeys {
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
+}
+
+export enum HalloweenI18nKeys {
+  ToastTitle = 'halloween.toastTitle',
+  SpidersToastMessage = 'halloween.spidersToastMessage',
+  GhostToastMessage = 'halloween.ghostToastMessage',
+  WebToastMessage = 'halloween.webToastMessage',
+  BatsToastMessage = 'halloween.batsToastMessage',
+  CatToastMessage = 'halloween.catToastMessage',
+  WitchesToastMessage = 'halloween.witchesToastMessage',
+  PumpkinLabel = 'halloween.pumpkinLabel',
+  TrainToastMessage = 'halloween.trainToastMessage',
+  PortalToastMessage = 'halloween.portalToastMessage',
+  RavensToastMessage = 'halloween.ravensToastMessage',
+  CandyToastMessage = 'halloween.candyToastMessage',
+  FootprintsToastMessage = 'halloween.footprintsToastMessage',
+  SkeletonsToastMessage = 'halloween.skeletonsToastMessage',
+  CauldronToastMessage = 'halloween.cauldronToastMessage',
+  MimicToastMessage = 'halloween.mimicToastMessage',
+  BowlingToastMessage = 'halloween.bowlingToastMessage',
+  MummyToastMessage = 'halloween.mummyToastMessage',
+}
+
+export enum NewYearI18nKeys {
+  ToastTitle = 'newYear.toastTitle',
+  SnowToastMessage = 'newYear.snowToastMessage',
+  ConfettiToastMessage = 'newYear.confettiToastMessage',
+  SleighToastMessage = 'newYear.sleighToastMessage',
+  GiftLabel = 'newYear.giftLabel',
 }
 
 export enum ApplicationCredentialsI18nKeys {

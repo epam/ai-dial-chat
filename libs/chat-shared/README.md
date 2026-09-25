@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.15`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.18`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.15
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.18
 - `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -83,6 +83,53 @@ above is genuinely optional for a host that imports anything else from this pack
 ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)). Scoped feature
 entries limit resolution to their own peer sets; they do not remove peers required by
 that feature.
+
+## Text refinement lifecycle
+
+`useTextRefinement({ value, onChange, onRefine?, disabled?, resetKey? })` owns one field's request, feedback, and session-local Undo baseline. `onRefine` is a host-supplied `(value: string, signal: AbortSignal) => Promise<string>` callback; transport and purpose selection stay in the host. `disabled` defaults to false. Change `resetKey` on draft identity changes even if text is equal.
+
+The result exposes `state` (`TextRefinementState`), `isPending`, `canRefine`, `canUndo`, `refine()`, `undo()`, and `reset()`. Public types are `TextRefinementCallback`, `UseTextRefinementOptions`, and `TextRefinementResult`. The host must acknowledge changes through its controlled `value`, and coordinate multiple fields so only one request runs per form and submission is blocked while pending.
+
+Successful changes retain the original baseline across repeated refinements. Undo restores it exactly; manual/external value changes, reset, callback removal, disabling, and unmount invalidate the session state. Identical output does not write a value. Errors and blank output preserve text and any existing baseline; cancellation is silent. Late results cannot overwrite a replaced draft, even if the callback ignores cancellation. No baseline persists after leaving the editing session.
+
+```tsx
+import { useState } from 'react';
+import {
+  useTextRefinement,
+  type TextRefinementCallback,
+} from '@epam/ai-dial-chat-shared';
+
+function RefinableDraft({ onRefine }: { onRefine: TextRefinementCallback }) {
+  const [value, setValue] = useState('Original draft');
+  const refinement = useTextRefinement({ value, onChange: setValue, onRefine });
+  return (
+    <div>
+      <textarea
+        aria-label="Draft"
+        value={value}
+        onChange={(event) => {
+          refinement.reset();
+          setValue(event.target.value);
+        }}
+      />
+      <button
+        type="button"
+        disabled={!refinement.canRefine}
+        onClick={refinement.refine}
+      >
+        Refine
+      </button>
+      <button
+        type="button"
+        disabled={!refinement.canUndo || refinement.isPending}
+        onClick={refinement.undo}
+      >
+        Undo
+      </button>
+    </div>
+  );
+}
+```
 
 ## Optional file-manager entry
 

@@ -11,7 +11,7 @@ import {
   MenuItemMark,
   Search,
 } from '@epam/ai-dial-ui-kit';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 import {
   MODEL_SELECTOR_SKELETON_ROW_COUNT,
   ModelSelectorSkeletonIcon,
@@ -54,6 +54,8 @@ export interface UseModelSelectorResult {
   menuItems: DropdownItem[];
   /** Sticky search header rendered above the menu items. */
   menuHeader: ReactNode;
+  /** Custom properties carrying the host's row colours; pass to `Dropdown.listStyle`. */
+  menuStyle: CSSProperties;
   /** Should be passed to `DialDropdownIcon.onOpenChange` to reset the search on close. */
   onOpenChange: (isOpen: boolean) => void;
 }
@@ -134,33 +136,43 @@ export const useModelSelector = ({
       }
       return [];
     }
-    return filterDeployments(deployments, searchQuery).map((item) => ({
-      key: item.id,
-      label: (
-        <Highlight
-          text={getDeploymentLabel(item)}
-          query={searchQuery}
-          maxLines={1}
-        />
-      ),
-      icon: buildDeploymentIcon(
-        item.iconUrl,
-        item.type,
-        item.displayName ?? item.id,
-      ),
-      /* The picked deployment is the menu's single choice, so the kit draws the
-         trailing check and announces the row as a radio item. */
-      mark: MenuItemMark.Check,
-      checked: item.id === selectedDeploymentId,
-      className: mergeClasses(
-        menuStyles?.itemClassName,
-        item.id === selectedDeploymentId && menuStyles?.selectedItemClassName,
-        CONVERSATION_INPUT_CLASS.modelMenuItem,
-        item.id === selectedDeploymentId &&
-          CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
-      ),
-      onClick: () => onDeploymentChange?.(item.id),
-    }));
+    const colors = menuStyles?.colors;
+    return filterDeployments(deployments, searchQuery).map((item) => {
+      const isSelected = item.id === selectedDeploymentId;
+      return {
+        key: item.id,
+        label: (
+          <Highlight
+            text={getDeploymentLabel(item)}
+            query={searchQuery}
+            maxLines={1}
+          />
+        ),
+        icon: buildDeploymentIcon(
+          item.iconUrl,
+          item.type,
+          item.displayName ?? item.id,
+        ),
+        /* The picked deployment is the menu's single choice, so the kit draws
+           the trailing check and announces the row as a radio item. */
+        mark: MenuItemMark.Check,
+        checked: isSelected,
+        className: mergeClasses(
+          colors?.itemText && styles.itemText,
+          colors?.itemHoverBackground && styles.itemHover,
+          isSelected &&
+            colors?.selectedItemBackground &&
+            styles.selectedItemBackground,
+          isSelected && colors?.selectedItemText && styles.selectedItemText,
+          isSelected && colors?.checkIcon && styles.checkIcon,
+          menuStyles?.itemClassName,
+          isSelected && menuStyles?.selectedItemClassName,
+          CONVERSATION_INPUT_CLASS.modelMenuItem,
+          isSelected && CONVERSATION_INPUT_CLASS.modelMenuItemSelected,
+        ),
+        onClick: () => onDeploymentChange?.(item.id),
+      };
+    });
   }, [
     deployments,
     isLoading,
@@ -170,7 +182,24 @@ export const useModelSelector = ({
     onDeploymentChange,
     menuStyles?.itemClassName,
     menuStyles?.selectedItemClassName,
+    menuStyles?.colors,
   ]);
+
+  /*
+   * The dropdown panel renders in a portal, so the row colours travel as
+   * custom properties on the panel itself rather than on the composer.
+   */
+  const menuStyle = useMemo(
+    () =>
+      buildCssVars({
+        '--ms-item-text': menuStyles?.colors?.itemText,
+        '--ms-item-hover-bg': menuStyles?.colors?.itemHoverBackground,
+        '--ms-selected-item-bg': menuStyles?.colors?.selectedItemBackground,
+        '--ms-selected-item-text': menuStyles?.colors?.selectedItemText,
+        '--ms-check-icon': menuStyles?.colors?.checkIcon,
+      }),
+    [menuStyles?.colors],
+  );
 
   const menuHeader: ReactNode = useMemo(
     () =>
@@ -216,6 +245,7 @@ export const useModelSelector = ({
     selectedVersion,
     menuItems,
     menuHeader,
+    menuStyle,
     onOpenChange: handleOpenChange,
   };
 };

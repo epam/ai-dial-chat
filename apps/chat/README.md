@@ -38,6 +38,94 @@ The app uses automatic chunk splitting, UI Kit `/grid` and `/editors` imports,
 the shared `/file-manager` entry and a lazy conversation publishing panel.
 Heavy feature engines load when their features are activated.
 
+## Celebration events
+
+Set `UI_EVENT=halloween` or `UI_EVENT=new-year` on chat-api to select an event.
+`none` or an omitted value disables events. The former `HALLOWEEN_ENABLED`
+setting and `features.halloweenEnabled` flag are removed. Deploy the frontend
+and backend together when migrating that setting. Event selection uses the
+existing client-config refresh lifecycle; it is not a calendar scheduler.
+
+Only `/` renders event decoration and intercepts its optional secret phrase.
+Existing conversations send text normally. The current modules are:
+
+| Event       | Click scenes                                                                                                                | Secret phrase                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `halloween` | Ghosts, connected web, bats, cat, witches, ghost train, portal, ravens, candy rain, invisible paw prints, dancing skeletons | `trick or treat` → random descending spiders, cauldron, mimic, pumpkin bowling or mummy |
+| `new-year`  | Snow, confetti, flying sleighs                                                                                              | `happy new year` → confetti                                                             |
+
+The Halloween portal briefly pulls visual copies of up to two adjacent, visible
+conversation-history rows into its claw, then restores the rows. It never changes
+conversation data. Interaction, scrolling, resizing, navigation or enabling reduced
+motion cancels the borrowing immediately. With closed or empty history, only the
+portal artwork appears. Reduced motion shows a static rift and leaves history alone.
+Every scene notification includes a hint for the event's secret chat phrase.
+
+The four new message-only surprises interact with the existing page through
+inert visual copies. A mummy walks in from the side, braces against the chat input
+and strains twice without moving it, then slowly pushes it completely offscreen.
+The input returns at the end; its draft and focus are preserved throughout.
+A cauldron pulls two chats into its brew and releases them as bubbles; a toothy
+mimic curls a shaded tongue in front of and behind two neighboring chats and pulls
+them into its mouth, keeping them attached to the tongue tip, then chews and spits them back. A pumpkin
+rolls into the visible history and scatters only the rows whose visible titles
+its body touches (up to six), starting each row's motion at contact, before they regroup.
+Original layout and conversation data never change. Copies disappear and originals
+return immediately on typing, composition, clicking, focus changes, scrolling,
+resizing, source changes, navigation or reduced motion. Unavailable or unusually
+large targets fall back to artwork alone. The mummy can use a focused composer;
+history scenes skip focused rows. The mummy animates for twelve seconds and
+unmounts after thirteen; the other three animate for eight and unmount after nine.
+Repeated secret messages select randomly without consecutive repeats, independently
+of pumpkin clicks. The new scenes are exclusive to messages and show a static
+illustration with reduced motion enabled.
+
+Descending spiders can now borrow up to three visible welcome-page elements:
+the greeting, model selector, attachment control and sometimes a history row.
+They descend, weave fine curved silk strands around their prizes, then climb above the viewport carrying
+the copies. Each carrier and its cargo share a transform. Originals retain layout
+and focus and return within eleven seconds; interaction cancels the theft
+immediately. Focused or expanded controls are skipped. Missing targets keep the
+decorative spider drop; reduced motion leaves the page untouched and shows static
+spiders. Existing public selectors provide all targets without changes to core
+page components or libraries.
+
+### Adding an event
+
+Use [the New Year definition](src/celebrations/new-year.ts) as the example and
+implement the [CelebrationEvent contract](src/types/celebration.ts):
+
+1. Add event components and resources in the app. The `Decoration` component
+   receives `onActivate`; it does not import the provider or select scenes.
+2. Export a default definition with `id`, optional `iconUrl`, `Decoration`,
+   `scenes`, `clickSceneIds` and `notificationTitleKey`. Every scene supplies
+   an `id`, `Component`, `durationMs` and typed `notificationKey`. Its duration
+   must include delayed arrivals and departures. An optional `secretTrigger`
+   supplies `phrases`, `hintPhrase` and `sceneIds`. The runtime samples distinct
+   valid IDs without consecutive repeats, independently of click selection.
+   A singleton pool can repeat; an empty or entirely invalid pool leaves messages
+   untouched. Both selection histories reset on navigation or event changes.
+3. Add one dynamic import to [the event registry](src/celebrations/registry.ts).
+   New IDs require no backend enum, provider, header or composer changes.
+4. Add translated labels/messages. Scenes for an event with a secret phrase
+   include `{{phrase}}` in their notification; the runtime interpolates the
+   module's `hintPhrase`. Phrases match the entire normalized input and support
+   non-Latin characters; omitting a trigger leaves all text untouched.
+5. Reuse [FlyingCharacters](src/components/FlyingCharacters/FlyingCharacters.tsx)
+   and [flight paths](src/utils/flying-characters.ts) where appropriate. Every
+   custom animation supplies a visible static frame under reduced motion,
+   stays decorative and non-interactive, and supports the mobile/desktop
+   breakpoints and RTL. A scene renders artwork inside the shared viewport
+   layer rather than creating its own portal.
+
+The shared provider owns one active scene, random selection without consecutive
+repeats when alternatives exist, replacement and cleanup. Event changes and
+navigation cancel playback and pending imports. Loading, unknown IDs and module
+failures leave the ordinary chat available; no input is intercepted until the
+selected module is ready. Missing providers are intentionally inert. Seasonal
+icons replace existing navigation/header slots only, preserving theme wordmarks
+and the browser-tab favicon. No event state is persisted.
+
 ## Content Security Policy
 
 Production HTML is served by `chat-api` with a fresh style nonce. Vite inserts
@@ -426,3 +514,9 @@ The Quick Apps iframe receives
 `{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId: 'applications/public/my-agent' }`
 from that iframe opens the same host dialog; no credentials are sent through
 `postMessage`. See [the authentication flow](../../docs/auth/auth-bff-encrypted-cookie.md#proactive-application-credential-forms).
+
+## AI text refinement
+
+Skill and scheduled-task forms opt into Description and Instructions refinement only when the backend returns `config.aiTextRefinementAvailable: true`. The host selects one of four purposes and passes a stable callback, cancellation signal, and translated labels to the libraries. Fields remain editable during requests; editing the active field cancels it. Save waits for refinement, and Undo is local to the current draft.
+
+Run `npm exec -- nx run @epam/chat:test-refinement-browser` for Chromium checks of both forms at 360/900/1280/1920px, in LTR and Arabic RTL, using deterministic callbacks without a live model. Geometry evidence is written to `tmp/text-refinement-browser/geometry.json`.

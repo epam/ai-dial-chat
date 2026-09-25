@@ -90,6 +90,8 @@ type RelayOutcome =
   | {
       outcome: 'error';
       error: unknown;
+      /** User-facing upstream text; unset for transport/runtime failures. */
+      displayMessage?: string;
       assembledMessage: ConversationMessageDto;
     };
 
@@ -386,9 +388,12 @@ export class ConversationStreamingService {
         this.logger.debug(
           `relayModelCompletion outcome: error (in-band stream error chunk) — model: ${model}: ${streamError.message}`,
         );
+        const displayMessage =
+          streamError.displayMessage ?? streamError.message;
         return {
           outcome: 'error',
-          error: new Error(streamError.displayMessage ?? streamError.message),
+          error: new Error(displayMessage),
+          displayMessage,
           assembledMessage,
         };
       }
@@ -738,11 +743,15 @@ export class ConversationStreamingService {
             'DIAL Core streamCompletion failed',
             relayResult.error,
           );
-          const errorMessage =
-            relayResult.error instanceof Error ? relayResult.error.message : '';
+          /*
+           * Only upstream-supplied text reaches the user. A thrown error's
+           * message (e.g. undici's `terminated`) is transport detail: it is
+           * logged above and persisted as '' so the frontend shows its
+           * localized fallback (issue #8979).
+           */
           const partialMsg = {
             ...relayResult.assembledMessage,
-            streamErrorMessage: errorMessage,
+            streamErrorMessage: relayResult.displayMessage ?? '',
           } as ConversationMessageDto;
           await finalize(GenerationStatus.Error, partialMsg);
           break;

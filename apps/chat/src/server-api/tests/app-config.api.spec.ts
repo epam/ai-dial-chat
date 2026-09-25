@@ -19,6 +19,7 @@ describe('app-config API', () => {
       appId: 'chat-ui',
       features: {},
       config: {
+        activeEventId: null,
         appVersion: '0.0.1',
         asrModelId: null,
         announcements: [],

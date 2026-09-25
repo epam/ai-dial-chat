@@ -18,7 +18,9 @@ The terminal save SHALL distinguish how the generation ended:
 | Upstream rejected the request | `streamErrorMessage` = DIAL Core text, or `''` when it gave none | `Error` |
 | The user pressed Stop | `wasStoppedByUser: true`, **no** `streamErrorMessage` | `Stopped` |
 | Aborted for any other reason (e.g. the relay itself threw before producing a result) | `streamErrorMessage: ''` | `Error` |
-| The relay itself threw | `streamErrorMessage` = the thrown error's message | `Error` |
+| The relay itself threw (e.g. undici `TypeError: terminated` while reading the upstream body, a socket reset, a programming error) | `streamErrorMessage: ''` | `Error` |
+
+`streamErrorMessage` SHALL only ever carry text that DIAL Core itself supplied as a user-facing error (a rejected request's error body, or an in-band `{error}` chunk's `displayMessage`/`message`). A thrown JavaScript error's `message` is transport or runtime detail: it SHALL be logged server-side through the service `Logger` with the full error, and SHALL NOT be persisted to, or relayed through the generation registry to, the user.
 
 A user stop is deliberately not an error state: the frontend renders an empty stopped message with its "Stopped generating" label, which it can only do when no `streamErrorMessage` is present.
 
@@ -37,7 +39,26 @@ The downstream HTTP connection closing (browser tab closed, page navigated away,
 #### Scenario: Partial state saved on error
 
 - **WHEN** the upstream stream fails before `[DONE]`
-- **THEN** the backend saves the partial assistant message with `streamErrorMessage` set — carrying the DIAL Core error text when one is available, or an empty string when no upstream text exists (empty body, non-user abort). The presence of the field (even `''`) is the terminal-error signal; the frontend localizes a generic fallback when the value is empty.
+- **THEN** the backend saves the partial assistant message with `streamErrorMessage` set — carrying the DIAL Core error text when one is available, or an empty string when no upstream text exists (empty body, non-user abort, relay throw). The presence of the field (even `''`) is the terminal-error signal; the frontend localizes a generic fallback when the value is empty.
+
+#### Scenario: A mid-stream transport abort persists no raw error text
+
+- **WHEN** reading the upstream stream throws `TypeError('terminated')` after some content was already assembled
+- **THEN** the backend saves the partial assistant message (assembled content preserved) with `streamErrorMessage: ''`, finalizes the generation as `Error` with an empty message, and logs the thrown error via `Logger.error`; the string `terminated` is not present in the saved conversation
+
+#### Scenario: DIAL Core-supplied error text is still persisted
+
+- **WHEN** DIAL Core rejects the request with an error body, or emits an in-band `{error:{message}}` chunk
+- **THEN** the persisted `streamErrorMessage` is that DIAL Core text, unchanged by this requirement
+
+#### Scenario: A Responses stream that ends without a terminal signal persists no internal text
+
+- **WHEN** a Responses API stream ends with no recognized terminal event (no `response.completed`, `response.failed`, `response.incomplete`, or `error` event)
+- **THEN** the persisted `streamErrorMessage` is `''`, not the adapter's internal "ended before completion" diagnostic, and that diagnostic is logged server-side instead
+
+#### Scenario: A Responses terminal failure keeps its upstream message
+- **WHEN** a Responses API stream ends with `response.failed`, `response.incomplete`, or an `error` event carrying a message
+- **THEN** the persisted `streamErrorMessage` is that upstream message
 
 #### Scenario: A user stop is not persisted as an error
 
@@ -320,4 +341,3 @@ Unrelated writers to the same conversation path SHALL be named explicitly rather
 
 - **WHEN** a terminal write is performed
 - **THEN** it is issued without a conditional-write precondition, and the capability documents that correctness rests on process-local admission rather than on storage-side fencing
-
