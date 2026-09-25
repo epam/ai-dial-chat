@@ -476,6 +476,10 @@ export const ExpectedConstants = {
   stageContentLimitExceeded: (limit: number) =>
     `Content is too large to display (exceeds ${limit} KB).`,
   fewVersionsLabel: 'Few',
+  appNameTooLongError: 'The Name is too long. Please shorten it and try again.',
+  appNameSpecialCharsError:
+    'Name should not contain special symbols :;,=/{}%&\\"',
+  appRequiredFieldsTooltip: 'Fill in all required fields',
 };
 
 export const withTraceId = (message: string): RegExp => {

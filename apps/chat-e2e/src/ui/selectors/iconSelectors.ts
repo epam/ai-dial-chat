@@ -40,4 +40,5 @@ export const IconSelectors = {
   chevronDownIcon: '.tabler-icon.tabler-icon-chevron-down',
   chevronUpIcon: '.tabler-icon.tabler-icon-chevron-up',
   userIcon: '.tabler-icon.tabler-icon-user',
+  entityEditorStepErrorIcon: '.rounded-full.bg-error.border-error',
 };

@@ -186,7 +186,7 @@ dialTest(
         await folderPrompts.renameFolderWithContentWithTick(newFolderName, {
           isHttpMethodTriggered: false,
         });
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await promptBarFolderAssertion.assertFolderArrowIconState(
           { name: newFolderName },
           'hidden',
