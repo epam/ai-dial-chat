@@ -12,12 +12,22 @@ export type {
   EditMessageInputProps,
 } from './models/ConversationInput';
 export { ActionRowLayout, SendOnEnter } from './models/Input';
+export {
+  useComposerSeed,
+  useComposerSeedSource,
+} from './hooks/useComposerSeed';
+export type {
+  UseComposerSeedInitial,
+  UseComposerSeedResult,
+} from './hooks/useComposerSeed';
 export type { TranscribeAudio } from './models/Voice';
 export type {
   ChatSettingsValues,
   CommandMenuConfig,
   CommandMenuContext,
+  HighlightedTextRange,
   InputColors,
+  InputHandle,
   InputProps,
   InputTypography,
   MenuOverlayConfig,

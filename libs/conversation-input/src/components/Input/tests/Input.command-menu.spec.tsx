@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { describe, expect, it, vi } from 'vitest';
 import {
   SendOnEnter,
@@ -13,6 +14,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
+    /*
+     * The real Dropdown renders its overlay through a FloatingPortal, so it
+     * lands outside the caret-anchored `aria-hidden` wrapper this component
+     * places around Dropdown's zero-size reference element. Rendering the
+     * overlay via `createPortal` here (instead of inline as a child) keeps
+     * that same escape so the mock doesn't hide the menu from the
+     * accessibility tree.
+     */
     Dropdown: ({
       children,
       open,
@@ -24,7 +33,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     }) => (
       <div>
         {children}
-        {open && renderOverlay?.()}
+        {open &&
+          renderOverlay &&
+          createPortal(renderOverlay(), document.body)}
       </div>
     ),
   };

@@ -1,12 +1,14 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import type { LimitsTabProps } from '../../../../models/limits-props';
+import { LimitRowLayout } from '../../../../types/limit-row-layout';
 import { LimitGroupSection } from './LimitGroupSection';
 import styles from './Limits.module.scss';
 
 /** Renders model usage limits as named groups (e.g. token limits, cost limits), each a list of capped progress rows or plain-value rows. */
 export const LimitsTab: FC<LimitsTabProps> = ({
   limits,
+  layout = LimitRowLayout.Inline,
   labelClassName = 'dial-small-semi-text',
   captionClassName = 'dial-caption-text',
   valueClassName = 'dial-tiny-text',
@@ -27,6 +29,7 @@ export const LimitsTab: FC<LimitsTabProps> = ({
     '--lt-section-heading': colors?.sectionHeading,
     '--lt-label': colors?.label,
     '--lt-value-primary': colors?.valuePrimary,
+    '--lt-value-danger': colors?.valueDanger,
     '--lt-divider': colors?.divider,
     '--lt-progress-track': colors?.progressTrack,
     '--lt-progress-fill-default': colors?.progressFillDefault,
@@ -40,6 +43,7 @@ export const LimitsTab: FC<LimitsTabProps> = ({
         <LimitGroupSection
           key={group.label}
           group={group}
+          layout={layout}
           sectionClassName={sectionClassName}
           labelClassName={labelClassName}
           captionClassName={captionClassName}

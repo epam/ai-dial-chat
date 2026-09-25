@@ -2696,12 +2696,38 @@ const api = kind && buildConnectApi(baseUrl, toolsetId, kind);
 
 ### mapDeploymentLimitsToInput
 
-Maps a deployment's monthly token-limit response into a display-ready `MonthlyUsageLimit` (`used`/`total`/`remaining`/`usedPercent`), or `undefined` when the backend reports no usable limit.
+Maps a deployment-limits response into display-ready `CatalogItemLimits` for a conversation-input usage affordance, or `undefined` when nothing reports a usable limit. It emits up to two groups: the deployment's day/week/month **token** limits, formatted with compact K/M notation, followed by the caller's day/week/month **cost** budget, formatted as currency. The worst-case `CatalogLimitStatus` is taken across the capped rows of both.
+
+The cost stats on a deployment-limits response are the caller's own budget and span every deployment, not the one that was queried — the same figures come back whichever deployment is asked. They are therefore listed as their own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
+
+**Only limits at or past 75% of their cap are mapped** — the same threshold `CatalogLimitStatus` uses for running-low. The affordance this feeds is a warning, not a dashboard: a deployment at 2% of its token allowance listed beside an account budget at 90% buries the figure worth acting on. When nothing reaches the threshold the function returns `undefined`, which is how a host removes the affordance entirely. A period whose total is the uncapped sentinel (`total >= Number.MAX_SAFE_INTEGER`) has no ratio and is therefore never listed.
+
+Minute and request stats are not mapped either: a rolling-minute counter changes between two openings of a popover for reasons the viewer cannot attribute to their own actions. Labels and value/aria formatters are injected through a `ConversationInputLimitsLabels` object so the function stays i18n-free.
+
+Pass `formatResetTime` to add each period's reset line. The function never parses or formats a timestamp itself: it hands the raw `resetsAt` to the callback and stores only the strings it returns, as a present-or-all-absent trio. Omit the callback, or return `undefined` from it, and the row renders without a reset line.
 
 ```ts
-import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
+import {
+  mapDeploymentLimitsToInput,
+  type ConversationInputLimitsLabels,
+} from '@epam/ai-dial-chat-hooks';
 
-const usage = mapDeploymentLimitsToInput(deploymentLimitsDto);
+const labels: ConversationInputLimitsLabels = {
+  tokenGroup: 'Token limits',
+  costGroup: 'Cost limits · all agents',
+  periodDay: 'Today',
+  periodWeek: 'This week',
+  periodMonth: 'This month',
+  formatValueLabel: (used, total) => `${used} / ${total}`,
+  formatProgressAriaLabel: ({ label, used, total }) =>
+    `${label}: ${used} of ${total} used`,
+};
+
+const limits = mapDeploymentLimitsToInput(
+  deploymentLimitsDto,
+  labels,
+  formatResetTime,
+);
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits

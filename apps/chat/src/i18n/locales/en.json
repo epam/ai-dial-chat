@@ -1213,11 +1213,17 @@
   },
   "conversationInput": {
     "usageLimits": {
-      "triggerAriaLabel": "Monthly token usage: {{value}}",
+      "triggerAriaLabel": "{{label}} usage: {{value}}",
       "popoverTitle": "Usage Limit",
       "error": "Could not load usage limits",
-      "tokensRemaining": "{{count}} tokens remaining",
-      "progressAriaLabel": "Monthly token usage: {{used}} of {{total}} tokens used"
+      "tokenGroup": "Token limits",
+      "costGroup": "Cost limits · all agents",
+      "periodDay": "Today",
+      "periodWeek": "This week",
+      "periodMonth": "This month",
+      "value": "{{used}} / {{total}}",
+      "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
+      "fullUsageLink": "See all usage"
     }
   },
   "customApp": {

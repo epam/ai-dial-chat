@@ -60,12 +60,12 @@ import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 import { configurePdfWorker } from '../utils/pdf';
+import { renderSettingsRoutes } from './settings-routes';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
-const SettingsPage = lazy(() => import('../pages/SettingsPage/SettingsPage'));
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
 );
@@ -356,21 +356,7 @@ const App: FC = () => {
                   </RouteErrorBoundary>
                 }
               />
-              <Route
-                path={ROUTES.Settings}
-                element={
-                  isSettingsPageHidden ? (
-                    /* Keeps a direct /settings URL from bypassing the hidden entries. */
-                    <Navigate to={ROUTES.Root} replace />
-                  ) : (
-                    <RouteErrorBoundary>
-                      <Suspense fallback={<RouteFallback />}>
-                        <SettingsPage />
-                      </Suspense>
-                    </RouteErrorBoundary>
-                  )
-                }
-              />
+              {renderSettingsRoutes(isSettingsPageHidden)}
               <Route
                 path={ROUTES.FileManager}
                 element={

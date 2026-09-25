@@ -44,3 +44,15 @@
     var(--bg-control-error-active, #cc4545)
   ) !important;
 }
+
+/* Same token chain as `.label`, but with a darker hard-coded fallback so the
+ * reset line still clears WCAG AAA (7:1 on a light surface) in the rare case
+ * where no theme token is defined at all. */
+.resetLabel {
+  color: var(--lt-label, var(--text-secondary, #3f4a5f));
+}
+
+/* Value of a row that has reached its limit, in the stacked layout. */
+.valueDanger {
+  color: var(--lt-value-danger, var(--text-error, #ae2f2f));
+}

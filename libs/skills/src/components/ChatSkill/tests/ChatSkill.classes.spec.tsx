@@ -31,9 +31,9 @@ describe('skills — public class names', () => {
       />,
     );
 
-    expect(
-      screen.getByRole('button', { name: '/summarize' }).classList,
-    ).toContain(SKILLS_CLASS.chip);
+    expect(screen.getByLabelText('/summarize').classList).toContain(
+      SKILLS_CLASS.chip,
+    );
   });
 
   it('keeps the chip class in the unsupported state', () => {
@@ -46,9 +46,9 @@ describe('skills — public class names', () => {
       />,
     );
 
-    expect(
-      screen.getByRole('button', { name: '/summarize' }).classList,
-    ).toContain(SKILLS_CLASS.chip);
+    expect(screen.getByLabelText('/summarize').classList).toContain(
+      SKILLS_CLASS.chip,
+    );
   });
 
   it('stamps the favorites panel root', () => {
