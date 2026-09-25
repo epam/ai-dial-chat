@@ -31,6 +31,7 @@ import {
 import en from '../../i18n/locales/en.json';
 import { HalloweenBurst } from '../../types/halloween';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { animateHalloweenWeb } from '../../utils/halloween-web-animation';
 import { useAppConfig } from '../AppConfigContext';
 import { CelebrationProvider, useCelebration } from '../CelebrationContext';
 import { useNotification } from '../NotificationContext';
@@ -41,6 +42,12 @@ vi.mock('../../hooks/breakpoint/useBreakpoint', () => ({
 
 vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
 vi.mock('../NotificationContext', () => ({ useNotification: vi.fn() }));
+
+/* jsdom has no canvas backend. Keep the real scene and geometry while
+   replacing only the renderer, which has its own drawing/lifecycle tests. */
+vi.mock('../../utils/halloween-web-animation', () => ({
+  animateHalloweenWeb: vi.fn(),
+}));
 
 /* The global `react-i18next` mock in `test-setup` is a plain function, so it
    records nothing. This spec needs the interpolation arguments, and keeps the
@@ -59,6 +66,8 @@ vi.mock('react-i18next', () => ({
 const mockUseAppConfig = vi.mocked(useAppConfig);
 const mockUseNotification = vi.mocked(useNotification);
 const showSuccessNotification = vi.fn();
+const mockAnimateHalloweenWeb = vi.mocked(animateHalloweenWeb);
+const stopWebAnimation = vi.fn();
 
 let lastConsumeResult: boolean | null = null;
 
@@ -162,6 +171,7 @@ describe('CelebrationContext with the Halloween module', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAnimateHalloweenWeb.mockReturnValue(stopWebAnimation);
     lastConsumeResult = null;
     mockUseNotification.mockReturnValue({
       notifications: [],
@@ -230,6 +240,12 @@ describe('CelebrationContext with the Halloween module', () => {
   });
 
   it('replaces ghosts with weaving across a viewport portal', async () => {
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+      1280,
+    );
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+      800,
+    );
     await renderProvider(true);
     await userEvent.click(
       screen.getByRole('button', { name: 'wake the ghosts' }),
@@ -242,13 +258,31 @@ describe('CelebrationContext with the Halloween module', () => {
       title: 'halloween.toastTitle',
       message: 'halloween.webToastMessage',
     });
-    /* Decorative SVG has no semantic query. Small patches sit in the body
-       portal, including both screen edges where chat history can be shown. */
+    await waitFor(() =>
+      expect(mockAnimateHalloweenWeb).toHaveBeenCalledTimes(1),
+    );
+    /* The decorative canvas is hidden from accessibility queries. Verify
+       the viewport portal and spider population through the real plan. */
     // eslint-disable-next-line testing-library/no-node-access
-    const patches = document.body.querySelectorAll('div[class*="webPatch"]');
-    expect(patches).toHaveLength(HALLOWEEN_WEB_COUNT);
+    const canvases = document.body.querySelectorAll(
+      'canvas[data-halloween-scene="web"]',
+    );
+    expect(canvases).toHaveLength(1);
+    const [canvas, plan] = mockAnimateHalloweenWeb.mock.calls[0];
+    expect(canvas).toBe(canvases[0]);
+    expect(canvas.getAttribute('aria-hidden')).toBe('true');
+    expect(plan).toMatchObject({ width: 1280, height: 800 });
+    expect(plan.webs).toHaveLength(HALLOWEEN_WEB_COUNT);
+    expect(queryGhosts()).toHaveLength(0);
     // eslint-disable-next-line testing-library/no-node-access
-    expect(patches[0].parentElement?.parentElement).toBe(document.body);
+    expect(canvas.parentElement?.parentElement).toBe(document.body);
+    expect(stopWebAnimation).not.toHaveBeenCalled();
+
+    await userEvent.click(
+      screen.getByRole('link', { name: 'open conversation' }),
+    );
+    expect(canvas.isConnected).toBe(false);
+    expect(stopWebAnimation).toHaveBeenCalledTimes(1);
   });
 
   it.each([

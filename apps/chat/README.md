@@ -68,6 +68,15 @@ decorative spider drop; reduced motion leaves the page untouched and shows stati
 spiders. Existing public selectors provide all targets without changes to core
 page components or libraries.
 
+The connected-web scene keeps 54 spiders on mobile and 80 on desktop, with
+slightly larger bodies and small webs that also attach to visible composer,
+welcome-heading and conversation-history corners, plus the main pumpkin's body.
+The pumpkin gets a target before the history limit is filled and remains clickable.
+A single canvas draws at most
+30 times per second, reusing finished silk and spider artwork. Target geometry is
+read only at scene setup; real controls retain their focus and behavior. Scrolling,
+resizing or hiding the tab stops the scene, and reduced motion shows a static web.
+
 The Halloween train stops with an empty final wagon, picks up the main pumpkin
 and departs with smoke from its chimney and side vents. Boarding uses the pumpkin's
 actual screen position; its decorative copy rides behind the wagon front while
