@@ -94,6 +94,7 @@ import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachme
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
+import { useConversationAnnotationPool } from '../../hooks/conversation/useConversationAnnotationPool';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -369,6 +370,7 @@ const ConversationView: FC<Props> = ({
      chat-settings hint promises — the format is a property of the
      conversation, not of the message it was chosen before. */
   const responseFormat = normalizeResponseFormat(conversation.responseFormat);
+  const fallbackCitationGroups = useConversationAnnotationPool(conversation);
   const mcpAppCache = useMcpAppResponseCache(conversation.id);
   const mcpAppHostAdapter = useMcpAppHostAdapter('fullscreen');
   const { closePanel } = useConversationPanel();
@@ -913,6 +915,7 @@ const ConversationView: FC<Props> = ({
                     isAssistantTyping={isAssistantTyping}
                     isCompactTypography={isMobile}
                     responseFormat={responseFormat}
+                    fallbackCitationGroups={fallbackCitationGroups}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
                     onStartEdit={isReadOnly ? undefined : handleStartEdit}

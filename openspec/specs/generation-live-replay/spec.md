@@ -26,7 +26,7 @@ start.
 
 1. Emits one `{ type: "snapshot", message: <ConversationMessageDto> }` event carrying the registry entry's current assembled message, synchronously captured before any subsequent chunk can be missed.
 2. Emits one `{ type: "chunk", ... }` event — in the same shape as a live `/completions` chunk — for every chunk produced by the generation after the snapshot was captured.
-3. Emits exactly one terminal event — `{ type: "done" }`, `{ type: "error", message?: string }`, or `{ type: "stopped" }` — matching the generation's actual outcome, then ends the response.
+3. Emits exactly one terminal event — `{ type: "done" }`, `{ type: "error", message?: string, errorType?: string }`, or `{ type: "stopped" }` — matching the generation's actual outcome, including terminal persistence failure, then ends the response.
 
 The endpoint SHALL support more than one concurrent subscriber for the same active generation, each receiving its own snapshot-then-live-chunks sequence. For a header-authenticated principal, those subscribers may be separate clients presenting tokens for the same (`providerId`, `sub`), as `generation-principal-ownership` defines.
 
@@ -110,3 +110,22 @@ Releasing the response SHALL follow the same bounded sequence the completion pat
 - **GIVEN** a subscriber whose cleanup has already run (for backpressure, disconnect, or the terminal event)
 - **WHEN** cleanup is invoked again for that same subscriber
 - **THEN** its response is not ended or destroyed a second time and its `dial_chat_sse_active{kind="generation_attach"}` contribution is released exactly once
+
+### Requirement: Attached clients retain output when terminal persistence fails
+
+When a terminal save rejects, the generation registry SHALL send attached subscribers an `error` terminal event with `errorType: 'conversation_save_failed'` and safe fallback text, including when the model was stopped by the user. The attached client SHALL retain its assembled snapshot and subsequent deltas, show its host-provided persistence warning, and settle its streaming controls without replacing the answer with a stored placeholder. The existing lease checks and finalization timeout remain applicable.
+
+#### Scenario: Storage fails after an attached client sees progress
+
+- **WHEN** an attached client receives an assistant snapshot and further stage/text deltas and the terminal save rejects
+- **THEN** it receives a persistence-error terminal event and keeps the assembled answer with the warning
+
+#### Scenario: Legacy backend reports done but storage still has a placeholder
+
+- **WHEN** an attach stream ends and the terminal reload returns an unresolved placeholder after the client received generated content
+- **THEN** the client preserves the generated content and shows a persistence warning
+
+#### Scenario: A resumed generation is superseded
+
+- **WHEN** a local generation replaces the buffer owned by an earlier resume while the earlier terminal reload is pending
+- **THEN** that resume callback does not overwrite the new generation or clear its streaming state

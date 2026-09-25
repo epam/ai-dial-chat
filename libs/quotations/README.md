@@ -128,6 +128,8 @@ keeps Preview for DIAL files and supported external file sources, and hides it
 for ordinary external web pages such as `https://data.imf.org/en/datasets/IMF.RES:WEO`.
 The library does not interpret DIAL file paths or decide which viewers the host supports.
 
+An optional trailing `fallbackGroups` parameter (default `[]`) is a pool of groups that do not belong to this message — supplied by the host for a `<cit data-id="…">` element the message's own `groups` do not resolve. It participates only in `data-id` lookup: it is never passed to sentinel injection, so it cannot shift a marker position in `processedContent`, and a colliding id always resolves from `groups` first.
+
 ```tsx
 import { useCitationMarkdownComponents } from '@epam/ai-dial-quotations';
 
@@ -155,6 +157,8 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
     }),
   },
   isStreaming,
+  false,
+  fallbackCitationGroups,
 );
 ```
 

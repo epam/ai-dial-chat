@@ -300,7 +300,7 @@ A generation SHALL attempt at most one terminal write. The worker SHALL record t
 
 The pre-stream failure paths SHALL remain write-free: a failure resolving the deployment's generation capability, fetching the conversation, or building its history SHALL release the registry entry and rethrow **without** performing any conversation write. A preflight failure SHALL NOT invent a terminal save.
 
-A failed or ambiguous terminal write SHALL continue to be logged and SHALL NOT abort the request, and the entry SHALL settle and release its key. A delivered terminal event, a released registry entry, and a recorded `dial.chat.completion.response.terminations` point SHALL NOT be treated as evidence that the conversation was durably persisted.
+A rejected terminal write SHALL be logged and reported as a persistence error on the open completion stream and to generation-attach subscribers, and the entry SHALL settle and release its key. The completion stream SHALL use its existing error envelope with type `conversation_save_failed` and safe fallback text. This applies to successful, stopped, and failed model outcomes; a storage failure SHALL NOT be reported as a successful save. There SHALL be no automatic second write. A delivered terminal event, a released registry entry, and a recorded `dial.chat.completion.response.terminations` point SHALL NOT be treated as evidence that the conversation was durably persisted.
 
 #### Scenario: Cancellation arriving after the terminal write was dispatched does not add a second write
 
@@ -341,3 +341,24 @@ Unrelated writers to the same conversation path SHALL be named explicitly rather
 
 - **WHEN** a terminal write is performed
 - **THEN** it is issued without a conditional-write precondition, and the capability documents that correctness rests on process-local admission rather than on storage-side fencing
+
+### Requirement: Terminal reloads cannot erase received assistant payload
+
+A client SHALL retain its accumulated assistant payload on an explicit persistence error or when a terminal reload returns the unresolved empty placeholder at that generation's assistant index. It SHALL show an app-localized warning that server persistence is unconfirmed and a page reload can lose the local answer. It SHALL preserve text and custom content together and SHALL NOT attempt a client-side save. Successful reloads SHALL still replace local state with server-persisted data. A superseded generation or another displayed conversation SHALL NOT receive stale restoration.
+
+`useConversationStream` SHALL own the retained message in its existing per-conversation buffer, including buffers assembled by `createResumeIfAwaitingGeneration`. The buffer lasts only within the mounted hook and is replaced by a new generation; it introduces no durable cache or cache TTL. Apps SHALL supply translated warning text through the optional `generationPersistenceErrorMessage` parameter using `chat.generationPersistenceError`; independently embedded hosts can use the safe default. The warning SHALL use the existing message `role="alert"` surface alongside the answer on mobile and desktop. It introduces no new controls or directional layout; existing RTL rendering and keyboard behavior remain applicable. This behavior is not feature-gated and requires no new memoisation, metrics, REST endpoint, OpenAPI schema, or generated-client method. The existing terminal-save logger SHALL retain the original failure server-side while the client receives safe text.
+
+#### Scenario: Empty terminal read after visible text and stages
+
+- **WHEN** a client receives text and stages and its completion reload returns the unresolved assistant placeholder
+- **THEN** the text and stages remain visible with a persistence warning and streaming controls settle
+
+#### Scenario: Server enrichment survives a successful save
+
+- **WHEN** the terminal reload contains the saved answer with server-enriched attachment data
+- **THEN** the client uses the server answer without adding a persistence warning
+
+#### Scenario: A newer generation supersedes a pending reload
+
+- **WHEN** another generation starts before the prior generation's terminal reload returns
+- **THEN** the old callback cannot restore its content over the new generation

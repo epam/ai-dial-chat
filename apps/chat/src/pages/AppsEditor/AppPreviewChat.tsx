@@ -254,6 +254,9 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       channel,
       onStopError: handleStopError,
       generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
+      generationPersistenceErrorMessage: t(
+        ChatI18nKeys.GenerationPersistenceError,
+      ),
       onStreamError: logConversationStreamError,
     });
 
