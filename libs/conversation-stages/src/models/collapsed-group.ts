@@ -39,8 +39,6 @@ export interface CollapsedGroupLabels {
   stepsLabel?: (count: number) => string;
   /** Returns the "N failed" text in the failed summary. Defaults to `(n) => \`${n} failed\``. */
   failedCountLabel?: (failedCount: number) => string;
-  /** Returns the "Step X of Y" text in the running summary. Defaults to `(current, total) => \`Step ${current} of ${total}\``. */
-  runningStepLabel?: (current: number, total: number) => string;
   /** Accessible label announced for the running summary's spinner. Defaults to `'Running'`. */
   runningAriaLabel?: string;
   /** Accessible label for the copy button on each stage's content. Defaults to `'Copy'`. */
