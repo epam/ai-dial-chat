@@ -63,13 +63,20 @@ const SharePopover: FC<SharePopoverProps> = ({
     '--shp-anyone-title': colors?.anyoneTitle,
     '--shp-anyone-subtitle': colors?.anyoneSubtitle,
     '--shp-access-chevron': colors?.accessChevron,
-    '--shp-menu-item-label': colors?.menuItemLabel,
     '--shp-link-row-bg': colors?.linkRowBackground,
     '--shp-link-text': colors?.linkText,
     '--shp-error-text': colors?.errorText,
     '--shp-note-text': colors?.noteText,
     '--shp-divider': colors?.divider,
     '--shp-skeleton-color': colors?.skeletonColor,
+  });
+  /*
+   * The access menu renders in a floating portal outside this popover, so a
+   * custom property set on the popover root never cascades to its rows; the
+   * menu's own vars travel on the menu panel instead.
+   */
+  const accessMenuStyle = buildCssVars({
+    '--shp-menu-item-label': colors?.menuItemLabel,
   });
   const {
     title = 'Share',
@@ -246,6 +253,7 @@ const SharePopover: FC<SharePopoverProps> = ({
             isOpen={isAccessOpen}
             onOpenChange={handleAccessOpenChange}
             onAccessChange={onAccessChange}
+            menuStyle={accessMenuStyle}
             triggerRef={accessTriggerRef}
             titleClassName={typography?.anyoneTitleClassName}
             subtitleClassName={typography?.anyoneSubtitleClassName}

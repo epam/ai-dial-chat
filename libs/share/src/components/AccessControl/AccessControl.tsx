@@ -7,7 +7,7 @@ import {
   MenuItemMark,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconWorld } from '@tabler/icons-react';
-import { FC, type RefObject } from 'react';
+import { type CSSProperties, FC, type RefObject } from 'react';
 import { ShareLinkAccess } from '../../types/share';
 import styles from '../SharePopover/SharePopover.module.scss';
 
@@ -33,6 +33,8 @@ interface AccessControlProps {
   onOpenChange: (next: boolean) => void;
   /** Called when the user selects a different access level. */
   onAccessChange: (access: ShareLinkAccess[]) => void;
+  /** Inline style for the menu panel, which renders in a portal outside the popover — the channel for its custom properties. */
+  menuStyle?: CSSProperties;
   /** Ref attached to the dropdown trigger button, so focus can return to it on close. */
   triggerRef: RefObject<HTMLButtonElement | null>;
   /** CSS class applied to the primary row text. Defaults to `'dial-small-semi-text'`. */
@@ -55,6 +57,7 @@ export const AccessControl: FC<AccessControlProps> = ({
   isOpen,
   onOpenChange,
   onAccessChange,
+  menuStyle,
   triggerRef,
   titleClassName = 'dial-small-semi-text',
   subtitleClassName = 'dial-small-text',
@@ -125,6 +128,7 @@ export const AccessControl: FC<AccessControlProps> = ({
           onOpenChange={onOpenChange}
           items={accessItems}
           listClassName="min-w-[160px]"
+          listStyle={menuStyle}
           onItemClick={handleAccessItemClick}
         >
           <button

@@ -139,6 +139,28 @@ describe('SharePopover', () => {
     expect(editOption.getAttribute('aria-checked')).toBe('true');
   });
 
+  it('sets the menu item label color on the access menu, which renders outside the popover', async () => {
+    render(
+      <SharePopover
+        {...makeProps({
+          onClose,
+          styles: { colors: { menuItemLabel: 'red' } },
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Can view' }));
+
+    expect(
+      screen.getByRole('menu').style.getPropertyValue('--shp-menu-item-label'),
+    ).toBe('red');
+    expect(
+      screen
+        .getByRole('dialog', { name: 'Share' })
+        .style.getPropertyValue('--shp-menu-item-label'),
+    ).toBe('');
+  });
+
   it('moves focus to the first access option when the menu opens', async () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 
