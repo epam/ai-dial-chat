@@ -481,6 +481,11 @@ const NewConversationComposer: FC<Props> = ({
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
         {isCelebrationEnabled && <CelebrationDecor />}
+        {agentDescription && (
+          <Suspense fallback={null}>
+            <AgentDescription content={agentDescription} />
+          </Suspense>
+        )}
         <ConversationInput
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
@@ -593,11 +598,6 @@ const NewConversationComposer: FC<Props> = ({
           </p>
         )}
         {children}
-        {agentDescription && (
-          <Suspense fallback={null}>
-            <AgentDescription content={agentDescription} />
-          </Suspense>
-        )}
       </div>
       <FooterMessage />
       {isDialFileManagerOpen && (
