@@ -5,7 +5,7 @@
 # ─────────────────────────────────────────────
 FROM node:24.21-alpine3.24 AS node-base
 
-# npm 12.0.x still bundles vulnerable brace-expansion, ip-address, and tar.
+# npm@12.1.0 bundles patched brace-expansion@5.0.9, ip-address@10.5.0, and tar@7.5.22.
 RUN apk upgrade --no-cache libcrypto3 libssl3 \
     && npm install --global npm@12.1.0
 
