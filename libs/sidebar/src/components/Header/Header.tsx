@@ -39,7 +39,7 @@ export const Header: FC<HeaderProps> = memo(
       )}
     >
       {leftActions && (
-        <div className="flex items-center gap-1">{leftActions}</div>
+        <div className="me-2 flex items-center gap-1">{leftActions}</div>
       )}
 
       <EllipsisTooltip
