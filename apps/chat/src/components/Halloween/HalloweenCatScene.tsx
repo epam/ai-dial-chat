@@ -144,11 +144,15 @@ const HalloweenCatScene: FC = () => {
     >
       <div ref={copiesRef} className={styles.copies} />
       {!stationary && plan?.active && plan.floor && (
-        <div className={styles.floor} data-cat-floor style={{
-          left: plan.floor.x,
-          top: plan.floor.y,
-          width: plan.floor.width,
-        }} />
+        <div
+          className={styles.floor}
+          data-cat-floor
+          style={{
+            left: plan.floor.x,
+            top: plan.floor.y,
+            width: plan.floor.width,
+          }}
+        />
       )}
       {!stationary && plan?.active ? (
         <div
