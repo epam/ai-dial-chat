@@ -48,6 +48,9 @@ export const HALLOWEEN_SPIDER_MAX_OFFSET_PX = 104;
  */
 export const HALLOWEEN_SPIDER_RETURN_MS = 2600;
 
+/** Optional audio asset URL for the train scene; silent by default. */
+export const HALLOWEEN_TRAIN_AUDIO_SRC: string | undefined = undefined;
+
 /** Pumpkin surprises, sampled randomly without consecutive repeats. */
 export const HALLOWEEN_CLICK_BURSTS = [
   HalloweenBurst.Ghost,

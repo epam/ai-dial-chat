@@ -10,7 +10,6 @@ import styles from './Halloween.module.scss';
 import HalloweenBowling from './HalloweenBowling';
 import HalloweenCatScene from './HalloweenCatScene';
 import {
-  HalloweenTrain,
   HalloweenRavens,
   HalloweenCandy,
   HalloweenFootprints,
@@ -23,6 +22,7 @@ import HalloweenNightFlight from './HalloweenNightFlight';
 import HalloweenPortal from './HalloweenPortal';
 import { HalloweenCauldron } from './HalloweenSecrets';
 import HalloweenSpiderTheft from './HalloweenSpiderTheft';
+import HalloweenTrain from './HalloweenTrain';
 import HalloweenWeb from './HalloweenWeb';
 
 const extraScenes: Partial<Record<HalloweenBurst, FC>> = {

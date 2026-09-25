@@ -6,7 +6,6 @@
   pointer-events: none;
   user-select: none;
 }
-.train,
 .raven,
 .candy,
 .paw,
@@ -15,7 +14,6 @@
 .portal {
   position: absolute;
 }
-.train,
 .raven,
 .candy,
 .skeleton {
@@ -23,53 +21,6 @@
     display: block;
     inline-size: 100%;
     block-size: auto;
-  }
-}
-
-.train {
-  left: 0;
-  bottom: 8px;
-  inline-size: clamp(300px, 43vw, 540px);
-  filter: drop-shadow(0 0 5px #a1d7bd80);
-  animation: train-crossing 11s linear both;
-}
-.wheel {
-  animation: wheel-turn 0.9s linear infinite;
-}
-.steam {
-  transform-origin: 92px 66px;
-  animation: steam-rise 1.85s ease-out infinite both;
-}
-@keyframes train-crossing {
-  0% {
-    transform: translateX(105vw);
-    opacity: 0;
-  }
-  6%,
-  91% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-110%);
-    opacity: 0;
-  }
-}
-@keyframes wheel-turn {
-  to {
-    transform: rotate(-360deg);
-  }
-}
-@keyframes steam-rise {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.4);
-  }
-  20% {
-    opacity: 0.45;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-45px, -65px) scale(2.4);
   }
 }
 
@@ -412,14 +363,6 @@
   .scene,
   .scene * {
     animation: none !important;
-  }
-  .train {
-    left: 50%;
-    inline-size: min(85vw, 450px);
-    transform: translateX(-50%);
-  }
-  .steam {
-    opacity: 0;
   }
   .ravenWing {
     transform: scaleX(0.22);
