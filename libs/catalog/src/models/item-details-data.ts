@@ -84,6 +84,19 @@ export interface UsageLimitProgressRow {
   noteLabel?: string;
   /** Secondary caption shown under the row's label, e.g. "$20.00 spent". Omitted when absent. */
   captionLabel?: string;
+  /*
+   * The reset-time trio is host-preformatted. The library renders these
+   * strings verbatim and never parses, formats, or timezone-shifts them — it
+   * imports no `Intl`, and accepts no locale, timezone, or raw timestamp. All
+   * three are absent together when the host could not format a reset time, in
+   * which case the row renders exactly as it did before reset times existed.
+   */
+  /** Visible reset line, e.g. `'Resets Sep 16, 2026, 2:00 AM GMT+2'`. Omitted when absent. */
+  resetLabel?: string;
+  /** Machine-readable instant for the reset line's `<time dateTime>` attribute, e.g. `'2026-09-16T00:00:00Z'`. */
+  resetIsoValue?: string;
+  /** Accessible expansion of the reset line, rendered on a visually-hidden sibling of the `<time>`. */
+  resetAriaLabel?: string;
 }
 
 /** A named, ordered group of rows in the Limits tab, e.g. token limits vs. cost limits. */

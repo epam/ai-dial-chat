@@ -2,18 +2,21 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import type { UsageLimitGroup } from '../../../../models/item-details-data';
 import type { LimitRowClassNames } from '../../../../models/limits-props';
+import type { LimitRowLayout } from '../../../../types/limit-row-layout';
 import { LimitRow } from './LimitRow';
 import styles from './Limits.module.scss';
 
 interface LimitGroupSectionProps extends LimitRowClassNames {
   group: UsageLimitGroup;
   sectionClassName: string;
+  layout: LimitRowLayout;
 }
 
 /** One named limits group (e.g. token limits, cost limits) rendered as a heading over its rows. */
 export const LimitGroupSection: FC<LimitGroupSectionProps> = ({
   group,
   sectionClassName,
+  layout,
   labelClassName,
   captionClassName,
   valueClassName,
@@ -35,6 +38,7 @@ export const LimitGroupSection: FC<LimitGroupSectionProps> = ({
         <LimitRow
           key={row.label}
           row={row}
+          layout={layout}
           labelClassName={labelClassName}
           captionClassName={captionClassName}
           valueClassName={valueClassName}

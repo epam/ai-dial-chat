@@ -1,5 +1,6 @@
 import { safeDecodeURIComponent } from '@epam/ai-dial-chat-hooks';
 import { ROUTES } from '../types/routes';
+import type { SettingsTabs } from '../types/settings-tabs';
 
 const CONVERSATION_ROUTE_PREFIX = `${ROUTES.Conversations}/`;
 const CONVERSATION_ROUTE_PREFIX_NO_LEADING_SLASH =
@@ -61,3 +62,7 @@ export const getScheduledTaskDetailRoute = (scheduleId: string): string =>
 
 export const getScheduledTaskEditRoute = (scheduleId: string): string =>
   `${getScheduledTaskDetailRoute(scheduleId)}/edit`;
+
+/** Canonical path of one Settings tab, e.g. `/settings/usage`. */
+export const getSettingsTabRoute = (tab: SettingsTabs): string =>
+  `${ROUTES.Settings}/${tab}`;

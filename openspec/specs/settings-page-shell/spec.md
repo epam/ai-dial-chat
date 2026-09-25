@@ -42,9 +42,6 @@ hidden via CSS.
 ---
 
 ### Requirement: Settings page route and lazy loading
-The system SHALL register a `/settings` route in `apps/chat/src/app/app.tsx` rendering a lazily-loaded
-`SettingsPage` component, wrapped in `RouteErrorBoundary` and `Suspense` with a `RouteFallback`,
-following the existing `ScheduledTasksPage` route registration pattern.
 
 When the `SettingsPageEnabled` feature flag resolves to `false`, the route's `element` SHALL instead
 render `<Navigate to={ROUTES.Root} replace />`, matching the existing `FileManager` route-gating
@@ -62,9 +59,21 @@ pattern, so that neither `SettingsPage` nor its lazy chunk ever mounts while the
 - **THEN** the application redirects (replacing history) to `ROUTES.Root` and `SettingsPage` is not
   rendered
 
+#### Scenario: The host hides the Settings page
+
+- **WHEN** `OverlayFeature.HideSettingsPage` resolves to `true` and a signed-in user navigates
+  directly to `/settings` or to `/settings/usage`
+- **THEN** the application redirects (replacing history) to `ROUTES.Root` and `SettingsPage` is not
+  rendered
+
+#### Scenario: Reload keeps the tab
+
+- **WHEN** a user on `/settings/usage` reloads the page
+- **THEN** Settings reopens with the Usage tab active
 ---
 
 ### Requirement: Extensible tab container
+
 `SettingsPage` SHALL render its sub-pages through a `SettingsTabs` enum, an associated tab-config
 hook (`useSettingsTabConfig`), and the presentational `SettingsPanel` component from
 `@epam/ai-dial-settings-panel` (a vertical icon + label list, replacing the earlier horizontal
@@ -83,6 +92,7 @@ capability (see `settings-panel-lib`), even though no current tab entry uses it.
   default
 
 #### Scenario: Panel is keyboard- and screen-reader-navigable
+
 - **WHEN** the tab container renders
 - **THEN** it delegates to `SettingsPanel`'s vertical ARIA tablist behavior (`role="tablist"`,
   `aria-orientation="vertical"`, `role="tab"` + `aria-selected` per row)
