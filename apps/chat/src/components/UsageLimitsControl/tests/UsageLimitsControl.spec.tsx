@@ -2,6 +2,7 @@ import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client'
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useDeployments } from '../../../context/DeploymentsContext';
 import { useDeploymentUsageLimits } from '../../../hooks/useDeploymentUsageLimits';
 import type { UseDeploymentUsageLimitsResult } from '../../../hooks/useDeploymentUsageLimits';
 import UsageLimitsControl from '../UsageLimitsControl';
@@ -37,7 +38,14 @@ vi.mock('../../../hooks/useDeploymentUsageLimits', () => ({
   useDeploymentUsageLimits: vi.fn(),
 }));
 
+vi.mock('../../../context/DeploymentsContext', () => ({
+  useDeployments: vi.fn(),
+}));
+
 const mockUseDeploymentUsageLimits = vi.mocked(useDeploymentUsageLimits);
+const mockUseDeployments = vi.mocked(useDeployments);
+
+const DEPLOYMENT_NAME = 'GPT-4o mini';
 
 /* The global `react-i18next` mock returns each key verbatim, so period rows are
    identified by their key rather than by translated English. */
@@ -76,6 +84,9 @@ describe('UsageLimitsControl', () => {
       ...defaultHookResult,
       refresh: vi.fn(),
     });
+    mockUseDeployments.mockReturnValue({
+      items: [{ id: 'gpt-4o', displayName: DEPLOYMENT_NAME }],
+    } as unknown as ReturnType<typeof useDeployments>);
   });
 
   afterEach(() => {
@@ -257,7 +268,21 @@ describe('UsageLimitsControl', () => {
       expect(screen.getAllByRole('progressbar')).toHaveLength(3);
     });
 
-    it('labels the dialog with its title', async () => {
+    it('titles the popover with the selected deployment and labels the dialog with it', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      const dialog = await openPopover(user);
+
+      expect(screen.getByText(DEPLOYMENT_NAME).id).toBe(
+        dialog.getAttribute('aria-labelledby'),
+      );
+    });
+
+    it('falls back to the generic title when the deployment is not in the list', async () => {
+      mockUseDeployments.mockReturnValue({ items: [] } as unknown as ReturnType<
+        typeof useDeployments
+      >);
       const user = userEvent.setup();
       renderControl();
 

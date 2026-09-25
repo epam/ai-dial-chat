@@ -169,14 +169,19 @@ present in the accessible name. The layout SHALL support LTR and RTL using logic
 
 ### Requirement: Period usage popover
 
-Activating the trigger by pointer or keyboard SHALL open a popover titled from
-`conversationInput.usageLimits.popoverTitle`. Its body SHALL be rendered by `LimitsTab` imported
-from `@epam/ai-dial-catalog`, passed the `CatalogItemLimits` value the mapper produced. The app
-SHALL NOT hand-roll a second row renderer, and SHALL NOT import `LimitRow` or `LimitGroupSection`.
+Activating the trigger by pointer or keyboard SHALL open a popover titled with the selected
+deployment's display name, resolved for the active locale and falling back to the deployment id.
+When the selection is not present in the deployments list the title SHALL fall back to
+`conversationInput.usageLimits.popoverTitle`. The title SHALL remain the dialog's accessible name
+through `aria-labelledby`.
 
-The popover SHALL be wide enough for `LimitRow`'s reserved value column alongside a label, a spent
-caption, and a reset line, and SHALL retain a viewport-relative maximum width so mobile layout does
-not overflow horizontally.
+Its body SHALL be rendered by `LimitsTab` imported from `@epam/ai-dial-catalog`, passed the
+`CatalogItemLimits` value the mapper produced and `LimitRowLayout.Stacked`. The app SHALL NOT
+hand-roll a second row renderer, and SHALL NOT import `LimitRow` or `LimitGroupSection`.
+
+In that layout each row puts its label and value on one line, with a full-width progress bar and the
+reset caption beneath, so the popover SHALL be wide enough for a label and its value side by side
+and SHALL retain a viewport-relative maximum width so mobile layout does not overflow horizontally.
 
 The popover SHALL refresh limits on open without displaying a loading indicator, and the control
 SHALL refresh once when an active generation ends so the trigger reflects the latest usage without
@@ -214,6 +219,16 @@ render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`
 - **WHEN** the user opens the popover for a deployment with day, week, and month limits
 - **THEN** the popover shows the title and three rows, each with its own progress bar, used/total
   figures, and spent caption
+
+#### Scenario: The popover is titled with the deployment
+
+- **WHEN** the selected deployment resolves to a display name
+- **THEN** that name is the popover's title and the dialog's accessible name
+
+#### Scenario: Unknown deployment keeps a generic title
+
+- **WHEN** the selected deployment is absent from the deployments list
+- **THEN** the popover falls back to `conversationInput.usageLimits.popoverTitle`
 
 #### Scenario: Reset line appears per row
 

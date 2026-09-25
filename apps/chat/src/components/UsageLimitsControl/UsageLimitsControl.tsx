@@ -1,4 +1,8 @@
-import { CatalogLimitStatus, LimitsTab } from '@epam/ai-dial-catalog';
+import {
+  CatalogLimitStatus,
+  LimitRowLayout,
+  LimitsTab,
+} from '@epam/ai-dial-catalog';
 import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
@@ -14,8 +18,10 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConversationInputI18nKeys } from '../../constants/translation-keys';
+import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useDeploymentUsageLimits } from '../../hooks/useDeploymentUsageLimits';
+import { resolveLocalizedText } from '../../utils/locale';
 import { findWorstCappedRow } from '../../utils/usage-limits';
 import { formatUsageResetTime } from '../../utils/usage-reset-time';
 import styles from './UsageLimitsControl.module.scss';
@@ -37,6 +43,7 @@ const UsageLimitsControl: FC<Props> = ({
     t: (key: string, params?: Record<string, unknown>) => string;
   };
   const { language: activeLocale } = useLanguage();
+  const { items: deployments } = useDeployments();
   const { limitsDto, isLoading, hasError, refresh } =
     useDeploymentUsageLimits(deploymentId);
   const [isOpen, setIsOpen] = useState(false);
@@ -87,6 +94,20 @@ const UsageLimitsControl: FC<Props> = ({
   );
 
   const worstRow = useMemo(() => findWorstCappedRow(limits), [limits]);
+
+  /* The popover is titled with the deployment it reports on. Falls back to the
+     generic string when the selection is not in the list yet. */
+  const deploymentName = useMemo(() => {
+    const deployment = deployments.find((item) => item.id === deploymentId);
+    if (deployment == null) {
+      return undefined;
+    }
+
+    return (
+      resolveLocalizedText(deployment.displayName, activeLocale) ||
+      deployment.id
+    );
+  }, [deployments, deploymentId, activeLocale]);
 
   useEffect(() => {
     if (wasGenerationInProgressRef.current && !isGenerationInProgress) {
@@ -220,10 +241,10 @@ const UsageLimitsControl: FC<Props> = ({
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="absolute bottom-full end-0 z-50 mb-2 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-none"
+          className="absolute bottom-full end-0 z-50 mb-2 flex w-[22.5rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-none"
         >
           <p id={titleId} className="dial-small-semi-text text-primary">
-            {t(ConversationInputI18nKeys.PopoverTitle)}
+            {deploymentName ?? t(ConversationInputI18nKeys.PopoverTitle)}
           </p>
 
           {hasError && (
@@ -232,7 +253,7 @@ const UsageLimitsControl: FC<Props> = ({
             </p>
           )}
 
-          <LimitsTab limits={limits} />
+          <LimitsTab limits={limits} layout={LimitRowLayout.Stacked} />
         </div>
       )}
     </div>

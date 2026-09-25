@@ -51,3 +51,8 @@
 .resetLabel {
   color: var(--lt-label, var(--text-secondary, #3f4a5f));
 }
+
+/* Value of a row that has reached its limit, in the stacked layout. */
+.valueDanger {
+  color: var(--lt-value-danger, var(--text-error, #ae2f2f));
+}

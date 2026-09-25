@@ -3,6 +3,7 @@ import { ElementSize, ProgressBar } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { UsageLimitProgressRow } from '../../../../models/item-details-data';
 import type { LimitRowClassNames } from '../../../../models/limits-props';
+import { LimitRowLayout } from '../../../../types/limit-row-layout';
 import {
   getProgressMax,
   getProgressStatus,
@@ -15,11 +16,13 @@ import styles from './Limits.module.scss';
 
 interface LimitRowProps extends LimitRowClassNames {
   row: UsageLimitProgressRow;
+  layout: LimitRowLayout;
 }
 
-/** A single usage-limit line: label (plus optional caption) on one side, a capped progress bar or a plain value on the other. */
+/** A single usage-limit line, arranged per `layout`: either a label column beside a fixed-width value/progress column, or a label/value line above a full-width bar. */
 export const LimitRow: FC<LimitRowProps> = ({
   row,
+  layout,
   labelClassName,
   captionClassName,
   valueClassName,
@@ -27,6 +30,102 @@ export const LimitRow: FC<LimitRowProps> = ({
   noteClassName,
 }) => {
   const valueLabel = getValueLabel(row);
+  const progressStatus = getProgressStatus(row);
+
+  const progressBar = (
+    <ProgressBar
+      value={getProgressValue(row)}
+      max={getProgressMax(row.total)}
+      size={ElementSize.Small}
+      className={mergeClasses(
+        '!h-1 w-full',
+        styles.progressTrack,
+        progressStatus === ProgressStatus.Default && styles.progressFillDefault,
+        progressStatus === ProgressStatus.Warning && styles.progressFillWarning,
+        progressStatus === ProgressStatus.Danger && styles.progressFillDanger,
+      )}
+      aria-label={row.label}
+      aria-valuetext={row.ariaLabel ?? valueLabel}
+    />
+  );
+
+  const caption = row.captionLabel != null && (
+    <span
+      className={mergeClasses('break-words', captionClassName, styles.label)}
+    >
+      {row.captionLabel}
+    </span>
+  );
+
+  /* Rendered for an unlimited row too — an unconfigured limit still
+     accumulates against a period that rolls over. */
+  const resetLine = row.resetLabel != null && (
+    <>
+      {/* `aria-label` is not reliably supported on a bare `<time>`, so the
+          spoken form — which names the timezone in full rather than as an
+          offset — is carried by a visually-hidden sibling instead. */}
+      <time
+        dateTime={row.resetIsoValue}
+        aria-hidden={row.resetAriaLabel != null || undefined}
+        className={mergeClasses(
+          'break-words',
+          captionClassName,
+          styles.resetLabel,
+        )}
+      >
+        {row.resetLabel}
+      </time>
+      {row.resetAriaLabel != null && (
+        <span className="sr-only">{row.resetAriaLabel}</span>
+      )}
+    </>
+  );
+
+  if (layout === LimitRowLayout.Stacked) {
+    return (
+      <li
+        className={mergeClasses(
+          'flex flex-col gap-2 border-b py-3 first:pt-0 last:border-b-0 last:pb-0',
+          styles.divider,
+        )}
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <span
+            className={mergeClasses(
+              'min-w-0 break-words',
+              labelClassName,
+              styles.valuePrimary,
+            )}
+          >
+            {row.label}
+          </span>
+          <span
+            className={mergeClasses(
+              'shrink-0',
+              valueClassName,
+              progressStatus === ProgressStatus.Danger
+                ? styles.valueDanger
+                : styles.valuePrimary,
+            )}
+          >
+            {valueLabel}
+          </span>
+        </div>
+
+        {caption}
+
+        {isCapped(row)
+          ? progressBar
+          : row.noteLabel != null && (
+              <span className={mergeClasses(noteClassName, styles.label)}>
+                {row.noteLabel}
+              </span>
+            )}
+
+        {resetLine}
+      </li>
+    );
+  }
 
   return (
     <li
@@ -41,41 +140,8 @@ export const LimitRow: FC<LimitRowProps> = ({
         >
           {row.label}
         </span>
-        {row.captionLabel != null && (
-          <span
-            className={mergeClasses(
-              'break-words',
-              captionClassName,
-              styles.label,
-            )}
-          >
-            {row.captionLabel}
-          </span>
-        )}
-
-        {/* Rendered for an unlimited row too — an unconfigured limit still
-            accumulates against a period that rolls over. */}
-        {row.resetLabel != null && (
-          <>
-            {/* `aria-label` is not reliably supported on a bare `<time>`, so the
-                spoken form — which names the timezone in full rather than as an
-                offset — is carried by a visually-hidden sibling instead. */}
-            <time
-              dateTime={row.resetIsoValue}
-              aria-hidden={row.resetAriaLabel != null || undefined}
-              className={mergeClasses(
-                'break-words',
-                captionClassName,
-                styles.resetLabel,
-              )}
-            >
-              {row.resetLabel}
-            </time>
-            {row.resetAriaLabel != null && (
-              <span className="sr-only">{row.resetAriaLabel}</span>
-            )}
-          </>
-        )}
+        {caption}
+        {resetLine}
       </div>
 
       {isCapped(row) ? (
@@ -90,23 +156,7 @@ export const LimitRow: FC<LimitRowProps> = ({
               <span className={styles.label}>{valueLabel}</span>
             )}
           </div>
-          <ProgressBar
-            value={getProgressValue(row)}
-            max={getProgressMax(row.total)}
-            size={ElementSize.Small}
-            className={mergeClasses(
-              '!h-1 w-full',
-              styles.progressTrack,
-              getProgressStatus(row) === ProgressStatus.Default &&
-                styles.progressFillDefault,
-              getProgressStatus(row) === ProgressStatus.Warning &&
-                styles.progressFillWarning,
-              getProgressStatus(row) === ProgressStatus.Danger &&
-                styles.progressFillDanger,
-            )}
-            aria-label={row.label}
-            aria-valuetext={row.ariaLabel ?? valueLabel}
-          />
+          {progressBar}
         </div>
       ) : (
         <div className="flex shrink-0 flex-col items-end">

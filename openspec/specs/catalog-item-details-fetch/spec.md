@@ -66,10 +66,18 @@ unaffected by their addition.
 
 ### Requirement: `LimitsTab` is a public, reusable export of `@epam/ai-dial-catalog`
 
-`libs/catalog/src/index.ts` SHALL export the `LimitsTab` component and the `LimitsTabProps` and
-`LimitsTabColors` types, so a host can render a `CatalogItemLimits` value outside the catalog
-details panel. `LimitsTabColors` (`libs/catalog/src/models/limits-props.ts`) SHALL be changed from a
-module-private interface to an exported one.
+`libs/catalog/src/index.ts` SHALL export the `LimitsTab` component, the `LimitsTabProps` and
+`LimitsTabColors` types, and the `LimitRowLayout` enum, so a host can render a `CatalogItemLimits`
+value outside the catalog details panel. `LimitsTabColors`
+(`libs/catalog/src/models/limits-props.ts`) SHALL be changed from a module-private interface to an
+exported one.
+
+`LimitsTab` SHALL accept `layout?: LimitRowLayout`, defaulting to `LimitRowLayout.Inline` — the
+arrangement the details panel already renders, with the label column beside a fixed-width column
+holding the used/total pair above a narrow progress bar. `LimitRowLayout.Stacked` SHALL instead put
+the label and the value on one line, followed by a full-width progress bar and then the reset
+caption, and SHALL color the value through the `valueDanger` token once the row has reached its
+limit. The default SHALL leave the details panel's rendered output unchanged.
 
 `LimitRow` and `LimitGroupSection` SHALL remain internal: the public contract is the whole list, not
 an individual row, so row-level markup stays free to change without a breaking release.
@@ -89,6 +97,17 @@ README and `src/index.ts` to agree in both directions.
   `CatalogItemLimits` value
 - **THEN** it renders the groups and rows without the details panel, the catalog shell, or any
   catalog item being involved
+
+#### Scenario: The default layout leaves the details panel unchanged
+
+- **WHEN** `LimitsTab` is rendered without a `layout` prop
+- **THEN** each row renders the inline arrangement the details panel shipped before the prop existed
+
+#### Scenario: The stacked layout moves the bar under the label line
+
+- **WHEN** `LimitsTab` is rendered with `LimitRowLayout.Stacked`
+- **THEN** each row shows its label and a single combined value on one line, a full-width progress
+  bar beneath them, and the reset caption below that
 
 #### Scenario: Empty input renders nothing
 

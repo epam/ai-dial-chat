@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { UsageLimitProgressRow } from '../../../../models/item-details-data';
+import { LimitRowLayout } from '../../../../types/limit-row-layout';
 import { LimitsTab } from '../Limits/Limits';
 import styles from '../Limits/Limits.module.scss';
 
@@ -500,6 +501,89 @@ describe('LimitsTab', () => {
           .getByText('Resets Oct 1, 2026, 2:00 AM GMT+2')
           .getAttribute('dateTime'),
       ).toBe('2026-10-01T00:00:00Z');
+    });
+  });
+
+  describe('stacked layout', () => {
+    const cappedRow: UsageLimitProgressRow = {
+      label: 'Today',
+      used: 2500,
+      total: 10000,
+      usedLabel: '2.5K',
+      totalLabel: '10K',
+      valueLabel: '2.5K / 10K',
+      captionLabel: '$1.20 spent',
+      ariaLabel: 'Today: 2,500 of 10,000 used',
+      resetLabel: 'Resets Sep 16, 2026, 2:00 AM GMT+2',
+      resetIsoValue: '2026-09-16T00:00:00Z',
+    };
+
+    const renderStacked = (row: UsageLimitProgressRow) =>
+      render(
+        <LimitsTab
+          limits={{ groups: [{ label: 'Token limits', rows: [row] }] }}
+          layout={LimitRowLayout.Stacked}
+        />,
+      );
+
+    it('shows the value as one string beside the label instead of a split used/total pair', () => {
+      renderStacked(cappedRow);
+
+      expect(screen.getByText('2.5K / 10K')).toBeTruthy();
+      expect(screen.queryByText('/ 10K')).toBeNull();
+    });
+
+    it('keeps the caption, the progress bar and the reset line', () => {
+      renderStacked(cappedRow);
+
+      expect(screen.getByText('$1.20 spent')).toBeTruthy();
+      expect(
+        screen.getByRole('progressbar').getAttribute('aria-valuetext'),
+      ).toBe('Today: 2,500 of 10,000 used');
+      const time = screen.getByText('Resets Sep 16, 2026, 2:00 AM GMT+2');
+      expect(time.tagName).toBe('TIME');
+    });
+
+    it('colors the value as danger once the row has reached its limit', () => {
+      renderStacked({ ...cappedRow, used: 10000, valueLabel: '10K / 10K' });
+
+      expect(screen.getByText('10K / 10K').className).toContain(
+        styles.valueDanger,
+      );
+    });
+
+    it('keeps the value in the primary color below the limit', () => {
+      renderStacked(cappedRow);
+
+      const value = screen.getByText('2.5K / 10K');
+      expect(value.className).toContain(styles.valuePrimary);
+      expect(value.className).not.toContain(styles.valueDanger);
+    });
+
+    it('replaces the bar with the note on an unlimited row', () => {
+      renderStacked({
+        label: 'This month',
+        used: 4200,
+        total: Number.MAX_SAFE_INTEGER,
+        isUnlimited: true,
+        valueLabel: '4.2K',
+        noteLabel: 'Follows cost limit',
+      });
+
+      expect(screen.queryByRole('progressbar')).toBeNull();
+      expect(screen.getByText('Follows cost limit')).toBeTruthy();
+      expect(screen.getByText('4.2K')).toBeTruthy();
+    });
+
+    it('leaves the default layout rendering the split used/total pair', () => {
+      render(
+        <LimitsTab
+          limits={{ groups: [{ label: 'Token limits', rows: [cappedRow] }] }}
+        />,
+      );
+
+      expect(screen.getByText('2.5K')).toBeTruthy();
+      expect(screen.getByText('/ 10K')).toBeTruthy();
     });
   });
 });

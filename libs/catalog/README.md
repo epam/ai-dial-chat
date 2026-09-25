@@ -552,6 +552,21 @@ not reliably supported. Omit `resetAriaLabel` and the visible line stays its
 own accessible name. A row with none of the three renders exactly as it did
 before reset lines existed.
 
+`layout` (`LimitRowLayout`) picks the row arrangement and defaults to
+`LimitRowLayout.Inline`, which is what the catalog details panel renders: the
+label column sits beside a fixed-width column holding the used/total pair above
+a narrow progress bar. `LimitRowLayout.Stacked` puts the label and the value on
+one line, with a full-width progress bar and the reset caption beneath it, and
+colors the value with `valueDanger` once the row has reached its limit — the
+arrangement the AI DIAL Chat conversation-input popover uses in its narrow
+panel.
+
+```tsx
+import { LimitRowLayout, LimitsTab } from '@epam/ai-dial-catalog';
+
+<LimitsTab limits={limits} layout={LimitRowLayout.Stacked} />;
+```
+
 Typography and colors are overridable: `labelClassName`, `captionClassName`,
 `valueClassName`, `noteValueClassName`, `noteClassName`, `sectionClassName`,
 and `footerClassName` each default to a `dial-*-text` scale class, and
@@ -573,6 +588,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
+  LimitRowLayout,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
