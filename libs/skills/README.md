@@ -460,6 +460,10 @@ from the render. The chips render beside the bubble's first text line, so
 pass `historyChipLabelClassName` with the label class the bubbles' body text
 uses, keeping the chips' height matched to that line.
 
+A live-composing mention also renders as a real `ChatSkill` chip — with
+`isUnsupported` error styling applied when the skill is not supported — via
+`HighlightedTextRange.render`, consistent with how history segments render.
+
 Row and chip descriptions come from the listing entries the host injects —
 no per-skill fetch happens anywhere in the flow, and opening a tooltip
 triggers zero requests.
