@@ -3447,7 +3447,7 @@ if (loadState === SkillEditorLoadState.Loading) {
 
 ### useSkillEditorSubmit
 
-Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself.
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook.
 
 `isSubmitErrorRetryable` is `true` only when `submitError` came from something a plain re-send can clear, such as an unavailable service; `retrySubmit` then re-sends the failed attempt's values, reusing the manifest and file blobs it already built. Pair the two to offer the action only where it can help — `onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}` on `SkillEditor`.
 
@@ -3492,6 +3492,7 @@ const {
   loadedPathRef,
   etagRef,
   returnUrl,
+  getCreateReturnUrl: (path) => `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
   refetchSkills,
   client,
   messages: {
