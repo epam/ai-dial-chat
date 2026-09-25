@@ -129,15 +129,27 @@ The percentage SHALL be the used/total ratio of the **worst capped row** — the
 the group's `CatalogLimitStatus` — not the month's. The trigger's accessible name SHALL name that
 row's period, so the number is never ambiguous across three periods.
 
+The trigger SHALL render that percentage as a dial: a circular face with a needle pivoting at its
+centre, aimed by a sweep that rests at the 7-o'clock mark for `0%`, passes straight up at `50%`, and
+stops at the 5-o'clock mark for `100%`. The needle angle SHALL be derived from the worst capped
+row's percentage alone.
+
 The trigger's visual state SHALL be driven by the group's `status`:
 `CatalogLimitStatus.LimitReached` SHALL use the theme error state,
 `CatalogLimitStatus.RunningLow` SHALL use the theme warning state, and an absent status SHALL use
-the default secondary state. `USAGE_LIMIT_THRESHOLD_PERCENT` SHALL NOT be reintroduced; the 75%/100%
-thresholds already encoded in `CatalogLimitStatus` are the single source of truth, so the ring, the
+the default secondary state, each tinting both the needle and the dial face through the matching
+text and background tokens. `USAGE_LIMIT_THRESHOLD_PERCENT` SHALL NOT be reintroduced; the 75%/100%
+thresholds already encoded in `CatalogLimitStatus` are the single source of truth, so the dial, the
 rows' progress fills, and the catalog agree.
 
 Meaning SHALL NOT depend on color or hover alone: the percentage and the period SHALL both be
-present in the accessible name. The layout SHALL support LTR and RTL using logical properties only.
+present in the accessible name. The dial SHALL be marked `aria-hidden`, being a second rendering of
+the value the accessible name already carries.
+
+The layout SHALL support LTR and RTL. The dial is the one exception to using logical properties: it
+is rotationally symmetric and its needle encodes a magnitude, so mirroring it would read `80%` as
+`20%`. It SHALL therefore be centred with the direction-agnostic `50%` technique and SHALL NOT
+mirror under `dir="rtl"`.
 
 #### Scenario: Daily limit reached while the month is comfortable
 
@@ -148,6 +160,19 @@ present in the accessible name. The layout SHALL support LTR and RTL using logic
 
 - **WHEN** the worst capped row is at `80%`
 - **THEN** the trigger uses the warning state and displays `80%`
+
+#### Scenario: The needle tracks the worst capped row
+
+- **WHEN** the worst capped row is at `0%`, `50%`, and `100%` in turn
+- **THEN** the needle rests at the 7-o'clock mark, points straight up, and stops at the 5-o'clock
+  mark respectively
+
+#### Scenario: Direction guard — the dial is centred, not mirrored
+
+- **WHEN** the trigger's stylesheet is inspected
+- **THEN** the needle is placed with the direction-agnostic `50%` centring technique and carries no
+  logical inset that would mirror it under `dir="rtl"`, with a comment stating why this is the
+  exception to the logical-property rule
 
 #### Scenario: No usable limit
 

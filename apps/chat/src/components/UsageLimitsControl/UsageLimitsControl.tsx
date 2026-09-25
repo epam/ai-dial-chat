@@ -22,7 +22,10 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useDeploymentUsageLimits } from '../../hooks/useDeploymentUsageLimits';
 import { resolveLocalizedText } from '../../utils/locale';
-import { findWorstCappedRow } from '../../utils/usage-limits';
+import {
+  findWorstCappedRow,
+  getGaugeNeedleAngle,
+} from '../../utils/usage-limits';
 import { formatUsageResetTime } from '../../utils/usage-reset-time';
 import styles from './UsageLimitsControl.module.scss';
 
@@ -165,9 +168,10 @@ const UsageLimitsControl: FC<Props> = ({
 
   const isLimitReached = limits.status === CatalogLimitStatus.LimitReached;
   const isRunningLow = limits.status === CatalogLimitStatus.RunningLow;
-  const triggerValue = `${worstRow?.usedPercent ?? 0}%`;
-  const ringStyle = {
-    '--usage-percent': worstRow?.usedPercent ?? 0,
+  const usedPercent = worstRow?.usedPercent ?? 0;
+  const triggerValue = `${usedPercent}%`;
+  const gaugeStyle = {
+    '--usage-angle': getGaugeNeedleAngle(usedPercent),
   } as CSSProperties;
 
   /*
@@ -180,6 +184,14 @@ const UsageLimitsControl: FC<Props> = ({
     if (isLimitReached) return 'text-error';
     if (isRunningLow) return 'text-warning';
     return 'text-secondary';
+  };
+
+  /* Dial face, tinted with the matching light background token so the status
+     reads without relying on the needle's colour alone. */
+  const getStatusFaceClass = () => {
+    if (isLimitReached) return 'bg-error';
+    if (isRunningLow) return 'bg-warning';
+    return 'bg-info';
   };
 
   const handleTriggerClick = () => {
@@ -228,11 +240,14 @@ const UsageLimitsControl: FC<Props> = ({
         <span
           aria-hidden
           className={mergeClasses(
-            'inline-block size-3.5 shrink-0 rounded-full',
-            styles.percentageRing,
+            'relative inline-block size-3.5 shrink-0 rounded-full',
+            getStatusFaceClass(),
+            styles.gauge,
           )}
-          style={ringStyle}
-        />
+          style={gaugeStyle}
+        >
+          <span className={styles.gaugeNeedle} />
+        </span>
       </button>
 
       {isOpen && (

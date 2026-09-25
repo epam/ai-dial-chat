@@ -34,8 +34,9 @@ The app-owned `UsageLimitsControl` is passed to the isolated Conversation Input
 library through `usageLimitsSlot`. It reads `dayTokenStats`, `weekTokenStats`,
 and `monthTokenStats`; `minuteTokenStats` is deliberately not shown, being a
 rolling-minute counter the user cannot act on. At rest the trigger shows a
-compact circular ring; hover, keyboard focus, and the open state reveal the
-percentage at the ring's inline-start side inside one rounded capsule.
+compact dial — a circular face with a needle pivoting at its centre; hover,
+keyboard focus, and the open state reveal the percentage at the dial's
+inline-start side inside one rounded capsule.
 
 The popover body is `LimitsTab` from `@epam/ai-dial-catalog`, so the chat and
 the catalog details panel render usage rows through one component. Each
@@ -45,8 +46,9 @@ configured period gets a row with its own progress bar, used/total figures, a
 its row and shows a `Follows cost limit` note instead of a bar. Opening the
 popover refreshes data silently without replacing its content with a loader.
 
-The ring's percentage comes from the worst capped row, and its accessible name
-names that row's period. Its color follows the group's `CatalogLimitStatus`:
+The dial's needle is aimed by the worst capped row's percentage — resting at the
+7-o'clock mark for `0%`, straight up at `50%`, and at the 5-o'clock mark for
+`100%` — and the trigger's accessible name names that row's period. Its color follows the group's `CatalogLimitStatus`:
 the theme error color once any capped period has reached its limit, the theme
 warning color from 75%, and the secondary color below that.
 
