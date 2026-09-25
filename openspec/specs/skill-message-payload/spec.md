@@ -83,7 +83,7 @@ Regenerating an assistant response and resuming a generation after a reload (the
 
 ### Requirement: Composing renders mentions as highlighted text, not full chips
 
-While a message is being actively composed or edited (the new-conversation composer, the existing-conversation composer, the edit-message input, and the AppsEditor/Quick Apps preview composer — all built on the same underlying `<textarea>`-based `Input`), each currently-tracked skill mention SHALL render as a highlighted run of the mention's own `/{name}` text, sharing the character width and font of the surrounding draft text exactly (no substitution of a differently-sized chip widget into the live editing surface). Live-composing mentions SHALL NOT expose a hover tooltip or "View details" action — those remain exclusive to the read-only history rendering (previous requirement) and are not available until the message is sent and re-rendered from history, or (for an already-sent message) until an active edit session on it ends. Selecting a skill from the `/` command menu or the Skills add-menu SHALL insert `/{name}` into the draft text at the caret and begin tracking it as a mention; placing the caret at the trailing boundary of a tracked mention and pressing Backspace SHALL remove that entire mention's text in one operation rather than one character; editing into the interior of a tracked mention's text SHALL stop tracking it as a mention (its text remains as plain text) rather than partially updating it.
+While a message is being actively composed or edited, each currently-tracked skill mention SHALL render as a highlighted run of the mention's own `/{name}` text, sharing the character width and font of the surrounding draft text exactly. A host that enables the click trigger for active mentions SHALL expose the existing description card only when the user clicks the mention or activates it with Enter or Space; hover and focus alone SHALL NOT open it. The card SHALL retain its existing description states and "View details" action, and only that action SHALL open the skill details side panel. A host that omits the optional trigger setting, including the parent chat application, SHALL retain the existing hover/focus behavior. Selecting a skill from the `/` command menu or the Skills add-menu SHALL insert `/{name}` into the draft text at the caret and begin tracking it as a mention; placing the caret at the trailing boundary of a tracked mention and pressing Backspace SHALL remove that entire mention's text in one operation rather than one character; editing into the interior of a tracked mention's text SHALL stop tracking it as a mention (its text remains as plain text) rather than partially updating it.
 
 #### Scenario: Inserting a mention from the command menu
 
@@ -105,10 +105,25 @@ While a message is being actively composed or edited (the new-conversation compo
 - **WHEN** the user places the caret inside a tracked mention's `/{name}` text and types or deletes a character
 - **THEN** that run stops being tracked as a mention (no more highlight, no `custom_content.skills` entry on send) while its current text remains in the draft as plain text
 
-#### Scenario: No tooltip while composing
+#### Scenario: Click opens the active-mention card
 
-- **WHEN** the pointer rests on or focus reaches a highlighted mention run inside an actively composing or editing textarea
-- **THEN** no tooltip opens and no "View details" action is available, unlike the same mention once it is part of sent, read-only history
+- **WHEN** a host configured `activeMentionDetailsTrigger` as `click` and the user clicks a highlighted mention or activates it with Enter or Space
+- **THEN** the description card opens without opening the skill details side panel
+
+#### Scenario: Hover does not open the click-triggered card
+
+- **WHEN** the pointer rests on or focus reaches a highlighted mention in a host configured with `activeMentionDetailsTrigger` as `click`
+- **THEN** no description card opens until the user explicitly activates the mention
+
+#### Scenario: The card retains the details action
+
+- **WHEN** the click-triggered description card is open and the user activates "View details"
+- **THEN** the existing skill details side panel opens for that skill
+
+#### Scenario: Default host behavior remains hover-triggered
+
+- **WHEN** a host omits `activeMentionDetailsTrigger` for a composing mention
+- **THEN** hover and keyboard focus open the existing description card
 
 ---
 

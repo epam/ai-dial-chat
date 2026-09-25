@@ -6,27 +6,35 @@ import type { NavigationSheetLabels } from '../../../models/navigation-sheet-pro
 import type { NavigationUserProfile } from '../../../models/user-profile';
 import { NavigationSheet } from '../NavigationSheet';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  BASE_ICON_SIZE: 20,
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ElementSize: { Standard: 'standard' },
-  EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
-  GhostIconButton: ({
-    'aria-label': ariaLabel,
-    onClick,
-  }: {
-    'aria-label': string;
-    onClick?: () => void;
-  }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
-  CloseButton: ({
-    ariaLabel,
-    onClose,
-  }: {
-    ariaLabel: string;
-    onClose: () => void;
-  }) => <button type="button" aria-label={ariaLabel} onClick={onClose} />,
-}));
+/* The sheet rows are the real kit `MenuItem`, so their role, name and
+   `aria-current` are what a user gets; the rest stays stubbed. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { MenuItem, MenuItemMark } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    MenuItem,
+    MenuItemMark,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    BASE_ICON_SIZE: 20,
+    DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+    ElementSize: { Standard: 'standard' },
+    EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
+    GhostIconButton: ({
+      'aria-label': ariaLabel,
+      onClick,
+    }: {
+      'aria-label': string;
+      onClick?: () => void;
+    }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
+    CloseButton: ({
+      ariaLabel,
+      onClose,
+    }: {
+      ariaLabel: string;
+      onClose: () => void;
+    }) => <button type="button" aria-label={ariaLabel} onClick={onClose} />,
+  };
+});
 
 const HomeIcon = () => <svg />;
 const CatalogIcon = () => <svg />;

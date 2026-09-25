@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { MenuItem, MenuItemMark } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type ReactNode } from 'react';
 import styles from './NavigationSheet.module.scss';
 
@@ -41,20 +42,24 @@ export const SheetRow: FC<SheetRowProps> = memo(
     textClassName = 'dial-small-text',
   }) => (
     <li>
-      <button
-        type="button"
+      {/* No `role`, so the kit row stays a plain button inside the list. The
+          geometry classes keep the sheet's full-bleed row instead of the
+          kit's inset menu row. */}
+      <MenuItem
+        label={label}
+        labelClassName={textClassName}
+        icon={icon && <span className={styles.rowIcon}>{icon}</span>}
+        trailing={trailing}
+        mark={MenuItemMark.Highlight}
+        selected={isHighlighted}
         aria-current={isCurrent ? 'true' : undefined}
         className={mergeClasses(
+          'h-auto gap-3 rounded-none px-4 py-[10px]',
           styles.row,
           isHighlighted && styles.rowActive,
-          'flex w-full items-center gap-3 px-4 py-[10px] text-start',
         )}
         onClick={onClick}
-      >
-        {icon && <span className={styles.rowIcon}>{icon}</span>}
-        <span className={mergeClasses(textClassName, 'flex-1')}>{label}</span>
-        {trailing}
-      </button>
+      />
     </li>
   ),
 );

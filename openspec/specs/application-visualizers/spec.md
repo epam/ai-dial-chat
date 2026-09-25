@@ -27,6 +27,15 @@ grouped visualizer, and SHALL re-export it from `@epam/ai-dial-chat-shared`:
 - `width?: number`, `height?: number`, `mobileHeight?: number` — optional integers ≥ 1.
   Forwarded in `CustomVisualizerDataLayout` and used by the host to size the inline
   frame.
+- `borderless?: boolean` — optional. When `true`, the inline frame renders without its
+  border, rounded corners, background, and header divider. Carried over from legacy
+  Chat 0.x.
+- `withoutTitle?: boolean` — optional. When `true`, the inline frame hides its header
+  title text; the header actions (expand-to-canvas) stay visible and the iframe keeps
+  its accessible `title`. Carried over from legacy Chat 0.x.
+
+A non-boolean `borderless` or `withoutTitle` SHALL fail validation and drop the entry,
+like any other mistyped field.
 
 The following fields SHALL be accepted and preserved for operator-configuration parity
 but MUST NOT be consumed by host logic: `description?: string`, `icon?: string`,
@@ -35,7 +44,8 @@ an entry to be dropped, so that a configuration copied verbatim from legacy Chat
 still yields a working visualizer.
 
 The following legacy fields SHALL be omitted from the type and ignored if present in
-the parsed JSON: `expanded`, `borderless`, `withoutTitle`, `providerId`, `logInHint`.
+the parsed JSON: `expanded`, `providerId`, `logInHint`. `expanded` has no successor:
+legacy Chat used it to open a collapsible attachments section that 1.0 does not have.
 Their presence MAY produce a warning log entry but MUST NOT cause an entry to be
 dropped.
 
@@ -66,6 +76,12 @@ translatable string — it MUST NOT be localised, or the handshake breaks.
 - **WHEN** the registry loader parses an entry carrying `description`, `icon`, `passAuthInfo`, `passExplicitToken`, and `expanded`
 - **THEN** `description`, `icon`, `passAuthInfo`, and `passExplicitToken` are retained on the resulting `ApplicationVisualizer`
 - **AND** `expanded` is dropped with a warning naming it as an unrecognised field
+
+#### Scenario: Display flags are retained
+
+- **WHEN** the registry loader parses an entry carrying `borderless: true` and `withoutTitle: true`
+- **THEN** both flags are retained on the resulting `ApplicationVisualizer`
+- **AND** no unrecognised-field warning names them
 
 ---
 
@@ -309,6 +325,10 @@ existing `McpAppInlinePreview`:
   a caller-supplied pixel height.
 - A header strip above the frame carries the entry title and an expand-to-canvas icon
   button wired to an `onExpand: () => void` prop.
+- `isBorderless?: boolean` drops the frame's border, rounded corners, background, and
+  the header's bottom divider; `isTitleHidden?: boolean` omits the header title text
+  while keeping the actions. Both default to `false`. The host maps them from the
+  entry's `borderless` and `withoutTitle`.
 - Loading, error, and expand labels are props with English defaults; the component MUST
   NOT import i18n.
 - It MUST NOT read app-level context (auth, theme, config, routing, feature flags).
@@ -376,6 +396,17 @@ and the "opened in canvas" placeholder is a `role="status"` region with
 
 - **WHEN** the entry declares `mobileHeight` and `useIsMobile` reports a mobile viewport
 - **THEN** the inline frame is sized to `mobileHeight`
+
+#### Scenario: withoutTitle hides the header title
+
+- **WHEN** the matched entry sets `withoutTitle: true`
+- **THEN** the inline header shows no title text
+- **AND** the expand button and the iframe's `title` are still present
+
+#### Scenario: borderless drops the frame chrome
+
+- **WHEN** the matched entry sets `borderless: true`
+- **THEN** the inline frame renders without its border, rounded corners, background, and header divider
 
 ---
 

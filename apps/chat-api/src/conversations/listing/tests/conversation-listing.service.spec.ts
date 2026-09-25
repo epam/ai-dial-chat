@@ -84,6 +84,7 @@ describe('ConversationListingService', () => {
     type MetadataItem = {
       url: string;
       nodeType: string;
+      createdAt?: number;
       updatedAt?: number;
       name?: string;
       parentPath?: string;
@@ -991,6 +992,105 @@ describe('ConversationListingService', () => {
 
       expect(result.items[0].id).toBe('conversations/public/newer');
       expect(result.items[1].id).toBe('conversations/test-bucket/older');
+    });
+
+    it('exposes the DIAL Core creation time of user-bucket and public-bucket items', async () => {
+      mockMetadata(
+        [
+          {
+            url: 'conversations/test-bucket/own',
+            nodeType: 'FILE',
+            createdAt: 1000,
+            updatedAt: 2000,
+          },
+        ],
+        [
+          {
+            url: 'conversations/public/published',
+            nodeType: 'FILE',
+            createdAt: 1500,
+            updatedAt: 2500,
+          },
+        ],
+      );
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      const own = result.items.find(
+        (i) => i.id === 'conversations/test-bucket/own',
+      );
+      const published = result.items.find(
+        (i) => i.id === 'conversations/public/published',
+      );
+      expect(own?.createdAt).toBe(1000);
+      expect(published?.createdAt).toBe(1500);
+      expect(published?.publishedWithMe).toBe(true);
+    });
+
+    it('omits createdAt when DIAL Core does not report it', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/undated',
+          nodeType: 'FILE',
+          updatedAt: 2000,
+        },
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0]).not.toHaveProperty('createdAt');
+    });
+
+    it('omits createdAt for conversations shared with the user', async () => {
+      mockMetadata([]);
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
+        data: {
+          resources: [
+            { url: 'conversations/other-bucket/shared-conv', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0]).not.toHaveProperty('createdAt');
+      expect(result.items[0].updatedAt).toBe(0);
+    });
+
+    it('keeps ordering by updatedAt even when creation times disagree', async () => {
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/created-later',
+          nodeType: 'FILE',
+          createdAt: 5000,
+          updatedAt: 1000,
+        },
+        {
+          url: 'conversations/test-bucket/updated-later',
+          nodeType: 'FILE',
+          createdAt: 100,
+          updatedAt: 3000,
+        },
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items.map((i) => i.id)).toEqual([
+        'conversations/test-bucket/updated-later',
+        'conversations/test-bucket/created-later',
+      ]);
     });
 
     it('returns only user items when public bucket request fails', async () => {

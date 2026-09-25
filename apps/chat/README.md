@@ -90,6 +90,15 @@ decorative spider drop; reduced motion leaves the page untouched and shows stati
 spiders. Existing public selectors provide all targets without changes to core
 page components or libraries.
 
+The connected-web scene keeps 54 spiders on mobile and 80 on desktop, with
+slightly larger bodies and small webs that also attach to visible composer,
+welcome-heading and conversation-history corners, plus the main pumpkin's body.
+The pumpkin gets a target before the history limit is filled and remains clickable.
+A single canvas draws at most
+30 times per second, reusing finished silk and spider artwork. Target geometry is
+read only at scene setup; real controls retain their focus and behavior. Scrolling,
+resizing or hiding the tab stops the scene, and reduced motion shows a static web.
+
 Ghosts possess separate small interface elements: their inert visual copies
 float and grow eyes, while one brave ghost tries to frighten the main pumpkin.
 The pumpkin answers with a glowing grin; the ghost recoils and hides with its
@@ -103,12 +112,16 @@ Missing anchors retain the decorative crossing flock. Reduced motion or missing
 animation support shows stationary ghosts without borrowing elements. Targeting
 and playback stay in the Halloween layer and work in both LTR and RTL.
 
-The cat tests gravity on nearby buttons: it jumps onto the composer, approaches
-up to two small controls, tests the first with a cautious paw and deliberately
-pushes its prizes off their ledges. The last button rebounds, startling the cat
-before it calmly grooms and leaves. Paw contact and falling copies share one
-17.5-second timeline; the Cat scene unmounts after eighteen seconds. Only safe
-idle buttons are copied (at most sixty descendants and 300×96/24000px² each).
+The cat tests gravity on nearby buttons: it walks in on four legs, jumps onto the
+composer and sits there glancing at the viewer and down at its prize, then hops
+down beside up to two small controls. It moves each button gradually over two
+paw pushes, looking at the viewer, at the button while pushing, and back at the
+viewer, until its prizes fall off their ledges. The last button rebounds,
+startling the cat before it sits to groom and leaves. A seated drawing sits,
+pushes and grooms; a standing drawing with a diagonal gait walks and jumps. Paw
+contact and falling copies share one 25-second timeline; the Cat scene unmounts
+after 25.5 seconds. Only safe idle buttons are copied (at most sixty descendants
+and 300×96/24000px² each).
 The composer stays live, preserving its draft, focus, selection and position.
 Interaction or real anchor changes restore controls immediately; unrelated toast
 portal removal leaves playback running. One eligible button keeps the same

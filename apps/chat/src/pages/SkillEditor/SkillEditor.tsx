@@ -96,7 +96,6 @@ const SkillEditorPage: FC = () => {
     rawReturnUrl != null && isSafeReturnUrl(rawReturnUrl)
       ? rawReturnUrl
       : ROUTES.Catalog;
-
   const personalBucket = user?.bucket;
 
   const rawId = searchParams.get(EditorQuery.Id);
@@ -122,6 +121,13 @@ const SkillEditorPage: FC = () => {
   }, [isEditMode, personalBucket, rawId]);
   const bucket = skillResource?.bucket;
   const skillPath = skillResource?.path;
+  const getCreateReturnUrl = useCallback(
+    (path: string) =>
+      `${ROUTES.Catalog}?${new URLSearchParams({
+        itemId: `skills/${bucket}/${path}`,
+      }).toString()}`,
+    [bucket],
+  );
 
   const {
     loadState,
@@ -256,6 +262,7 @@ const SkillEditorPage: FC = () => {
     loadedPathRef,
     etagRef,
     returnUrl,
+    getCreateReturnUrl,
     refetchSkills,
     client: skillEditorSubmitClient,
     messages: submitMessages,

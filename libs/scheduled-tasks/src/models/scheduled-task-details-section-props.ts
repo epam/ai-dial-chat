@@ -8,6 +8,8 @@ interface ScheduledTaskDetailsSectionLabels {
   repeatsLabel: string;
   /** Label for the activity-window field, e.g. "Active". */
   activeWindowLabel: string;
+  /** Label for the completed-state field, e.g. "Status". */
+  completedFieldLabel: string;
 }
 
 /** Props for the {@link ScheduledTaskDetailsSection} component. */
@@ -22,6 +24,8 @@ export interface ScheduledTaskDetailsSectionProps {
   repeatsLabel?: string;
   /** Pre-formatted activity-window label, e.g. "Aug 1, 2026 – Dec 31, 2026". Omit to hide the field (unbounded or one-shot schedule). */
   activeWindowLabel?: string;
+  /** Pre-formatted completed-state value, e.g. "Completed" — for a task that can no longer produce a future run. Omit to hide the field. */
+  completedLabel?: string;
   /** CSS class applied to each field label. Defaults to `'dial-tiny-text'`. */
   fieldLabelClassName?: string;
   /** CSS class applied to each field value. Defaults to `'dial-small-text'`. */

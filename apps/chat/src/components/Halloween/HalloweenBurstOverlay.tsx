@@ -1,9 +1,6 @@
 import type { FC } from 'react';
-import { memo, useMemo } from 'react';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { memo } from 'react';
 import { HalloweenBurst } from '../../types/halloween';
-import { buildHalloweenWebLayout } from '../../utils/halloween';
-import styles from './Halloween.module.scss';
 import HalloweenBats from './HalloweenBats';
 import HalloweenBowling from './HalloweenBowling';
 import HalloweenCatScene from './HalloweenCatScene';
@@ -21,7 +18,7 @@ import HalloweenRavens from './HalloweenRavens';
 import { HalloweenCauldron } from './HalloweenSecrets';
 import HalloweenSpiderTheft from './HalloweenSpiderTheft';
 import HalloweenTrain from './HalloweenTrain';
-import HalloweenWeb from './HalloweenWeb';
+import HalloweenWebScene from './HalloweenWebScene';
 
 const extraScenes: Partial<Record<HalloweenBurst, FC>> = {
   [HalloweenBurst.Bats]: HalloweenBats,
@@ -37,6 +34,7 @@ const extraScenes: Partial<Record<HalloweenBurst, FC>> = {
   [HalloweenBurst.Mimic]: HalloweenMimic,
   [HalloweenBurst.Bowling]: HalloweenBowling,
   [HalloweenBurst.Mummy]: HalloweenMummy,
+  [HalloweenBurst.Web]: HalloweenWebScene,
 };
 
 interface Props {
@@ -47,38 +45,10 @@ interface Props {
 /** Scene artwork only; the shared celebration runtime supplies its viewport layer. */
 const HalloweenBurstOverlay: FC<Props> = ({ burst }) => {
   const ExtraScene = extraScenes[burst];
-  const isMobile = useIsMobile();
-  const webLayout = useMemo(
-    () =>
-      burst === HalloweenBurst.Web ? buildHalloweenWebLayout(isMobile) : null,
-    [burst, isMobile],
-  );
 
   return (
     <>
       {ExtraScene && <ExtraScene />}
-      {webLayout && (
-        <svg
-          viewBox="0 0 1000 1000"
-          preserveAspectRatio="none"
-          className={styles.webNetwork}
-          focusable="false"
-        >
-          {webLayout.strands.map((strand) => (
-            <path
-              key={`${strand.from}-${strand.to}`}
-              d={strand.path}
-              style={strand.style}
-              pathLength="1"
-              vectorEffect="non-scaling-stroke"
-              className={styles.webBridge}
-            />
-          ))}
-        </svg>
-      )}
-      {webLayout?.webs.map((web, index) => (
-        <HalloweenWeb key={index} style={web.style} />
-      ))}
       {burst === HalloweenBurst.Witches && (
         <HalloweenNightFlight burst={burst} />
       )}

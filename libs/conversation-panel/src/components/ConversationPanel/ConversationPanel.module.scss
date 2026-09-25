@@ -25,12 +25,6 @@
   color: var(--cp-text-secondary, var(--text-tertiary, #848e9c));
 }
 
-.taskBadge {
-  border-color: var(--cp-task-badge-border, var(--stroke-tertiary, #e0e6f0));
-  background: var(--cp-task-badge-bg, var(--bg-layer-base, #f5f7fa));
-  color: var(--cp-task-badge-text, var(--text-secondary, #57647a));
-}
-
 .dropZoneActive {
   @apply ring-1 ring-inset;
   --tw-ring-color: var(--cp-drop-zone-ring, var(--stroke-accent, #1d4ed8));

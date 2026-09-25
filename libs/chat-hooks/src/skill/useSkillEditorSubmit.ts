@@ -132,6 +132,8 @@ export interface UseSkillEditorSubmitParams {
   etagRef: React.MutableRefObject<string | undefined>;
   /** Where to navigate on a successful save. */
   returnUrl: string;
+  /** Resolves the destination after creation from the normalized skill path. Defaults to `returnUrl`. */
+  getCreateReturnUrl?: (path: string) => string;
   /** Refetches the host's skill listing after a successful save. */
   refetchSkills: () => Promise<void>;
   /** Already-configured create/update operations. */
@@ -185,6 +187,7 @@ export const useSkillEditorSubmit = ({
   loadedPathRef,
   etagRef,
   returnUrl,
+  getCreateReturnUrl,
   refetchSkills,
   client,
   messages,
@@ -317,7 +320,7 @@ export const useSkillEditorSubmit = ({
           title: messages.saveSuccessTitle,
           message: messages.createSuccess(normalizedName),
         });
-        onNavigate(returnUrl);
+        onNavigate(getCreateReturnUrl?.(path) ?? returnUrl);
       } catch (err) {
         setPhase('failure');
         await applyUploadErrorStatus(err);
@@ -333,6 +336,7 @@ export const useSkillEditorSubmit = ({
       onNotify,
       onNavigate,
       returnUrl,
+      getCreateReturnUrl,
       refetchSkills,
       applyUploadErrorStatus,
     ],

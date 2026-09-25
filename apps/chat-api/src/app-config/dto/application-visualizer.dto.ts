@@ -118,4 +118,24 @@ export class ApplicationVisualizerDto {
   @IsOptional()
   @IsBoolean()
   passExplicitToken?: boolean;
+
+  @ApiProperty({
+    description:
+      'When true, the inline frame renders without its border, rounded corners, background, and header divider. Carried over from legacy Chat 0.x.',
+    required: false,
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  borderless?: boolean;
+
+  @ApiProperty({
+    description:
+      'When true, the inline frame hides its header title text; the header actions stay visible. Carried over from legacy Chat 0.x.',
+    required: false,
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  withoutTitle?: boolean;
 }

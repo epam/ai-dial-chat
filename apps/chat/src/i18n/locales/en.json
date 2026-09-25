@@ -473,7 +473,6 @@
       "revokeSuccess": "Shared access to \"{{name}}\" was revoked.",
       "revokeError": "Failed to revoke access to \"{{name}}\". Please try again."
     },
-    "taskBadgeLabel": "TASK",
     "unreadIndicatorLabel": "Unread"
   },
   "conversationPublish": {
@@ -778,6 +777,9 @@
       "statusMissed": "Missed",
       "errorLabel": "Failed to load the scheduled task",
       "activeStatusLabel": "Active",
+      "completedFieldLabel": "Status",
+      "activeDisabledReasonCompleted": "Already ran — cannot be rescheduled",
+      "activeDisabledReasonExpired": "Activity window has ended — cannot be rescheduled",
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
       "activeStatusUpdateError": "Failed to update the task's active status",
@@ -832,8 +834,8 @@
     "hideHiddenFiles": "Hide hidden files",
     "itemsSelected_one": "{{count}} item selected",
     "itemsSelected_other": "{{count}} items selected",
-    "upload": "Upload files",
-    "newFolder": "New folder",
+    "upload": "Files",
+    "newFolder": "Folder",
     "downloading": "Preparing download…",
     "uploadProgressTitle": "Uploading files",
     "uploadProgressSummary": "{{done}} of {{total}} complete",
@@ -958,7 +960,7 @@
     "metadataModifiedDateLabel": "Modified Date:",
     "metadataSizeLabel": "Size:",
     "metadataAuthorLabel": "Author:",
-    "uploadArchiveAction": "Upload archive",
+    "uploadArchiveAction": "Archive",
     "uploadArchiveError": "Failed to upload the archive",
     "uploadArchiveFilesError_one": "Failed to upload this archive file: {{files}}",
     "uploadArchiveFilesError_other": "Failed to upload these archive files: {{files}}",
@@ -1047,6 +1049,7 @@
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
     "qrCodeAriaLabel": "QR code for the share link",
+    "qrDownloadFileName": "share-qr-code.png",
     "loadingLabel": "Creating share link…",
     "errorTitle": "Couldn't create the share link. Please try again.",
     "invitationAcceptError": "This share link is invalid or has expired."

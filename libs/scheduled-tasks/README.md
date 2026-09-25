@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.18 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.19 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -82,11 +82,11 @@ import {
 
 ### ScheduledTaskCard
 
-A single scheduled task rendered as a card: title, optional description/prompt preview, schedule pill, and optional location breadcrumb and "new" badge. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
+A single scheduled task rendered as a card: title, optional description/prompt preview, a status pill, and optional location breadcrumb and "new" badge. The status pill is resolved by `getScheduledTaskStatus`: an explicit `item.presentationStatus` wins over the derived statuses; otherwise `item.isCompleted: true` renders a "Completed" badge (check icon), `item.isActive: false` renders a "Paused" badge, and otherwise the schedule label renders as the schedule pill — exactly one of the three, never two together. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
 
-`item.presentationStatus` takes precedence over the legacy `isActive` flag;
-when omitted, `isActive` retains its existing behavior. Supply
-`labels.completedBadgeLabel` for localized completed-state copy.
+Supply `labels.completedBadgeLabel` for localized completed-state copy.
+
+The Completed badge mirrors the Paused badge's theming contract: `styles.colors.completedBadgeBackground` / `completedBadgeBorder` / `completedBadgeText` (CSS vars `--stc-completed-*`, set on the card root; the badge background defaults to transparent — only the schedule pill keeps a filled background) and `styles.typography.completedBadgeClassName` (defaults to `'dial-tiny-text'`).
 
 ```tsx
 import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
@@ -96,7 +96,9 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
     id: 'sched_1',
     displayName: 'Competitor Updates',
     scheduleLabel: 'Every Monday 12:00',
+    isCompleted: true,
   }}
+  labels={{ completedBadgeLabel: 'Completed' }}
   onCardClick={(id) => {}}
 />;
 ```
@@ -143,7 +145,7 @@ import {
 
 ### ScheduledTaskDetailView
 
-Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout; below it (mobile and tablet) they render as a tab row — Details active by default — with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout; below it (mobile and tablet) they render as a tab row — Details active by default — with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
 
 ```tsx
 import {
@@ -266,6 +268,31 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
 
+## Utilities
+
+### getScheduledTaskStatus
+
+Resolves a `ScheduledTaskItem`'s visual status with fixed precedence: an explicit `presentationStatus` wins over `isCompleted`, which wins over `isActive === false`, which wins over the schedule pill. The card uses it internally; it is exported so a host (or test) resolves the same status the card renders.
+
+```ts
+import {
+  getScheduledTaskStatus,
+  ScheduledTaskStatus,
+} from '@epam/ai-dial-scheduled-tasks';
+
+getScheduledTaskStatus({ isCompleted: true, isActive: false }); // ScheduledTaskStatus.Completed
+getScheduledTaskStatus({ isActive: false }); // ScheduledTaskStatus.Paused
+getScheduledTaskStatus({ isActive: true }); // ScheduledTaskStatus.Scheduled
+```
+
+### ScheduledTaskStatus
+
+String enum of card visual statuses: `Scheduled = 'scheduled'` (schedule pill), `Paused = 'paused'` ("Paused" badge), `Completed = 'completed'` ("Completed" badge). Returned by `getScheduledTaskStatus`.
+
+### ScheduledTaskPresentationStatus
+
+String enum of host-supplied status overrides — the optional `presentationStatus` input on `ScheduledTaskItem`, not a duplicate of `ScheduledTaskStatus`: `Active = 'active'`, `Paused = 'paused'`, `Completed = 'completed'`. `getScheduledTaskStatus` maps it onto `ScheduledTaskStatus` (`Active` → `Scheduled`), and it wins over the derived `isCompleted`/`isActive` fields. Reach for it only when the host's own status source disagrees with what those fields derive.
+
 ## Constants
 
 ### TIME_OF_DAY_PATTERN
@@ -304,8 +331,7 @@ the class names used by the published JavaScript.
   `minCardWidth` (320px), `maxWidth` (1180px), `gap` (20px) and
   `cardHeight` (232px). Columns respond to the available container width;
   skeletons inherit the same height.
-- Card colors `pausedTitleText` and `completedTitleText` override
-  `titleText` for that status only. CardGrid accepts every card badge label.
+- CardGrid accepts every card badge label.
 - Form `styles.layout.detailsWidth` and `columnGap` configure the shared
   builder layout. The scheduler uses two wrapping columns without an empty
   third column. Generic builder forms retain their existing default layout.
