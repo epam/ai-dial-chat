@@ -397,8 +397,10 @@ const ConversationRoute: FC = () => {
       const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
       const skillsForSend = selectedSkills;
       resetSkillMentions();
+
+      let conversation: ConversationResponseDto;
       try {
-        const conversation = await apiCreateConversation(
+        conversation = await apiCreateConversation(
           message,
           selectedItemId,
           attachmentDtos,
@@ -406,35 +408,50 @@ const ConversationRoute: FC = () => {
           undefined,
           skillsForSend,
         );
-        // TODO: remove in next release
-        const isolatedName =
-          isIsolatedView && isolatedModelId
-            ? `isolated_${sanitizeIsolatedModelId(isolatedModelId)}`
-            : null;
+      } catch (err) {
+        seedSkillMentions(message, skillsForSend);
+        throw err;
+      }
+
+      // TODO: remove in next release
+      const isolatedName =
+        isIsolatedView && isolatedModelId
+          ? `isolated_${sanitizeIsolatedModelId(isolatedModelId)}`
+          : null;
+      const savedConversation = {
+        ...conversation,
+        ...(isolatedName ? { name: isolatedName } : {}),
+        prompt: chatSettingsValues.systemPrompt,
+        temperature: chatSettingsValues.temperature,
+        responseFormat: chatSettingsValues.responseFormat,
+      } as ConversationResponseDto;
+
+      try {
         if (isolatedName) {
           await renameConversation(
             getConversationPath(conversation.id),
             isolatedName,
           );
         }
-        const savedConversation = {
-          ...conversation,
-          ...(isolatedName ? { name: isolatedName } : {}),
-          prompt: chatSettingsValues.systemPrompt,
-          temperature: chatSettingsValues.temperature,
-          responseFormat: chatSettingsValues.responseFormat,
-        } as ConversationResponseDto;
         await saveConversation(
           getConversationPath(conversation.id),
           savedConversation,
         );
+      } catch (err) {
+        /*
+         * The conversation already exists on the server at this point, so
+         * navigate to it instead of restoring the composer — restoring it
+         * would let the user retry and create a duplicate conversation.
+         */
         navigate(getConversationRoute(conversation.id), {
           state: { conversation: savedConversation },
         });
-      } catch (err) {
-        seedSkillMentions(message, skillsForSend);
         throw err;
       }
+
+      navigate(getConversationRoute(conversation.id), {
+        state: { conversation: savedConversation },
+      });
     },
     [
       navigate,
