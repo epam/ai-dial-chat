@@ -1,8 +1,6 @@
 import type { CSSProperties } from 'react';
 import {
   HALLOWEEN_GHOST_COUNT,
-  HALLOWEEN_WEB_COUNT,
-  HALLOWEEN_MOBILE_WEB_COUNT,
   HALLOWEEN_BAT_COUNT,
   HALLOWEEN_WITCH_COUNT,
   HALLOWEEN_WISP_COUNT,
@@ -181,104 +179,6 @@ export const nextHalloweenSpiderOffset = ({
     x: (nextX / strayed) * maxOffset,
     y: (nextY / strayed) * maxOffset,
   };
-};
-
-interface HalloweenWebNode extends Point {
-  delay: number;
-  style: CSSProperties;
-}
-
-interface HalloweenWebStrand {
-  from: number;
-  to: number;
-  path: string;
-  style: CSSProperties;
-}
-
-/** A connected silk mesh in viewport percentages, with small weaving spiders. */
-export const buildHalloweenWebLayout = (
-  isMobile: boolean,
-): {
-  webs: HalloweenWebNode[];
-  strands: HalloweenWebStrand[];
-} => {
-  const count = isMobile ? HALLOWEEN_MOBILE_WEB_COUNT : HALLOWEEN_WEB_COUNT;
-  const columns = isMobile ? 6 : 10;
-  const rows = count / columns;
-  const arrivalOrder = Array.from({ length: count }, (_, index) => index);
-  for (let i = count - 1; i > 0; i -= 1) {
-    const other = Math.floor(Math.random() * (i + 1));
-    [arrivalOrder[i], arrivalOrder[other]] = [
-      arrivalOrder[other],
-      arrivalOrder[i],
-    ];
-  }
-  /* Keep a little silk near every edge, but scatter the interior widely
-     enough that the underlying coverage grid does not read as a pattern. */
-  const positionInCell = (cell: number, total: number) =>
-    cell === 0
-      ? between(0.15, 0.55)
-      : cell === total - 1
-        ? between(0.45, 0.85)
-        : between(0.08, 0.92);
-  const webs = Array.from({ length: count }, (_, cell) => {
-    const column = cell % columns;
-    const row = Math.floor(cell / columns);
-    const x = (column + positionInCell(column, columns)) * (100 / columns);
-    const y = (row + positionInCell(row, rows)) * (100 / rows);
-    const delay = (arrivalOrder[cell] / (count - 1)) * 4.2;
-    const escapesUp = Math.random() < 0.5;
-    return {
-      x,
-      y,
-      delay,
-      style: {
-        '--web-x': `${x}%`,
-        '--web-y': `${y}%`,
-        '--web-size': isMobile
-          ? `clamp(40px, ${between(12, 16).toFixed(1)}vw, 68px)`
-          : `clamp(64px, ${between(5, 9).toFixed(1)}vw, 108px)`,
-        '--web-delay': `${delay.toFixed(2)}s`,
-        '--web-rotation': `${between(-180, 180).toFixed(1)}deg`,
-        '--web-weave-duration': `${between(2.8, 4.1).toFixed(2)}s`,
-        '--web-run-duration': `${between(8.8, 9.6).toFixed(2)}s`,
-        '--web-escape-x': `${between(-55, 55).toFixed(1)}vw`,
-        '--web-escape-y': escapesUp ? '-120vh' : '120vh',
-      } as CSSProperties,
-    };
-  });
-  const strands: HalloweenWebStrand[] = [];
-  const connect = (from: number, to: number) => {
-    const a = webs[from];
-    const b = webs[to];
-    /* Vary the number and sag of threads, while retaining common anchors. */
-    const threadCount = Math.floor(between(2, 5));
-    const path = Array.from({ length: threadCount }, (_, thread) => {
-      const bend = (thread - (threadCount - 1) / 2) * between(0.5, 1.6);
-      const cx = (a.x + b.x) * 5 - (b.y - a.y) * bend * 1.4;
-      const cy = (a.y + b.y) * 5 + (b.x - a.x) * bend * 1.4;
-      return `M${a.x * 10} ${a.y * 10} Q${cx} ${cy} ${b.x * 10} ${b.y * 10}`;
-    }).join(' ');
-    strands.push({
-      from,
-      to,
-      path,
-      style: {
-        '--web-delay': `${Math.min(a.delay, b.delay).toFixed(2)}s`,
-      } as CSSProperties,
-    });
-  };
-  webs.forEach((_, cell) => {
-    if (cell % columns < columns - 1) connect(cell, cell + 1);
-    if (cell + columns < count) {
-      connect(cell, cell + columns);
-      if (cell % columns < columns - 1) {
-        if (Math.random() < 0.5) connect(cell, cell + columns + 1);
-        else connect(cell + 1, cell + columns);
-      }
-    }
-  });
-  return { webs, strands };
 };
 
 export const buildHalloweenBatFlight = (): CSSProperties[] =>
