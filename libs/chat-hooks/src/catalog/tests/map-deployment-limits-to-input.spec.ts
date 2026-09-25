@@ -9,16 +9,17 @@ import {
 
 const labels: ConversationInputLimitsLabels = {
   tokenGroup: 'Token limits',
-  tokensPerDay: 'Today',
-  tokensPerWeek: 'This week',
-  tokensPerMonth: 'This month',
+  costGroup: 'Cost limits',
+  periodDay: 'Today',
+  periodWeek: 'This week',
+  periodMonth: 'This month',
   followsCostLimit: 'Follows cost limit',
-  formatSpentCaption: (amount) => `${amount} spent`,
+  noLimit: 'No limit',
   formatValueLabel: (used, total) => `${used} / ${total}`,
   formatProgressAriaLabel: ({ label, used, total }) =>
     `${label}: ${used} of ${total} used`,
-  formatFollowsCostLimitAriaLabel: ({ label, used }) =>
-    `${label}: ${used} used. Follows cost limit.`,
+  formatUncappedAriaLabel: ({ label, used, note }) =>
+    `${label}: ${used} used. ${note}.`,
 };
 
 const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
@@ -84,12 +85,9 @@ describe('mapDeploymentLimitsToInput', () => {
     expect(rowLabels(dto)).toEqual(['Today', 'This month']);
   });
 
-  it('formats a capped row through the injected callbacks and clamps a negative used', () => {
+  it('formats a capped token row through the injected callbacks and clamps a negative used', () => {
     const result = mapDeploymentLimitsToInput(
-      {
-        dayTokenStats: { used: -5, total: 10000 },
-        dayCostStats: { used: 1.2, total: 100 },
-      },
+      { dayTokenStats: { used: -5, total: 10000 } },
       labels,
     );
 
@@ -100,9 +98,20 @@ describe('mapDeploymentLimitsToInput', () => {
       usedLabel: '0',
       totalLabel: '10K',
       valueLabel: '0 / 10K',
-      captionLabel: '$1.2 spent',
       ariaLabel: 'Today: 0 of 10,000 used',
     });
+  });
+
+  it('never captions a token row with the account-wide spend', () => {
+    const result = mapDeploymentLimitsToInput(
+      {
+        dayTokenStats: { used: 20, total: 100 },
+        dayCostStats: { used: 1.2, total: 100 },
+      },
+      labels,
+    );
+
+    expect(result?.groups[0].rows[0]).not.toHaveProperty('captionLabel');
   });
 
   it('treats the unlimited sentinel as following the cost limit', () => {
@@ -254,6 +263,90 @@ describe('mapDeploymentLimitsToInput', () => {
 
       expect(row?.isUnlimited).toBe(true);
       expect(row?.resetIsoValue).toBe(DAY_RESETS_AT);
+    });
+  });
+
+  describe('cost group', () => {
+    it("lists the caller's day, week and month budget as its own group", () => {
+      const result = mapDeploymentLimitsToInput(
+        {
+          dayTokenStats: { used: 36494, total: 50000 },
+          dayCostStats: { used: 0.0440118, total: 100 },
+          weekCostStats: { used: 0.0796718, total: 200 },
+          monthCostStats: { used: 0.0796718, total: 500 },
+        },
+        labels,
+      );
+
+      expect(result?.groups.map((group) => group.label)).toEqual([
+        'Token limits',
+        'Cost limits',
+      ]);
+      expect(result?.groups[1].rows.map((row) => row.label)).toEqual([
+        'Today',
+        'This week',
+        'This month',
+      ]);
+    });
+
+    it('formats cost figures as currency', () => {
+      const result = mapDeploymentLimitsToInput(
+        { dayCostStats: { used: 0.0440118, total: 100 } },
+        labels,
+      );
+
+      expect(result?.groups[0].rows[0]).toMatchObject({
+        label: 'Today',
+        usedLabel: '$0.04',
+        totalLabel: '$100',
+        valueLabel: '$0.04 / $100',
+      });
+    });
+
+    it('marks a budget-free period as having no limit rather than following the cost limit', () => {
+      const result = mapDeploymentLimitsToInput(
+        {
+          minuteCostStats: { used: 1, total: Number.MAX_SAFE_INTEGER },
+          dayCostStats: { used: 1, total: Number.MAX_SAFE_INTEGER },
+        },
+        labels,
+      );
+      const row = result?.groups[0].rows[0];
+
+      expect(row?.isUnlimited).toBe(true);
+      expect(row?.noteLabel).toBe('No limit');
+      expect(row?.ariaLabel).toBe('Today: $1 used. No limit.');
+    });
+
+    it('never maps the rolling-minute cost stat', () => {
+      const result = mapDeploymentLimitsToInput(
+        { minuteCostStats: { used: 0.0127488, total: 5 } },
+        labels,
+      );
+
+      expect(result).toBeUndefined();
+    });
+
+    it('lets a cost row drive the overall status', () => {
+      const result = mapDeploymentLimitsToInput(
+        {
+          dayTokenStats: { used: 10, total: 100 },
+          dayCostStats: { used: 100, total: 100 },
+        },
+        labels,
+      );
+
+      expect(result?.status).toBe(CatalogLimitStatus.LimitReached);
+    });
+
+    it('carries reset times on cost rows too', () => {
+      const result = mapDeploymentLimitsToInput(
+        { dayCostStats: { used: 1, total: 100, resetsAt: DAY_RESETS_AT } },
+        labels,
+        formatReset,
+      );
+
+      expect(result?.groups[0].rows[0].resetIsoValue).toBe(DAY_RESETS_AT);
     });
   });
 });

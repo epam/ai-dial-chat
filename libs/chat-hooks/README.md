@@ -2681,9 +2681,11 @@ const api = kind && buildConnectApi(baseUrl, toolsetId, kind);
 
 ### mapDeploymentLimitsToInput
 
-Maps a deployment's day, week, and month token-limit stats into display-ready `CatalogItemLimits` for a conversation-input usage affordance — one "token limits" group of `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across the capped ones — or `undefined` when no period reports a usable limit. `minuteTokenStats` is deliberately not mapped: a rolling-minute counter changes between two openings of a popover for reasons the viewer cannot attribute to their own actions.
+Maps a deployment-limits response into display-ready `CatalogItemLimits` for a conversation-input usage affordance, or `undefined` when nothing reports a usable limit. It emits up to two groups: the deployment's day/week/month **token** limits, formatted with compact K/M notation, followed by the caller's day/week/month **cost** budget, formatted as currency. The worst-case `CatalogLimitStatus` is taken across the capped rows of both.
 
-Each row carries a "spent" caption built from the sibling cost stat for the same period, and a row whose total is effectively unlimited (`total >= Number.MAX_SAFE_INTEGER`) gets a "follows cost limit" note instead of a progress bar. Labels and value/aria formatters are injected through a `ConversationInputLimitsLabels` object so the function stays i18n-free.
+The cost stats on a deployment-limits response are the caller's own budget and span every deployment, not the one that was queried — the same figures come back whichever deployment is asked. They are therefore listed as their own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
+
+Minute stats are deliberately not mapped: a rolling-minute counter changes between two openings of a popover for reasons the viewer cannot attribute to their own actions. A row whose total is the uncapped sentinel (`total >= Number.MAX_SAFE_INTEGER`) gets a note instead of a progress bar — `followsCostLimit` on a token row, whose spending the cost budget bounds instead, and `noLimit` on a cost row, which has no budget at all. Labels and value/aria formatters are injected through a `ConversationInputLimitsLabels` object so the function stays i18n-free.
 
 Pass `formatResetTime` to add each period's reset line. The function never parses or formats a timestamp itself: it hands the raw `resetsAt` to the callback and stores only the strings it returns, as a present-or-all-absent trio. Omit the callback, or return `undefined` from it, and the row renders without a reset line.
 
@@ -2695,16 +2697,17 @@ import {
 
 const labels: ConversationInputLimitsLabels = {
   tokenGroup: 'Token limits',
-  tokensPerDay: 'Today',
-  tokensPerWeek: 'This week',
-  tokensPerMonth: 'This month',
+  costGroup: 'Cost limits · all agents',
+  periodDay: 'Today',
+  periodWeek: 'This week',
+  periodMonth: 'This month',
   followsCostLimit: 'Follows cost limit',
-  formatSpentCaption: (amount) => `${amount} spent`,
+  noLimit: 'No limit',
   formatValueLabel: (used, total) => `${used} / ${total}`,
   formatProgressAriaLabel: ({ label, used, total }) =>
     `${label}: ${used} of ${total} used`,
-  formatFollowsCostLimitAriaLabel: ({ label, used }) =>
-    `${label}: ${used} used. Follows cost limit.`,
+  formatUncappedAriaLabel: ({ label, used, note }) =>
+    `${label}: ${used} used. ${note}.`,
 };
 
 const limits = mapDeploymentLimitsToInput(

@@ -1,6 +1,7 @@
 import {
   CatalogLimitStatus,
   type CatalogItemLimits,
+  type UsageLimitGroup,
   type UsageLimitProgressRow,
 } from '@epam/ai-dial-catalog';
 import type {
@@ -12,18 +13,20 @@ import type { FormatResetTime } from '../usage/map-usage-data-to-dashboard';
 
 /** Labels and formatter callbacks for the conversation-input limits mapping utility. */
 export interface ConversationInputLimitsLabels {
-  /** Heading of the group every token stat row is listed under. */
+  /** Heading of the group listing the selected deployment's token limits. */
   tokenGroup: string;
-  /** Label for the current-UTC-day stat row. */
-  tokensPerDay: string;
-  /** Label for the current-UTC-week stat row. */
-  tokensPerWeek: string;
-  /** Label for the current-UTC-month stat row. */
-  tokensPerMonth: string;
-  /** Note shown instead of a total on a row whose limit follows the cost limit. */
+  /** Heading of the group listing the caller's cost budget, which spans every deployment. */
+  costGroup: string;
+  /** Label for the current-UTC-day row, used by both groups. */
+  periodDay: string;
+  /** Label for the current-UTC-week row, used by both groups. */
+  periodWeek: string;
+  /** Label for the current-UTC-month row, used by both groups. */
+  periodMonth: string;
+  /** Note on a token row with no cap of its own, which the cost budget bounds instead. */
   followsCostLimit: string;
-  /** Formats the "$X spent" caption under a row's label. */
-  formatSpentCaption: (amount: string) => string;
+  /** Note on a cost row for a period the caller has no budget on. */
+  noLimit: string;
   /** Formats the combined used/total display value for a capped row. */
   formatValueLabel: (used: string, total: string) => string;
   /** Formats the ARIA label for a capped progress row. */
@@ -32,20 +35,19 @@ export interface ConversationInputLimitsLabels {
     used: string;
     total: string;
   }) => string;
-  /** Formats the ARIA label for an unlimited row, which has no total to announce. */
-  formatFollowsCostLimitAriaLabel: (params: {
+  /** Formats the ARIA label for an uncapped row, which has no total to announce. */
+  formatUncappedAriaLabel: (params: {
     label: string;
     used: string;
+    note: string;
   }) => string;
 }
 
-type StatLabelField = 'tokensPerDay' | 'tokensPerWeek' | 'tokensPerMonth';
+type PeriodLabelField = 'periodDay' | 'periodWeek' | 'periodMonth';
 
 interface PeriodMapping {
   key: keyof DeploymentLimitsResponseDto;
-  labelField: StatLabelField;
-  /** Sibling cost stat for the same period, shown as a "$X spent" caption under the label. */
-  costKey: keyof DeploymentLimitsResponseDto;
+  labelField: PeriodLabelField;
 }
 
 /*
@@ -54,21 +56,26 @@ interface PeriodMapping {
  * viewer cannot attribute to their own actions, so a static row for it would
  * be noise rather than headroom they can act on.
  */
-const PERIOD_MAPPINGS: PeriodMapping[] = [
-  { key: 'dayTokenStats', labelField: 'tokensPerDay', costKey: 'dayCostStats' },
-  {
-    key: 'weekTokenStats',
-    labelField: 'tokensPerWeek',
-    costKey: 'weekCostStats',
-  },
-  {
-    key: 'monthTokenStats',
-    labelField: 'tokensPerMonth',
-    costKey: 'monthCostStats',
-  },
+const TOKEN_MAPPINGS: PeriodMapping[] = [
+  { key: 'dayTokenStats', labelField: 'periodDay' },
+  { key: 'weekTokenStats', labelField: 'periodWeek' },
+  { key: 'monthTokenStats', labelField: 'periodMonth' },
 ];
 
-/** Upstream sentinel: a `total` at or above this means the period follows the cost limit instead. */
+/*
+ * The cost stats on a deployment-limits response are the caller's own budget,
+ * spanning every deployment rather than the one that was queried — the same
+ * figures come back whichever deployment is asked. They are listed as their own
+ * group, and never as a caption on a token row, so the spend is not read as
+ * this model's alone.
+ */
+const COST_MAPPINGS: PeriodMapping[] = [
+  { key: 'dayCostStats', labelField: 'periodDay' },
+  { key: 'weekCostStats', labelField: 'periodWeek' },
+  { key: 'monthCostStats', labelField: 'periodMonth' },
+];
+
+/** Upstream sentinel: a `total` at or above this means the period carries no cap of its own. */
 const UNLIMITED_TOTAL_THRESHOLD = Number.MAX_SAFE_INTEGER;
 
 /** Usage ratio at/above which a capped row counts as running low, short of the limit itself. */
@@ -118,27 +125,6 @@ const isUnlimitedTotal = (total: number): boolean =>
   total >= UNLIMITED_TOTAL_THRESHOLD;
 
 /*
- * Per-deployment cost stats are attributed spend, not a per-deployment cap, so
- * only `used` is read here — a `total` on the same object isn't a real limit
- * for this caption.
- */
-const isUsableCostStats = (
-  stats: LimitStatsDto | undefined,
-): stats is LimitStatsDto =>
-  stats != null && Number.isFinite(stats.total) && Number.isFinite(stats.used);
-
-const buildSpentCaption = (
-  stats: LimitStatsDto | undefined,
-  labels: ConversationInputLimitsLabels,
-): string | undefined => {
-  if (!isUsableCostStats(stats)) {
-    return undefined;
-  }
-
-  return labels.formatSpentCaption(formatCost(Math.max(0, stats.used)));
-};
-
-/*
  * Spread into a row so that an unformattable reset time leaves all three
  * fields absent rather than present-and-undefined.
  */
@@ -161,35 +147,48 @@ const buildResetFields = (
   };
 };
 
+/** How a group's figures are rendered and what an uncapped row in it is called. */
+interface GroupFormat {
+  /** Compact display form, e.g. `1.6M` or `$12.35`. */
+  format: (value: number) => string;
+  /** Full form for `aria-label` text, e.g. `1,600,000` or `$12.35`. */
+  formatFull: (value: number) => string;
+  /** Note shown on a row whose total is the uncapped sentinel. */
+  uncappedNote: string;
+}
+
 const mapLimitStatsToRow = (
   stats: LimitStatsDto,
   label: string,
-  captionLabel: string | undefined,
   labels: ConversationInputLimitsLabels,
+  groupFormat: GroupFormat,
   formatResetTime: FormatResetTime | undefined,
 ): UsageLimitProgressRow => {
   const used = Math.max(0, stats.used);
   const total = stats.total;
-  const formattedUsed = numberFormatter.format(truncateForCompactDisplay(used));
-  const formattedTotal = numberFormatter.format(total);
-  const fullUsed = fullNumberFormatter.format(used);
-  const fullTotal = fullNumberFormatter.format(total);
+  const formattedUsed = groupFormat.format(used);
+  const formattedTotal = groupFormat.format(total);
+  const fullUsed = groupFormat.formatFull(used);
+  const fullTotal = groupFormat.formatFull(total);
   const isUnlimited = isUnlimitedTotal(total);
 
   return {
     label,
     used,
     total,
-    captionLabel,
     ...buildResetFields(stats, formatResetTime),
     ...(isUnlimited
-      ? { isUnlimited: true, noteLabel: labels.followsCostLimit }
+      ? { isUnlimited: true, noteLabel: groupFormat.uncappedNote }
       : { usedLabel: formattedUsed, totalLabel: formattedTotal }),
     valueLabel: isUnlimited
       ? formattedUsed
       : labels.formatValueLabel(formattedUsed, formattedTotal),
     ariaLabel: isUnlimited
-      ? labels.formatFollowsCostLimitAriaLabel({ label, used: fullUsed })
+      ? labels.formatUncappedAriaLabel({
+          label,
+          used: fullUsed,
+          note: groupFormat.uncappedNote,
+        })
       : labels.formatProgressAriaLabel({
           label,
           used: fullUsed,
@@ -198,7 +197,7 @@ const mapLimitStatsToRow = (
   };
 };
 
-/** Ratio of `used` to `total` for a capped stat; `0` for an unlimited or otherwise uncapped one. */
+/** Ratio of `used` to `total` for a capped stat; `0` for an uncapped or otherwise unbounded one. */
 const getCappedRatio = (stats: LimitStatsDto): number =>
   isUnlimitedTotal(stats.total) ? 0 : Math.max(stats.used, 0) / stats.total;
 
@@ -220,18 +219,17 @@ const getOverallStatus = (
     return worst;
   }, undefined);
 
-/** Maps the day, week, and month deployment token limits to display-ready rows, or `undefined` when none qualify. */
-export const mapDeploymentLimitsToInput = (
-  dto: DeploymentLimitsResponseDto | undefined,
+/** Collects the qualifying rows of one group, pushing each contributing stat onto `usableStats`. */
+const buildGroup = (
+  dto: DeploymentLimitsResponseDto,
+  mappings: PeriodMapping[],
+  groupLabel: string,
   labels: ConversationInputLimitsLabels,
-  formatResetTime?: FormatResetTime,
-): CatalogItemLimits | undefined => {
-  if (dto == null) {
-    return undefined;
-  }
-
-  const usableStats: LimitStatsDto[] = [];
-  const rows = PERIOD_MAPPINGS.flatMap((mapping) => {
+  groupFormat: GroupFormat,
+  formatResetTime: FormatResetTime | undefined,
+  usableStats: LimitStatsDto[],
+): UsageLimitGroup | undefined => {
+  const rows = mappings.flatMap((mapping) => {
     const stats = dto[mapping.key];
     if (!isUsableLimitStats(stats)) {
       return [];
@@ -242,17 +240,62 @@ export const mapDeploymentLimitsToInput = (
       mapLimitStatsToRow(
         stats,
         labels[mapping.labelField],
-        buildSpentCaption(dto[mapping.costKey], labels),
         labels,
+        groupFormat,
         formatResetTime,
       ),
     ];
   });
 
-  return rows.length > 0
-    ? {
-        groups: [{ label: labels.tokenGroup, rows }],
-        status: getOverallStatus(usableStats),
-      }
+  return rows.length > 0 ? { label: groupLabel, rows } : undefined;
+};
+
+/** Maps a deployment's day, week, and month token limits and the caller's cost budget to display-ready rows, or `undefined` when none qualify. */
+export const mapDeploymentLimitsToInput = (
+  dto: DeploymentLimitsResponseDto | undefined,
+  labels: ConversationInputLimitsLabels,
+  formatResetTime?: FormatResetTime,
+): CatalogItemLimits | undefined => {
+  if (dto == null) {
+    return undefined;
+  }
+
+  const usableStats: LimitStatsDto[] = [];
+
+  const tokenGroup = buildGroup(
+    dto,
+    TOKEN_MAPPINGS,
+    labels.tokenGroup,
+    labels,
+    {
+      format: (value) =>
+        numberFormatter.format(truncateForCompactDisplay(value)),
+      formatFull: (value) => fullNumberFormatter.format(value),
+      uncappedNote: labels.followsCostLimit,
+    },
+    formatResetTime,
+    usableStats,
+  );
+
+  const costGroup = buildGroup(
+    dto,
+    COST_MAPPINGS,
+    labels.costGroup,
+    labels,
+    {
+      format: formatCost,
+      formatFull: formatCost,
+      uncappedNote: labels.noLimit,
+    },
+    formatResetTime,
+    usableStats,
+  );
+
+  const groups = [tokenGroup, costGroup].filter(
+    (group): group is UsageLimitGroup => group != null,
+  );
+
+  return groups.length > 0
+    ? { groups, status: getOverallStatus(usableStats) }
     : undefined;
 };

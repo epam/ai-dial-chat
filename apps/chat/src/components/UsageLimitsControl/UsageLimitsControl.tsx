@@ -60,12 +60,12 @@ const UsageLimitsControl: FC<Props> = ({
   const labels = useMemo(
     () => ({
       tokenGroup: t(ConversationInputI18nKeys.TokenGroup),
-      tokensPerDay: t(ConversationInputI18nKeys.TokensPerDay),
-      tokensPerWeek: t(ConversationInputI18nKeys.TokensPerWeek),
-      tokensPerMonth: t(ConversationInputI18nKeys.TokensPerMonth),
+      costGroup: t(ConversationInputI18nKeys.CostGroup),
+      periodDay: t(ConversationInputI18nKeys.PeriodDay),
+      periodWeek: t(ConversationInputI18nKeys.PeriodWeek),
+      periodMonth: t(ConversationInputI18nKeys.PeriodMonth),
       followsCostLimit: t(ConversationInputI18nKeys.FollowsCostLimit),
-      formatSpentCaption: (amount: string) =>
-        t(ConversationInputI18nKeys.SpentLabel, { amount }),
+      noLimit: t(ConversationInputI18nKeys.NoLimit),
       formatValueLabel: (used: string, total: string) =>
         t(ConversationInputI18nKeys.Value, { used, total }),
       formatProgressAriaLabel: (params: {
@@ -73,10 +73,11 @@ const UsageLimitsControl: FC<Props> = ({
         used: string;
         total: string;
       }) => t(ConversationInputI18nKeys.ProgressAriaLabel, params),
-      formatFollowsCostLimitAriaLabel: (params: {
+      formatUncappedAriaLabel: (params: {
         label: string;
         used: string;
-      }) => t(ConversationInputI18nKeys.FollowsCostLimitAriaLabel, params),
+        note: string;
+      }) => t(ConversationInputI18nKeys.UncappedAriaLabel, params),
     }),
     [t],
   );

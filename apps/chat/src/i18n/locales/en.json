@@ -1211,17 +1211,18 @@
   },
   "conversationInput": {
     "usageLimits": {
-      "triggerAriaLabel": "{{label}} token usage: {{value}}",
+      "triggerAriaLabel": "{{label}} usage: {{value}}",
       "popoverTitle": "Usage Limit",
       "error": "Could not load usage limits",
       "tokenGroup": "Token limits",
-      "tokensPerDay": "Today",
-      "tokensPerWeek": "This week",
-      "tokensPerMonth": "This month",
-      "spentLabel": "{{amount}} spent",
+      "costGroup": "Cost limits · all agents",
+      "periodDay": "Today",
+      "periodWeek": "This week",
+      "periodMonth": "This month",
       "value": "{{used}} / {{total}}",
       "followsCostLimit": "Follows cost limit",
-      "followsCostLimitAriaLabel": "{{label}}: {{used}} used. Follows cost limit.",
+      "noLimit": "No limit",
+      "uncappedAriaLabel": "{{label}}: {{used}} used. {{note}}.",
       "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
     }
   },

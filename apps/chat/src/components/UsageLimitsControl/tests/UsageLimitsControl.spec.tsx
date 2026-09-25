@@ -49,9 +49,9 @@ const DEPLOYMENT_NAME = 'GPT-4o mini';
 
 /* The global `react-i18next` mock returns each key verbatim, so period rows are
    identified by their key rather than by translated English. */
-const DAY_LABEL = 'conversationInput.usageLimits.tokensPerDay';
-const WEEK_LABEL = 'conversationInput.usageLimits.tokensPerWeek';
-const MONTH_LABEL = 'conversationInput.usageLimits.tokensPerMonth';
+const DAY_LABEL = 'conversationInput.usageLimits.periodDay';
+const WEEK_LABEL = 'conversationInput.usageLimits.periodWeek';
+const MONTH_LABEL = 'conversationInput.usageLimits.periodMonth';
 const RESET_LABEL = 'usage.resetsAtLabel';
 const ERROR_LABEL = 'conversationInput.usageLimits.error';
 const TITLE_LABEL = 'conversationInput.usageLimits.popoverTitle';
@@ -103,6 +103,49 @@ describe('UsageLimitsControl', () => {
     expect(screen.getByText(WEEK_LABEL)).toBeTruthy();
     expect(screen.getByText(MONTH_LABEL)).toBeTruthy();
     expect(screen.getAllByRole('progressbar')).toHaveLength(3);
+  });
+
+  it('lists the account-wide cost budget as a second group', async () => {
+    mockUseDeploymentUsageLimits.mockReturnValue({
+      ...defaultHookResult,
+      limitsDto: {
+        dayTokenStats: { used: 36494, total: 50000 },
+        dayCostStats: { used: 0.0440118, total: 100 },
+        monthCostStats: { used: 0.0796718, total: 500 },
+      },
+    });
+    const user = userEvent.setup();
+    renderControl();
+
+    await openPopover(user);
+
+    expect(
+      screen.getByText('conversationInput.usageLimits.tokenGroup'),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('conversationInput.usageLimits.costGroup'),
+    ).toBeTruthy();
+    /* One token row plus two cost rows. The figures themselves go through `t()`,
+       which the global i18n mock returns as the key, so the currency formatting
+       is asserted in the mapper's own spec instead. */
+    expect(screen.getAllByRole('progressbar')).toHaveLength(3);
+    expect(screen.getAllByText(DAY_LABEL)).toHaveLength(2);
+  });
+
+  it('shows no spend caption on a token row, the cost counter spanning every agent', async () => {
+    mockUseDeploymentUsageLimits.mockReturnValue({
+      ...defaultHookResult,
+      limitsDto: {
+        dayTokenStats: { used: 36494, total: 50000 },
+        dayCostStats: { used: 0.0440118, total: 100 },
+      },
+    });
+    const user = userEvent.setup();
+    renderControl();
+
+    await openPopover(user);
+
+    expect(screen.queryByText(/spent/)).toBeNull();
   });
 
   it('renders nothing when no deployment is selected', () => {

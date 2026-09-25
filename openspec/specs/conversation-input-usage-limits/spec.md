@@ -13,22 +13,36 @@ conversation input.
 `mapDeploymentLimitsToInput(dto: DeploymentLimitsResponseDto | undefined, labels:
 ConversationInputLimitsLabels, formatResetTime?: FormatResetTime): CatalogItemLimits | undefined`.
 
-The function SHALL map `dayTokenStats`, `weekTokenStats`, and `monthTokenStats` — in that order —
-into a single `UsageLimitGroup` labelled from `labels.tokenGroup`. It SHALL NOT map
-`minuteTokenStats`, `hourRequestStats`, or `dayRequestStats`.
+The function SHALL emit up to two `UsageLimitGroup`s, in this order:
+
+1. **Token limits**, labelled from `labels.tokenGroup`, mapping `dayTokenStats`, `weekTokenStats`,
+   and `monthTokenStats` in that order. Figures SHALL be formatted with compact K/M notation.
+2. **Cost limits**, labelled from `labels.costGroup`, mapping `dayCostStats`, `weekCostStats`, and
+   `monthCostStats` in that order. Figures SHALL be formatted as currency through `formatCost`.
+
+The cost stats on a deployment-limits response are the **caller's own budget and span every
+deployment**, not the one that was queried — the same figures come back whichever deployment is
+asked. They SHALL therefore be listed as their own group, whose label SHALL say so, and SHALL NOT be
+rendered as a caption on a token row, which would read as that model's spend. `captionLabel` SHALL
+NOT be set on any row, and `labels` SHALL carry no spend-caption formatter.
+
+The function SHALL NOT map `minuteTokenStats`, `minuteCostStats`, `hourRequestStats`, or
+`dayRequestStats`.
 
 A stat SHALL produce a row only when its `total` and `used` are both finite and `total` is greater
-than `0`. A `total` at or above `Number.MAX_SAFE_INTEGER` SHALL set `isUnlimited: true` and
-`noteLabel` from `labels.followsCostLimit` instead of emitting a capped progress row. `used` SHALL be
-clamped to a minimum of `0`. When no stat qualifies, or `dto` is `undefined`, the function SHALL
-return `undefined` rather than a group with an empty `rows` array.
+than `0`. A `total` at or above `Number.MAX_SAFE_INTEGER` SHALL set `isUnlimited: true` and a
+`noteLabel` naming why the row is uncapped — `labels.followsCostLimit` for a token row, whose
+spending is bounded by the cost budget instead, and `labels.noLimit` for a cost row, which has no
+budget at all. `used` SHALL be clamped to a minimum of `0`. When no stat qualifies, or `dto` is
+`undefined`, the function SHALL return `undefined` rather than a group with an empty `rows` array.
 
-For each emitted row the function SHALL set `captionLabel` from the matching sibling cost stat
-(`dayCostStats`, `weekCostStats`, `monthCostStats`) through `labels.formatSpentCaption`, reading only
-that stat's `used`. It SHALL set `valueLabel` and `ariaLabel` through the injected formatter
-callbacks and SHALL NOT build either string from its own template literal.
+Each row SHALL set `valueLabel` and `ariaLabel` through the injected formatter callbacks and SHALL
+NOT build either string from its own template literal. An uncapped row's `ariaLabel` SHALL come from
+`labels.formatUncappedAriaLabel`, which receives the row's `noteLabel` so the spoken form states why
+no total is announced.
 
-The result's `status` SHALL be the worst case across every capped row —
+The result's `status` SHALL be the worst case across every capped row of **both** groups, so a cost
+budget nearing its cap drives the trigger just as a token limit does —
 `CatalogLimitStatus.LimitReached` when any capped row's used/total ratio is at or above `1`,
 otherwise `CatalogLimitStatus.RunningLow` when any is at or above `0.75`, otherwise absent.
 
@@ -49,8 +63,29 @@ the last known limits and SHALL NOT affect message entry or sending.
 
 #### Scenario: Minute stats are never mapped
 
-- **WHEN** `dto` carries a usable `minuteTokenStats`
+- **WHEN** `dto` carries a usable `minuteTokenStats` or `minuteCostStats`
 - **THEN** no row is emitted for it, and its presence alone does not produce a result
+
+#### Scenario: The cost budget is its own group
+
+- **WHEN** `dto` carries both token stats and day/week/month cost stats
+- **THEN** the result has a token group followed by a cost group, and no row in either carries a
+  `captionLabel`
+
+#### Scenario: Cost figures are currency-formatted
+
+- **WHEN** `dayCostStats` is `{ used: 0.0440118, total: 100 }`
+- **THEN** the row's `usedLabel`/`totalLabel` are `"$0.04"`/`"$100"`
+
+#### Scenario: A budget-free period is not described as following the cost limit
+
+- **WHEN** a cost stat's `total` is the uncapped sentinel
+- **THEN** the row's note is `labels.noLimit`, not `labels.followsCostLimit`
+
+#### Scenario: A cost row can drive the status
+
+- **WHEN** the day cost row is at `100%` and every token row is comfortable
+- **THEN** `status` is `CatalogLimitStatus.LimitReached`
 
 #### Scenario: A missing period is skipped without shifting the others
 
@@ -220,9 +255,12 @@ SHALL NOT accept a `labels` prop — it is an `apps/chat` component, and two cal
 byte-identical label objects is the duplication this removes. Its remaining props SHALL be
 `deploymentId` and `isGenerationInProgress`.
 
-New i18n keys under `conversationInput.usageLimits.*`: `tokenGroup`, `tokensPerDay`, `tokensPerWeek`,
-`tokensPerMonth`, `spentLabel`, `value`, `followsCostLimit`, `followsCostLimitAriaLabel`,
-`progressAriaLabel`. `triggerAriaLabel` is re-worded to name the reported period.
+i18n keys under `conversationInput.usageLimits.*`: `tokenGroup`, `costGroup`, `periodDay`,
+`periodWeek`, `periodMonth`, `value`, `followsCostLimit`, `noLimit`, `uncappedAriaLabel`,
+`progressAriaLabel`, plus the pre-existing `popoverTitle`, `error`, and `triggerAriaLabel`. The
+three period labels SHALL be shared by both groups rather than duplicated per group, since they name
+a calendar period and not what is being metered. `triggerAriaLabel` SHALL name the reported period
+without naming tokens, the worst capped row now being a cost row as readily as a token one.
 `usage.resetsAtLabel` and `usage.resetsAtAriaLabel` are reused unchanged. Period labels SHALL use
 calendar wording (`Today`, `This week`, `This month`) and SHALL NOT describe the periods as trailing
 or rolling windows.
