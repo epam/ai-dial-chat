@@ -5,6 +5,7 @@ import type {
   MenuOverlayConfig,
 } from '@epam/ai-dial-conversation-input';
 import type { ComponentType, ReactNode } from 'react';
+import type { ChatSkillDetailsTrigger } from './chat-skill-props';
 import type { SkillListingEntry } from './favorite-skill-item';
 import type { FavoriteSkillsPanelLabels } from './favorite-skills-panel-props';
 
@@ -77,6 +78,11 @@ export interface UseSkillSelectorOverlayOptions {
    * to that line. Unset falls back to the chip's own default label class.
    */
   historyChipLabelClassName?: string;
+  /**
+   * Trigger used by mentions rendered in an active composer. Unset retains
+   * `ChatSkill`'s hover-and-focus default; history chips are unaffected.
+   */
+  activeMentionDetailsTrigger?: ChatSkillDetailsTrigger;
   /**
    * Renders the browse modal's picker content (e.g. a host catalog view);
    * receives the selection and close callbacks to wire into it, and is

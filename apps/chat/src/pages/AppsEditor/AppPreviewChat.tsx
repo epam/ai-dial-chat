@@ -13,10 +13,6 @@ import {
   useConversationStream,
 } from '@epam/ai-dial-chat-hooks';
 import {
-  useComposerSeed,
-  useComposerSeedSource,
-} from '@epam/ai-dial-conversation-input';
-import {
   generateUUID,
   MessageRating,
   MessageRole,
@@ -27,6 +23,10 @@ import {
   type RequestSkill,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
+import {
+  useComposerSeed,
+  useComposerSeedSource,
+} from '@epam/ai-dial-conversation-input';
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
