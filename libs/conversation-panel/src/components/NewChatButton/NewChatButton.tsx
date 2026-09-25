@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { Button, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
@@ -42,24 +42,27 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
 
     return (
       <div className="px-3 py-2" style={cssVars}>
-        <button
+        {/* No `variant`: the kit then paints no background or text colour of
+            its own, so the colours stay on this package's custom properties. */}
+        <Button
+          label={label}
+          textClassName={labelClassName}
+          iconBefore={
+            <IconPlus
+              size={18}
+              stroke={DIAL_KIT_ICON_STROKE}
+              className="shrink-0"
+              aria-hidden
+            />
+          }
           onClick={onClick}
-          type="button"
           className={mergeClasses(
-            'flex h-[36px] w-full cursor-pointer items-center justify-center gap-2 px-3 py-1 shadow-chat-button hover:shadow-xs focus-visible:shadow-xs active:shadow-xs',
+            'h-[36px] w-full gap-2 px-3 py-1 shadow-chat-button hover:shadow-xs focus-visible:shadow-xs active:shadow-xs',
             styles.button,
             className,
             CONVERSATION_PANEL_CLASS.newChatButton,
           )}
-        >
-          <IconPlus
-            size={18}
-            stroke={DIAL_KIT_ICON_STROKE}
-            className="shrink-0"
-            aria-hidden
-          />
-          <span className={labelClassName}>{label}</span>
-        </button>
+        />
       </div>
     );
   },
