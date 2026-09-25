@@ -5,6 +5,8 @@ import {
 } from '@epam/ai-dial-catalog';
 import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconChevronRight } from '@tabler/icons-react';
 import {
   type CSSProperties,
   type FC,
@@ -270,13 +272,22 @@ const UsageLimitsControl: FC<Props> = ({
             layout={LimitRowLayout.Stacked}
             /* The popover lists only what needs attention, so this is the one
                way to the whole picture from the conversation. */
+            footerClassName="dial-caption-text pt-3"
             footerNote={
               <Link
                 to={buildSettingsTabPath(SettingsTabs.Usage)}
-                className="text-accent underline"
                 onClick={() => setIsOpen(false)}
+                /* The negative inline-start margin cancels the pill's own
+                   padding so the label still lines up with the rows above. */
+                className="dial-tiny-semi-text -ms-2 inline-flex h-6 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus"
               >
                 {t(ConversationInputI18nKeys.FullUsageLink)}
+                <IconChevronRight
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
+                  className="rtl:scale-x-[-1]"
+                />
               </Link>
             }
           />
