@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
   GenerationConflictError,
+  GenerationPersistenceError,
   StreamUpstreamError,
 } from '../../create-chat-stream-api';
 import type {
@@ -48,6 +49,7 @@ const useHookHarness = ({
   channel?: ConversationStreamChannel;
   initialConversation?: Conversation;
   generationConflictMessage?: string;
+  generationPersistenceErrorMessage?: string;
   onStreamError?: (error: Error) => void;
   /** Overrides the `AbortController` `startGeneration` returns, so a test can abort it directly to simulate a host-driven stop. */
   generationOverride?: () => AbortController;
@@ -93,6 +95,302 @@ describe('useConversationStream', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  describe('unsaved answers', () => {
+    const warning = 'Unsaved answer: copy before leaving';
+    const placeholder = () =>
+      makeConversation({
+        messages: [
+          {
+            role: MessageRole.User,
+            content: 'question',
+            timestamp: '2026-09-25T00:00:00Z',
+          },
+          {
+            role: MessageRole.Assistant,
+            content: '',
+            timestamp: '2026-09-25T00:00:01Z',
+          },
+        ],
+      });
+    const chunk = {
+      id: 'response-1',
+      object: 'chat.completion.chunk' as const,
+      choices: [
+        {
+          index: 0,
+          finish_reason: null,
+          delta: {
+            content: 'Visible answer',
+            custom_content: {
+              stages: [
+                {
+                  index: 0,
+                  name: 'Visible step',
+                  content: 'Tool output',
+                  status: null,
+                },
+              ],
+              state: { result: 'preserve me' },
+            },
+          },
+        },
+      ],
+    };
+
+    it.each([true, false])(
+      'preserves text, stages and state after terminal failure (explicit=%s)',
+      async (explicit) => {
+        const initial = placeholder();
+        vi.mocked(transport.getConversation).mockResolvedValue(initial);
+        const { result } = renderHook(() =>
+          useHookHarness({
+            transport,
+            conversationId: 'bucket/conv',
+            initialConversation: initial,
+            generationPersistenceErrorMessage: warning,
+          }),
+        );
+        await act(async () => {
+          result.current.stream.startStream(
+            'bucket/conv',
+            'question',
+            1,
+            'gpt-4o',
+          );
+        });
+        act(() => capturedOptions?.onChunk(chunk));
+        expect(result.current.conversation?.messages[1].content).toBe(
+          'Visible answer',
+        );
+        await act(async () => {
+          if (explicit)
+            capturedOptions?.onError(new GenerationPersistenceError());
+          else await capturedOptions?.onComplete();
+        });
+        expect(result.current.conversation?.messages[1]).toMatchObject({
+          content: 'Visible answer',
+          streamErrorMessage: warning,
+          custom_content: {
+            stages: [{ name: 'Visible step', content: 'Tool output' }],
+            state: { result: 'preserve me' },
+          },
+        });
+        expect(result.current.stream.isStreaming).toBe(false);
+        expect(result.current.stream.canStopStreaming).toBe(false);
+        const restored = result.current.stream.restoreBufferedGeneration(
+          'bucket/conv',
+          initial,
+        );
+        expect(restored.messages[1].content).toBe('Visible answer');
+        if (explicit) expect(transport.getConversation).not.toHaveBeenCalled();
+      },
+    );
+
+    it('accepts the saved server answer and enrichment without a warning', async () => {
+      const initial = placeholder();
+      const saved = makeConversation({
+        messages: [
+          initial.messages[0],
+          {
+            role: MessageRole.Assistant,
+            content: 'Visible answer',
+            timestamp: '2026-09-25T00:00:01Z',
+            custom_content: { state: { server: 'enriched' } },
+          },
+        ],
+      });
+      vi.mocked(transport.getConversation).mockResolvedValue(saved);
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/conv',
+          'question',
+          1,
+          'gpt-4o',
+        );
+      });
+      act(() => capturedOptions?.onChunk(chunk));
+      await act(async () => {
+        await capturedOptions?.onComplete();
+      });
+      expect(result.current.conversation).toEqual(saved);
+      expect(
+        result.current.stream.restoreBufferedGeneration('bucket/conv', saved),
+      ).toEqual(saved);
+    });
+
+    it.each([true, false])(
+      'preserves a stages-only answer when terminal reload fails (%s)',
+      async (readFails) => {
+        const initial = placeholder();
+        if (readFails)
+          vi.mocked(transport.getConversation).mockRejectedValue(
+            new Error('network unavailable'),
+          );
+        else vi.mocked(transport.getConversation).mockResolvedValue(initial);
+        const { result } = renderHook(() =>
+          useHookHarness({
+            transport,
+            conversationId: 'bucket/conv',
+            initialConversation: initial,
+            generationPersistenceErrorMessage: warning,
+          }),
+        );
+        await act(async () => {
+          result.current.stream.startStream(
+            'bucket/conv',
+            'question',
+            1,
+            'gpt-4o',
+          );
+        });
+        act(() =>
+          capturedOptions?.onChunk({
+            ...chunk,
+            choices: [
+              {
+                ...chunk.choices[0],
+                delta: { ...chunk.choices[0].delta, content: '' },
+              },
+            ],
+          }),
+        );
+        await act(async () => {
+          await capturedOptions?.onComplete();
+        });
+        expect(result.current.conversation?.messages[1]).toMatchObject({
+          content: '',
+          streamErrorMessage: warning,
+          custom_content: { stages: [{ name: 'Visible step' }] },
+        });
+        expect(result.current.stream.isStreaming).toBe(false);
+      },
+    );
+
+    it.each([true, false])(
+      'preserves an attached answer on terminal failure (explicit=%s)',
+      async (explicit) => {
+        const initial = placeholder();
+        vi.mocked(transport.getConversation).mockResolvedValue(initial);
+        transport.attachToGeneration = vi.fn().mockResolvedValue(
+          new ReadableStream({
+            start(controller) {
+              const events = [
+                { type: 'snapshot', message: initial.messages[1] },
+                { type: 'chunk', chunk },
+                explicit
+                  ? {
+                      type: 'error',
+                      errorType: 'conversation_save_failed',
+                      message: 'raw detail',
+                    }
+                  : { type: 'done' },
+              ];
+              for (const event of events)
+                controller.enqueue(
+                  new TextEncoder().encode(
+                    'data: ' + JSON.stringify(event) + '\n\n',
+                  ),
+                );
+              controller.close();
+            },
+          }),
+        );
+        const { result } = renderHook(() =>
+          useHookHarness({
+            transport,
+            conversationId: 'bucket/conv',
+            initialConversation: initial,
+            generationPersistenceErrorMessage: warning,
+          }),
+        );
+        act(() =>
+          result.current.stream.resumeIfAwaitingGeneration(
+            'bucket/conv',
+            initial,
+          ),
+        );
+        await waitFor(() =>
+          expect(
+            result.current.conversation?.messages[1].streamErrorMessage,
+          ).toBe(warning),
+        );
+        expect(result.current.conversation?.messages[1]).toMatchObject({
+          content: 'Visible answer',
+          custom_content: {
+            stages: [{ name: 'Visible step' }],
+            state: { result: 'preserve me' },
+          },
+        });
+        expect(result.current.stream.isStreaming).toBe(false);
+        if (explicit) expect(transport.getConversation).not.toHaveBeenCalled();
+      },
+    );
+
+    it('does not restore a resumed answer over a newer generation while its reload is pending', async () => {
+      const initial = placeholder();
+      let resolveReload!: (conversation: Conversation) => void;
+      transport.getConversation = vi.fn(
+        () =>
+          new Promise<Conversation>((resolve) => {
+            resolveReload = resolve;
+          }),
+      );
+      transport.attachToGeneration = vi.fn().mockResolvedValue(
+        new ReadableStream({
+          start(controller) {
+            for (const event of [
+              {
+                type: 'snapshot',
+                message: { ...initial.messages[1], content: 'Old answer' },
+              },
+              { type: 'done' },
+            ]) {
+              controller.enqueue(
+                new TextEncoder().encode(
+                  'data: ' + JSON.stringify(event) + '\n\n',
+                ),
+              );
+            }
+            controller.close();
+          },
+        }),
+      );
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+      act(() =>
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          initial,
+        ),
+      );
+      await waitFor(() =>
+        expect(transport.getConversation).toHaveBeenCalledOnce(),
+      );
+      await act(async () => {
+        result.current.stream.startStream('bucket/conv', 'next', 1, 'gpt-4o');
+      });
+      act(() => capturedOptions?.onChunk(chunk));
+      const newAnswer = result.current.conversation;
+      await act(async () => {
+        resolveReload(initial);
+      });
+      expect(result.current.conversation).toEqual(newAnswer);
+      expect(result.current.stream.isStreaming).toBe(true);
+    });
   });
 
   it('delegates start to the injected transport', async () => {

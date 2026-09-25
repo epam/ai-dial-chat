@@ -90,6 +90,19 @@ decorative spider drop; reduced motion leaves the page untouched and shows stati
 spiders. Existing public selectors provide all targets without changes to core
 page components or libraries.
 
+The Halloween train stops with an empty final wagon, picks up the main pumpkin
+and departs with smoke from its chimney and side vents. Boarding uses the pumpkin's
+actual screen position; its decorative copy rides behind the wagon front while
+the original labelled button retains focus and layout. The scene restores the
+pumpkin on completion or interaction and shows static artwork under reduced motion.
+Train direction follows the pumpkin's side, including RTL.
+
+`HALLOWEEN_TRAIN_AUDIO_SRC` in `src/constants/halloween.ts` optionally accepts a
+supplied audio asset URL. It is unset by default, so the train stays silent and
+makes no audio request.
+Configured playback is bounded to the scene, stops on interruption and gracefully
+handles browser playback rejection. Reduced motion always stays silent.
+
 ### Adding an event
 
 Use [the New Year definition](src/celebrations/new-year.ts) as the example and

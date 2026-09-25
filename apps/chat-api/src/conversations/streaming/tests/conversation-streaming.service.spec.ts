@@ -17,7 +17,24 @@ import { CompletionMode } from '../../dto/send-completion.dto';
 import { generationRequestsTotal } from '../../generation/generation-metrics';
 import { ResponsesAdapter } from '../../generation/responses.adapter';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
+import { mergeHtmlTagAnnotationsIntoViewState } from '../../utils/conversation-view-state.server';
 import { ConversationStreamingService } from '../conversation-streaming.service';
+
+vi.mock(
+  '../../utils/conversation-view-state.server',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../utils/conversation-view-state.server')
+      >();
+    return {
+      ...actual,
+      mergeHtmlTagAnnotationsIntoViewState: vi.fn(
+        actual.mergeHtmlTagAnnotationsIntoViewState,
+      ),
+    };
+  },
+);
 
 const TEST_CONVERSATION = {
   id: 'test-bucket/gpt-4o__Test__11111111-1111-1111-1111-111111111111',
@@ -160,6 +177,7 @@ describe('ConversationStreamingService', () => {
       register: vi.fn().mockReturnValue(makeLease()),
       abort: vi.fn().mockReturnValue(true),
       complete: vi.fn(),
+      persistenceFailed: vi.fn(),
       error: vi.fn(),
       beginFinalizing: vi.fn(),
       getCancellation: vi.fn().mockReturnValue({ requested: false }),
@@ -2007,8 +2025,289 @@ describe('ConversationStreamingService', () => {
 
       expect(saveConversationSpy).toHaveBeenCalledTimes(2);
       /* The worker is demonstrably finished, so ownership still releases. */
-      expect(mockGenerationService.complete).toHaveBeenCalledOnce();
+      expect(mockGenerationService.persistenceFailed).toHaveBeenCalledOnce();
+      expect(mockGenerationService.complete).not.toHaveBeenCalled();
       expect(mockGenerationService.error).not.toHaveBeenCalled();
+      expect(res.getWritten()).toContain('conversation_save_failed');
+    });
+  });
+
+  describe('streamCompletion — customViewState annotation pool', () => {
+    const htmlTagAnnotationChunk = (id: string, url = 'files/bucket/doc.pdf') =>
+      `data: {"choices":[{"delta":{"content":"cited","custom_content":{"annotations":[{"target":{"selector":{"type":"html_tag","tag":"cit","id":"${id}"}},"body":{"source":{"type":"attachment","attachment":{"type":"application/pdf","url":"${url}"}}}}]}}}]}\n\n`;
+    const doneChunk = 'data: [DONE]\n\n';
+
+    it("writes a finished agent message's html_tag annotations into customViewState.annotations", async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([htmlTagAnnotationChunk('e1'), doneChunk]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const finalSave = saveConversationSpy.mock.calls[1][2].body as {
+        customViewState?: {
+          annotations: { target: { selector: { id: string } } }[];
+        };
+      };
+      expect(
+        finalSave.customViewState?.annotations.map((a) => a.target.selector.id),
+      ).toEqual(['e1']);
+    });
+
+    it('does not duplicate a re-cited id across two generations', async () => {
+      const existingAnnotation = {
+        target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+        body: {
+          source: {
+            type: 'attachment',
+            attachment: {
+              type: 'application/pdf',
+              url: 'files/bucket/original.pdf',
+            },
+          },
+        },
+      };
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          customViewState: { annotations: [existingAnnotation] },
+        },
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([
+            htmlTagAnnotationChunk('e1', 'files/bucket/new.pdf'),
+            doneChunk,
+          ]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello again',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      const finalSave = saveConversationSpy.mock.calls[1][2].body as {
+        customViewState?: {
+          annotations: { body: { source: { attachment: { url: string } } } }[];
+        };
+      };
+      expect(finalSave.customViewState?.annotations).toHaveLength(1);
+      expect(
+        finalSave.customViewState?.annotations[0].body.source.attachment.url,
+      ).toBe('files/bucket/original.pdf');
+    });
+
+    it('preserves an unrelated customViewState key while adding a new pooled entry', async () => {
+      const existingAnnotation = {
+        target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+        body: {
+          source: {
+            type: 'attachment',
+            attachment: { type: 'application/pdf', url: 'files/bucket/e1.pdf' },
+          },
+        },
+      };
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          customViewState: {
+            annotations: [existingAnnotation],
+            layout: 'wide',
+          },
+        },
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([htmlTagAnnotationChunk('e2'), doneChunk]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      const finalSave = saveConversationSpy.mock.calls[1][2].body as {
+        customViewState?: {
+          annotations: { target: { selector: { id: string } } }[];
+          layout?: string;
+        };
+      };
+      expect(finalSave.customViewState?.layout).toBe('wide');
+      expect(
+        finalSave.customViewState?.annotations.map((a) => a.target.selector.id),
+      ).toEqual(['e1', 'e2']);
+    });
+
+    it('still contributes a citation from a stopped generation', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      const generationAbortController = new AbortController();
+      const lease = makeLease(generationAbortController);
+      vi.mocked(mockGenerationService.register).mockReturnValue(lease);
+      vi.mocked(mockGenerationService.getCancellation).mockReturnValue({
+        requested: true,
+        reason: GenerationCancelReason.UserStop,
+      });
+
+      const cancel = vi.fn();
+      const encoder = new TextEncoder();
+      const pendingStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode(htmlTagAnnotationChunk('e9')));
+        },
+        cancel,
+      });
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(pendingStream, { status: 200 }),
+      } as never);
+
+      const res = makeMockRes();
+      const streamPromise = runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Use a tool',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+      await vi.waitFor(() => expect(res.write).toHaveBeenCalled());
+
+      generationAbortController.abort();
+      await streamPromise;
+
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const stoppedSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { wasStoppedByUser?: boolean }[];
+        customViewState?: {
+          annotations: { target: { selector: { id: string } } }[];
+        };
+      };
+      expect(stoppedSave.messages.at(-1)?.wasStoppedByUser).toBe(true);
+      expect(
+        stoppedSave.customViewState?.annotations.map(
+          (a) => a.target.selector.id,
+        ),
+      ).toEqual(['e9']);
+    });
+
+    it('still saves the messages and logs a warning when the merge throws', async () => {
+      vi.mocked(mergeHtmlTagAnnotationsIntoViewState).mockImplementationOnce(
+        () => {
+          throw new Error('merge exploded');
+        },
+      );
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(
+          textToStream([htmlTagAnnotationChunk('e1'), doneChunk]),
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      } as never);
+
+      const res = makeMockRes();
+      await runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const finalSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { content?: string }[];
+        customViewState?: unknown;
+      };
+      expect(finalSave.messages.at(-1)?.content).toBe('cited');
+      expect(finalSave.customViewState).toBeUndefined();
     });
   });
 

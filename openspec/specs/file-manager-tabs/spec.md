@@ -353,10 +353,10 @@ Before changing `activeTab`, the tab-change handler SHALL reset `selectedPaths` 
 
 ### Requirement: Tab strip accessibility
 
-The tab strip's DOM is owned by `@epam/ai-dial-react-file-manager`, which renders
+The chat SHALL NOT be expected to impose a different role structure on the kit:
+the tab strip's DOM is owned by `@epam/ai-dial-react-file-manager`, which renders
 it with the ui-kit `FilterChips` component. The chat supplies labels, the active
-value, and the change handler; it adds no markup of its own and SHALL NOT be
-expected to impose a different role structure on the kit.
+value, and the change handler, and adds no markup of its own.
 
 The strip SHALL be exposed as a **named `role="group"`**, named by the
 folders-panel heading through `aria-labelledby` when the panel renders a header

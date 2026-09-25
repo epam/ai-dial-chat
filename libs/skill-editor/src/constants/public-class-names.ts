@@ -11,8 +11,6 @@
 export const SKILL_EDITOR_CLASS = {
   /** The editor's root surface, which is also the file drop zone. */
   root: 'dial-skill-editor-root',
-  /** Refine and Undo buttons. */
-  refineAction: 'dial-skill-editor-refine-action',
   /** Field-local refinement feedback. */
   refineFeedback: 'dial-skill-editor-refine-feedback',
 } as const;
