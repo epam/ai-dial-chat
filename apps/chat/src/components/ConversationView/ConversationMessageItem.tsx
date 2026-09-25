@@ -138,6 +138,13 @@ const COMPACT_MESSAGE_TEXT_STYLES = {
   typography: { fontClassName: 'dial-small-paragraph-text' },
 };
 
+/*
+ * Shared empty array for the default `fallbackCitationGroups`: a default
+ * parameter's `[]` is a fresh array on every render, which would break
+ * downstream memoisation even when the host passes nothing.
+ */
+const EMPTY_FALLBACK_CITATION_GROUPS: AnnotationGroup[] = [];
+
 const isCitationPreviewable = (annotation: Annotation): boolean => {
   const attachment = annotation.body?.source?.attachment;
   return (
@@ -306,6 +313,13 @@ interface Props {
    * skills.
    */
   renderHistorySkills?: (skills: RequestSkill[] | undefined) => ReactNode;
+  /**
+   * Conversation-level pool of citation groups whose annotation arrived in
+   * an earlier turn — consulted only for a `<cit data-id="…">` this
+   * message's own annotations do not resolve. Derived by `ConversationView`
+   * from `conversation.customViewState.annotations`.
+   */
+  fallbackCitationGroups?: AnnotationGroup[];
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -374,6 +388,7 @@ const ConversationMessageItem: FC<Props> = ({
   editMenuOverlays,
   renderHistorySkillSegments,
   renderHistorySkills,
+  fallbackCitationGroups = EMPTY_FALLBACK_CITATION_GROUPS,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
@@ -431,6 +446,23 @@ const ConversationMessageItem: FC<Props> = ({
     () => groupAnnotations(annotations),
     [annotations],
   );
+  /*
+   * Union used only for Preview/Open-in-browser lookups (design D7), so
+   * `annotationToPdfCanvasContent`/`annotationToOoxmlCanvasContent` can find
+   * a pooled annotation's siblings. Never passed as the citation hook's
+   * `groups` — that stays message-scoped (design D6).
+   */
+  const citationGroupsWithFallback = useMemo(
+    () => [...citationGroups, ...fallbackCitationGroups],
+    [citationGroups, fallbackCitationGroups],
+  );
+  const annotationsWithFallback = useMemo(
+    () => [
+      ...annotations,
+      ...fallbackCitationGroups.flatMap((group) => group.annotations),
+    ],
+    [annotations, fallbackCitationGroups],
+  );
   const citationCard = useCitationCard();
   const messageTextStyles = isCompactTypography
     ? COMPACT_MESSAGE_TEXT_STYLES
@@ -442,7 +474,7 @@ const ConversationMessageItem: FC<Props> = ({
     (annotation: Annotation) => {
       const pdfContent = annotationToPdfCanvasContent(
         annotation,
-        citationGroups,
+        citationGroupsWithFallback,
         attachmentCanvasUrlResolvers,
       );
       if (pdfContent != null) {
@@ -454,7 +486,7 @@ const ConversationMessageItem: FC<Props> = ({
       }
       const ooxmlContent = annotationToOoxmlCanvasContent(
         annotation,
-        annotations,
+        annotationsWithFallback,
         attachmentCanvasUrlResolvers,
       );
       if (ooxmlContent != null) {
@@ -467,7 +499,12 @@ const ConversationMessageItem: FC<Props> = ({
       const display = annotationToDisplayAttachment(annotation);
       if (display) handleAttachmentClick(display);
     },
-    [citationGroups, annotations, openCanvas, handleAttachmentClick],
+    [
+      citationGroupsWithFallback,
+      annotationsWithFallback,
+      openCanvas,
+      handleAttachmentClick,
+    ],
   );
   const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
@@ -518,6 +555,7 @@ const ConversationMessageItem: FC<Props> = ({
       citationCallbacks,
       isStreaming,
       isCompactTypography,
+      fallbackCitationGroups,
     );
   const referenceGroups = useMemo(
     () => getReferenceAttachmentGroups(msg.custom_content?.attachments),

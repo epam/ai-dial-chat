@@ -2,6 +2,7 @@ import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   MessageRole,
+  type Annotation,
   type ApplicationVisualizer,
   type ApplicationVisualizerRegistry,
   type Message,
@@ -10,6 +11,7 @@ import {
   MessageBubble,
   type MessageActionsProps,
 } from '@epam/ai-dial-conversation-messages';
+import type { AnnotationGroup } from '@epam/ai-dial-quotations';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
@@ -1598,6 +1600,92 @@ describe('ConversationMessageItem — application visualizer sizing and fallback
   });
 });
 
+describe('ConversationMessageItem — conversation-level annotation pool', () => {
+  const poolAnnotation: Annotation = {
+    target: { selector: { type: 'html_tag', tag: 'cit', id: 'pooled-1' } },
+    body: {
+      title: 'earlier-turn.pdf',
+      source: {
+        type: 'attachment',
+        attachment: {
+          type: 'application/pdf',
+          url: 'https://example.com/earlier-turn.pdf',
+        },
+      },
+    },
+  };
+  const poolGroup: AnnotationGroup = {
+    groupKey: 'cit:pooled-1',
+    sourceUrl: 'https://example.com/earlier-turn.pdf',
+    sourceName: 'earlier-turn.pdf',
+    annotations: [poolAnnotation],
+    primaryAnnotation: poolAnnotation,
+  };
+  const message: Message = {
+    role: MessageRole.Assistant,
+    content: 'This claim<cit data-id="pooled-1"></cit> was cited earlier.',
+    timestamp: '2026-09-22T10:00:00Z',
+  };
+
+  it('renders an interactive citation marker for a citation resolved only from the pool', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        fallbackCitationGroups={[poolGroup]}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    ).toBeTruthy();
+  });
+
+  it("invokes the canvas with the pooled annotation's attachment on Preview", async () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        fallbackCitationGroups={[poolGroup]}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://example.com/earlier-turn.pdf' }),
+      expect.any(String),
+    );
+  });
+
+  it('renders literal text for the same message when the pool is empty', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        fallbackCitationGroups={[]}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    ).toBeFalsy();
+    expect(
+      screen.getByText(
+        'This claim<cit data-id="pooled-1"></cit> was cited earlier.',
+      ),
+    ).toBeTruthy();
+  });
+});
+
 describe('ConversationMessageItem — stream error banner (issue #8979)', () => {
   const failedMessage = (streamErrorMessage: string): Message => ({
     role: MessageRole.Assistant,
@@ -1636,6 +1724,31 @@ describe('ConversationMessageItem — stream error banner (issue #8979)', () => 
     expect(alert.textContent).toContain('Rate limit exceeded');
     expect(screen.queryByText(ChatI18nKeys.StreamError)).toBeNull();
   });
+
+  it.each([
+    { mobile: false, direction: 'ltr' },
+    { mobile: true, direction: 'ltr' },
+    { mobile: false, direction: 'rtl' },
+    { mobile: true, direction: 'rtl' },
+  ])(
+    'keeps an unsaved answer beside its accessible warning ($mobile, $direction)',
+    ({ mobile, direction }) => {
+      isMobileMock = mobile;
+      const warning =
+        'The response could not be saved. Copy it before continuing.';
+      render(
+        <div dir={direction}>
+          <ConversationMessageItem
+            {...defaultProps}
+            msg={failedMessage(warning)}
+            index={3}
+          />
+        </div>,
+      );
+      expect(screen.getByText('Partial answer')).toBeTruthy();
+      expect(screen.getByRole('alert').textContent).toContain(warning);
+    },
+  );
 
   it('renders no error banner for a successful message', () => {
     render(

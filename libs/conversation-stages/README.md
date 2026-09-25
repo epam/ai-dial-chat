@@ -64,7 +64,6 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
     executedLabel: 'Executed',
     stepsLabel: (count) => `${count} steps`,
     failedCountLabel: (failedCount) => `${failedCount} failed`,
-    runningStepLabel: (current, total) => `Step ${current} of ${total}`,
   }}
   styles={{ panel: { stageTextColor: 'var(--text-secondary)' } }}
 />;

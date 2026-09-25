@@ -17,6 +17,7 @@ import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from './dto/conversation-message.dto';
+import { GENERATION_PERSISTENCE_ERROR } from './generation/persistence-error';
 
 const STALE_ENTRY_FLOOR_MS = 30 * 60 * 1000; // 30 minutes
 const STALE_GRACE_MS = 60 * 1000; // 1 minute
@@ -80,7 +81,9 @@ export interface GenerationCancellation {
  * generation for persistence purposes.
  */
 export type GenerationTerminalEvent =
-  { type: 'done' } | { type: 'error'; message?: string } | { type: 'stopped' };
+  | { type: 'done' }
+  | { type: 'error'; message?: string; errorType?: string }
+  | { type: 'stopped' };
 
 /** Snapshot-then-live-subscription handle returned by `attach`. */
 export interface GenerationAttachment {
@@ -525,6 +528,17 @@ export class ConversationGenerationService implements OnModuleDestroy {
     const entry = this.resolveByLease(lease);
     if (!entry) return;
     this.settle(entry, { type: 'done' });
+  }
+
+  /** Storage failure must be visible even when the model was stopped by the user. */
+  persistenceFailed(lease: GenerationLease): void {
+    const entry = this.resolveByLease(lease);
+    if (!entry) return;
+    this.settle(entry, {
+      type: 'error',
+      errorType: GENERATION_PERSISTENCE_ERROR.type,
+      message: GENERATION_PERSISTENCE_ERROR.message,
+    });
   }
 
   /**

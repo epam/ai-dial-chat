@@ -752,4 +752,16 @@ export class ConversationResponseDto {
       'When true, automatic LLM conversation naming has already run for this conversation.',
   })
   llmNamingDone?: boolean;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    example: { annotations: [] },
+    description:
+      'Open, feature-keyed container for conversation-level view state. ' +
+      'Currently defines exactly one key, `annotations`, holding the pool ' +
+      'of html_tag citation annotations accumulated across the ' +
+      'conversation. Any other key is opaque and preserved as-is.',
+  })
+  customViewState?: Record<string, unknown>;
 }

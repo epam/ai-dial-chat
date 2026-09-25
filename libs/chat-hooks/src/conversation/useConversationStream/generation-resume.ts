@@ -6,6 +6,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { safeDecodeURI } from '../../shared/string-utils';
+import {
+  DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
+  GenerationPersistenceError,
+} from '../create-chat-stream-api';
 import { applyChunkToMessages } from './apply-chunk';
 import {
   type BufferedGeneration,
@@ -21,7 +25,7 @@ import type { ConversationStreamTransport } from './useConversationStream';
  * `content` and only `custom_content.attachments`, and a stage-only or
  * form-only answer is just as text-free.
  */
-const hasGeneratedPayload = (message: Message): boolean => {
+export const hasGeneratedPayload = (message: Message): boolean => {
   const customContent = message.custom_content;
   return (
     !!message.content ||
@@ -38,8 +42,8 @@ const hasGeneratedPayload = (message: Message): boolean => {
  * True when the conversation's last message is an unresolved assistant
  * placeholder: the backend only persists a conversation at generation start
  * (empty placeholder) and at generation end (final content, or a partial
- * flagged `streamErrorMessage`/`wasStoppedByUser`), so this shape means a
- * generation was still active elsewhere when the conversation was loaded.
+ * flagged `streamErrorMessage`/`wasStoppedByUser`). This can mean generation
+ * is still active elsewhere, or that its terminal save failed.
  */
 export const isAwaitingGenerationResume = (
   conversation: Conversation,
@@ -80,7 +84,7 @@ type GenerationAttachEvent =
   | { type: 'snapshot'; message: Message }
   | { type: 'chunk'; chunk: StreamChunk }
   | { type: 'done' }
-  | { type: 'error'; message?: string }
+  | { type: 'error'; message?: string; errorType?: string }
   | { type: 'stopped' };
 
 /**
@@ -147,6 +151,7 @@ export interface ResumeIfAwaitingGenerationDeps {
   addStreamingPath: (path: string) => void;
   removeStreamingPath: (path: string) => void;
   isPathDisplayed: (path: string) => boolean;
+  generationPersistenceErrorMessage?: string;
 }
 
 /**
@@ -172,6 +177,7 @@ export const createResumeIfAwaitingGeneration = ({
   addStreamingPath,
   removeStreamingPath,
   isPathDisplayed,
+  generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
 }: ResumeIfAwaitingGenerationDeps) => {
   return (currentConversationId: string, conversation: Conversation): void => {
     if (!isAwaitingGenerationResume(conversation)) return;
@@ -182,10 +188,40 @@ export const createResumeIfAwaitingGeneration = ({
     addStreamingPath(conversationPath);
 
     const messageIndex = conversation.messages.length - 1;
+    const resumedBuffer: BufferedGeneration = {
+      generationId: RESUME_BUFFER_GENERATION_ID,
+      messageIndex,
+      message: conversation.messages[messageIndex],
+    };
+    bufferedGenerationsRef.current.set(conversationPath, resumedBuffer);
+    const ownsBuffer = () =>
+      bufferedGenerationsRef.current.get(conversationPath) === resumedBuffer;
 
-    const finish = (result?: Conversation) => {
+    const finish = (result?: Conversation, persistenceFailed = false) => {
+      if (!ownsBuffer()) return;
       resumingPathsRef.current.delete(conversationPath);
       removeStreamingPath(conversationPath);
+      const placeholderReload =
+        result &&
+        result.messages.length - 1 === messageIndex &&
+        isAwaitingGenerationResume(result) &&
+        hasGeneratedPayload(resumedBuffer.message);
+      if (persistenceFailed || placeholderReload) {
+        resumedBuffer.message = {
+          ...resumedBuffer.message,
+          streamErrorMessage: generationPersistenceErrorMessage,
+        };
+        if (isPathDisplayed(conversationPath)) {
+          setConversation((prev) => {
+            if (!prev || !ownsBuffer() || !isPathDisplayed(conversationPath))
+              return prev;
+            const next = restoreBufferedMessage(prev, resumedBuffer);
+            conversationRef.current = next;
+            return next;
+          });
+        }
+        return;
+      }
       bufferedGenerationsRef.current.delete(conversationPath);
       if (result && isPathDisplayed(conversationPath)) {
         setConversation(result);
@@ -200,41 +236,32 @@ export const createResumeIfAwaitingGeneration = ({
         );
         finish(result);
       } catch {
-        finish();
+        finish(undefined, hasGeneratedPayload(resumedBuffer.message));
       }
     };
 
     const applySnapshot = (message: Message) => {
-      const buffered = {
-        generationId: RESUME_BUFFER_GENERATION_ID,
-        messageIndex,
-        message,
-      };
-      bufferedGenerationsRef.current.set(conversationPath, buffered);
+      if (!ownsBuffer()) return;
+      resumedBuffer.message = message;
       if (!isPathDisplayed(conversationPath)) return;
       setConversation((prev) => {
-        if (!prev) return prev;
-        const next = restoreBufferedMessage(prev, buffered);
+        if (!prev || !ownsBuffer() || !isPathDisplayed(conversationPath))
+          return prev;
+        const next = restoreBufferedMessage(prev, resumedBuffer);
         conversationRef.current = next;
         return next;
       });
     };
 
     const applyAttachChunk = (chunk: StreamChunk) => {
-      const buffered = bufferedGenerationsRef.current.get(conversationPath);
-      if (buffered?.generationId === RESUME_BUFFER_GENERATION_ID) {
-        const updated = applyChunkToMessages([buffered.message], 0, chunk);
-        if (updated) buffered.message = updated[0];
-      }
+      if (!ownsBuffer()) return;
+      const updated = applyChunkToMessages([resumedBuffer.message], 0, chunk);
+      if (updated) resumedBuffer.message = updated[0];
       if (!isPathDisplayed(conversationPath)) return;
       setConversation((prev) => {
-        if (!prev) return prev;
-        const currentBuffer =
-          bufferedGenerationsRef.current.get(conversationPath);
-        if (currentBuffer?.generationId !== RESUME_BUFFER_GENERATION_ID) {
+        if (!prev || !ownsBuffer() || !isPathDisplayed(conversationPath))
           return prev;
-        }
-        const next = restoreBufferedMessage(prev, currentBuffer);
+        const next = restoreBufferedMessage(prev, resumedBuffer);
         conversationRef.current = next;
         return next;
       });
@@ -317,7 +344,9 @@ export const createResumeIfAwaitingGeneration = ({
       }
 
       let sawTerminal = false;
+      let persistenceFailed = false;
       await readSseEvents<GenerationAttachEvent>(stream, (event) => {
+        if (!ownsBuffer()) return true;
         switch (event.type) {
           case 'snapshot':
             applySnapshot(event.message);
@@ -328,16 +357,20 @@ export const createResumeIfAwaitingGeneration = ({
           case 'done':
           case 'error':
           case 'stopped':
+            persistenceFailed =
+              event.type === 'error' &&
+              event.errorType === GenerationPersistenceError.type;
             sawTerminal = true;
             return true;
         }
       });
 
       if (sawTerminal) {
-        await finalCheck();
+        if (persistenceFailed) finish(undefined, true);
+        else await finalCheck();
         return true;
       }
-      return false;
+      return !ownsBuffer();
     };
 
     const resume = async () => {
