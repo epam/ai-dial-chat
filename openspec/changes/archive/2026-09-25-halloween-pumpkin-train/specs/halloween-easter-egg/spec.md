@@ -18,7 +18,7 @@ The train SHALL use layered translucent smoke from its chimney and side vents wi
 
 ### Requirement: Train soundtrack playback is optional and bounded
 
-The train SHALL support an optional supplied audio source. With no source, no media request SHALL occur. A supplied source SHALL play at most for the scene lifetime, stop/reset on interruption or unmount, and handle rejected playback silently. Reduced motion SHALL not start audio. The requested The Real Slim Shady recording SHALL not be considered implemented until a source is supplied; no replacement track SHALL be bundled.
+The train SHALL support an optional supplied audio source. With no source, no media request SHALL occur. A supplied source SHALL play at most for the scene lifetime, stop/reset on interruption or unmount, and handle rejected playback silently. Reduced motion SHALL not start audio.
 
 #### Scenario: No recording is available
 - **WHEN** no soundtrack source is configured

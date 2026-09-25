@@ -98,8 +98,8 @@ pumpkin on completion or interaction and shows static artwork under reduced moti
 Train direction follows the pumpkin's side, including RTL.
 
 `HALLOWEEN_TRAIN_AUDIO_SRC` in `src/constants/halloween.ts` optionally accepts a
-supplied audio asset URL. It is unset: the requested The Real Slim Shady recording
-has not been supplied, so the train is currently silent and makes no audio request.
+supplied audio asset URL. It is unset by default, so the train stays silent and
+makes no audio request.
 Configured playback is bounded to the scene, stops on interruption and gracefully
 handles browser playback rejection. Reduced motion always stays silent.
 
