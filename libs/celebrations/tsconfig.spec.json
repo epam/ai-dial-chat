@@ -30,7 +30,9 @@
     "src/**/*.spec.js",
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "src/test-utils/**/*.ts",
+    "src/test-setup.ts"
   ],
   "references": [{ "path": "./tsconfig.lib.json" }]
 }

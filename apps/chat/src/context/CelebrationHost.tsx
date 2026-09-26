@@ -1,6 +1,7 @@
 import {
   CelebrationProvider,
   type CelebrationAnchors,
+  type CelebrationEventLoader,
   type CelebrationNotification,
 } from '@epam/ai-dial-celebrations';
 import { CONVERSATION_INPUT_CLASS } from '@epam/ai-dial-conversation-input';
@@ -8,7 +9,7 @@ import { STARTER_BUTTONS_CLASS } from '@epam/ai-dial-starter-buttons';
 import { useCallback, useMemo, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
-import { CELEBRATION_EVENTS } from '../celebrations/registry';
+import { CELEBRATION_HISTORY_CLASS } from '../constants/celebration';
 import {
   HalloweenI18nKeys,
   NewYearI18nKeys,
@@ -16,9 +17,14 @@ import {
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { ROUTES } from '../types/routes';
 import { UserConfigStatus } from '../types/user-config-status';
-import { CELEBRATION_HISTORY_CLASS } from '../utils/celebration-history';
 import { useAppConfig } from './AppConfigContext';
 import { useNotification } from './NotificationContext';
+
+/* Only compiled modules can load; configuration never becomes an import path. */
+const EVENTS: Readonly<Record<string, CelebrationEventLoader>> = {
+  halloween: () => import('@epam/ai-dial-celebrations/halloween'),
+  'new-year': () => import('@epam/ai-dial-celebrations/new-year'),
+};
 
 /* The library knows no host routes or other libraries' class names. */
 const ANCHORS: CelebrationAnchors = {
@@ -82,7 +88,7 @@ export const CelebrationHost: FC<Props> = ({ children }) => {
 
   return (
     <CelebrationProvider
-      events={CELEBRATION_EVENTS}
+      events={EVENTS}
       activeEventId={activeEventId}
       resetKey={location.key}
       labels={labels}
