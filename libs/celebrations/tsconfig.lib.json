@@ -4,26 +4,21 @@
     "rootDir": "src",
     "outDir": "out-tsc/lib",
     "tsBuildInfoFile": "out-tsc/lib/tsconfig.lib.tsbuildinfo",
-
     "jsx": "react-jsx",
-
     "declaration": true,
     "sourceMap": true,
-
     "module": "esnext",
     "moduleResolution": "bundler",
-
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-
     "types": ["node"],
     "lib": ["dom"],
-
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "src/test-utils/**",
+    "src/stories/**",
     "src/test-setup.ts",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
@@ -32,7 +27,11 @@
     "src/**/*.test.js",
     "src/**/*.spec.js",
     "src/**/*.test.jsx",
-    "src/**/*.spec.jsx"
+    "src/**/*.spec.jsx",
+    "**/*.stories.ts",
+    "**/*.stories.js",
+    "**/*.stories.jsx",
+    "**/*.stories.tsx"
   ],
   "references": [
     {

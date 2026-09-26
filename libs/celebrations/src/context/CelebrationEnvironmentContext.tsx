@@ -8,6 +8,11 @@ export interface CelebrationEnvironment {
   /** The loaded event's labels, host overrides merged over defaults. */
   labels: Readonly<Record<string, string>>;
   isDecorBehaviorEnabled: (behavior: string) => boolean;
+  /** Shorter idle delays for Storybook; the provider never sets them. */
+  timings?: {
+    spiderDropDelayMs?: readonly [number, number];
+    pumpkinWrapIdleMs?: number;
+  };
 }
 
 const DEFAULT_ENVIRONMENT: CelebrationEnvironment = {

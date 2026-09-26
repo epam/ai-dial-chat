@@ -97,6 +97,23 @@ jobs:
       - name: Build @epam/ai-dial-chat-hooks and run packed-package smoke
         run: npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke
 
+  build_celebrations_storybook:
+    # Builds the lib-local Storybook so a broken story fails the PR; the
+    # output is not deployed.
+    name: celebrations Storybook build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build @epam/ai-dial-celebrations Storybook
+        run: npm exec nx run @epam/ai-dial-celebrations:build-storybook
+
   chat_hooks_cold_load_probes:
     # Checks root and subpath bundle sizes and dependency isolation.
     # Nx rebuilds each packed library and its workspace dependencies first.

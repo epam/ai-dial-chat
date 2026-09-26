@@ -1,7 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { CSSProperties, FC, RefObject } from 'react';
 import { memo, useEffect, useRef, useState } from 'react';
-import { useDecorBehavior } from '../../../context/CelebrationEnvironmentContext';
+import {
+  useCelebrationEnvironment,
+  useDecorBehavior,
+} from '../../../context/CelebrationEnvironmentContext';
 import {
   HALLOWEEN_SPIDER_ALERT_RADIUS_PX,
   HALLOWEEN_SPIDER_DROP_DELAY_MS,
@@ -98,6 +101,9 @@ const HalloweenCornerSpider: FC<Props> = ({
   const canDrop = useDecorBehavior(HalloweenDecorBehavior.SpiderDrop);
   const canDrum = useDecorBehavior(HalloweenDecorBehavior.SpiderDrum);
   const canWrap = useDecorBehavior(HalloweenDecorBehavior.PumpkinWrap);
+  const { timings } = useCelebrationEnvironment();
+  const dropDelayMs = timings?.spiderDropDelayMs ?? HALLOWEEN_SPIDER_DROP_DELAY_MS;
+  const wrapIdleMs = timings?.pumpkinWrapIdleMs ?? HALLOWEEN_SPIDER_WRAP_IDLE_MS;
 
   useEffect(() => {
     /* Optional-chained: a host without `matchMedia` should get the ordinary
@@ -145,7 +151,7 @@ const HalloweenCornerSpider: FC<Props> = ({
       window.clearTimeout(dropTimer);
       dropTimer = window.setTimeout(
         startDrop,
-        pickHalloweenRange(HALLOWEEN_SPIDER_DROP_DELAY_MS),
+        pickHalloweenRange(dropDelayMs),
       );
     };
 
@@ -211,7 +217,7 @@ const HalloweenCornerSpider: FC<Props> = ({
       scheduleDrop();
     };
 
-    const scheduleWrap = (delay = HALLOWEEN_SPIDER_WRAP_IDLE_MS) => {
+    const scheduleWrap = (delay = wrapIdleMs) => {
       if (!canWrap) return;
       window.clearTimeout(wrapTimer);
       wrapTimer = window.setTimeout(startWrap, delay);
@@ -220,8 +226,8 @@ const HalloweenCornerSpider: FC<Props> = ({
     /* Measures once, when the story starts; nothing is read while it plays. */
     const startWrap = () => {
       const quiet = Date.now() - lastActivity;
-      if (quiet < HALLOWEEN_SPIDER_WRAP_IDLE_MS) {
-        scheduleWrap(HALLOWEEN_SPIDER_WRAP_IDLE_MS - quiet);
+      if (quiet < wrapIdleMs) {
+        scheduleWrap(wrapIdleMs - quiet);
         return;
       }
       const spider = spiderRef.current;
@@ -397,7 +403,16 @@ const HalloweenCornerSpider: FC<Props> = ({
       drop?.animations.forEach((animation) => animation.cancel());
       wrap?.playback.cancel();
     };
-  }, [canDrop, canDrum, canFlee, canWrap, pumpkinRef, silkRef]);
+  }, [
+    canDrop,
+    canDrum,
+    canFlee,
+    canWrap,
+    dropDelayMs,
+    pumpkinRef,
+    silkRef,
+    wrapIdleMs,
+  ]);
 
   return (
     <span

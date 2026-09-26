@@ -49,15 +49,15 @@ Architecture guard (applies to every slice touching `libs/celebrations/**`): the
 
 ## 5. Slice 5 — Storybook
 
-- [ ] 5.1 Run `npm exec nx g @nx/storybook:configuration @epam/ai-dial-celebrations --uiFramework=@storybook/react-vite` (check `--help` first); keep generated files under `libs/celebrations/.storybook`; exclude `*.stories.tsx` from `tsconfig.lib.json`; import `../src/**/*.module.scss` styles through the lib entry.
+- [x] 5.1 Run `npm exec nx g @nx/storybook:configuration @epam/ai-dial-celebrations --uiFramework=@storybook/react-vite` (check `--help` first); keep generated files under `libs/celebrations/.storybook`; exclude `*.stories.tsx` from `tsconfig.lib.json`; import `../src/**/*.module.scss` styles through the lib entry.
   - Verification: `npm exec nx build-storybook @epam/ai-dial-celebrations`.
-- [ ] 5.2 Add story helpers in `libs/celebrations/src/stories/`: `StoryHostPage` (composer, starter list, history panel with links, welcome region, decor area; anchors passed through props), `ScenePlayer` (provider with synchronous loader, Play control, `isMobile`/`dir`/reduced-motion args) and a story-only timing override for decor behaviours.
+- [x] 5.2 Add story helpers in `libs/celebrations/src/stories/`: `StoryHostPage` (composer, starter list, history panel with links, welcome region, decor area; anchors passed through props), `ScenePlayer` (provider with synchronous loader, Play control, `isMobile`/`dir`/reduced-motion args) and a story-only timing override for decor behaviours.
   - Verification: `npm exec nx build-storybook @epam/ai-dial-celebrations`.
-- [ ] 5.3 Add stories: one per `HalloweenScene` (16) and `NewYearScene` (3) with `parameters.celebrationScene`, `Halloween/Decor`, one per `HalloweenDecorBehavior` with `parameters.celebrationBehavior`, `NewYear/Decor`, and a `Playground` with selection controls.
+- [x] 5.3 Add stories: one per `HalloweenScene` (16) and `NewYearScene` (3) with `parameters.celebrationScene`, `Halloween/Decor`, one per `HalloweenDecorBehavior` with `parameters.celebrationBehavior`, `NewYear/Decor`, and a `Playground` with selection controls.
   - Verification: `npm exec nx build-storybook @epam/ai-dial-celebrations`.
-- [ ] 5.4 Add `libs/celebrations/src/stories/tests/story-coverage.spec.ts` asserting every scene and decor-behaviour member has a story.
+- [x] 5.4 Add `libs/celebrations/src/stories/tests/story-coverage.spec.ts` asserting every scene and decor-behaviour member has a story.
   - Verification: `npm run test:file -- libs/celebrations/src/stories/tests/story-coverage.spec.ts`.
-- [ ] 5.5 Add a `build_celebrations_storybook` job to `.github/workflows/pr.yml` running `npm exec nx build-storybook @epam/ai-dial-celebrations` (no deploy).
+- [x] 5.5 Add a `build_celebrations_storybook` job to `.github/workflows/pr.yml` running `npm exec nx build-storybook @epam/ai-dial-celebrations` (no deploy).
   - Verification: `npm run verify:changed`.
 
 ## 6. RTL and accessibility checks
