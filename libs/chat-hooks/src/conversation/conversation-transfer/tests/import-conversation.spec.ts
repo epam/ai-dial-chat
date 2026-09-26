@@ -2,6 +2,7 @@ import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import { createUploadPathAllocator } from '../build-upload-path';
 import {
+  dropForeignAttachmentRefs,
   formatQuotedNameList,
   parseImportEnvelope,
   planAttachmentUploads,
@@ -802,5 +803,144 @@ describe('planAttachmentUploads', () => {
     );
 
     expect(plan[0].allocated.fileName).toBe('q1 (1).pdf');
+  });
+});
+
+describe('dropForeignAttachmentRefs', () => {
+  const withCustomContent = (
+    customContent: NonNullable<
+      Conversation['messages'][number]['custom_content']
+    >,
+  ): Conversation =>
+    makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: 'Answer',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: customContent,
+        },
+      ],
+    });
+
+  it("drops a message attachment in another user's bucket", () => {
+    const conversation = withCustomContent({
+      attachments: [
+        { title: 'q1.pdf', url: 'files/bucket-a/reports/q1%20final.pdf' },
+      ],
+    });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+
+    expect(result.messages[0].custom_content?.attachments).toEqual([]);
+    expect(droppedNames).toEqual(['q1 final.pdf']);
+  });
+
+  it('keeps own-bucket, public, and non-DIAL references', () => {
+    const conversation = withCustomContent({
+      attachments: [
+        { title: 'own.pdf', url: 'files/bucket-b/own.pdf' },
+        { title: 'pub.pdf', url: 'files/public/pub.pdf' },
+        { title: 'link', url: 'https://example.com/doc.pdf' },
+      ],
+    });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+
+    expect(result).toBe(conversation);
+    expect(droppedNames).toEqual([]);
+  });
+
+  it('removes only a foreign reference_url from an otherwise valid attachment', () => {
+    const conversation = withCustomContent({
+      attachments: [
+        {
+          title: 'chart.png',
+          url: 'files/bucket-b/chart.png',
+          reference_type: 'text/csv',
+          reference_url: 'files/bucket-a/chart.csv',
+        },
+      ],
+    });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+
+    expect(result.messages[0].custom_content?.attachments).toEqual([
+      { title: 'chart.png', url: 'files/bucket-b/chart.png' },
+    ]);
+    expect(droppedNames).toEqual(['chart.csv']);
+  });
+
+  it('drops a foreign stage attachment while keeping the stage', () => {
+    const conversation = withCustomContent({
+      stages: [
+        {
+          index: 0,
+          name: 'Render',
+          status: null,
+          attachments: [{ title: 'out.png', url: 'files/bucket-a/out.png' }],
+        },
+      ],
+    });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+
+    expect(result.messages[0].custom_content?.stages).toEqual([
+      { index: 0, name: 'Render', status: null, attachments: [] },
+    ]);
+    expect(droppedNames).toEqual(['out.png']);
+  });
+
+  it("removes a foreign citation source while keeping the citation's quote", () => {
+    const conversation = withCustomContent({
+      annotations: [
+        {
+          body: {
+            quote: 'Section 3',
+            source: {
+              type: 'attachment' as const,
+              attachment: {
+                type: 'application/pdf',
+                url: 'files/bucket-a/spec.pdf#page=3',
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+
+    expect(result.messages[0].custom_content?.annotations).toEqual([
+      { body: { quote: 'Section 3' } },
+    ]);
+    expect(droppedNames).toEqual(['spec.pdf']);
+  });
+
+  it('does not mutate the source conversation', () => {
+    const conversation = withCustomContent({
+      attachments: [{ title: 'q1.pdf', url: 'files/bucket-a/q1.pdf' }],
+    });
+
+    dropForeignAttachmentRefs(conversation, 'bucket-b');
+
+    expect(conversation.messages[0].custom_content?.attachments).toHaveLength(
+      1,
+    );
   });
 });

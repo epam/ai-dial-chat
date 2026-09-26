@@ -625,7 +625,16 @@ export const useConversationExport = ({
       if (signal.aborted) return;
 
       try {
-        const envelope = buildExportEnvelope(conversations, []);
+        /*
+         * Export-all ships no attachment bytes, so — as with a single
+         * without-attachments export — the references go too.
+         * Kept, they point at the exporting user's bucket: another user who
+         * imports the file gets a 403 on every preview.
+         */
+        const envelope = buildExportEnvelope(
+          conversations.map(stripConversationAttachments),
+          [],
+        );
         const blob = serializeExportEnvelope(envelope);
         triggerBlobDownload(blob, fileName);
         onSuccess?.({ jobId });
