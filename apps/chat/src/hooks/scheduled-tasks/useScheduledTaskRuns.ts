@@ -2,10 +2,15 @@ import { useScheduledTaskRuns as useSharedScheduledTaskRuns } from '@epam/ai-dia
 import { schedulerClient } from '../../server-api/scheduled-tasks.api';
 
 /** App adapter retaining run-history presentation ownership and feature gating. */
-export const useScheduledTaskRuns = (scheduleId: string, enabled = true) => {
+export const useScheduledTaskRuns = (
+  scheduleId: string,
+  enabled = true,
+  nextRunTime?: string | null,
+) => {
   const result = useSharedScheduledTaskRuns(schedulerClient, {
     scheduleId,
     enabled,
+    nextRunTime,
   });
   return { ...result, error: result.initialError };
 };

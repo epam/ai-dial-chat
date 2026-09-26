@@ -197,7 +197,11 @@ export const ActiveScheduledTaskProvider = ({
     setTaskRetryToken((token) => token + 1);
   }, []);
 
-  const history = useScheduledTaskRuns(scheduleId ?? '', Boolean(scheduleId));
+  const history = useScheduledTaskRuns(
+    scheduleId ?? '',
+    Boolean(scheduleId),
+    task?.nextRunTime,
+  );
 
   const value = useMemo(
     () => ({

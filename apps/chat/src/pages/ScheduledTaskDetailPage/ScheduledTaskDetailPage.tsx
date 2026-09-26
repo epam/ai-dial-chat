@@ -90,7 +90,11 @@ const ScheduledTaskDetailPage: FC = () => {
     hasMore: runsHasMore,
     loadMore: onRunsLoadMore,
     refetch: refetchRuns,
-  } = useScheduledTaskRuns(scheduleId, isEnabled && Boolean(scheduleId));
+  } = useScheduledTaskRuns(
+    scheduleId,
+    isEnabled && Boolean(scheduleId),
+    task?.nextRunTime,
+  );
 
   useEffect(() => {
     if (!isEnabled || !scheduleId) {
