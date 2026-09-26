@@ -3672,7 +3672,7 @@ const { results, batchErrors, manifestCandidate } =
 ### Supporting types and constants
 
 - **`SkillSource`** — which skill namespace a catalog skill item came from: `Personal`, `SharedWithMe`, `Public`.
-- **`PUBLIC_SKILL_BUCKET`** — the DIAL Core bucket holding organisation-wide skills.
+- **`PUBLIC_SKILL_BUCKET`** — the DIAL Core bucket holding organisation-wide skills. Deprecated: an alias of `PUBLIC_BUCKET` from `@epam/ai-dial-chat-shared`.
 - **`SKILL_MANIFEST_MAX_BYTES`** / **`SKILL_LISTING_PAGE_SIZE`** / **`SKILL_LISTING_MAX_PAGES`** — size/pagination bounds for skill manifest reads and skill listings.
 - **`SkillEntityDetails`** — a skill's parsed manifest details (`{ about?: SkillAboutDetails }`).
 - **`ParsedSkillResourceUrl`** / **`parseSkillResourceUrl`** — splits a `skills/{bucket}/{path}` resource URL into its bucket and path, or `null` if it doesn't match that shape.

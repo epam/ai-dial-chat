@@ -1,5 +1,6 @@
 import {
   generateUUID,
+  PUBLIC_BUCKET,
   sanitizeConversationName,
   stripTrailingDots,
   truncateToUtf8Bytes,
@@ -408,9 +409,6 @@ export const rewriteAttachmentUrls = (
     };
   }),
 });
-
-/** Bucket DIAL Core serves published files from — readable by every user, so never foreign. */
-const PUBLIC_BUCKET = 'public';
 
 /**
  * Returns the file name `url` points at when it is a DIAL file in a bucket

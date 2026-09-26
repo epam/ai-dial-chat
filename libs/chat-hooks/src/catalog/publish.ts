@@ -2,7 +2,7 @@ import type {
   PublishConversationResultDto,
   PublishHistoryEntryDto,
 } from '@epam/ai-dial-chat-api-client';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
 import type { PublishHistoryEntry } from '@epam/ai-dial-publish-panel';
 import { safeDecodeURIComponent } from '../shared/string-utils';
 
@@ -30,8 +30,6 @@ export const toPublishEntityType = (
   type: CatalogEntityType,
 ): CatalogPublishEntityType | undefined => PUBLISHABLE_ENTITY_TYPES[type];
 
-const PUBLIC_BUCKET_SEGMENT = 'public';
-
 /**
  * Whether a catalog entity id addresses the shared `public` bucket
  * (`{resourceType}/public/{folder…}/{name}`), i.e. the id names a published
@@ -43,7 +41,7 @@ const PUBLIC_BUCKET_SEGMENT = 'public';
  * `gpt-4` — is not public.
  */
 export const isPublicCatalogEntityId = (entityId: string): boolean =>
-  entityId.split('/')[1] === PUBLIC_BUCKET_SEGMENT;
+  entityId.split('/')[1] === PUBLIC_BUCKET;
 
 /**
  * The publish folder a public catalog entity id sits in: the segments between

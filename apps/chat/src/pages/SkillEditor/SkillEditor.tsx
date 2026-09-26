@@ -3,7 +3,6 @@ import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
-  PUBLIC_SKILL_BUCKET,
   SkillEditorLoadState,
   SKILL_MANIFEST_FILE,
   useSkillEditorLoad,
@@ -14,6 +13,7 @@ import {
   type SkillEditorSubmitMessages,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
+import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
@@ -110,7 +110,7 @@ const SkillEditorPage: FC = () => {
       const decoded = decodeURIComponent(rawId);
       const parsed = parseSkillResourceUrl(decoded);
       if (parsed != null) {
-        return parsed.bucket === PUBLIC_SKILL_BUCKET ? null : parsed;
+        return parsed.bucket === PUBLIC_BUCKET ? null : parsed;
       }
       return personalBucket && isValidSkillRelativePath(decoded)
         ? { bucket: personalBucket, path: decoded }
