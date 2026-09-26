@@ -2,13 +2,13 @@
 
 ## Purpose
 
-A shared start-page celebration runtime that loads one configured seasonal event, handles decorative scenes and secret phrases, and isolates their lifecycle from ordinary chat.
+A shared start-page celebration runtime, provided by `@epam/ai-dial-celebrations`, that loads one configured seasonal event, handles decorative scenes and secret phrases, and isolates their lifecycle from ordinary chat.
 
 ## Requirements
 
 ### Requirement: Event modules plug into one shared runtime
 
-CelebrationProvider SHALL own the active event, loaded module, current scene and previous click selection. A static registry SHALL load the selected compiled module only on the exact start-page route `/`. Modules SHALL declare an ID, optional icon override, decoration component, scene definitions with per-scene durations and translated notification keys, click scene IDs, notification title, and optional secret trigger. Header, Navigation and Composer SHALL contain no event-specific imports or branches. Modules SHALL receive decoration callbacks instead of importing the provider. Loading errors, unknown identifiers and an absent provider SHALL leave ordinary chat usable with no celebration. Stale module completions SHALL NOT activate after navigation or a config change. Context values and expensive scene layouts SHALL be memoized.
+CelebrationProvider, exported by `@epam/ai-dial-celebrations`, SHALL own the loaded event module, current scene and previous click selection. Hosts SHALL supply the event registry as loaders keyed by event ID and SHALL pass the active event ID; in DIAL Chat the app-level `CelebrationHost` passes `config.activeEventId` only on the exact start-page route `/` once the user config is ready, so the selected compiled module loads only there. Modules SHALL declare an ID, optional icon override, decoration component, scene definitions with per-scene durations and label IDs, click scene IDs, English default labels, and optional secret trigger. Header, Navigation and Composer SHALL contain no event-specific imports or branches. Modules SHALL receive decoration callbacks instead of importing the provider. Loading errors, unknown identifiers and an absent provider SHALL leave ordinary chat usable with no celebration. Stale module completions SHALL NOT activate after the host's reset key or active event ID changes. Context values and expensive scene layouts SHALL be memoized.
 
 #### Scenario: Register a second occasion
 - **WHEN** the registry includes New Year and config.activeEventId is new-year
@@ -44,7 +44,7 @@ Only the loaded, selected event on `/` SHALL intercept an exact nonempty normali
 
 ### Requirement: New Year demonstrates reusable visual effects
 
-The new-year module SHALL provide an existing-slot icon override, a gift trigger, decorative garland, snow, confetti and flying-sleigh scenes. The secret `happy new year` SHALL activate confetti. Bats, witches and sleighs SHALL reuse the same generic flying-character rendering and trajectory options. Keys SHALL include newYear.toastTitle, giftLabel, snowToastMessage, confettiToastMessage and sleighToastMessage. Each effect SHALL respect reduced motion with static visible positions. Touch/Enter/Space SHALL activate the same trigger; decorative art SHALL remain aria-hidden and shall not capture clicks. Layout SHALL support 360/900 mobile and 1280/1920 desktop widths and RTL, without adding a welcome-area logo block. The theme wordmark and browser favicon SHALL be unchanged; no configured icon slot means no added slot.
+The new-year module SHALL provide an existing-slot icon override, a gift trigger, decorative garland, snow, confetti and flying-sleigh scenes. The secret `happy new year` SHALL activate confetti. Bats, witches and sleighs SHALL reuse the same generic flying-character rendering and trajectory options. Its labels SHALL cover the notification title, the gift's accessible name and the snow, confetti and sleigh messages; DIAL Chat SHALL keep supplying them from newYear.toastTitle, giftLabel, snowToastMessage, confettiToastMessage and sleighToastMessage. Each effect SHALL respect reduced motion with static visible positions. Touch/Enter/Space SHALL activate the same trigger; decorative art SHALL remain aria-hidden and shall not capture clicks. Layout SHALL support 360/900 mobile and 1280/1920 desktop widths and RTL, without adding a welcome-area logo block. The theme wordmark and browser favicon SHALL be unchanged; no configured icon slot means no added slot.
 
 #### Scenario: Reduced-motion New Year
 - **WHEN** a user with reduced motion selects a New Year scene
