@@ -116,6 +116,59 @@ describe('PublishService', () => {
       expect(new Date(result.publishedAt).toString()).not.toBe('Invalid Date');
     });
 
+    /*
+     * The round trip the Author field exists for (GH #8727): Core always
+     * records its own token-derived `author`, so reading that first made the
+     * submitted display author unobservable in every response this API hands
+     * back.
+     */
+    it('reports the submitted display author, not the account Core recorded', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+          displayAuthor: 'DIAL Team',
+        }),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        undefined,
+        'DIAL Team',
+      );
+
+      expect(result.publishedBy).toBe('DIAL Team');
+    });
+
+    /* Core stores an omitted display author as `''`, not as a missing key. */
+    it('reports the recorded account when Core stored an empty display author', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+          displayAuthor: '',
+        }),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        undefined,
+        'Test User',
+      );
+
+      expect(result.publishedBy).toBe('user@example.com');
+    });
+
     it('publishes an unversioned skill using only its leaf name in the publication title and targetUrl', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
@@ -215,6 +268,93 @@ describe('PublishService', () => {
           body: expect.objectContaining({ rules: [] }),
         }),
       );
+    });
+
+    it('sets publishCredentials on the ADD resource when the flag is true', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+
+      await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+        undefined,
+        true,
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resources: [
+              {
+                action: 'ADD',
+                sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0',
+                targetUrl:
+                  'toolsets/public/Organization/Data%20Science/tool-abc123__1.2.0',
+                publishCredentials: true,
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
+    /*
+     * Omitted rather than sent as `false`, so the Core request stays
+     * byte-identical to the pre-change one for every existing caller.
+     */
+    it('omits publishCredentials entirely when the flag is false', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+
+      await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+        undefined,
+        false,
+      );
+
+      const [[call]] = vi.mocked(dialClient.client.createPublication).mock
+        .calls as unknown as [
+        [{ body: { resources: Record<string, unknown>[] } }],
+      ];
+      expect(call.body.resources[0]).not.toHaveProperty('publishCredentials');
+    });
+
+    it('omits publishCredentials entirely when the flag is absent', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+
+      await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        '1.2.0',
+        'Test User',
+      );
+
+      const [[call]] = vi.mocked(dialClient.client.createPublication).mock
+        .calls as unknown as [
+        [{ body: { resources: Record<string, unknown>[] } }],
+      ];
+      expect(call.body.resources[0]).not.toHaveProperty('publishCredentials');
     });
 
     it('builds targetUrl as resourceTypePrefix + targetFolder + resourceName, matching the DIAL Core OpenAPI spec example', async () => {
@@ -528,6 +668,7 @@ describe('PublishService', () => {
           version: '1.2.0',
           publishedAt: new Date(1_700_000_000_000).toISOString(),
           publishedBy: 'user@example.com',
+          publishCredentials: false,
         },
       ]);
     });
@@ -579,8 +720,38 @@ describe('PublishService', () => {
           version: '1.2.0',
           publishedAt: new Date(1_700_000_000_000).toISOString(),
           publishedBy: 'user@example.com',
+          publishCredentials: false,
         },
       ]);
+    });
+
+    /* History is the surface a re-publish is judged from, so it must name the
+       author the publisher chose, not the account Core recorded (GH #8727). */
+    it('reports each publication submitted display author', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          {
+            targetFolder: 'public/Organization/Data Science/',
+            createdAt: 1_700_000_000_000,
+            author: 'user@example.com',
+            displayAuthor: 'DIAL Team',
+            resources: [
+              { sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0' },
+            ],
+          },
+        ]),
+      );
+
+      const result = await service.getPublishHistory(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+      );
+
+      expect(result[0].publishedBy).toBe('DIAL Team');
     });
 
     it('returns an empty version when entityId has no {name}__{version} suffix', async () => {
@@ -655,6 +826,180 @@ describe('PublishService', () => {
       );
 
       expect(result[0].folderPath).toBe('test 14.04');
+    });
+
+    /*
+     * The flag rides on the resource, so it is read back off the same resource
+     * the narrowing already matched by `sourceUrl` — see
+     * `getPublicationSourceCredentials`.
+     */
+    it('reports publishCredentials: true for a publication made with shared credentials', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          {
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Data Science/',
+            createdAt: 1_700_000_000_000,
+            author: 'user@example.com',
+            resources: [
+              {
+                action: 'ADD',
+                sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0',
+                publishCredentials: true,
+              },
+            ],
+          },
+        ]),
+      );
+
+      const result = await service.getPublishHistory(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].publishCredentials).toBe(true);
+    });
+
+    it('reports publishCredentials: false when the resource carries the flag as false', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          {
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Data Science/',
+            createdAt: 1_700_000_000_000,
+            author: 'user@example.com',
+            resources: [
+              {
+                action: 'ADD',
+                sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0',
+                publishCredentials: false,
+              },
+            ],
+          },
+        ]),
+      );
+
+      const result = await service.getPublishHistory(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+      );
+
+      expect(result[0].publishCredentials).toBe(false);
+    });
+
+    /* A publication predating the field reports false, never an absent key. */
+    it('reports publishCredentials: false when the resource has no such property', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          {
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Data Science/',
+            createdAt: 1_700_000_000_000,
+            author: 'user@example.com',
+            resources: [
+              { sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0' },
+            ],
+          },
+        ]),
+      );
+
+      const result = await service.getPublishHistory(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+      );
+
+      expect(result[0]).toHaveProperty('publishCredentials', false);
+    });
+
+    /*
+     * Regression guard for the narrowing the new field rides along with: an
+     * approved DELETE still cancels the ADD it removed, ordering is still
+     * newest-first, and only the extra field was added to each entry.
+     */
+    it('leaves narrowing, ordering, and DELETE cancellation unchanged', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([
+          {
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Removed/',
+            createdAt: 1_700_000_000_000,
+            author: 'user@example.com',
+            resources: [
+              {
+                action: 'ADD',
+                sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0',
+                publishCredentials: true,
+              },
+            ],
+          },
+          {
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Removed/',
+            createdAt: 1_700_000_100_000,
+            author: 'user@example.com',
+            resources: [
+              {
+                action: 'DELETE',
+                sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0',
+              },
+            ],
+          },
+          {
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Older/',
+            createdAt: 1_600_000_000_000,
+            author: 'user@example.com',
+            resources: [
+              { sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0' },
+            ],
+          },
+          {
+            status: 'APPROVED',
+            targetFolder: 'public/Organization/Newer/',
+            createdAt: 1_800_000_000_000,
+            author: 'user@example.com',
+            resources: [
+              {
+                action: 'ADD',
+                sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0',
+                publishCredentials: true,
+              },
+            ],
+          },
+        ]),
+      );
+
+      const result = await service.getPublishHistory(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+      );
+
+      /* The removed folder is gone; the rest are newest-first, as before. */
+      expect(result.map((entry) => entry.folderPath)).toEqual([
+        'Organization/Newer',
+        'Organization/Older',
+      ]);
+      expect(result.map((entry) => entry.publishCredentials)).toEqual([
+        true,
+        false,
+      ]);
     });
 
     it('returns an empty array when no publications match', async () => {

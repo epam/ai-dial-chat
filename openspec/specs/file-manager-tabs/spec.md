@@ -8,7 +8,7 @@ File-manager tabs: per-tab visible columns, action labels, upload rules, and sel
 
 ### Requirement: Tab navigation in DialFileManagerModal
 
-`DialFileManagerModal` SHALL display the tabs present in the deployment-configured `fileManagerTabs` list (per `file-manager-tab-config`, read via `useAppConfig().config.fileManagerTabs`) — by default `My files`, `Shared with me`, and `Organization` (all three, when `FILE_MANAGER_AVAILABLE_TABS` is unset) — using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`, filtered against `fileManagerTabs`. The active tab SHALL be tracked via `handleTabChange` and wired to `DialFileManager` through `toolbarOptions.tabs`, `toolbarOptions.activeTab`, and `toolbarOptions.onTabChange`. The initial tab SHALL be the first tab present in `fileManagerTabs` following the fixed priority `my_files` → `shared` → `organization` (defaulting to `DialFileManagerTabs.MyFiles` when `fileManagerTabs` includes `my_files`, which is the default case).
+`DialFileManagerModal` SHALL display the tabs present in the deployment-configured `fileManagerTabs` list (per `file-manager-tab-config`, read via `useAppConfig().config.fileManagerTabs`) — by default `My files`, `Shared with me`, and `Organization` (all three, when `FILE_MANAGER_AVAILABLE_TABS` is unset) — using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`, filtered against `fileManagerTabs`. The active tab SHALL be tracked via `handleTabChange` and wired to `DialFileManager` through the folders-panel options — `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange`. The strip lives there, above the tree it filters, as of `@epam/ai-dial-react-file-manager` 0.3.0-dev.3, which rebuilt the file manager to the 2.0 design; up to 0.3.0-dev.2 the same three props were passed under `toolbarOptions` and rendered in the content toolbar, and a build still pinned to that version renders no strip at all if it passes them under `treeOptions` (and vice versa). The initial tab SHALL be the first tab present in `fileManagerTabs` following the fixed priority `my_files` → `shared` → `organization` (defaulting to `DialFileManagerTabs.MyFiles` when `fileManagerTabs` includes `my_files`, which is the default case).
 
 Tab label i18n keys:
 - `my_files` → `dialFileManager.tab.myFiles`
@@ -40,7 +40,7 @@ RTL: tab rendering and label alignment are handled by the ui-kit; no physical di
 #### Scenario: Deployment-narrowed tab set hides an unconfigured tab
 
 - **WHEN** `fileManagerTabs` is `['my_files', 'organization']` (Shared excluded by deployment configuration)
-- **THEN** `DialFileManagerModal` does not render a Shared tab, and `toolbarOptions.tabs` contains only My files and Organization
+- **THEN** `DialFileManagerModal` does not render a Shared tab, and `treeOptions.tabs` contains only My files and Organization
 
 #### Scenario: Initial tab falls back when my_files is excluded
 
@@ -340,7 +340,7 @@ When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWi
 
 Before changing `activeTab`, the tab-change handler SHALL reset `selectedPaths` to an empty `Set`, preventing stale paths from being carried into another tab's listing.
 
-> **Implementation note:** on user-facing file-manager surfaces, the ui-kit replaces the tab strip with the bulk-actions toolbar while selection is non-empty. Therefore, this is a handler-level invariant and SHALL NOT be tested through a select-file → click-tab DOM flow.
+> **Implementation note:** up to `@epam/ai-dial-react-file-manager` 0.3.0-dev.2 the kit replaced the tab strip with the bulk-actions toolbar while the selection was non-empty, so this could only be asserted at the handler level. From 0.3.0-dev.3 the strip sits in the folders panel and stays visible while items are selected — the bulk-actions toolbar floats over the grid instead — so a select-file → click-tab DOM flow is a valid way to cover it.
 
 #### Scenario: Handler clears stale selection
 
@@ -351,12 +351,47 @@ Before changing `activeTab`, the tab-change handler SHALL reset `selectedPaths` 
 
 ---
 
-### Requirement: Tab button accessibility
+### Requirement: Tab strip accessibility
 
-Each rendered tab button SHALL carry `role="tab"` and `aria-selected` (per ARIA spec). `aria-selected` SHALL be `true` for the currently active tab and `false` for all others. This requirement mirrors the pattern established in the `file-manager-toolbar` spec (#7932).
+The chat SHALL NOT be expected to impose a different role structure on the kit:
+the tab strip's DOM is owned by `@epam/ai-dial-react-file-manager`, which renders
+it with the ui-kit `FilterChips` component. The chat supplies labels, the active
+value, and the change handler, and adds no markup of its own.
 
-#### Scenario: Exactly one tab reports itself selected
+The strip SHALL be exposed as a **named `role="group"`**, named by the
+folders-panel heading through `aria-labelledby` when the panel renders a header
+(`treeOptions.header`, which the chat always sets — `labels.treeHeaderByTab`),
+and by `treeOptions.tabsAriaLabel` through `aria-label` when it does not.
+
+Each tab SHALL be a **toggle button**: `role="button"` with `aria-pressed="true"`
+on the active tab and `aria-pressed="false"` on every other one, each its own tab
+stop, activated with Enter or Space. There SHALL be no disabled tab — a tab the
+deployment excludes is absent from the list, not rendered inert (see the
+deployment-narrowed scenarios above).
+
+No element in the strip carries `role="tablist"`, `role="tab"`, or
+`aria-selected`. That is deliberate, not a regression: the kit models this strip
+as a filter row over one list — the tabs scope the same tree and grid to a
+section of the storage rather than swapping panels — and a `tablist` would make
+arrow keys change the filter on focus. It is also a behavioural change from the
+`Tabs`-based rendering used up to `@epam/ai-dial-react-file-manager` 0.3.0-dev.2,
+which did emit `role="tab"` + `aria-selected` from the content toolbar; anything
+asserting that older contract — UI automation included — SHALL be updated to the
+chip contract rather than treated as a product defect.
+
+Stable hooks for automation, in order of preference: the named group and its
+`[role="button"][aria-pressed]` children, then the kit's public class names
+`dial-kit-filter-chips` (the row) and `dial-kit-tag` (each chip). The visible tab
+label is the chip's accessible name.
+
+#### Scenario: Exactly one chip reports itself pressed
 
 - **WHEN** the tab strip is rendered with a tab active
-- **THEN** every tab button exposes `role="tab"`
-- **AND** the active tab carries `aria-selected="true"` while each remaining tab carries `aria-selected="false"`
+- **THEN** every tab exposes `role="button"`
+- **AND** the active tab carries `aria-pressed="true"` while each remaining tab carries `aria-pressed="false"`
+- **AND** no element in the strip carries `role="tab"`, `role="tablist"`, or `aria-selected`
+
+#### Scenario: The strip carries an accessible name
+
+- **WHEN** the folders panel renders its per-tab heading
+- **THEN** the `role="group"` wrapping the tabs is named from that heading via `aria-labelledby`, so the chips are announced as one storage-section filter rather than as unrelated toggles

@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { CodeBlockTheme } from '../../../types/code-editor';
 import { copyToClipboard } from '../../../utils/copy-to-clipboard';
 import { downloadTextFile } from '../../../utils/file-download';
@@ -242,7 +243,7 @@ describe('MarkdownCodeBlock', () => {
     expect(block.className).toContain('my-4');
     expect(block.className).toContain('max-w-full');
     expect(header.className).toContain('min-h-10');
-    expect(header.className).not.toContain('sticky');
+    expect(header.className).toContain('sticky');
   });
 
   it('renders the code value', () => {
@@ -320,7 +321,7 @@ describe('MarkdownCodeBlock', () => {
     );
 
     // eslint-disable-next-line testing-library/no-node-access -- header has no accessible role; padding-class check only
-    const header = document.querySelector('.border-b') as HTMLElement;
+    const header = document.querySelector('.sticky') as HTMLElement;
     expect(header.className).toContain('py-0');
     expect(header.className).not.toContain('py-2');
   });
@@ -329,7 +330,7 @@ describe('MarkdownCodeBlock', () => {
     render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
     // eslint-disable-next-line testing-library/no-node-access -- header has no accessible role; padding-class check only
-    const header = document.querySelector('.border-b') as HTMLElement;
+    const header = document.querySelector('.sticky') as HTMLElement;
     expect(header.className).toContain('py-2');
   });
 
@@ -356,5 +357,31 @@ describe('MarkdownCodeBlock', () => {
     // eslint-disable-next-line testing-library/no-node-access
     const code = document.querySelector('pre code');
     expect(code?.textContent).toBe('plain text block');
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('MarkdownCodeBlock — public class names', () => {
+  /*
+   * A lost public class fails silently: the build passes and a host's
+   * stylesheet simply stops applying. Issue #8707 asked for this hook on the
+   * fenced-code block, so it is asserted rather than left to review.
+   */
+  it('stamps the block container and its header', () => {
+    render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
+
+    const label = screen.getByText('typescript');
+    expect(
+      closestWithClass(label, CHAT_SHARED_CLASS.codeBlockHeader),
+    ).toBeTruthy();
+    expect(closestWithClass(label, CHAT_SHARED_CLASS.codeBlock)).toBeTruthy();
   });
 });

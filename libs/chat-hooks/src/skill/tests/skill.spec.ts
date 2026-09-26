@@ -7,6 +7,7 @@ import {
   isValidSkillRelativePath,
   normalizeSkillName,
   parseSkillManifest,
+  startsWithFrontmatterBlock,
   unpackSkillArchive,
 } from '../skill';
 
@@ -189,5 +190,81 @@ describe('unpackSkillArchive', () => {
     const { manifestText } = unpackSkillArchive(new Uint8Array(zipped));
 
     expect(manifestText).toBe(manifest);
+  });
+});
+
+describe('startsWithFrontmatterBlock', () => {
+  it('flags a whole SKILL.md pasted into the instructions body', () => {
+    const pasted = [
+      '---',
+      'name: pdf',
+      'display_name: PDF Tools',
+      'description: Work with PDF files',
+      '---',
+      '',
+      '# PDF Tools',
+      'Do the thing.',
+    ].join('\n');
+
+    expect(startsWithFrontmatterBlock(pasted)).toBe(true);
+  });
+
+  it('flags a block preceded by blank lines', () => {
+    expect(startsWithFrontmatterBlock('\n\n---\nname: pdf\n---\nbody')).toBe(
+      true,
+    );
+  });
+
+  it('flags a block whose fenced content is not parseable YAML', () => {
+    expect(startsWithFrontmatterBlock('---\nname: [unclosed\n---\nbody')).toBe(
+      true,
+    );
+  });
+
+  it('flags fences carrying trailing whitespace', () => {
+    expect(startsWithFrontmatterBlock('---  \nname: pdf\n---\t\nbody')).toBe(
+      true,
+    );
+  });
+
+  it('treats a horizontal rule further down the body as ordinary Markdown', () => {
+    const body = ['# Heading', '', 'Some prose.', '', '---', '', 'More.'].join(
+      '\n',
+    );
+
+    expect(startsWithFrontmatterBlock(body)).toBe(false);
+  });
+
+  it('does not flag a single unclosed leading fence', () => {
+    expect(startsWithFrontmatterBlock('---\nname: pdf\nstill going')).toBe(
+      false,
+    );
+  });
+
+  it('does not flag an indented first-line fence', () => {
+    expect(startsWithFrontmatterBlock('  ---\nname: pdf\n  ---\nbody')).toBe(
+      false,
+    );
+  });
+
+  it('does not flag an empty or whitespace-only value', () => {
+    expect(startsWithFrontmatterBlock('')).toBe(false);
+    expect(startsWithFrontmatterBlock('   \n\n  ')).toBe(false);
+  });
+
+  it('reaches the same verdict for CRLF input as for LF', () => {
+    const lf = '---\nname: pdf\n---\nbody';
+    const crlf = '---\r\nname: pdf\r\n---\r\nbody';
+
+    expect(startsWithFrontmatterBlock(crlf)).toBe(
+      startsWithFrontmatterBlock(lf),
+    );
+    expect(startsWithFrontmatterBlock(crlf)).toBe(true);
+  });
+
+  it('ignores a leading byte-order mark', () => {
+    expect(startsWithFrontmatterBlock('\uFEFF---\nname: pdf\n---\nbody')).toBe(
+      true,
+    );
   });
 });

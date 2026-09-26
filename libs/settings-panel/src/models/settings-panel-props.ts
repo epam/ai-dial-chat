@@ -16,36 +16,12 @@ export interface SettingsPanelItem {
 export interface SettingsPanelTypography {
   /** Typography class applied to the section header. Defaults to `'dial-h1-text'`. */
   sectionLabelClassName?: string;
-  /** Typography class applied to an inactive row's label. Defaults to `'dial-small-text'`. */
-  itemLabelClassName?: string;
-  /** Typography class applied to the active row's label. Defaults to `'dial-small-semi-text'`. */
-  activeItemLabelClassName?: string;
-}
-
-/** Color overrides for the {@link SettingsPanel} component, applied as CSS custom properties. */
-export interface SettingsPanelColors {
-  /** Label color of the section header. Defaults to `--text-primary`. */
-  sectionLabelText?: string;
-  /** Label and icon color of an inactive row (enabled or disabled). Defaults to `--text-secondary`. */
-  rowText?: string;
-  /** Background color of an enabled, inactive row on hover. Defaults to `--bg-control-accent-alpha-hover`. */
-  rowBackgroundHover?: string;
-  /** Background color of the active row. Defaults to `--bg-control-accent-alpha`. */
-  activeRowBackground?: string;
-  /** Background color of the active row on hover. Defaults to `--bg-control-accent-alpha-hover`. */
-  activeRowBackgroundHover?: string;
-  /** Label and icon color of the active row. Defaults to `--text-accent`. */
-  activeRowText?: string;
-  /** Keyboard focus ring color. Defaults to `--stroke-focus-black`. */
-  rowFocusOutline?: string;
 }
 
 /** Style overrides for the {@link SettingsPanel} component. */
 export interface SettingsPanelStyles {
   /** Typography overrides. */
   typography?: SettingsPanelTypography;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: SettingsPanelColors;
 }
 
 /** Props for {@link SettingsPanel}. */

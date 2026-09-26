@@ -6,20 +6,28 @@ import {
   Dropdown,
   NeutralButton,
   NeutralIconButton,
+  mergeClasses,
 } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { STARTER_BUTTONS_CLASS } from '../../constants/public-class-names';
 import type { StarterButtonsProps } from '../../models/starter-props';
 
 const MAX_VISIBLE = 4;
 const OVERFLOW_BUTTON_WIDTH = 56;
 const GAP = 8;
 
-/** Row of starter-prompt buttons that collapses overflowing items into a dropdown menu, sized to fit the available container width. */
+/**
+ * Row of starter-prompt buttons that collapses overflowing items into a
+ * dropdown menu, sized to fit the available container width. With
+ * `isCollapsible` set to `false` every starter is rendered instead, each on
+ * its own row, and no overflow menu appears.
+ */
 export const StarterButtons: FC<StarterButtonsProps> = ({
   starters,
   onSelect,
   isMobile,
+  isCollapsible = true,
   labels,
   styles,
 }) => {
@@ -31,44 +39,49 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
     Math.min(starters.length, MAX_VISIBLE),
   );
 
-  const computeVisibleCount = useCallback((totalStarters: number) => {
-    const container = containerRef.current;
-    if (!container) return;
+  const computeVisibleCount = useCallback(
+    (totalStarters: number) => {
+      const container = containerRef.current;
+      if (!container || !isCollapsible) return;
 
-    const containerWidth = container.getBoundingClientRect().width;
-    if (containerWidth === 0) return;
+      const containerWidth = container.getBoundingClientRect().width;
+      if (containerWidth === 0) return;
 
-    const cap = Math.min(totalStarters, MAX_VISIBLE);
-    const allMounted = pillRefs.current.slice(0, cap).every((el) => el != null);
-    if (allMounted) {
-      pillWidthCacheRef.current = pillRefs.current
+      const cap = Math.min(totalStarters, MAX_VISIBLE);
+      const allMounted = pillRefs.current
         .slice(0, cap)
-        .map((el) => el?.getBoundingClientRect().width ?? 0);
-    }
+        .every((el) => el != null);
+      if (allMounted) {
+        pillWidthCacheRef.current = pillRefs.current
+          .slice(0, cap)
+          .map((el) => el?.getBoundingClientRect().width ?? 0);
+      }
 
-    const widthOf = (i: number) => pillWidthCacheRef.current[i] ?? 120;
+      const widthOf = (i: number) => pillWidthCacheRef.current[i] ?? 120;
 
-    let usedWidth = 0;
-    let count = 0;
+      let usedWidth = 0;
+      let count = 0;
 
-    for (let i = 0; i < cap; i++) {
-      const pillWidth = widthOf(i);
-      const remainingAfterThis = totalStarters - (i + 1);
-      const needsOverflow = remainingAfterThis > 0;
-      const projectedWidth =
-        usedWidth +
-        (i > 0 ? GAP : 0) +
-        pillWidth +
-        (needsOverflow ? GAP + OVERFLOW_BUTTON_WIDTH : 0);
+      for (let i = 0; i < cap; i++) {
+        const pillWidth = widthOf(i);
+        const remainingAfterThis = totalStarters - (i + 1);
+        const needsOverflow = remainingAfterThis > 0;
+        const projectedWidth =
+          usedWidth +
+          (i > 0 ? GAP : 0) +
+          pillWidth +
+          (needsOverflow ? GAP + OVERFLOW_BUTTON_WIDTH : 0);
 
-      if (projectedWidth > containerWidth) break;
+        if (projectedWidth > containerWidth) break;
 
-      usedWidth += (i > 0 ? GAP : 0) + pillWidth;
-      count = i + 1;
-    }
+        usedWidth += (i > 0 ? GAP : 0) + pillWidth;
+        count = i + 1;
+      }
 
-    setVisibleCount(Math.max(1, count));
-  }, []);
+      setVisibleCount(Math.max(1, count));
+    },
+    [isCollapsible],
+  );
 
   useEffect(() => {
     pillWidthCacheRef.current = [];
@@ -77,7 +90,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !isCollapsible) return;
 
     const observer = new ResizeObserver(() => {
       computeVisibleCount(starters.length);
@@ -86,7 +99,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
     observer.observe(container);
 
     return () => observer.disconnect();
-  }, [computeVisibleCount, starters.length]);
+  }, [computeVisibleCount, isCollapsible, starters.length]);
 
   /* Re-measure once the newly rendered pill set is mounted: the width cache is
    * only refreshed when every pill up to the cap has a live ref, which is not
@@ -106,8 +119,10 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
 
   if (starters.length === 0) return null;
 
-  const visibleStarters = starters.slice(0, visibleCount);
-  const overflowStarters = starters.slice(visibleCount);
+  const visibleStarters = isCollapsible
+    ? starters.slice(0, visibleCount)
+    : starters;
+  const overflowStarters = isCollapsible ? starters.slice(visibleCount) : [];
 
   const overflowItems: DropdownItem[] = overflowStarters.map(
     (starter, idx) => ({
@@ -118,11 +133,19 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
   );
 
   return (
-    <div ref={containerRef} className="mb-4 w-full">
+    <div
+      ref={containerRef}
+      className={mergeClasses('mb-4 w-full', STARTER_BUTTONS_CLASS.root)}
+    >
       <div
         role="list"
         aria-label={labels.list}
-        className="flex flex-wrap justify-center gap-2"
+        className={mergeClasses(
+          isCollapsible
+            ? 'flex flex-wrap justify-center gap-2'
+            : 'flex flex-col items-center gap-2',
+          STARTER_BUTTONS_CLASS.list,
+        )}
       >
         {visibleStarters.map((starter, index) => (
           <div

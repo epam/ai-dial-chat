@@ -6,12 +6,11 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonVariant,
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
-  NeutralButton,
   Popup,
   PopupSize,
-  PrimaryButton,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
@@ -111,16 +110,15 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
       size={PopupSize.Lg}
       closeAriaLabel={closeLabel}
       onClose={onClose}
-      footer={
-        <div className="flex justify-end gap-2 px-6 py-4">
-          <NeutralButton label={cancelLabel} onClick={onCancel} />
-          <PrimaryButton
-            label={submitLabel}
-            disabled={isSubmitDisabled}
-            onClick={handleSubmit}
-          />
-        </div>
-      }
+      mainButtons={[
+        { label: cancelLabel, onClick: onCancel },
+        {
+          label: submitLabel,
+          variant: ButtonVariant.Primary,
+          disabled: isSubmitDisabled,
+          onClick: handleSubmit,
+        },
+      ]}
     >
       <div className="flex flex-col gap-4 px-6 pb-4 pt-2">
         <div

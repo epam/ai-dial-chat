@@ -1,9 +1,36 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiExtraModels,
+  ApiProperty,
+  ApiPropertyOptional,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { AnnouncementItemDto } from './announcement-item.dto';
+import { ApplicationVisualizerDto } from './application-visualizer.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
 
+/* ApplicationVisualizerDto is reachable only through an additionalProperties
+ * $ref, which Swagger does not follow when collecting schemas, so the model
+ * has to be registered explicitly or the reference dangles. */
+@ApiExtraModels(ApplicationVisualizerDto)
 export class ClientConfigDto {
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      'Whether a text refinement model is configured. Missing means unavailable.',
+    example: false,
+  })
+  aiTextRefinementAvailable?: boolean;
+
+  @ApiProperty({
+    description:
+      'Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.',
+    type: String,
+    nullable: true,
+    example: 'new-year',
+  })
+  activeEventId!: string | null;
+
   @ApiProperty({
     description:
       'Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Always a non-empty string.',
@@ -82,6 +109,16 @@ export class ClientConfigDto {
   @IsString()
   mcpAppUserAgent!: string | null;
 
+  @ApiPropertyOptional({
+    description:
+      'Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to "ai-dial-chat" on the client.',
+    type: String,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  mcpAppHostName!: string | null;
+
   @ApiProperty({
     description:
       'Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.',
@@ -104,6 +141,15 @@ export class ClientConfigDto {
     example: ['https://partner.example.com'],
   })
   overlayAllowedOrigins!: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Trusted HTTP(S) connection origins from ALLOWED_CONNECT_ORIGINS, including leading *. subdomain patterns. PDF previews use browser credentials for matching external origins and reject redirects. Empty by default; upstream credentialed CORS and browser cookie policy still apply.',
+    type: [String],
+    default: [],
+    example: ['https://documents.example.com'],
+  })
+  allowedConnectOrigins?: string[];
 
   @ApiProperty({
     description:
@@ -159,6 +205,18 @@ export class ClientConfigDto {
   })
   announcements!: AnnouncementItemDto[];
 
+  @ApiPropertyOptional({
+    description:
+      'Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.',
+    example:
+      'Your secure, all-in-one AI assistant for web search, document analysis, research, brainstorming, and more.',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  welcomeScreenDescription!: string | null;
+
   @ApiProperty({
     description:
       'Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.',
@@ -176,11 +234,35 @@ export class ClientConfigDto {
 
   @ApiProperty({
     description:
+      "Registry of application id → grouped visualizer mappings, keyed by a message's effective deployment id. Sourced from APPLICATION_VISUALIZERS. Every attachment an entry claims is delivered to one iframe together; an entry takes precedence over customVisualizers for the attachments it claims. The origin of each entry URL must also appear in ALLOWED_IFRAME_ORIGINS or the browser blocks the iframe. Each entry's passAuthInfo and passExplicitToken are accepted for configuration parity and are not consumed — auth is server-side and the browser holds no access token. Empty when unset — the feature is dark by default.",
+    type: 'object',
+    additionalProperties: { $ref: getSchemaPath(ApplicationVisualizerDto) },
+  })
+  applicationVisualizers!: Record<string, ApplicationVisualizerDto>;
+
+  @ApiProperty({
+    description:
+      'Public client-owned variables from CUSTOM_CLIENT_VARIABLES. Arbitrary JSON object; empty when unset or invalid. The BFF does not interpret its keys. Never put secrets here.',
+    type: 'object',
+    additionalProperties: true,
+    default: {},
+  })
+  customVariables!: Record<string, unknown>;
+
+  @ApiProperty({
+    description:
       "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
     type: [String],
     example: ['title', 'role', 'dial_roles'],
   })
   publicationFilterSources!: string[];
+
+  @ApiProperty({
+    description:
+      'Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.',
+    example: 536870912,
+  })
+  maxAttachmentFileSizeBytes!: number;
 }
 
 export class ClientConfigMetadataDto {

@@ -23,6 +23,8 @@ interface Props {
   onToggleFavorite: (id: string, isFavorite: boolean) => Promise<void> | void;
   onClose: () => void;
   onBrowseCatalog?: () => void;
+  /** Additional classes merged over the panel root's defaults. */
+  panelClassName?: string;
 }
 
 const DeploymentSelectorOverlay: FC<Props> = ({
@@ -35,6 +37,7 @@ const DeploymentSelectorOverlay: FC<Props> = ({
   onToggleFavorite,
   onClose,
   onBrowseCatalog,
+  panelClassName,
 }) => {
   const { t } = useTranslation();
 
@@ -65,6 +68,7 @@ const DeploymentSelectorOverlay: FC<Props> = ({
         onBrowseCatalog={onBrowseCatalog}
         onClose={onClose}
         labels={labels}
+        className={panelClassName}
       />
     </Suspense>
   );

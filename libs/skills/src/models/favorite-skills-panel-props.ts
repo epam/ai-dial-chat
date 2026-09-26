@@ -34,14 +34,18 @@ export interface FavoriteSkillsPanelColors {
 export interface FavoriteSkillsPanelProps {
   /** The user's favorited skills, already resolved by the host. */
   favorites: FavoriteSkillItem[];
-  /** Called when a row is activated (click, Enter, or Space). */
+  /** Called when a row is activated (click, Enter, or Space — or, in listbox mode, Enter in the owning text field while the row is active). */
   onSelect: (item: FavoriteSkillItem) => void;
-  /** Called with a skill's id when its row's star button is clicked to remove it from favorites. */
-  onToggleFavorite: (id: string) => void;
+  /** Removes a favorite by id; omitted hides the star action. */
+  onToggleFavorite?: (id: string) => void;
   /** Called when the "Browse" button is clicked. */
   onBrowse: () => void;
-  /** Called when a row tooltip's "View details" button is clicked. */
-  onViewDetails: (item: FavoriteSkillItem) => void;
+  /** Opens skill details; omitted hides the details tooltip. */
+  onViewDetails?: (item: FavoriteSkillItem) => void;
+  /** Additional classes applied to the panel root. */
+  className?: string;
+  /** Additional classes applied to each favorite row. */
+  rowClassName?: string;
   /**
    * When provided, the panel enters search mode: rows are filtered to names
    * containing this string case-insensitively and matched names render with a
@@ -49,6 +53,29 @@ export interface FavoriteSkillsPanelProps {
    * favorites unfiltered.
    */
   searchQuery?: string;
+  /**
+   * When provided, the list renders as a `role="listbox"` with this `id` and
+   * each row as a `role="option"` — the shape a list autocomplete (e.g. the
+   * conversation input's `commandMenu`) drives from its text field. In this
+   * mode Tab moves from row to row: a row's star and its tooltip's "View
+   * details" stay clickable but leave the Tab sequence. Omit for the plain
+   * list of button rows.
+   */
+  listboxId?: string;
+  /**
+   * Renders the rows and the "Browse" action as `role="menuitem"` for a host
+   * that mounts the panel inside a `role="menu"` container (e.g. a submenu
+   * whose arrow keys move between menu items). Ignored with `listboxId`.
+   * Defaults to `false`: rows are `role="button"`.
+   */
+  isMenu?: boolean;
+  /**
+   * `id` of the row the owning text field has active, rendered with
+   * `aria-selected="true"` and the row highlight — pass through the id the
+   * text field reports; row ids are derived from `listboxId` and each item's
+   * id. Used only with `listboxId`.
+   */
+  activeOptionId?: string | null;
   /** Localizable string overrides. */
   labels?: FavoriteSkillsPanelLabels;
   /** Color overrides applied as CSS custom properties. */

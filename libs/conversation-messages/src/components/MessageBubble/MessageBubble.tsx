@@ -9,7 +9,9 @@ import { UserMessageBubble } from './UserMessageBubble';
 export const MessageBubble: FC<MessageBubbleProps> = ({
   role,
   beforeContent,
+  textSegments,
   onAttachmentClick,
+  responseFormat,
   markdownComponents,
   markdownUrlTransform,
   ...props
@@ -29,7 +31,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
     return (
       <UserMessageBubble
         {...props}
-        beforeContent={beforeContent}
+        textSegments={textSegments}
         onAttachmentClick={onAttachmentClick}
       />
     );
@@ -39,6 +41,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
     <AssistantMessageBubble
       {...props}
       beforeContent={beforeContent}
+      responseFormat={responseFormat}
       markdownComponents={markdownComponents}
       markdownUrlTransform={markdownUrlTransform}
       onAttachmentClick={onAttachmentClick}

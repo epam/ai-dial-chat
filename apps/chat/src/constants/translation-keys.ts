@@ -8,8 +8,10 @@ export enum ChatI18nKeys {
   GreetingEveningNoName = 'chat.greetingEveningNoName',
   GreetingNight = 'chat.greetingNight',
   GreetingNightNoName = 'chat.greetingNightNoName',
+  StreamErrorTitle = 'chat.streamErrorTitle',
   StreamError = 'chat.streamError',
   GenerationConflict = 'chat.generationConflict',
+  GenerationPersistenceError = 'chat.generationPersistenceError',
   CreateConversationError = 'chat.createConversationError',
   ConversationNotFound = 'chat.conversationNotFound',
   /** TODO: remove in next release */
@@ -75,6 +77,7 @@ export enum ApiI18nKeys {
 
 export enum ButtonsI18nKeys {
   Retry = 'buttons.retry',
+  TryAgain = 'buttons.tryAgain',
   Reload = 'buttons.reload',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
@@ -103,9 +106,7 @@ export enum ButtonsI18nKeys {
   RegenerateResponse = 'buttons.regenerateResponse',
   CopyResponse = 'buttons.copyResponse',
   CopyAsMarkdown = 'buttons.copyAsMarkdown',
-  CopyAsCsv = 'buttons.copyAsCsv',
   OpenInCanvas = 'buttons.openInCanvas',
-  CopyAsTxt = 'buttons.copyAsTxt',
   CopyAsJson = 'buttons.copyAsJson',
   CopyText = 'buttons.copyText',
   LikeResponse = 'buttons.likeResponse',
@@ -220,6 +221,9 @@ export enum CatalogI18nKeys {
   PublishFolderEmptyState = 'catalog.publishFolderEmptyState',
   PublishHistoryLoading = 'catalog.publishHistoryLoading',
   PublishHistoryError = 'catalog.publishHistoryError',
+  PublishCredentialsLabel = 'catalog.publish.credentialsLabel',
+  PublishCredentialsHint = 'catalog.publish.credentialsHint',
+  PublishHistorySharedCredentials = 'catalog.publish.historySharedCredentials',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
@@ -346,6 +350,7 @@ export enum PromptSelectorI18nKeys {
 }
 
 export enum SkillSelectorI18nKeys {
+  RemoveSkillLabel = 'skillSelector.removeSkillLabel',
   AddMenuLabel = 'skillSelector.addMenuLabel',
   EmptyHint = 'skillSelector.emptyHint',
   EmptyQueryHint = 'skillSelector.emptyQueryHint',
@@ -378,7 +383,9 @@ export enum ScheduledTasksI18nKeys {
   ListErrorLabel = 'scheduledTasks.list.errorLabel',
   ListRetryLabel = 'scheduledTasks.list.retryLabel',
   ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
+  ListLoadMoreErrorLabel = 'scheduledTasks.list.loadMoreErrorLabel',
   CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
+  CardCompletedBadgeLabel = 'scheduledTasks.card.completedBadgeLabel',
   CardEditActionLabel = 'scheduledTasks.card.editActionLabel',
   CardScheduleDailyAt = 'scheduledTasks.card.scheduleDailyAt',
   CardScheduleWeeklyAt = 'scheduledTasks.card.scheduleWeeklyAt',
@@ -411,6 +418,7 @@ export enum ScheduledTasksI18nKeys {
   CreateMinuteInvalid = 'scheduledTasks.create.minuteInvalid',
   CreateStartDateLabel = 'scheduledTasks.create.startDateLabel',
   CreateStartDatePlaceholder = 'scheduledTasks.create.startDatePlaceholder',
+  CreateStartDateInvalid = 'scheduledTasks.create.startDateInvalid',
   CreateEndDateLabel = 'scheduledTasks.create.endDateLabel',
   CreateEndDatePlaceholder = 'scheduledTasks.create.endDatePlaceholder',
   CreateEndDateBeforeStartError = 'scheduledTasks.create.endDateBeforeStartError',
@@ -421,6 +429,10 @@ export enum ScheduledTasksI18nKeys {
   CreateDescriptionMaxLengthError = 'scheduledTasks.create.descriptionMaxLengthError',
   CreateInstructionsLabel = 'scheduledTasks.create.instructionsLabel',
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
+  CreateSkillLabel = 'scheduledTasks.create.skillLabel',
+  CreateSkillPlaceholder = 'scheduledTasks.create.skillPlaceholder',
+  CreateInstructionsOrSkillRequired = 'scheduledTasks.create.instructionsOrSkillRequired',
+  CreateInstructionsOnlySubtitle = 'scheduledTasks.create.instructionsOnlySubtitle',
   CreateSubmittingLabel = 'scheduledTasks.create.submittingLabel',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',
   CreateErrorNotification = 'scheduledTasks.create.errorNotification',
@@ -441,11 +453,16 @@ export enum ScheduledTasksI18nKeys {
   DetailStatusMissed = 'scheduledTasks.detail.statusMissed',
   DetailErrorLabel = 'scheduledTasks.detail.errorLabel',
   DetailActiveStatusLabel = 'scheduledTasks.detail.activeStatusLabel',
+  DetailCompletedFieldLabel = 'scheduledTasks.detail.completedFieldLabel',
+  DetailActiveDisabledReasonCompleted = 'scheduledTasks.detail.activeDisabledReasonCompleted',
+  DetailActiveDisabledReasonExpired = 'scheduledTasks.detail.activeDisabledReasonExpired',
   DetailPauseSuccess = 'scheduledTasks.detail.pauseSuccess',
   DetailResumeSuccess = 'scheduledTasks.detail.resumeSuccess',
   DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',
   DetailDeleteConfirmTitle = 'scheduledTasks.detail.deleteConfirmTitle',
   DetailDeleteConfirmDescription = 'scheduledTasks.detail.deleteConfirmDescription',
+  DetailDeleteConsequenceConversationsAccessible = 'scheduledTasks.detail.deleteConsequenceConversationsAccessible',
+  DetailDeleteConsequenceCannotBeUndone = 'scheduledTasks.detail.deleteConsequenceCannotBeUndone',
   DetailDeleteConfirmingLabel = 'scheduledTasks.detail.deleteConfirmingLabel',
   DetailDeleteSuccess = 'scheduledTasks.detail.deleteSuccess',
   DetailDeleteNotFoundError = 'scheduledTasks.detail.deleteNotFoundError',
@@ -453,7 +470,8 @@ export enum ScheduledTasksI18nKeys {
   DetailDeleteGenericError = 'scheduledTasks.detail.deleteGenericError',
   DetailDeletedStateLabel = 'scheduledTasks.detail.deletedStateLabel',
   EditPageTitle = 'scheduledTasks.edit.pageTitle',
-  EditUnsupportedTriggerMessage = 'scheduledTasks.edit.unsupportedTriggerMessage',
+  EditLoadErrorLabel = 'scheduledTasks.edit.loadErrorLabel',
+  EditInvalidScheduleLabel = 'scheduledTasks.edit.invalidScheduleLabel',
   EditSuccessNotification = 'scheduledTasks.edit.successNotification',
   EditErrorNotification = 'scheduledTasks.edit.errorNotification',
   ConversationBannerLoadingLabel = 'scheduledTasks.conversationBanner.loadingLabel',
@@ -498,6 +516,7 @@ export enum DialFileManagerI18nKeys {
   UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
   MaxSizeOnly = 'dialFileManager.maxSizeOnly',
+  UploadFileTooLarge = 'dialFileManager.uploadFileTooLarge',
   AllTypes = 'dialFileManager.allTypes',
   UpToFiles = 'dialFileManager.upToFiles',
   AttachingHiddenFilesNotAllowed = 'dialFileManager.attachingHiddenFilesNotAllowed',
@@ -680,7 +699,6 @@ export enum ConversationPanelI18nKeys {
   RevokeSuccessTitle = 'conversationPanel.revoke.revokeSuccessTitle',
   RevokeSuccess = 'conversationPanel.revoke.revokeSuccess',
   RevokeError = 'conversationPanel.revoke.revokeError',
-  TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
   UnreadIndicatorLabel = 'conversationPanel.unreadIndicatorLabel',
 }
 
@@ -822,6 +840,8 @@ export enum AttachmentsI18nKeys {
   NoAttachmentsAllowedMessage = 'attachments.noAttachmentsAllowed.message',
   NetworkErrorTitle = 'attachments.networkError.title',
   NetworkErrorMessage = 'attachments.networkError.message',
+  FileTooLargeTitle = 'attachments.fileTooLarge.title',
+  FileTooLargeMessage = 'attachments.fileTooLarge.message',
 }
 
 export enum CitationsI18nKeys {
@@ -874,7 +894,9 @@ export enum AttachmentCanvasI18nKeys {
   HtmlViewRendered = 'attachmentCanvas.htmlViewRendered',
   OpenedInCanvasLabel = 'attachmentCanvas.openedInCanvasLabel',
   ExpandAppLabel = 'attachmentCanvas.expandAppLabel',
-  McpAppTitle = 'attachmentCanvas.mcpAppTitle',
+  VisualizerActionsAriaLabel = 'attachmentCanvas.visualizerActionsAriaLabel',
+  VisualizerLoadingLabel = 'attachmentCanvas.visualizerLoadingLabel',
+  VisualizerLoadErrorLabel = 'attachmentCanvas.visualizerLoadErrorLabel',
   McpAppLoadErrorLabel = 'attachmentCanvas.mcpAppLoadErrorLabel',
   McpAppForbiddenErrorLabel = 'attachmentCanvas.mcpAppForbiddenErrorLabel',
   PdfThumbnailsLabel = 'attachmentCanvas.pdfThumbnailsLabel',
@@ -894,6 +916,8 @@ export enum AnnouncementBannerI18nKeys {
   RegionAriaLabel = 'announcementBanner.regionAriaLabel',
   RegionAriaLabelWithTitle = 'announcementBanner.regionAriaLabelWithTitle',
   CloseLabel = 'announcementBanner.closeLabel',
+  ExpandLabel = 'announcementBanner.expandLabel',
+  CollapseLabel = 'announcementBanner.collapseLabel',
 }
 
 export enum AnnouncementsPopoverI18nKeys {
@@ -963,9 +987,21 @@ export enum PromptEditorI18nKeys {
   ContentLoadingAriaLabel = 'promptEditor.contentLoadingAriaLabel',
 }
 
+export enum TextRefinementI18nKeys {
+  Action = 'textRefinement.action',
+  Undo = 'textRefinement.undo',
+  Error = 'textRefinement.error',
+  Pending = 'textRefinement.pending',
+  Success = 'textRefinement.success',
+  Restored = 'textRefinement.restored',
+  Unchanged = 'textRefinement.unchanged',
+}
+
 export enum SkillEditorI18nKeys {
   Title = 'skillEditor.title',
   BackAriaLabel = 'skillEditor.backAriaLabel',
+  BackToManifestAriaLabel = 'skillEditor.backToManifestAriaLabel',
+  ReturnedToManifestStatus = 'skillEditor.returnedToManifestStatus',
   FilesHeading = 'skillEditor.filesHeading',
   FilesTreeAriaLabel = 'skillEditor.filesTreeAriaLabel',
   AddUploadLabel = 'skillEditor.addUploadLabel',
@@ -986,6 +1022,7 @@ export enum SkillEditorI18nKeys {
   BucketMissingTitle = 'skillEditor.bucketMissingTitle',
   BucketMissingMessage = 'skillEditor.bucketMissingMessage',
   ErrorRequired = 'skillEditor.error.required',
+  ErrorInstructionsFrontmatter = 'skillEditor.error.instructionsFrontmatter',
   ErrorNameInvalid = 'skillEditor.error.nameInvalid',
   ErrorNameConflict = 'skillEditor.error.nameConflict',
   ErrorPathInvalid = 'skillEditor.error.pathInvalid',
@@ -1140,6 +1177,9 @@ export enum ToolsetSigninI18nKeys {
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
+  AdminConsentRequired = 'toolsetSignin.adminConsentRequired',
+  OfflineUnavailable = 'toolsetSignin.offlineUnavailable',
+  DialNativeHint = 'toolsetSignin.dialNativeHint',
   ErrorPopupBlocked = 'toolsetSignin.errorPopupBlocked',
   ErrorDeclineFailed = 'toolsetSignin.errorDeclineFailed',
   ErrorRetry = 'toolsetSignin.errorRetry',
@@ -1171,6 +1211,7 @@ export enum ShareI18nKeys {
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',
   QrCodeAriaLabel = 'share.qrCodeAriaLabel',
+  QrDownloadFileName = 'share.qrDownloadFileName',
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',
@@ -1197,8 +1238,14 @@ export enum ConversationInputI18nKeys {
   TriggerAriaLabel = 'conversationInput.usageLimits.triggerAriaLabel',
   PopoverTitle = 'conversationInput.usageLimits.popoverTitle',
   Error = 'conversationInput.usageLimits.error',
-  TokensRemaining = 'conversationInput.usageLimits.tokensRemaining',
+  TokenGroup = 'conversationInput.usageLimits.tokenGroup',
+  CostGroup = 'conversationInput.usageLimits.costGroup',
+  PeriodDay = 'conversationInput.usageLimits.periodDay',
+  PeriodWeek = 'conversationInput.usageLimits.periodWeek',
+  PeriodMonth = 'conversationInput.usageLimits.periodMonth',
+  Value = 'conversationInput.usageLimits.value',
   ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
+  FullUsageLink = 'conversationInput.usageLimits.fullUsageLink',
 }
 
 export enum NotificationI18nKeys {
@@ -1370,4 +1417,42 @@ export enum UsageI18nKeys {
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
+}
+
+export enum HalloweenI18nKeys {
+  ToastTitle = 'halloween.toastTitle',
+  SpidersToastMessage = 'halloween.spidersToastMessage',
+  GhostToastMessage = 'halloween.ghostToastMessage',
+  WebToastMessage = 'halloween.webToastMessage',
+  BatsToastMessage = 'halloween.batsToastMessage',
+  CatToastMessage = 'halloween.catToastMessage',
+  WitchesToastMessage = 'halloween.witchesToastMessage',
+  PumpkinLabel = 'halloween.pumpkinLabel',
+  TrainToastMessage = 'halloween.trainToastMessage',
+  PortalToastMessage = 'halloween.portalToastMessage',
+  RavensToastMessage = 'halloween.ravensToastMessage',
+  CandyToastMessage = 'halloween.candyToastMessage',
+  FootprintsToastMessage = 'halloween.footprintsToastMessage',
+  SkeletonsToastMessage = 'halloween.skeletonsToastMessage',
+  CauldronToastMessage = 'halloween.cauldronToastMessage',
+  MimicToastMessage = 'halloween.mimicToastMessage',
+  BowlingToastMessage = 'halloween.bowlingToastMessage',
+  MummyToastMessage = 'halloween.mummyToastMessage',
+}
+
+export enum NewYearI18nKeys {
+  ToastTitle = 'newYear.toastTitle',
+  SnowToastMessage = 'newYear.snowToastMessage',
+  ConfettiToastMessage = 'newYear.confettiToastMessage',
+  SleighToastMessage = 'newYear.sleighToastMessage',
+  GiftLabel = 'newYear.giftLabel',
+}
+
+export enum ApplicationCredentialsI18nKeys {
+  Title = 'applicationCredentials.title',
+  LoadError = 'applicationCredentials.loadError',
+  SignedIn = 'applicationCredentials.signedIn',
+  SignedOut = 'applicationCredentials.signedOut',
+  SharedCredentials = 'applicationCredentials.sharedCredentials',
+  ConfirmLogout = 'applicationCredentials.confirmLogout',
 }

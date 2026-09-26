@@ -43,7 +43,7 @@ The system SHALL select between these two forms using the field's filename and, 
 
 On success the endpoint SHALL respond `201 Created` with `name`, `path`, `url`, and `etag` fields describing the newly created Skill, identical in shape for both input forms.
 
-The endpoint SHALL be rate-limited identically to the existing create endpoint (`@Throttle({ default: { limit: 5, ttl: 60000 } })`) and SHALL NOT define or use any response cache. This is unchanged for both input forms.
+The endpoint SHALL NOT define or use any response cache. This is unchanged for both input forms.
 
 **Generated-client impact**: none beyond documentation. `operationId: importSkillArchive`, the `ImportSkillArchiveRequest { file: Blob }` request shape, and the `SkillImportResponseDto` response shape in `libs/chat-api-client` are unchanged; only the OpenAPI operation's description text is updated to state both accepted input forms. `apps/chat/src/server-api/skills.api.ts`'s `importSkillArchive` wrapper requires no signature change.
 
@@ -62,10 +62,6 @@ The endpoint SHALL be rate-limited identically to the existing create endpoint (
 #### Scenario: Unauthenticated request is rejected
 - **WHEN** a request to `/api/v1/skills/import` has no valid session
 - **THEN** the response is `401 Unauthorized` and no extraction, manifest parsing, or Core call is attempted
-
-#### Scenario: Rate limit is enforced
-- **WHEN** a user exceeds 5 import requests within 60 seconds, in any mix of archive and standalone-manifest requests
-- **THEN** the 6th request within that window is rejected with `429 Too Many Requests`
 
 ### Requirement: Import is all-or-nothing — validation failure makes zero Core calls
 
@@ -137,6 +133,8 @@ Every extracted, normalized entry path SHALL be validated against the same relat
 
 The system SHALL reject, per entry, before decompressing its content: encrypted entries, symbolic-link entries, and any entry that is neither a regular file nor a directory.
 
+An entry the ZIP reader itself refuses — while enumerating the central directory as well as while opening the entry's stream, for example one marked with strong encryption or compressed by a method the reader does not implement — SHALL likewise be answered with `422 Unprocessable Entity`. A reader-level refusal SHALL NOT surface as `500 Internal Server Error`: the defect is in the uploaded archive, not in the service.
+
 #### Scenario: Path traversal is rejected
 - **WHEN** an archive entry's path contains a `..` segment or an absolute path
 - **THEN** the response is `400 Bad Request` and no file is written
@@ -144,6 +142,10 @@ The system SHALL reject, per entry, before decompressing its content: encrypted 
 #### Scenario: Encrypted entry is rejected
 - **WHEN** an archive contains a password-protected (encrypted) entry
 - **THEN** the response is `422 Unprocessable Entity` and no Skill is created
+
+#### Scenario: An entry the ZIP reader refuses is rejected, not a server error
+- **WHEN** an archive contains an entry the reader will not enumerate or open, such as one marked with strong encryption
+- **THEN** the response is `422 Unprocessable Entity`, never `500 Internal Server Error`
 
 #### Scenario: Symbolic link entry is rejected
 - **WHEN** an archive contains an entry whose Unix external file attributes mark it as a symbolic link

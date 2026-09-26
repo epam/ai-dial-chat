@@ -24,14 +24,18 @@ export interface ScheduledTaskDetailViewLabels {
   repeatsLabel: string;
   /** Label for the activity-window field, e.g. "Active". Shown only for a recurring task whose window is bounded. */
   activeWindowLabel: string;
-  /** Accessible name and visible label of the header's Active switch. Distinct from `activeWindowLabel`, which describes the cron activity date window. Shown only when `isActive` is defined. */
+  /** Accessible name and visible label of the header's Active switch. Distinct from `activeWindowLabel`, which describes the cron activity date window. Shown only when `isActive` is defined and `isCompleted`/`isDeleted` are not `true`. */
   activeStatusLabel: string;
+  /** Label for the completed-state field in the Details section, e.g. "Status". */
+  completedFieldLabel: string;
   /** Announced via `aria-live` after a pause/resume mutation completes, separate from the switch's own accessible name. Empty string announces nothing. */
   activeStatusAnnouncement?: string;
   /** Title of the Configuration section. */
   configurationTitle: string;
   /** Label for the instructions field. */
   instructionsLabel: string;
+  /** Label of the optional skill field in Configuration. */
+  skillLabel?: string;
   /** Label for the page-level retry action shown alongside `error`. */
   retryLabel: string;
   /** Title of the History panel. */
@@ -40,6 +44,8 @@ export interface ScheduledTaskDetailViewLabels {
   historyEmptyLabel: string;
   /** Message shown alongside the retry action when `runsError` is set. */
   historyErrorLabel: string;
+  /** Next-page failure message; falls back to historyErrorLabel. */
+  historyLoadMoreErrorLabel?: string;
   /** Label for the History retry action. */
   historyRetryLabel: string;
   /** Announced via `aria-live` while a load-more runs fetch is in flight. */
@@ -101,6 +107,13 @@ export interface ScheduledTaskDetailViewStyles {
   typography?: ScheduledTaskDetailViewTypography;
 }
 
+export interface ScheduledTaskDetailViewLayout {
+  detailsWidth?: string;
+  historyWidth?: string;
+  historyMaxHeight?: string;
+  configurationMinWidth?: string;
+}
+
 /** Props for the {@link ScheduledTaskDetailView} component. */
 export interface ScheduledTaskDetailViewProps {
   /** Localized labels. */
@@ -115,12 +128,16 @@ export interface ScheduledTaskDetailViewProps {
   isDeleting?: boolean;
   /** When `true`, the header renders a read-only deleted-state indicator instead of the Delete, Edit, and Active controls, regardless of whether `onDelete`/`onEdit`/`isActive` are supplied. Defaults to `false`. */
   isDeleted?: boolean;
-  /** Whether the schedule is currently active (resumed) or paused. When `undefined`, the Active switch does not render. Suppressed while `isDeleted` is `true`. */
+  /** When `true`, the Active switch does not render at all — the task can no longer produce a future run, and the completed line in the Details summary carries the state. Defaults to `false`. */
+  isCompleted?: boolean;
+  /** Whether the schedule is currently active (resumed) or paused. When `undefined`, the Active switch does not render. Suppressed while `isDeleted` or `isCompleted` is `true`. */
   isActive?: boolean;
   /** When `true`, the Active switch renders disabled while a pause/resume request is in flight. Defaults to `false`. */
   isActiveUpdating?: boolean;
   /** When `true`, the Active switch renders disabled (e.g. a completed one-time schedule that cannot be resumed), independent of `isActiveUpdating`. Defaults to `false`. */
   isActiveDisabled?: boolean;
+  /** Pre-formatted reason text shown next to the Active switch when `isActiveDisabled` is `true`, explaining why resuming is unavailable (e.g. a one-time schedule that already ran). Per-task value, not a stable label. Omit to hide. */
+  activeDisabledReason?: string;
   /** Called with the newly requested value when the user toggles the Active switch. The component performs no network call or optimistic update itself. */
   onActiveChange?: (nextActive: boolean) => void;
   /** Task title shown in the header and used as the page's accessible name. */
@@ -139,8 +156,12 @@ export interface ScheduledTaskDetailViewProps {
   repeatsLabel?: string;
   /** Pre-formatted activity-window label, e.g. "Aug 1, 2026 – Dec 31, 2026". Omit to hide (unbounded or one-shot schedule). */
   activeWindowLabel?: string;
+  /** Pre-formatted completed-state value shown as a field in the Details section, e.g. "Completed" — for a task that can no longer produce a future run. Omit to hide. */
+  completedLabel?: string;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
+  /** Resolved skill name or full saved reference; omit to hide the field. */
+  skillDisplayName?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
   /** Pre-formatted "Next run" label shown under the History title, e.g. "Next run: Jul 31 at 9:00 AM". Omit to hide (e.g. when the schedule is paused or inactive). */
@@ -157,6 +178,10 @@ export interface ScheduledTaskDetailViewProps {
   runsError?: Error | null;
   /** Called when the user activates the History retry action shown alongside `runsError`. */
   onRunsRetry?: () => void;
+  /** Next-page failure, displayed beneath existing runs. */
+  runsLoadMoreError?: Error | null;
+  /** Retries the failed history page. */
+  onRunsRetryLoadMore?: () => void;
   /** Whether another page of `runs` is available beyond what has been loaded so far. Defaults to `false`. */
   runsHasMore?: boolean;
   /** Called when the user activates the "Show more" button, rendered below the loaded runs while `runsHasMore` is `true`. Omit to hide the button entirely. */
@@ -165,4 +190,12 @@ export interface ScheduledTaskDetailViewProps {
   onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** Style overrides. */
   styles?: ScheduledTaskDetailViewStyles;
+  /** Additional class names on the view root. */
+  className?: string;
+  /** Replacement for the directional default back icon. `null` hides it. */
+  backIcon?: ReactNode | null;
+  /** Desktop column and history sizing. */
+  layout?: ScheduledTaskDetailViewLayout;
+  /** Forwarded history presentation settings. */
+  historyStyles?: import('./scheduled-task-history-section-props').ScheduledTaskHistorySectionStyles;
 }

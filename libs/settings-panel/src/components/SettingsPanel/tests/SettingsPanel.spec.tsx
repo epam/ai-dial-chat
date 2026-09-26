@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { SETTINGS_PANEL_CLASS } from '../../../constants/public-class-names';
 import type { SettingsPanelItem } from '../../../models/settings-panel-props';
 import { SettingsPanel } from '../SettingsPanel';
 
@@ -173,16 +174,40 @@ describe('SettingsPanel', () => {
 
     expect(screen.queryByText('Settings')).toBeNull();
   });
+});
 
-  it('applies a custom row focus outline color', () => {
-    renderPanel({
-      styles: { colors: { rowFocusOutline: '#123456' } },
-    });
+/*
+ * The panel root carries no role of its own, so the assertion walks up from
+ * the tab list inside it.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
 
-    expect(
-      screen
-        .getByRole('tablist')
-        .parentElement?.style.getPropertyValue('--sp-row-focus-outline'),
-    ).toBe('#123456');
+describe('SettingsPanel — public class names', () => {
+  /*
+   * A lost public class fails silently: the build passes and a host's
+   * stylesheet simply stops applying. `role="tablist"` and `role="tab"` are
+   * accessibility contracts rather than styling hooks, which is what these
+   * classes replace.
+   */
+  it('stamps the panel, the tab list and every tab', () => {
+    renderPanel();
+
+    const tabList = screen.getByRole('tablist');
+    expect(tabList.classList).toContain(SETTINGS_PANEL_CLASS.tabList);
+    expect(closestWithClass(tabList, SETTINGS_PANEL_CLASS.panel)).toBeTruthy();
+
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.classList).toContain(SETTINGS_PANEL_CLASS.tab);
+    }
+  });
+
+  it('keeps the tab class on a disabled row', () => {
+    renderPanel();
+
+    expect(screen.getByRole('tab', { name: 'General' }).classList).toContain(
+      SETTINGS_PANEL_CLASS.tab,
+    );
   });
 });

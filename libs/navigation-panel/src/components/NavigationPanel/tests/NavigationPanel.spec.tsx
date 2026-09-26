@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import type { AriaAttributes, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { NAVIGATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import type { NavigationPanelItem } from '../../../models/navigation-item';
 import { NavigationPanel } from '../NavigationPanel';
 
@@ -11,12 +12,21 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': ariaLabel,
     'aria-current': ariaCurrent,
     icon,
+    className,
   }: {
     'aria-label': string;
     'aria-current'?: AriaAttributes['aria-current'];
     icon: ReactNode;
+    className?: string;
   }) => (
-    <button type="button" aria-label={ariaLabel} aria-current={ariaCurrent}>
+    /* The real kit button merges `className` onto the rendered element; the
+       stub has to do the same, or a class assertion on it proves nothing. */
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      aria-current={ariaCurrent}
+      className={className}
+    >
       {icon}
     </button>
   ),
@@ -113,5 +123,21 @@ describe('NavigationPanel', () => {
       />,
     );
     expect(screen.getByText('footer slot')).toBeTruthy();
+  });
+});
+
+describe('NavigationPanel — public class names', () => {
+  it('stamps the rail and every item', () => {
+    render(<NavigationPanel items={items} labels={labels} />);
+
+    expect(
+      screen.getByRole('navigation', { name: 'Primary' }).classList,
+    ).toContain(NAVIGATION_PANEL_CLASS.rail);
+
+    for (const name of ['Home', 'Catalog']) {
+      expect(screen.getByRole('button', { name }).classList).toContain(
+        NAVIGATION_PANEL_CLASS.item,
+      );
+    }
   });
 });

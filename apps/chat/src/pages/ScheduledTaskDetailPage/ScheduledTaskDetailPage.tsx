@@ -8,10 +8,6 @@ import {
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import {
-  ConfirmationPopup,
-  ConfirmationPopupVariant,
-} from '@epam/ai-dial-ui-kit';
-import {
   memo,
   useCallback,
   useEffect,
@@ -22,6 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import ScheduledTaskDeleteModal from '../../components/ScheduledTaskDeleteModal/ScheduledTaskDeleteModal';
 import {
   getConversationRoute,
   getScheduledTaskEditRoute,
@@ -37,6 +34,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
+import { useScheduledTaskSkillDisplayName } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayName';
 import { useStaleGuard } from '../../hooks/useStaleGuard';
 import {
   deleteScheduledTask,
@@ -66,6 +64,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const { conversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
+  const skillDisplayName = useScheduledTaskSkillDisplayName(task?.skillUrl);
   const [isTaskLoading, setIsTaskLoading] = useState(true);
   const [taskError, setTaskError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
@@ -86,6 +85,8 @@ const ScheduledTaskDetailPage: FC = () => {
     isLoading: runsIsLoading,
     isLoadingMore: runsIsLoadingMore,
     error: runsError,
+    loadMoreError: runsLoadMoreError,
+    retryLoadMore: retryRunsLoadMore,
     hasMore: runsHasMore,
     loadMore: onRunsLoadMore,
     refetch: refetchRuns,
@@ -165,8 +166,8 @@ const ScheduledTaskDetailPage: FC = () => {
   }, [taskModel, deploymentItems, language]);
 
   const repeatsLabel = useMemo(
-    () => (task ? buildScheduleLabel(task, t) : undefined),
-    [task, t],
+    () => (task ? buildScheduleLabel(task, t, language) : undefined),
+    [task, t, language],
   );
 
   const cronWindow = task?.trigger.cron;
@@ -212,6 +213,7 @@ const ScheduledTaskDetailPage: FC = () => {
         ScheduledTasksI18nKeys.CreateConfigurationSectionTitle,
       ),
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
+      skillLabel: t(ScheduledTasksI18nKeys.CreateSkillLabel),
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       historyTitle: t(ScheduledTasksI18nKeys.DetailHistoryTitle),
       historyEmptyLabel: t(ScheduledTasksI18nKeys.DetailHistoryEmptyLabel),
@@ -228,6 +230,7 @@ const ScheduledTaskDetailPage: FC = () => {
         missed: t(ScheduledTasksI18nKeys.DetailStatusMissed),
       },
       activeStatusLabel: t(ScheduledTasksI18nKeys.DetailActiveStatusLabel),
+      completedFieldLabel: t(ScheduledTasksI18nKeys.DetailCompletedFieldLabel),
       activeStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
@@ -247,12 +250,20 @@ const ScheduledTaskDetailPage: FC = () => {
   };
 
   /*
-   * A one-time (`date`) schedule with no next run has already fired and
-   * can't produce another run by resuming it. A recurring (`cron`) schedule
-   * whose activity window `endDate` has already passed can't produce a
-   * future run either, even though — unlike a one-time schedule — it may
-   * still be actively paused/resumable in principle; both cases disable
-   * (not hide) the switch so the state stays visible without offering a
+   * A completed task can never produce another run, so its Active switch is
+   * hidden entirely (the completed line in the details summary carries the
+   * state) — no dead-end control is offered.
+   */
+  const isTaskCompleted = task?.isCompleted === true;
+
+  /*
+   * Fallback for the shapes where the BFF's `isCompleted` enrichment degraded
+   * to `undefined` (a failed runs check) or the run is still in flight: a
+   * one-time (`date`) schedule with no next run has already fired, and a
+   * recurring (`cron`) schedule whose activity window `endDate` has already
+   * passed can't produce a future run either. Completed tasks never reach
+   * this — their switch is hidden above — so this only disables the switch
+   * that still renders, keeping the state visible without offering a
    * dead-end toggle.
    */
   const cronWindowEndDate = task?.trigger.cron?.endDate;
@@ -261,6 +272,25 @@ const ScheduledTaskDetailPage: FC = () => {
     (task?.triggerType === 'cron' &&
       cronWindowEndDate != null &&
       new Date(cronWindowEndDate).getTime() <= Date.now());
+
+  /*
+   * The disabled switch's explanatory text differs per case: a fired one-time
+   * schedule already ran, while a recurring schedule's activity window has
+   * closed — the user sees why the toggle is dead rather than a bare disabled
+   * control. Only computed while the switch renders; a completed task hides
+   * the switch, so it gets no reason.
+   */
+  let activeDisabledReason: string | undefined;
+  if (isActiveDisabled && !isTaskCompleted) {
+    activeDisabledReason =
+      task?.triggerType === 'date'
+        ? t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted)
+        : t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
+  }
+
+  const completedLabel = isTaskCompleted
+    ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
+    : undefined;
 
   const handleActiveChange = useCallback(
     async (nextActive: boolean) => {
@@ -379,9 +409,11 @@ const ScheduledTaskDetailPage: FC = () => {
         onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
         isDeleting={isDeleting}
         isDeleted={isTaskDeleted}
+        isCompleted={isTaskCompleted}
         isActive={isTaskDeleted ? undefined : task?.isActive}
         isActiveUpdating={isActiveUpdating}
         isActiveDisabled={isActiveDisabled}
+        activeDisabledReason={activeDisabledReason}
         onActiveChange={isTaskDeleted ? undefined : handleActiveChange}
         displayName={task?.displayName ?? ''}
         isLoading={isTaskLoading}
@@ -391,35 +423,26 @@ const ScheduledTaskDetailPage: FC = () => {
         modelLabel={modelLabel}
         repeatsLabel={repeatsLabel}
         activeWindowLabel={activeWindowLabel}
+        completedLabel={completedLabel}
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
+        skillDisplayName={skillDisplayName}
         runs={runItems}
         runsIsLoading={runsIsLoading}
         runsIsLoadingMore={runsIsLoadingMore}
         runsError={runsError}
         onRunsRetry={refetchRuns}
+        runsLoadMoreError={runsLoadMoreError}
+        onRunsRetryLoadMore={retryRunsLoadMore}
         runsHasMore={runsHasMore}
         onRunsLoadMore={onRunsLoadMore}
         onRunClick={handleRunClick}
       />
-      <ConfirmationPopup
+      <ScheduledTaskDeleteModal
         open={isDeleteDialogOpen}
-        header={t(ScheduledTasksI18nKeys.DetailDeleteConfirmTitle)}
-        description={t(ScheduledTasksI18nKeys.DetailDeleteConfirmDescription, {
-          taskName: task?.displayName ?? '',
-        })}
-        descriptionClassName="break-words"
-        variant={ConfirmationPopupVariant.Danger}
-        confirmLabel={
-          isDeleting
-            ? t(ScheduledTasksI18nKeys.DetailDeleteConfirmingLabel)
-            : t(ButtonsI18nKeys.Delete)
-        }
-        cancelLabel={t(ButtonsI18nKeys.Cancel)}
-        isLoading={isDeleting}
-        disableConfirmButton={isDeleting}
+        taskName={task?.displayName ?? ''}
+        isDeleting={isDeleting}
         onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteDialogClose}
         onClose={handleDeleteDialogClose}
       />
     </>

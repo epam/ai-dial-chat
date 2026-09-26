@@ -1,10 +1,23 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
+import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogSortKey } from '../../../types/sort';
+import {
+  CredentialStatus,
+  CredentialsLevel,
+} from '../../../types/toolset-auth';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { getTopicOptions } from '../../../utils/catalog-filter';
 import { buildCatalogTabs } from '../../../utils/catalog-tabs';
@@ -114,6 +127,9 @@ vi.mock('../../Toolbar/Toolbar', () => ({
       <button onClick={() => onViewModeChange?.(CatalogViewMode.Cards)}>
         List view
       </button>
+      <button onClick={() => onViewModeChange?.(CatalogViewMode.Grid)}>
+        Grid view
+      </button>
       {sortOptions.map((option) => (
         <button key={option.value} onClick={() => onSortChange?.(option.value)}>
           Sort {option.label}
@@ -199,6 +215,9 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isDownloadVisible,
     onRevokeShare,
     isRevokeShareVisible,
+    onLogin,
+    onLogout,
+    onClose,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
@@ -208,19 +227,42 @@ vi.mock('../../Details/DetailsPanel', () => ({
     isDownloadVisible?: (item: CatalogItem) => boolean;
     onRevokeShare?: (item: CatalogItem) => void;
     isRevokeShareVisible?: (item: CatalogItem) => boolean;
+    onLogin?: (
+      item: CatalogItem,
+      params: { level: CredentialsLevel },
+    ) => Promise<void>;
+    onLogout?: (
+      item: CatalogItem,
+      params: { level: CredentialsLevel },
+    ) => Promise<void>;
+    onClose?: () => void;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
+      {onClose && <button onClick={onClose}>ClosePanel</button>}
       {onDownload && (isDownloadVisible?.(item) ?? true) && (
         <button onClick={() => onDownload(item)}>DownloadTrigger</button>
       )}
       {onRevokeShare && (isRevokeShareVisible?.(item) ?? true) && (
         <button onClick={() => onRevokeShare(item)}>RevokeShareTrigger</button>
       )}
+      {onLogin && (
+        <button onClick={() => onLogin(item, { level: CredentialsLevel.User })}>
+          LoginTrigger
+        </button>
+      )}
+      {onLogout && (
+        <button
+          onClick={() => onLogout(item, { level: CredentialsLevel.User })}
+        >
+          LogoutTrigger
+        </button>
+      )}
       {shareOverlay?.(item, () => undefined)}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
       <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
+      <span>{`userStatus:${item.credentials?.userStatus ?? 'none'}`}</span>
     </div>
   ),
 }));
@@ -242,6 +284,22 @@ const makeItem = (
 });
 
 describe('Catalog', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'requestIdleCallback',
+      vi.fn(() => 1),
+    );
+    vi.stubGlobal('cancelIdleCallback', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('renders page title', () => {
     render(<Catalog items={[]} favorites={[]} />);
     expect(screen.getByText('Catalog')).toBeTruthy();
@@ -298,6 +356,123 @@ describe('Catalog', () => {
       />,
     );
     expect(screen.queryByLabelText('catalog list')).toBeNull();
+  });
+
+  it('prepares the hidden table during idle time and reuses it on the first list click', async () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+
+    const prepareList = vi.mocked(window.requestIdleCallback).mock.calls[0][0];
+    act(() => {
+      prepareList({ didTimeout: false, timeRemaining: () => 50 });
+    });
+    const list = screen.getByLabelText('catalog list');
+    /* The mock grid has no view wrapper of its own; assert that preparation
+       cannot expose its controls before the user selects the list. */
+    // eslint-disable-next-line testing-library/no-node-access
+    const preparedWrapper = list.closest('[inert]');
+    expect(preparedWrapper?.className).toContain('invisible');
+    expect(preparedWrapper?.className).toContain('h-0');
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.getByLabelText('catalog list')).toBe(list);
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(list.closest('[inert]')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Grid view' }));
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(list.closest('[inert]')?.className).toContain('hidden');
+  });
+
+  it('opens the table without waiting when the first click precedes idle preparation', async () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+    expect(window.cancelIdleCallback).toHaveBeenCalledWith(1);
+    expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not prepare an empty, loading, or already visible table', () => {
+    const { rerender } = render(<Catalog items={[]} favorites={[]} />);
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+
+    rerender(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} isLoading />,
+    );
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+
+    rerender(
+      <Catalog
+        key="list"
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        initialViewMode={CatalogViewMode.Cards}
+      />,
+    );
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+  });
+
+  it('cancels pending preparation on unmount', () => {
+    const { unmount } = render(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
+    );
+    unmount();
+    expect(window.cancelIdleCallback).toHaveBeenCalledWith(1);
+  });
+
+  it('cancels and reschedules preparation as data becomes unavailable and returns', () => {
+    const items = [makeItem('1', 'Claude')];
+    const { rerender } = render(<Catalog items={items} favorites={[]} />);
+    rerender(<Catalog items={items} favorites={[]} isLoading />);
+    expect(window.cancelIdleCallback).toHaveBeenCalledTimes(1);
+
+    rerender(<Catalog items={items} favorites={[]} />);
+    expect(window.requestIdleCallback).toHaveBeenCalledTimes(2);
+
+    rerender(<Catalog items={[]} favorites={[]} />);
+    expect(window.cancelIdleCallback).toHaveBeenCalledTimes(2);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+  });
+
+  it('prepares the table after a delay when idle callbacks are unavailable', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('requestIdleCallback', undefined);
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
+  });
+
+  it('cancels the fallback timer when the catalog unmounts', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('requestIdleCallback', undefined);
+    const clearTimeout = vi.spyOn(window, 'clearTimeout');
+    const { unmount } = render(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
+    );
+    unmount();
+    expect(clearTimeout).toHaveBeenCalledTimes(1);
+    clearTimeout.mockRestore();
+  });
+
+  it('keeps the prepared table collapsed if the results become empty', () => {
+    const { rerender } = render(
+      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
+    );
+    const prepareList = vi.mocked(window.requestIdleCallback).mock.calls[0][0];
+    act(() => {
+      prepareList({ didTimeout: false, timeRemaining: () => 50 });
+    });
+    rerender(<Catalog items={[]} favorites={[]} />);
+    // eslint-disable-next-line testing-library/no-node-access
+    const wrapper = screen.getByLabelText('catalog list').closest('[inert]');
+    expect(wrapper?.className).toContain('h-0');
+    expect(wrapper?.className).not.toContain('h-full');
   });
 
   it('caps the browse content column by default', () => {
@@ -450,6 +625,77 @@ describe('Catalog', () => {
     );
   });
 
+  it('retries the post-login details refetch until it reports signed-in', async () => {
+    const item = makeItem('1', 'GitHub');
+    const signedOut = {
+      credentials: { userStatus: CredentialStatus.SignedOut },
+    };
+    const signedIn = { credentials: { userStatus: CredentialStatus.SignedIn } };
+    const onFetchDetails = vi
+      .fn()
+      .mockResolvedValueOnce(signedOut) // initial panel open
+      .mockResolvedValueOnce(signedOut) // 1st post-login attempt: still stale
+      .mockResolvedValueOnce(signedIn); // 2nd post-login attempt: caught up
+    const onLogin = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Catalog
+        items={[item]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        onLogin={onLogin}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'GitHub' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'LoginTrigger' }));
+
+    expect(onLogin).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }), {
+      level: CredentialsLevel.User,
+    });
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(3));
+    expect(screen.getByText('userStatus:SIGNED_IN')).toBeTruthy();
+  });
+
+  it('stops retrying the post-logout details refetch once it reports signed-out', async () => {
+    const item = makeItem('1', 'GitHub');
+    const signedIn = { credentials: { userStatus: CredentialStatus.SignedIn } };
+    const signedOut = {
+      credentials: { userStatus: CredentialStatus.SignedOut },
+    };
+    const onFetchDetails = vi
+      .fn()
+      .mockResolvedValueOnce(signedIn) // initial panel open
+      .mockResolvedValueOnce(signedOut); // post-logout attempt: already caught up
+    const onLogout = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Catalog
+        items={[item]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        onLogout={onLogout}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'GitHub' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'LogoutTrigger' }),
+    );
+
+    expect(onLogout).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1' }),
+      { level: CredentialsLevel.User },
+    );
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+    expect(screen.getByText('userStatus:SIGNED_OUT')).toBeTruthy();
+    // No further retries once signed-out is confirmed on the first attempt.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+    expect(onFetchDetails).toHaveBeenCalledTimes(2);
+  });
+
   it('forwards onDownload and isDownloadVisible to the details panel', async () => {
     const onDownload = vi.fn();
     render(
@@ -532,6 +778,142 @@ describe('Catalog', () => {
     resolveFetch(fetched);
     await screen.findByText(`details:${JSON.stringify(fetched)}`);
     expect(screen.getByText('isDetailsLoading:false')).toBeTruthy();
+  });
+
+  it('applies only the second response when the same item is closed and reopened while a request is pending', async () => {
+    const first = { overview: { sections: [{ title: 'First', specs: [] }] } };
+    const second = { overview: { sections: [{ title: 'Second', specs: [] }] } };
+    let resolveFirst: (value: typeof first) => void = () => undefined;
+    let resolveSecond: (value: typeof second) => void = () => undefined;
+    const onFetchDetails = vi
+      .fn()
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveFirst = resolve)),
+      )
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveSecond = resolve)),
+      );
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+
+    /* The stale first response resolves after the reopen — must not land. */
+    resolveFirst(first);
+    resolveSecond(second);
+
+    await screen.findByText(`details:${JSON.stringify(second)}`);
+    expect(screen.queryByText(`details:${JSON.stringify(first)}`)).toBeNull();
+  });
+
+  it('applies no state and keeps the panel closed when a response arrives after close', async () => {
+    let resolveFetch: (value: { overview: { sections: [] } }) => void = () =>
+      undefined;
+    const onFetchDetails = vi.fn(
+      () =>
+        new Promise<{ overview: { sections: [] } }>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
+    resolveFetch({ overview: { sections: [] } });
+
+    /* handleCloseDetails clears selectedItem/fetchedDetails/isDetailsLoading after a 300ms exit delay. */
+    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+
+    expect(screen.queryByText('Claude', { selector: 'span' })).toBeNull();
+  });
+
+  it('discards the first response when switching to a different item mid-flight', async () => {
+    const itemAResult = { overview: { sections: [{ title: 'A', specs: [] }] } };
+    const itemBResult = { overview: { sections: [{ title: 'B', specs: [] }] } };
+    let resolveA: (value: typeof itemAResult) => void = () => undefined;
+    let resolveB: (value: typeof itemBResult) => void = () => undefined;
+    const onFetchDetails = vi
+      .fn()
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveA = resolve)),
+      )
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveB = resolve)),
+      );
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude'), makeItem('2', 'Gemini')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Gemini' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+
+    /* Stale response for Claude resolves after Gemini's fetch has started. */
+    resolveA(itemAResult);
+    resolveB(itemBResult);
+
+    await screen.findByText(`details:${JSON.stringify(itemBResult)}`);
+    expect(
+      screen.queryByText(`details:${JSON.stringify(itemAResult)}`),
+    ).toBeNull();
+  });
+
+  it('bails out of the post-login retry loop when the panel closes between attempts', async () => {
+    const item = makeItem('1', 'GitHub');
+    const signedOut = {
+      credentials: { userStatus: CredentialStatus.SignedOut },
+    };
+    const onFetchDetails = vi.fn().mockResolvedValue(signedOut);
+    const onLogin = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <Catalog
+        items={[item]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        onLogin={onLogin}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'GitHub' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    await userEvent.click(screen.getByRole('button', { name: 'LoginTrigger' }));
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+
+    await userEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
+
+    /* Retries would otherwise continue every 300ms up to POST_AUTH_REFRESH_ATTEMPTS. */
+    await act(() => new Promise((resolve) => setTimeout(resolve, 700)));
+
+    expect(onFetchDetails).toHaveBeenCalledTimes(2);
   });
 
   it('falls back to static item.details when onFetchDetails resolves undefined', async () => {
@@ -852,6 +1234,187 @@ describe('Catalog', () => {
     expect(screen.queryByRole('tablist')).toBeNull();
   });
 
+  it('renders the default empty state (CardGrid) when renderEmptyState is not passed', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+  });
+
+  it('falls back to the default empty state (CardGrid) when renderEmptyState returns null', () => {
+    render(<Catalog items={[]} favorites={[]} renderEmptyState={() => null} />);
+
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+  });
+
+  it('falls back to the default empty state (CardGrid) when renderEmptyState returns undefined', () => {
+    render(
+      <Catalog items={[]} favorites={[]} renderEmptyState={() => undefined} />,
+    );
+
+    expect(screen.getByLabelText('catalog grid')).toBeTruthy();
+  });
+
+  it('renders the custom empty state instead of the default when it resolves a node', () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.getByText('Nothing here yet')).toBeTruthy();
+    expect(screen.queryByLabelText('catalog grid')).toBeNull();
+    expect(screen.queryByText('No items')).toBeNull();
+  });
+
+  it('does not invoke renderEmptyState when the result set is non-empty', () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        renderEmptyState={renderEmptyState}
+      />,
+    );
+
+    expect(renderEmptyState).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke renderEmptyState while loading, even with an empty result set', () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        isLoading
+        renderEmptyState={renderEmptyState}
+      />,
+    );
+
+    expect(renderEmptyState).not.toHaveBeenCalled();
+  });
+
+  it('renders exactly one instance of the custom empty state when switching view mode', async () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.getAllByText('Nothing here yet')).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.getAllByText('Nothing here yet')).toHaveLength(1);
+  });
+
+  it('keeps rendering toolbar and page chrome while the custom empty state is shown', () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.getByText('Nothing here yet')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Catalog' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
+    expect(screen.getByPlaceholderText('search')).toBeTruthy();
+  });
+
+  it('passes the internally-managed query, activeTab, topic filters, and My Apps state to renderEmptyState', async () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', {
+            type: CatalogEntityType.Model,
+            topics: ['Free'],
+          }),
+        ]}
+        favorites={[]}
+        renderEmptyState={renderEmptyState}
+      />,
+    );
+
+    await userEvent.type(screen.getByPlaceholderText('search'), 'Gemini');
+    await userEvent.click(screen.getByRole('button', { name: 'Free' }));
+    await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
+
+    await waitFor(() =>
+      expect(renderEmptyState).toHaveBeenLastCalledWith({
+        query: 'Gemini',
+        activeTab: CatalogEntityType.Model,
+        hasTopicFilters: true,
+        isMyAppsActive: true,
+      }),
+    );
+  });
+
+  it('passes the externally-controlled activeTab, filterTopics, and isMyAppsActive to renderEmptyState', () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { type: CatalogEntityType.Model }),
+          makeItem('2', 'My Prompt', { type: CatalogEntityType.Prompt }),
+        ]}
+        favorites={[]}
+        activeTab={CatalogEntityType.Prompt}
+        filterTopics={new Set(['Paid'])}
+        isMyAppsActive
+        renderEmptyState={renderEmptyState}
+      />,
+    );
+
+    expect(renderEmptyState).toHaveBeenCalledWith({
+      query: '',
+      activeTab: CatalogEntityType.Prompt,
+      hasTopicFilters: true,
+      isMyAppsActive: true,
+    });
+  });
+
+  it('reports an empty activeTab in the context when there is no active tab', () => {
+    const renderEmptyState = vi.fn(() => <span>Nothing here yet</span>);
+    render(
+      <Catalog items={[]} favorites={[]} renderEmptyState={renderEmptyState} />,
+    );
+
+    expect(renderEmptyState).toHaveBeenCalledWith(
+      expect.objectContaining({ activeTab: '' }),
+    );
+  });
+
+  it('stops rendering the custom empty state once the result set becomes non-empty', () => {
+    const items = [makeItem('1', 'Claude', { topics: ['Free'] })];
+    const { rerender } = render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+    expect(screen.getByText('Nothing here yet')).toBeTruthy();
+
+    rerender(
+      <Catalog
+        items={items}
+        favorites={[]}
+        renderEmptyState={() => <span>Nothing here yet</span>}
+      />,
+    );
+
+    expect(screen.queryByText('Nothing here yet')).toBeNull();
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
   it('calls onActiveTabChange with the clicked tab id', async () => {
     const onActiveTabChange = vi.fn();
     render(
@@ -894,5 +1457,26 @@ describe('Catalog — read-only', () => {
     render(<Catalog items={[]} favorites={[]} isReadonly />);
 
     expect(screen.getByRole('heading', { name: 'Catalog' })).toBeTruthy();
+  });
+});
+
+describe('Catalog — public class names', () => {
+  /*
+   * A lost public class fails silently: the build passes, types pass, lint
+   * passes, and a host's stylesheet simply stops applying. The set is the
+   * catalog's layout skeleton, so each piece is asserted from something that
+   * has a role or text of its own.
+   */
+  it('stamps the catalog root', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+
+    /*
+     * The root is the `section` the catalog names itself with. The toolbar,
+     * the cards and the list view are stubbed out in this file, so each of
+     * their classes is asserted in that component's own spec instead.
+     */
+    expect(screen.getByRole('region', { name: 'Catalog' }).classList).toContain(
+      CATALOG_CLASS.root,
+    );
   });
 });

@@ -1,10 +1,11 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
+import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import {
   IconCheck,
   IconCode,
@@ -14,11 +15,21 @@ import {
   IconMarkdown,
   IconRefresh,
 } from '@tabler/icons-react';
-import { type FC, memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type FC,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { ATTACHMENT_CANVAS_CLASS } from '../../constants/public-class-names';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { isDownloadable } from '../../utils/download';
 import { AttachmentCanvasBody } from '../AttachmentCanvasBody/AttachmentCanvasBody';
+import styles from './AttachmentCanvas.module.scss';
 
 const COPY_RESET_MS = 2000;
 
@@ -28,6 +39,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   onClose,
   content,
   fileName,
+  leftActions,
   labels: {
     ariaLabel,
     closeLabel = 'Close',
@@ -59,9 +71,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
-    tableCopyCsvLabel,
-    tableCopyTxtLabel,
-    tableCopyMarkdownLabel,
+    tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
     ooxmlHighlightsLabel,
@@ -86,6 +96,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
   const [isCopiedJson, setIsCopiedJson] = useState(false);
   const [isHtmlSourceView, setIsHtmlSourceView] = useState(false);
+  /* Populated once `ui/initialize` completes — see mcp-app-trigger spec.md. */
+  const [mcpAppInfo, setMcpAppInfo] = useState<Implementation | undefined>(
+    undefined,
+  );
   const copyTextResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyJsonResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,9 +156,48 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
 
   useEffect(() => {
     setIsHtmlSourceView(false);
+    setMcpAppInfo(undefined);
   }, [content]);
 
   const { className, panelStyles, ...bodyStylesProp } = stylesProp ?? {};
+  const { colors, typography } = bodyStylesProp;
+
+  const panelTitleCssVars = useMemo(
+    () =>
+      buildCssVars({
+        '--ac-mcp-app-divider': colors?.mcpAppDividerColor,
+        '--ac-mcp-app-version': colors?.mcpAppVersionColor,
+      }),
+    [colors?.mcpAppDividerColor, colors?.mcpAppVersionColor],
+  );
+
+  const panelTitle =
+    content.type === AttachmentContentType.McpApp && mcpAppInfo != null ? (
+      <span style={panelTitleCssVars}>
+        <span>{fileName}</span>
+        <span
+          aria-hidden
+          className={mergeClasses(
+            'mx-1.5 inline-block h-3 w-0 border-s align-middle',
+            styles.mcpAppDivider,
+          )}
+        />
+        <span>{mcpAppInfo.name}</span>
+        {mcpAppInfo.version && (
+          <span
+            className={mergeClasses(
+              'ms-2',
+              typography?.mcpAppVersionClassName ?? 'dial-caption-text',
+              styles.mcpAppVersion,
+            )}
+          >
+            {mcpAppInfo.version}
+          </span>
+        )}
+      </span>
+    ) : (
+      fileName
+    );
 
   const showHtmlToggle =
     !isLoading &&
@@ -175,7 +228,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     <SidebarPanel
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
-      title={fileName}
+      title={panelTitle}
       labels={{ ariaLabel, closeLabel, resizeLabel }}
       onClose={onClose}
       resizable={!isMobile}
@@ -194,8 +247,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           isOpen ? 'mobile:w-full mobile:max-w-full' : 'w-0',
           className,
           panelStyles?.className,
+          ATTACHMENT_CANVAS_CLASS.panel,
         ),
       }}
+      leftActions={leftActions}
       rightActions={
         showHtmlToggle ||
         showCopyText ||
@@ -349,6 +404,11 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         isLoading={isLoading}
         fileName={fileName}
         isHtmlSourceView={isHtmlSourceView}
+        onAppInfo={
+          content.type === AttachmentContentType.McpApp
+            ? setMcpAppInfo
+            : undefined
+        }
         labels={{
           unsupportedLabel,
           loadErrorLabel,
@@ -367,9 +427,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           codeContentLoadingLabel,
           codeContentErrorLabel,
           codeContentRetryLabel,
-          tableCopyCsvLabel,
-          tableCopyTxtLabel,
-          tableCopyMarkdownLabel,
+          tableCopyLabel,
           tableCopiedLabel,
           tableDownloadCsvLabel,
           ooxmlHighlightsLabel,

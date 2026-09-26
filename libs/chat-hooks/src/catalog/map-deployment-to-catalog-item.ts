@@ -106,11 +106,13 @@ export interface DeploymentFolderLabels {
   public: string;
 }
 
+/** Resolves a deployment's display folder, including organization applications without a folder path. */
 export const resolveDeploymentFolder = (
   deployment: Pick<
     DeploymentItemDto,
     'isMy' | 'sharedWithMe' | 'applicationFolder'
-  >,
+  > &
+    Partial<Pick<DeploymentItemDto, 'type'>>,
   labels: DeploymentFolderLabels,
 ): string[] => {
   if (deployment.isMy) {
@@ -124,6 +126,14 @@ export const resolveDeploymentFolder = (
 
   if (deployment.sharedWithMe) {
     return [labels.shared, ...segments.slice(1)];
+  }
+
+  /* Configured applications with plain IDs have no applicationFolder. */
+  if (
+    segments.length === 0 &&
+    deployment.type?.toLowerCase() === 'application'
+  ) {
+    return [labels.public];
   }
 
   if (segments[0]?.toLowerCase() === PUBLIC_SEGMENT) {
@@ -143,7 +153,11 @@ const resolveToolsetFolder = (
 
   const raw = toolset.toolset || toolset.id;
   if (!raw.startsWith(TOOLSETS_PREFIX)) {
-    return [];
+    if (labels == null) return [];
+    if (toolset.sharedWithMe) return [labels.shared];
+
+    /* Configured toolsets use plain IDs rather than resource paths. */
+    return raw.length > 0 && !raw.includes('/') ? [labels.public] : [];
   }
 
   const segments = stripPrefixSegments(raw, TOOLSETS_PREFIX).slice(0, -1);

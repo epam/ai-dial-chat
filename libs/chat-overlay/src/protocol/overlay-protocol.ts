@@ -166,6 +166,49 @@ export enum OverlayFeature {
   HideKeyboardShortcuts = 'hide-keyboard-shortcuts',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
+  /**
+   * Renders every conversation starter, each on its own row, instead of
+   * fitting as many as the measured width allows on one line and collapsing
+   * the rest into a "…" dropdown. Intended for narrow embeds, where the row
+   * has space for a single starter and hides the remainder behind the menu.
+   */
+  ShowAllStarters = 'show-all-starters',
+  /**
+   * Hides the application version label in the footer. The label is
+   * diagnostic chrome an embedding host usually owns itself, and it is not
+   * gated by the operator's `footer` capability flag.
+   */
+  HideFooterVersion = 'hide-footer-version',
+  /**
+   * Renders the selected agent's own `description` on the empty-chat screen,
+   * above the greeting and the input, as markdown. Independent of the
+   * operator-wide welcome-screen description, which renders under the
+   * greeting for every agent alike.
+   */
+  ShowAgentDescription = 'show-agent-description',
+  /**
+   * Disables flipping through the conversation's previously sent messages
+   * with the Up/Down arrow keys in the chat input. The arrow keys then only
+   * move the caret, as in any other textarea.
+   */
+  DisableInputHistoryNavigation = 'disable-input-history-navigation',
+  /**
+   * Hides conversation export: the per-conversation "Export" entry and the
+   * conversations panel's "Export all" entry. Import stays available.
+   */
+  HideConversationExport = 'hide-conversation-export',
+  /**
+   * Hides the Settings page: its entry in the desktop user menu and on the
+   * mobile navigation sheet's profile page. A direct `/settings` URL
+   * redirects to `/`.
+   */
+  HideSettingsPage = 'hide-settings-page',
+  /**
+   * Renders the theme logo in the desktop top bar, centered between the
+   * conversation controls and the sources toggle. The mobile header shows the
+   * logo regardless of this key; `Header` still gates that surface.
+   */
+  ShowHeaderLogo = 'show-header-logo',
 }
 
 /**
@@ -323,6 +366,15 @@ export interface ChatOverlayOptions {
   /** Per-provider authentication UI behavior configured by the embedding host. */
   auth?: {
     providerUiModes?: Record<string, OverlayAuthUiMode>;
+    /**
+     * Provider id whose login the embedded app starts on its own, with no user
+     * interaction, while the session is unauthenticated. Presence enables the
+     * behavior — there is no separate boolean — and the same provider must be
+     * mapped to `OverlayAuthUiMode.SameWindow` in `providerUiModes`, because
+     * only that path navigates the iframe itself. Supersedes the legacy
+     * `signInOptions.autoSignIn` + `signInProvider` pair.
+     */
+    autoSignInProvider?: string;
   };
 }
 
@@ -343,6 +395,8 @@ export interface SetOverlayOptionsPayload {
   enabledFeatures?: string[];
   /** Opaque per-provider authentication UI modes supplied by the host. */
   authProviderUiModes?: Record<string, string>;
+  /** Opaque wire form of `ChatOverlayOptions.auth.autoSignInProvider`. */
+  authAutoSignInProvider?: string;
 }
 
 /** Payload of a `SEND_MESSAGE` request. */

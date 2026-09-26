@@ -1,3 +1,5 @@
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconX } from '@tabler/icons-react';
 import {
   fireEvent,
   render,
@@ -16,6 +18,12 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskDetailPage from '../ScheduledTaskDetailPage';
+vi.mock('../../../context/SkillsContext', () => ({
+  useSkills: () => ({ skills: [], publicSkills: [], sharedWithMe: [] }),
+}));
+vi.mock('../../../server-api/skills.api', () => ({
+  getSkillMetadata: vi.fn().mockRejectedValue(new Error('Unavailable')),
+}));
 
 vi.mock(
   '../../../context/AppConfigContext',
@@ -84,9 +92,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onDelete,
     isDeleting,
     isDeleted,
+    isCompleted,
     isActive,
     isActiveUpdating,
     isActiveDisabled,
+    activeDisabledReason,
     onActiveChange,
     displayName,
     isLoading,
@@ -94,8 +104,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onRetry,
     description,
     modelLabel,
+    skillDisplayName,
     repeatsLabel,
     activeWindowLabel,
+    completedLabel,
     nextRunLabel,
     runs,
     runsError,
@@ -113,15 +125,18 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       deletedStateLabel: string;
       activeStatusLabel: string;
       activeStatusAnnouncement?: string;
+      completedFieldLabel: string;
     };
     onBack: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
     isDeleting?: boolean;
     isDeleted?: boolean;
+    isCompleted?: boolean;
     isActive?: boolean;
     isActiveUpdating?: boolean;
     isActiveDisabled?: boolean;
+    activeDisabledReason?: string;
     onActiveChange?: (nextActive: boolean) => void;
     displayName: string;
     isLoading?: boolean;
@@ -129,8 +144,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onRetry?: () => void;
     description?: string;
     modelLabel?: string;
+    skillDisplayName?: string;
     repeatsLabel?: string;
     activeWindowLabel?: string;
+    completedLabel?: string;
     nextRunLabel?: string;
     runs: { id: string; conversationId?: string; isUnread?: boolean }[];
     runsError?: Error | null;
@@ -150,8 +167,13 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {isDeleted && <span>{labels.deletedStateLabel}</span>}
       <span>description:{description}</span>
       <span>modelLabel:{modelLabel}</span>
+      <span>skill:{skillDisplayName}</span>
       <span>repeatsLabel:{repeatsLabel}</span>
       <span>activeWindowLabel:{activeWindowLabel}</span>
+      {completedLabel && <span>completedLabel:{completedLabel}</span>}
+      {activeDisabledReason && (
+        <span>disabledReason:{activeDisabledReason}</span>
+      )}
       <span>nextRunLabel:{nextRunLabel}</span>
       <span>runs:{runs.length}</span>
       {runs.map((run) => (
@@ -175,7 +197,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
           {labels.editButtonLabel}
         </button>
       )}
-      {isActive !== undefined && (
+      {!isDeleted && !isCompleted && isActive !== undefined && (
         <>
           <input
             type="checkbox"
@@ -230,51 +252,49 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     onClick?: () => void;
   }) => <button onClick={onClick}>{label}</button>,
-  ConfirmationPopupVariant: { Info: 'info', Danger: 'danger' },
-  ConfirmationPopup: ({
-    open,
-    header,
-    description,
-    confirmLabel,
-    cancelLabel,
-    isLoading,
-    disableConfirmButton,
-    onConfirm,
-    onCancel,
-    onClose,
-  }: {
-    open: boolean;
-    header: string;
-    description?: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-    isLoading?: boolean;
-    disableConfirmButton?: boolean;
-    onConfirm: () => void;
-    onCancel?: () => void;
-    onClose?: () => void;
-  }) =>
-    open ? (
-      <div
-        role="dialog"
-        aria-label={header}
-        tabIndex={-1}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') onClose?.();
-        }}
-      >
-        <p>{description}</p>
-        <span>dialogIsLoading:{String(isLoading)}</span>
-        <button onClick={() => onClose?.()} aria-label="Close dialog">
-          x
-        </button>
-        <button onClick={() => onCancel?.()}>{cancelLabel}</button>
-        <button onClick={onConfirm} disabled={disableConfirmButton}>
-          {confirmLabel}
-        </button>
-      </div>
-    ) : null,
 }));
+
+/*
+ * The delete dialog is a component of its own with its own spec; this mock
+ * reproduces just the surface the page's Delete action tests drive — a
+ * named dialog with confirm, cancel, close, and Escape dismissal — without
+ * depending on the kit's Popup internals.
+ */
+vi.mock(
+  '../../../components/ScheduledTaskDeleteModal/ScheduledTaskDeleteModal',
+  () => ({
+    default: ({
+      open,
+      onConfirm,
+      onClose,
+    }: {
+      open: boolean;
+      onConfirm: () => void;
+      onClose: () => void;
+    }) =>
+      open ? (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <div
+          role="dialog"
+          aria-label="scheduledTasks.detail.deleteConfirmTitle"
+          tabIndex={-1}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onClose?.();
+          }}
+        >
+          <button onClick={() => onClose?.()} aria-label="Close dialog">
+            <IconX
+              size={DIAL_ICON_SIZE.SM}
+              stroke={DIAL_KIT_ICON_STROKE}
+              aria-hidden
+            />
+          </button>
+          <button onClick={() => onClose?.()}>buttons.cancel</button>
+          <button onClick={onConfirm}>buttons.delete</button>
+        </div>
+      ) : null,
+  }),
+);
 
 const BackTargetStub = () => <div>scheduled tasks list</div>;
 const EditTargetStub = () => <div>scheduled task edit page</div>;
@@ -299,6 +319,18 @@ const renderDetailPage = (scheduleId = 'sched_123') =>
   );
 
 describe('ScheduledTaskDetailPage', () => {
+  it('passes a deleted skill reference to the read-only detail without failing the page', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Task',
+      prompt: '',
+      skillUrl: 'skills/public/deleted',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+    });
+    renderDetailPage();
+    expect(await screen.findByText('skill:skills/public/deleted')).toBeTruthy();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     useAppConfigMock.mockReturnValue({ status: 'ready' });
@@ -1253,5 +1285,98 @@ describe('ScheduledTaskDetailPage', () => {
       expect(screen.queryByRole('switch')).toBeNull();
       expect(screen.getByText('runs:1')).toBeTruthy();
     });
+  });
+});
+
+describe('ScheduledTaskDetailPage — completed state', () => {
+  it('renders the completed label and hides the active switch for a finished one-time task', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'One-time report',
+      trigger: { date: '2020-01-01T00:00:00.000Z' },
+      triggerType: 'date',
+      isActive: false,
+      isCompleted: true,
+      nextRunTime: null,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'completedLabel:scheduledTasks.card.completedBadgeLabel',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
+
+    expect(pauseScheduledTaskMock).not.toHaveBeenCalled();
+    expect(resumeScheduledTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('hides the active switch and shows the completed label for a recurring schedule whose activity window has ended', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          endDate: '2020-01-01T00:00:00.000Z',
+        },
+      },
+      triggerType: 'cron',
+      isActive: false,
+      isCompleted: true,
+      nextRunTime: undefined,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'completedLabel:scheduledTasks.card.completedBadgeLabel',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
+  });
+
+  it('keeps the switch disabled with a reason when the completed signal is missing but the fields show exhaustion', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'One-time report',
+      trigger: { date: '2020-01-01T00:00:00.000Z' },
+      triggerType: 'date',
+      isActive: false,
+      nextRunTime: null,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'disabledReason:scheduledTasks.detail.activeDisabledReasonCompleted',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+    expect(screen.queryByText(/^completedLabel:/)).toBeNull();
+  });
+
+  it('renders no completed label for a task that has not completed', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+      triggerType: 'cron',
+      isActive: true,
+      isCompleted: false,
+      nextRunTime: '2030-01-01T09:00:00.000Z',
+    });
+    renderDetailPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    expect(screen.queryByText(/^completedLabel:/)).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
   });
 });

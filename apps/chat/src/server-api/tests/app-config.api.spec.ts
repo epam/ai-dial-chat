@@ -19,6 +19,7 @@ describe('app-config API', () => {
       appId: 'chat-ui',
       features: {},
       config: {
+        activeEventId: null,
         appVersion: '0.0.1',
         asrModelId: null,
         announcements: [],
@@ -29,7 +30,10 @@ describe('app-config API', () => {
         enabledUiFeatures: null,
         footerHtmlMessage: '',
         customVisualizers: [],
+        applicationVisualizers: {},
+        customVariables: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
+        maxAttachmentFileSizeBytes: 536_870_912,
       },
     });
 

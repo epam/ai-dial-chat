@@ -40,10 +40,10 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
     <Dropdown items={items} placement="bottom-end" onOpenChange={setIsOpen}>
       <GhostIconButton
         aria-label={label}
-        size={ElementSize.Small}
+        size={ElementSize.Standard}
         icon={
           <IconDotsVertical
-            size={DIAL_ICON_SIZE.SM}
+            size={DIAL_ICON_SIZE.LG}
             className={isOpen ? 'text-accent' : 'text-secondary'}
             stroke={DIAL_KIT_ICON_STROKE}
           />
@@ -56,7 +56,8 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
 
 interface Props {
   activeConversationId?: string;
-  onExportAll: () => void;
+  /** Omit to hide the "Export all" entry. */
+  onExportAll?: () => void;
   onImport: () => void;
 }
 
@@ -80,18 +81,22 @@ const ConversationPanelMenu: FC<Props> = ({
 
   const menuItems: DropdownItem[] = useMemo(
     () => [
-      {
-        key: 'export-all',
-        label: t(ConversationExportI18nKeys.ExportAllLabel),
-        icon: (
-          <IconFileArrowRight
-            size={DIAL_ICON_SIZE.SM}
-            className="text-secondary"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
-        onClick: onExportAll,
-      },
+      ...(onExportAll
+        ? [
+            {
+              key: 'export-all',
+              label: t(ConversationExportI18nKeys.ExportAllLabel),
+              icon: (
+                <IconFileArrowRight
+                  size={DIAL_ICON_SIZE.SM}
+                  className="text-secondary"
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              onClick: onExportAll,
+            },
+          ]
+        : []),
       {
         key: 'import',
         label: t(ConversationImportI18nKeys.ImportLabel),

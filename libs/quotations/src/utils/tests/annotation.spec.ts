@@ -11,6 +11,8 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
+  annotationHighlightId,
+  annotationsToPdfHighlights,
   annotationToOfficeHighlightLocations,
   getAnnotationPdfPage,
   isDocxRangeSelector,
@@ -28,6 +30,59 @@ const bbox = (overrides: Partial<PdfBBoxSelector> = {}): PdfBBoxSelector => ({
   y2: 0,
   ...overrides,
 });
+
+/** A `pdf_region` selector using the `lt`/`wh` origin/size coordinate form. */
+const pdfRegionLtWh = (
+  overrides: {
+    page?: number;
+    lt?: unknown;
+    wh?: unknown;
+  } = {},
+): AnnotationSelector =>
+  ({
+    type: 'pdf_region',
+    page: overrides.page ?? 1,
+    bbox: {
+      lt: overrides.lt ?? [58.752, 383.328],
+      wh: overrides.wh ?? [492.048, 29.304],
+    },
+  }) as AnnotationSelector;
+
+/** A `pdf_region` selector using the legacy `left`/`top`/`width`/`height` coordinate form. */
+const pdfRegionLegacy = (
+  overrides: {
+    page?: number;
+    left?: unknown;
+    top?: unknown;
+    width?: unknown;
+    height?: unknown;
+  } = {},
+): AnnotationSelector =>
+  ({
+    type: 'pdf_region',
+    page: overrides.page ?? 1,
+    bbox: {
+      left: overrides.left ?? 58.752,
+      top: overrides.top ?? 383.328,
+      width: overrides.width ?? 492.048,
+      height: overrides.height ?? 29.304,
+    },
+  }) as AnnotationSelector;
+
+/*
+ * `x2 = 58.752 + 492.048` is exact in IEEE 754 binary floating point, but
+ * `y2 = 383.328 + 29.304` is not (it evaluates to `412.63199999999995`), so
+ * this literal is the actual sum the reader computes, not the rounded
+ * decimal — asserted with plain equality since both sides run the same
+ * floating-point addition.
+ */
+const EXPECTED_BOX = {
+  page: 1,
+  x1: 58.752,
+  y1: 383.328,
+  x2: 550.8,
+  y2: 383.328 + 29.304,
+};
 
 const makeAnnotation = (
   selector?: AnnotationSelector | AnnotationSelector[],
@@ -92,6 +147,187 @@ describe('getAnnotationPdfPage', () => {
   it('returns the page even when all bounding-box coordinates are zero', () => {
     const selector = bbox({ page: 5, x1: 0, y1: 0, x2: 0, y2: 0 });
     expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(5);
+  });
+
+  it('returns the page from a scalar pdf_region selector', () => {
+    expect(
+      getAnnotationPdfPage(makeAnnotation(pdfRegionLtWh({ page: 4 }))),
+    ).toBe(4);
+  });
+
+  it('returns the page of the first pdf_region entry in a mixed array', () => {
+    const selector = [
+      { type: 'pdf_bbox', page: 2, x1: 0, y1: 0, x2: 10, y2: 10 },
+      pdfRegionLtWh({ page: 5 }),
+      { type: 'text_character_range', start: 0, end: 1 },
+    ];
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(2);
+  });
+
+  it('returns undefined for a pdf_region selector with non-finite geometry', () => {
+    const selector = pdfRegionLtWh({ wh: [NaN, 1] });
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBeUndefined();
+  });
+});
+
+describe('annotationsToPdfHighlights — pdf_region support', () => {
+  it('produces the same highlight for pdf_bbox, pdf_region lt/wh, and pdf_region legacy coordinates', () => {
+    const annotations: Annotation[] = [
+      { index: 0, body: { selector: bbox(EXPECTED_BOX) } },
+      { index: 1, body: { selector: pdfRegionLtWh() } },
+      { index: 2, body: { selector: pdfRegionLegacy() } },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(3);
+    highlights.forEach((highlight) => {
+      expect(highlight.bboxes).toEqual([EXPECTED_BOX]);
+    });
+    expect(highlights[0].bboxes).toEqual(highlights[1].bboxes);
+    expect(highlights[1].bboxes).toEqual(highlights[2].bboxes);
+
+    annotations.forEach((annotation) => {
+      expect(getAnnotationPdfPage(annotation)).toBe(1);
+    });
+  });
+
+  it('maps a scalar pdf_region selector to one highlight', () => {
+    const annotations: Annotation[] = [
+      { index: 0, body: { selector: pdfRegionLtWh({ page: 4 }) } },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(1);
+    expect(highlights[0].bboxes).toHaveLength(1);
+    expect(highlights[0].bboxes[0].page).toBe(4);
+  });
+
+  it('collects boxes from a mixed selector array onto one highlight, ignoring unrelated selector types', () => {
+    const annotations: Annotation[] = [
+      {
+        index: 0,
+        body: {
+          selector: [
+            { type: 'pdf_bbox', page: 2, x1: 0, y1: 0, x2: 10, y2: 10 },
+            pdfRegionLtWh({ page: 5 }),
+            { type: 'text_character_range', start: 0, end: 1 },
+          ],
+        },
+      },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(1);
+    expect(highlights[0].bboxes).toEqual([
+      { page: 2, x1: 0, y1: 0, x2: 10, y2: 10 },
+      { ...EXPECTED_BOX, page: 5 },
+    ]);
+    expect(getAnnotationPdfPage(annotations[0])).toBe(2);
+  });
+
+  it('skips malformed pdf_region entries without discarding a valid sibling', () => {
+    const selector = [
+      { type: 'pdf_region', page: 1, bbox: { lt: [1], wh: [2, 3] } },
+      {
+        type: 'pdf_region',
+        page: 0,
+        bbox: { left: 0, top: 0, width: 1, height: 1 },
+      },
+      null,
+      pdfRegionLtWh({ page: 6 }),
+    ];
+    const annotations: Annotation[] = [
+      { index: 0, body: { selector: selector as AnnotationSelector[] } },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(1);
+    expect(highlights[0].bboxes).toHaveLength(1);
+    expect(highlights[0].bboxes[0].page).toBe(6);
+    expect(
+      getAnnotationPdfPage(makeAnnotation(selector as AnnotationSelector[])),
+    ).toBe(6);
+  });
+
+  it('rejects a pdf_region selector with a non-finite coordinate', () => {
+    const annotations: Annotation[] = [
+      { index: 0, body: { selector: pdfRegionLtWh({ wh: [NaN, 1] }) } },
+    ];
+    expect(annotationsToPdfHighlights(annotations)).toEqual([]);
+  });
+
+  it('rejects a pdf_region selector with a missing or non-object bbox', () => {
+    const missingBbox = { type: 'pdf_region', page: 1 } as AnnotationSelector;
+    const nonObjectBbox = {
+      type: 'pdf_region',
+      page: 1,
+      bbox: 'not-an-object',
+    } as unknown as AnnotationSelector;
+
+    expect(
+      annotationsToPdfHighlights([
+        { index: 0, body: { selector: missingBbox } },
+      ]),
+    ).toEqual([]);
+    expect(
+      annotationsToPdfHighlights([
+        { index: 0, body: { selector: nonObjectBbox } },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('still yields a box and page for a zero-size pdf_region', () => {
+    const selector = pdfRegionLtWh({ page: 5, wh: [0, 0] });
+    const annotations: Annotation[] = [{ index: 0, body: { selector } }];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights[0].bboxes).toEqual([
+      { page: 5, x1: 58.752, y1: 383.328, x2: 58.752, y2: 383.328 },
+    ]);
+    expect(getAnnotationPdfPage(makeAnnotation(selector))).toBe(5);
+  });
+
+  it('prefers lt/wh over left/top/width/height when a bbox carries both', () => {
+    const selector = {
+      type: 'pdf_region',
+      page: 1,
+      bbox: {
+        lt: [58.752, 383.328],
+        wh: [492.048, 29.304],
+        left: 0,
+        top: 0,
+        width: 1,
+        height: 1,
+      },
+    } as unknown as AnnotationSelector;
+
+    const annotations: Annotation[] = [{ index: 0, body: { selector } }];
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights[0].bboxes).toEqual([EXPECTED_BOX]);
+  });
+
+  it('produces no highlight and no page for a quote-only annotation with no body.selector', () => {
+    const annotations: Annotation[] = [
+      {
+        index: 0,
+        body: {
+          quote: 'Some quoted text',
+          source: {
+            type: 'attachment',
+            attachment: { type: 'application/pdf', url: 'files/a.pdf' },
+          },
+        },
+      },
+    ];
+
+    expect(annotationsToPdfHighlights(annotations)).toEqual([]);
+    expect(getAnnotationPdfPage(annotations[0])).toBeUndefined();
   });
 });
 
@@ -300,6 +536,113 @@ describe('annotationToOfficeHighlightLocations', () => {
       } as AnnotationSelector),
     );
     expect(result).toHaveLength(0);
+  });
+});
+
+describe('annotationHighlightId', () => {
+  /*
+   * Issue #8907: ids used to be the annotation's position inside the list the
+   * caller gathered, so every single-annotation `cit` group resolved to '0'
+   * and the canvas could not tell two citations of one document apart.
+   */
+  const citAnnotation = (
+    citId: string | undefined,
+    selector: unknown,
+    index?: number,
+  ): Annotation => ({
+    ...(index != null ? { index } : {}),
+    ...(citId != null
+      ? { target: { selector: { type: 'html_tag', tag: 'cit', id: citId } } }
+      : {}),
+    body: {
+      source: {
+        type: 'attachment',
+        attachment: { type: MIMEType.PDF, url: 'files/bucket/report.pdf' },
+      },
+      selector: selector as NonNullable<Annotation['body']>['selector'],
+    },
+  });
+
+  const docxRange = (overrides: Record<string, unknown> = {}) => ({
+    type: 'docx_text_range',
+    story: 'body',
+    path: [3, 1],
+    start: 0,
+    end: 5,
+    text: 'Hello',
+    ...overrides,
+  });
+
+  it('agrees with the id annotationsToPdfHighlights assigns to the same annotation', () => {
+    const annotation = citAnnotation('c1', bbox({ page: 4, y1: 20, y2: 30 }));
+    const [highlight] = annotationsToPdfHighlights([annotation]);
+
+    expect(annotationHighlightId(annotation, 0)).toBe(highlight.id);
+  });
+
+  it('uses the wire-supplied index when present', () => {
+    const annotation = citAnnotation('c1', bbox({ page: 4 }), 7);
+
+    expect(annotationHighlightId(annotation, 0)).toBe('7');
+    expect(annotationsToPdfHighlights([annotation])[0].id).toBe('7');
+  });
+
+  it('distinguishes two citations of the same page by their geometry', () => {
+    const top = citAnnotation('c1', bbox({ page: 4, y1: 20, y2: 30 }));
+    const bottom = citAnnotation('c2', bbox({ page: 4, y1: 700, y2: 720 }));
+
+    expect(annotationHighlightId(top, 0)).not.toBe(
+      annotationHighlightId(bottom, 0),
+    );
+  });
+
+  it('distinguishes two citations that differ only by cit id', () => {
+    const selector = bbox({ page: 4, y1: 20, y2: 30 });
+
+    expect(annotationHighlightId(citAnnotation('c1', selector), 0)).not.toBe(
+      annotationHighlightId(citAnnotation('c2', selector), 0),
+    );
+  });
+
+  it('distinguishes two Office ranges sharing one cit id', () => {
+    const first = citAnnotation('c1', docxRange({ start: 0, end: 5 }));
+    const second = citAnnotation('c1', docxRange({ start: 40, end: 60 }));
+
+    expect(annotationHighlightId(first, 0)).not.toBe(
+      annotationHighlightId(second, 1),
+    );
+  });
+
+  it('is stable across repeated calls for the same annotation', () => {
+    const annotation = citAnnotation('c1', bbox({ page: 4, y1: 20, y2: 30 }));
+
+    expect(annotationHighlightId(annotation, 0)).toBe(
+      annotationHighlightId(annotation, 9),
+    );
+  });
+
+  it('falls back to the input position for an annotation with neither an index, a cit id, nor a selector', () => {
+    const annotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: { type: MIMEType.PDF, url: 'files/bucket/report.pdf' },
+        },
+      },
+    };
+
+    expect(annotationHighlightId(annotation, 3)).toBe('3');
+  });
+
+  it.each([
+    ['a pdf citation', bbox({ page: 4, y1: 20, y2: 30 })],
+    ['an office citation', docxRange()],
+  ])('produces a CSS-attribute-selector-safe id for %s', (_label, selector) => {
+    /* `@epam/pdf-highlighter-kit` interpolates the id into
+         `[data-term-id="<id>"]`, so a quote or bracket would break styling. */
+    expect(annotationHighlightId(citAnnotation('c1', selector), 0)).toMatch(
+      /^[A-Za-z0-9_-]+$/,
+    );
   });
 });
 

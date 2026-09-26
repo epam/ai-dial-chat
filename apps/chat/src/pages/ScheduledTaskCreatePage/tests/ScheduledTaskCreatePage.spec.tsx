@@ -1,8 +1,9 @@
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundI18nKeys } from '../../../constants/translation-keys';
 import {
   useAppConfig as useAppConfigMock,
@@ -10,6 +11,27 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskCreatePage from '../ScheduledTaskCreatePage';
+vi.mock(
+  '../../../components/ScheduledTaskSkillField/ScheduledTaskSkillField',
+  () => ({
+    default: ({
+      value,
+      onChange,
+      isSkillsSupported,
+    }: {
+      value?: string;
+      onChange: (value: string | undefined) => void;
+      isSkillsSupported: boolean;
+    }) => (
+      <input
+        aria-label="skillUrl"
+        aria-invalid={!isSkillsSupported}
+        value={value ?? ''}
+        onChange={(event) => onChange(event.target.value || undefined)}
+      />
+    ),
+  }),
+);
 
 vi.mock(
   '../../../context/AppConfigContext',
@@ -17,8 +39,14 @@ vi.mock(
 );
 
 const useDeploymentsMock = vi.fn();
+const TestSkillSupportContext = createContext<boolean | undefined>(undefined);
 vi.mock('../../../context/DeploymentsContext', () => ({
-  useDeployments: () => useDeploymentsMock(),
+  useDeployments: () => {
+    const support = useContext(TestSkillSupportContext);
+    return support === undefined
+      ? useDeploymentsMock()
+      : { items: [{ id: 'gpt-4o', features: { skillsSupported: support } }] };
+  },
 }));
 
 const showNotificationMock = vi.fn();
@@ -56,6 +84,7 @@ vi.mock(
         >
           <option value="" />
           <option value="gpt-4o">GPT-4o</option>
+          <option value="unsupported">Unsupported</option>
         </select>
         <output aria-label="triggerLabelledById">{labelledById}</output>
       </>
@@ -63,7 +92,16 @@ vi.mock(
   }),
 );
 
+const refineTextMock = vi.fn();
+vi.mock('../../../server-api/text-refinement.api', () => ({
+  refineText: (...args: unknown[]) => refineTextMock(...args),
+}));
 interface FormProps {
+  onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
+  onRefineInstructions?: (
+    value: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
   labels: { cancelButtonLabel: string; createButtonLabel: string };
   values: {
     displayName: string;
@@ -71,11 +109,13 @@ interface FormProps {
     prompt: string;
     description?: string;
     repeat: string;
+    time: string;
     startDate?: string;
     endDate?: string;
     runAt?: string;
   };
   errors: Record<string, string | undefined>;
+  skillSelector?: ReactNode;
   modelSelector: ReactNode;
   modelLabelId: string;
   onFieldChange: (field: string, value: unknown) => void;
@@ -94,10 +134,12 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     Monthly: 'monthly',
   },
   DESCRIPTION_MAX_LENGTH: 500,
+  TIME_OF_DAY_PATTERN: /^([01]\d|2[0-3]):([0-5]\d)$/,
   ScheduledTaskCreateForm: ({
     labels,
     values,
     errors,
+    skillSelector,
     modelSelector,
     modelLabelId,
     onFieldChange,
@@ -105,8 +147,40 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onCancel,
     onSubmit,
     isSubmitting,
+    onRefineDescription,
+    onRefineInstructions,
   }: FormProps): ReactNode => (
     <div>
+      {onRefineDescription && (
+        <button
+          onClick={async () =>
+            onFieldChange(
+              'description',
+              await onRefineDescription(
+                values.description ?? '',
+                new AbortController().signal,
+              ),
+            )
+          }
+        >
+          refine description
+        </button>
+      )}
+      {onRefineInstructions && (
+        <button
+          onClick={async () =>
+            onFieldChange(
+              'prompt',
+              await onRefineInstructions(
+                values.prompt,
+                new AbortController().signal,
+              ),
+            )
+          }
+        >
+          refine instructions
+        </button>
+      )}
       <button onClick={onBack}>back</button>
       <input
         aria-label="displayName"
@@ -115,6 +189,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       />
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
+      {skillSelector}
+      {errors.skillUrl && <span>{errors.skillUrl}</span>}
       <textarea
         aria-label="prompt"
         value={values.prompt}
@@ -151,13 +227,21 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.runAt ?? ''}
         onChange={(e) => onFieldChange('runAt', e.target.value)}
       />
+      <input
+        aria-label="time"
+        value={values.time}
+        onChange={(e) => onFieldChange('time', e.target.value)}
+      />
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.modelId && <span>{errors.modelId}</span>}
       {errors.prompt && <span>{errors.prompt}</span>}
       {errors.description && <span>{errors.description}</span>}
       {errors.endDate && <span>{errors.endDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
-      <button onClick={onSubmit} disabled={isSubmitting}>
+      <button
+        onClick={onSubmit}
+        disabled={isSubmitting || Boolean(errors.skillUrl)}
+      >
         {labels.createButtonLabel}
       </button>
     </div>
@@ -179,29 +263,205 @@ const renderAtRoute = (initialEntry: string) =>
   );
 
 const fillValidForm = async () => {
-  await userEvent.type(
-    screen.getByRole('textbox', { name: 'displayName' }),
-    'Daily summary',
-  );
+  fireEvent.change(screen.getByRole('textbox', { name: 'displayName' }), {
+    target: { value: 'Daily summary' },
+  });
   await userEvent.selectOptions(
     screen.getByRole('combobox', { name: 'modelId' }),
     'gpt-4o',
   );
-  await userEvent.type(
-    screen.getByRole('textbox', { name: 'prompt' }),
-    'Summarize my inbox',
-  );
+  fireEvent.change(screen.getByRole('textbox', { name: 'prompt' }), {
+    target: { value: 'Summarize my inbox' },
+  });
 };
 
 describe('ScheduledTaskCreatePage', () => {
+  it('supplies both purpose callbacks only when available and saves their results', async () => {
+    useAppConfigMock.mockReturnValue({
+      status: 'ready',
+      config: { aiTextRefinementAvailable: true },
+    });
+    refineTextMock
+      .mockResolvedValueOnce('Better description')
+      .mockResolvedValueOnce('Better instructions');
+    createScheduledTaskMock.mockResolvedValue({ id: 'new-task' });
+    renderAtRoute('/scheduled-tasks/new');
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'refine description' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'refine instructions' }),
+    );
+    expect(refineTextMock).toHaveBeenNthCalledWith(
+      1,
+      TextRefinementPurpose.ScheduledTaskDescription,
+      expect.any(String),
+      expect.any(AbortSignal),
+    );
+    expect(refineTextMock).toHaveBeenNthCalledWith(
+      2,
+      TextRefinementPurpose.ScheduledTaskInstructions,
+      'Summarize my inbox',
+      expect.any(AbortSignal),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+    expect(createScheduledTaskMock.mock.calls[0][0]).toMatchObject({
+      description: 'Better description',
+      prompt: 'Better instructions',
+    });
+  });
+  it('omits both actions when the optional capability is missing', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+    expect(
+      screen.queryByRole('button', { name: 'refine description' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'refine instructions' }),
+    ).toBeNull();
+  });
+  it('allows retry with the same draft after support recovers from a server rejection', async () => {
+    createScheduledTaskMock.mockRejectedValueOnce({
+      response: new Response(
+        JSON.stringify({ code: 'scheduledTaskSkillUnsupported' }),
+        { status: 400 },
+      ),
+    });
+    const page = (support = true) => (
+      <TestSkillSupportContext value={support}>
+        <MemoryRouter>
+          <ScheduledTaskCreatePage />
+        </MemoryRouter>
+      </TestSkillSupportContext>
+    );
+    const view = render(page());
+    await fillValidForm();
+    fireEvent.change(screen.getByLabelText('skillUrl'), {
+      target: { value: 'skills/public/report' },
+    });
+    const submit = screen.getByRole('button', { name: 'buttons.create' });
+    await userEvent.click(submit);
+    await screen.findByText('skillSelector.unsupportedTooltipLabel');
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    view.rerender(page());
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+
+    view.rerender(page(false));
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    view.rerender(page(true));
+    expect(
+      screen.queryByText('skillSelector.unsupportedTooltipLabel'),
+    ).toBeNull();
+    expect((submit as HTMLButtonElement).disabled).toBe(false);
+
+    createScheduledTaskMock.mockResolvedValueOnce({ id: 'task' });
+    await userEvent.click(submit);
+    expect(createScheduledTaskMock).toHaveBeenCalledTimes(2);
+    expect(createScheduledTaskMock.mock.calls[1][0]).toEqual(
+      createScheduledTaskMock.mock.calls[0][0],
+    );
+  });
+
+  it('saves skill-only content and rejects model switches immediately without losing the selection', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'task' });
+    renderAtRoute('/scheduled-tasks/new');
+    await fillValidForm();
+    fireEvent.change(screen.getByLabelText('skillUrl'), {
+      target: { value: 'skills/public/report' },
+    });
+    fireEvent.change(screen.getByLabelText('prompt'), {
+      target: { value: '' },
+    });
+    await userEvent.selectOptions(
+      screen.getByLabelText('modelId'),
+      'unsupported',
+    );
+    expect(
+      screen.getByText('skillSelector.unsupportedTooltipLabel'),
+    ).toBeTruthy();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect((screen.getByLabelText('skillUrl') as HTMLInputElement).value).toBe(
+      'skills/public/report',
+    );
+    await userEvent.selectOptions(screen.getByLabelText('modelId'), 'gpt-4o');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+    await vi.waitFor(() =>
+      expect(createScheduledTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skillUrl: 'skills/public/report',
+          prompt: '',
+        }),
+      ),
+    );
+  });
+
+  it('retains the draft and localizes a server capability rejection', async () => {
+    createScheduledTaskMock.mockRejectedValue({
+      response: new Response(
+        JSON.stringify({
+          code: 'scheduledTaskSkillUnsupported',
+          message: 'Unsupported',
+        }),
+        { status: 400 },
+      ),
+    });
+    renderAtRoute('/scheduled-tasks/new');
+    await fillValidForm();
+    fireEvent.change(screen.getByLabelText('skillUrl'), {
+      target: { value: 'skills/public/report' },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+    expect(
+      await screen.findByText('skillSelector.unsupportedTooltipLabel'),
+    ).toBeTruthy();
+    expect(
+      (screen.getByLabelText('displayName') as HTMLInputElement).value,
+    ).toBe('Daily summary');
+    expect((screen.getByLabelText('prompt') as HTMLInputElement).value).toBe(
+      'Summarize my inbox',
+    );
+  });
+
+  it('hides the entire selector when skill usage is disabled', () => {
+    useFeatureFlagMock.mockImplementation(
+      (key) => key === 'scheduledTasksEnabled',
+    );
+    renderAtRoute('/scheduled-tasks/new');
+    expect(screen.queryByLabelText('skillUrl')).toBeNull();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     useFeatureFlagMock.mockReturnValue(true);
     useDeploymentsMock.mockReturnValue({
-      items: [{ id: 'gpt-4o', displayName: 'GPT-4o' }],
+      items: [
+        {
+          id: 'gpt-4o',
+          displayName: 'GPT-4o',
+          features: { skillsSupported: true },
+        },
+        {
+          id: 'unsupported',
+          displayName: 'Unsupported',
+          features: { skillsSupported: false },
+        },
+      ],
     });
     useThemeMock.mockReturnValue({ currentTheme: 'light' });
-    useAppConfigMock.mockReturnValue({ status: 'ready' });
+    useAppConfigMock.mockReturnValue({ status: 'ready', config: {} });
+  });
+  /* Always restores real timers, even when a fake-timer test times out
+   and skips its own cleanup. */
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders a fallback instead of NotFound while app config is still loading', () => {
@@ -233,6 +493,40 @@ describe('ScheduledTaskCreatePage', () => {
 
     expect(modelLabelId).toBeTruthy();
     expect(triggerLabelledById).toBe(modelLabelId);
+  });
+
+  it('sends the entered time in the create body as UTC cron fields', async () => {
+    /*
+     * Both the mapper's local→UTC conversion and the expectation below read
+     * the wall clock; pin one instant so a minute or DST boundary between
+     * them cannot flip the assertion. `shouldAdvanceTime` keeps timers
+     * firing so userEvent and async queries still work under the fake clock.
+     */
+    vi.useFakeTimers({
+      now: new Date('2025-06-15T00:00:00Z'),
+      shouldAdvanceTime: true,
+    });
+
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    const timeInput = screen.getByLabelText('time');
+    await userEvent.clear(timeInput);
+    await userEvent.type(timeInput, '08:45');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    const fields = createScheduledTaskMock.mock.calls[0][0].trigger.cron.fields;
+    /* The mapper converts the local 08:45 to UTC with a reference Date —
+       compute the expectation the same way so the test holds in any
+       runner timezone. */
+    const reference = new Date();
+    reference.setHours(8, 45, 0, 0);
+    expect(fields.hour).toBe(String(reference.getUTCHours()));
+    expect(fields.minute).toBe(String(reference.getUTCMinutes()));
   });
 
   it('navigates to the default list route on Cancel when returnUrl is absent', async () => {
@@ -416,22 +710,19 @@ describe('ScheduledTaskCreatePage', () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'startDate' }),
-      '2026-08-01',
-    );
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'endDate' }),
-      '2026-08-31',
-    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: '2026-08-01' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: '2026-08-31' },
+    });
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'repeat' }),
       'oneTime',
     );
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'runAt' }),
-      '2099-08-24T09:00',
-    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'runAt' }), {
+      target: { value: '2099-08-24T09:00' },
+    });
     await userEvent.click(
       screen.getByRole('button', { name: 'buttons.create' }),
     );

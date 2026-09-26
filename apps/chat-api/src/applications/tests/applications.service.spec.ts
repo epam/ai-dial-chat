@@ -88,7 +88,7 @@ describe('ApplicationsService', () => {
     it('returns list from upstream on cache miss', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(okResponse({ data: [mockApp] }));
 
@@ -99,7 +99,7 @@ describe('ApplicationsService', () => {
     it('returns empty list when upstream data is missing', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(okResponse({}));
 
@@ -121,7 +121,10 @@ describe('ApplicationsService', () => {
         deploymentsDetailsService,
       );
       const spy = vi
-        .spyOn(service['dialClient'].client, 'getApplications')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getApplications',
+        )
         .mockResolvedValue(okResponse({ data: [mockApp] }));
 
       const result = await service.listApplications('user1', 'token-abc');
@@ -147,7 +150,7 @@ describe('ApplicationsService', () => {
         deploymentsDetailsService,
       );
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(okResponse({ data: [mockApp] }));
 
@@ -161,7 +164,10 @@ describe('ApplicationsService', () => {
     it('forwards Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['dialClient'].client, 'getApplications')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getApplications',
+        )
         .mockResolvedValue(okResponse({ data: [mockApp] }));
 
       await service.listApplications('user1', 'my-token');
@@ -177,7 +183,7 @@ describe('ApplicationsService', () => {
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(errResponse(401));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -188,7 +194,7 @@ describe('ApplicationsService', () => {
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(errResponse(403));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -199,7 +205,7 @@ describe('ApplicationsService', () => {
     it('throws HttpException(429) on upstream 429', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(errResponse(429));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -210,7 +216,7 @@ describe('ApplicationsService', () => {
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockResolvedValue(errResponse(500));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -221,7 +227,7 @@ describe('ApplicationsService', () => {
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getApplications',
       ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
@@ -242,10 +248,16 @@ describe('ApplicationsService', () => {
       saveResponse = okResponse({}),
     ) => {
       const getUserBucketSpy = vi
-        .spyOn(service['dialClient'].client, 'getUserBucket')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getUserBucket',
+        )
         .mockResolvedValue(bucketResponse);
       const saveCustomApplicationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveCustomApplication',
+        )
         .mockResolvedValue(saveResponse);
 
       return { getUserBucketSpy, saveCustomApplicationSpy };
@@ -315,6 +327,7 @@ describe('ApplicationsService', () => {
               'https://mydial.epam.com/custom_application_schemas/quickapps2',
             description: 'A description',
             iconUrl: 'https://example.com/icon.svg',
+            features: { skills_supported: true },
           },
         }),
       );
@@ -434,9 +447,10 @@ describe('ApplicationsService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockRejectedValue(
-        new TypeError('fetch failed'),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         ServiceUnavailableException,
       );
@@ -449,6 +463,45 @@ describe('ApplicationsService', () => {
         service.createApplication('user1', 't', body),
       ).rejects.toThrow();
       expect(cacheManager.del).not.toHaveBeenCalled();
+    });
+
+    it('forces features.skills_supported to true for a Quick App with no applicationProperties.features', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', body);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({ skills_supported: true });
+    });
+
+    it('merges skills_supported alongside caller-supplied features for a Quick App', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        applicationProperties: { features: { timestamp: true } },
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({
+        timestamp: true,
+        skills_supported: true,
+      });
+    });
+
+    it('does not add skills_supported for a non-Quick-App create', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        name: 'My App',
+        type: 'https://mydial.epam.com/schema',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('features');
     });
   });
 
@@ -472,10 +525,16 @@ describe('ApplicationsService', () => {
       saveResponse = okResponse({}),
     ) => {
       const getCustomApplicationSpy = vi
-        .spyOn(service['dialClient'].client, 'getCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'getCustomApplication',
+        )
         .mockResolvedValue(getResponse);
       const saveCustomApplicationSpy = vi
-        .spyOn(service['dialClient'].client, 'saveCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveCustomApplication',
+        )
         .mockResolvedValue(saveResponse);
 
       return { getCustomApplicationSpy, saveCustomApplicationSpy };
@@ -720,7 +779,7 @@ describe('ApplicationsService', () => {
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'getCustomApplication',
       ).mockRejectedValue(new TypeError('fetch failed'));
 
@@ -747,6 +806,33 @@ describe('ApplicationsService', () => {
         deploymentsDetailsService.invalidateDetailsCache,
       ).not.toHaveBeenCalled();
     });
+
+    it('forces features.skills_supported to true when updating an existing Quick App, even when features is omitted', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({
+          ...existingApp,
+          application_type_schema_id:
+            'https://mydial.epam.com/schema/quickapps2',
+        }),
+      );
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody.features).toEqual({ skills_supported: true });
+    });
+
+    it('does not add skills_supported when updating a non-Quick-App', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('features');
+    });
   });
 
   describe('deleteApplication', () => {
@@ -755,7 +841,10 @@ describe('ApplicationsService', () => {
     it('DELETEs the application id path and invalidates cache', async () => {
       const { service, cacheManager } = makeService();
       const deleteSpy = vi
-        .spyOn(service['dialClient'].client, 'deleteCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'deleteCustomApplication',
+        )
         .mockResolvedValue(okResponse({}));
 
       await service.deleteApplication('user1', 'token', id);
@@ -772,7 +861,7 @@ describe('ApplicationsService', () => {
     it('invalidates the deployments list cache on successful delete', async () => {
       const { service, deploymentsService } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockResolvedValue(okResponse({}));
 
@@ -785,7 +874,7 @@ describe('ApplicationsService', () => {
     it('does not invalidate the deployments list cache when delete returns error', async () => {
       const { service, deploymentsService } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockResolvedValue(errResponse(409));
 
@@ -797,11 +886,15 @@ describe('ApplicationsService', () => {
 
     it('resolves bucket via getUserBucket when applicationName has no bucket prefix', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
-        okResponse({ bucket: 'my-bucket' }),
-      );
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(okResponse({ bucket: 'my-bucket' }));
       const deleteSpy = vi
-        .spyOn(service['dialClient'].client, 'deleteCustomApplication')
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'deleteCustomApplication',
+        )
         .mockResolvedValue(okResponse({}));
 
       await service.deleteApplication('user1', 'token', 'my-app__1.0');
@@ -815,7 +908,7 @@ describe('ApplicationsService', () => {
     it('throws ForbiddenException when delete returns 403', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockResolvedValue(errResponse(403));
       await expect(service.deleteApplication('u', 't', id)).rejects.toThrow(
@@ -826,7 +919,7 @@ describe('ApplicationsService', () => {
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.deleteApplication('u', 't', id)).rejects.toThrow(
@@ -837,7 +930,7 @@ describe('ApplicationsService', () => {
     it('does not invalidate cache when delete returns error', async () => {
       const { service, cacheManager } = makeService();
       vi.spyOn(
-        service['dialClient'].client,
+        (service['dialClient'] as DialClientService).client,
         'deleteCustomApplication',
       ).mockResolvedValue(errResponse(409));
       await expect(
@@ -953,8 +1046,13 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       sdkClient.saveCustomApplication.mock.calls[0];
     expect(sentBody.application_properties).toEqual(updatedProperties);
     // The hoist bug used to lift `features` to the top level, stripping it
-    // from application_properties before it reached DIAL Core.
-    expect(sentBody).not.toHaveProperty('features');
+    // from application_properties before it reached DIAL Core. The top-level
+    // `features` seen here comes only from the Quick-App skills_supported
+    // force-set, not from a hoist of application_properties.features.
+    expect(sentBody.features).toEqual({ skills_supported: true });
+    expect(sentBody.application_properties.features).toEqual({
+      timestamp: false,
+    });
 
     // 3. Re-read: must reflect the saved Quick App features, not the original.
     sdkClient.getApplication.mockResolvedValueOnce(

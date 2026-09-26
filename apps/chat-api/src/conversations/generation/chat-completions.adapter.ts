@@ -268,9 +268,12 @@ export class ChatCompletionsAdapter {
         this.logger.debug(
           `relayModelCompletion outcome: error (in-band stream error chunk) — model: ${model}: ${streamError.message}`,
         );
+        const displayMessage =
+          streamError.displayMessage ?? streamError.message;
         return {
           outcome: 'error',
-          error: new Error(streamError.displayMessage ?? streamError.message),
+          error: new Error(displayMessage),
+          displayMessage,
           assembledMessage,
         };
       }

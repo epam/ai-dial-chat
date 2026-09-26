@@ -6,6 +6,7 @@ import {
   Configuration,
   ConversationsApi,
   DeploymentsApi,
+  ExternalServicesApi,
   FilesApi,
   HealthApi,
   OfflineCredentialsApi,
@@ -15,6 +16,7 @@ import {
   ScheduledTasksApi,
   ShareApi,
   SkillsApi,
+  TextRefinementApi,
   ToolsetsApi,
   TranscriptionApi,
   UserApi,
@@ -95,10 +97,12 @@ export const rateApi = new RateApi(config);
 export const toolsetsApi = new ToolsetsApi(config);
 export const shareApi = new ShareApi(config);
 export const skillsApi = new SkillsApi(config);
+export const textRefinementApi = new TextRefinementApi(config);
 export const publishApi = new PublishApi(config);
 export const promptsApi = new PromptsApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
 export const scheduledTasksApi = new ScheduledTasksApi(config);
 export const offlineCredentialsApi = new OfflineCredentialsApi(config);
+export const externalServicesApi = new ExternalServicesApi(config);
 export const healthApi = new HealthApi(config);
 export const transcriptionApi = new TranscriptionApi(config);

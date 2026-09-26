@@ -53,6 +53,7 @@ import {
   findContentNodeName,
 } from '../../utils/catalog-content-tree';
 import {
+  canPublishCredentials,
   getCredentialsBannerState,
   getSignedInLevel,
 } from '../../utils/toolset-credentials';
@@ -226,6 +227,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onLoadContentFile,
   onLoadContentFilePreview,
   renderContentFilePreview,
+  renderCredentials,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -483,9 +485,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   /*
    * Publish history is fetched at most once per item and shared by the publish
    * sub-view and the Manage menu's Unpublish gate, so opening Publish after
-   * opening the menu issues no second request. It is never fetched on panel
-   * open or item render: most items are never unpublished, and the request is
-   * only worth making when the user reaches for one of those surfaces.
+   * opening the menu issues no second request. For most items it is not
+   * fetched on panel open or item render: most items are never unpublished,
+   * and the request is only worth making when the user reaches for one of
+   * those surfaces. The exception is an item the host has said is
+   * unpublishable — see the effect after the per-item reset below.
    */
   const requestPublishHistory = useCallback(() => {
     if (
@@ -551,6 +555,15 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onPublishError,
     onFetchExistingRules,
   });
+
+  /*
+   * Offering the option is the catalog's call, not the panel's: only a toolset
+   * that needs a login and whose publisher holds one can pass that access on.
+   * `libs/publish-panel` renders whatever it is handed and knows none of this.
+   */
+  const isPublishCredentialsEligible =
+    item.type === CatalogEntityType.Toolset &&
+    canPublishCredentials(item.credentials);
 
   const publishDerived = useMemo(
     () =>
@@ -623,6 +636,22 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     // Reset publish-flow-local state only when the displayed item changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
+
+  /*
+   * An item the host affirmatively calls unpublishable — a published copy the
+   * caller may remove — resolves its history up front. Whether "Unpublish"
+   * joins the Manage menu decides whether the header shows a menu at all or
+   * promotes a lone action to a button, and that decision has to be settled
+   * before the pointer arrives rather than flip under it (GH #8989, where an
+   * Organization copy's only action sat behind `...`). Declared after the
+   * reset above so a new item's request is not cleared in the same commit.
+   */
+  const shouldPrefetchPublishHistory =
+    !isReadonly && !!onUnpublish && isUnpublishVisible?.(item) === true;
+
+  useEffect(() => {
+    if (shouldPrefetchPublishHistory) requestPublishHistory();
+  }, [shouldPrefetchPublishHistory, requestPublishHistory]);
 
   const handleOpenCredentialsManagement = useCallback(
     () => setIsCredentialsManagementOpen(true),
@@ -1109,7 +1138,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         aria-label={dialogAriaLabel}
         style={cssVars}
         className={mergeClasses(
-          'fixed inset-y-0 end-0 z-50 flex w-full flex-col overflow-hidden',
+          'fixed inset-y-0 end-0 z-50 flex flex-col overflow-hidden mobile:w-full',
           'desktop:rounded-ts-xl desktop:rounded-bs-xl desktop:w-[540px] desktop:border-s',
           'transition-transform duration-300',
           styles.panel,
@@ -1240,6 +1269,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 hasSubmitError={publishFlow.hasSubmitError}
                 author={publishFlow.author}
                 onAuthorChange={publishFlow.setAuthor}
+                publishCredentials={publishFlow.publishCredentials}
+                onPublishCredentialsChange={
+                  isPublishCredentialsEligible
+                    ? publishFlow.setPublishCredentials
+                    : undefined
+                }
                 rules={publishFlow.rules}
                 onRulesChange={publishFlow.setRules}
                 ruleSourceOptions={ruleSourceOptions}
@@ -1320,6 +1355,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     )
                   );
                 })()}
+
+              {!isReadonly && isOpen && renderCredentials?.(item)}
 
               <div className="flex items-center px-6">
                 <Tabs

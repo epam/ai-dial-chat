@@ -83,6 +83,21 @@ describe('ActiveScheduledTaskContext', () => {
     expect(result.current.runId).toBe('run-1');
   });
 
+  it('resolves an older run of a task, which the panel collapses away, as a task conversation', async () => {
+    contextMocks.pathname = '/conversations/conv-older';
+    contextMocks.conversations = [
+      taskConversation({ id: 'conv-older', runId: 'run-1', createdAt: 100 }),
+      taskConversation({ id: 'conv-newest', runId: 'run-2', createdAt: 200 }),
+    ];
+
+    const { result } = renderActiveScheduledTask();
+
+    await waitFor(() =>
+      expect(result.current.status).toBe('task-conversation'),
+    );
+    expect(result.current.runId).toBe('run-1');
+  });
+
   it('stays resolving while the conversation list is still loading and no match is found yet', () => {
     contextMocks.conversations = [];
     contextMocks.isConversationsLoading = true;

@@ -4,6 +4,7 @@ import {
   useAppConfig as mockUseAppConfig,
   useFeatureFlag as mockUseFeatureFlag,
 } from '../../../context/tests/app-config-context-mock';
+import { useUiFeature } from '../../../hooks/useUiFeature';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import FooterMessage from '../FooterMessage';
 
@@ -13,6 +14,7 @@ const { mockState } = vi.hoisted(() => ({
     footerHtmlMessage: '',
     appVersion: '',
     isFooterEnabled: true,
+    isVersionHidden: false,
   },
 }));
 
@@ -28,6 +30,11 @@ mockUseAppConfig.mockImplementation(() => ({
   },
 }));
 mockUseFeatureFlag.mockImplementation(() => mockState.isFooterEnabled);
+
+vi.mock('../../../hooks/useUiFeature', () => ({
+  useUiFeature: vi.fn(),
+}));
+vi.mocked(useUiFeature).mockImplementation(() => mockState.isVersionHidden);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -47,6 +54,7 @@ describe('FooterMessage', () => {
     mockState.footerHtmlMessage = '';
     mockState.appVersion = '';
     mockState.isFooterEnabled = true;
+    mockState.isVersionHidden = false;
   });
 
   it('renders null when footer feature flag is off', () => {
@@ -127,6 +135,25 @@ describe('FooterMessage', () => {
 
       expect(screen.queryByText('Operator copy')).toBeNull();
       expect(screen.getByText('v0.45.0')).toBeTruthy();
+    });
+
+    it('hides the version when the hide-footer-version feature is enabled', () => {
+      mockState.isVersionHidden = true;
+      mockState.appVersion = '0.45.0';
+      renderFooter();
+
+      expect(screen.queryByText('v0.45.0')).toBeNull();
+      expect(screen.queryByRole('region')).toBeNull();
+    });
+
+    it('keeps the footer message when only the version is hidden', () => {
+      mockState.isVersionHidden = true;
+      mockState.footerHtmlMessage = 'Operator copy';
+      mockState.appVersion = '0.45.0';
+      renderFooter();
+
+      expect(screen.getByText('Operator copy')).toBeTruthy();
+      expect(screen.queryByText('v0.45.0')).toBeNull();
     });
 
     it('renders null when there is neither a message nor a version', () => {

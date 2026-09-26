@@ -62,3 +62,4 @@ export {
   VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from './utils/validate-deployment-creation-fields';
+export { BUILDER_FORM_CLASS } from './constants/public-class-names';

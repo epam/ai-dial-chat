@@ -6,8 +6,29 @@ export default [
   ...baseConfig,
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      /*
+       * This library renders already-normalized display models only — DTO
+       * interpretation stays outside it (see AGENTS.md §Library isolation). A
+       * returning import here, even through a re-export, must fail lint
+       * rather than wait for review.
+       */
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@epam/ai-dial-chat-api-client',
+                '@epam/ai-dial-chat-api-client/*',
+              ],
+              message:
+                'libs/usage-dashboard must not import the generated BFF client — usage DTO interpretation belongs in libs/chat-hooks/src/usage under its recorded exception, with host-specific behavior supplied by callbacks. See AGENTS.md §Library isolation.',
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     files: ['**/*.json'],

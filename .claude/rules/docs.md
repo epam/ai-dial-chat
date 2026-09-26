@@ -19,8 +19,9 @@ external package is declared at two different ranges, that no test tool is
 declared in a shipped dependency field, that every `peerDependenciesMeta` key
 names a declared peer, that every version a lib README cites matches its own
 manifest, that `docs/host-install-matrix.md` still matches the manifests it is
-generated from, that every relative markdown link resolves, and that every
-name a lib README imports from its own package is actually exported.
+generated from, that every relative markdown link resolves, that every
+name a lib README imports from its own package is actually exported, and that
+a lib's public `dial-*` class names and its README agree in both directions.
 `npm run lint:check` covers none of this; the PR workflow's
 `validate_agent_docs` job runs it, so a failure here blocks the merge.
 
@@ -36,6 +37,7 @@ README behind. So the obligation is same-change, not follow-up:
 | Change a lib's `dependencies` or `peerDependencies`        | `npm run docs:install-matrix`, then commit the regenerated doc          |
 | Rename a prop, change its type, or make it required        | Every README example that passes it                                     |
 | Add, rename, or remove an enum member                      | Every README that lists the members                                     |
+| Add, rename, or remove a public `dial-*` class             | That lib's README class table — `npm run validate:docs` enforces it     |
 | Add or remove a lib/app, backend domain, context, or route | `docs/architecture.md` (see the Docs section of `AGENTS.md`)            |
 | Add or remove an environment variable                      | `apps/chat-api/README.md` and `apps/chat-api/.env.template`             |
 | Change a build output path, port, or npm script            | The root `README.md` and the affected app README                        |

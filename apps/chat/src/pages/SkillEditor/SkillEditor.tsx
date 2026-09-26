@@ -1,4 +1,5 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
@@ -39,6 +40,8 @@ import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
+import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
+import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import {
   createSkill,
   downloadSkill,
@@ -61,8 +64,25 @@ const skillEditorSubmitClient: SkillEditorSubmitClient = {
   updateSkill,
 };
 
+/* Stands in for the skill path while creating a skill that has none yet, so a
+ * create-mode preview is still scoped to its own resource. */
+const NEW_SKILL_CANVAS_SCOPE = '<new>';
+
+/* Separates the resource scope from the file's relative path in a canvas key.
+ * The key is only ever compared for equality, never parsed back, so an
+ * ambiguous split point costs nothing; a collision would need one skill's path
+ * to end with this character and absorb the next key's leading path segment. */
+const CANVAS_SCOPE_SEPARATOR = '#';
+
 const SkillEditorPage: FC = () => {
   const { t } = useTranslation();
+  const onRefineDescription = useTextRefinementCallback(
+    TextRefinementPurpose.SkillDescription,
+  );
+  const onRefineInstructions = useTextRefinementCallback(
+    TextRefinementPurpose.SkillInstructions,
+  );
+  const refinementLabels = useTextRefinementLabels();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useUser();
@@ -76,7 +96,6 @@ const SkillEditorPage: FC = () => {
     rawReturnUrl != null && isSafeReturnUrl(rawReturnUrl)
       ? rawReturnUrl
       : ROUTES.Catalog;
-
   const personalBucket = user?.bucket;
 
   const rawId = searchParams.get(EditorQuery.Id);
@@ -102,6 +121,13 @@ const SkillEditorPage: FC = () => {
   }, [isEditMode, personalBucket, rawId]);
   const bucket = skillResource?.bucket;
   const skillPath = skillResource?.path;
+  const getCreateReturnUrl = useCallback(
+    (path: string) =>
+      `${ROUTES.Catalog}?${new URLSearchParams({
+        itemId: `skills/${bucket}/${path}`,
+      }).toString()}`,
+    [bucket],
+  );
 
   const {
     loadState,
@@ -125,8 +151,37 @@ const SkillEditorPage: FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [pendingCancel, setPendingCancel] = useState(false);
   const [pendingReload, setPendingReload] = useState(false);
+  const [hasReturnedToManifest, setHasReturnedToManifest] = useState(false);
 
-  useSkillFilePreviewSync({ selectedPath, files, filesContentRef });
+  const isManifestSelected = selectedPath === SKILL_MANIFEST_FILE;
+
+  /*
+   * The canvas is shared application state, so the key a preview is recorded
+   * under has to identify the resource as well as the file: the same relative
+   * path can exist in another skill, or in another bucket.
+   */
+  const canvasAttachmentId = useMemo(
+    () =>
+      isManifestSelected
+        ? undefined
+        : /* `bucket` is always set here — the page early-returns without one
+             below — but the guard runs after this hook, so the type needs it. */
+          `${bucket ?? ''}/${skillPath ?? NEW_SKILL_CANVAS_SCOPE}` +
+          `${CANVAS_SCOPE_SEPARATOR}${selectedPath}`,
+    [bucket, skillPath, isManifestSelected, selectedPath],
+  );
+
+  const { state: previewState, retry: retryPreview } = useSkillFilePreviewSync({
+    selectedPath,
+    canvasAttachmentId,
+    files,
+    filesContentRef,
+  });
+
+  const handleSelectedPathChange = useCallback((path: string) => {
+    setSelectedPath(path);
+    setHasReturnedToManifest(false);
+  }, []);
 
   const fileActionsMessages = useMemo<SkillFileActionsMessages>(
     () => ({
@@ -170,6 +225,9 @@ const SkillEditorPage: FC = () => {
   const submitMessages = useMemo<SkillEditorSubmitMessages>(
     () => ({
       required: t(SkillEditorI18nKeys.ErrorRequired),
+      instructionsFrontmatter: t(
+        SkillEditorI18nKeys.ErrorInstructionsFrontmatter,
+      ),
       nameInvalid: t(SkillEditorI18nKeys.ErrorNameInvalid),
       nameConflict: t(SkillEditorI18nKeys.ErrorNameConflict),
       archiveTooLarge: t(SkillEditorI18nKeys.ErrorArchiveTooLarge),
@@ -185,22 +243,48 @@ const SkillEditorPage: FC = () => {
     [t],
   );
 
-  const { phase, errors, submitError, conflict, clearConflict, handleSubmit } =
-    useSkillEditorSubmit({
-      bucket,
-      isEditMode,
-      files,
-      filesContentRef,
-      frontmatterRef,
-      loadedPathRef,
-      etagRef,
-      returnUrl,
-      refetchSkills,
-      client: skillEditorSubmitClient,
-      messages: submitMessages,
-      onNavigate: navigate,
-      onNotify: showNotification,
+  const {
+    phase,
+    errors,
+    submitError,
+    isSubmitErrorRetryable,
+    retrySubmit,
+    conflict,
+    clearConflict,
+    handleSubmit,
+    handleValuesChange,
+  } = useSkillEditorSubmit({
+    bucket,
+    isEditMode,
+    files,
+    filesContentRef,
+    frontmatterRef,
+    loadedPathRef,
+    etagRef,
+    returnUrl,
+    getCreateReturnUrl,
+    refetchSkills,
+    client: skillEditorSubmitClient,
+    messages: submitMessages,
+    onNavigate: navigate,
+    onNotify: showNotification,
+  });
+
+  /*
+   * A skill stored with two frontmatter blocks (created before the editor
+   * refused them) seeds an Instructions body that still opens with a fence.
+   * The library deliberately stays silent while seeding, so run the check
+   * once per loaded skill here — otherwise the message would only appear
+   * after the user's first keystroke or a rejected Save.
+   */
+  useEffect(() => {
+    if (loadState !== SkillEditorLoadState.Loaded || !loadedValues) return;
+    handleValuesChange({
+      name: loadedValues.name ?? '',
+      description: loadedValues.description ?? '',
+      instructions: loadedValues.instructions ?? '',
     });
+  }, [loadState, loadedValues, handleValuesChange]);
 
   // Warn on a full page unload while there are unsaved changes — the
   // in-app Cancel/Back guards below cover in-app navigation.
@@ -217,6 +301,7 @@ const SkillEditorPage: FC = () => {
   // resources (create <-> edit, or editing a different skill).
   useEffect(() => {
     setSelectedPath(SKILL_MANIFEST_FILE);
+    setHasReturnedToManifest(false);
     closeCanvas();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on resource identity only
   }, [isEditMode, skillPath]);
@@ -233,6 +318,21 @@ const SkillEditorPage: FC = () => {
     navigateAway();
   }, [isDirty, navigateAway]);
 
+  /*
+   * Back is preview-aware: while a supporting file is selected it is a return
+   * to the `SKILL.md` view inside the editor, not a navigation, so it neither
+   * resolves `returnUrl` nor raises the unsaved-changes guard. From the
+   * manifest view it keeps today's exit behavior.
+   */
+  const handleBack = useCallback(() => {
+    if (!isManifestSelected) {
+      setSelectedPath(SKILL_MANIFEST_FILE);
+      setHasReturnedToManifest(true);
+      return;
+    }
+    handleCancel();
+  }, [isManifestSelected, handleCancel]);
+
   const handleReloadLatestClick = useCallback(() => {
     setPendingReload(true);
   }, []);
@@ -245,6 +345,7 @@ const SkillEditorPage: FC = () => {
 
   const labels = useMemo<SkillEditorLabels>(
     () => ({
+      ...refinementLabels,
       filesHeading: t(SkillEditorI18nKeys.FilesHeading),
       filesTreeAriaLabel: t(SkillEditorI18nKeys.FilesTreeAriaLabel),
       addUploadLabel: t(SkillEditorI18nKeys.AddUploadLabel),
@@ -293,7 +394,7 @@ const SkillEditorPage: FC = () => {
       dropOverlayTitle: t(SkillEditorI18nKeys.DropOverlayTitle),
       dropOverlaySubtitle: t(SkillEditorI18nKeys.DropOverlaySubtitle),
     }),
-    [t, isEditMode, loadState],
+    [t, isEditMode, loadState, refinementLabels],
   );
 
   if (!bucket) {
@@ -316,11 +417,22 @@ const SkillEditorPage: FC = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      {/* Announces the return to the manifest view; the Back control keeps
+          focus across the transition, so nothing else signals the change. */}
+      <span role="status" aria-live="polite" className="sr-only">
+        {hasReturnedToManifest && isManifestSelected
+          ? t(SkillEditorI18nKeys.ReturnedToManifestStatus)
+          : ''}
+      </span>
+
       <SkillEditorForm
+        key={`${bucket}/${skillPath ?? NEW_SKILL_CANVAS_SCOPE}`}
+        onRefineDescription={onRefineDescription}
+        onRefineInstructions={onRefineInstructions}
         initialValues={loadedValues}
         files={files}
         selectedPath={selectedPath}
-        onSelectedPathChange={setSelectedPath}
+        onSelectedPathChange={handleSelectedPathChange}
         isLoading={loadState === SkillEditorLoadState.Loading}
         hasLoadError={
           loadState === SkillEditorLoadState.Error ||
@@ -330,18 +442,26 @@ const SkillEditorPage: FC = () => {
         isSubmitting={phase === 'submitting'}
         errors={errors}
         submitError={submitError}
+        onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}
         conflict={conflict}
         onReloadLatest={handleReloadLatestClick}
         isNameReadOnly={isEditMode}
         onDirtyChange={setIsDirty}
+        onValuesChange={handleValuesChange}
         fileActions={fileActions}
-        supportingFileContent={<SkillFilePreview path={selectedPath} />}
+        supportingFileContent={
+          <SkillFilePreview state={previewState} onRetry={retryPreview} />
+        }
         labels={labels}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        onBack={handleCancel}
+        onBack={handleBack}
         onRetry={retryLoad}
-        backAriaLabel={t(SkillEditorI18nKeys.BackAriaLabel)}
+        backAriaLabel={
+          isManifestSelected
+            ? t(SkillEditorI18nKeys.BackAriaLabel)
+            : t(SkillEditorI18nKeys.BackToManifestAriaLabel)
+        }
         title={
           isEditMode
             ? t(SkillEditorI18nKeys.EditTitle)

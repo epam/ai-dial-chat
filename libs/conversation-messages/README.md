@@ -32,7 +32,7 @@ import '@epam/ai-dial-conversation-messages/styles.css';
 
 ### UserMessageBubble
 
-Renders a user message with text content and optional attachments. Long messages collapse to `collapsedLineCount` lines (default `10`) behind a toggle. Pass `beforeContent` to render host-supplied content inline at the start of the first text line, which word-flows after it on the same line (e.g. a used-skill chip; pass inline-level content no taller than a text line — the slot participates in the bubble's content-sized width and the collapse line measurement); the bubble renders for the slot alone even when `text` is empty, and with no slot the rendering is unchanged.
+Renders a user message with text content and optional attachments. Long messages collapse to `collapsedLineCount` lines (default `10`) behind a toggle. Pass `textSegments` to render an ordered array of content in place of `text` inside the same paragraph — interleaved plain-text runs and inline elements (e.g. skill-mention chips at their text position). `text` is still required alongside `textSegments`: it stays the identity/measurement input for the collapse-height calculation even when `textSegments` is what actually renders. With no `textSegments`, `text` renders unchanged.
 
 ```tsx
 import {
@@ -44,7 +44,7 @@ import {
   text={message.content}
   position={BubblePosition.Bottom}
   attachments={message.attachments}
-  beforeContent={usedSkillChip}
+  textSegments={messageTextSegments}
   onAttachmentClick={handleAttachmentClick}
   actions={{ onEdit: handleEdit, onDelete: handleDelete }}
 />;
@@ -52,16 +52,24 @@ import {
 
 ### AssistantMessageBubble
 
-Renders an assistant message as markdown. Set `isStreaming` while the response is still arriving so newly appended text reveals smoothly. Use `markdownComponents` to inject custom renderers (for example citation markers from `@epam/ai-dial-quotations`), `markdownClassNames` to pick the markdown type scale (`COMPACT_MARKDOWN_CLASS_NAMES` from `@epam/ai-dial-chat-shared` drops the body copy one step for narrow viewports), `markdownUrlTransform` to rewrite markdown `href`/`src` values (for example mapping DIAL `files/{bucket}/{path}` ids to host download URLs), `afterContent` to place a stages panel between the text and the actions bar, and `beforeContent` to render host-supplied content overlaid at the inline-start of the first markdown block's first line, which indents past the measured slot width so the text word-flows after it (e.g. a used-skill chip); while there is no text — the streaming placeholder case — the slot renders in flow above it, and an assistant message with no text at all renders the slot on its own line.
+Renders an assistant message as markdown. Set `isStreaming` while the response is still arriving so newly appended text reveals smoothly. Use `markdownComponents` to inject custom renderers (for example citation markers from `@epam/ai-dial-quotations`), `markdownClassNames` to pick the markdown type scale (`COMPACT_MARKDOWN_CLASS_NAMES` from `@epam/ai-dial-chat-shared` drops the body copy one step for narrow viewports), `markdownUrlTransform` to rewrite markdown `href`/`src` values (for example mapping DIAL `files/{bucket}/{path}` ids to host download URLs), `afterContent` to place a stages panel between the text and the actions bar, and `beforeContent` to render host-supplied content overlaid at the inline-start of the first markdown block's first line, which indents past the measured slot width so the text word-flows after it (e.g. one or more used-skill chips — `beforeContent` may itself be an array of elements); while there is no text — the streaming placeholder case — the slot renders in flow above it, and an assistant message with no text at all renders the slot on its own line.
 
-Assistant tables receive the matching copy/download controls when their table
-action labels (`tableCopyCsvLabel`, `tableCopyTxtLabel`,
-`tableCopyMarkdownLabel`, `tableCopiedLabel`, and `tableDownloadCsvLabel`) are
+Pass `responseFormat` to follow the conversation's response-format setting.
+`ResponseFormat.PlainText` (from `@epam/ai-dial-chat-shared`) renders the body
+verbatim — no Markdown pipeline, so a table, a heading, or `**bold**` reaches
+the reader as the model wrote it and can be pasted into an e-mail or a ticket
+unchanged. The markdown-only props (`markdownComponents`,
+`markdownUrlTransform`, the table action labels) stop applying in that mode;
+only `markdownClassNames`' `p` entry is still read, so both formats stay on
+one type scale. It defaults to `ResponseFormat.Markdown`.
+
+Assistant tables receive copy/download controls when their table action labels
+(`tableCopyLabel`, `tableCopiedLabel`, and `tableDownloadCsvLabel`) are
 supplied; each control has a UI-kit tooltip with its localized label. The bubble forwards
 `labels.tableDownloadFilename` and `labels.tableScrollRegionAriaLabel` to the
-markdown viewer, and hides the table action bar while `isStreaming` is true.
+markdown viewer, and hides the table actions while `isStreaming` is true.
 Set `tableOnOpenInCanvas` together with `labels.tableOpenInCanvasLabel` to add
-a fifth "Open in Canvas" action that receives the table serialized as Markdown
+an "Open in Canvas" action that receives the table serialized as Markdown
 when activated — omitting either one hides the action.
 
 ```tsx
@@ -82,9 +90,7 @@ import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
   labels={{
     codeBlockCopyLabel: 'Copy code',
     codeBlockCopiedLabel: 'Copied!',
-    tableCopyCsvLabel: 'Copy as CSV',
-    tableCopyTxtLabel: 'Copy as TXT',
-    tableCopyMarkdownLabel: 'Copy as Markdown',
+    tableCopyLabel: 'Copy',
     tableCopiedLabel: 'Copied!',
     tableDownloadCsvLabel: 'Download as CSV',
     tableOpenInCanvasLabel: 'Open in canvas',
@@ -117,7 +123,7 @@ import { StatusMessageBubble } from '@epam/ai-dial-conversation-messages';
 
 ### MessageBubble
 
-Role-dispatching wrapper — `AssistantMessageBubbleProps` plus the user-only fields (`position`, `collapsedLineCount`) and a required `role`. Use it when the caller iterates a mixed transcript and does not want to branch itself; reach for the specialised bubbles when the role is already known. `beforeContent` is consumed for both `MessageRole.User` and `MessageRole.Assistant` messages (status messages ignore it).
+Role-dispatching wrapper — `AssistantMessageBubbleProps` plus the user-only fields (`position`, `collapsedLineCount`, `textSegments`) and a required `role`. Use it when the caller iterates a mixed transcript and does not want to branch itself; reach for the specialised bubbles when the role is already known. `beforeContent` is forwarded only to the assistant bubble; `textSegments` is forwarded only to the user bubble (status messages ignore both).
 
 ```tsx
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -146,6 +152,63 @@ import { MessageActions } from '@epam/ai-dial-conversation-messages';
   isDisabled={isStreaming}
 />;
 ```
+
+## Public class names
+
+The bubbles carry stable `dial-cm-*` classes in addition to their internal
+classes. Target those instead of hashed CSS-module names or ARIA attributes.
+The names are exported so you never hardcode them:
+
+```tsx
+import { CONVERSATION_MESSAGES_CLASS } from '@epam/ai-dial-conversation-messages';
+
+CONVERSATION_MESSAGES_CLASS.userBubble; // 'dial-cm-user-bubble'
+```
+
+| Class                       | Element                                         |
+| --------------------------- | ----------------------------------------------- |
+| `dial-cm-user-bubble`       | The user message's bubble                       |
+| `dial-cm-assistant-content` | The assistant message's streamed content region |
+
+`dial-cm-user-bubble` is emitted only when the bubble renders — a message with
+no `text` has no bubble at all (this holds even when `textSegments` is passed,
+since a `textSegments`-carrying message always has non-empty `text`). It is
+additive to `styles.bubbleClassName`, which keeps working exactly as before.
+
+These classes carry no declarations of their own, so they change nothing until
+you style them.
+
+### Replacing fragile selectors
+
+| Instead of                 | Use                              |
+| -------------------------- | -------------------------------- |
+| `[class*='userBubble']`    | `.dial-cm-user-bubble`           |
+| `[aria-live='polite']`     | `.dial-cm-assistant-content`     |
+| `[aria-live='polite'] pre` | `.dial-cm-assistant-content pre` |
+
+`aria-live` is an accessibility contract, not a styling one — using it as a
+selector pressures this package to keep an ARIA attribute frozen on a
+particular element. Use the class.
+
+**Fenced code blocks have no class of their own.** They are rendered by
+`MarkdownCodeBlock` from `@epam/ai-dial-chat-shared`, which is outside this
+package, so style them by descending from the content region:
+`.dial-cm-assistant-content pre`.
+
+### Stability
+
+A `dial-cm-*` class is public API: renaming it, removing it, or moving it to a
+different element is a breaking change, announced in the release notes and
+recorded here with its replacement. The element itself stays free — its Tailwind
+utilities, its CSS-module class, and its position in the DOM may all change.
+
+Your own overrides are responsible for direction: the class names are
+direction-agnostic and identical under `dir="rtl"`, so use CSS logical
+properties (`border-start-start-radius`, `margin-inline-end`) rather than
+physical ones.
+
+The full convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 ## Enums
 

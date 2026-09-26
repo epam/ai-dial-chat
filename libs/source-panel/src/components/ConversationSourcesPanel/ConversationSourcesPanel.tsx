@@ -4,7 +4,12 @@ import {
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import { GhostIconButton, NoDataContent, Search } from '@epam/ai-dial-ui-kit';
+import {
+  GhostIconButton,
+  NoDataContent,
+  Search,
+  mergeClasses,
+} from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import {
   memo,
@@ -14,6 +19,7 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
+import { SOURCE_PANEL_CLASS } from '../../constants/public-class-names';
 import type { ConversationSourcesPanelProps } from '../../models/conversation-sources-panel-props';
 import FilesSection from '../FilesSection/FilesSection';
 import SourcesSection from '../SourcesSection/SourcesSection';
@@ -149,7 +155,10 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
       styles={{
-        className: isMobile && isOpen ? 'w-full' : undefined,
+        className: mergeClasses(
+          isMobile && isOpen && 'w-full',
+          SOURCE_PANEL_CLASS.panel,
+        ),
         bodyClassName: 'flex flex-col overflow-hidden p-0',
       }}
       labels={labels}
@@ -161,13 +170,13 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       maxWidth={maxWidth}
       onResizeStop={onResizeStop}
       rightActions={
-        hasFilesOrSources && (
+        hasFilesOrSources &&
+        onDownloadAll && (
           <GhostIconButton
             icon={<IconDownload {...BASE_LG_ICON_PROPS} />}
             aria-label={labels.downloadAllLabel}
             tooltipProps={{ tooltip: labels.downloadAllLabel }}
             onClick={onDownloadAll}
-            disabled={!onDownloadAll}
           />
         )
       }

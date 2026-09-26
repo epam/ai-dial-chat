@@ -21,9 +21,16 @@ A non-empty `id` SHALL switch the page to edit mode. A full `skills/{ownerBucket
 
 #### Scenario: Whole-skill ZIP is incompatible with the Core installation
 
-- **WHEN** the canonical whole-skill download returns `400` as a grouping folder, or returns an archive without a usable ETag/root manifest
+- **WHEN** the canonical whole-skill download returns `400` as a grouping folder, or returns an archive whose body cannot be unpacked into a root manifest
 - **THEN** the editor loads `SKILL.md`, recursive file metadata, and every supporting file through the granular skill-file endpoints
 - **AND** it derives supporting-file paths relative to `{skillPath}/files`, preserves the resource ETag for update, and never sends the technical `files` prefix back as part of a file path
+
+A **missing ETag** is not one of these cases and SHALL NOT trigger the granular path, which can only offer the manifest *file*'s own ETag — sending that as a whole-skill `If-Match` makes the save fail with `412` under a conflict banner blaming an edit nobody made. It is a load failure, per "Edit load requires an ETag and never falls back to an empty create form" below.
+
+#### Scenario: A missing ETag does not fall back to the granular path
+
+- **WHEN** the whole-skill download returns a readable archive with no `ETag` header
+- **THEN** the editor does not call the granular skill-file endpoints, and shows the retryable load-error state
 
 #### Scenario: Development StrictMode does not abort an active ZIP stream
 
@@ -139,7 +146,9 @@ DIAL Core has no rename or move operation for a whole-skill resource. The page S
 ---
 
 ### Requirement: Dirty-navigation guard
-When the edit or create form has unsaved changes (`onDirtyChange(true)` most recently reported by `libs/skill-editor`), the page SHALL confirm before: activating Cancel, activating the page's Back control, or closing/navigating away from the browser tab via `beforeunload`. A confirmed navigation proceeds; a declined one leaves the user on the page with their edits intact. No in-app router-level navigation-blocking mechanism (e.g. intercepting arbitrary link/menu clicks elsewhere in the app) is in scope — no such pattern exists elsewhere in this codebase to extend, and this guard is scoped to the page's own Cancel/Back controls plus the browser-level `beforeunload` guard.
+When the edit or create form has unsaved changes (`onDirtyChange(true)` most recently reported by `libs/skill-editor`), the page SHALL confirm before: activating Cancel, activating the page's Back control **while the `SKILL.md` view is shown**, or closing/navigating away from the browser tab via `beforeunload`. A confirmed navigation proceeds; a declined one leaves the user on the page with their edits intact. No in-app router-level navigation-blocking mechanism (e.g. intercepting arbitrary link/menu clicks elsewhere in the app) is in scope — no such pattern exists elsewhere in this codebase to extend, and this guard is scoped to the page's own Cancel/Back controls plus the browser-level `beforeunload` guard.
+
+The Back control while a supporting file is selected is **not** a navigation and SHALL NOT be guarded: it returns to the `SKILL.md` view inside the editor (see `skill-file-preview`'s "Returning from a supporting-file preview"), so it neither discards edits nor leaves the page and therefore SHALL NOT raise the confirmation. Cancel SHALL remain an editor exit in every selection state, guarded as above.
 
 #### Scenario: Cancel with unsaved changes confirms first
 - **WHEN** a user has unsaved edits and activates Cancel
@@ -149,7 +158,17 @@ When the edit or create form has unsaved changes (`onDirtyChange(true)` most rec
 - **WHEN** a user has made no edits (or has reverted to the seeded state) and activates Cancel
 - **THEN** the page navigates immediately, with no confirmation prompt
 
----
+#### Scenario: Back from the manifest view with unsaved changes confirms first
+- **WHEN** a user has unsaved edits, the `SKILL.md` view is shown, and they activate Back
+- **THEN** the page asks for confirmation before navigating to `returnUrl`; declining leaves the edits intact
+
+#### Scenario: Back from a supporting-file preview with unsaved changes does not prompt
+- **WHEN** a user has unsaved edits, a supporting file is selected, and they activate Back
+- **THEN** the editor returns to the `SKILL.md` view with the edits intact, no confirmation prompt is shown, and no navigation occurs
+
+#### Scenario: Cancel from a supporting-file preview is still guarded
+- **WHEN** a user has unsaved edits, a supporting file is selected, and they activate Cancel
+- **THEN** the page asks for confirmation before navigating to `returnUrl`, exactly as it does from the `SKILL.md` view
 
 ### Requirement: Edit-specific labels and success notification
 In edit mode, the page SHALL render an edit-specific title and Save-button label (distinct from create mode's "Create skill" title and Create button) and, on a successful save, SHALL show a success notification distinct from the create-success notification in both its title and its message (e.g. title "Skill updated" vs. "Skill created", message "\"{{name}}\" has been updated." vs. "\"{{name}}\" has been created."). The edit-mode notification's title SHALL use a dedicated i18n key distinct from create mode's title key — reusing the create-mode title key for an edit-mode save is a defect, not an acceptable shortcut.
@@ -166,7 +185,7 @@ In edit mode, the page SHALL render an edit-specific title and Save-button label
 
 ### Requirement: Selecting a supporting file in edit mode opens its preview
 
-In edit mode, selecting a supporting-file node in the file tree (any node other than `SKILL.md`) SHALL open a preview of that file's already-unpacked in-memory bytes (from the edit-mode ZIP unpack described in "Frontmatter and supporting files are unpacked and preserved for editing") through the `skill-file-preview` capability. This SHALL NOT trigger any additional `downloadSkill` call or other network request — the bytes are already resident in the page's `Map<relativePath, Uint8Array>` from the initial load. Selecting `SKILL.md` SHALL continue to show the editable manifest form exactly as today, closing any open supporting-file preview.
+In edit mode, selecting a supporting-file node in the file tree (any node other than `SKILL.md`) SHALL open a preview of that file's already-unpacked in-memory bytes (from the edit-mode ZIP unpack described in "Frontmatter and supporting files are unpacked and preserved for editing") through the `skill-file-preview` capability. This SHALL NOT trigger any additional `downloadSkill` call or other network request — the bytes are already resident in the page's `Map<relativePath, Uint8Array>` from the initial load. Selecting `SKILL.md` SHALL continue to show the editable manifest form exactly as today, closing any open supporting-file preview; activating the editor header's Back control while a supporting file is selected SHALL have the same effect, returning to the manifest form without leaving the editor.
 
 #### Scenario: Selecting an unpacked supporting file previews it with no extra download
 - **WHEN** an edit-mode session has loaded a skill whose ZIP contained `assets/logo.png`, and a user selects that node
@@ -176,7 +195,9 @@ In edit mode, selecting a supporting-file node in the file tree (any node other 
 - **WHEN** a user has a supporting file previewed and then selects the `SKILL.md` node
 - **THEN** the preview closes and the editable Name/Description/Instructions form renders as it did before any file was previewed
 
----
+#### Scenario: Back after previewing a file returns to the manifest form
+- **WHEN** a user has a supporting file previewed and activates the editor header's Back control
+- **THEN** the preview closes, the editable Name/Description/Instructions form renders with its current values, and the editor route is unchanged
 
 ### Requirement: Edit mode applies the same batch validation limits as create mode
 
@@ -211,3 +232,46 @@ When the staged batch in edit mode contains a valid manifest candidate (per `ski
 #### Scenario: Unknown frontmatter fields survive a confirmed import
 - **WHEN** the originally loaded skill had a `version: "2.0.0"` field and the imported `SKILL.md` omits it
 - **THEN** the merged frontmatter used for the next save still includes `version: "2.0.0"`, since the import merges into the original frontmatter rather than replacing it wholesale
+
+---
+
+### Requirement: Edit mode applies the same front-matter rejection as create mode
+
+Edit mode SHALL apply the "Instructions must not open with a YAML front-matter block"
+requirement defined in the `skill-authoring` capability, using the same exported pure
+detector and the same i18n key, because both modes share
+`buildSkillManifestForSubmit` and both can therefore produce a `SKILL.md` with two
+front-matter blocks.
+
+When the check fails in edit mode, the page SHALL render the message under the
+Instructions field, SHALL NOT call `updateSkill`, and SHALL NOT alter the loaded
+frontmatter object — the frontmatter fields preserved from the loaded manifest (the
+"Frontmatter and supporting files are unpacked and preserved for editing" requirement)
+stay exactly as loaded, and the pasted block is never merged into them.
+
+Loading an existing skill SHALL NOT trip the check: the load path splits the manifest
+via `parseSkillManifest` before seeding `instructions`, so a well-formed stored skill
+seeds a body with no leading fence. A skill whose *stored* body already contains a
+second front-matter block — one created before this change — SHALL surface the error on
+load-and-edit rather than being silently re-saved, so re-saving it requires the user to
+remove the block.
+
+#### Scenario: Pasting front matter while editing blocks the save
+
+- **WHEN** a user opens an existing skill for editing and pastes a whole `SKILL.md` into Instructions
+- **THEN** the front-matter error renders under Instructions and `updateSkill` is not called
+
+#### Scenario: Loading a well-formed skill shows no error
+
+- **WHEN** a user opens an existing skill whose stored `SKILL.md` has exactly one front-matter block
+- **THEN** the Instructions field seeds with the body alone and no front-matter error is shown
+
+#### Scenario: An already-corrupt skill surfaces the error on edit
+
+- **WHEN** a user opens a skill created before this change whose stored body begins with a second front-matter block
+- **THEN** the error renders under Instructions, and saving requires removing that block first
+
+#### Scenario: Loaded frontmatter is untouched while the error stands
+
+- **WHEN** the front-matter error is showing in edit mode
+- **THEN** the loaded frontmatter object (including unknown fields such as `version`) is unchanged, and no `updateSkill` request is made

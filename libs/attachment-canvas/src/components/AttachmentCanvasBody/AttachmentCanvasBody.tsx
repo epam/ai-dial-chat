@@ -123,9 +123,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     codeContentLoadingLabel,
     codeContentErrorLabel,
     codeContentRetryLabel,
-    tableCopyCsvLabel,
-    tableCopyTxtLabel,
-    tableCopyMarkdownLabel,
+    tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
     ooxmlHighlightsLabel,
@@ -137,6 +135,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   loadPdf,
   hidePdfToolbar = false,
   configurePdfWorker,
+  onAppInfo,
 }) => {
   const {
     colors,
@@ -218,6 +217,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
       case AttachmentContentType.Pdf:
       case AttachmentContentType.Ooxml:
       case AttachmentContentType.Visualizer:
+      case AttachmentContentType.GroupedVisualizer:
       case AttachmentContentType.McpApp:
       case AttachmentContentType.Code:
       case AttachmentContentType.Html:
@@ -295,9 +295,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
               tableScrollContainer: 'max-h-full',
             }}
             tableActionLabels={{
-              copyCsvLabel: tableCopyCsvLabel,
-              copyTxtLabel: tableCopyTxtLabel,
-              copyMarkdownLabel: tableCopyMarkdownLabel,
+              copyLabel: tableCopyLabel,
               copiedLabel: tableCopiedLabel,
               downloadCsvLabel: tableDownloadCsvLabel,
             }}
@@ -424,6 +422,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           />
         );
       case AttachmentContentType.Visualizer:
+      case AttachmentContentType.GroupedVisualizer:
         return (
           <VisualizerCanvasRenderer
             content={content}
@@ -431,7 +430,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           />
         );
       case AttachmentContentType.McpApp:
-        return <McpAppCanvasRenderer content={content} />;
+        return <McpAppCanvasRenderer content={content} onAppInfo={onAppInfo} />;
       case AttachmentContentType.Unsupported:
         return (
           <p className={mergeClasses('text-center', styles.statusLabel)}>
@@ -480,6 +479,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     loadPdf,
     hidePdfToolbar,
     configurePdfWorker,
+    onAppInfo,
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,
@@ -494,9 +494,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     PdfContent,
     pdfRetryKey,
     handleRetryPdf,
-    tableCopyCsvLabel,
-    tableCopyTxtLabel,
-    tableCopyMarkdownLabel,
+    tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
     ooxmlHighlightsLabel,

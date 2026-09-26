@@ -16,8 +16,48 @@ function makeProvider(envOverrides: Partial<EnvironmentVariables> = {}) {
 }
 
 describe('EnvConfigProvider', () => {
+  it('resolves external connection origins from the existing CSP configuration', async () => {
+    const origins = ['https://documents.example.com', 'https://*.example.org'];
+    const { provider } = makeProvider({ ALLOWED_CONNECT_ORIGINS: origins });
+    expect(
+      await provider.resolve('documents.allowedConnectOrigins', ctx),
+    ).toEqual(origins);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe('customVariables', () => {
+    it('preserves arbitrary JSON values without interpreting client keys', async () => {
+      const variables = {
+        label: 'Example',
+        count: 3,
+        enabled: false,
+        nested: { list: [1, null, 'x'] },
+      };
+      const { provider } = makeProvider({
+        CUSTOM_CLIENT_VARIABLES: JSON.stringify(variables),
+      });
+      expect(await provider.resolve('customVariables', ctx)).toEqual(variables);
+    });
+    it.each([
+      undefined,
+      '',
+      ' ',
+      '{invalid',
+      '[]',
+      'null',
+      '42',
+      'true',
+      '"string"',
+    ])('falls back for unset or invalid JSON object %j', async (raw) => {
+      const { provider } = makeProvider({ CUSTOM_CLIENT_VARIABLES: raw });
+      expect(await provider.resolve('customVariables', ctx)).toBeUndefined();
+    });
+    it('accepts an explicitly empty object', async () => {
+      const { provider } = makeProvider({ CUSTOM_CLIENT_VARIABLES: '{}' });
+      expect(await provider.resolve('customVariables', ctx)).toEqual({});
+    });
   });
 
   describe('asr.modelId', () => {
@@ -306,6 +346,26 @@ describe('EnvConfigProvider', () => {
       expect(
         await provider.resolve('features.responsesApiEnabled', ctx),
       ).toBeUndefined();
+    });
+  });
+
+  describe('ui.activeEventId', () => {
+    it.each(['halloween', 'new-year', 'product-launch-2027'])(
+      'returns the configured event ID %s without a backend allowlist',
+      async (eventId) => {
+        const { provider } = makeProvider({ UI_EVENT: eventId });
+        expect(await provider.resolve('ui.activeEventId', ctx)).toBe(eventId);
+      },
+    );
+
+    it('explicitly disables celebrations when UI_EVENT is none', async () => {
+      const { provider } = makeProvider({ UI_EVENT: 'none' });
+      expect(await provider.resolve('ui.activeEventId', ctx)).toBeNull();
+    });
+
+    it('uses the registry null default when UI_EVENT is absent', async () => {
+      const { provider } = makeProvider();
+      expect(await provider.resolve('ui.activeEventId', ctx)).toBeUndefined();
     });
   });
 
@@ -603,6 +663,236 @@ describe('EnvConfigProvider', () => {
 
       expect(result).toBeUndefined();
       expect(loggerWarnSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('applicationVisualizers', () => {
+    const validEntry = {
+      title: 'my-viz',
+      url: 'https://viz.example.com',
+    };
+
+    it('returns undefined when APPLICATION_VISUALIZERS is not set', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: undefined,
+      });
+      expect(
+        await provider.resolve('applicationVisualizers', ctx),
+      ).toBeUndefined();
+    });
+
+    it('returns {} and logs an error when APPLICATION_VISUALIZERS is invalid JSON', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: 'not-json',
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('applicationVisualizers', ctx)).toEqual({});
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('returns {} and logs an error when the value is a JSON array', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify([validEntry]),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('applicationVisualizers', ctx)).toEqual({});
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('must be a JSON object'),
+      );
+    });
+
+    it('resolves a valid entry keyed by application id', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({ 'app-1': validEntry }),
+      });
+
+      const result = (await provider.resolve(
+        'applicationVisualizers',
+        ctx,
+      )) as Record<string, { title: string; url: string }>;
+
+      expect(Object.keys(result)).toEqual(['app-1']);
+      expect(result['app-1'].title).toBe('my-viz');
+      expect(result['app-1'].url).toBe('https://viz.example.com');
+    });
+
+    it('accepts an entry without contentType', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({ 'app-1': validEntry }),
+      });
+
+      const result = (await provider.resolve(
+        'applicationVisualizers',
+        ctx,
+      )) as Record<string, { contentType?: string }>;
+
+      expect(result['app-1'].contentType).toBeUndefined();
+    });
+
+    it('keeps the other entries when one fails validation', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': validEntry,
+          'app-2': { title: 'bad-viz', url: 'not-a-url' },
+        }),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      const result = (await provider.resolve(
+        'applicationVisualizers',
+        ctx,
+      )) as Record<string, unknown>;
+
+      expect(Object.keys(result)).toEqual(['app-1']);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('app-2'),
+      );
+    });
+
+    it('drops an entry whose value is not an object', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({ 'app-1': 'nope' }),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('applicationVisualizers', ctx)).toEqual({});
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('is not an object'),
+      );
+    });
+
+    it('drops an entry whose declared contentType has no usable MIME type', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': { ...validEntry, contentType: ' , ' },
+        }),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('applicationVisualizers', ctx)).toEqual({});
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('no usable MIME type'),
+      );
+    });
+
+    it('accepts a whitespace-only title without trimming it', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': { ...validEntry, title: ' ' },
+        }),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      const result = (await provider.resolve(
+        'applicationVisualizers',
+        ctx,
+      )) as Record<string, { title: string }>;
+
+      expect(result['app-1'].title).toBe(' ');
+      expect(loggerErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('drops an entry with an empty-string title', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': { ...validEntry, title: '' },
+        }),
+      });
+
+      expect(await provider.resolve('applicationVisualizers', ctx)).toEqual({});
+    });
+
+    it('warns about unrecognized fields but keeps the entry', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': { ...validEntry, expanded: true },
+        }),
+      });
+      const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
+
+      const result = (await provider.resolve(
+        'applicationVisualizers',
+        ctx,
+      )) as Record<string, unknown>;
+
+      expect(Object.keys(result)).toEqual(['app-1']);
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('expanded'),
+      );
+    });
+
+    it('passes borderless and withoutTitle through without warning', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': { ...validEntry, borderless: true, withoutTitle: true },
+        }),
+      });
+      const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
+
+      const result = (await provider.resolve(
+        'applicationVisualizers',
+        ctx,
+      )) as Record<string, { borderless?: boolean; withoutTitle?: boolean }>;
+
+      expect(result['app-1'].borderless).toBe(true);
+      expect(result['app-1'].withoutTitle).toBe(true);
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('unrecognized'),
+      );
+    });
+
+    it('drops an entry whose borderless flag is not a boolean', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({
+          'app-1': { ...validEntry, borderless: 'yes' },
+        }),
+      });
+
+      expect(await provider.resolve('applicationVisualizers', ctx)).toEqual({});
+    });
+
+    it('warns when the entry origin is absent from ALLOWED_IFRAME_ORIGINS', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({ 'app-1': validEntry }),
+        ALLOWED_IFRAME_ORIGINS: ['https://other.example.com'],
+      });
+      const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
+
+      const result = (await provider.resolve(
+        'applicationVisualizers',
+        ctx,
+      )) as Record<string, unknown>;
+
+      expect(Object.keys(result)).toEqual(['app-1']);
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('ALLOWED_IFRAME_ORIGINS'),
+      );
+    });
+
+    it('does not warn when the entry origin is allowlisted', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({ 'app-1': validEntry }),
+        ALLOWED_IFRAME_ORIGINS: ['https://viz.example.com'],
+      });
+      const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
+
+      await provider.resolve('applicationVisualizers', ctx);
+
+      expect(loggerWarnSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not warn when a wildcard allowlist entry covers the origin', async () => {
+      const { provider } = makeProvider({
+        APPLICATION_VISUALIZERS: JSON.stringify({ 'app-1': validEntry }),
+        ALLOWED_IFRAME_ORIGINS: ['https://*.example.com'],
+      });
+      const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
+
+      await provider.resolve('applicationVisualizers', ctx);
+
+      expect(loggerWarnSpy).not.toHaveBeenCalled();
     });
   });
 });

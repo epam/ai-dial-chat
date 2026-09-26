@@ -1,3 +1,32 @@
 .searchHeader {
   background: var(--ms-search-header-bg, var(--bg-layer-raised, #fcfcfc));
 }
+
+/*
+ * The row colours below are applied only when the host sets the matching
+ * `ModelMenuColors` field, so an unthemed menu keeps the kit's own row
+ * styling. The values arrive as custom properties on the dropdown panel
+ * (`listStyle`), because the panel renders in a portal outside the composer.
+ * Each selector is doubled to outrank the kit's single-class Tailwind
+ * utilities on the same row regardless of stylesheet order.
+ */
+.itemText.itemText {
+  color: var(--ms-item-text);
+}
+
+.itemHover.itemHover:hover {
+  background: var(--ms-item-hover-bg);
+}
+
+/* Held off while hovered, so the hover tint still shows on the selected row. */
+.selectedItemBackground.selectedItemBackground:not(:hover) {
+  background: var(--ms-selected-item-bg);
+}
+
+.selectedItemText.selectedItemText {
+  color: var(--ms-selected-item-text);
+}
+
+.checkIcon :global(.dial-kit-menuitem-check) {
+  color: var(--ms-check-icon);
+}

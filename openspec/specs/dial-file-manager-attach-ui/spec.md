@@ -6,14 +6,14 @@ Define the DIAL file manager attach modal UI contract, including tab chrome, att
 
 ### Requirement: Tab navigation UI in DialFileManagerModal
 
-`DialFileManagerModal` SHALL render My files, Shared with me, and Organization tabs using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`. The hook is called with an i18n-translated label map and `DialFileManagerTabs.MyFiles` as the initial tab. The resulting `tabs`, `activeTab`, and `handleTabChange` are wired to `toolbarOptions.tabs`, `toolbarOptions.activeTab`, and `toolbarOptions.onTabChange` respectively. No custom tab UI is built — the ui-kit toolbar handles tab rendering.
+`DialFileManagerModal` SHALL render My files, Shared with me, and Organization tabs using `useDialFileManagerTabs` from `@epam/ai-dial-react-file-manager`. The hook is called with an i18n-translated label map and `DialFileManagerTabs.MyFiles` as the initial tab. The resulting `tabs`, `activeTab`, and `handleTabChange` are wired to `treeOptions.tabs`, `treeOptions.activeTab`, and `treeOptions.onTabChange` respectively (they were passed under `toolbarOptions` up to `@epam/ai-dial-react-file-manager` 0.3.0-dev.2). No custom tab UI is built — the kit renders the strip as a chip row in the folders panel, above the tree it filters; its role structure is specified by the `file-manager-tabs` spec, requirement "Tab strip accessibility".
 
 RTL: tab bar direction is handled by the ui-kit; no physical direction classes on the modal wrapper.
 
-#### Scenario: Tab bar renders in modal toolbar
+#### Scenario: Tab strip renders in the modal folders panel
 
 - **WHEN** `DialFileManagerModal` opens
-- **THEN** three tabs are visible in the toolbar: My files, Shared with me, Organization
+- **THEN** three tabs are visible in the folders panel: My files, Shared with me, Organization
 - **AND** the active tab is My files
 
 #### Scenario: Tab labels use i18n
@@ -84,7 +84,7 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 `DialFileManagerModal` SHALL reset `selectedPaths` to an empty `Set` when its tab-change handler changes `activeTab`. This prevents stale selections from one tab's file tree being carried over to another tab's tree.
 
-> **Implementation note:** the ui-kit may replace the tab strip with the bulk-actions toolbar while a selection is active. Specs and tests SHALL NOT require a user to click a tab while selected files hide the tab controls.
+> **Implementation note:** from `@epam/ai-dial-react-file-manager` 0.3.0-dev.3 the tab strip sits in the folders panel and stays visible while a selection is active (the bulk-actions toolbar floats over the grid), so clicking a tab with files selected is a reachable flow. Up to 0.3.0-dev.2 the bulk-actions toolbar took the place of the tab strip, which is why this requirement is stated at the handler level.
 
 #### Scenario: selectedPaths empty after tab-change handler runs
 

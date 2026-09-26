@@ -1,0 +1,20 @@
+/*
+ * Both vendor stylesheets are pulled in through this one wrapper so they land
+ * in a named cascade layer. `@epam/ai-dial-react-pdf-highlighter`'s published
+ * stylesheet is a complete Tailwind build — Preflight plus base utilities
+ * (`.hidden`, `.flex`, `.px-4`, …) at Tailwind's default breakpoints — and it
+ * is injected only once the lazily loaded PDF chunk runs, i.e. after the host
+ * app's own stylesheet. A media-query variant carries no extra specificity, so
+ * an unlayered vendor `.hidden { display: none }` arriving late outranks a
+ * host's `@media (min-width:1280px) { .desktop\:block { display: block } }`
+ * and silently collapses layout the host owns.
+ *
+ * Unlayered author styles outrank every layered rule regardless of document
+ * order, so naming a layer here restores host precedence while leaving the
+ * vendor's own `.pdf-*` / `.highlight-*` rules — which no host rule competes
+ * for — fully in effect. `pdf-highlighter-kit`'s sheet carries no colliding
+ * utilities but is layered alongside it to keep one seam.
+ */
+@import '@epam/ai-dial-react-pdf-highlighter/styles.css' layer(pdf-vendor);
+@import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css'
+  layer(pdf-vendor);

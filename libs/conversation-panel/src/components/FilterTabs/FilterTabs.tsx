@@ -1,6 +1,10 @@
 import { FilterTab } from '@epam/ai-dial-chat-shared';
-import { Tag, TagAppearance, mergeClasses } from '@epam/ai-dial-ui-kit';
-import { type FC, memo } from 'react';
+import {
+  FilterChips,
+  type FilterChipItem,
+  mergeClasses,
+} from '@epam/ai-dial-ui-kit';
+import { type FC, memo, useMemo } from 'react';
 import { type FilterLabels } from '../../models/panel-props';
 
 /** Props for `FilterTabs`. */
@@ -29,6 +33,11 @@ const TABS: { value: FilterTab; labelKey: FilterTabLabelKey }[] = [
 
 /**
  * Row of selectable filter chips for filtering conversations by source.
+ *
+ * The chips themselves come from the ui kit's `FilterChips`; this component
+ * only maps the panel's conversation vocabulary onto it — `FilterTab` values,
+ * the host's `FilterLabels`, and `hiddenSources` as an exclusion list rather
+ * than a prop the kit has to know about.
  */
 export const FilterTabs: FC<FilterTabsProps> = memo(
   ({
@@ -38,29 +47,25 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
     tabClassName = 'dial-tiny-semi-text',
     hiddenSources,
   }) => {
-    const tabs = TABS.filter(({ value }) => !hiddenSources?.includes(value));
+    const items = useMemo<FilterChipItem<FilterTab>[]>(
+      () =>
+        TABS.filter(({ value }) => !hiddenSources?.includes(value)).map(
+          ({ value, labelKey }) => ({ value, label: labels[labelKey] }),
+        ),
+      [labels, hiddenSources],
+    );
 
     return (
-      <div
-        role="group"
+      <FilterChips
+        items={items}
+        value={activeTab}
+        onChange={onChange}
+        stretch
         aria-label={labels.groupAriaLabel ?? 'Filter chats'}
-        className="flex flex-nowrap gap-1 px-3 py-2"
-      >
-        {tabs.map(({ value, labelKey }) => (
-          <Tag
-            key={value}
-            label={labels[labelKey]}
-            appearance={TagAppearance.Selectable}
-            selected={activeTab === value}
-            onClick={() => onChange(value)}
-            className={mergeClasses(
-              /* The filter row splits its width evenly and keeps the pill silhouette. */
-              'flex-1 justify-center rounded-full',
-              tabClassName,
-            )}
-          />
-        ))}
-      </div>
+        className="px-3 py-2"
+        /* !px-2 overrides the chip's own px-3 to fit four tabs in the panel */
+        chipClassName={mergeClasses('!px-2', tabClassName)}
+      />
     );
   },
 );

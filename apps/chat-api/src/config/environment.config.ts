@@ -50,6 +50,21 @@ export class EnvironmentVariables {
   CSP_REPORT_URI?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0);
+  })
+  @Matches(IFRAME_ORIGIN_PATTERN, {
+    each: true,
+    message:
+      'Each ALLOWED_CONNECT_ORIGINS entry must be an HTTP(S) origin (scheme://host[:port]) or a single leading-wildcard-label origin, without paths, queries, or fragments',
+  })
+  ALLOWED_CONNECT_ORIGINS?: string[] = [];
+
+  @IsOptional()
   @IsEnum(ApplicationLogLevel)
   LOG_LEVEL?: ApplicationLogLevel;
 
@@ -64,7 +79,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  CORS_ORIGIN?: string = 'http://localhost:4207';
+  CORS_ORIGIN?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -85,6 +100,10 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   MCP_APP_USER_AGENT?: string;
+
+  @IsOptional()
+  @IsString()
+  MCP_APP_HOST_NAME?: string;
 
   @IsOptional()
   @IsString()
@@ -122,6 +141,14 @@ export class EnvironmentVariables {
       'AUTH_SESSION_PREV_SECRET must be a 64-character hex string (32 bytes)',
   })
   AUTH_SESSION_PREV_SECRET?: string;
+
+  @IsOptional()
+  // Preserve fractional or malformed values so validation rejects them.
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  @Min(1)
+  @Max(2147483647)
+  AUTH_SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
   @IsOptional()
   @IsString()
@@ -611,6 +638,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  CUSTOM_CLIENT_VARIABLES?: string;
+
+  @IsOptional()
+  @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
 
   @IsOptional()
@@ -629,6 +660,10 @@ export class EnvironmentVariables {
   @IsString()
   FOOTER_HTML_MESSAGE?: string;
 
+  @IsOptional()
+  @IsString()
+  WELCOME_SCREEN_DESCRIPTION?: string;
+
   /* Deliberately unconstrained: this is an opaque display string, and CI
    * stamps take many shapes (0.45.0, 0.45.0-rc.3, 2026.08.10+a1b2c3d).
    * Outbound HTTP metadata uses a separately normalized representation. */
@@ -643,6 +678,30 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   UTILITY_MODEL?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  CONVERSATION_NAMING_SYSTEM_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TRANSCRIPTION_PROMPT?: string;
 
   @IsOptional()
   @Transform(({ value }) => {
@@ -808,6 +867,13 @@ export class EnvironmentVariables {
   SKILL_USAGE_ENABLED?: boolean = false;
 
   @IsOptional()
+  @IsString()
+  @Matches(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/, {
+    message: 'UI_EVENT must be a lowercase kebab-case event ID or none',
+  })
+  UI_EVENT?: string;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)
@@ -865,6 +931,10 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   CUSTOM_VISUALIZERS?: string;
+
+  @IsOptional()
+  @IsString()
+  APPLICATION_VISUALIZERS?: string;
 
   @IsOptional()
   @Transform(({ value }) => {
@@ -941,4 +1011,18 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   MAX_GENERATION_DURATION_MS?: number = 1_800_000;
+
+  /*
+   * Bounds subscriber and resource release, never ownership (see
+   * openspec/specs/generation-registry/spec.md): if a generation's terminal
+   * write has not settled this long after being dispatched, attach
+   * subscribers are released and the entry moves to the retained `settling`
+   * state, still owning its registry key so a replacement is never admitted
+   * over an unsettled write.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  GENERATION_FINALIZE_TIMEOUT_MS?: number = 60_000;
 }

@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { SKILL_EDITOR_CLASS } from '../../../constants/public-class-names';
 import type {
   SkillEditorFileActions,
   SkillEditorProps,
@@ -122,6 +123,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  Label: ({
+    id,
+    htmlFor,
+    label,
+    required,
+  }: {
+    id?: string;
+    htmlFor?: string;
+    label?: ReactNode;
+    required?: boolean;
+  }) => (
+    <label id={id} htmlFor={htmlFor}>
+      {label}
+      {required && ' *'}
+    </label>
+  ),
   Input: ({
     labelProps,
     value,
@@ -170,12 +187,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <div role="status">{ariaLabel}</div>
   ),
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
+  ButtonAppearance: { Solid: 'solid', Ghost: 'ghost', Link: 'link' },
   PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
   Popup: ({
     open,
     header,
     children,
     footer,
+    mainButtons,
     onClose,
     closeAriaLabel,
   }: {
@@ -183,6 +203,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     header: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
+    mainButtons?: {
+      label?: ReactNode;
+      onClick?: () => void;
+      disabled?: boolean;
+    }[];
     onClose: () => void;
     closeAriaLabel?: string;
   }) =>
@@ -195,6 +220,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         <button onClick={onClose}>{closeAriaLabel ?? 'Close'}</button>
         {children}
         {footer}
+        {mainButtons?.map((button, index) => (
+          <button
+            key={index}
+            onClick={button.onClick}
+            disabled={button.disabled}
+          >
+            {button.label}
+          </button>
+        ))}
       </div>
     ) : null,
   GhostIconButton: ({
@@ -318,6 +352,27 @@ describe('SkillEditor', () => {
     expect(screen.getByDisplayValue('my-skill')).toBeTruthy();
   });
 
+  it('renders no retry action beside a submitError the host did not mark retryable', () => {
+    renderEditor({ submitError: 'A skill with this name already exists' });
+
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+  });
+
+  it('offers a retry beside submitError and keeps the typed values for it', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onRetrySubmit = vi.fn();
+    renderEditor({
+      initialValues: { name: 'my-skill' },
+      submitError: 'The service is temporarily unavailable. Please try again.',
+      onRetrySubmit,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(onRetrySubmit).toHaveBeenCalledOnce();
+    expect(screen.getByDisplayValue('my-skill')).toBeTruthy();
+  });
+
   it('submits the current field values', async () => {
     const user = userEvent.setup({ delay: null });
     const onSubmit = vi.fn();
@@ -429,6 +484,86 @@ describe('SkillEditor', () => {
     expect(onDirtyChange).not.toHaveBeenCalledWith(true);
   });
 
+  it('renders an Instructions error under dir="rtl" with no physical-direction classes', () => {
+    /* The root's own dir="rtl" is covered by the dir-override test above. */
+    renderEditor({
+      dir: 'rtl',
+      errors: { instructions: 'Remove the front matter block' },
+    });
+
+    const message = screen.getByText('Remove the front matter block');
+    expect(message.className).not.toMatch(
+      /\b(ml-|mr-|pl-|pr-|left-|right-|text-left|text-right)/,
+    );
+  });
+
+  it('reports the full value object when a field is edited', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onValuesChange = vi.fn();
+    renderEditor({
+      onValuesChange,
+      initialValues: { name: 'my-copy', instructions: '# Body' },
+    });
+
+    await user.type(screen.getByRole('textbox', { name: /Description/ }), 'Hi');
+
+    expect(onValuesChange).toHaveBeenLastCalledWith({
+      name: 'my-copy',
+      description: 'Hi',
+      instructions: '# Body',
+    });
+  });
+
+  it('reports the pasted value when text is pasted into Instructions', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onValuesChange = vi.fn();
+    renderEditor({ onValuesChange });
+
+    const pasted = '---\nname: pdf\n---\n\n# PDF Tools';
+    const instructions = await screen.findByRole('textbox', {
+      name: /Instructions/,
+    });
+    await user.click(instructions);
+    await user.paste(pasted);
+
+    expect(onValuesChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ instructions: pasted }),
+    );
+  });
+
+  it('does not report a change when initialValues are reseeded', () => {
+    const onValuesChange = vi.fn();
+    const { rerender } = renderEditor({ onValuesChange });
+
+    rerender(
+      <SkillEditor
+        title="Test Skill"
+        onBack={vi.fn()}
+        initialValues={{
+          name: 'good-morning-breakfast',
+          description: 'A morning greeting skill',
+          instructions: '# Instructions',
+        }}
+        files={[]}
+        fileActions={fileActions}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        onValuesChange={onValuesChange}
+      />,
+    );
+
+    expect(onValuesChange).not.toHaveBeenCalled();
+  });
+
+  it('edits fields normally when no onValuesChange is supplied', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor();
+
+    await user.type(screen.getByRole('textbox', { name: /Name/ }), 'my-copy');
+
+    expect(screen.getByDisplayValue('my-copy')).toBeTruthy();
+  });
+
   it('renders a conflict message with a working Reload latest control', async () => {
     const onReloadLatest = vi.fn();
     const user = userEvent.setup({ delay: null });
@@ -463,5 +598,40 @@ describe('SkillEditor', () => {
         .getByRole('button', { name: 'Editing file' })
         .getAttribute('aria-expanded'),
     ).toBe('true');
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- an unlabeled container has no role or text to query, and querying by the class would pass with the class on the wrong node
+  from.closest(`.${className}`);
+
+describe('SkillEditor — public class names', () => {
+  /*
+   * The public class name is this package's styling contract, and a lost class
+   * fails silently: the build passes and a host's stylesheet simply stops
+   * applying. The root surface carries no role, so the field is located by
+   * role first and the assertion walks up to the stamped element.
+   */
+  it('stamps the root surface', () => {
+    renderEditor();
+
+    const nameField = screen.getByRole('textbox', { name: /Name/ });
+    expect(closestWithClass(nameField, SKILL_EDITOR_CLASS.root)).toBeTruthy();
+  });
+
+  it('emits the same class under RTL', () => {
+    renderEditor({ dir: 'rtl' });
+
+    const root = closestWithClass(
+      screen.getByRole('textbox', { name: /Name/ }),
+      SKILL_EDITOR_CLASS.root,
+    );
+    expect(root).toBeTruthy();
+    expect(root!.getAttribute('dir')).toBe('rtl');
   });
 });

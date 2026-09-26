@@ -63,6 +63,25 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     classes.filter(Boolean).join(' '),
   Tooltip: ({ children }: { children: ReactNode }) => children,
   EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  MenuItem: ({
+    label,
+    icon,
+    trailing,
+    onClick,
+    'aria-current': ariaCurrent,
+  }: {
+    label: ReactNode;
+    icon?: ReactNode;
+    trailing?: ReactNode;
+    onClick?: () => void;
+    'aria-current'?: AriaAttributes['aria-current'];
+  }) => (
+    <button type="button" aria-current={ariaCurrent} onClick={onClick}>
+      {icon}
+      {label}
+      {trailing}
+    </button>
+  ),
   IconButton: ({
     'aria-label': ariaLabel,
     'aria-current': ariaCurrent,
@@ -182,7 +201,8 @@ const setDefaults = (
       feature !== OverlayFeature.HideUserMenu &&
       feature !== OverlayFeature.HideUserSettings &&
       feature !== OverlayFeature.HideKeyboardShortcuts &&
-      feature !== OverlayFeature.HideNavigationMenu,
+      feature !== OverlayFeature.HideNavigationMenu &&
+      feature !== OverlayFeature.HideSettingsPage,
   );
 };
 
@@ -381,10 +401,19 @@ describe('Navigation user menu', () => {
     expect(screen.queryByText(SettingsI18nKeys.Theme)).toBeNull();
   });
 
-  it('always shows the Settings entry — it is no longer behind a flag', () => {
+  it('shows the Settings entry by default', () => {
     renderNavigation();
 
     expect(screen.getByText(BasicI18nKeys.Settings)).toBeTruthy();
+  });
+
+  it('drops the Settings entry when hide-settings-page is enabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideSettingsPage,
+    );
+    renderNavigation();
+
+    expect(screen.queryByText(BasicI18nKeys.Settings)).toBeNull();
   });
 });
 
@@ -416,6 +445,37 @@ describe('Navigation mobile sheet', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(
       screen.queryByRole('button', { name: NavigationI18nKeys.Profile }),
+    ).toBeNull();
+  });
+
+  it('offers a Settings row on the profile page', async () => {
+    const user = userEvent.setup();
+    renderNavigation({ isOpen: true });
+    const sheet = within(screen.getByRole('dialog'));
+
+    await user.click(
+      sheet.getByRole('button', { name: NavigationI18nKeys.Profile }),
+    );
+    expect(
+      sheet.getByRole('button', { name: BasicI18nKeys.Settings }),
+    ).toBeTruthy();
+  });
+
+  it('omits the Settings row when hide-settings-page is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) =>
+        feature !== OverlayFeature.HideNavigationMenu &&
+        feature !== OverlayFeature.HideUserSettings,
+    );
+    const user = userEvent.setup();
+    renderNavigation({ isOpen: true });
+    const sheet = within(screen.getByRole('dialog'));
+
+    await user.click(
+      sheet.getByRole('button', { name: NavigationI18nKeys.Profile }),
+    );
+    expect(
+      sheet.queryByRole('button', { name: BasicI18nKeys.Settings }),
     ).toBeNull();
   });
 

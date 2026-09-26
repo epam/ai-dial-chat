@@ -34,11 +34,17 @@ export interface ConversationItem {
   isIconLoading?: boolean;
   /** Conversation URL. When provided, middle-click opens it in a new tab. */
   href?: string;
-  /** When `true`, a "TASK" pill badge is rendered at the end of the row. */
-  showTaskBadge?: boolean;
-  /** Text shown inside the task badge. When `showTaskBadge` is `true` and this is omitted, the badge renders with no text. */
-  taskBadgeLabel?: string;
-  /** When `true`, an unread indicator dot is rendered before the row's leading icon. */
+  /**
+   * Decorative node rendered in the leading slot instead of the deployment
+   * avatar (`iconUrl`, `iconTooltip` and `isIconLoading` are then ignored).
+   * Its meaning belongs to the host; it should fit the 24px avatar footprint
+   * and be `aria-hidden`, since the row is named by its title.
+   */
+  leadingIcon?: ReactNode;
+  /**
+   * When `true`, the title renders in a heavier weight and an unread dot with a
+   * visually hidden label is rendered at the row's trailing edge.
+   */
   isUnread?: boolean;
 }
 
@@ -90,12 +96,6 @@ export interface ConversationColors {
   triggerIconIdle?: string;
   /** Shimmer color of the loading skeleton avatar. */
   skeletonColor?: string;
-  /** Border color of the task pill badge. Defaults to `--stroke-tertiary`. */
-  taskBadgeBorder?: string;
-  /** Background color of the task pill badge. Defaults to `--bg-layer-base`. */
-  taskBadgeBackground?: string;
-  /** Text color of the task pill badge. Defaults to `--text-secondary`. */
-  taskBadgeText?: string;
   /** Fill color of the unread indicator dot. Defaults to `--text-accent`. */
   unreadDot?: string;
 }
@@ -110,8 +110,22 @@ export interface ConversationPanelStyles {
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /** Typography class applied to the task pill badge in each conversation row. Defaults to `'dial-caption-lead-semi-text'`. Colors come from the module stylesheet. */
-  taskBadgeClassName?: string;
+  /**
+   * Extra class name(s) merged onto the panel's header bar. The header is
+   * `h-[64px]` by default; a `h-*` utility passed here replaces that height
+   * rather than losing to it, so a host does not need `!important` on
+   * `.dial-sb-header`.
+   */
+  headerClassName?: string;
+  /** Extra class name(s) merged onto the header's trailing action cluster — `headerActions` and the panel toggle. */
+  headerActionsClassName?: string;
+  /**
+   * Extra class name(s) merged onto the New chat button. Its `h-[36px]` height
+   * and `shadow-chat-button` elevation are merged, not fixed, so a `h-*` or
+   * `shadow-*` utility passed here replaces them. The corner radius is themed
+   * separately, through the kit's `--radius-control`.
+   */
+  newChatButtonClassName?: string;
   /**
    * Extra CSS class merged onto the search field's wrapper. The wrapper's
    * corner radius is themed with the `--cp-search-radius` custom property, so

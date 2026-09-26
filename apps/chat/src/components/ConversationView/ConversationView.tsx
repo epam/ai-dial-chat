@@ -14,6 +14,7 @@ import {
   getQuickAppConversationStarters,
   isQuickAppSchema,
   referenceAttachmentToPdfCanvasContent,
+  normalizeResponseFormat,
   shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
@@ -27,8 +28,8 @@ import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   DisplayAttachment,
+  formatFileSize,
   isStatusMessage,
-  MessageRole,
   StatusEvent,
   type Annotation,
   type Attachment,
@@ -40,9 +41,11 @@ import {
   type ToolMenuItem,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
-import type {
-  TextInsertion,
-  ToolsChipLabels,
+import {
+  useComposerSeed,
+  useComposerSeedSource,
+  type TextInsertion,
+  type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
@@ -69,7 +72,6 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
   AttachmentCanvasI18nKeys,
   AttachmentsI18nKeys,
@@ -77,14 +79,13 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
-  ConversationInputI18nKeys,
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { useFeatureFlag } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -94,6 +95,7 @@ import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachme
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
+import { useConversationAnnotationPool } from '../../hooks/conversation/useConversationAnnotationPool';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -109,6 +111,7 @@ import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOve
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
+import { getInputMessageHistory } from './utils/message-display';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -299,29 +302,78 @@ const ConversationView: FC<Props> = ({
     commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillElement,
-    selectedSkillPath,
+    message: skillMessage,
+    messageRevision: skillMessageRevision,
+    activeMentions,
+    onDraftChange,
+    onBackspaceAtCaret,
+    caretPositionOverride,
     selectedSkills,
     isSkillUnsupported,
-    selectSkill,
-    removeSelectedSkill,
+    resetSkillMentions,
+    renderHistorySkillSegments,
     renderHistorySkills,
+  } = useSkillSelectorOverlay({
+    isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
+  });
+  /*
+   * A second, independent hook instance drives the edit surface's mention
+   * tracking. Sharing the composer's instance would make starting an edit
+   * overwrite whatever the user is drafting for their next message, since
+   * `seedSkillMentions` pushes into the same `message`/`messageRevision`
+   * channel the live composer above also consumes.
+   */
+  const {
+    skillMenuOverlay: editSkillMenuOverlay,
+    commandMenu: editCommandMenu,
+    skillCatalogModal: editSkillCatalogModal,
+    skillDetailsPanel: editSkillDetailsPanel,
+    message: editMessage,
+    messageRevision: editMessageRevision,
+    activeMentions: editActiveMentions,
+    onDraftChange: onEditDraftChange,
+    onBackspaceAtCaret: onEditBackspaceAtCaret,
+    caretPositionOverride: editCaretPositionOverride,
+    selectedSkills: editSelectedSkills,
+    resetSkillMentions: resetEditSkillMentions,
+    seedSkillMentions,
   } = useSkillSelectorOverlay({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
   const isSkillUsageEnabled = useFeatureFlag('skillUsageEnabled');
   /*
-   * The skills an edit send writes. While the flag is on, the shared
-   * selection IS the edited message's skill state (seeded on edit start),
-   * so it maps directly — an empty array means the user removed the skill.
-   * While the flag is off, `undefined` tells `handleEditMessage` to
-   * preserve the message's original skills untouched.
+   * The skills an edit send writes. While the flag is on, the edit instance's
+   * selection IS the edited message's mention state (seeded on edit start),
+   * so an empty array means the user removed every mention. While the flag
+   * is off, `undefined` tells `handleEditMessage` to preserve the message's
+   * original skills untouched.
    */
-  const editSkills = useMemo<RequestSkill[] | undefined>(() => {
-    if (!isSkillUsageEnabled) return undefined;
-    if (selectedSkillPath == null) return [];
-    return [{ url: selectedSkillPath }];
-  }, [isSkillUsageEnabled, selectedSkillPath]);
+  const editSkills = useMemo<RequestSkill[] | undefined>(
+    () => (isSkillUsageEnabled ? (editSelectedSkills ?? []) : undefined),
+    [isSkillUsageEnabled, editSelectedSkills],
+  );
+
+  /*
+   * Merges two independent "seed the composer once" sources into the one
+   * message/messageRevision pair ConversationInput accepts: this component's
+   * own `inputContent`/`inputContentRevision` props (overlay mode's external
+   * content injection) and the skill hook's own message/messageRevision push
+   * (a mention insertion).
+   */
+  const {
+    message: composerSeedText,
+    messageRevision: composerSeedRevision,
+    seedMessage: seedComposerSeed,
+  } = useComposerSeed({
+    text: inputContent,
+    revision: inputContentRevision ?? 0,
+  });
+  useComposerSeedSource(inputContentRevision, () =>
+    seedComposerSeed(inputContent ?? ''),
+  );
+  useComposerSeedSource(skillMessageRevision, () =>
+    seedComposerSeed(skillMessage),
+  );
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
    * below Prompts in the `+` menu; `undefined` when both are absent keeps
@@ -338,6 +390,9 @@ const ConversationView: FC<Props> = ({
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
+  const {
+    config: { maxAttachmentFileSizeBytes },
+  } = useAppConfig();
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
@@ -349,6 +404,9 @@ const ConversationView: FC<Props> = ({
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
+  const isInputHistoryNavigationDisabled = useUiFeature(
+    OverlayFeature.DisableInputHistoryNavigation,
+  );
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -358,6 +416,11 @@ const ConversationView: FC<Props> = ({
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  /* Applies to existing messages as well as new ones, which is what the
+     chat-settings hint promises — the format is a property of the
+     conversation, not of the message it was chosen before. */
+  const responseFormat = normalizeResponseFormat(conversation.responseFormat);
+  const fallbackCitationGroups = useConversationAnnotationPool(conversation);
   const mcpAppCache = useMcpAppResponseCache(conversation.id);
   const mcpAppHostAdapter = useMcpAppHostAdapter('fullscreen');
   const { closePanel } = useConversationPanel();
@@ -368,7 +431,6 @@ const ConversationView: FC<Props> = ({
   }, [closePanel, closeSourcesPanel]);
   const mcpAppCanvasLabels = useMemo(
     () => ({
-      title: t(AttachmentCanvasI18nKeys.McpAppTitle),
       forbiddenErrorLabel: t(
         AttachmentCanvasI18nKeys.McpAppForbiddenErrorLabel,
       ),
@@ -416,10 +478,23 @@ const ConversationView: FC<Props> = ({
     ({
       reason,
       formats,
+      maxFileSizeBytes,
     }: {
       reason: AttachmentValidationErrorReason;
       formats?: string;
+      maxFileSizeBytes?: number;
     }) => {
+      if (reason === AttachmentValidationErrorReason.FileTooLarge) {
+        showErrorNotification({
+          title: t(AttachmentsI18nKeys.FileTooLargeTitle),
+          message: t(AttachmentsI18nKeys.FileTooLargeMessage, {
+            maxSize:
+              maxFileSizeBytes != null ? formatFileSize(maxFileSizeBytes) : '',
+          }),
+        });
+        return;
+      }
+
       const noTypesAllowed =
         reason === AttachmentValidationErrorReason.NoTypesAllowed;
       showErrorNotification({
@@ -446,6 +521,7 @@ const ConversationView: FC<Props> = ({
     fileAccept,
   } = useAttachmentValidation({
     allowedMimeTypes: selectedDeployment?.inputAttachmentTypes ?? [],
+    maxFileSizeBytes: maxAttachmentFileSizeBytes,
     onValidationError: handleAttachmentValidationError,
   });
 
@@ -557,32 +633,25 @@ const ConversationView: FC<Props> = ({
    * For each message, resolve the deployment active at that point in the conversation.
    * Scans status messages in order so messages before a model change get the initial model icon.
    */
-  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
-    () =>
-      messages.reduce<{
-        ids: (string | undefined)[];
-        activeId: string | undefined;
-      }>(
-        (acc, msg) => {
-          const nextId =
-            isStatusMessage(msg) &&
-            msg.custom_content?.event_type === StatusEvent.ModelChanged
-              ? msg.custom_content.new_deployment_id
-              : acc.activeId;
-          return {
-            ids: [...acc.ids, msg.deploymentId ?? nextId],
-            activeId: nextId,
-          };
-        },
-        { ids: [], activeId: initialModelId },
-      ).ids,
-    [messages, initialModelId],
-  );
+  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(() => {
+    /* Single linear pass — copying the accumulator per message was O(n²) on long conversations. */
+    const result: (string | undefined)[] = [];
+    let activeId = initialModelId;
+    for (const msg of messages) {
+      if (
+        isStatusMessage(msg) &&
+        msg.custom_content?.event_type === StatusEvent.ModelChanged
+      ) {
+        activeId = msg.custom_content.new_deployment_id;
+      }
+      result.push(msg.deploymentId ?? activeId);
+    }
+    return result;
+  }, [messages, initialModelId]);
 
   const messageHistory = useMemo(
-    () =>
-      messages.filter((m) => m.role === MessageRole.User).map((m) => m.content),
-    [messages],
+    () => getInputMessageHistory(messages, isInputHistoryNavigationDisabled),
+    [messages, isInputHistoryNavigationDisabled],
   );
 
   const tooltips = useMemo<MessageActionTooltips>(
@@ -619,20 +688,6 @@ const ConversationView: FC<Props> = ({
     itemCount: items.length,
   });
 
-  const usageLimitsLabels = useMemo(
-    () => ({
-      triggerAriaLabel: ({ value }: { value: string }) =>
-        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
-      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
-      error: t(ConversationInputI18nKeys.Error),
-      tokensRemaining: ({ count }: { count: string }) =>
-        t(ConversationInputI18nKeys.TokensRemaining, { count }),
-      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
-        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
-    }),
-    [t],
-  );
-
   const formatStatusModelChangedBody = useCallback(
     (from: string, to: string) =>
       t(ConversationI18nKeys.StatusModelChangedBody, {
@@ -664,12 +719,12 @@ const ConversationView: FC<Props> = ({
       await onSend(message, attachments, selectedSkills);
       /*
        * Clear only after a successful send: a rejected onSend restores the
-       * draft, and the skill selection should survive with it for the retry.
+       * draft, and the mentions should survive with it for the retry.
        * No-op while the skill flag is off.
        */
-      removeSelectedSkill();
+      resetSkillMentions();
     },
-    [onSend, messages.length, armAnchor, selectedSkills, removeSelectedSkill],
+    [onSend, messages.length, armAnchor, selectedSkills, resetSkillMentions],
   );
 
   const handleRegenerateMessageWithAnchor = useCallback(
@@ -688,35 +743,34 @@ const ConversationView: FC<Props> = ({
   );
 
   /*
-   * Seeds the edit input with the edited message's skill state: the shared
-   * selection renders in `EditMessageInput`'s inline-start slot, so it must
-   * mirror the message being edited — its (first) skill when it carries one,
-   * none otherwise. Both setters are no-ops while the skill flag is off.
+   * Seeds the edit input with the edited message's full mention state:
+   * `seedSkillMentions` reconstructs every mention's position in the
+   * message's text, matching `custom_content.skills` in order. A no-op (empty
+   * mentions) while the skill flag is off.
    */
   const handleStartEdit = useCallback(
     (messageIndex: number) => {
-      const skillUrl = messages[messageIndex]?.custom_content?.skills?.[0]?.url;
-      if (skillUrl != null) {
-        selectSkill(skillUrl);
-      } else {
-        removeSelectedSkill();
-      }
+      const editedMessage = messages[messageIndex];
+      seedSkillMentions(
+        editedMessage?.content ?? '',
+        editedMessage?.custom_content?.skills,
+      );
       onStartEdit?.(messageIndex);
     },
-    [messages, onStartEdit, selectSkill, removeSelectedSkill],
+    [messages, onStartEdit, seedSkillMentions],
   );
 
   /*
-   * An edit session's selection never outlives it — otherwise the composer
-   * would silently attach the edited message's skill to the next message.
+   * An edit session's mentions never outlive it — otherwise the composer
+   * would silently attach the edited message's mentions to the next message.
    * No-op while the skill flag is off.
    */
   const handleCancelEdit = useCallback(
     (messageIndex: number) => {
-      removeSelectedSkill();
+      resetEditSkillMentions();
       onCancelEdit?.(messageIndex);
     },
-    [onCancelEdit, removeSelectedSkill],
+    [onCancelEdit, resetEditSkillMentions],
   );
 
   const handleEditMessageWithAnchor = useCallback(
@@ -752,8 +806,8 @@ const ConversationView: FC<Props> = ({
         newAttachments,
         editSkills,
       );
-      /* The edit session consumed the selection; the composer starts fresh. */
-      removeSelectedSkill();
+      /* The edit session consumed the mentions; the next edit starts fresh. */
+      resetEditSkillMentions();
     },
     [
       isAssistantTyping,
@@ -761,7 +815,7 @@ const ConversationView: FC<Props> = ({
       onEditMessage,
       armAnchor,
       editSkills,
-      removeSelectedSkill,
+      resetEditSkillMentions,
     ],
   );
 
@@ -832,6 +886,11 @@ const ConversationView: FC<Props> = ({
     [openAttachmentCanvas],
   );
 
+  const clearPendingDialAttachments = useCallback(
+    () => setPendingDialAttachments([]),
+    [],
+  );
+
   const handleMessageAttachmentClick = useCallback(
     (attachment: DisplayAttachment, messageIndex: number) => {
       /*
@@ -890,6 +949,8 @@ const ConversationView: FC<Props> = ({
                     totalCount={messages.length}
                     isAssistantTyping={isAssistantTyping}
                     isCompactTypography={isMobile}
+                    responseFormat={responseFormat}
+                    fallbackCitationGroups={fallbackCitationGroups}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
                     onStartEdit={isReadOnly ? undefined : handleStartEdit}
@@ -901,8 +962,17 @@ const ConversationView: FC<Props> = ({
                     onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
                     onCancelEdit={handleCancelEdit}
                     onEditMessage={handleEditMessageWithAnchor}
-                    editInlineStartSlot={selectedSkillElement}
-                    onEditInlineStartRemove={removeSelectedSkill}
+                    editMessage={editMessage}
+                    editMessageRevision={editMessageRevision}
+                    editActiveMentions={editActiveMentions}
+                    onEditBackspaceAtCaret={onEditBackspaceAtCaret}
+                    editCaretPositionOverride={editCaretPositionOverride}
+                    onEditDraftChange={onEditDraftChange}
+                    editCommandMenu={editCommandMenu}
+                    editMenuOverlays={
+                      editSkillMenuOverlay ? [editSkillMenuOverlay] : undefined
+                    }
+                    renderHistorySkillSegments={renderHistorySkillSegments}
                     renderHistorySkills={renderHistorySkills}
                     onUploadAttachment={onUploadAttachment}
                     deploymentLookup={deploymentLookup}
@@ -971,9 +1041,7 @@ const ConversationView: FC<Props> = ({
                       !isAttachmentsAllowed || !isInputFilesEnabled
                     }
                     fileAccept={fileAccept}
-                    onAttachmentClick={(attachment) =>
-                      handleMessageAttachmentClick(attachment, index)
-                    }
+                    onAttachmentClick={handleMessageAttachmentClick}
                     selectedAttachmentKey={selectedAttachmentKey}
                     onDialFileSystemClick={
                       isAttachmentsAllowed
@@ -990,7 +1058,7 @@ const ConversationView: FC<Props> = ({
                     }
                     onPendingAttachmentsConsumed={
                       isEditActive && isThisMessageEditing
-                        ? () => setPendingDialAttachments([])
+                        ? clearPendingDialAttachments
                         : undefined
                     }
                     onMessageTooLong={handleMessageTooLong}
@@ -1041,8 +1109,9 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
-                message={inputContent}
-                messageRevision={inputContentRevision}
+                message={composerSeedText}
+                messageRevision={composerSeedRevision}
+                onChange={onDraftChange}
                 textInsertion={inputInsertion}
                 onSend={handleSendWithAnchor}
                 onUploadAttachment={onUploadAttachment}
@@ -1066,7 +1135,7 @@ const ConversationView: FC<Props> = ({
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
                 sendLabel={t(ChatI18nKeys.SendMessage)}
-                sendTitle={t(ChatI18nKeys.SendMessage)}
+                sendTooltip={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isAudioMessageSupported={isAudioMessageSupported}
                 isVoiceRecordingSupported={isVoiceRecordingSupported}
@@ -1130,8 +1199,9 @@ const ConversationView: FC<Props> = ({
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
                 menuOverlays={menuOverlays}
-                inlineStartSlot={selectedSkillElement}
-                onInlineStartRemove={removeSelectedSkill}
+                activeMentions={activeMentions}
+                onBackspaceAtCaret={onBackspaceAtCaret}
+                caretPositionOverride={caretPositionOverride}
                 commandMenu={commandMenu}
                 onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
@@ -1140,7 +1210,6 @@ const ConversationView: FC<Props> = ({
                       selectedDeployment?.id ?? activeDeploymentId ?? undefined
                     }
                     isGenerationInProgress={isAssistantTyping}
-                    labels={usageLimitsLabels}
                   />
                 }
               />
@@ -1153,7 +1222,7 @@ const ConversationView: FC<Props> = ({
                   onAttach={handleAttachDialFiles}
                   bucket={bucket}
                   allowedTypes={inputAttachmentTypes}
-                  maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
+                  maxSelectableFileSize={maxAttachmentFileSizeBytes}
                   maximumAttachmentsAmount={
                     selectedDeployment?.maxInputAttachments
                   }
@@ -1240,6 +1309,8 @@ const ConversationView: FC<Props> = ({
       {promptParametersPopup}
       {skillCatalogModal}
       {skillDetailsPanel}
+      {editSkillCatalogModal}
+      {editSkillDetailsPanel}
     </>
   );
 };

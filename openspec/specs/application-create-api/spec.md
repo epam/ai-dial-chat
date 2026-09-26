@@ -19,7 +19,6 @@ The endpoint SHALL:
 - Create the application via the client's `saveCustomApplication(bucket, encodedPath, …)` with a mapped body (see below).
 - On success, invalidate the `applications:list:<userSub>` cache entry via `cacheManager.del` and return `{ id: "applications/{bucket}/{appPath}" }` — the **unencoded** path, matching the resource id format used elsewhere (e.g. `listApplications`).
 - Map DIAL Core non-2xx responses to the appropriate HTTP status using `mapDialHttpStatus`, and transport-level failures via `handleDialFetchError`.
-- Apply `@Throttle({ default: { limit: 10, ttl: 60000 } })`.
 - Not log the access token, session cookie, or any secret. Safe identifiers (`userSub`, app path) MAY be logged at debug level.
 - Follow `apps/chat-api/AGENTS.md` for all controller and service conventions.
 
@@ -73,6 +72,8 @@ The `name` and `version` allowlist patterns exist so the `{name}__{version}` res
 
 The service SHALL NOT branch on `body.type` to decide `application_properties` content — that decision belongs to the caller. The frontend `GeneralForm` (`apps/chat/src/pages/AppsEditor/GeneralForm.tsx`) is the current caller, and uses the shared `isQuickAppSchema` helper to decide whether to send the QuickApps 2.0 orchestrator/contexts/tool_sets shape as `applicationProperties`.
 
+**Exception — forced `features.skills_supported` for Quick Apps.** The one deliberate exception to the rule above: when `body.type` matches the backend's own `isQuickAppSchema` helper (`apps/chat-api/src/common/utils/application-schema.ts`), the service SHALL force `features.skills_supported` to `true` on the DIAL Core save body, merged with any caller-supplied `features` (hoisted or not), overriding any `skills_supported` value the caller may have sent. This is a narrow, acknowledged hack: when an admin creates a Quick App from the Admin application, Admin's own UI lets them set `skills_supported`; chat has no equivalent UI control, so a Quick App created from chat would otherwise never get the flag set and would silently lose skills. Pushing this default into every individual Quick App implementation was rejected as duplicative across many places, and leaving skills broken was rejected outright — forcing it here, in the one place all chat-originated application writes already pass through, was judged the least-bad of those three options, even though it couples generic application-write logic to a QuickApp-specific business rule that doesn't otherwise belong in this endpoint.
+
 **Response DTO** (`CreatedApplicationDto`): `{ id: string; displayName?: LocalizedText; object?: string }`. This endpoint populates only `id`, constructed locally as `applications/{bucket}/{appPath}` (unencoded); DIAL Core's save response body is not forwarded. The two optional fields exist for other producers of the same DTO.
 
 **OpenAPI / generated client**: operationId `createApplication`. Generated method in `libs/chat-api-client/src/generated/src/apis/ApplicationsApi.ts` as `createApplicationRaw` + `createApplication`.
@@ -103,6 +104,11 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 - **WHEN** an authenticated user calls `POST /api/v1/applications` without `applicationProperties`, or with only hoisted keys in it
 - **THEN** the DIAL Core save body carries no `application_properties` field at all
+
+#### Scenario: A Quick App create forces skills_supported regardless of caller input
+
+- **WHEN** an authenticated user calls `POST /api/v1/applications` with a `type` matching `isQuickAppSchema` (e.g. `https://mydial.epam.com/custom_application_schemas/quickapps2`), with or without a `features` value in `applicationProperties`, and with `features.skills_supported` absent, `false`, or `true`
+- **THEN** the DIAL Core save body's top-level `features.skills_supported` is `true`, and any other caller-supplied `features` keys are preserved alongside it
 
 #### Scenario: A create without a schema type omits the schema id
 
@@ -143,8 +149,3 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 - **WHEN** DIAL Core times out or is unreachable
 - **THEN** the endpoint responds 503
-
-#### Scenario: Rate limit exceeded returns 429
-
-- **WHEN** more than 10 create requests arrive within 60 seconds for the same session
-- **THEN** subsequent requests respond 429

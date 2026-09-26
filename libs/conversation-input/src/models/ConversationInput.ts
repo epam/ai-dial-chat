@@ -1,3 +1,4 @@
+import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 import type {
   Attachment,
   AttachmentErrorReason,
@@ -8,11 +9,14 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type {
+  ActionRowLayout,
   ChatSettingsConfig,
   CommandMenuConfig,
+  HighlightedTextRange,
   InputColors,
   InputTypography,
   MenuOverlayConfig,
+  ModelMenuStyles,
   ModelSelectorLabels,
   SendOnEnter,
   TextInsertion,
@@ -24,6 +28,8 @@ import type { TranscribeAudio } from './Voice';
 export interface ConversationInputColors {
   /** Welcome heading text color. */
   welcomeText?: string;
+  /** Description text color, shown below the welcome heading. */
+  descriptionText?: string;
   /** Color overrides forwarded to the inner `Input` component. */
   input?: InputColors;
 }
@@ -32,6 +38,8 @@ export interface ConversationInputColors {
 export interface ConversationInputTypography {
   /** Tailwind (or custom) class applied to the welcome heading. Defaults to `'dial-display2-text'`. */
   welcomeClassName?: string;
+  /** Tailwind (or custom) class applied to the description text. Defaults to `'dial-body-paragraph-text'`. */
+  descriptionClassName?: string;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }
@@ -42,6 +50,20 @@ export interface ConversationInputStyles {
   colors?: ConversationInputColors;
   /** Typography overrides for the welcome heading and input. */
   typography?: ConversationInputTypography;
+  /**
+   * Style overrides for the composer's attachment tray. Its `card` slot
+   * carries `AttachmentCardStyles` through to every tile, which is how a host
+   * sizes a tile or restyles its meta line without a descendant selector on
+   * `ATTACHMENT_INPUT_CLASS`.
+   */
+  attachmentTray?: AttachmentTrayStyles;
+  /**
+   * Styling hooks for the model menu in both presentations — the desktop
+   * dropdown and the mobile sheet — so a host restyles its panel, search row
+   * and selected row without a descendant selector on
+   * `CONVERSATION_INPUT_CLASS.modelMenu*`.
+   */
+  modelMenu?: ModelMenuStyles;
 }
 
 /** Props accepted by the `EditMessageInput` component. */
@@ -49,17 +71,53 @@ export interface EditMessageInputProps {
   /** Initial message text pre-populated in the textarea. */
   message?: string;
   /**
-   * Host-supplied content rendered inside the text area at its inline-start;
-   * typed text starts after it on the first line and wraps at full width
-   * below. Forwarded to the inner `Input`.
+   * Optional token that forces the textarea to resync from `message`, even
+   * when `message` itself is the same string as before (e.g. the host
+   * spliced a mention into its own copy of the draft at a known position and
+   * needs the textarea to adopt it). Forwarded to the inner `Input`.
    */
-  inlineStartSlot?: ReactNode;
+  messageRevision?: number;
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `inlineStartSlot` content is shown (the slot's remove gesture).
+   * Called with the textarea's current value on every change (typing,
+   * deleting, pasting, undo/redo) — not only on save. A host tracking live
+   * state derived from the draft (e.g. skill-mention anchors that must
+   * reconcile as the user edits around them) wires this; omit it to ignore
+   * keystrokes between saves.
+   */
+  onChange?: (message: string) => void;
+  /**
+   * Ranges of `message` rendered as highlighted runs (e.g. a restored skill
+   * mention). Forwarded to the inner `Input`.
+   */
+  activeMentions?: HighlightedTextRange[];
+  /**
+   * Called on Backspace with the caret collapsed at some position, to ask
+   * whether a tracked range ends exactly there — see `Input`'s prop of the
+   * same name. Forwarded to the inner `Input`.
+   */
+  onBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
+  /**
+   * One-shot caret placement applied whenever the internal message resyncs
+   * from a new `message` value (e.g. right after inserting a mention).
    * Forwarded to the inner `Input`.
    */
-  onInlineStartRemove?: () => void;
+  caretPositionOverride?: number;
+  /**
+   * Host-injected slash-command menu, forwarded to the inner `Input` — see
+   * `Input`'s prop of the same name. Absent disables the mechanism during
+   * edit.
+   */
+  commandMenu?: CommandMenuConfig;
+  /**
+   * Host-injected overlay entries for the `+` menu. `EditMessageInput` hides
+   * the inner `Input`'s own footer (`hideActionBar`) and renders its own
+   * external `AddAttachmentButton` instead, so these entries are forwarded to
+   * that button, not to `Input`. Absent renders no add-menu overlay entries
+   * during edit.
+   */
+  menuOverlays?: MenuOverlayConfig[];
   /** Pre-existing attachments from the original message, shown in the attachment tray. */
   initialAttachments?: DisplayAttachment[];
   /** Called when the user clicks the Cancel button. */
@@ -178,6 +236,21 @@ export interface ConversationInputProps {
   /** Placeholder text shown inside the textarea when empty. */
   placeholder?: string;
   /**
+   * How the action row arranges the textarea and the controls around it.
+   * Defaults to `ActionRowLayout.Stacked`. `ActionRowLayout.Inline` applies
+   * from the desktop breakpoint (1280px) up, unless
+   * `isInlineActionRowAllowedBelowDesktop` opts the narrower widths in.
+   */
+  actionRowLayout?: ActionRowLayout;
+  /**
+   * When `true`, `ActionRowLayout.Inline` also applies below the desktop
+   * breakpoint (1280px). Set it when the embedded composer is wide enough
+   * there — a phone-width one is not. Affects the action row alone: the add
+   * menu and model picker keep their bottom-sheet presentation. Defaults to
+   * `false`.
+   */
+  isInlineActionRowAllowedBelowDesktop?: boolean;
+  /**
    * Message value. Sets the initial textarea content on mount and syncs the
    * textarea whenever the value changes.
    */
@@ -188,6 +261,14 @@ export interface ConversationInputProps {
    */
   messageRevision?: number;
   /**
+   * Called with the textarea's current value on every change (typing,
+   * deleting, pasting, undo/redo) — not only on send. A host tracking live
+   * state derived from the draft (e.g. skill-mention anchors that must
+   * reconcile as the user edits around them) wires this; omit it to ignore
+   * keystrokes between sends, as before this prop existed.
+   */
+  onChange?: (message: string) => void;
+  /**
    * Text inserted at the caret each time its `revision` changes, leaving the
    * surrounding draft intact. Unlike `message`, this never replaces what the
    * user has written, and it is made through the browser's editing pipeline so
@@ -196,6 +277,8 @@ export interface ConversationInputProps {
   textInsertion?: TextInsertion;
   /** Optional welcome heading rendered above the input. */
   welcomeText?: string;
+  /** Optional description text rendered below the welcome heading. Ignored when `welcomeText` is absent. */
+  descriptionText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
   /** Called immediately after an attachment is added. Returns the uploaded attachment URL and stored name. */
@@ -245,7 +328,9 @@ export interface ConversationInputProps {
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Tooltip shown on hover over the send button. */
-  sendTitle?: string;
+  sendTooltip?: string;
+  /** Tooltip for an empty composer (no text, attachments, or inline-start slot). Defaults to sendTooltip. */
+  emptyMessageTooltip?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Accessible label for each attachment card's remove button. Defaults to `'Remove attachment'`. */
@@ -408,17 +493,24 @@ export interface ConversationInputProps {
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Host-supplied content rendered inside the text area at its inline-start;
-   * typed text starts after it on the first line and wraps at full width
-   * below. Forwarded to the inner `Input`.
+   * Ranges of `message` rendered as highlighted runs (e.g. a tracked skill
+   * mention). Forwarded to the inner `Input`.
    */
-  inlineStartSlot?: ReactNode;
+  activeMentions?: HighlightedTextRange[];
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `inlineStartSlot` is present (the slot's remove gesture). Forwarded
-   * to the inner `Input`.
+   * Called on Backspace with the caret collapsed at some position, to ask
+   * whether a tracked range ends exactly there — see `Input`'s prop of the
+   * same name. Forwarded to the inner `Input`.
    */
-  onInlineStartRemove?: () => void;
+  onBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
+  /**
+   * One-shot caret placement applied whenever the internal message resyncs
+   * from a new `message` value (e.g. right after inserting a mention).
+   * Forwarded to the inner `Input`.
+   */
+  caretPositionOverride?: number;
   /**
    * Host-injected slash-command menu: typing `triggerPrefix` as the first
    * character of an empty textarea — or pasting into an empty textarea a

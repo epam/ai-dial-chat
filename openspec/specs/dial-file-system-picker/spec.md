@@ -343,8 +343,6 @@ All `aria-label` values in `DialFileManagerModal` go through `t()`. No English s
 
 **Observability / Telemetry**: No new metrics or analytics events required. The existing `MetricsInterceptor` on `GET /api/v1/files/list` tracks request duration automatically.
 
-**Rate limiting**: `GET /api/v1/files/list` uses `@Throttle({ default: { limit: 60, ttl: 60000 } })` (defined in `add-files-list-api`). The frontend does not add extra throttling.
-
 #### Scenario: Every user-visible string is translated
 
 - **WHEN** `DialFileManagerModal` is rendered

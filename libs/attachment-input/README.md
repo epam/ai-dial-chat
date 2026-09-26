@@ -79,6 +79,26 @@ import { AttachmentTray } from '@epam/ai-dial-attachment-input';
 />;
 ```
 
+`styles.className` lands on the tray row and `styles.card` carries an
+`AttachmentCardStyles` through to every tile, so a host sizes or restyles the
+tiles through the tray it already renders instead of a descendant selector on
+`dial-ai-attachment-tile`:
+
+```tsx
+<AttachmentTray
+  attachments={attachments}
+  onRemove={handleRemove}
+  styles={{
+    className: 'gap-3',
+    card: {
+      className: 'size-[120px]',
+      typography: { metaClassName: 'dial-tiny-text' },
+      colors: { border: 'var(--stroke-tertiary)' },
+    },
+  }}
+/>
+```
+
 ### AttachmentGroup
 
 Renders a sent message's attachments — image tiles plus file rows — with a header action that downloads everything downloadable at once. Collapses beyond `ATTACHMENT_COLLAPSE_THRESHOLD` items.
@@ -171,7 +191,8 @@ import {
   ATTACHMENT_COLLAPSE_THRESHOLD,
 } from '@epam/ai-dial-attachment-input';
 
-// Check if a file type is permitted (an empty allowlist permits nothing)
+// Check if a file type is permitted (an empty allowlist permits nothing).
+// Both sides are canonicalized, so a declared 'text/json' permits 'application/json'.
 const isAllowed = isMimeTypeAllowed(file.type, allowedMimeTypes);
 
 // Convert MIME types to a human-readable extension label string
@@ -184,6 +205,74 @@ const Icon = getAttachmentIcon(file.type);
 // Derive everything a card needs to render (visual state, type label, preview)
 const cardState = getAttachmentCardState(attachment, typeLabels);
 ```
+
+## Public class names
+
+Every tray and tile element a host is likely to restyle carries a stable
+`dial-ai-*` class in addition to its internal classes. Target those instead of
+hashed CSS-module names, DOM order, or ARIA attributes — all three change
+without notice. The names are exported so you never hardcode them:
+
+```tsx
+import { ATTACHMENT_INPUT_CLASS } from '@epam/ai-dial-attachment-input';
+
+ATTACHMENT_INPUT_CLASS.tile; // 'dial-ai-attachment-tile'
+```
+
+| Class                              | Element                                                   |
+| ---------------------------------- | --------------------------------------------------------- |
+| `dial-ai-attachment-tray`          | The tray's `role="list"` root                             |
+| `dial-ai-attachment-tray-item`     | Each `role="listitem"` wrapper in the tray                |
+| `dial-ai-attachment-tile`          | The square tile, for both image and non-previewable files |
+| `dial-ai-attachment-tile-selected` | The tile when selected, **additive** to the tile class    |
+| `dial-ai-attachment-tile-name`     | The tile's filename element                               |
+| `dial-ai-attachment-tile-type`     | The tile's type and size row                              |
+| `dial-ai-attachment-tile-action`   | Every corner action: download, retry, open-link, remove   |
+
+A selected tile carries both `dial-ai-attachment-tile` and
+`dial-ai-attachment-tile-selected`, so one rule can style all tiles and a second
+can style the selected case. An empty tray renders nothing at all, so no class
+is emitted.
+
+These classes carry no declarations of their own, so they change nothing until
+you style them.
+
+### Replacing fragile selectors
+
+| Instead of                                        | Use                                       |
+| ------------------------------------------------- | ----------------------------------------- |
+| `[role='list'][aria-label='Attached files']`      | `.dial-ai-attachment-tray`                |
+| `[role='listitem']`                               | `.dial-ai-attachment-tray-item`           |
+| `[class*='_tile_']`                               | `.dial-ai-attachment-tile`                |
+| `[class*='_selected_']`                           | `.dial-ai-attachment-tile-selected`       |
+| `[class*='_nameText_']` / `[class*='_typeText_']` | `.dial-ai-attachment-tile-name` / `-type` |
+| `[class*='_actionButton_']`                       | `.dial-ai-attachment-tile-action`         |
+
+The `aria-label` selector deserves a specific warning: the tray's label is
+localisable through `labels.ariaLabel`, so selecting by `'Attached files'`
+breaks the moment your app translates it. Never use an ARIA attribute as a
+styling hook.
+
+Hover-reveal for the corner actions still comes from the tile's
+`group/attachment-tile` and the actions'
+`group-hover/attachment-tile:opacity-100` utilities. Those are Tailwind
+utilities in this package's JSX, not rules in its stylesheet, so they only
+apply when your own Tailwind build scans this package.
+
+### Stability
+
+A `dial-ai-*` class is public API: renaming it, removing it, or moving it to a
+different element is a breaking change, announced in the release notes and
+recorded here with its replacement. The element itself stays free — its Tailwind
+utilities, its CSS-module class, and its position in the DOM may all change.
+
+Your own overrides are responsible for direction: the class names are
+direction-agnostic and identical under `dir="rtl"`, so use CSS logical
+properties (`margin-inline-start`, `inset-inline-end`) rather than physical ones.
+
+The full convention — naming grammar, why not BEM, and the rules these classes
+follow — is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 ## Types
 

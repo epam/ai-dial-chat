@@ -1,5 +1,3 @@
-import './styles.css';
-
 // Models
 export { PublishCalloutKind, PublicationRuleFunction } from './models/publish';
 export type {
@@ -89,3 +87,4 @@ export type {
   StandalonePublishPanelProps,
   StandalonePublishPanelLabels,
 } from './components/PublishPanel/StandalonePublishPanel';
+export { PUBLISH_PANEL_CLASS } from './constants/public-class-names';

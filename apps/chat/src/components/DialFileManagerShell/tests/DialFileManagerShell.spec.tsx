@@ -270,7 +270,7 @@ const renderShell = (
       hookResult={{ ...baseHookResult, ...hookResultOverrides }}
       labels={baseLabels}
       activeTab={options.activeTab ?? DialFileManagerTabs.MyFiles}
-      tabs={[{ id: DialFileManagerTabs.MyFiles, label: 'My Files' }]}
+      tabs={[{ value: DialFileManagerTabs.MyFiles, label: 'My Files' }]}
       onTabChange={vi.fn()}
       selectedPaths={selectedPaths}
       onSelectedPathsChange={vi.fn()}
@@ -684,7 +684,7 @@ describe('DialFileManagerShell', () => {
       expect(
         capturedDialFileManagerProps.current?.toolbarOptions?.newActions
           ?.uploadArchive,
-      ).toEqual({ label: baseLabels.uploadArchiveAction });
+      ).toEqual({ label: baseLabels.uploadArchiveAction, icon: null });
     });
 
     it('is absent on the shared tab', () => {

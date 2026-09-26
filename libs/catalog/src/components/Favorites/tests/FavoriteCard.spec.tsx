@@ -1,6 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import {
   CredentialStatus,
@@ -150,5 +151,19 @@ describe('FavoriteCard — credentials badge', () => {
     expect(
       screen.queryByRole('img', { name: 'Authorize to use this toolset.' }),
     ).toBeNull();
+  });
+});
+
+describe('FavoriteCard — public class names', () => {
+  it('stamps the card in every state', () => {
+    const { rerender } = render(<FavoriteCard item={makeItem()} />);
+    expect(screen.getByLabelText('Claude').classList).toContain(
+      CATALOG_CLASS.favoriteCard,
+    );
+
+    rerender(<FavoriteCard item={makeItem()} isSelected />);
+    expect(screen.getByLabelText('Claude').classList).toContain(
+      CATALOG_CLASS.favoriteCard,
+    );
   });
 });

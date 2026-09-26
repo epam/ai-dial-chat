@@ -106,12 +106,28 @@ The upload constraint constants (e.g. `MAX_UPLOADS_PER_MINUTE`) from `libs/conve
 - **WHEN** a consumer imports upload constants from `@epam/ai-dial-attachment-input/src/index`
 - **THEN** the constant values are accessible and correctly typed
 
-### Requirement: libs/conversation-input re-exports moved symbols
-All symbols that were previously exported from `libs/conversation-input/src/index.ts` and are now owned by `libs/attachment-input` SHALL continue to be re-exported from `libs/conversation-input/src/index.ts` via `export { ... } from '@epam/ai-dial-attachment-input'`. No existing consumer of `@epam/ai-dial-conversation-input` SHALL break.
+### Requirement: Attachment symbols are imported from their owning package
+Every consumer SHALL import `AttachmentCard`, `AttachmentTray`, `AttachmentGroup`,
+`FileDndOverlay`, `getAttachmentIcon`, and `AttachmentGroupProps` from
+`@epam/ai-dial-attachment-input`, the package that owns them.
+`libs/conversation-input/src/index.ts` SHALL NOT re-export them.
 
-#### Scenario: Existing conversation-input imports still resolve
-- **WHEN** any file that previously imported attachment symbols from `@epam/ai-dial-conversation-input` is typechecked
-- **THEN** TypeScript resolves the import without error
+A library that renders any of those components SHALL declare
+`@epam/ai-dial-attachment-input` in its own `peerDependencies` and mark it external in its bundler
+config, rather than reaching it transitively through `@epam/ai-dial-conversation-input`. A library
+that no longer imports anything from `@epam/ai-dial-conversation-input` SHALL drop that peer
+dependency.
+
+#### Scenario: Attachment components resolve from the owning package
+- **WHEN** `conversation-messages`, `source-panel`, or `apps/chat` renders an attachment component
+- **THEN** it imports the component from `@epam/ai-dial-attachment-input`, and the import from
+  `@epam/ai-dial-conversation-input` does not resolve that name
+
+#### Scenario: The dependency the re-export hid is declared
+- **WHEN** `@epam/ai-dial-conversation-messages` or `@epam/ai-dial-source-panel` is built
+- **THEN** each declares `@epam/ai-dial-attachment-input` as a peer dependency and marks it
+  external, its TypeScript project references include `attachment-input`, and neither declares
+  `@epam/ai-dial-conversation-input`, which it no longer imports
 
 ### Requirement: apps/chat attachment MIME helpers moved into the library
 All `apps/chat` files that previously imported from `apps/chat/src/utils/attachment-mime` SHALL import the same helpers from `@epam/ai-dial-attachment-input`, where they live in `libs/attachment-input/src/utils/attachment.ts` together with the rest of the attachment utilities rather than in a separate MIME module. The original `attachment-mime.ts` file SHALL NOT exist under `apps/chat/src/utils/`.

@@ -39,12 +39,27 @@ describe('ScheduledTaskConfigurationSection', () => {
     expect(screen.getByText('# Plan')).toBeTruthy();
   });
 
-  it('renders the label but no content when no markdown is supplied', () => {
+  it('hides empty instructions and absent skills', () => {
     render(
       <ScheduledTaskConfigurationSection instructionsLabel="Instructions" />,
     );
 
-    expect(screen.getByText('Instructions')).toBeTruthy();
+    expect(screen.queryByText('Instructions')).toBeNull();
     expect(screen.queryByText('# Plan')).toBeNull();
+  });
+
+  it('shows the skill alone with a full-reference fallback and no navigation', () => {
+    render(
+      <ScheduledTaskConfigurationSection
+        skillLabel="Skill"
+        skillDisplayName="skills/public/deleted"
+        instructionsLabel="Instructions"
+        instructionsMarkdown=""
+      />,
+    );
+    expect(screen.getByRole('group', { name: 'Skill' })).toBeTruthy();
+    expect(screen.getByText('skills/public/deleted')).toBeTruthy();
+    expect(screen.queryByText('Instructions')).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
   });
 });

@@ -9,36 +9,51 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   isStreaming = false,
   placeholder = 'Type a prompt or use "/" to select one',
   welcomeText,
+  descriptionText,
   styles: stylesProp,
   className,
   inputClassName,
   isInputDisabled = false,
   ...inputProps
 }) => {
-  const { colors, typography } = stylesProp ?? {};
+  const { colors, typography, attachmentTray, modelMenu } = stylesProp ?? {};
 
   const cssVars = buildCssVars({
     '--ci-welcome-color': colors?.welcomeText,
+    '--ci-description-color': colors?.descriptionText,
   });
 
   return (
     <div
       style={cssVars}
       className={mergeClasses(
-        'relative flex w-full flex-col items-center gap-6 px-4 py-5 desktop:p-5',
+        'relative flex w-full flex-col items-center gap-9 px-4 py-5 desktop:p-5',
         className,
       )}
     >
       {welcomeText && (
-        <h1
-          className={mergeClasses(
-            styles.welcome,
-            'm-0 text-center',
-            typography?.welcomeClassName || 'dial-display2-text',
+        <div className="flex flex-col items-center gap-4 text-center">
+          <h1
+            className={mergeClasses(
+              styles.welcome,
+              'm-0',
+              typography?.welcomeClassName || 'dial-display2-text',
+            )}
+          >
+            {welcomeText}
+          </h1>
+          {descriptionText && (
+            <p
+              className={mergeClasses(
+                styles.description,
+                'm-0 max-w-[540px]',
+                typography?.descriptionClassName || 'dial-body-paragraph-text',
+              )}
+            >
+              {descriptionText}
+            </p>
           )}
-        >
-          {welcomeText}
-        </h1>
+        </div>
       )}
       <div
         className={mergeClasses(
@@ -56,6 +71,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           className={inputClassName}
           colors={colors?.input}
           typography={typography?.input}
+          attachmentTray={attachmentTray}
+          modelMenu={modelMenu}
         />
       </div>
     </div>

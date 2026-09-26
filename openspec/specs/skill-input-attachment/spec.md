@@ -98,7 +98,7 @@ With zero favorites, the list area SHALL instead show "Star a skill to pin it he
 
 ### Requirement: Interactive tooltip on favorite-skill rows
 
-Each favorite-skill row in the Skills panel SHALL be wrapped in the ui-kit `InteractiveTooltip` (with `asChild`, so the row itself remains the trigger). The panel SHALL open on row hover or keyboard focus, place itself to the row's end side on desktop (kit-default Right placement, flipping with direction), and be reachable by Tab from the row. The open state SHALL be the kit's own uncontrolled behavior — the upgraded ui-kit's hover handling keeps the panel open while the pointer travels between the row and the panel, so no panel-managed open state or close timers exist. The app SHALL mount a portal container for these panels at its root (`<div id="interactive-tooltip-portal" />` in `apps/chat/src/main.tsx`): the kit portals every `InteractiveTooltip` panel through floating-ui into `document.getElementById('interactive-tooltip-portal')`, and with no such element in the document the panel silently renders nothing (this container serves every `InteractiveTooltip` in the app, including the prompts panel's migrated rows and the `ChatSkill` chip's tooltip). Its content SHALL be, top to bottom: the skill's description paragraph (the listing's `description` value — see the description-from-listing requirement; the paragraph omitted entirely for a skill whose listing entry carries no description), and below it a link-style "View details" button (ui-kit `Button`, `variant Primary` + `appearance Link`, 24px total height via a `h-[24px]` override of the kit Standard button's 40px — its label class `dial-small-paragraph-semi-text`, 14px/24px semibold, is the design spec, so the kit's `ElementSize.Small` is not used — with `self-start` so it hugs the content's start edge instead of stretching across the panel) with an `IconEye` on its inline-start and its label from `skillSelector.viewDetailsLabel` ("View details"). The panel's max width on desktop SHALL be 550px (via the kit's `contentClassName`, overriding its 320px default). On a touch-only device the tooltip SHALL render nothing — the row still selects the skill on tap, and the row's accessible name SHALL never depend on the tooltip.
+Each favorite-skill row in the Skills panel SHALL be wrapped in the ui-kit `InteractiveTooltip` (with `asChild`, so the row itself remains the trigger). The panel SHALL open on row hover or keyboard focus, place itself to the row's end side on desktop (kit-default Right placement, flipping with direction), and be reachable by Tab from the row in the Add-menu panel (in the slash dropdown the "View details" button leaves the Tab sequence — see the slash-dropdown keyboard requirement below). The open state SHALL be the kit's own uncontrolled behavior — the upgraded ui-kit's hover handling keeps the panel open while the pointer travels between the row and the panel, so no panel-managed open state or close timers exist. The app SHALL mount a portal container for these panels at its root (`<div id="interactive-tooltip-portal" />` in `apps/chat/src/main.tsx`): the kit portals every `InteractiveTooltip` panel through floating-ui into `document.getElementById('interactive-tooltip-portal')`, and with no such element in the document the panel silently renders nothing (this container serves every `InteractiveTooltip` in the app, including the prompts panel's migrated rows and the `ChatSkill` chip's tooltip). Its content SHALL be, top to bottom: the skill's description paragraph (the listing's `description` value — see the description-from-listing requirement; the paragraph omitted entirely for a skill whose listing entry carries no description), and below it a link-style "View details" button (ui-kit `Button`, `variant Primary` + `appearance Link`, 24px total height via a `h-[24px]` override of the kit Standard button's 40px — its label class `dial-small-paragraph-semi-text`, 14px/24px semibold, is the design spec, so the kit's `ElementSize.Small` is not used — with `self-start` so it hugs the content's start edge instead of stretching across the panel) with an `IconEye` on its inline-start and its label from `skillSelector.viewDetailsLabel` ("View details"). The panel's max width on desktop SHALL be 550px (via the kit's `contentClassName`, overriding its 320px default). On a touch-only device the tooltip SHALL render nothing — the row still selects the skill on tap, and the row's accessible name SHALL never depend on the tooltip.
 
 Clicking "View details" SHALL open the skill details side panel (next requirement) and close the Add menu and its tooltip.
 
@@ -219,7 +219,7 @@ The conversation input SHALL hold at most one selected skill at a time. When a s
 
 ### Requirement: Selected skill renders inline inside the input
 
-The selected skill SHALL be rendered inside the conversation input's text area, at its inline-start on the first text line — not outside the input and not below the text area — and the user SHALL be able to keep typing in the same input while the skill is selected. Typed text SHALL start after the `ChatSkill` element on the first line and wrapped lines SHALL use the text area's full width (the text flows around the element; lines after an explicit line break also use the full width). While the slot is present the input's placeholder SHALL be suppressed (the slot itself says what the input holds); the text area SHALL gain no extra block padding while the slot is present, so slot content whose height is one label line (the `ChatSkill` chip, which carries no vertical padding of its own) aligns with the first text line exactly. The mechanism SHALL be a generic `inlineStartSlot?: ReactNode` prop on `Input` (forwarded by `ConversationInput` and `EditMessageInput`) whose content the app supplies — `libs/conversation-input` SHALL NOT know about skills; the flow-around mechanics (slot positioning and the first-line indent of the text) SHALL be the lib's own generic behavior driven by the slot's measured width, using logical properties so RTL mirrors automatically. `Input` SHALL also expose `onInlineStartRemove?: () => void`, invoked when Backspace is pressed with the caret collapsed at position 0 while the slot is present — the slot's remove gesture (at position 0 a Backspace has nothing to delete backwards, so the keypress is suppressed and redirected to the slot; no text is affected) — and forwarded by `ConversationInput` and `EditMessageInput`. The slot's presence SHALL count as sendable content on its own: while a skill is selected the send button SHALL be mounted and enabled and the configured send gesture SHALL send even with an empty draft (the send-time payload carrying the skill is the `skill-message-payload` capability's concern), except while the selected skill is unsupported — in that state the send button stays mounted but disabled per the error-state requirement above. Removing the skill with an empty draft SHALL disable sending again. The part-1 `selectedEntities`/`selectedEntityChipLabels` props and the `SelectedEntityChips` component SHALL be removed in the same change (the selected skill was their only consumer); all call sites migrate to the slot.
+The selected skill SHALL be rendered inside the conversation input's text area, at its inline-start on the first text line — not outside the input and not below the text area — and the user SHALL be able to keep typing in the same input while the skill is selected. Typed text SHALL start after the `ChatSkill` element on the first line and wrapped lines SHALL use the text area's full width (the text flows around the element; lines after an explicit line break also use the full width). While the slot is present the input's placeholder SHALL be suppressed (the slot itself says what the input holds); the text area SHALL gain no extra block padding while the slot is present, so slot content whose height is one label line (the `ChatSkill` chip, which carries no vertical padding of its own) aligns with the first text line exactly. The mechanism SHALL be a generic `inlineStartSlot?: ReactNode` prop on `Input` (forwarded by `ConversationInput` and `EditMessageInput`) whose content the app supplies — `libs/conversation-input` SHALL NOT know about skills; the flow-around mechanics (slot positioning and the first-line indent of the text) SHALL be the lib's own generic behavior driven by the slot's measured width, using logical properties so RTL mirrors automatically. The measured width SHALL be re-established every time the slot's element (re)mounts — not only when the `inlineStartSlot` prop first becomes non-`null` — so a mount/unmount cycle driven by an unrelated ancestor (for example the text area being replaced by the voice-recording bar for the duration of a recording, per `voice-recording-ui`) never leaves a stale or zero indent behind once the slot reappears. `Input` SHALL also expose `onInlineStartRemove?: () => void`, invoked when Backspace is pressed with the caret collapsed at position 0 while the slot is present — the slot's remove gesture (at position 0 a Backspace has nothing to delete backwards, so the keypress is suppressed and redirected to the slot; no text is affected) — and forwarded by `ConversationInput` and `EditMessageInput`. The slot's presence SHALL count as sendable content on its own: while a skill is selected the send button SHALL be mounted and enabled and the configured send gesture SHALL send even with an empty draft (the send-time payload carrying the skill is the `skill-message-payload` capability's concern), except while the selected skill is unsupported — in that state the send button stays mounted but disabled per the error-state requirement above. Removing the skill with an empty draft SHALL disable sending again. The part-1 `selectedEntities`/`selectedEntityChipLabels` props and the `SelectedEntityChips` component SHALL be removed in the same change (the selected skill was their only consumer); all call sites migrate to the slot.
 
 #### Scenario: Skill inside the input with typed text
 
@@ -255,6 +255,11 @@ The selected skill SHALL be rendered inside the conversation input's text area, 
 
 - **WHEN** the document direction is RTL and a skill is selected
 - **THEN** the `ChatSkill` element renders at the inline-start (right) edge of the text area and the first text line indents from the same edge
+
+#### Scenario: Slot indent survives being hidden behind the voice-recording bar
+
+- **WHEN** a skill is selected while a voice recording is active (the slot's element is unmounted because the voice bar replaces the text area for the recording's duration) and the recording then stops
+- **THEN** the slot's width is re-measured once its element remounts, and the first text line's indent matches that width — the `ChatSkill` element and the transcribed text do not overlap
 
 #### Scenario: No domain knowledge in the lib
 
@@ -379,6 +384,17 @@ All new skill-selection UI SHALL use logical Tailwind classes (`ms-*`/`me-*`/`ps
 - The tooltip's "View details" button SHALL take its accessible name from its visible label (`skillSelector.viewDetailsLabel`); the row's accessible name SHALL come from the skill name alone, never from tooltip content. The `ChatSkill` button's accessible name SHALL be its visible `/{name}` label.
 - The `ChatSkill` button SHALL be reachable via Tab and announced by its visible `/{name}` label. Removal SHALL be the Backspace-at-position-0 gesture in the text area — keyboard-operable by construction, needing no separate control or accessible name of its own.
 - The slash dropdown's menu region SHALL carry an accessible name (the host-supplied "Skills" label), its rows SHALL be keyboard-reachable, and the "No matching skills" state SHALL be announced through an `aria-live` status region.
+- The slash dropdown SHALL behave as a list autocomplete driven from the text area (issue #8992). Its list SHALL be a `role="listbox"` named by the "My Collection" header and each row a `role="option"`; the text area keeps its `textbox` role and carries `aria-autocomplete="list"`, `aria-controls` (the listbox, while open), and `aria-activedescendant` (the active row). With the dropdown open, ArrowDown/ArrowUp SHALL move the active row through the listed skills, wrapping at both ends and starting from the first/last row, instead of navigating message history; the active row SHALL carry `aria-selected="true"` and the row highlight, and SHALL reset whenever the query changes. Enter SHALL take the active row exactly as a click does (consume the `/query`, select the skill, return focus to the text area); with no row active, the send gesture SHALL do nothing — the `/query` never reaches the model while the dropdown is open. Escape SHALL keep closing without sending. Tab SHALL move between rows: a row's star and its tooltip's "View details" stay clickable but leave the Tab sequence (both stay keyboard-reachable from the Add-menu panel, whose rows are unchanged).
+
+#### Scenario: Keyboard selection from the slash dropdown
+
+- **WHEN** the dropdown is open over `/a`, the user presses ArrowDown and then Enter
+- **THEN** the first listed skill is selected as the chip, the `/a` text is removed, focus stays in the text area, and no message is sent
+
+#### Scenario: Enter with no active row
+
+- **WHEN** the dropdown is open over `/a` with no row active and the user presses Enter
+- **THEN** nothing is sent, no skill is selected, and the text and the dropdown stay as they were
 
 #### Scenario: Keyboard removal of a selected skill
 
@@ -490,3 +506,48 @@ Sending SHALL be disabled while this state holds: the send button SHALL remain m
 - **WHEN** the chip is in the error state and the user removes the skill with the Backspace-at-position-0 gesture
 - **THEN** the chip disappears and sending follows the ordinary sendable-content rules for the remaining draft
 
+Selection SHALL be determined by the stored skill reference, not a successful catalog lookup. The overlay SHALL consume the shared pure capability predicate under its existing enabled-flow gate. An unresolved selected reference SHALL retain a fallback chip, unsupported state, and removal gesture.
+
+#### Scenario: Unresolved selected reference blocks unsupported sending
+
+- **WHEN** the enabled chat flow has a selected URL absent from every catalog pool and deployment support is not true
+- **THEN** the fallback chip displays the same unsupported message and sending remains disabled until removal or a supporting deployment is selected
+
+### Requirement: Controlled skill field is reusable outside chat inputs
+
+`@epam/ai-dial-skills` SHALL export `SkillSelectorField` and its props with controlled `value?: string`, `onChange`, optional resolved `displayName`, `isSkillsSupported`, disabled/invalid state, label/error IDs, injected labels, and `renderCatalogContent(onSelect, onClose)`. It SHALL accept host-resolved `favorites`, optional favorite/details callbacks, and `renderOverlay` for mobile presentation. It SHALL own popup/focus state and the search query only, reuse the existing skills catalog modal, and never import application providers or construct network requests. It SHALL display the saved reference while metadata is unavailable, replace selection rather than append, and provide an explicit accessible remove action. Browse entry points SHALL be disabled when deployment support is not true; an existing selected value SHALL remain removable.
+
+`@epam/ai-dial-chat-shared` SHALL export a pure `isSkillSelectionUnsupported(skillUrl, isSkillsSupported)` predicate; the controlled field, chat overlay hook, and scheduler validator SHALL use it. The predicate SHALL depend on reference presence and strict support, not resolved metadata or feature flags. The chat hook SHALL apply its existing enabled-flow gate around the result. Existing overlay API signatures SHALL remain compatible.
+
+#### Scenario: Controlled external hydration
+
+- **WHEN** a host changes the field value from one saved reference to another while catalog data is unavailable
+- **THEN** the displayed selection follows the new prop immediately without waiting for a second selection state to synchronize
+
+#### Scenario: Choose a favorite or browse the catalog
+
+- **WHEN** the supported field is activated
+- **THEN** an input styled consistently with the model/agent selector opens searchable host-supplied favorites, an empty-state hint when appropriate, and a Browse action
+- **AND** selecting a favorite replaces the controlled reference and closes the panel; Browse opens the existing skill-only catalog
+- **AND** search matches use the shared `Highlight` component and no matches are announced as a live status
+
+#### Scenario: Clear without opening the picker
+
+- **WHEN** the trailing clear button is activated
+- **THEN** `onChange(undefined)` removes the selection without opening the dropdown or catalog
+- **AND** clearing remains available when the model cannot use skills, unless the entire field is disabled
+
+#### Scenario: Mobile picker presentation
+
+- **WHEN** a host supplies `renderOverlay` for a mobile sheet
+- **THEN** the same favorites, search, Browse, and selection behavior is rendered in that sheet, with keyboard dismissal and focus return
+
+#### Scenario: Unsupported reference remains removable
+
+- **WHEN** a selected reference has no catalog item and support is false
+- **THEN** the field reports unsupported state, displays the reference, disables browsing, and still supports removal
+
+#### Scenario: Keyboard and search behavior is retained
+
+- **WHEN** a user browses and filters catalog skills using the keyboard
+- **THEN** the injected catalog retains its shared `Highlight` matched-text rendering and selection semantics, Escape restores focus, and selection invokes `onChange` once with one reference

@@ -18,8 +18,10 @@ import type {
 import {
   MDMessageViewer,
   AttachmentType,
+  MIMEType,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
+import { parsePdfPageReference } from '@epam/ai-dial-quotations';
 import {
   ScheduledTaskDetailsSummary,
   ScheduledTaskRunHistoryList,
@@ -55,6 +57,7 @@ import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useScheduledTaskSkillDisplayName } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayName';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   ActiveScheduledTaskDetailState,
@@ -91,6 +94,9 @@ const ConversationSourcesPanelContainer: FC = () => {
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const activeScheduledTask = useActiveScheduledTask();
+  const skillDisplayName = useScheduledTaskSkillDisplayName(
+    activeScheduledTask.task?.skillUrl,
+  );
   const { items: deploymentItems } = useDeployments();
   const { conversations } = useConversations();
   const navigate = useNavigate();
@@ -185,6 +191,8 @@ const ConversationSourcesPanelContainer: FC = () => {
       <ScheduledTaskDetailsSummary
         modelLabel={t(ScheduledTasksI18nKeys.ConversationPanelModelLabel)}
         instructionsLabel={t(ScheduledTasksI18nKeys.CreateInstructionsLabel)}
+        skillLabel={t(ScheduledTasksI18nKeys.CreateSkillLabel)}
+        skillDisplayName={skillDisplayName}
         modelDisplayName={modelDisplayName as string}
         instructionsMarkdown={activeScheduledTask.task?.prompt}
         renderInstructions={(markdown) => (
@@ -253,6 +261,34 @@ const ConversationSourcesPanelContainer: FC = () => {
         !isExternalSourcePreviewable(contentType, url)
       ) {
         window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      /* A `…pdf#page=N` source goes through the canvas's reference-PDF
+       * resolver (it only runs for `referenceUrl` with no `url`), which keeps
+       * the page; the generic PDF path strips the fragment and opens page 1. */
+      const pageReference = parsePdfPageReference(url);
+      if (pageReference?.page != null) {
+        const pageAttachment: DisplayAttachment = {
+          id: url,
+          name: title,
+          contentType: MIMEType.PDF,
+          type: AttachmentType.File,
+          status: RequestStatus.Idle,
+          referenceUrl: url,
+        };
+        if (await openAttachmentCanvas(pageAttachment)) {
+          handleClose();
+          return;
+        }
+        if (isDialFileId(pageReference.baseUrl)) {
+          downloadAttachment({
+            ...pageAttachment,
+            referenceUrl: undefined,
+            url: pageReference.baseUrl,
+          });
+        } else {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
         return;
       }
       const resolvedContentType = resolveExternalSourceContentType(

@@ -101,7 +101,7 @@ export const ImportExportQueueRow: FC<ImportExportQueueRowProps> = ({
       )}
       {job.status === ConversationTransferJobStatus.Warning && (
         <Tooltip
-          tooltip={labels.jobWarningMessage(job.warningCode)}
+          tooltip={labels.jobWarningMessage(job.warningCode, job.warningNames)}
           contentClassName="!z-[80]"
           asChild
         >
@@ -109,7 +109,10 @@ export const ImportExportQueueRow: FC<ImportExportQueueRowProps> = ({
           <span
             className={STATUS_SLOT_CLASS}
             role="img"
-            aria-label={labels.jobWarningMessage(job.warningCode)}
+            aria-label={labels.jobWarningMessage(
+              job.warningCode,
+              job.warningNames,
+            )}
             tabIndex={0}
           >
             <IconAlertTriangleFilled

@@ -64,7 +64,6 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
     executedLabel: 'Executed',
     stepsLabel: (count) => `${count} steps`,
     failedCountLabel: (failedCount) => `${failedCount} failed`,
-    runningStepLabel: (current, total) => `Step ${current} of ${total}`,
   }}
   styles={{ panel: { stageTextColor: 'var(--text-secondary)' } }}
 />;
@@ -109,3 +108,34 @@ import type { Stage } from '@epam/ai-dial-chat-shared';
 
 A stage with `status: null` is still executing; `isStreaming` controls whether
 that unresolved state is animated with a live spinner.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key           | Class                                   | Element                                                       |
+| ------------- | --------------------------------------- | ------------------------------------------------------------- |
+| `panel`       | `dial-conversation-stages-panel`        | The stages panel root, which carries the themed CSS variables |
+| `group`       | `dial-conversation-stages-group`        | The root of a `CollapsedGroup`                                |
+| `groupToggle` | `dial-conversation-stages-group-toggle` | Its summary line, which expands and collapses the group       |
+
+```tsx
+import { CONVERSATION_STAGES_CLASS } from '@epam/ai-dial-conversation-stages';
+
+CONVERSATION_STAGES_CLASS.groupToggle; // 'dial-conversation-stages-group-toggle'
+```
+
+The retry-attempt row inside `StagesPanel` has its own collapse control and
+carries no public class: it is an internal row of the panel rather than the
+group a host collapses.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

@@ -16,12 +16,20 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-catalog/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.14.2 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.19 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
-- `ag-grid-community@35.3.0`
+
+`ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
+dependencies and install transitively; they are not host peers.
 
 Both `@epam/ai-dial-chat-shared` and `@epam/ai-dial-publish-panel` are kept
 external by the library build — a consumer's own bundler resolves them, so
@@ -57,11 +65,62 @@ pulls in the full publish/editor UI as before.
 
 ## Components
 
+### DeploymentSelectorField
+
+`DeploymentSelectorField` is a controlled, provider-free deployment picker
+for hosts that already resolved their display records. It does not fetch,
+persist favorites, open a catalog modal, or mutate a conversation. Supply
+those behaviours through callbacks or `renderOverlay` / `renderPanel` slots.
+
+```tsx
+import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
+
+<DeploymentSelectorField
+  selectedId={selectedId}
+  records={[{ id: 'model-a', label: 'Model A' }]}
+  placeholder="Choose a model"
+  labels={{
+    searchPlaceholder: 'Search models',
+    searchAriaLabel: 'Search models',
+    emptyLabel: 'No models',
+    errorLabel: 'Could not load models',
+    browseLabel: 'Browse',
+  }}
+  labelledById="model-label"
+  onSelect={setSelectedId}
+  onBrowse={openCatalog}
+/>;
+```
+
+Omit `open` for local popup state, or provide `open` and `onOpenChange` for a
+controlled overlay. Enter, Space, and pointer activation open the picker;
+selection and Escape close it, restoring focus to the combobox. Result labels
+use the UI Kit `Highlight` component for the current search query. Records can
+also supply a decorative `icon` and a `description`, both rendered in the row.
+
+`renderPanel(onClose)` replaces the default searchable list. The resulting panel
+is passed to `renderOverlay(panel, open, onClose)` when a host supplies a sheet;
+otherwise it appears in the default dropdown. These slots compose together.
+Pass `ariaHasPopup="dialog"` for a sheet (the default is `"listbox"`). The same
+field handles selection display, disabled state and keyboard/pointer activation
+in both layouts; favorites and catalog integration remain host-owned panel content.
+
 The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
 keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;
 CSS/SCSS imports remain side effects. Load catalog UI through a host lazy boundary.
 
 ### Catalog
+
+The card view renders first by default. Once data is available, `Catalog`
+prepares the hidden list table during browser idle time using a React
+transition (with a short timer fallback when idle callbacks are unavailable).
+The first list-view click then reuses that instance. Clicking before preparation
+finishes opens the list immediately; it does not wait for the idle callback.
+Hidden views are inert, and pending preparation is cancelled when loading
+resumes, results become empty, or the catalog unmounts.
+During preparation the table keeps its real width inside an invisible,
+zero-height wrapper, so AG Grid can lay out its columns without extending the
+page. After the first visit, the inactive table uses `display: none`.
 
 Root component. Manages all state internally (search, filters, view mode, selected item) and renders the toolbar and content area.
 
@@ -190,9 +249,61 @@ navigation (a category tree, etc.).
 />
 ```
 
+#### Custom empty state
+
+By default, the Browse section renders a `PanelEmptyState` (an icon plus
+`titles.noResultsTitle`) when the current search/filter/tab combination
+matches nothing. Pass `renderEmptyState` to replace it with any node — e.g. a
+richer illustration, description, and a scoped "Create" call to action:
+
+```tsx
+import { Catalog, type CatalogEmptyStateContext } from '@epam/ai-dial-catalog';
+
+<Catalog
+  items={catalogItems}
+  favorites={favoriteItems}
+  renderEmptyState={({
+    query,
+    activeTab,
+    hasTopicFilters,
+    isMyAppsActive,
+  }: CatalogEmptyStateContext) =>
+    query ? (
+      <NoResultsIllustration query={query} />
+    ) : (
+      <EmptyCollectionIllustration
+        activeTab={activeTab}
+        isMyAppsActive={isMyAppsActive}
+        hasTopicFilters={hasTopicFilters}
+      />
+    )
+  }
+/>;
+```
+
+`renderEmptyState` is called only once the result set that would otherwise be
+handed to the active view (Grid or List) is actually empty — never while
+`isLoading` is `true`, and never while there are items to show — and it
+replaces both views' default empty state in the one content area they share,
+so only one instance of the returned node is ever mounted regardless of the
+current view mode. The context reflects `Catalog`'s live, resolved state,
+whether each field is managed internally or via the corresponding controlled
+prop (`activeTab`, `filterTopics`, `isMyAppsActive`). Returning `null` or
+`undefined` — or omitting the prop entirely — keeps the default empty state,
+including `titles.noResultsTitle`. Like `titles.noResultsTitle`, the callback
+runs on every render while the result set stays empty (e.g. on every
+keystroke of a query that keeps matching nothing), so keep it cheap.
+
+This prop only exists on `Catalog` — `CardGrid` and `ListView` keep their own
+built-in default empty state and gain no new prop, so a host composing its
+own layout from those exported components directly does not get the custom
+empty state for free.
+
 ### CardGrid
 
-Virtualized grid view of catalog cards.
+Virtualized grid view of catalog cards. Switching views preserves the hidden
+grid's measured layout and mounted cards. Hidden views ignore scroll/resize
+measurements until they become visible; unchanged visible rows are reused.
 
 ```tsx
 import { CardGrid } from '@epam/ai-dial-catalog';
@@ -261,10 +372,16 @@ virtualisation off, so `ListView` windows the rows itself: it hands the grid
 only the rows around the viewport and reserves the rest of the table's height
 with spacers. Rows are a fixed 60 px for that reason — a `styles.typography`
 override that changes a cell's line count would break the reserved height.
+Window changes render without row movement/fade animations or deferred cell
+drawing, and keep the column configuration stable while scrolling.
 
 Name, Folder and Tags share the spare width (Name takes twice the share of the
 other two), so widening the table widens the columns that carry variable-length
 values rather than only the name.
+
+Edge padding follows AG Grid's first/last displayed-column markers, including
+when switching tabs restores hidden columns. The Favorite header and star
+button share the same end inset; the star renderer fills the cell width.
 
 The Folder cell shows the deepest folder and keeps the full path in a tooltip
 and in the accessible name — a breadcrumb of the whole path collapses into
@@ -355,6 +472,107 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 See `DetailsPanelProps` (and its `texts` / `styles` overrides) in the Types
 section below; a skills-scoped wrapper lives in `@epam/ai-dial-skills`.
 
+#### The Manage menu, and the last action standing
+
+Secondary actions collect behind the header's `...` trigger: Edit, Download,
+Publish/Unpublish, Delete, "Revoke access", "Remove from My List", and Share
+where `isSharePrimary` returns `false`. When filtering leaves exactly one of
+them, it renders as a button in the action row instead and the trigger goes
+away — a menu of one costs a click for nothing and leaves the header looking
+empty until it is opened. A destructive action keeps its danger styling on
+the way across.
+
+Two entries resolve lazily off that trigger, so an item that could produce
+either keeps its menu whatever the lookup eventually says: `Unpublish` (an
+item with `onOpenUnpublish` that `isUnpublishVisible` does not reject) and
+"Revoke access" (an owned item with both `onRevokeShare` and
+`onFetchRecipientsCount`). Gating on the pending state instead would let the
+hover that starts a lookup turn the button back into the trigger under the
+pointer that was reaching for it. The menu likewise stays put while it is
+open.
+
+`Unpublish` is released from that hold for an item `isUnpublishVisible`
+returns `true` for: `DetailsPanel` requests that item's publish history as
+soon as it shows it, and once the history has resolved the lone `Unpublish`
+of a published copy renders as a button like any other last action. An item
+the rule is absent for keeps the hold.
+
+### LimitsTab
+
+The usage-limits list `DetailsPanel` renders on its `Limits` tab, exported so
+a host can render the same rows on another surface — the conversation input's
+usage popover in AI DIAL Chat is one. It takes a `CatalogItemLimits` value and
+renders `null` when `limits` is absent or every group has no rows.
+
+It is presentation-only: it parses and formats nothing, and it never sees a
+locale, a timezone, a raw timestamp, or a backend DTO. Every visible string on
+a row — the used/total figures, the value label, the spent caption, the reset
+line, and the `aria-valuetext` of each progress bar — is preformatted by the
+host. Capped rows get a progress bar whose fill turns warning at 75% of the
+limit and danger at 100%; a row with `isUnlimited` gets its `noteLabel`
+instead.
+
+```tsx
+import { LimitsTab } from '@epam/ai-dial-catalog';
+
+<LimitsTab
+  limits={{
+    groups: [
+      {
+        label: 'Token limits',
+        rows: [
+          {
+            label: 'Today',
+            used: 2500,
+            total: 10000,
+            usedLabel: '2.5K',
+            totalLabel: '10K',
+            valueLabel: '2.5K / 10K',
+            captionLabel: '$1.20 spent',
+            ariaLabel: 'Today: 2,500 of 10,000 used',
+            resetLabel: 'Resets Sep 16, 2026, 2:00 AM GMT+2',
+            resetIsoValue: '2026-09-16T00:00:00Z',
+            resetAriaLabel:
+              'Usage resets Sep 16, 2026, 2:00 AM Central European Summer Time',
+          },
+        ],
+      },
+    ],
+  }}
+  footerNote="View full usage limits"
+/>;
+```
+
+`resetLabel`, `resetIsoValue`, and `resetAriaLabel` are optional and behave as
+one trio: supply all three or none. When present the row renders a
+`<time dateTime={resetIsoValue}>` line under its label, hidden from the
+accessibility tree in favour of a visually-hidden sibling carrying
+`resetAriaLabel` — `<time>` has no implicit ARIA role, so `aria-label` on it is
+not reliably supported. Omit `resetAriaLabel` and the visible line stays its
+own accessible name. A row with none of the three renders exactly as it did
+before reset lines existed.
+
+`layout` (`LimitRowLayout`) picks the row arrangement and defaults to
+`LimitRowLayout.Inline`, which is what the catalog details panel renders: the
+label column sits beside a fixed-width column holding the used/total pair above
+a narrow progress bar. `LimitRowLayout.Stacked` puts the label and the value on
+one line, with a full-width progress bar and the reset caption beneath it, and
+colors the value with `valueDanger` once the row has reached its limit — the
+arrangement the AI DIAL Chat conversation-input popover uses in its narrow
+panel.
+
+```tsx
+import { LimitRowLayout, LimitsTab } from '@epam/ai-dial-catalog';
+
+<LimitsTab limits={limits} layout={LimitRowLayout.Stacked} />;
+```
+
+Typography and colors are overridable: `labelClassName`, `captionClassName`,
+`valueClassName`, `noteValueClassName`, `noteClassName`, `sectionClassName`,
+and `footerClassName` each default to a `dial-*-text` scale class, and
+`colors` (`LimitsTabColors`) maps to the CSS custom properties the stylesheet
+reads. See `LimitsTabProps` in the Types section.
+
 ## Enums
 
 ```tsx
@@ -370,6 +588,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   DetailsConfirmationVariant,
+  LimitRowLayout,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
@@ -433,14 +652,57 @@ disabled until the user picks one. Confirming calls
 removal is a request an administrator must approve, so the folder still reads
 as published afterwards.
 
-`onPublish(item, folderPath, rules, author)` receives the publication's display
-author as its fourth argument — the value the publish panel's Author field
-holds, already trimmed. Seed that field with `publishDefaultAuthor`: the
-library has no access to the signed-in user, so the host resolves its own
-display name and passes it in. An empty `author` is a valid state that never
-blocks submit; what it means is the host's decision (`apps/chat` omits the
-field from the request so the backend attributes the publication to the
-caller's own session name).
+`onPublish(item, folderPath, rules, author, publishCredentials)` receives the
+publication's display author as its fourth argument — the value the publish
+panel's Author field holds, already trimmed. Seed that field with
+`publishDefaultAuthor`: the library has no access to the signed-in user, so
+the host resolves its own display name and passes it in. An empty `author` is
+a valid state that never blocks submit; what it means is the host's decision
+(`apps/chat` omits the field from the request so the backend attributes the
+publication to the caller's own session name).
+
+The fifth argument is the credentials opt-in. The panel renders that checkbox
+only for a `Toolset` whose `credentials.authenticationType` is set and is not
+`ToolsetAuthenticationType.None`, and whose `credentials.userStatus` or
+`credentials.globalStatus` is `CredentialStatus.SignedIn` — access the
+publisher does not hold cannot be passed on. No host prop controls this; the
+decision is derived from the item the panel already has, and there is no role
+gate. For every other item the argument is always `false`. It is cleared on
+every open, including immediately after a publication that carried it.
+
+Its copy travels through the existing `publishLabels` prop as
+`credentialsLabel` and `credentialsHint`.
+
+`historySharedCredentialsLabel` travels the same way, for the marker
+`PublishHistoryList` puts on a past publication that carried shared
+credentials — but **it has no visible effect today**: `PublishPanel` keeps its
+versions-history section behind a `TODO`, so the marker (like
+`historyLoadingLabel` and `historyErrorLabel` beside it) only appears once
+that section is re-enabled. The data path is wired and unit-tested; supplying
+the label now simply means nothing else has to change then.
+
+```tsx
+<DetailsPanel
+  item={toolset}
+  isOpen
+  onClose={handleClose}
+  onPublish={async (item, folderPath, rules, author, publishCredentials) => {
+    await publishEntity(item, {
+      folderPath,
+      rules,
+      author,
+      publishCredentials,
+    });
+  }}
+  publishLabels={{
+    credentialsLabel: t('catalog.publish.credentialsLabel'),
+    credentialsHint: t('catalog.publish.credentialsHint'),
+    historySharedCredentialsLabel: t(
+      'catalog.publish.historySharedCredentials',
+    ),
+  }}
+/>
+```
 
 ```tsx
 <DetailsPanel
@@ -756,8 +1018,20 @@ import type {
   ToolDefinition,
   PricingRow,
   UsageLimitRow,
+  UsageLimitGroup,
+  UsageLimitProgressRow,
+  CatalogItemLimits,
+  LimitsTabProps,
+  LimitsTabColors,
 } from '@epam/ai-dial-catalog';
 ```
+
+`UsageLimitProgressRow` is one row of a `LimitsTab` group: `label`, `used`, and
+`total` are required, and everything else is an optional preformatted display
+string — `valueLabel`, `usedLabel`, `totalLabel`, `ariaLabel`, `noteLabel`,
+`captionLabel`, plus the `resetLabel` / `resetIsoValue` / `resetAriaLabel`
+trio described under `LimitsTab`. `isUnlimited` marks a row whose `total` is a
+sentinel rather than a cap, so it renders its note instead of a progress bar.
 
 ## Utilities
 
@@ -802,3 +1076,127 @@ host back to a previous `@epam/ai-dial-catalog` release:
 3. Reinstall (`npm install`) so the host's lockfile records every reverted package's previous
    resolved version and integrity hash, rather than a partial mix of pre- and post-change
    versions.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. A card's
+`aria-label` is the item's own name, so it was never usable as a selector
+either. Five elements carry a stable public class:
+
+| Key            | Class                        | Element                                                              |
+| -------------- | ---------------------------- | -------------------------------------------------------------------- |
+| `root`         | `dial-catalog-root`          | The catalog's `section` root, which carries the themed CSS variables |
+| `toolbar`      | `dial-catalog-toolbar`       | The toolbar above the results: title row, search, sort, view toggle  |
+| `card`         | `dial-catalog-card`          | One grid card, in every state — featured and selected are additive   |
+| `favoriteCard` | `dial-catalog-favorite-card` | One favorites card                                                   |
+| `listView`     | `dial-catalog-list-view`     | The list view's root: the bordered row box, or its empty state       |
+
+```tsx
+import { CATALOG_CLASS } from '@epam/ai-dial-catalog';
+
+CATALOG_CLASS.card; // 'dial-catalog-card'
+```
+
+```css
+.dial-catalog-card {
+  border-radius: 12px;
+}
+
+/* Everything inside a card is reached by descending from it. */
+.dial-catalog-card .dial-kit-tag {
+  text-transform: none;
+}
+```
+
+Both card kinds are a `CardShell` from
+[`@epam/ai-dial-ui-kit`](https://www.npmjs.com/package/@epam/ai-dial-ui-kit), so
+`dial-kit-card-shell` is on the same element — these classes are what tell a
+catalog card apart from any other card in the same host.
+
+### What has no class, and why
+
+The set is the catalog's layout skeleton, not one class per component. Card
+internals — the icon, the name, the topic tags, the featured chip — are reached
+by descending from the card's class, which keeps the contract small enough to
+stay accurate as the catalog's internals change.
+
+The virtualised grid box inside `CardGrid` is left out on purpose: its height is
+recomputed every scroll frame, so a host styling it would be fighting the
+virtualizer rather than the design.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.
+
+### ApplicationCredentials
+
+`ApplicationCredentials` renders application service credentials with the same
+`CredentialsRow`, identity/status icon and configured-key card used by toolset
+credentials management. It owns only form drafts, pending state, validation,
+offline-use checkbox state and removal confirmation. The host supplies normalized
+`ApplicationCredential[]`, localized `ApplicationCredentialsTexts`, and callbacks.
+It imports no API client, application DTO, i18n, routing, or authentication provider.
+
+```tsx
+import {
+  ApplicationCredentials,
+  CredentialStatus,
+  ToolsetAuthenticationType,
+} from '@epam/ai-dial-catalog';
+
+<ApplicationCredentials
+  services={[
+    {
+      id: 'finance',
+      name: 'Finance',
+      authenticationType: ToolsetAuthenticationType.ApiKey,
+      status: CredentialStatus.SignedOut,
+      canLogout: true,
+      canConsentToOfflineUsage: true,
+    },
+  ]}
+  onRetry={reloadCredentials}
+  onLogin={async (serviceId, { apiKey, offlineUsageConsent }) => {
+    const success = await login(serviceId, { apiKey, offlineUsageConsent });
+    if (success) await reloadCredentials();
+    return success;
+  }}
+  onLogout={async (serviceId) => {
+    await logout(serviceId);
+    await reloadCredentials();
+  }}
+/>;
+```
+
+The callback names in the example are host implementations. `onLogin` resolves
+`true` on success or `false` on cancellation; a rejection displays its user-facing
+error message and keeps the draft. `onLogout` runs only after confirmation.
+`canLogout` and `canConsentToOfflineUsage` default to false; a host can represent a
+non-removable redirect-based connection without exposing provider details. A
+`hasSharedCredentials` banner is informational. Status changes belong to the host:
+callbacks refresh and supply new service data. Key the component by application
+identity to reset drafts when switching applications.
+
+`isLoading` and `hasError` expose metadata loading/retry states. With no services,
+the default is no content; `showEmptyState` enables an explicit empty message.
+`ApplicationCredentialLoginParams` and `ApplicationCredentialsProps` are exported
+alongside the service and text models. Text overrides use English defaults and the
+same credentials CSS variables as the toolset rows.
+
+`Catalog` and `DetailsPanel` accept `renderCredentials?: (item: CatalogItem) => ReactNode`.
+The slot appears below the item header in the open, editable, normal details view.
+A host adapter can render `ApplicationCredentials` here and reuse it in another
+surface. The host decides which items qualify and supplies API/authentication
+behavior and translations; `useApplicationCredentials` from
+`@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients.
+Existing toolset `onLogin` / `onLogout` contracts are unchanged.
+
+The public `DeploymentSelectorField` restores focus through the input's
+supported `onFocus` event and never requires a private input ref or DOM query.
+Its keyboard and Browse behavior is exercised by the packed scheduler consumer.

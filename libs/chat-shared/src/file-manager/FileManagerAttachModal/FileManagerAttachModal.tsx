@@ -4,9 +4,9 @@ import {
   type DialFile,
   type DialFileAcceptType,
   type FileManagerGridRow,
-  type ToolbarOptions,
+  type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
-import { Popup, PopupSize, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import { ButtonVariant, Popup, PopupSize } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, type FC } from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import type { AttachResult } from '../attach-result';
@@ -41,8 +41,8 @@ export interface FileManagerAttachModalProps {
   isAnyOperationInProgress: boolean;
   /** Currently active tab. */
   activeTab: DialFileManagerTabs;
-  /** Tab configuration for the toolbar. */
-  tabs: ToolbarOptions['tabs'];
+  /** Filter chips scoping the tree and the grid, rendered above the folder tree. */
+  tabs: FileTreeOptions['tabs'];
   /**
    * Called when the user switches tabs.
    * The host is responsible for resetting `selectedPaths` to an empty set.
@@ -103,6 +103,8 @@ export interface FileManagerAttachModalProps {
   allowedFileTypes?: DialFileAcceptType[];
   /** Whether to auto-select items immediately after upload. Defaults to `false`. */
   autoSelectUploadedItems?: boolean;
+  /** Pre-translated message shown by the ui-kit when a newly-selected file exceeds `maxSelectableFileSize`. Omit to leave upload-size validation unrestricted regardless of `maxSelectableFileSize`. */
+  oversizedUploadMessage?: string;
 }
 
 /** File-manager modal with Popup chrome and an Attach footer. Selection and tab state are controlled by the host. */
@@ -133,6 +135,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
     unsupportedFileTypeTooltip,
     allowedFileTypes,
     autoSelectUploadedItems = false,
+    oversizedUploadMessage,
   }) => {
     const { items, isLoading, searchResults } = controller;
 
@@ -286,21 +289,19 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
         size={PopupSize.Lg}
         className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"
         onClose={onClose}
-        footer={
-          <div className="flex justify-end px-6 py-4">
-            <PrimaryButton
-              label={attachLabel}
-              disabled={
-                selectedFiles.length === 0 ||
-                isLoading ||
-                isAnyOperationInProgress
-              }
-              onClick={handleAttach}
-            />
-          </div>
-        }
+        mainButtons={[
+          {
+            label: attachLabel,
+            variant: ButtonVariant.Primary,
+            disabled:
+              selectedFiles.length === 0 ||
+              isLoading ||
+              isAnyOperationInProgress,
+            onClick: handleAttach,
+          },
+        ]}
       >
-        <div className="flex min-h-0 flex-col">
+        <div className="flex h-full min-h-0 flex-col">
           <DialFileManagerShell
             controller={controller}
             labels={shellLabels}
@@ -317,6 +318,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
             isRowSelectable={isRowSelectable}
             getDisabledTooltip={getDisabledTooltip}
             unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
+            oversizedUploadMessage={oversizedUploadMessage}
           />
         </div>
       </Popup>

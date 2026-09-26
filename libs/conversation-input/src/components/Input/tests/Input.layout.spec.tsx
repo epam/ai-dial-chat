@@ -1,7 +1,7 @@
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ActionRowLayout } from '../../../models/Input';
 import { Input } from '../Input';
 
 const { mockUseIsMobile } = vi.hoisted(() => ({
@@ -24,10 +24,21 @@ const getParent = (element: Element): HTMLElement =>
   // eslint-disable-next-line testing-library/no-node-access
   element.parentElement as HTMLElement;
 
+/*
+ * `Input` wraps its textarea in a permanent `relative` positioning div (the
+ * highlighted-mention-run overlay's anchor) one level up from the textarea
+ * itself — present unconditionally, specifically so that div's appearance
+ * never depends on live state (a mention being added/removed mid-draft), or
+ * the textarea would unmount and remount every time that state flipped. So
+ * the "cell" these tests care about is two levels up, not one.
+ */
+const getTextareaCell = (textarea: Element): HTMLElement =>
+  getParent(getParent(textarea));
+
 const expectTextareaOwnsItsRow = (): void => {
   const textarea = screen.getByRole('textbox');
   const addButton = screen.getByLabelText('Add');
-  const textareaCell = getParent(textarea);
+  const textareaCell = getTextareaCell(textarea);
 
   /* The textarea sits in a cell of its own — the + button is not in it. */
   expect(textareaCell.contains(addButton)).toBe(false);
@@ -66,20 +77,20 @@ describe('Input — layout', () => {
     expectTextareaOwnsItsRow();
   });
 
-  it('does not reflow when the message grows to several lines', async () => {
+  it('does not reflow when the message grows to several lines', () => {
     render(<Input />);
     expectTextareaOwnsItsRow();
 
     const textarea = screen.getByRole('textbox');
-    const textareaCell = getParent(textarea);
+    const textareaCell = getTextareaCell(textarea);
     const addButton = screen.getByLabelText('Add');
     const controlsRow = getParent(addButton);
 
-    await userEvent.type(textarea, 'first line{shift>}{enter}{/shift}second');
+    fireEvent.change(textarea, { target: { value: 'first line\nsecond' } });
 
     expect((textarea as HTMLTextAreaElement).value).toContain('\n');
     /* Same nodes in the same relationship — nothing moved. */
-    expect(getParent(screen.getByRole('textbox'))).toBe(textareaCell);
+    expect(getTextareaCell(screen.getByRole('textbox'))).toBe(textareaCell);
     expect(getParent(screen.getByLabelText('Add'))).toBe(controlsRow);
     expectTextareaOwnsItsRow();
   });
@@ -113,5 +124,100 @@ describe('Input — layout', () => {
     ).toBeTruthy();
     /* The chips sit in their own cell, not inside the trailing actions. */
     expect(getParent(chip).contains(trailingAction)).toBe(false);
+  });
+  describe('inline action row', () => {
+    it('puts the add button before the textarea, in the same row', () => {
+      render(<Input actionRowLayout={ActionRowLayout.Inline} />);
+
+      const textarea = screen.getByRole('textbox');
+      const addButton = screen.getByLabelText('Add');
+
+      /* Same row as the textarea cell — the row no longer wraps. */
+      expect(getParent(getTextareaCell(textarea)).contains(addButton)).toBe(
+        true,
+      );
+      /*
+       * The add button comes first in the DOM, so the tab order matches the
+       * visual order without any `order-*` utility.
+       */
+      expect(
+        addButton.compareDocumentPosition(textarea) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('falls back to the stacked layout on mobile', () => {
+      mockUseIsMobile.mockReturnValue(true);
+      render(<Input actionRowLayout={ActionRowLayout.Inline} />);
+
+      expectTextareaOwnsItsRow();
+    });
+
+    it('keeps the inline layout below the desktop breakpoint when the host opts in', () => {
+      mockUseIsMobile.mockReturnValue(true);
+      render(
+        <Input
+          actionRowLayout={ActionRowLayout.Inline}
+          isInlineActionRowAllowedBelowDesktop
+        />,
+      );
+
+      const textarea = screen.getByRole('textbox');
+      const addButton = screen.getByLabelText('Add');
+
+      /* Same row as the textarea cell, as in the desktop inline case above. */
+      expect(getParent(getTextareaCell(textarea)).contains(addButton)).toBe(
+        true,
+      );
+    });
+
+    it('ignores the opt-in while the layout is stacked', () => {
+      mockUseIsMobile.mockReturnValue(true);
+      render(
+        <Input
+          actionRowLayout={ActionRowLayout.Stacked}
+          isInlineActionRowAllowedBelowDesktop
+        />,
+      );
+
+      expectTextareaOwnsItsRow();
+    });
+
+    it('moves the tool chips out of the action row', () => {
+      render(
+        <Input
+          actionRowLayout={ActionRowLayout.Inline}
+          toolsMenuItems={[buildTool('web', 'Web Search')]}
+          onToolToggle={vi.fn()}
+        />,
+      );
+
+      const chip = screen.getByRole('button', { name: 'Web Search' });
+      const addButton = screen.getByLabelText('Add');
+      /* The textarea cell's parent is the action row — see the helper above. */
+      const actionRow = getParent(getTextareaCell(screen.getByRole('textbox')));
+
+      expect(actionRow.contains(chip)).toBe(false);
+      expect(actionRow.contains(addButton)).toBe(true);
+      /* The chips row comes before the action row. */
+      expect(
+        chip.compareDocumentPosition(addButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('keeps the tool chips inside the action row when stacked', () => {
+      render(
+        <Input
+          toolsMenuItems={[buildTool('web', 'Web Search')]}
+          onToolToggle={vi.fn()}
+        />,
+      );
+
+      const chip = screen.getByRole('button', { name: 'Web Search' });
+      const actionRow = getParent(getTextareaCell(screen.getByRole('textbox')));
+
+      expect(actionRow.contains(chip)).toBe(true);
+    });
   });
 });

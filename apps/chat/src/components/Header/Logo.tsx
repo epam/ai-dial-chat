@@ -1,6 +1,7 @@
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatI18nKeys } from '../../constants/translation-keys';
+import { useCelebration } from '../../context/CelebrationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getIconPath } from '../../utils/icon-path';
 
@@ -9,6 +10,7 @@ import { getIconPath } from '../../utils/icon-path';
  */
 const Logo: FC = () => {
   const { t } = useTranslation();
+  const { event } = useCelebration();
   const { currentThemeLogo, currentThemeFavicon } = useTheme();
 
   if (!currentThemeLogo && !currentThemeFavicon) {
@@ -20,7 +22,7 @@ const Logo: FC = () => {
       {currentThemeFavicon && (
         <span
           style={{
-            backgroundImage: `url(${getIconPath(currentThemeFavicon)})`,
+            backgroundImage: `url(${event?.iconUrl ?? getIconPath(currentThemeFavicon)})`,
           }}
           className="h-[32px] w-[32px] bg-contain bg-center bg-no-repeat desktop:hidden"
         />
@@ -28,7 +30,7 @@ const Logo: FC = () => {
       {currentThemeLogo && (
         <span
           style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
-          className="hidden h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat desktop:block"
+          className="hidden h-[48px] min-w-[125px] bg-contain bg-center bg-no-repeat desktop:block"
         />
       )}
     </a>

@@ -6,28 +6,49 @@ import styles from './ScheduledTaskConfigurationSection.module.scss';
 /* Reads the `--stdv-subtitle-text` var the parent ScheduledTaskDetailView
  * sets on its root, so the label color stays overridable through the view's
  * `styles.colors.subtitleText` without this section taking a color prop. */
-/** Instructions field: the task's prompt markdown, rendered by `renderInstructions` or the shared markdown viewer; the rendering context owns the section title. */
+/** Optional skill and instructions fields; the rendering context owns the section title. */
 export const ScheduledTaskConfigurationSection: FC<
   ScheduledTaskConfigurationSectionProps
 > = ({
+  skillLabel,
+  skillDisplayName,
   instructionsLabel,
   instructionsMarkdown,
   renderInstructions,
   fieldLabelClassName = 'dial-tiny-text',
 }) => (
-  <div
-    role="group"
-    aria-label={instructionsLabel}
-    className="flex flex-col gap-1"
-  >
-    <span className={mergeClasses(fieldLabelClassName, styles.subtitleText)}>
-      {instructionsLabel}
-    </span>
-    {instructionsMarkdown &&
-      (renderInstructions ? (
-        renderInstructions(instructionsMarkdown)
-      ) : (
-        <MDMessageViewer content={instructionsMarkdown} />
-      ))}
+  <div className="flex min-w-0 flex-col gap-5">
+    {skillDisplayName && (
+      <div
+        role="group"
+        aria-label={skillLabel}
+        className="flex min-w-0 flex-col gap-1"
+      >
+        <span
+          className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
+        >
+          {skillLabel}
+        </span>
+        <p className="whitespace-normal break-all">{skillDisplayName}</p>
+      </div>
+    )}
+    {instructionsMarkdown && (
+      <div
+        role="group"
+        aria-label={instructionsLabel}
+        className="flex min-w-0 flex-col gap-1"
+      >
+        <span
+          className={mergeClasses(fieldLabelClassName, styles.subtitleText)}
+        >
+          {instructionsLabel}
+        </span>
+        {renderInstructions ? (
+          renderInstructions(instructionsMarkdown)
+        ) : (
+          <MDMessageViewer content={instructionsMarkdown} />
+        )}
+      </div>
+    )}
   </div>
 );

@@ -13,7 +13,6 @@ The system SHALL expose `GET /api/v1/files/shared` in `apps/chat-api/src/files/f
 - **HTTP method / route**: `GET /api/v1/files/shared`
 - **operationId**: `listSharedFiles` → generated SDK method `filesApi.listSharedFiles(...)`
 - **Auth**: session cookie; BFF forwards the bearer token to DIAL Core
-- **Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - **Request content-type**: none (query params only)
 - **Response content-type**: `application/json`
 
@@ -75,7 +74,6 @@ The system SHALL expose `GET /api/v1/files/public` in `apps/chat-api/src/files/f
 - **HTTP method / route**: `GET /api/v1/files/public`
 - **operationId**: `listPublicFiles` → generated SDK method `filesApi.listPublicFiles(...)`
 - **Auth**: session cookie
-- **Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - **Request content-type**: none (query params only)
 - **Response content-type**: `application/json`
 

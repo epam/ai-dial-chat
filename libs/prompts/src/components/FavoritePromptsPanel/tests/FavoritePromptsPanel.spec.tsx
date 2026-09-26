@@ -1,9 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PROMPTS_CLASS } from '../../../constants/public-class-names';
 import type { FavoritePromptItem } from '../../../models/favorite-prompt-item';
 import { FavoritePromptsPanel } from '../FavoritePromptsPanel';
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const makeItem = (
   overrides: Partial<FavoritePromptItem> = {},
@@ -43,7 +48,7 @@ describe('FavoritePromptsPanel', () => {
   it('shows the "Browse" button even when there are no favorites', () => {
     renderPanel({ favorites: [] });
 
-    expect(screen.getByRole('button', { name: 'Browse' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Browse' })).toBeTruthy();
   });
 
   it('renders a favorite row with its name and a pressed star toggle', () => {
@@ -79,13 +84,15 @@ describe('FavoritePromptsPanel', () => {
   });
 
   it('calls onToggleFavorite with the id once the exit animation finishes', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ delay: null });
     const onToggleFavorite = vi.fn();
     renderPanel({
       favorites: [makeItem({ id: 'prompt-2' })],
       onToggleFavorite,
     });
 
-    await userEvent.click(
+    await user.click(
       screen.getByRole('button', { name: 'Remove from favorites' }),
     );
 
@@ -98,12 +105,13 @@ describe('FavoritePromptsPanel', () => {
     const onBrowse = vi.fn();
     renderPanel({ onBrowse });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
 
     expect(onBrowse).toHaveBeenCalledOnce();
   });
 
   it('renders the description in the row tooltip when a described row is hovered', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     renderPanel({
       favorites: [makeItem({ description: 'Summarizes long text' })],
     });
@@ -114,11 +122,30 @@ describe('FavoritePromptsPanel', () => {
      * user-event's hover on the inner row button never reaches it — dispatch
      * the enter event directly instead.
      */
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Summarizer' }));
+    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: 'Summarizer' }));
 
-    /* The kit opens the tooltip after its 400 ms hover-open delay. */
+    expect(await screen.findByText('Summarizes long text')).toBeTruthy();
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('FavoritePromptsPanel — public class names', () => {
+  it('stamps the panel root', () => {
+    renderPanel();
+
     expect(
-      await screen.findByText('Summarizes long text', {}, { timeout: 2000 }),
+      closestWithClass(
+        screen.getByText('My Collection'),
+        PROMPTS_CLASS.favoritesPanel,
+      ),
     ).toBeTruthy();
   });
 });

@@ -1,4 +1,8 @@
-import type { CustomVisualizer } from '@epam/ai-dial-chat-shared';
+import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
+import type {
+  ApplicationVisualizerRegistry,
+  CustomVisualizer,
+} from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   FC,
@@ -10,7 +14,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { AnnouncementItem } from '../models/announcement';
 import { getClientConfig } from '../server-api/app-config.api';
 import { AuthStatus } from '../types/auth-status';
 import { UserConfigStatus } from '../types/user-config-status';
@@ -19,11 +22,14 @@ import { useUser } from './auth/UserContext';
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
+const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
 
 export interface AppConfigState {
   status: UserConfigStatus;
   features: Record<string, boolean>;
   config: {
+    activeEventId: string | null;
+    aiTextRefinementAvailable?: boolean;
     appVersion: string;
     asrModelId: string | null;
     transcribeSizeLimitBytes: number;
@@ -32,17 +38,22 @@ export interface AppConfigState {
     mcpAppSandboxUrl: string | null;
     mcpAppTheme: 'light' | 'dark' | null;
     mcpAppUserAgent: string | null;
+    mcpAppHostName: string | null;
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
+    allowedConnectOrigins: string[];
     enabledUiFeatures: string[] | null;
     announcementHtml: string | null;
     announcementTitle: string | null;
     announcementDescription: string | null;
-    announcements: AnnouncementItem[];
+    announcements: AnnouncementListItem[];
+    welcomeScreenDescription: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
+    applicationVisualizers: ApplicationVisualizerRegistry;
     publicationFilterSources: string[];
+    maxAttachmentFileSizeBytes: number;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -51,6 +62,8 @@ const INITIAL_STATE: AppConfigState = {
   status: UserConfigStatus.Loading,
   features: {},
   config: {
+    activeEventId: null,
+    aiTextRefinementAvailable: false,
     appVersion: '',
     asrModelId: null,
     transcribeSizeLimitBytes: DEFAULT_TRANSCRIBE_SIZE_LIMIT,
@@ -59,17 +72,22 @@ const INITIAL_STATE: AppConfigState = {
     mcpAppSandboxUrl: null,
     mcpAppTheme: null,
     mcpAppUserAgent: null,
+    mcpAppHostName: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
+    allowedConnectOrigins: [],
     enabledUiFeatures: null,
     announcementHtml: null,
     announcementTitle: null,
     announcementDescription: null,
     announcements: [],
+    welcomeScreenDescription: null,
     footerHtmlMessage: '',
     customVisualizers: [],
+    applicationVisualizers: {},
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
+    maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
   },
 };
 
@@ -92,6 +110,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
           status: UserConfigStatus.Ready,
           features: (response.features ?? {}) as Record<string, boolean>,
           config: {
+            activeEventId: response.config?.activeEventId ?? null,
+            aiTextRefinementAvailable:
+              response.config?.aiTextRefinementAvailable ?? false,
             appVersion: response.config?.appVersion ?? '',
             asrModelId: response.config?.asrModelId ?? null,
             transcribeSizeLimitBytes:
@@ -102,10 +123,12 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             mcpAppSandboxUrl: response.config?.mcpAppSandboxUrl ?? null,
             mcpAppTheme: response.config?.mcpAppTheme ?? null,
             mcpAppUserAgent: response.config?.mcpAppUserAgent ?? null,
+            mcpAppHostName: response.config?.mcpAppHostName ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
+            allowedConnectOrigins: response.config?.allowedConnectOrigins ?? [],
             enabledUiFeatures: response.config?.enabledUiFeatures ?? null,
             announcementHtml: response.config?.announcementHtml ?? null,
             announcementTitle: response.config?.announcementTitle ?? null,
@@ -114,11 +137,18 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             announcements: Array.isArray(response.config?.announcements)
               ? response.config.announcements
               : [],
+            welcomeScreenDescription:
+              response.config?.welcomeScreenDescription ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
             customVisualizers: response.config?.customVisualizers ?? [],
+            applicationVisualizers:
+              response.config?.applicationVisualizers ?? {},
             publicationFilterSources:
               response.config?.publicationFilterSources ??
               DEFAULT_PUBLICATION_FILTER_SOURCES,
+            maxAttachmentFileSizeBytes:
+              response.config?.maxAttachmentFileSizeBytes ??
+              DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
           },
           metadata: response.metadata,
         });

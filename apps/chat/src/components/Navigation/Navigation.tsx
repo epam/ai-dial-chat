@@ -17,6 +17,7 @@ import {
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useCelebration } from '../../context/CelebrationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
@@ -43,6 +44,7 @@ interface Props {
  */
 const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const { t } = useTranslation();
+  const { event } = useCelebration();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { status, user } = useUser();
@@ -52,6 +54,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const isNavigationMenuHidden = useUiFeature(
     OverlayFeature.HideNavigationMenu,
   );
+  const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
   const items = useNavigationItems();
   const profile = useNavigationUserProfile();
   const { languageGroup, keyboardGroup } = useNavigationMenuGroups();
@@ -60,6 +63,9 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const isUserMenuShown = isAuthenticated && !isUserMenuHidden;
 
   const handleSelectItem = (item: NavigationPanelItem) => navigate(item.id);
+  const handleOpenSettings = isSettingsPageHidden
+    ? undefined
+    : () => navigate(ROUTES.Settings);
 
   return (
     <>
@@ -70,7 +76,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           logo={
             currentThemeFavicon
               ? {
-                  iconUrl: getIconPath(currentThemeFavicon),
+                  iconUrl: event?.iconUrl ?? getIconPath(currentThemeFavicon),
                   ariaLabel: t(ChatI18nKeys.Logo),
                 }
               : undefined
@@ -92,7 +98,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
                   settings: t(BasicI18nKeys.Settings),
                 }}
                 onLogout={openLogout}
-                onSettings={() => navigate(ROUTES.Settings)}
+                onSettings={handleOpenSettings}
               />
             )
           }
@@ -110,6 +116,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           profile={profile}
           groups={keyboardGroup ? [keyboardGroup] : undefined}
           onLogout={openLogout}
+          onSettings={handleOpenSettings}
           footer={<FooterMessage />}
           labels={{
             title: t(NavigationI18nKeys.Menu),
@@ -117,6 +124,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
             back: t(NavigationI18nKeys.Back),
             profile: t(NavigationI18nKeys.Profile),
             logOut: t(ButtonsI18nKeys.LogOut),
+            settings: t(BasicI18nKeys.Settings),
           }}
         />
       )}

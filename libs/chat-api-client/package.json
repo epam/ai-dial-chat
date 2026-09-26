@@ -25,6 +25,13 @@
     "targets": {
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      },
+      "typecheck": {
+        "outputs": [
+          "{projectRoot}/dist/**/*.{d.ts,d.cts,d.mts}",
+          "{projectRoot}/dist/**/*.{d.ts,d.cts,d.mts}.map",
+          "{projectRoot}/dist/tsconfig.lib.tsbuildinfo"
+        ]
       }
     }
   },

@@ -12,8 +12,9 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, ReactNode, useState } from 'react';
+import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useModelSelector } from '../../hooks/useModelSelector';
-import type { ModelSelectorLabels } from '../../models/Input';
+import type { ModelMenuStyles, ModelSelectorLabels } from '../../models/Input';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet';
 import styles from './Input.module.scss';
@@ -23,6 +24,8 @@ interface Props {
   selectedDeploymentId?: string | null;
   onDeploymentChange?: (id: string) => void;
   modelSelectorLabels?: ModelSelectorLabels;
+  /** Host styling hooks for the menu panel, search row and deployment rows. */
+  menuStyles?: ModelMenuStyles;
   isStreaming: boolean;
   isMobile: boolean;
   /**
@@ -48,6 +51,7 @@ export const ModelSelectorControl: FC<Props> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
+  menuStyles,
   isStreaming,
   isMobile,
   isDisabled = false,
@@ -66,12 +70,14 @@ export const ModelSelectorControl: FC<Props> = ({
     selectedVersion,
     menuItems,
     menuHeader,
+    menuStyle,
     onOpenChange: handleModelSelectorOpenChange,
   } = useModelSelector({
     deployments,
     selectedDeploymentId,
     onDeploymentChange,
     modelSelectorLabels,
+    styles: menuStyles,
   });
 
   if (!deployments) {
@@ -86,34 +92,53 @@ export const ModelSelectorControl: FC<Props> = ({
   const caretIcon = (
     <IconChevronDown
       size={DIAL_ICON_SIZE.SM}
-      className={styles.modelSelectorCaret}
+      className={mergeClasses(
+        styles.modelSelectorCaret,
+        CONVERSATION_INPUT_CLASS.modelSelectorCaret,
+      )}
       aria-hidden
       stroke={DIAL_KIT_ICON_STROKE}
     />
   );
 
+  /*
+   * The icon comes from `DeploymentIcon`, which takes no class of its own, so
+   * the host styling hook needs a wrap. It is layout-neutral: the icon is a
+   * fixed-size, non-shrinking box in all three presentations.
+   */
+  const iconNode = (
+    <span
+      className={mergeClasses(
+        'flex shrink-0 items-center',
+        CONVERSATION_INPUT_CLASS.modelSelectorIcon,
+      )}
+    >
+      {selectorIcon}
+    </span>
+  );
+
   if (isMobile) {
     return (
       <>
-        <Tooltip tooltip={selectedLabel}>
-          <GhostIconButton
-            icon={
-              <div className="flex items-center gap-1">
-                {selectorIcon}
-                {caretIcon}
-              </div>
-            }
-            aria-label={selectorAriaLabel}
-            onClick={() => {
-              if (!isDisabled) setIsModelSheetOpen(true);
-            }}
-            className={mergeClasses(
-              'w-[50px]',
-              styles.modelSelectorButton,
-              disabledIconClassName,
-            )}
-          />
-        </Tooltip>
+        <GhostIconButton
+          tooltipProps={{ tooltip: selectedLabel }}
+          icon={
+            <div className="flex items-center gap-1">
+              {iconNode}
+              {caretIcon}
+            </div>
+          }
+          aria-label={selectorAriaLabel}
+          onClick={() => {
+            if (!isDisabled) setIsModelSheetOpen(true);
+          }}
+          className={mergeClasses(
+            'w-[50px]',
+            styles.modelSelectorButton,
+            disabledIconClassName,
+            CONVERSATION_INPUT_CLASS.modelSelectorButton,
+          )}
+        />
         {modelPickerOverlay ? (
           <BottomSheetShell
             isOpen={isModelSheetOpen}
@@ -121,6 +146,10 @@ export const ModelSelectorControl: FC<Props> = ({
             closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
             onClose={() => setIsModelSheetOpen(false)}
             style={style}
+            className={mergeClasses(
+              menuStyles?.className,
+              CONVERSATION_INPUT_CLASS.modelMenu,
+            )}
           >
             {modelPickerOverlay(() => setIsModelSheetOpen(false))}
           </BottomSheetShell>
@@ -140,6 +169,7 @@ export const ModelSelectorControl: FC<Props> = ({
             errorLabel={modelSelectorLabels?.error}
             emptyLabel={modelSelectorLabels?.empty}
             style={style}
+            menuStyles={menuStyles}
           />
         )}
       </>
@@ -162,7 +192,11 @@ export const ModelSelectorControl: FC<Props> = ({
         renderOverlay={() =>
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
-        listClassName="!w-[368px] !bg-layer-raised"
+        listClassName={mergeClasses(
+          '!w-[368px] !bg-layer-raised',
+          menuStyles?.className,
+          CONVERSATION_INPUT_CLASS.modelMenu,
+        )}
       >
         <Tooltip tooltip={chipTooltip}>
           <button
@@ -174,6 +208,7 @@ export const ModelSelectorControl: FC<Props> = ({
               styles.modelSelectorButton,
               disabledIconClassName,
               isDisabled && styles.modelSelectorButtonDisabled,
+              CONVERSATION_INPUT_CLASS.modelSelectorButton,
             )}
             onClick={() => {
               if (!isStreaming && !isDisabled) {
@@ -181,7 +216,7 @@ export const ModelSelectorControl: FC<Props> = ({
               }
             }}
           >
-            {selectorIcon}
+            {iconNode}
             <span className="flex min-w-0 max-w-[180px] items-baseline gap-1">
               <span
                 className={mergeClasses(
@@ -224,7 +259,12 @@ export const ModelSelectorControl: FC<Props> = ({
            it — unlike the kit's own `Select`, which scrolls the options
            inside a header that stays put. */
         maxDropdownHeight={SELECT_LIST_MAX_HEIGHT_PX}
-        listClassName="!w-[240px]"
+        listClassName={mergeClasses(
+          '!w-[240px]',
+          menuStyles?.className,
+          CONVERSATION_INPUT_CLASS.modelMenu,
+        )}
+        listStyle={menuStyle}
         disabled={isDisabled}
         onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
       >
@@ -237,9 +277,10 @@ export const ModelSelectorControl: FC<Props> = ({
               'flex items-center gap-1 rounded-full p-1.5',
               styles.modelSelectorButton,
               isDisabled && styles.modelSelectorButtonDisabled,
+              CONVERSATION_INPUT_CLASS.modelSelectorButton,
             )}
           >
-            {selectorIcon}
+            {iconNode}
             {caretIcon}
           </button>
         </Tooltip>

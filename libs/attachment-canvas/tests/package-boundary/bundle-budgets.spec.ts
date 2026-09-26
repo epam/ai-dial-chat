@@ -25,9 +25,15 @@ import {
  * factories (`ooxml-highlight-surfaces.ts`) were moved behind the same dynamic
  * import as the format they serve, keeping them out of this closure.
  *
+ * `dist/index.css` grew from 4,015 to 8,888 bytes when the build started
+ * appending the Tailwind utilities this package's components reference
+ * (tools/vite-lib-tailwind-utilities.mjs). Those bytes are layout the
+ * components always needed; before, a host without its own Tailwind build
+ * rendered them unpositioned.
+ *
  * Measured on this change's final build (raw / gzip):
  *   entry static JS closure  46,734 / 13,310
- *   dist/index.css             4,015 /  1,265
+ *   dist/index.css             8,888 /  2,784
  *   dist/PdfContent-*.js        7,012 /  2,824
  *   dist/PdfContent.css        16,398 /  4,540
  */
@@ -60,11 +66,11 @@ describe('dist/index.css size budget', () => {
   const { raw, gzip } = sizeOf('index.css');
 
   it('stays within the base-stylesheet raw size budget', () => {
-    expect(raw).toBeLessThanOrEqual(6_000);
+    expect(raw).toBeLessThanOrEqual(12_000);
   });
 
   it('stays within the base-stylesheet gzip size budget', () => {
-    expect(gzip).toBeLessThanOrEqual(2_000);
+    expect(gzip).toBeLessThanOrEqual(3_600);
   });
 });
 

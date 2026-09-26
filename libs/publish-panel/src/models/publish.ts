@@ -25,6 +25,13 @@ export interface PublishHistoryEntry {
   publishedAt: number;
   /** Folder path segments this version was published to, outermost first. */
   folderPath: string[];
+  /**
+   * Whether this publication requested that the publisher's own credentials
+   * for the resource be published alongside it. Reports what was requested,
+   * never that the credential was applied. Absent reads the same as `false` —
+   * a synthesised or unversioned entry may not know.
+   */
+  publishCredentials?: boolean;
 }
 
 /**

@@ -12,6 +12,7 @@ import {
   buildSkillOverview,
   mapSkillToCatalogItem,
   readSkillFileBytes,
+  readSkillFilePreviewBytes,
   readSkillManifest,
   resolveSkillFileDownloadPath,
   resolveSkillManifestFileId,
@@ -143,7 +144,10 @@ describe('mapSkillToCatalogItem', () => {
   });
 
   it('prefixes a nested folder path with the Personal label', () => {
-    const item = mapPersonal({ parentPath: 'analysis/finance/' });
+    const item = mapPersonal({
+      parentPath: 'analysis/finance/',
+      url: 'skills/my-bucket/analysis/finance/revenue-skill',
+    });
 
     expect(item.folder).toEqual(['Personal', 'analysis', 'finance']);
   });
@@ -158,10 +162,49 @@ describe('mapSkillToCatalogItem', () => {
     expect(item.folder).toEqual(['Organization']);
   });
 
-  it('decodes percent-encoded folder segments', () => {
-    const item = mapPersonal({ parentPath: 'my%20folder/' });
+  it('decodes a folder whose parentPath arrived percent-encoded (Issue #8882)', () => {
+    const item = mapPersonal({
+      parentPath: 'test%20folder/',
+      url: 'skills/my-bucket/test%20folder/revenue-skill',
+    });
+
+    expect(item.folder).toEqual(['Personal', 'test folder']);
+  });
+
+  it('preserves a folder literally named with a percent escape (Issue #8974)', () => {
+    const item = mapPersonal({
+      parentPath: 'test%20folder/',
+      url: 'skills/my-bucket/test%2520folder/revenue-skill',
+    });
+
+    expect(item.folder).toEqual(['Personal', 'test%20folder']);
+  });
+
+  it('keeps a literal percent sign in a folder name', () => {
+    const item = mapPersonal({
+      parentPath: '100%/',
+      url: 'skills/my-bucket/100%25/revenue-skill',
+    });
+
+    expect(item.folder).toEqual(['Personal', '100%']);
+  });
+
+  it('keeps a folder name containing a raw space intact', () => {
+    const item = mapPersonal({
+      parentPath: 'my folder/',
+      url: 'skills/my-bucket/my%20folder/revenue-skill',
+    });
 
     expect(item.folder).toEqual(['Personal', 'my folder']);
+  });
+
+  it('falls back to the verbatim parentPath when the url shape does not match', () => {
+    const item = mapPersonal({
+      parentPath: 'test%20folder/',
+      url: 'skills/my-bucket/revenue-skill',
+    });
+
+    expect(item.folder).toEqual(['Personal', 'test%20folder']);
   });
 
   it('carries the metadata timestamps through for sorting', () => {
@@ -299,6 +342,34 @@ describe('buildSkillOverview', () => {
       label: 'Author',
       value: 'ada',
     });
+  });
+
+  it('renders an always-present Updated row with an empty value when no timestamp resolved', () => {
+    const overview = buildSkillOverview(
+      makeSkill({ updatedAt: undefined }),
+      [],
+      undefined,
+      overviewLabels,
+    );
+
+    expect(
+      detailsOf(overview)?.specs.find((spec) => spec.label === 'Updated'),
+    ).toEqual({ label: 'Updated', value: '' });
+  });
+
+  it('renders the Updated row as a formatted calendar date when the metadata carries a timestamp', () => {
+    const overview = buildSkillOverview(
+      makeSkill({ updatedAt: 1752100000000 }),
+      [],
+      undefined,
+      overviewLabels,
+    );
+
+    const updated = detailsOf(overview)?.specs.find(
+      (spec) => spec.label === 'Updated',
+    )?.value;
+    expect(updated).toBeTruthy();
+    expect(updated).not.toBe('');
   });
 
   it('counts only files, excluding grouping folders', () => {
@@ -610,5 +681,29 @@ describe('readSkillManifest', () => {
     });
 
     expect(await readSkillManifest(response)).toBeNull();
+  });
+});
+
+describe('readSkillFilePreviewBytes', () => {
+  it('returns the response body as bytes when within the manifest cap', async () => {
+    const body = 'hello world';
+    const response = new Response(body, {
+      headers: { 'content-length': String(body.length) },
+    });
+
+    expect(
+      new TextDecoder().decode(await readSkillFilePreviewBytes(response)),
+    ).toBe(body);
+  });
+
+  it('reads an oversized body in full instead of returning null', async () => {
+    const oversized = 'a'.repeat(SKILL_MANIFEST_MAX_BYTES + 1);
+    const response = new Response(oversized, {
+      headers: { 'content-length': String(oversized.length) },
+    });
+
+    const bytes = await readSkillFilePreviewBytes(response);
+
+    expect(bytes.byteLength).toBe(SKILL_MANIFEST_MAX_BYTES + 1);
   });
 });

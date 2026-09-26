@@ -35,7 +35,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.14.2`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.19`
 
 ## Components
 
@@ -83,6 +83,10 @@ import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
 ```
 
 `BuilderFormContainer`'s header is configured through `labels` (typed `BuilderFormHeaderLabels`) and styled through `styles.header` (typed `BuilderFormHeaderStyles`, holding `BuilderFormHeaderColors` and `BuilderFormHeaderTypography`). All four are exported for consumers building those objects. The header and body components themselves are internal to the container.
+
+`backIcon` is optional: omit it for the generic mirrored arrow, pass `null` to
+omit the decorative icon, or provide a `ReactNode`. Its accessible label and
+callback remain the header's own contract.
 
 ### EditorLayout
 
@@ -387,3 +391,48 @@ through `styles.header` (typed `BuilderFormHeaderStyles`, holding
 `BuilderFormHeaderColors` and `BuilderFormHeaderTypography`). All of these are
 exported for consumers building those objects. The header, body, and actions
 components themselves are internal to the container.
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key       | Class                       | Element                                                    |
+| --------- | --------------------------- | ---------------------------------------------------------- |
+| `layout`  | `dial-builder-form-layout`  | The editor layout root, holding the header and the columns |
+| `section` | `dial-builder-form-section` | Every `EditorSection` box, titled or not                   |
+
+```tsx
+import { BUILDER_FORM_CLASS } from '@epam/ai-dial-builder-form';
+
+BUILDER_FORM_CLASS.section; // 'dial-builder-form-section'
+```
+
+Both classes reach every editor built on this package, so a host styling
+`.dial-builder-form-section` restyles the prompt, skill and toolset editors at
+once. To reach one of them only, pair this class with that editor's own —
+`.dial-toolset-editor-setup-section`, for instance.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Optional body layout
+
+`BuilderFormBody` and `BuilderFormContainer` accept `layout` with
+`sideColumnWidth` (400px), `columnGap` (0px) and `reserveEndColumn` (true).
+Supplying layout enables wrapping columns based on the available container
+width. Set `reserveEndColumn: false` for a two-column form. Omitting layout
+preserves the existing responsive three-column behavior.
+The public `styles.css` entry is the built stylesheet with matching CSS
+Modules names; composed packages must include that entry, not source SCSS.
+
+The composed form header, body and action footer use scoped 1280px responsive
+rules. Host Tailwind screen definitions do not change which action set is visible.
+Explicit body layout options still size and wrap columns by their container.

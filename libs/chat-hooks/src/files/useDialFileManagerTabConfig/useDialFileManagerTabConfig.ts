@@ -1,13 +1,13 @@
 import {
   DialFileManagerTabs,
-  type ToolbarOptions,
+  type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
-import type { TabModel } from '@epam/ai-dial-ui-kit';
+import type { FilterChipItem } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useMemo } from 'react';
 
 /** Values returned by `useDialFileManagerTabConfig`. */
 export interface UseDialFileManagerTabConfigResult {
-  tabs: ToolbarOptions['tabs'];
+  tabs: FileTreeOptions['tabs'];
 }
 
 /*
@@ -30,7 +30,7 @@ const TAB_PRIORITY_ORDER = [
 export const useDialFileManagerTabConfig = (
   activeTab: DialFileManagerTabs,
   onTabChange: (tab: DialFileManagerTabs) => void,
-  allTabs: TabModel[] | undefined,
+  allTabs: FilterChipItem<DialFileManagerTabs>[] | undefined,
   fileManagerTabs: string[] | undefined,
 ): UseDialFileManagerTabConfigResult => {
   const isTabEnabled = useCallback(
@@ -40,12 +40,7 @@ export const useDialFileManagerTabConfig = (
   );
 
   const tabs = useMemo(
-    () =>
-      allTabs
-        ?.filter((tab) => isTabEnabled(tab.id))
-        .flatMap(({ id, label, disabled }) =>
-          typeof label === 'string' ? [{ id, label, disabled }] : [],
-        ),
+    () => allTabs?.filter((tab) => isTabEnabled(tab.value)),
     [allTabs, isTabEnabled],
   );
 

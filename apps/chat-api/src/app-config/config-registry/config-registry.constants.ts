@@ -26,6 +26,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'TRANSCRIBE_SIZE_LIMIT_BYTES',
   },
   {
+    key: 'customVariables',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: {},
+    critical: false,
+    description:
+      'Public, client-owned configuration values. Keys have no BFF-defined semantics.',
+    owner: 'chat-team',
+    envVar: 'CUSTOM_CLIENT_VARIABLES',
+  },
+  {
     key: 'deployments.defaultDeploymentId',
     type: 'config',
     valueType: 'string',
@@ -86,6 +98,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'MCP_APP_USER_AGENT',
   },
   {
+    key: 'mcpApps.hostName',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — the client falls back to its own default identity.',
+    owner: 'chat-team',
+    envVar: 'MCP_APP_HOST_NAME',
+  },
+  {
     key: 'app.version',
     type: 'config',
     valueType: 'string',
@@ -144,6 +168,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'List of announcements shown in the popover behind the banner\'s "+N announcements" pill. JSON array of { title, description?, link?: { label, href } }. Entries with a blank title, or with a link whose label is blank or whose href is not http/https, are dropped with a warning. Empty (pill hidden) when ANNOUNCEMENTS is unset or malformed; boot never fails on bad config.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENTS',
+  },
+  {
+    key: 'welcomeScreen.description',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Rendered as text, never as markup. Null/blank hides it. Sourced from WELCOME_SCREEN_DESCRIPTION.',
+    owner: 'chat-team',
+    envVar: 'WELCOME_SCREEN_DESCRIPTION',
   },
   {
     key: 'footer.html',
@@ -228,6 +264,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'SKILL_USAGE_ENABLED',
   },
   {
+    key: 'ui.activeEventId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Active start-page celebration module ID selected by UI_EVENT. Missing or none disables celebrations. The frontend owns the event registry and ignores IDs it does not support; adding an event does not require a backend enum change.',
+    owner: 'chat-team',
+    envVar: 'UI_EVENT',
+  },
+  {
     key: 'overlay.enabled',
     type: 'config',
     valueType: 'boolean',
@@ -238,6 +286,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Whether the chat-overlay embedded runtime mode is reachable. Distinct from ALLOWED_IFRAME_ORIGINS: has no effect unless at least one origin is also allowlisted there.',
     owner: 'chat-team',
     envVar: 'OVERLAY_ENABLED',
+  },
+  {
+    key: 'documents.allowedConnectOrigins',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'External connection origins permitted by CSP. PDF previews may use browser credentials for matching HTTP(S) origins.',
+    owner: 'chat-team',
+    envVar: 'ALLOWED_CONNECT_ORIGINS',
   },
   {
     key: 'overlay.allowedOrigins',
@@ -332,6 +392,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'CUSTOM_VISUALIZERS',
   },
   {
+    key: 'applicationVisualizers',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: {},
+    critical: false,
+    description:
+      'Registry of application id → grouped visualizer mappings, keyed by the effective deployment id of a message. Every attachment the entry claims is delivered to one iframe together via SEND_GROUPED_VISUALIZE_DATA, rendered inline in the message with an expand-to-canvas control. An entry may declare a comma-separated contentType to claim only those MIME types; when it is omitted, every attachment carrying a URL is claimed, and unclaimed attachments render as ordinary tiles. Takes precedence over CUSTOM_VISUALIZERS for the attachments it claims. The origin of each entry URL must also be listed in ALLOWED_IFRAME_ORIGINS, which is the sole source of CSP frame-src; otherwise the browser blocks the iframe. Empty (feature dark) when APPLICATION_VISUALIZERS is unset. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails on malformed config.',
+    owner: 'chat-team',
+    envVar: 'APPLICATION_VISUALIZERS',
+  },
+  {
     key: 'publish.publicationFilterSources',
     type: 'config',
     valueType: 'json',
@@ -342,5 +414,17 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES (comma-separated); falls back to the legacy default when unset or empty.",
     owner: 'chat-team',
     envVar: 'PUBLICATION_FILTER_SOURCES',
+  },
+  {
+    key: 'attachments.maxFileSizeBytes',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'client',
+    defaultValue: 536_870_912,
+    critical: false,
+    description:
+      'Maximum attachment/upload file size in bytes, surfaced to the client so it can reject an oversized file before attempting to upload it. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that already bounds the POST /api/v1/files Multer limit — so the frontend pre-check and the backend enforcement can never diverge.',
+    owner: 'chat-team',
+    envVar: 'FILE_UPLOAD_MAX_BYTES',
   },
 ];

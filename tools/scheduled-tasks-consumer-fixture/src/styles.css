@@ -1,0 +1,35 @@
+:root {
+  --stroke-tertiary: rgb(111, 112, 115);
+}
+
+/* Host baseline normally supplied by the UI Kit/theme bundle. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+.fixture-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin: 0 auto;
+  max-inline-size: 1120px;
+  padding: 16px;
+}
+
+.fixture-detail {
+  block-size: 620px;
+  min-inline-size: 0;
+}
+
+.fixture-delete.fixture-delete {
+  max-width: 440px;
+}

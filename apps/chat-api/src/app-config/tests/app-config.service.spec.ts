@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PACKAGE_VERSION } from '../../common/utils/app-version';
 import { AppConfigService } from '../app-config.service';
@@ -15,7 +16,11 @@ const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
 ).length;
 
 function makeService(
-  resolveImpl: (key: string) => Promise<unknown | undefined>,
+  resolveImpl: (
+    key: string,
+    context?: AppConfigEvalContext,
+  ) => Promise<unknown | undefined>,
+  model?: string,
 ) {
   const compositeProvider = {
     resolve: vi.fn(resolveImpl),
@@ -28,7 +33,11 @@ function makeService(
     }),
   };
   return {
-    service: new AppConfigService(compositeProvider, cacheManager as never),
+    service: new AppConfigService(
+      compositeProvider,
+      cacheManager as never,
+      new ConfigService({ UTILITY_MODEL: model }),
+    ),
     cacheManager,
     compositeProvider,
   };
@@ -40,6 +49,67 @@ describe('AppConfigService', () => {
   });
 
   describe('getClientConfig', () => {
+    it.each(['halloween', 'new-year', 'product-launch-2027', null, undefined])(
+      'returns the resolved event selection %s without a legacy feature flag',
+      async (eventId) => {
+        const { service } = makeService(async (key) =>
+          key === 'ui.activeEventId' ? eventId : undefined,
+        );
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.activeEventId).toBe(eventId ?? null);
+        expect(result.features).not.toHaveProperty('halloweenEnabled');
+      },
+    );
+
+    it('exposes the configured external connection origins', async () => {
+      const origins = [
+        'https://documents.example.com',
+        'https://*.example.org',
+      ];
+      const { service } = makeService(async (key) =>
+        key === 'documents.allowedConnectOrigins' ? origins : undefined,
+      );
+      expect(
+        (await service.getClientConfig(ctx)).config.allowedConnectOrigins,
+      ).toEqual(origins);
+    });
+    it.each([undefined, '', '  ', 'refinement-model', ' refinement-model '])(
+      'exposes only refinement availability for model %s',
+      async (model) => {
+        const { service } = makeService(async () => undefined, model);
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.aiTextRefinementAvailable).toBe(
+          Boolean(model?.trim()),
+        );
+        expect(JSON.stringify(result)).not.toContain('refinement-model');
+      },
+    );
+
+    it('keeps client-owned variables in their own namespace without overriding built-in config', async () => {
+      const custom = {
+        defaultDeploymentId: 'custom-only',
+        asrEnabled: true,
+        nested: { values: [null, false, 3] },
+      };
+      const { service } = makeService(async (key) =>
+        key === 'customVariables' ? custom : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.customVariables).toEqual(custom);
+      expect(result.config.defaultDeploymentId).toBeNull();
+      expect(result.features['asrEnabled']).toBe(false);
+    });
+    it.each([undefined, null, [], 'invalid', 4])(
+      'returns empty custom variables for missing or invalid provider value %j',
+      async (value) => {
+        const { service } = makeService(async (key) =>
+          key === 'customVariables' ? value : undefined,
+        );
+        expect(
+          (await service.getClientConfig(ctx)).config.customVariables,
+        ).toEqual({});
+      },
+    );
     it('filters server-only keys and only returns client-visible config', async () => {
       const { service } = makeService(async () => undefined);
       const result = await service.getClientConfig(ctx);
@@ -70,15 +140,27 @@ describe('AppConfigService', () => {
       ]);
       expect(result.config.overlayEnabled).toBe(false);
       expect(result.config.overlayAllowedOrigins).toEqual([]);
+      expect(result.config.allowedConnectOrigins).toEqual([]);
       expect(result.config.enabledUiFeatures).toBeNull();
       expect(result.config.announcementHtml).toBeNull();
       expect(result.config.footerHtmlMessage).toBe('');
       expect(result.config.customVisualizers).toEqual([]);
+      expect(result.config.applicationVisualizers).toEqual({});
       expect(result.config.publicationFilterSources).toEqual([
         'title',
         'role',
         'dial_roles',
       ]);
+      expect(result.config.maxAttachmentFileSizeBytes).toBe(536_870_912);
+    });
+
+    it('surfaces an operator-configured maxAttachmentFileSizeBytes value', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'attachments.maxFileSizeBytes' ? 104_857_600 : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.maxAttachmentFileSizeBytes).toBe(104_857_600);
     });
 
     it('surfaces an operator-configured publicationFilterSources list verbatim', async () => {
@@ -107,6 +189,31 @@ describe('AppConfigService', () => {
       const result = await service.getClientConfig(ctx);
 
       expect(result.config.customVisualizers).toEqual([entry]);
+    });
+
+    it('surfaces the resolved applicationVisualizers registry verbatim', async () => {
+      const registry = {
+        'app-1': {
+          title: 'my-viz',
+          url: 'https://viz.example.com',
+          passAuthInfo: true,
+        },
+      };
+      const { service } = makeService(async (key: string) =>
+        key === 'applicationVisualizers' ? registry : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.applicationVisualizers).toEqual(registry);
+    });
+
+    it('falls back to an empty applicationVisualizers registry when the resolved value is an array', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'applicationVisualizers' ? [] : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.applicationVisualizers).toEqual({});
     });
 
     it('returns resolved values when providers succeed', async () => {
@@ -204,6 +311,119 @@ describe('AppConfigService', () => {
       const result = await service.getClientConfig(ctx);
 
       expect(result.config.enabledUiFeatures).toBeNull();
+    });
+
+    it.each([
+      ['a non-array value', 'not-an-array'],
+      ['an empty array', []],
+    ])(
+      'falls back to null with no warning when enabledUiFeatures resolves to %s',
+      async (_label, value) => {
+        const { service } = makeService(async (key: string) =>
+          key === 'uiFeatures.enabledUiFeatures' ? value : undefined,
+        );
+        const warnSpy = vi
+          .spyOn(
+            (service as never as { logger: { warn: () => void } }).logger,
+            'warn',
+          )
+          .mockImplementation(() => undefined);
+
+        const result = await service.getClientConfig(ctx);
+
+        expect(result.config.enabledUiFeatures).toBeNull();
+        expect(warnSpy).not.toHaveBeenCalled();
+      },
+    );
+
+    it('preserves the input order of multiple recognized enabledUiFeatures entries', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures'
+          ? ['likes', 'header', 'prompts']
+          : undefined,
+      );
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual([
+        'likes',
+        'header',
+        'prompts',
+      ]);
+    });
+
+    it('coerces a non-string enabledUiFeatures entry with String() before reporting it', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures' ? [42] : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toBeNull();
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        1,
+        'Ignoring unrecognized ENABLED_UI_FEATURES entry: "42"',
+      );
+    });
+
+    it('logs the unrecognized-entry warning once per repeated occurrence, in order', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures'
+          ? ['bogus', 'likes', 'bogus']
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['likes']);
+      expect(warnSpy).toHaveBeenCalledTimes(2);
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        1,
+        'Ignoring unrecognized ENABLED_UI_FEATURES entry: "bogus"',
+      );
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        2,
+        'Ignoring unrecognized ENABLED_UI_FEATURES entry: "bogus"',
+      );
+    });
+
+    it('logs the deprecated-alias warning once per repeated occurrence, in order', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures'
+          ? ['custom-applications', 'custom-applications']
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.enabledUiFeatures).toEqual(['schema-apps']);
+      expect(warnSpy).toHaveBeenCalledTimes(2);
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        1,
+        'ENABLED_UI_FEATURES entry "custom-applications" is deprecated; using "schema-apps" instead',
+      );
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        2,
+        'ENABLED_UI_FEATURES entry "custom-applications" is deprecated; using "schema-apps" instead',
+      );
     });
 
     it('returns null defaultDeploymentId when DEFAULT_DEPLOYMENT is not set', async () => {
@@ -531,6 +751,205 @@ describe('AppConfigService', () => {
       expect(result.config.announcements[9].title).toBe('Announcement 9');
     });
 
+    it('logs a single exact warning and returns an empty list when ANNOUNCEMENTS resolves to a non-array value', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items' ? { title: 'x' } : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledOnce();
+      expect(warnSpy).toHaveBeenCalledWith(
+        'ANNOUNCEMENTS did not resolve to an array; ignoring it',
+      );
+    });
+
+    it.each([
+      ['null', null],
+      ['undefined', undefined],
+    ])(
+      'returns an empty list with no warning when ANNOUNCEMENTS resolves to %s',
+      async (_label, value) => {
+        const { service } = makeService(async (key: string) =>
+          key === 'announcement.items' ? value : undefined,
+        );
+        const warnSpy = vi
+          .spyOn(
+            (service as never as { logger: { warn: () => void } }).logger,
+            'warn',
+          )
+          .mockImplementation(() => undefined);
+
+        const result = await service.getClientConfig(ctx);
+
+        expect(result.config.announcements).toEqual([]);
+        expect(warnSpy).not.toHaveBeenCalled();
+      },
+    );
+
+    it('logs the exact warning text for a non-object announcement entry', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items' ? ['not-an-object'] : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement entry that is not an object',
+      );
+    });
+
+    it('logs the exact warning text for a blank or missing title', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items' ? [{ title: '   ' }] : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement entry with a blank or missing title',
+      );
+    });
+
+    it('logs the exact warning text for a blank link label', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [
+              {
+                title: 'No label',
+                link: { label: '  ', href: 'https://x.dev' },
+              },
+            ]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement "No label": link.label is blank or missing',
+      );
+    });
+
+    it('logs the exact warning text for an invalid link href', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [{ title: 'Bad link', link: { label: 'Go', href: '/settings' } }]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement "Bad link": link.href is not an http(s) URL: /settings',
+      );
+    });
+
+    it('preserves duplicate announcements rather than deduplicating them', async () => {
+      const entry = {
+        title: 'Same announcement',
+        description: 'Same body',
+        link: { label: 'Go', href: 'https://x.dev' },
+      };
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items' ? [entry, { ...entry }] : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toHaveLength(2);
+      expect(result.config.announcements[0]).toEqual(
+        result.config.announcements[1],
+      );
+    });
+
+    it('logs a rejection warning for an invalid entry positioned beyond the cap', async () => {
+      const validEntries = Array.from({ length: 10 }, (_, index) => ({
+        title: `Announcement ${index}`,
+      }));
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [...validEntries, { title: '   ' }]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toHaveLength(10);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Ignoring announcement entry with a blank or missing title',
+      );
+    });
+
+    it('logs the cap-exceeded warning last, reporting the total number of valid entries', async () => {
+      const validEntries = Array.from({ length: 12 }, (_, index) => ({
+        title: `Announcement ${index}`,
+      }));
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [...validEntries, { title: '   ' }]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements).toHaveLength(10);
+      expect(warnSpy).toHaveBeenCalledTimes(2);
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        1,
+        'Ignoring announcement entry with a blank or missing title',
+      );
+      expect(warnSpy).toHaveBeenNthCalledWith(
+        2,
+        'ANNOUNCEMENTS carried 12 entries; keeping the first 10 and dropping the rest',
+      );
+    });
+
     it('returns empty string for footerHtmlMessage when FOOTER_HTML_MESSAGE is not set', async () => {
       const { service } = makeService(async () => undefined);
       const result = await service.getClientConfig(ctx);
@@ -725,6 +1144,319 @@ describe('AppConfigService', () => {
         CLIENT_DEFINITIONS_COUNT * 2,
       );
     });
+
+    it('serves a cache hit without re-resolving providers or emitting new enabledUiFeatures warnings', async () => {
+      const { service, compositeProvider } = makeService(async (key: string) =>
+        key === 'uiFeatures.enabledUiFeatures'
+          ? ['likes', 'not-a-real-feature']
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const first = await service.getClientConfig(ctx);
+      warnSpy.mockClear();
+      const resolveCallsAfterFirst = (
+        compositeProvider.resolve as never as {
+          mock: { calls: unknown[] };
+        }
+      ).mock.calls.length;
+
+      const second = await service.getClientConfig(ctx);
+
+      expect(second).toEqual(first);
+      expect(second.config.enabledUiFeatures).toEqual(['likes']);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        resolveCallsAfterFirst,
+      );
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it('serves a cache hit without re-resolving providers or emitting new announcement warnings', async () => {
+      const { service, compositeProvider } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [{ title: 'Good' }, { title: '   ' }]
+          : undefined,
+      );
+      const warnSpy = vi
+        .spyOn(
+          (service as never as { logger: { warn: () => void } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const first = await service.getClientConfig(ctx);
+      warnSpy.mockClear();
+      const resolveCallsAfterFirst = (
+        compositeProvider.resolve as never as {
+          mock: { calls: unknown[] };
+        }
+      ).mock.calls.length;
+
+      const second = await service.getClientConfig(ctx);
+
+      expect(second).toEqual(first);
+      expect(second.config.announcements).toHaveLength(1);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        resolveCallsAfterFirst,
+      );
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['mcpApps.sandboxUrl', 'mcpAppSandboxUrl'],
+      ['mcpApps.userAgent', 'mcpAppUserAgent'],
+      ['mcpApps.hostName', 'mcpAppHostName'],
+    ] as const)(
+      'surfaces a configured %s string and nulls a non-string value',
+      async (key, field) => {
+        const configured = makeService(async (k) =>
+          k === key ? 'configured-value' : undefined,
+        );
+        expect(
+          (await configured.service.getClientConfig(ctx)).config[field],
+        ).toBe('configured-value');
+
+        const wrongShape = makeService(async (k) =>
+          k === key ? 42 : undefined,
+        );
+        expect(
+          (await wrongShape.service.getClientConfig(ctx)).config[field],
+        ).toBeNull();
+
+        const unset = makeService(async () => undefined);
+        expect(
+          (await unset.service.getClientConfig(ctx)).config[field],
+        ).toBeNull();
+      },
+    );
+
+    it.each([
+      ['light', 'light'],
+      ['dark', 'dark'],
+      ['blue', null],
+      ['', null],
+      [true, null],
+      [undefined, null],
+    ])('maps an mcpApps.theme value of %j to %j', async (value, expected) => {
+      const { service } = makeService(async (key) =>
+        key === 'mcpApps.theme' ? value : undefined,
+      );
+      expect((await service.getClientConfig(ctx)).config.mcpAppTheme).toBe(
+        expected,
+      );
+    });
+
+    it.each([
+      ['  Start a <b>new</b> chat  ', 'Start a <b>new</b> chat'],
+      ['   ', null],
+      ['', null],
+      [5, null],
+      [undefined, null],
+    ])(
+      'maps a welcomeScreen.description value of %j to %j as plain text',
+      async (value, expected) => {
+        const { service } = makeService(async (key) =>
+          key === 'welcomeScreen.description' ? value : undefined,
+        );
+        expect(
+          (await service.getClientConfig(ctx)).config.welcomeScreenDescription,
+        ).toBe(expected);
+      },
+    );
+
+    it.each([
+      ['asr.transcribeSizeLimitBytes', 'transcribeSizeLimitBytes', 0, 0],
+      [
+        'asr.transcribeSizeLimitBytes',
+        'transcribeSizeLimitBytes',
+        '5',
+        5 * 1024 * 1024,
+      ],
+      ['attachments.maxFileSizeBytes', 'maxAttachmentFileSizeBytes', 0, 0],
+      [
+        'attachments.maxFileSizeBytes',
+        'maxAttachmentFileSizeBytes',
+        '5',
+        536_870_912,
+      ],
+      ['ui.activeEventId', 'activeEventId', 42, null],
+      ['asr.modelId', 'asrModelId', 42, null],
+      ['deployments.defaultDeploymentId', 'defaultDeploymentId', 42, null],
+      ['dialCore.externalUrl', 'dialCoreExternalUrl', 42, null],
+      [
+        'fileManager.availableTabs',
+        'fileManagerTabs',
+        'x',
+        ['my_files', 'shared', 'organization'],
+      ],
+      [
+        'fileManager.availableTabs',
+        'fileManagerTabs',
+        null,
+        ['my_files', 'shared', 'organization'],
+      ],
+      ['fileManager.availableTabs', 'fileManagerTabs', [1, null], [1, null]],
+      [
+        'publish.publicationFilterSources',
+        'publicationFilterSources',
+        'x',
+        ['title', 'role', 'dial_roles'],
+      ],
+      [
+        'publish.publicationFilterSources',
+        'publicationFilterSources',
+        [1, null],
+        [1, null],
+      ],
+      ['overlay.allowedOrigins', 'overlayAllowedOrigins', {}, []],
+      ['documents.allowedConnectOrigins', 'allowedConnectOrigins', {}, []],
+      ['customVisualizers', 'customVisualizers', {}, []],
+      ['overlay.enabled', 'overlayEnabled', 'true', false],
+      ['overlay.enabled', 'overlayEnabled', 1, false],
+      ['announcement.html', 'announcementHtml', '', ''],
+      ['announcement.html', 'announcementHtml', 5, null],
+      ['footer.html', 'footerHtmlMessage', 5, ''],
+    ] as const)(
+      'maps %s resolved as %j to the current %s policy',
+      async (key, field, value, expected) => {
+        const { service } = makeService(async (k) =>
+          k === key ? value : undefined,
+        );
+        expect((await service.getClientConfig(ctx)).config[field]).toEqual(
+          expected,
+        );
+      },
+    );
+
+    it('resolves app.version first, then every other client key once in registry order with the full context', async () => {
+      const fullCtx: AppConfigEvalContext = {
+        appId: 'chat-ui',
+        userId: 'user-1',
+        roles: ['viewer'],
+        environment: 'test',
+      };
+      const { service, compositeProvider } = makeService(async () => undefined);
+
+      await service.getClientConfig(fullCtx);
+
+      const calls = (
+        compositeProvider.resolve as never as {
+          mock: { calls: [string, AppConfigEvalContext][] };
+        }
+      ).mock.calls;
+      expect(calls.map(([key]) => key)).toEqual([
+        'app.version',
+        ...CONFIG_DEFINITIONS.filter(
+          (def) => def.visibility === 'client' && def.key !== 'app.version',
+        ).map((def) => def.key),
+      ]);
+      for (const [, callContext] of calls) {
+        expect(callContext).toBe(fullCtx);
+      }
+      const resolvedKeys = calls.map(([key]) => key);
+      expect(resolvedKeys).not.toContain('utility.modelId');
+      expect(resolvedKeys).not.toContain('features.llmConversationNaming');
+      expect(resolvedKeys).not.toContain('features.responsesApiEnabled');
+    });
+
+    it('keeps the response, config, and features key order', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+
+      expect(Object.keys(result)).toEqual([
+        'appId',
+        'features',
+        'config',
+        'metadata',
+      ]);
+      expect(Object.keys(result.config)).toEqual([
+        'aiTextRefinementAvailable',
+        'appVersion',
+        'activeEventId',
+        'asrModelId',
+        'transcribeSizeLimitBytes',
+        'defaultDeploymentId',
+        'dialCoreExternalUrl',
+        'mcpAppSandboxUrl',
+        'mcpAppTheme',
+        'mcpAppUserAgent',
+        'mcpAppHostName',
+        'fileManagerTabs',
+        'overlayEnabled',
+        'overlayAllowedOrigins',
+        'allowedConnectOrigins',
+        'announcementHtml',
+        'announcementTitle',
+        'announcementDescription',
+        'announcements',
+        'welcomeScreenDescription',
+        'footerHtmlMessage',
+        'enabledUiFeatures',
+        'customVisualizers',
+        'applicationVisualizers',
+        'customVariables',
+        'publicationFilterSources',
+        'maxAttachmentFileSizeBytes',
+      ]);
+      expect(Object.keys(result.features)).toEqual([
+        'footer',
+        'asrEnabled',
+        'skillUsageEnabled',
+        'liveChatInteraction',
+        'scheduledTasksEnabled',
+        'defaultDeploymentPinned',
+      ]);
+    });
+
+    it('keeps values resolved for one role set out of another caller response', async () => {
+      const { service } = makeService(async (key, context) => {
+        const isAdmin = context?.roles?.includes('admin') ?? false;
+        if (key === 'fileManager.availableTabs') {
+          return isAdmin ? ['my_files'] : undefined;
+        }
+        if (key === 'overlay.allowedOrigins') {
+          return isAdmin ? ['https://admin.example.com'] : undefined;
+        }
+        return undefined;
+      });
+
+      const [admin, viewer] = await Promise.all([
+        service.getClientConfig({ appId: 'chat-ui', roles: ['admin'] }),
+        service.getClientConfig({ appId: 'chat-ui', roles: ['viewer'] }),
+      ]);
+
+      expect(admin.config.fileManagerTabs).toEqual(['my_files']);
+      expect(admin.config.overlayAllowedOrigins).toEqual([
+        'https://admin.example.com',
+      ]);
+      expect(viewer.config.fileManagerTabs).toEqual([
+        'my_files',
+        'shared',
+        'organization',
+      ]);
+      expect(viewer.config.overlayAllowedOrigins).toEqual([]);
+      expect(viewer.config).not.toBe(admin.config);
+    });
+
+    it('serves a cache hit with the original metadata and no provider calls', async () => {
+      const { service, compositeProvider } = makeService(async () => undefined);
+
+      const first = await service.getClientConfig(ctx);
+      const callsAfterFirst = (
+        compositeProvider.resolve as never as {
+          mock: { calls: unknown[] };
+        }
+      ).mock.calls.length;
+      const second = await service.getClientConfig(ctx);
+
+      expect(second.metadata?.resolvedAt).toBe(first.metadata?.resolvedAt);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(callsAfterFirst);
+    });
   });
 
   describe('isEnabled', () => {
@@ -761,10 +1493,14 @@ describe('AppConfigService', () => {
       const compositeProvider = {
         resolve: vi.fn(async () => 'test-value'),
       } as unknown as CompositeConfigProvider;
-      const service = new AppConfigService(compositeProvider, {
-        get: vi.fn(),
-        set: vi.fn(),
-      } as never);
+      const service = new AppConfigService(
+        compositeProvider,
+        {
+          get: vi.fn(),
+          set: vi.fn(),
+        } as never,
+        new ConfigService(),
+      );
 
       const result = await service.resolveValue('asr.modelId', ctx);
 

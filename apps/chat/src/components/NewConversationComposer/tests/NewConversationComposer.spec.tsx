@@ -1,3 +1,4 @@
+import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { type DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
@@ -188,6 +189,13 @@ const deployments: DeploymentItem[] = [
   { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
 ];
 
+const agentWithDescription = {
+  id: 'gpt-4o',
+  displayName: 'GPT-4o',
+  description:
+    'Answers questions. Read [the terms](https://example.com/terms).',
+} as DeploymentItemDto;
+
 describe('NewConversationComposer', () => {
   const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
 
@@ -369,6 +377,50 @@ describe('NewConversationComposer', () => {
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('auto-focus').textContent).toBe('true');
+  });
+
+  it('renders the agent description above the input when show-agent-description is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.ShowAgentDescription,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          selectedDeployment={agentWithDescription}
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        >
+          <button type="button">Draft</button>
+        </NewConversationComposer>
+      </Suspense>,
+    );
+
+    const link = await screen.findByRole('link', { name: 'the terms' });
+    const input = screen.getByTestId('conversation-input');
+
+    expect(link.getAttribute('href')).toBe('https://example.com/terms');
+    expect(
+      link.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('omits the agent description when show-agent-description is disabled', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          selectedDeployment={agentWithDescription}
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+
+    expect(screen.queryByRole('link', { name: 'the terms' })).toBeNull();
   });
 
   it('re-throws a failed conversation creation after showing the error notification', async () => {

@@ -18,10 +18,10 @@ describe('useCitationCard', () => {
     expect(result.current.isOpen(GROUP_KEY_B)).toBe(false);
   });
 
-  it('closePopup clears the open state', () => {
+  it('closePopup clears the open state when called with the owning key', () => {
     const { result } = renderHook(() => useCitationCard());
     act(() => result.current.openPopup(GROUP_KEY_A));
-    act(() => result.current.closePopup());
+    act(() => result.current.closePopup(GROUP_KEY_A));
     expect(result.current.isOpen(GROUP_KEY_A)).toBe(false);
   });
 
@@ -38,6 +38,13 @@ describe('useCitationCard', () => {
     act(() => result.current.openPopup(GROUP_KEY_B));
     expect(result.current.isOpen(GROUP_KEY_A)).toBe(false);
     expect(result.current.isOpen(GROUP_KEY_B)).toBe(true);
+  });
+
+  it('a closePopup call naming a key that does not currently own the popup leaves the popup open', () => {
+    const { result } = renderHook(() => useCitationCard());
+    act(() => result.current.openPopup(GROUP_KEY_A));
+    act(() => result.current.closePopup(GROUP_KEY_B));
+    expect(result.current.isOpen(GROUP_KEY_A)).toBe(true);
   });
 
   it('two groupKeys derived from the same sourceUrl have independent state', () => {

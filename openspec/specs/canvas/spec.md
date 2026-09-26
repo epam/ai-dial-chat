@@ -313,11 +313,12 @@ This graceful fallback is required because some backends put already-decoded pla
 
 `resolveImageCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts` is **synchronous** (`ImageCanvasContent | null`) and never issues a `fetch`. Resolution priority:
 
-1. Local `attachment.file` → `URL.createObjectURL(file)` (locally-picked, not yet uploaded).
-2. `resolveDialUrl(attachment)` → the BFF download URL is passed to `<img src>` directly. The browser's HTTP cache deduplicates it with the `<img>` already rendered in the conversation view. Load failures are detected via `<img onError>` in the renderer (see "Rendering" below).
-3. `attachment.previewUrl` — typically a `data:image/...;base64,...` URL synthesized by `message-attachment-to-display.ts` for stage attachments that carry inline base64 content and no `url`.
-4. Inline `attachment.data` decoded via `base64ToBlobUrl(data, contentType)`.
-5. `null` if no source is available ("not previewable").
+1. Local `attachment.file` **with bytes** → `URL.createObjectURL(file)` — a locally-picked file, or an uploaded-but-unsent composer attachment whose eager upload already assigned the DIAL `url` while keeping the local copy; the in-memory bytes win, so the preview needs no network.
+2. `resolveDialUrl(attachment)` → the BFF download URL is passed to `<img src>` directly; consulted whenever the local `File` is 0-byte (the file-manager placeholder, whose real content is the DIAL url) or absent. The browser's HTTP cache deduplicates it with the `<img>` already rendered in the conversation view. Load failures are detected via `<img onError>` in the renderer (see "Rendering" below).
+3. A 0-byte local `attachment.file` → `URL.createObjectURL(file)` — a genuine empty local file with no `url`; the browser's own decode failure routes through the same `onError` path.
+4. `attachment.previewUrl` — typically a `data:image/...;base64,...` URL synthesized by `message-attachment-to-display.ts` for stage attachments that carry inline base64 content and no `url`.
+5. Inline `attachment.data` decoded via `base64ToBlobUrl(data, contentType)`.
+6. `null` if no source is available ("not previewable").
 
 Because images skip `fetch()`, `resolveImageCanvasContent` never returns `ErrorCanvasContent`. Load failures surface as an inline error state in the renderer instead (see "Rendering" below).
 
@@ -337,7 +338,7 @@ Images are rendered by the `ImageContent` sub-component, defined inside `libs/at
 
 `resolvePdfCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts` is `async` and resolves `url` via the shared `resolveAttachmentBlobUrl` helper (see "Shared content resolution helpers" below). A resolved `ErrorCanvasContent` is returned as-is; a resolved string is wrapped as `{ type: AttachmentContentType.Pdf, url }`. When `resolveAttachmentBlobUrl` returns `undefined` (no local file, DIAL URL, preview URL, or inline data), `attachment.url` is set, is not a DIAL `files/` id, and is a fetchable absolute URL (`isFetchableExternalUrl`: `http:`, `https:`, or `blob:` scheme — a relative or opaque string, e.g. a bare citation/reference id, fails this check and is rejected rather than handed to the viewer as an unfetchable `url`), that raw external URL is used directly as `{ type: AttachmentContentType.Pdf, url: attachment.url }` instead of failing — the same fallback `annotationToPdfCanvasContent`/`referenceAttachmentToPdfCanvasContent` use for a citation whose source is an external PDF, since the PDF canvas viewer fetches and renders the URL itself. Otherwise `undefined` returns `null`.
 
-Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL` → (PDF only) the raw `attachment.url` when it is a non-DIAL, fetchable (`http:`/`https:`/`blob:`) external URL.
+Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` **with bytes** (`URL.createObjectURL` — a locally-picked file, or an uploaded-but-unsent composer attachment whose eager upload already assigned the DIAL `url` while keeping the local copy) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead; consulted whenever the local `File` is 0-byte — the file-manager placeholder, whose real content is the DIAL url — or absent) → a 0-byte local `attachment.file` (`URL.createObjectURL`) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL` → (PDF only) the raw `attachment.url` when it is a non-DIAL, fetchable (`http:`/`https:`/`blob:`) external URL.
 
 This covers stage attachments (e.g. from the DIAL Annotation API) that carry the PDF as inline base64 `data` with no `url` — `DocumentPreview` receives a `blob:` object URL and loads it the same way it would a remote URL. A DIAL-hosted PDF is fetched once at resolution time (to classify load/permission failures before rendering); `DocumentPreview`'s own `loadFileCb` then resolves that `blob:` URL from the in-memory blob store, so this does not add a second network round-trip.
 
@@ -421,11 +422,11 @@ When a user clicks "Preview" in a `CitationDropdown`, `useCitationMarkdownCompon
 When `annotation.body.source.attachment.type === 'application/pdf'`:
 
 1. Find the `AnnotationGroup` that owns the clicked annotation (by `sourceUrl`).
-2. `annotationsToPdfHighlights(group.annotations)` — maps every annotation whose `body.selector` contains one or more `PdfBBoxSelector` entries (`type: 'pdf_bbox'`) to an `InputHighlightData`. Each annotation becomes one highlight whose `bboxes` list collects all its `pdf_bbox` selectors. The highlight `id` is `annotation.index` when present, otherwise the annotation's position in the group.
-3. `selectedHighlightId` is computed for the clicked annotation using the same ID formula, so the viewer scrolls to it on load.
+2. `annotationsToPdfHighlights(group.annotations)` — maps every annotation whose `body.selector` contains one or more recognised PDF selectors (`pdf_bbox`, or `pdf_region` in either coordinate form) to an `InputHighlightData`. Each annotation becomes one highlight whose `bboxes` list collects all its recognised selectors, converting a `pdf_region` to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`. The highlight `id` comes from `annotationHighlightId`, which identifies the annotation itself (`annotation.index` when the wire supplied one, otherwise its `cit` id plus a digest of its selectors) rather than its position in the group.
+3. `selectedHighlightId` is computed for the clicked annotation with the same helper, so the viewer scrolls to it on load — and so selecting another citation of the same document, even on the same page, changes the id and re-navigates.
 4. `fileName` is derived from the annotation's `attachment`: `attachment.title` is used when present; otherwise the last path segment of `attachment.url` is URL-decoded with `decodeURIComponent` (so `%20` → space, etc.).
 5. `openCanvas` is called directly with `PdfCanvasContent { type: Pdf, url, highlights, selectedHighlightId }` and the resolved `fileName`.
-6. Annotations whose `body.selector` carries no `pdf_bbox` entries produce no highlight and are silently skipped.
+6. Annotations whose `body.selector` carries no recognised PDF selector produce no highlight and are silently skipped.
 
 #### Non-PDF sources
 
@@ -433,7 +434,7 @@ When `annotation.body.source.attachment.type === 'application/pdf'`:
 
 #### Selector type
 
-`AnnotationBody.selector` may be a single `AnnotationSelector` or an array. Only entries with `type === 'pdf_bbox'` are mapped; all other selector types are ignored. The `PdfBBoxSelector` shape:
+`AnnotationBody.selector` may be a single `AnnotationSelector` or an array. Entries with `type === 'pdf_bbox'` or `type === 'pdf_region'` are mapped; all other selector types are ignored. The recognised shapes:
 
 ```ts
 interface PdfBBoxSelector {
@@ -441,6 +442,12 @@ interface PdfBBoxSelector {
   page: number;   // 1-based
   x1: number; y1: number; x2: number; y2: number;
 }
+
+/* pdf_region — origin/size pair form */
+{ type: 'pdf_region', page: number, bbox: { lt: [left: number, top: number], wh: [width: number, height: number] } }
+
+/* pdf_region — legacy named-coordinate form */
+{ type: 'pdf_region', page: number, bbox: { left: number, top: number, width: number, height: number } }
 ```
 
 ---
@@ -554,6 +561,42 @@ A failed fetch SHALL resolve to `ErrorCanvasContent` carrying `errorType: Forbid
 - **WHEN** an image fails to load
 - **THEN** `resolveImageCanvasContent` still returns `ImageCanvasContent` and `ImageContent`'s `onError` swaps in the inline error message
 
+### Requirement: Attachment content resolvers prefer a resolvable DIAL download URL over a 0-byte local File
+
+Every attachment-canvas content resolver in `@epam/ai-dial-chat-hooks` that can resolve content from either a local `attachment.file` or a DIAL file id — `resolveImageCanvasContent`, `resolveAttachmentBlobUrl` (and the resolvers built on it, including `resolvePdfCanvasContent` and `resolveOoxmlCanvasContent`), `resolveAttachmentText` (and the resolvers built on it, including text/Markdown/code/JSON and `resolveVisualizerCanvasContent`), and `hasAttachmentTextSource` — SHALL apply this source precedence: a local `attachment.file` **with bytes** resolves first; when the local `File` is 0-byte or absent, the host-injected DIAL download URL (`resolvers.resolveDialUrl(attachment)`, i.e. a `files/{bucket}/{path}` id in `attachment.url` or `attachment.referenceUrl`) resolves before the 0-byte local `File`. The remaining fallback order (`attachment.previewUrl`, then inline base64 `attachment.data`, then any type-specific external-URL tail) SHALL be unchanged.
+
+Rationale: a file-manager-selected attachment carries a 0-byte placeholder `File` (synthesized by `dialFileToAttachment` to satisfy the required `Attachment.file` field) while its real content sits behind the DIAL url; local-`File`-first precedence hands the renderer an object URL over that empty placeholder (issue #8761). Conversely, the composer's eager-upload flow assigns the DIAL url before send while keeping the real local `File`, so a `File` with bytes must keep winning to preserve the instant, offline-capable in-memory preview.
+
+#### Scenario: File-manager image previews from its DIAL content
+
+- **GIVEN** an image attachment shaped like a file-manager selection: `attachment.file` is a 0-byte `File` typed `image/png` and `attachment.url` is `files/{bucket}/path/image.png`
+- **WHEN** `resolveImageCanvasContent` is called
+- **THEN** it returns `ImageCanvasContent` whose `url` is the resolved DIAL download URL, not an object URL over `attachment.file`
+
+#### Scenario: File-manager PDF content is fetched from the DIAL download URL
+
+- **GIVEN** an attachment whose `attachment.file` is a 0-byte placeholder `File` and whose `attachment.url` is a `files/{bucket}/{path}` id
+- **WHEN** `resolvePdfCanvasContent` (via `resolveAttachmentBlobUrl`) is called
+- **THEN** content is fetched from the resolved DIAL download URL (through the existing blob cache and error classification), not from `attachment.file`
+
+#### Scenario: An uploaded-but-unsent attachment previews from its local File without network
+
+- **GIVEN** an attachment whose `attachment.file` holds the real bytes and whose `attachment.url` is the DIAL id assigned by the composer's eager upload
+- **WHEN** `resolveImageCanvasContent` or `resolvePdfCanvasContent` (via `resolveAttachmentBlobUrl`) is called
+- **THEN** the content resolves from the local `File` (an object URL), and no DIAL download or metadata fetch is issued
+
+#### Scenario: A genuine local file still resolves locally, including zero-byte text
+
+- **GIVEN** an attachment with a local `attachment.file` and no `files/` id in `url` or `referenceUrl`
+- **WHEN** any content resolver or `hasAttachmentTextSource` is called
+- **THEN** behavior is unchanged from local resolution: blob/text content comes from `attachment.file`, and a zero-byte text `File` resolves to empty text rather than "no source"
+
+#### Scenario: hasAttachmentTextSource reports a DIAL-hosted attachment as a text source
+
+- **GIVEN** an attachment whose `attachment.url` is a `files/{bucket}/{path}` id (with or without a placeholder `File`)
+- **WHEN** `hasAttachmentTextSource` is called
+- **THEN** it returns `true`, so a fetched-and-rejected HTML payload is classified as "fetched and rejected" rather than "nothing to fetch"
+
 ### Requirement: `AttachmentContentType.Visualizer` variant
 
 `libs/attachment-canvas/src/types/attachment-canvas.ts` SHALL add a new enum member `AttachmentContentType.Visualizer`.
@@ -598,12 +641,24 @@ interface VisualizerCanvasContent {
 `libs/attachment-canvas/src/components/VisualizerCanvasRenderer/VisualizerCanvasRenderer.tsx` SHALL render an iframe host and drive the visualizer handshake and data delivery via the published npm package `@epam/ai-dial-visualizer-connector` (and `@epam/ai-dial-shared` for the request enum). Behaviour:
 
 - On mount, create a `VisualizerConnector` bound to the container element, passing `domain: content.url`, `hostDomain: window.location.origin` (required by the published options type; unused at runtime in the current package), `visualizerName: content.visualizerName`, and `requestTimeout: content.requestTimeout`.
-- Await `.ready()` and then call `.send(VisualizerConnectorRequests.sendVisualizeData, { mimeType: content.mimeType, visualizerData: { layout: content.layout, ...content.data } })`, where `VisualizerConnectorRequests` is imported from `@epam/ai-dial-shared` (camelCase member; wire value `SEND_VISUALIZE_DATA`).
-- On unmount, call `connector.destroy()` exactly once for that instance.
-- Display a loading state while `.ready()` is pending. Because `.ready()` never times out (see the `custom-visualizers` capability), a visualizer that never completes the handshake leaves the body in this loading state indefinitely — this is intended. Display an error state if the `SEND_VISUALIZE_DATA` `send()` rejects (its own timeout) or if `.ready()` rejects due to `destroy()`.
-- The component SHALL keep the connector instance stable across parent re-renders that do not change `url` / `visualizerName` / `requestTimeout`, so those re-renders do not tear down the iframe.
+- Await `.ready()` and then dispatch exactly one request, selected by the content variant it was given:
+  - `AttachmentContentType.Visualizer` → `.send(VisualizerConnectorRequests.sendVisualizeData, { mimeType: content.mimeType, visualizerData: { layout: content.layout, ...content.data } })` (wire value `SEND_VISUALIZE_DATA`).
+  - `AttachmentContentType.GroupedVisualizer` → `.send(VisualizerConnectorRequests.sendGroupedVisualizeData, { attachments: content.attachments, layout: content.layout })` (wire value `SEND_GROUPED_VISUALIZE_DATA`).
 
-The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags) — all data required for the visualizer is passed in through `VisualizerCanvasContent`.
+  `VisualizerConnectorRequests` is imported from `@epam/ai-dial-shared` (camelCase members).
+- Set the `title` attribute of the connector-created iframe to the optional `frameTitle` prop, defaulting to `content.visualizerName` with surrounding whitespace removed and setting nothing when that is empty — an unnamed iframe is announced as an anonymous frame. Applied in its own effect so renaming the frame never tears the connector down and refetches.
+- On unmount, call `connector.destroy()` exactly once for that instance.
+- Display a loading state while `.ready()` is pending. Because `.ready()` never times out (see the `custom-visualizers` capability), a visualizer that never completes the handshake leaves the body in this loading state indefinitely — this is intended. Display an error state if the dispatched `send()` rejects (its own timeout) or if `.ready()` rejects due to `destroy()`.
+- The component SHALL keep the connector instance stable across parent re-renders that do not change `url` / `visualizerName` / `requestTimeout`, so those re-renders do not tear down the iframe. This applies to both variants: appending attachments to a grouped payload during streaming changes the content object's identity but MUST NOT remount the iframe.
+
+The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags) — all data required for the visualizer is passed in through the canvas content object.
+
+#### Scenario: the iframe carries an accessible name
+
+- **WHEN** the renderer mounts with `visualizerName: 'my-viz'` and no `frameTitle`
+- **THEN** the iframe's `title` attribute is `'my-viz'`
+- **AND** an explicit `frameTitle` takes precedence over it
+- **AND** a `visualizerName` that is only whitespace leaves the iframe untitled
 
 #### Scenario: connector is destroyed on unmount
 
@@ -613,13 +668,20 @@ The component MUST NOT read from any app-level context (auth, theme, i18n, featu
 
 #### Scenario: SEND_VISUALIZE_DATA is dispatched after READY_TO_INTERACT
 
-- **WHEN** the iframe posts `${visualizerName}/READY_TO_INTERACT`
+- **WHEN** the renderer was given a `VisualizerCanvasContent` and the iframe posts `${visualizerName}/READY_TO_INTERACT`
 - **THEN** the renderer calls `connector.send` with the published enum member whose wire value is `SEND_VISUALIZE_DATA` exactly once
 - **AND** the payload's `layout` equals `content.layout`
 
+#### Scenario: SEND_GROUPED_VISUALIZE_DATA is dispatched for grouped content
+
+- **WHEN** the renderer was given a `GroupedVisualizerCanvasContent` and the iframe posts `${visualizerName}/READY_TO_INTERACT`
+- **THEN** the renderer calls `connector.send` with the published enum member whose wire value is `SEND_GROUPED_VISUALIZE_DATA` exactly once
+- **AND** the payload is `{ attachments, layout }` taken from the content
+- **AND** no `SEND_VISUALIZE_DATA` request is sent
+
 #### Scenario: send failure surfaces error state
 
-- **WHEN** the `SEND_VISUALIZE_DATA` `send()` promise rejects (no `/RESPONSE` within `requestTimeout`)
+- **WHEN** the dispatched `send()` promise rejects (no `/RESPONSE` within `requestTimeout`)
 - **THEN** the renderer displays an error state
 - **AND** the canvas remains closable via the header's close button
 
@@ -765,13 +827,94 @@ When the registry is empty or no entry matches, `openFileCanvas` behaves exactly
 - **WHEN** `configurePdfWorker` is not supplied
 - **THEN** `DocumentPreview` mounts immediately using the existing CDN-hosted worker fallback, unchanged from current behavior
 
+### Requirement: One PDF selector reader serves both highlight geometry and page navigation
+
+`libs/quotations/src/utils/annotation.ts` SHALL expose a single internal reader that converts one `AnnotationSelector` to the highlighter's `{ page, x1, y1, x2, y2 }` box shape, or `undefined` when the selector is not a recognised PDF selector or fails validation. Both `annotationsToPdfHighlights` and `getAnnotationPdfPage` SHALL derive their result from that one reader, so the set of selector shapes that produce a highlight and the set that produce a page number are identical by construction.
+
+The reader SHALL recognise three input shapes:
+
+```ts
+/* 1. pdf_bbox — absolute edges (existing) */
+{ type: 'pdf_bbox', page: 1, x1: 58.752, y1: 383.328, x2: 550.8, y2: 412.632 }
+
+/* 2. pdf_region — origin/size pair form */
+{ type: 'pdf_region', page: 1, bbox: { lt: [58.752, 383.328], wh: [492.048, 29.304] } }
+
+/* 3. pdf_region — legacy named-coordinate form */
+{ type: 'pdf_region', page: 1, bbox: { left: 58.752, top: 383.328, width: 492.048, height: 29.304 } }
+```
+
+A `pdf_region` bbox SHALL convert to edges as `x1 = left`, `y1 = top`, `x2 = left + width`, `y2 = top + height`, where `left`/`top` come from `lt[0]`/`lt[1]` and `width`/`height` from `wh[0]`/`wh[1]` in the origin/size form. All three shapes above describe the same region and SHALL therefore produce the identical box.
+
+When both coordinate forms are present on the same `bbox`, the reader SHALL prefer `lt`/`wh` and ignore the named fields, so a producer emitting both is read one way deterministically.
+
+Validation SHALL be per selector and non-throwing: the reader SHALL reject a selector whose `page` is absent, non-integer, or `< 1`, and one whose four resulting coordinates are not all finite numbers. A zero-area box SHALL remain valid (it still carries a page). Rejecting one selector SHALL NOT discard the other selectors in the same array and SHALL NOT throw for `null`, a primitive, a missing `bbox`, a non-object `bbox`, a short or non-numeric `lt`/`wh` array, or an unrecognised `type`.
+
+`annotationsToPdfHighlights` SHALL keep its current contract with the wider set of selector shapes: `body.selector` may be a single selector or an array; one annotation still yields at most one `InputHighlightData` whose `bboxes` collects every box the reader accepted from that annotation, in selector order; the highlight `id` is derived by the shared annotation-identity helper described in the "Citation highlight ids identify the annotation, not its position in the clicked group" requirement (no longer the input position); `CITATION_HIGHLIGHT_STYLE` is unchanged; and an annotation contributing no accepted box still produces no highlight.
+
+`getAnnotationPdfPage` SHALL return the `page` of the first selector the reader accepts, and `undefined` when it accepts none.
+
+The original annotations SHALL NOT be mutated and the persisted message format SHALL NOT change — conversion happens only where PDF preview data is built, so a message saved with `pdf_region` selectors is reloaded and re-read the same way.
+
+**i18n**: none — no new user-visible strings.
+**RTL**: none — no new UI; the change is pure coordinate reading.
+**Feature flag**: none — the new shapes are accepted unconditionally.
+**Memoisation**: none beyond existing behavior; the reader is a pure function called from the existing mappers.
+**Accessibility**: unchanged — highlight selection, keyboard navigation, and the viewer's own affordances are untouched.
+
+#### Scenario: The three supplied coordinate forms produce the same highlight
+
+- **WHEN** three annotations carry, respectively, `{ type: 'pdf_bbox', page: 1, x1: 58.752, y1: 383.328, x2: 550.8, y2: 412.632 }`, `{ type: 'pdf_region', page: 1, bbox: { lt: [58.752, 383.328], wh: [492.048, 29.304] } }`, and `{ type: 'pdf_region', page: 1, bbox: { left: 58.752, top: 383.328, width: 492.048, height: 29.304 } }`
+- **THEN** `annotationsToPdfHighlights` returns one highlight per annotation, each with a single bbox equal to `{ page: 1, x1: 58.752, y1: 383.328, x2: 550.8, y2: 412.632 }`, and `getAnnotationPdfPage` returns `1` for all three
+
+#### Scenario: A scalar pdf_region selector produces a highlight and a page
+
+- **WHEN** an annotation's `body.selector` is a single `pdf_region` object with `page: 4` and a valid `lt`/`wh` bbox
+- **THEN** `annotationsToPdfHighlights` returns one highlight with one bbox on page 4 and `getAnnotationPdfPage` returns `4`
+
+#### Scenario: A mixed selector array collects every box on one highlight
+
+- **WHEN** one annotation's `body.selector` array holds a `pdf_bbox` entry on page 2, a `pdf_region` `lt`/`wh` entry on page 5, and a `text_character_range` entry
+- **THEN** the annotation yields exactly one highlight whose `bboxes` are the page-2 and page-5 boxes in that order, the `text_character_range` entry is ignored, and `getAnnotationPdfPage` returns `2`
+
+#### Scenario: A malformed region does not discard its valid siblings
+
+- **WHEN** a selector array holds `{ type: 'pdf_region', page: 1, bbox: { lt: [1], wh: [2, 3] } }`, `{ type: 'pdf_region', page: 0, bbox: { left: 0, top: 0, width: 1, height: 1 } }`, `null`, and then a valid `pdf_region` entry on page 6
+- **THEN** no error is thrown, the first three entries are skipped, the highlight carries only the page-6 box, and `getAnnotationPdfPage` returns `6`
+
+#### Scenario: A region with a non-finite coordinate is rejected
+
+- **WHEN** a `pdf_region` selector's `wh` contains `NaN`, or its `bbox` is absent or not an object
+- **THEN** the reader rejects that selector, it contributes no bbox, and it is not considered for the page
+
+#### Scenario: A zero-size region still navigates
+
+- **WHEN** a `pdf_region` selector on page 5 has `wh: [0, 0]`
+- **THEN** the box `{ page: 5, x1, y1, x2: x1, y2: y1 }` is produced and `getAnnotationPdfPage` returns `5`, matching the existing all-zero `pdf_bbox` behavior
+
+#### Scenario: A quote-only citation gets no fabricated highlight
+
+- **WHEN** an annotation has a `body.quote` and a PDF source attachment but no `body.selector`
+- **THEN** `annotationsToPdfHighlights` produces no highlight for it, `getAnnotationPdfPage` returns `undefined`, and the PDF opens unhighlighted at the viewer's default page
+
+#### Scenario: Both coordinate forms on one bbox resolve deterministically
+
+- **WHEN** a `pdf_region` bbox carries `lt`/`wh` and `left`/`top`/`width`/`height` with conflicting values
+- **THEN** the reader uses `lt`/`wh` and ignores the named fields
+
+#### Scenario: Existing pdf_bbox annotations keep their geometry and page
+
+- **WHEN** every selector on a message is `pdf_bbox`, including entries with all-zero coordinates, a missing page, or a non-integer page
+- **THEN** the highlight geometry, styling, and selected page are identical to the behavior before this change, and the highlight ids are whatever the annotation-identity helper produces — equal to `annotation.index` when the wire supplied one
+
+
 ### Requirement: PDF citation preview navigates to the annotation's referenced page independent of highlight geometry
 
 When opening a PDF citation or a reference-only PDF-page chip in the attachment canvas, the panel SHALL navigate to the page specified by the triggering annotation's/reference's page number, whether or not that page's bounding box is renderable as a visible highlight.
 
 `PdfCanvasContent` (`libs/attachment-canvas/src/models/attachment-canvas.ts`) SHALL include an optional `page?: number` field — a 1-based page to navigate to on initial load, independent of `highlights`/`selectedHighlightId`.
 
-`annotationToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL set `page` from the clicked annotation's own `body.selector` (single object or array), taking the first `pdf_bbox` entry with an integer `page >= 1`, skipping malformed entries and invalid pages; otherwise `page` is `undefined`. This selection SHALL use the exact annotation the caller passes in (the annotation the user clicked/selected within a grouped citation), never the group's `primaryAnnotation`, and SHALL NOT derive the page from `body.title` or any other display text.
+`annotationToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL set `page` from the clicked annotation's own `body.selector` (single object or array), taking the page of the first entry the PDF selector reader accepts — a `pdf_bbox` or a `pdf_region` selector with an integer `page >= 1` and finite geometry — skipping malformed entries and invalid pages; otherwise `page` is `undefined`. This selection SHALL use the exact annotation the caller passes in (the annotation the user clicked/selected within a grouped citation), never the group's `primaryAnnotation`, and SHALL NOT derive the page from `body.title` or any other display text.
 
 `referenceAttachmentToPdfCanvasContent` (`libs/chat-hooks/src/files/attachment-canvas.ts`) SHALL likewise set `page` to the parsed page fragment when a reference-only PDF URL carries one (e.g. `files/{bucket}/report.pdf#page=81`).
 
@@ -795,6 +938,17 @@ The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page
 - **WHEN** the user clicks Preview for a PDF citation whose annotation has a `pdf_bbox` selector with `page: 3`
 - **THEN** the canvas opens with `PdfCanvasContent.page === 3` and the viewer navigates to page 3
 
+#### Scenario: Citation with a pdf_region selector opens its page and highlights its region
+
+- **WHEN** the user clicks Preview for a PDF citation whose annotation has `{ type: 'pdf_region', page: 1, bbox: { lt: [58.752, 383.328], wh: [492.048, 29.304] } }`
+- **THEN** the canvas opens with `PdfCanvasContent.page === 1`, `highlights` carrying the converted box `{ page: 1, x1: 58.752, y1: 383.328, x2: 550.8, y2: 412.632 }`, and `selectedHighlightId` set to that annotation's highlight, so the viewer scrolls to the cited location
+
+#### Scenario: A previously saved pdf_region message previews correctly on reload
+
+- **GIVEN** a persisted assistant message whose `custom_content.annotations` carry `pdf_region` body selectors with their coordinates present
+- **WHEN** the conversation is reloaded and the user clicks one of its citations
+- **THEN** the preview highlights and page are the same as they would be for the equivalent `pdf_bbox` selectors, with no change to the stored message
+
 #### Scenario: Navigation succeeds with an all-zero bounding box
 
 - **WHEN** the clicked annotation's `pdf_bbox` selector has `x1: 0, y1: 0, x2: 0, y2: 0` and `page: 5`
@@ -817,7 +971,7 @@ The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page
 
 #### Scenario: Missing or invalid page data falls back to the existing default
 
-- **WHEN** the clicked annotation has no `pdf_bbox` selector, or its `page` is missing, non-integer, or less than 1
+- **WHEN** the clicked annotation has no recognised PDF selector, or every such selector's `page` is missing, non-integer, or less than 1
 - **THEN** `getAnnotationPdfPage` returns `undefined`, `PdfCanvasContent.page` is `undefined`, and the canvas falls back to the existing default behavior (page 1) without throwing
 
 #### Scenario: Reference-only PDF-page reference also navigates independent of highlight geometry
@@ -929,3 +1083,137 @@ The `PdfContent` and `CodeContent` dynamic-import and runtime-preparation paths 
 
 - **WHEN** the PDF or syntax-highlighting dynamic import is pending
 - **THEN** an accessible polite status announcement reflects the pending state without moving keyboard focus
+
+---
+
+### Requirement: Citation highlight ids identify the annotation, not its position in the clicked group
+
+`libs/quotations/src/utils/annotation.ts` SHALL derive every citation highlight id from the annotation's own identity, so that two different citations of the same document never collapse onto one id. `annotationHighlightId(annotation, fallbackIndex)` and `annotationsToPdfHighlights` SHALL both call one shared internal helper, so the id a highlight carries and the id computed for the clicked annotation are identical by construction.
+
+The id SHALL be resolved in this order:
+
+1. `String(annotation.index)` when the wire supplied an `index` — it is already unique within the message and keeps ids short and stable.
+2. Otherwise an identity-derived id built from the annotation's `target.selector.id` when its selector is `html_tag` (the `cit` id) **and** a digest of the annotation's `body.selector` entries (single object or array), covering the PDF shapes (`pdf_bbox`, `pdf_region`) and the Office shapes (`docx_text_range`, `pptx_text_range`, `excel_rc_range`, `docx_text_anchor`, `pptx_text_anchor`). Two annotations differing in either part SHALL receive different ids; two annotations agreeing in both describe the same cited region and MAY share one.
+3. Otherwise `String(fallbackIndex)` — the annotation's position in the input list, as today.
+
+The id SHALL be an opaque, deterministic string: derived only from the annotation's own fields, stable across re-renders of the same message, never persisted, and never sent over the wire. Callers SHALL NOT parse it or infer a page, an order, or an index from it.
+
+Highlight **scope** is unchanged by this requirement: `annotationToPdfCanvasContent` still passes only the clicked citation group's same-document annotations, and `annotationToOoxmlCanvasContent` still gathers same-source annotations across the message.
+
+**State ownership**: none — pure functions in `libs/quotations`; the canvas's open state stays with `useOpenAttachmentCanvas` / the canvas context.
+**Adapter contract**: none — no host or external knowledge enters `libs/quotations`.
+**i18n**: none — no user-visible strings.
+**RTL**: none — no UI surface; ids are opaque strings.
+**Feature flag**: none — the new formula applies unconditionally.
+**Memoisation**: none beyond existing behavior; the helper is pure and called from the existing mappers, which stay `useCallback`-wrapped at their `apps/chat` call site.
+**Accessibility**: unchanged.
+**Telemetry**: none.
+
+#### Scenario: Two `cit` citations of the same PDF page get different ids
+
+- **WHEN** a message carries two `html_tag` citations with distinct `cit` ids, both citing `files/bucket/report.pdf` with a `pdf_bbox` selector on page 4 — one near the top of the page, one near the bottom — and neither annotation carries an `index`
+- **THEN** `annotationToPdfCanvasContent` returns a different `selectedHighlightId` for each of them
+
+#### Scenario: The clicked annotation's id is present in the highlights it ships with
+
+- **WHEN** any citation is previewed and its annotation yields at least one accepted box
+- **THEN** `selectedHighlightId` equals the `id` of one of the returned `highlights`, and is `undefined` when the clicked annotation yielded no highlight
+
+#### Scenario: A wire-supplied index still wins
+
+- **WHEN** an annotation carries `index: 7`
+- **THEN** its highlight id is `'7'`, both from `annotationsToPdfHighlights` and from `annotationHighlightId`
+
+#### Scenario: Two Office ranges under one `cit` id stay distinct
+
+- **WHEN** two annotations share one `cit` id, cite the same DOCX, and carry different `docx_text_range` selectors, and neither carries an `index`
+- **THEN** `annotationToOoxmlCanvasContent` returns two highlights with different ids, and `selectedHighlightId` names the clicked one
+
+#### Scenario: The id is a stable function of the annotation
+
+- **WHEN** the same annotation object is mapped twice within one message
+- **THEN** both calls produce the same id, and no id is derived from anything outside that annotation's own fields
+
+### Requirement: Selecting another citation on the same PDF page re-navigates the preview
+
+Selecting a different citation of the same PDF while the canvas is already open SHALL bring the newly selected citation into view, including when both citations sit on the **same** page. Because `PdfContent` drives the viewer declaratively — the vendor re-issues `goToHighlight` only when `selectedHighlightId` changes and `setPage` only when `page` changes — the content the canvas is opened with SHALL differ from the previous content in `selectedHighlightId` whenever the reader selected a different citation. A same-page selection SHALL NOT rely on `page` changing.
+
+Re-opening the **same** citation SHALL remain a no-op for navigation: an unchanged `selectedHighlightId` with an unchanged `page` is the existing "nothing to navigate to" case, consistent with the OOXML path's one-shot-per-selection rule.
+
+**i18n**: none.
+**RTL**: none — vertical scrolling of the preview is direction-agnostic.
+**Feature flag**: none.
+**Accessibility**: unchanged — the viewer's own focus and keyboard behavior are untouched.
+
+#### Scenario: Switching between a top-of-page and a bottom-of-page citation scrolls
+
+- **WHEN** the reader previews a citation at the top of page 4 of a PDF whose page is taller than the preview viewport, and then previews a second citation at the bottom of that same page
+- **THEN** the canvas receives content whose `selectedHighlightId` differs from the first, so the viewer navigates to the second citation's bounding box instead of leaving the viewport where it was
+
+#### Scenario: Cross-page navigation keeps working
+
+- **WHEN** the reader switches between two citations on different pages of one PDF
+- **THEN** both `page` and `selectedHighlightId` differ and the viewer navigates to the newly selected citation
+
+#### Scenario: Re-previewing the same citation does not re-navigate
+
+- **WHEN** the reader previews the citation that is already selected in the open canvas
+- **THEN** `selectedHighlightId` and `page` are unchanged and the preview stays where the reader left it
+
+### Requirement: `AttachmentContentType.GroupedVisualizer` variant
+
+`libs/attachment-canvas` SHALL add a `GroupedVisualizer` member to
+`AttachmentContentType` and a `GroupedVisualizerCanvasContent` variant to the canvas
+content union:
+
+```ts
+interface GroupedVisualizerCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.GroupedVisualizer;
+  /** Iframe `src`, resolved from the matching registry entry's `url`. */
+  url: string;
+  /** One item per claimed attachment, in the message's attachment order. */
+  attachments: AttachmentItem[];
+  /** Presentation layout hints (`themeId`, `width`, `height`, `mobileHeight`). */
+  layout: CustomVisualizerDataLayout;
+  /** postMessage protocol namespace — MUST equal the registry entry's `title`. */
+  visualizerName: string;
+  /** Milliseconds to wait for a `send()` request's response before rejecting. Does NOT bound the handshake. */
+  requestTimeout?: number;
+}
+```
+
+The variant carries no `mimeType` and no single `data` field — per-attachment MIME types
+and payloads live inside `attachments`.
+
+The content object SHALL be built once by the app and shared by both mount points: the
+inline surface in the message and the canvas panel. Opening the canvas from the inline
+surface SHALL pass the existing object rather than rebuilding it.
+
+**Feature flag:** none. The variant is reachable only when the app builds it from a
+populated `APPLICATION_VISUALIZERS` registry.
+
+#### Scenario: Grouped content is distinguishable from single-attachment content
+
+- **WHEN** the app builds content for an application visualizer
+- **THEN** `content.type` is `AttachmentContentType.GroupedVisualizer`
+- **AND** `content.attachments` is a non-empty array
+
+---
+
+### Requirement: `AttachmentCanvas` switch handles the GroupedVisualizer variant
+
+`AttachmentCanvasBody` SHALL carry a `case AttachmentContentType.GroupedVisualizer`
+branch — in
+`libs/attachment-canvas/src/components/AttachmentCanvasBody/AttachmentCanvasBody.tsx`,
+which owns the switch over `AttachmentContentType` — that renders
+`<VisualizerCanvasRenderer content={content} />` inside the panel body.
+
+The panel chrome (header, close button, resize handle, keyboard/ARIA behaviour) SHALL be
+identical to the chrome used for other content types.
+
+#### Scenario: Rendering switch dispatches to the grouped visualizer branch
+
+- **WHEN** `AttachmentCanvas` is rendered with a `GroupedVisualizerCanvasContent`
+- **THEN** the panel body contains a mounted `VisualizerCanvasRenderer`
+- **AND** the panel chrome behaves as it does for every other content type

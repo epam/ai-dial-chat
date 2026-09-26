@@ -1,0 +1,7 @@
+{
+  "name": "reusable-workflows-consumer-fixture",
+  "description": "Runs scripts/run.mjs, which installs the packed @epam/ai-dial-skills and @epam/ai-dial-prompts tarballs into a fully isolated, explicitly resolved dependency tree and proves their published exports maps, dependency closures, split CSS, and lazy-loading boundary resolve outside the workspace's own @epam/source alias graph and node_modules tree",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0"
+}

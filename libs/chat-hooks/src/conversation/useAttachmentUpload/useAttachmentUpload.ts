@@ -17,8 +17,8 @@ const CONFLICT_RETRY_LIMIT = 5;
 
 /** Parameters for {@link useAttachmentUpload}. */
 export interface UseAttachmentUploadParams {
-  /** Already-configured generated-client instance used to upload the file. */
-  filesApi: Pick<FilesApi, 'uploadFile'>;
+  /** Already-configured client; optional listing skips stored names after a conflict. */
+  filesApi: Pick<FilesApi, 'uploadFile'> & Partial<Pick<FilesApi, 'listFiles'>>;
   /** DIAL Core bucket the file is uploaded into. */
   bucket: string | undefined;
   /** Called with batched filenames after a burst of network-error upload failures. */
@@ -106,8 +106,9 @@ export const useAttachmentUpload = ({
        * path, so the later upload replaced the earlier one and the message
        * carried the same file twice. The allocator disambiguates names seen in
        * this session; `create-only` catches the ones it cannot see (a file an
-       * earlier session left in the same month folder) and the retry below
-       * moves that upload onto the next free name. */
+       * earlier session left in the same month folder). On a conflict, list
+       * stored names before retrying so old uploads do not exhaust the retry
+       * budget, which is reserved for concurrent writers. */
       const allocator = getAllocator(bucket, new Date());
       let attempt = allocator.allocate(safeName);
 
@@ -129,6 +130,20 @@ export const useAttachmentUpload = ({
           if (isConflictError(err)) {
             allocator.markTaken(attempt.fileName);
             if (retry < CONFLICT_RETRY_LIMIT) {
+              if (filesApi.listFiles) {
+                try {
+                  const listing = await filesApi.listFiles({
+                    bucket,
+                    path: attempt.path.slice(0, attempt.path.lastIndexOf('/')),
+                  });
+                  for (const item of listing.items) {
+                    allocator.markTaken(item.name);
+                  }
+                } catch {
+                  /* Listing is best-effort: retain local reservations and
+                   * let create-only uploads enforce collision safety. */
+                }
+              }
               attempt = allocator.allocate(safeName);
               continue;
             }

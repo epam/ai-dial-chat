@@ -41,7 +41,7 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/chat-shared/src/index.ts',
       ),
-      /* `@epam/ai-dial-chat-hooks` ships one root barrel plus 14 dependency-scoped
+      /* `@epam/ai-dial-chat-hooks` ships one root barrel plus 18 dependency-scoped
        * subpaths (see `libs/chat-hooks/package.json#exports`). Vite's alias matcher
        * treats a plain string `find` as a prefix match (`importee === find ||
        * importee.startsWith(find + '/')`), so a bare `@epam/ai-dial-chat-hooks`
@@ -61,6 +61,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/conversation.ts',
       ),
+      '@epam/ai-dial-chat-hooks/conversation-overlay': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/conversation-overlay.ts',
+      ),
       '@epam/ai-dial-chat-hooks/conversation-transfer': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/conversation-transfer.ts',
@@ -68,6 +72,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-chat-hooks/conversation-sources': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/conversation-sources.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/file-manager-canvas': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/file-manager-canvas.ts',
       ),
       '@epam/ai-dial-chat-hooks/file-manager': path.resolve(
         import.meta.dirname,
@@ -104,6 +112,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-chat-hooks/utils': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/utils.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/usage': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/usage.ts',
       ),
       '@epam/ai-dial-chat-hooks/mcp-apps': path.resolve(
         import.meta.dirname,
@@ -177,6 +189,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/share/src/index.ts',
       ),
+      '@epam/ai-dial-scheduled-tasks/validation': path.resolve(
+        import.meta.dirname,
+        '../../libs/scheduled-tasks/src/validation/index.ts',
+      ),
       '@epam/ai-dial-scheduled-tasks': path.resolve(
         import.meta.dirname,
         '../../libs/scheduled-tasks/src/index.ts',
@@ -184,6 +200,11 @@ export default defineConfig(() => ({
       '@epam/ai-dial-quotations': path.resolve(
         import.meta.dirname,
         '../../libs/quotations/src/index.ts',
+      ),
+      // Source components import their CSS Modules; do not prefix-match the public CSS subpath.
+      '@epam/ai-dial-builder-form/styles.css': path.resolve(
+        import.meta.dirname,
+        '../../libs/builder-form/src/styles.css',
       ),
       '@epam/ai-dial-builder-form': path.resolve(
         import.meta.dirname,

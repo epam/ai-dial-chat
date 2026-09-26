@@ -13,6 +13,7 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
+import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
@@ -21,6 +22,7 @@ import { PublishResultDto } from './dto/publish-result.dto';
 import type { PublishRuleDto } from './dto/publish-rule.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
 import {
+  getPublicationSourceCredentials,
   resolvePublicationsForSource,
   toPublicationList,
 } from './publication.util';
@@ -90,6 +92,11 @@ export class PublishService {
   ) {}
 
   /**
+   * @param publishCredentials When true, asks DIAL Core to copy the publisher's
+   * own credential for the entity onto the published copy so members of the
+   * organization use it without authorising individually. Carries the
+   * publisher's intent only — it changes no authorization here or in Core.
+   *
    * @throws {NotFoundException} When Core reports the entity or folder as unknown
    * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
    * @throws {BadGatewayException} When Core returns an unexpected error
@@ -104,6 +111,7 @@ export class PublishService {
     version: string | undefined,
     author: string,
     rules?: PublishRuleDto[],
+    publishCredentials?: boolean,
   ): Promise<PublishResultDto> {
     /*
      * `entityId` arrives as plain, unencoded text (e.g. a prompt path can
@@ -127,7 +135,19 @@ export class PublishService {
       /* A prompt carries no version, so the title must not gain a trailing space. */
       name: `${entityName} ${publicationVersion}`.trim(),
       targetFolder: publicTargetFolder,
-      resources: [{ action: 'ADD' as const, sourceUrl, targetUrl }],
+      /*
+       * `publishCredentials` is omitted entirely when false rather than sent as
+       * `false`, so the Core request stays byte-identical to the pre-change
+       * request for every caller that does not set it.
+       */
+      resources: [
+        {
+          action: 'ADD' as const,
+          sourceUrl,
+          targetUrl,
+          ...(publishCredentials ? { publishCredentials: true } : {}),
+        },
+      ],
       displayAuthor: author,
       rules: rules ?? [],
     };
@@ -184,7 +204,7 @@ export class PublishService {
       publishedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      publishedBy: publication?.author ?? publication?.displayAuthor ?? author,
+      publishedBy: readPublicationDisplayAuthor(publication, author),
     };
   }
 
@@ -281,7 +301,7 @@ export class PublishService {
       requestedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
-      requestedBy: publication?.author ?? publication?.displayAuthor ?? author,
+      requestedBy: readPublicationDisplayAuthor(publication, author),
     };
   }
 
@@ -358,7 +378,11 @@ export class PublishService {
             publishedAt: publication.createdAt
               ? new Date(publication.createdAt).toISOString()
               : '',
-            publishedBy: publication.author ?? publication.displayAuthor ?? '',
+            publishedBy: readPublicationDisplayAuthor(publication, ''),
+            publishCredentials: getPublicationSourceCredentials(
+              publication,
+              sourceUrl,
+            ),
           }))
           .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
       },

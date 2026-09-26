@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The time-of-day greeting with the user's first name on the start view.
+The time-of-day greeting with the user's first name on the start view, and the operator-configurable description line shown beneath it.
 
 ## Requirements
 
@@ -86,3 +86,50 @@ Where `GreetingTranslations` is an object carrying the eight pre-translated phra
 #### Scenario: Utility returns no-name variant when firstName is absent
 - **WHEN** `getTimeOfDayGreeting(14, translations)` is called without a third argument
 - **THEN** it SHALL return the afternoon-no-name phrase from `translations`
+
+---
+
+### Requirement: Operator-configurable description below the greeting
+
+The start screen SHALL display a short line of copy below the greeting heading, sourced from `useAppConfig().config.welcomeScreenDescription` (see the `app-config-context` and `client-config-endpoint` capabilities), not hardcoded or translated through i18n.
+
+`NewConversationComposer` SHALL pass this value to `ConversationInput`'s `descriptionText` prop as `welcomeScreenDescription ?? undefined`. When the value is `null` (operator has not configured `WELCOME_SCREEN_DESCRIPTION`), no description SHALL render and no extra spacing SHALL be introduced.
+
+`ConversationInput` (`libs/conversation-input`) SHALL render `descriptionText`, when both it and `welcomeText` are present, as a `<p>` beneath the welcome `<h1>`, both wrapped in a shared column with `gap-4` (16px) between them. `descriptionText` SHALL be ignored (never rendered) when `welcomeText` is absent. The paragraph SHALL be capped at `max-w-[540px]` so long operator copy wraps instead of stretching the layout, and its default typography SHALL be `dial-body-paragraph-text`, overridable via `styles.typography.descriptionClassName`; its color SHALL default to `--text-secondary`, overridable via `styles.colors.descriptionText` (CSS var `--ci-description-color`).
+
+The gap between the welcome/description column and the chat input below it SHALL be `gap-9` (36px), up from the prior `gap-6` (24px), applied unconditionally (not only when a description is present) since the ticketed spacing change targets the welcome-heading-to-input distance generally.
+
+The welcome heading's default typography is unchanged in the lib (`dial-display2-text`); the app SHALL override it to `font-light text-4xl` (Light, 36px) via `styles.typography.welcomeClassName` in `NewConversationComposer`, since no kit type-scale class matches that exact weight/size combination.
+
+**RTL impact:** None beyond what `ConversationInput` already provides — the description is plain text in a `text-center` column, no directional icons or logical-property gaps beyond the existing `gap-*` utilities (which are direction-agnostic).
+
+**i18n impact:** None — the copy is operator-authored config text, not a translated string; no `t()` call or `en.json` key is involved.
+
+**Accessibility:** The description is a plain `<p>` with no interactive semantics; it does not need an ARIA role. It is read by screen readers as regular content following the `<h1>` greeting.
+
+**Feature gate:** None — presence is entirely determined by whether `WELCOME_SCREEN_DESCRIPTION` is configured.
+
+#### Scenario: Description renders below the greeting when configured
+
+- **WHEN** `useAppConfig().config.welcomeScreenDescription` is `"Your secure, all-in-one AI assistant for web search, document analysis, research, brainstorming, and more."`
+- **THEN** the start screen renders that text as a paragraph directly below the greeting heading
+
+#### Scenario: No description renders when unconfigured
+
+- **WHEN** `useAppConfig().config.welcomeScreenDescription` is `null`
+- **THEN** the start screen renders the greeting heading with no description paragraph beneath it
+
+#### Scenario: Description is capped at 540px and wraps
+
+- **WHEN** the configured description text is long enough to exceed 540px at the current font size
+- **THEN** it wraps onto multiple lines rather than stretching wider than 540px
+
+#### Scenario: descriptionText is ignored when welcomeText is absent
+
+- **WHEN** `ConversationInput` is rendered with `descriptionText` set but `welcomeText` empty or absent
+- **THEN** no description paragraph is rendered
+
+#### Scenario: Welcome heading renders Light 36px
+
+- **WHEN** the start screen renders the greeting heading
+- **THEN** it is styled `font-light text-4xl` (36px, font-weight 300), not the lib's `dial-display2-text` default

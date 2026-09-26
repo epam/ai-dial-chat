@@ -75,6 +75,33 @@ describe('dist/index.js static import closure', () => {
     expect(staticClosureJs).toMatch(/import\("react-syntax-highlighter"\)/);
   });
 
+  it('references each OOXML renderer only through external dynamic imports', () => {
+    for (const packageEntry of [
+      '@silurus/ooxml/docx',
+      '@silurus/ooxml/xlsx',
+      '@silurus/ooxml/pptx',
+      '@silurus/ooxml/chart-ex',
+    ]) {
+      expect(staticClosureJs).toContain(`import("${packageEntry}")`);
+    }
+  });
+
+  it('emits no private OOXML renderer or worker implementation chunks', () => {
+    const privateChunkPatterns = [
+      /^docx-[\w-]+\.js$/,
+      /^xlsx-[\w-]+\.js$/,
+      /^pptx-[\w-]+\.js$/,
+      /^render-worker-host-[\w-]+\.js$/,
+      /^renderer-module-contract-[\w-]+\.js$/,
+      /^bounded-raw-part-cache-[\w-]+\.js$/,
+    ];
+    const privateChunks = distFiles.filter((file) =>
+      privateChunkPatterns.some((pattern) => pattern.test(file)),
+    );
+
+    expect(privateChunks).toEqual([]);
+  });
+
   it('still contains the PDF and code lazy-loading call sites', () => {
     expect(indexJs).toMatch(/import\("\.\/PdfContent-[\w-]+\.js"\)/);
     expect(indexJs).toMatch(/import\("react-syntax-highlighter"\)/);

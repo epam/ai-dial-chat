@@ -14,6 +14,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { FC, ReactNode } from 'react';
+import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 import styles from './CitationCard.module.scss';
 
@@ -104,8 +105,7 @@ export const CitationCard: FC<CitationCardProps> = ({
   const total = group.annotations.length;
   const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
   const hasSwitcher = total > 1;
-  const sourceContentType =
-    group.primaryAnnotation.body?.source?.attachment?.type;
+  const sourceContentType = annotation.body?.source?.attachment?.type;
   const isWebLink =
     onPreview == null ||
     sourceContentType === MIMEType.HTML ||
@@ -136,6 +136,7 @@ export const CitationCard: FC<CitationCardProps> = ({
       className={mergeClasses(
         'flex w-[400px] flex-col gap-3 rounded-lg p-4 shadow-lg',
         styles.card,
+        QUOTATIONS_CLASS.citationCard,
       )}
     >
       {/* Header */}

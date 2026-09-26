@@ -9,6 +9,7 @@ import {
 import { DIAL_ICON_SIZE, ElementSize, LinkButton } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC, useId } from 'react';
+import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import type { UserMessageBubbleProps } from '../../models/message-bubble';
 import { BubblePosition } from '../../types/bubble-position';
 import { MessageActions } from '../MessageActions/MessageActions';
@@ -26,7 +27,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   attachments,
   collapsedLineCount = DEFAULT_COLLAPSED_LINE_COUNT,
   labels,
-  beforeContent,
+  textSegments,
   onAttachmentClick,
   onDownloadAll,
   onAttachmentRetry,
@@ -107,53 +108,48 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           styles={{ className: 'max-w-[640px]' }}
           selectedAttachmentId={selectedAttachmentId}
         />
-        {(text || beforeContent != null) && (
+        {text && (
           <div
             className={mergeClasses(
               styles.userBubble,
               'flex w-fit items-center justify-end rounded-es-2xl rounded-ss-2xl border px-6 py-4',
               positionRadius,
               bubbleClassName,
+              CONVERSATION_MESSAGES_CLASS.userBubble,
             )}
           >
             <div className="flex min-w-0 flex-col items-start">
-              {text && (
-                <div
-                  id={collapsibleTextId}
+              <div
+                id={collapsibleTextId}
+                className={mergeClasses(
+                  // Bleed room for chip edges — see design.md Decision 3a.
+                  'relative -me-1 -ms-1 w-[calc(100%+8px)] overflow-hidden pe-1 ps-1',
+                  isOverflowing && styles.collapsibleText,
+                  isOverflowing && !isCollapsed && styles.expandedText,
+                  isTextCollapsed && styles.collapsedText,
+                )}
+              >
+                <p
+                  ref={textRef}
                   className={mergeClasses(
-                    'relative overflow-hidden',
-                    isOverflowing && styles.collapsibleText,
-                    isOverflowing && !isCollapsed && styles.expandedText,
-                    isTextCollapsed && styles.collapsedText,
+                    textClass,
+                    'whitespace-pre-wrap text-start [overflow-wrap:anywhere]',
                   )}
                 >
-                  <p
-                    ref={textRef}
-                    className={mergeClasses(
-                      textClass,
-                      'whitespace-pre-wrap text-start [overflow-wrap:anywhere]',
-                    )}
-                  >
-                    {/*
-                     * The slot renders inline at the start of the text so the
-                     * text word-flows after it on the same line — the
-                     * conversation input's inline-start slot behaviour.
-                     * Inline placement keeps the bubble's content-sized width
-                     * and the collapse line measurement honest, which an
-                     * overlaid or floated slot would not; the wrapper supplies
-                     * the chip-to-text gap because generic slot content
-                     * carries no padding of its own. In flow when there is no
-                     * text: the bubble then renders for the slot alone and
-                     * needs its height.
-                     */}
-                    {beforeContent != null && (
-                      <span className="me-1">{beforeContent}</span>
-                    )}
-                    {text}
-                  </p>
-                </div>
-              )}
-              {beforeContent != null && !text && <div>{beforeContent}</div>}
+                  {/*
+                   * `textSegments` (when present) replaces `text` here with
+                   * interleaved plain-text runs and inline elements (e.g.
+                   * skill-mention chips at their text position) — `text`
+                   * itself remains non-empty in that case too (a mention is
+                   * literal `/{name}` text), so this component never needs a
+                   * separate "segments with no text" branch: `text`'s own
+                   * truthiness gate above already covers both cases, and the
+                   * `useCollapsedText` ref-based measurement above measures
+                   * whatever is actually rendered here, segments included.
+                   */}
+                  {textSegments ?? text}
+                </p>
+              </div>
               {isOverflowing && (
                 <LinkButton
                   label={<>{toggleLabel}</>}

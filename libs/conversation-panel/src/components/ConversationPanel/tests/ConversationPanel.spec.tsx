@@ -2,6 +2,7 @@ import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import { ConversationItem } from '../../../models/panel-props';
 import { ConversationPanel } from '../ConversationPanel';
 
@@ -49,6 +50,32 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  FilterChips: <T extends string>({
+    items,
+    value,
+    onChange,
+    'aria-label': ariaLabel,
+    chipClassName,
+  }: {
+    items: { value: T; label: string }[];
+    value: T;
+    onChange: (value: T) => void;
+    'aria-label'?: string;
+    chipClassName?: string;
+  }) => (
+    <div role="group" aria-label={ariaLabel}>
+      {items.map((item) => (
+        <button
+          key={item.value}
+          aria-pressed={item.value === value}
+          className={chipClassName}
+          onClick={() => onChange(item.value)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
   TagAppearance: { Outlined: 'outlined', Selectable: 'selectable' },
   EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
@@ -83,13 +110,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Button: ({
     onClick,
     label,
+    className,
     'aria-current': ariaCurrent,
   }: {
     onClick?: () => void;
     label?: React.ReactNode;
+    className?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
   }) => (
-    <button onClick={onClick} aria-current={ariaCurrent}>
+    <button onClick={onClick} className={className} aria-current={ariaCurrent}>
       {label}
     </button>
   ),
@@ -115,23 +144,44 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarOrientation: { Left: 'left', Right: 'right' },
+  /*
+   * The real panel puts `styles.headerClassName` on its header bar and
+   * `styles.headerActionsClassName` on the cluster holding `rightActions`.
+   * The stand-in keeps that nesting and gives both boxes a role and name, so
+   * a class landing on the wrong one fails without reaching into the DOM.
+   */
   SidebarPanel: ({
     children,
     isOpen,
     ariaLabel,
     rightActions,
+    styles,
   }: {
     children: React.ReactNode;
     isOpen?: boolean;
     ariaLabel: string;
     rightActions?: React.ReactNode;
+    styles?: {
+      headerClassName?: string;
+      headerActionsClassName?: string;
+    };
   }) => (
     <aside role="complementary" aria-label={ariaLabel} aria-hidden={!isOpen}>
-      {rightActions && (
-        <div role="group" aria-label="panel header actions">
-          {rightActions}
-        </div>
-      )}
+      <div
+        role="group"
+        aria-label="panel header"
+        className={styles?.headerClassName}
+      >
+        {rightActions && (
+          <div
+            role="group"
+            aria-label="panel header actions"
+            className={styles?.headerActionsClassName}
+          >
+            {rightActions}
+          </div>
+        )}
+      </div>
       {children}
     </aside>
   ),
@@ -450,5 +500,97 @@ describe('ConversationPanel', () => {
     );
     expect(screen.queryByRole('listitem')).toBeNull();
     expect(screen.getAllByText('No conversations yet')).toBeTruthy();
+  });
+});
+
+/*
+ * The public classes are host styling hooks, so these tests never find an
+ * element *by* the class — that would still pass with the class on the wrong
+ * node. They locate by role or text first, then assert the hook is present.
+ *
+ * This lives in the main spec rather than its own file so it reuses the ui-kit,
+ * chat-shared, sidebar and react-window mocks defined above.
+ */
+describe('ConversationPanel — public class names', () => {
+  it('marks the new-chat button, and only it', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+
+    /*
+     * Located by its accessible name, which is the label the host passes —
+     * finding it by the class would pass even with the class on another node,
+     * which is the whole failure this test exists to catch.
+     */
+    expect(
+      screen.getByRole('button', { name: /New chat/ }).classList,
+    ).toContain(CONVERSATION_PANEL_CLASS.newChatButton);
+
+    expect(
+      screen
+        .getAllByRole('button')
+        .filter((button) =>
+          button.classList.contains(CONVERSATION_PANEL_CLASS.newChatButton),
+        ),
+    ).toHaveLength(1);
+  });
+
+  it('marks the search region found by its role', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+
+    expect(screen.getByRole('search').classList).toContain(
+      CONVERSATION_PANEL_CLASS.search,
+    );
+  });
+});
+
+describe('ConversationPanel — header style forwarding', () => {
+  it('keeps its own header height when the host passes no class', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
+
+    expect(
+      screen.getByRole('group', { name: 'panel header' }).classList,
+    ).toContain('h-[64px]');
+  });
+
+  it('forwards styles.headerClassName onto the header bar', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        styles={{ headerClassName: 'h-[80px] border-b' }}
+      />,
+    );
+
+    const header = screen.getByRole('group', { name: 'panel header' });
+    expect(header.classList).toContain('h-[80px]');
+    expect(header.classList).toContain('border-b');
+  });
+
+  it('forwards styles.newChatButtonClassName onto the New chat button', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        styles={{ newChatButtonClassName: 'h-[44px]' }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: /New chat/ }).classList,
+    ).toContain('h-[44px]');
+  });
+
+  it('forwards styles.headerActionsClassName onto the trailing action cluster', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        headerActions={<button>Test Action</button>}
+        styles={{ headerActionsClassName: 'gap-4' }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('group', { name: 'panel header actions' }).classList,
+    ).toContain('gap-4');
   });
 });

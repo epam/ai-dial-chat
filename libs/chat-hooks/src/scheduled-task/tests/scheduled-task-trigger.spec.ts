@@ -338,13 +338,27 @@ describe('mapFormValuesToUpdateBody', () => {
       prompt: 'Summarize my inbox',
     };
 
-    expect(mapFormValuesToUpdateBody(values)).toEqual(
-      mapFormValuesToCreateBody(values),
-    );
+    expect(mapFormValuesToUpdateBody(values)).toEqual({
+      ...mapFormValuesToCreateBody(values),
+      skillUrl: null,
+    });
   });
 });
 
 describe('mapScheduledTaskDtoToFormValues', () => {
+  it('hydrates a skill-only detail without synthesizing instructions', () => {
+    expect(
+      mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        prompt: '',
+        skillUrl: 'skills/public/report',
+        trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+      }),
+    ).toMatchObject({
+      ok: true,
+      values: { prompt: '', skillUrl: 'skills/public/report' },
+    });
+  });
   afterEach(() => {
     vi.unstubAllEnvs();
   });

@@ -4,16 +4,16 @@ context: |
   # AI DIAL Chat
 
   ## Tech Stack
-  - Monorepo: Nx 22
+  - Monorepo: Nx 23
   - Frontend: React 19, Vite 8 (apps/chat, port 4207)
   - Backend: NestJS 11 (apps/chat-api, port 5000)
-  - Language: TypeScript 5.9 (strict mode, noUnusedLocals, noUnusedParameters)
+  - Language: TypeScript 6.0 (strict mode, noUnusedLocals, noUnusedParameters)
   - Frontend module resolution: Vite-built apps and libs use `module: esnext` with
     `moduleResolution: bundler`; relative TypeScript source imports omit `.js`/`.ts` extensions
   - Styling: Tailwind CSS 3 (primary) + SCSS (component overrides only)
   - i18n: react-i18next + i18next-browser-languagedetector (keys in apps/chat/src/i18n/locales/en.json)
   - State: React Context + custom hooks (no external state management library)
-  - API layer: generated `@epam/chat-api-client` wrappers in apps/chat/src/server-api/ for REST endpoints.
+  - API layer: generated `@epam/ai-dial-chat-api-client` wrappers in apps/chat/src/server-api/ for REST endpoints.
     `apps/chat/src/server-api/base.ts` is legacy/infrastructure support (CSRF, unauthorized handling,
     streaming, and temporary exceptions only), not the default path for new business endpoints.
   - Routing: React Router v6 (BrowserRouter, lazy-loaded routes)
@@ -28,7 +28,6 @@ context: |
   - react-i18next / i18next: Internationalisation
   - class-validator + class-transformer: NestJS DTO validation and serialisation
   - @nestjs/swagger: OpenAPI documentation
-  - @nestjs/throttler: Rate limiting
   - @nestjs/cache-manager + cache-manager: In-memory cache
   - helmet: Security headers
   - prettier-plugin-tailwindcss: Tailwind class ordering
@@ -67,7 +66,7 @@ context: |
   - Components: apps/chat/src/components/{ComponentName}/{ComponentName}.tsx
     - Folder name must be PascalCase and match the component name exactly (e.g. RequireAuth/RequireAuth.tsx)
     - Tests go in a tests/ subfolder inside the component folder (e.g. RequireAuth/tests/RequireAuth.spec.tsx)
-  - API: apps/chat/src/server-api/ — thin domain wrappers around generated `@epam/chat-api-client`
+  - API: apps/chat/src/server-api/ — thin domain wrappers around generated `@epam/ai-dial-chat-api-client`
     APIs. New REST business endpoints must be exposed through the generated client; use raw
     `base.ts` helpers only for documented generator gaps, streaming, or infrastructure endpoints.
   - i18n: apps/chat/src/i18n/ — i18next config + locale JSON files
@@ -86,7 +85,7 @@ context: |
     implementing anything inside apps/chat-api/**
 
   ### Libraries
-  - libs/chat-shared/  — shared TypeScript interfaces and types only (no logic)
+  - libs/chat-shared/  — shared domain models, utilities, hooks, and UI components
   - libs/chat-hooks/  — reusable headless React hooks for chat interfaces
   - libs/conversation-input/  — ConversationInput React component
   - Libraries under libs/* are host-agnostic: host/external integration knowledge stays in
@@ -96,13 +95,14 @@ context: |
 
   ### Module boundary rules
   - apps may import from libs; apps may not import from each other
-  - type:ui libs may import from chat-shared only
-  - type:shared libs (chat-shared) import nothing
+  - Library dependencies must follow the isolation policy and declared package contracts;
+    consult AGENTS.md and each library's package.json rather than inferring a tag hierarchy
   - libs may not import from apps, server-api wrappers, generated API clients, backend DTOs,
     app providers/contexts, config/env, storage, analytics, routing, or SDK singletons; the
     generated-client exceptions are limited to libs/chat-api-client/ and the narrow
     libs/chat-hooks/ contract documented in AGENTS.md
-  - Enforced by @nx/enforce-module-boundaries in eslint.config.mjs
+  - @nx/enforce-module-boundaries in eslint.config.mjs enforces buildable-library constraints,
+    but its current wildcard tag constraint does not enforce the full isolation policy above
 
 rules:
   # Coding conventions (arrow functions, component folder structure, etc.) are defined in
@@ -129,7 +129,7 @@ rules:
       the lib boundary and which app-level adapter, prop, callback, or resolved value carries it
     - Ask clarifying questions before finalising — especially around state ownership and
       whether the feature needs a new context or can use an existing one
-    - Include impact on i18n: does this introduce new user-visible strings?
+    - 'Include impact on i18n: does this introduce new user-visible strings?'
 
   design:
     # Code-syntax conventions (Tailwind, mergeClasses, icons, props/component syntax,
@@ -137,7 +137,7 @@ rules:
     # i18n) are NOT repeated here — they auto-load from .claude/rules/*.md and AGENTS.md when
     # matching files are touched. This block governs design decisions only.
     - 'All user-visible strings go through react-i18next useTranslation — key format: {domain}.{element}'
-    - Use the generated `@epam/chat-api-client` through apps/chat/src/server-api/api-client.ts
+    - Use the generated `@epam/ai-dial-chat-api-client` through apps/chat/src/server-api/api-client.ts
       and thin domain wrappers in apps/chat/src/server-api/. Do not call `fetch` directly in
       components or hooks, and do not add new `base.ts` get/post/put/del wrappers for business
       endpoints unless the design documents a generated-client gap.
@@ -191,8 +191,6 @@ rules:
     - Define accessibility requirements — keyboard navigation, ARIA roles/labels
     - State observability/telemetry requirements where the feature needs metrics or analytics
       (which events/metrics, where they are emitted)
-    - Specify rate limiting requirements for new NestJS endpoints (per-route @Throttle
-      when stricter than the global default)
     - Include cache TTL and invalidation strategy for new cached data — state the cache key
       (naming <domain>:<resource>[:<param>]), the TTL, AND the event that triggers invalidation
 
@@ -206,11 +204,12 @@ rules:
     - Scope discipline — each task touches only what it requires. No drive-by cleanup or refactors
       in untouched files. Record out-of-scope findings as explicit follow-up tasks, not inline edits
     - Reference specific file paths — never vague descriptions like "update the service"
-    - Follow the file location conventions:
-        - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
-          API wrappers in apps/chat/src/server-api/ that delegate to `@epam/chat-api-client`
-        - Backend — domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
-          see apps/chat-api/AGENTS.md §1 for the full layout
+    - |-
+      Follow the file location conventions:
+      - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,
+        API wrappers in apps/chat/src/server-api/ that delegate to `@epam/ai-dial-chat-api-client`
+      - Backend — domains in apps/chat-api/src/{domain}/ (NO `modules/` wrapper);
+        see apps/chat-api/AGENTS.md §1 for the full layout
     - Before writing tasks that touch apps/<app>/** or libs/<lib>/**, read the corresponding
       AGENTS.md (e.g. apps/chat-api/AGENTS.md for chat-api work) so task wording matches the
       conventions of that project
@@ -241,14 +240,15 @@ rules:
       ENABLED_FEATURES / ENABLED_FEATURES_ROLES
     - Add a docs-update task when the change alters behavior documented under docs/
       (feature flags, viewers, theming, auth, architecture)
-    - For any new or changed business HTTP endpoint, include dedicated tasks to:
-        - update Swagger DTO/response annotations in apps/chat-api so the endpoint appears in
-          `libs/chat-api-client/openapi.json` with strong types
-        - run `npm run openapi` and `npm run openapi:check`
-        - build and lint `chat-api-client`
-        - add or update the generated API singleton in `apps/chat/src/server-api/api-client.ts`
-        - implement frontend server-api wrappers using `@epam/chat-api-client`, not direct
-          `base.ts` helpers, unless the task documents a generator gap
+    - |-
+      For any new or changed business HTTP endpoint, include dedicated tasks to:
+      - update Swagger DTO/response annotations in apps/chat-api so the endpoint appears in
+        `libs/chat-api-client/openapi.json` with strong types
+      - run `npm run openapi` and `npm run openapi:check`
+      - build and lint `chat-api-client`
+      - add or update the generated API singleton in `apps/chat/src/server-api/api-client.ts`
+      - implement frontend server-api wrappers using `@epam/ai-dial-chat-api-client`, not direct
+        `base.ts` helpers, unless the task documents a generator gap
     - Give every implementation task an explicit Verification subsection naming the exact Vitest
       file(s) to run with `npm run test:file -- <workspace-relative-path>`. Run
       `npm run verify:changed` once after a completed vertical slice, not after each micro-edit,

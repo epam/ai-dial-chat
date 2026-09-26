@@ -52,6 +52,20 @@ export class ScheduledTaskDto {
   @IsBoolean()
   isActive?: boolean;
 
+  @ApiPropertyOptional({
+    example: true,
+    description:
+      'True when the schedule can no longer produce a future run: either a ' +
+      'one-time (date-trigger) schedule whose newest run terminated with ' +
+      'Success or Error, or a recurring schedule whose cron activity window ' +
+      'has closed with no upcoming run. Undefined when the run-history check ' +
+      'failed; computed by ScheduledTasksService, not by ' +
+      'fromUpstreamSchedule (which cannot see runs).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isCompleted?: boolean;
+
   @ApiPropertyOptional({ example: false })
   @IsOptional()
   @IsBoolean()
@@ -83,4 +97,9 @@ export class ScheduledTaskDto {
   @IsOptional()
   @IsString()
   prompt?: string;
+
+  @ApiPropertyOptional({ example: 'skills/public/daily-summary' })
+  @IsOptional()
+  @IsString()
+  skillUrl?: string;
 }

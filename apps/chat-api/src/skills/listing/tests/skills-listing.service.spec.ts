@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   ForbiddenException,
   NotFoundException,
   ServiceUnavailableException,
@@ -288,6 +289,93 @@ describe('SkillsListingService', () => {
     });
   });
 
+  /*
+   * DIAL Core's cursor walks storage objects while this listing shows only
+   * skills, so an upstream page can map to nothing. These cover the walk
+   * that keeps such a page from reaching the caller.
+   */
+  describe('listSkills — upstream pages holding no skill', () => {
+    const page = (items: unknown[], nextToken?: string) => ({
+      error: undefined,
+      response: { status: 200 },
+      data: { items, nextToken },
+    });
+
+    it('follows the cursor past empty pages instead of answering with an empty first page', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listSkillMetadata
+        .mockResolvedValueOnce(page([], 'page-2'))
+        .mockResolvedValueOnce(page([], 'page-3'))
+        .mockResolvedValueOnce(page([skillItem], 'page-4'));
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items).toHaveLength(1);
+      expect(result.nextToken).toBe('page-4');
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledTimes(3);
+    });
+
+    it('never answers with more items than the requested limit', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listSkillMetadata
+        .mockResolvedValueOnce(page([], 'page-2'))
+        .mockResolvedValueOnce(page([skillItem], 'page-3'))
+        .mockResolvedValueOnce(page([skillItem], 'page-4'));
+
+      const result = await service.listSkills(
+        'my-bucket',
+        '',
+        { limit: 2 },
+        'token',
+      );
+
+      expect(result.items).toHaveLength(2);
+      /* Each upstream page asks only for what the limit still lacks. */
+      expect(sdkClient.listSkillMetadata).toHaveBeenNthCalledWith(
+        1,
+        'my-bucket',
+        '',
+        expect.objectContaining({
+          params: { query: { token: undefined, limit: 2, recursive: false } },
+        }),
+      );
+      expect(sdkClient.listSkillMetadata).toHaveBeenNthCalledWith(
+        3,
+        'my-bucket',
+        '',
+        expect.objectContaining({
+          params: { query: { token: 'page-3', limit: 1, recursive: false } },
+        }),
+      );
+    });
+
+    it('stops when the cursor repeats a token', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listSkillMetadata.mockResolvedValue(page([], 'same-token'));
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items).toEqual([]);
+      expect(result.nextToken).toBe('same-token');
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledTimes(2);
+    });
+
+    it('bounds the number of upstream pages one request consumes', async () => {
+      const { service, sdkClient } = makeService();
+      let pageNumber = 0;
+      sdkClient.listSkillMetadata.mockImplementation(() => {
+        pageNumber += 1;
+        return Promise.resolve(page([], `page-${pageNumber}`));
+      });
+
+      const result = await service.listSkills('my-bucket', '', {}, 'token');
+
+      expect(result.items).toEqual([]);
+      expect(result.nextToken).toBe('page-20');
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledTimes(20);
+    });
+  });
+
   describe('listCatalogSkills', () => {
     it('returns personal, writable shared, and read-only public skills', async () => {
       const { service, sdkClient } = makeService({
@@ -473,6 +561,145 @@ describe('SkillsListingService', () => {
           'token',
         ),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getSkillMetadata', () => {
+    it('resolves an item with author/updatedAt and no ownership fields', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: skillItem,
+      });
+
+      const result = await service.getSkillMetadata(
+        'my-bucket',
+        'team-a/docs-helper',
+        'token',
+      );
+
+      expect(result).toMatchObject({
+        name: 'docs-helper',
+        author: 'user@example.com',
+        createdAt: 1000,
+        updatedAt: 2000,
+        permissions: ['READ', 'WRITE'],
+      });
+      expect(result).not.toHaveProperty('isMy');
+      expect(result).not.toHaveProperty('canEdit');
+      expect(result).not.toHaveProperty('sharedWithMe');
+    });
+
+    it('resolves against another user bucket verbatim, never the caller bucket', async () => {
+      const { service, sdkClient } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: { ...skillItem, bucket: 'owner-bucket' },
+      });
+
+      const result = await service.getSkillMetadata(
+        'owner-bucket',
+        'team-a/docs-helper',
+        'token',
+      );
+
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledWith(
+        'owner-bucket',
+        'team-a/docs-helper',
+        expect.anything(),
+      );
+      expect(result.url).toBe('skills/owner-bucket/team-a/docs-helper');
+    });
+
+    it('encodes a nested path before calling the SDK', async () => {
+      const { service, sdkClient } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: skillItem,
+      });
+
+      await service.getSkillMetadata(
+        'my-bucket',
+        'team a/docs helper',
+        'token',
+      );
+
+      expect(sdkClient.listSkillMetadata).toHaveBeenCalledWith(
+        'my-bucket',
+        'team%20a/docs%20helper',
+        expect.anything(),
+      );
+    });
+
+    it('rejects a folder path with BadRequestException', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: folderItem,
+      });
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a', 'token'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('maps a Core 404 to NotFoundException', async () => {
+      const { service } = makeService({
+        error: true,
+        response: { status: 404 },
+        data: undefined,
+      });
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('maps unnormalizable metadata to NotFoundException', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: { status: 200 },
+        data: { bucket: 'my-bucket' },
+      });
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('maps a 5xx to BadGatewayException', async () => {
+      const { service } = makeService({
+        error: true,
+        response: { status: 502 },
+        data: undefined,
+      });
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('maps a network/timeout failure to ServiceUnavailableException', async () => {
+      const sdkClient = {
+        listSkillMetadata: vi
+          .fn()
+          .mockRejectedValue(
+            Object.assign(new Error('aborted'), { name: 'TimeoutError' }),
+          ),
+        listSkillFileMetadata: vi.fn(),
+      };
+      const configService = {
+        get: vi.fn().mockReturnValue(undefined),
+      } as unknown as ConfigService<EnvironmentVariables>;
+      const dialClient = {
+        client: sdkClient,
+        baseUrl: 'http://dial-core',
+      } as unknown as DialClientService;
+      const service = new SkillsListingService(dialClient, configService);
+
+      await expect(
+        service.getSkillMetadata('my-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
   });
 });

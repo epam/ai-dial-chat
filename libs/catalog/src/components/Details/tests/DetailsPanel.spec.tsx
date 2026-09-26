@@ -293,6 +293,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       ruleSourceOptions,
       isRulesLoading,
       hasRulesLoadError,
+      publishCredentials,
+      onPublishCredentialsChange,
     }: {
       onSelectedFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
@@ -303,6 +305,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       ruleSourceOptions: string[];
       isRulesLoading?: boolean;
       hasRulesLoadError?: boolean;
+      publishCredentials?: boolean;
+      onPublishCredentialsChange?: (value: boolean) => void;
     }) => (
       <div>
         <span>Publish panel</span>
@@ -312,6 +316,15 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <span>rules:{rules.map((r) => r.source).join(',')}</span>
         <span>rulesLoading:{String(isRulesLoading)}</span>
         <span>rulesLoadError:{String(hasRulesLoadError)}</span>
+        {onPublishCredentialsChange != null && (
+          <button
+            onClick={() =>
+              onPublishCredentialsChange(publishCredentials !== true)
+            }
+          >
+            Toggle credentials:{String(publishCredentials)}
+          </button>
+        )}
         <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
           Select Shared
         </button>
@@ -385,6 +398,175 @@ const renderPanel = (props?: Partial<ComponentProps<typeof DetailsPanel>>) =>
       {...props}
     />,
   );
+
+const toolsetWithCredentials = (
+  credentials: CatalogItem['credentials'],
+): CatalogItem => makeItem({ type: CatalogEntityType.Toolset, credentials });
+
+const openPublish = async () =>
+  userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+const credentialsToggle = () =>
+  screen.queryByRole('button', { name: /^Toggle credentials:/ });
+
+describe('DetailsPanel — publish credentials opt-in', () => {
+  it('offers the option for an OAuth toolset whose publisher is signed in globally', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.OAuth,
+        globalStatus: CredentialStatus.SignedIn,
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeTruthy();
+  });
+
+  /* A shared team API key is the common internal case. */
+  it('offers the option for an API-key toolset whose publisher is signed in personally', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.ApiKey,
+        userStatus: CredentialStatus.SignedIn,
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeTruthy();
+  });
+
+  it('offers no option for a toolset that needs no login', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.None,
+        globalStatus: CredentialStatus.SignedIn,
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeNull();
+  });
+
+  /* Access the publisher does not hold cannot be passed on. */
+  it('offers no option for a toolset the publisher is signed out of', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.OAuth,
+        userStatus: CredentialStatus.SignedOut,
+        globalStatus: CredentialStatus.SignedOut,
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeNull();
+  });
+
+  it('offers no option for a toolset with no credentials at all', async () => {
+    renderPanel({ item: makeItem({ type: CatalogEntityType.Toolset }) });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeNull();
+  });
+
+  it('offers no option for a non-toolset entity', async () => {
+    renderPanel({
+      item: makeItem({
+        type: CatalogEntityType.Agent,
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          globalStatus: CredentialStatus.SignedIn,
+        },
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeNull();
+  });
+
+  /* No role gate: the person holding a shared team account is rarely an admin. */
+  it('offers the option to a non-administrator', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.ApiKey,
+        globalStatus: CredentialStatus.SignedIn,
+        isManageableByAdmin: false,
+      }),
+    });
+    await openPublish();
+
+    expect(credentialsToggle()).toBeTruthy();
+  });
+
+  it('sends the selected value to onPublish', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    const eligibleItem = toolsetWithCredentials({
+      authenticationType: ToolsetAuthenticationType.OAuth,
+      globalStatus: CredentialStatus.SignedIn,
+    });
+    renderPanel({ item: eligibleItem, onPublish });
+    await openPublish();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(credentialsToggle() as HTMLElement);
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(onPublish).toHaveBeenCalledWith(
+      eligibleItem,
+      ['Shared'],
+      [],
+      '',
+      true,
+    );
+  });
+
+  /* GH #5074: the option survived a publish and the next open started ticked. */
+  it('clears the option when the panel is reopened after a publish', async () => {
+    const eligibleItem = toolsetWithCredentials({
+      authenticationType: ToolsetAuthenticationType.OAuth,
+      globalStatus: CredentialStatus.SignedIn,
+    });
+    renderPanel({
+      item: eligibleItem,
+      onPublish: vi.fn().mockResolvedValue(undefined),
+    });
+    await openPublish();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(credentialsToggle() as HTMLElement);
+    expect(
+      screen.getByRole('button', { name: 'Toggle credentials:true' }),
+    ).toBeTruthy();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await openPublish();
+
+    expect(
+      screen.getByRole('button', { name: 'Toggle credentials:false' }),
+    ).toBeTruthy();
+  });
+
+  it('clears the option when the panel is reopened after cancelling', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.OAuth,
+        globalStatus: CredentialStatus.SignedIn,
+      }),
+    });
+    await openPublish();
+
+    await userEvent.click(credentialsToggle() as HTMLElement);
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await openPublish();
+
+    expect(
+      screen.getByRole('button', { name: 'Toggle credentials:false' }),
+    ).toBeTruthy();
+  });
+});
 
 describe('DetailsPanel — header favorite star', () => {
   it('renders the star toggle in the header by default', () => {
@@ -1296,7 +1478,7 @@ describe('DetailsPanel', () => {
       screen.getByRole('button', { name: 'Select Shared' }),
     );
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
-    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '');
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
     expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
   });
 
@@ -1317,7 +1499,13 @@ describe('DetailsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Set author' }));
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], 'DIAL Team');
+    expect(onPublish).toHaveBeenCalledWith(
+      item,
+      ['Shared'],
+      [],
+      'DIAL Team',
+      false,
+    );
   });
 
   it('forwards the untouched prefill to onPublish', async () => {
@@ -1334,6 +1522,7 @@ describe('DetailsPanel', () => {
       ['Shared'],
       [],
       'Daniil Pavlov',
+      false,
     );
   });
 
@@ -1360,6 +1549,7 @@ describe('DetailsPanel', () => {
         },
       ],
       '',
+      false,
     );
   });
 
@@ -2289,6 +2479,56 @@ describe('DetailsPanel — Unpublish', () => {
     expect(getPublishHistory).toHaveBeenCalledTimes(2);
   });
 
+  it('requests the history up front for an item the host calls unpublishable', async () => {
+    const getPublishHistory = vi
+      .fn()
+      .mockResolvedValue([historyEntry(['Shared'])]);
+    renderPanel({
+      getPublishHistory,
+      onUnpublish: vi.fn(),
+      isUnpublishVisible: () => true,
+    });
+
+    expect(
+      await screen.findByRole('button', { name: 'UnpublishTrigger' }),
+    ).toBeTruthy();
+    expect(getPublishHistory).toHaveBeenCalledOnce();
+  });
+
+  it('requests the history up front again for the next unpublishable item', async () => {
+    const getPublishHistory = vi.fn().mockResolvedValue([]);
+    const props = {
+      getPublishHistory,
+      onUnpublish: vi.fn(),
+      isUnpublishVisible: () => true,
+    };
+    const { rerender } = renderPanel(props);
+    await waitFor(() => expect(getPublishHistory).toHaveBeenCalledOnce());
+
+    const nextItem = { ...item, id: `${item.id}-next` };
+    rerender(
+      <DetailsPanel
+        item={nextItem}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        {...props}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(getPublishHistory).toHaveBeenLastCalledWith(nextItem),
+    );
+  });
+
+  it('leaves the history unrequested until reached for when the host has no unpublish rule', () => {
+    const getPublishHistory = vi.fn().mockResolvedValue([]);
+    renderPanel({ getPublishHistory, onUnpublish: vi.fn() });
+
+    expect(getPublishHistory).not.toHaveBeenCalled();
+  });
+
   it('issues the history lookup once per item across the menu and the publish view', async () => {
     const getPublishHistory = vi
       .fn()
@@ -2434,5 +2674,47 @@ describe('DetailsPanel — Unpublish', () => {
     expect(
       screen.getByRole('button', { name: 'UnpublishTrigger' }),
     ).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel host credential slot', () => {
+  it('renders host forms for an open editable item and hides them in readonly mode', () => {
+    const renderCredentials = vi.fn(() => (
+      <div>Application credential forms</div>
+    ));
+    const { rerender } = render(
+      <DetailsPanel
+        item={item}
+        isOpen
+        onClose={vi.fn()}
+        renderCredentials={renderCredentials}
+      />,
+    );
+    expect(screen.getByText('Application credential forms')).toBeTruthy();
+    expect(renderCredentials).toHaveBeenCalledWith(item);
+    rerender(
+      <DetailsPanel
+        item={item}
+        isOpen
+        isReadonly
+        onClose={vi.fn()}
+        renderCredentials={renderCredentials}
+      />,
+    );
+    expect(screen.queryByText('Application credential forms')).toBeNull();
+  });
+  it('does not mount credential forms while the details panel is closed', () => {
+    const renderCredentials = vi.fn(() => (
+      <div>Application credential forms</div>
+    ));
+    render(
+      <DetailsPanel
+        item={item}
+        isOpen={false}
+        onClose={vi.fn()}
+        renderCredentials={renderCredentials}
+      />,
+    );
+    expect(renderCredentials).not.toHaveBeenCalled();
   });
 });

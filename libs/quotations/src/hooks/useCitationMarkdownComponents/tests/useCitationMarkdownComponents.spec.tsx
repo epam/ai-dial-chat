@@ -85,6 +85,7 @@ interface HostProps {
   callbacks: UseCitationMarkdownComponentsCallbacks;
   isStreaming?: boolean;
   isCompactTypography?: boolean;
+  fallbackGroups?: AnnotationGroup[];
 }
 
 const Host = ({
@@ -93,6 +94,7 @@ const Host = ({
   callbacks,
   isStreaming,
   isCompactTypography,
+  fallbackGroups,
 }: HostProps) => {
   const citationCard = useCitationCard();
   const { processedContent, markdownComponents } =
@@ -102,6 +104,7 @@ const Host = ({
       callbacks,
       isStreaming,
       isCompactTypography,
+      fallbackGroups,
     );
   return (
     <CitationCardProvider value={citationCard}>
@@ -404,6 +407,129 @@ describe('useCitationMarkdownComponents — cit element rendering', () => {
     ).toBeTruthy();
   });
 
+  it('activating one occurrence of a repeated cit id opens exactly one card', async () => {
+    const group = makeCitGroup('e1');
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>'
+        groups={[group]}
+        callbacks={callbacks}
+      />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: `Citation from ${group.sourceName}`,
+    });
+    expect(markers).toHaveLength(2);
+
+    await userEvent.click(markers[0]);
+
+    /* F1, fixed: each occurrence owns its popup by its own `useId()` key
+       rather than the shared `group.groupKey`, so activating one occurrence
+       opens exactly one dialog instead of both. */
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  });
+
+  it('previewing a card opened from a repeated marker invokes onPreview exactly once', async () => {
+    const group = makeCitGroup('e1');
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>'
+        groups={[group]}
+        callbacks={callbacks}
+      />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: `Citation from ${group.sourceName}`,
+    });
+    await userEvent.click(markers[0]);
+
+    /*
+     * Before the fix (F2, observed empirically with a debug assertion during
+     * development): clicking one occurrence's "Preview" delivered a
+     * `pointerdown` that the sibling occurrence's still-mounted `Tooltip`
+     * treated as an outside press, closing the shared `openGroupKey` before
+     * the synthetic `click` reached the (by then unmounted) button — zero
+     * `onPreview` calls and zero dialogs left mounted. Occurrence-scoped
+     * ownership (D1) eliminates the race structurally: only one occurrence's
+     * `isOpen` is ever true, so only one `Tooltip` is ever mounted with
+     * `open`, and there is no sibling to receive the outside press.
+     */
+    await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
+
+    expect(callbacks.onPreview).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the same occurrence open, at the same switcher index, across an unrelated rerender', async () => {
+    const selector = { type: 'html_tag' as const, tag: 'cit', id: 'e1' };
+    const url = 'https://example.com/doc.pdf';
+    const annotationA: Annotation = {
+      target: { selector },
+      body: {
+        title: 'A',
+        source: {
+          type: 'attachment',
+          attachment: { type: 'application/pdf', url },
+        },
+      },
+    };
+    const annotationB: Annotation = {
+      target: { selector },
+      body: {
+        title: 'B',
+        source: {
+          type: 'attachment',
+          attachment: { type: 'application/pdf', url },
+        },
+      },
+    };
+    const group: AnnotationGroup = {
+      groupKey: 'cit:e1',
+      sourceUrl: url,
+      sourceName: 'doc.pdf',
+      annotations: [annotationA, annotationB],
+      primaryAnnotation: annotationA,
+    };
+    const groups = [group];
+    const content =
+      'Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>';
+    const callbacks = makeCallbacks();
+    const { rerender } = render(
+      <Host
+        content={content}
+        groups={groups}
+        callbacks={callbacks}
+        isCompactTypography={false}
+      />,
+    );
+
+    const markers = screen.getAllByRole('button', {
+      name: `Citation from ${group.sourceName}`,
+    });
+    await userEvent.click(markers[1]);
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('B')).toBeTruthy();
+
+    /* Same `groups` (and `content`) reference, simulating an unrelated
+       rerender of the host message component — `markdownComponents` must not
+       recompute (D2), so the second occurrence's `useId` value survives and
+       its card stays open at the same switcher index. */
+    rerender(
+      <Host
+        content={content}
+        groups={groups}
+        callbacks={callbacks}
+        isCompactTypography={false}
+      />,
+    );
+
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.getByText('B')).toBeTruthy();
+  });
+
   it('renders a non-empty data-id element literally even when its annotation matches', () => {
     const callbacks = makeCallbacks();
     render(
@@ -417,6 +543,137 @@ describe('useCitationMarkdownComponents — cit element rendering', () => {
     expect(screen.queryByRole('button')).toBeFalsy();
     expect(
       screen.getByText('Patient meets criteria<cit data-id="e1">source</cit>.'),
+    ).toBeTruthy();
+  });
+
+  it('resolves an id absent from the message from the fallback pool', () => {
+    const poolGroup = makeCitGroup('e43864');
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="e43864"></cit>.'
+        groups={[]}
+        fallbackGroups={[poolGroup]}
+        callbacks={callbacks}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', {
+        name: `Citation from ${poolGroup.sourceName}`,
+      }),
+    ).toBeTruthy();
+  });
+
+  it('resolves preview and open-in-browser against the pooled group for a fallback-only match', async () => {
+    const poolGroup = makeCitGroup('e43864');
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="e43864"></cit>.'
+        groups={[]}
+        fallbackGroups={[poolGroup]}
+        callbacks={callbacks}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: `Citation from ${poolGroup.sourceName}`,
+      }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
+
+    expect(callbacks.onPreview).toHaveBeenCalledWith(
+      poolGroup.primaryAnnotation,
+      poolGroup,
+    );
+  });
+
+  it("prefers the message's own group over a colliding id in the fallback pool", () => {
+    const messageGroup = makeCitGroup('e1', 'https://example.com/message.pdf');
+    const poolGroup = makeCitGroup('e1', 'https://example.com/pool.pdf');
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="e1"></cit>.'
+        groups={[messageGroup]}
+        fallbackGroups={[poolGroup]}
+        callbacks={callbacks}
+      />,
+    );
+
+    expect(callbacks.buildLabels).toHaveBeenCalledWith(messageGroup);
+    expect(callbacks.buildLabels).not.toHaveBeenCalledWith(poolGroup);
+  });
+
+  it('leaves processedContent byte-identical whether the fallback pool is empty or has three foreign groups', () => {
+    const offsetGroup = makeGroup({
+      primaryAnnotation: makeAnnotation('https://example.com/a', 5),
+      annotations: [makeAnnotation('https://example.com/a', 5)],
+    });
+    const callbacks = makeCallbacks();
+    const content = 'Hello world';
+
+    const { result: resultWithoutPool } = renderHook(() =>
+      useCitationMarkdownComponents(
+        content,
+        [offsetGroup],
+        callbacks,
+        false,
+        false,
+        [],
+      ),
+    );
+    const { result: resultWithPool } = renderHook(() =>
+      useCitationMarkdownComponents(
+        content,
+        [offsetGroup],
+        callbacks,
+        false,
+        false,
+        [makeCitGroup('f1'), makeCitGroup('f2'), makeCitGroup('f3')],
+      ),
+    );
+
+    expect(resultWithPool.current.processedContent).toBe(
+      resultWithoutPool.current.processedContent,
+    );
+  });
+
+  it('gets a cit override for a pool-only match even when the message groups are empty', () => {
+    const poolGroup = makeCitGroup('e1');
+    const callbacks = makeCallbacks();
+    const { result } = renderHook(() =>
+      useCitationMarkdownComponents(
+        'Patient meets criteria<cit data-id="e1"></cit>.',
+        [],
+        callbacks,
+        false,
+        false,
+        [poolGroup],
+      ),
+    );
+
+    expect(
+      (result.current.markdownComponents as Record<string, unknown>).cit,
+    ).toBeDefined();
+  });
+
+  it('degrades to literal text when an id is present in neither groups nor the fallback pool', () => {
+    const callbacks = makeCallbacks();
+    render(
+      <Host
+        content='Patient meets criteria<cit data-id="zz"></cit>.'
+        groups={[]}
+        fallbackGroups={[makeCitGroup('e1')]}
+        callbacks={callbacks}
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeFalsy();
+    expect(
+      screen.getByText('Patient meets criteria<cit data-id="zz"></cit>.'),
     ).toBeTruthy();
   });
 });

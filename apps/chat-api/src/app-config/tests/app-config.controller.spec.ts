@@ -90,6 +90,20 @@ describe('AppConfigController (integration)', () => {
   });
 
   describe('GET /v1/client-config', () => {
+    it.each(['halloween', 'new-year', 'product-launch-2027', null])(
+      'returns event selection %s in the public client configuration',
+      async (activeEventId) => {
+        mockService.getClientConfig.mockResolvedValue({
+          ...DEFAULT_RESPONSE,
+          config: { ...DEFAULT_RESPONSE.config, activeEventId },
+        });
+        const result = await request(app.getHttpServer())
+          .get('/v1/client-config?appId=chat-ui')
+          .expect(200);
+        expect(result.body.config.activeEventId).toBe(activeEventId);
+      },
+    );
+
     it('returns 200 with ASR configured response', async () => {
       mockService.getClientConfig.mockResolvedValue(ASR_RESPONSE);
 
@@ -112,6 +126,18 @@ describe('AppConfigController (integration)', () => {
       expect(result.body.features.asrEnabled).toBe(false);
       expect(result.body.config.asrModelId).toBeNull();
       expect(result.body.config.transcribeSizeLimitBytes).toBe(5_242_880);
+    });
+
+    /* A cached response keeps serving the previous deployment's announcements
+       and feature flags after a redeploy (issue #8827). */
+    it('forbids caching the response', async () => {
+      mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
+
+      const result = await request(app.getHttpServer())
+        .get('/v1/client-config?appId=chat-ui')
+        .expect(200);
+
+      expect(result.headers['cache-control']).toBe('private, no-store');
     });
 
     it('returns 400 when appId is missing', async () => {

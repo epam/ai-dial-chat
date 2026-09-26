@@ -115,6 +115,54 @@ describe('Input while dictating', () => {
     expect(stopTrack).toHaveBeenCalledOnce();
   });
 
+  it.each([false, true])(
+    'restores the draft and focus after failure and allows a new recording (mobile=%s)',
+    async (mobile) => {
+      mockUseIsMobile.mockReturnValue(mobile);
+      const onChange = vi.fn();
+      const onTranscribeAudio = vi
+        .fn()
+        .mockRejectedValueOnce(
+          new Error('Speech recognition is temporarily unavailable.'),
+        )
+        .mockResolvedValue('Recovered');
+      render(
+        <Input
+          message="Draft"
+          isAudioMessageSupported
+          onChange={onChange}
+          onTranscribeAudio={onTranscribeAudio}
+        />,
+      );
+      fireEvent.click(screen.getByLabelText('Dictate'));
+      await act(async () => vi.advanceTimersByTimeAsync(1000));
+      fireEvent.click(screen.getByLabelText('Stop recording'));
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        'Speech recognition is temporarily unavailable.',
+      );
+      expect(screen.queryByLabelText('Discard recording')).toBeNull();
+      expect(screen.getByRole('textbox')).toHaveProperty('value', 'Draft');
+      expect(screen.getByRole('textbox')).toHaveProperty('readOnly', false);
+      // eslint-disable-next-line testing-library/no-node-access -- Focus has no role query.
+      expect(screen.getByRole('textbox')).toBe(document.activeElement);
+      expect(onChange).not.toHaveBeenCalled();
+      expect(stopTrack).toHaveBeenCalledOnce();
+
+      fireEvent.click(screen.getByLabelText('Dictate'));
+      await act(async () => vi.advanceTimersByTimeAsync(1000));
+      expect(screen.queryByRole('alert')).toBeNull();
+      fireEvent.click(screen.getByLabelText('Stop recording'));
+      await act(async () => vi.advanceTimersByTimeAsync(0));
+      expect(screen.getByRole('textbox')).toHaveProperty(
+        'value',
+        'Draft Recovered',
+      );
+      expect(onChange).toHaveBeenCalledExactlyOnceWith('Draft Recovered');
+    },
+  );
+
   it('keeps the original draft when recognition is cancelled', async () => {
     let resolve!: (text: string) => void;
     const onTranscribeAudio = vi.fn().mockImplementationOnce(
@@ -197,8 +245,12 @@ describe('Input while dictating', () => {
       expect(onUploadAttachment).toHaveBeenCalledOnce();
       expect(onUploadAttachment.mock.calls[0][0]).toEqual(
         expect.objectContaining({
-          name: expect.stringMatching(/\.webm$/),
-          file: expect.objectContaining({ type: 'audio/webm', size: 5 }),
+          name: expect.stringMatching(/\.weba$/),
+          file: expect.objectContaining({
+            name: expect.stringMatching(/\.weba$/),
+            type: 'audio/webm',
+            size: 5,
+          }),
         }),
       );
       expect(onTranscribeAudio).not.toHaveBeenCalled();

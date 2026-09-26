@@ -83,4 +83,4 @@ Because `ConversationPage` is not remounted when navigating between conversation
 
 ---
 
-No new i18n keys — the resumed state reuses the existing, already-translated typing/thinking indicator label. No RTL impact — no new UI markup is introduced. Not gated behind `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` — this is core conversation-loading behavior, always on. No new backend endpoint and no new rate limit — reuses `/api/v1/conversations/watch`'s existing `20/60s` throttle. No new telemetry.
+No new i18n keys — the resumed state reuses the existing, already-translated typing/thinking indicator label. No RTL impact — no new UI markup is introduced. Not gated behind `ENABLED_FEATURES`/`ENABLED_FEATURES_ROLES` — this is core conversation-loading behavior, always on. No new backend endpoint — reuses `/api/v1/conversations/watch`. No new telemetry.

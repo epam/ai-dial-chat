@@ -36,6 +36,31 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
+  it('uses the supplied locale for dates and weekdays throughout list mapping', () => {
+    const dateTask = buildDto();
+    const weeklyTask = buildDto({
+      trigger: {
+        cron: { fields: { hour: '9', minute: '0', day_of_week: 'Monday' } },
+      },
+    });
+    const items = mapScheduledTaskDtosToItems(
+      [dateTask, weeklyTask],
+      fakeT,
+      'fr',
+    );
+    expect(items[0].scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleOnceAt}:${JSON.stringify({
+        date: new Intl.DateTimeFormat('fr', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(new Date('2026-07-24T09:00:00.000Z')),
+      })}`,
+    );
+    expect(items[1].scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: 'lundi', time: '09:00' })}`,
+    );
+  });
+
   it('formats a weekly cron trigger via the weekly translation key', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({
@@ -77,14 +102,14 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
-  it('falls back to a generic recurring label when cron fields lack hour/minute', () => {
+  it('shows invalid schedule when cron fields are empty', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({ trigger: { cron: { fields: {} } } }),
       fakeT,
     );
 
     expect(result.scheduleLabel).toBe(
-      ScheduledTasksI18nKeys.CardScheduleRecurringFallback,
+      ScheduledTasksI18nKeys.EditInvalidScheduleLabel,
     );
   });
 
@@ -161,6 +186,31 @@ describe('mapScheduledTaskDtoToItem', () => {
     const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
 
     expect(result.isActive).toBeUndefined();
+  });
+
+  it('maps isCompleted true to the item unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ isCompleted: true, isActive: false }),
+      fakeT,
+    );
+
+    expect(result.isCompleted).toBe(true);
+    expect(result.isActive).toBe(false);
+  });
+
+  it('maps isCompleted false to the item unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ isCompleted: false }),
+      fakeT,
+    );
+
+    expect(result.isCompleted).toBe(false);
+  });
+
+  it('maps a missing isCompleted to undefined without throwing', () => {
+    const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
+
+    expect(result.isCompleted).toBeUndefined();
   });
 });
 

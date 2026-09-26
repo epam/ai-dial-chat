@@ -1,3 +1,7 @@
+.search {
+  background: var(--ci-sheet-search-bg, transparent);
+}
+
 .divider {
   background: var(--ci-sheet-divider, var(--stroke-secondary, #d1dbea));
 }
@@ -27,4 +31,18 @@
 
 .stateLabel {
   color: var(--ci-sheet-text, var(--text-secondary, #57647a));
+}
+
+/*
+ * Applied only when the host sets the matching `ModelMenuColors` field, so an
+ * unthemed sheet keeps the row's own background. Declared after `.item` so the
+ * label colour wins over it; the hover and pressed tints still outrank the
+ * selected background.
+ */
+.itemSelectedBackground {
+  background: var(--ci-sheet-selected-bg);
+}
+
+.itemSelectedText {
+  color: var(--ci-sheet-selected-text);
 }

@@ -1,8 +1,11 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
+  BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +16,7 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
+import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
@@ -21,7 +25,11 @@ import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task
 import type { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
 import { ScheduledTasksSortKey } from './dto/list-scheduled-tasks-query.dto';
 import type { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
-import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
+import { ScheduledTaskRunStatus } from './dto/scheduled-task-run.dto';
+import {
+  ScheduleTriggerType,
+  type ScheduledTaskDto,
+} from './dto/scheduled-task.dto';
 import type { UpdateScheduledTaskBodyDto } from './dto/update-scheduled-task.dto';
 import {
   fromUpstreamRun,
@@ -31,6 +39,7 @@ import {
   type UpstreamScheduleRun,
 } from './scheduled-tasks.mapper';
 import { ScheduleAction } from './types/schedule-action.enum';
+import { ScheduledTaskErrorCode } from './types/scheduled-task-error-code.enum';
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
 const LIST_CACHE_EPOCH_TTL_MS = 24 * 60 * 60 * 1000;
@@ -68,6 +77,7 @@ export class ScheduledTasksService {
     private readonly dialClient: DialClientService,
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly deploymentsService: DeploymentsService,
   ) {
     this.schedulerAppId = configService.get('SCHEDULER_APP_ID', {
       infer: true,
@@ -154,6 +164,110 @@ export class ScheduledTasksService {
     searchParams.set('order_by', 'created_at');
     searchParams.set('order_dir', 'desc');
     return `${this.buildSchedulesUrl(scheduleId)}/runs?${searchParams.toString()}`;
+  }
+
+  /*
+   * Shared parse-and-compare tail of the two terminal-state predicates below:
+   * whether an optional ISO date string resolves to a moment that is not in
+   * the future. An absent or unparseable date never counts as passed — the
+   * list shape that omits the nested `trigger` degrades to not-terminal.
+   * Uses this server's clock, keeping skew/timezone handling in one place.
+   */
+  private isPastDate(date?: string): boolean {
+    const dateMs = date ? new Date(date).getTime() : NaN;
+    return !Number.isNaN(dateMs) && dateMs <= Date.now();
+  }
+
+  /*
+   * Completion candidate gate, first two clauses of the derivation for
+   * one-time (date-trigger) schedules: nothing left to run. The gate is an OR
+   * so it is path-independent — list responses that omit the nested `trigger`
+   * rely on `nextRunTime` alone; responses that carry `trigger` have both arms
+   * and they agree wherever both are computable.
+   */
+  private isCompletionCandidate(task: ScheduledTaskDto): boolean {
+    if (task.triggerType !== ScheduleTriggerType.Date) {
+      return false;
+    }
+    if (task.nextRunTime == null) {
+      return true;
+    }
+    return this.isPastDate(task.trigger?.date);
+  }
+
+  /*
+   * Recurring-schedule terminal state: the activity window has closed with no
+   * upcoming run, so resuming can never produce another run — the same
+   * condition that disables the detail view's Active switch. Unlike a one-time
+   * schedule, this is unambiguous from the schedule fields alone, so no
+   * run-history call is needed. A cron schedule without an `endDate`, or with
+   * one still in the future, is merely paused — not terminal. Degrades to
+   * `false` when the response carries no `trigger.cron.endDate` (a list shape
+   * without the nested trigger), leaving such cards on today's Paused display.
+   */
+  private isExpiredRecurring(task: ScheduledTaskDto): boolean {
+    if (task.triggerType !== ScheduleTriggerType.Cron) {
+      return false;
+    }
+    if (task.nextRunTime != null) {
+      return false;
+    }
+    return this.isPastDate(task.trigger?.cron?.endDate);
+  }
+
+  /** Newest run of a schedule (the runs endpoint's documented order is newest-first). */
+  private async fetchNewestRun(
+    scheduleId: string,
+    accessToken: string,
+  ): Promise<UpstreamScheduleRun | undefined> {
+    const result = await this.fetchUpstream<
+      UpstreamScheduleResponse & { results?: UpstreamScheduleRun[] }
+    >(
+      this.buildRunsUrl(scheduleId, { limit: 1, offset: 0 }),
+      'GET',
+      accessToken,
+      `resolve scheduled task completion "${scheduleId}"`,
+    );
+    return result.results?.[0];
+  }
+
+  /*
+   * Terminal-state resolution: an expired-window recurring schedule is
+   * completed from its fields alone (no runs call); a one-time candidate
+   * additionally needs its newest run to be terminal (Success or Error) —
+   * "completed" means the task has finished, regardless of outcome.
+   * InProgress, Missed, and an empty run list all mean not completed, and a
+   * non-terminal schedule is never completed. A failed runs call degrades to
+   * `undefined` (rendered identically to false) instead of failing the parent
+   * list/get.
+   */
+  private async resolveIsCompleted(
+    task: ScheduledTaskDto,
+    accessToken: string,
+  ): Promise<boolean | undefined> {
+    if (this.isExpiredRecurring(task)) {
+      return true;
+    }
+    if (!this.isCompletionCandidate(task)) {
+      return false;
+    }
+    try {
+      const newestRun = await this.fetchNewestRun(task.id, accessToken);
+      if (newestRun == null) {
+        return false;
+      }
+      const status = fromUpstreamRun(newestRun).status;
+      return (
+        status === ScheduledTaskRunStatus.Success ||
+        status === ScheduledTaskRunStatus.Error
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to resolve completion for scheduled task "${task.id}"; returning isCompleted as unknown`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      return undefined;
+    }
   }
 
   /*
@@ -341,7 +455,28 @@ export class ScheduledTasksService {
               : `object{${Object.keys(result).join(',')}}`
           })`,
         );
-        return { items: items.map(fromUpstreamSchedule), ...pagination };
+        /*
+         * Completion enrichment runs inside the cache wrapper, so a cached
+         * page pays no runs calls. Checks fire in parallel and only for the
+         * page's candidate items (one-time schedules with no next run) —
+         * one `runs?limit=1` call per candidate, so a cache miss costs up to
+         * `limit` concurrent upstream calls (page size 20 in this app, hard
+         * cap 100 via the DTO validation), at most once per 30s cache window
+         * per query variant. No concurrency cap by design: the burst is
+         * page-bounded, cron schedules never qualify, and a failed check
+         * degrades per-item instead of failing the list. When DIAL Scheduler
+         * gains an authoritative state field (or a batch runs endpoint),
+         * replace this fan-out here in one place.
+         */
+        const mappedTasks = items.map(fromUpstreamSchedule);
+        const completions = await Promise.all(
+          mappedTasks.map((task) => this.resolveIsCompleted(task, accessToken)),
+        );
+        const enrichedItems = mappedTasks.map((task, index) => ({
+          ...task,
+          isCompleted: completions[index],
+        }));
+        return { items: enrichedItems, ...pagination };
       },
     });
   }
@@ -350,7 +485,9 @@ export class ScheduledTasksService {
     userSub: string,
     accessToken: string,
     body: CreateScheduledTaskBodyDto,
+    bucket = '',
   ): Promise<ScheduledTaskDto> {
+    await this.validateConfiguration(body, accessToken, bucket);
     const payload = toUpstreamSchedulePayload(
       body,
       this.dialClient.baseUrl,
@@ -380,7 +517,11 @@ export class ScheduledTasksService {
       accessToken,
       `get scheduled task "${scheduleId}"`,
     );
-    return fromUpstreamSchedule(result);
+    const task = fromUpstreamSchedule(result);
+    return {
+      ...task,
+      isCompleted: await this.resolveIsCompleted(task, accessToken),
+    };
   }
 
   async listScheduledTaskRuns(
@@ -419,12 +560,20 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
     body: UpdateScheduledTaskBodyDto,
+    bucket = '',
   ): Promise<ScheduledTaskDto> {
+    const serviceId = this.getSchedulerServiceId();
+    const saved = await this.getScheduledTask(accessToken, scheduleId);
+    const effectiveBody = {
+      ...body,
+      skillUrl: body.skillUrl === undefined ? saved.skillUrl : body.skillUrl,
+    };
+    await this.validateConfiguration(effectiveBody, accessToken, bucket);
     const payload = toUpstreamSchedulePayload(
-      body,
+      effectiveBody,
       this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
-      this.getSchedulerServiceId(),
+      serviceId,
     );
 
     const result = await this.fetchUpstream(
@@ -437,6 +586,63 @@ export class ScheduledTasksService {
 
     await this.invalidateListCache(userSub);
     return fromUpstreamSchedule(result);
+  }
+
+  private async validateConfiguration(
+    body: CreateScheduledTaskBodyDto,
+    accessToken: string,
+    bucket: string,
+  ): Promise<void> {
+    if (!body.prompt.trim() && !body.skillUrl) {
+      throw new BadRequestException({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: ScheduledTaskErrorCode.InstructionsOrSkillRequired,
+        field: 'prompt',
+        message: 'Choose a skill or write instructions.',
+      });
+    }
+    if (!body.skillUrl) return;
+
+    const unavailable = {
+      code: ScheduledTaskErrorCode.DeploymentUnavailable,
+      field: 'model',
+      message: 'Selected model is unavailable.',
+    };
+    let deployment;
+    try {
+      deployment = await this.deploymentsService.resolveDeploymentItem(
+        body.model,
+        accessToken,
+        bucket,
+      );
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw new ForbiddenException({
+          ...unavailable,
+          statusCode: 403,
+          error: 'Forbidden',
+        });
+      }
+      if (!(error instanceof NotFoundException)) throw error;
+    }
+    if (!deployment) {
+      throw new NotFoundException({
+        ...unavailable,
+        statusCode: 404,
+        error: 'Not Found',
+      });
+    }
+    if (deployment.features?.skillsSupported !== true) {
+      throw new BadRequestException({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: ScheduledTaskErrorCode.SkillUnsupported,
+        field: 'skillUrl',
+        message:
+          'Selected model does not support skills. Remove the skill or select different model to proceed.',
+      });
+    }
   }
 
   /*

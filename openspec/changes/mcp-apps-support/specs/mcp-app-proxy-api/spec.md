@@ -24,8 +24,6 @@ This mirrors DIAL Core's own `GET /v1/deployments/{deployment_name}/mcp/resource
 
 **Caching:** cache key `mcp-apps:resource:${toolsetId}:${resourceUri}`, TTL `30000ms` (matching the `cached-dial-list-request` default), invalidated only by TTL expiry — a `ui://` resource for a given toolset+URI is treated as effectively static content, mirroring how visualizer URLs are operator-static. Uses `withCachedDialRequest`, caching the raw body + `Content-Type` pair. Because the iframe's own `src` request and `useOpenMcpAppCanvas`'s validation request hit the same URL, the second request is normally a cache hit.
 
-**Rate limiting:** default global throttle applies; no stricter per-route `@Throttle` — this is a read-mostly, cached GET.
-
 #### Scenario: Successful resource fetch
 
 - **WHEN** a caller with toolset access requests `GET /api/v1/toolsets/ts-1/mcp-app-resource?resourceUri=ui%3A%2F%2Fwidget%2F1`
@@ -71,13 +69,12 @@ Response (`200`) `McpAppToolCallResponseDto { result: unknown }` — unwrapped f
 - `400 BadRequestException` — malformed body.
 - `403 ForbiddenException` — caller lacks access to the toolset, or `toolName` is not among the tools the owning MCP session actually exposes (checked server-side against a `tools/list` call, not trusted from the request).
 - `404 NotFoundException` — unknown `toolsetId`.
+- `429` — DIAL Core rate-limits the request; the BFF forwards the status and `Retry-After` header when present.
 - `502 BadGatewayException` — Core's proxied `tools/call` returns a JSON-RPC `error`, fails, or times out.
 
 **OpenAPI / generated client:** `operationIdFactory` → `callToolsetMcpAppTool`. Frontend caller: `apps/chat/src/server-api/mcp-apps.ts`, normal generated-client method, awaited directly from `McpAppCanvasContent.onToolCall`.
 
 **No caching** — every call is a live, potentially side-effecting tool invocation.
-
-**Rate limiting:** `@Throttle` stricter than the global default (e.g. 20 requests / 60s per caller+toolset) to bound a runaway or malicious app looping tool calls through the sandboxed iframe, per `design.md`'s risk mitigation.
 
 **Observability:** emit a metric (via the existing `MetricsInterceptor` pattern) tagged by `toolsetId` and `toolName` for call count and latency, and a `Logger` warning on every `403`/`502` outcome (never logging `arguments` contents, which may carry user data).
 
@@ -91,10 +88,10 @@ Response (`200`) `McpAppToolCallResponseDto { result: unknown }` — unwrapped f
 - **WHEN** `toolName` does not match any tool the toolset's MCP session currently exposes
 - **THEN** the response is `403`, even if the caller has general toolset access
 
-#### Scenario: Rate limit exceeded
+#### Scenario: DIAL Core rate limit is forwarded
 
-- **WHEN** a caller exceeds the configured request rate for this route
-- **THEN** subsequent requests within the window receive `429`
+- **WHEN** DIAL Core responds to the tool-call request with HTTP `429`
+- **THEN** the BFF returns `429` and forwards `Retry-After` when present
 
 #### Scenario: Upstream failure surfaces as 502
 
@@ -111,7 +108,7 @@ Both endpoints reuse the existing toolset-to-MCP-endpoint resolution already pre
 
 **`MCP_APP_THEME`** — optional admin override for the color theme delivered to all hosted MCP app Views via `hostContext.theme`. Registered as client-visible key `mcpApps.theme` → `ClientConfigResponseDto.config.mcpAppTheme` (`'light' | 'dark' | null`, defaults `null`). Both env vars follow the same `CONFIG_DEFINITIONS`/`EnvConfigProvider`/`ClientConfigResponseDto` pipeline already used by `dialCoreExternalUrl` and `customVisualizers` — no new frontend-config mechanism is introduced.
 
-**`MCP_APP_USER_AGENT`** — optional admin override for the host application identifier delivered to all hosted MCP App Views via `hostContext.userAgent`. Registered as client-visible key `mcpApps.userAgent` → `ClientConfigResponseDto.config.mcpAppUserAgent` (`string | null`, defaults `null`). When unset, the client falls back to `'ai-dial-chat'`.
+**`MCP_APP_USER_AGENT`** — optional admin override for the host application identifier delivered to all hosted MCP App Views via `hostContext.userAgent`. Registered as client-visible key `mcpApps.userAgent` → `ClientConfigResponseDto.config.mcpAppUserAgent` (`string | null`, defaults `null`). **Further revised** (see design.md D21): when unset, the client falls back to the browser's own `navigator.userAgent` rather than a fixed `'ai-dial-chat'` string — the app's own identity is now sent separately, via `hostInfo`.
 
 `EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`) SHALL add:
 

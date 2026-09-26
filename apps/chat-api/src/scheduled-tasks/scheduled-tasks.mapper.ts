@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { StringUtils } from '../common/utils/string-utils';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
 import type {
@@ -9,10 +10,8 @@ import {
   type ScheduledTaskRunDto,
   ScheduledTaskRunStatus,
 } from './dto/scheduled-task-run.dto';
-import type {
-  ScheduledTaskDto,
-  ScheduleTriggerType,
-} from './dto/scheduled-task.dto';
+import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
+import { ScheduleTriggerType } from './dto/scheduled-task.dto';
 
 interface UpstreamScheduleTrigger {
   date?: string;
@@ -44,7 +43,11 @@ interface UpstreamSchedulePayload {
     retry: null;
     timeout: null;
     payload: {
-      messages: { role: 'user'; content: string }[];
+      messages: {
+        role: 'user';
+        content: string;
+        custom_content?: { skills: { url: string }[] };
+      }[];
       model: string;
     };
   };
@@ -58,9 +61,10 @@ export interface UpstreamScheduleResponse {
   created_at?: string;
   updated_at?: string;
   /*
-   * List items only carry `trigger_type` (no nested `trigger`); `trigger`
-   * above is populated for shapes that do include it (e.g. create/update
-   * responses), so both are read here rather than picking one.
+   * List items only carry `trigger_type` (no nested `trigger`); GET responses
+   * carry the nested `trigger` with no `trigger_type`, and create/update
+   * responses carry both — so `triggerType` is derived from whichever source
+   * is present (see `deriveTriggerType`).
    */
   trigger_type?: string;
   service_id?: string;
@@ -70,7 +74,11 @@ export interface UpstreamScheduleResponse {
   properties?: {
     payload?: {
       model?: string;
-      messages?: { role: string; content: string }[];
+      messages?: {
+        role: string;
+        content: string;
+        custom_content?: { skills?: { url: string }[] };
+      }[];
     };
   };
   [key: string]: unknown;
@@ -151,7 +159,19 @@ export const toUpstreamSchedulePayload = (
     retry: null,
     timeout: null,
     payload: {
-      messages: [{ role: 'user', content: body.prompt }],
+      messages: [
+        {
+          role: 'user',
+          content: body.prompt,
+          ...(body.skillUrl
+            ? {
+                custom_content: {
+                  skills: [{ url: encodeDialResourcePath(body.skillUrl) }],
+                },
+              }
+            : {}),
+        },
+      ],
       model: body.model,
     },
   },
@@ -175,6 +195,25 @@ const deriveIsActive = (
   return upstream.next_run_time != null;
 };
 
+/*
+ * List responses carry `trigger_type` but no nested `trigger`; GET responses
+ * (observed live) carry the nested `trigger` with no `trigger_type`. Derive
+ * the trigger kind from whichever source is present so the DTO always names
+ * it — the completed-state derivation and the detail page's field fallbacks
+ * both branch on `triggerType`.
+ */
+const deriveTriggerType = (
+  upstream: UpstreamScheduleResponse,
+): ScheduleTriggerType | undefined => {
+  if (upstream.trigger?.cron != null) {
+    return ScheduleTriggerType.Cron;
+  }
+  if (upstream.trigger?.date != null) {
+    return ScheduleTriggerType.Date;
+  }
+  return upstream.trigger_type as ScheduleTriggerType | undefined;
+};
+
 export const fromUpstreamSchedule = (
   upstream: UpstreamScheduleResponse,
 ): ScheduledTaskDto => ({
@@ -193,7 +232,7 @@ export const fromUpstreamSchedule = (
   nextRunTime: upstream.next_run_time,
   createdAt: upstream.created_at,
   updatedAt: upstream.updated_at,
-  triggerType: upstream.trigger_type as ScheduleTriggerType | undefined,
+  triggerType: deriveTriggerType(upstream),
   isActive: deriveIsActive(upstream),
   isDeleted: upstream.is_deleted ?? false,
   serviceId: upstream.service_id,
@@ -201,6 +240,9 @@ export const fromUpstreamSchedule = (
   description: upstream.description,
   model: upstream.properties?.payload?.model,
   prompt: upstream.properties?.payload?.messages?.[0]?.content,
+  skillUrl:
+    upstream.properties?.payload?.messages?.[0]?.custom_content?.skills?.[0]
+      ?.url,
 });
 
 export interface UpstreamScheduleRun {

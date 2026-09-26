@@ -8,9 +8,11 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { useContainer } from 'class-validator';
+import type { Request, Response } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
+import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import { IsAllowedRedirectUriConstraint } from '../dto/offline-credentials.dto';
 import { OfflineCredentialsController } from '../offline-credentials.controller';
@@ -24,8 +26,13 @@ async function buildApp(
   service: unknown,
   {
     featureEnabled = true,
+    liveChatEnabled = false,
     authenticated = true,
-  }: { featureEnabled?: boolean; authenticated?: boolean } = {},
+  }: {
+    featureEnabled?: boolean;
+    liveChatEnabled?: boolean;
+    authenticated?: boolean;
+  } = {},
 ): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [OfflineCredentialsController],
@@ -35,7 +42,13 @@ async function buildApp(
       FeatureGuard,
       {
         provide: FeatureFlagsService,
-        useValue: { isEnabled: vi.fn().mockResolvedValue(featureEnabled) },
+        useValue: {
+          isEnabled: vi.fn(async (key: FeatureKey) =>
+            key === FeatureKey.LiveChatInteraction
+              ? liveChatEnabled
+              : featureEnabled,
+          ),
+        },
       },
       {
         provide: ConfigService,
@@ -59,7 +72,7 @@ async function buildApp(
     },
   );
   if (!authenticated) {
-    app.use((req: Express.Request, res: Express.Response, next: () => void) =>
+    app.use((req: Request, res: Response, next: () => void) =>
       req.user ? next() : res.status(401).json({ message: 'Unauthorized' }),
     );
   }
@@ -97,6 +110,29 @@ describe('OfflineCredentialsController (integration)', () => {
   });
 
   describe('GET /api/v1/offline-credentials', () => {
+    it('allows status and sign-in for live chat when Scheduled Tasks is disabled', async () => {
+      app = await buildApp(service, {
+        featureEnabled: false,
+        liveChatEnabled: true,
+      });
+      service.getOfflineCredentialsStatus.mockResolvedValue({
+        available: true,
+        connected: false,
+      });
+      const status = await request(app.getHttpServer()).get(
+        '/api/v1/offline-credentials',
+      );
+      expect(status.status).toBe(200);
+      const signIn = await request(app.getHttpServer())
+        .post('/api/v1/offline-credentials/signin')
+        .send({ code: 'offline-code', redirectUri: ALLOWED_REDIRECT_URI });
+      expect(signIn.status).toBe(200);
+      expect(service.signIn).toHaveBeenCalledWith(
+        'test-access-token',
+        expect.objectContaining({ code: 'offline-code' }),
+      );
+    });
+
     it('returns the mapped status', async () => {
       app = await buildApp(service);
       service.getOfflineCredentialsStatus.mockResolvedValue({

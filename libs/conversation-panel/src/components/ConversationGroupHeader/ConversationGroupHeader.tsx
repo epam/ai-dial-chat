@@ -77,18 +77,22 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
       onDragLeave={isDropZone ? handleDragLeave : undefined}
       onDrop={isDropZone ? handleDrop : undefined}
       className={mergeClasses(
-        'flex h-6 w-full items-center gap-1 rounded py-1 pe-3 text-start',
+        'group flex h-6 w-full items-center gap-1 rounded py-1 pe-3 text-start',
         className,
         styles.groupHeader,
         isDragOver && styles.dropZoneActive,
       )}
     >
       {isExpanded ? (
-        <IconCaretDownFilled size={12} className="shrink-0" aria-hidden />
+        <IconCaretDownFilled
+          size={12}
+          className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+          aria-hidden
+        />
       ) : (
         <IconCaretRightFilled
           size={12}
-          className="shrink-0 rtl:scale-x-[-1]"
+          className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 rtl:scale-x-[-1]"
           aria-hidden
         />
       )}

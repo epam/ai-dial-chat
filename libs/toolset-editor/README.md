@@ -42,10 +42,16 @@ only — `ToolsetAuthTypes`, `WithLogin`, `ToolsetCredentialsLevel` and
 }
 ```
 
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-toolset-editor/styles.css';
+```
+
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.14.2`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.19`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-chat-hooks` `*`
 
@@ -346,3 +352,32 @@ const runOAuthLogin: ToolsetOAuthLoginHandler = async ({
   };
 };
 ```
+
+## Public class names
+
+A host embedding this package cannot style it through its CSS-module locals —
+they are hashed at build time — nor through DOM order or ARIA attributes, which
+are structure and accessibility contracts rather than styling ones. Selected
+elements therefore carry a stable public class.
+
+| Key               | Class                                  | Element                                                           |
+| ----------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `metadataSection` | `dial-toolset-editor-metadata-section` | The metadata column, inside the shared editor layout              |
+| `setupSection`    | `dial-toolset-editor-setup-section`    | The setup column beside it, holding the connection and auth forms |
+
+```tsx
+import { TOOLSET_EDITOR_CLASS } from '@epam/ai-dial-toolset-editor';
+
+TOOLSET_EDITOR_CLASS.setupSection; // 'dial-toolset-editor-setup-section'
+```
+
+`GeneralForm` renders a fragment rather than an element of its own, so it
+carries no class — style the column it sits in.
+
+The classes carry no declarations of their own: nothing in `styles.css`
+selects on them, so they change nothing until a host writes a rule. Renaming
+one, or moving it to a different element, is a breaking change. The convention
+is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
+
+Write host overrides with CSS logical properties (`margin-inline-start`,
+`inset-inline-end`) so they keep working under `dir="rtl"`.

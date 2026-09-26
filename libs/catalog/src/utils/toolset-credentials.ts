@@ -11,6 +11,21 @@ import {
 const isSignedIn = (status: CredentialStatus | undefined): boolean =>
   status === CredentialStatus.SignedIn;
 
+/** Whether the given credentials level (`USER` or `GLOBAL`) is currently signed in. */
+export const isLevelSignedIn = (
+  credentials: CatalogItemCredentials | undefined,
+  level: CredentialsLevel,
+): boolean =>
+  isSignedIn(
+    level === CredentialsLevel.User
+      ? credentials?.userStatus
+      : credentials?.globalStatus,
+  );
+
+/** Resolves after the given duration, used to space out retry attempts. */
+export const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 /** Resolves which credentials action/section the Details Panel should show for the given item credentials. */
 export const getCredentialsUiState = (
   credentials: CatalogItemCredentials,
@@ -44,6 +59,29 @@ export const getCredentialsBadgeState = (
   return !isUserSignedIn && !isGlobalSignedIn
     ? CredentialsBadgeState.LoggedOut
     : undefined;
+};
+
+/**
+ * Whether the publisher holds a credential for an authenticated toolset and
+ * may therefore offer to publish it alongside the toolset.
+ *
+ * Either level qualifies: publishing always acts on the publisher's own source
+ * item, where `globalStatus` is the owner's own credential and `userStatus`
+ * covers a personal credential configured on top of it. Access the publisher
+ * does not hold cannot be passed on.
+ */
+export const canPublishCredentials = (
+  credentials: CatalogItemCredentials | undefined,
+): boolean => {
+  if (
+    credentials?.authenticationType == null ||
+    credentials.authenticationType === ToolsetAuthenticationType.None
+  ) {
+    return false;
+  }
+  return (
+    isSignedIn(credentials.userStatus) || isSignedIn(credentials.globalStatus)
+  );
 };
 
 /** Resolves which level a direct (non-accordion) "Log out" action applies to. */

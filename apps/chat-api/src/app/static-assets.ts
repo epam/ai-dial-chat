@@ -24,6 +24,7 @@ interface FrontendMiddlewareOptions {
   overlaySandboxRootPath?: string;
   overlaySandboxEnabled?: boolean;
   allowedIframeOrigins?: string[];
+  allowedConnectOrigins?: string[];
   secureTransport?: boolean;
   cspMode?: CspMode;
   reportUri?: string;
@@ -77,6 +78,7 @@ export const createFrontendMiddleware = async ({
   overlaySandboxRootPath = resolveOverlaySandboxRootPath(),
   overlaySandboxEnabled = false,
   allowedIframeOrigins = [],
+  allowedConnectOrigins = [],
   secureTransport = true,
   cspMode = CspMode.ReportOnly,
   reportUri,
@@ -89,7 +91,7 @@ export const createFrontendMiddleware = async ({
     const { contentSecurityPolicy } = createHelmetOptions(
       allowedIframeOrigins,
       secureTransport,
-      options,
+      { ...options, allowedConnectOrigins },
     );
     return helmet.contentSecurityPolicy(
       typeof contentSecurityPolicy === 'object' ? contentSecurityPolicy : {},

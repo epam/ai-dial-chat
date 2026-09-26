@@ -1,7 +1,8 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Tooltip } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode, useCallback, useMemo } from 'react';
+import { FC, ReactNode, useCallback, useId, useMemo } from 'react';
+import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 import { useCitationCardContext } from '../../context/CitationCardContext';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 import {
@@ -24,6 +25,8 @@ export interface CitationDropdownProps {
    * group has nothing previewable — the "Preview" button is hidden.
    */
   onPreview?: (annotation: Annotation) => void;
+  /** Whether the host can preview the active annotation. Defaults to allowing preview when `onPreview` is provided. */
+  isPreviewable?: (annotation: Annotation) => boolean;
   /** Called when the user clicks "Open in browser" for an annotation. */
   onOpenInBrowser: (annotation: Annotation) => void;
   /** Optional icon rendered before the marker's label. */
@@ -44,6 +47,7 @@ export interface CitationDropdownProps {
 export const CitationDropdown: FC<CitationDropdownProps> = ({
   group,
   onPreview,
+  isPreviewable,
   onOpenInBrowser,
   icon,
   headerIcon,
@@ -53,41 +57,49 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   markerLabelClassName,
 }) => {
   const citationCard = useCitationCardContext();
-  const isOpen = citationCard.isOpen(group.groupKey);
+  const ownerKey = useId();
+  const isOpen = citationCard.isOpen(ownerKey);
   const activeIndex = citationCard.getActiveIndex(group.groupKey);
+  const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
+  const canPreview = isPreviewable?.(annotation) ?? true;
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
-      if (!nextOpen) citationCard.closePopup();
+      if (!nextOpen) citationCard.closePopup(ownerKey);
     },
-    [citationCard],
+    [citationCard, ownerKey],
   );
 
   const handlePreview = useMemo(
     () =>
-      onPreview
+      onPreview && canPreview
         ? (annotation: Annotation) => {
             onPreview(annotation);
-            citationCard.closePopup();
+            citationCard.closePopup(ownerKey);
           }
         : undefined,
-    [onPreview, citationCard],
+    [onPreview, canPreview, citationCard, ownerKey],
   );
 
   /*
-   * Stays on the 1.0 tooltip: this is a controlled popover carrying an
-   * interactive card, and it needs `bottom-end` so the 400px card aligns with
-   * the marker instead of overhanging it. The 2.0 `Tooltip` narrows `placement`
-   * to the four `TooltipPlacement` sides, which cannot express `-end` alignment.
+   * This is a controlled popover carrying an interactive card and needs
+   * `bottom-end` so the 400px card aligns with the marker instead of
+   * overhanging it. The resolved `Tooltip` export is the 2.0 component; it
+   * narrows `placement` to the four `TooltipPlacement` sides, which cannot
+   * express `-end` alignment, so no `placement` is passed here.
    */
   return (
     <Tooltip
       open={isOpen}
       onOpenChange={handleOpenChange}
-      triggerClassName="ms-1 inline-flex align-middle"
+      triggerClassName={mergeClasses(
+        'ms-1 inline-flex align-middle',
+        styles.trigger,
+      )}
       contentClassName={mergeClasses(
         '!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none',
         styles.content,
+        QUOTATIONS_CLASS.citationDropdown,
       )}
       tooltip={
         <CitationCard
@@ -105,7 +117,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       <CitationMarker
         sourceName={group.sourceName}
         annotationCount={group.annotations.length}
-        onOpen={() => citationCard.openPopup(group.groupKey)}
+        onOpen={() => citationCard.openPopup(ownerKey)}
         icon={icon}
         labels={markerLabels}
         labelClassName={markerLabelClassName}

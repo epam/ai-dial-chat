@@ -28,15 +28,13 @@ interface SettingsPanelProps {
   activeId: string;
   onSelect: (id: string) => void;
   sectionLabel?: string;
-  styles?: SettingsPanelStyles; // { typography?: SettingsPanelTypography; colors?: SettingsPanelColors }
+  styles?: SettingsPanelStyles; // { typography?: SettingsPanelTypography }
   className?: string;
 }
 ```
 
-Color overrides (`SettingsPanelColors`) are applied as CSS custom properties following the
-`PillTabs` pattern (`buildCssVars` + a `.module.scss`), not hardcoded Tailwind color utilities.
-The active row's default background token is `--bg-control-accent-alpha` (not
-`--bg-accent-primary-alpha`, which is deprecated in `tailwind.config.js`'s `bgColorsToRemove`).
+Row colors (inactive, hover, active, focus ring) come from the UI kit's vertical `Tabs` and are
+not overridable through `SettingsPanel` props.
 
 #### Scenario: Rendering the item list
 - **WHEN** the panel is given `items` with one active id and one or more disabled items

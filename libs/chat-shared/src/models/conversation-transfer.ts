@@ -98,4 +98,6 @@ export interface ConversationTransferJob {
    * {@link ConversationTransferJobStatus.Warning}.
    */
   warningCode?: ConversationTransferWarningCode;
+  /** Untranslated names of skipped attachments, when available for this warning. */
+  warningNames?: string[];
 }

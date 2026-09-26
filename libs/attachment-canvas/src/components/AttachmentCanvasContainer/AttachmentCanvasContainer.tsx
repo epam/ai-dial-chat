@@ -2,7 +2,7 @@ import {
   copyToClipboard,
   type CodeBlockTheme,
 } from '@epam/ai-dial-chat-shared';
-import { memo, useCallback, type FC } from 'react';
+import { memo, useCallback, type FC, type ReactNode } from 'react';
 import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
 import type {
   AttachmentCanvasLabels,
@@ -19,6 +19,8 @@ import { AttachmentCanvas } from '../AttachmentCanvas/AttachmentCanvas';
 export interface AttachmentCanvasContainerProps {
   /** User-visible strings. All fields have English defaults. */
   labels?: AttachmentCanvasLabels;
+  /** Host-supplied controls rendered in the header before the title. */
+  leftActions?: ReactNode;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. Defaults to `false`. */
   isMobile?: boolean;
   /** Initial panel width in pixels. When omitted, SidebarPanel uses its own default. */
@@ -29,6 +31,8 @@ export interface AttachmentCanvasContainerProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. */
   tableDownloadFilename?: string;
+  /** Host-owned PDF loader. When omitted, the viewer fetches the URL with browser defaults. */
+  loadPdf?: (url: string) => Promise<Blob>;
   /**
    * Configures `pdfjs-dist`'s worker (`GlobalWorkerOptions.workerSrc`) for the
    * host app. Called once, the first time a PDF attachment is opened, and
@@ -48,11 +52,13 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
   memo(
     ({
       labels,
+      leftActions,
       isMobile = false,
       defaultWidth,
       maxWidth,
       codeBlockTheme,
       tableDownloadFilename,
+      loadPdf,
       configurePdfWorker,
     }) => {
       const {
@@ -83,9 +89,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         codeContentLoadingLabel,
         codeContentErrorLabel,
         codeContentRetryLabel,
-        tableCopyCsvLabel,
-        tableCopyTxtLabel,
-        tableCopyMarkdownLabel,
+        tableCopyLabel,
         tableCopiedLabel,
         tableDownloadCsvLabel,
         ooxmlHighlightsLabel,
@@ -128,6 +132,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           onClose={closeCanvas}
           content={content}
           fileName={fileName}
+          leftActions={leftActions}
           labels={{
             ariaLabel,
             closeLabel,
@@ -156,9 +161,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             codeContentLoadingLabel,
             codeContentErrorLabel,
             codeContentRetryLabel,
-            tableCopyCsvLabel,
-            tableCopyTxtLabel,
-            tableCopyMarkdownLabel,
+            tableCopyLabel,
             tableCopiedLabel,
             tableDownloadCsvLabel,
             ooxmlHighlightsLabel,
@@ -187,6 +190,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           maxWidth={maxWidth}
           codeBlockTheme={codeBlockTheme}
           configurePdfWorker={configurePdfWorker}
+          loadPdf={loadPdf}
         />
       );
     },

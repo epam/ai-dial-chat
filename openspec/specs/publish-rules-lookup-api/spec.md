@@ -43,8 +43,6 @@ Response (200), folder has no rules of its own:
 
 Generated-client impact: new OpenAPI `operationId: getPublishRules`; request via a query DTO (`folderPath: string`); response DTO `PublishRulesResultDto { rules: PublishRuleDto[] }`, reusing the existing `PublishRuleDto` defined for the publish request bodies (same shape, no duplicate type). Frontend caller: new `apps/chat/src/server-api/publish-rules.api.ts` thin wrapper using the normal (non-`Raw`) generated method.
 
-Rate limiting: default global throttle applies (read endpoint, no stricter override needed) — matching the existing publish-history endpoints' profile.
-
 Caching: none. This is a live, interaction-scoped lookup fired once per folder-selection click, not a background-refreshed list; caching would risk surfacing stale rules immediately after another user changes them, at exactly the moment accuracy matters for a publisher deciding whether to add redundant rules.
 
 Authorization: caller SHALL be authenticated (existing session guard). No additional write-access enforcement is performed by this endpoint — it is a read of what rules already apply to a folder, not a write; DIAL Core's own response is passed through as-is.

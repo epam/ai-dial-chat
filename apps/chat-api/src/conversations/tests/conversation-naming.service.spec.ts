@@ -6,13 +6,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
 import type { AppConfigService } from '../../app-config/app-config.service';
 import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import { ConversationNamingService } from '../conversation-naming.service';
+import type { ConversationPersistencePort } from '../conversation-persistence.port';
 import { ConversationMessageRole } from '../dto/conversation-message.dto';
 import { CONVERSATION_NAMING_SYSTEM_PROMPT } from '../prompts/conversation-naming.prompt';
 
@@ -49,14 +50,13 @@ const makeConversation = (
 describe('ConversationNamingService', () => {
   let service: ConversationNamingService;
   let mockAppConfigService: { isEnabled: ReturnType<typeof vi.fn> };
-  let mockConversationPersistence: {
-    getConversation: ReturnType<typeof vi.fn>;
-    saveConversation: ReturnType<typeof vi.fn>;
-  };
-  let mockConfigService: Partial<ConfigService<EnvironmentVariables>>;
+  let mockConversationPersistence: Mocked<ConversationPersistencePort>;
+  let mockConfigService: Pick<ConfigService<EnvironmentVariables>, 'get'>;
   let mockDialClient: DialClientService;
+  let namingPrompt: string | undefined;
 
   beforeEach(() => {
+    namingPrompt = undefined;
     mockAppConfigService = {
       isEnabled: vi.fn().mockResolvedValue(true),
     };
@@ -70,6 +70,7 @@ describe('ConversationNamingService', () => {
     };
     mockConfigService = {
       get: vi.fn((key: string) => {
+        if (key === 'CONVERSATION_NAMING_SYSTEM_PROMPT') return namingPrompt;
         if (key === 'DIAL_CORE_URL') return 'http://localhost:3000';
         if (key === 'UTILITY_MODEL') return 'utility-model';
         if (key === 'DIAL_API_KEY') return 'dial-api-key';
@@ -91,7 +92,7 @@ describe('ConversationNamingService', () => {
     );
 
     vi.spyOn(
-      service['dialClient'].client,
+      mockDialClient.client,
       'sendChatCompletionRequest',
     ).mockResolvedValue({
       response: { ok: true },
@@ -100,6 +101,56 @@ describe('ConversationNamingService', () => {
       },
     } as never);
   });
+
+  it.each([
+    undefined,
+    '',
+    ' \t\n ',
+    '  Return only a title.\nPreserve العربية.\n',
+  ])(
+    'uses the configured prompt or default in both naming flows (%j)',
+    async (prompt) => {
+      namingPrompt = prompt;
+      await service['runMaybeRenameAfterFirstReply'](
+        'gpt-4o__Hello',
+        'test-token',
+        'test-bucket',
+        makeConversation(),
+      );
+      await service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket');
+      const send = vi.mocked(mockDialClient.client.sendChatCompletionRequest);
+      expect(send).toHaveBeenCalledTimes(2);
+      for (const [index, headers] of [
+        { 'Api-Key': 'dial-api-key' },
+        { Authorization: 'Bearer test-token' },
+      ].entries()) {
+        expect(send).toHaveBeenNthCalledWith(
+          index + 1,
+          'utility-model',
+          expect.objectContaining({
+            body: {
+              messages: [
+                {
+                  role: 'system',
+                  content: prompt?.trim()
+                    ? prompt
+                    : CONVERSATION_NAMING_SYSTEM_PROMPT,
+                },
+                {
+                  role: 'user',
+                  content: expect.stringContaining(
+                    'How does Docker networking work?',
+                  ),
+                },
+              ],
+              stream: false,
+            },
+            headers,
+          }),
+        );
+      }
+    },
+  );
 
   it('renames the conversation after a successful LLM response', async () => {
     await service['runMaybeRenameAfterFirstReply'](
@@ -114,7 +165,7 @@ describe('ConversationNamingService', () => {
       expect.any(Object),
     );
     expect(
-      service['dialClient'].client.sendChatCompletionRequest,
+      mockDialClient.client.sendChatCompletionRequest,
     ).toHaveBeenCalledWith(
       'utility-model',
       expect.objectContaining({
@@ -191,7 +242,7 @@ describe('ConversationNamingService', () => {
     );
 
     expect(
-      service['dialClient'].client.sendChatCompletionRequest,
+      mockDialClient.client.sendChatCompletionRequest,
     ).not.toHaveBeenCalled();
   });
 
@@ -206,7 +257,7 @@ describe('ConversationNamingService', () => {
     );
 
     expect(
-      service['dialClient'].client.sendChatCompletionRequest,
+      mockDialClient.client.sendChatCompletionRequest,
     ).not.toHaveBeenCalled();
   });
 
@@ -219,7 +270,7 @@ describe('ConversationNamingService', () => {
     );
 
     expect(
-      service['dialClient'].client.sendChatCompletionRequest,
+      mockDialClient.client.sendChatCompletionRequest,
     ).not.toHaveBeenCalled();
   });
 
@@ -255,19 +306,24 @@ describe('ConversationNamingService', () => {
     );
 
     expect(
-      service['dialClient'].client.sendChatCompletionRequest,
+      mockDialClient.client.sendChatCompletionRequest,
     ).not.toHaveBeenCalled();
   });
 
   it('keeps the original name when the LLM call times out', async () => {
     vi.useFakeTimers();
     vi.spyOn(
-      service['dialClient'].client,
+      mockDialClient.client,
       'sendChatCompletionRequest',
     ).mockImplementation(
       (_modelId, options) =>
         new Promise((_resolve, reject) => {
-          options?.signal?.addEventListener('abort', () => {
+          const signal = options?.signal;
+          if (!(signal instanceof AbortSignal)) {
+            reject(new Error('Expected an AbortSignal'));
+            return;
+          }
+          signal.addEventListener('abort', () => {
             const error = new Error('The operation was aborted');
             error.name = 'AbortError';
             reject(error);
@@ -291,7 +347,7 @@ describe('ConversationNamingService', () => {
 
   it('keeps the original name when the LLM response is empty', async () => {
     vi.spyOn(
-      service['dialClient'].client,
+      mockDialClient.client,
       'sendChatCompletionRequest',
     ).mockResolvedValue({
       response: { ok: true },
@@ -330,7 +386,7 @@ describe('ConversationNamingService', () => {
     });
 
     vi.spyOn(
-      service['dialClient'].client,
+      mockDialClient.client,
       'sendChatCompletionRequest',
     ).mockImplementation(
       () =>
@@ -361,7 +417,7 @@ describe('ConversationNamingService', () => {
     await Promise.all([first, second]);
 
     expect(
-      service['dialClient'].client.sendChatCompletionRequest,
+      mockDialClient.client.sendChatCompletionRequest,
     ).toHaveBeenCalledTimes(1);
   });
 
@@ -388,7 +444,7 @@ describe('ConversationNamingService', () => {
       await service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket');
 
       expect(
-        service['dialClient'].client.sendChatCompletionRequest,
+        mockDialClient.client.sendChatCompletionRequest,
       ).toHaveBeenCalledWith(
         'utility-model',
         expect.objectContaining({
@@ -460,7 +516,7 @@ describe('ConversationNamingService', () => {
       await service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket');
 
       expect(
-        service['dialClient'].client.sendChatCompletionRequest,
+        mockDialClient.client.sendChatCompletionRequest,
       ).toHaveBeenCalledWith(
         'utility-model',
         expect.objectContaining({
@@ -489,7 +545,7 @@ describe('ConversationNamingService', () => {
         service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
       ).rejects.toBeInstanceOf(ServiceUnavailableException);
       expect(
-        service['dialClient'].client.sendChatCompletionRequest,
+        mockDialClient.client.sendChatCompletionRequest,
       ).not.toHaveBeenCalled();
     });
 
@@ -502,13 +558,13 @@ describe('ConversationNamingService', () => {
         service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(
-        service['dialClient'].client.sendChatCompletionRequest,
+        mockDialClient.client.sendChatCompletionRequest,
       ).not.toHaveBeenCalled();
     });
 
     it('throws BadGatewayException when the LLM returns an empty title', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: { ok: true },
@@ -522,7 +578,7 @@ describe('ConversationNamingService', () => {
 
     it('throws BadGatewayException when the upstream request fails', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: { ok: false, status: 500 },
@@ -536,7 +592,7 @@ describe('ConversationNamingService', () => {
 
     it('surfaces the upstream display_message when DIAL Core rejects with 429', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: { ok: false, status: 429 },
@@ -559,7 +615,7 @@ describe('ConversationNamingService', () => {
 
     it('throws ForbiddenException when the upstream request is rejected with 403', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: { ok: false, status: 403 },
@@ -573,7 +629,7 @@ describe('ConversationNamingService', () => {
 
     it('throws UnauthorizedException when the upstream request is rejected with 401', async () => {
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: { ok: false, status: 401 },
@@ -588,12 +644,17 @@ describe('ConversationNamingService', () => {
     it('throws ServiceUnavailableException when the LLM call times out', async () => {
       vi.useFakeTimers();
       vi.spyOn(
-        service['dialClient'].client,
+        mockDialClient.client,
         'sendChatCompletionRequest',
       ).mockImplementation(
         (_modelId, options) =>
           new Promise((_resolve, reject) => {
-            options?.signal?.addEventListener('abort', () => {
+            const signal = options?.signal;
+            if (!(signal instanceof AbortSignal)) {
+              reject(new Error('Expected an AbortSignal'));
+              return;
+            }
+            signal.addEventListener('abort', () => {
               const error = new Error('The operation was aborted');
               error.name = 'AbortError';
               reject(error);

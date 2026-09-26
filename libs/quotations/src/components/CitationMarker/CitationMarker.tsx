@@ -1,5 +1,7 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ElementSize, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
+import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 
 /** User-visible strings for `CitationMarker`. */
 export interface CitationMarkerLabels {
@@ -34,22 +36,27 @@ export const CitationMarker: FC<CitationMarkerProps> = ({
   icon,
   labels,
   labelClassName = 'dial-caption-text',
-}) => {
-  const label = (
-    <span className="flex items-center gap-1">
-      {icon}
+}) => (
+  <NeutralButton
+    size={ElementSize.Small}
+    /*
+     * A source name is server-supplied and routinely a full folder path plus a
+     * page number, long enough to wrap at one of its hyphens. The pill is a
+     * fixed 24px tall and centers its content, so a second line overflows it —
+     * the marker stays one ellipsised line instead, capped so several markers
+     * share a row. `min-w-0` is what lets the label shrink below its text
+     * width; a flex item's `min-width: auto` would otherwise hold it open.
+     * The full name remains in the card header and in `aria-label`.
+     */
+    className={mergeClasses('max-w-[240px]', QUOTATIONS_CLASS.citationMarker)}
+    textClassName="min-w-0 truncate"
+    iconBefore={icon}
+    label={
       <span className={labelClassName}>
         {annotationCount > 1 ? labels.labelWithOverflow : labels.label}
       </span>
-    </span>
-  );
-
-  return (
-    <NeutralButton
-      size={ElementSize.Small}
-      label={label}
-      aria-label={labels.ariaLabel}
-      onClick={onOpen}
-    />
-  );
-};
+    }
+    aria-label={labels.ariaLabel}
+    onClick={onOpen}
+  />
+);

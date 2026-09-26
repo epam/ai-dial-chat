@@ -20,6 +20,21 @@ import type {
 } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
 
+/**
+ * Live search/filter/tab state passed to `CatalogProps.renderEmptyState` when
+ * the Browse section's displayed result set is empty.
+ */
+export interface CatalogEmptyStateContext {
+  /** Current search query text. */
+  query: string;
+  /** Currently active entity-type tab id, or `''` when no tab is active. */
+  activeTab: string;
+  /** Whether at least one Topics filter value is currently selected. */
+  hasTopicFilters: boolean;
+  /** Current state of the "My Apps" filter toggle. */
+  isMyAppsActive: boolean;
+}
+
 /** Text labels used by the `Catalog` surface. */
 export interface CatalogTitles {
   /** Page heading. Default: 'Catalog'. */
@@ -171,12 +186,18 @@ export interface CatalogProps {
    * display name; the catalog library holds no notion of a session.
    */
   publishDefaultAuthor?: string;
-  /** Called with the destination folder path, current access rules, and trimmed display author when the user confirms publish/update. */
+  /**
+   * Called with the destination folder path, current access rules, trimmed
+   * display author, and the credentials opt-in when the user confirms
+   * publish/update. The fifth argument is additive — a callback declaring only
+   * the first four parameters stays assignable.
+   */
   onPublish?: (
     item: CatalogItem,
     folderPath: string[],
     rules: PublicationRule[],
     author: string,
+    publishCredentials: boolean,
   ) => Promise<void>;
   /** Called after a successful publish; use this to surface a success notification. */
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
@@ -327,6 +348,8 @@ export interface CatalogProps {
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
   ) => Promise<void> | void;
+  /** Renders host-owned credential controls below the details header. Omitted in read-only mode. */
+  renderCredentials?: (item: CatalogItem) => ReactNode;
   /**
    * Called when logout is confirmed in the details panel's credentials
    * section, for the given credentials `level`. May return a promise;
@@ -429,4 +452,13 @@ export interface CatalogProps {
   activeTab?: string;
   /** Called when the user switches tabs; required to control `activeTab`. */
   onActiveTabChange?: (tabId: string) => void;
+  /**
+   * Renders a custom empty state in place of the Browse section's default
+   * icon/title (`PanelEmptyState`) when the displayed result set is empty.
+   * Called with the live `CatalogEmptyStateContext` only after loading has
+   * finished and the result set is empty; not called at all when there are
+   * items to show. Returning `null` or `undefined` — or omitting the prop —
+   * keeps the existing default empty state, including `titles.noResultsTitle`.
+   */
+  renderEmptyState?: (context: CatalogEmptyStateContext) => ReactNode;
 }

@@ -1,4 +1,9 @@
-import { DialFileName, Popup, NeutralButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialFileName,
+  ElementSize,
+  Popup,
+  ProgressBar,
+} from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
 import type { FileUploadBatchState } from '../upload-batch';
 
@@ -26,27 +31,28 @@ export const UploadProgressModal: FC<UploadProgressModalProps> = ({
 }) => {
   const { files } = batchState;
 
-  const renderDetails = useCallback((percent?: number): ReactNode => {
-    if (percent === undefined) {
-      return null;
-    }
+  const renderDetails = useCallback(
+    (name: string, percent?: number): ReactNode => {
+      if (percent === undefined) {
+        return null;
+      }
 
-    return (
-      <div
-        className="h-1 w-full overflow-hidden rounded-full bg-control-disable-primary"
-        data-qa="uploading-indicator"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-      >
-        <div
-          className="h-full rounded-full bg-control-accent transition-all duration-300"
-          style={{ width: `${percent}%` }}
+      /*
+       * Named after the file it tracks: a batch renders one bar per row, and
+       * bars that share a name tell a screen-reader user nothing about which
+       * upload is which.
+       */
+      return (
+        <ProgressBar
+          value={percent}
+          size={ElementSize.Small}
+          aria-label={name}
+          data-qa="uploading-indicator"
         />
-      </div>
-    );
-  }, []);
+      );
+    },
+    [],
+  );
 
   return (
     <Popup
@@ -55,11 +61,7 @@ export const UploadProgressModal: FC<UploadProgressModalProps> = ({
       closeOnOutsideClick={false}
       hideClose
       onClose={onCancel}
-      footer={
-        <div className="flex justify-end gap-2 px-6 py-4">
-          <NeutralButton label={cancelLabel} onClick={onCancel} />
-        </div>
-      }
+      mainButtons={[{ label: cancelLabel, onClick: onCancel }]}
       header={
         <div className="flex flex-col gap-2">
           <div>{uploadProgressTitle}</div>
@@ -78,7 +80,7 @@ export const UploadProgressModal: FC<UploadProgressModalProps> = ({
             <div key={entry.id} className="rounded bg-layer-sunken px-3 py-2">
               <DialFileName
                 name={entry.name}
-                details={renderDetails(entry.percent)}
+                details={renderDetails(entry.name, entry.percent)}
               />
             </div>
           ))}

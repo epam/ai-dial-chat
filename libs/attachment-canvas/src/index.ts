@@ -7,6 +7,11 @@ export type {
   CodeContentLabels,
   CodeContentProps,
 } from './components/CodeContent/CodeContent';
+export { InlineGroupedVisualizer } from './components/InlineGroupedVisualizer/InlineGroupedVisualizer';
+export type {
+  InlineGroupedVisualizerColors,
+  InlineGroupedVisualizerProps,
+} from './components/InlineGroupedVisualizer/InlineGroupedVisualizer';
 export { McpAppCanvasRenderer } from './components/McpAppCanvasRenderer/McpAppCanvasRenderer';
 export type { McpAppCanvasRendererProps } from './components/McpAppCanvasRenderer/McpAppCanvasRenderer';
 export {
@@ -17,6 +22,7 @@ export type { AttachmentCanvasContextValue } from './context/AttachmentCanvasCon
 export { useOpenAttachmentCanvas } from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';
 export type {
   OpenAttachmentCanvas,
+  ShouldCommitCanvas,
   UseOpenAttachmentCanvasOptions,
   UseOpenAttachmentCanvasResolvers,
 } from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';
@@ -33,6 +39,7 @@ export type {
   AudioCanvasContent,
   CodeCanvasContent,
   ErrorCanvasContent,
+  GroupedVisualizerCanvasContent,
   HtmlCanvasContent,
   ImageCanvasContent,
   JsonCanvasContent,
@@ -43,9 +50,11 @@ export type {
   OoxmlCanvasContent,
   OoxmlCellAddress,
   OoxmlDocxHighlightLocation,
+  OoxmlDocxTableRowLocation,
   OoxmlHighlight,
   OoxmlHighlightLocation,
   OoxmlPptxHighlightLocation,
+  OoxmlPptxTableRowLocation,
   OoxmlXlsxHighlightLocation,
   PdfCanvasContent,
   PlainTextCanvasContent,
@@ -70,4 +79,11 @@ export {
   isTextPreviewable,
 } from './utils/content';
 export { downloadAttachmentContent, isDownloadable } from './utils/download';
-export { findVisualizerForMime } from './utils/visualizer';
+export {
+  findVisualizerForApplication,
+  findVisualizerForMime,
+  groupedVisualizerCanvasKey,
+  partitionAttachmentsForApplicationVisualizer,
+} from './utils/visualizer';
+export type { ApplicationVisualizerPartition } from './utils/visualizer';
+export { ATTACHMENT_CANVAS_CLASS } from './constants/public-class-names';

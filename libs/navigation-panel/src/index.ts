@@ -51,3 +51,4 @@ export type { NavigationMenuPageProps } from './components/NavigationSheet/Navig
 export type { OptionListPageProps } from './components/NavigationSheet/OptionListPage';
 export type { ProfilePageProps } from './components/NavigationSheet/ProfilePage';
 export type { SheetRowProps } from './components/NavigationSheet/SheetRow';
+export { NAVIGATION_PANEL_CLASS } from './constants/public-class-names';

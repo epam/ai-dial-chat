@@ -1,5 +1,8 @@
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { ConversationInput } from './ConversationInput';
 
 describe('ConversationInput', () => {
@@ -53,6 +56,23 @@ describe('ConversationInput', () => {
   it('should hide welcome text when welcomeText prop is empty string', () => {
     render(<ConversationInput welcomeText="" />);
     expect(screen.queryByRole('heading')).toBeNull();
+  });
+
+  it('renders description text below the welcome heading', () => {
+    render(
+      <ConversationInput
+        welcomeText="Afternoon, Nivesh"
+        descriptionText="Your secure, all-in-one AI assistant."
+      />,
+    );
+    expect(
+      screen.getByText('Your secure, all-in-one AI assistant.'),
+    ).toBeTruthy();
+  });
+
+  it('hides description text when welcomeText is absent', () => {
+    render(<ConversationInput descriptionText="Your secure AI assistant." />);
+    expect(screen.queryByText('Your secure AI assistant.')).toBeNull();
   });
 
   it('should not call onSend when Shift+Enter is pressed', () => {
@@ -172,5 +192,54 @@ describe('ConversationInput — attachments', () => {
     });
 
     expect(screen.queryByRole('list', { name: 'Attached files' })).toBeNull();
+  });
+});
+
+describe('ConversationInput — attachment tray styles', () => {
+  it('forwards styles.attachmentTray to the composer tray', () => {
+    render(
+      <ConversationInput
+        pendingAttachments={[
+          {
+            id: 'report',
+            name: 'report.pdf',
+            file: new File([], 'report.pdf', { type: 'application/pdf' }),
+            type: AttachmentType.File,
+            contentType: 'application/pdf',
+            url: 'files/report.pdf',
+            status: RequestStatus.Idle,
+          },
+        ]}
+        styles={{ attachmentTray: { className: 'host-tray' } }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('list', { name: 'Attached files' }).classList,
+    ).toContain('host-tray');
+  });
+});
+
+describe('ConversationInput — model menu styles', () => {
+  it('forwards styles.modelMenu to the model menu', async () => {
+    const user = userEvent.setup({ delay: null });
+    render(
+      <ConversationInput
+        deployments={[{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }]}
+        selectedDeploymentId="gpt-4o"
+        styles={{ modelMenu: { className: 'host-menu' } }}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Select model/ }));
+
+    /* The panel carries no role of its own, so the row is found by role and
+       walked up to it. */
+    expect(
+      screen
+        .getByRole('menuitemradio', { name: 'GPT-4o' })
+        // eslint-disable-next-line testing-library/no-node-access
+        .closest(`.${CONVERSATION_INPUT_CLASS.modelMenu}`)?.classList,
+    ).toContain('host-menu');
   });
 });

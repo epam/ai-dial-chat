@@ -15,6 +15,7 @@ import {
   useState,
   type FC,
 } from 'react';
+import { SIDEBAR_CLASS } from '../../constants/public-class-names';
 import { type SidebarPanelProps } from '../../models/panel-props';
 import { SidebarOrientation } from '../../types/orientation';
 import { Header } from '../Header/Header';
@@ -46,6 +47,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     titleClassName,
     className,
     headerClassName,
+    headerActionsClassName,
   } = panelStyles ?? {};
 
   const panelCssVars = useMemo(
@@ -235,11 +237,13 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
             'flex h-full w-full flex-col gap-3',
             navDividerClass,
             typography?.fontClassName,
+            SIDEBAR_CLASS.aside,
           )}
         >
           <Header
             title={title}
             className={headerClassName}
+            actionsClassName={headerActionsClassName}
             titleClassName={titleClassName}
             leftActions={leftActions}
             rightActions={

@@ -18,8 +18,12 @@ const config = {
   transcribeSizeLimitBytes: 1024,
 };
 
+const { mockT } = vi.hoisted(() => ({
+  mockT: vi.fn((key: string, _options?: Record<string, unknown>) => key),
+}));
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: mockT }),
 }));
 vi.mock(
   '../../../context/AppConfigContext',
@@ -157,6 +161,50 @@ describe('useAudioTranscription', () => {
       ).rejects.toThrow(expectedKey);
     },
   );
+
+  it.each([
+    [5 * 1024 * 1024, '5 MB'],
+    [5_000_000, '4.8 MB'],
+  ])(
+    'shows a %d-byte size limit as a human-readable %s',
+    async (limitBytes, expectedMaxSize) => {
+      config.asrModelId = 'asr';
+      transcribe.mockRejectedValue(
+        new AudioTranscriptionError(
+          AudioTranscriptionErrorReason.TooLarge,
+          limitBytes,
+        ),
+      );
+      const { result } = renderHook(() => useAudioTranscription({}));
+      await expect(
+        result.current.handleTranscribeAudio(
+          new File(['audio'], 'voice.webm'),
+          new AbortController().signal,
+        ),
+      ).rejects.toThrow(VoiceRecordingI18nKeys.TooLarge);
+      expect(mockT).toHaveBeenCalledWith(VoiceRecordingI18nKeys.TooLarge, {
+        maxSize: expectedMaxSize,
+      });
+    },
+  );
+
+  it('falls back to the configured limit when the size error carries no limit', async () => {
+    config.asrModelId = 'asr';
+    config.transcribeSizeLimitBytes = 2 * 1024 * 1024;
+    transcribe.mockRejectedValue(
+      new AudioTranscriptionError(AudioTranscriptionErrorReason.TooLarge),
+    );
+    const { result } = renderHook(() => useAudioTranscription({}));
+    await expect(
+      result.current.handleTranscribeAudio(
+        new File(['audio'], 'voice.webm'),
+        new AbortController().signal,
+      ),
+    ).rejects.toThrow(VoiceRecordingI18nKeys.TooLarge);
+    expect(mockT).toHaveBeenCalledWith(VoiceRecordingI18nKeys.TooLarge, {
+      maxSize: '2 MB',
+    });
+  });
 
   it('falls back to the generic Failed message for a non-library error', async () => {
     config.asrModelId = 'asr';

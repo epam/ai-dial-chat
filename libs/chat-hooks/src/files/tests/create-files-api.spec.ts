@@ -146,7 +146,7 @@ describe('createFilesApiClient — getFileMetadata', () => {
 describe('createFilesApiClient — downloadFile', () => {
   it('delegates to downloadFileRaw and returns the raw Response', async () => {
     const filesApi = makeFilesApi();
-    const rawResponse = new Response(new Blob(['bytes']));
+    const rawResponse = new Response('bytes');
     const downloadFileRawSpy = vi.fn().mockResolvedValue({ raw: rawResponse });
     filesApi.downloadFileRaw = downloadFileRawSpy;
     const client = createFilesApiClient(
@@ -165,7 +165,7 @@ describe('createFilesApiClient — downloadFile', () => {
 
   it('passes an AbortSignal through to the generated client when provided', async () => {
     const filesApi = makeFilesApi();
-    const rawResponse = new Response(new Blob(['bytes']));
+    const rawResponse = new Response('bytes');
     const downloadFileRawSpy = vi.fn().mockResolvedValue({ raw: rawResponse });
     filesApi.downloadFileRaw = downloadFileRawSpy;
     const client = createFilesApiClient(

@@ -1,4 +1,7 @@
-import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ConversationResponseDto,
+  DeploymentDetailsDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
@@ -10,8 +13,8 @@ import {
   useConversationStream,
 } from '@epam/ai-dial-chat-hooks';
 import {
-  MessageRating,
   generateUUID,
+  MessageRating,
   MessageRole,
   ResponseFormat,
   type Attachment,
@@ -21,8 +24,13 @@ import {
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ConfirmationPopupVariant,
+  useComposerSeed,
+  useComposerSeedSource,
+} from '@epam/ai-dial-conversation-input';
+import {
   ConfirmationPopup,
+  ConfirmationPopupVariant,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import {
@@ -36,6 +44,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import ConversationView from '../../components/ConversationView/ConversationView';
+import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
@@ -45,6 +54,7 @@ import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  RateI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
@@ -63,8 +73,12 @@ import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { getDeploymentDetails } from '../../server-api/deployments';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
+import {
+  conversationStreamTransport,
+  logConversationStreamError,
+} from '../../utils/conversation-stream-transport';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 
 /*
@@ -94,10 +108,10 @@ interface Props {
 
 const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   const { t } = useTranslation();
-  const { showErrorNotification } = useNotification();
+  const { showSuccessNotification, showErrorNotification } = useNotification();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
-  const { items } = useDeployments();
+  const { items, isLoading: isDeploymentsLoading } = useDeployments();
 
   /*
    * `appId` is the application id (e.g. "applications/<bucket>/My App__1.0")
@@ -125,9 +139,55 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     [appDeployment?.conversationStarters],
   );
 
+  /*
+   * The preview's fixed agent never goes through DeploymentsContext's own
+   * selection (it isn't the globally selected deployment), so nothing there
+   * fetches its details. Fetched here directly, in parallel with the full
+   * deployments list (`items` above), so skills-support gating below doesn't
+   * have to wait for that list to resolve `appId`.
+   */
+  const [appDeploymentDetails, setAppDeploymentDetails] =
+    useState<DeploymentDetailsDto | null>(null);
+  const [isAppDetailsLoading, setIsAppDetailsLoading] = useState(true);
+  useEffect(() => {
+    let isCancelled = false;
+    setAppDeploymentDetails(null);
+    setIsAppDetailsLoading(true);
+    getDeploymentDetails(appId)
+      .then((details) => {
+        if (!isCancelled) setAppDeploymentDetails(details);
+      })
+      .catch(() => {
+        // Best-effort early fallback — appDeployment (from the full list) still resolves normally.
+      })
+      .finally(() => {
+        if (!isCancelled) setIsAppDetailsLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [appId]);
+  const appDeploymentDetailsEntity =
+    appDeploymentDetails?.modelDetails ??
+    appDeploymentDetails?.applicationDetails;
+  const isAppSkillsSupported =
+    appDeployment?.features?.skillsSupported === true ||
+    (!appDeployment &&
+      appDeploymentDetailsEntity?.features?.skillsSupported === true);
+  /*
+   * Neither source has resolved this app yet: showing the composer now would
+   * flash starters/skill-support in as soon as whichever request lands, so a
+   * spinner covers the gap instead. Whichever of the list or the direct
+   * details fetch resolves first clears it — the other one filling in later
+   * only refines features/starters behind the scenes.
+   */
+  const isAppInfoLoading =
+    !appDeployment &&
+    !appDeploymentDetails &&
+    (isDeploymentsLoading || isAppDetailsLoading);
+
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [inputMessage, setInputMessage] = useState<string | undefined>();
   const conversationRef = useRef<Conversation | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -197,6 +257,10 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       channel,
       onStopError: handleStopError,
       generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
+      generationPersistenceErrorMessage: t(
+        ChatI18nKeys.GenerationPersistenceError,
+      ),
+      onStreamError: logConversationStreamError,
     });
 
   /*
@@ -212,13 +276,33 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillElement,
+    message: skillMessage,
+    messageRevision: skillMessageRevision,
+    activeMentions,
+    onDraftChange,
+    onBackspaceAtCaret,
+    caretPositionOverride,
     selectedSkills,
     isSkillUnsupported,
-    removeSelectedSkill,
+    resetSkillMentions,
+    seedSkillMentions,
   } = useSkillSelectorOverlay({
-    isSkillsSupported: appDeployment?.features?.skillsSupported === true,
+    isSkillsSupported: isAppSkillsSupported,
   });
+
+  /*
+   * Merges the starter-selection seed (`seedComposerText`) with the skill
+   * hook's own message/messageRevision push (a mention insertion) into the
+   * one message/messageRevision pair `NewConversationComposer` accepts.
+   */
+  const {
+    message: composerSeedText,
+    messageRevision: composerSeedRevision,
+    seedMessage: seedComposerText,
+  } = useComposerSeed();
+  useComposerSeedSource(skillMessageRevision, () =>
+    seedComposerText(skillMessage),
+  );
 
   const handleCreateConversation = useCallback(
     async (
@@ -228,65 +312,72 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       skills?: RequestSkill[],
     ) => {
       const attachmentDtos = attachmentsToDtos(attachments || []);
-      const created = await apiCreateConversation(
-        message,
-        normalizeDeploymentId(appId),
-        attachmentDtos,
-        undefined,
-        undefined,
-        skills,
-      );
-      const savedConversation = {
-        ...created,
-        prompt: chatSettingsValues.systemPrompt,
-        temperature: chatSettingsValues.temperature,
-        responseFormat: chatSettingsValues.responseFormat,
-      } as ConversationResponseDto;
-      await saveConversation(
-        getConversationPath(created.id),
-        savedConversation,
-      );
-
-      const assistantPlaceholder: Message = {
-        role: MessageRole.Assistant,
-        content: '',
-        timestamp: new Date().toISOString(),
-      };
-      const createdConversation = savedConversation as Conversation;
-      const withPlaceholder = {
-        ...createdConversation,
-        messages: [...createdConversation.messages, assistantPlaceholder],
-      };
-      conversationRef.current = withPlaceholder;
-      setConversation(withPlaceholder);
-      setConversationId(created.id);
-
-      startStream(
-        created.id,
-        message,
-        withPlaceholder.messages.length - 1,
-        appId,
-        attachmentDtos?.length || skills?.length
-          ? {
-              ...(attachmentDtos?.length
-                ? { attachments: attachmentDtos }
-                : {}),
-              ...(skills?.length ? { skills } : {}),
-            }
-          : undefined,
-        generateUUID(),
-        CompletionMode.ContinueLastUser,
-      );
       /*
-       * The selection is consumed by the created conversation's first
-       * message (or discarded on the starter path below, which carries no
-       * skill); a no-op while nothing is selected or the skill flag is off.
-       * On failure the awaits above reject first, so the selection survives
-       * for the retry.
+       * The textarea itself clears the instant `onSend` fires (`Input.tsx`'s
+       * own `handleSend`), but the composer only unmounts once
+       * `setConversationId` below flips this preview to the `ConversationView`
+       * branch — after two awaited API calls. Without resetting here first,
+       * the mention chip stays tracked (and visibly rendered over the
+       * now-empty, placeholder-showing input) for that entire gap. Restored
+       * on failure below so a retry still has its skill mention.
        */
-      removeSelectedSkill();
+      resetSkillMentions();
+      try {
+        const created = await apiCreateConversation(
+          message,
+          normalizeDeploymentId(appId),
+          attachmentDtos,
+          undefined,
+          undefined,
+          skills,
+        );
+        const savedConversation = {
+          ...created,
+          prompt: chatSettingsValues.systemPrompt,
+          temperature: chatSettingsValues.temperature,
+          responseFormat: chatSettingsValues.responseFormat,
+        } as ConversationResponseDto;
+        await saveConversation(
+          getConversationPath(created.id),
+          savedConversation,
+        );
+
+        const assistantPlaceholder: Message = {
+          role: MessageRole.Assistant,
+          content: '',
+          timestamp: new Date().toISOString(),
+        };
+        const createdConversation = savedConversation as Conversation;
+        const withPlaceholder = {
+          ...createdConversation,
+          messages: [...createdConversation.messages, assistantPlaceholder],
+        };
+        conversationRef.current = withPlaceholder;
+        setConversation(withPlaceholder);
+        setConversationId(created.id);
+
+        startStream(
+          created.id,
+          message,
+          withPlaceholder.messages.length - 1,
+          appId,
+          attachmentDtos?.length || skills?.length
+            ? {
+                ...(attachmentDtos?.length
+                  ? { attachments: attachmentDtos }
+                  : {}),
+                ...(skills?.length ? { skills } : {}),
+              }
+            : undefined,
+          generateUUID(),
+          CompletionMode.ContinueLastUser,
+        );
+      } catch (err) {
+        seedSkillMentions(message, skills);
+        throw err;
+      }
     },
-    [appId, startStream, removeSelectedSkill],
+    [appId, startStream, resetSkillMentions, seedSkillMentions],
   );
 
   /*
@@ -312,7 +403,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     (starter: StarterOption) => {
       const text = getStarterPopulateText(starter);
       if (!starter['dial:widgetOptions'].submit) {
-        setInputMessage(text);
+        seedComposerText(text);
         return;
       }
 
@@ -335,7 +426,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
 
       void createFromStarter();
     },
-    [handleCreateConversation, showErrorNotification, t],
+    [handleCreateConversation, showErrorNotification, t, seedComposerText],
   );
 
   /*
@@ -394,18 +485,61 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   );
 
   const handleRate = useCallback(
-    (messageIndex: number, rating: MessageRating | null) => {
-      void handleRateMessage(messageIndex, rating);
+    async (messageIndex: number, rating: MessageRating | null) => {
+      const success = await handleRateMessage(messageIndex, rating);
+      if (success && rating === MessageRating.Like) {
+        showSuccessNotification({
+          title: t(RateI18nKeys.LikeToastTitle),
+          message: t(RateI18nKeys.LikeToastDescription),
+        });
+      }
     },
-    [handleRateMessage],
+    [handleRateMessage, showSuccessNotification, t],
   );
 
-  const handleDislike = useCallback(
-    (messageIndex: number) => {
-      void handleRateMessage(messageIndex, MessageRating.Dislike);
+  const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
+    number | null
+  >(null);
+
+  const handleOpenDislikeModal = useCallback((messageIndex: number) => {
+    setPendingDislikeMessageIndex(messageIndex);
+  }, []);
+
+  const handleDislikeModalClose = useCallback(() => {
+    setPendingDislikeMessageIndex(null);
+  }, []);
+
+  const handleDislikeSubmit = useCallback(
+    async (comment: string) => {
+      if (pendingDislikeMessageIndex == null) return;
+      const index = pendingDislikeMessageIndex;
+      setPendingDislikeMessageIndex(null);
+      const success = await handleRateMessage(
+        index,
+        MessageRating.Dislike,
+        comment,
+      );
+      if (success) {
+        showSuccessNotification({
+          title: t(RateI18nKeys.DislikeToastTitle),
+          message: t(RateI18nKeys.LikeToastDescription),
+        });
+      }
     },
-    [handleRateMessage],
+    [pendingDislikeMessageIndex, handleRateMessage, showSuccessNotification, t],
   );
+
+  if (isAppInfoLoading) {
+    return (
+      <div
+        role="region"
+        aria-label={t(AppsEditorI18nKeys.PreviewChatAriaLabel)}
+        className="flex size-full items-center justify-center"
+      >
+        <Spinner />
+      </div>
+    );
+  }
 
   if (!conversationId || !conversation) {
     return (
@@ -423,11 +557,14 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             isInputDisabled={quickAppStarters.isChatMessageInputDisabled}
             placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
             introText={quickAppStarters.introText}
-            message={inputMessage}
+            message={composerSeedText}
+            messageRevision={composerSeedRevision}
+            onChange={onDraftChange}
             onCreateConversation={handleCreateFromComposer}
             menuOverlays={skillMenuOverlay ? [skillMenuOverlay] : undefined}
-            inlineStartSlot={selectedSkillElement}
-            onInlineStartRemove={removeSelectedSkill}
+            activeMentions={activeMentions}
+            onBackspaceAtCaret={onBackspaceAtCaret}
+            caretPositionOverride={caretPositionOverride}
             isSkillUnsupported={isSkillUnsupported}
             commandMenu={commandMenu}
           >
@@ -459,7 +596,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         onDeleteMessage={handleDeleteMessage}
         onRegenerateMessage={handleRegenerateMessage}
         onRateMessage={handleRate}
-        onDislikeMessage={handleDislike}
+        onDislikeMessage={handleOpenDislikeModal}
         onStartEdit={handleStartEdit}
         onCancelEdit={handleCancelEdit}
         onEditMessage={handleEditMessage}
@@ -485,6 +622,13 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         onConfirm={handleConfirmDelete}
         onClose={() => setPendingDeleteIndex(null)}
       />
+
+      {pendingDislikeMessageIndex != null && (
+        <NegativeFeedbackModal
+          onClose={handleDislikeModalClose}
+          onSubmit={handleDislikeSubmit}
+        />
+      )}
     </div>
   );
 };

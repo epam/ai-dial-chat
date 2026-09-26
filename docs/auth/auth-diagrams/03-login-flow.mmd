@@ -24,7 +24,7 @@ sequenceDiagram
         IDP-->>BFF: UserInfo profile (or lookup error)
         BFF->>BFF: Copy only job_title if sub matches<br/>Ignore missing/invalid values or lookup failures
     end
-    BFF->>BFF: Encrypt payload (AES-GCM via jose)
+    BFF->>BFF: Set session_exp = now + configured lifetime<br/>Resolve provider expiry if known<br/>Encrypt v2 payload (AES-GCM via jose)
     BFF-->>U: Set __Host-chat.sess cookie<br/>302 -> /
     U->>SPA: Loads app, calls /auth/me
     SPA->>BFF: GET /auth/me (cookie sent automatically)

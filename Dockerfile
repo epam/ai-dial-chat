@@ -3,9 +3,11 @@
 # ─────────────────────────────────────────────
 # Stage 0: install the patched package manager used by all stages
 # ─────────────────────────────────────────────
-FROM node:24.17-alpine AS node-base
+FROM node:24.21-alpine3.24 AS node-base
 
-RUN npm install --global npm@12.0.1
+# npm@12.1.0 bundles patched brace-expansion@5.0.9, ip-address@10.5.0, and tar@7.5.22.
+RUN apk upgrade --no-cache libcrypto3 libssl3 \
+    && npm install --global npm@12.1.0
 
 # ─────────────────────────────────────────────
 # Stage 1: install all workspace dependencies

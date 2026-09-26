@@ -7,9 +7,11 @@ import {
   MDMessageViewer,
   mergeClasses,
   MessageRole,
+  ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import { NeutralButton } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
+import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import { useInlineStartIndent } from '../../hooks/useInlineStartIndent/useInlineStartIndent';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { MessageActions } from '../MessageActions/MessageActions';
@@ -32,6 +34,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   isStreaming,
   attachments,
   beforeContent,
+  responseFormat,
   afterContent,
   starters,
   onSelectStarter,
@@ -57,9 +60,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
     thinkingLabel,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
-    tableCopyCsvLabel,
-    tableCopyTxtLabel,
-    tableCopyMarkdownLabel,
+    tableCopyLabel,
     tableCopiedLabel,
     tableDownloadCsvLabel,
     tableOpenInCanvasLabel,
@@ -68,6 +69,20 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
     assistantMessageAriaLabel = 'Assistant message',
     deploymentIconFallbackLabel = 'AI',
   } = labels ?? {};
+  const tableActionLabels = useMemo(
+    () => ({
+      copyLabel: tableCopyLabel,
+      copiedLabel: tableCopiedLabel,
+      downloadCsvLabel: tableDownloadCsvLabel,
+      openInCanvasLabel: tableOpenInCanvasLabel,
+    }),
+    [
+      tableCopyLabel,
+      tableCopiedLabel,
+      tableDownloadCsvLabel,
+      tableOpenInCanvasLabel,
+    ],
+  );
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
     : (attachments ?? []);
@@ -143,6 +158,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                  * receive the indent.
                  */
                 beforeContent != null && text && FIRST_LINE_INDENT_CLASS_NAME,
+                CONVERSATION_MESSAGES_CLASS.assistantContent,
               )}
             >
               {beforeContent != null && text && (
@@ -157,6 +173,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               <div className="cm-bubble-markdown min-w-0 max-w-full">
                 <MDMessageViewer
                   content={text ?? ''}
+                  isPlainText={responseFormat === ResponseFormat.PlainText}
                   isStreaming={isStreaming}
                   thinkingLabel={thinkingLabel}
                   components={markdownComponents}
@@ -165,14 +182,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                   codeBlockCopyLabel={codeBlockCopyLabel}
                   codeBlockCopiedLabel={codeBlockCopiedLabel}
                   codeBlockTheme={codeBlockTheme}
-                  tableActionLabels={{
-                    copyCsvLabel: tableCopyCsvLabel,
-                    copyTxtLabel: tableCopyTxtLabel,
-                    copyMarkdownLabel: tableCopyMarkdownLabel,
-                    copiedLabel: tableCopiedLabel,
-                    downloadCsvLabel: tableDownloadCsvLabel,
-                    openInCanvasLabel: tableOpenInCanvasLabel,
-                  }}
+                  tableActionLabels={tableActionLabels}
                   tableDownloadFilename={tableDownloadFilename}
                   tableOnOpenInCanvas={tableOnOpenInCanvas}
                   tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}

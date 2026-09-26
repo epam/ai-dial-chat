@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ATTACHMENT_CANVAS_CLASS } from '../../../constants/public-class-names';
 import type { AttachmentCanvasContent } from '../../../models/attachment-canvas';
 import {
   AttachmentContentType,
@@ -80,6 +82,22 @@ describe('AttachmentCanvas', () => {
     render(<AttachmentCanvas {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /close/i }));
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders host-supplied leftActions in the header', async () => {
+    const onBack = vi.fn();
+    render(
+      <AttachmentCanvas
+        {...defaultProps}
+        leftActions={
+          <button type="button" onClick={onBack}>
+            Open panel
+          </button>
+        }
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Open panel' }));
+    expect(onBack).toHaveBeenCalledOnce();
   });
 
   it('does not render a download button when onDownload is not provided', () => {
@@ -258,5 +276,41 @@ describe('AttachmentCanvas', () => {
       );
       expect(screen.queryByRole('button', { name: /download/i })).toBeNull();
     });
+  });
+});
+
+/*
+ * `SidebarPanel` puts `styles.className` on the wrapper that owns the panel's
+ * width and transition, while `dial-sb-aside` sits on the `aside` inside it —
+ * so the class is asserted by walking up from the element that has the role.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('AttachmentCanvas — public class names', () => {
+  /*
+   * A lost public class fails silently: the build passes and a host's
+   * stylesheet simply stops applying. The panel itself is drawn by
+   * `@epam/ai-dial-sidebar`, so the class travels as `styles.className` and
+   * this covers the whole path to the element a host selects.
+   */
+  it('stamps the canvas panel, open or closed', () => {
+    const { unmount } = render(<AttachmentCanvas {...defaultProps} />);
+    expect(
+      closestWithClass(
+        screen.getByRole('complementary', { name: 'Attachment canvas' }),
+        ATTACHMENT_CANVAS_CLASS.panel,
+      ),
+    ).toBeTruthy();
+    unmount();
+
+    render(<AttachmentCanvas {...defaultProps} isOpen={false} />);
+    expect(
+      closestWithClass(
+        screen.getByRole('complementary', { hidden: true }),
+        ATTACHMENT_CANVAS_CLASS.panel,
+      ),
+    ).toBeTruthy();
   });
 });

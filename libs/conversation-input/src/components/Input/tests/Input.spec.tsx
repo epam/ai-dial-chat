@@ -4,7 +4,13 @@ import {
   type Attachment,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input';
@@ -653,7 +659,13 @@ describe('Input — isSendDisabled', () => {
         message="Hello"
         onSend={handleSend}
         isSendDisabled
-        renderFooterActions={({ canSend, onSend }) => {
+        renderFooterActions={({
+          canSend,
+          onSend,
+        }: {
+          canSend: boolean;
+          onSend: () => void;
+        }) => {
           footerCanSend = canSend;
           return (
             <button type="button" onClick={onSend}>
@@ -1130,52 +1142,61 @@ describe('Input — message length cap', () => {
 });
 
 /* Issue #8754: a picked prompt used to arrive on the `message` channel, which
- * replaces the whole textarea value, so any draft was destroyed with no undo. */
+ * replaces the whole textarea value, so any draft was destroyed with no undo.
+ * Issue #8781: the insert then had to survive as an *undoable* edit. */
 describe('Input — textInsertion', () => {
   const renderWithInsertion = (revision: number, text: string) =>
     render(<Input textInsertion={{ text, revision }} />);
 
-  it('does not insert the text it was mounted with', () => {
+  /* The insert is deferred to a microtask so it lands outside the commit that
+     asked for it; draining that queue is what the browser does next. */
+  const flushInsertion = () => act(async () => undefined);
+
+  it('does not insert the text it was mounted with', async () => {
     renderWithInsertion(1, 'Prompt body');
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    await flushInsertion();
 
     expect(textarea.value).toBe('');
   });
 
-  it('keeps the typed draft and inserts at the caret', () => {
+  it('keeps the typed draft and inserts at the caret', async () => {
     const { rerender } = renderWithInsertion(0, '');
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
 
     fireEvent.change(textarea, { target: { value: 'my draft' } });
     textarea.setSelectionRange(3, 3);
     rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+    await flushInsertion();
 
     expect(textarea.value).toBe('my PROMPTdraft');
   });
 
-  it('appends when the caret sits at the end of the draft', () => {
+  it('appends when the caret sits at the end of the draft', async () => {
     const { rerender } = renderWithInsertion(0, '');
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
 
     fireEvent.change(textarea, { target: { value: 'draft ' } });
     textarea.setSelectionRange(6, 6);
     rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+    await flushInsertion();
 
     expect(textarea.value).toBe('draft PROMPT');
   });
 
-  it('replaces the selection rather than the whole draft', () => {
+  it('replaces the selection rather than the whole draft', async () => {
     const { rerender } = renderWithInsertion(0, '');
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
 
     fireEvent.change(textarea, { target: { value: 'keep drop keep' } });
     textarea.setSelectionRange(5, 9);
     rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+    await flushInsertion();
 
     expect(textarea.value).toBe('keep PROMPT keep');
   });
 
-  it('reports the merged value through onChange', () => {
+  it('reports the merged value through onChange', async () => {
     const handleChange = vi.fn();
     const { rerender } = render(
       <Input
@@ -1194,21 +1215,24 @@ describe('Input — textInsertion', () => {
         onChange={handleChange}
       />,
     );
+    await flushInsertion();
 
     expect(handleChange).toHaveBeenCalledWith('draft PROMPT');
   });
 
-  it('inserts the same text again when only the revision changes', () => {
+  it('inserts the same text again when only the revision changes', async () => {
     const { rerender } = renderWithInsertion(0, '');
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
 
     rerender(<Input textInsertion={{ text: 'AB', revision: 1 }} />);
+    await flushInsertion();
     rerender(<Input textInsertion={{ text: 'AB', revision: 2 }} />);
+    await flushInsertion();
 
     expect(textarea.value).toBe('ABAB');
   });
 
-  it('returns focus to the textarea so the user can keep typing', () => {
+  it('returns focus to the textarea so the user can keep typing', async () => {
     const { rerender } = renderWithInsertion(0, '');
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
 
@@ -1216,22 +1240,52 @@ describe('Input — textInsertion', () => {
     textarea.setSelectionRange(1, 1);
     textarea.blur();
     rerender(<Input textInsertion={{ text: 'XY', revision: 1 }} />);
+    await flushInsertion();
 
     /* eslint-disable-next-line testing-library/no-node-access -- focus is the assertion; no semantic query exposes the active element */
     expect(document.activeElement).toBe(textarea);
     expect(textarea.value).toBe('aXYb');
   });
 
+  /* Issue #8781: the menu the prompt was picked in returns focus to its own
+     opener from a microtask queued as it unmounts, which used to leave the
+     caret outside the composer — and the undo shortcut with nothing to act on. */
+  it('keeps the caret in the composer when the closing menu returns focus to its opener', async () => {
+    const withOpener = (revision: number, text: string) => (
+      <>
+        <button type="button">Prompts</button>
+        <Input textInsertion={{ text, revision }} />
+      </>
+    );
+    const { rerender } = render(withOpener(0, ''));
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    const opener = screen.getByRole('button', { name: 'Prompts' });
+
+    fireEvent.change(textarea, { target: { value: 'draft ' } });
+    textarea.setSelectionRange(6, 6);
+    textarea.blur();
+
+    /* Queued before the insertion is requested, exactly as the closing menu's
+       own `returnFocus` microtask is. */
+    queueMicrotask(() => opener.focus());
+    rerender(withOpener(1, 'PROMPT'));
+    await flushInsertion();
+
+    /* eslint-disable-next-line testing-library/no-node-access -- focus is the assertion; no semantic query exposes the active element */
+    expect(document.activeElement).toBe(textarea);
+    expect(textarea.selectionStart).toBe('draft PROMPT'.length);
+  });
+
   /* The native path is what makes the insert undoable; jsdom has no
    * execCommand, so the production branch is only reachable with a stub. */
-  it('uses the browser editing command so the insert lands on the native undo stack', () => {
+  it('uses the browser editing command so the insert lands on the native undo stack', async () => {
     const execCommand = vi.fn().mockReturnValue(true);
-    vi.stubGlobal('document', document);
     document.execCommand = execCommand;
 
     try {
       const { rerender } = renderWithInsertion(0, '');
       rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+      await flushInsertion();
 
       expect(execCommand).toHaveBeenCalledWith('insertText', false, 'PROMPT');
     } finally {
@@ -1239,12 +1293,163 @@ describe('Input — textInsertion', () => {
     }
   });
 
-  it('leaves the draft alone when the inserted text is empty', () => {
+  it('leaves Ctrl+Z to the browser when the insert went on the native undo stack', async () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+
+    try {
+      const { rerender } = renderWithInsertion(0, '');
+      const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'draft ' } });
+      rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+      await flushInsertion();
+
+      /* `fireEvent` reports `false` for a consumed event, so `true` is the
+         assertion that the browser's own undo was left to run. */
+      expect(fireEvent.keyDown(textarea, { key: 'z', ctrlKey: true })).toBe(
+        true,
+      );
+    } finally {
+      delete (document as Partial<Document>).execCommand;
+    }
+  });
+
+  /* Browsers that cannot insert into a textarea through the editing pipeline
+     (Firefox) only take the value programmatically, which drops their undo
+     history — so the hook owes the user that one undo itself (issue #8781).
+     jsdom has no `execCommand` at all, which is exactly that case. */
+  describe('when the browser cannot put the insert on its undo stack', () => {
+    const insertIntoDraft = async (draft: string, text = 'PROMPT') => {
+      const { rerender } = renderWithInsertion(0, '');
+      const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: draft } });
+      textarea.setSelectionRange(draft.length, draft.length);
+      rerender(<Input textInsertion={{ text, revision: 1 }} />);
+      await flushInsertion();
+
+      return textarea;
+    };
+
+    it('restores the draft on Ctrl+Z and keeps what the user typed', async () => {
+      const textarea = await insertIntoDraft('my draft ');
+      expect(textarea.value).toBe('my draft PROMPT');
+
+      expect(fireEvent.keyDown(textarea, { key: 'z', ctrlKey: true })).toBe(
+        false,
+      );
+
+      expect(textarea.value).toBe('my draft ');
+      expect(textarea.selectionStart).toBe('my draft '.length);
+    });
+
+    it('restores the draft on Cmd+Z', async () => {
+      const textarea = await insertIntoDraft('my draft ');
+
+      fireEvent.keyDown(textarea, { key: 'z', metaKey: true });
+
+      expect(textarea.value).toBe('my draft ');
+    });
+
+    it('restores the selection the insertion replaced', async () => {
+      const { rerender } = renderWithInsertion(0, '');
+      const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'keep drop keep' } });
+      textarea.setSelectionRange(5, 9);
+      rerender(<Input textInsertion={{ text: 'PROMPT', revision: 1 }} />);
+      await flushInsertion();
+
+      fireEvent.keyDown(textarea, { key: 'z', ctrlKey: true });
+
+      expect(textarea.value).toBe('keep drop keep');
+      expect(textarea.selectionStart).toBe(5);
+      expect(textarea.selectionEnd).toBe(9);
+    });
+
+    it('reports the restored draft through onChange', async () => {
+      const handleChange = vi.fn();
+      const { rerender } = render(
+        <Input
+          textInsertion={{ text: '', revision: 0 }}
+          onChange={handleChange}
+        />,
+      );
+      const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'draft ' } });
+      rerender(
+        <Input
+          textInsertion={{ text: 'PROMPT', revision: 1 }}
+          onChange={handleChange}
+        />,
+      );
+      await flushInsertion();
+      handleChange.mockClear();
+
+      fireEvent.keyDown(textarea, { key: 'z', ctrlKey: true });
+
+      expect(handleChange).toHaveBeenCalledWith('draft ');
+    });
+
+    it('undoes only the latest insertion', async () => {
+      const { rerender } = renderWithInsertion(0, '');
+      const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'draft ' } });
+      rerender(<Input textInsertion={{ text: 'ONE ', revision: 1 }} />);
+      await flushInsertion();
+      rerender(<Input textInsertion={{ text: 'TWO', revision: 2 }} />);
+      await flushInsertion();
+
+      fireEvent.keyDown(textarea, { key: 'z', ctrlKey: true });
+
+      expect(textarea.value).toBe('draft ONE ');
+    });
+
+    it('hands the undo back to the browser once the user has typed', async () => {
+      const textarea = await insertIntoDraft('draft ');
+
+      fireEvent.change(textarea, { target: { value: 'draft PROMPT!' } });
+
+      expect(fireEvent.keyDown(textarea, { key: 'z', ctrlKey: true })).toBe(
+        true,
+      );
+      expect(textarea.value).toBe('draft PROMPT!');
+    });
+
+    it('undoes once and leaves any further Ctrl+Z to the browser', async () => {
+      const textarea = await insertIntoDraft('draft ');
+
+      fireEvent.keyDown(textarea, { key: 'z', ctrlKey: true });
+
+      expect(fireEvent.keyDown(textarea, { key: 'z', ctrlKey: true })).toBe(
+        true,
+      );
+      expect(textarea.value).toBe('draft ');
+    });
+
+    it('does not treat the redo shortcut as an undo', async () => {
+      const textarea = await insertIntoDraft('draft ');
+
+      expect(
+        fireEvent.keyDown(textarea, {
+          key: 'z',
+          ctrlKey: true,
+          shiftKey: true,
+        }),
+      ).toBe(true);
+      expect(textarea.value).toBe('draft PROMPT');
+    });
+  });
+
+  it('leaves the draft alone when the inserted text is empty', async () => {
     const { rerender } = renderWithInsertion(0, '');
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
 
     fireEvent.change(textarea, { target: { value: 'draft' } });
     rerender(<Input textInsertion={{ text: '', revision: 1 }} />);
+    await flushInsertion();
 
     expect(textarea.value).toBe('draft');
   });

@@ -1,0 +1,12 @@
+.frame {
+  background-color: var(--igv-bg, var(--bg-layer-2, #f3f4f6));
+  border-color: var(--igv-border, var(--stroke-tertiary, #dde1e6));
+}
+
+.header {
+  border-block-end-color: var(--igv-border, var(--stroke-tertiary, #dde1e6));
+}
+
+.title {
+  color: var(--igv-title-text, var(--text-primary, #161b2d));
+}

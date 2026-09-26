@@ -33,6 +33,8 @@ API, never a rebuild of the frontend image.
    If the provider uses a private CA, configure its trust bundle before startup
    as described in [Private certificate authorities](#private-certificate-authorities).
 2. Port environment variables — see [Environment variables](#environment-variables).
+   For external PDF or Office previews, configure the trusted document origins
+   as described in [External document previews](#external-document-previews).
 3. Re-register the OIDC redirect URI and the post-logout redirect URI with every
    identity provider. Both moved in 1.0 — the callback path gained the `/v1` API
    version segment — see [Authentication](#authentication).
@@ -62,7 +64,7 @@ describe what happens to a legacy deployment's variables. The source of truth is
 | `DIAL_API_HOST`             | `DIAL_CORE_URL`                                            | Internal URL, never exposed to browsers.                                                                                                 |
 | `NEXTAUTH_SECRET`           | `AUTH_SESSION_SECRET`                                      | Must be 64 hex characters (32 bytes) — generate a new one rather than reusing the old.                                                   |
 | `NEXTAUTH_URL`              | `AUTH_CALLBACK_BASE_URL`                                   | Public base URL of the **API**, used to build OIDC redirect URIs. The callback path changed too — see [Authentication](#authentication). |
-| `APP_BASE_ORIGIN`           | `CORS_ORIGIN`                                              | Origin of the browser application; also used by the CSRF origin check.                                                                   |
+| `APP_BASE_ORIGIN`           | `CORS_ORIGIN`                                              | Origin of the browser application; also used by the CSRF origin check. Defaults to `AUTH_CALLBACK_BASE_URL` when not set.                |
 | `IS_IFRAME`                 | `OVERLAY_ENABLED`                                          | `ALLOWED_IFRAME_ORIGINS` keeps its name and now also gates incoming `postMessage`.                                                       |
 | `ENABLED_FEATURES`          | `ENABLED_UI_FEATURES`                                      | Same replace semantics; several flag names changed — see below.                                                                          |
 | `THEMES_CONFIG_HOST`        | `THEMES_CONFIG_URL`                                        | Add `THEMES_SERVICE_TIMEOUT_MS` if 5 s is too tight.                                                                                     |
@@ -79,33 +81,80 @@ describe what happens to a legacy deployment's variables. The source of truth is
 `AUTH_{PROVIDER}_*` variable (Auth0, Azure AD, GitLab, Google, Keycloak, PingID,
 Cognito, Okta) keep their names and meaning.
 
-Two additions apply to all providers in 1.0: `AUTH_POST_LOGOUT_REDIRECT_URI` is
-required once any provider is configured, and each provider can now override
-roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
+Two additions apply to all providers in 1.0: `AUTH_POST_LOGOUT_REDIRECT_URI`
+defaults to `AUTH_CALLBACK_BASE_URL` when not set explicitly, and each provider
+can now override roles handling with `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` and
 `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`. Azure B2C is newly supported.
+
+### Carried over with fields dropped
+
+`APPLICATION_VISUALIZERS` keeps its name, its JSON-object shape keyed by
+application id, and its grouped delivery: every attachment an entry claims goes
+to one iframe together, rendered inline in the message with an expand control
+that opens the same payload in the Attachment Canvas. `contentType` stays
+optional, and the attachments an entry does not claim keep rendering as ordinary
+tiles. An existing value can be copied over as-is — invalid entries are dropped
+with a log rather than failing boot.
+
+`borderless` and `withoutTitle` still work: `borderless` drops the inline
+frame's border, background, and header divider, and `withoutTitle` hides the
+header's title text while keeping the expand-to-canvas button.
+
+Three field groups no longer do anything, and are accepted only so a copied
+configuration still works:
+
+- `passAuthInfo` / `passExplicitToken`, with the `accessToken` they fed. 1.0
+  auth is server-side; the browser holds an encrypted session cookie and never
+  an access token, and legacy's `ALLOW_TOKEN_IN_SESSION` is itself gone.
+- `expanded` — it opened the collapsible attachments section, which 1.0 does
+  not have, the same reason the paired `ATTACHMENT_TYPES_*` variables were
+  dropped. It is logged as an unrecognized field and otherwise ignored.
+- `logInHint` / `providerId`, which only mattered for the auth forwarding above.
+
+`ALLOW_VISUALIZER_SEND_MESSAGES` was not ported (see the dropped table below).
 
 ### Dropped with no replacement
 
-| Legacy variables                                                                                                                                                                                                                                                                    | Why                                                                                                                                                           |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT`, `NEXT_PUBLIC_DEFAULT_TEMPERATURE`, `NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES`, `NEXT_PUBLIC_STAGE_CONTENT_LIMIT`, `APP_BASE_PATH`                                                                                        | The frontend reads no environment variables at all in 1.0.                                                                                                    |
-| `AUTH_FORCE_STRICT`, `AUTH_ADDITIONAL_PARAMS`, `AUTH_TEST_TOKEN`, `ALLOW_TOKEN_IN_SESSION`, `SHOW_TOKEN_SUB`, `ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME`                                                                                                                                    | Auth moved server-side; the browser never holds a token. Same-window login in an iframe is now a per-provider overlay option instead of a global switch.      |
-| `ALLOWED_IFRAME_SOURCES`, `ALLOWED_SCRIPT_SOURCES`                                                                                                                                                                                                                                  | CSP is managed by `helmet` in `chat-api`.                                                                                                                     |
-| `STORAGE_TYPE`                                                                                                                                                                                                                                                                      | DIAL Core is the only storage backend.                                                                                                                        |
-| `AVAILABLE_LOCALES`                                                                                                                                                                                                                                                                 | The locale set is not a deployment variable. English is the default, and adding a locale is a code change — locale JSON plus registration in the i18n config. |
-| `THEME_DEFAULT_ID`                                                                                                                                                                                                                                                                  | The default is light, then the user's stored choice.                                                                                                          |
-| `RECENT_MODELS_IDS`, `TOPICS`, `MAX_PROMPT_TOKENS_DEFAULT_PERCENT`, `MAX_PROMPT_TOKENS_DEFAULT_VALUE`, `ATTACHMENT_TYPES_EXPANDED`, `ATTACHMENT_TYPES_BORDERLESS`, `ATTACHMENT_TYPES_WITHOUT_TITLE`, `CODE_GENERATION_WARNING`, `CODE_EDITOR_PYTHON_VERSIONS`, `WIDGETS_SCHEMA_IDS` | The corresponding UI or behaviour has no successor yet. `FEATURED_MODEL_IDS` covers the catalog's featured list, which is not the same as recent models.      |
-| `REPORT_ISSUE_CODE`, `REQUEST_API_KEY_CODE`, `TMS_URL`, `ISSUE_URL`, `AZURE_FUNCTIONS_API_HOST`                                                                                                                                                                                     | The report-an-issue and request-API-key dialogs were not migrated.                                                                                            |
-| `QUICK_APPS_HOST`, `QUICK_APPS_MODEL`, `QUICK_APPS_SCHEMA_ID`, `EXTERNAL_APPS_SCHEMA_ID`, `CODE_APPS_ROLES`, `APPLICATION_VISUALIZERS`, `ALLOW_VISUALIZER_SEND_MESSAGES`                                                                                                            | Application authoring is configured differently; `DEV_QUICKAPPS_EDITOR_URL` is the only remaining QuickApps knob.                                             |
+| Legacy variables                                                                                                                                                                                                                                                                    | Why                                                                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT`, `NEXT_PUBLIC_DEFAULT_TEMPERATURE`, `NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES`, `NEXT_PUBLIC_STAGE_CONTENT_LIMIT`, `APP_BASE_PATH`                                                                                        | The frontend reads no environment variables at all in 1.0.                                                                                                                                                                            |
+| `AUTH_FORCE_STRICT`, `AUTH_ADDITIONAL_PARAMS`, `AUTH_TEST_TOKEN`, `ALLOW_TOKEN_IN_SESSION`, `SHOW_TOKEN_SUB`, `ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME`                                                                                                                                    | Auth moved server-side; the browser never holds a token. Same-window login in an iframe is now a per-provider overlay option instead of a global switch.                                                                              |
+| `ALLOWED_IFRAME_SOURCES`, `ALLOWED_SCRIPT_SOURCES`                                                                                                                                                                                                                                  | CSP is managed by `helmet` in `chat-api`.                                                                                                                                                                                             |
+| `STORAGE_TYPE`                                                                                                                                                                                                                                                                      | DIAL Core is the only storage backend.                                                                                                                                                                                                |
+| `AVAILABLE_LOCALES`                                                                                                                                                                                                                                                                 | The locale set is not a deployment variable. English is the default, and adding a locale is a code change — locale JSON plus registration in the i18n config.                                                                         |
+| `THEME_DEFAULT_ID`                                                                                                                                                                                                                                                                  | The default is light, then the user's stored choice.                                                                                                                                                                                  |
+| `RECENT_MODELS_IDS`, `TOPICS`, `MAX_PROMPT_TOKENS_DEFAULT_PERCENT`, `MAX_PROMPT_TOKENS_DEFAULT_VALUE`, `ATTACHMENT_TYPES_EXPANDED`, `ATTACHMENT_TYPES_BORDERLESS`, `ATTACHMENT_TYPES_WITHOUT_TITLE`, `CODE_GENERATION_WARNING`, `CODE_EDITOR_PYTHON_VERSIONS`, `WIDGETS_SCHEMA_IDS` | The corresponding UI or behaviour has no successor yet. `FEATURED_MODEL_IDS` covers the catalog's featured list, which is not the same as recent models.                                                                              |
+| `REPORT_ISSUE_CODE`, `REQUEST_API_KEY_CODE`, `TMS_URL`, `ISSUE_URL`, `AZURE_FUNCTIONS_API_HOST`                                                                                                                                                                                     | The report-an-issue and request-API-key dialogs were not migrated.                                                                                                                                                                    |
+| `QUICK_APPS_HOST`, `QUICK_APPS_MODEL`, `QUICK_APPS_SCHEMA_ID`, `EXTERNAL_APPS_SCHEMA_ID`, `CODE_APPS_ROLES`, `ALLOW_VISUALIZER_SEND_MESSAGES`                                                                                                                                       | Application authoring is configured differently; `DEV_QUICKAPPS_EDITOR_URL` is the only remaining QuickApps knob. `ALLOW_VISUALIZER_SEND_MESSAGES` gated the iframe → chat `SEND_MESSAGE` channel, which the host does not implement. |
 
 ### Worth setting in 1.0
 
 These have no legacy counterpart but change user-visible behaviour:
-`AUTH_COOKIE_SECURE`, `OVERLAY_SANDBOX_ENABLED`, `RESPONSES_API_ENABLED`,
+`AUTH_COOKIE_SECURE`, `ALLOWED_CONNECT_ORIGINS`, `OVERLAY_SANDBOX_ENABLED`, `RESPONSES_API_ENABLED`,
 `SCHEDULED_TASKS_ENABLED` / `_ROLES`, `LIVE_CHAT_INTERACTION_ENABLED` / `_ROLES`,
 `FILE_MANAGER_AVAILABLE_TABS`, `UTILITY_MODEL` with
 `LLM_CONVERSATION_NAMING_ENABLED`, `ASR_ENABLED_ROLES`, `ANNOUNCEMENTS`,
 `CHAT_VERSION`, and the `ARCHIVE_*` / `SKILL_*` transfer limits.
+
+### External document previews
+
+The legacy `development-old` chat did not set `connect-src` or `default-src` in
+its application CSP, so that policy did not restrict external document fetches.
+The new chat defaults to `connect-src 'self' blob:`. To preserve external PDF and
+Office previews, set trusted document origins on `chat-api`:
+
+```dotenv
+ALLOWED_CONNECT_ORIGINS=https://documents.example.com
+```
+
+This is a new setting, not a renamed legacy variable. Adding a portal to
+`ALLOWED_IFRAME_ORIGINS` does not authorize document fetches from that portal.
+The connection allowlist applies in both CSP modes; switching to `report-only`
+alone does not remove the enforced connection restriction. Restart `chat-api`
+and reload the chat page or overlay iframe after changing it. Remote-server CORS
+and authorization still apply. See the authoritative
+[CSP configuration reference](../apps/chat-api/README.md#content-security-policy)
+for origin syntax, redirect destinations, and reverse-proxy requirements.
 
 ## Authentication
 
@@ -140,11 +189,13 @@ Practical consequences for a migration:
   Keycloak answers the authorization request with `Invalid parameter:
 redirect_uri`.
 
-- **Register `AUTH_POST_LOGOUT_REDIRECT_URI` with the provider as well.** It is
-  required in 1.0 once any provider is configured, and federated logout sends the
-  browser there through the IdP, so it must be in the client's post-logout
-  allow-list (Keycloak: _Valid post logout redirect URIs_). Unlike the callback it
-  points at the **application** origin, not the API.
+- **Register the post-logout redirect URI with the provider as well.** In 1.0
+  this is `AUTH_POST_LOGOUT_REDIRECT_URI` when set, or `AUTH_CALLBACK_BASE_URL`
+  otherwise, and federated logout sends the browser there through the IdP, so
+  it must be in the client's post-logout allow-list (Keycloak: _Valid post
+  logout redirect URIs_). Unlike the callback it points at the **application**
+  origin, not the API — set `AUTH_POST_LOGOUT_REDIRECT_URI` explicitly when
+  that differs from `AUTH_CALLBACK_BASE_URL`.
 - **Allow Chat's toolset OAuth callback in DIAL Core.** When toolset OAuth is
   used and more than one client can start sign-in for the same toolset, add the
   1.0 callback URI to Core's `toolsets.security.allowedRedirectUris`, preserving

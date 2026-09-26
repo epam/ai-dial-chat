@@ -8,6 +8,8 @@ import {
   buildFrameSrcDirective,
   buildPermissionsPolicyHeader,
   createHelmetOptions,
+  extractOrigin,
+  isOriginAllowedForIframe,
 } from '../csp';
 
 @Controller('ping')
@@ -27,9 +29,14 @@ const createTestApp = async (
   class CspTestModule {}
 
   const app = await NestFactory.create(CspTestModule, { logger: false });
+  /* The app declarations use Helmet's CJS types; Vitest resolves its ESM types. */
   app.use(
     helmet(
-      createHelmetOptions(allowedIframeOrigins, secureTransport, cspOptions),
+      createHelmetOptions(
+        allowedIframeOrigins,
+        secureTransport,
+        cspOptions,
+      ) as Parameters<typeof helmet>[0],
     ),
   );
   await app.init();
@@ -185,6 +192,17 @@ describe('Helmet security headers', () => {
     );
   });
 
+  it('sends a referrer policy that keeps the origin visible cross-site', async () => {
+    app = await createTestApp([]);
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+
+    expect(response.headers['referrer-policy']).toBe(
+      'strict-origin-when-cross-origin',
+    );
+  });
+
   it('allows local HTTP transport when secure transport is disabled', async () => {
     app = await createTestApp([], false);
     const response = await request(app.getHttpServer())
@@ -195,5 +213,93 @@ describe('Helmet security headers', () => {
       'upgrade-insecure-requests',
     );
     expect(response.headers['strict-transport-security']).toBeUndefined();
+  });
+});
+
+describe('extractOrigin', () => {
+  it('returns the origin of an absolute URL, dropping path and query', () => {
+    expect(extractOrigin('https://viz.example.com/app?x=1')).toBe(
+      'https://viz.example.com',
+    );
+  });
+
+  it('keeps an explicit non-default port', () => {
+    expect(extractOrigin('http://localhost:4207/app')).toBe(
+      'http://localhost:4207',
+    );
+  });
+
+  it('returns undefined for an unparseable value', () => {
+    expect(extractOrigin('not-a-url')).toBeUndefined();
+  });
+});
+
+describe('isOriginAllowedForIframe', () => {
+  it('matches an exact origin entry', () => {
+    expect(
+      isOriginAllowedForIframe('https://viz.example.com/app', [
+        'https://viz.example.com',
+      ]),
+    ).toBe(true);
+  });
+
+  it('does not match a different scheme, host, or port', () => {
+    const url = 'https://viz.example.com/app';
+    expect(isOriginAllowedForIframe(url, ['http://viz.example.com'])).toBe(
+      false,
+    );
+    expect(isOriginAllowedForIframe(url, ['https://other.example.com'])).toBe(
+      false,
+    );
+    expect(
+      isOriginAllowedForIframe(url, ['https://viz.example.com:8443']),
+    ).toBe(false);
+  });
+
+  it('matches a subdomain through a leading-wildcard-label entry', () => {
+    expect(
+      isOriginAllowedForIframe('https://viz.example.com', [
+        'https://*.example.com',
+      ]),
+    ).toBe(true);
+  });
+
+  it('does not match the apex through a wildcard entry, as CSP does not', () => {
+    expect(
+      isOriginAllowedForIframe('https://example.com', [
+        'https://*.example.com',
+      ]),
+    ).toBe(false);
+  });
+
+  it('does not match a wildcard entry across schemes or ports', () => {
+    expect(
+      isOriginAllowedForIframe('http://viz.example.com', [
+        'https://*.example.com',
+      ]),
+    ).toBe(false);
+    expect(
+      isOriginAllowedForIframe('https://viz.example.com:8443', [
+        'https://*.example.com',
+      ]),
+    ).toBe(false);
+  });
+
+  it('returns false for an empty allowlist, blank entries, and an unparseable URL', () => {
+    expect(isOriginAllowedForIframe('https://viz.example.com', [])).toBe(false);
+    expect(isOriginAllowedForIframe('https://viz.example.com', ['  '])).toBe(
+      false,
+    );
+    expect(
+      isOriginAllowedForIframe('not-a-url', ['https://viz.example.com']),
+    ).toBe(false);
+  });
+
+  it('tolerates surrounding whitespace on an allowlist entry', () => {
+    expect(
+      isOriginAllowedForIframe('https://viz.example.com', [
+        ' https://viz.example.com ',
+      ]),
+    ).toBe(true);
   });
 });

@@ -20,7 +20,6 @@ The endpoint SHALL:
 - Rely on DIAL Core to enforce ownership; a caller who does not own the resource SHALL surface as `403 Forbidden` via `mapDialHttpStatus`.
 - On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, unconditionally regardless of `itemId` type, mirroring `ShareManagementService.discardShared`. Conversations, skills, and prompts have no equivalent server-side list cache, so for those `itemId` types this is a harmless no-op.
 - Respond `200 OK` with `RevokeSharedAccessResponseDto { success: true }`. DIAL Core returns an empty 200 body for this operation, so the response is synthesized by the BFF.
-- Apply `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the discard endpoint's posture.
 - Map upstream failures via the fetch-shaped `mapDialHttpStatus` / `handleDialFetchError` pair: DIAL Core 400 → 404 (`'Resource does not exist'`, since the DTO already rejects malformed itemIds so a Core 400 can only mean an unresolvable resource — same reasoning as `discardShared`), 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
 - Not cache the mutation response.
 - Log structured start/completion messages (e.g. `Revoke shared access started`, `Revoke shared access completed: success=true`) without the access token, invitation links, full resource path, or any other user data.
@@ -78,11 +77,6 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 - **WHEN** DIAL Core returns `400` or `404` for the given `itemId`
 - **THEN** the endpoint responds `404 Not Found`
 
-#### Scenario: Rate limit exceeded
-
-- **WHEN** the calling session exceeds 10 requests per 60 seconds to this endpoint
-- **THEN** the endpoint responds `429 Too Many Requests`
-
 #### Scenario: DIAL Core upstream error
 
 - **WHEN** DIAL Core returns a 5xx status
@@ -110,7 +104,7 @@ Observability: no new metrics. The endpoint is covered by the existing global `M
 
 ### Requirement: `GET /api/v1/share/recipients` reports how many users hold shared access
 
-`ShareController` SHALL expose `GET /api/v1/share/recipients?itemId=...`, throttled at 60 requests per minute (it fires whenever an owner opens a menu offering revoke), answering `ShareRecipientsResponseDto { itemId, recipientsCount }`.
+`ShareController` SHALL expose `GET /api/v1/share/recipients?itemId=...`, answering `ShareRecipientsResponseDto { itemId, recipientsCount }`.
 
 `GetShareRecipientsDto` SHALL validate `itemId` with the same allowlist as `RevokeSharedAccessDto` (`applications|toolsets|conversations|skills|prompts` prefix, `IsValidFilePath`, `@MaxLength(2048)`) and carries no `resourceKind` field: a resource revoke cannot act on has no count worth answering, and every accepted resource type — prompts included — is now identified by one self-sufficient `itemId`.
 

@@ -2,8 +2,9 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import dts from 'vite-plugin-dts';
+import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
-import { isExternalPeerImport } from './src/utils/vite-external-matcher';
+import { isExternalPackageImport } from './src/utils/vite-external-matcher';
 
 /*
  * Vite's library-mode `cssCodeSplit` extracts CSS reached only through a
@@ -41,6 +42,7 @@ export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/attachment-canvas',
   plugins: [
+    createLibTailwindUtilities({ root: import.meta.dirname }),
     react(),
     dts({
       entryRoot: 'src',
@@ -83,15 +85,15 @@ export default defineConfig(() => ({
     },
     rolldownOptions: {
       /*
-       * A matcher, not a flat list: peer engines that ship deep JS subpaths
-       * (`pdfjs-dist`, `@epam/ai-dial-react-pdf-highlighter`,
+       * A matcher, not a flat list: runtime packages that ship deep JS subpaths
+       * (`@silurus/ooxml`, `pdfjs-dist`, `@epam/ai-dial-react-pdf-highlighter`,
        * `@epam/pdf-highlighter-kit`, `react-syntax-highlighter`, `@mcp-ui/client`,
        * `@modelcontextprotocol/sdk`) need every such subpath externalized too,
        * while their vendor CSS subpaths (aliased above) must stay locally
        * resolved so Vite can extract them as real stylesheets. See
-       * `isExternalPeerImport`.
+       * `isExternalPackageImport`.
        */
-      external: isExternalPeerImport,
+      external: isExternalPackageImport,
     },
   },
   test: {

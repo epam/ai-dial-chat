@@ -32,6 +32,7 @@ import {
 } from './Table/MarkdownTable';
 import tableStyles from './Table/MarkdownTable.module.scss';
 import { MarkdownTaskCheckbox } from './TaskCheckbox/MarkdownTaskCheckbox';
+import { ThinkingShimmer } from './ThinkingShimmer';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */
 export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
@@ -596,7 +597,7 @@ const buildMarkdownComponents = (
   td: ({ children, node }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal px-3 py-[7px] align-top [overflow-wrap:anywhere]',
         getTableCellAlignClass(node),
         tableStyles.rowDivider,
         cn.tableBodyCell,
@@ -693,8 +694,6 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     );
 
     const cssVars = buildCssVars({
-      '--cm-thinking-inverted': colors?.thinkingPrimary,
-      '--cm-thinking-secondary': colors?.thinkingSecondary,
       '--cm-markdown-border': colors?.border,
       '--cm-blockquote-border': colors?.blockquoteBorder,
       '--cm-blockquote-text': colors?.blockquoteText,
@@ -743,11 +742,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     );
 
     if (isStreaming && !displayedContent) {
-      return (
-        <span className={styles.thinking} style={cssVars}>
-          {thinkingLabel}
-        </span>
-      );
+      return <ThinkingShimmer label={thinkingLabel} colors={colors} />;
     }
 
     return (

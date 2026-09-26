@@ -20,7 +20,7 @@ npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke
 It installs three representative consumers: `minimal`, `oauth`, and
 `negative-oauth`. Together they verify the complete packed-file/export map,
 minimal optional-peer isolation, the OAuth side-effect path, the complete
-audited `sideEffects` manifest (including the file-manager chunk), and the
+audited `sideEffects` manifest (including the file-manager-canvas chunk), and the
 exact missing-peer diagnostic. This keeps the network-bound PR gate focused
 while retaining coverage of the package contract's highest-risk behavior.
 
@@ -62,6 +62,11 @@ harness nested fixtures under `libs/chat-hooks/e2e-fixtures/.tmp/` and the
 negative fixture (task 6.5) passed without the missing peer ever being
 installed, for exactly this reason.
 
+Packing also uses a private temporary copy of each library's `dist/` output.
+The shared publish transform writes only to that copy, so concurrent consumer
+fixtures using different synthetic versions cannot overwrite each other's
+package manifests or change the shared build output.
+
 ## What each fixture proves
 
 - **`minimal`** — installs only the `react` runtime peer (plus consumer-owned
@@ -85,10 +90,10 @@ installed, for exactly this reason.
 --json`'s actual file list.
 - **Side-effect checks** — compare the audited marker files with the
   publish-transformed `sideEffects` patterns, then rebuild `./oauth` and
-  `./file-manager` from side-effect-only imports and check their emitted
+  `./file-manager-canvas` from side-effect-only imports and check their emitted
   bundles for the two real module-scope effects: a literal
   `new EventTarget()` call (the singleton in `./oauth`) and the bundled
-  `lru-cache` implementation (the two cache instances in `./file-manager`,
+  `lru-cache` implementation (the two cache instances in `./file-manager-canvas`,
   detected via its `Symbol.toStringTag` string literal — the only part of
   its own construction that survives this workspace's identifier-renaming
   production build; see `fixtures.mjs`'s `SIDE_EFFECT_CHECKS` comment).
@@ -179,3 +184,21 @@ The application fixture builds the same React host against source aliases and is
 The executable limits live in `application-mode.mjs` and `cold-load-probes.mjs`. Both source and packed fixtures must meet the fixed limits; a source regression cannot automatically raise them. Keep a measurement and rationale with any intentional budget amendment.
 
 Use `KEEP_FIXTURES=1` when inspecting generated files. Reports are written to the OS temporary directory. Package byte measurements do not measure host LCP.
+
+## Reusable chat workflows
+
+`useSkillArchiveImport` and `useFileAttachmentPicker`
+(`openspec/changes/extract-reusable-chat-workflows`) are reachable through the existing
+`skill-editor` and `file-manager` subpath entries, so no new fixture was added here — the
+existing `skill-editor`/`file-manager` fixtures already typecheck and bundle them. Adding
+`useFileAttachmentPicker` did add a real, previously-undeclared peer to the `file-manager`
+fixture's closure: it calls `@epam/ai-dial-attachment-input`'s `isMimeTypeAllowed` directly, so
+`fixtures.mjs`'s `file-manager` entry now lists that peer explicitly.
+
+`@epam/ai-dial-skills`'s `SkillArchiveUploadDialog` and `@epam/ai-dial-prompts`'s
+`usePromptSelectorOverlay` have no fixture here — both packages declare workspace-sibling
+packages as ordinary `dependencies`, not `peerDependencies` (the shape this harness's peer-closure
+model isn't built for; see `.claude/rules/libs.md`'s "a sibling lib is a dependency" section).
+`tools/reusable-workflows-consumer-fixture` covers them instead, modeled on
+`tools/attachment-canvas-consumer-fixture`. See `docs/reusable-chat-workflows.md` for the full
+adoption map and the split between behavior tests and package-consumption fixtures.

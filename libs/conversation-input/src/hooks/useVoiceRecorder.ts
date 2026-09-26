@@ -1,3 +1,7 @@
+import {
+  MIME_TYPE_EXT_MAP,
+  normalizeMimeType,
+} from '@epam/ai-dial-chat-shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TranscribeAudio } from '../models/Voice';
 
@@ -93,6 +97,7 @@ export const useVoiceRecorder = ({
     if (sessionRef.current) return;
     const session: RecordingSession = { controller: new AbortController() };
     sessionRef.current = session;
+    setErrorMessage(null);
     setState(VoiceRecorderState.Recording);
     const { signal } = session.controller;
     /* Freeze the provider for the session; transcript delivery uses the latest
@@ -152,6 +157,7 @@ export const useVoiceRecorder = ({
     const fail = (error: unknown) => {
       if (signal.aborted) return;
       session.controller.abort();
+      sessionRef.current = null;
       setErrorMessage(
         error instanceof Error
           ? error.message
@@ -191,7 +197,11 @@ export const useVoiceRecorder = ({
             blob.size &&
             (!transcribe || (hasAudio && (!sampled || hasSpeech)))
           ) {
-            const extension = mimeType.split(';')[0].split('/')[1] ?? 'webm';
+            const baseMimeType = normalizeMimeType(mimeType);
+            const extension =
+              MIME_TYPE_EXT_MAP[baseMimeType] ??
+              baseMimeType.split('/')[1] ??
+              'webm';
             const file = new File(
               [blob],
               'voice-' + crypto.randomUUID() + '.' + extension,

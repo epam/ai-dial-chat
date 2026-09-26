@@ -123,11 +123,20 @@ The detail page SHALL render a Details section showing the task's description, a
 - **WHEN** the task's `model` id has no matching entry in the deployments context
 - **THEN** the Details section displays the raw model id string as the "Model or Agent" value, without throwing
 
+The Configuration section SHALL render an optional Skill field above Instructions using a host-resolved display name or full raw reference. It SHALL hide Skill only when no reference is saved, and hide empty Instructions for a skill-only task. The existing Model location and schedule formatting remain unchanged.
+
+#### Scenario: Read-only skill is independent of metadata availability
+
+- **WHEN** a saved skill cannot be resolved
+- **THEN** Configuration displays the raw reference and retains the rest of the task without a broken link or error screen
+
 ### Requirement: History panel paginates runs via a "Show more" button inside its own scroll container
 
 The detail page SHALL render a History panel listing the task's runs, fetched via a `useScheduledTaskRuns(scheduleId, enabled)` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskRuns.ts`) exposing `{ items, isLoading, isLoadingMore, error, hasMore, loadMore, refetch }`, mirroring the shape of the existing `useScheduledTasks` hook. The hook SHALL call `listScheduledTaskRuns({ scheduleId, limit: 10, offset: 0 })` for the initial page, and `loadMore()` SHALL, only when `hasMore && !isLoadingMore && !isLoading`, fetch the next page at `offset = items.length` and append the results deduplicated by `id`, with no client-side re-sorting (server order is `created_at desc`). `hasMore` SHALL be derived from `items.length < count` when `count` is present in the response, falling back to a non-null `next` field, or — when the upstream response omits both `count` and `next` — to a full-page-size heuristic (the just-fetched page had exactly `limit` items), so pagination does not permanently stop after the first page purely because upstream didn't echo a total. The hook SHALL use `AbortController` to cancel any in-flight request when `scheduleId` changes or the hook unmounts.
 
-The History panel SHALL be rendered inside a fixed-height, self-scrolling container (`max-h-[70vh]` at all breakpoints, `overflow-y-auto`) that does not require scrolling the whole page (except where the responsive-design skill's mobile layout requires stacking instead). Inside that scroll container: the panel title and the "Next run" label (when present) SHALL be pinned with `position: sticky; top: 0` so they stay visible while the run list scrolls beneath them; an explicit **"Show more" button** (not a scroll sentinel) SHALL render pinned with `position: sticky; bottom: 0`, below the loaded rows, only while `hasMore` is `true`. Both sticky regions SHALL use the same background as the History card so scrolled-past rows do not show through underneath them. Activating the button, while `hasMore && !isLoadingMore && !isLoading`, SHALL invoke `loadMore()`.
+At the **desktop breakpoint (≥1280px)**, the History panel SHALL be rendered inside a fixed-height, self-scrolling container (`max-h-[70vh]`, `overflow-y-auto`) that does not require scrolling the whole page. Inside that scroll container: the panel title and the "Next run" label (when present) SHALL be pinned with `position: sticky; top: 0` so they stay visible while the run list scrolls beneath them; an explicit **"Show more" button** (not a scroll sentinel) SHALL render pinned with `position: sticky; bottom: 0`, below the loaded rows, only while `hasMore` is `true`. Both sticky regions SHALL use the same background as the History card so scrolled-past rows do not show through underneath them.
+
+Below the desktop breakpoint (mobile and tablet, where the body renders as tabs), the History section SHALL render as a tab panel in **standard top-to-bottom flow** within the page's own scroll container: no inner `max-h-[70vh]` self-scrolling container, no sticky title/"Next run" header, and no sticky footer — the "Next run" label (when present) renders above the run list unstuck, and the "Show more" button renders inline below the loaded rows, only while `hasMore` is `true`, disabled while `isLoadingMore` is `true`. Activating the button, while `hasMore && !isLoadingMore && !isLoading`, SHALL invoke `loadMore()` at both breakpoints.
 
 #### Scenario: Initial history page loads on mount
 
@@ -159,10 +168,15 @@ The History panel SHALL be rendered inside a fixed-height, self-scrolling contai
 - **WHEN** the hook unmounts, or `scheduleId` changes, while a runs request is in flight
 - **THEN** the in-flight request is aborted via `AbortController` and its resolution does not update state
 
-#### Scenario: Sticky header and footer stay visible while the run list scrolls
+#### Scenario: Sticky header and footer stay visible while the run list scrolls at desktop
 
-- **WHEN** the History panel has enough rows to overflow its `max-h-[70vh]` scroll container and the user scrolls it
+- **WHEN** at the desktop breakpoint the History panel has enough rows to overflow its `max-h-[70vh]` scroll container and the user scrolls it
 - **THEN** the panel title (and "Next run" label, when present) remain pinned at the top of the scroll container, and the "Show more" button (when rendered) remains pinned at the bottom, both opaque against the scrolling rows beneath them
+
+#### Scenario: Mobile History panel renders in standard top-to-bottom flow
+
+- **WHEN** the History tab is active below the desktop breakpoint and its run list is long enough to overflow the viewport
+- **THEN** the runs scroll with the page (no inner self-scrolling container), the panel title and "Next run" label are not sticky, and the "Show more" button renders inline below the loaded rows — not pinned to the panel's bottom edge
 
 ### Requirement: History rows show skeleton loading, status icon, timestamp, and duration
 
@@ -219,7 +233,7 @@ When `item.isUnread` is `true`, the row SHALL additionally render the shared unr
 
 ### Requirement: Presentational ScheduledTaskDetailView stays host-agnostic
 
-`libs/scheduled-tasks` SHALL export a presentational `ScheduledTaskDetailView` component accepting only props: localized label strings (including Edit and Delete button labels, the Active switch's label/status announcements, a deleted-state label, and the History panel's `unreadIndicatorLabel`), detail field values (`description`, model display value, schedule label), either `instructionsMarkdown: string` or a `renderInstructions: (markdown: string) => ReactNode` callback, a runs list (each item optionally carrying `conversationId` and `isUnread`) plus `{ runsHasMore, runsIsLoadingMore, runsSkeletonCount, onRunsLoadMore, onRunClick? }`, top-level `isLoading`/`error` flags and their History-scoped counterparts, an `onBack` callback, an optional `onEdit?: () => void` callback, optional `isActive?: boolean`/`isActiveUpdating?: boolean`/`isActiveDisabled?: boolean`/`onActiveChange?: (nextActive: boolean) => void` for the Active switch, an optional `onDelete?: () => void` callback, an optional `isDeleting?: boolean` flag, and an optional `isDeleted?: boolean` flag.
+`libs/scheduled-tasks` SHALL export a presentational `ScheduledTaskDetailView` component accepting only props: localized label strings (including Edit and Delete button labels, the Active switch's label/status announcements, a deleted-state label, and the History panel's `unreadIndicatorLabel`), detail field values (`description`, model display value, schedule label), either `instructionsMarkdown: string` or a `renderInstructions: (markdown: string) => ReactNode` callback, a runs list (each item optionally carrying `conversationId` and `isUnread`) plus `{ runsHasMore, runsIsLoadingMore, runsSkeletonCount, onRunsLoadMore, onRunClick? }`, top-level `isLoading`/`error` flags and their History-scoped counterparts, an `onBack` callback, an optional `onEdit?: () => void` callback, optional `isActive?: boolean`/`isActiveUpdating?: boolean`/`isActiveDisabled?: boolean`/`isCompleted?: boolean`/`onActiveChange?: (nextActive: boolean) => void` for the Active switch (no switch renders when `isCompleted` is `true`), an optional `onDelete?: () => void` callback, an optional `isDeleting?: boolean` flag, and an optional `isDeleted?: boolean` flag.
 
 When `onEdit` is supplied, the component SHALL render the Edit button; when omitted, no Edit button renders. When `onDelete` is supplied, the component SHALL render the Delete action; when omitted, no Delete action renders. When `isActive` is `undefined`, no Active switch SHALL render. When `isDeleted` is `true`, the component SHALL render its read-only deleted-state indicator and SHALL NOT render the Edit button, Delete action, or Active switch regardless of whether `onEdit`/`onDelete`/`isActive` are supplied — `isDeleted` takes precedence over the presence of those callbacks. When `isDeleting` is `true`, the component SHALL render the Edit button, Delete action, and Active switch (whichever are otherwise eligible to render) in a disabled state rather than omitting them. `onRunClick`, when supplied, SHALL be invoked by the History panel only for a row whose run carries a non-empty `conversationId`, per the "History rows show skeleton loading, status icon, timestamp, and duration" requirement; the component SHALL NOT itself navigate, resolve routes, or call `markConversationViewed`. The component SHALL NOT import `@epam/chat-api-client`, any routing module, i18n, or auth/env/analytics modules, and SHALL NOT render any confirmation dialog itself — activating Delete only invokes `onDelete`; the host page owns opening/closing the confirmation dialog, the API call, and all post-delete navigation.
 
@@ -502,26 +516,178 @@ All directional layout in the detail page header, Details/Configuration sections
 - **WHEN** the user navigates away from `/scheduled-tasks/sched_123` (unmount or `scheduleId` change) while a pause/resume call for `sched_123` is still in flight, and that call later resolves
 - **THEN** no component state is updated as a result of that resolution
 
-### Requirement: Active switch is disabled, not hidden, when a schedule can no longer produce a future run
+### Requirement: Active switch is hidden for completed tasks, disabled only when the completed signal degrades
 
-`ScheduledTaskDetailPage` SHALL pass `isActiveDisabled={true}` to `ScheduledTaskDetailView` whenever the loaded task has permanently exhausted its ability to produce a future run — the switch still renders (since `isActive` is defined), but disabled, rather than offering a resume action DIAL Scheduler cannot fulfill. Two cases qualify:
+`ScheduledTaskDetailPage` SHALL pass `isCompleted={true}` to `ScheduledTaskDetailView` when the loaded task has `isCompleted: true`, and the view SHALL NOT render the Active switch (nor any disabled-switch reason) in that case — a completed task can never produce another run, so no dead-end control is offered; the completed line in the details summary carries the state. When the BFF's `isCompleted` is `undefined` or `false` but the loaded task's fields show it can no longer produce a future run — the enrichment degraded (a failed runs check) or a run is still in flight — the page SHALL pass `isActiveDisabled={true}` so the switch still renders (since `isActive` is defined) but disabled, with an explanatory reason label (a `labels` entry with an English default, localized by the page). Two field shapes qualify for the disabled fallback:
 
 - **Completed one-time schedule:** `triggerType` is `date` (one-time) and `nextRunTime` is `null` — the schedule has already run once and a `date` trigger cannot be rescheduled.
 - **Expired recurring schedule:** `triggerType` is `cron` and `trigger.cron.endDate` is a past timestamp — the schedule's activity window has closed, so resuming it cannot produce a future run within that window either.
 
 A recurring (`cron`) schedule with no upcoming run but an `endDate` that has not yet passed (or no `endDate` at all) is merely paused, not exhausted, and MUST remain togglable.
 
-#### Scenario: Completed one-time schedule shows a disabled, unchecked switch
+#### Scenario: Completed one-time task renders no switch at all
 
-- **WHEN** the loaded task has `triggerType: 'date'` and `nextRunTime: null`
-- **THEN** the Active switch renders unchecked and disabled, and toggling it (via pointer or keyboard) has no effect and calls neither `pauseScheduledTask` nor `resumeScheduledTask`
+- **WHEN** the loaded task has `isCompleted: true`, `triggerType: 'date'`, and `nextRunTime: null`
+- **THEN** no Active switch and no disabled-switch reason render, the details summary shows the completed line, and neither `pauseScheduledTask` nor `resumeScheduledTask` can be called from the page
 
-#### Scenario: Recurring schedule whose activity window has ended shows a disabled, unchecked switch
+#### Scenario: Recurring schedule whose activity window has ended renders no switch
 
-- **WHEN** the loaded task has `triggerType: 'cron'` and `trigger.cron.endDate` in the past
-- **THEN** the Active switch renders unchecked and disabled, and toggling it (via pointer or keyboard) has no effect and calls neither `pauseScheduledTask` nor `resumeScheduledTask`
+- **WHEN** the loaded task has `isCompleted: true` and `triggerType: 'cron'` with a past `trigger.cron.endDate`
+- **THEN** no Active switch renders and the details summary shows the completed line
+
+#### Scenario: Degraded completed signal keeps the switch visible but disabled with a reason
+
+- **WHEN** the loaded task omits `isCompleted` (a failed runs check) and has `triggerType: 'date'` with `nextRunTime: null`
+- **THEN** the Active switch renders unchecked and disabled with the explanatory reason label visible, and toggling it (via pointer or keyboard) has no effect and calls neither `pauseScheduledTask` nor `resumeScheduledTask`
 
 #### Scenario: Recurring schedule with no upcoming run remains togglable
 
 - **WHEN** the loaded task has `triggerType: 'cron'`, `nextRunTime: null` (paused, not completed), and `trigger.cron.endDate` is absent or in the future
-- **THEN** the Active switch renders unchecked but NOT disabled, and toggling it on calls `resumeScheduledTask`
+- **THEN** the Active switch renders unchecked but NOT disabled, no reason label is shown, and toggling it on calls `resumeScheduledTask`
+
+### Requirement: Detail and history layout have public per-instance settings
+
+ScheduledTaskDetailView SHALL expose className, backIcon, typed column layout and forwarded historyStyles. The Details/Configuration divider SHALL stretch the full shared desktop content height. History SHALL expose maxHeight, rowMinHeight, hover/focus colors and retain its own vertical scroll. Responsive fallback SHALL preserve existing mobile tabs; no structural child selectors SHALL be needed by a host.
+
+#### Scenario: Short metadata does not shorten the divider
+
+- **WHEN** Details text is shorter than Configuration content in desktop columns
+- **THEN** the divider spans the shared content height.
+
+#### Scenario: Wider history is configurable without stealing configuration width
+
+- **WHEN** the host configures the design.md column sizes including history up to 408px
+- **THEN** history expands within available space, configuration retains its minimum, and the layout falls back rather than causing horizontal overflow.
+
+#### Scenario: History interactions and empty label are configurable
+
+- **WHEN** a history row is hovered or keyboard-focused, or there are no runs
+- **THEN** the configured interaction background/focus treatment is visible; an empty panel renders the host label, including 'No tasks runs yet' when supplied.
+
+### Requirement: Details show independent metadata and load states
+
+The app SHALL use trigger-only descriptions and host-resolved model display names with stored-id fallback. It SHALL preserve explicit not-found/retry states already required by the detail specification. History initial and incremental errors SHALL be separate from task loading; later-page failure SHALL preserve runs.
+
+#### Scenario: Model name is resolved for display
+
+- **WHEN** a task model id resolves to a deployment with a display name
+- **THEN** details show that name; unresolved ids remain visible as raw-id fallback.
+
+#### Scenario: Task not-found never becomes a blank page
+
+- **WHEN** getScheduledTask returns 404
+- **THEN** the existing NotFound content renders.
+
+#### Scenario: History retry does not erase task details or prior runs
+
+- **WHEN** task details and first history page succeeded but the next runs request fails
+- **THEN** details and runs remain visible and the retry targets only the failed history page.
+
+### Requirement: Delete confirmation presentation is reusable and host-configurable
+
+scheduled-tasks SHALL export ScheduledTaskDeleteConfirmation with controlled open/pending state, task name, host-provided title/body/consequences/action labels, callbacks, cancelAppearance (Ghost by default), and typed title/action styling. It SHALL render safe React content and contain no API, routing or i18n imports. The parent SHALL retain mutation, notification and navigation ownership.
+
+#### Scenario: Host supplies the complete deletion design
+
+- **WHEN** the host passes 'Delete task', the specified permanent-action body and four consequences, a 16px title style and ghost Cancel
+- **THEN** the confirmation renders that content and styling without private selectors or hardcoded package English.
+
+#### Scenario: Cancel and confirm have distinct effects
+
+- **WHEN** the user cancels or confirms an idle dialog
+- **THEN** Cancel requests close without mutation; Confirm invokes the supplied confirmation callback once per activation.
+
+#### Scenario: Pending deletion prevents duplicate actions and dismissal
+
+- **WHEN** isDeleting is true and the user activates actions, Escape or backdrop
+- **THEN** no further confirm or dismissal callback is emitted and pending feedback is accessible.
+
+#### Scenario: Task name remains data
+
+- **WHEN** a task name contains markup-like characters
+- **THEN** the name is rendered as text/React content and never executed as HTML.
+
+### Requirement: Details summary shows the completed state for terminal tasks
+
+When the loaded task has `isCompleted: true` (a finished one-time schedule, or a recurring schedule whose activity window has closed), `ScheduledTaskDetailView` SHALL render a completed line in the details summary (label from a required `labels` entry, like the section's other field labels, localized by the page via a `ScheduledTasksI18nKeys` member — the lib carries no English fallback). The completed line SHALL be informational text, not a control, and SHALL NOT replace or hide the existing summary fields (schedule, next run, timestamps).
+
+#### Scenario: Completed task shows the completed line
+
+- **WHEN** the detail page loads a task with `isCompleted: true`
+- **THEN** the details summary renders the localized completed line alongside the existing fields
+
+#### Scenario: Non-completed task shows no completed line
+
+- **WHEN** the detail page loads a task with `isCompleted: false` or omitted
+- **THEN** the details summary renders exactly as before this change, with no completed line
+
+### Requirement: Skill display covers reusable summaries and the active Configuration view
+
+`ScheduledTaskDetailsSummary` and `ScheduledTaskConfigurationSection` SHALL accept optional localized `skillLabel` and resolved `skillDisplayName`; `ScheduledTaskDetailView` SHALL forward its optional skill value and label to Configuration. The host SHALL pass the skill's resolved display name or full raw reference, independent of catalog loading/failure and of `skillUsageEnabled`. No skill SHALL produce no Skill field. Values SHALL be plain text, without a details link. Libraries SHALL perform no lookup or navigation.
+
+The full detail page SHALL render Skill above Instructions in Configuration on desktop and in the mobile Configuration tab, preserving Model in Details. The conversation sources panel SHALL pass the same saved-task metadata to the reusable summary, ordered Model, Skill, Instructions. Skill-only tasks SHALL render without an empty Instructions block or an empty Configuration section. Lookup failure SHALL NOT replace task content with an error screen. The existing detail task state remains the source of truth; no new context is added.
+
+#### Scenario: Present skill resolves to a readable name
+
+- **WHEN** task detail or its conversation sources panel has a saved skill and readable metadata
+- **THEN** Skill displays the name above Instructions in the relevant reusable surface
+
+#### Scenario: Deleted unreadable or loading skill metadata
+
+- **WHEN** the saved reference cannot be resolved because it is deleted, unreadable, loading, or lookup failed
+- **THEN** the full reference is displayed as text, other task metadata remains visible, and no broken details link appears
+
+#### Scenario: No skill preserves the established view
+
+- **WHEN** a task has instructions and no skill
+- **THEN** no Skill label or empty placeholder is rendered and existing Model/Instructions content is unchanged
+
+#### Scenario: Skill-only task on mobile and RTL
+
+- **WHEN** a skill-only task is viewed in a narrow RTL Configuration tab
+- **THEN** the Skill field remains visible, wraps its name/reference, inherits direction, and no empty instructions field is shown
+
+### Requirement: Detail view body renders section tabs at mobile and tablet
+
+`ScheduledTaskDetailView` SHALL branch its body layout on the app-wide mobile boundary (`useIsMobile` from `@epam/ai-dial-chat-shared`, `(max-width: 1279px)`), mounting exactly one layout's subtree at a time — never mounting both layouts and hiding one with CSS.
+
+Below the desktop breakpoint (mobile and tablet), the body SHALL render a tab row (`Tabs` from `@epam/ai-dial-ui-kit`, generation 2.0) with exactly three tabs, in this order: **Details**, **Configuration**, **History**. Tab labels SHALL reuse the existing section-title label strings (`detailsTitle`, `configurationTitle`, `historyTitle`) — no new i18n keys. The **Details** tab SHALL be active by default, and tab selection SHALL be internal component state that survives a viewport resize across the boundary. Exactly one section's content SHALL be visible at a time; activating a tab SHALL swap the visible panel. Tabs SHALL NOT render count badges.
+
+The tab row SHALL expose an accessible name (from an optional `tabsAriaLabel` label with an English default). Each visible panel SHALL expose `role="tabpanel"` with an accessible name matching its tab's label (via `aria-label`, or `aria-labelledby` when the kit's tab elements expose referenceable ids).
+
+The three section bodies (Details fields, Configuration instructions, History run list) SHALL be extracted into internal presentational section components that render content only — no section titles — and both layouts SHALL compose those same components, so section content is identical across breakpoints. At the desktop breakpoint (≥1280px) the body SHALL render no tab row and SHALL render all three sections simultaneously in the existing three-column layout, each column keeping its `<h2>` section title. The section components SHALL NOT be re-exported from the lib's public API.
+
+#### Scenario: Mobile renders the tab row in order with Details active by default
+
+- **WHEN** `ScheduledTaskDetailView` renders below the desktop breakpoint with a loaded task
+- **THEN** the body renders a tab row whose tabs read Details, Configuration, History in that order, the Details tab is the active one, and only the Details section's content is visible
+
+#### Scenario: Activating a tab swaps the visible panel
+
+- **WHEN** the user activates the History tab on a mobile/tablet body
+- **THEN** the History run list becomes the visible panel, the previously visible section's content is no longer rendered, and no `onRunClick`/`onRunsLoadMore` behavior differs from the desktop History panel
+
+#### Scenario: Desktop renders three columns and no tab row
+
+- **WHEN** `ScheduledTaskDetailView` renders at the desktop breakpoint with a loaded task
+- **THEN** no tab row is present, and the Details, Configuration, and History sections render simultaneously in the three-column layout, each with its `<h2>` section title
+
+#### Scenario: Section content is identical across breakpoints
+
+- **WHEN** the same loaded task renders below and at the desktop breakpoint
+- **THEN** each section shows the same field values, instructions rendering, and run rows in both layouts — only the container chrome (tabs + panel vs. three columns with titles) differs
+
+#### Scenario: Tab selection survives a viewport resize across the boundary
+
+- **WHEN** the History tab is active and the viewport is resized past the boundary to desktop and back below it
+- **THEN** the History tab is still the active tab when the tab row re-renders
+
+#### Scenario: Tablist and panels expose accessible names
+
+- **WHEN** the mobile/tab body renders
+- **THEN** the tab row exposes an accessible name, and the visible panel exposes `role="tabpanel"` with an accessible name matching its tab's label
+
+#### Scenario: Tabs render no count badges
+
+- **WHEN** the tab row renders at any breakpoint
+- **THEN** no tab renders a count or badge value

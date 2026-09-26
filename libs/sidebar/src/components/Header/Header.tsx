@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, type ReactNode } from 'react';
+import { SIDEBAR_CLASS } from '../../constants/public-class-names';
 import styles from '../SidebarPanel/SidebarPanel.module.scss';
 
 /** Props for the `Header` component. */
@@ -11,6 +12,8 @@ export interface HeaderProps {
   titleClassName?: string;
   /** CSS class applied to the root element. */
   className?: string;
+  /** Extra class name(s) merged onto the end (right) action cluster. */
+  actionsClassName?: string;
   /** Content rendered in the start (left) group of the header bar. */
   leftActions?: ReactNode;
   /** Content rendered in the end (right) group of the header bar. */
@@ -24,17 +27,19 @@ export const Header: FC<HeaderProps> = memo(
     titleClassName = 'dial-h1-text',
     leftActions,
     className,
+    actionsClassName,
     rightActions,
   }) => (
     <div
       className={mergeClasses(
-        'flex h-12 items-center px-4',
+        'flex h-12 items-center pe-3 ps-6',
         className,
         styles.header,
+        SIDEBAR_CLASS.header,
       )}
     >
       {leftActions && (
-        <div className="flex items-center gap-1">{leftActions}</div>
+        <div className="me-2 flex items-center gap-1">{leftActions}</div>
       )}
 
       <EllipsisTooltip
@@ -43,7 +48,11 @@ export const Header: FC<HeaderProps> = memo(
       />
 
       {rightActions && (
-        <div className="flex items-center gap-1">{rightActions}</div>
+        <div
+          className={mergeClasses('flex items-center gap-1', actionsClassName)}
+        >
+          {rightActions}
+        </div>
       )}
     </div>
   ),

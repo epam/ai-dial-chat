@@ -4,6 +4,7 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
+  DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
@@ -29,6 +30,7 @@ import {
   IconUserOff,
   IconWorldOff,
   IconWorldShare,
+  type TablerIcon,
 } from '@tabler/icons-react';
 import {
   FC,
@@ -85,6 +87,23 @@ const LimitStatusBadge: FC<LimitStatusBadgeProps> = ({ status, label }) => (
     {label}
   </div>
 );
+
+/**
+ * One secondary ("Manage") action, declared once and rendered on whichever
+ * surface it lands on: an entry inside the overflow menu, or — when it is the
+ * only action left after filtering — a button in the action row. The icon
+ * stays a component rather than a rendered node so each surface can size it
+ * for itself (SM in the menu, MD on a button).
+ */
+interface ManageAction {
+  key: string;
+  label: ReactNode;
+  Icon: TablerIcon;
+  /** Menu-entry icon tint. The destructive entries take the menu row's own colour. */
+  iconClassName?: string;
+  danger?: boolean;
+  onClick: () => void;
+}
 
 interface HeaderProps {
   item: CatalogItem;
@@ -183,7 +202,9 @@ interface HeaderProps {
    * `onOpenUnpublish`. Defaults to `true` when absent. When the entry ends up
    * shown, it replaces "Publish" rather than joining it. Supplying it also
    * keeps the Manage trigger rendered for an item it returns `true` for while
-   * `isPublishHistoryResolved` is still `false`.
+   * `isPublishHistoryResolved` is still `false`, and lets a lone "Unpublish"
+   * render as its own button once history resolves — so the host should
+   * resolve history for such an item without waiting for hover.
    */
   isUnpublishVisible?: (item: CatalogItem) => boolean;
   /**
@@ -219,7 +240,7 @@ interface HeaderProps {
    */
   isReadonly?: boolean;
 }
-/** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit, Publish or Unpublish, and Delete), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. Shows a "Running low"/"Limit reached" badge from `item.details?.limits?.status`, disabling "Use in chat" once a limit is reached. */
+/** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit, Publish or Unpublish, and Delete — or that action as a button of its own where filtering leaves only one), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. Shows a "Running low"/"Limit reached" badge from `item.details?.limits?.status`, disabling "Use in chat" once a limit is reached. */
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
@@ -415,8 +436,15 @@ export const Header: FC<HeaderProps> = ({
     void resolve();
   }, [item, onFetchRecipientsCount, onRevokeShare, isRevokeShareVisible]);
 
+  const [isManageMenuOpen, setIsManageMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsManageMenuOpen(false);
+  }, [item.id]);
+
   const handleManageOpenChange = useCallback(
     (isOpen: boolean) => {
+      setIsManageMenuOpen(isOpen);
       if (!isOpen) return;
       requestRecipientsCount();
       onRequestPublishHistory?.();
@@ -591,20 +619,14 @@ export const Header: FC<HeaderProps> = ({
         (recipientsCount ?? 0) > 0)) &&
     (isRevokeShareVisible?.(item) ?? true);
 
-  const manageItems = useMemo<DropdownItem[]>(() => {
-    const items: DropdownItem[] = [];
+  const manageActions = useMemo<ManageAction[]>(() => {
+    const items: ManageAction[] = [];
     if (!isShareInActionRow && shouldShowShareAction) {
       items.push({
         key: 'share',
         label: texts?.shareLabel ?? 'Share',
-        icon: (
-          <IconShare
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            className="text-secondary"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
+        Icon: IconShare,
+        iconClassName: 'text-secondary',
         onClick: handleShare,
       });
     }
@@ -612,14 +634,8 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'edit',
         label: texts?.editActionLabel ?? 'Edit',
-        icon: (
-          <IconPencil
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            className="text-secondary"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
+        Icon: IconPencil,
+        iconClassName: 'text-secondary',
         onClick: handleEdit,
       });
     }
@@ -627,14 +643,8 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'download',
         label: texts?.downloadActionLabel ?? 'Download',
-        icon: (
-          <IconDownload
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            className="text-secondary"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
+        Icon: IconDownload,
+        iconClassName: 'text-secondary',
         onClick: handleDownload,
       });
     }
@@ -642,14 +652,8 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'publish',
         label: texts?.publishLabel ?? 'Publish',
-        icon: (
-          <IconWorldShare
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            className="text-secondary"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
+        Icon: IconWorldShare,
+        iconClassName: 'text-secondary',
         onClick: handleOpenPublish,
       });
     }
@@ -660,14 +664,8 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'unpublish',
         label: texts?.unpublishLabel ?? 'Unpublish',
-        icon: (
-          <IconWorldOff
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            className="text-secondary"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
+        Icon: IconWorldOff,
+        iconClassName: 'text-secondary',
         onClick: handleOpenUnpublish,
       });
     }
@@ -675,13 +673,7 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'delete',
         label: texts?.deleteActionLabel ?? 'Delete',
-        icon: (
-          <IconTrash
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
+        Icon: IconTrash,
         danger: true,
         onClick: handleDelete,
       });
@@ -697,13 +689,7 @@ export const Header: FC<HeaderProps> = ({
           recipientsCount == null
             ? revokeShareLabel
             : formatWithCount(recipientsCount),
-        icon: (
-          <IconUserOff
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
+        Icon: IconUserOff,
         danger: true,
         onClick: handleRevokeShare,
       });
@@ -712,14 +698,7 @@ export const Header: FC<HeaderProps> = ({
       items.push({
         key: 'unshare',
         label: texts?.unshareLabel ?? 'Remove from My List',
-        icon: (
-          <IconTrash
-            size={DIAL_ICON_SIZE.SM}
-            aria-hidden
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
-
+        Icon: IconTrash,
         onClick: handleUnshare,
       });
     }
@@ -746,6 +725,74 @@ export const Header: FC<HeaderProps> = ({
     handleRevokeShare,
     handleUnshare,
   ]);
+
+  const manageItems = useMemo<DropdownItem[]>(
+    () =>
+      manageActions.map(
+        ({ key, label, Icon, iconClassName, danger, onClick }) => ({
+          key,
+          label,
+          icon: (
+            <Icon
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              className={iconClassName}
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          ),
+          danger,
+          onClick,
+        }),
+      ),
+    [manageActions],
+  );
+
+  /*
+   * An overflow menu holding a single entry costs a click for nothing and
+   * leaves the header looking empty until it is opened — which is how a
+   * read-only shared item, whose only surviving action is "Remove from My
+   * List", ended up with no visible action at all (GH #8989). So the last
+   * action standing is rendered as a button in the action row instead.
+   *
+   * Two entries resolve lazily off the Manage trigger, and the trigger is
+   * what starts their lookups: "Unpublish" needs the publish history and
+   * "Revoke access" needs the recipient count. An item that could produce
+   * either keeps its menu whatever the lookup eventually says, because the
+   * decision has to hold still — gating on the pending state instead would
+   * turn the button back into a kebab under the pointer that was reaching
+   * for it, the hover having settled the lookup on the way in.
+   *
+   * "Unpublish" is released from that hold once the history has settled for
+   * an item the host affirmatively calls unpublishable, because the details
+   * panel resolves those up front rather than on hover. That is what lets an
+   * Organization copy, whose only action is "Unpublish", show it as a button
+   * (GH #8989). A host with no unpublish rule gets no up-front lookup, so its
+   * items keep the hold.
+   */
+  const isUnpublishRuleAffirmed = isUnpublishVisible?.(item);
+  const mayGainUnpublishEntry =
+    !isReadonly &&
+    !!onOpenUnpublish &&
+    (isUnpublishRuleAffirmed == null ||
+      (isUnpublishRuleAffirmed && !isPublishHistoryResolved));
+  const mayGainRevokeShareEntry =
+    !isReadonly &&
+    !!onRevokeShare &&
+    !!onFetchRecipientsCount &&
+    item.isMyApp === true &&
+    (isRevokeShareVisible?.(item) ?? true);
+  /*
+   * Never while the menu is open either. The set can still shrink to one
+   * from a prop the host resolves late, and promoting then unmounts the
+   * trigger the open overlay hangs from, taking the overlay with it.
+   */
+  const promotedManageAction =
+    manageActions.length === 1 &&
+    !isManageMenuOpen &&
+    !mayGainUnpublishEntry &&
+    !mayGainRevokeShareEntry
+      ? manageActions[0]
+      : undefined;
 
   const [isApiKeyOverlayOpen, setIsApiKeyOverlayOpen] = useState(false);
 
@@ -875,6 +922,52 @@ export const Header: FC<HeaderProps> = ({
       >
         {button}
       </Dropdown>
+    );
+  };
+
+  /*
+   * The action-row form of a promoted Manage entry. Share is the one that
+   * cannot be drawn generically: its popover anchors to the trigger, which
+   * is what `ShareButton` — the same component the row already uses when
+   * `isSharePrimary` puts Share there — exists to do. Delete accompanies
+   * Share on every item that offers it today, so that branch is a guard
+   * rather than a live path; it keeps the rule total if the two ever come
+   * apart.
+   */
+  const renderPromotedManageAction = ({
+    key,
+    label,
+    Icon,
+    danger,
+    onClick,
+  }: ManageAction): ReactNode => {
+    if (key === 'share') {
+      return (
+        <ShareButton
+          item={item}
+          onShare={onShare}
+          shareOverlay={shareOverlay}
+          isShareVisible={isShareVisible}
+          label={texts?.shareLabel}
+        />
+      );
+    }
+    /* A destructive entry keeps the weight the menu gave it: dropping the
+     * danger styling on the way to the row would quietly make Delete look
+     * like Edit. */
+    const ButtonComponent = danger ? DangerButton : NeutralButton;
+    return (
+      <ButtonComponent
+        label={label}
+        iconBefore={
+          <Icon
+            size={DIAL_ICON_SIZE.MD}
+            aria-hidden
+            stroke={DIAL_KIT_ICON_STROKE}
+          />
+        }
+        onClick={onClick}
+      />
     );
   };
 
@@ -1050,7 +1143,10 @@ export const Header: FC<HeaderProps> = ({
           {shouldShowCredentialsAction &&
             !isCredentialsActionPrimary &&
             renderCredentialsButton(NeutralButton)}
-          {(manageItems.length > 0 || isUnpublishPending) && renderManageMenu()}
+          {promotedManageAction
+            ? renderPromotedManageAction(promotedManageAction)
+            : (manageItems.length > 0 || isUnpublishPending) &&
+              renderManageMenu()}
         </div>
       )}
     </div>

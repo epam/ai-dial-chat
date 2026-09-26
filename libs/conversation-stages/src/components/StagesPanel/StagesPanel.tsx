@@ -10,6 +10,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
+import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import { StageRow } from '../../models/stage-grouping';
 import type {
   StagesPanelLabels,
@@ -189,7 +190,12 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('w-full', styles.panel, className)}
+      className={mergeClasses(
+        'w-full',
+        styles.panel,
+        className,
+        CONVERSATION_STAGES_CLASS.panel,
+      )}
     >
       <ul role="list" className="flex w-full flex-col gap-0.5 ps-5">
         {rows.map((row) =>

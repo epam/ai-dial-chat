@@ -47,9 +47,13 @@ const createStaticTestApp = async (
   overlaySandboxEnabled = false,
   cspMode = CspMode.Enforce,
   reportUri?: string,
+  allowedConnectOrigins: string[] = [],
 ): Promise<INestApplication> => {
   const app = await NestFactory.create(StaticTestModule, { logger: false });
-  app.use(helmet(createHelmetOptions([], false)));
+  /* The app declarations use Helmet's CJS types; Vitest resolves its ESM types. */
+  app.use(
+    helmet(createHelmetOptions([], false) as Parameters<typeof helmet>[0]),
+  );
   app.use(
     await createFrontendMiddleware({
       frontendRootPath,
@@ -58,6 +62,7 @@ const createStaticTestApp = async (
       secureTransport: false,
       cspMode,
       reportUri,
+      allowedConnectOrigins,
     }),
   );
   await app.init();
@@ -95,6 +100,52 @@ describe('static assets serving', () => {
     await rm(staticRoot, { recursive: true, force: true });
     await rm(overlaySandboxRoot, { recursive: true, force: true });
     vi.restoreAllMocks();
+  });
+
+  it.each([CspMode.Enforce, CspMode.ReportOnly])(
+    'allows external document fetches in every HTML policy in %s mode',
+    async (mode) => {
+      await app.close();
+      const origin = 'https://documents.example.com';
+      app = await createStaticTestApp(
+        staticRoot,
+        overlaySandboxRoot,
+        true,
+        mode,
+        undefined,
+        [origin],
+      );
+
+      for (const path of ['/', '/conversation/123', '/overlay-sandbox/']) {
+        const response = await request(app.getHttpServer())
+          .get(path)
+          .expect(200);
+        const policies = [response.headers['content-security-policy']];
+        if (mode === CspMode.ReportOnly) {
+          policies.push(
+            response.headers['content-security-policy-report-only'],
+          );
+        }
+        for (const policy of policies) {
+          const directives = policy.split(';');
+          expect(directives).toContain(`connect-src 'self' blob: ${origin}`);
+          expect(directives).toContain("frame-src 'self'");
+          expect(directives).toContain("frame-ancestors 'none'");
+          expect(
+            directives.find((directive: string) =>
+              directive.startsWith('script-src '),
+            ),
+          ).not.toContain(origin);
+        }
+      }
+    },
+  );
+
+  it('keeps external connections blocked when no origins are configured', async () => {
+    const response = await request(app.getHttpServer()).get('/').expect(200);
+    expect(response.headers['content-security-policy'].split(';')).toContain(
+      "connect-src 'self' blob:",
+    );
   });
 
   it('resolves the built React app from source modules', () => {

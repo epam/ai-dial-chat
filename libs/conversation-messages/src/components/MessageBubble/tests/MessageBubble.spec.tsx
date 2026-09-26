@@ -3,6 +3,7 @@ import {
   AttachmentType,
   MessageRole,
   RequestStatus,
+  ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import {
   act,
@@ -28,20 +29,10 @@ const ATTACHMENT: DisplayAttachment = {
 
 const TABLE_MARKDOWN = '| A | B |\n| - | - |\n| 1 | 2 |';
 
-const TABLE_ACTION_LABELS = {
-  copyCsvLabel: 'Copy as CSV',
-  copyTxtLabel: 'Copy as TXT',
-  copyMarkdownLabel: 'Copy as Markdown',
-  copiedLabel: 'Copied!',
-  downloadCsvLabel: 'Download as CSV',
-};
-
 const ASSISTANT_TABLE_LABELS = {
-  tableCopyCsvLabel: TABLE_ACTION_LABELS.copyCsvLabel,
-  tableCopyTxtLabel: TABLE_ACTION_LABELS.copyTxtLabel,
-  tableCopyMarkdownLabel: TABLE_ACTION_LABELS.copyMarkdownLabel,
-  tableCopiedLabel: TABLE_ACTION_LABELS.copiedLabel,
-  tableDownloadCsvLabel: TABLE_ACTION_LABELS.downloadCsvLabel,
+  tableCopyLabel: 'Copy',
+  tableCopiedLabel: 'Copied!',
+  tableDownloadCsvLabel: 'Download as CSV',
 };
 
 const findMessageParagraph = (message: string) =>
@@ -313,51 +304,62 @@ describe('UserMessageBubble — collapsed text', () => {
   });
 });
 
-describe('UserMessageBubble — inline-start slot', () => {
-  const skillSlot = <span>/Summarizer</span>;
+describe('UserMessageBubble — textSegments', () => {
+  const segments = [<span key="chip">/Summarizer</span>, ' please summarize'];
 
-  it('renders the slot inline inside the text paragraph, before the text', () => {
-    render(<UserMessageBubble text="Hello world" beforeContent={skillSlot} />);
-
-    const slot = screen.getByText('/Summarizer');
-    /*
-     * The slot's DOM position — inside the text paragraph, ahead of the text —
-     * is the feature under test, and its wrapper span carries no ARIA hook, so
-     * no semantic query reaches it (see spec.md's node-access exception).
-     */
-    // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    const paragraph = slot.closest('p') as HTMLParagraphElement;
-    // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    const wrapper = slot.parentElement as HTMLElement;
-
-    expect(paragraph).toBeTruthy();
-    expect(wrapper.className).toContain('me-1');
-    // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    expect(paragraph.firstChild).toBe(wrapper);
-  });
-
-  it('renders the bubble for the slot alone when there is no text', () => {
-    const { container } = render(
-      <UserMessageBubble beforeContent={skillSlot} />,
+  it('renders textSegments in order inside the text paragraph, in place of text', () => {
+    render(
+      <UserMessageBubble
+        text="/Summarizer please summarize"
+        textSegments={segments}
+      />,
     );
 
-    expect(screen.getByText('/Summarizer')).toBeTruthy();
-    expect(screen.getByRole('group', { name: 'User message' })).toBeTruthy();
-    /* Slot-only: the slot stays in flow in a plain div, with no text paragraph. */
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
-    expect(container.querySelector('p')).toBeNull();
+    const chip = screen.getByText('/Summarizer');
+    /*
+     * The segments' DOM position — inside the text paragraph, in reading
+     * order — is the feature under test; the chip's wrapper span carries no
+     * ARIA hook, so no semantic query reaches the paragraph directly (see
+     * spec.md's node-access exception).
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const paragraph = chip.closest('p') as HTMLParagraphElement;
+
+    expect(paragraph).toBeTruthy();
+    expect(paragraph.textContent).toBe('/Summarizer please summarize');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(paragraph.firstElementChild).toBe(chip);
   });
 
-  it('renders no slot wrapper inside the paragraph when beforeContent is absent', () => {
+  it('renders text unchanged, byte-identical, when textSegments is absent', () => {
     render(<UserMessageBubble text="Hello world" />);
 
     const paragraph = findMessageParagraph('Hello world');
     /*
-     * The absence of a slot wrapper — a plain span with no ARIA hook — inside
-     * the paragraph cannot be queried semantically, so the check is DOM-level.
+     * No segment wrapper — a plain span with no ARIA hook — should appear
+     * inside the paragraph, so the check is DOM-level.
      */
     // eslint-disable-next-line testing-library/no-node-access -- see comment above
     expect(paragraph.firstElementChild).toBeNull();
+    expect(paragraph.textContent).toBe('Hello world');
+  });
+
+  it('renders interleaved segments correctly under dir="rtl"', () => {
+    render(
+      <div dir="rtl">
+        <UserMessageBubble
+          text="/Summarizer please summarize"
+          textSegments={segments}
+        />
+      </div>,
+    );
+
+    const chip = screen.getByText('/Summarizer');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const paragraph = chip.closest('p') as HTMLParagraphElement;
+
+    expect(paragraph.textContent).toBe('/Summarizer please summarize');
+    expect(paragraph.className).toContain('text-start');
   });
 });
 
@@ -458,11 +460,7 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Copy as CSV' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Copy as TXT' })).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'Copy as Markdown' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Download as CSV' }),
     ).toBeTruthy();
@@ -767,5 +765,74 @@ describe('StatusMessageBubble', () => {
      */
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
     expect(container.querySelector('svg')).not.toBeNull();
+  });
+});
+
+describe('AssistantMessageBubble — response format', () => {
+  it('renders markdown by default', () => {
+    render(<AssistantMessageBubble text={TABLE_MARKDOWN} />);
+
+    expect(screen.getByRole('table')).toBeTruthy();
+  });
+
+  it('renders the body verbatim when the format is plain text', () => {
+    render(
+      <AssistantMessageBubble
+        text={TABLE_MARKDOWN}
+        responseFormat={ResponseFormat.PlainText}
+      />,
+    );
+
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(findMessageParagraph(TABLE_MARKDOWN)).toBeTruthy();
+  });
+
+  it('forwards the format through the role-switching MessageBubble', () => {
+    render(
+      <MessageBubble
+        role={MessageRole.Assistant}
+        text="**bold**"
+        responseFormat={ResponseFormat.PlainText}
+      />,
+    );
+
+    expect(findMessageParagraph('**bold**')).toBeTruthy();
+  });
+
+  it('keeps the plain-text body inside the markdown wrapper the indent targets', () => {
+    /* The overlaid slot is measured by a ResizeObserver, absent in jsdom. */
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {
+          // No-op in JSDOM.
+        }
+        unobserve() {
+          // No-op in JSDOM.
+        }
+        disconnect() {
+          // No-op in JSDOM.
+        }
+      },
+    );
+
+    render(
+      <AssistantMessageBubble
+        text="plain body"
+        beforeContent={<span>slot</span>}
+        responseFormat={ResponseFormat.PlainText}
+      />,
+    );
+
+    /*
+     * The first-line indent selector is
+     * `.cm-bubble-markdown > div > *:first-child`, so the plain-text body has
+     * to keep the element shape a markdown body has. Only the DOM shape can
+     * show that.
+     */
+    const body = findMessageParagraph('plain body');
+    expect(body.parentElement?.parentElement?.className).toContain(
+      'cm-bubble-markdown',
+    );
   });
 });

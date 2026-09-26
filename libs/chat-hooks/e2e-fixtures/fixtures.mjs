@@ -74,9 +74,24 @@ export const SUBPATH_FIXTURES = [
   {
     name: 'conversation',
     subpath: 'conversation',
+    /*
+     * `@epam/ai-dial-chat-overlay` is deliberately absent: the overlay
+     * protocol mapper moved to `./conversation-overlay` below, so a host
+     * importing this entry for ordinary chat behavior never has to install
+     * that optional peer
+     * ([issue #8855](https://github.com/epam/ai-dial-chat/issues/8855)).
+     */
     peers: [
       '@epam/ai-dial-chat-shared',
       '@epam/ai-dial-publish-panel',
+      ...CHAT_SHARED_ROOT_PEERS,
+    ],
+  },
+  {
+    name: 'conversation-overlay',
+    subpath: 'conversation-overlay',
+    peers: [
+      '@epam/ai-dial-chat-shared',
       '@epam/ai-dial-chat-overlay',
       ...CHAT_SHARED_ROOT_PEERS,
     ],
@@ -104,15 +119,34 @@ export const SUBPATH_FIXTURES = [
      * `@epam/ai-dial-chat-shared/file-manager` — and so
      * `@epam/ai-dial-react-file-manager` with its `ag-grid-community` peer —
      * enters the closure.
+     *
+     * The canvas trio (`@epam/ai-dial-attachment-canvas`,
+     * `@epam/ai-dial-quotations` and the `@epam/pdf-highlighter-kit` its
+     * highlight types reach) is deliberately absent: the canvas content
+     * resolvers moved to `./file-manager-canvas` below, so browsing, upload
+     * and naming helpers no longer require them
+     * ([issue #8855](https://github.com/epam/ai-dial-chat/issues/8855)).
+     *
+     * `@epam/ai-dial-attachment-input` was added for `useFileAttachmentPicker`,
+     * whose row-eligibility predicate calls its `isMimeTypeAllowed` directly.
      */
     peers: [
       '@epam/ai-dial-react-file-manager',
       'ag-grid-community',
+      '@epam/ai-dial-attachment-input',
       '@epam/ai-dial-ui-kit',
       '@epam/ai-dial-chat-shared',
+      ...CHAT_SHARED_ROOT_PEERS,
+    ],
+  },
+  {
+    name: 'file-manager-canvas',
+    subpath: 'file-manager-canvas',
+    peers: [
       '@epam/ai-dial-attachment-canvas',
       '@epam/ai-dial-quotations',
       '@epam/pdf-highlighter-kit',
+      '@epam/ai-dial-chat-shared',
       ...CHAT_SHARED_ROOT_PEERS,
     ],
   },
@@ -187,6 +221,15 @@ export const SUBPATH_FIXTURES = [
       ...CHAT_SHARED_ROOT_PEERS,
     ],
   },
+  {
+    name: 'usage',
+    subpath: 'usage',
+    peers: [
+      '@epam/ai-dial-usage-dashboard',
+      '@epam/ai-dial-chat-shared',
+      ...CHAT_SHARED_ROOT_PEERS,
+    ],
+  },
 ];
 
 /**
@@ -217,6 +260,7 @@ export const ALL_OPTIONAL_PEERS = [
   '@epam/ai-dial-skill-editor',
   '@epam/ai-dial-source-panel',
   '@epam/ai-dial-ui-kit',
+  '@epam/ai-dial-usage-dashboard',
   '@epam/pdf-highlighter-kit',
   ...CHAT_SHARED_ROOT_PEERS,
 ];
@@ -263,7 +307,7 @@ export const NEGATIVE_FIXTURE = {
  */
 export const SIDE_EFFECT_CHECKS = [
   { fixtureName: 'oauth', mustContain: ['new EventTarget()'] },
-  { fixtureName: 'file-manager', mustContain: ['LRUCache'] },
+  { fixtureName: 'file-manager-canvas', mustContain: ['LRUCache'] },
 ];
 
 export const SIDE_EFFECT_SYMBOLS = ['new EventTarget()', 'LRUCache'];

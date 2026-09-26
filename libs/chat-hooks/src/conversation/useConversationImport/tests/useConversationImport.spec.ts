@@ -256,8 +256,46 @@ describe('useConversationImport', () => {
     expect(result.current.jobs[0]).toMatchObject({
       status: ConversationTransferJobStatus.Warning,
       warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+      warningNames: ['q1.pdf'],
       progress: { percent: 100 },
     });
+  });
+
+  it('keeps missing archive attachment names on the job and in the notification', async () => {
+    const { result } = renderImport('new-bucket');
+    const names = ['absent.pdf', 'missing.txt'];
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant',
+          content: '',
+          custom_content: {
+            attachments: names.map((name) => ({
+              title: name,
+              url: 'files/old-bucket/' + name,
+            })),
+          },
+        },
+      ],
+    });
+
+    await act(() =>
+      result.current.importConversations(dialFile([conversation])),
+    );
+
+    expect(saveConversation).toHaveBeenCalledTimes(1);
+    expect(uploadFile).not.toHaveBeenCalled();
+    expect(result.current.jobs[0]).toMatchObject({
+      status: ConversationTransferJobStatus.Warning,
+      warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+      warningNames: names,
+    });
+    expect(onWarning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobId: result.current.jobs[0].id,
+        names,
+      }),
+    );
   });
 
   it('reports an attachment shared by several conversations as skipped once', async () => {
@@ -295,6 +333,7 @@ describe('useConversationImport', () => {
         names: ['q1.pdf'],
       }),
     );
+    expect(result.current.jobs[0].warningNames).toEqual(['q1.pdf']);
   });
 
   it('reports MissingBucket and fails the job when there is no bucket', async () => {

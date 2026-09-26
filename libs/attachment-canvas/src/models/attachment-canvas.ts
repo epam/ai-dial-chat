@@ -1,12 +1,16 @@
 import type {
   CodeBlockTheme,
   CustomVisualizerDataLayout,
+  GroupedAttachmentItem,
 } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
 import type { McpUiHostContext } from '@mcp-ui/client';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { CSSProperties } from 'react';
+import type {
+  CallToolResult,
+  Implementation,
+} from '@modelcontextprotocol/sdk/types.js';
+import type { CSSProperties, ReactNode } from 'react';
 import {
   AttachmentContentType,
   AttachmentErrorType,
@@ -100,6 +104,28 @@ export interface OoxmlPptxHighlightLocation {
   text: string;
 }
 
+/** A complete table row in the DOCX body, matched by cell text. */
+export interface OoxmlDocxTableRowLocation {
+  /** Location kind. */
+  kind: OoxmlHighlightKind.DocxTableRow;
+  /** Plain text of each cell, in column order. */
+  cells: string[];
+  /** 1-based matching row in document order. */
+  occurrence: number;
+}
+
+/** A complete table row on one PPTX slide, matched by cell text. */
+export interface OoxmlPptxTableRowLocation {
+  /** Location kind. */
+  kind: OoxmlHighlightKind.PptxTableRow;
+  /** Plain text of each cell, in column order. */
+  cells: string[];
+  /** 1-based matching row on the specified slide. */
+  occurrence: number;
+  /** 1-based slide number. */
+  slide: number;
+}
+
 /** A 1-based cell address, matching `@silurus/ooxml`'s own `CellAddress`. */
 export interface OoxmlCellAddress {
   /** 1-based row number. */
@@ -124,6 +150,8 @@ export interface OoxmlXlsxHighlightLocation {
 export type OoxmlHighlightLocation =
   | OoxmlDocxHighlightLocation
   | OoxmlPptxHighlightLocation
+  | OoxmlDocxTableRowLocation
+  | OoxmlPptxTableRowLocation
   | OoxmlXlsxHighlightLocation;
 
 /** One citation's highlight: the locations it resolved to, under a stable id. */
@@ -196,6 +224,22 @@ export interface VisualizerCanvasContent {
   requestTimeout?: number;
 }
 
+/** Content payload for an application-scoped grouped visualizer: every attachment a message's visualizer claims, rendered together inside one sandboxed iframe. */
+export interface GroupedVisualizerCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.GroupedVisualizer;
+  /** Iframe `src`, resolved from the matching registry entry's `url`. */
+  url: string;
+  /** One item per claimed attachment, in the message's attachment order. Each `url` is absolute, resolved by the host. */
+  attachments: GroupedAttachmentItem[];
+  /** Presentation layout hints (`themeId`, `width`, `height`, `mobileHeight`) shared by every item. */
+  layout: CustomVisualizerDataLayout;
+  /** postMessage protocol namespace — MUST equal the registry entry's `title`, or the iframe never receives data. */
+  visualizerName: string;
+  /** Milliseconds to wait for a `send()` request's response before rejecting. From the registry entry; does NOT bound the handshake. */
+  requestTimeout?: number;
+}
+
 /** Display mode an MCP App can ask the host to switch to via `ui/request-display-mode` — the MCP UI protocol's `inline`/`fullscreen`/`pip` union. */
 export type McpAppDisplayMode = NonNullable<McpUiHostContext['displayMode']>;
 
@@ -213,6 +257,8 @@ export interface McpAppCanvasContent {
   toolResult?: CallToolResult;
   /** UI context delivered to the View during the `ui/initialize` handshake; built by the app layer from the active theme, locale, and CSS design tokens. */
   hostContext?: McpUiHostContext;
+  /** Host identity (`name`/`version`) delivered during the `ui/initialize` handshake. Defaults to a generic `'MCP-UI Host'` identity when omitted. */
+  hostInfo?: Implementation;
   /** Forwards a `tools/call` request issued by the mounted app to the owning MCP session via the app layer. */
   onToolCall: (name: string, args: unknown) => Promise<CallToolResult>;
   /** Handles the mounted app's `ui/open-link` request. Return `false` when the URL must not be opened — the app then receives an error result. When omitted, the renderer itself opens http(s) URLs in a new browser tab (other schemes are rejected). */
@@ -256,6 +302,7 @@ export type AttachmentCanvasContent =
   | CodeCanvasContent
   | HtmlCanvasContent
   | VisualizerCanvasContent
+  | GroupedVisualizerCanvasContent
   | McpAppCanvasContent
   | UnsupportedCanvasContent
   | ErrorCanvasContent;
@@ -308,6 +355,10 @@ export interface AttachmentCanvasColors {
   jsonCollapsedText?: string;
   /** Background color of the collapsed-content ellipsis. Defaults to `--bg-layer-raised`. */
   jsonCollapsedBackground?: string;
+  /** Divider color between the file name and the MCP App name in the panel title. Defaults to `--text-secondary`. */
+  mcpAppDividerColor?: string;
+  /** MCP App version text color in the panel title. Defaults to `--text-secondary`. */
+  mcpAppVersionColor?: string;
 }
 
 /** Themeable typography overrides for the AttachmentCanvas plain-text content body. */
@@ -331,6 +382,8 @@ export interface AttachmentCanvasTypography {
   jsonClassName?: string;
   /** CSS utility class applied to the decorative XLSX `fx` label. Defaults to `'dial-italic-text'`. */
   xlsxFormulaLabelClassName?: string;
+  /** CSS utility class applied to the MCP App version text in the panel title. Defaults to `'dial-caption-text'`. */
+  mcpAppVersionClassName?: string;
 }
 
 /** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */
@@ -418,12 +471,8 @@ export interface AttachmentCanvasLabels {
   codeContentErrorLabel?: string;
   /** Label and accessible name for the retry control shown alongside `codeContentErrorLabel`. Defaults to `'Retry'`. */
   codeContentRetryLabel?: string;
-  /** Label for copying a Markdown table as CSV. */
-  tableCopyCsvLabel?: string;
-  /** Label for copying a Markdown table as text. */
-  tableCopyTxtLabel?: string;
-  /** Label for copying a Markdown table as Markdown. */
-  tableCopyMarkdownLabel?: string;
+  /** Label for the copy action on a Markdown table (copies as Markdown format). */
+  tableCopyLabel?: string;
   /** Status announced after a Markdown table has been copied. */
   tableCopiedLabel?: string;
   /** Label for downloading a Markdown table as CSV. */
@@ -446,6 +495,8 @@ export interface AttachmentCanvasProps {
   content: AttachmentCanvasContent;
   /** File name displayed as the panel title. */
   fileName?: string;
+  /** Host-supplied controls rendered in the header before the title. */
+  leftActions?: ReactNode;
   /** User-visible strings. */
   labels: AttachmentCanvasLabels;
   /** Called when the user activates the download button. When omitted the download button is hidden. Hidden automatically when content type is `Unsupported`. */
@@ -512,9 +563,7 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'codeContentLoadingLabel'
   | 'codeContentErrorLabel'
   | 'codeContentRetryLabel'
-  | 'tableCopyCsvLabel'
-  | 'tableCopyTxtLabel'
-  | 'tableCopyMarkdownLabel'
+  | 'tableCopyLabel'
   | 'tableCopiedLabel'
   | 'tableDownloadCsvLabel'
   | 'ooxmlHighlightsLabel'
@@ -544,6 +593,8 @@ export interface AttachmentCanvasBodyProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. Only relevant when content type is `MarkdownTable`. */
   tableDownloadFilename?: string;
+  /** Called once a mounted `McpApp` completes its `ui/initialize` handshake, with its declared name/version. Only relevant when content type is `McpApp`; omitted when the app didn't declare an `appInfo`. */
+  onAppInfo?: (appInfo: Implementation) => void;
   /**
    * Fetches a PDF file by URL and returns its bytes as a `Blob`. Used when
    * content type is `Pdf` to load the file before rendering. Defaults to a

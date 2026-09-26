@@ -16,6 +16,7 @@ import {
 import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  formatFileSize,
   ResponseFormat,
   type Attachment,
   type DeploymentItem,
@@ -25,27 +26,28 @@ import {
 import type {
   CommandMenuConfig,
   ConversationInputStyles,
+  HighlightedTextRange,
   MenuOverlayConfig,
   TextInsertion,
   ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import type { FC, ReactNode } from 'react';
-import { lazy, memo, useCallback, useMemo, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
-  ConversationInputI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useCelebration } from '../../context/CelebrationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -60,6 +62,7 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { resolveLocalizedText } from '../../utils/locale';
+import CelebrationDecor from '../CelebrationDecor/CelebrationDecor';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
@@ -70,6 +73,13 @@ const ConversationInput = lazy(async () => {
 
 const DialFileManagerModal = lazy(async () => {
   const module = await import('../DialFileManagerModal/DialFileManagerModal');
+  return { default: module.default };
+});
+
+/* Lazy so the markdown renderer stays out of the empty screen's own chunk —
+   `show-agent-description` is off by default. */
+const AgentDescription = lazy(async () => {
+  const module = await import('../AgentDescription/AgentDescription');
   return { default: module.default };
 });
 
@@ -107,26 +117,38 @@ interface Props {
    */
   inputInsertion?: TextInsertion;
   /**
+   * Called with the textarea's current value on every change (typing,
+   * deleting, pasting, undo/redo), passed through to `ConversationInput` —
+   * e.g. the host's skill-mention tracking reconciling live edits.
+   */
+  onChange?: (message: string) => void;
+  /**
    * Host-injected overlay entries for the `+` menu (e.g. the Prompts
    * selector), passed through to `ConversationInput`.
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Host-supplied content rendered inside the text area at its inline-start
-   * (e.g. the selected skill's `ChatSkill` element), passed through to
-   * `ConversationInput`.
+   * Ranges of `message` rendered as highlighted runs (e.g. tracked skill
+   * mentions), passed through to `ConversationInput`.
    */
-  inlineStartSlot?: ReactNode;
+  activeMentions?: HighlightedTextRange[];
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `inlineStartSlot` is present (the skill element's remove gesture),
+   * Looks up a highlighted range whose run ends exactly at the given caret
+   * position, without mutating state — the whole-mention Backspace gesture,
    * passed through to `ConversationInput`.
    */
-  onInlineStartRemove?: () => void;
+  onBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
   /**
-   * Whether the selected skill (rendered via `inlineStartSlot`) is
-   * unsupported by the current deployment — folded into the input's
-   * send-disabled state, matching `ConversationView`'s own fold.
+   * Caret offset to place the cursor at once `messageRevision` next bumps and
+   * `message` takes effect, passed through to `ConversationInput`.
+   */
+  caretPositionOverride?: number;
+  /**
+   * Whether the currently-mentioned skill(s) are unsupported by the current
+   * deployment — folded into the input's send-disabled state, matching
+   * `ConversationView`'s own fold.
    */
   isSkillUnsupported?: boolean;
   /**
@@ -164,9 +186,11 @@ const NewConversationComposer: FC<Props> = ({
   message,
   messageRevision,
   inputInsertion,
+  onChange,
   menuOverlays,
-  inlineStartSlot,
-  onInlineStartRemove,
+  activeMentions,
+  onBackspaceAtCaret,
+  caretPositionOverride,
   isSkillUnsupported = false,
   commandMenu,
   inputStyles,
@@ -179,7 +203,12 @@ const NewConversationComposer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const {
+    config: { welcomeScreenDescription, maxAttachmentFileSizeBytes },
+  } = useAppConfig();
   const { showErrorNotification, showSuccessNotification } = useNotification();
+  const { isEnabled: isCelebrationEnabled, consumeSecretPhrase } =
+    useCelebration();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -199,6 +228,17 @@ const NewConversationComposer: FC<Props> = ({
           }
         : undefined,
     [selectedDeployment, language],
+  );
+
+  const composerStyles: ConversationInputStyles = useMemo(
+    () => ({
+      ...inputStyles,
+      typography: {
+        welcomeClassName: 'font-light text-4xl',
+        ...inputStyles?.typography,
+      },
+    }),
+    [inputStyles],
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -223,10 +263,23 @@ const NewConversationComposer: FC<Props> = ({
     ({
       reason,
       formats,
+      maxFileSizeBytes,
     }: {
       reason: AttachmentValidationErrorReason;
       formats?: string;
+      maxFileSizeBytes?: number;
     }) => {
+      if (reason === AttachmentValidationErrorReason.FileTooLarge) {
+        showErrorNotification({
+          title: t(AttachmentsI18nKeys.FileTooLargeTitle),
+          message: t(AttachmentsI18nKeys.FileTooLargeMessage, {
+            maxSize:
+              maxFileSizeBytes != null ? formatFileSize(maxFileSizeBytes) : '',
+          }),
+        });
+        return;
+      }
+
       const noTypesAllowed =
         reason === AttachmentValidationErrorReason.NoTypesAllowed;
       showErrorNotification({
@@ -253,6 +306,7 @@ const NewConversationComposer: FC<Props> = ({
     fileAccept,
   } = useAttachmentValidation({
     allowedMimeTypes: resolvedSelectedDeployment?.inputAttachmentTypes ?? [],
+    maxFileSizeBytes: maxAttachmentFileSizeBytes,
     onValidationError: handleAttachmentValidationError,
   });
 
@@ -340,24 +394,16 @@ const NewConversationComposer: FC<Props> = ({
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
+  const isAgentDescriptionEnabled = useUiFeature(
+    OverlayFeature.ShowAgentDescription,
+  );
+  const agentDescription = isAgentDescriptionEnabled
+    ? resolvedSelectedDeployment?.description?.trim()
+    : undefined;
   const { displayName } = useUserProfile();
   const firstName = displayName.split(' ')[0];
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
-
-  const usageLimitsLabels = useMemo(
-    () => ({
-      triggerAriaLabel: ({ value }: { value: string }) =>
-        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
-      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
-      error: t(ConversationInputI18nKeys.Error),
-      tokensRemaining: ({ count }: { count: string }) =>
-        t(ConversationInputI18nKeys.TokensRemaining, { count }),
-      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
-        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
-    }),
-    [t],
-  );
 
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
@@ -395,6 +441,10 @@ const NewConversationComposer: FC<Props> = ({
   const handleSend = useCallback(
     async (text: string, attachments: Attachment[]) => {
       if (isSending || !selectedDeploymentId) return;
+      /* The active event's secret phrase celebrates instead of
+         starting a conversation. A no-op unless an event is ready, so the phrase
+         otherwise sends as an ordinary message. */
+      if (consumeSecretPhrase(text)) return;
       setIsSending(true);
       try {
         await onCreateConversation(text, attachments, chatSettingsValues);
@@ -413,6 +463,7 @@ const NewConversationComposer: FC<Props> = ({
     [
       isSending,
       selectedDeploymentId,
+      consumeSecretPhrase,
       onCreateConversation,
       chatSettingsValues,
       showErrorNotification,
@@ -443,6 +494,12 @@ const NewConversationComposer: FC<Props> = ({
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
+        {isCelebrationEnabled && <CelebrationDecor />}
+        {agentDescription && (
+          <Suspense fallback={null}>
+            <AgentDescription content={agentDescription} />
+          </Suspense>
+        )}
         <ConversationInput
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
@@ -472,11 +529,12 @@ const NewConversationComposer: FC<Props> = ({
             },
             firstName || undefined,
           )}
+          descriptionText={welcomeScreenDescription ?? undefined}
           placeholder={placeholder}
           removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
           retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
           uploadingLabel={t(AttachmentsI18nKeys.UploadingLabel)}
-          styles={inputStyles}
+          styles={composerStyles}
           deployments={
             isHideEmptyChatChangeAgentEnabled ? undefined : deployments
           }
@@ -488,7 +546,7 @@ const NewConversationComposer: FC<Props> = ({
           modelSelectorLabels={modelSelectorLabels}
           addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
           sendLabel={t(ChatI18nKeys.SendMessage)}
-          sendTitle={t(ChatI18nKeys.SendMessage)}
+          sendTooltip={t(ChatI18nKeys.SendMessage)}
           stopLabel={t(ChatI18nKeys.StopStreaming)}
           isAudioMessageSupported={isAudioMessageSupported}
           isVoiceRecordingSupported={isVoiceRecordingSupported}
@@ -530,9 +588,11 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
+          onChange={onChange}
           menuOverlays={menuOverlays}
-          inlineStartSlot={inlineStartSlot}
-          onInlineStartRemove={onInlineStartRemove}
+          activeMentions={activeMentions}
+          onBackspaceAtCaret={onBackspaceAtCaret}
+          caretPositionOverride={caretPositionOverride}
           commandMenu={commandMenu}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
@@ -544,7 +604,6 @@ const NewConversationComposer: FC<Props> = ({
               deploymentId={
                 selectedDeployment?.id ?? selectedDeploymentId ?? undefined
               }
-              labels={usageLimitsLabels}
             />
           }
         />
@@ -563,7 +622,7 @@ const NewConversationComposer: FC<Props> = ({
           onAttach={handleAttachDialFiles}
           bucket={bucket}
           allowedTypes={inputAttachmentTypes}
-          maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
+          maxSelectableFileSize={maxAttachmentFileSizeBytes}
           maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
           existingAttachmentsAmount={attachmentsAmount}
           canAttachFolders={selectedDeployment?.features?.folderAttachments}

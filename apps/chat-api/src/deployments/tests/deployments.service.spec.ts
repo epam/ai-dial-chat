@@ -68,11 +68,16 @@ describe('DeploymentsService facade', () => {
   it('delegates resolveDeploymentItem to DeploymentsLookupService', async () => {
     const { service, lookupService } = makeService();
 
-    const result = await service.resolveDeploymentItem('gpt-4o', 'token');
+    const result = await service.resolveDeploymentItem(
+      'gpt-4o',
+      'token',
+      'bucket',
+    );
 
     expect(lookupService.resolveDeploymentItem).toHaveBeenCalledWith(
       'gpt-4o',
       'token',
+      'bucket',
     );
     expect(result).toBe('lookup-resolve');
   });

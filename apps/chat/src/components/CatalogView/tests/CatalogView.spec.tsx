@@ -124,6 +124,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isPublishVisible,
     onUnpublish,
     isUnpublishVisible,
+    publishLabels,
     ruleSourceOptions,
     onFetchExistingRules,
     isShareVisible,
@@ -178,6 +179,11 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isPublishVisible?: (item: CatalogItem) => boolean;
     onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
+    publishLabels?: {
+      credentialsLabel?: string;
+      credentialsHint?: string;
+      historySharedCredentialsLabel?: string;
+    };
     ruleSourceOptions?: string[];
     onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isShareVisible?: (item: CatalogItem) => boolean;
@@ -228,6 +234,15 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
           {String(Boolean(isFullWidth))}
         </output>
         <output aria-label="Active tab">{activeTab ?? ''}</output>
+        <output aria-label="Publish credentials label">
+          {publishLabels?.credentialsLabel ?? ''}
+        </output>
+        <output aria-label="Publish credentials hint">
+          {publishLabels?.credentialsHint ?? ''}
+        </output>
+        <output aria-label="Publish history shared credentials label">
+          {publishLabels?.historySharedCredentialsLabel ?? ''}
+        </output>
         <button type="button" onClick={() => onActiveTabChange?.('PROMPT')}>
           switch to Prompts tab
         </button>
@@ -524,6 +539,7 @@ vi.mock('../../../server-api/skills.api', () => ({
   downloadSkill: vi.fn(),
   downloadSkillFile: vi.fn(),
   listSkillFiles: vi.fn(),
+  getSkillMetadata: vi.fn(),
   deleteSkill: vi.fn(),
 }));
 
@@ -671,6 +687,7 @@ describe('CatalogView', () => {
       status: UserConfigStatus.Ready,
       features: {},
       config: {
+        activeEventId: null,
         appVersion: '0.0.1',
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
@@ -679,17 +696,22 @@ describe('CatalogView', () => {
         mcpAppSandboxUrl: null,
         mcpAppTheme: null,
         mcpAppUserAgent: null,
+        mcpAppHostName: null,
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],
+        allowedConnectOrigins: [],
         enabledUiFeatures: null,
         announcementHtml: null,
         announcementTitle: null,
         announcementDescription: null,
         announcements: [],
+        welcomeScreenDescription: null,
         footerHtmlMessage: '',
         customVisualizers: [],
+        applicationVisualizers: {},
         publicationFilterSources: ['title', 'role', 'dial_roles'],
+        maxAttachmentFileSizeBytes: 536_870_912,
       },
     });
   });
@@ -775,6 +797,22 @@ describe('CatalogView', () => {
         'role',
         'dial_roles',
       ]);
+    });
+
+    /* `t` echoes the key here; what matters is that the app supplies all three. */
+    it('supplies the credentials labels the publish panel needs', () => {
+      render(<CatalogView />);
+
+      expect(
+        screen.getByLabelText('Publish credentials label').textContent,
+      ).toBe(CatalogI18nKeys.PublishCredentialsLabel);
+      expect(
+        screen.getByLabelText('Publish credentials hint').textContent,
+      ).toBe(CatalogI18nKeys.PublishCredentialsHint);
+      expect(
+        screen.getByLabelText('Publish history shared credentials label')
+          .textContent,
+      ).toBe(CatalogI18nKeys.PublishHistorySharedCredentials);
     });
   });
 

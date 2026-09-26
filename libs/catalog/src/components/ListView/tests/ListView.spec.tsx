@@ -1,7 +1,9 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { Grid } from '@epam/ai-dial-ui-kit/grid';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { ListView } from '../ListView';
 
@@ -14,62 +16,66 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit/grid', () => ({
-  Grid: ({
-    rowData,
-    emptyStateTitle,
-    additionalGridOptions,
-    ariaLabel,
-    withoutHeaderBorders,
-    alternateOddRowColors,
-    wrapCustomCellRenderers,
-  }: {
-    rowData: CatalogItem[];
-    emptyStateTitle?: string;
-    additionalGridOptions?: {
-      rowHeight?: number;
-      context?: {
-        onToggleFavorite?: (id: string, isStarred: boolean) => void;
-        selectedItemId?: string;
+  Grid: vi.fn(
+    ({
+      rowData,
+      emptyStateTitle,
+      additionalGridOptions,
+      ariaLabel,
+      withoutHeaderBorders,
+      alternateOddRowColors,
+      wrapCustomCellRenderers,
+    }: {
+      rowData: CatalogItem[];
+      emptyStateTitle?: string;
+      additionalGridOptions?: {
+        rowHeight?: number;
+        context?: {
+          onToggleFavorite?: (id: string, isStarred: boolean) => void;
+          selectedItemId?: string;
+        };
+        getRowClass?: (params: { data: CatalogItem }) => string | undefined;
       };
-      getRowClass?: (params: { data: CatalogItem }) => string | undefined;
-    };
-    ariaLabel?: string;
-    withoutHeaderBorders?: boolean;
-    alternateOddRowColors?: boolean;
-    wrapCustomCellRenderers?: boolean;
-    [key: string]: unknown;
-  }) => {
-    const ctx = additionalGridOptions?.context;
-    return (
-      <div
-        aria-label={ariaLabel}
-        data-row-height={additionalGridOptions?.rowHeight}
-        data-without-header-borders={String(Boolean(withoutHeaderBorders))}
-        data-alternate-odd-row-colors={String(Boolean(alternateOddRowColors))}
-        data-wrap-custom-cell-renderers={String(
-          Boolean(wrapCustomCellRenderers),
-        )}
-      >
-        {!rowData?.length && emptyStateTitle && <span>{emptyStateTitle}</span>}
-        {rowData?.map((item) => (
-          <div
-            key={item.id}
-            data-row-class={
-              additionalGridOptions?.getRowClass?.({ data: item }) ?? ''
-            }
-          >
-            <span>{item.id === ctx?.selectedItemId ? 'selected' : ''}</span>
-            <button
-              aria-label={`star ${item.id}`}
-              onClick={() =>
-                ctx?.onToggleFavorite?.(item.id, !(item.isStarred ?? false))
+      ariaLabel?: string;
+      withoutHeaderBorders?: boolean;
+      alternateOddRowColors?: boolean;
+      wrapCustomCellRenderers?: boolean;
+      [key: string]: unknown;
+    }) => {
+      const ctx = additionalGridOptions?.context;
+      return (
+        <div
+          aria-label={ariaLabel}
+          data-row-height={additionalGridOptions?.rowHeight}
+          data-without-header-borders={String(Boolean(withoutHeaderBorders))}
+          data-alternate-odd-row-colors={String(Boolean(alternateOddRowColors))}
+          data-wrap-custom-cell-renderers={String(
+            Boolean(wrapCustomCellRenderers),
+          )}
+        >
+          {!rowData?.length && emptyStateTitle && (
+            <span>{emptyStateTitle}</span>
+          )}
+          {rowData?.map((item) => (
+            <div
+              key={item.id}
+              data-row-class={
+                additionalGridOptions?.getRowClass?.({ data: item }) ?? ''
               }
-            />
-          </div>
-        ))}
-      </div>
-    );
-  },
+            >
+              <span>{item.id === ctx?.selectedItemId ? 'selected' : ''}</span>
+              <button
+                aria-label={`star ${item.id}`}
+                onClick={() =>
+                  ctx?.onToggleFavorite?.(item.id, !(item.isStarred ?? false))
+                }
+              />
+            </div>
+          ))}
+        </div>
+      );
+    },
+  ),
 }));
 
 const makeItem = (
@@ -87,6 +93,10 @@ const makeItem = (
 describe('ListView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('renders without crashing', () => {
@@ -218,6 +228,90 @@ describe('ListView', () => {
     expect(container.querySelectorAll('[data-row-class]')).toHaveLength(5);
   });
 
+  it('scrolls between bounded row windows without reconfiguring columns or animating rows', () => {
+    const items = Array.from({ length: 200 }, (_, i) =>
+      makeItem({ id: `item-${i}`, name: `Model ${i}` }),
+    );
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(600);
+    const getWidth = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockReturnValue(1100);
+    let scrollTop = 0;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        return {
+          top: this.getAttribute('aria-label') === 'Results' ? 0 : -scrollTop,
+        } as DOMRect;
+      },
+    );
+    render(
+      <div role="region" aria-label="Results" style={{ overflowY: 'auto' }}>
+        <ListView type={CatalogEntityType.Model} items={items} />
+      </div>,
+    );
+    const initialProps = vi.mocked(Grid).mock.lastCall?.[0];
+    const retainedRow = screen.getByRole('button', { name: 'star item-15' });
+    const scroller = screen.getByRole('region', { name: 'Results' });
+
+    scrollTop = 1200;
+    fireEvent.scroll(scroller);
+
+    expect(screen.queryByRole('button', { name: 'star item-0' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'star item-15' })).toBe(
+      retainedRow,
+    );
+    expect(screen.getByRole('button', { name: 'star item-39' })).toBeTruthy();
+    expect(screen.getAllByRole('button')).toHaveLength(30);
+    const scrolledProps = vi.mocked(Grid).mock.lastCall?.[0];
+    expect(scrolledProps?.columnDefs).toBe(initialProps?.columnDefs);
+    expect(scrolledProps?.additionalGridOptions).toBe(
+      initialProps?.additionalGridOptions,
+    );
+    expect(scrolledProps?.additionalGridOptions).toMatchObject({
+      domLayout: 'autoHeight',
+      animateRows: false,
+      suppressAnimationFrame: true,
+      suppressScrollOnNewData: true,
+    });
+
+    scrollTop = 10800;
+    getWidth.mockReturnValue(0);
+    fireEvent.scroll(scroller);
+    expect(screen.getByRole('button', { name: 'star item-15' })).toBe(
+      retainedRow,
+    );
+
+    getWidth.mockReturnValue(1100);
+    fireEvent.scroll(scroller);
+    expect(screen.getByRole('button', { name: 'star item-180' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'star item-199' })).toBeTruthy();
+    expect(screen.getAllByRole('button')).toHaveLength(30);
+
+    scrollTop = 0;
+    fireEvent.scroll(scroller);
+    expect(screen.getByRole('button', { name: 'star item-0' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'star item-180' })).toBeNull();
+  });
+
+  it('can clear and restore results after the table has been mounted', () => {
+    const items = [makeItem({ id: 'item-1', name: 'Test' })];
+    const { rerender } = render(
+      <ListView type={CatalogEntityType.Model} items={items} />,
+    );
+
+    rerender(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={[]}
+        emptyStateTitle="No results"
+      />,
+    );
+    expect(screen.getByText('No results')).toBeTruthy();
+
+    rerender(<ListView type={CatalogEntityType.Model} items={items} />);
+    expect(screen.getByRole('button', { name: 'star item-1' })).toBeTruthy();
+  });
+
   it('reserves the height of the rows outside the window', () => {
     const items = Array.from({ length: 200 }, (_, i) =>
       makeItem({ id: `item-${i}`, name: `Model ${i}` }),
@@ -284,5 +378,52 @@ describe('ListView', () => {
         .getByLabelText('Catalog')
         .getAttribute('data-alternate-odd-row-colors'),
     ).toBe('false');
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('ListView — public class names', () => {
+  it('stamps the list box when there are rows', () => {
+    render(
+      <ListView
+        items={[makeItem({ id: 'item-1', name: 'Claude' })]}
+        query=""
+        type={CatalogEntityType.Model}
+        ariaLabel="Catalog"
+      />,
+    );
+
+    /* The row's cells come from stubbed renderers; its star control is what
+       this file can reach. */
+    expect(
+      closestWithClass(
+        screen.getByRole('button', { name: 'star item-1' }),
+        CATALOG_CLASS.listView,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('stamps the empty state, which is a root of its own', () => {
+    render(
+      <ListView
+        items={[]}
+        query=""
+        type={CatalogEntityType.Model}
+        ariaLabel="Catalog"
+        emptyStateTitle="No items"
+      />,
+    );
+
+    expect(
+      closestWithClass(screen.getByText('No items'), CATALOG_CLASS.listView),
+    ).toBeTruthy();
   });
 });

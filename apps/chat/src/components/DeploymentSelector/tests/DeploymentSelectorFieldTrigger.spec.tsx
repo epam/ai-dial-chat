@@ -164,6 +164,38 @@ describe('DeploymentSelectorFieldTrigger', () => {
 });
 
 describe('DeploymentSelectorFieldTrigger — mobile', () => {
+  it('keeps an open field and its host panel when switching between desktop and mobile', async () => {
+    mockOverlay();
+    const user = userEvent.setup({ delay: null });
+    const props = {
+      selectedId: null,
+      onSelect: vi.fn(),
+      placeholder: 'Choose model',
+    };
+    const { rerender } = renderTrigger(props);
+    await user.click(screen.getByRole('combobox'));
+    expect(await screen.findByText('overlay content')).toBeTruthy();
+
+    breakpoint.isMobile = true;
+    rerender(
+      <DeploymentSelectorFieldTrigger {...props} className="mobile-host" />,
+    );
+    const sheet = await screen.findByRole('dialog', {
+      name: 'deploymentSelector.ariaLabel',
+    });
+    expect(within(sheet).getByText('overlay content')).toBeTruthy();
+    expect(screen.getAllByRole('combobox')).toHaveLength(1);
+
+    breakpoint.isMobile = false;
+    rerender(
+      <DeploymentSelectorFieldTrigger {...props} className="desktop-host" />,
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(await screen.findByText('overlay content')).toBeTruthy();
+    await user.click(screen.getByText('overlay content'));
+    expect(screen.queryByText('overlay content')).toBeNull();
+  });
+
   it('opens the selector in a bottom sheet dialog when the field is tapped', async () => {
     breakpoint.isMobile = true;
     mockOverlay();

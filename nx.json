@@ -71,8 +71,21 @@
     "build": {
       "dependsOn": ["^build", "^typecheck"]
     },
+    "typecheck": {
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/tsconfig.base.json",
+        {
+          "dependentTasksOutputFiles": "**/*.{d.ts,d.cts,d.mts,tsbuildinfo}",
+          "transitive": true
+        },
+        { "externalDependencies": ["typescript"] }
+      ],
+      "outputs": ["{projectRoot}/out-tsc/**"]
+    },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "options": {
         "passWithNoTests": true
       }

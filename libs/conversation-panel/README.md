@@ -74,8 +74,11 @@ row. The list then stays on whichever tab is active — `FilterTab.All` unless
 `activeFilter` says otherwise — so every group remains visible; only the
 control disappears. `labels.filterLabels` stays required either way.
 
-The row renders each filter as a ui-kit `Tag` in its `TagAppearance.Selectable`
-appearance, so the chips take their colors from the active theme's tag tokens.
+The row is the ui-kit's `FilterChips`, which draws each filter as a `Tag` in
+its `TagAppearance.Selectable` appearance, so the chips take their colors from
+the active theme's tag tokens. This component only maps the panel's vocabulary
+onto it: `FilterTab` values, the host's `filterLabels`, and `hiddenSources` as
+an exclusion list.
 It is a named `role="group"` of toggle chips — the selected one carries
 `aria-pressed` — not a `tablist`, because the chips filter the list in place
 rather than switching between panels. `labels.filterLabels.groupAriaLabel` names
@@ -106,9 +109,91 @@ The New chat button is not on this list on purpose: it is a labelled button, so
 it reads the ui-kit's own `--radius-control` and stays in step with every other
 button in the host app.
 
+Its height and elevation are classes rather than properties, and
+`styles.newChatButtonClassName` is merged after them, so a `h-*` or `shadow-*`
+utility passed there replaces the default instead of landing beside it:
+
+```tsx
+<ConversationPanel
+  {...props}
+  styles={{ newChatButtonClassName: 'h-[44px] shadow-md' }}
+/>
+```
+
+Colors stay on `styles.newChatButton` (`background`, `text`, `focusOutline`),
+which sets them as custom properties.
+
 `styles.searchWrapperClassName` remains for anything else the search wrapper
 needs; a `rounded-*` utility passed there still wins over `--cp-search-radius`,
 since a host's utilities are emitted after this package's stylesheet.
+
+### Header
+
+The panel renders a 64 px header inside `SidebarPanel`. `styles.headerClassName`
+is merged after that height and `styles.headerActionsClassName` onto the cluster
+holding `headerActions` and the panel toggle, so a `h-*` or `gap-*` passed here
+replaces the default rather than competing with it at equal specificity — which
+is what a rule on `.dial-sb-header` does:
+
+```tsx
+<ConversationPanel
+  {...props}
+  headerActions={<CollapseButton />}
+  styles={{
+    headerClassName: 'h-[56px] px-4',
+    headerActionsClassName: 'gap-2',
+  }}
+/>
+```
+
+## Public class names
+
+The panel's controls carry stable `dial-cp-*` classes in addition to their
+internal classes. Target those instead of DOM-order selectors or hashed
+CSS-module names. The names are exported so you never hardcode them:
+
+```tsx
+import { CONVERSATION_PANEL_CLASS } from '@epam/ai-dial-conversation-panel';
+
+CONVERSATION_PANEL_CLASS.search; // 'dial-cp-search'
+```
+
+| Class                     | Element                                             |
+| ------------------------- | --------------------------------------------------- |
+| `dial-cp-new-chat-button` | The new-chat button                                 |
+| `dial-cp-search`          | The `role="search"` wrapper around the search field |
+
+The panel renders inside `SidebarPanel`, so `dial-sb-aside` and
+`dial-sb-header` from `@epam/ai-dial-sidebar` are available on the surrounding
+chrome.
+
+These classes carry no declarations of their own, so they change nothing until
+you style them.
+
+### Replacing fragile selectors
+
+| Instead of                                                             | Use                               |
+| ---------------------------------------------------------------------- | --------------------------------- |
+| `[role='complementary'] > div:nth-child(2) > div:first-child > button` | `.dial-cp-new-chat-button`        |
+| `[role='search'] .dial-kit-input`                                      | `.dial-cp-search .dial-kit-input` |
+
+`dial-kit-input` is itself a public class of `@epam/ai-dial-ui-kit`, so
+descending to it from `dial-cp-search` is supported — what was fragile was the
+`role='search'` half.
+
+### Stability
+
+A `dial-cp-*` class is public API: renaming it, removing it, or moving it to a
+different element is a breaking change, announced in the release notes and
+recorded here with its replacement. The element itself stays free — its Tailwind
+utilities, its CSS-module class, and its position in the DOM may all change.
+
+Your own overrides are responsible for direction: the class names are
+direction-agnostic and identical under `dir="rtl"`, so use CSS logical
+properties (`padding-inline-start`, `inset-inline-end`) rather than physical ones.
+
+The full convention is in
+[`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 ## Enums
 
@@ -158,11 +243,39 @@ interface ConversationItem {
   iconTooltip?: string;
   isIconLoading?: boolean;
   href?: string;
-  showTaskBadge?: boolean;
-  taskBadgeLabel?: string;
+  leadingIcon?: ReactNode;
   isUnread?: boolean;
 }
 ```
+
+- `leadingIcon` replaces the deployment avatar (`iconUrl`, `iconTooltip` and
+  `isIconLoading` are then ignored). The panel gives it no meaning of its own:
+  pass a decorative, `aria-hidden` node that fits the 24px avatar slot.
+- `isUnread` sets the title in `dial-small-semi-text` and renders a dot at the
+  row's trailing edge, with a visually hidden `unreadIndicatorLabel`. While the
+  row's actions trigger is visible (hover, focus, open menu) the dot is hidden
+  and the trigger takes its place; the label keeps announcing the state. The
+  dot color is `colors.unreadDot`.
+
+```tsx
+import type { ConversationItem } from '@epam/ai-dial-conversation-panel';
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconCalendarTime } from '@tabler/icons-react';
+
+const item: ConversationItem = {
+  id: 'bucket/gpt-4__Daily digest__run-1',
+  title: 'Daily digest',
+  leadingIcon: (
+    <IconCalendarTime size={24} stroke={DIAL_KIT_ICON_STROKE} aria-hidden />
+  ),
+  isUnread: true,
+};
+```
+
+**Breaking since the TASK pill was removed:** `showTaskBadge`, `taskBadgeLabel`,
+`ConversationColors.taskBadgeBorder` / `taskBadgeBackground` / `taskBadgeText`,
+and `ConversationPanelStyles.taskBadgeClassName` no longer exist. Pass
+`leadingIcon` to mark a row and keep passing `isUnread`.
 
 The panel does not sort — it renders `conversations` in the order given, so
 recency ordering is the host's job. Grouping is derived from `isPinned` and
@@ -258,28 +371,30 @@ The component has no retry control. `retryJob` stays on `useConversationExport` 
 
 An `InProgress` row shows an indeterminate spinner, never its own percentage. The one place `progress.percent` is rendered is the **collapsed** queue: while collapsed with at least one job still in progress, a determinate progress bar sits under the header showing the mean percent across all jobs. Expanded, the per-row spinners already convey activity, so no bar is drawn.
 
-A job with status `Warning` — one that delivered its file but skipped part of it, such as an attachment that could not be downloaded — renders an amber icon named by `jobWarningMessage(job.warningCode)`. It is not counted in the failed-count badge and raises no close confirmation, but it does suppress the success-only auto-close, so a warning is never dismissed before it is read.
+A job with status `Warning` — one that delivered its file but skipped part of it, such as an attachment that could not be downloaded — renders an amber icon named by `jobWarningMessage(job.warningCode, job.warningNames)`. It is not counted in the failed-count badge and raises no close confirmation, but it does suppress the success-only auto-close, so a warning is never dismissed before it is read.
+
+Import jobs provide unique skipped attachment names in `job.warningNames`. Use the optional second label argument to interpolate the host translation, and provide generic text when names are absent. The callback result is used for both the tooltip and accessible name. Existing callbacks that accept only the code continue to work.
 
 ### ImportExportQueueLabels
 
-| Field                                    | Type                                                             | Description                                                              |
-| ---------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `cancelJobAriaLabel`                     | `(fileName: string) => string`                                   | Accessible name for cancelling an in-progress job                        |
-| `canceledLabel`                          | `string`                                                         | Trailing text shown on a canceled row                                    |
-| `jobErrorMessage`                        | `(code: ConversationTransferErrorCode \| undefined) => string`   | Tooltip and accessible name explaining why a job failed                  |
-| `jobProgressAriaLabel`                   | `(fileName: string) => string`                                   | Accessible name for a row's in-progress spinner                          |
-| `jobWarningMessage`                      | `(code: ConversationTransferWarningCode \| undefined) => string` | Tooltip and accessible name explaining what a warned job left out        |
-| `queueProgressAriaLabel`                 | `string`                                                         | Accessible name for the collapsed queue's aggregate progress bar         |
-| `queueProgressValueText`                 | `(completed: number, total: number) => string`                   | The aggregate bar's `aria-valuetext`, given settled and total job counts |
-| `collapseQueueAriaLabel`                 | `string`                                                         | Accessible name for the collapse toggle                                  |
-| `expandQueueAriaLabel`                   | `string`                                                         | Accessible name for the expand toggle                                    |
-| `closeQueueAriaLabel`                    | `string`                                                         | Accessible name for the close button                                     |
-| `closeQueueConfirmHeader`                | `string`                                                         | Heading of the close-confirmation dialog                                 |
-| `closeQueueConfirmDescriptionInProgress` | `string`                                                         | Dialog description when jobs are in progress                             |
-| `closeQueueConfirmDescriptionFailed`     | `string`                                                         | Dialog description when jobs have failed                                 |
-| `closeQueueConfirmDescriptionMixed`      | `string`                                                         | Dialog description when jobs are both in-progress and failed             |
-| `closeLabel`                             | `string`                                                         | Confirm button label in the dialog                                       |
-| `cancelLabel`                            | `string`                                                         | Cancel button label in the dialog                                        |
+| Field                                    | Type                                                                               | Description                                                              |
+| ---------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `cancelJobAriaLabel`                     | `(fileName: string) => string`                                                     | Accessible name for cancelling an in-progress job                        |
+| `canceledLabel`                          | `string`                                                                           | Trailing text shown on a canceled row                                    |
+| `jobErrorMessage`                        | `(code: ConversationTransferErrorCode \| undefined) => string`                     | Tooltip and accessible name explaining why a job failed                  |
+| `jobProgressAriaLabel`                   | `(fileName: string) => string`                                                     | Accessible name for a row's in-progress spinner                          |
+| `jobWarningMessage`                      | `(code: ConversationTransferWarningCode \| undefined, names?: string[]) => string` | Tooltip and accessible name explaining what a warned job left out        |
+| `queueProgressAriaLabel`                 | `string`                                                                           | Accessible name for the collapsed queue's aggregate progress bar         |
+| `queueProgressValueText`                 | `(completed: number, total: number) => string`                                     | The aggregate bar's `aria-valuetext`, given settled and total job counts |
+| `collapseQueueAriaLabel`                 | `string`                                                                           | Accessible name for the collapse toggle                                  |
+| `expandQueueAriaLabel`                   | `string`                                                                           | Accessible name for the expand toggle                                    |
+| `closeQueueAriaLabel`                    | `string`                                                                           | Accessible name for the close button                                     |
+| `closeQueueConfirmHeader`                | `string`                                                                           | Heading of the close-confirmation dialog                                 |
+| `closeQueueConfirmDescriptionInProgress` | `string`                                                                           | Dialog description when jobs are in progress                             |
+| `closeQueueConfirmDescriptionFailed`     | `string`                                                                           | Dialog description when jobs have failed                                 |
+| `closeQueueConfirmDescriptionMixed`      | `string`                                                                           | Dialog description when jobs are both in-progress and failed             |
+| `closeLabel`                             | `string`                                                                           | Confirm button label in the dialog                                       |
+| `cancelLabel`                            | `string`                                                                           | Cancel button label in the dialog                                        |
 
 ### ImportExportQueueStyles
 

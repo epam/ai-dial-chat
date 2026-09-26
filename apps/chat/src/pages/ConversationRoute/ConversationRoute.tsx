@@ -16,6 +16,10 @@ import type {
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
+  useComposerSeed,
+  useComposerSeedSource,
+} from '@epam/ai-dial-conversation-input';
+import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -84,13 +88,23 @@ const ConversationRoute: FC = () => {
     state as { pendingPrompt?: PendingParametersPrompt } | null
   )?.pendingPrompt;
   const routeSkillId = (state as { skillId?: string } | null)?.skillId;
-  const [inputMessage, setInputMessage] = useState<string | undefined>();
-  const [inputMessageRevision, setInputMessageRevision] = useState(0);
+  /*
+   * Merges every one-shot "seed the composer" source — a picked prompt's
+   * route state, a non-submitting starter selection, and the skill hook's
+   * own message/messageRevision push (a mention insertion) — into the one
+   * message/messageRevision pair `NewConversationComposer` accepts.
+   */
+  const {
+    message: composerSeedText,
+    messageRevision: composerSeedRevision,
+    seedMessage: seedComposerText,
+  } = useComposerSeed();
   /*
    * A picked prompt is inserted at the caret rather than written to
-   * `inputMessage`, so it cannot discard a draft the user has already typed on
-   * this screen (issue #8754). The route-state seeding below still replaces,
-   * because it arrives with a fresh navigation onto an empty composer.
+   * `composerSeed`, so it cannot discard a draft the user has already typed
+   * on this screen (issue #8754). The route-state seeding below still
+   * replaces, because it arrives with a fresh navigation onto an empty
+   * composer.
    */
   const [inputInsertion, setInputInsertion] = useState({
     revision: 0,
@@ -147,14 +161,24 @@ const ConversationRoute: FC = () => {
     commandMenu,
     skillCatalogModal,
     skillDetailsPanel,
-    selectedSkillElement,
+    message: skillMessage,
+    messageRevision: skillMessageRevision,
+    activeMentions,
+    onDraftChange,
+    onBackspaceAtCaret,
+    caretPositionOverride,
     selectedSkills,
     isSkillUnsupported,
-    selectSkill,
-    removeSelectedSkill,
+    selectSkillByUrl,
+    resetSkillMentions,
+    seedSkillMentions,
   } = useSkillSelectorOverlay({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
+
+  useComposerSeedSource(skillMessageRevision, () =>
+    seedComposerText(skillMessage),
+  );
   /*
    * The first message's skills payload comes from the overlay hook. On a
    * successful create this route navigates away and unmounts (clearing the
@@ -252,10 +276,9 @@ const ConversationRoute: FC = () => {
    */
   useEffect(() => {
     if (routePromptContent == null) return;
-    setInputMessage(routePromptContent);
-    setInputMessageRevision((prev) => prev + 1);
+    seedComposerText(routePromptContent);
     navigate(pathname, { replace: true, state: null });
-  }, [routePromptContent, navigate, pathname]);
+  }, [routePromptContent, navigate, pathname, seedComposerText]);
 
   /*
    * Seeds the "Prompt parameters" popup from a parameterized prompt the user
@@ -277,9 +300,9 @@ const ConversationRoute: FC = () => {
    */
   useEffect(() => {
     if (routeSkillId == null) return;
-    selectSkill(routeSkillId);
+    selectSkillByUrl(routeSkillId);
     navigate(pathname, { replace: true, state: null });
-  }, [routeSkillId, selectSkill, navigate, pathname]);
+  }, [routeSkillId, selectSkillByUrl, navigate, pathname]);
 
   /*
    * This is the "no conversation selected" empty state. Overlay mode must
@@ -306,7 +329,8 @@ const ConversationRoute: FC = () => {
     },
   );
 
-  const deploymentItems: DeploymentItem[] = useMemo(    () =>
+  const deploymentItems: DeploymentItem[] = useMemo(
+    () =>
       items.map(
         ({
           id,
@@ -371,25 +395,29 @@ const ConversationRoute: FC = () => {
       if (!selectedItemId) return;
       const attachmentDtos = attachmentsToDtos(attachments || []);
       const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
-      const conversation = await apiCreateConversation(
-        message,
-        selectedItemId,
-        attachmentDtos,
-        hasToolConfig ? toolConfigurationValue : undefined,
-        undefined,
-        selectedSkills,
-      );
+      const skillsForSend = selectedSkills;
+      resetSkillMentions();
+
+      let conversation: ConversationResponseDto;
+      try {
+        conversation = await apiCreateConversation(
+          message,
+          selectedItemId,
+          attachmentDtos,
+          hasToolConfig ? toolConfigurationValue : undefined,
+          undefined,
+          skillsForSend,
+        );
+      } catch (err) {
+        seedSkillMentions(message, skillsForSend);
+        throw err;
+      }
+
       // TODO: remove in next release
       const isolatedName =
         isIsolatedView && isolatedModelId
           ? `isolated_${sanitizeIsolatedModelId(isolatedModelId)}`
           : null;
-      if (isolatedName) {
-        await renameConversation(
-          getConversationPath(conversation.id),
-          isolatedName,
-        );
-      }
       const savedConversation = {
         ...conversation,
         ...(isolatedName ? { name: isolatedName } : {}),
@@ -397,10 +425,30 @@ const ConversationRoute: FC = () => {
         temperature: chatSettingsValues.temperature,
         responseFormat: chatSettingsValues.responseFormat,
       } as ConversationResponseDto;
-      await saveConversation(
-        getConversationPath(conversation.id),
-        savedConversation,
-      );
+
+      try {
+        if (isolatedName) {
+          await renameConversation(
+            getConversationPath(conversation.id),
+            isolatedName,
+          );
+        }
+        await saveConversation(
+          getConversationPath(conversation.id),
+          savedConversation,
+        );
+      } catch (err) {
+        /*
+         * The conversation already exists on the server at this point, so
+         * navigate to it instead of restoring the composer — restoring it
+         * would let the user retry and create a duplicate conversation.
+         */
+        navigate(getConversationRoute(conversation.id), {
+          state: { conversation: savedConversation },
+        });
+        throw err;
+      }
+
       navigate(getConversationRoute(conversation.id), {
         state: { conversation: savedConversation },
       });
@@ -412,6 +460,8 @@ const ConversationRoute: FC = () => {
       isIsolatedView,
       isolatedModelId,
       selectedSkills,
+      resetSkillMentions,
+      seedSkillMentions,
     ],
   );
 
@@ -460,7 +510,7 @@ const ConversationRoute: FC = () => {
         void createAndNavigate();
       } else {
         const text = getStarterConversationText(starter, description);
-        setInputMessage(text);
+        seedComposerText(text);
       }
     },
     [
@@ -468,6 +518,7 @@ const ConversationRoute: FC = () => {
       propertyKey,
       selectedItemId,
       navigate,
+      seedComposerText,
       showErrorNotification,
       t,
       toolConfigurationValue,
@@ -503,14 +554,16 @@ const ConversationRoute: FC = () => {
         isInputDisabled={isInputDisabled}
         placeholder={t(ChatI18nKeys.Placeholder)}
         introText={starterIntroText}
-        message={inputMessage}
-        messageRevision={inputMessageRevision}
+        message={composerSeedText}
+        messageRevision={composerSeedRevision}
+        onChange={onDraftChange}
         inputInsertion={inputInsertion}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
         menuOverlays={menuOverlays}
-        inlineStartSlot={selectedSkillElement}
-        onInlineStartRemove={removeSelectedSkill}
+        activeMentions={activeMentions}
+        onBackspaceAtCaret={onBackspaceAtCaret}
+        caretPositionOverride={caretPositionOverride}
         isSkillUnsupported={isSkillUnsupported}
         commandMenu={commandMenu}
         toolsMenuItems={toolsMenuItems}

@@ -7,7 +7,7 @@
  */
 export interface AcceptInvitationResponseDto {
   /**
-   * Identifier (DIAL Core resource path) of the entity the invitation grants access to.
+   * Identifier (DIAL Core resource path) of the entity the invitation grants access to. A prompt path is returned decoded, matching the id its listing endpoints report.
    * @type {string}
    * @memberof AcceptInvitationResponseDto
    */
@@ -434,6 +434,98 @@ export interface ApplicationDto {
 /**
  *
  * @export
+ * @interface ApplicationExternalServiceDto
+ */
+export interface ApplicationExternalServiceDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  authenticationType: ApplicationExternalServiceDtoAuthenticationTypeEnum;
+  /**
+   * USER-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  userLevelAuthStatus?: string;
+  /**
+   * APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  appLevelAuthStatus?: string;
+  /**
+   * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  globalAuthStatus?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationExternalServiceDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  codeChallenge?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  codeChallengeMethod?: string;
+  /**
+   * External-service identifier within the application
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  id: string;
+}
+
+/**
+ * @export
+ */
+export const ApplicationExternalServiceDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+  DialNative: 'DIAL_NATIVE',
+} as const;
+export type ApplicationExternalServiceDtoAuthenticationTypeEnum =
+  (typeof ApplicationExternalServiceDtoAuthenticationTypeEnum)[keyof typeof ApplicationExternalServiceDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
  * @interface ApplicationSchemaSummaryDto
  */
 export interface ApplicationSchemaSummaryDto {
@@ -486,6 +578,91 @@ export interface ApplicationSchemasResponseDto {
    * @memberof ApplicationSchemasResponseDto
    */
   schemas: Array<ApplicationSchemaSummaryDto>;
+}
+/**
+ *
+ * @export
+ * @interface ApplicationVisualizerDto
+ */
+export interface ApplicationVisualizerDto {
+  /**
+   * The postMessage protocol namespace, NOT a display label. Every message exchanged with the iframe is prefixed "${title}/…", and the visualizer application must be constructed with this identical string as its appName. A mismatch is a silent failure — the iframe loads but never receives data. Also used as the inline frame's header text.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  title: string;
+  /**
+   * Human-readable description of the visualizer. Accepted for schema parity; not consumed by the host UI.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  description?: string;
+  /**
+   * Icon URL or identifier for the visualizer. Accepted for schema parity; not consumed by the host UI.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  icon?: string;
+  /**
+   * MIME type(s) this entry claims, as a comma-separated list (e.g. "application/vnd.plotly.v1+json, application/vnd.vega.v5+json"). Optional, unlike the required field of the same name on CustomVisualizerDto: when omitted, the entry claims every attachment of the message that carries a URL. Attachments it does not claim render as ordinary attachment tiles.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  contentType?: string;
+  /**
+   * Absolute HTTP(S) URL of the visualizer iframe.
+   * @type {string}
+   * @memberof ApplicationVisualizerDto
+   */
+  url: string;
+  /**
+   * Milliseconds to wait for a send() request response before rejecting. Defaults to 10000 when unset. Does not bound the initial READY_TO_INTERACT handshake.
+   * @type {number}
+   * @memberof ApplicationVisualizerDto
+   */
+  requestTimeout?: number;
+  /**
+   * Suggested initial width of the visualizer surface in pixels.
+   * @type {number}
+   * @memberof ApplicationVisualizerDto
+   */
+  width?: number;
+  /**
+   * Suggested initial height of the visualizer surface in pixels. Also used by the host to size the inline frame in the message.
+   * @type {number}
+   * @memberof ApplicationVisualizerDto
+   */
+  height?: number;
+  /**
+   * Suggested height on mobile-sized screens in pixels. Also used by the host to size the inline frame on a mobile viewport.
+   * @type {number}
+   * @memberof ApplicationVisualizerDto
+   */
+  mobileHeight?: number;
+  /**
+   * Whether the host should pass auth info to the visualizer. Accepted for schema parity; inert, because 1.0 auth is server-side and the browser holds no access token.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  passAuthInfo?: boolean;
+  /**
+   * Whether the host should pass an explicit access token. Accepted for schema parity; inert, because 1.0 auth is server-side and the browser holds no access token.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  passExplicitToken?: boolean;
+  /**
+   * When true, the inline frame renders without its border, rounded corners, background, and header divider. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  borderless?: boolean;
+  /**
+   * When true, the inline frame hides its header title text; the header actions stay visible. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  withoutTitle?: boolean;
 }
 /**
  *
@@ -780,6 +957,18 @@ export interface Check200Response {
  */
 export interface ClientConfigDto {
   /**
+   * Whether a text refinement model is configured. Missing means unavailable.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  aiTextRefinementAvailable?: boolean;
+  /**
+   * Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  activeEventId: string | null;
+  /**
    * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Always a non-empty string.
    * @type {string}
    * @memberof ClientConfigDto
@@ -828,6 +1017,12 @@ export interface ClientConfigDto {
    */
   mcpAppUserAgent?: string | null;
   /**
+   * Host application identifier sent to every mounted MCP App as hostInfo.name during its ui/initialize handshake. Null when MCP_APP_HOST_NAME is not configured — defaults to "ai-dial-chat" on the client.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  mcpAppHostName?: string | null;
+  /**
    * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
@@ -845,6 +1040,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   overlayAllowedOrigins: Array<string>;
+  /**
+   * Trusted HTTP(S) connection origins from ALLOWED_CONNECT_ORIGINS, including leading *. subdomain patterns. PDF previews use browser credentials for matching external origins and reject redirects. Empty by default; upstream credentialed CORS and browser cookie policy still apply.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  allowedConnectOrigins?: Array<string>;
   /**
    * When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.
    * @type {Array<string>}
@@ -876,6 +1077,12 @@ export interface ClientConfigDto {
    */
   announcements: Array<AnnouncementItemDto>;
   /**
+   * Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  welcomeScreenDescription?: string | null;
+  /**
    * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
    * @type {string}
    * @memberof ClientConfigDto
@@ -888,11 +1095,29 @@ export interface ClientConfigDto {
    */
   customVisualizers: Array<CustomVisualizerDto>;
   /**
+   * Registry of application id → grouped visualizer mappings, keyed by a message's effective deployment id. Sourced from APPLICATION_VISUALIZERS. Every attachment an entry claims is delivered to one iframe together; an entry takes precedence over customVisualizers for the attachments it claims. The origin of each entry URL must also appear in ALLOWED_IFRAME_ORIGINS or the browser blocks the iframe. Each entry's passAuthInfo and passExplicitToken are accepted for configuration parity and are not consumed — auth is server-side and the browser holds no access token. Empty when unset — the feature is dark by default.
+   * @type {{ [key: string]: ApplicationVisualizerDto; }}
+   * @memberof ClientConfigDto
+   */
+  applicationVisualizers: { [key: string]: ApplicationVisualizerDto };
+  /**
+   * Public client-owned variables from CUSTOM_CLIENT_VARIABLES. Arbitrary JSON object; empty when unset or invalid. The BFF does not interpret its keys. Never put secrets here.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ClientConfigDto
+   */
+  customVariables: { [key: string]: unknown };
+  /**
    * Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.
    * @type {Array<string>}
    * @memberof ClientConfigDto
    */
   publicationFilterSources: Array<string>;
+  /**
+   * Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  maxAttachmentFileSizeBytes: number;
 }
 
 /**
@@ -1036,6 +1261,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   title: string;
+  /**
+   * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  createdAt?: number;
   /**
    * Unix epoch milliseconds of the last update.
    * @type {number}
@@ -1436,6 +1667,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   llmNamingDone?: boolean;
+  /**
+   * Open, feature-keyed container for conversation-level view state. Currently defines exactly one key, `annotations`, holding the pool of html_tag citation annotations accumulated across the conversation. Any other key is opaque and preserved as-is.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ConversationResponseDto
+   */
+  customViewState?: { [key: string]: unknown };
 }
 
 /**
@@ -1851,11 +2088,17 @@ export interface CreateScheduledTaskBodyDto {
    */
   model: string;
   /**
-   *
+   * Instructions; may be empty when the effective task has a skill.
    * @type {string}
    * @memberof CreateScheduledTaskBodyDto
    */
   prompt: string;
+  /**
+   * DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  skillUrl?: string | null;
   /**
    *
    * @type {string}
@@ -1980,6 +2223,12 @@ export interface CreatedScheduledTaskDto {
    */
   isActive?: boolean;
   /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
+  /**
    *
    * @type {boolean}
    * @memberof CreatedScheduledTaskDto
@@ -2015,6 +2264,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**
@@ -3997,6 +4252,12 @@ export interface GetExternalServiceResponseDto {
    */
   userLevelAuthStatus?: string;
   /**
+   * APPLICATION-level status. For DIAL_NATIVE, indicates application consent managed by an administrator.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  appLevelAuthStatus?: string;
+  /**
    * GLOBAL-level credential status ('SIGNED_IN' | 'SIGNED_OUT' | 'FAILED'), when Core reports one.
    * @type {string}
    * @memberof GetExternalServiceResponseDto
@@ -4041,6 +4302,7 @@ export const GetExternalServiceResponseDtoAuthenticationTypeEnum = {
   None: 'NONE',
   ApiKey: 'API_KEY',
   Oauth: 'OAUTH',
+  DialNative: 'DIAL_NATIVE',
 } as const;
 export type GetExternalServiceResponseDtoAuthenticationTypeEnum =
   (typeof GetExternalServiceResponseDtoAuthenticationTypeEnum)[keyof typeof GetExternalServiceResponseDtoAuthenticationTypeEnum];
@@ -5168,6 +5430,12 @@ export interface PublishCatalogEntityDto {
    * @memberof PublishCatalogEntityDto
    */
   rules?: Array<PublishRuleDto>;
+  /**
+   * Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.
+   * @type {boolean}
+   * @memberof PublishCatalogEntityDto
+   */
+  publishCredentials?: boolean;
 }
 /**
  *
@@ -5267,6 +5535,12 @@ export interface PublishHistoryEntryDto {
    * @memberof PublishHistoryEntryDto
    */
   publishedBy: string;
+  /**
+   * Whether this publication requested that the publisher's own credential for the entity be published alongside it. Reports what was requested, not what DIAL Core ultimately applied — Core is the authority on that. A publication that predates the field reports `false`.
+   * @type {boolean}
+   * @memberof PublishHistoryEntryDto
+   */
+  publishCredentials: boolean;
 }
 
 /**
@@ -5414,11 +5688,11 @@ export interface RateMessageDto {
    */
   modelId: string;
   /**
-   * Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.
+   * Rating value — 1 (like/thumbs-up), -1 (dislike/thumbs-down), or null to clear a previously sent rating. DIAL Core's `/v1/{modelId}/rate` only accepts a boolean `rate`: this value is mapped to `true` for 1 and to `false` for both -1 and null, since DIAL Core has no separate state for "cleared".
    * @type {number}
    * @memberof RateMessageDto
    */
-  rate: RateMessageDtoRateEnum;
+  rate: RateMessageDtoRateEnum | null;
   /**
    * Optional free-text comment from the user
    * @type {string}
@@ -5437,6 +5711,39 @@ export const RateMessageDtoRateEnum = {
 export type RateMessageDtoRateEnum =
   (typeof RateMessageDtoRateEnum)[keyof typeof RateMessageDtoRateEnum];
 
+/**
+ *
+ * @export
+ * @interface RefineTextRequestDto
+ */
+export interface RefineTextRequestDto {
+  /**
+   * Server-owned rewriting purpose
+   * @type {TextRefinementPurpose}
+   * @memberof RefineTextRequestDto
+   */
+  purpose: TextRefinementPurpose;
+  /**
+   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, either Instructions 32000.
+   * @type {string}
+   * @memberof RefineTextRequestDto
+   */
+  text: string;
+}
+
+/**
+ *
+ * @export
+ * @interface RefineTextResponseDto
+ */
+export interface RefineTextResponseDto {
+  /**
+   * Complete refined draft, bounded by the same purpose-specific Unicode limits as the input.
+   * @type {string}
+   * @memberof RefineTextResponseDto
+   */
+  text: string;
+}
 /**
  *
  * @export
@@ -5807,6 +6114,12 @@ export interface ScheduledTaskDto {
    */
   isActive?: boolean;
   /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isCompleted?: boolean;
+  /**
    *
    * @type {boolean}
    * @memberof ScheduledTaskDto
@@ -5842,6 +6155,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**
@@ -5853,6 +6172,19 @@ export const ScheduledTaskDtoTriggerTypeEnum = {
 } as const;
 export type ScheduledTaskDtoTriggerTypeEnum =
   (typeof ScheduledTaskDtoTriggerTypeEnum)[keyof typeof ScheduledTaskDtoTriggerTypeEnum];
+
+/**
+ *
+ * @export
+ */
+export const ScheduledTaskErrorCode = {
+  ScheduledTaskSkillUnsupported: 'scheduledTaskSkillUnsupported',
+  ScheduledTaskInstructionsOrSkillRequired:
+    'scheduledTaskInstructionsOrSkillRequired',
+  ScheduledTaskDeploymentUnavailable: 'scheduledTaskDeploymentUnavailable',
+} as const;
+export type ScheduledTaskErrorCode =
+  (typeof ScheduledTaskErrorCode)[keyof typeof ScheduledTaskErrorCode];
 
 /**
  *
@@ -5910,6 +6242,50 @@ export const ScheduledTaskRunDtoStatusEnum = {
 export type ScheduledTaskRunDtoStatusEnum =
   (typeof ScheduledTaskRunDtoStatusEnum)[keyof typeof ScheduledTaskRunDtoStatusEnum];
 
+/**
+ *
+ * @export
+ * @interface ScheduledTaskValidationErrorDto
+ */
+export interface ScheduledTaskValidationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {ScheduledTaskValidationErrorDtoMessage}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  message: ScheduledTaskValidationErrorDtoMessage;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {ScheduledTaskErrorCode}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  code?: ScheduledTaskErrorCode;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskValidationErrorDto
+   */
+  field?: string;
+}
+
+/**
+ * @type ScheduledTaskValidationErrorDtoMessage
+ *
+ * @export
+ */
+export type ScheduledTaskValidationErrorDtoMessage = Array<string> | string;
 /**
  *
  * @export
@@ -6375,7 +6751,7 @@ export interface StageDto {
    */
   index?: number;
   /**
-   * Stage title
+   * Stage title. `null` on the chunk that opens the stage, before the name streams in
    * @type {string}
    * @memberof StageDto
    */
@@ -6387,12 +6763,35 @@ export interface StageDto {
    */
   content?: string;
   /**
+   * Terminal state of the stage. Absent or `null` while the stage is still running
+   * @type {string}
+   * @memberof StageDto
+   */
+  status?: StageDtoStatusEnum | null;
+  /**
+   * Short source/category label shown beside the stage name (e.g. `MCP`)
+   * @type {string}
+   * @memberof StageDto
+   */
+  tag?: string;
+  /**
    * Files produced or referenced by this stage
    * @type {Array<StageAttachmentDto>}
    * @memberof StageDto
    */
   attachments?: Array<StageAttachmentDto>;
 }
+
+/**
+ * @export
+ */
+export const StageDtoStatusEnum = {
+  Completed: 'completed',
+  Failed: 'failed',
+} as const;
+export type StageDtoStatusEnum =
+  (typeof StageDtoStatusEnum)[keyof typeof StageDtoStatusEnum];
+
 /**
  *
  * @export
@@ -6412,6 +6811,20 @@ export interface StopCompletionDto {
    */
   path: string;
 }
+
+/**
+ * Server-owned rewriting purpose
+ * @export
+ */
+export const TextRefinementPurpose = {
+  SkillDescription: 'skill-description',
+  SkillInstructions: 'skill-instructions',
+  ScheduledTaskDescription: 'scheduled-task-description',
+  ScheduledTaskInstructions: 'scheduled-task-instructions',
+} as const;
+export type TextRefinementPurpose =
+  (typeof TextRefinementPurpose)[keyof typeof TextRefinementPurpose];
+
 /**
  *
  * @export
@@ -7365,11 +7778,17 @@ export interface UpdateScheduledTaskBodyDto {
    */
   model: string;
   /**
-   *
+   * Instructions; may be empty when the effective task has a skill.
    * @type {string}
    * @memberof UpdateScheduledTaskBodyDto
    */
   prompt: string;
+  /**
+   * DIAL skill reference with a path of at most 1024 decoded characters. Omission preserves the saved skill on update; null removes it.
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  skillUrl?: string | null;
   /**
    *
    * @type {string}
@@ -7470,6 +7889,12 @@ export interface UpdatedScheduledTaskDto {
    */
   isActive?: boolean;
   /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
+  /**
    *
    * @type {boolean}
    * @memberof UpdatedScheduledTaskDto
@@ -7505,6 +7930,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  skillUrl?: string;
 }
 
 /**

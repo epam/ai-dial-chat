@@ -62,6 +62,83 @@ strict policy. Enforce mode SHALL enforce the candidate. A configured, validated
   without the nonce marker
 - **THEN** startup fails with a rebuild error without downgrading the CSP mode
 
+### Requirement: Configurable external connection origins
+
+The server SHALL accept `ALLOWED_CONNECT_ORIGINS` as a comma-separated list of
+trusted HTTP(S) origins, defaulting to an empty list. It SHALL trim entries and
+ignore empty entries. Each nonempty entry SHALL be an origin
+(`scheme://host[:port]`) or a single leading-wildcard-label origin
+(`scheme://*.host[:port]`), without credentials, paths, queries, fragments, or
+header/directive delimiters. Invalid entries SHALL fail startup validation.
+
+Configured origins SHALL extend `connect-src 'self' blob:` in the enforced policy
+and, when present, the report-only candidate. This SHALL apply to chat HTML,
+including embedded chat and deep links, and enabled overlay sandbox HTML.
+Connection origins SHALL NOT grant script-loading or iframe permissions.
+Configuration SHALL remain owned by `chat-api`; viewer libraries SHALL NOT read
+environment variables or encode deployment-specific origins. Direct external
+document fetches SHALL remain subject to remote-server CORS and authorization.
+
+#### Scenario: No external origins configured
+
+- **WHEN** `ALLOWED_CONNECT_ORIGINS` is unset or empty
+- **THEN** `connect-src` permits only `'self'` and `blob:`
+
+#### Scenario: External document in enforce mode
+
+- **WHEN** `https://documents.example.com` is configured and `CSP_MODE=enforce`
+- **THEN** the chat HTML policy includes that origin in `connect-src`, allowing
+  the PDF or Office viewer to attempt a direct fetch
+- **AND** the setting does not add that origin to `script-src`, `frame-src`, or
+  `frame-ancestors`
+
+#### Scenario: External document during report-only rollout
+
+- **WHEN** a connection origin is configured and `CSP_MODE=report-only`
+- **THEN** both the enforced and report-only HTML policies include that origin
+  in `connect-src`, including embedded chat and enabled overlay sandbox pages
+- **AND** the enforced baseline does not retain a conflicting self-only
+  connection restriction
+
+#### Scenario: Subdomain family
+
+- **WHEN** `https://*.reports.example.com` is configured
+- **THEN** `connect-src` permits HTTPS connections to its subdomains
+- **AND** it does not permit the bare `https://reports.example.com` origin unless
+  that origin is listed separately
+
+#### Scenario: Invalid connection origin
+
+- **WHEN** an entry is a bare `*`, a scheme-only source, a URL with credentials,
+  path, query, or fragment, or contains a directive/header injection
+- **THEN** startup validation rejects the configuration and identifies
+  `ALLOWED_CONNECT_ORIGINS`
+
+### Requirement: PDF credentials follow the existing connection allowlist
+
+The chat app SHALL supply its PDF viewers with a host-owned loader that uses
+`credentials: 'include'` only for external HTTP(S) URLs matching
+`ALLOWED_CONNECT_ORIGINS`, received through `config.allowedConnectOrigins`.
+Matching SHALL include exact origins and leading `*.` subdomain patterns, with
+scheme and port boundaries. No additional environment variable or service-specific
+domain SHALL be required. The attachment library SHALL accept the loader through
+the optional `loadPdf` callback without reading configuration or owning auth policy.
+
+#### Scenario: Allowed external PDF
+
+- **WHEN** an external PDF URL matches the configured connection allowlist
+- **THEN** the loader requests it with browser-managed credentials and
+  `redirect: 'error'`, rejecting redirects before following them
+- **AND** the external server must support credentialed CORS for the chat origin
+  and the browser must permit the relevant session cookies
+
+#### Scenario: Other PDF sources
+
+- **WHEN** the URL is same-origin, a blob URL, or an external origin absent from
+  the allowlist, or the allowlist is empty
+- **THEN** the loader retains `credentials: 'same-origin'` and normal redirect behavior
+- **AND** a wildcard entry does not match its bare parent domain or a different port
+
 ### Requirement: WebAssembly permission follows its execution context
 
 Only chat HTML and the bundled PDF worker response SHALL carry WebAssembly

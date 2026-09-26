@@ -279,6 +279,23 @@ The `CONFIG_DEFINITIONS` registry SHALL include an `announcement.html` entry so 
 
 `AppConfigService.getClientConfig` SHALL filter the resolved `uiFeatures.enabledUiFeatures` list to values that are members of the shared `OverlayFeature` enum before including it in the response, logging a `warn`-level message (naming the unrecognized value) for each entry dropped. When all entries are unrecognized, the service SHALL log an additional warning and return `null` (falling back to compiled-in defaults), rather than sending an empty array that would break the entire UI. This filtering SHALL NOT cause application boot to fail and SHALL NOT reject the request — the response always returns `200 OK`.
 
+Membership SHALL be decided against the app-local `KNOWN_UI_FEATURES` allowlist and `DEPRECATED_UI_FEATURE_ALIASES` map (`apps/chat-api/src/app-config/known-ui-features.constants.ts`), which mirror `OverlayFeature` and `DEPRECATED_OVERLAY_FEATURE_ALIASES` without importing the browser-facing overlay package into this Node-only service.
+
+Normalization SHALL apply the following rules, in this order:
+
+1. A resolved value that is not an array — including the `null` default — SHALL yield `null` with no warning. An empty array SHALL likewise yield `null` with no warning.
+2. Each entry SHALL be coerced with `String(entry)` before any lookup. No trimming, case folding, or other input canonicalization SHALL be applied at this layer; `ENABLED_UI_FEATURES` trimming remains the responsibility of `EnvConfigProvider`.
+3. The deprecated-alias map SHALL be consulted **before** the allowlist. An entry matching an alias SHALL emit one `warn` naming both the deprecated value and its replacement, and SHALL contribute the replacement value.
+4. An entry not matching an alias but present in the allowlist SHALL contribute its own value unchanged.
+5. Any other entry SHALL emit one `warn` naming it, and SHALL contribute nothing.
+6. Warnings SHALL be emitted per occurrence, in input order, before deduplication. A repeated deprecated or unrecognized entry SHALL therefore warn once per occurrence.
+7. Accepted values SHALL be deduplicated **after** alias resolution, preserving first occurrence, so an alias and its canonical name supplied together collapse to one value at the earlier position.
+8. A non-empty input that yields no accepted values SHALL emit one additional `warn` stating that compiled-in defaults are used, and SHALL yield `null`.
+
+The resolved input array, the allowlist, and the alias map SHALL NOT be mutated, and no state SHALL be retained between requests.
+
+A cached client-config response SHALL be returned without re-resolving providers, so a cache hit SHALL produce no normalization warnings.
+
 #### Scenario: Unrecognized entry is dropped and logged
 
 - **WHEN** `ENABLED_UI_FEATURES=header,not-a-real-feature` is set
@@ -288,6 +305,46 @@ The `CONFIG_DEFINITIONS` registry SHALL include an `announcement.html` entry so 
 
 - **WHEN** `ENABLED_UI_FEATURES=totally-invalid` is set
 - **THEN** the response is still `200 OK` with `config.enabledUiFeatures: null` (compiled-in defaults are used), and a warning is logged
+
+#### Scenario: Absent, non-array, or empty input yields null silently
+
+- **WHEN** the resolved `uiFeatures.enabledUiFeatures` value is `null`, a non-array value, or an empty array
+- **THEN** `config.enabledUiFeatures` is `null` and no normalization warning is logged
+
+#### Scenario: Recognized entries keep their input order
+
+- **WHEN** `ENABLED_UI_FEATURES=likes,header,prompts` is set
+- **THEN** `config.enabledUiFeatures` is `['likes', 'header', 'prompts']` in that order, and no warning is logged
+
+#### Scenario: A deprecated alias resolves to its replacement with a naming warning
+
+- **WHEN** `ENABLED_UI_FEATURES=likes,custom-applications` is set
+- **THEN** `config.enabledUiFeatures` is `['likes', 'schema-apps']`, and one warning naming both `'custom-applications'` and `'schema-apps'` is logged
+
+#### Scenario: An alias and its canonical name collapse at the first occurrence
+
+- **WHEN** `ENABLED_UI_FEATURES=schema-apps,custom-applications` is set
+- **THEN** `config.enabledUiFeatures` is `['schema-apps']` — one entry, at the position of the first occurrence
+
+#### Scenario: Repeated invalid entries warn once per occurrence
+
+- **WHEN** the resolved list contains the same unrecognized value twice, or the same deprecated alias twice
+- **THEN** the corresponding warning is logged twice, in input order, and the accepted result still carries the value at most once
+
+#### Scenario: Non-string entries are coerced before lookup
+
+- **WHEN** the resolved list contains a non-string entry such as `42`
+- **THEN** it is evaluated as `'42'`, fails both the alias and allowlist lookups, and is reported by a warning naming `"42"`
+
+#### Scenario: Normalization leaves its inputs untouched
+
+- **WHEN** a client-config response is produced from any resolved `uiFeatures.enabledUiFeatures` value
+- **THEN** the resolved input array is unchanged, and `KNOWN_UI_FEATURES` and `DEPRECATED_UI_FEATURE_ALIASES` still hold exactly their declared members
+
+#### Scenario: A cache hit produces no warnings
+
+- **WHEN** a second `GET /api/v1/client-config` request hits the cached response for the same app, user, and roles
+- **THEN** the cached `config.enabledUiFeatures` value is returned, no provider is re-resolved, and no normalization warning is logged
 
 ---
 
@@ -481,3 +538,198 @@ The `CONFIG_DEFINITIONS` registry SHALL include a `features.skillUsageEnabled` e
 
 - **WHEN** all `FeatureKey` enum values are compared to `CONFIG_DEFINITIONS`
 - **THEN** `FeatureKey.SkillUsageEnabled` has a matching `type='feature'` entry with the identical key string
+
+### Requirement: Client-owned variables have a generic environment entry
+
+The registry SHALL declare `customVariables` as a non-critical, client-visible JSON config entry sourced from `CUSTOM_CLIENT_VARIABLES`, defaulting to an empty object. The environment schema SHALL accept an optional string. EnvConfigProvider SHALL parse this string as JSON and accept only a non-null, non-array object. The BFF SHALL NOT register or interpret individual client-owned keys.
+
+#### Scenario: Valid custom variables
+
+- **WHEN** the environment value is a JSON object
+- **THEN** the provider returns it unchanged, preserving nested objects, arrays, strings, numbers, booleans and null values
+
+#### Scenario: Missing or invalid custom variables
+
+- **WHEN** the environment value is unset, blank, malformed JSON, an array, null or a primitive
+- **THEN** the provider resolves to undefined and the registry default is used
+
+### Requirement: Registry declares the attachments.maxFileSizeBytes key
+
+The `CONFIG_DEFINITIONS` registry SHALL include an `attachments.maxFileSizeBytes` entry: `type='config'`, `valueType='number'`, `visibility='client'`, `defaultValue=536870912`, `critical=false`, and `envVar='FILE_UPLOAD_MAX_BYTES'`. This entry SHALL reuse the existing `FILE_UPLOAD_MAX_BYTES` environment variable — the same one that already backs the `MulterModule` file-size limit on `POST /api/v1/files` (`apps/chat-api/src/files/files.module.ts`) — rather than declaring a new environment variable, so the frontend's pre-upload check and the backend's actual enforcement can never diverge. `FILE_UPLOAD_MAX_BYTES` is already declared as an optional numeric `EnvironmentVariables` field with the same default; no change to `environment.config.ts` is needed.
+
+#### Scenario: Registry contains the attachments.maxFileSizeBytes key
+
+- **WHEN** the registry is imported
+- **THEN** it MUST contain an entry with `key='attachments.maxFileSizeBytes'`, `type='config'`, `valueType='number'`, `visibility='client'`, `envVar='FILE_UPLOAD_MAX_BYTES'`, and `defaultValue=536870912`
+
+#### Scenario: Operator-configured limit is resolved
+
+- **WHEN** `FILE_UPLOAD_MAX_BYTES=104857600` is set
+- **THEN** `EnvConfigProvider.resolve('attachments.maxFileSizeBytes', ctx)` resolves to `104857600`
+
+#### Scenario: Unconfigured limit falls back to the default
+
+- **WHEN** `FILE_UPLOAD_MAX_BYTES` is not set
+- **THEN** the key resolves to the registry's `defaultValue` of `536870912`, matching `MulterModule`'s own hardcoded fallback in `files.module.ts`
+- **AND** invalid nonblank values produce a diagnostic without logging the payload or parser error text
+
+### Requirement: UI_EVENT selects one decorative event
+
+UI_EVENT SHALL be an optional validated lowercase kebab-case identifier. An absent value or `none` SHALL resolve to null; other valid identifiers SHALL be exposed as config.activeEventId:string|null by existing GET /api/v1/client-config. Unknown valid IDs SHALL be allowed through the API and result in no decoration when absent from the frontend registry. HALLOWEEN_ENABLED and features.halloweenEnabled SHALL be removed with no fallback. There SHALL be no new role-gating flag or scheduling behavior. Existing endpoint authentication, status codes, configuration cache and refresh behavior SHALL be retained. Swagger and the generated AppConfigApi.getClientConfig response model SHALL reflect the new config field; callers SHALL continue using the normal method through the existing app adapter.
+
+#### Scenario: Event explicitly selected
+- **WHEN** UI_EVENT is halloween or new-year
+- **THEN** GET /api/v1/client-config returns the corresponding string in config.activeEventId
+
+#### Scenario: Old configuration only
+- **WHEN** only the removed HALLOWEEN_ENABLED variable is set
+- **THEN** config.activeEventId is null and no seasonal decoration is enabled
+
+#### Scenario: Explicit off
+- **WHEN** UI_EVENT is none
+- **THEN** config.activeEventId is null
+
+### Requirement: Registry declares the applicationVisualizers key
+
+The `CONFIG_DEFINITIONS` registry (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`) SHALL include a new entry:
+
+- `key='applicationVisualizers'`
+- `type='config'`
+- `valueType='json'`
+- `visibility='client'`
+- `defaultValue={}`
+- `critical=false`
+- `envVar='APPLICATION_VISUALIZERS'`
+- `description` — human-readable summary of the application-scoped grouped visualizer registry, including that each entry's origin must also be listed in `ALLOWED_IFRAME_ORIGINS` and that application visualizers take precedence over `CUSTOM_VISUALIZERS` for the attachments they claim.
+- `owner` — matches the ownership convention used by other registry entries.
+
+The parsed value type MUST be `Record<string, ApplicationVisualizer>` (see the `application-visualizers` capability). Entries that fail per-entry validation SHALL be dropped with an error log at boot; total parse failure SHALL yield `{}`.
+
+**Feature flag:** none. The registry entry is a backend implementation detail.
+
+#### Scenario: Registry contains applicationVisualizers key
+
+- **WHEN** the registry is imported
+- **THEN** it MUST contain an entry with `key='applicationVisualizers'`, `type='config'`, `valueType='json'`, `visibility='client'`, `envVar='APPLICATION_VISUALIZERS'`, and `defaultValue={}`
+
+#### Scenario: Env resolves to a parsed object
+
+- **WHEN** `APPLICATION_VISUALIZERS='{"app-1":{"title":"my-viz","url":"https://viz.example.com"}}'` and the config is resolved
+- **THEN** the `applicationVisualizers` value on the resolved config equals `{ 'app-1': { title: 'my-viz', url: 'https://viz.example.com' } }`
+
+#### Scenario: Missing env falls back to default
+
+- **WHEN** `APPLICATION_VISUALIZERS` is unset
+- **THEN** the `applicationVisualizers` value on the resolved config equals `{}`
+
+---
+
+### Requirement: EnvConfigProvider parses APPLICATION_VISUALIZERS fail-open
+
+`EnvConfigProvider` (`apps/chat-api/src/app-config/config-registry/env-config.provider.ts`) SHALL resolve `applicationVisualizers` through a dedicated `parseApplicationVisualizers` method, structurally mirroring the existing `parseCustomVisualizers`:
+
+- Unparseable JSON SHALL log an error and resolve to `{}`.
+- A parsed value that is not a plain object — including an array or `null` — SHALL log an error and resolve to `{}`.
+- Each value SHALL be validated independently via `plainToInstance(ApplicationVisualizerDto, …)` + `validateSync`. A failing entry SHALL be dropped with an error log naming its key; the remaining entries SHALL still resolve.
+- A value that is not an object SHALL be dropped with an error log naming its key.
+- When an entry declares `contentType`, it SHALL be dropped with an error log if splitting on `,` and trimming yields no non-empty MIME type. An entry that omits `contentType` SHALL NOT be subject to this check.
+- `title` SHALL NOT be trimmed or normalised — it is an opaque postMessage namespace, and a whitespace-only value is a legitimate `appName` for some deployed visualizers. Only absent and empty-string titles are rejected, by `@IsNotEmpty()` on the DTO.
+- Unrecognised fields on an entry SHALL be logged as a warning listing their names and then ignored; they MUST NOT cause the entry to be dropped.
+
+Boot MUST NOT fail for any of these cases.
+
+Additionally, the provider SHALL log a warning when a surviving entry's URL origin is absent from `ALLOWED_IFRAME_ORIGINS`, naming the entry key and the missing origin. The entry is still returned — CSP, not this provider, is what blocks the iframe — but the warning gives the operator the only server-side signal of a misconfiguration that is otherwise invisible in the browser.
+
+`ApplicationVisualizerDto` (`apps/chat-api/src/app-config/dto/application-visualizer.dto.ts`) SHALL mirror `CustomVisualizerDto` with `contentType` optional, and SHALL carry full `@ApiProperty` metadata on every field.
+
+#### Scenario: Invalid JSON resolves to an empty registry
+
+- **WHEN** `APPLICATION_VISUALIZERS` is `'not-json'`
+- **THEN** `resolve('applicationVisualizers', ctx)` returns `{}`
+- **AND** an error is logged
+
+#### Scenario: A JSON array is rejected
+
+- **WHEN** `APPLICATION_VISUALIZERS` is `'[{"title":"my-viz","url":"https://viz.example.com"}]'`
+- **THEN** `resolve('applicationVisualizers', ctx)` returns `{}`
+- **AND** an error is logged stating the value must be a JSON object
+
+#### Scenario: One invalid entry does not drop the others
+
+- **WHEN** the object contains a valid entry under `app-1` and an entry under `app-2` whose `url` is not an absolute HTTP(S) URL
+- **THEN** the resolved registry contains only `app-1`
+- **AND** an error naming `app-2` is logged
+
+#### Scenario: Entry without contentType is accepted
+
+- **WHEN** an entry declares `title` and `url` but no `contentType`
+- **THEN** the entry is accepted with `contentType` absent
+
+#### Scenario: Entry with an unusable contentType is dropped
+
+- **WHEN** an entry declares `contentType: " , "`
+- **THEN** the entry is dropped with an error log
+
+#### Scenario: Whitespace-only title is preserved
+
+- **WHEN** an entry's `title` is `" "`
+- **THEN** the entry is accepted and `title` is preserved verbatim, including its whitespace
+- **AND** no error is logged
+
+#### Scenario: Unknown fields are warned about and ignored
+
+- **WHEN** an entry carries `expanded: true`
+- **THEN** the entry is still accepted
+- **AND** a warning naming `expanded` as an ignored field is logged
+
+#### Scenario: Origin missing from the iframe allowlist is warned about
+
+- **WHEN** a valid entry's `url` is `https://viz.example.com` and `ALLOWED_IFRAME_ORIGINS` does not contain that origin
+- **THEN** the entry is still returned in the resolved registry
+- **AND** a warning naming the entry key and the missing origin is logged
+
+### Requirement: Client-visible registry keys stay in sync with the client-config mapping
+
+Every `CONFIG_DEFINITIONS` entry with `visibility: 'client'` and `type: 'config'` SHALL
+fall into exactly one of two groups. Either it has exactly one entry in the
+client-config mapping table, or it is `app.version`, which `AppConfigService` resolves
+through its documented special path. Every mapping-table entry SHALL name a key that
+exists in `CONFIG_DEFINITIONS` with `visibility: 'client'` and `type: 'config'`. No two
+mapping entries SHALL write the same response field. The mapped fields, together with
+`appVersion` and `aiTextRefinementAvailable`, SHALL cover every `ClientConfigDto`
+field.
+
+A unit test in `apps/chat-api/src/app-config/tests/` SHALL enforce these properties
+against the real `CONFIG_DEFINITIONS`, so a new unmapped client key fails the test
+suite during development. `ConfigDefinition.key` SHALL stay typed as `string`, and
+`CONFIG_DEFINITIONS` SHALL stay annotated as `ConfigDefinition[]`. This requirement
+does not require a type-level rewrite of the registry. Server-visible keys, such as
+`utility.modelId`, and `type: 'feature'` keys SHALL have no mapping entry.
+
+This requirement SHALL NOT change the contents or order of `CONFIG_DEFINITIONS`,
+provider priority, or provider fallback behavior.
+
+#### Scenario: A new client key without a mapping is caught
+
+- **WHEN** a developer adds a `visibility: 'client'`, `type: 'config'` definition to `CONFIG_DEFINITIONS` without adding a mapping entry
+- **THEN** the registry-coverage test fails and names the unmapped key
+
+#### Scenario: A stale mapping is caught
+
+- **WHEN** a mapping entry names a key that is absent from `CONFIG_DEFINITIONS`, or that is server-visible or a feature
+- **THEN** the registry-coverage test fails and names the stale key
+
+#### Scenario: Duplicate field ownership is caught
+
+- **WHEN** two mapping entries write the same `ClientConfigDto` field
+- **THEN** the registry-coverage test fails and names the field
+
+#### Scenario: app.version is the only unmapped client config key
+
+- **WHEN** the coverage test lists client-visible `type: 'config'` keys without a mapping entry
+- **THEN** the only key listed is `app.version`
+
+#### Scenario: Server-only keys stay out of the mapping
+
+- **WHEN** the mapping table is inspected
+- **THEN** it has no entry for `utility.modelId` or for any `features.*` key

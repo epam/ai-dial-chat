@@ -8,6 +8,7 @@ import type {
   OoxmlCanvasContent,
   OoxmlHighlight,
   OoxmlHighlightLocation,
+  GroupedVisualizerCanvasContent,
   PdfCanvasContent,
   PlainTextCanvasContent,
   VisualizerCanvasContent,
@@ -21,10 +22,13 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import type {
   Annotation,
+  ApplicationVisualizer,
   Attachment,
   AttachmentResource,
   CustomVisualizer,
+  CustomVisualizerDataLayout,
   DisplayAttachment,
+  GroupedAttachmentItem,
 } from '@epam/ai-dial-chat-shared';
 import {
   base64ToBlob,
@@ -283,19 +287,27 @@ const resolveAttachmentFileId = (
 
 /**
  * Resolves a displayable Blob/object URL for an attachment's binary content: a
- * locally-picked `File`, an already-uploaded DIAL file (fetched via LRU cache),
- * an existing preview URL, or inline base64 `data` decoded into a Blob URL.
- * Returns `undefined` when none of these sources are available, or an
- * `ErrorCanvasContent` when a DIAL file fetch fails.
+ * local `File` with bytes, an already-uploaded DIAL file (fetched via LRU
+ * cache), a 0-byte local `File`, an existing preview URL, or inline base64
+ * `data` decoded into a Blob URL. A local `File` with bytes takes precedence
+ * over the DIAL download URL; a 0-byte `File` (the file-manager placeholder)
+ * does not. Returns `undefined` when none of these sources are available, or
+ * an `ErrorCanvasContent` when a DIAL file fetch fails.
  */
 const resolveAttachmentBlobUrl = async (
   attachment: DisplayAttachment,
   resolvers: AttachmentCanvasUrlResolvers,
 ): Promise<string | ErrorCanvasContent | undefined> => {
-  if ('file' in attachment) {
-    return URL.createObjectURL((attachment as Attachment).file);
+  const file =
+    'file' in attachment ? (attachment as Attachment).file : undefined;
+  const isFileEmpty = file != null && file.size === 0;
+  const dialUrl =
+    file != null && !isFileEmpty
+      ? undefined
+      : resolvers.resolveDialUrl(attachment);
+  if (file != null && dialUrl == null) {
+    return URL.createObjectURL(file);
   }
-  const dialUrl = resolvers.resolveDialUrl(attachment);
   if (dialUrl != null) {
     try {
       const blob = await fetchDialBlob(
@@ -365,22 +377,30 @@ export const hasAttachmentTextSource = (
 
 /**
  * Resolves an image canvas content payload from a DisplayAttachment without
- * fetching — returns the BFF download URL (or a local/inline blob URL)
- * directly so the browser cache can be shared with the conversation view's
- * `<img>` element. Error detection is delegated to `<img onError>` in the
- * canvas renderer. Returns `null` if no URL source is available.
+ * fetching — returns a local blob URL or the BFF download URL directly so the
+ * browser cache can be shared with the conversation view's `<img>` element.
+ * A local `File` with bytes takes precedence over the DIAL download URL; a
+ * 0-byte `File` (the file-manager placeholder) does not. Error detection is
+ * delegated to `<img onError>` in the canvas renderer. Returns `null` if no
+ * URL source is available.
  */
 export const resolveImageCanvasContent = (
   attachment: DisplayAttachment,
   resolvers: AttachmentCanvasUrlResolvers,
 ): ImageCanvasContent | null => {
-  if ('file' in attachment) {
+  const file =
+    'file' in attachment ? (attachment as Attachment).file : undefined;
+  const isFileEmpty = file != null && file.size === 0;
+  const dialUrl =
+    file != null && !isFileEmpty
+      ? undefined
+      : resolvers.resolveDialUrl(attachment);
+  if (file != null && dialUrl == null) {
     return {
       type: AttachmentContentType.Image,
-      url: URL.createObjectURL((attachment as Attachment).file),
+      url: URL.createObjectURL(file),
     };
   }
-  const dialUrl = resolvers.resolveDialUrl(attachment);
   if (dialUrl != null) {
     return { type: AttachmentContentType.Image, url: dialUrl };
   }
@@ -503,6 +523,19 @@ const toOoxmlHighlightLocation = (
   location: OfficeHighlightLocation,
 ): OoxmlHighlightLocation => {
   switch (location.type) {
+    case 'docx_text_anchor':
+      return {
+        kind: OoxmlHighlightKind.DocxTableRow,
+        cells: location.cells,
+        occurrence: location.occurrence,
+      };
+    case 'pptx_text_anchor':
+      return {
+        kind: OoxmlHighlightKind.PptxTableRow,
+        cells: location.cells,
+        occurrence: location.occurrence,
+        slide: location.slide,
+      };
     case 'docx_text_range':
       return {
         kind: OoxmlHighlightKind.DocxTextRange,
@@ -756,5 +789,63 @@ export const resolveVisualizerCanvasContent = async (
     },
     visualizerName: entry.title,
     requestTimeout: entry.requestTimeout,
+  };
+};
+
+/** Outcome of building a grouped visualizer payload. */
+export interface GroupedVisualizerResolution {
+  /** The grouped payload, or `null` when no claimed attachment resolved to a URL. */
+  content: GroupedVisualizerCanvasContent | null;
+  /** The claimed attachments that reached `content.attachments`, in the input's order. The caller returns the rest to the ordinary attachment tray. */
+  resolved: DisplayAttachment[];
+}
+
+/**
+ * Builds the grouped payload for an application-scoped visualizer from the
+ * attachments its entry claims, reporting which of them `resolveAbsoluteUrl`
+ * could produce a URL for. Unlike the single-attachment resolver this fetches
+ * nothing: the grouped protocol hands the visualizer URLs and lets it read
+ * them itself, so the URLs must be absolute — a host-relative path would
+ * resolve against the iframe's own origin. Producing one is host knowledge,
+ * which is why it arrives as a callback rather than being built here.
+ */
+export const resolveGroupedVisualizerCanvasContent = (
+  attachments: DisplayAttachment[],
+  resolveAbsoluteUrl: (attachment: DisplayAttachment) => string | undefined,
+  entry: ApplicationVisualizer,
+  themeId: string,
+): GroupedVisualizerResolution => {
+  const layout: CustomVisualizerDataLayout = {
+    width: entry.width,
+    height: entry.height,
+    mobileHeight: entry.mobileHeight,
+    themeId,
+  };
+
+  const items: GroupedAttachmentItem[] = [];
+  const resolved: DisplayAttachment[] = [];
+  attachments.forEach((attachment) => {
+    const url = resolveAbsoluteUrl(attachment);
+    if (url == null) return;
+    resolved.push(attachment);
+    items.push({
+      url,
+      mimeType: attachment.contentType,
+      visualizerData: { layout },
+    });
+  });
+
+  if (items.length === 0) return { content: null, resolved: [] };
+
+  return {
+    content: {
+      type: AttachmentContentType.GroupedVisualizer,
+      url: entry.url,
+      attachments: items,
+      layout,
+      visualizerName: entry.title,
+      requestTimeout: entry.requestTimeout,
+    },
+    resolved,
   };
 };

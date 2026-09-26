@@ -85,6 +85,20 @@ const renderSection = (props?: Partial<ScheduledTaskHistorySectionProps>) =>
   );
 
 describe('ScheduledTaskHistorySection', () => {
+  it('retains loaded runs and retries only the failed page', async () => {
+    const retry = vi.fn();
+    renderSection({
+      loadMoreError: new Error('failed'),
+      onRetryLoadMore: retry,
+    });
+    expect(screen.getByText(runs[0].timestampLabel)).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toBe(
+      labels.historyErrorLabel,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
   describe('ScheduledTaskHistorySection — card variant', () => {
     it('renders the section title, next-run label, and run rows', () => {
       renderSection({ nextRunLabel: 'Next run: Jul 31 at 9:00 AM' });

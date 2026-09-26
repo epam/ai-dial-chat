@@ -39,6 +39,7 @@ import {
   SkillCatalogListResponseDto,
   SkillFileListResponseDto,
   SkillListResponseDto,
+  SkillMetadataItemDto,
 } from './dto/skill-metadata.dto';
 import {
   DeleteSkillDto,
@@ -161,6 +162,41 @@ export class SkillsController {
     );
   }
 
+  @Get('metadata')
+  @ApiOperation({
+    operationId: 'getSkillMetadata',
+    summary: "Get one skill's own authoritative metadata",
+    description:
+      'Proxies DIAL Core listSkillMetadata for a single skill resource and returns its provenance (author, timestamps, permissions) without ownership fields — GET /api/v1/skills cannot serve this because its response is items-shaped.',
+  })
+  @ApiResponse({ status: 200, type: SkillMetadataItemDto })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid bucket/path, or the path resolves to a grouping folder',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Skill not found' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  getSkillMetadata(
+    @Query() query: SkillResourceQueryDto,
+    @Req() req: Request,
+  ): Promise<SkillMetadataItemDto> {
+    const { at } = req.user as SessionUser;
+    return this.skillsService.getSkillMetadata(query.bucket, query.path, at);
+  }
+
   @Get('download')
   @ApiProduces('application/zip')
   @ApiOperation({
@@ -199,7 +235,7 @@ export class SkillsController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const { at } = req.user as SessionUser;
+    const { at, bucket } = req.user as SessionUser;
     /*
      * Registered before the await so a client disconnect that happens while
      * skillsService.downloadSkill() is still resolving isn't missed — the
@@ -212,7 +248,12 @@ export class SkillsController {
     });
 
     const { stream, headers, abortOnDisconnect } =
-      await this.skillsService.downloadSkill(query.bucket, query.path, at);
+      await this.skillsService.downloadSkill(
+        query.bucket,
+        query.path,
+        at,
+        bucket,
+      );
 
     if (clientDisconnected) {
       abortOnDisconnect();
@@ -268,7 +309,7 @@ export class SkillsController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const { at } = req.user as SessionUser;
+    const { at, bucket } = req.user as SessionUser;
     /*
      * Registered before the await so a client disconnect that happens while
      * skillsService.downloadSkillFile() is still resolving isn't missed —
@@ -285,6 +326,7 @@ export class SkillsController {
         query.path,
         query.filePath,
         at,
+        bucket,
       );
 
     if (clientDisconnected) {
@@ -703,14 +745,14 @@ export class SkillsController {
   }
 
   @Post('grouping-folders')
-  @HttpCode(200)
+  @HttpCode(201)
   @ApiOperation({
     operationId: 'createSkillGroupingFolder',
     summary: 'Create a grouping folder',
     description:
       'Proxies DIAL Core createSkillGroupingFolder. Accepts no conditional request headers — the verified SDK schema declares none for this operation.',
   })
-  @ApiResponse({ status: 200, type: SkillGroupingFolderResponseDto })
+  @ApiResponse({ status: 201, type: SkillGroupingFolderResponseDto })
   @ApiResponse({
     status: 400,
     description:
@@ -721,7 +763,6 @@ export class SkillsController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 404, description: 'Parent path not found' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

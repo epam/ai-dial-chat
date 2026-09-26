@@ -50,9 +50,11 @@ export {
 } from './utils/annotation';
 export type {
   DocxOfficeHighlightLocation,
+  DocxTableRowOfficeHighlightLocation,
   ExcelOfficeHighlightLocation,
   OfficeHighlightLocation,
   PptxOfficeHighlightLocation,
+  PptxTableRowOfficeHighlightLocation,
 } from './models/office-highlight';
 
 export {
@@ -67,3 +69,4 @@ export {
   getReferenceAttachmentGroups,
 } from './utils/reference-attachment';
 export type { PdfPageReference } from './utils/reference-attachment';
+export { QUOTATIONS_CLASS } from './constants/public-class-names';

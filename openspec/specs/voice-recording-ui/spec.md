@@ -30,7 +30,7 @@ The mic button and the voice bar that replaces the conversation input while a re
 
 ### Requirement: Voice bar replaces conversation input during recording
 
-The voice bar SHALL replace the textarea inside the existing input border for both dictation and attachment recording, beginning when microphone permission is requested. The draft SHALL remain in `useMessageState` while its textarea is unmounted. Existing attachment cards and any welcome heading SHALL remain present. The waveform SHALL occupy the first input content row below any attachment tray; the model/send action row SHALL be unavailable, but the voice bar's own attach-file control SHALL remain available (see Requirement: Attach a file during recording). Processing and error states SHALL continue to withhold the textarea until the voice session closes.
+The voice bar SHALL replace the textarea inside the existing input border for both dictation and attachment recording, beginning when microphone permission is requested. The draft SHALL remain in `useMessageState` while its textarea is unmounted. Existing attachment cards and any welcome heading SHALL remain present. The waveform SHALL occupy the first input content row below any attachment tray; the model/send action row SHALL be unavailable, but the voice bar's own attach-file control SHALL remain present, disabled for the recording's duration (see Requirement: Attach a file during recording). Processing SHALL continue to withhold the textarea. An error SHALL end the active voice presentation immediately, restore and focus the textarea, and display the error alert alongside the normal input.
 
 #### Scenario: Recording starts from either entry point
 
@@ -54,6 +54,12 @@ The voice bar SHALL replace the textarea inside the existing input border for bo
 
 - **WHEN** the user presses Stop for Record voice
 - **THEN** the complete recording enters the existing attachment validation/upload pipeline and the textarea returns with unchanged draft text
+
+#### Scenario: Dictation processing fails
+
+- **WHEN** recognition fails after the user presses Stop
+- **THEN** the waveform and voice controls disappear, the unchanged draft and normal input return with focus, and the error alert remains visible
+- **AND** the user can immediately start another recording
 
 ---
 
@@ -100,7 +106,7 @@ A `ResizeObserver` SHALL be attached to the canvas so that the histogram redraws
 
 ### Requirement: Waveform full-width, buttons on separate line at every viewport width
 
-At every viewport width, the first voice-bar row SHALL contain the dot and waveform spanning the full width, and the second row SHALL contain the attach-file control aligned to the inline start and the discard/stop/spinner controls aligned to the inline end. The discard control SHALL precede the filled stop-square control during recording; only discard and the processing spinner SHALL remain during processing, and only discard SHALL remain during error. These controls SHALL have at least 44 px touch targets. Layout SHALL inherit document direction and use logical alignment; the waveform's time animation SHALL retain its existing direction.
+At every viewport width, the first voice-bar row SHALL contain the dot and waveform spanning the full width, and the second row SHALL contain the attach-file control aligned to the inline start and the discard/stop/spinner controls aligned to the inline end. The discard control SHALL precede the filled stop-square control during recording; only discard and the processing spinner SHALL remain during processing. An error SHALL unmount the voice bar and restore the normal input. These controls SHALL have at least 44 px touch targets. Layout SHALL inherit document direction and use logical alignment; the waveform's time animation SHALL retain its existing direction.
 
 #### Scenario: Recording at any width
 
@@ -111,17 +117,14 @@ At every viewport width, the first voice-bar row SHALL contain the dot and wavef
 
 ### Requirement: Attach a file during recording
 
-The voice bar's second row SHALL render, at its inline start, the same attach-file control (`+`, including its menu) used by the normal footer's add button — not a separate reduced control. It SHALL be disabled while the recorder is anything but actively Recording, so it cannot be used to interrupt a pending transcription, and SHALL otherwise follow the same visibility rules as the footer's add button (hidden when attachments are disabled, `hideAttachFile`, or the add button is hidden entirely) and respect the input-disabled state.
+The voice bar's second row SHALL render, at its inline start, the same attach-file control (`+`, including its menu) used by the normal footer's add button — not a separate reduced control. It SHALL be disabled for the entire duration of an active recording session (Recording and Processing), so a prompt, skill or file cannot be selected while the textarea is unmounted and the draft cannot yet reflect the choice, and SHALL otherwise follow the same visibility rules as the footer's add button (hidden when attachments are disabled, `hideAttachFile`, or the add button is hidden entirely) and respect the input-disabled state.
 
-#### Scenario: Attach while actively recording
+#### Scenario: Attach disabled while recording
 
-- **WHEN** the user activates the `+` control while Recording
-- **THEN** the same attach menu as the normal footer opens, any selected file is added to the attachment tray, and the voice session continues unaffected
-
-#### Scenario: Attach disabled while processing
-
-- **WHEN** the recorder is awaiting recognition (Processing) or in Error
-- **THEN** the `+` control is rendered but disabled
+- **WHEN** the recorder is actively Recording or awaiting recognition (Processing)
+- **THEN** the voice bar's `+` control is rendered but disabled
+- **WHEN** recognition enters Error
+- **THEN** the voice bar is removed and the normal input controls return, and the `+` control is enabled again
 
 #### Scenario: Attach control hidden
 
@@ -132,12 +135,12 @@ The voice bar's second row SHALL render, at its inline start, the same attach-fi
 
 ### Requirement: Microphone permission error
 
-`useVoiceRecorder` SHALL catch microphone access failures, release acquired media resources, and enter Error. The voice bar SHALL display an error alert and discard control; dismissing it SHALL restore the saved draft. Browser-supplied error messages may be retained; the host SHALL provide translated fallback recording-error text.
+`useVoiceRecorder` SHALL catch microphone access failures, release acquired media resources, clear the failed session, and enter Error. The normal input SHALL return immediately with the saved draft and focus, and SHALL display the error with `role="alert"` without a discard step. Starting another recording SHALL clear the previous error. Browser-supplied error messages may be retained; the host SHALL provide translated fallback recording-error text.
 
 #### Scenario: Permission denied
 
 - **WHEN** the browser rejects microphone permission
-- **THEN** an error is displayed with `role="alert"`, no upload or recognition begins, and discard restores the original input
+- **THEN** an error is displayed with `role="alert"`, no upload or recognition begins, and the original input is restored immediately
 
 ### Requirement: Record voice menu action
 
@@ -149,6 +152,32 @@ The desktop add-menu dropdown and mobile bottom sheet SHALL insert Record voice 
 - **THEN** their order is Attach file, Prompts, Record voice, Settings
 - **WHEN** Record voice is selected
 - **THEN** the menu closes and recording begins without an additional confirmation
+
+### Requirement: Recorded audio filename matches its MIME type
+
+`useVoiceRecorder` SHALL select the completed file's extension using the shared MIME-to-extension table after normalizing the actual recorder MIME type for lookup. WebM audio SHALL use `.weba`, Ogg audio SHALL use `.oga`, and MP4 audio SHALL use `.m4a`. Unknown MIME types SHALL retain the subtype fallback. The file SHALL retain the recorder's MIME type, including codec parameters, and all captured bytes. This contract SHALL apply to attachment and dictation delivery. Existing stored attachments SHALL retain their names.
+
+#### Scenario: Record voice produces downloadable WebM audio
+
+- **WHEN** the user stops Record voice with recorder MIME `audio/webm` or `audio/webm;codecs=opus`
+- **THEN** the file entering the attachment validation/upload pipeline has a `.weba` filename
+- **AND** its MIME type and captured bytes are preserved
+- **AND** its filename extension agrees with the attachment type label and the suggested download filename
+
+#### Scenario: Other browser audio formats
+
+- **WHEN** the recorder produces `audio/ogg;codecs=opus` or `audio/mp4`
+- **THEN** the completed file uses `.oga` or `.m4a`, respectively, and retains its original MIME type
+
+#### Scenario: Dictation and legacy attachment fallback
+
+- **WHEN** a completed recording is delivered to transcription or to the attachment fallback without transcription
+- **THEN** the same MIME-based filename extension contract applies
+
+#### Scenario: Unmapped format
+
+- **WHEN** the recorder reports an audio MIME type absent from the shared extension table
+- **THEN** the filename uses its normalized MIME subtype as the extension and retains the original MIME type
 
 ### Requirement: Voice labels and accessible feedback
 

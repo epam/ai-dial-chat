@@ -68,7 +68,10 @@ import {
 import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
-import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
+import {
+  conversationStreamTransport,
+  logConversationStreamError,
+} from '../../utils/conversation-stream-transport';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -319,6 +322,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     overlay,
     onStopError: handleStopError,
     generationConflictMessage: t(ChatI18nKeys.GenerationConflict),
+    generationPersistenceErrorMessage: t(
+      ChatI18nKeys.GenerationPersistenceError,
+    ),
+    onStreamError: logConversationStreamError,
   });
 
   /*
@@ -660,6 +667,23 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     setPendingDislikeMessageIndex(null);
   }, []);
 
+  /* Stable props so memo(ConversationView) skips re-rendering long message lists. */
+  const toolsChipLabels = useMemo(
+    () => ({
+      removeLabel: (label: string) => t(ToolsI18nKeys.RemoveTool, { label }),
+    }),
+    [t],
+  );
+
+  const topContent = useMemo(
+    () =>
+      activeScheduledTaskStatus ===
+      ActiveScheduledTaskStatus.TaskConversation ? (
+        <ScheduledTaskConversationBanner />
+      ) : undefined,
+    [activeScheduledTaskStatus],
+  );
+
   if (isFetching)
     return (
       <div className="flex size-full items-center justify-center">
@@ -710,15 +734,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
-          toolsChipLabels={{
-            removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
-          }}
-          topContent={
-            activeScheduledTaskStatus ===
-            ActiveScheduledTaskStatus.TaskConversation ? (
-              <ScheduledTaskConversationBanner />
-            ) : undefined
-          }
+          toolsChipLabels={toolsChipLabels}
+          topContent={topContent}
         />
       </div>
 

@@ -5,6 +5,13 @@
   "license": "Apache-2.0",
   "nx": {
     "targets": {
+      "test-refinement-browser": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "apps/chat",
+          "command": "node --test browser-tests/text-refinement.browser.spec.mjs"
+        }
+      },
       "test-csp-browser": {
         "executor": "nx:run-commands",
         "options": {

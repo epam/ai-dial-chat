@@ -4,7 +4,11 @@ import {
   DIAL_KIT_ICON_STROKE,
   EllipsisTooltip,
 } from '@epam/ai-dial-ui-kit';
-import { IconChevronRight, IconLogout } from '@tabler/icons-react';
+import {
+  IconChevronRight,
+  IconLogout,
+  IconSettings,
+} from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
 import type { NavigationMenuGroup } from '../../models/navigation-menu';
@@ -22,6 +26,10 @@ export interface ProfilePageProps {
   logOutLabel: string;
   /** Called when the user taps "Log out"; the sheet closes first. */
   onLogout: () => void;
+  /** Label of the settings row; required when `onSettings` is provided. */
+  settingsLabel?: string;
+  /** Called when the user taps the settings row; the sheet closes first. Omit to hide the row. */
+  onSettings?: () => void;
   /** Settings groups listed above the log-out row; empty groups are skipped. */
   groups?: NavigationMenuGroup[];
   /** CSS class controlling the row labels' type scale. Defaults to `'dial-small-text'`. */
@@ -30,13 +38,15 @@ export interface ProfilePageProps {
 
 /**
  * Sheet page showing the signed-in user, their settings groups (each pushing an
- * `OptionListPage`), and a log-out row.
+ * `OptionListPage`), an optional settings row, and a log-out row.
  */
 export const ProfilePage: FC<ProfilePageProps> = memo(
   ({
     profile,
     logOutLabel,
     onLogout,
+    settingsLabel,
+    onSettings,
     groups,
     textClassName = 'dial-small-text',
   }) => {
@@ -49,6 +59,11 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
     const handleLogout = () => {
       close();
       onLogout();
+    };
+
+    const handleSettings = () => {
+      close();
+      onSettings?.();
     };
 
     return (
@@ -105,6 +120,20 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
         )}
 
         <ul className="flex flex-col pb-4">
+          {onSettings && settingsLabel && (
+            <SheetRow
+              label={settingsLabel}
+              textClassName={textClassName}
+              icon={
+                <IconSettings
+                  size={BASE_ICON_SIZE}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
+                />
+              }
+              onClick={handleSettings}
+            />
+          )}
           <SheetRow
             label={logOutLabel}
             textClassName={textClassName}

@@ -1,5 +1,8 @@
 import type { McpUiHostContext } from '@mcp-ui/client';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type {
+  CallToolResult,
+  Implementation,
+} from '@modelcontextprotocol/sdk/types.js';
 
 /** Which of the host's two MCP proxy routes a deployment id resolves through — a plain toolset, or an application that is itself an MCP server. */
 export type McpDeploymentKind = 'toolset' | 'application';
@@ -121,10 +124,25 @@ export enum McpAppInlinePreviewStatus {
 export interface McpAppHostAdapter {
   /** `McpUiHostContext` to deliver to the mounted app's `ui/initialize` handshake. */
   hostContext: McpUiHostContext;
+  /** Host identity (`name`/`version`) to deliver to the mounted app's `ui/initialize` handshake. */
+  hostInfo: Implementation;
   /** Operator-configured MCP Apps sandbox-proxy URL, or `null` when unconfigured. */
   sandboxUrl: string | null;
   /** Fetches the matched tool's MCP Apps `ui://` resource. */
   fetchResourceHtml: FetchMcpAppResourceHtml;
   /** Forwards a tool call the mounted app makes on its own (`onToolCall`) or the live re-call `resolveMcpAppToolResult` performs. */
   callTool: CallMcpAppTool;
+}
+
+/**
+ * Color overrides for `McpAppInlinePreview`, applied as CSS custom properties
+ * on the preview's root.
+ */
+export interface McpAppInlinePreviewColors {
+  /** Surface the mounted app sits on. Fallback: `--bg-layer-raised`. */
+  previewBackground?: string;
+  /** Border around the preview card. Fallback: `--stroke-tertiary`. */
+  previewBorder?: string;
+  /** Divider under the header strip. Fallback: `--stroke-tertiary`. */
+  previewHeaderBorder?: string;
 }

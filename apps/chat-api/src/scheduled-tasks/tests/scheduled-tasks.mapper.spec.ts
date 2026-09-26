@@ -39,6 +39,55 @@ describe('buildScheduledTaskChatCompletionUrl', () => {
 });
 
 describe('toUpstreamSchedulePayload', () => {
+  it.each([
+    'skills/public/my report',
+    'skills/public/my%20report',
+    'skills/public/\u062a\u0642\u0631\u064a\u0631',
+  ])('encodes and reads a message-level skill: %s', (skillUrl) => {
+    const payload = toUpstreamSchedulePayload(
+      {
+        displayName: 'Skill task',
+        model: 'model',
+        prompt: '',
+        skillUrl,
+        trigger: { date: '2026-12-01T09:00:00Z' },
+      },
+      DIAL_CORE_URL,
+      DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
+    );
+    const expectedUrl = skillUrl
+      .split('/')
+      .map((part) => encodeURIComponent(decodeURIComponent(part)))
+      .join('/');
+    expect(payload.properties.payload.messages).toEqual([
+      {
+        role: 'user',
+        content: '',
+        custom_content: { skills: [{ url: expectedUrl }] },
+      },
+    ]);
+    expect(payload.properties.payload).not.toHaveProperty('custom_content');
+    const mapped = fromUpstreamSchedule({ id: 'task', ...payload });
+    expect(mapped).toMatchObject({ prompt: '', skillUrl: expectedUrl });
+    expect(
+      toUpstreamSchedulePayload(
+        { ...mapped, model: 'model', prompt: '', trigger: mapped.trigger },
+        DIAL_CORE_URL,
+        DIAL_API_VERSION,
+        SCHEDULER_SERVICE_ID,
+      ).properties.payload,
+    ).toEqual(payload.properties.payload);
+  });
+
+  it('does not invent a skill for a sparse list row', () => {
+    expect(
+      fromUpstreamSchedule({
+        id: 'task',
+        display_name: 'Task',
+      } as UpstreamScheduleResponse).skillUrl,
+    ).toBeUndefined();
+  });
   it('builds the fixed chat_completion body for a date trigger, using the configured service_id', () => {
     const body: CreateScheduledTaskBodyDto = {
       displayName: 'Daily summary',
@@ -321,6 +370,7 @@ describe('fromUpstreamSchedule', () => {
       id: 'sched_123',
       displayName: 'Daily summary',
       trigger: { date: '2026-07-24T09:00:00.000Z', cron: undefined },
+      triggerType: 'date',
       serviceId: 'dial-oauth',
       isActive: false,
       isDeleted: false,
@@ -357,6 +407,42 @@ describe('fromUpstreamSchedule', () => {
     expect(result.triggerType).toBe('cron');
     expect(result.updatedAt).toBe('2026-07-24T05:44:20.011023Z');
     expect(result.createdBy).toBe('70e570e9-cc23-4ffd-9182-078d09f116ac');
+  });
+
+  it('derives triggerType from the nested cron trigger when trigger_type is absent (get-path shape)', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_904',
+      display_name: 'Bounded schedule',
+      trigger: {
+        cron: {
+          fields: { hour: '6', minute: '0' },
+          start_date: '2026-08-31T21:00:00Z',
+          end_date: '2026-09-22T20:59:59.999000Z',
+        },
+      },
+    };
+
+    expect(fromUpstreamSchedule(upstream).triggerType).toBe('cron');
+  });
+
+  it('derives triggerType from the nested date trigger when trigger_type is absent', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_905',
+      display_name: 'One-time report',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+    };
+
+    expect(fromUpstreamSchedule(upstream).triggerType).toBe('date');
+  });
+
+  it('leaves triggerType undefined when neither the nested trigger nor trigger_type names a kind', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_906',
+      display_name: 'Kindless schedule',
+      trigger: {},
+    };
+
+    expect(fromUpstreamSchedule(upstream).triggerType).toBeUndefined();
   });
 
   it('maps upstream cron start_date/end_date to startDate/endDate', () => {
@@ -418,6 +504,7 @@ describe('fromUpstreamSchedule', () => {
       id: 'sched_456',
       displayName: 'Hourly check',
       trigger: { date: undefined, cron: { fields: { minute: '0' } } },
+      triggerType: 'cron',
       isActive: false,
       isDeleted: false,
     });
@@ -496,6 +583,7 @@ describe('fromUpstreamSchedule', () => {
     it('maps a schedule with a future next run to isActive true', () => {
       const upstream: UpstreamScheduleResponse = {
         id: 'sched_901',
+        trigger: {},
         display_name: 'Daily summary',
         trigger_type: 'cron',
         next_run_time: '2026-07-28T12:00:00.000Z',
@@ -507,6 +595,7 @@ describe('fromUpstreamSchedule', () => {
     it('maps a paused recurring schedule (no next run) to isActive false', () => {
       const upstream: UpstreamScheduleResponse = {
         id: 'sched_902',
+        trigger: {},
         display_name: 'Paused digest',
         trigger_type: 'cron',
         next_run_time: undefined,
@@ -516,10 +605,11 @@ describe('fromUpstreamSchedule', () => {
     });
 
     it('leaves isActive undefined without throwing when trigger and trigger_type are both absent', () => {
-      const upstream: UpstreamScheduleResponse = {
+      /* Deliberately malformed upstream response: validate the runtime fallback. */
+      const upstream = {
         id: 'sched_903',
         display_name: 'Unknown shape',
-      };
+      } as UpstreamScheduleResponse;
 
       expect(() => fromUpstreamSchedule(upstream)).not.toThrow();
       expect(fromUpstreamSchedule(upstream).isActive).toBeUndefined();
@@ -563,6 +653,7 @@ describe('fromUpstreamSchedule', () => {
     it('maps a soft-deleted schedule with a null next_run_time without treating deletion as evidence of anything else', () => {
       const upstream: UpstreamScheduleResponse = {
         id: 'sched_913',
+        trigger: {},
         display_name: 'Soft-deleted with no next run',
         trigger_type: 'cron',
         is_deleted: true,

@@ -4,7 +4,7 @@ export enum AudioTranscriptionErrorReason {
   Unavailable = 'unavailable',
   /** The recording exceeds the caller's configured size limit. */
   TooLarge = 'tooLarge',
-  /** The upstream ASR provider stayed rate-limited or unavailable after retrying. */
+  /** Recognition is rate-limited, unavailable, or exhausted short gateway retries. */
   Busy = 'busy',
   /** Recognition failed for any other reason. */
   Failed = 'failed',

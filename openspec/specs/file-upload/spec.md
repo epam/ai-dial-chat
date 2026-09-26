@@ -11,7 +11,6 @@ The system SHALL expose `POST /api/v1/files` accepting a `multipart/form-data` r
 
 The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffer to DIAL Core immediately. The multer `memoryStorage` engine MUST be used with `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 512 MB).
 
-- **Rate limit**: `@Throttle({ default: { limit: 100, ttl: 60000 } })`.
 - **Swagger**: `@ApiConsumes('multipart/form-data')` and `@ApiBody` with schema describing `file`, `bucket`, `path`, and optional `uploadMode` fields.
 - **operationId**: `uploadFile` → generated SDK method `filesApi.uploadFile(...)`.
 - **Request content-type**: `multipart/form-data`

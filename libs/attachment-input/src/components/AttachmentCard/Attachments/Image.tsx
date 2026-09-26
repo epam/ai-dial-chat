@@ -12,6 +12,7 @@ import {
 import { IconPhoto } from '@tabler/icons-react';
 import { CSSProperties, type FC, type KeyboardEvent, useMemo } from 'react';
 import { ATTACHMENT_TILE_BASE_CLASS } from '../../../constants/attachment-group';
+import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import {
   LazyImageLoadStatus,
   useLazyImageLoad,
@@ -102,6 +103,8 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
     styles.tile,
     isSelected && styles.selected,
     className,
+    ATTACHMENT_INPUT_CLASS.tile,
+    isSelected && ATTACHMENT_INPUT_CLASS.tileSelected,
   );
 
   return (

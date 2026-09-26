@@ -21,6 +21,7 @@ import {
   useState,
 } from 'react';
 import { List, type ListImperativeAPI } from 'react-window';
+import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
 import { ConversationPanelProps } from '../../models/panel-props';
 import type { RowRendererData, VirtualRow } from '../../models/virtual-row';
@@ -75,6 +76,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       typography,
       newChatButton: newChatButtonColors,
       searchWrapperClassName,
+      headerClassName,
+      headerActionsClassName,
+      newChatButtonClassName,
     } = panelStyles ?? {};
 
     const {
@@ -223,9 +227,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-trigger-icon': colors?.triggerIcon,
       '--cp-trigger-icon-idle': colors?.triggerIconIdle,
       '--cp-skeleton-color': colors?.skeletonColor,
-      '--cp-task-badge-border': colors?.taskBadgeBorder,
-      '--cp-task-badge-bg': colors?.taskBadgeBackground,
-      '--cp-task-badge-text': colors?.taskBadgeText,
       '--cp-unread-dot': colors?.unreadDot,
     });
 
@@ -351,7 +352,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
           itemIconBadgeClassName: panelStyles?.itemIconBadgeClassName,
-          taskBadgeClassName: panelStyles?.taskBadgeClassName,
         },
         draggingId,
         dragOverId,
@@ -377,7 +377,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         panelStyles?.itemIconBadgeClassName,
-        panelStyles?.taskBadgeClassName,
         draggingId,
         dragOverId,
         allowedDropGroups,
@@ -412,7 +411,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           bodyClassName: 'flex flex-col overflow-hidden p-0 gap-3',
           cssVars,
           titleClassName: typography?.fontClassName,
-          headerClassName: 'h-[64px]',
+          headerClassName: mergeClasses('h-[64px]', headerClassName),
+          headerActionsClassName,
           className: mergeClasses(
             isOpen ? 'w-[324px] mobile:w-full' : 'w-0',
             className,
@@ -425,9 +425,13 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           onClick={onNewChat}
           labelClassName={typography?.newChatLabelClassName}
           colors={newChatButtonColors}
+          className={newChatButtonClassName}
         />
 
-        <div role="search" className="px-3 py-2">
+        <div
+          role="search"
+          className={mergeClasses('px-3 py-2', CONVERSATION_PANEL_CLASS.search)}
+        >
           <Search
             wrapperClassName={mergeClasses(
               styles.search,
@@ -464,7 +468,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                 : ''}
         </span>
 
-        <div className="flex-1 overflow-hidden px-2 py-1">
+        <div className="flex-1 overflow-hidden px-3 py-1">
           {isLoading ? (
             <div className="flex flex-col gap-3 px-2 py-3">
               {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (

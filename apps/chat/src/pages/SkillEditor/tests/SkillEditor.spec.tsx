@@ -60,6 +60,10 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'light' }),
 }));
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
@@ -126,6 +130,12 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
       ),
     }),
 }));
+
+// jsdom has no layout engine, so floating-ui's positioning (used by the file
+// row's hover-reveal Dropdown) needs this browser-only API stubbed.
+if (!document.elementFromPoint) {
+  document.elementFromPoint = () => null;
+}
 
 const showNotification = vi.fn();
 const refetchSkills = vi.fn<() => Promise<void>>();
@@ -290,7 +300,9 @@ describe('SkillEditor page', () => {
         }),
       ),
     );
-    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/catalog?itemId=skills%2Fmy-bucket%2Fgood-morning-breakfast',
+    );
   });
 
   it('refreshes the skill catalog before navigating after create', async () => {
@@ -308,7 +320,11 @@ describe('SkillEditor page', () => {
     await user.click(getCreateButton());
 
     await waitFor(() => expect(refetchSkills).toHaveBeenCalledOnce());
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/catalog'));
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/catalog?itemId=skills%2Fmy-bucket%2Fnew-catalog-skill',
+      ),
+    );
   });
 
   it('blocks submission with a required-field error when Instructions is empty', async () => {
@@ -326,6 +342,84 @@ describe('SkillEditor page', () => {
       expect(screen.getAllByText('skillEditor.error.required')[0]).toBeTruthy(),
     );
     expect(createSkill).not.toHaveBeenCalled();
+  });
+
+  it('flags a pasted SKILL.md front matter before any submit and keeps the typed Name/Description', async () => {
+    render(<SkillEditor />);
+
+    await user.type(
+      screen.getByPlaceholderText('skillEditor.namePlaceholder'),
+      'my-copy',
+    );
+    await user.type(
+      screen.getByPlaceholderText('skillEditor.descriptionPlaceholder'),
+      'My own description',
+    );
+    const instructions = await screen.findByPlaceholderText(
+      'skillEditor.instructionsPlaceholder',
+    );
+    await user.click(instructions);
+    await user.paste(
+      '---\nname: pdf\ndisplay_name: PDF Tools\ndescription: Work with PDFs\n---\n\n# PDF Tools',
+    );
+
+    expect(
+      await screen.findByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeTruthy();
+    expect(screen.getByDisplayValue('my-copy')).toBeTruthy();
+    expect(screen.getByDisplayValue('My own description')).toBeTruthy();
+    expect(createSkill).not.toHaveBeenCalled();
+  });
+
+  it('blocks Create while the front-matter error stands, and lets it through once removed', async () => {
+    render(<SkillEditor />);
+
+    await fillRequiredFields(user, 'my-copy', 'My own description', '');
+    const instructions = await screen.findByPlaceholderText(
+      'skillEditor.instructionsPlaceholder',
+    );
+    await user.click(instructions);
+    await user.paste('---\nname: pdf\n---\n\n# PDF Tools');
+    await user.click(getCreateButton());
+
+    expect(
+      await screen.findByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeTruthy();
+    expect(createSkill).not.toHaveBeenCalled();
+
+    await user.clear(instructions);
+    await user.type(instructions, '# PDF Tools');
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText('skillEditor.error.instructionsFrontmatter'),
+      ).toBeNull(),
+    );
+    await user.click(getCreateButton());
+
+    await waitFor(() => expect(createSkill).toHaveBeenCalledOnce());
+    const manifest = vi.mocked(createSkill).mock.calls[0][2];
+    expect(manifest.split(/^---[ \t]*$/m)).toHaveLength(3);
+  });
+
+  it('does not flag a SKILL.md imported through the upload dialog', async () => {
+    render(<SkillEditor />);
+    const manifestFile = new File(
+      ['---\nname: good-morning\ndescription: A greeting skill\n---\n\nDo it.'],
+      'SKILL.md',
+    );
+
+    await openUploadDialog(user);
+    stageFile(manifestFile);
+    await waitFor(() =>
+      expect(screen.getAllByText('SKILL.md')[0]).toBeTruthy(),
+    );
+    await confirmUpload(user);
+
+    expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
+    expect(
+      screen.queryByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeNull();
   });
 
   it('shows a naming conflict inline when createSkill rejects with 409', async () => {
@@ -705,6 +799,33 @@ describe('SkillEditor page — edit mode', () => {
       ),
     );
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+  });
+
+  it('shows no front-matter error for a well-formed stored skill', async () => {
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
+
+    render(<SkillEditor />);
+
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+    expect(
+      screen.queryByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeNull();
+  });
+
+  it('surfaces the front-matter error on opening a skill already stored with two blocks', async () => {
+    const corrupt =
+      '---\nname: docs-helper\ndescription: Explains docs\n---\n\n---\nname: pdf\ndescription: Work with PDFs\n---\n\n# PDF Tools';
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(corrupt));
+
+    render(<SkillEditor />);
+
+    expect(
+      await screen.findByText('skillEditor.error.instructionsFrontmatter'),
+    ).toBeTruthy();
+
+    await user.click(getSaveButton());
+
+    expect(updateSkill).not.toHaveBeenCalled();
   });
 
   it('opens only one ZIP request during the StrictMode setup-cleanup-setup cycle', async () => {
@@ -1150,5 +1271,210 @@ describe('SkillEditor page — edit mode', () => {
     await waitFor(() => expect(updateSkill).toHaveBeenCalledOnce());
     const sentManifest = vi.mocked(updateSkill).mock.calls[0][2];
     expect(sentManifest).toContain('2.0.0');
+  });
+});
+
+describe('SkillEditor page — Back control and preview round trip', () => {
+  const user = userEvent.setup({ delay: null });
+  const manifest =
+    '---\nname: docs-helper\ndescription: Explains docs\n---\n\ninstr';
+
+  /*
+   * The Back control's accessible name depends on the current selection —
+   * `backAriaLabel` on the manifest view, `backToManifestAriaLabel` while a
+   * supporting file is selected — so it is matched by either name here and
+   * asserted explicitly in the dedicated accessible-name test.
+   */
+  const getBackButton = () =>
+    screen.getByRole('button', {
+      name: /^skillEditor\.back(AriaLabel|ToManifestAriaLabel)$/,
+    });
+
+  const selectNode = async (name: string) => {
+    await user.click(screen.getAllByText(name)[0]);
+  };
+
+  /* The manifest view is the only one that renders the Name field. */
+  const isManifestViewShown = () =>
+    screen.queryByPlaceholderText('skillEditor.namePlaceholder') != null;
+
+  const renderEditorWithSupportingFile = async () => {
+    vi.mocked(downloadSkill).mockResolvedValue(
+      buildSkillResponse(manifest, '"etag-1"', {
+        'analyzer.md': '# Analyzer notes',
+      }),
+    );
+    render(<SkillEditor />);
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getAllByText('analyzer.md')[0]).toBeTruthy(),
+    );
+  };
+
+  const makeDirty = async () => {
+    await user.type(
+      screen.getByPlaceholderText('skillEditor.descriptionPlaceholder'),
+      ' more',
+    );
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(downloadSkillFile).mockReset();
+    vi.mocked(listSkillFiles).mockReset();
+    mockSearchParams = new URLSearchParams({ id: 'team-a/docs-helper' });
+    vi.mocked(useUser).mockReturnValue({
+      user: { bucket: 'my-bucket' },
+    } as unknown as ReturnType<typeof useUser>);
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    refetchSkills.mockResolvedValue(undefined);
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      sharedWithMe: [],
+      isLoading: false,
+      error: null,
+      refetchSkills,
+      mergeSharedSkill: vi.fn(),
+    });
+  });
+
+  it('returns to the SKILL.md view instead of navigating when Back is activated on a clean form with a supporting file selected', async () => {
+    await renderEditorWithSupportingFile();
+
+    await selectNode('analyzer.md');
+    await waitFor(() => expect(isManifestViewShown()).toBe(false));
+
+    await user.click(getBackButton());
+
+    await waitFor(() => expect(isManifestViewShown()).toBe(true));
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
+  });
+
+  it('returns to the SKILL.md view with no confirmation when Back is activated on a dirty form with a supporting file selected', async () => {
+    await renderEditorWithSupportingFile();
+    await makeDirty();
+
+    await selectNode('analyzer.md');
+    await waitFor(() => expect(isManifestViewShown()).toBe(false));
+
+    await user.click(getBackButton());
+
+    await waitFor(() => expect(isManifestViewShown()).toBe(true));
+    expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('describes returning to SKILL.md in the Back control accessible name while a supporting file is selected', async () => {
+    await renderEditorWithSupportingFile();
+    expect(
+      screen.getByRole('button', { name: 'skillEditor.backAriaLabel' }),
+    ).toBeTruthy();
+
+    await selectNode('analyzer.md');
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'skillEditor.backToManifestAriaLabel',
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'skillEditor.backAriaLabel' }),
+    ).toBeNull();
+  });
+
+  it('preserves edited manifest fields, uploaded files, and dirty state across a preview round trip', async () => {
+    await renderEditorWithSupportingFile();
+    await makeDirty();
+
+    await openUploadDialog(user);
+    stageFile(new File(['new body'], 'new.md'));
+    await waitFor(() => expect(screen.getAllByText('new.md')[0]).toBeTruthy());
+    await confirmUpload(user);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', {
+          name: 'skillEditor.uploadDialogTitle',
+        }),
+      ).toBeNull(),
+    );
+
+    await selectNode('new.md');
+    await waitFor(() => expect(isManifestViewShown()).toBe(false));
+
+    await user.click(getBackButton());
+
+    await waitFor(() => expect(isManifestViewShown()).toBe(true));
+    expect(screen.getByDisplayValue('Explains docs more')).toBeTruthy();
+    expect(screen.getAllByText('new.md')[0]).toBeTruthy();
+    expect(screen.getAllByText('analyzer.md')[0]).toBeTruthy();
+
+    /* Still dirty: Back from the manifest view must raise the guard again. */
+    await user.click(getBackButton());
+    expect(screen.getByText('skillEditor.unsavedChangesMessage')).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('keeps Back from the SKILL.md view guarded by the unsaved-changes confirmation', async () => {
+    await renderEditorWithSupportingFile();
+    await makeDirty();
+
+    await user.click(getBackButton());
+
+    expect(screen.getByText('skillEditor.unsavedChangesMessage')).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'skillEditor.unsavedChangesConfirmLabel',
+      }),
+    );
+
+    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+  });
+
+  it('keeps Back from the SKILL.md view navigating immediately on a clean form', async () => {
+    await renderEditorWithSupportingFile();
+
+    await user.click(getBackButton());
+
+    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+    expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
+  });
+
+  it('keeps Cancel an editor exit from a supporting-file preview, guarded when dirty', async () => {
+    await renderEditorWithSupportingFile();
+    await makeDirty();
+
+    await selectNode('analyzer.md');
+    await waitFor(() => expect(isManifestViewShown()).toBe(false));
+
+    await user.click(getCancelButton());
+
+    expect(screen.getByText('skillEditor.unsavedChangesMessage')).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'skillEditor.unsavedChangesConfirmLabel',
+      }),
+    );
+
+    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+  });
+
+  it('keeps Cancel an editor exit from a supporting-file preview on a clean form', async () => {
+    await renderEditorWithSupportingFile();
+
+    await selectNode('analyzer.md');
+    await waitFor(() => expect(isManifestViewShown()).toBe(false));
+
+    await user.click(getCancelButton());
+
+    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+    expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
   });
 });

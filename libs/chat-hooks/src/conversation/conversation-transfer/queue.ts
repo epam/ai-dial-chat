@@ -34,11 +34,12 @@ export interface ConversationTransferQueue {
   /**
    * Marks the job `Warning` at 100%, recording what was incomplete. The file
    * was still delivered, so this settles the job exactly as `succeedJob` does
-   * apart from the status and the attached code.
+   * apart from the status and the attached code and optional file names.
    */
   warnJob: (
     jobId: string,
     warningCode: ConversationTransferWarningCode,
+    warningNames?: string[],
   ) => void;
   /** Marks the job `Failed`, recording why. Progress freezes where it stopped. */
   failJob: (jobId: string, errorCode: ConversationTransferErrorCode) => void;
@@ -131,7 +132,11 @@ export const useConversationTransferQueue = (): ConversationTransferQueue => {
   );
 
   const warnJob = useCallback(
-    (jobId: string, warningCode: ConversationTransferWarningCode) => {
+    (
+      jobId: string,
+      warningCode: ConversationTransferWarningCode,
+      warningNames?: string[],
+    ) => {
       setJobs((prev) =>
         prev.map((job) => {
           if (job.id !== jobId) return job;
@@ -150,6 +155,7 @@ export const useConversationTransferQueue = (): ConversationTransferQueue => {
             progress: { percent: TRANSFER_PROGRESS_COMPLETE },
             errorCode: undefined,
             warningCode,
+            warningNames,
           };
         }),
       );
@@ -211,6 +217,8 @@ export const useConversationTransferQueue = (): ConversationTransferQueue => {
           status: ConversationTransferJobStatus.InProgress,
           progress: { percent: 0 },
           errorCode: undefined,
+          warningCode: undefined,
+          warningNames: undefined,
         });
         return invoke();
       });

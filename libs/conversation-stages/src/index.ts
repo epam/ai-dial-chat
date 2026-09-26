@@ -14,3 +14,4 @@ export type {
   StagesPanelStyles,
   StageTypography,
 } from './models/stages-props';
+export { CONVERSATION_STAGES_CLASS } from './constants/public-class-names';

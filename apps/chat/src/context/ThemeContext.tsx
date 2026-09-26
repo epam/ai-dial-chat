@@ -95,32 +95,67 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /*
+   * `system` is not a configured theme — it resolves to `light` or `dark` at
+   * runtime — so it is only usable when the configuration serves both. A
+   * deployment offering, say, `light` plus a custom theme would otherwise
+   * apply nothing at all whenever the OS asked for dark. This mirrors
+   * `useThemeOptions`, which offers `system` in the picker on the same
+   * condition.
+   */
+  const isSystemAvailable = useMemo(
+    () =>
+      config?.themes?.some((theme) => theme.id === ThemeId.Light) === true &&
+      config?.themes?.some((theme) => theme.id === ThemeId.Dark) === true,
+    [config],
+  );
+
+  /*
+   * A stored id only means something once the configuration is known, since a
+   * theme the configuration no longer serves cannot be applied. The stored
+   * value is deliberately left in place when it does not match: a theme
+   * missing from one load of the configuration should not erase a preference
+   * that the next load would honour again.
+   *
+   * Light is the default for a user who has never chosen, regardless of the
+   * order the themes host lists its themes in — configuration order is not a
+   * statement about which theme a first-time visitor should get. A deployment
+   * that serves no `light` theme therefore renders in the built-in Tailwind
+   * light palette until the user picks something, which is what it does today.
+   */
   useEffect(() => {
+    if (!config) return;
+
     const storedTheme =
       typeof window !== 'undefined'
         ? getFromLocalStorage(StorageKey.Theme)
         : null;
-    const defaultTheme = config?.themes?.[0].id;
-    const configuredTheme =
-      storedTheme && defaultTheme !== ThemeId.Dark
-        ? defaultTheme
-        : ThemeId.Light;
-    if (configuredTheme) {
-      setSelectedThemeId(configuredTheme);
-      updateTheme(configuredTheme);
-    }
-  }, [config, updateTheme]);
+    const isStoredThemeAvailable =
+      storedTheme === ThemeId.System
+        ? isSystemAvailable
+        : config.themes?.some((theme) => theme.id === storedTheme);
+    const resolvedTheme =
+      storedTheme && isStoredThemeAvailable ? storedTheme : ThemeId.Light;
 
-  // Subscribe to OS color scheme changes when the stored preference is 'system'
+    setSelectedThemeId(resolvedTheme);
+    updateTheme(resolvedTheme);
+  }, [config, isSystemAvailable, updateTheme]);
+
+  /*
+   * Subscribe to OS colour-scheme changes only once `system` is the
+   * *resolved* selection, not merely the stored one. The effect above admits
+   * `system` only where the configuration serves both `light` and `dark`, so
+   * keying off `selectedThemeId` means an OS flip can never apply a theme the
+   * configuration does not have — which reading localStorage directly did.
+   */
   useEffect(() => {
-    const storedTheme = getFromLocalStorage(StorageKey.Theme);
-    if (storedTheme !== ThemeId.System) return;
+    if (!isSystemAvailable || selectedThemeId !== ThemeId.System) return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => applyResolvedTheme(getOsPreferredTheme());
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [applyResolvedTheme]);
+  }, [applyResolvedTheme, isSystemAvailable, selectedThemeId]);
 
   const setTheme = useCallback(
     (themeId: string) => {

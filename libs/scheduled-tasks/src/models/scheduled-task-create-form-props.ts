@@ -1,3 +1,4 @@
+import type { TextRefinementLabels } from '@epam/ai-dial-chat-shared';
 import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
@@ -34,8 +35,10 @@ export interface ScheduledTaskCreateFormValues {
   modelId: string;
   /** Optional human-readable summary sent to the BFF as `description` (max 500 characters). */
   description?: string;
-  /** Prompt text sent to the BFF as `prompt` (required). */
+  /** Prompt text; may be empty when a skill is selected. */
   prompt: string;
+  /** Optional selected skill reference, independent of its display metadata. */
+  skillUrl?: string;
 }
 
 /** Validation error messages keyed by {@link ScheduledTaskCreateFormValues} field. */
@@ -62,10 +65,12 @@ export interface ScheduledTaskCreateFormErrors {
   description?: string;
   /** Error shown under the prompt field. */
   prompt?: string;
+  /** Error shown under the skill field, or at form level when the slot is hidden. */
+  skillUrl?: string;
 }
 
 /** Localized labels used by the {@link ScheduledTaskCreateForm} component. */
-export interface ScheduledTaskCreateFormLabels {
+export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   /** Page/header title, e.g. "New task". */
   pageTitle: string;
   /** Accessible label for the header's back control. */
@@ -84,12 +89,14 @@ export interface ScheduledTaskCreateFormLabels {
   displayNameRequired: string;
   /** Run-at field label (shown when `repeat` is "oneTime"). */
   runAtLabel: string;
+  /** Time-of-day field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
+  timeLabel: string;
+  /** Validation message shown under the time field when its visible draft is not a complete `HH:mm` value. */
+  timeInvalidLabel: string;
   /** Accessible label for the Repeat dropdown. */
   repeatLabel: string;
   /** Options rendered in the Repeat dropdown. */
   repeatOptions: ScheduledTaskRepeatOption[];
-  /** Time field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
-  timeLabel: string;
   /** Day-of-week field label (shown when `repeat` is "weekly"). */
   dayOfWeekLabel: string;
   /** Day-of-month field label (shown when `repeat` is "monthly"). */
@@ -110,6 +117,10 @@ export interface ScheduledTaskCreateFormLabels {
   descriptionLabel: string;
   /** Accessible label for the Instructions markdown editor. */
   instructionsLabel: string;
+  /** Optional label above the host-composed skill selector. */
+  skillLabel?: string;
+  /** Optional placeholder forwarded to the Instructions editor. */
+  instructionsPlaceholder?: string;
   /** Label for the Cancel action. */
   cancelButtonLabel: string;
   /** Label for the Save action (submits the create form). */
@@ -123,6 +134,10 @@ export interface ScheduledTaskCreateFormLabels {
  * as CSS custom properties with app theme fallbacks.
  */
 export interface ScheduledTaskCreateFormColors {
+  /** Refinement status text color. Defaults to --text-primary. */
+  refineActionText?: string;
+  /** Refinement error color. Defaults to --text-error. */
+  refineErrorText?: string;
   /** Root container background. Fallback: `--bg-layer-base`. */
   background?: string;
   /** Header row's bottom border color. Fallback: `--stroke-tertiary`. */
@@ -137,6 +152,8 @@ export interface ScheduledTaskCreateFormColors {
 
 /** Typography overrides for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormTypography {
+  /** Refinement feedback typography. Defaults to 'dial-small-text'. */
+  refineFeedbackClassName?: string;
   /** CSS class applied to the title. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
   /** CSS class applied to a section heading. Defaults to `'dial-body-semi-text'`. */
@@ -155,10 +172,19 @@ export interface ScheduledTaskCreateFormStyles {
   colors?: ScheduledTaskCreateFormColors;
   /** Typography class overrides. */
   typography?: ScheduledTaskCreateFormTypography;
+  /** Layout values scoped to this form instance. */
+  layout?: { detailsWidth?: string; columnGap?: string };
 }
 
 /** Props for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormProps {
+  /** Optional Description rewrite callback; omission hides its action. */
+  onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
+  /** Optional Instructions rewrite callback; omission hides its action. */
+  onRefineInstructions?: (
+    value: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
   /** Localized labels. */
   labels: ScheduledTaskCreateFormLabels;
   /** Current field values. */
@@ -178,6 +204,12 @@ export interface ScheduledTaskCreateFormProps {
    * linked without a literal id that could collide across form instances.
    */
   modelLabelId: string;
+  /** Optional host-composed skill control, rendered above Instructions. */
+  skillSelector?: ReactNode;
+  /** ID of the skill label; also pass to the control's aria-labelledby. */
+  skillLabelId?: string;
+  /** ID of the skill error; also pass to the control's aria-describedby. */
+  skillErrorId?: string;
   /** Called with the changed field key and its new value whenever any field is edited. */
   onFieldChange: <K extends keyof ScheduledTaskCreateFormValues>(
     field: K,
@@ -193,6 +225,10 @@ export interface ScheduledTaskCreateFormProps {
   isSubmitting?: boolean;
   /** Color theme applied to the Instructions markdown editor. Defaults to the editor's own default (`EditorThemes.light`). */
   markdownEditorTheme?: EditorThemes;
+  /** Optional replacement for the default back icon. */
+  backIcon?: ReactNode;
+  /** Additional class name on the form root. */
+  className?: string;
   /** Style overrides. */
   styles?: ScheduledTaskCreateFormStyles;
 }

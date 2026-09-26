@@ -1,5 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type CSSProperties, FC } from 'react';
+import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { ToolbarProps } from '../../models/toolbar-props';
 import { TitleRow } from './Rows/TitleRow';
 import styles from './Toolbar.module.scss';
@@ -33,7 +34,11 @@ export const Toolbar: FC<ToolbarProps> = ({
 
   return (
     <section
-      className={mergeClasses('flex-shrink-0 px-4', styles.section)}
+      className={mergeClasses(
+        'flex-shrink-0 px-4',
+        styles.section,
+        CATALOG_CLASS.toolbar,
+      )}
       style={cssVars}
     >
       <TitleRow

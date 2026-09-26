@@ -1,5 +1,3 @@
-import './styles.css';
-
 // Headless catalog enums and catalog-item-mapping functions — see
 // `./entry-points/mapping.ts`; import `@epam/ai-dial-catalog/mapping`
 // directly to avoid resolving the catalog/publish-panel UI.
@@ -15,13 +13,18 @@ export {
 } from './types/details-confirmation';
 export { DeploymentSize } from './types/deployment-icon-size';
 export { CatalogViewMode } from './types/view-mode';
+export { LimitRowLayout } from './types/limit-row-layout';
 export {
   CatalogContentNodeType,
   CatalogContentPreviewType,
 } from './types/catalog-content-type';
 
 // Models
-export type { CatalogProps, CatalogTitles } from './models/catalog-props';
+export type {
+  CatalogEmptyStateContext,
+  CatalogProps,
+  CatalogTitles,
+} from './models/catalog-props';
 export type {
   CatalogColors,
   CatalogStyles,
@@ -143,6 +146,9 @@ export type {
 export { ContentTab } from './components/Details/TabsContent/Content';
 export type { ContentTabProps } from './components/Details/TabsContent/Content';
 
+export { LimitsTab } from './components/Details/TabsContent/Limits/Limits';
+export type { LimitsTabColors, LimitsTabProps } from './models/limits-props';
+
 export { DetailsPanel } from './components/Details/DetailsPanel';
 
 export { AppIdentity } from './components/AppIdentity/AppIdentity';
@@ -152,3 +158,19 @@ export type {
   AppIdentityStyles,
   AppIdentityTypography,
 } from './models/app-identity-styles';
+export { CATALOG_CLASS } from './constants/public-class-names';
+export { DeploymentSelectorField } from './components/DeploymentSelectorField/DeploymentSelectorField';
+export type {
+  DeploymentSelectorDisplayRecord,
+  DeploymentSelectorExtraOption,
+  DeploymentSelectorFieldLabels,
+  DeploymentSelectorFieldProps,
+} from './components/DeploymentSelectorField/DeploymentSelectorField';
+
+export { ApplicationCredentials } from './components/ApplicationCredentials/ApplicationCredentials';
+export type {
+  ApplicationCredential,
+  ApplicationCredentialLoginParams,
+  ApplicationCredentialsProps,
+  ApplicationCredentialsTexts,
+} from './models/application-credentials';

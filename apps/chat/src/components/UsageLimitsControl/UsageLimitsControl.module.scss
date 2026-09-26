@@ -1,16 +1,20 @@
-.percentageRing {
-  background: conic-gradient(
-    currentColor calc(var(--usage-percent, 0) * 1%),
-    var(--stroke-primary, #57647a) 0
-  );
-  -webkit-mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 2px),
-    #000 calc(100% - 2px)
-  );
-  mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 2px),
-    #000 calc(100% - 2px)
-  );
+/* Dial face. The fill comes from a Tailwind background class on the element so
+ * it can follow the usage status; only the rim lives here. */
+.gauge {
+  border: 1px solid currentColor;
+}
+
+.gaugeNeedle {
+  position: absolute;
+  /* A dial is rotationally symmetric and must read identically under `dir="rtl"`
+   * — a needle at 80% may not mirror to 20% — so it is centred with the
+   * direction-agnostic 50% trick rather than logical offsets. */
+  left: 50%;
+  bottom: 50%;
+  inline-size: 1px;
+  block-size: 45%;
+  border-radius: 1px;
+  background: currentColor;
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(calc(var(--usage-angle, 0) * 1deg));
 }

@@ -1,0 +1,80 @@
+.artwork {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
+}
+
+.wheel {
+  transform-origin: 0 0;
+  animation: wheel-turn var(--train-duration, 11s) linear both;
+}
+
+.smoke {
+  opacity: 0;
+  transform-origin: 0 0;
+  animation: smoke-drift calc(var(--train-duration, 11s) / 4) ease-out
+    var(--smoke-delay) 4 both;
+}
+
+.plumeFlow {
+  transform-origin: 0 0;
+  animation: smoke-departure var(--train-duration, 11s) ease-in-out both;
+}
+
+@keyframes wheel-turn {
+  20%,
+  50% {
+    transform: rotate(-720deg);
+  }
+  86%,
+  100% {
+    transform: rotate(-4320deg);
+  }
+}
+
+@keyframes smoke-departure {
+  0%,
+  50% {
+    transform: scale(1);
+  }
+  58%,
+  100% {
+    transform: scale(1.35);
+  }
+}
+
+@keyframes smoke-drift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(calc(var(--smoke-size) * 0.18));
+  }
+  14% {
+    opacity: 0.82;
+  }
+  56% {
+    opacity: 0.48;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--smoke-x), var(--smoke-y))
+      rotate(var(--smoke-turn)) scale(calc(var(--smoke-size) * 2.15));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wheel {
+    animation: none;
+  }
+
+  .plumeFlow {
+    animation: none;
+  }
+
+  .smoke {
+    display: none;
+    animation: none;
+  }
+}

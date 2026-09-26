@@ -193,7 +193,11 @@ action was performed by an admin at `GLOBAL` level on a public toolset, a person
 After a successful API-key or OAuth login or logout, the system SHALL refresh the open Details
 Panel's credential status, the Toolset Editor's login/logout action, and the underlying toolset
 list used by the Catalog grid/list/favorites views, without a full page reload, so cards, rows,
-and favorite cards reflect the change immediately.
+and favorite cards reflect the change immediately. The Details Panel's post-action refresh SHALL
+retry a bounded number of times (3 attempts, 300ms apart) when the refreshed credentials do not
+yet show the expected sign-in state for the level just acted on, before falling back to whatever
+the last attempt returned — covering a transient blip or upstream credential-propagation lag
+without retrying indefinitely.
 
 #### Scenario: Panel updates after API-key login
 - **WHEN** an API key login succeeds
@@ -237,6 +241,18 @@ and favorite cards reflect the change immediately.
 - **THEN** the initiating tab clears its busy state, keeps "Log in" available, and shows no
   success notification; when the pending timeout elapses, the system also closes the popup so a
   late callback cannot complete the abandoned login
+
+#### Scenario: Post-login details refresh retries past a stale first read
+- **WHEN** a login succeeds but the details refresh issued immediately afterward still reports
+  the pre-login (signed-out) status for the level just logged in
+- **THEN** the system retries the details refresh up to 2 more times, 300ms apart, and applies
+  the first result that reports the expected signed-in status; if all attempts still report
+  signed-out, the panel shows the last attempt's result rather than retrying indefinitely
+
+#### Scenario: Post-logout details refresh stops once signed-out is confirmed
+- **WHEN** a logout succeeds and the first details refresh issued afterward already reports the
+  expected signed-out status for the level just logged out
+- **THEN** the system does not issue any further retry for that logout
 
 ### Requirement: Toolset card and list logged-out warning icon
 Toolset cards (grid view), rows (list view), and favorite cards in the Catalog SHALL mark a

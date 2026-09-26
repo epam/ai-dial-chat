@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { USAGE_DASHBOARD_CLASS } from '../../../constants/public-class-names';
 import {
   UsageLimitCardData,
   UsageLimitCardGroupLabels,
@@ -118,5 +119,27 @@ describe('UsageLimitCardGroup', () => {
     const root = container.firstChild as HTMLElement;
     expect(root.className).toContain('grid-cols-1');
     expect(root.style.getPropertyValue('--uld-card-count')).toBe('3');
+  });
+});
+
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
+describe('UsageLimitCardGroup — public class names', () => {
+  it('stamps the grid the cards are laid out in', () => {
+    render(<UsageLimitCardGroup cards={[daily, weekly]} labels={labels} />);
+
+    expect(
+      closestWithClass(
+        screen.getByText('Today'),
+        USAGE_DASHBOARD_CLASS.cardGroup,
+      ),
+    ).toBeTruthy();
   });
 });
