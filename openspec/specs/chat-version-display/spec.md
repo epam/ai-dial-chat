@@ -30,7 +30,7 @@ and it SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`.
 `AppConfigService.getClientConfig` SHALL resolve `app.version` and coalesce it through the
 shared `resolveAppVersion` helper (`apps/chat-api/src/common/utils/app-version.ts`): a resolved
 string that is non-empty after trimming is used as-is (trimmed); otherwise the `PACKAGE_VERSION`
-constant, statically imported from `apps/chat-api/package.json`, is used. The result is therefore
+constant, statically imported from the workspace root `package.json`, is used. The result is therefore
 always a non-empty string.
 
 `resolveAppVersion` and `PACKAGE_VERSION` SHALL be the only source of a version string in
@@ -55,12 +55,12 @@ different versions on two endpoints.
 #### Scenario: CHAT_VERSION is unset
 
 - **WHEN** `CHAT_VERSION` is not present in the environment
-- **THEN** `config.appVersion` equals the `version` field of `apps/chat-api/package.json`
+- **THEN** `config.appVersion` equals the `version` field of the workspace root `package.json`
 
 #### Scenario: CHAT_VERSION is blank
 
 - **WHEN** `CHAT_VERSION` is set to `""` or to whitespace only
-- **THEN** `config.appVersion` falls back to `packageJson.version` rather than returning an
+- **THEN** `config.appVersion` falls back to the workspace root `package.json` version rather than returning an
   empty or whitespace string
 
 #### Scenario: CHAT_VERSION has surrounding whitespace
@@ -80,7 +80,7 @@ different versions on two endpoints.
 `ClientConfigDto` (`apps/chat-api/src/app-config/dto/client-config-response.dto.ts`) SHALL
 declare a required `appVersion!: string` property annotated with `@ApiProperty` (`type: String`,
 non-nullable, with a description stating it is sourced from `CHAT_VERSION` and falls back to the
-application's `package.json` version, and an example such as `0.45.0`). The field SHALL be
+workspace root `package.json` version, and an example such as `0.45.0`). The field SHALL be
 regenerated into `libs/chat-api-client` by `npm run openapi` and verified with
 `npm run openapi:check`; generated files SHALL NOT be hand-edited.
 

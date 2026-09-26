@@ -117,7 +117,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: null,
     critical: false,
     description:
-      'Version string shown in the footer version label and substituted for the %%VERSION%% footer token. Sourced from CHAT_VERSION so CI/CD can stamp the deployed build; falls back to the application package.json version when unset or blank.',
+      'Version string shown in the footer version label and substituted for the %%VERSION%% footer token. Sourced from CHAT_VERSION so CI/CD can stamp the deployed build; falls back to the workspace root package.json version — the one the release pipeline stamps — when unset or blank.',
     owner: 'chat-team',
     envVar: 'CHAT_VERSION',
   },
