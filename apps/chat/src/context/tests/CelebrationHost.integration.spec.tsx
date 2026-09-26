@@ -1,3 +1,4 @@
+import { CelebrationDecor, useCelebration } from '@epam/ai-dial-celebrations';
 import {
   act,
   fireEvent,
@@ -17,7 +18,6 @@ import {
   it,
   vi,
 } from 'vitest';
-import CelebrationDecor from '../../components/CelebrationDecor/CelebrationDecor';
 import {
   HALLOWEEN_BURST_DURATION_MS,
   HALLOWEEN_SCENE_DURATIONS,
@@ -33,7 +33,7 @@ import { HalloweenBurst } from '../../types/halloween';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { animateHalloweenWeb } from '../../utils/halloween-web-animation';
 import { useAppConfig } from '../AppConfigContext';
-import { CelebrationProvider, useCelebration } from '../CelebrationContext';
+import { CelebrationHost } from '../CelebrationHost';
 import { useNotification } from '../NotificationContext';
 
 vi.mock('../../hooks/breakpoint/useBreakpoint', () => ({
@@ -49,11 +49,15 @@ vi.mock('../../utils/halloween-web-animation', () => ({
   animateHalloweenWeb: vi.fn(),
 }));
 
-/* The global `react-i18next` mock in `test-setup` is a plain function, so it
-   records nothing. This spec needs the interpolation arguments, and keeps the
-   same key-as-output behaviour every assertion below relies on. */
+/* Key-as-output like the global mock, but a toast message keeps the
+   interpolated `phrase`, as real i18next does, so the library's secret-hint
+   substitution is visible in the assertions below. */
 const { mockT } = vi.hoisted(() => ({
-  mockT: vi.fn((key: string, _params?: Record<string, string>) => key),
+  mockT: vi.fn((key: string, params?: Record<string, string>) =>
+    key.endsWith('ToastMessage') && params?.phrase
+      ? `${key} ${params.phrase}`
+      : key,
+  ),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -143,9 +147,9 @@ const renderProvider = async (isEnabled: boolean, path = '/') => {
   setActiveEvent(isEnabled ? 'halloween' : null);
   const view = render(
     <MemoryRouter initialEntries={[path]}>
-      <CelebrationProvider>
+      <CelebrationHost>
         <Triggers />
-      </CelebrationProvider>
+      </CelebrationHost>
     </MemoryRouter>,
   );
   if (isEnabled && path === '/') {
@@ -156,7 +160,7 @@ const renderProvider = async (isEnabled: boolean, path = '/') => {
   return view;
 };
 
-describe('CelebrationContext with the Halloween module', () => {
+describe('CelebrationHost with the Halloween module', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
@@ -230,9 +234,9 @@ describe('CelebrationContext with the Halloween module', () => {
     setActiveEvent(null);
     rerender(
       <MemoryRouter>
-        <CelebrationProvider>
+        <CelebrationHost>
           <Triggers />
-        </CelebrationProvider>
+        </CelebrationHost>
       </MemoryRouter>,
     );
     expect(screen.getByTestId('enabled').textContent).toBe('false');
@@ -256,7 +260,7 @@ describe('CelebrationContext with the Halloween module', () => {
     await userEvent.click(screen.getByRole('button', { name: 'weave webs' }));
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: 'halloween.toastTitle',
-      message: 'halloween.webToastMessage',
+      message: `halloween.webToastMessage ${HALLOWEEN_SECRET_PHRASE}`,
     });
     await waitFor(() =>
       expect(mockAnimateHalloweenWeb).toHaveBeenCalledTimes(1),
@@ -297,7 +301,7 @@ describe('CelebrationContext with the Halloween module', () => {
       await waitFor(() => expect(queryDrawings()).toHaveLength(count));
       expect(showSuccessNotification).toHaveBeenLastCalledWith({
         title: 'halloween.toastTitle',
-        message,
+        message: `${message} ${HALLOWEEN_SECRET_PHRASE}`,
       });
     },
   );
@@ -351,7 +355,7 @@ describe('CelebrationContext with the Halloween module', () => {
       expect(lastConsumeResult).toBe(true);
       expect(showSuccessNotification).toHaveBeenCalledWith({
         title: 'halloween.toastTitle',
-        message: 'halloween.spidersToastMessage',
+        message: `halloween.spidersToastMessage ${HALLOWEEN_SECRET_PHRASE}`,
       });
       await waitFor(() =>
         expect(querySpiders()).toHaveLength(HALLOWEEN_SPIDER_COUNT),
@@ -374,7 +378,7 @@ describe('CelebrationContext with the Halloween module', () => {
 
       expect(showSuccessNotification).toHaveBeenCalledWith({
         title: 'halloween.toastTitle',
-        message: 'halloween.ghostToastMessage',
+        message: `halloween.ghostToastMessage ${HALLOWEEN_SECRET_PHRASE}`,
       });
       await waitFor(() =>
         expect(queryGhosts()).toHaveLength(HALLOWEEN_GHOST_COUNT),
@@ -428,8 +432,9 @@ describe('CelebrationContext with the Halloween module', () => {
         if (button === 'say phrase')
           vi.spyOn(Math, 'random').mockReturnValue(0);
         await userEvent.click(screen.getByRole('button', { name: button }));
-        expect(mockT).toHaveBeenCalledWith(`halloween.${message}`, {
-          phrase: HALLOWEEN_SECRET_PHRASE,
+        expect(showSuccessNotification).toHaveBeenLastCalledWith({
+          title: 'halloween.toastTitle',
+          message: `halloween.${message} ${HALLOWEEN_SECRET_PHRASE}`,
         });
         expect(en.halloween[message]).toContain('{{phrase}}');
         expect(en.halloween[message]).toContain('start-page chat');
@@ -471,10 +476,11 @@ describe('CelebrationContext with the Halloween module', () => {
         expect(lastConsumeResult).toBe(true);
         expect(showSuccessNotification).toHaveBeenLastCalledWith({
           title: 'halloween.toastTitle',
-          message: `halloween.${message}`,
+          message: `halloween.${message} ${HALLOWEEN_SECRET_PHRASE}`,
         });
-        expect(mockT).toHaveBeenCalledWith(`halloween.${message}`, {
-          phrase: HALLOWEEN_SECRET_PHRASE,
+        expect(showSuccessNotification).toHaveBeenLastCalledWith({
+          title: 'halloween.toastTitle',
+          message: `halloween.${message} ${HALLOWEEN_SECRET_PHRASE}`,
         });
         expect(
           // eslint-disable-next-line testing-library/no-node-access
@@ -521,9 +527,9 @@ describe('CelebrationContext with the Halloween module', () => {
     };
     render(
       <MemoryRouter>
-        <CelebrationProvider>
+        <CelebrationHost>
           <NewYearTriggers />
-        </CelebrationProvider>
+        </CelebrationHost>
       </MemoryRouter>,
     );
     const gift = await screen.findByRole('button', {
@@ -536,7 +542,7 @@ describe('CelebrationContext with the Halloween module', () => {
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: 'newYear.toastTitle',
       message: expect.stringMatching(
-        /^newYear\.(snow|confetti|sleigh)ToastMessage$/,
+        /^newYear\.(snow|confetti|sleigh)ToastMessage happy new year$/,
       ),
     });
     await userEvent.click(
@@ -545,10 +551,7 @@ describe('CelebrationContext with the Halloween module', () => {
     expect(lastConsumeResult).toBe(true);
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: 'newYear.toastTitle',
-      message: 'newYear.confettiToastMessage',
-    });
-    expect(mockT).toHaveBeenCalledWith('newYear.confettiToastMessage', {
-      phrase: 'happy new year',
+      message: 'newYear.confettiToastMessage happy new year',
     });
     await userEvent.click(
       screen.getByRole('button', { name: 'other event phrase' }),

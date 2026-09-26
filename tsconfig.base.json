@@ -32,6 +32,7 @@
       "@epam/ai-dial-navigation-panel/*": ["./libs/navigation-panel/*"],
       "@epam/ai-dial-conversation-stages/*": ["./libs/conversation-stages/*"],
       "@epam/ai-dial-conversation-panel/*": ["./libs/conversation-panel/*"],
+      "@epam/ai-dial-celebrations/*": ["./libs/celebrations/*"],
       "@epam/ai-dial-starter-buttons/*": ["./libs/starter-buttons/*"],
       "@epam/ai-dial-catalog/*": ["./libs/catalog/*"],
       "@epam/ai-dial-prompt-editor/*": ["./libs/prompt-editor/*"],

@@ -5,11 +5,7 @@ import { HalloweenBurst } from '../types/halloween';
  * nothing is persisted, sent to a backend, or reflected in a conversation.
  */
 
-/**
- * The phrase that triggers a secret scene when typed into the
- * conversation input, already normalized the way
- * `isHalloweenSecretPhrase` normalizes its input.
- */
+/** The phrase that triggers a secret scene when typed into the conversation input. */
 export const HALLOWEEN_SECRET_PHRASE = 'trick or treat';
 
 /**

@@ -1,3 +1,4 @@
+import type { CelebrationEvent } from '@epam/ai-dial-celebrations';
 import iconUrl from '../assets/new-year-logo.svg?no-inline';
 import NewYearDecor from '../components/NewYear/NewYearDecor';
 import {
@@ -7,7 +8,9 @@ import {
 import NewYearSleigh from '../components/NewYear/NewYearSleigh';
 import { NewYearScene } from '../components/NewYear/types';
 import { NewYearI18nKeys } from '../constants/translation-keys';
-import type { CelebrationEvent } from '../types/celebration';
+
+/* Label ids are the i18n key suffixes; the host adapter supplies the text. */
+const labelId = (key: NewYearI18nKeys) => key.replace('newYear.', '');
 
 const newYear: CelebrationEvent = {
   id: 'new-year',
@@ -18,23 +21,24 @@ const newYear: CelebrationEvent = {
       id: NewYearScene.Snow,
       Component: NewYearSnow,
       durationMs: 12000,
-      notificationKey: NewYearI18nKeys.SnowToastMessage,
+      labelId: labelId(NewYearI18nKeys.SnowToastMessage),
     },
     {
       id: NewYearScene.Confetti,
       Component: NewYearConfetti,
       durationMs: 9000,
-      notificationKey: NewYearI18nKeys.ConfettiToastMessage,
+      labelId: labelId(NewYearI18nKeys.ConfettiToastMessage),
     },
     {
       id: NewYearScene.Sleigh,
       Component: NewYearSleigh,
       durationMs: 12000,
-      notificationKey: NewYearI18nKeys.SleighToastMessage,
+      labelId: labelId(NewYearI18nKeys.SleighToastMessage),
     },
   ],
   clickSceneIds: Object.values(NewYearScene),
-  notificationTitleKey: NewYearI18nKeys.ToastTitle,
+  labels: {},
+  titleLabelId: labelId(NewYearI18nKeys.ToastTitle),
   secretTrigger: {
     phrases: ['happy new year'],
     hintPhrase: 'happy new year',

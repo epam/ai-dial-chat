@@ -2,6 +2,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { matchesCelebrationPhrase, pickCelebrationScene } from '../celebration';
 
 describe('event secret phrases', () => {
+  it('matches a whole phrase regardless of case, punctuation and padding', () => {
+    const phrases = ['trick or treat'];
+    expect(matchesCelebrationPhrase('  Trick Or Treat!  ', phrases)).toBe(true);
+    expect(matchesCelebrationPhrase('trick-or-treat', phrases)).toBe(true);
+    expect(matchesCelebrationPhrase('TRICK   OR   TREAT???', phrases)).toBe(
+      true,
+    );
+    expect(
+      matchesCelebrationPhrase('what does trick or treat mean?', phrases),
+    ).toBe(false);
+    expect(matchesCelebrationPhrase('trick or treats', phrases)).toBe(false);
+    expect(matchesCelebrationPhrase('treat or trick', phrases)).toBe(false);
+  });
+
   it.each([
     ['Trick-or-Treat!', 'trick or treat'],
     ['  С НОВЫМ ГОДОМ! ', 'с новым годом'],

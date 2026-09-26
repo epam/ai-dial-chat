@@ -108,11 +108,8 @@ describe('New Year event contract', () => {
     newYear.secretTrigger?.sceneIds.forEach((id) =>
       expect(sceneIds).toContain(id),
     );
-    newYear.scenes.forEach(({ notificationKey }) => {
-      const key = notificationKey.replace(
-        'newYear.',
-        '',
-      ) as keyof typeof en.newYear;
+    newYear.scenes.forEach(({ labelId }) => {
+      const key = labelId as keyof typeof en.newYear;
       expect(en.newYear[key]).toContain('{{phrase}}');
     });
   });

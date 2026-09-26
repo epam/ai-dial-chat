@@ -33,9 +33,7 @@ describe('message-only Halloween scenes', () => {
     (id) => {
       const scene = halloween.scenes.find((candidate) => candidate.id === id);
       expect(scene?.durationMs).toBe(HALLOWEEN_SCENE_DURATIONS[id]);
-      const key = scene?.notificationKey.split(
-        '.',
-      )[1] as keyof typeof en.halloween;
+      const key = scene?.labelId as keyof typeof en.halloween;
       expect(en.halloween[key]).toContain('{{phrase}}');
       expect(en.halloween[key]).toContain('start-page chat');
     },

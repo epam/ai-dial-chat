@@ -34,9 +34,7 @@ describe('additional Halloween scenes', () => {
       expect(halloween.clickSceneIds).toContain(id);
       expect(scene?.durationMs).toBeGreaterThanOrEqual(10000);
       expect(scene?.durationMs).toBeLessThanOrEqual(14000);
-      const key = scene?.notificationKey.split(
-        '.',
-      )[1] as keyof typeof en.halloween;
+      const key = scene?.labelId as keyof typeof en.halloween;
       expect(en.halloween[key]).toContain('{{phrase}}');
       expect(en.halloween[key]).toContain('start-page chat');
     },

@@ -1,8 +1,8 @@
+import type { CelebrationDecorationProps } from '@epam/ai-dial-celebrations';
 import { GhostIconButton } from '@epam/ai-dial-ui-kit';
 import { memo, useId, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NewYearI18nKeys } from '../../constants/translation-keys';
-import type { CelebrationDecorationProps } from '../../types/celebration';
 import styles from './NewYear.module.scss';
 
 const Gift: FC = () => {

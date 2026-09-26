@@ -1,10 +1,10 @@
+import type { CelebrationDecorationProps } from '@epam/ai-dial-celebrations';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ButtonAppearance, IconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HalloweenI18nKeys } from '../../constants/translation-keys';
-import type { CelebrationDecorationProps } from '../../types/celebration';
 import styles from './Halloween.module.scss';
 import HalloweenCornerSpider from './HalloweenCornerSpider';
 import HalloweenPumpkin from './HalloweenPumpkin';

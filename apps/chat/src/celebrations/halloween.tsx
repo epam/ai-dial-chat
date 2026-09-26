@@ -1,3 +1,4 @@
+import type { CelebrationEvent } from '@epam/ai-dial-celebrations';
 import halloweenLogoUrl from '../assets/halloween-logo.svg?no-inline';
 import HalloweenBurstOverlay from '../components/Halloween/HalloweenBurstOverlay';
 import HalloweenDecor from '../components/Halloween/HalloweenDecor';
@@ -9,8 +10,10 @@ import {
   HALLOWEEN_SCENE_DURATIONS,
 } from '../constants/halloween';
 import { HalloweenI18nKeys } from '../constants/translation-keys';
-import type { CelebrationEvent } from '../types/celebration';
 import { HalloweenBurst } from '../types/halloween';
+
+/* Label ids are the i18n key suffixes; the host adapter supplies the text. */
+const labelId = (key: HalloweenI18nKeys) => key.replace('halloween.', '');
 
 const messages: Record<HalloweenBurst, HalloweenI18nKeys> = {
   [HalloweenBurst.Ghost]: HalloweenI18nKeys.GhostToastMessage,
@@ -39,10 +42,11 @@ const halloween: CelebrationEvent = {
     id: burst,
     Component: () => <HalloweenBurstOverlay burst={burst} />,
     durationMs: HALLOWEEN_SCENE_DURATIONS[burst] ?? HALLOWEEN_BURST_DURATION_MS,
-    notificationKey: messages[burst],
+    labelId: labelId(messages[burst]),
   })),
   clickSceneIds: HALLOWEEN_CLICK_BURSTS,
-  notificationTitleKey: HalloweenI18nKeys.ToastTitle,
+  labels: {},
+  titleLabelId: labelId(HalloweenI18nKeys.ToastTitle),
   secretTrigger: {
     phrases: [HALLOWEEN_SECRET_PHRASE],
     hintPhrase: HALLOWEEN_SECRET_PHRASE,

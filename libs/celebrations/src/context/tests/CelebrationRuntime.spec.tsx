@@ -5,25 +5,24 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { Link, MemoryRouter } from 'react-router';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadCelebrationEvent } from '../../celebrations/registry';
-import type { CelebrationEvent } from '../../types/celebration';
-import { UserConfigStatus } from '../../types/user-config-status';
-import { useAppConfig } from '../AppConfigContext';
+import { CELEBRATIONS_CLASS } from '../../constants/public-class-names';
+import type { CelebrationEvent } from '../../models/celebration';
 import { CelebrationProvider, useCelebration } from '../CelebrationContext';
-import { useNotification } from '../NotificationContext';
 
-vi.mock('../../celebrations/registry', () => ({
-  loadCelebrationEvent: vi.fn(),
-}));
-vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
-vi.mock('../NotificationContext', () => ({ useNotification: vi.fn() }));
-
-const mockLoadEvent = vi.mocked(loadCelebrationEvent);
-const mockUseAppConfig = vi.mocked(useAppConfig);
+const mockLoadEvent = vi.fn<(id: string) => Promise<CelebrationEvent>>();
 const showSuccessNotification = vi.fn();
 let consumed: boolean | null = null;
+/* What the host would pass as `activeEventId` while on its start page. */
+let configuredEventId: string | null = 'test-event';
+
+/* Label ids double as their text, so assertions read like the old i18n keys. */
+const LABEL_IDS = [
+  'halloween.toastTitle',
+  'halloween.ghostToastMessage',
+  'halloween.webToastMessage',
+];
 
 const makeEvent = (
   overrides: Partial<CelebrationEvent> = {},
@@ -35,19 +34,25 @@ const makeEvent = (
       id: 'short',
       Component: () => <span data-testid="short-scene" />,
       durationMs: 200,
-      notificationKey: 'halloween.ghostToastMessage',
+      labelId: 'halloween.ghostToastMessage',
     },
     {
       id: 'long',
       Component: () => <span data-testid="long-scene" />,
       durationMs: 900,
-      notificationKey: 'halloween.webToastMessage',
+      labelId: 'halloween.webToastMessage',
     },
   ],
   clickSceneIds: ['short', 'long'],
-  notificationTitleKey: 'halloween.toastTitle',
+  labels: Object.fromEntries(LABEL_IDS.map((id) => [id, id])),
+  titleLabelId: 'halloween.toastTitle',
   ...overrides,
 });
+
+const events = {
+  'test-event': () => mockLoadEvent('test-event'),
+  'second-event': () => mockLoadEvent('second-event'),
+};
 
 const Triggers = () => {
   const { event, isEnabled, activate, celebrate, consumeSecretPhrase } =
@@ -57,8 +62,6 @@ const Triggers = () => {
       <p>Chat remains usable</p>
       <span data-testid="selected-event">{event?.id ?? 'none'}</span>
       <span data-testid="event-enabled">{String(isEnabled)}</span>
-      <Link to="/conversations/existing">open conversation</Link>
-      <Link to="/">back to start</Link>
       <button type="button" onClick={activate}>
         activate
       </button>
@@ -83,24 +86,41 @@ const Triggers = () => {
   );
 };
 
-const setConfig = (
-  activeEventId: string | null,
-  status = UserConfigStatus.Ready,
-) => {
-  mockUseAppConfig.mockReturnValue({
-    status,
-    features: {},
-    config: { activeEventId },
-  } as ReturnType<typeof useAppConfig>);
-};
-
-const Harness = ({ path = '/' }: { path?: string }) => (
-  <MemoryRouter initialEntries={[path]}>
-    <CelebrationProvider>
+/* Stands in for a host: leaving the start page withholds the event id and
+   every navigation changes the reset key. */
+const Harness = ({
+  labels,
+}: {
+  labels?: Record<string, Record<string, string>>;
+}) => {
+  const [isOnStartPage, setIsOnStartPage] = useState(true);
+  const [navigationKey, setNavigationKey] = useState(0);
+  const navigate = (toStartPage: boolean) => {
+    setIsOnStartPage(toStartPage);
+    setNavigationKey((key) => key + 1);
+  };
+  return (
+    <CelebrationProvider
+      events={events}
+      activeEventId={isOnStartPage ? configuredEventId : null}
+      resetKey={navigationKey}
+      labels={labels}
+      onNotify={showSuccessNotification}
+    >
+      <button type="button" onClick={() => navigate(false)}>
+        open conversation
+      </button>
+      <button type="button" onClick={() => navigate(true)}>
+        back to start
+      </button>
       <Triggers />
     </CelebrationProvider>
-  </MemoryRouter>
-);
+  );
+};
+
+const setConfig = (activeEventId: string | null) => {
+  configuredEventId = activeEventId;
+};
 
 const expectEventLoaded = async (id = 'test-event') => {
   await waitFor(() =>
@@ -109,8 +129,8 @@ const expectEventLoaded = async (id = 'test-event') => {
 };
 
 const deferredEvent = () => {
-  let resolve!: (event: CelebrationEvent | null) => void;
-  const promise = new Promise<CelebrationEvent | null>((done) => {
+  let resolve!: (event: CelebrationEvent) => void;
+  const promise = new Promise<CelebrationEvent>((done) => {
     resolve = done;
   });
   return { promise, resolve };
@@ -122,16 +142,6 @@ describe('Celebration runtime', () => {
     consumed = null;
     mockLoadEvent.mockReset().mockResolvedValue(makeEvent());
     setConfig('test-event');
-    vi.mocked(useNotification).mockReturnValue({
-      notifications: [],
-      showNotification: vi.fn(),
-      showInfoNotification: vi.fn(),
-      showSuccessNotification,
-      showWarningNotification: vi.fn(),
-      showErrorNotification: vi.fn(),
-      showLoadingNotification: vi.fn(),
-      dismissNotification: vi.fn(),
-    });
   });
 
   afterEach(() => {
@@ -139,12 +149,8 @@ describe('Celebration runtime', () => {
     vi.restoreAllMocks();
   });
 
-  it.each([
-    UserConfigStatus.Idle,
-    UserConfigStatus.Loading,
-    UserConfigStatus.Error,
-  ])('does not import an event before config is ready (%s)', (status) => {
-    setConfig('test-event', status);
+  it('does not load an event while the host passes no event id', () => {
+    setConfig(null);
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'activate' }));
     fireEvent.click(screen.getByRole('button', { name: 'secret' }));
@@ -153,15 +159,6 @@ describe('Celebration runtime', () => {
     expect(consumed).toBe(false);
     expect(showSuccessNotification).not.toHaveBeenCalled();
   });
-
-  it.each(['/conversations/existing', '/catalog', '/apps-editor'])(
-    'does not import a decorative module on %s',
-    (path) => {
-      render(<Harness path={path} />);
-      expect(mockLoadEvent).not.toHaveBeenCalled();
-      expect(screen.getByTestId('event-enabled').textContent).toBe('false');
-    },
-  );
 
   it('keeps ordinary chat usable while a module loads and after its load fails', async () => {
     mockLoadEvent.mockRejectedValue(new Error('Chunk unavailable'));
@@ -174,8 +171,8 @@ describe('Celebration runtime', () => {
     expect(showSuccessNotification).not.toHaveBeenCalled();
   });
 
-  it('ignores an unknown configured event', async () => {
-    mockLoadEvent.mockResolvedValue(null);
+  it('ignores an event id with no loader', async () => {
+    setConfig('unknown-event');
     render(<Harness />);
     await act(async () => undefined);
     expect(screen.getByTestId('event-enabled').textContent).toBe('false');
@@ -210,12 +207,12 @@ describe('Celebration runtime', () => {
     const loading = deferredEvent();
     mockLoadEvent.mockReturnValueOnce(loading.promise);
     render(<Harness />);
-    fireEvent.click(screen.getByRole('link', { name: 'open conversation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'open conversation' }));
     await act(async () => loading.resolve(makeEvent()));
     expect(screen.getByTestId('event-enabled').textContent).toBe('false');
     fireEvent.click(screen.getByRole('button', { name: 'secret' }));
     expect(consumed).toBe(false);
-    fireEvent.click(screen.getByRole('link', { name: 'back to start' }));
+    fireEvent.click(screen.getByRole('button', { name: 'back to start' }));
     await expectEventLoaded();
     expect(mockLoadEvent).toHaveBeenCalledTimes(2);
     expect(screen.queryByTestId('short-scene')).toBeNull();
@@ -419,11 +416,11 @@ describe('Celebration runtime', () => {
     await expectEventLoaded();
     fireEvent.click(screen.getByRole('button', { name: 'secret' }));
     expect(screen.getByTestId('short-scene')).toBeTruthy();
-    fireEvent.click(screen.getByRole('link', { name: 'open conversation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'open conversation' }));
     fireEvent.click(screen.getByRole('button', { name: 'secret' }));
     expect(consumed).toBe(false);
     expect(screen.queryByTestId('short-scene')).toBeNull();
-    fireEvent.click(screen.getByRole('link', { name: 'back to start' }));
+    fireEvent.click(screen.getByRole('button', { name: 'back to start' }));
     await expectEventLoaded();
     fireEvent.click(screen.getByRole('button', { name: 'secret' }));
     expect(screen.getByTestId('short-scene')).toBeTruthy();
@@ -460,12 +457,46 @@ describe('Celebration runtime', () => {
     expect(screen.getByTestId('long-scene')).toBeTruthy();
   });
 
-  it('is inert when the optional provider is absent', () => {
-    render(
-      <MemoryRouter>
-        <Triggers />
-      </MemoryRouter>,
+  it('merges host labels over the defaults and fills in the secret phrase', async () => {
+    mockLoadEvent.mockResolvedValue(
+      makeEvent({
+        secretTrigger: {
+          phrases: ['magic please'],
+          hintPhrase: 'magic please',
+          sceneIds: ['long'],
+        },
+      }),
     );
+    render(
+      <Harness
+        labels={{
+          'test-event': {
+            'halloween.ghostToastMessage': 'Boo! Say {{phrase}}',
+          },
+        }}
+      />,
+    );
+    await expectEventLoaded();
+    fireEvent.click(screen.getByRole('button', { name: 'short' }));
+    fireEvent.click(screen.getByRole('button', { name: 'long' }));
+    expect(showSuccessNotification.mock.calls).toEqual([
+      [{ title: 'halloween.toastTitle', message: 'Boo! Say magic please' }],
+      [{ title: 'halloween.toastTitle', message: 'halloween.webToastMessage' }],
+    ]);
+  });
+
+  it('renders a playing scene in the public scene layer', async () => {
+    render(<Harness />);
+    await expectEventLoaded();
+    fireEvent.click(screen.getByRole('button', { name: 'short' }));
+
+    expect(
+      screen.getByTestId('short-scene').parentElement?.className,
+    ).toContain(CELEBRATIONS_CLASS.sceneLayer);
+  });
+
+  it('is inert when the optional provider is absent', () => {
+    render(<Triggers />);
     fireEvent.click(screen.getByRole('button', { name: 'activate' }));
     fireEvent.click(screen.getByRole('button', { name: 'short' }));
     fireEvent.click(screen.getByRole('button', { name: 'secret' }));

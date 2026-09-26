@@ -157,6 +157,19 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/navigation-panel/src/index.ts',
       ),
+      /* Subpaths first: a bare alias would also swallow `/halloween`. */
+      '@epam/ai-dial-celebrations/halloween': path.resolve(
+        import.meta.dirname,
+        '../../libs/celebrations/src/halloween/index.ts',
+      ),
+      '@epam/ai-dial-celebrations/new-year': path.resolve(
+        import.meta.dirname,
+        '../../libs/celebrations/src/new-year/index.ts',
+      ),
+      '@epam/ai-dial-celebrations': path.resolve(
+        import.meta.dirname,
+        '../../libs/celebrations/src/index.ts',
+      ),
       '@epam/ai-dial-starter-buttons': path.resolve(
         import.meta.dirname,
         '../../libs/starter-buttons/src/index.ts',

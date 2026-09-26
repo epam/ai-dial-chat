@@ -4,16 +4,10 @@ import {
   HALLOWEEN_BAT_COUNT,
   HALLOWEEN_WITCH_COUNT,
   HALLOWEEN_WISP_COUNT,
-  HALLOWEEN_SECRET_PHRASE,
   HALLOWEEN_SPIDER_COUNT,
 } from '../constants/halloween';
 import { HalloweenGhostVariant } from '../types/halloween';
-import { matchesCelebrationPhrase } from './celebration';
 import { buildFlyingCharacterPaths } from './flying-characters';
-
-/** The Halloween module's phrase, using the shared exact-match rules. */
-export const isHalloweenSecretPhrase = (text: string): boolean =>
-  matchesCelebrationPhrase(text, [HALLOWEEN_SECRET_PHRASE]);
 
 /** Public class hooks of the composer and starter list that scenes anchor to. */
 export interface HalloweenAnchorClasses {
