@@ -3491,7 +3491,8 @@ const {
   loadedPathRef,
   etagRef,
   returnUrl,
-  getCreateReturnUrl: (path) => `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
+  getCreateReturnUrl: (path) =>
+    `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
   refetchSkills,
   client,
   messages: {
