@@ -6,6 +6,18 @@ import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { ConversationInput } from './ConversationInput';
 
 describe('ConversationInput', () => {
+  it('forwards focus requests without replacing the draft or its caret', () => {
+    const { rerender } = render(<ConversationInput />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'Existing draft' } });
+    textarea.setSelectionRange(3, 3);
+    textarea.blur();
+    rerender(<ConversationInput focusRequestId={1} />);
+    // eslint-disable-next-line testing-library/no-node-access -- The public focus-request contract is observable through the active element.
+    expect(document.activeElement).toBe(textarea);
+    expect(textarea.value).toBe('Existing draft');
+    expect(textarea.selectionStart).toBe(3);
+  });
   it('should render with welcome text', () => {
     render(<ConversationInput welcomeText="How can I help you?" />);
     expect(screen.getByText('How can I help you?')).toBeTruthy();

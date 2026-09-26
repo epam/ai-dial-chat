@@ -20,6 +20,7 @@ const DEFAULT_COLLAPSED_LINE_COUNT = 10;
 /** User-authored message bubble, end-aligned with configurable radius based on group position. */
 export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   text,
+  contentRef,
   position = BubblePosition.Bottom,
   styles: bubbleStyles,
   actions,
@@ -121,6 +122,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             <div className="flex min-w-0 flex-col items-start">
               <div
                 id={collapsibleTextId}
+                ref={contentRef}
                 className={mergeClasses(
                   // Bleed room for chip edges — see design.md Decision 3a.
                   'relative -me-1 -ms-1 w-[calc(100%+8px)] overflow-hidden pe-1 ps-1',
