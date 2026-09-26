@@ -1,0 +1,52 @@
+{
+  "name": "@epam/ai-dial-celebrations",
+  "description": "Seasonal start-page celebrations with lazily loaded Halloween and New Year scenes that hosts can switch on and off one by one",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    "./styles.css": "./dist/index.css",
+    ".": {
+      "@epam/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./halloween": {
+      "@epam/source": "./src/halloween/index.ts",
+      "types": "./dist/halloween/index.d.ts",
+      "import": "./dist/halloween.js",
+      "default": "./dist/halloween.js"
+    },
+    "./new-year": {
+      "@epam/source": "./src/new-year/index.ts",
+      "types": "./dist/new-year/index.d.ts",
+      "import": "./dist/new-year.js",
+      "default": "./dist/new-year.js"
+    }
+  },
+  "dependencies": {
+    "react-error-boundary": "^6.1.5"
+  },
+  "peerDependencies": {
+    "@epam/ai-dial-chat-shared": "*",
+    "@epam/ai-dial-ui-kit": "^0.15.0-dev.19",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "nx": {
+    "tags": [
+      "publishable"
+    ],
+    "targets": {
+      "publish": {
+        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      }
+    }
+  }
+}

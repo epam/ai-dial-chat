@@ -74,6 +74,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { CELEBRATION_HISTORY_CLASS } from '../../constants/celebration';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -114,7 +115,6 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
-import { CELEBRATION_HISTORY_CLASS } from '../../utils/celebration-history';
 import { collapseScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,

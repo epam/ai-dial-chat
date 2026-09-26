@@ -1,7 +1,7 @@
+import { useCelebration } from '@epam/ai-dial-celebrations';
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatI18nKeys } from '../../constants/translation-keys';
-import { useCelebration } from '../../context/CelebrationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getIconPath } from '../../utils/icon-path';
 
