@@ -7,6 +7,8 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CelebrationEnvironmentContext } from '../../../../context/CelebrationEnvironmentContext';
+import { testEnvironment } from '../../../../test-utils/environment';
 import {
   HALLOWEEN_SPIDER_DROP_DELAY_MS,
   HALLOWEEN_SPIDER_DROP_MS,
@@ -15,6 +17,7 @@ import {
   HALLOWEEN_SPIDER_RETURN_MS,
   HALLOWEEN_SPIDER_WRAP_IDLE_MS,
 } from '../../../constants/halloween';
+import { HalloweenDecorBehavior } from '../../../types/halloween';
 import { HALLOWEEN_PUMPKIN_SILK } from '../../../utils/halloween-spider-wrap';
 import HalloweenDecor from '../HalloweenDecor';
 
@@ -365,6 +368,67 @@ describe('HalloweenDecor', () => {
       fireEvent.keyDown(window, { key: 'Escape' });
 
       expect(spider.dataset.spiderTap).toBeUndefined();
+    });
+
+    describe('when the host switches a behavior off', () => {
+      const renderWithout = (behavior: HalloweenDecorBehavior) =>
+        render(
+          <>
+            <textarea aria-label="Message" />
+            <CelebrationEnvironmentContext.Provider
+              value={testEnvironment({
+                isDecorBehaviorEnabled: (candidate) => candidate !== behavior,
+              })}
+            >
+              <HalloweenDecor onActivate={onActivate} />
+            </CelebrationEnvironmentContext.Provider>
+          </>,
+        );
+
+      it('never drops on its thread without SpiderDrop', () => {
+        renderWithout(HalloweenDecorBehavior.SpiderDrop);
+
+        waitForDrop();
+
+        expect(played).toHaveLength(0);
+      });
+
+      it('never wraps the pumpkin without PumpkinWrap but keeps dropping', () => {
+        renderWithout(HalloweenDecorBehavior.PumpkinWrap);
+
+        stayQuiet(HALLOWEEN_SPIDER_WRAP_IDLE_MS + 5000);
+
+        expect(storyAnimations()).toHaveLength(0);
+        expect(
+          played.filter(({ duration }) => duration === HALLOWEEN_SPIDER_DROP_MS)
+            .length,
+        ).toBeGreaterThan(0);
+      });
+
+      it('never drums without SpiderDrum', () => {
+        renderWithout(HalloweenDecorBehavior.SpiderDrum);
+        const [spider] = queryCornerSpiders();
+
+        fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), {
+          key: 'h',
+        });
+
+        expect(spider.dataset.spiderTap).toBeUndefined();
+      });
+
+      it('stays on its perch without SpiderFlee but still freezes and watches', async () => {
+        renderWithout(HalloweenDecorBehavior.SpiderFlee);
+        const [spider] = queryCornerSpiders();
+        perch(spider, 900, 100);
+        fireEvent(window, new Event('resize'));
+
+        movePointer(910, 110);
+
+        await waitFor(() => expect(spider.dataset.spiderState).toBe('alert'));
+        expect(spider.style.transform).toBe(
+          'translate3d(0px, 0px, 0) rotate(0.0deg)',
+        );
+      });
     });
 
     it('never drops or leans under reduced motion', () => {

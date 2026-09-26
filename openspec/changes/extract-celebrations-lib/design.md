@@ -64,7 +64,7 @@ The repo has no Storybook. Publishing is `tools/publish-lib.mjs` over projects t
 
 ### D3. Selection is applied once, in the provider
 
-The provider computes, per loaded event, memoized `clickPool`, `secretPool` and `enabledBehaviors` from `selection[event.id]`: start from all scene ids (or `enabledScenes` when given), subtract `disabledScenes`, intersect each pool; unknown ids drop out. `consumeSecretPhrase` returns `false` when `isSecretEnabled === false` or the secret pool is empty. Decors ask `useDecorBehavior(HalloweenDecorBehavior.X)` (internal) and skip installing timers/listeners when disabled — `HalloweenCornerSpider` splits its single effect into per-behaviour effects (flee, drop, drum, wrap) so a disabled one installs nothing.
+The provider computes, per loaded event, memoized `clickPool`, `secretPool` and `enabledBehaviors` from `selection[event.id]`: start from all scene ids (or `enabledScenes` when given), subtract `disabledScenes`, intersect each pool; unknown ids drop out. `consumeSecretPhrase` returns `false` when `isSecretEnabled === false` or the secret pool is empty. Decors ask `useDecorBehavior(HalloweenDecorBehavior.X)` (internal) and skip installing timers/listeners when disabled. `HalloweenCornerSpider` keeps one effect, because its behaviours coordinate (an idle drop yields to the wrap, activity aborts the wrap), and gates each behaviour's timers and listeners on its flag.
 
 *Alternative:* hosts pass a filtered event object — pushes pool logic onto every host and breaks secret-trigger consistency. Rejected.
 

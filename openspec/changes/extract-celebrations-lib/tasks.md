@@ -42,9 +42,9 @@ Architecture guard (applies to every slice touching `libs/celebrations/**`): the
 
 ## 4. Slice 4 — scene and decor selection
 
-- [ ] 4.1 Implement design D3 in `libs/celebrations/src/context/CelebrationContext.tsx`: memoized per-event click/secret pools and enabled behaviours from `selection` (`enabledScenes`, `disabledScenes`, `disabledDecorBehaviors`, `isSecretEnabled`), `celebrate` ignoring disabled ids, secret consumption rules, unknown ids ignored; internal `useDecorBehavior`.
+- [x] 4.1 Implement design D3 in `libs/celebrations/src/context/CelebrationContext.tsx`: memoized per-event click/secret pools and enabled behaviours from `selection` (`enabledScenes`, `disabledScenes`, `disabledDecorBehaviors`, `isSecretEnabled`), `celebrate` ignoring disabled ids, secret consumption rules, unknown ids ignored; internal `useDecorBehavior`.
   - Verification: `npm run test:file -- libs/celebrations/src/context/tests/CelebrationSelection.spec.tsx` (new: disabled scene never plays, allow-list only, empty click pool inert, secret disabled/empty pool sends normally, unknown ids ignored).
-- [ ] 4.2 Split `HalloweenCornerSpider` into per-behaviour effects (flee, drop, drum, wrap) that install nothing when disabled.
+- [x] 4.2 Gate each `HalloweenCornerSpider` behaviour (flee, drop, drum, wrap) so a disabled one installs no timer or listener; the behaviours stay in one effect because they coordinate (drops yield to the wrap, activity aborts it).
   - Verification: `npm run test:file -- libs/celebrations/src/halloween/tests/HalloweenDecor.spec.tsx` (new cases per disabled behaviour); `npm run verify:changed`.
 
 ## 5. Slice 5 — Storybook

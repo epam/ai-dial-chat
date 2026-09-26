@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { CSSProperties, FC, RefObject } from 'react';
 import { memo, useEffect, useRef, useState } from 'react';
+import { useDecorBehavior } from '../../../context/CelebrationEnvironmentContext';
 import {
   HALLOWEEN_SPIDER_ALERT_RADIUS_PX,
   HALLOWEEN_SPIDER_DROP_DELAY_MS,
@@ -15,7 +16,10 @@ import {
   HALLOWEEN_SPIDER_WATCH_MAX_DEG,
   HALLOWEEN_SPIDER_WRAP_IDLE_MS,
 } from '../../constants/halloween';
-import { HalloweenSpiderMood } from '../../types/halloween';
+import {
+  HalloweenDecorBehavior,
+  HalloweenSpiderMood,
+} from '../../types/halloween';
 import {
   buildHalloweenSpiderDangle,
   getHalloweenSpiderDangleTransform,
@@ -89,6 +93,11 @@ const HalloweenCornerSpider: FC<Props> = ({
   const [mood, setMood] = useState(HalloweenSpiderMood.Idle);
   const offsetRef = useRef(AT_REST);
   const isFleeing = offset !== AT_REST;
+  /* A behavior the host switched off installs no timer or listener at all. */
+  const canFlee = useDecorBehavior(HalloweenDecorBehavior.SpiderFlee);
+  const canDrop = useDecorBehavior(HalloweenDecorBehavior.SpiderDrop);
+  const canDrum = useDecorBehavior(HalloweenDecorBehavior.SpiderDrum);
+  const canWrap = useDecorBehavior(HalloweenDecorBehavior.PumpkinWrap);
 
   useEffect(() => {
     /* Optional-chained: a host without `matchMedia` should get the ordinary
@@ -132,6 +141,7 @@ const HalloweenCornerSpider: FC<Props> = ({
     let drumTimer: number | undefined;
 
     const scheduleDrop = () => {
+      if (!canDrop) return;
       window.clearTimeout(dropTimer);
       dropTimer = window.setTimeout(
         startDrop,
@@ -202,6 +212,7 @@ const HalloweenCornerSpider: FC<Props> = ({
     };
 
     const scheduleWrap = (delay = HALLOWEEN_SPIDER_WRAP_IDLE_MS) => {
+      if (!canWrap) return;
       window.clearTimeout(wrapTimer);
       wrapTimer = window.setTimeout(startWrap, delay);
     };
@@ -284,8 +295,9 @@ const HalloweenCornerSpider: FC<Props> = ({
 
     /* Taps alternate between two legs, so each keystroke restarts a tap. */
     const handleKeyDown = (event: KeyboardEvent) => {
-      handleActivity();
+      if (canWrap) handleActivity();
       const spider = spiderRef.current;
+      if (!canDrum) return;
       if (!spider || !isEditable(event.target)) return;
       spider.dataset.spiderTap = spider.dataset.spiderTap === 'a' ? 'b' : 'a';
       window.clearTimeout(drumTimer);
@@ -327,6 +339,7 @@ const HalloweenCornerSpider: FC<Props> = ({
         setMood(isNear ? HalloweenSpiderMood.Alert : HalloweenSpiderMood.Idle);
       }
       if (alert) retract();
+      if (!canFlee) return;
 
       const next = nextHalloweenSpiderOffset({
         perch,
@@ -347,21 +360,24 @@ const HalloweenCornerSpider: FC<Props> = ({
     /* Coalesced into one frame: a pointer crossing the web fires far more
        moves than there are frames to render them. */
     const handlePointerMove = (event: PointerEvent) => {
-      handleActivity();
+      if (canWrap) handleActivity();
       pointer = { x: event.clientX, y: event.clientY };
       frame ||= window.requestAnimationFrame(step);
     };
 
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('resize', measure);
-    window.addEventListener('keydown', handleKeyDown, true);
-    ACTIVITY_EVENTS.forEach((event) =>
-      window.addEventListener(event, handleActivity, {
-        capture: true,
-        passive: true,
-      }),
-    );
-    document.addEventListener('visibilitychange', handleVisibility);
+    if (canDrum || canWrap)
+      window.addEventListener('keydown', handleKeyDown, true);
+    if (canWrap) {
+      ACTIVITY_EVENTS.forEach((event) =>
+        window.addEventListener(event, handleActivity, {
+          capture: true,
+          passive: true,
+        }),
+      );
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
     scheduleDrop();
     scheduleWrap();
 
@@ -381,7 +397,7 @@ const HalloweenCornerSpider: FC<Props> = ({
       drop?.animations.forEach((animation) => animation.cancel());
       wrap?.playback.cancel();
     };
-  }, [pumpkinRef, silkRef]);
+  }, [canDrop, canDrum, canFlee, canWrap, pumpkinRef, silkRef]);
 
   return (
     <span
