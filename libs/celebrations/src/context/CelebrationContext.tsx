@@ -127,7 +127,17 @@ export const CelebrationProvider: FC<CelebrationProviderProps> = ({
   );
   const eventLabels = event ? labels?.[event.id] : undefined;
   const resolvedLabels = useMemo(
-    () => (event ? { ...event.labels, ...eventLabels } : EMPTY_LABELS),
+    () =>
+      event
+        ? {
+            ...event.labels,
+            ...Object.fromEntries(
+              Object.entries(eventLabels ?? {}).filter(
+                (entry): entry is [string, string] => entry[1] !== undefined,
+              ),
+            ),
+          }
+        : EMPTY_LABELS,
     [event, eventLabels],
   );
 

@@ -5,6 +5,10 @@ import type { StorybookConfig } from '@storybook/react-vite';
 const getAbsolutePath = (value: string): string =>
   dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
 
+/* The library build appends Tailwind utilities to dist/index.css and emits
+   declarations; Storybook compiles its own utilities through preview.css. */
+const LIBRARY_ONLY_PLUGINS = new Set(['vite:dts', 'lib-tailwind-utilities']);
+
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(ts|tsx)'],
   addons: [],
@@ -29,7 +33,7 @@ const config: StorybookConfig = {
             plugin &&
             typeof plugin === 'object' &&
             'name' in plugin &&
-            plugin.name === 'vite:dts'
+            LIBRARY_ONLY_PLUGINS.has(plugin.name)
           ),
       ),
   }),

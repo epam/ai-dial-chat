@@ -4,7 +4,9 @@
     "outDir": "out-tsc/storybook",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "lib": ["dom", "es2022"],
+    "types": ["node", "vite/client"]
   },
   "exclude": [
     "src/**/*.spec.ts",

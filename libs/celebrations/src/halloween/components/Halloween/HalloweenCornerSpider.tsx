@@ -102,8 +102,10 @@ const HalloweenCornerSpider: FC<Props> = ({
   const canDrum = useDecorBehavior(HalloweenDecorBehavior.SpiderDrum);
   const canWrap = useDecorBehavior(HalloweenDecorBehavior.PumpkinWrap);
   const { timings } = useCelebrationEnvironment();
-  const dropDelayMs = timings?.spiderDropDelayMs ?? HALLOWEEN_SPIDER_DROP_DELAY_MS;
-  const wrapIdleMs = timings?.pumpkinWrapIdleMs ?? HALLOWEEN_SPIDER_WRAP_IDLE_MS;
+  const dropDelayMs =
+    timings?.spiderDropDelayMs ?? HALLOWEEN_SPIDER_DROP_DELAY_MS;
+  const wrapIdleMs =
+    timings?.pumpkinWrapIdleMs ?? HALLOWEEN_SPIDER_WRAP_IDLE_MS;
 
   useEffect(() => {
     /* Optional-chained: a host without `matchMedia` should get the ordinary
@@ -149,10 +151,7 @@ const HalloweenCornerSpider: FC<Props> = ({
     const scheduleDrop = () => {
       if (!canDrop) return;
       window.clearTimeout(dropTimer);
-      dropTimer = window.setTimeout(
-        startDrop,
-        pickHalloweenRange(dropDelayMs),
-      );
+      dropTimer = window.setTimeout(startDrop, pickHalloweenRange(dropDelayMs));
     };
 
     /* The spider and its thread share one timeline, so the silk always ends

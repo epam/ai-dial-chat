@@ -103,8 +103,10 @@ export interface CelebrationProviderProps {
   activeEventId: string | null;
   /** Any value whose change cancels the active scene and reloads the event. */
   resetKey?: unknown;
-  /** Label overrides keyed by event id, merged over the event's defaults. */
-  labels?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** Label overrides keyed by event id, merged over the event's defaults; `undefined` keeps a default. */
+  labels?: Readonly<
+    Record<string, Readonly<Record<string, string | undefined>>>
+  >;
   /** Called once per played scene with its resolved notification. */
   onNotify?: (notification: CelebrationNotification) => void;
   /** Whether the host currently uses its mobile layout. Default: `false`. */

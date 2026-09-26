@@ -48,6 +48,9 @@ const buildUtilities = async (root) => {
       toGlob(root, 'src/**/*.{ts,tsx}'),
       `!${toGlob(root, 'src/**/*.{spec,test}.{ts,tsx}')}`,
       `!${toGlob(root, 'src/**/tests/**')}`,
+      /* Stories and their fixtures are not part of the published package. */
+      `!${toGlob(root, 'src/**/*.stories.{ts,tsx}')}`,
+      `!${toGlob(root, 'src/stories/**')}`,
     ],
   };
 

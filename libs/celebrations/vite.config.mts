@@ -5,6 +5,15 @@ import dts from 'vite-plugin-dts';
 import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
 import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
+import { createVerifyPublishedStyles } from '../../tools/vite-verify-published-styles.mjs';
+
+/* One marker per event plus a Tailwind utility the scenes use in TSX; CSS-module
+   hashes change, their name prefixes do not. */
+const REQUIRED_PUBLISHED_STYLE_MARKERS = [
+  '_halloween-spider-weave_',
+  '_giftButton_',
+  '.desktop\\:bottom-4',
+] as const;
 
 const isExternalPeerImport = createIsExternalPeerImport([
   '@epam/ai-dial-chat-shared',
@@ -22,6 +31,17 @@ export default defineConfig(({ command }) => ({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
     }),
+    {
+      ...createVerifyPublishedStyles({
+        root: import.meta.dirname,
+        requiredMarkers: REQUIRED_PUBLISHED_STYLE_MARKERS,
+        forbidEmbeddedFonts: true,
+      }),
+      /* Only the library build emits `dist/index.css`; Storybook turns
+         library mode off. */
+      apply: (config, { command }) =>
+        command === 'build' && Boolean(config.build?.lib),
+    },
   ],
   build: {
     outDir: './dist',

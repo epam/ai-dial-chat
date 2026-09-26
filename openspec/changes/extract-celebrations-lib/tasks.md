@@ -62,26 +62,26 @@ Architecture guard (applies to every slice touching `libs/celebrations/**`): the
 
 ## 6. RTL and accessibility checks
 
-- [ ] 6.1 No new UI is introduced; confirm moved decor keeps logical positioning (`start/end`, `rtl:` mirror on the web only) and scenes keep physical measured geometry. Add the `dir` arg to `ScenePlayer` and keep the existing RTL assertions in the moved specs (`HalloweenCatScene`, `HalloweenGhosts`, `HalloweenRavens`, `HalloweenDecor`) passing; add a guard test that `CELEBRATIONS_CLASS` classes render on the decor root, trigger (found by its accessible name) and scene layer.
+- [x] 6.1 No new UI is introduced; confirm moved decor keeps logical positioning (`start/end`, `rtl:` mirror on the web only) and scenes keep physical measured geometry. Add the `dir` arg to `ScenePlayer` and keep the existing RTL assertions in the moved specs (`HalloweenCatScene`, `HalloweenGhosts`, `HalloweenRavens`, `HalloweenDecor`) passing; add a guard test that `CELEBRATIONS_CLASS` classes render on the decor root, trigger (found by its accessible name) and scene layer.
   - Verification: `npm run test:file -- libs/celebrations/src/components/CelebrationDecor/tests/CelebrationDecor.spec.tsx` plus the four specs named above.
 
 ## 7. i18n
 
-- [ ] 7.1 No new user-visible strings: `apps/chat/src/i18n/locales/en.json` and `translation-keys.ts` stay unchanged; add a test in `apps/chat/src/context/tests/CelebrationHost.spec.tsx` that every `HalloweenLabels`/`NewYearLabels` field is mapped from an existing key, and in the lib that `HALLOWEEN_LABELS`/`NEW_YEAR_LABELS` equal today's English text.
+- [x] 7.1 No new user-visible strings: `apps/chat/src/i18n/locales/en.json` and `translation-keys.ts` stay unchanged; add a test in `apps/chat/src/context/tests/CelebrationHost.spec.tsx` that every `HalloweenLabels`/`NewYearLabels` field is mapped from an existing key, and in the lib that `HALLOWEEN_LABELS`/`NEW_YEAR_LABELS` equal today's English text.
   - Verification: `npm run test:file -- apps/chat/src/context/tests/CelebrationHost.spec.tsx`.
 
 ## 8. Publishing and documentation
 
-- [ ] 8.1 Write `libs/celebrations/README.md` (H1 package name, Overview, Installation + `import '@epam/ai-dial-celebrations/styles.css';`, Peer Dependencies, Components/Hooks/Events/Enums/Types sections with compiling examples of D2, selection and anchors, public class table).
+- [x] 8.1 Write `libs/celebrations/README.md` (H1 package name, Overview, Installation + `import '@epam/ai-dial-celebrations/styles.css';`, Peer Dependencies, Components/Hooks/Events/Enums/Types sections with compiling examples of D2, selection and anchors, public class table).
   - Verification: `npm run validate:docs`.
-- [ ] 8.2 Update `docs/architecture.md` (libraries table and count; celebration mechanism now in the lib; `CelebrationContext` row → `CelebrationHost` adapter), root `README.md` libraries table, `apps/chat/README.md` celebration section (points to the lib), and run `npm run docs:install-matrix` (add a scenario in `scripts/generate-install-matrix.mjs` if the lib is a new host scenario).
+- [x] 8.2 Update `docs/architecture.md` (libraries table and count; celebration mechanism now in the lib; `CelebrationContext` row → `CelebrationHost` adapter), root `README.md` libraries table, `apps/chat/README.md` celebration section (points to the lib), and run `npm run docs:install-matrix` (add a scenario in `scripts/generate-install-matrix.mjs` if the lib is a new host scenario).
   - Verification: `npm run validate:docs`.
-- [ ] 8.3 Add `tools/vite-verify-published-styles.mjs` markers for one Halloween and one New Year class to the lib's Vite config; run the publish dry run.
+- [x] 8.3 Add `tools/vite-verify-published-styles.mjs` markers for one Halloween and one New Year class to the lib's Vite config; run the publish dry run.
   - Verification: `npm exec nx build @epam/ai-dial-celebrations`; `npm run publish:dry` lists `@epam/ai-dial-celebrations` with every export target present.
 
 ## 9. Final verification
 
-- [ ] 9.1 Run strict OpenSpec validation, `npm run validate:docs`, `npm run build:quiet` (bundling changed) and exactly one `npm run verify:full`; record results below. Leave the change active for archive approval.
+- [x] 9.1 Run strict OpenSpec validation, `npm run validate:docs`, `npm run build:quiet` (bundling changed) and exactly one `npm run verify:full`; record results below. Leave the change active for archive approval.
   - Verification: `openspec validate extract-celebrations-lib --strict`; the commands above.
 
 ## 10. Follow-ups (out of scope)
@@ -91,4 +91,10 @@ Architecture guard (applies to every slice touching `libs/celebrations/**`): the
 
 ## Verification record
 
-Pending.
+- `openspec validate extract-celebrations-lib --strict`: valid.
+- `npm run validate:docs`: passed (49 markdown files); install matrix matches the manifests.
+- `npm run build:quiet`: `@epam/chat` and `@epam/ai-dial-celebrations` build; the first attempt was interrupted and left `tools/attachment-canvas-consumer-fixture/node_modules` half-extracted (git-ignored), repaired by deleting it; the fixture then builds and tests green.
+- Library: 44 test files / 740 tests pass; lint and typecheck clean; `build-storybook` succeeds (26 stories); `publish --dry=true` packs 161 files (109 kB) with no stories, test utilities or specs.
+- `npm run verify:full`: `typecheck:full` and `lint:check` pass. `format:check` fails on `apps/chat-api/README.md` and `libs/chat-hooks/README.md`, which this change does not touch (inherited from `development`). `test:full`: every project passes except `apps/chat-api` `app-config.service.spec.ts` "exposes only refinement availability for model undefined", which fails only under the full parallel run and passes in isolation; it is unrelated to celebrations.
+- Found during verification and fixed in this change: ESLint linted `storybook-static`, the shared Tailwind utility plugin picked up story-only classes, and the Storybook build ran library-only plugins.
+- Out of scope, not restored: the standing-cat pose (seated/standing drawings) is absent from `development` and from PR #9086; it was reverted in the working tree before that PR was committed.

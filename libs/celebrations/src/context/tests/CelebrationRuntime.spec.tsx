@@ -91,7 +91,7 @@ const Triggers = () => {
 const Harness = ({
   labels,
 }: {
-  labels?: Record<string, Record<string, string>>;
+  labels?: Record<string, Record<string, string | undefined>>;
 }) => {
   const [isOnStartPage, setIsOnStartPage] = useState(true);
   const [navigationKey, setNavigationKey] = useState(0);

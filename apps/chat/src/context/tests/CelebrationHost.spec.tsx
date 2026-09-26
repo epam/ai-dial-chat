@@ -1,4 +1,6 @@
 import type { CelebrationProviderProps } from '@epam/ai-dial-celebrations';
+import { HALLOWEEN_LABELS } from '@epam/ai-dial-celebrations/halloween';
+import { NEW_YEAR_LABELS } from '@epam/ai-dial-celebrations/new-year';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter } from 'react-router';
@@ -7,6 +9,7 @@ import {
   HalloweenI18nKeys,
   NewYearI18nKeys,
 } from '../../constants/translation-keys';
+import en from '../../i18n/locales/en.json';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { useAppConfig } from '../AppConfigContext';
 import { CelebrationHost } from '../CelebrationHost';
@@ -128,6 +131,20 @@ describe('CelebrationHost', () => {
     expect(labels?.['new-year'].giftLabel).toBe(
       `${NewYearI18nKeys.GiftLabel}|{{phrase}}`,
     );
+  });
+
+  it('maps every library label from an existing key, and the library defaults match en.json', () => {
+    renderHost();
+    const { labels } = lastProps();
+
+    expect(Object.keys(labels?.halloween ?? {}).sort()).toEqual(
+      Object.keys(HALLOWEEN_LABELS).sort(),
+    );
+    expect(Object.keys(labels?.['new-year'] ?? {}).sort()).toEqual(
+      Object.keys(NEW_YEAR_LABELS).sort(),
+    );
+    expect(HALLOWEEN_LABELS).toEqual(en.halloween);
+    expect(NEW_YEAR_LABELS).toEqual(en.newYear);
   });
 
   it('forwards scene notifications to the success toast', () => {
