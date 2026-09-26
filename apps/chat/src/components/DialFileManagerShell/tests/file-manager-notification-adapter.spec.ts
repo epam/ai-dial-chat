@@ -2,6 +2,7 @@ import {
   FileManagerNotificationReason,
   FileNameValidationErrorReason,
   FileOperationKind,
+  type FileOperationSuccessEvent,
 } from '@epam/ai-dial-chat-hooks';
 import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
@@ -158,89 +159,105 @@ describe('handleFileOperationSuccess', () => {
     );
   });
 
-  it('builds a single-item copy toast with the destination folder', () => {
-    const notifyOperationSuccess = vi.fn();
-    const showSuccessNotification = vi.fn();
+  describe('copy, move, and duplicate toasts', () => {
+    const tWithParams = ((key: string, params?: Record<string, unknown>) =>
+      params == null ? key : `${key} ${JSON.stringify(params)}`) as typeof t;
 
-    handleFileOperationSuccess(
-      t,
-      notifyOperationSuccess,
-      showSuccessNotification,
-      {
-        kind: FileOperationKind.FileCopied,
-        name: 'a.pdf',
-        count: 1,
-        destinationFolderName: 'reports',
+    const notify = (event: FileOperationSuccessEvent) => {
+      const showSuccessNotification = vi.fn();
+      handleFileOperationSuccess(
+        tWithParams,
+        vi.fn(),
+        showSuccessNotification,
+        event,
+      );
+      return showSuccessNotification;
+    };
+
+    it.each([
+      [FileOperationKind.FileCopied, false, 'fileCopiedSuccessfully'],
+      [FileOperationKind.FileCopied, true, 'folderCopiedSuccessfully'],
+      [FileOperationKind.FileMoved, false, 'fileMovedSuccessfully'],
+      [FileOperationKind.FileMoved, true, 'folderMovedSuccessfully'],
+    ])(
+      'names the single %s item (isFolder: %s) in the title and the destination path in the message',
+      (kind, isFolder, titleKey) => {
+        const messageKey =
+          kind === FileOperationKind.FileMoved
+            ? 'movedToFolder'
+            : 'copiedToFolder';
+
+        expect(
+          notify({
+            kind,
+            name: '09document_scan.png',
+            count: 1,
+            isFolder,
+            destinationFolderName: 'My files/DK Test/DK Test with nested',
+          }),
+        ).toHaveBeenCalledWith({
+          title: `dialFileManager.${titleKey} {"name":"09document_scan.png","count":1}`,
+          message: `dialFileManager.${messageKey} {"folder":"My files / DK Test / DK Test with nested"}`,
+        });
       },
     );
 
-    expect(showSuccessNotification).toHaveBeenCalledWith({
-      title: 'dialFileManager.itemCopiedSuccessfully',
-      message: 'dialFileManager.itemCopiedToFolder',
+    it.each([
+      [
+        FileOperationKind.FilesCopied,
+        'itemsCopiedSuccessfully',
+        'copiedToFolder',
+      ],
+      [FileOperationKind.FilesMoved, 'itemsMovedSuccessfully', 'movedToFolder'],
+    ])(
+      'uses the item count for a multi-item %s toast',
+      (kind, titleKey, messageKey) => {
+        expect(
+          notify({
+            kind,
+            name: 'a.pdf',
+            count: 4,
+            isFolder: false,
+            destinationFolderName: 'My files/reports',
+          }),
+        ).toHaveBeenCalledWith({
+          title: `dialFileManager.${titleKey} {"name":"a.pdf","count":4}`,
+          message: `dialFileManager.${messageKey} {"folder":"My files / reports"}`,
+        });
+      },
+    );
+
+    it('builds a single duplicated folder toast that points at the same folder', () => {
+      expect(
+        notify({
+          kind: FileOperationKind.FileDuplicated,
+          name: '08folder (1)',
+          count: 1,
+          isFolder: true,
+          destinationFolderName: 'My files',
+        }),
+      ).toHaveBeenCalledWith({
+        title:
+          'dialFileManager.folderDuplicatedSuccessfully {"name":"08folder (1)","count":1}',
+        message: 'dialFileManager.duplicatedToSameFolder {"folder":"My files"}',
+      });
     });
-  });
 
-  it('builds a multi-item copy toast with the plural wording', () => {
-    const notifyOperationSuccess = vi.fn();
-    const showSuccessNotification = vi.fn();
-
-    handleFileOperationSuccess(
-      t,
-      notifyOperationSuccess,
-      showSuccessNotification,
-      {
-        kind: FileOperationKind.FilesCopied,
-        count: 3,
-        destinationFolderName: 'reports',
-      },
-    );
-
-    expect(showSuccessNotification).toHaveBeenCalledWith({
-      title: 'dialFileManager.itemsCopiedSuccessfully',
-      message: 'dialFileManager.itemsCopiedToFolder',
-    });
-  });
-
-  it('builds a single-item move toast with the destination folder', () => {
-    const notifyOperationSuccess = vi.fn();
-    const showSuccessNotification = vi.fn();
-
-    handleFileOperationSuccess(
-      t,
-      notifyOperationSuccess,
-      showSuccessNotification,
-      {
-        kind: FileOperationKind.FileMoved,
-        name: 'a.pdf',
-        count: 1,
-        destinationFolderName: 'reports',
-      },
-    );
-
-    expect(showSuccessNotification).toHaveBeenCalledWith({
-      title: 'dialFileManager.itemMovedSuccessfully',
-      message: 'dialFileManager.itemMovedToFolder',
-    });
-  });
-
-  it('builds a multi-item move toast with the plural wording', () => {
-    const notifyOperationSuccess = vi.fn();
-    const showSuccessNotification = vi.fn();
-
-    handleFileOperationSuccess(
-      t,
-      notifyOperationSuccess,
-      showSuccessNotification,
-      {
-        kind: FileOperationKind.FilesMoved,
-        count: 3,
-        destinationFolderName: 'reports',
-      },
-    );
-
-    expect(showSuccessNotification).toHaveBeenCalledWith({
-      title: 'dialFileManager.itemsMovedSuccessfully',
-      message: 'dialFileManager.itemsMovedToFolder',
+    it('builds a multi-item duplicate toast with the plural same-folder message', () => {
+      expect(
+        notify({
+          kind: FileOperationKind.FilesDuplicated,
+          name: 'a (1).pdf',
+          count: 4,
+          isFolder: false,
+          destinationFolderName: 'My files',
+        }),
+      ).toHaveBeenCalledWith({
+        title:
+          'dialFileManager.itemsDuplicatedSuccessfully {"name":"a (1).pdf","count":4}',
+        message:
+          'dialFileManager.itemsDuplicatedToSameFolder {"folder":"My files"}',
+      });
     });
   });
 });

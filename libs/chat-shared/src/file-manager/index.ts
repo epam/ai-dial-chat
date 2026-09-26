@@ -7,7 +7,6 @@ export * from './path';
 export * from './upload-batch';
 export * from './useGridEditingScroll/useGridEditingScroll';
 export * from './OperationLoaderModal/OperationLoaderModal';
-export * from './UploadProgressModal/UploadProgressModal';
 
 /*
  * `DialFileManagerShell` and `FileManagerAttachModal` are deliberately absent:

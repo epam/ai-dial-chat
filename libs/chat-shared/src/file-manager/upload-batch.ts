@@ -19,10 +19,20 @@ export interface FileUploadEntry {
   percent?: number;
 }
 
-/** State of an in-progress or just-settled upload batch, as returned by `useDialFileUploadBatch`. */
+/** State of the upload queue, as returned by `useDialFileUploadBatch`. */
 export interface FileUploadBatchState {
-  /** Individual file entries in this batch. */
+  /** Every file uploaded since the queue was last cleared, settled ones included. */
   files: FileUploadEntry[];
-  /** Whether the upload progress modal should be visible. */
+  /** Whether the upload queue should be visible. */
   isOpen: boolean;
 }
+
+/** Returns whether any file in the batch is still queued or uploading. */
+export const isUploadInProgress = (
+  batchState: FileUploadBatchState | null,
+): boolean =>
+  batchState?.files.some(
+    (file) =>
+      file.status === FileUploadStatus.Queued ||
+      file.status === FileUploadStatus.Uploading,
+  ) ?? false;

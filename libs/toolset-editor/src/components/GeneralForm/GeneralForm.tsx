@@ -72,8 +72,6 @@ const DEFAULT_AVATAR_PICKER_LABELS: AvatarPickerModalLabels = {
   deleteConfirmItemsLabel: 'items?',
   deleteConfirmLabel: 'Delete',
   deleteCancelLabel: 'Cancel',
-  uploadProgressTitle: 'Uploading files',
-  cancelLabel: 'Cancel',
 };
 
 /** General (metadata) form shared by the Toolset and Custom App editors: name, description, avatar, version, tags, and additional locales. */

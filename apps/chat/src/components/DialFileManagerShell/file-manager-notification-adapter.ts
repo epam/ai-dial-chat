@@ -165,6 +165,87 @@ export const buildFileManagerNotificationOptions = (
   }
 };
 
+interface TransferNotificationKeys {
+  fileTitle: DialFileManagerI18nKeys;
+  folderTitle: DialFileManagerI18nKeys;
+  itemsTitle: DialFileManagerI18nKeys;
+  message: DialFileManagerI18nKeys;
+  itemsMessage: DialFileManagerI18nKeys;
+}
+
+const COPY_NOTIFICATION_KEYS: TransferNotificationKeys = {
+  fileTitle: DialFileManagerI18nKeys.FileCopiedSuccessfully,
+  folderTitle: DialFileManagerI18nKeys.FolderCopiedSuccessfully,
+  itemsTitle: DialFileManagerI18nKeys.ItemsCopiedSuccessfully,
+  message: DialFileManagerI18nKeys.CopiedToFolder,
+  itemsMessage: DialFileManagerI18nKeys.CopiedToFolder,
+};
+
+const MOVE_NOTIFICATION_KEYS: TransferNotificationKeys = {
+  fileTitle: DialFileManagerI18nKeys.FileMovedSuccessfully,
+  folderTitle: DialFileManagerI18nKeys.FolderMovedSuccessfully,
+  itemsTitle: DialFileManagerI18nKeys.ItemsMovedSuccessfully,
+  message: DialFileManagerI18nKeys.MovedToFolder,
+  itemsMessage: DialFileManagerI18nKeys.MovedToFolder,
+};
+
+const DUPLICATE_NOTIFICATION_KEYS: TransferNotificationKeys = {
+  fileTitle: DialFileManagerI18nKeys.FileDuplicatedSuccessfully,
+  folderTitle: DialFileManagerI18nKeys.FolderDuplicatedSuccessfully,
+  itemsTitle: DialFileManagerI18nKeys.ItemsDuplicatedSuccessfully,
+  message: DialFileManagerI18nKeys.DuplicatedToSameFolder,
+  itemsMessage: DialFileManagerI18nKeys.ItemsDuplicatedToSameFolder,
+};
+
+const getTransferNotificationKeys = (
+  kind: FileOperationKind,
+): TransferNotificationKeys => {
+  switch (kind) {
+    case FileOperationKind.FileMoved:
+    case FileOperationKind.FilesMoved:
+      return MOVE_NOTIFICATION_KEYS;
+    case FileOperationKind.FileDuplicated:
+    case FileOperationKind.FilesDuplicated:
+      return DUPLICATE_NOTIFICATION_KEYS;
+    default:
+      return COPY_NOTIFICATION_KEYS;
+  }
+};
+
+const isSingleItemTransfer = (kind: FileOperationKind): boolean =>
+  kind === FileOperationKind.FileCopied ||
+  kind === FileOperationKind.FileMoved ||
+  kind === FileOperationKind.FileDuplicated;
+
+/* `My files/reports/q1` → `My files / reports / q1`, as the toast shows it. */
+const formatDestinationFolderPath = (folder?: string): string =>
+  (folder ?? '').split('/').filter(Boolean).join(' / ');
+
+/**
+ * Builds the copy/move/duplicate success toast: the title names the single
+ * file or folder (or the item count), and the message names the destination
+ * folder path — or, for a duplicate, says the copy stays in the same folder.
+ */
+const buildTransferNotification = (
+  t: TFunction,
+  event: FileOperationSuccessEvent,
+): { title: string; message: string } => {
+  const keys = getTransferNotificationKeys(event.kind);
+  const isSingle = isSingleItemTransfer(event.kind);
+
+  let titleKey = keys.itemsTitle;
+  if (isSingle) {
+    titleKey = event.isFolder ? keys.folderTitle : keys.fileTitle;
+  }
+
+  return {
+    title: t(titleKey, { name: event.name, count: event.count }),
+    message: t(isSingle ? keys.message : keys.itemsMessage, {
+      folder: formatDestinationFolderPath(event.destinationFolderName),
+    }),
+  };
+};
+
 /**
  * Translates a `FileOperationSuccessEvent` into the existing
  * `useOperationNotification`/`showSuccessNotification` calls, reproducing the
@@ -217,43 +298,11 @@ export const handleFileOperationSuccess = (
       return;
     case FileOperationKind.FileCopied:
     case FileOperationKind.FilesCopied:
-      showSuccessNotification({
-        title: t(
-          event.kind === FileOperationKind.FileCopied
-            ? DialFileManagerI18nKeys.ItemCopiedSuccessfully
-            : DialFileManagerI18nKeys.ItemsCopiedSuccessfully,
-        ),
-        message: t(
-          event.kind === FileOperationKind.FileCopied
-            ? DialFileManagerI18nKeys.ItemCopiedToFolder
-            : DialFileManagerI18nKeys.ItemsCopiedToFolder,
-          {
-            count: event.count,
-            fileName: event.name,
-            folder: event.destinationFolderName,
-          },
-        ),
-      });
-      return;
     case FileOperationKind.FileMoved:
     case FileOperationKind.FilesMoved:
-      showSuccessNotification({
-        title: t(
-          event.kind === FileOperationKind.FileMoved
-            ? DialFileManagerI18nKeys.ItemMovedSuccessfully
-            : DialFileManagerI18nKeys.ItemsMovedSuccessfully,
-        ),
-        message: t(
-          event.kind === FileOperationKind.FileMoved
-            ? DialFileManagerI18nKeys.ItemMovedToFolder
-            : DialFileManagerI18nKeys.ItemsMovedToFolder,
-          {
-            count: event.count,
-            fileName: event.name,
-            folder: event.destinationFolderName,
-          },
-        ),
-      });
+    case FileOperationKind.FileDuplicated:
+    case FileOperationKind.FilesDuplicated:
+      showSuccessNotification(buildTransferNotification(t, event));
       return;
   }
 };

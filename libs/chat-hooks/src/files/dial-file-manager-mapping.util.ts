@@ -163,15 +163,13 @@ export const mergeCreatedFolderIntoCache = (
 
 export const updateEntry = (
   prev: FileUploadBatchState | null,
-  index: number,
+  id: string,
   patch:
     FileUploadStatus | Partial<Pick<FileUploadEntry, 'status' | 'percent'>>,
 ): FileUploadBatchState | null => {
   if (!prev) return prev;
   const changes = typeof patch === 'string' ? { status: patch } : patch;
-  const files = prev.files.map((f, i) =>
-    i === index ? { ...f, ...changes } : f,
-  );
+  const files = prev.files.map((f) => (f.id === id ? { ...f, ...changes } : f));
   return { ...prev, files };
 };
 

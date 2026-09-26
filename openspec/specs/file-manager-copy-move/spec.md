@@ -348,12 +348,17 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 #### Scenario: Single copy success toast names the copied destination
 
 - **WHEN** `onCopyFiles` is called with one item and `copyFiles` returns one successful result
-- **THEN** the success notification title is `dialFileManager.itemCopiedSuccessfully`, and the message is produced from `dialFileManager.itemCopiedToFolder` with the destination item name and destination folder
+- **THEN** the success notification title is `dialFileManager.fileCopiedSuccessfully` (or `dialFileManager.folderCopiedSuccessfully` for a folder) with the destination item name, and the message is produced from `dialFileManager.copiedToFolder` with the destination folder path joined by ` / ` (e.g. `My files / reports`)
 
 #### Scenario: Multiple copy success toast reports count
 
 - **WHEN** `onCopyFiles` is called with multiple items and more than one item succeeds
-- **THEN** the success notification title is `dialFileManager.itemsCopiedSuccessfully`, and the message is produced from `dialFileManager.itemsCopiedToFolder` with the successful item count and destination folder
+- **THEN** the success notification title is `dialFileManager.itemsCopiedSuccessfully` with the successful item count, and the message is produced from `dialFileManager.copiedToFolder` with the destination folder path joined by ` / `
+
+#### Scenario: Duplicate success toast points at the same folder
+
+- **WHEN** `onCopyFiles` is called with items whose destination parent folder equals their source parent folder (the Duplicate action) and at least one succeeds
+- **THEN** `onOperationSuccess` receives `FileOperationKind.FileDuplicated` (one success) or `FileOperationKind.FilesDuplicated` (several); the title is `dialFileManager.fileDuplicatedSuccessfully` / `dialFileManager.folderDuplicatedSuccessfully` with the item name, or `dialFileManager.itemsDuplicatedSuccessfully` with the count, and the message is `dialFileManager.duplicatedToSameFolder` / `dialFileManager.itemsDuplicatedToSameFolder`
 
 #### Scenario: Partial copy failure shows toast
 
@@ -406,12 +411,12 @@ Successful cross-folder moves SHALL surface a success notification via `onNotifi
 #### Scenario: Single cross-folder move success toast names the moved destination
 
 - **WHEN** `onMoveToFiles` is called with one cross-folder item and `moveFiles` returns one successful result
-- **THEN** the success notification title is `dialFileManager.itemMovedSuccessfully`, and the message is produced from `dialFileManager.itemMovedToFolder` with the destination item name and destination folder
+- **THEN** the success notification title is `dialFileManager.fileMovedSuccessfully` (or `dialFileManager.folderMovedSuccessfully` for a folder) with the destination item name, and the message is produced from `dialFileManager.movedToFolder` with the destination folder path joined by ` / `
 
 #### Scenario: Multiple cross-folder move success toast reports count
 
 - **WHEN** `onMoveToFiles` is called with multiple cross-folder items and more than one move succeeds
-- **THEN** the success notification title is `dialFileManager.itemsMovedSuccessfully`, and the message is produced from `dialFileManager.itemsMovedToFolder` with the successful moved item count and destination folder
+- **THEN** the success notification title is `dialFileManager.itemsMovedSuccessfully` with the successful moved item count, and the message is produced from `dialFileManager.movedToFolder` with the destination folder path joined by ` / `
 
 #### Scenario: Mixed batch calls both endpoints
 
@@ -467,14 +472,19 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 | `dialFileManager.moveAction` | `Move` |
 | `dialFileManager.copyingLabel` | `Copying...` |
 | `dialFileManager.movingLabel` | `Moving...` |
-| `dialFileManager.itemCopiedSuccessfully` | `Item copied successfully` |
-| `dialFileManager.itemsCopiedSuccessfully` | `Items copied successfully` |
-| `dialFileManager.itemMovedSuccessfully` | `Item moved successfully` |
-| `dialFileManager.itemsMovedSuccessfully` | `Items moved successfully` |
-| `dialFileManager.itemCopiedToFolder` | `“{{fileName}}” copied to {{folder}}` |
-| `dialFileManager.itemsCopiedToFolder` | `{{count}} items copied to {{folder}}` |
-| `dialFileManager.itemMovedToFolder` | `“{{fileName}}” moved to {{folder}}` |
-| `dialFileManager.itemsMovedToFolder` | `{{count}} items moved to {{folder}}` |
+| `dialFileManager.fileCopiedSuccessfully` | `File "{{name}}" copied successfully` |
+| `dialFileManager.folderCopiedSuccessfully` | `Folder "{{name}}" copied successfully` |
+| `dialFileManager.itemsCopiedSuccessfully` | `{{count}} items copied to folder successfully` |
+| `dialFileManager.copiedToFolder` | `Copied to folder "{{folder}}"` |
+| `dialFileManager.fileMovedSuccessfully` | `File "{{name}}" moved successfully` |
+| `dialFileManager.folderMovedSuccessfully` | `Folder "{{name}}" moved successfully` |
+| `dialFileManager.itemsMovedSuccessfully` | `{{count}} items moved to folder successfully` |
+| `dialFileManager.movedToFolder` | `Moved to folder "{{folder}}"` |
+| `dialFileManager.fileDuplicatedSuccessfully` | `File "{{name}}" duplicated successfully` |
+| `dialFileManager.folderDuplicatedSuccessfully` | `Folder "{{name}}" duplicated successfully` |
+| `dialFileManager.itemsDuplicatedSuccessfully` | `{{count}} items duplicated successfully` |
+| `dialFileManager.duplicatedToSameFolder` | `You’ll find the copy in the same folder.` |
+| `dialFileManager.itemsDuplicatedToSameFolder` | `You’ll find the copies in the same folder.` |
 | `dialFileManager.copyError` | `Failed to copy the selected items` |
 | `dialFileManager.copyPartialError` | `{{count}} item(s) could not be copied` |
 | `dialFileManager.moveError` | `Failed to move the selected items` |

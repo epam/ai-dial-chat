@@ -1,4 +1,9 @@
-.filterBtn {
+/*
+ * The trigger is the kit `Button`, whose `.dial-kit-base-button` sets its own
+ * border and focus outline at single-class specificity. The doubled class
+ * keeps these rules ahead of it whichever stylesheet loads last.
+ */
+.filterBtn.filterBtn {
   background-color: var(
     --cat-filter-btn-bg,
     var(--bg-control-neutral, #fcfcfc)
@@ -28,14 +33,14 @@
   }
 }
 
-.filterBtnActive {
+.filterBtn.filterBtnActive {
   border-color: var(
     --cat-filter-btn-border-active,
     var(--stroke-accent, #1d4ed8)
   );
 }
 
-.filterBtnOpen {
+.filterBtn.filterBtnOpen {
   border-color: var(
     --cat-filter-btn-border-open,
     var(--stroke-accent-alpha, #2764d933)

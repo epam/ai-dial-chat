@@ -10,7 +10,9 @@
     );
   }
 
-  &:focus-visible {
+  /* Doubled so the outline colour beats the kit's
+     `.dial-kit-base-button:focus-visible` whichever stylesheet loads last. */
+  &#{&}:focus-visible {
     background: var(
       --np-trigger-hover-bg,
       var(--bg-control-accent-alpha-hover, #2764d924)
