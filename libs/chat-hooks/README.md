@@ -536,6 +536,9 @@ const ComposerWithFileDrop = ({
 
 ### useMessageSelectionReply
 
+The hook and its types are exported from both `@epam/ai-dial-chat-hooks` and
+`@epam/ai-dial-chat-hooks/conversation`.
+
 Captures visible text selected inside a registered message body and feeds one UTF-8
 `text/plain` Reply file into an existing composer attachment queue. The host supplies
 the scope identifier, eligibility policy and its ordinary page-drop batch; it retains
