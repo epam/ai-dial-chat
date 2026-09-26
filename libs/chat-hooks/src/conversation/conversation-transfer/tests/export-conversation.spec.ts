@@ -138,6 +138,40 @@ describe('stripConversationAttachments', () => {
     ]);
   });
 
+  it("removes a citation's source document while keeping its quote", () => {
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: 'Per the spec [1]',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            annotations: [
+              {
+                body: {
+                  quote: 'Section 3',
+                  source: {
+                    type: 'attachment' as const,
+                    attachment: {
+                      type: 'application/pdf',
+                      url: 'files/bucket/spec.pdf#page=3',
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const stripped = stripConversationAttachments(conversation);
+
+    expect(stripped.messages[0].custom_content?.annotations).toEqual([
+      { body: { quote: 'Section 3' } },
+    ]);
+  });
+
   it('leaves a message without custom_content untouched', () => {
     const message = {
       role: 'user' as Conversation['messages'][number]['role'],

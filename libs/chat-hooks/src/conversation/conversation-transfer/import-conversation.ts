@@ -9,6 +9,7 @@ import type {
   Conversation,
   ExportFolder,
   ExportFormat,
+  MessageAttachment,
   Stage,
 } from '@epam/ai-dial-chat-shared';
 import { collectAttachmentRefs, splitFileIdAnchor } from './attachment-refs';
@@ -407,6 +408,150 @@ export const rewriteAttachmentUrls = (
     };
   }),
 });
+
+/** Bucket DIAL Core serves published files from — readable by every user, so never foreign. */
+const PUBLIC_BUCKET = 'public';
+
+/**
+ * Returns the file name `url` points at when it is a DIAL file in a bucket
+ * the importing user cannot be assumed to read — neither their own `bucket`
+ * nor the public one — or `undefined` when the reference may stay.
+ */
+const getForeignFileName = (
+  url: string | undefined,
+  bucket: string,
+): string | undefined => {
+  if (!url) return undefined;
+  const resolved = resolveDialFileBucketAndPath(splitFileIdAnchor(url).fileId);
+  if (
+    !resolved ||
+    resolved.bucket === bucket ||
+    resolved.bucket === PUBLIC_BUCKET
+  ) {
+    return undefined;
+  }
+  return resolved.path.split('/').pop() || resolved.path;
+};
+
+/**
+ * Removes foreign references from an attachment list: an attachment whose
+ * `url` is foreign is dropped; a foreign `reference_url` alone is removed
+ * from the attachment, which is dropped only when nothing renderable is left.
+ */
+const dropForeignAttachments = (
+  attachments: MessageAttachment[],
+  bucket: string,
+  droppedNames: string[],
+): MessageAttachment[] =>
+  attachments.flatMap((attachment) => {
+    const urlName = getForeignFileName(attachment.url, bucket);
+    if (urlName != null) {
+      droppedNames.push(urlName);
+      return [];
+    }
+    const referenceName = getForeignFileName(attachment.reference_url, bucket);
+    if (referenceName == null) return [attachment];
+
+    droppedNames.push(referenceName);
+    const {
+      reference_url: _referenceUrl,
+      reference_type: _referenceType,
+      ...kept
+    } = attachment;
+    return kept.url == null && kept.data == null ? [] : [kept];
+  });
+
+/** Removes a citation's source document when it is foreign, keeping its quote, title and target. */
+const dropForeignAnnotationSources = (
+  annotations: Annotation[],
+  bucket: string,
+  droppedNames: string[],
+): Annotation[] =>
+  annotations.map((annotation) => {
+    const body = annotation.body;
+    const name = getForeignFileName(body?.source?.attachment?.url, bucket);
+    if (body == null || name == null) return annotation;
+
+    droppedNames.push(name);
+    const { source: _source, ...keptBody } = body;
+    return { ...annotation, body: keptBody };
+  });
+
+/**
+ * Removes every attachment reference that still points into another user's
+ * bucket once the import has re-pointed what it could.
+ *
+ * A plain `.json` export carries no attachment bytes, and an archive can miss
+ * some, so those references keep the exporting user's `files/{bucket}/…` ids.
+ * Written back verbatim, they leave the importing user with previews that
+ * fail with 403. Own-bucket references are kept — they are the
+ * user's own files on a re-import — and so are public ones. A file another
+ * user shared with the importing user is dropped too: nothing here can tell
+ * it apart from one they never had access to.
+ *
+ * Returns the conversation (unchanged when nothing was foreign) and the name
+ * of every dropped file, for the skipped-attachment warning.
+ */
+export const dropForeignAttachmentRefs = (
+  conversation: Conversation,
+  bucket: string,
+): { conversation: Conversation; droppedNames: string[] } => {
+  const droppedNames: string[] = [];
+  const messages = conversation.messages.map((message) => {
+    const customContent = message.custom_content;
+    if (!customContent) return message;
+
+    const { attachments, stages, annotations } = customContent;
+    if (!attachments?.length && !stages?.length && !annotations?.length) {
+      return message;
+    }
+
+    return {
+      ...message,
+      custom_content: {
+        ...customContent,
+        ...(attachments?.length
+          ? {
+              attachments: dropForeignAttachments(
+                attachments,
+                bucket,
+                droppedNames,
+              ),
+            }
+          : {}),
+        ...(stages?.length
+          ? {
+              stages: stages.map((stage) =>
+                stage.attachments?.length
+                  ? {
+                      ...stage,
+                      attachments: dropForeignAttachments(
+                        stage.attachments,
+                        bucket,
+                        droppedNames,
+                      ),
+                    }
+                  : stage,
+              ),
+            }
+          : {}),
+        ...(annotations?.length
+          ? {
+              annotations: dropForeignAnnotationSources(
+                annotations,
+                bucket,
+                droppedNames,
+              ),
+            }
+          : {}),
+      },
+    };
+  });
+
+  return droppedNames.length
+    ? { conversation: { ...conversation, messages }, droppedNames }
+    : { conversation, droppedNames };
+};
 
 /** Best-effort display name for a fileId that failed to resolve to a `{bucket, path}` pair. */
 const fileIdDisplayName = (fileId: string): string =>

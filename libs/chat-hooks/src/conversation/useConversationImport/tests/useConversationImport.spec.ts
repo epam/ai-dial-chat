@@ -134,6 +134,73 @@ describe('useConversationImport', () => {
     );
   });
 
+  it("drops references into another user's bucket from a plain JSON import and warns", async () => {
+    const { result } = renderImport('new-bucket');
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'user',
+          content: 'Take a look',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            attachments: [
+              { title: 'q1.pdf', url: 'files/old-bucket/q1.pdf' },
+              { title: 'mine.pdf', url: 'files/new-bucket/mine.pdf' },
+            ],
+          },
+        },
+      ],
+    });
+
+    await act(() =>
+      result.current.importConversations(jsonFile([conversation])),
+    );
+
+    const [params] = saveConversation.mock.calls[0];
+    expect(
+      params.saveConversationBodyDto.conversation.messages[0].custom_content
+        .attachments,
+    ).toEqual([{ title: 'mine.pdf', url: 'files/new-bucket/mine.pdf' }]);
+    expect(uploadFile).not.toHaveBeenCalled();
+    expect(onWarning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: ConversationTransferWarningCode.AttachmentSkipped,
+        names: ['q1.pdf'],
+      }),
+    );
+    expect(result.current.jobs[0].status).toBe(
+      ConversationTransferJobStatus.Warning,
+    );
+  });
+
+  it("drops a missing archive attachment's reference into the source bucket", async () => {
+    const { result } = renderImport('new-bucket');
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant',
+          content: '',
+          custom_content: {
+            attachments: [
+              { title: 'absent.pdf', url: 'files/old-bucket/absent.pdf' },
+            ],
+          },
+        },
+      ],
+    });
+
+    await act(() =>
+      result.current.importConversations(dialFile([conversation])),
+    );
+
+    const [params] = saveConversation.mock.calls[0];
+    expect(
+      params.saveConversationBodyDto.conversation.messages[0].custom_content
+        .attachments,
+    ).toEqual([]);
+    expect(result.current.jobs[0].warningNames).toEqual(['absent.pdf']);
+  });
+
   it('marks the saved conversation llmNamingDone: true', async () => {
     const { result } = renderImport('new-bucket');
     await act(() =>
