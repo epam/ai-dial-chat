@@ -572,64 +572,71 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             </p>
           )}
         </div>
-        <TextRefinementField
-          isEnabled={Boolean(onRefineInstructions)}
-          fieldId={instructionsEditorId}
-          labelClassName={instructionsLabelClassName}
-          label={labels.instructionsLabel}
-          labels={labels}
-          refinement={instructionsRefinement}
-          disabled={isSubmitting || isRefining}
-          {...refinementStyles}
-        >
-          <div className="flex flex-1 flex-col gap-1">
-            {/*
-             * A real <label for>, not a span: the markdown editor renders a plain
-             * textarea, and text sitting next to it names nothing the browser
-             * associates with the control.
-             */}
-            {!onRefineInstructions && (
-              <label
-                htmlFor={instructionsEditorId}
-                className={instructionsLabelClassName}
-              >
-                {labels.instructionsLabel}
-              </label>
-            )}
-            <div
-              ref={instructionsCapRef}
-              className={mergeClasses(
-                'w-full max-w-[996px]',
-                MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
-                MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+        {/*
+         * Cap the whole group, not just the editor: the Refine action sits at the
+         * end of the label row, so an uncapped row lets it drift past the editor
+         * whenever the column is wider than the cap (e.g. at browser zoom-out).
+         */}
+        <div className="flex w-full min-w-0 max-w-[996px] flex-col">
+          <TextRefinementField
+            isEnabled={Boolean(onRefineInstructions)}
+            fieldId={instructionsEditorId}
+            labelClassName={instructionsLabelClassName}
+            label={labels.instructionsLabel}
+            labels={labels}
+            refinement={instructionsRefinement}
+            disabled={isSubmitting || isRefining}
+            {...refinementStyles}
+          >
+            <div className="flex flex-1 flex-col gap-1">
+              {/*
+               * A real <label for>, not a span: the markdown editor renders a plain
+               * textarea, and text sitting next to it names nothing the browser
+               * associates with the control.
+               */}
+              {!onRefineInstructions && (
+                <label
+                  htmlFor={instructionsEditorId}
+                  className={instructionsLabelClassName}
+                >
+                  {labels.instructionsLabel}
+                </label>
               )}
-            >
-              <Suspense fallback={<Spinner />}>
-                <MarkdownEditor
-                  id={instructionsEditorId}
-                  value={values.prompt}
-                  onChange={(value) => {
-                    instructionsRefinement.reset();
-                    onFieldChange('prompt', value);
-                  }}
-                  height={480}
-                  theme={markdownEditorTheme}
-                  placeholder={labels.instructionsPlaceholder}
-                />
-              </Suspense>
-            </div>
-            {errors.prompt && (
-              <p
+              <div
+                ref={instructionsCapRef}
                 className={mergeClasses(
-                  instructionsErrorClassName,
-                  styles.instructionsError,
+                  'w-full',
+                  MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+                  MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
                 )}
               >
-                {errors.prompt}
-              </p>
-            )}
-          </div>
-        </TextRefinementField>
+                <Suspense fallback={<Spinner />}>
+                  <MarkdownEditor
+                    id={instructionsEditorId}
+                    value={values.prompt}
+                    onChange={(value) => {
+                      instructionsRefinement.reset();
+                      onFieldChange('prompt', value);
+                    }}
+                    height={480}
+                    theme={markdownEditorTheme}
+                    placeholder={labels.instructionsPlaceholder}
+                  />
+                </Suspense>
+              </div>
+              {errors.prompt && (
+                <p
+                  className={mergeClasses(
+                    instructionsErrorClassName,
+                    styles.instructionsError,
+                  )}
+                >
+                  {errors.prompt}
+                </p>
+              )}
+            </div>
+          </TextRefinementField>
+        </div>
       </div>
     </BuilderFormContainer>
   );
