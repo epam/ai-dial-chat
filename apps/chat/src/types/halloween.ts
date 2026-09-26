@@ -41,3 +41,15 @@ export enum HalloweenGhostVariant {
   /** Small and round, winking. */
   Sprite = 'sprite',
 }
+
+/** What the corner spider is up to; drives its CSS pose and fidgets. */
+export enum HalloweenSpiderMood {
+  /** Fidgeting on its perch or dangling on an idle drop. */
+  Idle = 'idle',
+  /** The pointer is close: fidgets freeze and it watches. */
+  Alert = 'alert',
+  /** Spinning silk around the pumpkin. */
+  Wrapping = 'wrapping',
+  /** The pumpkin shook it off; eyes wide, climbing away. */
+  Startled = 'startled',
+}

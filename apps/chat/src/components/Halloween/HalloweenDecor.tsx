@@ -1,13 +1,14 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ButtonAppearance, IconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HalloweenI18nKeys } from '../../constants/translation-keys';
 import type { CelebrationDecorationProps } from '../../types/celebration';
 import styles from './Halloween.module.scss';
 import HalloweenCornerSpider from './HalloweenCornerSpider';
 import HalloweenPumpkin from './HalloweenPumpkin';
+import HalloweenPumpkinSilk from './HalloweenPumpkinSilk';
 
 interface CobwebProps {
   /** Mirroring classes, so the web's dense end lands in the screen corner. */
@@ -46,9 +47,28 @@ const Cobweb: FC<CobwebProps> = ({ className }) => (
 /** Halloween artwork; eligibility and scene selection belong to the shared runtime. */
 const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
   const { t } = useTranslation();
+  const pumpkinRef = useRef<HTMLDivElement>(null);
+  const silkRef = useRef<SVGSVGElement>(null);
 
   return (
     <>
+      {/* Before the decoration layer, so the spider paints over the pumpkin
+          it wraps; that layer takes no pointer events, so the pumpkin stays
+          clickable. */}
+      <div
+        ref={pumpkinRef}
+        data-halloween-pumpkin-anchor="true"
+        className="absolute bottom-2 end-2 origin-bottom desktop:bottom-4 desktop:end-4"
+      >
+        <IconButton
+          appearance={ButtonAppearance.Link}
+          className={styles.pumpkinButton}
+          icon={<HalloweenPumpkin />}
+          aria-label={t(HalloweenI18nKeys.PumpkinLabel)}
+          onClick={onActivate}
+        />
+        <HalloweenPumpkinSilk ref={silkRef} />
+      </div>
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 select-none overflow-hidden"
@@ -58,28 +78,16 @@ const HalloweenDecor: FC<CelebrationDecorationProps> = ({ onActivate }) => {
             would flee towards the pointer instead of away from it and jam
             against its leash. The spider is placed with logical insets
             instead, which follow the corner the same way the mirror does.
-            The faintness lives on the web too — the spiders are the part
+            The faintness lives on the web too — the spider is the part
             worth seeing. */}
-        <div className="absolute start-0 top-0">
-          <Cobweb className="rtl:scale-x-[-1]" />
-          <HalloweenCornerSpider className="start-[42%] top-[30%]" />
-        </div>
         <div className="absolute end-0 top-0">
           <Cobweb className="scale-x-[-1] rtl:scale-x-100" />
-          <HalloweenCornerSpider className="end-[26%] top-[48%]" />
+          <HalloweenCornerSpider
+            className="end-[26%] top-[48%]"
+            pumpkinRef={pumpkinRef}
+            silkRef={silkRef}
+          />
         </div>
-      </div>
-      <div
-        data-halloween-pumpkin-anchor="true"
-        className="absolute bottom-2 end-2 desktop:bottom-4 desktop:end-4"
-      >
-        <IconButton
-          appearance={ButtonAppearance.Link}
-          className={styles.pumpkinButton}
-          icon={<HalloweenPumpkin />}
-          aria-label={t(HalloweenI18nKeys.PumpkinLabel)}
-          onClick={onActivate}
-        />
       </div>
     </>
   );

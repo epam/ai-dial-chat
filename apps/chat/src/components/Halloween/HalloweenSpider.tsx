@@ -42,9 +42,10 @@ const HalloweenSpider: FC<Props> = ({ className, ...size }) => {
         </linearGradient>
       </defs>
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        {LEGS.map((leg) => (
+        {LEGS.map((leg, index) => (
           <path
             key={leg}
+            data-spider-leg={index}
             d={leg}
             stroke={`url(#${id}-legs)`}
             strokeWidth="2.4"
@@ -97,19 +98,23 @@ const HalloweenSpider: FC<Props> = ({ className, ...size }) => {
         strokeWidth="1.4"
         strokeLinecap="round"
       />
-      <g fill="#ffc36d" stroke="#3c1c12" strokeWidth="0.7">
-        <ellipse cx="28.5" cy="20" rx="2.8" ry="3.4" />
-        <ellipse cx="35.5" cy="20" rx="2.8" ry="3.4" />
-        <circle cx="24.8" cy="23" r="1.25" />
-        <circle cx="39.2" cy="23" r="1.25" />
-      </g>
-      <g fill="#16121c">
-        <ellipse cx="28.8" cy="19.5" rx="1.25" ry="2" />
-        <ellipse cx="35.2" cy="19.5" rx="1.25" ry="2" />
-      </g>
-      <g fill="#fff6d9">
-        <circle cx="28" cy="18.5" r="0.75" />
-        <circle cx="34.5" cy="18.5" r="0.75" />
+      <g data-spider-eyes="true">
+        <g fill="#ffc36d" stroke="#3c1c12" strokeWidth="0.7">
+          <ellipse cx="28.5" cy="20" rx="2.8" ry="3.4" />
+          <ellipse cx="35.5" cy="20" rx="2.8" ry="3.4" />
+          <circle cx="24.8" cy="23" r="1.25" />
+          <circle cx="39.2" cy="23" r="1.25" />
+        </g>
+        <g data-spider-pupils="true">
+          <g fill="#16121c">
+            <ellipse cx="28.8" cy="19.5" rx="1.25" ry="2" />
+            <ellipse cx="35.2" cy="19.5" rx="1.25" ry="2" />
+          </g>
+          <g fill="#fff6d9">
+            <circle cx="28" cy="18.5" r="0.75" />
+            <circle cx="34.5" cy="18.5" r="0.75" />
+          </g>
+        </g>
       </g>
     </svg>
   );

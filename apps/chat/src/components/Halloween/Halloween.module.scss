@@ -153,6 +153,273 @@
   transition-timing-function: cubic-bezier(0.22, 0.92, 0.3, 1);
 }
 
+/* Swings about the thread's anchor, which sits at the top of the head. */
+.cornerSpiderDangle {
+  display: block;
+  transform-origin: 50% 17%;
+}
+
+/* A 1px strand scaled to the paid-out length; it hangs from the spider's
+   head back up to the anchor, so it swings with the spider. */
+.cornerSpiderThread {
+  position: absolute;
+  bottom: 83%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  background: #d9cfe0b3;
+  transform: scaleY(0);
+  transform-origin: 50% 100%;
+}
+
+.cornerSpiderWatch {
+  display: block;
+  transform-origin: 50% 45%;
+  transition: transform 700ms cubic-bezier(0.3, 0, 0.2, 1);
+}
+
+/* Idle fidgets: the front legs rub, the others shift, the body breathes and
+   the eyes blink. Near the pointer they pause mid-pose — the spider freezes. */
+.cornerSpider {
+  svg {
+    transform-origin: 50% 62%;
+    animation: halloween-spider-breathe 3.4s ease-in-out infinite;
+  }
+
+  [data-spider-leg],
+  [data-spider-eyes],
+  [data-spider-pupils] {
+    transform-box: view-box;
+  }
+
+  [data-spider-leg='0'] {
+    transform-origin: 27px 25px;
+    animation: halloween-spider-rub 6.4s ease-in-out infinite;
+  }
+
+  [data-spider-leg='4'] {
+    transform-origin: 37px 25px;
+    animation: halloween-spider-rub-mirrored 6.4s ease-in-out infinite;
+  }
+
+  [data-spider-leg='1'] {
+    transform-origin: 26px 28px;
+    animation: halloween-spider-shift 9s ease-in-out 1.3s infinite;
+  }
+
+  [data-spider-leg='6'] {
+    transform-origin: 38px 31px;
+    animation: halloween-spider-shift-mirrored 10s ease-in-out 3.1s infinite;
+  }
+
+  [data-spider-leg='3'] {
+    transform-origin: 28px 34px;
+    animation: halloween-spider-shift 11s ease-in-out 5.2s infinite;
+  }
+
+  [data-spider-leg='7'] {
+    transform-origin: 36px 34px;
+    animation: halloween-spider-shift-mirrored 8s ease-in-out 6.4s infinite;
+  }
+
+  [data-spider-eyes] {
+    transform-origin: 32px 20px;
+    animation: halloween-spider-blink 5.6s linear infinite;
+  }
+
+  [data-spider-pupils] {
+    transition: transform 400ms ease-out;
+  }
+}
+
+.cornerSpider[data-spider-state='alert'] {
+  svg,
+  [data-spider-leg] {
+    animation-play-state: paused;
+  }
+}
+
+/* Spinning silk: the front legs work the thread in quick passes. */
+.cornerSpider[data-spider-state='wrapping'] {
+  [data-spider-leg='0'] {
+    animation: halloween-spider-weave 0.36s ease-in-out infinite alternate;
+  }
+
+  [data-spider-leg='4'] {
+    animation: halloween-spider-weave 0.36s ease-in-out 0.18s infinite
+      alternate-reverse;
+  }
+}
+
+/* Shaken off: eyes wide, legs flung out. */
+.cornerSpider[data-spider-state='startled'] {
+  [data-spider-eyes] {
+    animation: none;
+    transform: scale(1.35);
+    transition: transform 120ms ease-out;
+  }
+
+  [data-spider-leg] {
+    animation: halloween-spider-splay 0.5s ease-out;
+  }
+}
+
+/* Drumming while the user types: each keystroke swaps which leg taps, and
+   the new animation name restarts the tap. */
+.cornerSpider[data-spider-tap='a'] [data-spider-leg='1'] {
+  animation: halloween-spider-tap 160ms ease-out;
+}
+
+.cornerSpider[data-spider-tap='b'] [data-spider-leg='5'] {
+  transform-origin: 38px 28px;
+  animation: halloween-spider-tap-mirrored 160ms ease-out;
+}
+
+.pumpkinSilk {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  pointer-events: none;
+
+  [data-silk-group] {
+    transform-box: view-box;
+    transform-origin: 80px 89px;
+  }
+
+  [data-silk-cocoon] {
+    fill: #efe9f3;
+    opacity: 0;
+  }
+
+  [data-silk-strand] {
+    fill: none;
+    stroke: #f4f0f7;
+    stroke-opacity: 0.9;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes halloween-spider-weave {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes halloween-spider-splay {
+  30% {
+    transform: rotate(-14deg) scale(1.08);
+  }
+}
+
+@keyframes halloween-spider-tap {
+  45% {
+    transform: rotate(-12deg);
+  }
+}
+
+@keyframes halloween-spider-tap-mirrored {
+  45% {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes halloween-spider-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02, 1.035);
+  }
+}
+
+@keyframes halloween-spider-rub {
+  0%,
+  66%,
+  96%,
+  100% {
+    transform: rotate(0deg);
+  }
+  71%,
+  79%,
+  87% {
+    transform: rotate(-11deg);
+  }
+  75%,
+  83%,
+  91% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes halloween-spider-rub-mirrored {
+  0%,
+  66%,
+  96%,
+  100% {
+    transform: rotate(0deg);
+  }
+  71%,
+  79%,
+  87% {
+    transform: rotate(11deg);
+  }
+  75%,
+  83%,
+  91% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes halloween-spider-shift {
+  0%,
+  80%,
+  96%,
+  100% {
+    transform: rotate(0deg);
+  }
+  85% {
+    transform: rotate(-7deg);
+  }
+  90% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes halloween-spider-shift-mirrored {
+  0%,
+  80%,
+  96%,
+  100% {
+    transform: rotate(0deg);
+  }
+  85% {
+    transform: rotate(7deg);
+  }
+  90% {
+    transform: rotate(-2deg);
+  }
+}
+
+@keyframes halloween-spider-blink {
+  0%,
+  93%,
+  98%,
+  100% {
+    transform: scaleY(1);
+  }
+  95.5% {
+    transform: scaleY(0.1);
+  }
+}
+
 @keyframes halloween-chuckle {
   0%,
   100% {
@@ -389,8 +656,21 @@
      rule honest either way. */
   .cornerSpider,
   .cornerSpiderFleeing,
+  .cornerSpiderWatch,
   .pumpkinEyes {
     transition: none;
+  }
+
+  .cornerSpider {
+    svg,
+    [data-spider-leg],
+    [data-spider-eyes] {
+      animation: none;
+    }
+  }
+
+  .cornerSpider[data-spider-tap] [data-spider-leg] {
+    animation: none;
   }
 
   /* Un-animated, the spiders would hang above the top edge; show them already

@@ -54,6 +54,27 @@ export const HALLOWEEN_SPIDER_MAX_OFFSET_PX = 104;
  */
 export const HALLOWEEN_SPIDER_RETURN_MS = 2600;
 
+/** Undisturbed pause, in ms, before the corner spider pays out its thread. */
+export const HALLOWEEN_SPIDER_DROP_DELAY_MS = [10000, 20000] as const;
+
+/** One idle drop — descend, dangle and climb back — in ms. */
+export const HALLOWEEN_SPIDER_DROP_MS = 5200;
+
+/** How far, in pixels, the corner spider lowers itself on its thread. */
+export const HALLOWEEN_SPIDER_DROP_DEPTH_PX = [60, 120] as const;
+
+/** How fast, in ms, the spider reels in when the pointer interrupts a drop. */
+export const HALLOWEEN_SPIDER_RETRACT_MS = 220;
+
+/**
+ * Within this distance, in pixels, the corner spider stops fidgeting, reels
+ * in and freezes to watch the pointer; closer still, it bolts.
+ */
+export const HALLOWEEN_SPIDER_ALERT_RADIUS_PX = 240;
+
+/** How far, in degrees, the spider leans to keep the pointer in view. */
+export const HALLOWEEN_SPIDER_WATCH_MAX_DEG = 28;
+
 /** Optional audio asset URL for the train scene; silent by default. */
 export const HALLOWEEN_TRAIN_AUDIO_SRC: string | undefined = undefined;
 
@@ -105,3 +126,12 @@ export const HALLOWEEN_BAT_COUNT = 16;
 export const HALLOWEEN_WISP_COUNT = 18;
 
 export const HALLOWEEN_WITCH_COUNT = 5;
+
+/**
+ * How long, in ms, the user must leave the page alone before the corner
+ * spider climbs down and wraps the pumpkin in silk.
+ */
+export const HALLOWEEN_SPIDER_WRAP_IDLE_MS = 60000;
+
+/** How long, in ms, a keystroke keeps the spider drumming its legs. */
+export const HALLOWEEN_SPIDER_DRUM_MS = 700;

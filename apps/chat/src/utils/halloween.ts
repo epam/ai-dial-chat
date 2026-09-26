@@ -214,6 +214,69 @@ export const nextHalloweenSpiderOffset = ({
   };
 };
 
+/** Where an idle drop has the spider: thread paid out and pendulum angle. */
+export interface HalloweenSpiderDanglePose {
+  depth: number;
+  angle: number;
+}
+
+const smoothstep = (from: number, to: number, value: number): number => {
+  const progress = Math.max(0, Math.min(1, (value - from) / (to - from)));
+  return progress * progress * (3 - 2 * progress);
+};
+
+/**
+ * The pose `progress` (0–1) of the way through an idle drop: the spider pays
+ * out its thread, swings a little as it stops, hangs, and climbs back up.
+ * Evaluated rather than read back from the page, so an interrupted drop can
+ * reel in from exactly where it is.
+ */
+export const getHalloweenSpiderDanglePose = (
+  depth: number,
+  progress: number,
+): HalloweenSpiderDanglePose => {
+  const paidOut =
+    smoothstep(0, 0.27, progress) * (1 - smoothstep(0.62, 1, progress));
+  const swinging =
+    smoothstep(0.2, 0.3, progress) * (1 - smoothstep(0.5, 0.64, progress));
+  return {
+    depth: depth * paidOut,
+    angle: Math.sin((progress - 0.2) * Math.PI * 7) * 7 * swinging,
+  };
+};
+
+/** Pendulum transform: rotate about the anchor, then hang down the thread. */
+export const getHalloweenSpiderDangleTransform = ({
+  depth,
+  angle,
+}: HalloweenSpiderDanglePose): string =>
+  `rotate(${angle.toFixed(2)}deg) translateY(${depth.toFixed(2)}px)`;
+
+/** Keyframes for the spider and its thread, which share one timeline. */
+export const buildHalloweenSpiderDangle = (
+  depth: number,
+): { dangle: Keyframe[]; thread: Keyframe[] } => {
+  const steps = 48;
+  const poses = Array.from({ length: steps + 1 }, (_, index) => ({
+    offset: index / steps,
+    pose: getHalloweenSpiderDanglePose(depth, index / steps),
+  }));
+  return {
+    dangle: poses.map(({ offset, pose }) => ({
+      offset,
+      transform: getHalloweenSpiderDangleTransform(pose),
+    })),
+    thread: poses.map(({ offset, pose }) => ({
+      offset,
+      transform: `scaleY(${pose.depth.toFixed(2)})`,
+    })),
+  };
+};
+
+/** A random value in a `[min, max)` range tuple. */
+export const pickHalloweenRange = ([min, max]: readonly [number, number]) =>
+  between(min, max);
+
 export const buildHalloweenBatFlight = (): CSSProperties[] =>
   buildFlyingCharacterPaths({
     count: HALLOWEEN_BAT_COUNT,

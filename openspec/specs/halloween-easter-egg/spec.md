@@ -24,7 +24,7 @@ Only the start-page `NewConversationComposer` SHALL route outgoing text through 
 
 ### Requirement: The empty chat carries seasonal decoration with a pumpkin trigger
 
-While Halloween is the selected, loaded event on the start page, `NewConversationComposer` SHALL render `HalloweenDecor` inside its welcome-screen region: a cobweb pinned to each of the region's inline-start and inline-end top corners with a spider perched on it, and a pumpkin button. `CelebrationDecor` SHALL render the selected event decoration, or nothing when the runtime is disabled. HalloweenDecor receives an onActivate callback and does not read config or select scenes.
+While Halloween is the selected, loaded event on the start page, `NewConversationComposer` SHALL render `HalloweenDecor` inside its welcome-screen region: a single cobweb pinned to the region's inline-end top corner with a spider perched on it, and a pumpkin button rendered before the decoration layer so the spider paints over it. `CelebrationDecor` SHALL render the selected event decoration, or nothing when the runtime is disabled. HalloweenDecor receives an onActivate callback and does not read config or select scenes.
 
 The webs SHALL stay faint — they frame the screen rather than compete with it — and the faintness SHALL live on the web drawing, not on the corner wrapper, so the spiders keep their contrast.
 
@@ -106,21 +106,52 @@ Distance SHALL be measured from the spider's chosen position — its perch plus 
 
 Displacement SHALL be clamped to `HALLOWEEN_SPIDER_MAX_OFFSET_PX` as a circle, not a box, so a spider herded against the boundary keeps whatever part of the push runs along it and slides round rather than stopping dead. A push aimed exactly at the centre has no such component and does hold it against the leash — the one way to corner it. A pointer exactly on the spider SHALL break the tie diagonally rather than divide by zero.
 
-Pointer moves SHALL be coalesced into one animation frame, because a cursor crossing the web fires far more of them than there are frames to render. The two corners SHALL be independent: one spider bolting SHALL NOT move the other.
+Pointer moves SHALL be coalesced into one animation frame, because a cursor crossing the web fires far more of them than there are frames to render. There SHALL be one web and one spider, in the inline-end corner.
+
+Left alone, the spider SHALL look alive: it SHALL rub its front legs, shift its other legs, breathe and blink, and SHALL lean and turn its pupils toward the pointer from afar. After an undisturbed pause between `HALLOWEEN_SPIDER_DROP_DELAY_MS` bounds it SHALL lower itself on a visible thread by `HALLOWEEN_SPIDER_DROP_DEPTH_PX`, swing briefly, hang and climb back, with the spider and its thread on one `HALLOWEEN_SPIDER_DROP_MS` timeline. Within `HALLOWEEN_SPIDER_ALERT_RADIUS_PX` of the pointer it SHALL stop fidgeting mid-pose, reel in from its current computed pose within `HALLOWEEN_SPIDER_RETRACT_MS` and watch the pointer; no drop SHALL start while it is alert or displaced. Leaning and pupils SHALL be written directly to the DOM rather than re-rendering on every pointer frame, and no drop SHALL read layout.
+
+While the user types into a text field the spider SHALL drum its legs, alternating legs on every keystroke and stopping `HALLOWEEN_SPIDER_DRUM_MS` after the last one; keys pressed outside a text field SHALL NOT make it drum.
+
+After `HALLOWEEN_SPIDER_WRAP_IDLE_MS` with no pointer, key, wheel, touch, focus or scroll activity, the spider SHALL climb down its thread to the pumpkin and wrap it: it SHALL walk along each silk strand exactly while that strand is drawn, with strands crossing the pumpkin in alternating directions and a cocoon thickening beneath them. Then the pumpkin SHALL shake, the silk SHALL burst and fade, and the startled spider SHALL climb back to its perch. The spider, thread, strands, cocoon, silk and pumpkin SHALL share one precomputed timeline, measured once when the story starts. Any user activity or a hidden document SHALL interrupt the story: the spider SHALL reel in from its computed pose, the pumpkin SHALL stop shaking and the silk SHALL fade within 250ms. The silk SHALL be `aria-hidden` and pointer-transparent, so the pumpkin stays clickable throughout. Idle drops SHALL NOT start during the story, and the story SHALL wait for a running drop or escape to finish.
 
 The decoration layer takes no pointer events; the spider listens on the window instead, so nothing in the corner becomes click-through-blocking in order to make this work.
 
-The gesture is deliberately pointer-only and the spider stays `aria-hidden`: it accomplishes nothing, so a keyboard user is missing nothing, and making a decoration focusable inside a hidden layer would cost more than it gives. Under `prefers-reduced-motion: reduce` the spider SHALL never take a displacement at all. That check lives in the component rather than the stylesheet, because the displacement is an inline transform a media query could not override; a host without `matchMedia` SHALL get the ordinary spider rather than an error.
+The gesture is deliberately pointer-only and the spider stays `aria-hidden`: it accomplishes nothing, so a keyboard user is missing nothing, and making a decoration focusable inside a hidden layer would cost more than it gives. Under `prefers-reduced-motion: reduce` the spider SHALL never take a displacement, drop, lean, fidget, drum or wrap the pumpkin. That check lives in the component rather than the stylesheet, because the displacement is an inline transform a media query could not override; a host without `matchMedia` SHALL get the ordinary spider rather than an error.
 
-#### Scenario: The pointer closes in on one corner
+#### Scenario: The pointer closes in on the corner spider
 
-- **WHEN** Halloween is selected and the pointer comes within the flee radius of one corner spider
-- **THEN** that spider bolts away from it and the other corner's spider does not move
+- **WHEN** Halloween is selected and the pointer comes within the flee radius of the corner spider
+- **THEN** the spider bolts away from it
 
-#### Scenario: Both corners behave the same
+#### Scenario: Displacement ignores the mirrored web
 
-- **WHEN** a pointer approaches each corner spider from its left in turn
-- **THEN** both bolt to the right — displacement is in screen coordinates, so no corner may sit under a mirrored ancestor
+- **WHEN** a pointer approaches the corner spider from its left
+- **THEN** it bolts to the right — displacement is in screen coordinates, so the spider may not sit under a mirrored ancestor
+
+#### Scenario: A lonely spider drops on its thread
+
+- **WHEN** the pointer stays outside the alert radius for the idle pause
+- **THEN** the spider lowers itself on a thread, swings, hangs and climbs back to its perch
+
+#### Scenario: The pointer interrupts the idle spider
+
+- **WHEN** the pointer comes within the alert radius during a drop
+- **THEN** the spider reels in from where it is, freezes its fidgets and watches the pointer
+
+#### Scenario: The spider wraps a neglected pumpkin
+
+- **WHEN** the page sees no user activity for `HALLOWEEN_SPIDER_WRAP_IDLE_MS`
+- **THEN** the spider climbs down, wraps the pumpkin strand by strand, is shaken off by the pumpkin and climbs back up startled
+
+#### Scenario: The user returns mid-wrap
+
+- **WHEN** the user moves the pointer, presses a key, scrolls or clicks during the wrap
+- **THEN** the spider reels back to its perch, the pumpkin settles and the silk fades away at once
+
+#### Scenario: The spider drums along with typing
+
+- **WHEN** the user types in a text field
+- **THEN** the spider taps its legs, alternating with each keystroke, and stops shortly after typing stops
 
 #### Scenario: The pointer gives chase
 
@@ -163,9 +194,9 @@ All twelve celebration notifications, including the secret-phrase spider drop, S
 
 The easter egg SHALL persist nothing, read no storage, and issue no feature-specific API request; all of its state is in-memory and per-tab. The seasonal icon SHALL be a bundled SVG loaded through the normal asset pipeline.
 
-**Accessibility:** The cobwebs, the corner spiders, and everything either celebration draws are decorative — they SHALL sit in `aria-hidden` layers that take no pointer events, and the announcement SHALL be the notification each celebration raises. The pumpkin SHALL be a labelled `IconButton` with `ButtonAppearance.Link`, a transparent background in idle, hover and pressed states, and a visible keyboard focus outline, kept outside the `aria-hidden` layer, so it stays focusable and is never an unreachable control inside a hidden subtree. The celebration layer SHALL be portaled to `document.body` so no scroll container clips it.
+**Accessibility:** The cobweb, the corner spider, the silk it spins over the pumpkin, and everything either celebration draws are decorative — they SHALL sit in `aria-hidden` layers that take no pointer events, and the announcement SHALL be the notification each celebration raises. The pumpkin SHALL be a labelled `IconButton` with `ButtonAppearance.Link`, a transparent background in idle, hover and pressed states, and a visible keyboard focus outline, kept outside the `aria-hidden` layer, so it stays focusable and is never an unreachable control inside a hidden subtree; it renders before that layer, which takes no pointer events, so the spider can paint over it without blocking clicks. The celebration layer SHALL be portaled to `document.body` so no scroll container clips it.
 
-**RTL:** The decoration SHALL use logical positioning so the corners follow the document's `dir`. A web is drawn from its own top-left, so whichever corner it lands in decides whether it is mirrored, and each web SHALL carry the `rtl:` counterpart that keeps its dense end in the screen corner. The mirror SHALL sit on the web itself and never on the corner wrapper: a flipped ancestor would also flip the spider's inline transform, so it would flee towards the pointer instead of away from it and jam against its leash. The spider SHALL be placed with logical insets instead, which follow the corner the same way the mirror does.
+**RTL:** The decoration SHALL use logical positioning so the corner follows the document's `dir`. The web is drawn from its own top-left and sits in the inline-end corner, so it is mirrored and SHALL carry the `rtl:` counterpart that keeps its dense end in the screen corner. The mirror SHALL sit on the web itself and never on the corner wrapper: a flipped ancestor would also flip the spider's inline transform, so it would flee towards the pointer instead of away from it and jam against its leash. The spider SHALL be placed with logical insets instead, which follow the corner the same way the mirror does.
 
 **Reduced motion:** Every animation the feature adds SHALL be suppressed under `prefers-reduced-motion: reduce`, resolving to a static frame rather than to an empty screen. Because an un-animated ghost would otherwise sit at the layer's origin with the rest of the flock stacked on top of it, each one SHALL carry a spread-out resting position used in that state; an un-animated spider SHALL likewise render already paid out on its thread rather than parked above the top edge.
 

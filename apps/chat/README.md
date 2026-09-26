@@ -80,6 +80,15 @@ Repeated secret messages select randomly without consecutive repeats, independen
 of pumpkin clicks. The new scenes are exclusive to messages and show a static
 illustration with reduced motion enabled.
 
+A single cobweb hangs in the inline-end top corner, and its spider is never
+quite still: it rubs its front legs, blinks, leans to watch the pointer and
+every 10–20 seconds lowers itself on a thread. It drums its legs while the user
+types. Within 240px of the pointer it reels in and freezes; closer still it
+bolts. After a minute with no user activity it climbs down to the pumpkin and
+wraps it in crossing silk strands until the pumpkin shakes it off and the
+startled spider climbs back up. Any activity interrupts the wrap at once; the
+pumpkin stays clickable throughout, and reduced motion keeps the spider still.
+
 Descending spiders can now borrow up to three visible welcome-page elements:
 the greeting, model selector, attachment control and sometimes a history row.
 They descend, weave fine curved silk strands around their prizes, then climb above the viewport carrying
