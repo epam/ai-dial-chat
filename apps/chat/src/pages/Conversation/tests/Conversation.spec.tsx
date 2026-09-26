@@ -91,7 +91,11 @@ vi.mock('../../../context/overlay/OverlayContext', () => ({
   useOptionalOverlay: () => undefined,
 }));
 vi.mock('../../../context/SourcesSidebarContext', () => ({
-  useSourcesSidebar: () => ({ handleClose: vi.fn(), setMessages: vi.fn() }),
+  useSourcesSidebar: () => ({
+    handleClose: vi.fn(),
+    setMessages: vi.fn(),
+    setConversationModelId: vi.fn(),
+  }),
 }));
 
 vi.mock('../../../hooks/conversation/useActiveConversationBridge', () => ({

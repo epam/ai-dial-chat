@@ -117,8 +117,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       />
     ),
   });
-  const { handleClose: handleCloseSourcesSidebar, setMessages } =
-    useSourcesSidebar();
+  const {
+    handleClose: handleCloseSourcesSidebar,
+    setMessages,
+    setConversationModelId,
+  } = useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const { status: activeScheduledTaskStatus } = useActiveScheduledTask();
@@ -222,7 +225,16 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
-  }, [conversation?.messages, setMessages]);
+    setConversationModelId(
+      conversation?.assistantModelId || conversation?.model.id,
+    );
+  }, [
+    conversation?.messages,
+    conversation?.assistantModelId,
+    conversation?.model.id,
+    setMessages,
+    setConversationModelId,
+  ]);
 
   /*
    * Switching to another conversation resets the sidebar, matching how the
@@ -244,8 +256,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     () => () => {
       handleCloseSourcesSidebar();
       setMessages([]);
+      setConversationModelId(undefined);
     },
-    [handleCloseSourcesSidebar, setMessages],
+    [handleCloseSourcesSidebar, setMessages, setConversationModelId],
   );
 
   const addStatusMessage = useCallback(
