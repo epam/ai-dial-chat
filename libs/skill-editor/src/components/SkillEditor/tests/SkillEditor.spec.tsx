@@ -37,6 +37,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },
+  TextareaResize: { Vertical: 'vertical' },
+  TagInput: () => null,
   Accordion: ({
     title,
     children,
@@ -140,35 +142,46 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </label>
   ),
   Input: ({
+    id,
     labelProps,
     value,
     onChange,
     error,
+    caption,
     disabled,
+    readOnly,
   }: {
+    id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
     value?: string;
     onChange?: (value: string) => void;
     error?: string;
+    caption?: string;
     disabled?: boolean;
+    readOnly?: boolean;
   }) => (
     <label>
       {labelProps?.label}
       {labelProps?.required && ' *'}
+      {caption && <span>{caption}</span>}
       <input
+        id={id}
         value={value ?? ''}
         disabled={disabled}
+        readOnly={readOnly}
         onChange={(e) => onChange?.(e.target.value)}
       />
       {error && <span>{error}</span>}
     </label>
   ),
   Textarea: ({
+    id,
     labelProps,
     value,
     onChange,
     error,
   }: {
+    id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
     value?: string;
     onChange?: (value: string) => void;
@@ -178,6 +191,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {labelProps?.label}
       {labelProps?.required && ' *'}
       <textarea
+        id={id}
         value={value ?? ''}
         onChange={(e) => onChange?.(e.target.value)}
       />
@@ -429,7 +443,7 @@ describe('SkillEditor', () => {
     expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
   });
 
-  it('disables the Name field when isNameReadOnly is set', () => {
+  it('renders the Name field read-only when isNameReadOnly is set', () => {
     renderEditor({
       isNameReadOnly: true,
       initialValues: { name: 'good-morning-breakfast' },
@@ -437,7 +451,7 @@ describe('SkillEditor', () => {
 
     expect(
       (screen.getByDisplayValue('good-morning-breakfast') as HTMLInputElement)
-        .disabled,
+        .readOnly,
     ).toBe(true);
   });
 

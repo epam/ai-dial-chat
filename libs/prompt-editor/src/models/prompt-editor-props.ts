@@ -81,8 +81,14 @@ export interface PromptEditorLabels {
   folderDeleteConfirmTitle?: string;
   /** Builds the delete-folder confirmation message. Defaults to a sentence naming the folder. */
   folderDeleteConfirmMessage?: (folderId: string) => string;
-  /** Save button label. Defaults to `'Save'`. */
+  /** Primary button label in create mode. Defaults to `'Create'`. */
+  createLabel?: string;
+  /** Primary button label in edit mode. Defaults to `'Save'`. */
   saveLabel?: string;
+  /** Heading of the section holding Name and Description. Defaults to `'Metadata'`. */
+  metadataSectionTitle?: string;
+  /** Heading of the section holding the Instructions editor. Defaults to `'Setup'`. */
+  setupSectionTitle?: string;
   /** Cancel button label. Defaults to `'Cancel'`. */
   cancelLabel?: string;
   /** Retry button label shown in the load-error state. Defaults to `'Retry'`. */
@@ -123,7 +129,7 @@ export interface PromptEditorStyles {
 
 /** Props for `PromptEditor`. */
 export interface PromptEditorProps {
-  /** Whether the form edits an existing prompt (changes the heading only). Defaults to `false`. */
+  /** Whether the form edits an existing prompt (changes the heading and the primary button label). Defaults to `false`. */
   isEditMode?: boolean;
   /**
    * Values to seed the fields with. Changing this object's identity re-seeds

@@ -302,6 +302,49 @@ import { MetadataField, MetadataForm } from '@epam/ai-dial-builder-form';
 />;
 ```
 
+`renderDescription(textarea, fieldId)` wraps the Description textarea, for example in a label row with an extra action. The textarea then renders without its own label, so the wrapper must label the control whose id is `fieldId`:
+
+```tsx
+import { MetadataField, MetadataForm } from '@epam/ai-dial-builder-form';
+import { Label } from '@epam/ai-dial-ui-kit';
+
+<MetadataForm
+  values={values}
+  errors={errors}
+  onChange={handleChange}
+  fields={[MetadataField.Name, MetadataField.Description]}
+  renderDescription={(textarea, fieldId) => (
+    <>
+      <Label htmlFor={fieldId} label="Description" required />
+      {textarea}
+    </>
+  )}
+/>;
+```
+
+`DEFAULT_METADATA_FORM_LABELS` holds the English labels `MetadataForm` falls back to. `labels.form` replaces the whole group, so spread it to override only a few fields:
+
+```tsx
+import {
+  DEFAULT_METADATA_FORM_LABELS,
+  MetadataField,
+  MetadataForm,
+} from '@epam/ai-dial-builder-form';
+
+<MetadataForm
+  values={values}
+  errors={errors}
+  onChange={handleChange}
+  fields={[MetadataField.Name, MetadataField.Description]}
+  labels={{
+    form: {
+      ...DEFAULT_METADATA_FORM_LABELS,
+      name: { label: 'Name', placeholder: 'Prompt name' },
+    },
+  }}
+/>;
+```
+
 ### DeploymentCreationForm
 
 Renders the whole shared General-step field set. `values`, `errors`, `onChange`, `onAddAvatarClick`, and `labels` are required. The avatar field never opens a file picker itself — `onAddAvatarClick` is the host's hook to open its own file manager/upload flow, and the host reports the result back through `onChange({ iconUrl })`. `iconPreviewUrl` is the URL to actually render in the preview box; the host resolves it from `values.iconUrl` (which may be a DIAL file id rather than a directly displayable URL). Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.

@@ -170,14 +170,14 @@ Labels, `bucket`, `FileManagerModal`, `resolveIconUrl`, locale options and submi
 
 ## 5. Prompt and skill adopt the shared left panel
 
-- [ ] 5.1 Rebuild `libs/prompt-editor/src/components/PromptEditor/PromptEditor.tsx` (all three render paths: form, loading, load error) on `EntityEditor`:
+- [x] 5.1 Rebuild `libs/prompt-editor/src/components/PromptEditor/PromptEditor.tsx` (all three render paths: form, loading, load error) on `EntityEditor`:
   - `metadata` = `MetadataForm fields={[Name, Description]}`, keeping the existing ids, placeholders and error props
   - `setup` = the Instructions editor block
   - `submitLabel` picks between `labels.createLabel` and `labels.saveLabel` by mode
   - update the prop models and `libs/prompt-editor/README.md`
-- [ ] 5.2 Pass `createLabel: t(ButtonsI18nKeys.Create)` in create mode from `apps/chat/src/pages/PromptEditor/PromptEditor.tsx`.
+- [x] 5.2 Pass `createLabel: t(ButtonsI18nKeys.Create)` in create mode from `apps/chat/src/pages/PromptEditor/PromptEditor.tsx`.
   - Verification: `npm run test:file -- libs/prompt-editor/src/components/PromptEditor/tests/PromptEditor.spec.tsx apps/chat/src/pages/PromptEditor/tests/PromptEditor.spec.tsx`. Add cases for the Metadata/Setup headings and the primary label by mode, and update `PromptEditor.classes.spec.tsx` if the class names move.
-- [ ] 5.3 Rebuild `libs/skill-editor/src/components/SkillEditor/SkillEditor.tsx` on `EntityEditor`:
+- [x] 5.3 Rebuild `libs/skill-editor/src/components/SkillEditor/SkillEditor.tsx` on `EntityEditor`:
   - `metadata` = `MetadataForm fields={[Name, Description]} isDescriptionRequired nameCaption isNameReadOnly`, with values still owned by the skill field state
   - `metadataFooter` = the Files pane (mobile accordion + desktop panel)
   - `setup` + `setupTitle` = the selected file path, replacing the local `<h2>`
@@ -187,18 +187,18 @@ Labels, `bucket`, `FileManagerModal`, `resolveIconUrl`, locale options and submi
 
 ## 6. Cleanup, i18n, RTL, docs
 
-- [ ] 6.1 i18n (dedicated task), in `apps/chat/src/i18n/locales/en.json`, every other locale file and `apps/chat/src/constants/translation-keys.ts`:
+- [x] 6.1 i18n (dedicated task), in `apps/chat/src/i18n/locales/en.json`, every other locale file and `apps/chat/src/constants/translation-keys.ts`:
   - add `applicationEditor.setupPendingCreate`, `customApp.createTitle`, `customApp.editTitle`, `appsEditor.createTitle`, `appsEditor.editTitle` and `appsEditor.defaultTypeName`
   - move `toolsetEditor.metadataSectionTitle`/`setupSectionTitle` to `editor.metadataSectionTitle`/`editor.setupSectionTitle`
   - set `editor.topicsPlaceholder` to "Add tags, comma separated" and drop `toolsetEditor.general.topicsPlaceholder`
   - remove `editor.stepGeneral`, `editor.nextButton`, `editor.saveButton`, `editor.stepsNavAriaLabel`, `editor.stepOfTotal` and `editor.moreActionsLabel`, after grepping that no usage remains
-- [ ] 6.2 Delete `apps/chat/src/components/EditorHeader/` (component + `tests/EditorHeader.spec.tsx`) once `grep -r "EditorHeader" apps/chat/src` finds no importer. Remove the now-empty `apps/chat/src/pages/AppsEditor/` and `apps/chat/src/pages/ToolsetEditor/` folders if no files remain.
-- [ ] 6.3 RTL (dedicated task): confirm `EntityEditor`, `MetadataForm`, `QuickAppSetup`, `CustomAppSetup` and the placeholders use only logical classes (`ms/me`, `ps/pe`, `start/end`, `text-start`). The back arrow's mirroring is inherited from `EditorLayout`, and Preview/Eye icons are not mirrored. Add a `dir="rtl"` render assertion to `libs/builder-form/src/components/EntityEditor/tests/EntityEditor.spec.tsx`.
-- [ ] 6.4 Docs:
+- [x] 6.2 Delete `apps/chat/src/components/EditorHeader/` (component + `tests/EditorHeader.spec.tsx`) once `grep -r "EditorHeader" apps/chat/src` finds no importer. Remove the now-empty `apps/chat/src/pages/AppsEditor/` and `apps/chat/src/pages/ToolsetEditor/` folders if no files remain.
+- [x] 6.3 RTL (dedicated task): confirm `EntityEditor`, `MetadataForm`, `QuickAppSetup`, `CustomAppSetup` and the placeholders use only logical classes (`ms/me`, `ps/pe`, `start/end`, `text-start`). The back arrow's mirroring is inherited from `EditorLayout`, and Preview/Eye icons are not mirrored. Add a `dir="rtl"` render assertion to `libs/builder-form/src/components/EntityEditor/tests/EntityEditor.spec.tsx`.
+- [x] 6.4 Docs:
   - `docs/architecture.md`: the route → page map now points to `ApplicationEditorPage`; `EditorHeader` is removed; builder-form owns the entity editor shell.
   - The builder-form, toolset-editor, prompt-editor and skill-editor READMEs (already touched in their slices; re-check).
   - Run `npm run validate:docs`.
-- [ ] 6.5 Close the change with exactly one `npm run verify:full`, plus `npm run build:quiet`, since routes and lazy chunks changed.
+- [x] 6.5 Close the change with exactly one `npm run verify:full`, plus `npm run build:quiet`, since routes and lazy chunks changed.
 
 ## 7. Follow-ups (out of scope — record, do not implement)
 

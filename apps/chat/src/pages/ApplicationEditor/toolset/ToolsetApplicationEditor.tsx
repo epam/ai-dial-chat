@@ -80,7 +80,7 @@ const getMetadataLabelOverrides = (t: TFunction) => ({
   },
   topics: {
     label: t(EditorI18nKeys.TopicsLabel),
-    placeholder: t(ToolsetEditorI18nKeys.TopicsPlaceholder),
+    placeholder: t(EditorI18nKeys.TopicsPlaceholder),
   },
 });
 
@@ -294,8 +294,8 @@ const ToolsetApplicationEditor: FC = () => {
         editTitle: t(ToolsetEditorI18nKeys.EditTitle),
         backAriaLabel: t(ToolsetEditorI18nKeys.BackAriaLabel),
         savingStatusLabel: t(ToolsetEditorI18nKeys.SavingStatus),
-        metadataSectionTitle: t(ToolsetEditorI18nKeys.MetadataSectionTitle),
-        setupSectionTitle: t(ToolsetEditorI18nKeys.SetupSectionTitle),
+        metadataSectionTitle: t(EditorI18nKeys.MetadataSectionTitle),
+        setupSectionTitle: t(EditorI18nKeys.SetupSectionTitle),
         cancelLabel: t(ButtonsI18nKeys.Cancel),
         saveLabel: t(ButtonsI18nKeys.Save),
         createLabel: t(ButtonsI18nKeys.Create),

@@ -65,11 +65,13 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     </>
   ),
   Textarea: ({
+    id,
     value,
     onChange,
     labelProps,
     placeholder,
   }: {
+    id?: string;
     value?: string;
     onChange?: (v: string) => void;
     labelProps?: { label?: string };
@@ -78,6 +80,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     <label>
       {labelProps?.label}
       <textarea
+        id={id}
         value={value ?? ''}
         placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
@@ -239,5 +242,22 @@ describe('MetadataForm', () => {
     await user.click(screen.getByRole('button', { name: 'attach-avatar' }));
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('lets the host wrap the Description textarea and label it through the field id', () => {
+    renderForm({
+      fields: [MetadataField.Name, MetadataField.Description],
+      renderDescription: (textarea, fieldId) => (
+        <div>
+          <label htmlFor={fieldId}>Skill description</label>
+          <button type="button">Refine</button>
+          {textarea}
+        </div>
+      ),
+    });
+
+    expect(screen.getByLabelText('Skill description')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Refine' })).toBeTruthy();
+    expect(screen.queryByLabelText('Description')).toBeNull();
   });
 });

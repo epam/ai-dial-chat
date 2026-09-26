@@ -19,6 +19,7 @@ import { AddAvatar } from '../AddAvatar/AddAvatar';
 import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
 
 const DEFAULT_TOPICS_PLACEHOLDER = 'Add tags, comma separated';
+const DESCRIPTION_FIELD_ID = 'deployment-creation-form-description';
 
 /**
  * Controlled field set for deployment creation: avatar, name, version,
@@ -40,6 +41,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   isNameReadOnly = false,
   nameCaption,
   isDescriptionRequired = false,
+  renderDescription,
   focusRequestKey,
 }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +97,31 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
     errors.version,
     errors.description,
   ]);
+
+  const descriptionTextarea = (
+    <Textarea
+      id={DESCRIPTION_FIELD_ID}
+      ref={descriptionRef}
+      value={values.description}
+      onChange={(value) => onChange({ description: value })}
+      aria-required={isDescriptionRequired || undefined}
+      // A `renderDescription` wrapper renders the label itself.
+      labelProps={
+        renderDescription
+          ? undefined
+          : {
+              label: labels.description.label,
+              required: isDescriptionRequired,
+            }
+      }
+      placeholder={labels.description.placeholder}
+      error={errors.description || undefined}
+      invalid={!!errors.description}
+      containerClassName={renderDescription ? undefined : styles?.field}
+      className={RESIZABLE_TEXTAREA_CLASS_NAME}
+      resize={TextareaResize.Vertical}
+    />
+  );
 
   return (
     <div
@@ -153,24 +180,14 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         </div>
       )}
 
-      {shows(MetadataField.Description) && (
-        <Textarea
-          id="deployment-creation-form-description"
-          ref={descriptionRef}
-          value={values.description}
-          onChange={(value) => onChange({ description: value })}
-          labelProps={{
-            label: labels.description.label,
-            required: isDescriptionRequired,
-          }}
-          placeholder={labels.description.placeholder}
-          error={errors.description || undefined}
-          invalid={!!errors.description}
-          containerClassName={styles?.field}
-          className={RESIZABLE_TEXTAREA_CLASS_NAME}
-          resize={TextareaResize.Vertical}
-        />
-      )}
+      {shows(MetadataField.Description) &&
+        (renderDescription ? (
+          <div className={styles?.field}>
+            {renderDescription(descriptionTextarea, DESCRIPTION_FIELD_ID)}
+          </div>
+        ) : (
+          descriptionTextarea
+        ))}
 
       {shows(MetadataField.Locales) && (
         <DeploymentLocalesField

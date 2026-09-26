@@ -1055,12 +1055,8 @@
     "invitationAcceptError": "This share link is invalid or has expired."
   },
   "editor": {
-    "stepGeneral": "General",
-    "stepsNavAriaLabel": "Editor steps",
-    "stepOfTotal": "Step {{current}} of {{total}}",
-    "moreActionsLabel": "More actions",
-    "saveButton": "Save & Exit",
-    "nextButton": "Next",
+    "metadataSectionTitle": "Metadata",
+    "setupSectionTitle": "Setup",
     "nameLabel": "Name",
     "nameRequired": "Name is required",
     "descriptionLabel": "Description",
@@ -1070,7 +1066,7 @@
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
     "topicsLabel": "Tags",
-    "topicsPlaceholder": "Add a topic",
+    "topicsPlaceholder": "Add tags, comma separated",
     "locales": {
       "summaryLabel": "Locales",
       "rowLabel": "Locale",
@@ -1120,13 +1116,10 @@
     "createTitle": "Create toolset",
     "editTitle": "Edit toolset",
     "backAriaLabel": "Back to catalog",
-    "metadataSectionTitle": "Metadata",
-    "setupSectionTitle": "Setup",
     "savingStatus": "Saving",
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",
-      "topicsPlaceholder": "Add tags, comma separated",
       "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {

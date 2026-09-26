@@ -33,6 +33,7 @@ import { SkillFilePreview } from '../../components/SkillFilePreview/SkillFilePre
 import { isSafeReturnUrl } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
+  EditorI18nKeys,
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -358,6 +359,7 @@ const SkillEditorPage: FC = () => {
       descriptionPlaceholder: t(SkillEditorI18nKeys.DescriptionPlaceholder),
       instructionsLabel: t(SkillEditorI18nKeys.InstructionsLabel),
       instructionsPlaceholder: t(SkillEditorI18nKeys.InstructionsPlaceholder),
+      metadataSectionTitle: t(EditorI18nKeys.MetadataSectionTitle),
       createLabel: isEditMode
         ? t(SkillEditorI18nKeys.SaveLabel)
         : t(ButtonsI18nKeys.Create),

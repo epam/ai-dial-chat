@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BUILDER_FORM_CLASS } from '../../../constants/public-class-names';
 import type { EntityEditorProps } from '../../../models/entity-editor-props';
 import { EntityEditor } from '../EntityEditor';
+
+const PHYSICAL_DIRECTION_CLASS =
+  /\b(ml-|mr-|pl-|pr-|left-|right-|text-left|text-right|border-l|border-r)/;
 
 const renderEditor = (props: Partial<EntityEditorProps> = {}) =>
   render(
@@ -159,6 +163,29 @@ describe('EntityEditor', () => {
       screen.getByRole('heading', { level: 2, name: 'Metadaten' }),
     ).toBeTruthy();
     expect(getFirstButton('Abbrechen')).toBeTruthy();
+  });
+
+  it('renders under dir="rtl" with no physical-direction classes on its sections', () => {
+    renderEditor({ dir: 'rtl' });
+
+    const metadataSection = closestWithClass(
+      screen.getByText('metadata fields'),
+      BUILDER_FORM_CLASS.metadataSection,
+    );
+    const setupSection = closestWithClass(
+      screen.getByText('setup fields'),
+      BUILDER_FORM_CLASS.setupSection,
+    );
+    expect(metadataSection).toBeTruthy();
+    expect(setupSection).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-node-access -- the direction override lives on an unlabeled ancestor
+    expect(metadataSection?.closest('[dir]')?.getAttribute('dir')).toBe('rtl');
+    for (const section of [metadataSection, setupSection]) {
+      expect(section?.className).not.toMatch(PHYSICAL_DIRECTION_CLASS);
+    }
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Metadata' }).className,
+    ).not.toMatch(PHYSICAL_DIRECTION_CLASS);
   });
 
   it('stamps host-supplied classes on the section roots', () => {

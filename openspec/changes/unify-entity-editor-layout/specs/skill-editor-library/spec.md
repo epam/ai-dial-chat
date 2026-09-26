@@ -9,6 +9,7 @@
   - `isDescriptionRequired`
   - `nameCaption` (the existing lowercase-and-hyphens caption)
   - `isNameReadOnly` forwarded from the existing prop
+  - `renderDescription` wrapping the Description textarea in `TextRefinementField` when `onRefineDescription` is supplied, so the AI refine action keeps working
 
   The Name and Description values stay owned by the skill editor's field state (see "Form field state ownership"). `MetadataForm` is controlled.
 - `metadataFooter`: the Files pane, below the Metadata section in the left panel.

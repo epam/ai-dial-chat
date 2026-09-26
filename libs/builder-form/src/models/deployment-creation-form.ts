@@ -2,6 +2,7 @@ import type {
   LocaleOption,
   LocalizedTextEntry,
 } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 import type { MetadataField } from './metadata-field';
 
 /** One additional (non-primary) locale's name/description translation, edited via the "Add locale" popup. */
@@ -150,6 +151,12 @@ export interface DeploymentCreationFormProps {
   nameCaption?: string;
   /** Marks the description field as required. The host still owns the validation. */
   isDescriptionRequired?: boolean;
+  /**
+   * Wraps the Description textarea, e.g. in a label row with extra actions.
+   * When set, the textarea renders without its own label, so the returned node
+   * must label the control whose id is `fieldId`.
+   */
+  renderDescription?: (textarea: ReactNode, fieldId: string) => ReactNode;
   /**
    * Changes on every submit attempt; each change moves focus to the first
    * invalid field. When set, errors appearing for any other reason (e.g. on

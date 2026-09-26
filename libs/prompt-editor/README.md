@@ -50,6 +50,12 @@ needs (`@uiw/react-markdown-preview`, `@uiw/react-md-editor`).
 
 ### `PromptEditor`
 
+Rendered on the shared `EntityEditor` shell from `@epam/ai-dial-builder-form`:
+a "Metadata" section on the left with the shared `MetadataForm` narrowed to
+Name and Description, and a "Setup" section on the right with the Instructions
+editor. The primary button reads `labels.createLabel` (default `'Create'`)
+in create mode and `labels.saveLabel` (default `'Save'`) in edit mode.
+
 ```tsx
 import { PromptEditor } from '@epam/ai-dial-prompt-editor';
 import type { PromptEditorValues } from '@epam/ai-dial-prompt-editor';
@@ -81,7 +87,11 @@ const EditPromptPage = () => {
       onBack={goBack}
       onCancel={goBack}
       onRetry={reload}
-      labels={{ createTitle: t('promptEditor.createTitle') }}
+      labels={{
+        createTitle: t('promptEditor.createTitle'),
+        createLabel: t('buttons.create'),
+        saveLabel: t('buttons.save'),
+      }}
     />
   );
 };
@@ -130,14 +140,15 @@ import { FolderFormMode } from '@epam/ai-dial-prompt-editor';
 
 A host embedding this package cannot style it through its CSS-module locals —
 they are hashed at build time — nor through DOM order or ARIA attributes, which
-are structure and accessibility contracts rather than styling ones. Two
+are structure and accessibility contracts rather than styling ones. Three
 elements therefore carry a stable public class, exported as
 `PROMPT_EDITOR_CLASS`.
 
-| Key           | Class                             | Element                                                             |
-| ------------- | --------------------------------- | ------------------------------------------------------------------- |
-| `form`        | `dial-prompt-editor-form`         | The editor's scrolling form column, inside the shared editor layout |
-| `folderField` | `dial-prompt-editor-folder-field` | The folder picker row rendered by `PromptFolderField`               |
+| Key           | Class                             | Element                                                      |
+| ------------- | --------------------------------- | ------------------------------------------------------------ |
+| `form`        | `dial-prompt-editor-form`         | The Metadata section holding the Name and Description fields |
+| `setup`       | `dial-prompt-editor-setup`        | The Setup section holding the Instructions editor            |
+| `folderField` | `dial-prompt-editor-folder-field` | The folder picker row rendered by `PromptFolderField`        |
 
 The classes carry no declarations of their own: nothing in `styles.css` selects
 on them, so they change nothing until a host writes a rule. Renaming one, or

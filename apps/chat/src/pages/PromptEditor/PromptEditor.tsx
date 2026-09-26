@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
   ButtonsI18nKeys,
+  EditorI18nKeys,
   PromptEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
@@ -235,13 +236,16 @@ const PromptEditorPage: FC = () => {
     () => ({
       createTitle: t(PromptEditorI18nKeys.CreateTitle),
       editTitle: t(PromptEditorI18nKeys.EditTitle),
-      backButtonLabel: t(PromptEditorI18nKeys.BackButtonLabel),
+      backButtonAriaLabel: t(PromptEditorI18nKeys.BackButtonLabel),
       nameLabel: t(PromptEditorI18nKeys.NameLabel),
       namePlaceholder: t(PromptEditorI18nKeys.NamePlaceholder),
       descriptionLabel: t(PromptEditorI18nKeys.DescriptionLabel),
       descriptionPlaceholder: t(PromptEditorI18nKeys.DescriptionPlaceholder),
       contentLabel: t(PromptEditorI18nKeys.ContentLabel),
       contentPlaceholder: t(PromptEditorI18nKeys.ContentPlaceholder),
+      metadataSectionTitle: t(EditorI18nKeys.MetadataSectionTitle),
+      setupSectionTitle: t(EditorI18nKeys.SetupSectionTitle),
+      createLabel: t(ButtonsI18nKeys.Create),
       saveLabel: t(ButtonsI18nKeys.Save),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       retryLabel: t(PromptEditorI18nKeys.RetryLabel),

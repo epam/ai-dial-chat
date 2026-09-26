@@ -8,7 +8,6 @@ import {
   ButtonsI18nKeys,
   CustomAppI18nKeys,
   EditorI18nKeys,
-  ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -113,13 +112,13 @@ describe('ApplicationEditorPage — custom app', () => {
     expect(
       screen.getByRole('heading', {
         level: 2,
-        name: ToolsetEditorI18nKeys.MetadataSectionTitle,
+        name: EditorI18nKeys.MetadataSectionTitle,
       }),
     ).toBeTruthy();
     expect(
       screen.getByRole('heading', {
         level: 2,
-        name: ToolsetEditorI18nKeys.SetupSectionTitle,
+        name: EditorI18nKeys.SetupSectionTitle,
       }),
     ).toBeTruthy();
     expect(getNameInput()).toBeTruthy();
@@ -127,7 +126,7 @@ describe('ApplicationEditorPage — custom app', () => {
       screen.getByLabelText(CustomAppI18nKeys.FeaturesDataLabel),
     ).toBeTruthy();
     expect(
-      screen.queryByRole('button', { name: EditorI18nKeys.NextButton }),
+      screen.queryByRole('button', { name: 'editor.nextButton' }),
     ).toBeNull();
   });
 

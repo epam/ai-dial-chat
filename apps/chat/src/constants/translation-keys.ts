@@ -932,12 +932,8 @@ export enum FooterMessageI18nKeys {
 }
 
 export enum EditorI18nKeys {
-  StepGeneral = 'editor.stepGeneral',
-  StepsNavAriaLabel = 'editor.stepsNavAriaLabel',
-  StepOfTotal = 'editor.stepOfTotal',
-  MoreActionsLabel = 'editor.moreActionsLabel',
-  SaveButton = 'editor.saveButton',
-  NextButton = 'editor.nextButton',
+  MetadataSectionTitle = 'editor.metadataSectionTitle',
+  SetupSectionTitle = 'editor.setupSectionTitle',
   NameLabel = 'editor.nameLabel',
   NameRequired = 'editor.nameRequired',
   DescriptionLabel = 'editor.descriptionLabel',
@@ -1113,13 +1109,10 @@ export enum ToolsetEditorI18nKeys {
   CreateTitle = 'toolsetEditor.createTitle',
   EditTitle = 'toolsetEditor.editTitle',
   BackAriaLabel = 'toolsetEditor.backAriaLabel',
-  MetadataSectionTitle = 'toolsetEditor.metadataSectionTitle',
-  SetupSectionTitle = 'toolsetEditor.setupSectionTitle',
   SavingStatus = 'toolsetEditor.savingStatus',
   // General form
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
-  TopicsPlaceholder = 'toolsetEditor.general.topicsPlaceholder',
   VersionInvalid = 'toolsetEditor.general.versionInvalid',
   // Settings form
   EndpointCaption = 'toolsetEditor.settings.endpointCaption',

@@ -14,6 +14,12 @@ safety checks are delegated through `fileActions.validatePath`, and the host
 decides what "created" means when `onSubmit` fires. That keeps the same form
 usable by any host whose skill storage differs from DIAL Core's.
 
+The form renders on the shared `EntityEditor` shell from
+`@epam/ai-dial-builder-form`, the same one every entity editor uses: a
+"Metadata" section with Name and Description (the shared `MetadataForm`) and
+the Files pane below it on the left, and a "Setup" section on the right that
+holds the selected file's editor or preview.
+
 ## Installation
 
 Requires UI Kit ^0.15.0-dev.19 or later with the public `/editors` entry.
@@ -76,14 +82,17 @@ const CreateSkillPage = () => {
       backAriaLabel="Back to catalog"
       title={isEditMode ? 'Edit skill' : 'Create skill'}
       fileActions={{
-        validatePath: (path) => validateSkillRelativePath(path),
-        onUploadFile: async (file, path) => {
-          const blob = await file.arrayBuffer();
-          setSupportingFileContent(path, blob);
+        validateBatch: (candidates) => validateSkillFiles(candidates, files),
+        commitBatch: async (candidates) => {
           setFiles((prev) => [
             ...prev,
-            { path, name: file.name, kind: SkillFileNodeKind.File },
+            ...candidates.map((candidate) => ({
+              path: candidate.path,
+              name: candidate.file.name,
+              kind: SkillFileNodeKind.File,
+            })),
           ]);
+          return {};
         },
         onRemoveNode: (path) =>
           setFiles((prev) => prev.filter((node) => node.path !== path)),
@@ -100,12 +109,13 @@ once the data has arrived. The root `SKILL.md` node is synthesised internally
 and is always present, first, and selected by default — it never appears in
 the `files` prop and never exposes a rename/move/delete affordance.
 
-`fileActions.validatePath` runs before a device upload is accepted —
-returning a message blocks it and shows the message inline. Removing any
-other node requires the user to confirm a popup before
-`fileActions.onRemoveNode` is called. The library currently offers only
-"Upload from device" as an Add action; it does not support creating an empty
-file or folder.
+"Upload from device" (or a drop anywhere on the editor) stages files in an
+upload dialog. `fileActions.validateBatch` validates the whole staged batch on
+every change, and `fileActions.commitBatch` receives the valid batch when the
+user confirms; resolving with an `error` keeps the dialog open with the batch
+intact. Removing any other node calls `fileActions.onRemoveNode` immediately,
+with no confirmation. The library offers no way to create an empty file or
+folder.
 
 `onValuesChange` reports the complete current `SkillEditorValues` whenever the
 user edits `name`, `description`, or `instructions` — including a paste into
@@ -128,12 +138,21 @@ component derives no meaning from the values it reports:
 />
 ```
 
-The header is rendered by `EditorLayout` (from `@epam/ai-dial-builder-form`).
+The header is rendered by `EntityEditor` (from `@epam/ai-dial-builder-form`).
 Pass `onBack` (called when the back arrow is activated), `title` (the page
 heading), and optionally `backAriaLabel` (accessible label for the arrow,
 defaults to `'Back'`). The header, including the back arrow, Cancel/Create
-actions, and saving status, appears on all viewports — no separate mobile
-header is needed from the host.
+actions, and saving status, appears on all viewports; on mobile the actions
+move to a fixed bottom bar. The primary button reads `labels.createLabel`
+(default `'Create'`), so a host editing an existing skill passes its own Save
+label there.
+
+On mobile the column stacks Metadata, then the Files pane as a collapsed
+"Editing file" accordion, then Setup. The Setup heading is `SKILL.md` for the
+manifest, or `labels.selectedFileHeading(name)` for a supporting file; Name and
+Description stay in Metadata whichever file is selected. `submitError` and
+`conflict` (with its "Reload latest" action) render in a `role="alert"` region
+above the Setup section.
 
 ## Types
 
@@ -152,7 +171,7 @@ import type {
 import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
 ```
 
-`styles.colors` (`SkillEditorColors`) overrides the section-heading, Instructions-label, and border colors as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`) and then to a hard-coded hex when no theme is present:
+`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`) and then to a hard-coded hex when no theme is present:
 
 ```tsx
 <SkillEditor

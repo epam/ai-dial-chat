@@ -2,10 +2,7 @@ import type { DeploymentCreationFormLabels } from '@epam/ai-dial-builder-form';
 import type { TFunction } from 'i18next';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  EditorI18nKeys,
-  ToolsetEditorI18nKeys,
-} from '../../constants/translation-keys';
+import { EditorI18nKeys } from '../../constants/translation-keys';
 import { buildLocaleFieldLabels } from '../../utils/locale';
 
 /**
@@ -37,7 +34,7 @@ export const useMetadataLabels = (
         placeholder: t(EditorI18nKeys.TopicsPlaceholder),
       },
       otherLocales: buildLocaleFieldLabels(t),
-      ariaLabel: t(ToolsetEditorI18nKeys.MetadataSectionTitle),
+      ariaLabel: t(EditorI18nKeys.MetadataSectionTitle),
       ...getOverrides?.(t),
     }),
     [t, getOverrides],

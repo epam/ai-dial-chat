@@ -1,5 +1,5 @@
 import type { AttachResult } from '@epam/ai-dial-chat-shared';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type {
   AvatarPickerFileManagerModalProps,
   AvatarPickerModalLabels,
@@ -63,6 +63,8 @@ export interface MetadataFormProps {
   nameCaption?: string;
   /** Marks the Description field as required. Defaults to `false`. */
   isDescriptionRequired?: boolean;
+  /** Wraps the Description textarea, which then renders without its own label; see `DeploymentCreationFormProps.renderDescription`. */
+  renderDescription?: (textarea: ReactNode, fieldId: string) => ReactNode;
   /** Changes on every submit attempt to move focus to the first invalid field; see `DeploymentCreationFormProps.focusRequestKey`. */
   focusRequestKey?: number;
   /** Pre-translated labels; each group falls back to English defaults. */

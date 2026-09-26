@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
   ButtonsI18nKeys,
+  EditorI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -394,8 +395,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
           labels={{
             backAriaLabel: t(ToolsetEditorI18nKeys.BackAriaLabel),
             savingStatusLabel: t(ToolsetEditorI18nKeys.SavingStatus),
-            metadataTitle: t(ToolsetEditorI18nKeys.MetadataSectionTitle),
-            setupTitle: t(ToolsetEditorI18nKeys.SetupSectionTitle),
+            metadataTitle: t(EditorI18nKeys.MetadataSectionTitle),
+            setupTitle: t(EditorI18nKeys.SetupSectionTitle),
             cancelLabel: t(ButtonsI18nKeys.Cancel),
           }}
           metadata={

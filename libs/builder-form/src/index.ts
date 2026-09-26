@@ -81,3 +81,4 @@ export {
   validateDeploymentCreationFields,
 } from './utils/validate-deployment-creation-fields';
 export { BUILDER_FORM_CLASS } from './constants/public-class-names';
+export { DEFAULT_METADATA_FORM_LABELS } from './constants/metadata-form';

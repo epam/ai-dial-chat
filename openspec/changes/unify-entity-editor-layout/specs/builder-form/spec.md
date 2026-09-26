@@ -65,10 +65,11 @@ It adds the following props:
 - `nameCaption?: string`, helper text under Name.
 - `isDescriptionRequired?: boolean`, which marks Description required.
 - `errors.description?: string`.
+- `renderDescription?: (textarea: ReactNode, fieldId: string) => ReactNode`, which wraps the Description textarea (for example in a label row with an AI refine action). When it is set, the textarea SHALL render without its own label, and the wrapper labels the control whose id is `fieldId`.
 
 The Avatar field SHALL render only when `fields` includes `MetadataField.Avatar` and `avatarPicker` is provided. When `resolveAttachedIconUrl` returns `undefined`, the icon SHALL stay unchanged.
 
-`DeploymentCreationForm` SHALL accept the same `fields`, `isNameReadOnly`, `nameCaption` and `isDescriptionRequired` options, and SHALL extend `DeploymentCreationFormFieldErrors` with `description?`. On an error transition, focus-first-invalid SHALL consider Name, then Version, then Description.
+`DeploymentCreationForm` SHALL accept the same `fields`, `isNameReadOnly`, `nameCaption`, `isDescriptionRequired` and `renderDescription` options, and SHALL extend `DeploymentCreationFormFieldErrors` with `description?`. On an error transition, focus-first-invalid SHALL consider Name, then Version, then Description.
 
 The default Tags placeholder SHALL be `'Add tags, comma separated'`.
 
@@ -83,6 +84,10 @@ The default Tags placeholder SHALL be `'Add tags, comma separated'`.
 #### Scenario: Picked avatar is resolved by the host
 - **WHEN** the user picks a file in the avatar picker and `avatarPicker.resolveAttachedIconUrl` returns `'files/b/icon.png'`
 - **THEN** `onChange({ iconUrl: 'files/b/icon.png' })` is called and the picker closes
+
+#### Scenario: Host wraps the Description field
+- **WHEN** `MetadataForm` renders with `renderDescription` returning a label for `fieldId`, a Refine button and the textarea
+- **THEN** the textarea is named by the host label, the Refine button renders beside it, and the default Description label does not render
 
 #### Scenario: Description error receives focus when it is the only invalid field
 - **WHEN** `errors` changes from empty to `{ description: 'Description is required' }`

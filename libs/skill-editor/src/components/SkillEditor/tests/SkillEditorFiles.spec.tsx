@@ -82,6 +82,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },
+  TextareaResize: { Vertical: 'vertical' },
+  TagInput: () => null,
   Accordion: ({
     title,
     children,
@@ -576,6 +578,45 @@ describe('SkillEditor — files pane', () => {
     expect(onSelectedPathChange).toHaveBeenCalledWith('notes.md');
     expect(
       screen.getAllByRole('heading', { name: 'notes.md' })[0],
+    ).toBeTruthy();
+  });
+
+  it('keeps the SKILL.md Name and Description in Metadata while a supporting file fills Setup', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      initialValues: { name: 'good-morning', description: 'Says hi' },
+      files: [
+        { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+      ],
+    });
+
+    await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
+
+    expect(screen.getByRole('heading', { name: 'Metadata' })).toBeTruthy();
+    expect(screen.getByDisplayValue('good-morning')).toBeTruthy();
+    expect(screen.getByDisplayValue('Says hi')).toBeTruthy();
+    expect(
+      screen.getAllByRole('heading', { name: 'notes.md' })[0],
+    ).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'SKILL.md' })).toBeNull();
+  });
+
+  it('orders Metadata, then the Editing file accordion, then Setup in the stacked mobile column', () => {
+    renderEditor();
+
+    const metadataHeading = screen.getByRole('heading', { name: 'Metadata' });
+    const filesAccordion = screen.getByRole('heading', {
+      name: 'Editing file',
+    });
+    const setupHeading = screen.getByRole('heading', { name: 'SKILL.md' });
+
+    expect(
+      metadataHeading.compareDocumentPosition(filesAccordion) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      filesAccordion.compareDocumentPosition(setupHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 

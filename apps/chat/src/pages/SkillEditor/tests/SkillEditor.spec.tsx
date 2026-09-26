@@ -992,7 +992,7 @@ describe('SkillEditor page — edit mode', () => {
 
     await waitFor(() =>
       expect(
-        (screen.getByDisplayValue('docs-helper') as HTMLInputElement).disabled,
+        (screen.getByDisplayValue('docs-helper') as HTMLInputElement).readOnly,
       ).toBe(true),
     );
   });
@@ -1295,8 +1295,9 @@ describe('SkillEditor page — Back control and preview round trip', () => {
   };
 
   /* The manifest view is the only one that renders the Name field. */
+  /* Name and Description stay in Metadata for every file, so the Setup heading tells the views apart. */
   const isManifestViewShown = () =>
-    screen.queryByPlaceholderText('skillEditor.namePlaceholder') != null;
+    screen.queryByRole('heading', { name: 'SKILL.md' }) != null;
 
   const renderEditorWithSupportingFile = async () => {
     vi.mocked(downloadSkill).mockResolvedValue(

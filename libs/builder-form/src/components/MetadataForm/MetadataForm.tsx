@@ -25,6 +25,7 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
   isNameReadOnly,
   nameCaption,
   isDescriptionRequired,
+  renderDescription,
   focusRequestKey,
   labels,
 }) => {
@@ -83,6 +84,7 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
         isNameReadOnly={isNameReadOnly}
         nameCaption={nameCaption}
         isDescriptionRequired={isDescriptionRequired}
+        renderDescription={renderDescription}
         focusRequestKey={focusRequestKey}
       />
       {avatarPicker && (

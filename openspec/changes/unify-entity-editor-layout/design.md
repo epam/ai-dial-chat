@@ -209,6 +209,7 @@ The readiness gating and timeouts (`ReadyToSave`, `LoggedOut`, save timeout) kee
   - `metadata` = `MetadataForm fields={[Name, Description]} isDescriptionRequired nameCaption={…} isNameReadOnly={edit}`.
   - `metadataFooter` = the Files tree. On mobile it keeps its "Editing file" accordion.
   - `setup` = Instructions for `SKILL.md`, or the supporting-file preview. `setupTitle` is the selected file path, replacing the ad-hoc `<h2>`.
+  - Description keeps its AI refine action: `MetadataForm.renderDescription` lets the skill wrap the shared textarea in `TextRefinementField`. This slot was added during implementation, because a plain `MetadataForm` Description would have dropped `onRefineDescription`. Name renders read-only (still focusable) instead of disabled.
   - The Name/Description values still live in the skill editor's field state (`skill-editor-library` "Form field state ownership"). `MetadataForm` is controlled.
 - Neither uses the avatar picker. The prompt and skill libs render `MetadataForm` without `bucket` or `FileManagerModal`, so those props become optional and are required only when `fields` includes `Avatar`.
 
