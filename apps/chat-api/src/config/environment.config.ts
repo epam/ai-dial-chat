@@ -680,6 +680,30 @@ export class EnvironmentVariables {
   UTILITY_MODEL?: string;
 
   @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  CONVERSATION_NAMING_SYSTEM_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TRANSCRIPTION_PROMPT?: string;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null) return undefined;
     if (typeof value === 'boolean') return value;
@@ -841,6 +865,13 @@ export class EnvironmentVariables {
   })
   @IsBoolean()
   SKILL_USAGE_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/, {
+    message: 'UI_EVENT must be a lowercase kebab-case event ID or none',
+  })
+  UI_EVENT?: string;
 
   @IsOptional()
   @Transform(({ value }) => {

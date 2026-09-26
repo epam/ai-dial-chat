@@ -155,11 +155,11 @@ If the conversation read throws, returns an upstream error, or returns no conver
 
 ### Requirement: Related file resources outside the conversation's own bucket are dropped
 
+`ShareInvitationService.getRelatedResourceUrls` SHALL filter the collected related file resource URLs to only those whose bucket (`getResourceBucket`, `apps/chat-api/src/publish/publish-target.util.ts` — segment `[1]` of a `files/{bucket}/...` url) matches the conversation's own resolved bucket. A related file in any other bucket — another user's private bucket, or the public bucket — is silently omitted rather than causing the whole share request to fail. The two reasons follow.
+
 A conversation duplicated from someone else's shared conversation keeps referencing the original owner's files in its messages — duplication copies the conversation into the caller's own bucket, but never copies the attachments it references. DIAL Core's `shareResource` rejects any single request whose `resources` mix more than one owning bucket, answering 400 with `"You're not allowed to share resources of different owners in a single request"`. The caller also does not own a file left behind in another user's bucket, so it is not theirs to grant access to regardless.
 
 A related file in the public/organization bucket (`PUBLIC_BUCKET`, `apps/chat-api/src/conversations/constants/conversation.constants.ts`) is dropped too, for a different reason: `public` is DIAL Core's globally-readable bucket, already accessible to every authenticated user without a grant, and is not an owned resource `shareResource` can create an ACL entry for. Including a public-bucket resource in the request makes DIAL Core reject the whole batch with `"Incorrect resource link provided files/public/..."`, even though the file itself is reachable and opens fine from within the conversation.
-
-`ShareInvitationService.getRelatedResourceUrls` SHALL filter the collected related file resource URLs to only those whose bucket (`getResourceBucket`, `apps/chat-api/src/publish/publish-target.util.ts` — segment `[1]` of a `files/{bucket}/...` url) matches the conversation's own resolved bucket. A related file in any other bucket — another user's private bucket, or the public bucket — is silently omitted rather than causing the whole share request to fail.
 
 #### Scenario: A file left in the original owner's bucket is excluded
 

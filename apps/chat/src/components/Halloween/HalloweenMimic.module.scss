@@ -1,0 +1,31 @@
+.tongueCanvas {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.tongue {
+  transform-origin: 0 0;
+  transform: scale(0);
+}
+.loop {
+  fill: none;
+  opacity: 0;
+}
+.loop [data-mimic-wrap] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.tongue,
+.loop {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tongueCanvas {
+    display: none;
+  }
+}

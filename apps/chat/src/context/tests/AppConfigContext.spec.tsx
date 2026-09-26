@@ -52,6 +52,7 @@ describe('AppConfigContext', () => {
     mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
     const { result } = renderHook(() => useAppConfig(), { wrapper });
     expect(result.current.status).toBe(UserConfigStatus.Loading);
+    expect(result.current.config.activeEventId).toBeNull();
     expect(result.current.config.dialCoreExternalUrl).toBeNull();
     expect(result.current.config.fileManagerTabs).toEqual([
       'my_files',
@@ -60,6 +61,7 @@ describe('AppConfigContext', () => {
     ]);
     expect(result.current.config.overlayEnabled).toBe(false);
     expect(result.current.config.overlayAllowedOrigins).toEqual([]);
+    expect(result.current.config.allowedConnectOrigins).toEqual([]);
     expect(result.current.config.enabledUiFeatures).toBeNull();
     expect(result.current.config.announcementHtml).toBeNull();
     expect(result.current.config.customVisualizers).toEqual([]);
@@ -80,6 +82,30 @@ describe('AppConfigContext', () => {
     );
   });
 
+  it.each(['halloween', 'new-year', 'product-launch-2027', null])(
+    'preserves the event selection %s from client-config',
+    async (activeEventId) => {
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: { ...READY_RESPONSE.config, activeEventId },
+      });
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.activeEventId).toBe(activeEventId);
+    },
+  );
+
+  it('disables celebrations when a backend response omits event selection', async () => {
+    mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+    expect(result.current.config.activeEventId).toBeNull();
+  });
+
   it('populates overlayEnabled/overlayAllowedOrigins from a successful API call', async () => {
     mockGetClientConfig.mockResolvedValue({
       appId: 'chat-ui',
@@ -90,6 +116,7 @@ describe('AppConfigContext', () => {
         dialCoreExternalUrl: null,
         overlayEnabled: true,
         overlayAllowedOrigins: ['https://partner.example.com'],
+        allowedConnectOrigins: ['https://documents.example.com'],
       },
       metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
     } as unknown as ClientConfigResponseDto);
@@ -100,6 +127,9 @@ describe('AppConfigContext', () => {
     );
 
     expect(result.current.config.overlayEnabled).toBe(true);
+    expect(result.current.config.allowedConnectOrigins).toEqual([
+      'https://documents.example.com',
+    ]);
     expect(result.current.config.overlayAllowedOrigins).toEqual([
       'https://partner.example.com',
     ]);

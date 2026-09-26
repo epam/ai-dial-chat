@@ -94,6 +94,12 @@ interface AddAttachmentButtonProps {
    * selection is complete.
    */
   menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Called to read the host's textarea caret position when a `menuOverlays`
+   * entry opens, forwarded as that entry's `renderOverlay`'s second
+   * argument. Absent (or returning `undefined`) reports `0`.
+   */
+  getCaretPosition?: () => number;
   /** Color overrides. */
   colors?: AddAttachmentButtonColors;
 }
@@ -125,6 +131,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   toolsMenuTitle = 'Tools',
   toolsBackLabel = 'Back',
   menuOverlays,
+  getCaretPosition,
   colors,
 }) => {
   const isMobile = useIsMobile();
@@ -263,7 +270,10 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                */
               children: [{ key: `${overlay.key}-panel`, label: '' }],
               renderSubMenu: () =>
-                overlay.renderOverlay(() => setIsDesktopMenuOpen(false)),
+                overlay.renderOverlay(
+                  () => setIsDesktopMenuOpen(false),
+                  getCaretPosition?.() ?? 0,
+                ),
             }),
       })),
       ...(onRecordVoice != null
@@ -327,6 +337,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       toolsMenuTitle,
       toolsSubmenuChildren,
       menuOverlays,
+      getCaretPosition,
       cssVars,
     ],
   );
@@ -338,6 +349,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       matchReferenceWidth={false}
       placement="bottom-start"
       listClassName={listClassName}
+      overlayContentClassName="flex flex-col gap-1"
       items={menuItems}
       open={hasMenuOverlays ? isDesktopMenuOpen : undefined}
       onOpenChange={hasMenuOverlays ? setIsDesktopMenuOpen : undefined}
@@ -415,7 +427,17 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               onClose={() => setOpenMenuOverlayKey(null)}
               style={style}
             >
-              {overlay.renderOverlay(() => setOpenMenuOverlayKey(null))}
+              {/*
+               * The same `role="menu"` container the desktop submenu panel
+               * provides, so an overlay's `menuitem` rows sit inside a menu in
+               * both presentations.
+               */}
+              <div role="menu" aria-label={overlay.title}>
+                {overlay.renderOverlay(
+                  () => setOpenMenuOverlayKey(null),
+                  getCaretPosition?.() ?? 0,
+                )}
+              </div>
             </BottomSheetShell>
           ))}
           {chatSettings != null && (

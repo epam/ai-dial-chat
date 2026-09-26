@@ -1,3 +1,4 @@
+import type { TextRefinementLabels } from '@epam/ai-dial-chat-shared';
 import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
@@ -69,7 +70,7 @@ export interface ScheduledTaskCreateFormErrors {
 }
 
 /** Localized labels used by the {@link ScheduledTaskCreateForm} component. */
-export interface ScheduledTaskCreateFormLabels {
+export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   /** Page/header title, e.g. "New task". */
   pageTitle: string;
   /** Accessible label for the header's back control. */
@@ -133,6 +134,10 @@ export interface ScheduledTaskCreateFormLabels {
  * as CSS custom properties with app theme fallbacks.
  */
 export interface ScheduledTaskCreateFormColors {
+  /** Refinement status text color. Defaults to --text-primary. */
+  refineActionText?: string;
+  /** Refinement error color. Defaults to --text-error. */
+  refineErrorText?: string;
   /** Root container background. Fallback: `--bg-layer-base`. */
   background?: string;
   /** Header row's bottom border color. Fallback: `--stroke-tertiary`. */
@@ -147,6 +152,8 @@ export interface ScheduledTaskCreateFormColors {
 
 /** Typography overrides for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormTypography {
+  /** Refinement feedback typography. Defaults to 'dial-small-text'. */
+  refineFeedbackClassName?: string;
   /** CSS class applied to the title. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
   /** CSS class applied to a section heading. Defaults to `'dial-body-semi-text'`. */
@@ -171,6 +178,13 @@ export interface ScheduledTaskCreateFormStyles {
 
 /** Props for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormProps {
+  /** Optional Description rewrite callback; omission hides its action. */
+  onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
+  /** Optional Instructions rewrite callback; omission hides its action. */
+  onRefineInstructions?: (
+    value: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
   /** Localized labels. */
   labels: ScheduledTaskCreateFormLabels;
   /** Current field values. */

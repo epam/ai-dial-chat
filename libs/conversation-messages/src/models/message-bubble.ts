@@ -119,17 +119,6 @@ interface BaseMessageBubbleProps {
   onAttachmentRetry?: (id: string) => void;
   /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */
   selectedAttachmentId?: string;
-  /**
-   * Content rendered at the inline-start of the message's first text line,
-   * which word-flows after it (e.g. a used-skill chip — inline-level content
-   * no taller than a text line). The user bubble renders it inline within
-   * the text; the assistant bubble overlays it on the first markdown block's
-   * first line, which indents past it. The user bubble renders for the slot
-   * alone even when `text` is empty; an assistant message with no text
-   * renders the slot on its own line — above the streaming placeholder while
-   * the first token has not arrived yet.
-   */
-  beforeContent?: ReactNode;
 }
 
 /** Props for `UserMessageBubble`. */
@@ -138,6 +127,16 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   position?: BubblePosition;
   /** Maximum number of text lines shown while a long user message is collapsed. Defaults to `10`. */
   collapsedLineCount?: number;
+  /**
+   * Ordered content replacing the plain-text render when present —
+   * interleaved plain-text runs and inline elements (e.g. skill-mention
+   * chips at their text position), rendered in place of `text` inside the
+   * same paragraph. `text` is still required alongside this: it remains the
+   * identity/measurement input for the collapse-height calculation
+   * (`useCollapsedText`), even though `textSegments` is what's visually
+   * rendered. Absent renders `text` directly, byte-identical to today.
+   */
+  textSegments?: ReactNode[];
 }
 
 /** Props for `AssistantMessageBubble`. */
@@ -150,6 +149,17 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
    * `ResponseFormat.Markdown`.
    */
   responseFormat?: ResponseFormat;
+  /**
+   * Content rendered at the inline-start of the message's first markdown
+   * block's first line, which word-flows after it (e.g. used-skill chips —
+   * inline-level content no taller than a text line). Overlaid on the first
+   * line, which indents past it; an assistant message with no text renders
+   * the slot on its own line — above the streaming placeholder while the
+   * first token has not arrived yet. May itself be an array of elements
+   * (e.g. one `ChatSkill` per mention) — React renders `ReactNode[]` as a
+   * sibling sequence with no extra wrapper needed.
+   */
+  beforeContent?: ReactNode;
   /** react-markdown component overrides. Use to inject custom renderers (e.g. citation markers) into markdown elements. */
   markdownComponents?: Components;
   /** Per-element markdown typography classes. Defaults to the renderer's full-size scale; pass `COMPACT_MARKDOWN_CLASS_NAMES` for the smaller body scale. */
@@ -180,7 +190,10 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
 
 /** Props for `MessageBubble` — `AssistantMessageBubbleProps` plus user-only fields and `role`. */
 export type MessageBubbleProps = AssistantMessageBubbleProps &
-  Pick<UserMessageBubbleProps, 'position' | 'collapsedLineCount'> & {
+  Pick<
+    UserMessageBubbleProps,
+    'position' | 'collapsedLineCount' | 'textSegments'
+  > & {
     /** Message author/type: user, assistant, or status banner. */
     role: MessageRole;
   };

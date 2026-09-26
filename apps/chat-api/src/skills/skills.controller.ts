@@ -235,7 +235,7 @@ export class SkillsController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const { at } = req.user as SessionUser;
+    const { at, bucket } = req.user as SessionUser;
     /*
      * Registered before the await so a client disconnect that happens while
      * skillsService.downloadSkill() is still resolving isn't missed — the
@@ -248,7 +248,12 @@ export class SkillsController {
     });
 
     const { stream, headers, abortOnDisconnect } =
-      await this.skillsService.downloadSkill(query.bucket, query.path, at);
+      await this.skillsService.downloadSkill(
+        query.bucket,
+        query.path,
+        at,
+        bucket,
+      );
 
     if (clientDisconnected) {
       abortOnDisconnect();
@@ -304,7 +309,7 @@ export class SkillsController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const { at } = req.user as SessionUser;
+    const { at, bucket } = req.user as SessionUser;
     /*
      * Registered before the await so a client disconnect that happens while
      * skillsService.downloadSkillFile() is still resolving isn't missed —
@@ -321,6 +326,7 @@ export class SkillsController {
         query.path,
         query.filePath,
         at,
+        bucket,
       );
 
     if (clientDisconnected) {

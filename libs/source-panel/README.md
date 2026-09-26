@@ -79,6 +79,8 @@ interface QuotationSource {
 }
 ```
 
+For a PDF source, `url` may carry a `#page=N` fragment naming the cited page (e.g. `files/bucket/report.pdf#page=12`). The panel keys rows by `url` and passes the source to `onSourceClick` unchanged, fragment included. Opening the document at that page is up to the host.
+
 ### ConversationSourcesPanelLabels
 
 Override default English UI strings with translated values.

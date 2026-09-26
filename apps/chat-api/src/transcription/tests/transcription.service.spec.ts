@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { TranscribeAudioDto } from '../dto/transcribe-audio.dto';
+import { TRANSCRIPTION_PROMPT } from '../prompts/transcription.prompt';
 import { TranscriptionUnavailableException } from '../transcription-unavailable.exception';
 import { TranscriptionService } from '../transcription.service';
 
@@ -14,7 +15,10 @@ const dto: TranscribeAudioDto = {
 
 const TOKEN = 'test-token';
 
-const makeService = (sendChatCompletionRequest: ReturnType<typeof vi.fn>) => {
+const makeService = (
+  sendChatCompletionRequest: ReturnType<typeof vi.fn>,
+  prompt?: string,
+) => {
   const dialClient = {
     client: { sendChatCompletionRequest },
     baseUrl: 'http://dial-core',
@@ -24,6 +28,7 @@ const makeService = (sendChatCompletionRequest: ReturnType<typeof vi.fn>) => {
   const configService = {
     get: vi.fn((key: string) => {
       if (key === 'ASR_MODEL') return 'whisper-1';
+      if (key === 'TRANSCRIPTION_PROMPT') return prompt;
       return undefined;
     }),
   } as unknown as ConfigService<EnvironmentVariables>;
@@ -39,6 +44,47 @@ describe('TranscriptionService', () => {
     sendChatCompletionRequest = vi.fn();
     service = makeService(sendChatCompletionRequest);
   });
+
+  it.each([
+    undefined,
+    '',
+    ' \t\n ',
+    '  Transcribe only speech.\nPreserve العربية.\n',
+  ])(
+    'uses the configured prompt or default without changing the audio request (%j)',
+    async (prompt) => {
+      service = makeService(sendChatCompletionRequest, prompt);
+      sendChatCompletionRequest.mockResolvedValue({
+        data: { choices: [{ message: { content: 'hello' } }] },
+        response: { ok: true },
+      });
+      await expect(service.transcribeAudio(dto, TOKEN)).resolves.toBe('hello');
+      expect(sendChatCompletionRequest).toHaveBeenCalledWith(
+        'whisper-1',
+        expect.objectContaining({
+          body: {
+            messages: [
+              {
+                role: 'user',
+                content: prompt?.trim() ? prompt : TRANSCRIPTION_PROMPT,
+                custom_content: {
+                  attachments: [
+                    {
+                      type: dto.mimeType,
+                      title: 'recording',
+                      url: dto.audioUrl,
+                    },
+                  ],
+                },
+              },
+            ],
+            stream: false,
+          },
+          headers: { Authorization: 'Bearer test-token' },
+        }),
+      );
+    },
+  );
 
   it('throws NotFoundException from response.status when the error body carries no status', async () => {
     sendChatCompletionRequest.mockResolvedValue({

@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.15`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.19`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.15
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.19
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.7 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -83,6 +83,53 @@ above is genuinely optional for a host that imports anything else from this pack
 ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)). Scoped feature
 entries limit resolution to their own peer sets; they do not remove peers required by
 that feature.
+
+## Text refinement lifecycle
+
+`useTextRefinement({ value, onChange, onRefine?, disabled?, resetKey? })` owns one field's request, feedback, and session-local Undo baseline. `onRefine` is a host-supplied `(value: string, signal: AbortSignal) => Promise<string>` callback; transport and purpose selection stay in the host. `disabled` defaults to false. Change `resetKey` on draft identity changes even if text is equal.
+
+The result exposes `state` (`TextRefinementState`), `isPending`, `canRefine`, `canUndo`, `refine()`, `undo()`, and `reset()`. Public types are `TextRefinementCallback`, `UseTextRefinementOptions`, and `TextRefinementResult`. The host must acknowledge changes through its controlled `value`, and coordinate multiple fields so only one request runs per form and submission is blocked while pending.
+
+Successful changes retain the original baseline across repeated refinements. Undo restores it exactly; manual/external value changes, reset, callback removal, disabling, and unmount invalidate the session state. Identical output does not write a value. Errors and blank output preserve text and any existing baseline; cancellation is silent. Late results cannot overwrite a replaced draft, even if the callback ignores cancellation. No baseline persists after leaving the editing session.
+
+```tsx
+import { useState } from 'react';
+import {
+  useTextRefinement,
+  type TextRefinementCallback,
+} from '@epam/ai-dial-chat-shared';
+
+function RefinableDraft({ onRefine }: { onRefine: TextRefinementCallback }) {
+  const [value, setValue] = useState('Original draft');
+  const refinement = useTextRefinement({ value, onChange: setValue, onRefine });
+  return (
+    <div>
+      <textarea
+        aria-label="Draft"
+        value={value}
+        onChange={(event) => {
+          refinement.reset();
+          setValue(event.target.value);
+        }}
+      />
+      <button
+        type="button"
+        disabled={!refinement.canRefine}
+        onClick={refinement.refine}
+      >
+        Refine
+      </button>
+      <button
+        type="button"
+        disabled={!refinement.canUndo || refinement.isPending}
+        onClick={refinement.undo}
+      >
+        Undo
+      </button>
+    </div>
+  );
+}
+```
 
 ## Optional file-manager entry
 
@@ -145,6 +192,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 ```
 
+### Conversation custom view state
+
+`Conversation.customViewState?: Record<string, unknown>` is an open, feature-keyed container for conversation-level view state that rides the existing save/read of the conversation. It is absent on every conversation that has none. A host reads and writes individual keys of this record at the application edge; the model itself imposes no schema on the keys.
+
 ### Annotation selectors
 
 `Annotation.body.selector` is an `AnnotationSelector | AnnotationSelector[]`, a discriminated union with an open forward-compatible branch. `TextCharacterRangeSelector`, `PdfBBoxSelector`, and `HtmlTagSelector` target text ranges, PDF regions, and inline `<cit>` markers respectively. `DocxRangeSelector`, `PptxRangeSelector`, and `ExcelRcRangeSelector` target Office document citations.
@@ -206,7 +257,7 @@ import type {
 ```
 
 - `CustomVisualizer` — one MIME → visualizer mapping. `contentType` is **required** and accepts a comma-separated MIME list. One attachment per iframe.
-- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together.
+- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together. Optional `borderless` and `withoutTitle` tell the host to render the inline frame without its border chrome, or without its header title text.
 - `GroupedAttachmentsData` / `GroupedAttachmentItem` — the grouped payload the host builds from the claimed attachments. Each item's `url` is absolute, resolved by the host before sending.
 
 In both types, `title` is the postMessage protocol namespace rather than a display label: the iframe-side application must be constructed with the identical string as its `appName`, so it must never be localised. `passAuthInfo` and `passExplicitToken` are accepted for configuration parity and are inert — auth is server-side and the browser holds no access token.
@@ -592,6 +643,50 @@ Pass `hasVersionTag={false}` to drop the trailing tag and show the version
 inline after the name instead, or pass `children` to render arbitrary content
 in the row instead of the entity header. The legacy top-level `colors` prop is
 still accepted; new consumers should use `styles.colors`.
+
+### TextRefinementField
+
+Label row with kit `GhostButton` "Refine with AI" / Undo actions, plus a polite
+status region and an error alert, around one field driven by
+[`useTextRefinement`](#text-refinement-lifecycle). The group is named by the
+label and described by the error while one is shown; Undo returns focus to the
+Refine action. With `isEnabled={false}` it renders `children` alone, so the
+host keeps its own label. Copy comes from `labels` (`TextRefinementLabels`),
+each key with an English default.
+
+```tsx
+import { useState } from 'react';
+import {
+  TextRefinementField,
+  useTextRefinement,
+  type TextRefinementCallback,
+} from '@epam/ai-dial-chat-shared';
+
+function DescriptionField({ onRefine }: { onRefine?: TextRefinementCallback }) {
+  const [value, setValue] = useState('');
+  const refinement = useTextRefinement({ value, onChange: setValue, onRefine });
+  return (
+    <TextRefinementField
+      isEnabled={Boolean(onRefine)}
+      fieldId="description"
+      label="Description"
+      required
+      refinement={refinement}
+      disabled={false}
+      labels={{ refineWithAiLabel: 'Refine with AI' }}
+    >
+      <textarea
+        id="description"
+        value={value}
+        onChange={(event) => {
+          refinement.reset();
+          setValue(event.target.value);
+        }}
+      />
+    </TextRefinementField>
+  );
+}
+```
 
 ## Hooks
 

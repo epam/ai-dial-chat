@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getIconPath } from '../../utils/icon-path';
+import { getIconMimeType, getIconPath } from '../../utils/icon-path';
 
 /**
  * Custom hook to manage dynamic favicon based on URL.
@@ -8,7 +8,7 @@ import { getIconPath } from '../../utils/icon-path';
  * - Error handling for failed loads
  * - Cache-busting to force reload on theme changes
  *
- * @param faviconUrl - URL to the favicon image (typically PNG format)
+ * @param faviconUrl - Theme icon name of the favicon (SVG, PNG, ICO, …)
  *
  * @example
  * ```tsx
@@ -40,14 +40,29 @@ export const useFavicon = (faviconUrl?: string) => {
 
     // Preload image to avoid broken icon flash
     const img = new Image();
+    let cancelled = false;
 
     img.onload = () => {
-      // Image loaded successfully, update favicon
+      if (cancelled) return;
+      /*
+       * Image loaded successfully, update favicon. The `type` must follow the
+       * new icon: index.html ships `image/x-icon`, and a stale hint on an SVG
+       * or PNG icon may make the browser skip it. An unknown extension drops
+       * the hint so the browser sniffs the response instead. `href` goes
+       * first so the new hint is never paired with the old icon URL.
+       */
       link.href = urlWithCache;
+      const mimeType = getIconMimeType(faviconUrl);
+      if (mimeType) {
+        link.type = mimeType;
+      } else {
+        link.removeAttribute('type');
+      }
       console.info(`Favicon updated to: ${faviconUrl}`);
     };
 
     img.onerror = () => {
+      if (cancelled) return;
       // Image failed to load, log error but don't update favicon
       console.warn(`Failed to load favicon from ${faviconUrl}`);
       // Keep existing favicon (graceful fallback)
@@ -56,9 +71,14 @@ export const useFavicon = (faviconUrl?: string) => {
     // Start loading the image
     img.src = urlWithCache;
 
-    // Cleanup function (though link element persists)
+    /*
+     * The favicon itself persists; only the in-flight preload is discarded so
+     * a late load of a previous icon cannot overwrite the current one.
+     */
     return () => {
-      // No cleanup needed - favicon should persist
+      cancelled = true;
+      img.onload = null;
+      img.onerror = null;
     };
   }, [faviconUrl]);
 };

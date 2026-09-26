@@ -22,18 +22,30 @@
     color: var(--ci-placeholder, var(--text-secondary, #57647a));
   }
 
-  &.textareaIndented {
+  &.textareaMentionMode {
     /*
-     * Applied only while an inline-start slot is present: the first text line
-     * starts past the slot's measured width plus a small caret gap
-     * (`text-indent` affects the first formatted line only, so wrapped lines
-     * and lines after an explicit Enter keep the text area's full width). The
-     * slot is absolutely positioned at the first line's top edge with no
-     * block padding of its own on the text area, so slot content whose height
-     * is one label line (the ChatSkill chip) aligns with the first text line
-     * exactly.
+     * While mentions are tracked, the highlighted-run mirror stacked above
+     * this textarea (see `Input.tsx`'s `z-10`) renders the visible text
+     * (with mention ranges styled); this element's own text is made
+     * invisible so it doesn't double-render underneath the mirror. The caret
+     * itself must stay visible and normally colored, since the textarea
+     * still owns all native caret/selection/IME/undo behavior.
      */
-    text-indent: var(--ci-first-line-indent, 0px);
+    color: transparent;
+    caret-color: var(--ci-text, var(--text-primary, #161b2d));
+
+    /*
+     * The native selection highlight paints inside *this* element, which has
+     * no visible glyphs for it to sit behind — left alone, it renders as an
+     * opaque rectangle hiding the mirror's colored text/chips above it
+     * instead of tinting behind them. `Input.tsx`'s `updateSelectionRects`
+     * draws the real replacement (measured against the mirror's own DOM, so
+     * it wraps exactly like the native selection it replaces); this only
+     * has to turn the native one off.
+     */
+    &::selection {
+      background-color: transparent;
+    }
   }
 
   &:disabled {
@@ -47,12 +59,32 @@
 /*
  * The command menu's empty-query hint color: the placeholder token, so the
  * hint reads as placeholder text. The hint's positioning (absolute, at the
- * first line's text start — the same offset the first line's `text-indent`
- * uses) and its pointer pass-through live in the Tailwind classes in
+ * measured trigger-word location) and its pointer pass-through live in
  * `Input.tsx`.
  */
 .commandHint {
   color: var(--ci-placeholder, var(--text-secondary, #57647a));
+}
+
+.mentionHighlight {
+  border-radius: 4px;
+  background-color: var(
+    --ci-mention-highlight-bg,
+    var(--bg-control-accent-alpha, #2764d90f)
+  );
+  color: var(--ci-mention-highlight-text, var(--text-accent, #1d4ed8));
+}
+
+.mentionHighlightUnsupported {
+  border-radius: 4px;
+  background-color: var(
+    --ci-mention-highlight-unsupported-bg,
+    var(--bg-error, #f3d6d8)
+  );
+  color: var(
+    --ci-mention-highlight-unsupported-text,
+    var(--text-error, #ae2f2f)
+  );
 }
 
 .modelSelectorButton {

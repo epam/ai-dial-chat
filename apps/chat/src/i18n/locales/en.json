@@ -29,8 +29,10 @@
     "greetingNight": "Good night, {{name}}",
     "greetingNightNoName": "Good night",
     "placeholder": "How can I help you today?",
-    "streamError": "Something went wrong while generating the response.",
+    "streamErrorTitle": "Couldn't finish this response",
+    "streamError": "Something went wrong while generating the response. Try again in a moment.",
     "generationConflict": "A response is already being generated in this conversation, possibly in another browser tab. Wait for it to finish or stop it before sending another message.",
+    "generationPersistenceError": "The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.",
     "createConversationError": "Failed to create the conversation. Please try again.",
     "conversationNotFound": "The conversation was not found.",
     "isolatedModelNotFoundTitle": "Model not available",
@@ -379,6 +381,7 @@
     "copyUrl": "Copy URL",
     "logIn": "Log in",
     "retry": "Retry",
+    "tryAgain": "Try again",
     "reload": "Reload",
     "publish": "Publish",
     "unpublish": "Unpublish",
@@ -470,7 +473,6 @@
       "revokeSuccess": "Shared access to \"{{name}}\" was revoked.",
       "revokeError": "Failed to revoke access to \"{{name}}\". Please try again."
     },
-    "taskBadgeLabel": "TASK",
     "unreadIndicatorLabel": "Unread"
   },
   "conversationPublish": {
@@ -775,6 +777,9 @@
       "statusMissed": "Missed",
       "errorLabel": "Failed to load the scheduled task",
       "activeStatusLabel": "Active",
+      "completedFieldLabel": "Status",
+      "activeDisabledReasonCompleted": "Already ran — cannot be rescheduled",
+      "activeDisabledReasonExpired": "Activity window has ended — cannot be rescheduled",
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
       "activeStatusUpdateError": "Failed to update the task's active status",
@@ -829,8 +834,8 @@
     "hideHiddenFiles": "Hide hidden files",
     "itemsSelected_one": "{{count}} item selected",
     "itemsSelected_other": "{{count}} items selected",
-    "upload": "Upload files",
-    "newFolder": "New folder",
+    "upload": "Files",
+    "newFolder": "Folder",
     "downloading": "Preparing download…",
     "uploadProgressTitle": "Uploading files",
     "uploadProgressSummary": "{{done}} of {{total}} complete",
@@ -955,7 +960,7 @@
     "metadataModifiedDateLabel": "Modified Date:",
     "metadataSizeLabel": "Size:",
     "metadataAuthorLabel": "Author:",
-    "uploadArchiveAction": "Upload archive",
+    "uploadArchiveAction": "Archive",
     "uploadArchiveError": "Failed to upload the archive",
     "uploadArchiveFilesError_one": "Failed to upload this archive file: {{files}}",
     "uploadArchiveFilesError_other": "Failed to upload these archive files: {{files}}",
@@ -1044,6 +1049,7 @@
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
     "qrCodeAriaLabel": "QR code for the share link",
+    "qrDownloadFileName": "share-qr-code.png",
     "loadingLabel": "Creating share link…",
     "errorTitle": "Couldn't create the share link. Please try again.",
     "invitationAcceptError": "This share link is invalid or has expired."
@@ -1215,11 +1221,17 @@
   },
   "conversationInput": {
     "usageLimits": {
-      "triggerAriaLabel": "Monthly token usage: {{value}}",
+      "triggerAriaLabel": "{{label}} usage: {{value}}",
       "popoverTitle": "Usage Limit",
       "error": "Could not load usage limits",
-      "tokensRemaining": "{{count}} tokens remaining",
-      "progressAriaLabel": "Monthly token usage: {{used}} of {{total}} tokens used"
+      "tokenGroup": "Token limits",
+      "costGroup": "Cost limits · all agents",
+      "periodDay": "Today",
+      "periodWeek": "This week",
+      "periodMonth": "This month",
+      "value": "{{used}} / {{total}}",
+      "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
+      "fullUsageLink": "See all usage"
     }
   },
   "customApp": {
@@ -1531,6 +1543,33 @@
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"
   },
+  "halloween": {
+    "toastTitle": "🎃 Happy Halloween!",
+    "spidersToastMessage": "The spiders are sneaking away with pieces of the page — everything will be back! Send \"{{phrase}}\" in the start-page chat for another secret surprise.",
+    "ghostToastMessage": "The ghosts are awake! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "webToastMessage": "Tiny spiders are weaving one big web! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "batsToastMessage": "The bats are out for a moonlit flight. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "catToastMessage": "A little familiar is chasing the lights. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "witchesToastMessage": "The witches are taking the scenic route. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "pumpkinLabel": "Halloween pumpkin",
+    "trainToastMessage": "All aboard! The pumpkin is hopping onto the midnight express. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "portalToastMessage": "A portal is borrowing a couple of chats — they will be right back! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "ravensToastMessage": "The ravens have spotted something in the night. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "candyToastMessage": "Treats for everyone! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "footprintsToastMessage": "Someone invisible is tiptoeing through the chat. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "skeletonsToastMessage": "The skeletons have found their rhythm. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "cauldronToastMessage": "A couple of chats are bubbling in the brew — they will float back! Send \"{{phrase}}\" in the start-page chat for another secret surprise.",
+    "mimicToastMessage": "The chest has caught a couple of chats with its tongue — it will spit them back! Send \"{{phrase}}\" in the start-page chat for another secret surprise.",
+    "bowlingToastMessage": "Pumpkin strike! Your chats will pick themselves back up. Send \"{{phrase}}\" in the start-page chat for another secret surprise.",
+    "mummyToastMessage": "The mummy is pushing the chat input out of the way — it will be right back! Send \"{{phrase}}\" in the start-page chat for another secret surprise."
+  },
+  "newYear": {
+    "toastTitle": "Happy New Year!",
+    "snowToastMessage": "A little winter magic. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "confettiToastMessage": "Here's to a bright new year! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "sleighToastMessage": "Special delivery from the night sky. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "giftLabel": "New Year gift"
+  },
   "applicationCredentials": {
     "title": "Application credentials",
     "loadError": "Failed to load application credentials.",
@@ -1538,5 +1577,14 @@
     "signedOut": "You are not logged in.",
     "sharedCredentials": "Shared credentials are available. You can also log in with your own credentials.",
     "confirmLogout": "Log out of your personal credentials for this service?"
+  },
+  "textRefinement": {
+    "action": "Refine with AI",
+    "undo": "Undo",
+    "error": "Could not refine this text. Please try again.",
+    "pending": "Refining text",
+    "success": "Text refined. Undo is available.",
+    "restored": "Original text restored.",
+    "unchanged": "No changes were needed."
   }
 }

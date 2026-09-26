@@ -1,0 +1,41 @@
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.train {
+  --train-duration: 11s;
+  --train-width: min(clamp(320px, 54vw, 760px), calc(100vw - 24px));
+  position: absolute;
+  /* Measured artwork uses physical screen coordinates, including in RTL. */
+  left: calc((100% - var(--train-width)) / 2);
+  bottom: 8px;
+  inline-size: var(--train-width);
+  aspect-ratio: 640 / 170;
+  filter: drop-shadow(0 0 5px #a1d7bd50);
+}
+.artwork {
+  position: absolute;
+  inset: 0;
+}
+.passenger {
+  position: absolute;
+  opacity: 0;
+  transform-origin: center;
+  > svg {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .passenger {
+    display: none;
+  }
+}

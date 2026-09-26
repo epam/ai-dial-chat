@@ -217,12 +217,21 @@ apps/chat/src/
 
 Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `SettingsPage`, `NotFound`, and `auth/`.
 
-`SettingsPage` is always available — it is behind no feature flag. It renders a
-vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list declared
-in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum
-member plus one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
-`Preferences` is the tab selected on arrival, so `GET /api/v1/user/usage` is not requested until
-the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
+`SettingsPage` renders a vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list
+declared in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum member plus
+one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
+
+Each tab is a location. `ROUTES.SettingsTab` (`/settings/:tab`) is a single dynamic pattern rather
+than one route per tab, so adding a tab stays a config change; `app/settings-routes.tsx` registers
+it alongside the bare `ROUTES.Settings`, applying the `OverlayFeature.HideSettingsPage` gate to
+both so neither path mounts the lazy chunk while the page is hidden. `SettingsPage` reads the
+segment from the URL — it holds no selection state — resolves it against the ids the config
+returned, and redirects a bare, unknown, or withheld segment to the first configured tab. Build a
+concrete path with `getSettingsTabRoute` (`constants/routes.ts`, beside the other route builders)
+rather than interpolating the pattern.
+
+`Preferences` is the first configured tab and therefore the redirect target, so
+`GET /api/v1/user/usage` is not requested until the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
 boundaries, and DIAL Core reports each one's exclusive end as an optional `resetsAt` instant.
 `UsageTab` formats those at the application edge (`utils/usage-reset-time.ts` — the only place
 `Date`/`Intl` touch a reset time) and passes preformatted strings into `@epam/ai-dial-usage-dashboard`,
@@ -304,13 +313,17 @@ Current implementation uses **React Context** with no external state library. Th
 | `ActiveScheduledTaskContext`  | Scheduled task currently being viewed or edited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UserConfigContext`           | Per-user preferences persisted through `/api/v1/user-config`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CelebrationContext`          | Start-page event selection from `config.activeEventId` (`UI_EVENT`), lazy event loading, random scene playback, per-scene cleanup and optional secret phrase interception with an independent random scene pool (no consecutive repeats). Halloween and New Year supply independent event modules; navigation cancels playback. Decoration stays click-through, honors reduced motion and persists no state. The hook is inert outside its optional provider.                                                                                                                                                        |
 | `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
 
 - `createContext<T | undefined>(undefined)`
 - `useMemo` on context value to prevent consumer re-renders
-- Guard consumer hook throws a clear error when used outside the provider
+- Guard consumer hook throws a clear error when used outside the provider —
+  the one exception is `CelebrationContext`, whose default value is an inert,
+  disabled easter egg, so a decorative feature cannot break a tree that skips
+  its provider
 
 ### API layer
 
@@ -377,7 +390,12 @@ Configured at startup:
   a fresh style nonce and its required WebAssembly permission, while the PDF worker receives a
   separate worker policy. `CSP_MODE` controls report-only rollout versus strict
   enforcement. `ALLOWED_CONNECT_ORIGINS` extends `connect-src` for trusted external
-  document previews in both policies; remote-server CORS still applies.
+  document previews in both policies; remote-server CORS still applies. The same
+  list reaches the app through client config. The app supplies a PDF loader that
+  enables browser credentials for matching external HTTP(S) origins and rejects
+  their redirects; the attachment library receives only the loader callback.
+  See the [configuration reference](../apps/chat-api/README.md#content-security-policy)
+  for credentialed CORS and cookie requirements.
   Report-only mode accepts legacy HTML without the nonce marker with
   a startup warning; enforcement requires a nonce-aware build. See
   [CSP configuration](../apps/chat-api/README.md#content-security-policy).
@@ -429,6 +447,7 @@ apps/chat-api/src/
 ├── external-services/      # Application external-service metadata + signin/signout proxy
 ├── offline-credentials/    # Long-lived credentials for background runs
 ├── deployments/  models/   # Deployment and model listings
+├── text-refinement/        # Bounded draft rewriting with caller credentials
 ├── transcription/          # Speech-to-text proxy for voice input
 ├── rate/                   # Message like/dislike
 ├── user-config/            # Per-user preferences
@@ -464,6 +483,7 @@ Business controllers are versioned; three infrastructure controllers are deliber
 | `/api/v1/client-channel`            | Client-channel SSE relay                                  |
 | `/api/v1/external-services`         | External-service metadata and credentials                 |
 | `/api/v1/offline-credentials`       | Long-lived credentials for background runs                |
+| `/api/v1/text-refinement`           | Draft refinement without persistence                      |
 | `/api/v1/transcription`             | Speech-to-text                                            |
 | `/api/v1/rate`                      | Message rating                                            |
 | `/api/v1/user-config`               | Per-user preferences                                      |
@@ -511,7 +531,7 @@ prefix is fixed in `auth.controller.ts`, not derived from `API_PREFIX`.
 
 No endpoint in this domain carries a per-route rate limit — repo-wide rate limiting was removed from `apps/chat-api`.
 
-`GET /api/v1/conversations/list` returns the complete history when both `limit` and `nextToken` are omitted. The BFF follows personal and public bucket cursors independently in batches of 1000, adds shared conversations once, and sorts the combined list by latest activity before bounded display-name enrichment. The conversation panel uses this full-history mode. An explicit `limit` or `nextToken` requests one page per bucket and returns a compound continuation cursor; with only `nextToken`, the page size is 100. A failed personal page fails the request rather than returning a truncated history; public and shared sources remain best-effort.
+`GET /api/v1/conversations/list` returns the complete history when both `limit` and `nextToken` are omitted. The BFF follows personal and public bucket cursors independently in batches of 1000, adds shared conversations once, and sorts the combined list by latest activity before bounded display-name enrichment. The conversation panel uses this full-history mode. An explicit `limit` or `nextToken` requests one page per bucket and returns a compound continuation cursor; with only `nextToken`, the page size is 100. A failed personal page fails the request rather than returning a truncated history; public and shared sources remain best-effort. Items carry DIAL Core's `createdAt` when it reports one (never for shared items). The panel shows one row per scheduled task: `ConversationPanelView` collapses a task's run conversations (`bucket` + `scheduleId`) to the newest by `createdAt` — or to the run currently open — while `ConversationsContext` keeps the full list, which the task banner, History unread marks, and mark-as-viewed depend on.
 
 | Method   | Path                                       | Description                                                                             |
 | -------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
@@ -533,7 +553,7 @@ the upstream payload. Encoding preserves path separators while escaping path
 segments; this mapping does not mutate the stored conversation. The Responses
 adapter receives its own request inputs and is a separate mapping boundary.
 
-**The backend, not the frontend, owns conversation persistence** across a completion's full lifecycle. `ConversationGenerationService` keeps an in-memory registry keyed by **principal**+conversation path — an opaque owner key that `resolvePrincipalKey` (`apps/chat-api/src/auth/session/principal-key.ts`) derives from server-verified identity only: the session `sid` under cookie auth, the verified `providerId`+`sub` pair under header (bearer) auth, in disjoint `c:`/`h:` namespaces. All three completion endpoints work under either authentication mode: `streamCompletion` saves the start state (user message + empty assistant placeholder) before opening the upstream stream, assembles the assistant message chunk-by-chunk as it relays the response, and attempts to save the final/partial state on completion, stop, or error regardless of whether the originating HTTP request is still connected. Save failures are logged; stream completion does not prove durable persistence. `ConversationController.streamCompletion` tracks client disconnection for response cleanup while continuing to consume the generation, so closing the tab does not stop upstream work. `POST .../completions/stop` aborts an active generation.
+**The backend, not the frontend, owns conversation persistence** across a completion's full lifecycle. `ConversationGenerationService` keeps an in-memory registry keyed by **principal**+conversation path — an opaque owner key that `resolvePrincipalKey` (`apps/chat-api/src/auth/session/principal-key.ts`) derives from server-verified identity only: the session `sid` under cookie auth, the verified `providerId`+`sub` pair under header (bearer) auth, in disjoint `c:`/`h:` namespaces. All three completion endpoints work under either authentication mode: `streamCompletion` saves the start state (user message + empty assistant placeholder) before opening the upstream stream, assembles the assistant message chunk-by-chunk as it relays the response, and attempts to save the final/partial state on completion, stop, or error regardless of whether the originating HTTP request is still connected. Terminal-save failures are logged and signaled to the originating stream as `error.type: "conversation_save_failed"` and to attach subscribers as an `error` event with `errorType: "conversation_save_failed"`, including after user stop. Clients retain received output and show a host-localized unsaved-answer warning instead of replacing it with the stored placeholder; successful reloads still use server-enriched data. Upstream `[DONE]` does not prove durable persistence. There is still only one terminal-write attempt, and retained browser state does not survive a page reload. `ConversationController.streamCompletion` tracks client disconnection for response cleanup while continuing to consume the generation, so closing the tab does not stop upstream work. `POST .../completions/stop` aborts an active generation.
 
 Because generation survives a closed tab, reopening the conversation needs a way to see its progress: `POST /api/v1/conversations/watch` proxies DIAL Core's generic resource-update events (also used to detect LLM-title-rename completion) so the frontend can poll for the terminal save. `POST .../completions/attach` — resolved from the same registry, looked up by conversation path rather than `generationId` (a freshly-opened tab has no `generationId` to send) — opens an SSE stream that immediately snapshots the assistant message as assembled so far, then delivers every subsequent chunk live, then a terminal event (`done`/`error`/`stopped`) when registered before terminal notification, so a resumed conversation populates progressively instead of showing only a typing indicator until it finishes. It responds `404` when no active generation exists for that path under the caller's principal — including one that already finished, and including one another principal is running — in which case the frontend falls back to the `watch`-based terminal check.
 

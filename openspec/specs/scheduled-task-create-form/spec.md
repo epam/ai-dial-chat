@@ -77,7 +77,15 @@ A valid submit SHALL call `POST /api/v1/scheduled-tasks` through `apps/chat/src/
 
 ### Requirement: ScheduledTaskCreateForm lib component matches the BFF create contract
 
-`libs/scheduled-tasks` SHALL export a `ScheduledTaskCreateForm` component accepting `labels`, `values`, `errors`, `modelSelector` (`ReactNode`), `modelLabelId` (`string`), `onFieldChange`, `onCancel`, `onSubmit`, and optional `isSubmitting` (default `false`). `modelLabelId` is applied as the `id` of the Model or Agent field's `Label` element; the host generates it (e.g. via React `useId()`) rather than a hardcoded literal, and passes the same value as `modelSelector`'s own `aria-labelledby` target, so two concurrently-mounted form instances (or any future host reusing the component) never collide on a shared DOM id.
+`libs/scheduled-tasks` SHALL export a `ScheduledTaskCreateForm` component accepting `labels`, `values`, `errors`, `modelSelector` (`ReactNode`), `modelLabelId` (`string`), `onFieldChange`, `onCancel`, `onBack`, `onSubmit`, and optional `isSubmitting` (default `false`). `modelLabelId` is applied as the `id` of the Model or Agent field's `Label` element; the host generates it (e.g. via React `useId()`) rather than a hardcoded literal, and passes the same value as `modelSelector`'s own `aria-labelledby` target, so two concurrently-mounted form instances (or any future host reusing the component) never collide on a shared DOM id.
+
+The form SHALL render inside the shared `BuilderFormContainer` shell (`@epam/ai-dial-builder-form`) as a full-width header followed by a responsive two-column body:
+
+- **Header** — start side: a back control (arrow icon, mirrored in RTL via `rtl:scale-x-[-1]`) that calls `onBack` when activated, followed by the page title (`labels.pageTitle`). End side: Cancel (`labels.cancelButtonLabel`, calls `onCancel`) and the submit action (`labels.createButtonLabel`, calls `onSubmit`), in that order — shown at the `desktop` breakpoint; at `mobile` the pair moves to the form's sticky footer (see "Create-task form chrome adapts to mobile").
+- **Details column** — a `role="group"` region labeled `labels.detailsSectionTitle`, holding Display name, Description, Repeat and its conditional schedule fields, and Model or Agent.
+- **Configuration column** — a `role="group"` region labeled `labels.configurationSectionTitle`, holding Skill and Instructions.
+
+At the `desktop` breakpoint the two columns SHALL render side by side, Details narrower than Configuration. At `mobile` they SHALL stack full-width, Details above Configuration. Only Tailwind logical properties and the project's named breakpoints (`mobile`, `desktop`) MAY be used for this layout.
 
 It SHALL render:
 
@@ -182,6 +190,31 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** the create or edit form re-renders repeatedly after the run-at field mounted (e.g. the user edits other fields for several minutes)
 - **THEN** the earliest selectable moment stays pinned at the field's mount time rather than advancing with each render, and the memoized `minDate` identity does not churn the `Calendar`'s internal effects
 
+#### Scenario: Back control calls onBack without submitting
+
+- **WHEN** the user activates the back control in the header
+- **THEN** `onBack` is called, `onSubmit` is not called, and no field values are reset
+
+#### Scenario: Details and Configuration render as two distinct regions
+
+- **WHEN** `ScheduledTaskCreateForm` renders
+- **THEN** the Display name, Description, Repeat, and Model or Agent fields render inside the group labeled `labels.detailsSectionTitle`, and the Skill and Instructions fields render inside the group labeled `labels.configurationSectionTitle`
+
+#### Scenario: Instructions editor updates the prompt value
+
+- **WHEN** the user types in the Instructions markdown editor
+- **THEN** `onFieldChange('prompt', <new value>)` is called with the editor's current text
+
+#### Scenario: Desktop layout splits into two columns
+
+- **WHEN** the viewport matches the `desktop` breakpoint
+- **THEN** Details and Configuration render side by side, Details narrower than Configuration
+
+#### Scenario: Mobile layout stacks the columns
+
+- **WHEN** the viewport matches the `mobile` breakpoint
+- **THEN** Details renders full-width above Configuration, both stacked in that order
+
 ### Requirement: Page maps form values to BFF trigger shape
 
 `ScheduledTaskCreatePage` SHALL use `@epam/ai-dial-chat-hooks/scheduled-tasks` checked preparation to convert form `values` to the BFF `trigger` field before calling `createScheduledTask`, branching on `values.repeat`:
@@ -226,7 +259,7 @@ This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/
 
 ### Requirement: Create-task strings flow through react-i18next
 
-Every user-visible string on the create-task page (page title, repeat-field labels, model/prompt/description labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Cancel/Create MUST reuse `ButtonsI18nKeys.Cancel` and `ButtonsI18nKeys.Save`.
+Every user-visible string on the create-task page (page title, repeat-field labels, model/prompt/description labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Cancel MUST reuse `ButtonsI18nKeys.Cancel`; the submit action MUST reuse `ButtonsI18nKeys.Create` (labeled "Create" — the create page creates a task; the edit page keeps `ButtonsI18nKeys.Save`).
 
 #### Scenario: New keys exist for the Repeat control and model copy
 
@@ -236,16 +269,16 @@ Every user-visible string on the create-task page (page title, repeat-field labe
 #### Scenario: Generic labels are reused, not duplicated
 
 - **WHEN** `ScheduledTaskCreatePage` renders `<ScheduledTaskCreateForm />`
-- **THEN** display name text props resolve from `EditorI18nKeys` and Cancel/Create from `ButtonsI18nKeys`, not duplicated feature-scoped strings
+- **THEN** display name text props resolve from `EditorI18nKeys`, Cancel from `ButtonsI18nKeys.Cancel`, and the submit action from `ButtonsI18nKeys.Create`, not duplicated feature-scoped strings
 
 ### Requirement: Create-task page supports RTL and meets AAA accessibility defaults
 
-All directional layout in the create-task header and form MUST use Tailwind logical properties (`ms/me`, `ps/pe`, `text-start/end`) instead of physical ones, per `.claude/rules/rtl.md`. Every form field MUST have an accessible label distinct from its placeholder. Dropdowns (Repeat, model) MUST expose `aria-expanded` and mark the selected option via `aria-selected`/`aria-current`. Focus-visible styling on Cancel/Create MUST match hover feedback per `.claude/rules/a11y.md`.
+All directional layout in the create-task header and two-column form MUST use Tailwind logical properties (`ms/me`, `ps/pe`, `text-start/end`) instead of physical ones, per `.claude/rules/rtl.md`. The header's back arrow MUST mirror in RTL via `rtl:scale-x-[-1]`. Every form field MUST have an accessible label distinct from its placeholder. Dropdowns (Repeat, model) MUST expose `aria-expanded` and mark the selected option via `aria-selected`/`aria-current`. Focus-visible styling on the back control, Cancel, and Create MUST match hover feedback per `.claude/rules/a11y.md`.
 
 #### Scenario: Page mirrors under RTL
 
 - **WHEN** `document.documentElement.dir` is `rtl`
-- **THEN** the create-task header and form lay out mirrored with no hard-coded left/right offsets breaking the mirrored layout
+- **THEN** the create-task header, back arrow, and two-column form lay out mirrored with no hard-coded left/right offsets breaking the mirrored layout
 
 #### Scenario: Form fields are labeled
 
@@ -261,6 +294,34 @@ All directional layout in the create-task header and form MUST use Tailwind logi
 
 - **WHEN** the user opens the Repeat dropdown
 - **THEN** the trigger has `aria-expanded="true"` and the currently-selected Repeat option is marked `aria-selected="true"` (or `aria-current`)
+
+#### Scenario: Back control is keyboard accessible
+
+- **WHEN** the user tabs to the back control and activates it with Enter or Space
+- **THEN** `onBack` is called
+
+### Requirement: Create-task form chrome adapts to mobile
+
+The create/edit form's action placement, header chrome, and pickers SHALL adapt at the `mobile` breakpoint; the `desktop` presentation is unchanged:
+
+- The cancel/submit pair SHALL render in the header at `desktop`. At `mobile` it SHALL render in a sticky footer pinned over the bottom of the scrolling form, the two buttons splitting the row equally, separated from the content by an elevation shadow instead of the header's border.
+- At `mobile` the header row (back control + title) SHALL sit below its divider (drawn above the row rather than below it) and use 16px horizontal gutters; `desktop` keeps the divider below the header and 32px gutters.
+- At `mobile` the Model or Agent trigger (`DeploymentSelectorFieldTrigger`, supplied by the host as `modelSelector`) SHALL open the deployment selector as a bottom sheet — the same `BottomSheetShell` the chat page's picker uses, capped at 90% of the viewport height — and its Catalog action SHALL open the "Talk to" catalog modal covering the full viewport. At `desktop` the trigger keeps the dropdown popover and the centered modal.
+
+#### Scenario: Mobile renders the actions in a sticky footer
+
+- **WHEN** the viewport matches the `mobile` breakpoint and the form content scrolls
+- **THEN** Cancel and Create pin to the bottom of the visible form, each taking half the action row, with a shadow separating the footer from the scrolled content
+
+#### Scenario: Mobile opens the model selector as a bottom sheet
+
+- **WHEN** the user activates the Model or Agent field at the `mobile` breakpoint
+- **THEN** the deployment selector slides up from the bottom (height capped at 90% of the viewport), and activating its Catalog action opens the "Talk to" modal covering the full viewport
+
+#### Scenario: Desktop presentation is unchanged
+
+- **WHEN** the viewport matches the `desktop` breakpoint
+- **THEN** the actions render in the header above the border divider, and the model field opens the dropdown popover and centered catalog modal as before the mobile adaptation
 
 ### Requirement: ScheduledTaskCreateForm renders optional Start date / End date pickers for recurring schedules
 

@@ -1,0 +1,312 @@
+/* Artwork uses physical viewport coordinates so paths do not reverse in RTL. */
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.candy,
+.paw,
+.hiddenGrin,
+.skeleton,
+.portal {
+  position: absolute;
+}
+.candy,
+.skeleton {
+  svg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
+}
+
+.candy {
+  left: var(--x);
+  top: -60px;
+  inline-size: var(--size);
+  animation: candy-fall 7.8s ease-in var(--delay) both;
+  filter: drop-shadow(0 2px 2px #19213155);
+}
+@keyframes candy-fall {
+  0% {
+    transform: translateY(0) rotate(0);
+    opacity: 0;
+  }
+  8%,
+  82% {
+    opacity: 1;
+  }
+  65% {
+    transform: translate(var(--drift), calc(100vh - 80px)) rotate(var(--turn));
+  }
+  75% {
+    transform: translate(var(--drift), calc(100vh - 145px))
+      rotate(calc(var(--turn) + 30deg));
+  }
+  84% {
+    transform: translate(var(--drift), calc(100vh - 80px))
+      rotate(calc(var(--turn) + 65deg));
+  }
+  100% {
+    transform: translate(var(--drift), calc(100vh + 70px))
+      rotate(calc(var(--turn) + 100deg));
+    opacity: 0;
+  }
+}
+
+.paw {
+  left: var(--x);
+  top: var(--y);
+  inline-size: 22px;
+  block-size: 25px;
+  fill: #b4d5be;
+  filter: drop-shadow(0 0 3px #529482);
+  transform: rotate(var(--angle));
+  animation: paw-appear 3s ease-out var(--delay) both;
+}
+.hiddenGrin {
+  left: clamp(8px, var(--x), calc(100% - 100px));
+  top: var(--y);
+  inline-size: 85px;
+  filter: drop-shadow(0 0 5px #66ad8d);
+  animation: grin-appear 3s ease-in-out 6.4s both;
+}
+@keyframes paw-appear {
+  0% {
+    opacity: 0;
+  }
+  12%,
+  55% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes grin-appear {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  30%,
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.skeleton {
+  bottom: 3px;
+  left: calc(8% + var(--side) * 68%);
+  inline-size: 74px;
+  filter: drop-shadow(0 2px 3px #253c39a0);
+  animation: skeleton-arrival 9s ease-in-out both;
+}
+.skeletonBody {
+  transform-origin: 50px 105px;
+  animation: skeleton-bounce 0.65s ease-in-out 1s infinite alternate;
+}
+.skeletonLeftArm {
+  transform-origin: 36px 58px;
+  animation: skeleton-swing 0.65s ease-in-out 1s infinite alternate;
+}
+.skeletonRightArm {
+  transform-origin: 64px 58px;
+  animation: skeleton-swing 0.65s ease-in-out 1s infinite alternate-reverse;
+}
+.skeletonLeftLeg {
+  transform-origin: 41px 115px;
+  animation: skeleton-step 0.65s ease-in-out 1s infinite alternate;
+}
+.skeletonRightLeg {
+  transform-origin: 59px 115px;
+  animation: skeleton-step 0.65s ease-in-out 1s infinite alternate-reverse;
+}
+.skeletonSkull {
+  transform-origin: 50px 43px;
+  animation: skeleton-nod 0.65s ease-in-out 1s infinite alternate;
+}
+@keyframes skeleton-arrival {
+  0%,
+  100% {
+    transform: translateY(110%) scaleX(var(--mirror));
+    opacity: 0;
+  }
+  13%,
+  84% {
+    transform: translateY(0) scaleX(var(--mirror));
+    opacity: 1;
+  }
+}
+@keyframes skeleton-bounce {
+  from {
+    transform: translateY(0) rotate(-4deg);
+  }
+  to {
+    transform: translateY(-5px) rotate(4deg);
+  }
+}
+@keyframes skeleton-swing {
+  from {
+    transform: rotate(-20deg);
+  }
+  to {
+    transform: rotate(20deg);
+  }
+}
+@keyframes skeleton-step {
+  from {
+    transform: rotate(-14deg);
+  }
+  to {
+    transform: rotate(14deg);
+  }
+}
+@keyframes skeleton-nod {
+  from {
+    transform: rotate(-8deg);
+  }
+  to {
+    transform: rotate(8deg);
+  }
+}
+
+.portal {
+  filter: drop-shadow(0 0 8px #73ceac);
+  transform-origin: center;
+  animation: rift-open 9s ease-in-out both;
+}
+.portalEyes {
+  animation: rift-eyes 9s ease-in-out both;
+}
+.armCanvas {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px #102b2699);
+}
+.portalArm {
+  animation: claw-reach 9s ease-in-out both;
+}
+.clawFinger {
+  animation: claw-grip 9s ease-in-out both;
+}
+@keyframes rift-open {
+  0% {
+    opacity: 0;
+    transform: scale(0.02, 0.15);
+  }
+  8% {
+    opacity: 1;
+    transform: scale(0.08, 0.8);
+  }
+  20%,
+  68% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(0.02, 1.12);
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(0, 0.1);
+  }
+}
+@keyframes rift-eyes {
+  0%,
+  12%,
+  68%,
+  100% {
+    opacity: 0;
+  }
+  22%,
+  27%,
+  32%,
+  60% {
+    opacity: 1;
+  }
+  29% {
+    opacity: 0.1;
+  }
+}
+@keyframes claw-reach {
+  0%,
+  17% {
+    opacity: 0;
+    transform: scale(0.02);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(0.22);
+  }
+  34%,
+  42% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  63% {
+    opacity: 1;
+    transform: scale(0.05);
+  }
+  66%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes claw-grip {
+  0%,
+  34%,
+  100% {
+    transform: rotate(-10deg);
+  }
+  40%,
+  65% {
+    transform: rotate(16deg);
+  }
+}
+
+@media (min-width: 1280px) {
+  .skeleton {
+    inline-size: 98px;
+  }
+  .paw {
+    inline-size: 28px;
+    block-size: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene,
+  .scene * {
+    animation: none !important;
+  }
+  .candy {
+    top: var(--rest-y);
+  }
+  .paw {
+    opacity: 0.5;
+  }
+  .hiddenGrin {
+    opacity: 1;
+  }
+  .skeleton {
+    transform: scaleX(var(--mirror));
+  }
+  .portal,
+  .portalEyes {
+    opacity: 1;
+    transform: none;
+  }
+  .portalArm {
+    display: none;
+  }
+}

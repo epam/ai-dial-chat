@@ -77,6 +77,20 @@ nothing reads — the theme still loads, and the misspelled color silently has n
 effect. A recognized key that a theme omits falls back to the built-in light
 value. This is the single most common way a theme "half applies".
 
+### Seasonal start-page branding
+
+`UI_EVENT=halloween` or `UI_EVENT=new-year` selects a bundled celebration on the
+start page. `UI_EVENT=none` or an omitted value disables it. Unknown event IDs
+leave the normal interface intact. The former `HALLOWEEN_ENABLED` setting has
+been removed; use `UI_EVENT=halloween` instead.
+
+The selected event replaces the existing favicon slot in desktop navigation
+and the mobile header. It adds no logo block to the welcome area and leaves
+the theme wordmark and browser-tab favicon unchanged. Leaving the start page
+restores the configured icon. If no favicon slot is configured, no new one is
+introduced. Event artwork loads only when its module is selected on the start
+page; it is independent of the light/dark theme choice.
+
 ### Theme ids and the theme picker
 
 The picker lives on **Settings → Preferences** and offers **every theme in the
@@ -116,11 +130,19 @@ user picks something.
 
 The application reads exactly three image fields:
 
-| Field                    | Used for                                           |
-| ------------------------ | -------------------------------------------------- |
-| `images.chat-logo-light` | Header logo while the resolved theme is not `dark` |
-| `images.chat-logo-dark`  | Header logo while the resolved theme is `dark`     |
-| `images.chat-favicon`    | Browser tab favicon (PNG, 32×32 recommended)       |
+| Field                    | Used for                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `images.chat-logo-light` | Header logo while the resolved theme is not `dark`                                                                |
+| `images.chat-logo-dark`  | Header logo while the resolved theme is `dark`                                                                    |
+| `images.chat-favicon`    | Browser tab favicon, brand icon on the Sign In page, and the navigation icon slot (SVG, or PNG 32×32 recommended) |
+
+Every image is served through `/api/themes/icon`, which derives the
+`Content-Type` from the file extension. The favicon `<link>` gets a matching
+`type` (`image/svg+xml` for `.svg`), so an SVG favicon works in browsers that
+support SVG favicons; older Safari releases do not render an SVG favicon — use
+a PNG if they matter. SVG responses carry their own sandboxed
+`Content-Security-Policy` (`default-src 'none'; sandbox`), so scripts inside an
+SVG never run, even when the file is opened directly.
 
 The remaining fields carried by the configuration contract — `themes[].app-logo`,
 `images.favicon`, `images.default-addon`, `images.default-model` — are accepted

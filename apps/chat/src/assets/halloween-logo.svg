@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <radialGradient id="skin" cx=".35" cy=".25" r=".85">
+      <stop stop-color="#ffd489"/><stop offset=".4" stop-color="#f49532"/><stop offset="1" stop-color="#a43d15"/>
+    </radialGradient>
+    <linearGradient id="hat" x2="1" y2="1">
+      <stop stop-color="#8b779d"/><stop offset="1" stop-color="#251b35"/>
+    </linearGradient>
+  </defs>
+  <path d="M31 25C14 17 5 32 9 46C12 58 24 61 32 57C43 61 55 54 56 41C58 28 44 18 31 25Z" fill="url(#skin)" stroke="#9d4e25"/>
+  <path d="M25 26C16 37 20 52 28 56M38 25C47 37 44 50 36 57M32 26V57" stroke="#8e3d1c" stroke-opacity=".45"/>
+  <path d="M17 37L28 41L24 33ZM46 37L35 41L39 33ZM18 46L26 48L28 45L34 49L38 46L46 44Q35 61 18 46Z" fill="#ffecaa" stroke="#75351a" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M17 24L31 3Q34 11 45 9L38 16L43 28Z" fill="url(#hat)" stroke="#c1a0bd" stroke-width=".7"/>
+  <path d="M20 20Q31 25 40 22L42 28L17 25Z" fill="#b86331"/>
+  <path d="M27 23L33 24L32 29L26 28Z" stroke="#efc876" stroke-width="1.5"/>
+  <path d="M10 26Q14 21 21 25Q34 31 44 26Q48 26 51 31Q25 38 10 26Z" fill="url(#hat)" stroke="#c1a0bd" stroke-width=".7"/>
+</svg>

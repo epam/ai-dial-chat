@@ -76,12 +76,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.7
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.15
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.19
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -922,22 +922,38 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name                        | Type                                | Description                                                                                                                                                                                                                                     |
-| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                      |
-| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                        |
-| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                         |
-| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                   |
-| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                            |
-| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                            |
-| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                           |
-| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`. |
+| Name                        | Type                                | Description                                                                                                                                                                                                                                                                                                       |
+| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                        |
+| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                          |
+| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                           |
+| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                     |
+| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                              |
+| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                              |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                                                                                             |
+| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                   |
+| `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed stream. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors is set to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
 **Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event.
 
 Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
+
+`generationPersistenceErrorMessage?: string` supplies a host-translated warning
+when the server reports a failed terminal save or a terminal reload still
+contains the empty assistant placeholder after output was received. It defaults
+to `DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE`. Both the initiating stream
+and resumed generation keep their received text and custom content, including
+stages, with this warning. Successful reloads still use the server's enriched
+answer. The buffer belongs to the mounted hook; it does not survive a page reload
+or provide durable storage, and the hook does not retry the conversation save.
+
+`createChatStreamApi` recognizes `error.type: "conversation_save_failed"` as
+`GenerationPersistenceError`, even after an upstream `[DONE]` frame. The error
+class (including its static `type`) and the default message are exported from
+`@epam/ai-dial-chat-hooks`. Custom transports can report this error through
+`onError`; the hook uses the host's warning rather than raw upstream error text.
 
 #### applyChunkToMessages / mergeStages
 
@@ -1160,6 +1176,8 @@ const SourcesPanel = ({ messages }: { messages: Message[] }) => {
 **Parameters**: `useConversationSources(messages: Message[], resolvers?: AttachmentDisplayResolvers)` — `resolvers` (from `@epam/ai-dial-chat-shared`) resolves preview/play URLs for attachments; omit it to use the attachment's own `url`.
 
 **Returns** (`UseConversationSourcesResult`): `{ uploaded: DisplayAttachment[], generated: DisplayAttachment[], sources: QuotationSource[] }`.
+
+`sources` gets one entry per distinct URL. A reference-only attachment keeps its `reference_url` as is. For a citation annotation on a `.pdf` file, the hook appends the cited page from its `pdf_bbox`/`pdf_region` selector (`files/bucket/doc.pdf#page=12`). This applies only when the URL has no fragment yet. As a result, each cited page of a document is a separate source, and two citations of the same page collapse into one.
 
 ### useChatSettingsFormConfig
 
@@ -2053,6 +2071,14 @@ onError: (error: Error) => {
 };
 ```
 
+An in-band `data: {"error":{"message":…}}` chunk — DIAL Core itself reporting a failure mid-stream — is reported as a `StreamUpstreamError`, whose `message` is upstream text intended for the user. Every other failure (a rejected `fetch`, a non-OK status other than `409`, a missing body, a stream that breaks mid-read) stays a plain `Error` with technical detail. `useConversationStream` shows a `StreamUpstreamError`'s text on the message bubble and replaces any other non-conflict error with `''`, so a custom `ConversationStreamTransport` must raise `StreamUpstreamError` for upstream text it wants the user to see:
+
+```ts
+import { StreamUpstreamError } from '@epam/ai-dial-chat-hooks';
+
+options.onError(new StreamUpstreamError('Rate limit exceeded'));
+```
+
 ### getApiErrorDetails / getApiErrorMessage / getApiErrorStatus / isConversationNotFoundError
 
 Host-agnostic API error/trace-ID normalization. Works identically for a generated-client `ResponseError` or any host's own raw-fetch request-error shape.
@@ -2669,12 +2695,38 @@ const api = kind && buildConnectApi(baseUrl, toolsetId, kind);
 
 ### mapDeploymentLimitsToInput
 
-Maps a deployment's monthly token-limit response into a display-ready `MonthlyUsageLimit` (`used`/`total`/`remaining`/`usedPercent`), or `undefined` when the backend reports no usable limit.
+Maps a deployment-limits response into display-ready `CatalogItemLimits` for a conversation-input usage affordance, or `undefined` when nothing reports a usable limit. It emits up to two groups: the deployment's day/week/month **token** limits, formatted with compact K/M notation, followed by the caller's day/week/month **cost** budget, formatted as currency. The worst-case `CatalogLimitStatus` is taken across the capped rows of both.
+
+The cost stats on a deployment-limits response are the caller's own budget and span every deployment, not the one that was queried — the same figures come back whichever deployment is asked. They are therefore listed as their own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
+
+**Only limits at or past 75% of their cap are mapped** — the same threshold `CatalogLimitStatus` uses for running-low. The affordance this feeds is a warning, not a dashboard: a deployment at 2% of its token allowance listed beside an account budget at 90% buries the figure worth acting on. When nothing reaches the threshold the function returns `undefined`, which is how a host removes the affordance entirely. A period whose total is the uncapped sentinel (`total >= Number.MAX_SAFE_INTEGER`) has no ratio and is therefore never listed.
+
+Minute and request stats are not mapped either: a rolling-minute counter changes between two openings of a popover for reasons the viewer cannot attribute to their own actions. Labels and value/aria formatters are injected through a `ConversationInputLimitsLabels` object so the function stays i18n-free.
+
+Pass `formatResetTime` to add each period's reset line. The function never parses or formats a timestamp itself: it hands the raw `resetsAt` to the callback and stores only the strings it returns, as a present-or-all-absent trio. Omit the callback, or return `undefined` from it, and the row renders without a reset line.
 
 ```ts
-import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
+import {
+  mapDeploymentLimitsToInput,
+  type ConversationInputLimitsLabels,
+} from '@epam/ai-dial-chat-hooks';
 
-const usage = mapDeploymentLimitsToInput(deploymentLimitsDto);
+const labels: ConversationInputLimitsLabels = {
+  tokenGroup: 'Token limits',
+  costGroup: 'Cost limits · all agents',
+  periodDay: 'Today',
+  periodWeek: 'This week',
+  periodMonth: 'This month',
+  formatValueLabel: (used, total) => `${used} / ${total}`,
+  formatProgressAriaLabel: ({ label, used, total }) =>
+    `${label}: ${used} of ${total} used`,
+};
+
+const limits = mapDeploymentLimitsToInput(
+  deploymentLimitsDto,
+  labels,
+  formatResetTime,
+);
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits
@@ -3394,7 +3446,7 @@ if (loadState === SkillEditorLoadState.Loading) {
 
 ### useSkillEditorSubmit
 
-Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself.
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook.
 
 `isSubmitErrorRetryable` is `true` only when `submitError` came from something a plain re-send can clear, such as an unavailable service; `retrySubmit` then re-sends the failed attempt's values, reusing the manifest and file blobs it already built. Pair the two to offer the action only where it can help — `onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}` on `SkillEditor`.
 
@@ -3439,6 +3491,7 @@ const {
   loadedPathRef,
   etagRef,
   returnUrl,
+  getCreateReturnUrl: (path) => `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
   refetchSkills,
   client,
   messages: {
@@ -3755,7 +3808,7 @@ Five hooks and two utility functions extracted from `ConversationPanelView.tsx` 
 
 ### useConversationPanelItems
 
-Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and task badges through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
+Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and scheduled-task row presentation through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
 
 ```tsx
 import { useConversationPanelItems } from '@epam/ai-dial-chat-hooks';
@@ -3773,9 +3826,9 @@ const conversations = useConversationPanelItems({
   resolveIconTooltip: (d: DeploymentItemDto | undefined, fallback: string) =>
     d?.displayName ?? fallback,
   resolveHref: (id) => `/chat/${id}`,
-  resolveTaskBadge: (item: ConversationListItemDto) =>
+  resolveTaskPresentation: (item: ConversationListItemDto) =>
     item.isScheduledTask
-      ? { label: 'Task', isUnread: item.isUnread ?? false }
+      ? { leadingIcon: taskIcon, isUnread: item.isUnread ?? false }
       : undefined,
 });
 ```
@@ -3784,18 +3837,20 @@ const conversations = useConversationPanelItems({
 
 **Parameters** (`UseConversationPanelItemsParams`):
 
-| Name                    | Type                                                                                   | Description                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `items`                 | `ConversationListItemDto[]`                                                            | Raw DTOs from the API.                                                   |
-| `deployments`           | `DeploymentItemDto[]`                                                                  | Current deployment catalogue used for icon/tooltip resolution.           |
-| `isDeploymentsLoading`  | `boolean`                                                                              | When `true`, all items are returned with `isIconLoading: true`.          |
-| `toPanelConversationId` | `(id: string) => string`                                                               | Maps a DTO `id` to the panel-space identifier.                           |
-| `resolveIconUrl`        | `(deployment?: DeploymentItemDto) => string \| undefined`                              | Returns the resolved icon URL for a deployment.                          |
-| `resolveIconTooltip`    | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`            | Returns the tooltip text for the icon.                                   |
-| `resolveHref`           | `(id: string) => string`                                                               | Converts a panel-space ID to a navigation href.                          |
-| `resolveTaskBadge`      | `(item: ConversationListItemDto) => { label: string; isUnread: boolean } \| undefined` | Optional; returns the badge descriptor for scheduled-task conversations. |
+| Name                      | Type                                                                                             | Description                                                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`                   | `ConversationListItemDto[]`                                                                      | Raw DTOs from the API.                                                                                                                                                                             |
+| `deployments`             | `DeploymentItemDto[]`                                                                            | Current deployment catalogue used for icon/tooltip resolution.                                                                                                                                     |
+| `isDeploymentsLoading`    | `boolean`                                                                                        | When `true`, all items are returned with `isIconLoading: true`.                                                                                                                                    |
+| `toPanelConversationId`   | `(id: string) => string`                                                                         | Maps a DTO `id` to the panel-space identifier.                                                                                                                                                     |
+| `resolveIconUrl`          | `(deployment?: DeploymentItemDto) => string \| undefined`                                        | Returns the resolved icon URL for a deployment.                                                                                                                                                    |
+| `resolveIconTooltip`      | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`                      | Returns the tooltip text for the icon.                                                                                                                                                             |
+| `resolveHref`             | `(id: string) => string`                                                                         | Converts a panel-space ID to a navigation href.                                                                                                                                                    |
+| `resolveTaskPresentation` | `(item: ConversationListItemDto) => { leadingIcon?: ReactNode; isUnread: boolean } \| undefined` | Optional; returns the row presentation for scheduled-task conversations. `leadingIcon` (a host-rendered, `aria-hidden` node) replaces the deployment avatar; `isUnread` drives the unread styling. |
 
-**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs.
+**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs. The hook maps every item it is given; collapsing a scheduled task's runs into one row is left to the host.
+
+`resolveTaskPresentation` replaced `resolveTaskBadge` (`{ label, isUnread }`) when the conversation panel dropped its TASK pill.
 
 ### getConversationSource
 

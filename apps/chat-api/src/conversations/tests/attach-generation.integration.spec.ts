@@ -192,6 +192,28 @@ describe('POST /conversations/completions/attach (integration)', () => {
     expect(res2.text).toContain('"content":"Hi"');
     expect(res2.text).toContain('"type":"done"');
   });
+
+  it.each([true, false])(
+    'reports failed persistence to an attached client even after user stop (%s)',
+    async (stopped) => {
+      const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+      generationService.seedAssembledMessage(
+        lease,
+        makeMessage('Visible answer'),
+      );
+      const reqPromise = startAttachRequest(app);
+      await waitForSubscribers(generationService, COOKIE_OWNER_KEY);
+      if (stopped) generationService.abort(COOKIE_OWNER_KEY, PATH, GEN_ID);
+      generationService.beginFinalizing(lease);
+      generationService.persistenceFailed(lease);
+      const res = await reqPromise;
+      expect(res.text).toContain('"content":"Visible answer"');
+      expect(res.text).toContain('"errorType":"conversation_save_failed"');
+      expect(res.text).not.toContain('"type":"done"');
+      expect(res.text).not.toContain('"type":"stopped"');
+      expect(generationService.attach(COOKIE_OWNER_KEY, PATH)).toBeUndefined();
+    },
+  );
 });
 
 describe('POST /conversations/completions/attach — header-authenticated caller', () => {

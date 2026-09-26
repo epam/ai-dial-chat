@@ -113,6 +113,8 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
         accessible name.
       */
       <MenuItem
+        /* The panel renders inside the Add menu's submenu, whose arrow-key navigation moves between `menuitem` rows. */
+        role="menuitem"
         className="h-auto py-1.5"
         icon={
           <DeploymentIcon size={DIAL_ICON_SIZE.MD} initialsName={item.name} />
@@ -144,6 +146,7 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
     return (
       <li
         key={item.id}
+        role="none"
         className={
           leavingIds.has(item.id) ? styles.rowLeaving : styles.rowEnter
         }
@@ -199,7 +202,7 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
       >
         <div ref={listContentRef}>
           {favorites.length > 0 ? (
-            <ul className="flex flex-col gap-1 px-1 pb-1">
+            <ul role="none" className="flex flex-col gap-1 px-1 pb-1">
               {favorites.map(renderRow)}
             </ul>
           ) : (
@@ -218,6 +221,7 @@ export const FavoritePromptsPanel: FC<FavoritePromptsPanelProps> = ({
 
       <div className={mergeClasses('border-t px-2 py-3', styles.footer)}>
         <GhostButton
+          role="menuitem"
           label={browseLabel}
           className="w-full justify-center"
           onClick={onBrowse}

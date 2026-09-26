@@ -119,3 +119,16 @@ export const getMessageStarterProps = (
         : undefined,
   };
 };
+
+/**
+ * Returns the sent user-message contents the chat input recalls with Up/Down,
+ * or `undefined` when history navigation is disabled so the input has nothing
+ * to recall.
+ */
+export const getInputMessageHistory = (
+  messages: readonly Message[],
+  isNavigationDisabled: boolean,
+): string[] | undefined =>
+  isNavigationDisabled
+    ? undefined
+    : messages.filter((m) => m.role === MessageRole.User).map((m) => m.content);

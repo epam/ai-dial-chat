@@ -64,9 +64,15 @@ budget (identical field names and semantics per the `user-usage-limits-api` capa
 The hook SHALL accept an `enabled: boolean` second parameter, defaulting to `true`, following the
 `useScheduledTasks(enabled)` pattern. When `enabled` is `false`, the effect SHALL NOT call
 `getUserUsage()`, and `isLoading` SHALL initialize to `false` (not the perpetual-loading state a
-disabled hook would otherwise report). The Usage tab component SHALL call
-`useUsageData(getUserUsage, useFeatureFlag('settingsPageEnabled'))` (or receive the resolved flag
-value as a prop from `SettingsPage`), so the fetch only runs when `SettingsPageEnabled` is `true`.
+disabled hook would otherwise report). The parameter stays because it is part of a host-agnostic
+lib hook's contract, not because this app still needs it.
+
+The Usage tab SHALL NOT read a feature flag: the `SettingsPageEnabled` flag is removed, so
+`useFeatureFlag('settingsPageEnabled')` no longer exists and the tab cannot be reached while the
+page is disabled — mounting the tab is itself the signal that the data is wanted.
+`apps/chat/src/pages/SettingsPage/UsageTab/UsageTab.tsx` therefore imports no `useFeatureFlag` and
+passes a literal `true` for `enabled` (positionally required only because it also passes
+`refreshToken`, below).
 
 The hook SHALL accept a `refreshToken: number` third parameter, defaulting to `0`. Changing it SHALL
 re-run the fetch effect, subject to the same `enabled` gate and the same `cancelled` flag. The hook
@@ -129,16 +135,20 @@ promise's rejection, if any.
 - **THEN** `useUsageData` is invoked by the `Usage` tab component (not by `SettingsPage` itself),
   so the endpoint is only called while a user is actually viewing the Usage tab
 
-#### Scenario: Fetch does not run when the feature flag is disabled
-- **WHEN** `SettingsPageEnabled` resolves to `false` and `useUsageData(getUserUsage, false)` is
-  invoked (directly, or because the Usage tab was somehow rendered while the flag is off)
-- **THEN** `GET /api/v1/user/usage` is not called, and the hook returns `isLoading: false`,
-  `usage: undefined`, `usageError: undefined`
+#### Scenario: Arriving at the Settings page does not fetch usage
+- **WHEN** a user opens `/settings`, where `Preferences` is the default tab
+- **THEN** `UsageTab` does not mount and `GET /api/v1/user/usage` is not requested
 
-#### Scenario: Fetch resumes when the feature flag becomes enabled
-- **WHEN** `useUsageData`'s `enabled` argument transitions from `false` to `true` between renders
-- **THEN** the hook's effect runs and calls `getUserUsage()`, matching the behavior of
-  `useUsageData(getUserUsage, true)` on initial mount
+#### Scenario: The Usage tab reads no feature flag
+- **WHEN** the user activates the `Usage` row and the tab renders
+- **THEN** it calls `useUsageData(getUserUsage, true, refreshToken)` without consulting any feature
+  flag, and `GET /api/v1/user/usage` is requested
+
+#### Scenario: An explicit disabled caller still suppresses the fetch
+- **WHEN** any caller invokes `useUsageData(getUserUsage, false)`
+- **THEN** `GET /api/v1/user/usage` is not called, and the hook returns `isLoading: false`,
+  `usage: undefined`, `usageError: undefined` — the lib contract is unchanged even though this app
+  no longer uses it
 
 ### Requirement: Library isolation between apps/chat and libs
 `useUsageData` SHALL live in `libs/chat-hooks` and SHALL NOT import `apps/chat/src/server-api/*`,

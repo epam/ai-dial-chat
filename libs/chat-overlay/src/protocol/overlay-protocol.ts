@@ -181,11 +181,34 @@ export enum OverlayFeature {
   HideFooterVersion = 'hide-footer-version',
   /**
    * Renders the selected agent's own `description` on the empty-chat screen,
-   * below the conversation starters, as markdown. Independent of the
+   * above the greeting and the input, as markdown. Independent of the
    * operator-wide welcome-screen description, which renders under the
    * greeting for every agent alike.
    */
   ShowAgentDescription = 'show-agent-description',
+  /**
+   * Disables flipping through the conversation's previously sent messages
+   * with the Up/Down arrow keys in the chat input. The arrow keys then only
+   * move the caret, as in any other textarea.
+   */
+  DisableInputHistoryNavigation = 'disable-input-history-navigation',
+  /**
+   * Hides conversation export: the per-conversation "Export" entry and the
+   * conversations panel's "Export all" entry. Import stays available.
+   */
+  HideConversationExport = 'hide-conversation-export',
+  /**
+   * Hides the Settings page: its entry in the desktop user menu and on the
+   * mobile navigation sheet's profile page. A direct `/settings` URL
+   * redirects to `/`.
+   */
+  HideSettingsPage = 'hide-settings-page',
+  /**
+   * Renders the theme logo in the desktop top bar, centered between the
+   * conversation controls and the sources toggle. The mobile header shows the
+   * logo regardless of this key; `Header` still gates that surface.
+   */
+  ShowHeaderLogo = 'show-header-logo',
 }
 
 /**

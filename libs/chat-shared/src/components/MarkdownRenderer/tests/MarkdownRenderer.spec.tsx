@@ -572,7 +572,7 @@ describe('MarkdownRenderer', () => {
     const math = document.querySelector('math');
 
     expect(math?.getAttribute('display')).toBeNull();
-    // eslint-disable-next-line testing-library/no-node-access
+
     expect(math?.parentElement?.parentElement?.tagName).toBe('P');
   });
 

@@ -1,0 +1,255 @@
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.actor {
+  position: absolute;
+  inset-inline-start: calc(50% - 65px);
+  inset-block-start: calc(50% - 85px);
+  inline-size: 130px;
+  aspect-ratio: 200 / 260;
+  /* Contact coordinates are physical viewport geometry, including in RTL. */
+  inset-inline-end: auto;
+  svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 3px 3px #17242d50);
+  }
+}
+.backLeg,
+.frontLeg {
+  transform-origin: 98px 167px;
+  animation: mummy-step var(--mummy-duration) linear both;
+}
+.frontLeg {
+  animation-name: mummy-front-step;
+}
+.torso {
+  transform-origin: 102px 165px;
+  animation: mummy-strain var(--mummy-duration) ease-in-out both;
+}
+.head {
+  transform-origin: 115px 92px;
+  animation: mummy-determination var(--mummy-duration) ease-in-out both;
+}
+.eyes {
+  transform-origin: 135px 61px;
+  animation: mummy-squint var(--mummy-duration) ease-in-out both;
+}
+.looseLinen {
+  transform-origin: 72px 124px;
+  animation: mummy-linen var(--mummy-duration) ease-in-out both;
+}
+.effort {
+  animation: mummy-effort var(--mummy-duration) ease-in-out both;
+}
+.dust {
+  animation: mummy-dust var(--mummy-duration) ease-in-out both;
+}
+
+@keyframes mummy-step {
+  0%,
+  6%,
+  12%,
+  36%,
+  46%,
+  56%,
+  66%,
+  76%,
+  86%,
+  100% {
+    transform: rotate(-9deg);
+  }
+  3%,
+  9%,
+  15%,
+  41%,
+  51%,
+  61%,
+  71%,
+  81% {
+    transform: rotate(8deg);
+  }
+  18%,
+  22%,
+  28%,
+  34% {
+    transform: rotate(0);
+  }
+  20%,
+  24%,
+  30%,
+  32% {
+    transform: translateX(-3px) rotate(-2deg);
+  }
+}
+@keyframes mummy-front-step {
+  0%,
+  6%,
+  12%,
+  36%,
+  46%,
+  56%,
+  66%,
+  76%,
+  86%,
+  100% {
+    transform: rotate(7deg);
+  }
+  3%,
+  9%,
+  15%,
+  41%,
+  51%,
+  61%,
+  71%,
+  81% {
+    transform: rotate(-7deg);
+  }
+  18%,
+  22%,
+  28%,
+  34% {
+    transform: none;
+  }
+  20%,
+  24%,
+  30%,
+  32% {
+    transform: translateX(-1px) rotate(1deg);
+  }
+}
+@keyframes mummy-strain {
+  0%,
+  15% {
+    transform: none;
+  }
+  19%,
+  23%,
+  29%,
+  33% {
+    transform: translateX(3px) rotate(5deg);
+  }
+  21%,
+  31% {
+    transform: translateX(1px) rotate(3deg);
+  }
+  26% {
+    transform: rotate(-3deg);
+  }
+  36%,
+  100% {
+    transform: translateX(5px) rotate(8deg);
+  }
+}
+@keyframes mummy-determination {
+  0%,
+  15%,
+  26% {
+    transform: none;
+  }
+  19%,
+  23%,
+  29%,
+  33%,
+  36%,
+  100% {
+    transform: rotate(7deg);
+  }
+  21%,
+  31% {
+    transform: rotate(3deg);
+  }
+}
+@keyframes mummy-squint {
+  0%,
+  15%,
+  26% {
+    transform: none;
+  }
+  19%,
+  24%,
+  30%,
+  100% {
+    transform: scaleY(0.5);
+  }
+}
+@keyframes mummy-linen {
+  0%,
+  15%,
+  26%,
+  36%,
+  56%,
+  76%,
+  100% {
+    transform: rotate(-9deg);
+  }
+  8%,
+  22%,
+  32%,
+  46%,
+  66%,
+  86% {
+    transform: rotate(14deg);
+  }
+}
+@keyframes mummy-effort {
+  0%,
+  16%,
+  26%,
+  35%,
+  48%,
+  100% {
+    opacity: 0;
+  }
+  19%,
+  23%,
+  29%,
+  33%,
+  40% {
+    opacity: 0.9;
+  }
+}
+@keyframes mummy-dust {
+  0%,
+  36%,
+  47%,
+  58%,
+  69%,
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  42%,
+  53%,
+  64%,
+  75% {
+    opacity: 0.6;
+    transform: translateX(-10px);
+  }
+}
+
+.scene[data-static='true'] {
+  .actor * {
+    animation: none;
+  }
+  .effort,
+  .dust {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .actor * {
+    animation: none !important;
+  }
+  .effort,
+  .dust {
+    display: none;
+  }
+}

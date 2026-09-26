@@ -1,3 +1,4 @@
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createContext, useContext, type ReactNode } from 'react';
@@ -91,7 +92,16 @@ vi.mock(
   }),
 );
 
+const refineTextMock = vi.fn();
+vi.mock('../../../server-api/text-refinement.api', () => ({
+  refineText: (...args: unknown[]) => refineTextMock(...args),
+}));
 interface FormProps {
+  onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
+  onRefineInstructions?: (
+    value: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
   labels: { cancelButtonLabel: string; createButtonLabel: string };
   values: {
     displayName: string;
@@ -137,8 +147,40 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onCancel,
     onSubmit,
     isSubmitting,
+    onRefineDescription,
+    onRefineInstructions,
   }: FormProps): ReactNode => (
     <div>
+      {onRefineDescription && (
+        <button
+          onClick={async () =>
+            onFieldChange(
+              'description',
+              await onRefineDescription(
+                values.description ?? '',
+                new AbortController().signal,
+              ),
+            )
+          }
+        >
+          refine description
+        </button>
+      )}
+      {onRefineInstructions && (
+        <button
+          onClick={async () =>
+            onFieldChange(
+              'prompt',
+              await onRefineInstructions(
+                values.prompt,
+                new AbortController().signal,
+              ),
+            )
+          }
+        >
+          refine instructions
+        </button>
+      )}
       <button onClick={onBack}>back</button>
       <input
         aria-label="displayName"
@@ -234,6 +276,52 @@ const fillValidForm = async () => {
 };
 
 describe('ScheduledTaskCreatePage', () => {
+  it('supplies both purpose callbacks only when available and saves their results', async () => {
+    useAppConfigMock.mockReturnValue({
+      status: 'ready',
+      config: { aiTextRefinementAvailable: true },
+    });
+    refineTextMock
+      .mockResolvedValueOnce('Better description')
+      .mockResolvedValueOnce('Better instructions');
+    createScheduledTaskMock.mockResolvedValue({ id: 'new-task' });
+    renderAtRoute('/scheduled-tasks/new');
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'refine description' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'refine instructions' }),
+    );
+    expect(refineTextMock).toHaveBeenNthCalledWith(
+      1,
+      TextRefinementPurpose.ScheduledTaskDescription,
+      expect.any(String),
+      expect.any(AbortSignal),
+    );
+    expect(refineTextMock).toHaveBeenNthCalledWith(
+      2,
+      TextRefinementPurpose.ScheduledTaskInstructions,
+      'Summarize my inbox',
+      expect.any(AbortSignal),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+    expect(createScheduledTaskMock.mock.calls[0][0]).toMatchObject({
+      description: 'Better description',
+      prompt: 'Better instructions',
+    });
+  });
+  it('omits both actions when the optional capability is missing', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+    expect(
+      screen.queryByRole('button', { name: 'refine description' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'refine instructions' }),
+    ).toBeNull();
+  });
   it('allows retry with the same draft after support recovers from a server rejection', async () => {
     createScheduledTaskMock.mockRejectedValueOnce({
       response: new Response(
@@ -368,7 +456,7 @@ describe('ScheduledTaskCreatePage', () => {
       ],
     });
     useThemeMock.mockReturnValue({ currentTheme: 'light' });
-    useAppConfigMock.mockReturnValue({ status: 'ready' });
+    useAppConfigMock.mockReturnValue({ status: 'ready', config: {} });
   });
   /* Always restores real timers, even when a fake-timer test times out
    and skips its own cleanup. */

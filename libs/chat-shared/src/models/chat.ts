@@ -396,4 +396,6 @@ export interface Conversation {
   assistantModelId: string;
   /** Response format used when rendering messages. */
   responseFormat?: ResponseFormat;
+  /** Open, feature-keyed container for conversation-level view state. This change owns only the `annotations` key; any other key is opaque and preserved as-is. */
+  customViewState?: Record<string, unknown>;
 }

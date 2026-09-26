@@ -32,6 +32,7 @@ import ConversationPanelView from '../components/ConversationPanel/ConversationP
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
+import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
 import Navigation from '../components/Navigation/Navigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -50,6 +51,7 @@ import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
+import { usePdfPreviewLoader } from '../hooks/attachment/usePdfPreviewLoader';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
@@ -60,12 +62,12 @@ import { ApplicationEditorKind } from '../types/application-editor';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 import { configurePdfWorker } from '../utils/pdf';
+import { renderSettingsRoutes } from './settings-routes';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
-const SettingsPage = lazy(() => import('../pages/SettingsPage/SettingsPage'));
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
 );
@@ -113,6 +115,7 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const loadPdf = usePdfPreviewLoader();
   const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
   const canvasDefaultWidth = isMobile
     ? window.innerWidth
@@ -174,6 +177,7 @@ const App: FC = () => {
     OverlayFeature.AttachmentsManager,
   );
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
+  const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
@@ -350,16 +354,7 @@ const App: FC = () => {
                   </RouteErrorBoundary>
                 }
               />
-              <Route
-                path={ROUTES.Settings}
-                element={
-                  <RouteErrorBoundary>
-                    <Suspense fallback={<RouteFallback />}>
-                      <SettingsPage />
-                    </Suspense>
-                  </RouteErrorBoundary>
-                }
-              />
+              {renderSettingsRoutes(isSettingsPageHidden)}
               <Route
                 path={ROUTES.FileManager}
                 element={
@@ -507,6 +502,7 @@ const App: FC = () => {
         </ActiveScheduledTaskProvider>
         {isConversationRoute && isAttachmentsManagerEnabled && (
           <AttachmentCanvasContainer
+            loadPdf={loadPdf}
             labels={{
               ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
               closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
@@ -570,6 +566,7 @@ const App: FC = () => {
                 AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
               ),
             }}
+            leftActions={isMobile ? <SourcesSidebarToggle /> : undefined}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
             maxWidth={canvasMaxWidth}

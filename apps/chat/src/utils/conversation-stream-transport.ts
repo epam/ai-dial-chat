@@ -46,3 +46,12 @@ export const conversationStreamTransport: ConversationStreamTransport = {
   getConversation: async (conversationId, signal) =>
     (await getConversation(conversationId, signal)) as Conversation,
 };
+
+/**
+ * Logs the raw error of a failed completion stream. The message bubble shows
+ * only localized or upstream-supplied text (issue #8979), so the transport
+ * detail (e.g. `Failed to fetch`) is kept for debugging here instead.
+ */
+export const logConversationStreamError = (error: Error): void => {
+  console.error('Conversation stream failed', error);
+};

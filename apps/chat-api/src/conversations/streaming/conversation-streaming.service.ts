@@ -38,6 +38,7 @@ import {
   generationTimeToFirstDelta,
 } from '../generation/generation-metrics';
 import type { GenerationRelayTiming } from '../generation/generation.types';
+import { GENERATION_PERSISTENCE_ERROR } from '../generation/persistence-error';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import {
@@ -46,6 +47,7 @@ import {
   type DialStreamErrorPayload,
 } from '../utils/apply-chunk.server';
 import { buildConversationHistory } from '../utils/conversation-history-builder';
+import { mergeHtmlTagAnnotationsIntoViewState } from '../utils/conversation-view-state.server';
 import {
   buildConversationUrl,
   qualifySessionConversationPath,
@@ -89,6 +91,8 @@ type RelayOutcome =
   | {
       outcome: 'error';
       error: unknown;
+      /** User-facing upstream text; unset for transport/runtime failures. */
+      displayMessage?: string;
       assembledMessage: ConversationMessageDto;
     };
 
@@ -385,9 +389,12 @@ export class ConversationStreamingService {
         this.logger.debug(
           `relayModelCompletion outcome: error (in-band stream error chunk) — model: ${model}: ${streamError.message}`,
         );
+        const displayMessage =
+          streamError.displayMessage ?? streamError.message;
         return {
           outcome: 'error',
-          error: new Error(streamError.displayMessage ?? streamError.message),
+          error: new Error(displayMessage),
+          displayMessage,
           assembledMessage,
         };
       }
@@ -587,6 +594,7 @@ export class ConversationStreamingService {
       this.generationService.applyChunk(lease, rawChunk, message);
     };
 
+    let persistenceFailed = false;
     const finalize = async (
       status:
         | GenerationStatus.Done
@@ -594,12 +602,26 @@ export class ConversationStreamingService {
         | GenerationStatus.Error,
       partialMessage: ConversationMessageDto,
     ): Promise<void> => {
+      let customViewState = startConversation.customViewState;
+      try {
+        customViewState = mergeHtmlTagAnnotationsIntoViewState(
+          startConversation.customViewState,
+          partialMessage.custom_content?.annotations,
+        );
+      } catch (err) {
+        this.logger.warn(
+          'Failed to merge annotations into customViewState',
+          err,
+        );
+      }
+
       const finalConversation = {
         ...startConversation,
         messages: [
           ...startConversation.messages.slice(0, assistantMessageIndex),
           partialMessage,
         ],
+        ...(customViewState !== undefined ? { customViewState } : {}),
       };
       /*
        * Record that the terminal write has been dispatched before awaiting
@@ -617,6 +639,9 @@ export class ConversationStreamingService {
         );
       } catch (err) {
         this.logger.warn(`Failed to save ${status} conversation`, err);
+        persistenceFailed = true;
+        this.generationService.persistenceFailed(lease);
+        return;
       }
       if (status === GenerationStatus.Done) {
         this.generationService.complete(lease);
@@ -723,15 +748,22 @@ export class ConversationStreamingService {
             'DIAL Core streamCompletion failed',
             relayResult.error,
           );
-          const errorMessage =
-            relayResult.error instanceof Error ? relayResult.error.message : '';
+          /*
+           * Only upstream-supplied text reaches the user. A thrown error's
+           * message (e.g. undici's `terminated`) is transport detail: it is
+           * logged above and persisted as '' so the frontend shows its
+           * localized fallback (issue #8979).
+           */
           const partialMsg = {
             ...relayResult.assembledMessage,
-            streamErrorMessage: errorMessage,
+            streamErrorMessage: relayResult.displayMessage ?? '',
           } as ConversationMessageDto;
           await finalize(GenerationStatus.Error, partialMsg);
           break;
         }
+      }
+      if (persistenceFailed) {
+        yield `data: ${JSON.stringify({ error: GENERATION_PERSISTENCE_ERROR })}\n\n`;
       }
     } finally {
       /*

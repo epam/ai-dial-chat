@@ -18,7 +18,9 @@ The terminal save SHALL distinguish how the generation ended:
 | Upstream rejected the request | `streamErrorMessage` = DIAL Core text, or `''` when it gave none | `Error` |
 | The user pressed Stop | `wasStoppedByUser: true`, **no** `streamErrorMessage` | `Stopped` |
 | Aborted for any other reason (e.g. the relay itself threw before producing a result) | `streamErrorMessage: ''` | `Error` |
-| The relay itself threw | `streamErrorMessage` = the thrown error's message | `Error` |
+| The relay itself threw (e.g. undici `TypeError: terminated` while reading the upstream body, a socket reset, a programming error) | `streamErrorMessage: ''` | `Error` |
+
+`streamErrorMessage` SHALL only ever carry text that DIAL Core itself supplied as a user-facing error (a rejected request's error body, or an in-band `{error}` chunk's `displayMessage`/`message`). A thrown JavaScript error's `message` is transport or runtime detail: it SHALL be logged server-side through the service `Logger` with the full error, and SHALL NOT be persisted to, or relayed through the generation registry to, the user.
 
 A user stop is deliberately not an error state: the frontend renders an empty stopped message with its "Stopped generating" label, which it can only do when no `streamErrorMessage` is present.
 
@@ -37,7 +39,26 @@ The downstream HTTP connection closing (browser tab closed, page navigated away,
 #### Scenario: Partial state saved on error
 
 - **WHEN** the upstream stream fails before `[DONE]`
-- **THEN** the backend saves the partial assistant message with `streamErrorMessage` set — carrying the DIAL Core error text when one is available, or an empty string when no upstream text exists (empty body, non-user abort). The presence of the field (even `''`) is the terminal-error signal; the frontend localizes a generic fallback when the value is empty.
+- **THEN** the backend saves the partial assistant message with `streamErrorMessage` set — carrying the DIAL Core error text when one is available, or an empty string when no upstream text exists (empty body, non-user abort, relay throw). The presence of the field (even `''`) is the terminal-error signal; the frontend localizes a generic fallback when the value is empty.
+
+#### Scenario: A mid-stream transport abort persists no raw error text
+
+- **WHEN** reading the upstream stream throws `TypeError('terminated')` after some content was already assembled
+- **THEN** the backend saves the partial assistant message (assembled content preserved) with `streamErrorMessage: ''`, finalizes the generation as `Error` with an empty message, and logs the thrown error via `Logger.error`; the string `terminated` is not present in the saved conversation
+
+#### Scenario: DIAL Core-supplied error text is still persisted
+
+- **WHEN** DIAL Core rejects the request with an error body, or emits an in-band `{error:{message}}` chunk
+- **THEN** the persisted `streamErrorMessage` is that DIAL Core text, unchanged by this requirement
+
+#### Scenario: A Responses stream that ends without a terminal signal persists no internal text
+
+- **WHEN** a Responses API stream ends with no recognized terminal event (no `response.completed`, `response.failed`, `response.incomplete`, or `error` event)
+- **THEN** the persisted `streamErrorMessage` is `''`, not the adapter's internal "ended before completion" diagnostic, and that diagnostic is logged server-side instead
+
+#### Scenario: A Responses terminal failure keeps its upstream message
+- **WHEN** a Responses API stream ends with `response.failed`, `response.incomplete`, or an `error` event carrying a message
+- **THEN** the persisted `streamErrorMessage` is that upstream message
 
 #### Scenario: A user stop is not persisted as an error
 
@@ -279,7 +300,7 @@ A generation SHALL attempt at most one terminal write. The worker SHALL record t
 
 The pre-stream failure paths SHALL remain write-free: a failure resolving the deployment's generation capability, fetching the conversation, or building its history SHALL release the registry entry and rethrow **without** performing any conversation write. A preflight failure SHALL NOT invent a terminal save.
 
-A failed or ambiguous terminal write SHALL continue to be logged and SHALL NOT abort the request, and the entry SHALL settle and release its key. A delivered terminal event, a released registry entry, and a recorded `dial.chat.completion.response.terminations` point SHALL NOT be treated as evidence that the conversation was durably persisted.
+A rejected terminal write SHALL be logged and reported as a persistence error on the open completion stream and to generation-attach subscribers, and the entry SHALL settle and release its key. The completion stream SHALL use its existing error envelope with type `conversation_save_failed` and safe fallback text. This applies to successful, stopped, and failed model outcomes; a storage failure SHALL NOT be reported as a successful save. There SHALL be no automatic second write. A delivered terminal event, a released registry entry, and a recorded `dial.chat.completion.response.terminations` point SHALL NOT be treated as evidence that the conversation was durably persisted.
 
 #### Scenario: Cancellation arriving after the terminal write was dispatched does not add a second write
 
@@ -321,3 +342,23 @@ Unrelated writers to the same conversation path SHALL be named explicitly rather
 - **WHEN** a terminal write is performed
 - **THEN** it is issued without a conditional-write precondition, and the capability documents that correctness rests on process-local admission rather than on storage-side fencing
 
+### Requirement: Terminal reloads cannot erase received assistant payload
+
+A client SHALL retain its accumulated assistant payload on an explicit persistence error or when a terminal reload returns the unresolved empty placeholder at that generation's assistant index. It SHALL show an app-localized warning that server persistence is unconfirmed and a page reload can lose the local answer. It SHALL preserve text and custom content together and SHALL NOT attempt a client-side save. Successful reloads SHALL still replace local state with server-persisted data. A superseded generation or another displayed conversation SHALL NOT receive stale restoration.
+
+`useConversationStream` SHALL own the retained message in its existing per-conversation buffer, including buffers assembled by `createResumeIfAwaitingGeneration`. The buffer lasts only within the mounted hook and is replaced by a new generation; it introduces no durable cache or cache TTL. Apps SHALL supply translated warning text through the optional `generationPersistenceErrorMessage` parameter using `chat.generationPersistenceError`; independently embedded hosts can use the safe default. The warning SHALL use the existing message `role="alert"` surface alongside the answer on mobile and desktop. It introduces no new controls or directional layout; existing RTL rendering and keyboard behavior remain applicable. This behavior is not feature-gated and requires no new memoisation, metrics, REST endpoint, OpenAPI schema, or generated-client method. The existing terminal-save logger SHALL retain the original failure server-side while the client receives safe text.
+
+#### Scenario: Empty terminal read after visible text and stages
+
+- **WHEN** a client receives text and stages and its completion reload returns the unresolved assistant placeholder
+- **THEN** the text and stages remain visible with a persistence warning and streaming controls settle
+
+#### Scenario: Server enrichment survives a successful save
+
+- **WHEN** the terminal reload contains the saved answer with server-enriched attachment data
+- **THEN** the client uses the server answer without adding a persistence warning
+
+#### Scenario: A newer generation supersedes a pending reload
+
+- **WHEN** another generation starts before the prior generation's terminal reload returns
+- **THEN** the old callback cannot restore its content over the new generation

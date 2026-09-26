@@ -1,3 +1,4 @@
+import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
@@ -100,7 +101,16 @@ vi.mock(
   }),
 );
 
+const refineTextMock = vi.fn();
+vi.mock('../../../server-api/text-refinement.api', () => ({
+  refineText: (...args: unknown[]) => refineTextMock(...args),
+}));
 interface FormProps {
+  onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
+  onRefineInstructions?: (
+    value: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
   labels: { cancelButtonLabel: string; createButtonLabel: string };
   values: {
     displayName: string;
@@ -144,8 +154,40 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onCancel,
     onSubmit,
     isSubmitting,
+    onRefineDescription,
+    onRefineInstructions,
   }: FormProps): ReactNode => (
     <div>
+      {onRefineDescription && (
+        <button
+          onClick={async () =>
+            onFieldChange(
+              'description',
+              await onRefineDescription(
+                values.description ?? '',
+                new AbortController().signal,
+              ),
+            )
+          }
+        >
+          refine description
+        </button>
+      )}
+      {onRefineInstructions && (
+        <button
+          onClick={async () =>
+            onFieldChange(
+              'prompt',
+              await onRefineInstructions(
+                values.prompt,
+                new AbortController().signal,
+              ),
+            )
+          }
+        >
+          refine instructions
+        </button>
+      )}
       <span>displayName:{values.displayName}</span>
       <span>modelId:{values.modelId}</span>
       <span>prompt:{values.prompt}</span>
@@ -204,6 +246,53 @@ const baseTask = {
 };
 
 describe('ScheduledTaskEditPage', () => {
+  it('supplies both purpose callbacks only when available and saves their results', async () => {
+    useAppConfigMock.mockReturnValue({
+      status: 'ready',
+      config: { aiTextRefinementAvailable: true },
+    });
+    refineTextMock
+      .mockResolvedValueOnce('Better description')
+      .mockResolvedValueOnce('Better instructions');
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
+    renderEditPage();
+    await screen.findByText('displayName:Daily summary');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'refine description' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'refine instructions' }),
+    );
+    expect(refineTextMock).toHaveBeenNthCalledWith(
+      1,
+      TextRefinementPurpose.ScheduledTaskDescription,
+      expect.any(String),
+      expect.any(AbortSignal),
+    );
+    expect(refineTextMock).toHaveBeenNthCalledWith(
+      2,
+      TextRefinementPurpose.ScheduledTaskInstructions,
+      'Summarize my inbox',
+      expect.any(AbortSignal),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+    expect(updateScheduledTaskMock.mock.calls[0][1]).toMatchObject({
+      description: 'Better description',
+      prompt: 'Better instructions',
+    });
+  });
+  it('omits both actions when the optional capability is missing', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    renderEditPage();
+    await screen.findByText('displayName:Daily summary');
+    expect(
+      screen.queryByRole('button', { name: 'refine description' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'refine instructions' }),
+    ).toBeNull();
+  });
   it.each([true, false])(
     'allows retry after support recovers with skill selection enabled: %s',
     async (skillSelectionEnabled) => {
@@ -362,7 +451,7 @@ describe('ScheduledTaskEditPage', () => {
       ],
     });
     useThemeMock.mockReturnValue({ currentTheme: 'light' });
-    useAppConfigMock.mockReturnValue({ status: 'ready' });
+    useAppConfigMock.mockReturnValue({ status: 'ready', config: {} });
     getApiErrorStatusMock.mockReturnValue(undefined);
     getApiErrorDetailsMock.mockResolvedValue({ traceId: undefined });
   });

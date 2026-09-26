@@ -12,6 +12,7 @@ import type {
   ActionRowLayout,
   ChatSettingsConfig,
   CommandMenuConfig,
+  HighlightedTextRange,
   InputColors,
   InputTypography,
   MenuOverlayConfig,
@@ -70,17 +71,53 @@ export interface EditMessageInputProps {
   /** Initial message text pre-populated in the textarea. */
   message?: string;
   /**
-   * Host-supplied content rendered inside the text area at its inline-start;
-   * typed text starts after it on the first line and wraps at full width
-   * below. Forwarded to the inner `Input`.
+   * Optional token that forces the textarea to resync from `message`, even
+   * when `message` itself is the same string as before (e.g. the host
+   * spliced a mention into its own copy of the draft at a known position and
+   * needs the textarea to adopt it). Forwarded to the inner `Input`.
    */
-  inlineStartSlot?: ReactNode;
+  messageRevision?: number;
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `inlineStartSlot` content is shown (the slot's remove gesture).
+   * Called with the textarea's current value on every change (typing,
+   * deleting, pasting, undo/redo) — not only on save. A host tracking live
+   * state derived from the draft (e.g. skill-mention anchors that must
+   * reconcile as the user edits around them) wires this; omit it to ignore
+   * keystrokes between saves.
+   */
+  onChange?: (message: string) => void;
+  /**
+   * Ranges of `message` rendered as highlighted runs (e.g. a restored skill
+   * mention). Forwarded to the inner `Input`.
+   */
+  activeMentions?: HighlightedTextRange[];
+  /**
+   * Called on Backspace with the caret collapsed at some position, to ask
+   * whether a tracked range ends exactly there — see `Input`'s prop of the
+   * same name. Forwarded to the inner `Input`.
+   */
+  onBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
+  /**
+   * One-shot caret placement applied whenever the internal message resyncs
+   * from a new `message` value (e.g. right after inserting a mention).
    * Forwarded to the inner `Input`.
    */
-  onInlineStartRemove?: () => void;
+  caretPositionOverride?: number;
+  /**
+   * Host-injected slash-command menu, forwarded to the inner `Input` — see
+   * `Input`'s prop of the same name. Absent disables the mechanism during
+   * edit.
+   */
+  commandMenu?: CommandMenuConfig;
+  /**
+   * Host-injected overlay entries for the `+` menu. `EditMessageInput` hides
+   * the inner `Input`'s own footer (`hideActionBar`) and renders its own
+   * external `AddAttachmentButton` instead, so these entries are forwarded to
+   * that button, not to `Input`. Absent renders no add-menu overlay entries
+   * during edit.
+   */
+  menuOverlays?: MenuOverlayConfig[];
   /** Pre-existing attachments from the original message, shown in the attachment tray. */
   initialAttachments?: DisplayAttachment[];
   /** Called when the user clicks the Cancel button. */
@@ -223,6 +260,14 @@ export interface ConversationInputProps {
    * when `message` itself is the same string as before.
    */
   messageRevision?: number;
+  /**
+   * Called with the textarea's current value on every change (typing,
+   * deleting, pasting, undo/redo) — not only on send. A host tracking live
+   * state derived from the draft (e.g. skill-mention anchors that must
+   * reconcile as the user edits around them) wires this; omit it to ignore
+   * keystrokes between sends, as before this prop existed.
+   */
+  onChange?: (message: string) => void;
   /**
    * Text inserted at the caret each time its `revision` changes, leaving the
    * surrounding draft intact. Unlike `message`, this never replaces what the
@@ -448,17 +493,24 @@ export interface ConversationInputProps {
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Host-supplied content rendered inside the text area at its inline-start;
-   * typed text starts after it on the first line and wraps at full width
-   * below. Forwarded to the inner `Input`.
+   * Ranges of `message` rendered as highlighted runs (e.g. a tracked skill
+   * mention). Forwarded to the inner `Input`.
    */
-  inlineStartSlot?: ReactNode;
+  activeMentions?: HighlightedTextRange[];
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `inlineStartSlot` is present (the slot's remove gesture). Forwarded
-   * to the inner `Input`.
+   * Called on Backspace with the caret collapsed at some position, to ask
+   * whether a tracked range ends exactly there — see `Input`'s prop of the
+   * same name. Forwarded to the inner `Input`.
    */
-  onInlineStartRemove?: () => void;
+  onBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
+  /**
+   * One-shot caret placement applied whenever the internal message resyncs
+   * from a new `message` value (e.g. right after inserting a mention).
+   * Forwarded to the inner `Input`.
+   */
+  caretPositionOverride?: number;
   /**
    * Host-injected slash-command menu: typing `triggerPrefix` as the first
    * character of an empty textarea — or pasting into an empty textarea a

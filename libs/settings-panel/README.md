@@ -59,31 +59,15 @@ import { SettingsPanel } from '@epam/ai-dial-settings-panel';
 />;
 ```
 
-Pass `styles={{ typography, colors }}` to override the section-header typography class or
-the row background/text/focus colors (applied as CSS custom properties). The rows are drawn by
-the UI kit's `Tabs`, so their typography is the kit's `dial-small-text` / `dial-small-semi-text`
-step and is not overridable here:
-
-```tsx
-<SettingsPanel
-  activeId="usage"
-  onSelect={setActiveTab}
-  items={items}
-  styles={{
-    colors: {
-      activeRowBackground: '#e6f0ff',
-      rowFocusOutline: '#161b2d',
-    },
-  }}
-/>
-```
+Pass `styles={{ typography }}` to override the section-header typography class. The rows are
+drawn by the UI kit's `Tabs`, so their colors and typography (`dial-small-text` /
+`dial-small-semi-text`) come from the kit and are not overridable here.
 
 ## Types
 
 - `SettingsPanelItem` — `{ id, label, icon?, disabled? }`
 - `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, styles?, className? }`
-- `SettingsPanelStyles` — `{ typography?, colors? }`
-- `SettingsPanelColors` — CSS-custom-property color overrides
+- `SettingsPanelStyles` — `{ typography? }`
 - `SettingsPanelTypography` — `{ sectionLabelClassName? }`
 
 ## Public class names
@@ -93,11 +77,11 @@ they are hashed at build time — nor through DOM order or ARIA attributes, whic
 are structure and accessibility contracts rather than styling ones. Selected
 elements therefore carry a stable public class.
 
-| Key       | Class                          | Element                                                |
-| --------- | ------------------------------ | ------------------------------------------------------ |
-| `panel`   | `dial-settings-panel-panel`    | The panel root, which carries the themed CSS variables |
-| `tabList` | `dial-settings-panel-tab-list` | The vertical tab list holding the section rows         |
-| `tab`     | `dial-settings-panel-tab`      | Every section row, selected or not                     |
+| Key       | Class                          | Element                                        |
+| --------- | ------------------------------ | ---------------------------------------------- |
+| `panel`   | `dial-settings-panel-panel`    | The panel root                                 |
+| `tabList` | `dial-settings-panel-tab-list` | The vertical tab list holding the section rows |
+| `tab`     | `dial-settings-panel-tab`      | Every section row, selected or not             |
 
 ```tsx
 import { SETTINGS_PANEL_CLASS } from '@epam/ai-dial-settings-panel';

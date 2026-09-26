@@ -18,7 +18,10 @@ import {
 import { safeDecodeURI } from '../../shared/string-utils';
 import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   GenerationConflictError,
+  GenerationPersistenceError,
+  StreamUpstreamError,
 } from '../create-chat-stream-api';
 import { applyChunkToMessages } from './apply-chunk';
 import {
@@ -26,7 +29,11 @@ import {
   restoreBufferedMessage,
 } from './buffered-generation';
 import { getConversationPath } from './conversation-path';
-import { createResumeIfAwaitingGeneration } from './generation-resume';
+import {
+  createResumeIfAwaitingGeneration,
+  hasGeneratedPayload,
+  isAwaitingGenerationResume,
+} from './generation-resume';
 
 /*
  * Bounded wait for the client-channel subscribe to resolve so that
@@ -135,7 +142,35 @@ export interface UseConversationStreamParams {
    * {@link DEFAULT_GENERATION_CONFLICT_MESSAGE}.
    */
   generationConflictMessage?: string;
+  /** Host-translated warning shown when the received answer could not be saved. */
+  generationPersistenceErrorMessage?: string;
+  /**
+   * Receives the original error of every failed stream. The hook shows only
+   * host-supplied or upstream-supplied text on the message bubble and hides
+   * transport detail (e.g. `Failed to fetch`), so this is where the host can
+   * still log or report the raw error.
+   */
+  onStreamError?: (error: Error) => void;
 }
+
+/*
+ * Picks the text written to `streamErrorMessage`. Only a conflict (host copy)
+ * or an upstream DIAL Core error (upstream copy) is displayable; any other
+ * error is transport detail and becomes '' so the host renders its localized
+ * fallback (issue #8979).
+ */
+const resolveStreamErrorMessage = (
+  error: Error,
+  generationConflictMessage: string,
+  generationPersistenceErrorMessage: string,
+): string => {
+  if (error instanceof GenerationPersistenceError)
+    return generationPersistenceErrorMessage;
+  if (error instanceof GenerationConflictError)
+    return generationConflictMessage;
+  if (error instanceof StreamUpstreamError) return error.message;
+  return '';
+};
 
 /** Return value of {@link useConversationStream}. */
 export interface UseConversationStreamResult {
@@ -179,7 +214,14 @@ export const useConversationStream = ({
   overlay,
   onStopError,
   generationConflictMessage = DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
+  onStreamError,
 }: UseConversationStreamParams): UseConversationStreamResult => {
+  /* Read through a ref so a new callback identity never re-creates `startStream`. */
+  const onStreamErrorRef = useRef(onStreamError);
+  useEffect(() => {
+    onStreamErrorRef.current = onStreamError;
+  }, [onStreamError]);
   /*
    * Paths with an in-flight generation. A Set (not a boolean) so concurrent
    * generations across conversations each track their own streaming state.
@@ -253,6 +295,7 @@ export const useConversationStream = ({
     ) => {
       const genId = generationId ?? generateUUID();
       const conversationPath = getConversationPath(currentConversationId);
+      resumingPathsRef.current.delete(conversationPath);
       activeGenerationIdRef.current = genId;
       activeGenerationPathRef.current = conversationPath;
       latestGenerationIdsRef.current.set(conversationPath, genId);
@@ -302,6 +345,25 @@ export const useConversationStream = ({
        */
       channel?.ensureConnected();
 
+      const preserveUnsavedAnswer = () => {
+        if (isSuperseded()) return;
+        const buffered = bufferedGenerationsRef.current.get(conversationPath);
+        if (!buffered || buffered.generationId !== genId) return;
+        buffered.message = {
+          ...buffered.message,
+          streamErrorMessage: generationPersistenceErrorMessage,
+        };
+        onStreamErrorRef.current?.(new GenerationPersistenceError());
+        if (!isPathDisplayed(conversationPath)) return;
+        setConversation((prev) => {
+          if (!prev || isSuperseded() || !isPathDisplayed(conversationPath))
+            return prev;
+          const next = restoreBufferedMessage(prev, buffered);
+          conversationRef.current = next;
+          return next;
+        });
+      };
+
       const completionOptions: StreamCompletionOptions = {
         signal: controller.signal,
         onChunk: (chunk) => {
@@ -340,12 +402,10 @@ export const useConversationStream = ({
           });
         },
         onComplete: async () => {
-          if (
-            bufferedGenerationsRef.current.get(conversationPath)
-              ?.generationId === genId
-          ) {
-            bufferedGenerationsRef.current.delete(conversationPath);
-          }
+          const currentBuffer =
+            bufferedGenerationsRef.current.get(conversationPath);
+          const buffered =
+            currentBuffer?.generationId === genId ? currentBuffer : undefined;
           if (!isSuperseded()) removeStreamingPath(conversationPath);
           if (activeGenerationIdRef.current === genId) {
             activeGenerationIdRef.current = null;
@@ -366,10 +426,14 @@ export const useConversationStream = ({
            * Only refresh displayed state if the user is still viewing this
            * conversation; otherwise leave the currently-shown chat untouched.
            */
-          if (!isPathDisplayed(conversationPath)) return;
+          if (!isPathDisplayed(conversationPath)) {
+            if (buffered)
+              bufferedGenerationsRef.current.delete(conversationPath);
+            return;
+          }
           try {
             /*
-             * Backend has already saved the conversation; reload to get
+             * Reload to confirm persistence and obtain
              * server-persisted state (including server-computed fields
              * like stage attachment `data`). Unlike `streamCompletion`/
              * `watchConversation` (which take the bucket-stripped
@@ -383,19 +447,47 @@ export const useConversationStream = ({
             );
             /* Re-checked after the round trip: a re-submit during it makes this
              * reload stale — it would restore the answer the user just replaced. */
-            if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
+            if (isSuperseded()) return;
+            if (!isPathDisplayed(conversationPath)) {
+              if (buffered)
+                bufferedGenerationsRef.current.delete(conversationPath);
+              return;
+            }
+            if (
+              buffered &&
+              buffered.messageIndex === refreshed.messages.length - 1 &&
+              isAwaitingGenerationResume(refreshed) &&
+              hasGeneratedPayload(buffered.message)
+            ) {
+              preserveUnsavedAnswer();
+              return;
+            }
+            if (buffered)
+              bufferedGenerationsRef.current.delete(conversationPath);
             setConversation(refreshed);
             conversationRef.current = refreshed;
           } catch {
-            // Non-fatal: keep local state if reload fails
+            if (!isSuperseded()) {
+              preserveUnsavedAnswer();
+            }
           }
         },
         onError: (error: Error) => {
+          onStreamErrorRef.current?.(error);
           const currentBuffer =
             bufferedGenerationsRef.current.get(conversationPath);
           const buffered =
             currentBuffer?.generationId === genId ? currentBuffer : undefined;
-          if (buffered) bufferedGenerationsRef.current.delete(conversationPath);
+          if (buffered) {
+            if (error instanceof GenerationPersistenceError) {
+              buffered.message = {
+                ...buffered.message,
+                streamErrorMessage: generationPersistenceErrorMessage,
+              };
+            } else {
+              bufferedGenerationsRef.current.delete(conversationPath);
+            }
+          }
           if (!isSuperseded()) removeStreamingPath(conversationPath);
           if (activeGenerationIdRef.current === genId) {
             activeGenerationIdRef.current = null;
@@ -408,17 +500,19 @@ export const useConversationStream = ({
            * and never over the generation that superseded this one. */
           if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
           /*
-           * A conflict is an expected state, not a transport failure: another
-           * tab of this session is already generating into this conversation,
-           * so it gets the host-supplied explanation rather than the raw
-           * error text (issue #8688).
+           * A conflict is an expected state (another tab is already
+           * generating, issue #8688) and gets the host-supplied explanation;
+           * an upstream DIAL Core error keeps its own text; every other error
+           * is transport detail and falls back to the host's localized copy.
            */
-          const streamErrorMessage =
-            error instanceof GenerationConflictError
-              ? generationConflictMessage
-              : error.message;
+          const streamErrorMessage = resolveStreamErrorMessage(
+            error,
+            generationConflictMessage,
+            generationPersistenceErrorMessage,
+          );
           setConversation((prev) => {
-            if (!prev) return prev;
+            if (!prev || isSuperseded() || !isPathDisplayed(conversationPath))
+              return prev;
             const restored =
               buffered?.generationId === genId
                 ? restoreBufferedMessage(prev, buffered)
@@ -525,6 +619,7 @@ export const useConversationStream = ({
       overlay,
       transport,
       generationConflictMessage,
+      generationPersistenceErrorMessage,
     ],
   );
 
@@ -576,10 +671,17 @@ export const useConversationStream = ({
         addStreamingPath,
         removeStreamingPath,
         isPathDisplayed,
+        generationPersistenceErrorMessage,
       }),
     // setConversation and conversationRef are stable refs — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addStreamingPath, removeStreamingPath, isPathDisplayed, transport],
+    [
+      addStreamingPath,
+      removeStreamingPath,
+      isPathDisplayed,
+      transport,
+      generationPersistenceErrorMessage,
+    ],
   );
 
   /*

@@ -1,0 +1,85 @@
+/* Measured anchors are physical viewport coordinates in either reading direction. */
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+  user-select: none;
+  contain: layout style;
+}
+
+.scene[data-ready='false'],
+.scene[data-ended='true'] {
+  visibility: hidden;
+}
+
+.actor,
+.copies,
+.art {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: auto;
+}
+
+.copies {
+  z-index: 1;
+}
+
+.actor {
+  inline-size: 0;
+  block-size: 0;
+  transform-origin: 0 0;
+  opacity: 0;
+  z-index: 3;
+}
+
+.art {
+  /* SVG claws at (50,66) rotate around the measured attachment point. */
+  transform: translate(-50%, -82.5%);
+
+  svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+  }
+
+  [data-bat-part='wing-left'],
+  [data-bat-part='wing-right'],
+  [data-bat-part='forearm-left'],
+  [data-bat-part='forearm-right'],
+  [data-bat-part='wrap'] {
+    transform-box: view-box;
+  }
+
+  [data-bat-part='wing-left'] {
+    transform-origin: 42px 39px;
+  }
+
+  [data-bat-part='wing-right'] {
+    transform-origin: 58px 39px;
+  }
+
+  [data-bat-part='forearm-left'] {
+    transform-origin: 27px 29px;
+  }
+
+  [data-bat-part='forearm-right'] {
+    transform-origin: 73px 29px;
+  }
+
+  [data-bat-part='wrap'] {
+    transform-origin: 50px 47px;
+  }
+}
+
+.scene[data-ended='true'] .fallback *,
+.scene[data-stationary='true'] .fallback * {
+  animation: none;
+}
+
+.scene[data-stationary='true'] .fallback span[style] {
+  opacity: 1;
+  transform: translate3d(var(--flight-rest-x), var(--flight-rest-y), 0);
+}

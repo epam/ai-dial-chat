@@ -2,6 +2,7 @@ import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   MessageRole,
+  type Annotation,
   type ApplicationVisualizer,
   type ApplicationVisualizerRegistry,
   type Message,
@@ -10,6 +11,7 @@ import {
   MessageBubble,
   type MessageActionsProps,
 } from '@epam/ai-dial-conversation-messages';
+import type { AnnotationGroup } from '@epam/ai-dial-quotations';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
@@ -1422,6 +1424,32 @@ describe('ConversationMessageItem — application visualizers', () => {
     expect(screen.getByTitle('my-viz')).toBeTruthy();
   });
 
+  it('hides the inline header title when the entry sets withoutTitle', () => {
+    applicationVisualizersMock = registryWith({ withoutTitle: true });
+
+    renderItem();
+
+    expect(screen.queryByText('my-viz')).toBeNull();
+    expect(screen.getByTitle('my-viz')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'attachmentCanvas.expandAppLabel' }),
+    ).toBeTruthy();
+  });
+
+  it('renders the inline frame without its border when the entry sets borderless', () => {
+    applicationVisualizersMock = registryWith({ borderless: true });
+
+    renderItem();
+
+    const toolbar = screen.getByRole('toolbar', {
+      name: 'attachmentCanvas.visualizerActionsAriaLabel',
+    });
+    // eslint-disable-next-line testing-library/no-node-access -- the frame root is a presentational wrapper with no accessible role to query
+    const frame = toolbar.closest('.overflow-hidden');
+
+    expect(frame?.classList.contains('border')).toBe(false);
+  });
+
   it('renders no inline visualizer when the registry is empty', () => {
     renderItem();
 
@@ -1595,5 +1623,255 @@ describe('ConversationMessageItem — application visualizer sizing and fallback
 
     expect(screen.queryByText('my-viz')).toBeNull();
     expect(screen.getByTitle('unresolvable')).toBeTruthy();
+  });
+});
+
+describe('ConversationMessageItem — conversation-level annotation pool', () => {
+  const poolAnnotation: Annotation = {
+    target: { selector: { type: 'html_tag', tag: 'cit', id: 'pooled-1' } },
+    body: {
+      title: 'earlier-turn.pdf',
+      source: {
+        type: 'attachment',
+        attachment: {
+          type: 'application/pdf',
+          url: 'https://example.com/earlier-turn.pdf',
+        },
+      },
+    },
+  };
+  const poolGroup: AnnotationGroup = {
+    groupKey: 'cit:pooled-1',
+    sourceUrl: 'https://example.com/earlier-turn.pdf',
+    sourceName: 'earlier-turn.pdf',
+    annotations: [poolAnnotation],
+    primaryAnnotation: poolAnnotation,
+  };
+  const message: Message = {
+    role: MessageRole.Assistant,
+    content: 'This claim<cit data-id="pooled-1"></cit> was cited earlier.',
+    timestamp: '2026-09-22T10:00:00Z',
+  };
+
+  it('renders an interactive citation marker for a citation resolved only from the pool', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        fallbackCitationGroups={[poolGroup]}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    ).toBeTruthy();
+  });
+
+  it("invokes the canvas with the pooled annotation's attachment on Preview", async () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        fallbackCitationGroups={[poolGroup]}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://example.com/earlier-turn.pdf' }),
+      expect.any(String),
+    );
+  });
+
+  it('renders literal text for the same message when the pool is empty', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={message}
+        index={1}
+        fallbackCitationGroups={[]}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    ).toBeFalsy();
+    expect(
+      screen.getByText(
+        'This claim<cit data-id="pooled-1"></cit> was cited earlier.',
+      ),
+    ).toBeTruthy();
+  });
+});
+
+describe('ConversationMessageItem — stream error banner (issue #8979)', () => {
+  const failedMessage = (streamErrorMessage: string): Message => ({
+    role: MessageRole.Assistant,
+    content: 'Partial answer',
+    timestamp: '2024-01-01T00:00:02Z',
+    streamErrorMessage,
+  });
+
+  const renderFailed = (
+    streamErrorMessage: string,
+    props: Partial<ComponentProps<typeof ConversationMessageItem>> = {},
+  ) =>
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={failedMessage(streamErrorMessage)}
+        index={3}
+        onRegenerateMessage={vi.fn()}
+        {...props}
+      />,
+    );
+
+  it('shows the title and the localized fallback when the error carries no text', () => {
+    renderFailed('');
+
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
+    expect(alert.textContent).toContain(ChatI18nKeys.StreamError);
+  });
+
+  it('shows upstream error text under the same title', () => {
+    renderFailed('Rate limit exceeded');
+
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
+    expect(alert.textContent).toContain('Rate limit exceeded');
+    expect(screen.queryByText(ChatI18nKeys.StreamError)).toBeNull();
+  });
+
+  it.each([
+    { mobile: false, direction: 'ltr' },
+    { mobile: true, direction: 'ltr' },
+    { mobile: false, direction: 'rtl' },
+    { mobile: true, direction: 'rtl' },
+  ])(
+    'keeps an unsaved answer beside its accessible warning ($mobile, $direction)',
+    ({ mobile, direction }) => {
+      isMobileMock = mobile;
+      const warning =
+        'The response could not be saved. Copy it before continuing.';
+      render(
+        <div dir={direction}>
+          <ConversationMessageItem
+            {...defaultProps}
+            msg={failedMessage(warning)}
+            index={3}
+          />
+        </div>,
+      );
+      expect(screen.getByText('Partial answer')).toBeTruthy();
+      expect(screen.getByRole('alert').textContent).toContain(warning);
+    },
+  );
+
+  it('renders no error banner for a successful message', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: 'Done',
+          timestamp: '2024-01-01T00:00:02Z',
+        }}
+        onRegenerateMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+    ).toBeNull();
+  });
+
+  it('regenerates the failed message when Try again is clicked', async () => {
+    const onRegenerateMessage = vi.fn();
+    renderFailed('', { onRegenerateMessage });
+
+    const alert = screen.getByRole('alert');
+    const retry = screen.getByRole('button', {
+      name: ButtonsI18nKeys.TryAgain,
+    });
+    expect(alert.contains(retry)).toBe(true);
+
+    await userEvent.click(retry);
+
+    expect(onRegenerateMessage).toHaveBeenCalledOnce();
+    expect(onRegenerateMessage).toHaveBeenCalledWith(3);
+  });
+
+  it('regenerates the failed message when Try again is activated with the keyboard', async () => {
+    const onRegenerateMessage = vi.fn();
+    renderFailed('', { onRegenerateMessage });
+
+    screen.getByRole('button', { name: ButtonsI18nKeys.TryAgain }).focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(onRegenerateMessage).toHaveBeenCalledWith(3);
+  });
+
+  it('hides Try again when hide-regenerate-assistant-message is enabled', () => {
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) => feature === OverlayFeature.HideRegenerateAssistantMessage,
+    );
+    renderFailed('');
+
+    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+    ).toBeNull();
+  });
+
+  it('hides Try again when no regenerate handler is provided', () => {
+    renderFailed('', { onRegenerateMessage: undefined });
+
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+    ).toBeNull();
+  });
+
+  it('disables Try again while the assistant is typing', async () => {
+    const onRegenerateMessage = vi.fn();
+    renderFailed('', { onRegenerateMessage, isAssistantTyping: true });
+
+    const retry = screen.getByRole('button', {
+      name: ButtonsI18nKeys.TryAgain,
+    }) as HTMLButtonElement;
+    expect(retry.disabled).toBe(true);
+
+    await userEvent.click(retry);
+
+    expect(onRegenerateMessage).not.toHaveBeenCalled();
+  });
+
+  it('keeps Try again reachable in a right-to-left layout without physical-direction classes', () => {
+    render(
+      <div dir="rtl">
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={failedMessage('')}
+          index={3}
+          onRegenerateMessage={vi.fn()}
+        />
+      </div>,
+    );
+
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+    ).toBeTruthy();
+    const alertMarkup = screen.getByRole('alert').innerHTML;
+    expect(alertMarkup).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
+    expect(alertMarkup).not.toMatch(/\btext-(left|right)\b/);
   });
 });

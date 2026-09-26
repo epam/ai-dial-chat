@@ -32,7 +32,7 @@ import '@epam/ai-dial-conversation-messages/styles.css';
 
 ### UserMessageBubble
 
-Renders a user message with text content and optional attachments. Long messages collapse to `collapsedLineCount` lines (default `10`) behind a toggle. Pass `beforeContent` to render host-supplied content inline at the start of the first text line, which word-flows after it on the same line (e.g. a used-skill chip; pass inline-level content no taller than a text line — the slot participates in the bubble's content-sized width and the collapse line measurement); the bubble renders for the slot alone even when `text` is empty, and with no slot the rendering is unchanged.
+Renders a user message with text content and optional attachments. Long messages collapse to `collapsedLineCount` lines (default `10`) behind a toggle. Pass `textSegments` to render an ordered array of content in place of `text` inside the same paragraph — interleaved plain-text runs and inline elements (e.g. skill-mention chips at their text position). `text` is still required alongside `textSegments`: it stays the identity/measurement input for the collapse-height calculation even when `textSegments` is what actually renders. With no `textSegments`, `text` renders unchanged.
 
 ```tsx
 import {
@@ -44,7 +44,7 @@ import {
   text={message.content}
   position={BubblePosition.Bottom}
   attachments={message.attachments}
-  beforeContent={usedSkillChip}
+  textSegments={messageTextSegments}
   onAttachmentClick={handleAttachmentClick}
   actions={{ onEdit: handleEdit, onDelete: handleDelete }}
 />;
@@ -52,7 +52,7 @@ import {
 
 ### AssistantMessageBubble
 
-Renders an assistant message as markdown. Set `isStreaming` while the response is still arriving so newly appended text reveals smoothly. Use `markdownComponents` to inject custom renderers (for example citation markers from `@epam/ai-dial-quotations`), `markdownClassNames` to pick the markdown type scale (`COMPACT_MARKDOWN_CLASS_NAMES` from `@epam/ai-dial-chat-shared` drops the body copy one step for narrow viewports), `markdownUrlTransform` to rewrite markdown `href`/`src` values (for example mapping DIAL `files/{bucket}/{path}` ids to host download URLs), `afterContent` to place a stages panel between the text and the actions bar, and `beforeContent` to render host-supplied content overlaid at the inline-start of the first markdown block's first line, which indents past the measured slot width so the text word-flows after it (e.g. a used-skill chip); while there is no text — the streaming placeholder case — the slot renders in flow above it, and an assistant message with no text at all renders the slot on its own line.
+Renders an assistant message as markdown. Set `isStreaming` while the response is still arriving so newly appended text reveals smoothly. Use `markdownComponents` to inject custom renderers (for example citation markers from `@epam/ai-dial-quotations`), `markdownClassNames` to pick the markdown type scale (`COMPACT_MARKDOWN_CLASS_NAMES` from `@epam/ai-dial-chat-shared` drops the body copy one step for narrow viewports), `markdownUrlTransform` to rewrite markdown `href`/`src` values (for example mapping DIAL `files/{bucket}/{path}` ids to host download URLs), `afterContent` to place a stages panel between the text and the actions bar, and `beforeContent` to render host-supplied content overlaid at the inline-start of the first markdown block's first line, which indents past the measured slot width so the text word-flows after it (e.g. one or more used-skill chips — `beforeContent` may itself be an array of elements); while there is no text — the streaming placeholder case — the slot renders in flow above it, and an assistant message with no text at all renders the slot on its own line.
 
 Pass `responseFormat` to follow the conversation's response-format setting.
 `ResponseFormat.PlainText` (from `@epam/ai-dial-chat-shared`) renders the body
@@ -123,7 +123,7 @@ import { StatusMessageBubble } from '@epam/ai-dial-conversation-messages';
 
 ### MessageBubble
 
-Role-dispatching wrapper — `AssistantMessageBubbleProps` plus the user-only fields (`position`, `collapsedLineCount`) and a required `role`. Use it when the caller iterates a mixed transcript and does not want to branch itself; reach for the specialised bubbles when the role is already known. `beforeContent` is consumed for both `MessageRole.User` and `MessageRole.Assistant` messages (status messages ignore it).
+Role-dispatching wrapper — `AssistantMessageBubbleProps` plus the user-only fields (`position`, `collapsedLineCount`, `textSegments`) and a required `role`. Use it when the caller iterates a mixed transcript and does not want to branch itself; reach for the specialised bubbles when the role is already known. `beforeContent` is forwarded only to the assistant bubble; `textSegments` is forwarded only to the user bubble (status messages ignore both).
 
 ```tsx
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -171,8 +171,9 @@ CONVERSATION_MESSAGES_CLASS.userBubble; // 'dial-cm-user-bubble'
 | `dial-cm-assistant-content` | The assistant message's streamed content region |
 
 `dial-cm-user-bubble` is emitted only when the bubble renders — a message with
-neither text nor `beforeContent` has no bubble at all. It is additive to
-`styles.bubbleClassName`, which keeps working exactly as before.
+no `text` has no bubble at all (this holds even when `textSegments` is passed,
+since a `textSegments`-carrying message always has non-empty `text`). It is
+additive to `styles.bubbleClassName`, which keeps working exactly as before.
 
 These classes carry no declarations of their own, so they change nothing until
 you style them.

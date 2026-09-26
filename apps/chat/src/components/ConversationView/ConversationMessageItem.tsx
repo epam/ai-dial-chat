@@ -37,6 +37,11 @@ import {
   type StarterOption,
   type UploadedAttachmentResult,
 } from '@epam/ai-dial-chat-shared';
+import type {
+  CommandMenuConfig,
+  HighlightedTextRange,
+  MenuOverlayConfig,
+} from '@epam/ai-dial-conversation-input';
 import {
   MessageBubble,
   type MessageActionAriaLabels,
@@ -64,7 +69,11 @@ import {
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
 import {
+  Button,
+  ButtonAppearance,
+  ButtonVariant,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
   ErrorMessageNotification,
 } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
@@ -128,6 +137,13 @@ const MESSAGE_TEXT_STYLES = {
 const COMPACT_MESSAGE_TEXT_STYLES = {
   typography: { fontClassName: 'dial-small-paragraph-text' },
 };
+
+/*
+ * Shared empty array for the default `fallbackCitationGroups`: a default
+ * parameter's `[]` is a fresh array on every render, which would break
+ * downstream memoisation even when the host passes nothing.
+ */
+const EMPTY_FALLBACK_CITATION_GROUPS: AnnotationGroup[] = [];
 
 const isCitationPreviewable = (annotation: Annotation): boolean => {
   const attachment = annotation.body?.source?.attachment;
@@ -243,26 +259,67 @@ interface Props {
   /** Called when the user pastes text that exceeds the max length while attachments are disabled. */
   onMessageTooLong?: (length: number, max: number) => void;
   /**
-   * Content rendered at the inline-start of the edit input's text area —
-   * the selected-skill `ChatSkill` element the host seeds from the edited
-   * message's `custom_content.skills`. Rendered only in the edit branch.
+   * The edit input's live draft text, seeded by the host from the edited
+   * message's content plus its tracked skill mentions. Forwarded to
+   * `EditMessageInput`'s `message`. Rendered only in the edit branch.
    */
-  editInlineStartSlot?: ReactNode;
+  editMessage?: string;
+  /** Token that forces `editMessage` to re-apply (e.g. after a mention is inserted mid-edit). Forwarded to `EditMessageInput`'s `messageRevision`. */
+  editMessageRevision?: number;
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `editInlineStartSlot` content is shown — the host's
-   * remove-selected-skill gesture. Forwarded to `EditMessageInput`'s
-   * `onInlineStartRemove`.
+   * Ranges of `editMessage` rendered as highlighted runs — the edited
+   * message's tracked skill mentions. Forwarded to `EditMessageInput`'s
+   * `activeMentions`.
    */
-  onEditInlineStartRemove?: () => void;
+  editActiveMentions?: HighlightedTextRange[];
   /**
-   * Renders a message's `custom_content.skills` entries as `ChatSkill`
-   * history elements for the bubble's `beforeContent` slot — name and
-   * description resolution and the "View details" details panel are owned by
-   * the host's skill selector wiring. Returns `null` while the skill-usage
-   * flag is off or the message carries no skills.
+   * Looks up a highlighted range whose run ends exactly at the given caret
+   * position, without mutating state — the whole-mention Backspace gesture.
+   * Forwarded to `EditMessageInput`'s `onBackspaceAtCaret`.
+   */
+  onEditBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
+  /** Caret offset to place the cursor at once `editMessageRevision` next bumps. Forwarded to `EditMessageInput`'s `caretPositionOverride`. */
+  editCaretPositionOverride?: number;
+  /**
+   * Called with the edit textarea's current value on every change — the
+   * host's skill-mention tracking reconciling live edits. Forwarded to
+   * `EditMessageInput`'s `onChange`.
+   */
+  onEditDraftChange?: (nextValue: string) => void;
+  /** Host-injected slash-command menu for adding a skill mid-edit. Forwarded to `EditMessageInput`'s `commandMenu`. */
+  editCommandMenu?: CommandMenuConfig;
+  /** Host-injected `+`-menu entries for adding a skill mid-edit. Forwarded to `EditMessageInput`'s `menuOverlays`. */
+  editMenuOverlays?: MenuOverlayConfig[];
+  /**
+   * Renders a user message's `content` and `custom_content.skills` as an
+   * ordered array interleaving plain-text runs and `ChatSkill` elements at
+   * each mention's actual text position, for `MessageBubble`'s `textSegments`
+   * prop. Returns `null` while the skill-usage flag is off or the message
+   * carries no skills.
+   */
+  renderHistorySkillSegments?: (
+    content: string,
+    skills: RequestSkill[] | undefined,
+  ) => ReactNode[] | null;
+  /**
+   * Renders a message's `custom_content.skills` entries as a flat list of
+   * `ChatSkill` history elements for the bubble's `beforeContent` slot (the
+   * assistant-message path, since assistant text never authors positioned
+   * mentions) — name and description resolution and the "View details"
+   * details panel are owned by the host's skill selector wiring. Returns
+   * `null` while the skill-usage flag is off or the message carries no
+   * skills.
    */
   renderHistorySkills?: (skills: RequestSkill[] | undefined) => ReactNode;
+  /**
+   * Conversation-level pool of citation groups whose annotation arrived in
+   * an earlier turn — consulted only for a `<cit data-id="…">` this
+   * message's own annotations do not resolve. Derived by `ConversationView`
+   * from `conversation.customViewState.annotations`.
+   */
+  fallbackCitationGroups?: AnnotationGroup[];
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -321,9 +378,17 @@ const ConversationMessageItem: FC<Props> = ({
   onPendingAttachmentsConsumed,
   selectedAttachmentKey,
   onMessageTooLong,
-  editInlineStartSlot,
-  onEditInlineStartRemove,
+  editMessage,
+  editMessageRevision,
+  editActiveMentions,
+  onEditBackspaceAtCaret,
+  editCaretPositionOverride,
+  onEditDraftChange,
+  editCommandMenu,
+  editMenuOverlays,
+  renderHistorySkillSegments,
   renderHistorySkills,
+  fallbackCitationGroups = EMPTY_FALLBACK_CITATION_GROUPS,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
@@ -381,6 +446,23 @@ const ConversationMessageItem: FC<Props> = ({
     () => groupAnnotations(annotations),
     [annotations],
   );
+  /*
+   * Union used only for Preview/Open-in-browser lookups (design D7), so
+   * `annotationToPdfCanvasContent`/`annotationToOoxmlCanvasContent` can find
+   * a pooled annotation's siblings. Never passed as the citation hook's
+   * `groups` — that stays message-scoped (design D6).
+   */
+  const citationGroupsWithFallback = useMemo(
+    () => [...citationGroups, ...fallbackCitationGroups],
+    [citationGroups, fallbackCitationGroups],
+  );
+  const annotationsWithFallback = useMemo(
+    () => [
+      ...annotations,
+      ...fallbackCitationGroups.flatMap((group) => group.annotations),
+    ],
+    [annotations, fallbackCitationGroups],
+  );
   const citationCard = useCitationCard();
   const messageTextStyles = isCompactTypography
     ? COMPACT_MESSAGE_TEXT_STYLES
@@ -392,7 +474,7 @@ const ConversationMessageItem: FC<Props> = ({
     (annotation: Annotation) => {
       const pdfContent = annotationToPdfCanvasContent(
         annotation,
-        citationGroups,
+        citationGroupsWithFallback,
         attachmentCanvasUrlResolvers,
       );
       if (pdfContent != null) {
@@ -404,7 +486,7 @@ const ConversationMessageItem: FC<Props> = ({
       }
       const ooxmlContent = annotationToOoxmlCanvasContent(
         annotation,
-        annotations,
+        annotationsWithFallback,
         attachmentCanvasUrlResolvers,
       );
       if (ooxmlContent != null) {
@@ -417,7 +499,12 @@ const ConversationMessageItem: FC<Props> = ({
       const display = annotationToDisplayAttachment(annotation);
       if (display) handleAttachmentClick(display);
     },
-    [citationGroups, annotations, openCanvas, handleAttachmentClick],
+    [
+      citationGroupsWithFallback,
+      annotationsWithFallback,
+      openCanvas,
+      handleAttachmentClick,
+    ],
   );
   const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
@@ -468,6 +555,7 @@ const ConversationMessageItem: FC<Props> = ({
       citationCallbacks,
       isStreaming,
       isCompactTypography,
+      fallbackCitationGroups,
     );
   const referenceGroups = useMemo(
     () => getReferenceAttachmentGroups(msg.custom_content?.attachments),
@@ -537,6 +625,8 @@ const ConversationMessageItem: FC<Props> = ({
       height:
         (isMobile ? (entry.mobileHeight ?? entry.height) : entry.height) ??
         DEFAULT_VISUALIZER_HEIGHT,
+      isBorderless: entry.borderless === true,
+      isTitleHidden: entry.withoutTitle === true,
     };
   }, [
     effectiveDeploymentId,
@@ -562,6 +652,12 @@ const ConversationMessageItem: FC<Props> = ({
       groupedVisualizerCanvasKey(index),
     );
   }, [groupedVisualizer, openCanvas, index]);
+
+  const isStreamErrorRetryShown =
+    onRegenerateMessage != null && !isRegenerateAssistantMessageHidden;
+  const handleStreamErrorRetry = useCallback(() => {
+    onRegenerateMessage?.(index);
+  }, [onRegenerateMessage, index]);
 
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
@@ -594,7 +690,12 @@ const ConversationMessageItem: FC<Props> = ({
             <MessageBubble
               role={msg.role}
               text={msg.content}
-              beforeContent={renderHistorySkills?.(msg.custom_content?.skills)}
+              textSegments={
+                renderHistorySkillSegments?.(
+                  msg.content,
+                  msg.custom_content?.skills,
+                ) ?? undefined
+              }
               styles={{ ...messageTextStyles, className: 'justify-end' }}
               attachments={allDisplayAttachments}
               labels={{
@@ -613,7 +714,8 @@ const ConversationMessageItem: FC<Props> = ({
           }
         >
           <EditMessageInput
-            message={msg.content}
+            message={editMessage ?? msg.content}
+            messageRevision={editMessageRevision}
             initialAttachments={allDisplayAttachments}
             onCancel={() => onCancelEdit?.(index)}
             onSave={(text, kept, added) =>
@@ -639,8 +741,12 @@ const ConversationMessageItem: FC<Props> = ({
             onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
             onAttachmentClick={handleAttachmentClick}
             onMessageTooLong={onMessageTooLong}
-            inlineStartSlot={editInlineStartSlot}
-            onInlineStartRemove={onEditInlineStartRemove}
+            activeMentions={editActiveMentions}
+            onBackspaceAtCaret={onEditBackspaceAtCaret}
+            caretPositionOverride={editCaretPositionOverride}
+            onChange={onEditDraftChange}
+            commandMenu={editCommandMenu}
+            menuOverlays={editMenuOverlays}
           />
         </Suspense>
       </div>
@@ -700,13 +806,20 @@ const ConversationMessageItem: FC<Props> = ({
 
   const isUserMessage = msg.role === MessageRole.User;
 
-  const beforeContent = renderHistorySkills?.(msg.custom_content?.skills);
+  const textSegments = isUserMessage
+    ? (renderHistorySkillSegments?.(msg.content, msg.custom_content?.skills) ??
+      undefined)
+    : undefined;
+  const beforeContent = isUserMessage
+    ? undefined
+    : renderHistorySkills?.(msg.custom_content?.skills);
 
   return (
     <CitationCardProvider value={citationCard}>
       <MessageBubble
         role={msg.role}
         text={messageText}
+        textSegments={textSegments}
         beforeContent={beforeContent}
         styles={{
           ...messageTextStyles,
@@ -847,6 +960,8 @@ const ConversationMessageItem: FC<Props> = ({
                   <InlineGroupedVisualizer
                     content={groupedVisualizer.content}
                     height={groupedVisualizer.height}
+                    isBorderless={groupedVisualizer.isBorderless}
+                    isTitleHidden={groupedVisualizer.isTitleHidden}
                     onExpand={handleExpandGroupedVisualizer}
                     expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
                     actionsGroupAriaLabel={t(
@@ -884,8 +999,24 @@ const ConversationMessageItem: FC<Props> = ({
               {msg.streamErrorMessage != null && (
                 <div className="w-full">
                   <ErrorMessageNotification
+                    title={t(ChatI18nKeys.StreamErrorTitle)}
                     message={
-                      msg.streamErrorMessage || t(ChatI18nKeys.StreamError)
+                      <span className="flex flex-wrap items-center justify-between gap-2 text-start">
+                        <span>
+                          {msg.streamErrorMessage ||
+                            t(ChatI18nKeys.StreamError)}
+                        </span>
+                        {isStreamErrorRetryShown && (
+                          <Button
+                            variant={ButtonVariant.Neutral}
+                            appearance={ButtonAppearance.Outlined}
+                            size={ElementSize.Small}
+                            label={t(ButtonsI18nKeys.TryAgain)}
+                            disabled={isAssistantTyping}
+                            onClick={handleStreamErrorRetry}
+                          />
+                        )}
+                      </span>
                     }
                   />
                 </div>

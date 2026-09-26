@@ -61,6 +61,8 @@ export interface NavigationSheetLabels {
   profile: string;
   /** Label of the log-out row. */
   logOut: string;
+  /** Label of the settings row on the profile page; required when `onSettings` is provided. */
+  settings?: string;
 }
 
 /** Props accepted by `NavigationSheet`. */
@@ -81,6 +83,11 @@ export interface NavigationSheetProps {
   groups?: NavigationMenuGroup[];
   /** Called when the user taps "Log out"; the host owns the confirmation flow. */
   onLogout: () => void;
+  /**
+   * Called when the user taps the profile page's settings row, after the sheet
+   * closes; the host performs the navigation. Omit to hide the row.
+   */
+  onSettings?: () => void;
   /** Rendered at the end of the root page — typically a footer message. */
   footer?: ReactNode;
   /** Style overrides for colors, typography, and class names. */

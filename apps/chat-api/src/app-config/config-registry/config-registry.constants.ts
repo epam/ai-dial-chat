@@ -264,6 +264,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'SKILL_USAGE_ENABLED',
   },
   {
+    key: 'ui.activeEventId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Active start-page celebration module ID selected by UI_EVENT. Missing or none disables celebrations. The frontend owns the event registry and ignores IDs it does not support; adding an event does not require a backend enum change.',
+    owner: 'chat-team',
+    envVar: 'UI_EVENT',
+  },
+  {
     key: 'overlay.enabled',
     type: 'config',
     valueType: 'boolean',
@@ -274,6 +286,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Whether the chat-overlay embedded runtime mode is reachable. Distinct from ALLOWED_IFRAME_ORIGINS: has no effect unless at least one origin is also allowlisted there.',
     owner: 'chat-team',
     envVar: 'OVERLAY_ENABLED',
+  },
+  {
+    key: 'documents.allowedConnectOrigins',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'External connection origins permitted by CSP. PDF previews may use browser credentials for matching HTTP(S) origins.',
+    owner: 'chat-team',
+    envVar: 'ALLOWED_CONNECT_ORIGINS',
   },
   {
     key: 'overlay.allowedOrigins',

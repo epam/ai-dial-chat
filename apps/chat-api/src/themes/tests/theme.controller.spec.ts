@@ -116,6 +116,30 @@ describe('ThemeController (integration)', () => {
       expect(themeService.getThemeIcon).toHaveBeenCalledWith('icon-light.svg');
     });
 
+    it('sandboxes SVG responses with a restrictive CSP', async () => {
+      mockThemeService.getThemeIcon.mockResolvedValue('<svg></svg>');
+
+      const response = await request(app.getHttpServer())
+        .get('/themes/icon?iconName=favicon.svg')
+        .expect(200);
+
+      // Full string, so a change to the policy is a deliberate test update
+      expect(response.headers['content-security-policy']).toBe(
+        "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+      );
+    });
+
+    it('does not add the SVG CSP to raster icons', async () => {
+      mockThemeService.getThemeIcon.mockResolvedValue(Buffer.from([0x89]));
+
+      const response = await request(app.getHttpServer())
+        .get('/themes/icon?iconName=favicon.png')
+        .expect(200)
+        .expect('Content-Type', /image\/png/);
+
+      expect(response.headers['content-security-policy']).toBeUndefined();
+    });
+
     it('should return 400 for path traversal attempt', async () => {
       await request(app.getHttpServer())
         .get('/themes/icon?iconName=../etc/passwd')

@@ -659,7 +659,13 @@ describe('Input — isSendDisabled', () => {
         message="Hello"
         onSend={handleSend}
         isSendDisabled
-        renderFooterActions={({ canSend, onSend }) => {
+        renderFooterActions={({
+          canSend,
+          onSend,
+        }: {
+          canSend: boolean;
+          onSend: () => void;
+        }) => {
           footerCanSend = canSend;
           return (
             <button type="button" onClick={onSend}>

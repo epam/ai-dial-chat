@@ -304,51 +304,62 @@ describe('UserMessageBubble — collapsed text', () => {
   });
 });
 
-describe('UserMessageBubble — inline-start slot', () => {
-  const skillSlot = <span>/Summarizer</span>;
+describe('UserMessageBubble — textSegments', () => {
+  const segments = [<span key="chip">/Summarizer</span>, ' please summarize'];
 
-  it('renders the slot inline inside the text paragraph, before the text', () => {
-    render(<UserMessageBubble text="Hello world" beforeContent={skillSlot} />);
-
-    const slot = screen.getByText('/Summarizer');
-    /*
-     * The slot's DOM position — inside the text paragraph, ahead of the text —
-     * is the feature under test, and its wrapper span carries no ARIA hook, so
-     * no semantic query reaches it (see spec.md's node-access exception).
-     */
-    // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    const paragraph = slot.closest('p') as HTMLParagraphElement;
-    // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    const wrapper = slot.parentElement as HTMLElement;
-
-    expect(paragraph).toBeTruthy();
-    expect(wrapper.className).toContain('me-1');
-    // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    expect(paragraph.firstChild).toBe(wrapper);
-  });
-
-  it('renders the bubble for the slot alone when there is no text', () => {
-    const { container } = render(
-      <UserMessageBubble beforeContent={skillSlot} />,
+  it('renders textSegments in order inside the text paragraph, in place of text', () => {
+    render(
+      <UserMessageBubble
+        text="/Summarizer please summarize"
+        textSegments={segments}
+      />,
     );
 
-    expect(screen.getByText('/Summarizer')).toBeTruthy();
-    expect(screen.getByRole('group', { name: 'User message' })).toBeTruthy();
-    /* Slot-only: the slot stays in flow in a plain div, with no text paragraph. */
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
-    expect(container.querySelector('p')).toBeNull();
+    const chip = screen.getByText('/Summarizer');
+    /*
+     * The segments' DOM position — inside the text paragraph, in reading
+     * order — is the feature under test; the chip's wrapper span carries no
+     * ARIA hook, so no semantic query reaches the paragraph directly (see
+     * spec.md's node-access exception).
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const paragraph = chip.closest('p') as HTMLParagraphElement;
+
+    expect(paragraph).toBeTruthy();
+    expect(paragraph.textContent).toBe('/Summarizer please summarize');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(paragraph.firstElementChild).toBe(chip);
   });
 
-  it('renders no slot wrapper inside the paragraph when beforeContent is absent', () => {
+  it('renders text unchanged, byte-identical, when textSegments is absent', () => {
     render(<UserMessageBubble text="Hello world" />);
 
     const paragraph = findMessageParagraph('Hello world');
     /*
-     * The absence of a slot wrapper — a plain span with no ARIA hook — inside
-     * the paragraph cannot be queried semantically, so the check is DOM-level.
+     * No segment wrapper — a plain span with no ARIA hook — should appear
+     * inside the paragraph, so the check is DOM-level.
      */
     // eslint-disable-next-line testing-library/no-node-access -- see comment above
     expect(paragraph.firstElementChild).toBeNull();
+    expect(paragraph.textContent).toBe('Hello world');
+  });
+
+  it('renders interleaved segments correctly under dir="rtl"', () => {
+    render(
+      <div dir="rtl">
+        <UserMessageBubble
+          text="/Summarizer please summarize"
+          textSegments={segments}
+        />
+      </div>,
+    );
+
+    const chip = screen.getByText('/Summarizer');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const paragraph = chip.closest('p') as HTMLParagraphElement;
+
+    expect(paragraph.textContent).toBe('/Summarizer please summarize');
+    expect(paragraph.className).toContain('text-start');
   });
 });
 

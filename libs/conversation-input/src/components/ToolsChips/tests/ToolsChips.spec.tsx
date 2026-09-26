@@ -84,7 +84,7 @@ describe('ToolsChips', () => {
 
   it('labels the × button through the removeLabel prop', () => {
     renderChips([buildTool('web-search', 'Web Search', false)], {
-      removeLabel: (label) => `Drop ${label}`,
+      removeLabel: (label: string) => `Drop ${label}`,
     });
 
     expect(

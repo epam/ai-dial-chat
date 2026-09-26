@@ -8,8 +8,10 @@ export enum ChatI18nKeys {
   GreetingEveningNoName = 'chat.greetingEveningNoName',
   GreetingNight = 'chat.greetingNight',
   GreetingNightNoName = 'chat.greetingNightNoName',
+  StreamErrorTitle = 'chat.streamErrorTitle',
   StreamError = 'chat.streamError',
   GenerationConflict = 'chat.generationConflict',
+  GenerationPersistenceError = 'chat.generationPersistenceError',
   CreateConversationError = 'chat.createConversationError',
   ConversationNotFound = 'chat.conversationNotFound',
   /** TODO: remove in next release */
@@ -75,6 +77,7 @@ export enum ApiI18nKeys {
 
 export enum ButtonsI18nKeys {
   Retry = 'buttons.retry',
+  TryAgain = 'buttons.tryAgain',
   Reload = 'buttons.reload',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
@@ -450,6 +453,9 @@ export enum ScheduledTasksI18nKeys {
   DetailStatusMissed = 'scheduledTasks.detail.statusMissed',
   DetailErrorLabel = 'scheduledTasks.detail.errorLabel',
   DetailActiveStatusLabel = 'scheduledTasks.detail.activeStatusLabel',
+  DetailCompletedFieldLabel = 'scheduledTasks.detail.completedFieldLabel',
+  DetailActiveDisabledReasonCompleted = 'scheduledTasks.detail.activeDisabledReasonCompleted',
+  DetailActiveDisabledReasonExpired = 'scheduledTasks.detail.activeDisabledReasonExpired',
   DetailPauseSuccess = 'scheduledTasks.detail.pauseSuccess',
   DetailResumeSuccess = 'scheduledTasks.detail.resumeSuccess',
   DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',
@@ -693,7 +699,6 @@ export enum ConversationPanelI18nKeys {
   RevokeSuccessTitle = 'conversationPanel.revoke.revokeSuccessTitle',
   RevokeSuccess = 'conversationPanel.revoke.revokeSuccess',
   RevokeError = 'conversationPanel.revoke.revokeError',
-  TaskBadgeLabel = 'conversationPanel.taskBadgeLabel',
   UnreadIndicatorLabel = 'conversationPanel.unreadIndicatorLabel',
 }
 
@@ -982,6 +987,16 @@ export enum PromptEditorI18nKeys {
   ContentLoadingAriaLabel = 'promptEditor.contentLoadingAriaLabel',
 }
 
+export enum TextRefinementI18nKeys {
+  Action = 'textRefinement.action',
+  Undo = 'textRefinement.undo',
+  Error = 'textRefinement.error',
+  Pending = 'textRefinement.pending',
+  Success = 'textRefinement.success',
+  Restored = 'textRefinement.restored',
+  Unchanged = 'textRefinement.unchanged',
+}
+
 export enum SkillEditorI18nKeys {
   Title = 'skillEditor.title',
   BackAriaLabel = 'skillEditor.backAriaLabel',
@@ -1199,6 +1214,7 @@ export enum ShareI18nKeys {
   LinkAriaLabel = 'share.linkAriaLabel',
   ExpiryNote = 'share.expiryNote',
   QrCodeAriaLabel = 'share.qrCodeAriaLabel',
+  QrDownloadFileName = 'share.qrDownloadFileName',
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',
@@ -1225,8 +1241,14 @@ export enum ConversationInputI18nKeys {
   TriggerAriaLabel = 'conversationInput.usageLimits.triggerAriaLabel',
   PopoverTitle = 'conversationInput.usageLimits.popoverTitle',
   Error = 'conversationInput.usageLimits.error',
-  TokensRemaining = 'conversationInput.usageLimits.tokensRemaining',
+  TokenGroup = 'conversationInput.usageLimits.tokenGroup',
+  CostGroup = 'conversationInput.usageLimits.costGroup',
+  PeriodDay = 'conversationInput.usageLimits.periodDay',
+  PeriodWeek = 'conversationInput.usageLimits.periodWeek',
+  PeriodMonth = 'conversationInput.usageLimits.periodMonth',
+  Value = 'conversationInput.usageLimits.value',
   ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
+  FullUsageLink = 'conversationInput.usageLimits.fullUsageLink',
 }
 
 export enum NotificationI18nKeys {
@@ -1404,6 +1426,35 @@ export enum UsageI18nKeys {
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
+}
+
+export enum HalloweenI18nKeys {
+  ToastTitle = 'halloween.toastTitle',
+  SpidersToastMessage = 'halloween.spidersToastMessage',
+  GhostToastMessage = 'halloween.ghostToastMessage',
+  WebToastMessage = 'halloween.webToastMessage',
+  BatsToastMessage = 'halloween.batsToastMessage',
+  CatToastMessage = 'halloween.catToastMessage',
+  WitchesToastMessage = 'halloween.witchesToastMessage',
+  PumpkinLabel = 'halloween.pumpkinLabel',
+  TrainToastMessage = 'halloween.trainToastMessage',
+  PortalToastMessage = 'halloween.portalToastMessage',
+  RavensToastMessage = 'halloween.ravensToastMessage',
+  CandyToastMessage = 'halloween.candyToastMessage',
+  FootprintsToastMessage = 'halloween.footprintsToastMessage',
+  SkeletonsToastMessage = 'halloween.skeletonsToastMessage',
+  CauldronToastMessage = 'halloween.cauldronToastMessage',
+  MimicToastMessage = 'halloween.mimicToastMessage',
+  BowlingToastMessage = 'halloween.bowlingToastMessage',
+  MummyToastMessage = 'halloween.mummyToastMessage',
+}
+
+export enum NewYearI18nKeys {
+  ToastTitle = 'newYear.toastTitle',
+  SnowToastMessage = 'newYear.snowToastMessage',
+  ConfettiToastMessage = 'newYear.confettiToastMessage',
+  SleighToastMessage = 'newYear.sleighToastMessage',
+  GiftLabel = 'newYear.giftLabel',
 }
 
 export enum ApplicationCredentialsI18nKeys {

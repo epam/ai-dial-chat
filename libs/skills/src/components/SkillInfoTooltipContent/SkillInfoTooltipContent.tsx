@@ -15,6 +15,7 @@ export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
   unsupportedMessage,
   viewDetailsLabel = 'View details',
   onViewDetails,
+  viewDetailsTabIndex,
 }) => {
   /*
    * The unsupported state replaces the whole content: the message alone, no
@@ -53,6 +54,7 @@ export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
           />
         }
         onClick={onViewDetails}
+        tabIndex={viewDetailsTabIndex}
       />
     </div>
   );

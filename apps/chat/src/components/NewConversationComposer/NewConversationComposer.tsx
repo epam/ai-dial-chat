@@ -26,6 +26,7 @@ import {
 import type {
   CommandMenuConfig,
   ConversationInputStyles,
+  HighlightedTextRange,
   MenuOverlayConfig,
   TextInsertion,
   ToolsChipLabels,
@@ -39,7 +40,6 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
-  ConversationInputI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
@@ -47,6 +47,7 @@ import {
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useCelebration } from '../../context/CelebrationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -61,6 +62,7 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { resolveLocalizedText } from '../../utils/locale';
+import CelebrationDecor from '../CelebrationDecor/CelebrationDecor';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
@@ -115,26 +117,38 @@ interface Props {
    */
   inputInsertion?: TextInsertion;
   /**
+   * Called with the textarea's current value on every change (typing,
+   * deleting, pasting, undo/redo), passed through to `ConversationInput` —
+   * e.g. the host's skill-mention tracking reconciling live edits.
+   */
+  onChange?: (message: string) => void;
+  /**
    * Host-injected overlay entries for the `+` menu (e.g. the Prompts
    * selector), passed through to `ConversationInput`.
    */
   menuOverlays?: MenuOverlayConfig[];
   /**
-   * Host-supplied content rendered inside the text area at its inline-start
-   * (e.g. the selected skill's `ChatSkill` element), passed through to
-   * `ConversationInput`.
+   * Ranges of `message` rendered as highlighted runs (e.g. tracked skill
+   * mentions), passed through to `ConversationInput`.
    */
-  inlineStartSlot?: ReactNode;
+  activeMentions?: HighlightedTextRange[];
   /**
-   * Called when Backspace is pressed with the caret collapsed at position 0
-   * while `inlineStartSlot` is present (the skill element's remove gesture),
+   * Looks up a highlighted range whose run ends exactly at the given caret
+   * position, without mutating state — the whole-mention Backspace gesture,
    * passed through to `ConversationInput`.
    */
-  onInlineStartRemove?: () => void;
+  onBackspaceAtCaret?: (
+    caretPosition: number,
+  ) => HighlightedTextRange | undefined;
   /**
-   * Whether the selected skill (rendered via `inlineStartSlot`) is
-   * unsupported by the current deployment — folded into the input's
-   * send-disabled state, matching `ConversationView`'s own fold.
+   * Caret offset to place the cursor at once `messageRevision` next bumps and
+   * `message` takes effect, passed through to `ConversationInput`.
+   */
+  caretPositionOverride?: number;
+  /**
+   * Whether the currently-mentioned skill(s) are unsupported by the current
+   * deployment — folded into the input's send-disabled state, matching
+   * `ConversationView`'s own fold.
    */
   isSkillUnsupported?: boolean;
   /**
@@ -172,9 +186,11 @@ const NewConversationComposer: FC<Props> = ({
   message,
   messageRevision,
   inputInsertion,
+  onChange,
   menuOverlays,
-  inlineStartSlot,
-  onInlineStartRemove,
+  activeMentions,
+  onBackspaceAtCaret,
+  caretPositionOverride,
   isSkillUnsupported = false,
   commandMenu,
   inputStyles,
@@ -191,6 +207,8 @@ const NewConversationComposer: FC<Props> = ({
     config: { welcomeScreenDescription, maxAttachmentFileSizeBytes },
   } = useAppConfig();
   const { showErrorNotification, showSuccessNotification } = useNotification();
+  const { isEnabled: isCelebrationEnabled, consumeSecretPhrase } =
+    useCelebration();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -387,20 +405,6 @@ const NewConversationComposer: FC<Props> = ({
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
 
-  const usageLimitsLabels = useMemo(
-    () => ({
-      triggerAriaLabel: ({ value }: { value: string }) =>
-        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
-      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
-      error: t(ConversationInputI18nKeys.Error),
-      tokensRemaining: ({ count }: { count: string }) =>
-        t(ConversationInputI18nKeys.TokensRemaining, { count }),
-      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
-        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
-    }),
-    [t],
-  );
-
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment);
@@ -437,6 +441,10 @@ const NewConversationComposer: FC<Props> = ({
   const handleSend = useCallback(
     async (text: string, attachments: Attachment[]) => {
       if (isSending || !selectedDeploymentId) return;
+      /* The active event's secret phrase celebrates instead of
+         starting a conversation. A no-op unless an event is ready, so the phrase
+         otherwise sends as an ordinary message. */
+      if (consumeSecretPhrase(text)) return;
       setIsSending(true);
       try {
         await onCreateConversation(text, attachments, chatSettingsValues);
@@ -455,6 +463,7 @@ const NewConversationComposer: FC<Props> = ({
     [
       isSending,
       selectedDeploymentId,
+      consumeSecretPhrase,
       onCreateConversation,
       chatSettingsValues,
       showErrorNotification,
@@ -485,6 +494,12 @@ const NewConversationComposer: FC<Props> = ({
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
+        {isCelebrationEnabled && <CelebrationDecor />}
+        {agentDescription && (
+          <Suspense fallback={null}>
+            <AgentDescription content={agentDescription} />
+          </Suspense>
+        )}
         <ConversationInput
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
@@ -573,9 +588,11 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
+          onChange={onChange}
           menuOverlays={menuOverlays}
-          inlineStartSlot={inlineStartSlot}
-          onInlineStartRemove={onInlineStartRemove}
+          activeMentions={activeMentions}
+          onBackspaceAtCaret={onBackspaceAtCaret}
+          caretPositionOverride={caretPositionOverride}
           commandMenu={commandMenu}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}
@@ -587,7 +604,6 @@ const NewConversationComposer: FC<Props> = ({
               deploymentId={
                 selectedDeployment?.id ?? selectedDeploymentId ?? undefined
               }
-              labels={usageLimitsLabels}
             />
           }
         />
@@ -597,11 +613,6 @@ const NewConversationComposer: FC<Props> = ({
           </p>
         )}
         {children}
-        {agentDescription && (
-          <Suspense fallback={null}>
-            <AgentDescription content={agentDescription} />
-          </Suspense>
-        )}
       </div>
       <FooterMessage />
       {isDialFileManagerOpen && (

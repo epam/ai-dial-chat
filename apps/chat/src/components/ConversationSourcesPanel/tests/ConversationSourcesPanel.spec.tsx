@@ -3,7 +3,12 @@ import type {
   ScheduledTaskRunDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  MIMEType,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
+import type { QuotationSource } from '@epam/ai-dial-source-panel';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -35,6 +40,8 @@ const mockRefetch = vi.fn();
 
 let mockUploaded: DisplayAttachment[] = [];
 let mockGenerated: DisplayAttachment[] = [];
+let mockSources: QuotationSource[] = [];
+const mockOpenAttachmentCanvas = vi.hoisted(() => vi.fn());
 
 const activeScheduledTaskMock = vi.hoisted(() => ({
   status: 'not-a-task-conversation' as
@@ -58,14 +65,27 @@ vi.mock('@epam/ai-dial-source-panel', () => ({
     onDownloadAll,
     title,
     additionalSections,
+    sources,
+    onSourceClick,
   }: {
     onDownloadAll?: () => void;
     title?: ReactNode;
     additionalSections?: ReactNode;
+    sources?: QuotationSource[];
+    onSourceClick?: (source: QuotationSource) => void;
   }) => (
     <div>
       {title && <h1>{title}</h1>}
       {additionalSections}
+      {sources?.map((source) => (
+        <button
+          key={source.url}
+          type="button"
+          onClick={() => onSourceClick?.(source)}
+        >
+          {source.title}
+        </button>
+      ))}
       {onDownloadAll && (
         <button
           type="button"
@@ -120,7 +140,7 @@ vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
   return {
     ...actual,
     useOpenAttachmentCanvas: () => ({
-      openAttachmentCanvas: vi.fn().mockResolvedValue(false),
+      openAttachmentCanvas: mockOpenAttachmentCanvas,
     }),
   };
 });
@@ -160,7 +180,7 @@ vi.mock(
       useConversationSources: () => ({
         uploaded: mockUploaded,
         generated: mockGenerated,
-        sources: [],
+        sources: mockSources,
       }),
     };
   },
@@ -688,5 +708,113 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
         name: /conversationPanel\.unreadIndicatorLabel$/,
       }),
     ).toBeTruthy();
+  });
+});
+
+describe('ConversationSourcesPanelContainer — source clicks', () => {
+  const makeSource = (url: string, contentType = ''): QuotationSource => ({
+    url,
+    title: 'Report',
+    contentType,
+  });
+
+  const clickSource = async () => {
+    render(<ConversationSourcesPanelContainer />);
+    await userEvent.click(screen.getByRole('button', { name: 'Report' }));
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUploaded = [];
+    mockGenerated = [];
+    mockSources = [];
+    mockConversations = [];
+    resetActiveScheduledTaskMock();
+    mockOpenAttachmentCanvas.mockResolvedValue(true);
+    vi.spyOn(window, 'open').mockReturnValue(null);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('opens a DIAL PDF page reference through its reference URL and closes the sidebar', async () => {
+    mockSources = [makeSource('files/bucket/report.pdf#page=81')];
+
+    await clickSource();
+
+    const [attachment] = mockOpenAttachmentCanvas.mock.lastCall ?? [];
+    expect(attachment).toMatchObject({
+      referenceUrl: 'files/bucket/report.pdf#page=81',
+      contentType: MIMEType.PDF,
+    });
+    expect(attachment.url).toBeUndefined();
+    expect(mockHandleClose).toHaveBeenCalledOnce();
+  });
+
+  it('opens an external PDF page reference through its reference URL', async () => {
+    mockSources = [makeSource('https://example.com/docs/outlook.pdf#page=12')];
+
+    await clickSource();
+
+    const [attachment] = mockOpenAttachmentCanvas.mock.lastCall ?? [];
+    expect(attachment).toMatchObject({
+      referenceUrl: 'https://example.com/docs/outlook.pdf#page=12',
+    });
+    expect(attachment.url).toBeUndefined();
+  });
+
+  it('downloads the fragment-free DIAL file when a page reference fails to open', async () => {
+    mockOpenAttachmentCanvas.mockResolvedValue(false);
+    mockSources = [makeSource('files/bucket/report.pdf#page=81')];
+
+    await clickSource();
+
+    expect(mockHandleAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'files/bucket/report.pdf',
+        referenceUrl: undefined,
+      }),
+    );
+    expect(window.open).not.toHaveBeenCalled();
+    expect(mockHandleClose).not.toHaveBeenCalled();
+  });
+
+  it('opens an external page reference in a new tab with its page fragment when the canvas fails', async () => {
+    mockOpenAttachmentCanvas.mockResolvedValue(false);
+    mockSources = [makeSource('https://example.com/docs/outlook.pdf#page=12')];
+
+    await clickSource();
+
+    expect(window.open).toHaveBeenCalledWith(
+      'https://example.com/docs/outlook.pdf#page=12',
+      '_blank',
+      'noopener,noreferrer',
+    );
+  });
+
+  it('opens a PDF without a page fragment through its regular URL', async () => {
+    mockSources = [makeSource('files/bucket/report.pdf', MIMEType.PDF)];
+
+    await clickSource();
+
+    const [attachment] = mockOpenAttachmentCanvas.mock.lastCall ?? [];
+    expect(attachment).toMatchObject({ url: 'files/bucket/report.pdf' });
+    expect(attachment.referenceUrl).toBeUndefined();
+  });
+
+  it('opens a web-search redirect URL without a file extension in a new tab', async () => {
+    const url =
+      'https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc';
+    mockSources = [makeSource(url, 'text/markdown')];
+
+    await clickSource();
+
+    expect(window.open).toHaveBeenCalledWith(
+      url,
+      '_blank',
+      'noopener,noreferrer',
+    );
+    expect(mockOpenAttachmentCanvas).not.toHaveBeenCalled();
   });
 });

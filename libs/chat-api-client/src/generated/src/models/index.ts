@@ -651,6 +651,18 @@ export interface ApplicationVisualizerDto {
    * @memberof ApplicationVisualizerDto
    */
   passExplicitToken?: boolean;
+  /**
+   * When true, the inline frame renders without its border, rounded corners, background, and header divider. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  borderless?: boolean;
+  /**
+   * When true, the inline frame hides its header title text; the header actions stay visible. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  withoutTitle?: boolean;
 }
 /**
  *
@@ -945,6 +957,18 @@ export interface Check200Response {
  */
 export interface ClientConfigDto {
   /**
+   * Whether a text refinement model is configured. Missing means unavailable.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  aiTextRefinementAvailable?: boolean;
+  /**
+   * Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  activeEventId: string | null;
+  /**
    * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.
    * @type {string}
    * @memberof ClientConfigDto
@@ -1016,6 +1040,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   overlayAllowedOrigins: Array<string>;
+  /**
+   * Trusted HTTP(S) connection origins from ALLOWED_CONNECT_ORIGINS, including leading *. subdomain patterns. PDF previews use browser credentials for matching external origins and reject redirects. Empty by default; upstream credentialed CORS and browser cookie policy still apply.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  allowedConnectOrigins?: Array<string>;
   /**
    * When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.
    * @type {Array<string>}
@@ -1231,6 +1261,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   title: string;
+  /**
+   * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  createdAt?: number;
   /**
    * Unix epoch milliseconds of the last update.
    * @type {number}
@@ -1631,6 +1667,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   llmNamingDone?: boolean;
+  /**
+   * Open, feature-keyed container for conversation-level view state. Currently defines exactly one key, `annotations`, holding the pool of html_tag citation annotations accumulated across the conversation. Any other key is opaque and preserved as-is.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ConversationResponseDto
+   */
+  customViewState?: { [key: string]: unknown };
 }
 
 /**
@@ -2180,6 +2222,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
   /**
    *
    * @type {boolean}
@@ -5666,6 +5714,39 @@ export type RateMessageDtoRateEnum =
 /**
  *
  * @export
+ * @interface RefineTextRequestDto
+ */
+export interface RefineTextRequestDto {
+  /**
+   * Server-owned rewriting purpose
+   * @type {TextRefinementPurpose}
+   * @memberof RefineTextRequestDto
+   */
+  purpose: TextRefinementPurpose;
+  /**
+   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, either Instructions 32000.
+   * @type {string}
+   * @memberof RefineTextRequestDto
+   */
+  text: string;
+}
+
+/**
+ *
+ * @export
+ * @interface RefineTextResponseDto
+ */
+export interface RefineTextResponseDto {
+  /**
+   * Complete refined draft, bounded by the same purpose-specific Unicode limits as the input.
+   * @type {string}
+   * @memberof RefineTextResponseDto
+   */
+  text: string;
+}
+/**
+ *
+ * @export
  * @interface RenameConversationBodyDto
  */
 export interface RenameConversationBodyDto {
@@ -6032,6 +6113,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isCompleted?: boolean;
   /**
    *
    * @type {boolean}
@@ -6724,6 +6811,20 @@ export interface StopCompletionDto {
    */
   path: string;
 }
+
+/**
+ * Server-owned rewriting purpose
+ * @export
+ */
+export const TextRefinementPurpose = {
+  SkillDescription: 'skill-description',
+  SkillInstructions: 'skill-instructions',
+  ScheduledTaskDescription: 'scheduled-task-description',
+  ScheduledTaskInstructions: 'scheduled-task-instructions',
+} as const;
+export type TextRefinementPurpose =
+  (typeof TextRefinementPurpose)[keyof typeof TextRefinementPurpose];
+
 /**
  *
  * @export
@@ -7787,6 +7888,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
   /**
    *
    * @type {boolean}

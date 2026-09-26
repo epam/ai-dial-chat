@@ -5,6 +5,9 @@ import {
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
   useAvailableHeightCap,
+  TextRefinementField,
+  useTextRefinement,
+  type TextRefinementCallback,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
@@ -34,10 +37,12 @@ import {
   Suspense,
   useEffect,
   useId,
+  useRef,
   useState,
   type FC,
   type FocusEventHandler,
 } from 'react';
+import { SCHEDULED_TASKS_CLASS } from '../../constants/public-class-names';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
@@ -81,12 +86,50 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   onCancel,
   onSubmit,
   isSubmitting = false,
+  onRefineDescription,
+  onRefineInstructions,
   markdownEditorTheme,
   backIcon,
   className,
   styles: formStyles,
 }) => {
+  const descriptionId = useId();
   const instructionsEditorId = useId();
+  const refinementLock = useRef<AbortSignal | undefined>(undefined);
+  const guardRefinement = (
+    callback?: TextRefinementCallback,
+  ): TextRefinementCallback | undefined =>
+    callback
+      ? async (value, signal) => {
+          if (refinementLock.current && !refinementLock.current.aborted)
+            throw new DOMException('Busy', 'AbortError');
+          refinementLock.current = signal;
+          try {
+            return await callback(value, signal);
+          } finally {
+            if (refinementLock.current === signal)
+              refinementLock.current = undefined;
+          }
+        }
+      : undefined;
+  const descriptionRefinement = useTextRefinement({
+    value: values.description ?? '',
+    onChange: (value) => onFieldChange('description', value),
+    onRefine: guardRefinement(onRefineDescription),
+    disabled: isSubmitting,
+  });
+  const instructionsRefinement = useTextRefinement({
+    value: values.prompt,
+    onChange: (value) => onFieldChange('prompt', value),
+    onRefine: guardRefinement(onRefineInstructions),
+    disabled: isSubmitting,
+  });
+  const isRefining =
+    descriptionRefinement.isPending || instructionsRefinement.isPending;
+  const resetRefinement = () => {
+    descriptionRefinement.reset();
+    instructionsRefinement.reset();
+  };
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const [timeBlurError, setTimeBlurError] = useState<string>();
   const { colors, typography, layout } = formStyles ?? {};
@@ -103,8 +146,18 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     '--stcf-details-border': colors?.detailsColumnBorder,
     '--stcf-subtitle-text': colors?.sectionSubtitleText,
     '--stcf-error-text': colors?.instructionsErrorText,
+    '--stcf-refine-action-text': colors?.refineActionText,
+    '--stcf-refine-error-text': colors?.refineErrorText,
   });
 
+  const refinementStyles = {
+    feedbackClassName: mergeClasses(
+      styles.refineFeedback,
+      typography?.refineFeedbackClassName ?? 'dial-small-text',
+      SCHEDULED_TASKS_CLASS.refineFeedback,
+    ),
+    errorClassName: styles.refineError,
+  };
   /*
    * The masked time input only reports complete `HH:mm` values through
    * onChange, so a cleared or half-typed draft never reaches `values.time` —
@@ -148,6 +201,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
   const isCreateDisabled =
     isSubmitting ||
+    isRefining ||
     !values.displayName.trim() ||
     !values.modelId ||
     (!values.prompt.trim() && !values.skillUrl?.trim()) ||
@@ -166,9 +220,21 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
         submitButtonLabel: labels.createButtonLabel,
         submittingLabel: labels.submittingLabel ?? 'Saving',
       }}
-      onBack={onBack}
-      onCancel={onCancel}
-      onSubmit={onSubmit}
+      onBack={() => {
+        resetRefinement();
+        onBack();
+      }}
+      onCancel={() => {
+        resetRefinement();
+        onCancel();
+      }}
+      onSubmit={() => {
+        if (
+          !isCreateDisabled &&
+          (!refinementLock.current || refinementLock.current.aborted)
+        )
+          onSubmit();
+      }}
       isCancelDisabled={isSubmitting}
       isSubmitDisabled={isCreateDisabled}
       isSubmitting={isSubmitting}
@@ -231,20 +297,37 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             error={errors.displayName}
           />
 
-          <Textarea
-            id="scheduled-task-description"
-            value={values.description ?? ''}
-            onChange={(value) => onFieldChange('description', value)}
-            labelProps={{ label: labels.descriptionLabel }}
-            maxLength={DESCRIPTION_MAX_LENGTH}
-            invalid={Boolean(errors.description)}
-            error={errors.description}
-            caption={
-              values.description
-                ? `${values.description.length}/${DESCRIPTION_MAX_LENGTH}`
-                : undefined
-            }
-          />
+          <TextRefinementField
+            isEnabled={Boolean(onRefineDescription)}
+            fieldId={descriptionId}
+            label={labels.descriptionLabel}
+            labels={labels}
+            refinement={descriptionRefinement}
+            disabled={isSubmitting || isRefining}
+            {...refinementStyles}
+          >
+            <Textarea
+              id={descriptionId}
+              value={values.description ?? ''}
+              onChange={(value) => {
+                descriptionRefinement.reset();
+                onFieldChange('description', value);
+              }}
+              labelProps={
+                onRefineDescription
+                  ? undefined
+                  : { label: labels.descriptionLabel }
+              }
+              maxLength={DESCRIPTION_MAX_LENGTH}
+              invalid={Boolean(errors.description)}
+              error={errors.description}
+              caption={
+                values.description
+                  ? `${values.description.length}/${DESCRIPTION_MAX_LENGTH}`
+                  : undefined
+              }
+            />
+          </TextRefinementField>
 
           <div className="flex flex-col gap-1">
             <Label
@@ -489,48 +572,64 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             </p>
           )}
         </div>
-        <div className="flex flex-1 flex-col gap-1">
-          {/*
-           * A real <label for>, not a span: the markdown editor renders a plain
-           * textarea, and text sitting next to it names nothing the browser
-           * associates with the control.
-           */}
-          <label
-            htmlFor={instructionsEditorId}
-            className={instructionsLabelClassName}
-          >
-            {labels.instructionsLabel}
-          </label>
-          <div
-            ref={instructionsCapRef}
-            className={mergeClasses(
-              'w-full max-w-[996px]',
-              MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
-              MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+        <TextRefinementField
+          isEnabled={Boolean(onRefineInstructions)}
+          fieldId={instructionsEditorId}
+          labelClassName={instructionsLabelClassName}
+          label={labels.instructionsLabel}
+          labels={labels}
+          refinement={instructionsRefinement}
+          disabled={isSubmitting || isRefining}
+          {...refinementStyles}
+        >
+          <div className="flex flex-1 flex-col gap-1">
+            {/*
+             * A real <label for>, not a span: the markdown editor renders a plain
+             * textarea, and text sitting next to it names nothing the browser
+             * associates with the control.
+             */}
+            {!onRefineInstructions && (
+              <label
+                htmlFor={instructionsEditorId}
+                className={instructionsLabelClassName}
+              >
+                {labels.instructionsLabel}
+              </label>
             )}
-          >
-            <Suspense fallback={<Spinner />}>
-              <MarkdownEditor
-                id={instructionsEditorId}
-                value={values.prompt}
-                onChange={(value) => onFieldChange('prompt', value)}
-                height={480}
-                theme={markdownEditorTheme}
-                placeholder={labels.instructionsPlaceholder}
-              />
-            </Suspense>
-          </div>
-          {errors.prompt && (
-            <p
+            <div
+              ref={instructionsCapRef}
               className={mergeClasses(
-                instructionsErrorClassName,
-                styles.instructionsError,
+                'w-full max-w-[996px]',
+                MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+                MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
               )}
             >
-              {errors.prompt}
-            </p>
-          )}
-        </div>
+              <Suspense fallback={<Spinner />}>
+                <MarkdownEditor
+                  id={instructionsEditorId}
+                  value={values.prompt}
+                  onChange={(value) => {
+                    instructionsRefinement.reset();
+                    onFieldChange('prompt', value);
+                  }}
+                  height={480}
+                  theme={markdownEditorTheme}
+                  placeholder={labels.instructionsPlaceholder}
+                />
+              </Suspense>
+            </div>
+            {errors.prompt && (
+              <p
+                className={mergeClasses(
+                  instructionsErrorClassName,
+                  styles.instructionsError,
+                )}
+              >
+                {errors.prompt}
+              </p>
+            )}
+          </div>
+        </TextRefinementField>
       </div>
     </BuilderFormContainer>
   );

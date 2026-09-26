@@ -684,7 +684,7 @@ describe('DialFileManagerShell', () => {
       expect(
         capturedDialFileManagerProps.current?.toolbarOptions?.newActions
           ?.uploadArchive,
-      ).toEqual({ label: baseLabels.uploadArchiveAction });
+      ).toEqual({ label: baseLabels.uploadArchiveAction, icon: null });
     });
 
     it('is absent on the shared tab', () => {

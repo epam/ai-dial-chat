@@ -52,6 +52,10 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'light' }),
 }));
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
+}));
+
 vi.mock('../../../context/ConversationPanelContext', () => ({
   useConversationPanel: () => ({ closePanel: vi.fn() }),
 }));

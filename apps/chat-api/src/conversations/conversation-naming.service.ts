@@ -18,6 +18,7 @@ import {
   getApiKeyAuthHeaders,
   getBearerAuthHeaders,
 } from '../common/utils/auth-header';
+import { resolvePrompt } from '../common/utils/resolve-prompt';
 import { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
 import { ConversationResponseDto } from '../openapi/openapi-response.dto';
@@ -392,7 +393,15 @@ export class ConversationNamingService {
         {
           body: {
             messages: [
-              { role: 'system', content: CONVERSATION_NAMING_SYSTEM_PROMPT },
+              {
+                role: 'system',
+                content: resolvePrompt(
+                  this.configService.get('CONVERSATION_NAMING_SYSTEM_PROMPT', {
+                    infer: true,
+                  }),
+                  CONVERSATION_NAMING_SYSTEM_PROMPT,
+                ),
+              },
               { role: 'user', content: userContent },
             ],
             stream: false,

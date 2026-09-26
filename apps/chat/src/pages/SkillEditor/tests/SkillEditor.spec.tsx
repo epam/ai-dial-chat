@@ -60,6 +60,10 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'light' }),
 }));
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
@@ -296,7 +300,9 @@ describe('SkillEditor page', () => {
         }),
       ),
     );
-    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/catalog?itemId=skills%2Fmy-bucket%2Fgood-morning-breakfast',
+    );
   });
 
   it('refreshes the skill catalog before navigating after create', async () => {
@@ -314,7 +320,11 @@ describe('SkillEditor page', () => {
     await user.click(getCreateButton());
 
     await waitFor(() => expect(refetchSkills).toHaveBeenCalledOnce());
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/catalog'));
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/catalog?itemId=skills%2Fmy-bucket%2Fnew-catalog-skill',
+      ),
+    );
   });
 
   it('blocks submission with a required-field error when Instructions is empty', async () => {

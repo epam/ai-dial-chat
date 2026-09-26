@@ -92,9 +92,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onDelete,
     isDeleting,
     isDeleted,
+    isCompleted,
     isActive,
     isActiveUpdating,
     isActiveDisabled,
+    activeDisabledReason,
     onActiveChange,
     displayName,
     isLoading,
@@ -105,6 +107,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     skillDisplayName,
     repeatsLabel,
     activeWindowLabel,
+    completedLabel,
     nextRunLabel,
     runs,
     runsError,
@@ -122,15 +125,18 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       deletedStateLabel: string;
       activeStatusLabel: string;
       activeStatusAnnouncement?: string;
+      completedFieldLabel: string;
     };
     onBack: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
     isDeleting?: boolean;
     isDeleted?: boolean;
+    isCompleted?: boolean;
     isActive?: boolean;
     isActiveUpdating?: boolean;
     isActiveDisabled?: boolean;
+    activeDisabledReason?: string;
     onActiveChange?: (nextActive: boolean) => void;
     displayName: string;
     isLoading?: boolean;
@@ -141,6 +147,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     skillDisplayName?: string;
     repeatsLabel?: string;
     activeWindowLabel?: string;
+    completedLabel?: string;
     nextRunLabel?: string;
     runs: { id: string; conversationId?: string; isUnread?: boolean }[];
     runsError?: Error | null;
@@ -163,6 +170,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <span>skill:{skillDisplayName}</span>
       <span>repeatsLabel:{repeatsLabel}</span>
       <span>activeWindowLabel:{activeWindowLabel}</span>
+      {completedLabel && <span>completedLabel:{completedLabel}</span>}
+      {activeDisabledReason && (
+        <span>disabledReason:{activeDisabledReason}</span>
+      )}
       <span>nextRunLabel:{nextRunLabel}</span>
       <span>runs:{runs.length}</span>
       {runs.map((run) => (
@@ -186,7 +197,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
           {labels.editButtonLabel}
         </button>
       )}
-      {isActive !== undefined && (
+      {!isDeleted && !isCompleted && isActive !== undefined && (
         <>
           <input
             type="checkbox"
@@ -1274,5 +1285,98 @@ describe('ScheduledTaskDetailPage', () => {
       expect(screen.queryByRole('switch')).toBeNull();
       expect(screen.getByText('runs:1')).toBeTruthy();
     });
+  });
+});
+
+describe('ScheduledTaskDetailPage — completed state', () => {
+  it('renders the completed label and hides the active switch for a finished one-time task', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'One-time report',
+      trigger: { date: '2020-01-01T00:00:00.000Z' },
+      triggerType: 'date',
+      isActive: false,
+      isCompleted: true,
+      nextRunTime: null,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'completedLabel:scheduledTasks.card.completedBadgeLabel',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
+
+    expect(pauseScheduledTaskMock).not.toHaveBeenCalled();
+    expect(resumeScheduledTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('hides the active switch and shows the completed label for a recurring schedule whose activity window has ended', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          endDate: '2020-01-01T00:00:00.000Z',
+        },
+      },
+      triggerType: 'cron',
+      isActive: false,
+      isCompleted: true,
+      nextRunTime: undefined,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'completedLabel:scheduledTasks.card.completedBadgeLabel',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
+  });
+
+  it('keeps the switch disabled with a reason when the completed signal is missing but the fields show exhaustion', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'One-time report',
+      trigger: { date: '2020-01-01T00:00:00.000Z' },
+      triggerType: 'date',
+      isActive: false,
+      nextRunTime: null,
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'disabledReason:scheduledTasks.detail.activeDisabledReasonCompleted',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
+    expect(screen.queryByText(/^completedLabel:/)).toBeNull();
+  });
+
+  it('renders no completed label for a task that has not completed', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+      triggerType: 'cron',
+      isActive: true,
+      isCompleted: false,
+      nextRunTime: '2030-01-01T09:00:00.000Z',
+    });
+    renderDetailPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    expect(screen.queryByText(/^completedLabel:/)).toBeNull();
+    expect(screen.queryByText(/^disabledReason:/)).toBeNull();
   });
 });

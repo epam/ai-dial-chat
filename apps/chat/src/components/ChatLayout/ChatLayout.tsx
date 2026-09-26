@@ -16,6 +16,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ROUTES } from '../../types/routes';
+import Logo from '../Header/Logo';
 import SourcesSidebarToggle from '../Header/SourcesSidebarToggle';
 
 interface Props {
@@ -33,44 +34,49 @@ const ChatLayout: FC<Props> = ({ isPanelOpen, onTogglePanel, onNewChat }) => {
   const isNewConversationHidden = useUiFeature(
     OverlayFeature.HideNewConversation,
   );
+  const isHeaderLogoShown = useUiFeature(OverlayFeature.ShowHeaderLogo);
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div
         className={mergeClasses(
-          'hidden items-center gap-2 px-2 desktop:flex',
+          'hidden grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 desktop:grid',
           isRootRoute ? 'absolute inset-x-0 top-0 z-10 h-16' : 'h-16 shrink-0',
         )}
       >
-        {isConversationsPanelToggleEnabled && (
-          <GhostIconButton
-            icon={
-              <IconLayoutSidebarRight
-                size={DIAL_ICON_SIZE.LG}
-                stroke={DIAL_KIT_ICON_STROKE}
-                className="rtl:scale-x-[-1]"
-              />
-            }
-            aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-            tooltipProps={{
-              tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel),
-            }}
-            onClick={onTogglePanel}
-          />
-        )}
-        {!isPanelOpen && !isNewConversationHidden && (
-          <GhostIconButton
-            icon={
-              <IconPlus
-                size={DIAL_ICON_SIZE.LG}
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            }
-            aria-label={t(ButtonsI18nKeys.NewChat)}
-            tooltipProps={{ tooltip: t(ButtonsI18nKeys.NewChat) }}
-            onClick={onNewChat}
-          />
-        )}
-        <div className="ms-auto">
+        <div className="flex items-center gap-2">
+          {isConversationsPanelToggleEnabled && (
+            <GhostIconButton
+              icon={
+                <IconLayoutSidebarRight
+                  size={DIAL_ICON_SIZE.LG}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  className="rtl:scale-x-[-1]"
+                />
+              }
+              aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
+              tooltipProps={{
+                tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel),
+              }}
+              onClick={onTogglePanel}
+            />
+          )}
+          {!isPanelOpen && !isNewConversationHidden && (
+            <GhostIconButton
+              icon={
+                <IconPlus
+                  size={DIAL_ICON_SIZE.LG}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
+              aria-label={t(ButtonsI18nKeys.NewChat)}
+              tooltipProps={{ tooltip: t(ButtonsI18nKeys.NewChat) }}
+              onClick={onNewChat}
+            />
+          )}
+        </div>
+        {/* An empty center cell keeps the grid's side columns in place. */}
+        <div>{isHeaderLogoShown && <Logo />}</div>
+        <div className="flex justify-end">
           <SourcesSidebarToggle />
         </div>
       </div>

@@ -1,0 +1,40 @@
+.scene,
+.carrier,
+.cargo,
+.web {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.scene {
+  overflow: hidden;
+}
+.carrier {
+  transform: translateY(-110%);
+}
+.web {
+  inline-size: 100%;
+  block-size: 100%;
+  opacity: 0;
+  filter: drop-shadow(0 0.4px 0.45px #1a263a66);
+}
+.silk {
+  stroke: #e2e7e8;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+/* Threads and their cargo use the same physical viewport coordinates in RTL. */
+.thread {
+  position: absolute;
+  inset-block-start: 0;
+  inline-size: 1px;
+  background: linear-gradient(#c1d0df28, #e2e7e899);
+}
+.spider {
+  position: absolute;
+}
+.body.body {
+  inline-size: 100%;
+  block-size: 100%;
+}

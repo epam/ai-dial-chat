@@ -110,13 +110,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Button: ({
     onClick,
     label,
+    className,
     'aria-current': ariaCurrent,
   }: {
     onClick?: () => void;
     label?: React.ReactNode;
+    className?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
   }) => (
-    <button onClick={onClick} aria-current={ariaCurrent}>
+    <button onClick={onClick} className={className} aria-current={ariaCurrent}>
       {label}
     </button>
   ),

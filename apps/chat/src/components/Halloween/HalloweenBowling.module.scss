@@ -1,0 +1,26 @@
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.actor {
+  position: absolute;
+  inset-inline-start: calc(50% - 55px);
+  inset-block-start: calc(50% - 55px);
+  inline-size: 110px;
+  aspect-ratio: 1;
+  /* Animated positions come from physical viewport geometry, also in RTL. */
+  inset-inline-end: auto;
+  svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 3px 3px #17242d50);
+  }
+}
+.spin {
+  transform-origin: 80px 83px;
+}

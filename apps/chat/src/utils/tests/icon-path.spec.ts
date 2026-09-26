@@ -1,7 +1,41 @@
 import { describe, it, expect } from 'vitest';
 import { ApiEndpoints } from '../../server-api/base';
 import { resolveDialFileDownloadUrl, resolveMarkdownUrl } from '../dial-file';
-import { getIconPath } from '../icon-path';
+import { getIconMimeType, getIconPath } from '../icon-path';
+
+describe('getIconMimeType', () => {
+  it('returns image/svg+xml for an SVG icon regardless of extension case', () => {
+    expect(getIconMimeType('chat-favicon.svg')).toBe('image/svg+xml');
+    expect(getIconMimeType('CHAT-FAVICON.SVG')).toBe('image/svg+xml');
+  });
+
+  it('returns the raster MIME type for PNG and ICO icons', () => {
+    expect(getIconMimeType('favicon.png')).toBe('image/png');
+    expect(getIconMimeType('favicon.ico')).toBe('image/x-icon');
+  });
+
+  it('ignores a query string or fragment after the extension', () => {
+    expect(getIconMimeType('https://cdn.example.com/logo.svg?v=2')).toBe(
+      'image/svg+xml',
+    );
+    expect(getIconMimeType('logo.svg#brand')).toBe('image/svg+xml');
+  });
+
+  it('returns undefined for a missing or unknown extension', () => {
+    expect(getIconMimeType(undefined)).toBeUndefined();
+    expect(getIconMimeType('favicon')).toBeUndefined();
+    expect(getIconMimeType('favicon.bmpx')).toBeUndefined();
+  });
+
+  it('reads the extension from the file name, not a dotted directory', () => {
+    expect(getIconMimeType('https://cdn.example.com/assets.svg/logo')).toBe(
+      undefined,
+    );
+    expect(getIconMimeType('https://cdn.example.com/v2.0/logo.png')).toBe(
+      'image/png',
+    );
+  });
+});
 
 describe('getIconPath', () => {
   it('should return correct URL format for icon name', () => {

@@ -2,14 +2,11 @@
   background: var(--cp-new-chat-bg, var(--bg-control-neutral, #fcfcfc));
   color: var(--cp-new-chat-text, var(--text-accent, #1d4ed8));
   /*
-   * This is a hand-rolled button rather than the ui-kit `Button`, so it does
-   * not inherit the kit's control radius on its own. Reading the same token
-   * keeps it in step with every other labelled button in a host app; the
-   * fallback is the fully rounded pill it has always been.
+   * The kit's `.dial-kit-base-button:focus-visible` sets its own outline
+   * colour at the same specificity, so the doubled class makes this package's
+   * `--cp-new-chat-focus-outline` win whichever stylesheet loads last.
    */
-  border-radius: var(--radius-control, 9999px);
-
-  &:focus-visible {
+  &#{&}:focus-visible {
     outline: 1px solid
       var(--cp-new-chat-focus-outline, var(--stroke-focus-black, #161b2d));
     outline-offset: 0;

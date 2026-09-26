@@ -1,3 +1,4 @@
+import type { TextRefinementLabels } from '@epam/ai-dial-chat-shared';
 import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { SkillFileNodeKind } from '../types/skill-file-node-kind';
@@ -119,7 +120,7 @@ export interface SkillEditorFileActions {
 }
 
 /** Text overrides for `SkillEditor`. Every field has an English default. */
-export interface SkillEditorLabels {
+export interface SkillEditorLabels extends TextRefinementLabels {
   /** Files pane heading. Defaults to `'Files'`. */
   filesHeading?: string;
   /** Accessible name of the file tree region. Defaults to `'Skill files'`. */
@@ -206,6 +207,10 @@ export interface SkillEditorConflict {
 
 /** CSS custom-property color overrides for `SkillEditor`. */
 export interface SkillEditorColors {
+  /** Refinement status text color. Defaults to --text-primary. */
+  refineActionText?: string;
+  /** Refinement error color. Defaults to --text-error. */
+  refineErrorText?: string;
   /** Color of the "Files" and selected-file section headings. Defaults to `--text-primary`. */
   title?: string;
   /** Color of the hand-rendered Instructions field label. Defaults to `--text-secondary`. */
@@ -216,6 +221,8 @@ export interface SkillEditorColors {
 
 /** Typography class overrides for `SkillEditor`. */
 export interface SkillEditorTypography {
+  /** Refinement feedback typography. Defaults to 'dial-small-text'. */
+  refineFeedbackClassName?: string;
   /** Typography class applied to the "Files" and selected-file section headings. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** Typography class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text'`. */
@@ -234,6 +241,13 @@ export interface SkillEditorStyles {
 
 /** Props for `SkillEditor`. */
 export interface SkillEditorProps {
+  /** Optional Description rewrite callback; omission hides its action. */
+  onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
+  /** Optional Instructions rewrite callback; omission hides its action. */
+  onRefineInstructions?: (
+    value: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
   /**
    * Values to seed the fields with. Changing this object's identity re-seeds
    * the form, so hosts that load asynchronously should memoise it and only

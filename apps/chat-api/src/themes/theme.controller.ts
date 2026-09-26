@@ -6,6 +6,18 @@ import { Public } from '../common/decorators/public.decorator';
 import { ThemeConfigResponseDto } from '../openapi/openapi-response.dto';
 import { GetThemeIconDto } from './dto/get-theme-icon.dto';
 import { ThemeService } from './theme.service';
+
+const SVG_MIME_TYPE = 'image/svg+xml';
+
+/*
+ * An SVG is an active document: opened directly from this origin it could run
+ * embedded scripts. This policy is scoped to the icon response itself, so it
+ * holds even when the global CSP runs in report-only mode, and it does not
+ * affect rendering through <img>, CSS background-image, or <link rel="icon">.
+ */
+const SVG_CONTENT_SECURITY_POLICY =
+  "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+
 /**
  * Controller for theme-related endpoints.
  *
@@ -58,10 +70,11 @@ export class ThemeController {
   }
 
   /**
-   * Retrieves a theme icon as SVG content.
+   * Retrieves a theme icon (SVG, PNG, ICO, …) by filename.
    *
    * @param query - Query parameters containing the icon name
-   * @returns SVG content as a string with appropriate Content-Type header
+   * @returns The icon content with a Content-Type derived from its extension;
+   * SVG responses also carry a restrictive, sandboxed Content-Security-Policy
    *
    * @throws {BadRequestException} When the icon name contains invalid characters (path traversal attempt)
    * @throws {NotFoundException} When the requested icon is not found
@@ -122,9 +135,12 @@ export class ThemeController {
     const file = await this.themeService.getThemeIcon(query.iconName || '');
 
     const mimeType =
-      lookup(query.iconName || '') || 'image/svg+xml; charset=utf-8';
+      lookup(query.iconName || '') || `${SVG_MIME_TYPE}; charset=utf-8`;
 
     res.setHeader('Content-Type', mimeType);
+    if (mimeType.startsWith(SVG_MIME_TYPE)) {
+      res.setHeader('Content-Security-Policy', SVG_CONTENT_SECURITY_POLICY);
+    }
 
     return res.send(file);
   }

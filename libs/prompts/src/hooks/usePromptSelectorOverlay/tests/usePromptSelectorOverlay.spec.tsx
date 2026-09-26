@@ -100,7 +100,7 @@ describe('usePromptSelectorOverlay', () => {
     render(<Harness onInsertText={onInsertText} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Greeting' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Greeting' }));
 
     expect(onInsertText).toHaveBeenCalledWith('Hello there!');
     expect(screen.queryByText('Greeting')).toBeNull();
@@ -125,7 +125,7 @@ describe('usePromptSelectorOverlay', () => {
     render(<Harness />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
     await userEvent.click(
       screen.getByRole('button', { name: 'Pick browse prompt' }),
     );
@@ -157,7 +157,7 @@ describe('usePromptSelectorOverlay', () => {
     render(<Harness onInsertText={onInsertText} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
     await userEvent.click(
       screen.getByRole('button', { name: 'Pick browse prompt' }),
     );
@@ -177,7 +177,7 @@ describe('usePromptSelectorOverlay', () => {
     render(<Harness onInsertText={onInsertText} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
     await userEvent.click(
       screen.getByRole('button', { name: 'Pick browse prompt' }),
     );
@@ -209,7 +209,7 @@ describe('usePromptSelectorOverlay', () => {
     render(<Harness />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
 
     /* The popover (renderOverlay) is unmounted the moment Browse is clicked — the
        catalog modal it opened must still be there. */
@@ -230,7 +230,7 @@ describe('usePromptSelectorOverlay', () => {
     render(<Harness renderCatalog={renderCatalog} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
 
     expect(screen.getByText('Custom host catalog')).toBeTruthy();
   });
@@ -244,7 +244,7 @@ describe('usePromptSelectorOverlay', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    const row = screen.getByRole('button', { name: 'Greeting' });
+    const row = screen.getByRole('menuitem', { name: 'Greeting' });
     row.focus();
     await userEvent.keyboard('{Enter}');
 

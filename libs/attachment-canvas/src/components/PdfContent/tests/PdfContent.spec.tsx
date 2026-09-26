@@ -364,6 +364,22 @@ describe('PdfContent', () => {
       expect(input.value).toBe('6');
     });
 
+    it('moves to the new page when selectedPageNumber changes on an open document', () => {
+      const { rerender } = render(
+        <PdfContent url="doc.pdf" highlights={[]} selectedPageNumber={3} />,
+      );
+      setTotalPages(50);
+
+      rerender(
+        <PdfContent url="doc.pdf" highlights={[]} selectedPageNumber={8} />,
+      );
+      openThumbnailsPanel();
+
+      const input = screen.getByLabelText('Page number') as HTMLInputElement;
+      expect(input.value).toBe('8');
+      expect(documentPreviewState.props?.selectedPageNumber).toBe(8);
+    });
+
     it('falls back to the existing highlight-derived page when selectedPageNumber is absent', () => {
       render(
         <PdfContent

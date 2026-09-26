@@ -10,10 +10,8 @@ import {
   type ScheduledTaskRunDto,
   ScheduledTaskRunStatus,
 } from './dto/scheduled-task-run.dto';
-import type {
-  ScheduledTaskDto,
-  ScheduleTriggerType,
-} from './dto/scheduled-task.dto';
+import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
+import { ScheduleTriggerType } from './dto/scheduled-task.dto';
 
 interface UpstreamScheduleTrigger {
   date?: string;
@@ -63,9 +61,10 @@ export interface UpstreamScheduleResponse {
   created_at?: string;
   updated_at?: string;
   /*
-   * List items only carry `trigger_type` (no nested `trigger`); `trigger`
-   * above is populated for shapes that do include it (e.g. create/update
-   * responses), so both are read here rather than picking one.
+   * List items only carry `trigger_type` (no nested `trigger`); GET responses
+   * carry the nested `trigger` with no `trigger_type`, and create/update
+   * responses carry both — so `triggerType` is derived from whichever source
+   * is present (see `deriveTriggerType`).
    */
   trigger_type?: string;
   service_id?: string;
@@ -196,6 +195,25 @@ const deriveIsActive = (
   return upstream.next_run_time != null;
 };
 
+/*
+ * List responses carry `trigger_type` but no nested `trigger`; GET responses
+ * (observed live) carry the nested `trigger` with no `trigger_type`. Derive
+ * the trigger kind from whichever source is present so the DTO always names
+ * it — the completed-state derivation and the detail page's field fallbacks
+ * both branch on `triggerType`.
+ */
+const deriveTriggerType = (
+  upstream: UpstreamScheduleResponse,
+): ScheduleTriggerType | undefined => {
+  if (upstream.trigger?.cron != null) {
+    return ScheduleTriggerType.Cron;
+  }
+  if (upstream.trigger?.date != null) {
+    return ScheduleTriggerType.Date;
+  }
+  return upstream.trigger_type as ScheduleTriggerType | undefined;
+};
+
 export const fromUpstreamSchedule = (
   upstream: UpstreamScheduleResponse,
 ): ScheduledTaskDto => ({
@@ -214,7 +232,7 @@ export const fromUpstreamSchedule = (
   nextRunTime: upstream.next_run_time,
   createdAt: upstream.created_at,
   updatedAt: upstream.updated_at,
-  triggerType: upstream.trigger_type as ScheduleTriggerType | undefined,
+  triggerType: deriveTriggerType(upstream),
   isActive: deriveIsActive(upstream),
   isDeleted: upstream.is_deleted ?? false,
   serviceId: upstream.service_id,

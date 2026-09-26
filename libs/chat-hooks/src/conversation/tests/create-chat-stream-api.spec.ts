@@ -3,6 +3,8 @@ import {
   createChatStreamApi,
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
   GenerationConflictError,
+  GenerationPersistenceError,
+  StreamUpstreamError,
 } from '../create-chat-stream-api';
 
 let csrfToken: string | null = null;
@@ -106,6 +108,27 @@ describe('createChatStreamApi', () => {
     expect(error.message).toBe(DEFAULT_GENERATION_CONFLICT_MESSAGE);
   });
 
+  it('reports persistence failure after upstream DONE without completing successfully or exposing raw error text', async () => {
+    const encoder = new TextEncoder();
+    fetchMock.mockResolvedValue(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(
+                'data: [DONE]\n\ndata: {"error":{"type":"conversation_save_failed","message":"private upstream detail"}}\n\n',
+              ),
+            );
+            controller.close();
+          },
+        }),
+      ),
+    );
+    const error = await failStreamRequest();
+    expect(error).toBeInstanceOf(GenerationPersistenceError);
+    expect(error.message).not.toContain('private upstream detail');
+  });
+
   it('reports any other non-OK completion response as a plain transport error', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 502 }));
 
@@ -113,6 +136,71 @@ describe('createChatStreamApi', () => {
 
     expect(error).not.toBeInstanceOf(GenerationConflictError);
     expect(error.message).toBe('Stream request failed with status 502');
+  });
+
+  const streamOf = (body: string): ReadableStream<Uint8Array> =>
+    new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(body));
+        controller.close();
+      },
+    });
+
+  it('reports an in-band DIAL Core error chunk as a StreamUpstreamError', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        streamOf('data: {"error":{"message":"Model overloaded"}}\n\n'),
+        { status: 200 },
+      ),
+    );
+
+    const error = await failStreamRequest();
+
+    expect(error).toBeInstanceOf(StreamUpstreamError);
+    expect(error.message).toBe('Model overloaded');
+  });
+
+  describe('transport failures stay untagged', () => {
+    const expectUntagged = (error: Error) => {
+      expect(error).not.toBeInstanceOf(StreamUpstreamError);
+      expect(error).not.toBeInstanceOf(GenerationConflictError);
+    };
+
+    it('leaves a rejected fetch untagged', async () => {
+      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+      expectUntagged(await failStreamRequest());
+    });
+
+    it('leaves a 502 response untagged', async () => {
+      fetchMock.mockResolvedValue(new Response(null, { status: 502 }));
+
+      expectUntagged(await failStreamRequest());
+    });
+
+    it('leaves a missing response body untagged', async () => {
+      fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+
+      const error = await failStreamRequest();
+
+      expectUntagged(error);
+      expect(error.message).toBe('No response body');
+    });
+
+    it('leaves a stream that breaks mid-read untagged', async () => {
+      fetchMock.mockResolvedValue(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            pull(controller) {
+              controller.error(new TypeError('network error'));
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+
+      expectUntagged(await failStreamRequest());
+    });
   });
 
   it('sends the current browser timezone with each completion request', async () => {

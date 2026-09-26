@@ -234,6 +234,8 @@ additional role restriction.
 
 ### Requirement: Quick Apps always get features.skills_supported: true
 
+Every chat-originated Quick App create or update SHALL persist `features.skills_supported: true`; the rationale and mechanics follow.
+
 When a user creates a Quick App from the Admin application, Admin's own UI lets them set the
 `skills_supported` feature flag. Chat has no equivalent UI control for this flag, so a Quick App
 created or updated from chat would otherwise never get it set, and would silently lose skills.

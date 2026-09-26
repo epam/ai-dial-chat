@@ -379,7 +379,7 @@ describe('NewConversationComposer', () => {
     expect(screen.getByLabelText('auto-focus').textContent).toBe('true');
   });
 
-  it('renders the agent description below the starters when show-agent-description is enabled', async () => {
+  it('renders the agent description above the input when show-agent-description is enabled', async () => {
     mockUseUiFeature.mockImplementation(
       (feature) => feature === OverlayFeature.ShowAgentDescription,
     );
@@ -398,12 +398,11 @@ describe('NewConversationComposer', () => {
     );
 
     const link = await screen.findByRole('link', { name: 'the terms' });
-    const starterButton = screen.getByRole('button', { name: 'Draft' });
+    const input = screen.getByTestId('conversation-input');
 
     expect(link.getAttribute('href')).toBe('https://example.com/terms');
     expect(
-      starterButton.compareDocumentPosition(link) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      link.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 

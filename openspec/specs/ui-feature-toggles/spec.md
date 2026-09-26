@@ -335,6 +335,68 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 - **WHEN** `isEnabled('show-agent-description')` is `true` and the selected deployment's resolved description is absent or whitespace-only
 - **THEN** the empty-chat screen renders no agent description, and no empty container is left in its place
 
+### Requirement: disable-input-history-navigation turns off Up/Down message recall
+
+`ConversationView` SHALL pass no `messageHistory` to `ConversationInput` when `isEnabled('disable-input-history-navigation')` is `true`, so the Up/Down arrow keys in the chat input only move the caret and never replace the draft with a previously sent message. When the key is off, the existing history navigation SHALL apply unchanged.
+
+**Accessibility:** No change — the arrow keys fall back to the native textarea caret behavior.
+
+**i18n impact:** None.
+
+#### Scenario: Arrow keys do not recall sent messages when the key is on
+
+- **WHEN** `isEnabled('disable-input-history-navigation')` is `true` and the conversation has sent user messages
+- **THEN** pressing Up in an empty chat input leaves it empty
+
+### Requirement: hide-conversation-export removes the conversation export entry points
+
+`ConversationPanelView` SHALL omit the per-conversation Export row action (for owned and read-only conversations alike) and the panel menu's "Export all" entry when `isEnabled('hide-conversation-export')` is `true`. Import and Delete all SHALL stay. The key hides UI entry points only and SHALL NOT be treated as an authorization control.
+
+**Accessibility:** Removed entries leave no empty or disabled menu items behind.
+
+**i18n impact:** None.
+
+#### Scenario: Export entries are gone when the key is on
+
+- **WHEN** `isEnabled('hide-conversation-export')` is `true`
+- **THEN** no conversation row menu renders an Export item, and the panel menu renders Import and Delete all but no Export all
+
+### Requirement: The Settings page is reachable on both layouts and hide-settings-page removes it
+
+`Navigation` SHALL offer the Settings page on both layouts: the desktop `UserMenu` Settings entry, and a Settings row on the mobile `NavigationSheet` profile page, above Log out, that closes the sheet and navigates to `/settings`. When `isEnabled('hide-settings-page')` is `true`, both entries SHALL be omitted and the `/settings` route SHALL redirect to `/` with `replace`. `SettingsPage` SHALL stack its section list above the active tab at full width on the mobile breakpoint and keep the 240px side column on desktop.
+
+**Accessibility:** The sheet row is a labeled button like its siblings; its icon is `aria-hidden`.
+
+**i18n impact:** None — the row reuses the existing `BasicI18nKeys.Settings` string.
+
+#### Scenario: Mobile users reach Settings from the profile page
+
+- **WHEN** the mobile navigation sheet is open and the user opens the profile page
+- **THEN** a Settings row is listed above Log out, and tapping it closes the sheet and navigates to `/settings`
+
+#### Scenario: hide-settings-page removes every entry point
+
+- **WHEN** `isEnabled('hide-settings-page')` is `true`
+- **THEN** neither the desktop user menu nor the mobile profile page renders a Settings entry, and a direct `/settings` URL redirects to `/`
+
+### Requirement: show-header-logo renders the theme logo in the desktop top bar
+
+`ChatLayout`'s desktop top bar SHALL render the theme logo, centered between the start-side conversation controls and the end-side sources toggle, when `isEnabled('show-header-logo')` is `true`. Nothing SHALL render there when the key is off, and the bar's other controls SHALL keep their positions either way. The key SHALL NOT affect the mobile `Header`, which renders the logo whenever `header` is on, nor the desktop navigation rail. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+
+**Accessibility:** The logo reuses `Logo`'s existing labeled link; no new interactive control is introduced.
+
+**i18n impact:** None — the link's accessible name is the existing `ChatI18nKeys.Logo` string.
+
+#### Scenario: The logo renders in the desktop top bar when the key is on
+
+- **WHEN** `isEnabled('show-header-logo')` is `true` and the active theme defines a logo
+- **THEN** the desktop top bar renders the logo link between the conversation controls and the sources toggle
+
+#### Scenario: Nothing renders when the key is off
+
+- **WHEN** `isEnabled('show-header-logo')` is `false`
+- **THEN** the desktop top bar renders no logo, and the mobile header's logo is unaffected
+
 ### Requirement: Isolated-view override takes precedence over every other source
 
 `TODO: remove in next release.` `UiFeaturesContext` SHALL expose `applyIsolatedViewOverride(features: Set<OverlayFeature> | null)`, called only by `useIsolatedModelView` (see `isolated-model-view`). When set to a non-null value, the effective UI-feature set SHALL become exactly that set, taking precedence over the overlay override, the server `enabledUiFeatures` baseline, and the compiled defaults — none of those other sources SHALL be consulted while the isolated-view override is active. When `null` (the default, and the value whenever isolated view is not active), the existing three-level priority chain (overlay override → server baseline → compiled defaults) SHALL apply unchanged.

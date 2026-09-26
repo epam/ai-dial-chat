@@ -1,4 +1,5 @@
 import type {
+  Annotation,
   AttachmentDisplayResolvers,
   DisplayAttachment,
   Message,
@@ -8,7 +9,9 @@ import {
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import {
+  getAnnotationPdfPage,
   isReferenceOnlyAttachment,
+  parsePdfPageReference,
   resolveMessageAnnotations,
 } from '@epam/ai-dial-quotations';
 import type { QuotationSource } from '@epam/ai-dial-source-panel';
@@ -20,13 +23,27 @@ import { useMemo } from 'react';
  */
 const EMPTY_RESOLVERS: AttachmentDisplayResolvers = {};
 
+/*
+ * Qualifies a citation's `.pdf` URL with the cited page (`#page=N`) — the
+ * same form reference-only sources already carry — so each cited page is its
+ * own source and opens at that page. URLs that are not PDFs, already carry a
+ * fragment, or whose annotation has no PDF selector are returned unchanged.
+ */
+const toAnnotationSourceUrl = (annotation: Annotation, url: string): string => {
+  const page = getAnnotationPdfPage(annotation);
+  if (page == null) return url;
+  const reference = parsePdfPageReference(url);
+  if (reference == null || reference.page != null) return url;
+  return `${url}#page=${page}`;
+};
+
 /** Return value of {@link useConversationSources}. */
 export interface UseConversationSourcesResult {
   /** Deduplicated attachments the user uploaded across the conversation. */
   uploaded: DisplayAttachment[];
   /** Deduplicated attachments the assistant generated across the conversation. */
   generated: DisplayAttachment[];
-  /** Quotation sources referenced by assistant messages, deduplicated by URL. */
+  /** Quotation sources referenced by assistant messages, deduplicated by URL; PDF sources are qualified with `#page=N`. */
   sources: QuotationSource[];
 }
 
@@ -84,12 +101,14 @@ export const useConversationSources = (
 
         for (const annotation of resolveMessageAnnotations(msg)) {
           const att = annotation?.body?.source?.attachment;
-          const url = att?.url;
-          if (!url || seenUrls.has(url)) continue;
+          const fileUrl = att?.url;
+          if (!fileUrl) continue;
+          const url = toAnnotationSourceUrl(annotation, fileUrl);
+          if (seenUrls.has(url)) continue;
           seenUrls.add(url);
           sources.push({
             url,
-            title: att?.title ?? url.split('/').pop() ?? url,
+            title: att?.title ?? fileUrl.split('/').pop() ?? fileUrl,
             contentType: att?.type ?? '',
             quote: annotation.body?.quote,
           });

@@ -7,9 +7,11 @@ import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { buildJobTitleHeaders } from '../common/utils/header-value';
+import { resolvePrompt } from '../common/utils/resolve-prompt';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
 import { TranscribeAudioDto } from './dto/transcribe-audio.dto';
+import { TRANSCRIPTION_PROMPT } from './prompts/transcription.prompt';
 import { TranscriptionUnavailableException } from './transcription-unavailable.exception';
 
 interface CompletionResponse {
@@ -45,8 +47,12 @@ export class TranscriptionService {
             messages: [
               {
                 role: 'user',
-                content:
-                  'Transcribe the audio, return the content only, no extra',
+                content: resolvePrompt(
+                  this.configService.get('TRANSCRIPTION_PROMPT', {
+                    infer: true,
+                  }),
+                  TRANSCRIPTION_PROMPT,
+                ),
                 custom_content: {
                   attachments: [
                     { type: mimeType, title: 'recording', url: audioUrl },

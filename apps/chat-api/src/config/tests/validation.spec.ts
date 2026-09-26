@@ -8,6 +8,35 @@ const baseConfig: Record<string, unknown> = {
 };
 
 describe('validate', () => {
+  it('leaves event selection absent unless UI_EVENT is configured', () => {
+    expect(validate({ ...baseConfig }).UI_EVENT).toBeUndefined();
+  });
+
+  it.each(['none', 'halloween', 'new-year', 'product-launch-2027'])(
+    'accepts the lowercase event ID %s',
+    (eventId) => {
+      expect(validate({ ...baseConfig, UI_EVENT: eventId }).UI_EVENT).toBe(
+        eventId,
+      );
+    },
+  );
+
+  it.each([
+    '',
+    ' ',
+    'Halloween',
+    'new_year',
+    '-event',
+    'event-',
+    'new--year',
+    '../halloween',
+    'new year',
+  ])('rejects invalid UI_EVENT %j at startup', (eventId) => {
+    expect(() => validate({ ...baseConfig, UI_EVENT: eventId })).toThrow(
+      /UI_EVENT/,
+    );
+  });
+
   it('defaults external connections to an empty allowlist', () => {
     expect(validate({ ...baseConfig }).ALLOWED_CONNECT_ORIGINS).toEqual([]);
     expect(
@@ -66,6 +95,7 @@ describe('validate', () => {
       ).toThrow(/AUTH_SESSION_MAX_AGE_SECONDS/);
     },
   );
+
   it('defaults CSP rollout to report-only and accepts explicit enforcement', () => {
     expect(validate({ ...baseConfig }).CSP_MODE).toBe('report-only');
     expect(validate({ ...baseConfig, CSP_MODE: 'enforce' }).CSP_MODE).toBe(

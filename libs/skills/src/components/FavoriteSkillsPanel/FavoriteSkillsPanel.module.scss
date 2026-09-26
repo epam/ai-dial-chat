@@ -1,6 +1,8 @@
 .row {
+  /* `aria-selected` marks the option a text field has active (listbox mode). */
   &:hover,
-  &:focus-visible {
+  &:focus-visible,
+  &[aria-selected='true'] {
     background: var(--fs-row-hover-bg, var(--bg-layer-sunken, #eef1f7));
   }
 }

@@ -189,6 +189,18 @@ authorization callbacks or bearer tokens. Consequently, an internal cluster
 discovery URL may safely resolve metadata whose canonical issuer is the
 externally advertised identity, while RFC 9207 issuer matching remains exact.
 
+Discovery, and every subsequent token, userinfo, revocation, or JWKS request `openid-client` makes,
+honor `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` when set, via
+`apps/chat-api/src/net/proxy-agent.setup.ts` — see
+`apps/chat-api/README.md` "Corporate proxy support". The registry copies the
+discovery HTTP hook onto each issuer instance (JWKS) and client instance
+(token exchange/refresh, userinfo, revocation), because `openid-client` v5
+does not inherit it from the `Issuer` constructor. Without it, a deployment
+that can only reach the internet through a corporate proxy fails to start:
+discovery runs in `ProviderRegistryService.onModuleInit()`, so a hung
+connection there blocks `NestFactory.create(AppModule)` and boot fails with
+`ETIMEDOUT`.
+
 Login URLs become `/auth/login/:providerId?callbackUrl=<app-url>`. The active provider is encoded in the session, so refresh and logout always use the correct IdP; the validated `callbackUrl` is encoded in the short-lived transaction cookie so the callback can return the browser to the correct SPA origin/page.
 
 ---

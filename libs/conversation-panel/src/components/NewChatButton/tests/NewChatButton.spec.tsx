@@ -26,6 +26,7 @@ describe('NewChatButton', () => {
     renderButton();
 
     expect(getButton().classList).toContain('h-[36px]');
+    expect(getButton().classList).not.toContain('h-[40px]');
     expect(getButton().classList).toContain('shadow-chat-button');
   });
 

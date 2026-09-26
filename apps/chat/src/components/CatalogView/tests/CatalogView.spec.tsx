@@ -687,6 +687,7 @@ describe('CatalogView', () => {
       status: UserConfigStatus.Ready,
       features: {},
       config: {
+        activeEventId: null,
         appVersion: '0.0.1',
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
@@ -699,6 +700,7 @@ describe('CatalogView', () => {
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],
+        allowedConnectOrigins: [],
         enabledUiFeatures: null,
         announcementHtml: null,
         announcementTitle: null,

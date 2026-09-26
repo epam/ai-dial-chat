@@ -17,14 +17,20 @@ import {
   useState,
 } from 'react';
 import type { EditMessageInputProps } from '../../models/ConversationInput';
+import type { InputHandle } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { Input } from '../Input/Input';
 
 /** Inline edit-message form: pre-populated textarea, existing attachment tray, and Save/Cancel actions. */
 export const EditMessageInput: FC<EditMessageInputProps> = ({
   message,
-  inlineStartSlot,
-  onInlineStartRemove,
+  messageRevision,
+  onChange,
+  activeMentions,
+  onBackspaceAtCaret,
+  caretPositionOverride,
+  commandMenu,
+  menuOverlays,
   initialAttachments = [],
   onCancel,
   onSave,
@@ -59,6 +65,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   onMessageTooLong,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<InputHandle>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
 
   useEffect(() => {
@@ -110,6 +117,14 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
     [],
   );
 
+  const handleChange = useCallback(
+    (value: string) => {
+      setCurrentText(value);
+      onChange?.(value);
+    },
+    [onChange],
+  );
+
   const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
@@ -142,16 +157,20 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
     <div className={mergeClasses('flex w-full flex-col gap-2', className)}>
       {/* Bordered box — contains kept attachments, new attachments, and the textarea */}
       <Input
+        ref={inputRef}
         message={message}
-        inlineStartSlot={inlineStartSlot}
-        onInlineStartRemove={onInlineStartRemove}
+        messageRevision={messageRevision}
+        activeMentions={activeMentions}
+        onBackspaceAtCaret={onBackspaceAtCaret}
+        caretPositionOverride={caretPositionOverride}
+        commandMenu={commandMenu}
         ariaLabel={ariaLabel}
         hideActionBar
         pendingDropFiles={pendingDropFiles}
         onDropFilesConsumed={handleDropFilesConsumed}
         onSend={handleSend}
         onUploadAttachment={onUploadAttachment}
-        onChange={setCurrentText}
+        onChange={handleChange}
         onAttachmentsChange={setCurrentNewAttachments}
         removeLabel={removeLabel}
         retryLabel={retryLabel}
@@ -176,26 +195,36 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex">
           {!hideAttachFile && (
-            <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept={fileAccept}
-                className="sr-only"
-                aria-hidden
-                tabIndex={-1}
-                onChange={handleFileChange}
-              />
-              <AddAttachmentButton
-                onAttachClick={() => fileInputRef.current?.click()}
-                attachLabel={attachLabel}
-                addMenuTitle={addMenuTitle}
-                menuTitle={menuTitle}
-                menuCloseLabel={menuCloseLabel}
-                extraMenuItems={dialFileSystemMenuItem}
-              />
-            </>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={fileAccept}
+              className="sr-only"
+              aria-hidden
+              tabIndex={-1}
+              onChange={handleFileChange}
+            />
+          )}
+          {/*
+           * Rendered whenever there's an attach action or a host-injected
+           * overlay (e.g. the Skills add-menu) — `hideAttachFile` hides only
+           * the attach-file entry, per `onAttachClick` being conditional
+           * below, not the whole button.
+           */}
+          {(!hideAttachFile || (menuOverlays?.length ?? 0) > 0) && (
+            <AddAttachmentButton
+              onAttachClick={
+                hideAttachFile ? undefined : () => fileInputRef.current?.click()
+              }
+              attachLabel={attachLabel}
+              addMenuTitle={addMenuTitle}
+              menuTitle={menuTitle}
+              menuCloseLabel={menuCloseLabel}
+              extraMenuItems={dialFileSystemMenuItem}
+              menuOverlays={menuOverlays}
+              getCaretPosition={() => inputRef.current?.getCaretPosition() ?? 0}
+            />
           )}
         </div>
 
