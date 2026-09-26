@@ -1,4 +1,4 @@
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StorybookConfig } from '@storybook/react-vite';
 
@@ -24,6 +24,18 @@ const config: StorybookConfig = {
      Storybook bundle, which is an application. */
   viteFinal: (viteConfig) => ({
     ...viteConfig,
+    /* Workspace peers resolve from source, as in the library's tests: a clean
+       checkout has no built dist for them. */
+    resolve: {
+      ...viteConfig.resolve,
+      alias: {
+        ...viteConfig.resolve?.alias,
+        '@epam/ai-dial-chat-shared': resolve(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../chat-shared/src/index.ts',
+        ),
+      },
+    },
     build: { ...viteConfig.build, lib: false },
     plugins: (viteConfig.plugins ?? [])
       .flat()
