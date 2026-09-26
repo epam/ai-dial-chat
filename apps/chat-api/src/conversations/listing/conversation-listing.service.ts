@@ -20,6 +20,7 @@ import { ConversationPersistenceService } from '../persistence/conversation-pers
 import type {
   MetadataItem,
   MetadataResult,
+  ShareGrant,
   SharedResourcesResult,
 } from '../types/conversation.types';
 import {
@@ -46,6 +47,16 @@ const pickMostRecent = (
   [...group]
     .sort((left, right) => right.updatedAt - left.updatedAt)
     .slice(0, MAX_LIST_DISPLAY_NAME_ENRICHMENTS);
+
+/** Latest time the current user accepted a share of this resource, or 0. */
+const getSharedAt = (sharedBy: ShareGrant[] | undefined): number =>
+  (sharedBy ?? []).reduce(
+    (latest, { acceptedAt }) =>
+      acceptedAt != null && Number.isFinite(acceptedAt)
+        ? Math.max(latest, acceptedAt)
+        : latest,
+    0,
+  );
 
 @Injectable()
 export class ConversationListingService {
@@ -273,7 +284,25 @@ export class ConversationListingService {
         sharedError == null && sharedData
           ? (sharedData.resources ?? [])
               .filter((r) => r.nodeType !== 'FOLDER')
-              .map((r) => {
+              .map((r) => ({ resource: r, sharedAt: getSharedAt(r.sharedBy) }))
+              /*
+               * Shared items carry no `updatedAt`, so they all tie at 0 in the
+               * stable merged sort below and this pre-sort alone decides the
+               * Shared group's order: most recently shared first, then by
+               * name and url so the order is deterministic across reloads
+               * whatever order DIAL Core returns them in.
+               */
+              .sort(
+                (left, right) =>
+                  right.sharedAt - left.sharedAt ||
+                  (left.resource.name ?? '').localeCompare(
+                    right.resource.name ?? '',
+                  ) ||
+                  (left.resource.url ?? '').localeCompare(
+                    right.resource.url ?? '',
+                  ),
+              )
+              .map(({ resource: r }) => {
                 const id = r.url ?? `${r.parentPath ?? ''}/${r.name ?? ''}`;
                 const decodedId = safeDecodeURIComponent(id);
                 const scheduledTask = parseScheduledTaskConversationPath(id);
