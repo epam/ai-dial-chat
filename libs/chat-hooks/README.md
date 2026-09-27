@@ -490,6 +490,10 @@ const ChatMessageList = ({
 
 ### usePageFileDrag
 
+`onFilesConsumed` acknowledges the `pendingFiles` batch from the render that
+provided the callback. Files dropped after that render remain queued, allowing
+hosts to merge drops with other generated files without losing a newer batch.
+
 Detects files being dragged over the whole page (using `document`-level drag events with an enter/leave counter to avoid flicker from child-element boundary crossings) and exposes the dropped files once dropped.
 
 ```tsx
@@ -529,6 +533,111 @@ const ComposerWithFileDrop = ({
 | `isDragging`      | `boolean`    | Whether a file drag is currently over the page.               |
 | `pendingFiles`    | `File[]`     | Files dropped on the page, pending consumption by the caller. |
 | `onFilesConsumed` | `() => void` | Clears `pendingFiles` after the caller has processed them.    |
+
+### useMessageSelectionReply
+
+The hook and its types are exported from both `@epam/ai-dial-chat-hooks` and
+`@epam/ai-dial-chat-hooks/conversation`.
+
+Captures visible text selected inside a registered message body and feeds one UTF-8
+`text/plain` Reply file into an existing composer attachment queue. The host supplies
+the scope identifier, eligibility policy and its ordinary page-drop batch; it retains
+ownership of model capability, upload, translated labels and rendering.
+
+This composition accepts completed assistant text. For a transcript, register each
+user/assistant `MessageBubble` with the same `reply.contentRef`. The host derives
+`canAttachText` from read-only/edit/streaming state, composer availability and MIME
+permissions; upload and validation callbacks remain application-owned.
+
+```tsx
+import { useMessageSelectionReply } from '@epam/ai-dial-chat-hooks/conversation';
+import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  ConversationInput,
+  type ConversationInputProps,
+} from '@epam/ai-dial-conversation-input';
+import {
+  MessageBubble,
+  MessageSelectionReply,
+  type MessageSelectionReplyLabels,
+} from '@epam/ai-dial-conversation-messages';
+import '@epam/ai-dial-conversation-input/styles.css';
+import '@epam/ai-dial-conversation-messages/styles.css';
+
+interface ReplyConversationProps {
+  conversationId: string;
+  text: string;
+  canAttachText: boolean;
+  labels: MessageSelectionReplyLabels;
+  portalContainer?: HTMLElement | null;
+  onUploadAttachment: NonNullable<ConversationInputProps['onUploadAttachment']>;
+  onSend: NonNullable<ConversationInputProps['onSend']>;
+  validateAttachment?: ConversationInputProps['validateAttachment'];
+  maximumAttachmentsAmount?: number;
+  onAttachmentsLimitExceeded?: ConversationInputProps['onAttachmentsLimitExceeded'];
+}
+
+const ReplyConversationBody = ({
+  conversationId,
+  text,
+  canAttachText,
+  labels,
+  portalContainer,
+  ...attachmentCallbacks
+}: ReplyConversationProps) => {
+  const pageDrop = usePageFileDrag(canAttachText);
+  const reply = useMessageSelectionReply({
+    conversationId,
+    enabled: canAttachText,
+    droppedFiles: pageDrop.pendingFiles,
+    onDroppedFilesConsumed: pageDrop.onFilesConsumed,
+  });
+
+  return (
+    <>
+      <MessageBubble
+        role={MessageRole.Assistant}
+        text={text}
+        contentRef={reply.contentRef}
+      />
+      <MessageSelectionReply
+        rect={reply.selection?.rect}
+        actionRef={reply.actionRef}
+        onReply={reply.onReply}
+        addedRevision={reply.addedRevision}
+        labels={labels}
+        portalContainer={portalContainer}
+      />
+      <ConversationInput
+        {...attachmentCallbacks}
+        isAttachmentsEnabled={canAttachText}
+        focusRequestId={reply.focusRequestId}
+        pendingDropFiles={reply.pendingFiles}
+        onDropFilesConsumed={reply.onFilesConsumed}
+        onAttachmentsChange={reply.onAttachmentsChange}
+      />
+    </>
+  );
+};
+
+export const ReplyConversation = (props: ReplyConversationProps) => (
+  <ReplyConversationBody key={props.conversationId} {...props} />
+);
+```
+
+The key deliberately resets the composer and drop queue on conversation changes:
+changing the hook's `conversationId` alone clears only its selection and unconsumed
+Reply files, not attachments already accepted by `ConversationInput`. Old upload
+results therefore cannot appear in the next conversation's composer. Within the
+same conversation Reply preserves the existing draft and attachments. If the host
+also observes attachments, compose its callback with `reply.onAttachmentsChange`
+so accepted-insertion announcements continue to work.
+
+For a modal or locally themed surface, pass a same-document `portalContainer`
+inside that surface; pass `null` while its callback ref has not mounted. See
+[MessageSelectionReply](../conversation-messages/README.md#messageselectionreply)
+for appearance overrides and portal placement.
 
 ### useViewportWidth / usePanelMaxWidth
 
@@ -3492,7 +3601,8 @@ const {
   loadedPathRef,
   etagRef,
   returnUrl,
-  getCreateReturnUrl: (path) => `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
+  getCreateReturnUrl: (path) =>
+    `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
   refetchSkills,
   client,
   messages: {

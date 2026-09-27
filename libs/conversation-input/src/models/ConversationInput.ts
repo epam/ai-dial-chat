@@ -233,6 +233,8 @@ export interface EditMessageInputProps {
 
 /** Props accepted by the `ConversationInput` component. */
 export interface ConversationInputProps {
+  /** Changing this token requests textarea focus without altering its value or caret. */
+  focusRequestId?: number;
   /** Placeholder text shown inside the textarea when empty. */
   placeholder?: string;
   /**

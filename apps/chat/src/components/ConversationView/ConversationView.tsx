@@ -19,6 +19,7 @@ import {
   useAttachmentValidation,
   useChatSettingsFormConfig,
 } from '@epam/ai-dial-chat-hooks';
+import { useMessageSelectionReply } from '@epam/ai-dial-chat-hooks/conversation';
 import {
   useMcpAppTools,
   useOpenMcpAppCanvas,
@@ -51,6 +52,7 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { MessageSelectionReply } from '@epam/ai-dial-conversation-messages';
 import { useMcpAppResponseCache } from '@epam/ai-dial-mcp-apps';
 import {
   BASE_ICON_SIZE,
@@ -613,6 +615,24 @@ const ConversationView: FC<Props> = ({
     [hasQuickAppStarters, selectedDeploymentConfiguration],
   );
 
+  const reply = useMessageSelectionReply({
+    conversationId: conversation.id,
+    enabled:
+      !isReadOnly &&
+      !isEditActive &&
+      !isAssistantTyping &&
+      !isInputDisabled &&
+      !isDisabledSendEnabled &&
+      !isSkillUnsupported &&
+      isInputFilesEnabled &&
+      isAttachmentsAllowed &&
+      isTextAttachmentsAllowed &&
+      !!selectedDeployment &&
+      !!onUploadAttachment,
+    droppedFiles: pendingFiles,
+    onDroppedFilesConsumed: onFilesConsumed,
+  });
+
   const deploymentLookup = useMemo<
     Record<string, { displayName: string; iconUrl: string | undefined }>
   >(
@@ -849,12 +869,14 @@ const ConversationView: FC<Props> = ({
     [bucket],
   );
 
+  const handleReplyAttachmentsChange = reply.onAttachmentsChange;
   const handleAttachmentsChange = useCallback(
     (attachments: Attachment[]) => {
+      handleReplyAttachmentsChange(attachments);
       setAttachmentsAmount(attachments.length);
       onAttachmentsChange?.(attachments);
     },
-    [onAttachmentsChange],
+    [onAttachmentsChange, handleReplyAttachmentsChange],
   );
 
   const handleAttachmentsLimitExceeded = useCallback(
@@ -906,6 +928,17 @@ const ConversationView: FC<Props> = ({
 
   return (
     <>
+      <MessageSelectionReply
+        rect={reply.selection?.rect}
+        actionRef={reply.actionRef}
+        onReply={reply.onReply}
+        addedRevision={reply.addedRevision}
+        labels={{
+          reply: t(ChatI18nKeys.Reply),
+          selectionAvailable: t(ChatI18nKeys.ReplySelectionAvailable),
+          attachmentAdded: t(ChatI18nKeys.ReplyAttachmentAdded),
+        }}
+      />
       <FileDndOverlay
         isVisible={isDragging}
         isAttachmentsAllowed={isAttachmentsAllowed}
@@ -945,6 +978,7 @@ const ConversationView: FC<Props> = ({
                 >
                   <ConversationMessageItem
                     msg={msg}
+                    contentRef={reply.contentRef}
                     index={index}
                     totalCount={messages.length}
                     isAssistantTyping={isAssistantTyping}
@@ -1109,6 +1143,8 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
+                key={conversation.id}
+                focusRequestId={reply.focusRequestId}
                 message={composerSeedText}
                 messageRevision={composerSeedRevision}
                 onChange={onDraftChange}
@@ -1158,12 +1194,14 @@ const ConversationView: FC<Props> = ({
                 canRemoveTools={isRemovableToolsEnabled}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsChipLabels={toolsChipLabels}
-                pendingDropFiles={!isEditActive ? pendingFiles : undefined}
+                pendingDropFiles={
+                  !isEditActive ? reply.pendingFiles : undefined
+                }
                 pendingAttachments={
                   !isEditActive ? pendingDialAttachments : undefined
                 }
                 onDropFilesConsumed={
-                  !isEditActive ? onFilesConsumed : undefined
+                  !isEditActive ? reply.onFilesConsumed : undefined
                 }
                 onPendingAttachmentsConsumed={
                   !isEditActive

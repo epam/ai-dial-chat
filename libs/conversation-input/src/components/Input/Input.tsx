@@ -67,6 +67,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
     {
       message: messageProp = '',
       messageRevision,
+      focusRequestId,
       textInsertion,
       onSend,
       onUploadAttachment,
@@ -211,6 +212,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
       messageProp,
       messageRevision,
     });
+
+    useEffect(() => {
+      if (focusRequestId !== undefined) textareaRef.current?.focus();
+    }, [focusRequestId, textareaRef]);
 
     useImperativeHandle(
       ref,

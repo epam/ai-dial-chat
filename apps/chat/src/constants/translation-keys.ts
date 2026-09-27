@@ -1,4 +1,7 @@
 export enum ChatI18nKeys {
+  Reply = 'chat.reply',
+  ReplySelectionAvailable = 'chat.replySelectionAvailable',
+  ReplyAttachmentAdded = 'chat.replyAttachmentAdded',
   Placeholder = 'chat.placeholder',
   GreetingMorning = 'chat.greetingMorning',
   GreetingMorningNoName = 'chat.greetingMorningNoName',
