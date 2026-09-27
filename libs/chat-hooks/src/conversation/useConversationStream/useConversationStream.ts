@@ -3,6 +3,7 @@ import {
   type Conversation,
   generateUUID,
   type MessageCustomContent,
+  MessageRole,
   type StreamChunk,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -21,6 +22,7 @@ import {
   DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   GenerationConflictError,
   GenerationPersistenceError,
+  StreamInterruptedError,
   StreamUpstreamError,
 } from '../create-chat-stream-api';
 import { applyChunkToMessages } from './apply-chunk';
@@ -31,6 +33,7 @@ import {
 import { getConversationPath } from './conversation-path';
 import {
   createResumeIfAwaitingGeneration,
+  fetchConversationForRecovery,
   hasGeneratedPayload,
   isAwaitingGenerationResume,
 } from './generation-resume';
@@ -278,6 +281,35 @@ export const useConversationStream = ({
   }, []);
 
   /*
+   * One resume instance shared by the public `resumeIfAwaitingGeneration` and
+   * by `startStream`'s recovery of an interrupted stream, so both see the
+   * same buffered generations and resuming paths.
+   */
+  const resumeGeneration = useMemo(
+    () =>
+      createResumeIfAwaitingGeneration({
+        transport,
+        setConversation,
+        conversationRef,
+        resumingPathsRef,
+        bufferedGenerationsRef,
+        addStreamingPath,
+        removeStreamingPath,
+        isPathDisplayed,
+        generationPersistenceErrorMessage,
+      }),
+    // setConversation and conversationRef are stable refs — intentionally omitted
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      addStreamingPath,
+      removeStreamingPath,
+      isPathDisplayed,
+      transport,
+      generationPersistenceErrorMessage,
+    ],
+  );
+
+  /*
    * An in-flight generation is intentionally NOT aborted on unmount: it is
    * owned by the injected `generation` lifecycle and must survive
    * navigation; only Stop or tab close ends it.
@@ -345,6 +377,18 @@ export const useConversationStream = ({
        */
       channel?.ensureConnected();
 
+      /* Releases this generation's streaming, stoppable, and lifecycle state. */
+      const releaseGeneration = () => {
+        if (!isSuperseded()) removeStreamingPath(conversationPath);
+        if (activeGenerationIdRef.current === genId) {
+          activeGenerationIdRef.current = null;
+          activeGenerationPathRef.current = null;
+          setStoppablePath(null);
+        }
+        completeGeneration(conversationPath, genId);
+        channel?.notifyGenerationSettled?.();
+      };
+
       const preserveUnsavedAnswer = () => {
         if (isSuperseded()) return;
         const buffered = bufferedGenerationsRef.current.get(conversationPath);
@@ -406,14 +450,7 @@ export const useConversationStream = ({
             bufferedGenerationsRef.current.get(conversationPath);
           const buffered =
             currentBuffer?.generationId === genId ? currentBuffer : undefined;
-          if (!isSuperseded()) removeStreamingPath(conversationPath);
-          if (activeGenerationIdRef.current === genId) {
-            activeGenerationIdRef.current = null;
-            activeGenerationPathRef.current = null;
-            setStoppablePath(null);
-          }
-          completeGeneration(conversationPath, genId);
-          channel?.notifyGenerationSettled?.();
+          releaseGeneration();
           if (stoppedGenerationIdsRef.current.has(genId)) {
             stoppedGenerationIdsRef.current.delete(genId);
           } else if (!isSuperseded()) {
@@ -474,59 +511,128 @@ export const useConversationStream = ({
         },
         onError: (error: Error) => {
           onStreamErrorRef.current?.(error);
-          const currentBuffer =
-            bufferedGenerationsRef.current.get(conversationPath);
-          const buffered =
-            currentBuffer?.generationId === genId ? currentBuffer : undefined;
-          if (buffered) {
-            if (error instanceof GenerationPersistenceError) {
-              buffered.message = {
-                ...buffered.message,
-                streamErrorMessage: generationPersistenceErrorMessage,
-              };
-            } else {
-              bufferedGenerationsRef.current.delete(conversationPath);
-            }
-          }
-          if (!isSuperseded()) removeStreamingPath(conversationPath);
-          if (activeGenerationIdRef.current === genId) {
-            activeGenerationIdRef.current = null;
-            activeGenerationPathRef.current = null;
-            setStoppablePath(null);
-          }
-          completeGeneration(conversationPath, genId);
-          channel?.notifyGenerationSettled?.();
-          /* Surface the error only on the conversation the user is viewing,
-           * and never over the generation that superseded this one. */
-          if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
           /*
-           * A conflict is an expected state (another tab is already
-           * generating, issue #8688) and gets the host-supplied explanation;
-           * an upstream DIAL Core error keeps its own text; every other error
-           * is transport detail and falls back to the host's localized copy.
+           * A lost or stalled connection says nothing about the backend-owned
+           * generation, which usually keeps running (issue #8959): ask the
+           * server before showing an error.
            */
-          const streamErrorMessage = resolveStreamErrorMessage(
-            error,
-            generationConflictMessage,
-            generationPersistenceErrorMessage,
-          );
-          setConversation((prev) => {
-            if (!prev || isSuperseded() || !isPathDisplayed(conversationPath))
-              return prev;
-            const restored =
-              buffered?.generationId === genId
-                ? restoreBufferedMessage(prev, buffered)
-                : prev;
-            const updated = {
-              ...restored,
-              messages: restored.messages.map((m, index) =>
-                index === messageIndex ? { ...m, streamErrorMessage } : m,
-              ),
-            };
-            conversationRef.current = updated;
-            return updated;
-          });
+          if (error instanceof StreamInterruptedError && !isSuperseded()) {
+            void recoverInterruptedStream(error);
+            return;
+          }
+          settleAsFailed(error);
         },
+      };
+
+      /* Settles the generation as failed and writes the displayable error text onto its message. */
+      const settleAsFailed = (error: Error) => {
+        const currentBuffer =
+          bufferedGenerationsRef.current.get(conversationPath);
+        const buffered =
+          currentBuffer?.generationId === genId ? currentBuffer : undefined;
+        if (buffered) {
+          if (error instanceof GenerationPersistenceError) {
+            buffered.message = {
+              ...buffered.message,
+              streamErrorMessage: generationPersistenceErrorMessage,
+            };
+          } else {
+            bufferedGenerationsRef.current.delete(conversationPath);
+          }
+        }
+        releaseGeneration();
+        /* Surface the error only on the conversation the user is viewing,
+         * and never over the generation that superseded this one. */
+        if (isSuperseded() || !isPathDisplayed(conversationPath)) return;
+        /*
+         * A conflict is an expected state (another tab is already
+         * generating, issue #8688) and gets the host-supplied explanation;
+         * an upstream DIAL Core error keeps its own text; every other error
+         * is transport detail and falls back to the host's localized copy.
+         */
+        const streamErrorMessage = resolveStreamErrorMessage(
+          error,
+          generationConflictMessage,
+          generationPersistenceErrorMessage,
+        );
+        setConversation((prev) => {
+          if (!prev || isSuperseded() || !isPathDisplayed(conversationPath))
+            return prev;
+          const restored =
+            buffered?.generationId === genId
+              ? restoreBufferedMessage(prev, buffered)
+              : prev;
+          const updated = {
+            ...restored,
+            messages: restored.messages.map((m, index) =>
+              index === messageIndex ? { ...m, streamErrorMessage } : m,
+            ),
+          };
+          conversationRef.current = updated;
+          return updated;
+        });
+      };
+
+      /* Settles a generation that recovery resolved: finished on the server, or resumed there. */
+      const settleRecovered = () => {
+        releaseGeneration();
+        if (stoppedGenerationIdsRef.current.has(genId)) {
+          stoppedGenerationIdsRef.current.delete(genId);
+        } else if (!isSuperseded()) {
+          overlay?.notifyGenerationEnd?.();
+        }
+      };
+
+      /*
+       * Recovery of an interrupted stream (`generation-stream-recovery`). The
+       * path stays streaming and stoppable, and the live partial stays on
+       * screen, while the server copy decides the outcome: still generating
+       * → rejoin it through the resume flow, seeded with the partial so it
+       * never blanks out; already finished → show the saved answer; anything
+       * else → the ordinary failure path. Reserving the path in
+       * `resumingPathsRef` turns a concurrent reload's own resume into a no-op.
+       */
+      const recoverInterruptedStream = async (
+        error: StreamInterruptedError,
+      ) => {
+        resumingPathsRef.current.add(conversationPath);
+        const server = await fetchConversationForRecovery(
+          () => transport.getConversation(safeDecodeURI(currentConversationId)),
+          isSuperseded,
+        );
+        if (isSuperseded()) {
+          releaseGeneration();
+          return;
+        }
+        const lastMessage = server?.messages[server.messages.length - 1];
+        const isSameTurn =
+          server != null &&
+          server.messages.length - 1 === messageIndex &&
+          lastMessage?.role === MessageRole.Assistant;
+        if (!server || !isSameTurn) {
+          resumingPathsRef.current.delete(conversationPath);
+          settleAsFailed(error);
+          return;
+        }
+        const currentBuffer =
+          bufferedGenerationsRef.current.get(conversationPath);
+        const buffered =
+          currentBuffer?.generationId === genId ? currentBuffer : undefined;
+        if (isAwaitingGenerationResume(server)) {
+          resumeGeneration(currentConversationId, server, {
+            seedMessage: buffered?.message,
+            skipDedupe: true,
+            onSettled: settleRecovered,
+          });
+          return;
+        }
+        resumingPathsRef.current.delete(conversationPath);
+        if (buffered) bufferedGenerationsRef.current.delete(conversationPath);
+        if (isPathDisplayed(conversationPath)) {
+          setConversation(server);
+          conversationRef.current = server;
+        }
+        settleRecovered();
       };
 
       // See client-channel-protocol spec for the full rationale.
@@ -618,6 +724,7 @@ export const useConversationStream = ({
       channel?.notifyGenerationSettled,
       overlay,
       transport,
+      resumeGeneration,
       generationConflictMessage,
       generationPersistenceErrorMessage,
     ],
@@ -660,28 +767,11 @@ export const useConversationStream = ({
       });
   }, [conversationId, onStopError, overlay, transport]);
 
-  const resumeIfAwaitingGeneration = useMemo(
-    () =>
-      createResumeIfAwaitingGeneration({
-        transport,
-        setConversation,
-        conversationRef,
-        resumingPathsRef,
-        bufferedGenerationsRef,
-        addStreamingPath,
-        removeStreamingPath,
-        isPathDisplayed,
-        generationPersistenceErrorMessage,
-      }),
-    // setConversation and conversationRef are stable refs — intentionally omitted
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      addStreamingPath,
-      removeStreamingPath,
-      isPathDisplayed,
-      transport,
-      generationPersistenceErrorMessage,
-    ],
+  /* The public entry point takes no options; those are reserved for stream recovery. */
+  const resumeIfAwaitingGeneration = useCallback(
+    (currentConversationId: string, conversation: Conversation) =>
+      resumeGeneration(currentConversationId, conversation),
+    [resumeGeneration],
   );
 
   /*

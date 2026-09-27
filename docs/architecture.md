@@ -370,6 +370,9 @@ see [PDF citation metadata](../apps/chat-api/README.md#pdf-citation-metadata).
 - Handles `[DONE]` termination marker
 - Supports `AbortSignal` for cancellation
 - Ignores comment lines (those starting with `:`), as every SSE reader in the repo must
+- Reports a lost connection (a rejected `fetch` or a failed read) and a stream silent for 45 s — keepalives included, re-checked immediately on `visibilitychange`/`online`/`pageshow` — as a `StreamInterruptedError`. `useConversationStream` then re-fetches the conversation and rejoins the still-running generation through `completions/attach` (falling back to `watch`), shows the saved answer if it already finished, and shows the error banner only if neither applies (issue #8959; OpenSpec capability `generation-stream-recovery`)
+
+`conversations/completions`, `conversations/completions/attach`, and `conversations/watch` each write a `: keepalive` comment every 15 s while open. On `completions` the tick is skipped while the last relayed upstream slice ended mid-line, so the comment never splits an SSE line.
 
 Every `chat-api` SSE response (`conversations/completions`, `conversations/watch`, `client-channel/subscribe`) is opened through `startSseResponse` (`apps/chat-api/src/common/utils/sse.ts`), which sets the event-stream headers, flushes them, and immediately writes a `: init` comment. Firefox does not hand a streamed response to the `fetch()` caller until the first body byte arrives, and these endpoints flush headers long before their first real event exists — without the comment, Firefox leaves the request pending, so the client-channel id never resolves and `useConversationStream` blocks on `waitForChannel` before it even sends the completion request — this is now the ordinary cold-start path for the first completion after mount or after an idle disconnect, not an edge case, since the subscription is opened by that same completion rather than in advance.
 
