@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.20`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.21`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.20
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.21
 - `@epam/ai-dial-react-file-manager` ^0.3.0-dev.13 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -754,6 +754,11 @@ import {
   MARKDOWN_TABLE_CSV_MIME_TYPE,
   getUtf8ByteLength,
   truncateToUtf8Bytes,
+  ENTITY_NAME_MAX_LENGTH,
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  exceedsMaxLength,
+  hasControlCharacters,
   sanitizeConversationName,
   stripTrailingDots,
   PROHIBITED_CONVERSATION_NAME_CHARS_RE,
@@ -761,6 +766,11 @@ import {
   resolvePromptParams,
   buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
+
+// Length limits shared by every entity editor (prompts, skills, toolsets,
+// applications, scheduled tasks): name 256, description 2000, instructions 50000.
+const isNameTooLong = exceedsMaxLength(name.trim(), ENTITY_NAME_MAX_LENGTH);
+const isNameMultiline = hasControlCharacters(name); // line breaks, tabs, NUL, …
 
 // Merge conditional class names — the only supported way to compose classes.
 // Conflicting utilities collapse to the last one, including the workspace

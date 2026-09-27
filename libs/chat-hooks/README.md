@@ -82,7 +82,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.20
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.21
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -3463,6 +3463,21 @@ const manifestText = buildSkillManifest({
 const { frontmatter, instructions } = parseSkillManifest(manifestText);
 ```
 
+### getSkillFieldLengthViolations / SKILL_TEXT_FIELD_MAX_LENGTHS
+
+Returns, for each of a skill's `name`, `description` and `instructions` values that is longer than its limit once trimmed, the limit it exceeds (256, 2000 and 50000 — the shared entity limits from `@epam/ai-dial-chat-shared`). `useSkillEditorSubmit` uses it to show `messages.tooLong(limit)` as the user types and to block a submit.
+
+```ts
+import {
+  getSkillFieldLengthViolations,
+  SKILL_TEXT_FIELD_MAX_LENGTHS,
+} from '@epam/ai-dial-chat-hooks';
+
+const violations = getSkillFieldLengthViolations(values);
+// e.g. { name: 256 } when values.name is 300 characters long
+const nameLimit = SKILL_TEXT_FIELD_MAX_LENGTHS.name;
+```
+
 ### parseSkillManifestDocument
 
 Splits a `SKILL.md` into its frontmatter fields (`name`, `description`, and recognised `about.*` fields) and its prose body. Never throws — a file with no frontmatter fence resolves to the whole input as `body`.
@@ -3607,6 +3622,8 @@ const {
   client,
   messages: {
     required: 'Required',
+    tooLong: (maxLength) => `Use ${maxLength} characters or fewer.`,
+    instructionsFrontmatter: 'Front matter belongs in the fields above',
     nameInvalid: 'Invalid name',
     nameConflict: 'A skill with this name already exists',
     archiveTooLarge: 'The uploaded content is too large',
