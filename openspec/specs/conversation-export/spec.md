@@ -41,6 +41,14 @@ The export format SHALL start at version 5: only `ExportFormatV5` is defined by 
 
 The system SHALL let a user export one conversation, without attachments, from the conversation's context menu. The full conversation content SHALL be fetched from the existing conversation-content wrapper (`getConversation(path)` in `apps/chat/src/server-api/conversations.api.ts`), serialized into the JSON v5 envelope, wrapped in a `Blob` of type `application/json`, and offered as a browser download by reusing the existing `triggerBlobDownload(blob, filename)` helper in `apps/chat/src/utils/file-download.ts` (do not hand-roll a new `<a download>`). Like every other export mode, this path SHALL create a queue job (see the export-queue requirement) so the user has one consistent place to see the status of every export they trigger, even ones that complete almost immediately. The downloaded file SHALL be named per the file-naming requirement.
 
+Because this mode ships no attachment bytes, the system SHALL remove every attachment reference from the exported conversation — `custom_content.attachments`, each stage's `attachments`, and each annotation's `body.source` (the cited document), keeping the annotation's quote, title and target. A kept reference is a `files/{bucket}/{path}` id in the exporting user's bucket: the importing user either cannot read it (403 on every preview) or, re-importing their own file, gets back the very attachments the mode excluded (issues #8663, #9003).
+
+#### Scenario: Without-attachments export carries no attachment references
+
+- **GIVEN** a conversation whose messages carry attachments, stage attachments, and a citation with a source document
+- **WHEN** the user chooses Export → "without attachments"
+- **THEN** the downloaded `.json` contains no `files/…` reference to any of them, and the citation keeps its quote
+
 #### Scenario: Single JSON export downloads immediately
 
 - **GIVEN** a user opens a conversation's context menu
@@ -93,7 +101,13 @@ The system SHALL let a user export one conversation, with attachments, producing
 
 ### Requirement: Export all conversations as a single JSON file
 
-The system SHALL let a user export all of their conversations, without attachments, from the conversation panel header menu. The system SHALL enumerate the full conversation list from the existing conversation-list BFF endpoint, following pagination via `nextToken` until all pages are retrieved, fetch each conversation's content, serialize everything into one JSON v5 envelope, and download it as a single `.json` file named per the file-naming requirement. This action SHALL NOT show any submenu or mode selection (it is always without attachments) and SHALL create a queue job for the duration of the operation, during which the rest of the app remains usable. Bulk export WITH attachments is out of scope.
+The system SHALL let a user export all of their conversations, without attachments, from the conversation panel header menu. The system SHALL enumerate the full conversation list from the existing conversation-list BFF endpoint, following pagination via `nextToken` until all pages are retrieved, fetch each conversation's content, serialize everything into one JSON v5 envelope, and download it as a single `.json` file named per the file-naming requirement. This action SHALL NOT show any submenu or mode selection (it is always without attachments) and SHALL create a queue job for the duration of the operation, during which the rest of the app remains usable. Bulk export WITH attachments is out of scope. Like the single without-attachments export, export-all SHALL remove every attachment reference from each exported conversation (see that requirement), so a user who imports another user's export-all file never inherits references into the exporter's bucket (issue #9003).
+
+#### Scenario: Export-all carries no attachment references
+
+- **GIVEN** a user's conversations reference files in their bucket
+- **WHEN** the user chooses "Export all conversations"
+- **THEN** the downloaded `.json` contains no `files/{bucket}/…` reference, and every other message field is kept
 
 #### Scenario: Export-all follows pagination
 
