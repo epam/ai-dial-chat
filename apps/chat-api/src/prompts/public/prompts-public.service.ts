@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import { DialClientService } from '../../dial/dial-client.service';
 import { FOLDER_SENTINEL } from '../constants/prompt.constants';
 import type { PromptResponseDto } from '../dto/prompt-response.dto';
@@ -13,7 +14,6 @@ import {
   isSentinelPath,
   mapPromptToResponse,
   metadataItemToPromptPath,
-  PUBLIC_BUCKET,
   type PromptMetadataItem,
   type PromptReadResult,
 } from '../utils/prompt-mapper.util';

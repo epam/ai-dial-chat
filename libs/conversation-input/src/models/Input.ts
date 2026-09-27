@@ -265,6 +265,8 @@ export interface InputHandle {
 
 /** Props accepted by the `Input` component. */
 export interface InputProps {
+  /** Changing this token requests textarea focus without altering its value or caret. */
+  focusRequestId?: number;
   /**
    * Message value. Sets the initial textarea content on mount and syncs the
    * textarea whenever the value changes.

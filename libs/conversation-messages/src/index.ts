@@ -4,6 +4,7 @@ export { UserMessageBubble } from './components/MessageBubble/UserMessageBubble'
 export { AssistantMessageBubble } from './components/MessageBubble/AssistantMessageBubble';
 export { StatusMessageBubble } from './components/MessageBubble/StatusMessageBubble';
 export { MessageActions } from './components/MessageActions/MessageActions';
+export { MessageSelectionReply } from './components/MessageSelectionReply/MessageSelectionReply';
 export { BubblePosition } from './types/bubble-position';
 export type {
   MessageBubbleProps,
@@ -15,6 +16,13 @@ export type {
   MessageBubbleLabels,
   AssistantMessageBubbleLabels,
 } from './models/message-bubble';
+export type {
+  MessageSelectionReplyColors,
+  MessageSelectionReplyLabels,
+  MessageSelectionReplyProps,
+  MessageSelectionReplyStyles,
+  MessageSelectionReplyTypography,
+} from './components/MessageSelectionReply/MessageSelectionReply';
 export type {
   StatusMessageBubbleLabels,
   StatusMessageBubbleProps,

@@ -371,6 +371,28 @@ English defaults, and this app passes `t(...)` values in.
 
 ## Testing
 
+### Reply to selected message text
+
+Reply stays hidden while selection is in progress and appears after pointer release
+or completion of keyboard selection, including repeated selections.
+
+Select text inside one completed user or assistant message and activate **Reply**
+to add it to the current composer as `reply-<uuid>.txt`. The UTF-8 file contains
+the selected visible text, including whitespace and Unicode. The typed draft is
+preserved; Reply focuses the composer without sending. The file uses normal
+attachment upload, size/count validation, preview, retry, removal and URL-based
+send behavior. A loading or failed upload blocks sending; removing its draft tile
+does not delete the uploaded file.
+
+Reply is available only in an editable conversation whose selected model permits
+text attachments. It is unavailable during streaming or message editing, with
+disabled input/files, and in read-only views. Cross-message selections, attachment
+viewers, control-only selections and tool output are excluded. Inline citations,
+annotations and links within selected message text do not hide Reply; the file
+preserves the browser-selected text, including selected marker labels. Tab reaches Reply after
+selection; Enter/Space activates it and Escape dismisses it. Touch and RTL use the
+same flow.
+
 ```bash
 # Run all tests
 npm exec nx test chat

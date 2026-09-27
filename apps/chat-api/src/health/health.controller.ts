@@ -79,7 +79,7 @@ export class HealthController {
           type: 'string',
           example: '1.0.0',
           description:
-            'Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.',
+            'Application version. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.',
         },
         buildId: {
           type: 'string',

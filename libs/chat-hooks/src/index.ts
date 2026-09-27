@@ -80,6 +80,7 @@ export * from './conversation/useAsyncConfirmDialog/useAsyncConfirmDialog';
 export * from './conversation/useConversationLookupMaps/useConversationLookupMaps';
 export * from './conversation/useConversationPanelItems/useConversationPanelItems';
 export * from './conversation/useImportFilePicker/useImportFilePicker';
+export * from './conversation/useMessageSelectionReply/useMessageSelectionReply';
 export * from './conversation/useAttachmentUpload/useAttachmentUpload';
 export * from './conversation/useTranscribeAudio/audio-transcription-error';
 export * from './conversation/useTranscribeAudio/useTranscribeAudio';
