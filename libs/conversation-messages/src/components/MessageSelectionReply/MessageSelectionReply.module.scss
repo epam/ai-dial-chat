@@ -1,0 +1,17 @@
+/* Keep opaque Reply backgrounds above the kit's button state rules while
+ * preserving host color overrides through CSS variables. */
+.button.button {
+  background: var(
+    --cm-reply-background,
+    var(--bg-layer-raised, #fcfcfc)
+  ) !important;
+  color: var(--cm-reply-text, var(--text-primary, #161b2d));
+
+  &:hover {
+    background: var(
+      --cm-reply-hover-background,
+      var(--bg-layer-base, #f5f7fa)
+    ) !important;
+    color: var(--cm-reply-text, var(--text-primary, #161b2d));
+  }
+}

@@ -25,10 +25,59 @@ import '@epam/ai-dial-conversation-messages/styles.css';
 ## Peer Dependencies
 
 - `react`
+- `react-dom`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
 
 ## Components
+
+`MessageBubble`, `UserMessageBubble` and `AssistantMessageBubble` accept an optional
+`contentRef?: React.Ref<HTMLDivElement>`. It points to the rendered text wrapper,
+excluding attachment trays, actions and host `beforeContent`/`afterContent` slots.
+Hosts can use it to scope native text-selection interactions; selection policy and
+file upload remain host responsibilities. Embedded Markdown controls can still be
+descendants, so hosts must exclude interactive controls from eligible selections.
+
+### MessageSelectionReply
+
+Renders a viewport-clamped Reply action beside a native text selection. The host owns
+selection eligibility, file creation, upload and localization; pass translated labels
+through `labels` and unmount the action by omitting `rect`.
+
+Pass `portalContainer` when the chat lives in a modal dialog or a container with
+its own theme. The destination must belong to the same document as the message
+bodies and retain viewport coordinates for fixed-position children (avoid a
+transformed ancestor). It defaults to `document.body`; `null` defers rendering
+until the host container is mounted. Both the action and its live status region
+are portaled into this destination.
+
+`styles` accepts `colors` (`background`, `hoverBackground`, `text`),
+`typography.fontClassName` (defaults to `dial-small-text`), `className` for the
+floating root and `buttonClassName` for the button. Colors use the host's
+`--bg-layer-raised`, `--bg-layer-base` and `--text-primary` tokens when omitted,
+with opaque light-theme fallbacks. The exported types are
+`MessageSelectionReplyProps`, `MessageSelectionReplyLabels`,
+`MessageSelectionReplyStyles`, `MessageSelectionReplyColors` and
+`MessageSelectionReplyTypography`.
+
+```tsx
+import { MessageSelectionReply } from '@epam/ai-dial-conversation-messages';
+
+<MessageSelectionReply
+  rect={selection?.rect}
+  actionRef={actionRef}
+  onReply={onReply}
+  addedRevision={addedRevision}
+  labels={{
+    reply: t('chat.reply'),
+    selectionAvailable: t('chat.replySelectionAvailable'),
+    attachmentAdded: t('chat.replyAttachmentAdded'),
+  }}
+/>;
+```
+
+For a complete hook, message body, action and upload composition, see
+[useMessageSelectionReply](../chat-hooks/README.md#usemessageselectionreply).
 
 ### UserMessageBubble
 
