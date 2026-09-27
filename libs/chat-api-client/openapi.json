@@ -27,7 +27,7 @@
                     "version": {
                       "type": "string",
                       "example": "1.0.0",
-                      "description": "Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint."
+                      "description": "Application version. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Matches the appVersion reported by the client config endpoint."
                     },
                     "buildId": {
                       "type": "string",
@@ -6836,7 +6836,7 @@
           },
           "appVersion": {
             "type": "string",
-            "description": "Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.",
+            "description": "Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Always a non-empty string.",
             "example": "0.45.0"
           },
           "asrModelId": {

@@ -268,9 +268,18 @@ export const useAttachments = ({
     ],
   );
 
+  const consumedFiles = useRef(new WeakSet<File>());
   useEffect(() => {
-    if (pendingDropFiles.length === 0) return;
-    const built = buildAttachments(pendingDropFiles);
+    if (pendingDropFiles.length === 0) {
+      consumedFiles.current = new WeakSet<File>();
+      return;
+    }
+    const files = pendingDropFiles.filter(
+      (file) => !consumedFiles.current.has(file),
+    );
+    if (files.length === 0) return;
+    files.forEach((file) => consumedFiles.current.add(file));
+    const built = buildAttachments(files);
     addAttachments(built);
     onDropFilesConsumed?.();
   }, [addAttachments, buildAttachments, onDropFilesConsumed, pendingDropFiles]);

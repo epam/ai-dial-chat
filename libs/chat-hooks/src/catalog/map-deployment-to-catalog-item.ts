@@ -9,7 +9,11 @@ import type {
   DialToolsetAuthSettingsDto,
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
-import { CatalogEntityType, formatLastUsed } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  formatLastUsed,
+  PUBLIC_BUCKET,
+} from '@epam/ai-dial-chat-shared';
 import { isPublicToolsetId } from '../oauth/toolset-id';
 import { resolveLocalizedText } from '../shared/locale';
 import { safeDecodeURIComponent } from '../shared/string-utils';
@@ -91,7 +95,6 @@ const TYPE_MAP: Record<string, CatalogEntityType> = {
 
 const APPLICATIONS_PREFIX = 'applications/';
 const TOOLSETS_PREFIX = 'toolsets/';
-const PUBLIC_SEGMENT = 'public';
 
 const stripPrefixSegments = (raw: string, prefix: string): string[] =>
   (raw.startsWith(prefix) ? raw.slice(prefix.length) : raw)
@@ -136,7 +139,7 @@ export const resolveDeploymentFolder = (
     return [labels.public];
   }
 
-  if (segments[0]?.toLowerCase() === PUBLIC_SEGMENT) {
+  if (segments[0]?.toLowerCase() === PUBLIC_BUCKET) {
     return [labels.public, ...segments.slice(1)];
   }
 
@@ -166,7 +169,7 @@ const resolveToolsetFolder = (
     return [labels.shared, ...segments.slice(1)];
   }
 
-  if (segments[0]?.toLowerCase() === PUBLIC_SEGMENT && labels != null) {
+  if (segments[0]?.toLowerCase() === PUBLIC_BUCKET && labels != null) {
     return [labels.public, ...segments.slice(1)];
   }
 

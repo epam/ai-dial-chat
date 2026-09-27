@@ -6,7 +6,7 @@ import type {
   ResponseFormat,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import type { Components } from 'react-markdown';
 import type { BubblePosition } from '../types/bubble-position';
 import type { MessageActionsProps } from './message-actions';
@@ -97,6 +97,8 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
 
 /** Shared props for user and assistant message bubble components. */
 interface BaseMessageBubbleProps {
+  /** Ref to the text body, excluding attachment trays, actions and host slots. */
+  contentRef?: Ref<HTMLDivElement>;
   /** Plain-text (or Markdown) content of the message. When absent, the bubble renders for `beforeContent` alone. */
   text?: string;
   /** Color and typography overrides applied as CSS custom properties. */

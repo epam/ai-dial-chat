@@ -6,6 +6,7 @@ export * from '../conversation/get-model-id-from-conversation-id';
 export * from '../conversation/greeting';
 export * from '../conversation/message-factory';
 export * from '../conversation/message-utils';
+export * from '../conversation/useMessageSelectionReply/useMessageSelectionReply';
 export * from '../conversation/quick-app-conversation-starters';
 export * from '../conversation/stage';
 export * from '../conversation/starter-option';
