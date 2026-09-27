@@ -1,4 +1,8 @@
 import { parse as parseYaml } from 'yaml';
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '../../common/validators/entity-field-limits';
 
 /** A line consisting solely of `---`, opening or closing the frontmatter block. */
 const FENCE_LINE = /^---[ \t]*$/;
@@ -71,6 +75,17 @@ export const parseSkillManifestFrontmatter = (
   if (typeof description !== 'string' || description.trim() === '') {
     throw new InvalidSkillManifestError(
       'SKILL.md frontmatter must include a non-empty "description"',
+    );
+  }
+
+  if (name.trim().length > ENTITY_NAME_MAX_LENGTH) {
+    throw new InvalidSkillManifestError(
+      `SKILL.md frontmatter "name" must be ${ENTITY_NAME_MAX_LENGTH} characters or fewer`,
+    );
+  }
+  if (description.trim().length > ENTITY_DESCRIPTION_MAX_LENGTH) {
+    throw new InvalidSkillManifestError(
+      `SKILL.md frontmatter "description" must be ${ENTITY_DESCRIPTION_MAX_LENGTH} characters or fewer`,
     );
   }
 
