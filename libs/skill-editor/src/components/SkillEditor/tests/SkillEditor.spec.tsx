@@ -34,6 +34,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  ButtonDropdown: ({ label }: { label: ReactNode }) => (
+    <button aria-haspopup="menu">{label}</button>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },
@@ -267,6 +270,9 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconArrowNarrowLeft: () => <svg />,
+  IconDatabase: () => <svg />,
+  IconFileZip: () => <svg />,
+  IconFolderPlus: () => <svg />,
   IconPlus: () => <svg />,
   IconTrashX: () => <svg />,
   IconUpload: () => <svg />,

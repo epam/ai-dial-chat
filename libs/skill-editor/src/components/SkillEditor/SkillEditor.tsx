@@ -10,13 +10,20 @@ import {
   type TextRefinementCallback,
 } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
-import { DialFoldersTree } from '@epam/ai-dial-react-file-manager';
+import {
+  DialFileNodeType,
+  DialFoldersTree,
+} from '@epam/ai-dial-react-file-manager';
 import {
   Accordion,
+  ButtonAppearance,
+  ButtonDropdown,
+  ButtonVariant,
   CaptionText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   EditorThemes,
+  ElementSize,
   ErrorText,
   GhostButton,
   Input,
@@ -28,7 +35,14 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
-import { IconPlus, IconTrashX } from '@tabler/icons-react';
+import {
+  IconDatabase,
+  IconFileZip,
+  IconFolderPlus,
+  IconPlus,
+  IconTrashX,
+  IconUpload,
+} from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
  * it here, rather than eagerly from the host app's entry point, keeps this
@@ -50,18 +64,36 @@ import {
   useState,
 } from 'react';
 import { SKILL_EDITOR_CLASS } from '../../constants/public-class-names';
+import { useDraftFolder } from '../../hooks/useDraftFolder';
 import { useSkillFileDropZone } from '../../hooks/useSkillFileDropZone';
 import type {
   SkillEditorProps,
   SkillEditorValues,
+  SkillFileSourceEntry,
   SkillFileTreeNode,
 } from '../../models/skill-editor-props';
+import { SkillAddSource } from '../../types/skill-add-source';
 import { SKILL_MANIFEST_PATH } from '../../types/skill-editor-defaults';
 import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
-import { buildDialFileTree } from '../../utils/file-tree';
+import { SkillFileUploadMode } from '../../types/skill-file-upload-mode';
+import { SkillFilesPane } from '../../types/skill-files-pane';
+import { buildDialFileTree, resolveAddTarget } from '../../utils/file-tree';
 import { SkillFileDropOverlay } from '../SkillFileDropOverlay/SkillFileDropOverlay';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog/SkillFileUploadDialog';
 import styles from './SkillEditor.module.scss';
+
+/** What the upload dialog was last opened for. */
+interface UploadRequest {
+  mode: SkillFileUploadMode;
+  targetFolderPath: string;
+  initialFiles?: File[];
+  initialEntries?: SkillFileSourceEntry[];
+}
+
+const DEFAULT_UPLOAD_REQUEST: UploadRequest = {
+  mode: SkillFileUploadMode.Files,
+  targetFolderPath: '',
+};
 
 type MarkdownEditorComponent = ComponentType<{
   value: string;
@@ -248,7 +280,13 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   );
 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [droppedFiles, setDroppedFiles] = useState<File[] | undefined>();
+  const [uploadRequest, setUploadRequest] = useState<UploadRequest>(
+    DEFAULT_UPLOAD_REQUEST,
+  );
+  const openUploadDialog = useCallback((request: UploadRequest) => {
+    setUploadRequest(request);
+    setIsUploadDialogOpen(true);
+  }, []);
   /*
    * Collapsed on first paint. The accordion only mounts under the mobile
    * breakpoint — desktop renders the always-visible Files sidebar instead — so
@@ -266,10 +304,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const handleSurfaceFilesDropped = useCallback(
     (droppedFileList: File[]) => {
       if (isUploadDialogOpen) return;
-      setDroppedFiles(droppedFileList);
-      setIsUploadDialogOpen(true);
+      openUploadDialog({
+        ...DEFAULT_UPLOAD_REQUEST,
+        initialFiles: droppedFileList,
+      });
     },
-    [isUploadDialogOpen],
+    [isUploadDialogOpen, openUploadDialog],
   );
   const {
     isDragActive: isSurfaceDragActive,
@@ -284,6 +324,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     typography.helperTextClassName ?? 'dial-tiny-semi-text';
   const removeIconClassName =
     typography.removeIconClassName ?? 'text-secondary';
+  const menuIconClassName = typography.menuIconClassName ?? 'text-secondary';
 
   const cssVars = buildCssVars({
     '--se-title-color': colors?.title,
@@ -309,6 +350,44 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       }
     : undefined;
 
+  const folderNameMessages = useMemo(
+    () => ({
+      required: t.folderNameRequiredError ?? 'Enter a folder name',
+      invalid:
+        t.folderNameInvalidError ??
+        "Folder name can't contain / or \\, or be . or ..",
+      duplicate:
+        t.folderNameDuplicateError ??
+        'An item with this name already exists here',
+    }),
+    [
+      t.folderNameRequiredError,
+      t.folderNameInvalidError,
+      t.folderNameDuplicateError,
+    ],
+  );
+  const revealFolder = useCallback(
+    (path: string) => {
+      if (expandedPathsSet.has(path)) return;
+      handleExpandedPathsChange(new Set([...expandedPathsSet, path]));
+    },
+    [expandedPathsSet, handleExpandedPathsChange],
+  );
+  const draftFolder = useDraftFolder({
+    files,
+    fileActions,
+    defaultName: t.newFolderDefaultName ?? 'New folder',
+    messages: folderNameMessages,
+    onRevealFolder: revealFolder,
+    onCreated: handleSelectedPathChange,
+  });
+  const { draftNode, draftPath, draftPane } = draftFolder;
+
+  /*
+   * The Files pane renders once per breakpoint, so the draft (and its inline
+   * rename field) lives only in the rendering the user started it from —
+   * two live rename fields would both save on the same outside click.
+   */
   const treeItems: DialFile[] = useMemo(
     () =>
       buildDialFileTree([
@@ -321,6 +400,21 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       ]),
     [files],
   );
+  const treeItemsWithDraft: DialFile[] = useMemo(
+    () =>
+      draftNode
+        ? buildDialFileTree([
+            {
+              path: SKILL_MANIFEST_PATH,
+              name: SKILL_MANIFEST_PATH,
+              kind: SkillFileNodeKind.File,
+            },
+            ...files,
+            draftNode,
+          ])
+        : treeItems,
+    [files, draftNode, treeItems],
+  );
 
   const selectedNode = useMemo(
     () => files.find((node) => node.path === selectedPath),
@@ -329,9 +423,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const handleTreeItemClick = useCallback(
     (item: DialFile) => {
+      if (item.path === draftPath) return;
       handleSelectedPathChange(item.path);
     },
-    [handleSelectedPathChange],
+    [handleSelectedPathChange, draftPath],
   );
 
   const handleRemoveNode = useCallback(
@@ -344,13 +439,141 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [fileActions, selectedPath, handleSelectedPathChange],
   );
 
-  const getContextMenuItems = useCallback(
-    (item: DialFile): DropdownItem[] => {
-      if (item.path === SKILL_MANIFEST_PATH) return [];
-      return [
+  const { startDraft } = draftFolder;
+  const { onCreateFolder, extractArchive, pickFromFileSystem } = fileActions;
+
+  const handlePickFromFileSystem = useCallback(
+    async (targetFolderPath: string) => {
+      if (!pickFromFileSystem) return;
+      const entries = await pickFromFileSystem();
+      if (!entries?.length) return;
+      openUploadDialog({
+        mode: SkillFileUploadMode.Files,
+        targetFolderPath,
+        initialEntries: entries,
+      });
+    },
+    [pickFromFileSystem, openUploadDialog],
+  );
+
+  const buildAddMenuItems = useCallback(
+    (targetFolderPath: string, pane: SkillFilesPane): DropdownItem[] => {
+      const menuIcon = (Icon: typeof IconPlus) => (
+        <Icon
+          size={DIAL_ICON_SIZE.SM}
+          className={menuIconClassName}
+          aria-hidden
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      );
+      const items: DropdownItem[] = [];
+      if (onCreateFolder) {
+        items.push({
+          key: 'create-folder',
+          label: t.createFolderLabel ?? 'Create folder',
+          icon: menuIcon(IconFolderPlus),
+          onClick: () => startDraft(targetFolderPath, pane),
+        });
+      }
+      items.push({
+        key: 'upload-files',
+        label:
+          t.uploadFilesLabel ?? t.addUploadLabel ?? 'Upload files from device',
+        icon: menuIcon(IconUpload),
+        onClick: () =>
+          openUploadDialog({
+            mode: SkillFileUploadMode.Files,
+            targetFolderPath,
+          }),
+      });
+      if (extractArchive) {
+        items.push({
+          key: 'upload-archive',
+          label: t.uploadArchiveLabel ?? 'Upload archive from device',
+          icon: menuIcon(IconFileZip),
+          onClick: () =>
+            openUploadDialog({
+              mode: SkillFileUploadMode.Archive,
+              targetFolderPath,
+            }),
+        });
+      }
+      if (pickFromFileSystem) {
+        items.push({
+          key: 'open-file-system',
+          label: t.openFileSystemLabel ?? 'Open DIAL file system',
+          icon: menuIcon(IconDatabase),
+          onClick: () => void handlePickFromFileSystem(targetFolderPath),
+        });
+      }
+      return items;
+    },
+    [
+      menuIconClassName,
+      onCreateFolder,
+      extractArchive,
+      pickFromFileSystem,
+      t.createFolderLabel,
+      t.uploadFilesLabel,
+      t.addUploadLabel,
+      t.uploadArchiveLabel,
+      t.openFileSystemLabel,
+      startDraft,
+      openUploadDialog,
+      handlePickFromFileSystem,
+    ],
+  );
+
+  const headerAddItems = useMemo(() => {
+    const target = resolveAddTarget(
+      SkillAddSource.Header,
+      files.find((node) => node.path === selectedPath),
+    );
+    return {
+      [SkillFilesPane.Mobile]: buildAddMenuItems(target, SkillFilesPane.Mobile),
+      [SkillFilesPane.Desktop]: buildAddMenuItems(
+        target,
+        SkillFilesPane.Desktop,
+      ),
+    };
+  }, [buildAddMenuItems, files, selectedPath]);
+
+  const buildContextMenuItems = useCallback(
+    (item: DialFile, pane: SkillFilesPane): DropdownItem[] => {
+      if (item.path === SKILL_MANIFEST_PATH || item.path === draftPath) {
+        return [];
+      }
+      const node: SkillFileTreeNode = {
+        path: item.path,
+        name: item.name,
+        kind:
+          item.nodeType === DialFileNodeType.FOLDER
+            ? SkillFileNodeKind.Folder
+            : SkillFileNodeKind.File,
+      };
+      const items: DropdownItem[] = [];
+      if (node.kind === SkillFileNodeKind.Folder) {
+        items.push({
+          key: 'add-child',
+          label: t.addChildLabel ?? 'Add child',
+          children: buildAddMenuItems(
+            resolveAddTarget(SkillAddSource.Child, node),
+            pane,
+          ),
+        });
+      }
+      items.push(
         {
-          key: 'remove',
-          label: t.removeLabel ?? 'Remove',
+          key: 'add-sibling',
+          label: t.addSiblingLabel ?? 'Add sibling',
+          children: buildAddMenuItems(
+            resolveAddTarget(SkillAddSource.Sibling, node),
+            pane,
+          ),
+        },
+        {
+          key: 'delete',
+          label: t.deleteLabel ?? t.removeLabel ?? 'Delete',
           icon: (
             <IconTrashX
               size={DIAL_ICON_SIZE.SM}
@@ -361,37 +584,64 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           ),
           onClick: () => handleRemoveNode(item.path),
         },
-      ];
+      );
+      return items;
     },
-    [t.removeLabel, removeIconClassName, handleRemoveNode],
+    [
+      draftPath,
+      t.addChildLabel,
+      t.addSiblingLabel,
+      t.deleteLabel,
+      t.removeLabel,
+      removeIconClassName,
+      buildAddMenuItems,
+      handleRemoveNode,
+    ],
+  );
+  const getContextMenuItems = useMemo(
+    () => ({
+      [SkillFilesPane.Mobile]: (item: DialFile) =>
+        buildContextMenuItems(item, SkillFilesPane.Mobile),
+      [SkillFilesPane.Desktop]: (item: DialFile) =>
+        buildContextMenuItems(item, SkillFilesPane.Desktop),
+    }),
+    [buildContextMenuItems],
   );
 
-  const filesPane = (
+  const renderFilesPane = (pane: SkillFilesPane) => (
     <div className="flex flex-col gap-2 desktop:gap-5">
       <div className="flex items-center justify-between">
         <span className={mergeClasses(styles.title, titleClassName)}>
           {t.filesHeading ?? 'Files'}
         </span>
-        <NeutralButton
-          label={t.addUploadLabel ?? 'Upload from device'}
+        <ButtonDropdown
+          label={t.addLabel ?? 'Add'}
+          variant={ButtonVariant.Neutral}
+          appearance={ButtonAppearance.Solid}
+          size={ElementSize.Small}
           iconBefore={
-            <IconPlus size={16} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
+            <IconPlus
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
           }
-          onClick={() => {
-            setDroppedFiles(undefined);
-            setIsUploadDialogOpen(true);
-          }}
+          items={headerAddItems[pane]}
         />
       </div>
       <div role="tree" aria-label={t.filesTreeAriaLabel ?? 'Skill files'}>
         <DialFoldersTree
-          items={treeItems}
+          items={draftPane === pane ? treeItemsWithDraft : treeItems}
           showFiles
           selectedPath={selectedPath}
           expandedPaths={expandedPathsSet}
           onExpandedPathsChange={handleExpandedPathsChange}
           onItemClick={handleTreeItemClick}
-          getContextMenuItems={getContextMenuItems}
+          getContextMenuItems={getContextMenuItems[pane]}
+          renamedPath={draftPane === pane ? draftPath : undefined}
+          onRenameSave={draftFolder.handleSave}
+          onRenameCancel={draftFolder.handleCancel}
+          onRenameValidate={draftFolder.handleValidate}
           rootItemPath=""
         />
       </div>
@@ -505,12 +755,14 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 onToggle={setIsFilesExpanded}
                 ariaLabel={t.editingFileLabel ?? 'Editing file'}
               >
-                {filesPane}
+                {renderFilesPane(SkillFilesPane.Mobile)}
               </Accordion>
             </div>
 
             {/* Desktop: always-visible Files panel. */}
-            <div className="hidden px-8 py-6 desktop:block">{filesPane}</div>
+            <div className="hidden px-8 py-6 desktop:block">
+              {renderFilesPane(SkillFilesPane.Desktop)}
+            </div>
           </>
         }
         rightContent={
@@ -681,12 +933,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
       <SkillFileUploadDialog
         isOpen={isUploadDialogOpen}
-        onClose={() => {
-          setIsUploadDialogOpen(false);
-          setDroppedFiles(undefined);
-        }}
+        onClose={() => setIsUploadDialogOpen(false)}
         fileActions={fileActions}
-        initialFiles={droppedFiles}
+        mode={uploadRequest.mode}
+        targetFolderPath={uploadRequest.targetFolderPath}
+        initialFiles={uploadRequest.initialFiles}
+        initialEntries={uploadRequest.initialEntries}
         labels={labels}
       />
     </div>
