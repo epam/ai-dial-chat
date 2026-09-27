@@ -754,11 +754,6 @@ import {
   MARKDOWN_TABLE_CSV_MIME_TYPE,
   getUtf8ByteLength,
   truncateToUtf8Bytes,
-  ENTITY_NAME_MAX_LENGTH,
-  ENTITY_DESCRIPTION_MAX_LENGTH,
-  ENTITY_INSTRUCTIONS_MAX_LENGTH,
-  exceedsMaxLength,
-  hasControlCharacters,
   sanitizeConversationName,
   stripTrailingDots,
   PROHIBITED_CONVERSATION_NAME_CHARS_RE,
@@ -766,11 +761,6 @@ import {
   resolvePromptParams,
   buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
-
-// Length limits shared by every entity editor (prompts, skills, toolsets,
-// applications, scheduled tasks): name 256, description 2000, instructions 50000.
-const isNameTooLong = exceedsMaxLength(name.trim(), ENTITY_NAME_MAX_LENGTH);
-const isNameMultiline = hasControlCharacters(name); // line breaks, tabs, NUL, …
 
 // Merge conditional class names — the only supported way to compose classes.
 // Conflicting utilities collapse to the last one, including the workspace
