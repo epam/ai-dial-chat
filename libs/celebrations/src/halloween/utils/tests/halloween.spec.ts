@@ -8,7 +8,6 @@ import { HalloweenGhostVariant } from '../../types/halloween';
 import {
   buildHalloweenGhostFlight,
   buildHalloweenBatFlight,
-  buildHalloweenWitchFlight,
   buildHalloweenSpiderDrop,
   nextHalloweenSpiderOffset,
 } from '../halloween';
@@ -204,7 +203,7 @@ describe('nextHalloweenSpiderOffset', () => {
 });
 
 describe('Halloween scene layout', () => {
-  it.each([buildHalloweenBatFlight, buildHalloweenWitchFlight])(
+  it.each([buildHalloweenBatFlight])(
     'finishes flights before the overlay is removed',
     (build) => {
       const flights = build() as Record<string, string>[];

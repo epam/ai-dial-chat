@@ -13,7 +13,7 @@ export enum HalloweenScene {
   Bats = 'bats',
   /** A black cat follows drifting will-o’-the-wisps. */
   Cat = 'cat',
-  /** Witches fly across the sky on broomsticks. */
+  /** Two witches enchant page buttons and undo a wayward spell. */
   Witches = 'witches',
   Train = 'train',
   Portal = 'portal',

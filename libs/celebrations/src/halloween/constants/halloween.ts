@@ -21,6 +21,9 @@ export const HALLOWEEN_BAT_SCENE_DURATION_MS = 17500;
 /** Time for an unhurried walk, a long sit, paced pushes, falling prizes and grooming. */
 export const HALLOWEEN_CAT_SCENE_DURATION_MS = 25000;
 
+/** Time for the spell lesson, restoration and final broom hop. */
+export const HALLOWEEN_WITCH_SCENE_DURATION_MS = 20000;
+
 /** Spiders dropped per `HalloweenScene.Spiders`, each on its own thread. */
 export const HALLOWEEN_SPIDER_COUNT = 9;
 
@@ -101,6 +104,7 @@ export const HALLOWEEN_SCENE_DURATIONS: Partial<
 > = {
   [HalloweenScene.Bats]: HALLOWEEN_BAT_SCENE_DURATION_MS + 500,
   [HalloweenScene.Cat]: HALLOWEEN_CAT_SCENE_DURATION_MS + 500,
+  [HalloweenScene.Witches]: HALLOWEEN_WITCH_SCENE_DURATION_MS + 500,
   [HalloweenScene.Train]: 12000,
   [HalloweenScene.Portal]: 10000,
   [HalloweenScene.Ravens]: 13000,
@@ -118,7 +122,7 @@ export const HALLOWEEN_MOBILE_WEB_COUNT = 54;
 export const HALLOWEEN_BAT_COUNT = 16;
 export const HALLOWEEN_WISP_COUNT = 18;
 
-export const HALLOWEEN_WITCH_COUNT = 5;
+export const HALLOWEEN_WITCH_COUNT = 2;
 
 /**
  * How long, in ms, the user must leave the page alone before the corner

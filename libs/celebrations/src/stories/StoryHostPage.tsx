@@ -36,63 +36,84 @@ interface StoryHostPageProps {
   onSend?: () => void;
 }
 
-/** A stand-in chat start page carrying every anchor scenes can borrow from. */
+/**
+ * A stand-in chat start page carrying every anchor scenes can borrow from.
+ * Keep the decoration and history inside the iframe viewport so scenes can
+ * interact with them even when Storybook's panels reduce the available space.
+ */
 export const StoryHostPage: FC<StoryHostPageProps> = ({
   children,
   composerValue,
   onComposerChange,
   onSend,
 }) => (
-  <div className="bg-layer-1 flex h-screen min-h-[560px] text-primary">
+  <div className="bg-layer-1 flex h-dvh min-w-0 overflow-hidden text-primary">
     <nav
       aria-label="Conversation history"
-      className="story-history w-60 shrink-0 overflow-hidden border-e border-primary p-3"
+      className="story-history w-1/3 max-w-60 shrink-0 overflow-y-auto border-e border-primary p-3"
     >
       <h2 className="mb-2">Today</h2>
       <ul className="flex flex-col gap-1">
         {CONVERSATIONS.map((title, index) => (
           <li key={title} className="rounded px-2 py-1.5">
-            <a href={`/conversations/${index}`} onClick={stayOnPage}>
+            <a
+              href={`/conversations/${index}`}
+              className="block truncate"
+              onClick={stayOnPage}
+            >
               {title}
             </a>
           </li>
         ))}
       </ul>
-      <button type="button" className="mt-3 rounded border px-2 py-1">
+      <button type="button" className="mt-3 min-h-11 rounded border px-2 py-1">
         New chat
       </button>
     </nav>
     <main
       role="region"
       aria-label="Start page"
-      className="relative flex flex-1 flex-col items-center justify-center gap-6 overflow-hidden p-8"
+      className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-4 overflow-hidden p-4 desktop:gap-6 desktop:p-8"
     >
       {children}
       <h1>Good evening!</h1>
-      <ul className="story-starters flex gap-2">
+      <ul className="story-starters flex max-w-full flex-wrap justify-center gap-2">
         {STARTERS.map((starter) => (
           <li key={starter}>
-            <button type="button" className="rounded border px-3 py-1.5">
+            <button
+              type="button"
+              className="min-h-11 rounded border px-3 py-1.5"
+            >
               {starter}
             </button>
           </li>
         ))}
       </ul>
-      <div className="story-composer flex w-full max-w-[560px] items-center gap-2 rounded-lg border p-3">
-        <button type="button" className="story-add rounded border px-2">
+      <div className="story-composer flex w-full min-w-0 max-w-[560px] flex-wrap items-center gap-1 rounded-lg border p-2 desktop:flex-nowrap desktop:gap-2 desktop:p-3">
+        <button
+          type="button"
+          className="story-add me-auto min-h-11 min-w-11 shrink-0 rounded border px-2 desktop:me-0"
+        >
           +
         </button>
         <textarea
           aria-label="Message"
           rows={1}
-          className="flex-1 resize-none bg-transparent"
+          className="order-first min-w-0 basis-full resize-none bg-transparent desktop:order-none desktop:flex-1 desktop:basis-auto"
           value={composerValue}
           onChange={(event) => onComposerChange?.(event.target.value)}
         />
-        <button type="button" className="story-model rounded border px-2">
+        <button
+          type="button"
+          className="story-model min-h-11 shrink-0 rounded border px-2"
+        >
           Model
         </button>
-        <button type="button" className="rounded border px-2" onClick={onSend}>
+        <button
+          type="button"
+          className="min-h-11 shrink-0 rounded border px-2"
+          onClick={onSend}
+        >
           Send
         </button>
       </div>

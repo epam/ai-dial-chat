@@ -21,6 +21,7 @@ import {
   HALLOWEEN_WEB_COUNT,
   HALLOWEEN_BAT_COUNT,
   HALLOWEEN_WITCH_COUNT,
+  HALLOWEEN_WITCH_SCENE_DURATION_MS,
   HALLOWEEN_GHOST_COUNT,
   HALLOWEEN_SECRET_PHRASE,
   HALLOWEEN_SPIDER_COUNT,
@@ -277,6 +278,25 @@ describe('Halloween event through the celebration runtime', () => {
     act(() => vi.advanceTimersByTime(100));
     expect(queryGhosts()).toHaveLength(HALLOWEEN_GHOST_COUNT);
     act(() => vi.advanceTimersByTime(HALLOWEEN_BURST_DURATION_MS));
+    expect(queryDrawings()).toHaveLength(0);
+  });
+
+  it('lets the witches finish their lesson before the runtime deadline', async () => {
+    await renderProvider(true);
+    await userEvent.click(screen.getByRole('button', { name: 'witches' }));
+    await waitFor(() =>
+      expect(queryDrawings()).toHaveLength(HALLOWEEN_WITCH_COUNT),
+    );
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'witches' }));
+    act(() => vi.advanceTimersByTime(HALLOWEEN_WITCH_SCENE_DURATION_MS));
+    expect(queryDrawings()).toHaveLength(HALLOWEEN_WITCH_COUNT);
+    const deadline =
+      HALLOWEEN_SCENE_DURATIONS[HalloweenScene.Witches] ??
+      HALLOWEEN_BURST_DURATION_MS;
+    act(() =>
+      vi.advanceTimersByTime(deadline - HALLOWEEN_WITCH_SCENE_DURATION_MS),
+    );
     expect(queryDrawings()).toHaveLength(0);
   });
 

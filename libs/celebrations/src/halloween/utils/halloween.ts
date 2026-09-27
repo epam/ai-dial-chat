@@ -3,7 +3,6 @@ import { buildFlyingCharacterPaths } from '../../utils/flying-characters';
 import {
   HALLOWEEN_GHOST_COUNT,
   HALLOWEEN_BAT_COUNT,
-  HALLOWEEN_WITCH_COUNT,
   HALLOWEEN_WISP_COUNT,
   HALLOWEEN_SPIDER_COUNT,
 } from '../constants/halloween';
@@ -251,14 +250,6 @@ export const buildHalloweenBatFlight = (): CSSProperties[] =>
         '--wing-duration': `${0.24 + (index % 4) * 0.04}s`,
       }) as CSSProperties,
   );
-
-export const buildHalloweenWitchFlight = (): CSSProperties[] =>
-  buildFlyingCharacterPaths({
-    count: HALLOWEEN_WITCH_COUNT,
-    sizesPx: [76, 88, 100],
-    durationSeconds: 7.5,
-    staggerSeconds: 0.62,
-  });
 
 /** Dim little lights rise from separate columns, leaving the UI readable. */
 export const buildHalloweenWisps = (): CSSProperties[] =>

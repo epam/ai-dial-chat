@@ -305,6 +305,28 @@ with damped motion. Jointed outer wings fold on recovery and spread on the power
 stroke, accompanied by a slight body lift. Airflow has no rays, streaks or drawn
 vortex. The scene unmounts after eighteen seconds.
 
+The witches stage a spell lesson: an apprentice levitates small buttons, which
+grow frog eyes and legs and hop away. Her broom-herding attempt enchants the
+broom itself. A composed mentor undoes the spell; the buttons return exactly
+to their places before departure, with one final broom hop startling the
+apprentice. Two articulated witches share a twenty-second timeline; the scene
+unmounts after 20.5 seconds. Spells start at the posed hand; curved flights,
+hop anticipation and landing recovery, and delayed hat/cloak motion distinguish
+the apprentice's impulsive gestures from the mentor's measured ones. Returned
+copies cover the controls until original visibility is fully restored.
+Desktop borrows at most two buttons and mobile one,
+each at most 40 descendants and 240×64 pixels. The composer is only measured,
+never cloned. Missing or unsuitable targets retain a broom-only lesson; reduced
+motion or unsupported animation APIs show static witches without measuring or
+borrowing controls. Input, focus, scrolling, resizing, relevant source changes,
+hidden documents and scene replacement cancel playback and restore originals.
+Physical geometry works in both LTR and RTL without mirroring button text.
+Selection inspects at most 24 buttons. Precomputed transform/opacity tracks
+use at most 48 animations and 160 keyframes per track, with no per-frame layout
+reads or React updates. Actual anchor changes can trigger a geometry recheck
+solely for cancellation. No audio, additional dependency or network request is
+introduced.
+
 The raven scene tears small visual fragments from separated headings, buttons
 and history rows to build a nest on the main pumpkin. Each collector has its own
 pickup point and flight path, drops its piece briefly, then leaves in a separate

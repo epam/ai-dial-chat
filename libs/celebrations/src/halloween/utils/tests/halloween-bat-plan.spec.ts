@@ -118,8 +118,12 @@ describe('bat wind story geometry', () => {
     expect(BAT_SCENE_MS).toBeGreaterThan(HALLOWEEN_BURST_DURATION_MS);
     expect(deadline).toBeGreaterThan(BAT_SCENE_MS);
     for (const [scene, duration] of Object.entries(HALLOWEEN_SCENE_DURATIONS)) {
-      /* The cat story carries its own longer lifetime, like the bats. */
-      if (scene !== HalloweenScene.Bats && scene !== HalloweenScene.Cat)
+      /* The cat and witch stories carry their own longer lifetimes. */
+      if (
+        scene !== HalloweenScene.Bats &&
+        scene !== HalloweenScene.Cat &&
+        scene !== HalloweenScene.Witches
+      )
         expect(duration).toBeLessThanOrEqual(HALLOWEEN_BURST_DURATION_MS);
     }
   });

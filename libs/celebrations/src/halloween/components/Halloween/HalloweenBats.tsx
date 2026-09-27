@@ -154,7 +154,7 @@ const HalloweenBats: FC = () => {
           ))
         : (stationary || plan) && (
             <div className={styles.fallback} data-bat-fallback="true">
-              <HalloweenNightFlight burst={HalloweenScene.Bats} />
+              <HalloweenNightFlight />
             </div>
           )}
     </div>

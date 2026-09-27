@@ -12,13 +12,13 @@ import {
 import HalloweenGhosts from './HalloweenGhosts';
 import HalloweenMimic from './HalloweenMimic';
 import HalloweenMummy from './HalloweenMummy';
-import HalloweenNightFlight from './HalloweenNightFlight';
 import HalloweenPortal from './HalloweenPortal';
 import HalloweenRavens from './HalloweenRavens';
 import { HalloweenCauldron } from './HalloweenSecrets';
 import HalloweenSpiderTheft from './HalloweenSpiderTheft';
 import HalloweenTrain from './HalloweenTrain';
 import HalloweenWebScene from './HalloweenWebScene';
+import HalloweenWitches from './HalloweenWitches';
 
 const extraScenes: Partial<Record<HalloweenScene, FC>> = {
   [HalloweenScene.Bats]: HalloweenBats,
@@ -50,9 +50,7 @@ const HalloweenBurstOverlay: FC<Props> = ({ burst, trainSoundtrackUrl }) => {
   return (
     <>
       {ExtraScene && <ExtraScene />}
-      {burst === HalloweenScene.Witches && (
-        <HalloweenNightFlight burst={burst} />
-      )}
+      {burst === HalloweenScene.Witches && <HalloweenWitches />}
       {burst === HalloweenScene.Cat && <HalloweenCatScene />}
       {burst === HalloweenScene.Train && (
         <HalloweenTrain soundtrackUrl={trainSoundtrackUrl} />

@@ -1,0 +1,139 @@
+/* Decorative illustration pigments and SVG joint origins, not UI text colors. */
+.witch {
+  --witch-cloak: #71518e;
+  --witch-edge: #c5a1db;
+  --witch-dark: #30233e;
+  --witch-hair: #c17643;
+  --witch-ribbon: #e9a44f;
+}
+
+.mentor {
+  --witch-cloak: #2f6664;
+  --witch-edge: #9bd0bb;
+  --witch-dark: #193b43;
+  --witch-hair: #c3c8d3;
+  --witch-ribbon: #ceb780;
+}
+
+.cloak {
+  fill: var(--witch-cloak);
+  stroke: var(--witch-edge);
+  stroke-width: 1;
+}
+.hatBrim,
+.boot {
+  fill: var(--witch-dark);
+  stroke: var(--witch-edge);
+  stroke-width: 0.8;
+}
+.hair {
+  fill: var(--witch-hair);
+}
+.ribbon,
+.buckle {
+  fill: var(--witch-ribbon);
+}
+.lapel {
+  fill: var(--witch-edge);
+}
+.fold {
+  fill: none;
+  stroke: var(--witch-edge);
+  stroke-width: 1;
+}
+.skin {
+  fill: #d9c5aa;
+  stroke: #705a62;
+  stroke-width: 0.8;
+}
+.eye {
+  fill: #fff6d6;
+}
+.pupil {
+  fill: #1e2633;
+}
+.expression {
+  fill: none;
+  stroke: #3c2d42;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.wood {
+  fill: none;
+  stroke: #986342;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.straw {
+  fill: #d5aa58;
+  stroke: #835733;
+  stroke-width: 1;
+}
+.strawLines {
+  fill: none;
+  stroke: #ffe3a0;
+  stroke-width: 1;
+}
+.binding {
+  stroke: #685057;
+  stroke-width: 2.4;
+}
+.frogLeg {
+  fill: none;
+  stroke: #86ba70;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.frogEye {
+  fill: #deeb9b;
+  stroke: #578553;
+  stroke-width: 1.4;
+}
+.broom {
+  transform-origin: 90px 120px;
+}
+.armJoint {
+  transform-origin: 98px 82px;
+}
+.headJoint {
+  transform-origin: 93px 70px;
+}
+.hatJoint {
+  transform-origin: 94px 45px;
+}
+.cloakJoint {
+  transform-origin: 88px 72px;
+}
+.frogLegs {
+  transform-origin: 50px 57px;
+}
+.broom,
+.armJoint,
+.headJoint,
+.hatJoint,
+.cloakJoint,
+.frogLegs {
+  transform-box: view-box;
+}
+.broomFrog {
+  opacity: 0;
+}
+.frog {
+  color: #86ba70;
+}
+.spell {
+  fill: #dab378;
+}
+.mentorSpell {
+  fill: #9cdabb;
+}
+
+/* Before WAAPI takes ownership, and after cleanup, never flash displaced art. */
+.scene[data-ready='false'],
+.scene[data-ended='true'] {
+  visibility: hidden;
+}
+.scene[data-stationary='true'] .witch:not(.mentor) .broomFrog {
+  opacity: 1;
+}
