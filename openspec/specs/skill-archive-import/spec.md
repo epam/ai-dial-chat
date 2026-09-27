@@ -2,9 +2,7 @@
 
 ## Purpose
 Specifies the Catalog "Upload" entry point and the `POST /api/v1/skills/import` BFF endpoint that let a user create a whole Skill from a single ZIP archive or from a standalone `SKILL.md` file: server-side extraction and validation, atomic creation via the existing multipart Skill contract, and the frontend workflow that wires file selection to the API call and Catalog refresh.
-
 ## Requirements
-
 ### Requirement: Catalog "Upload" entry imports a Skill archive or a standalone manifest
 
 The Catalog Create dropdown's "Upload" entry (child of the "Skill" submenu, see `catalog-create-options`) SHALL open a native file picker whose accepted-file hint includes both ZIP archives and Markdown files, upload the selected file to the BFF's import endpoint, and — on success — refresh `SkillsContext` so the newly created Skill appears in the Catalog without a manual page reload. The picker's `accept` attribute is a browser-level hint only; the BFF, not the picker, is the authority on whether a given upload is accepted.
@@ -175,7 +173,7 @@ The system SHALL additionally enforce a separate, configurable compressed-ingres
 
 ### Requirement: Manifest content validation
 
-The system SHALL decode the archive's `SKILL.md` entry as strict UTF-8, rejecting (`400`) any byte sequence that is not valid UTF-8. The system SHALL parse the manifest's YAML frontmatter and require non-empty string `name` and `description` fields, rejecting (`400`) a manifest with missing frontmatter, malformed YAML, or an empty or non-string `name` or `description`.
+The system SHALL decode the archive's `SKILL.md` entry as strict UTF-8, rejecting (`400`) any byte sequence that is not valid UTF-8. The system SHALL parse the manifest's YAML frontmatter and require non-empty string `name` and `description` fields, rejecting (`400`) a manifest with missing frontmatter, malformed YAML, an empty or non-string `name` or `description`, a trimmed `name` longer than 256 characters, or a trimmed `description` longer than 2000 characters (bounds from `apps/chat-api/src/common/validators/entity-field-limits.ts`, see `entity-field-limits`).
 
 The system SHALL derive the destination Skill path from the manifest's `name` field using the same path-safety contract the manual Skill-creation flow already applies to a Skill's destination path. The system SHALL NOT rewrite or otherwise modify the uploaded `SKILL.md` content; only the destination path is computed from `name`.
 
@@ -186,6 +184,10 @@ The system SHALL derive the destination Skill path from the manifest's `name` fi
 #### Scenario: Missing or invalid frontmatter is rejected
 - **WHEN** `SKILL.md`'s YAML frontmatter is missing, malformed, or has an empty or non-string `name` or `description`
 - **THEN** the response is `400 Bad Request`
+
+#### Scenario: Over-long name or description is rejected
+- **WHEN** `SKILL.md`'s frontmatter `name` is longer than 256 characters or its `description` is longer than 2000 characters
+- **THEN** the response is `400 Bad Request` and no Skill is created
 
 #### Scenario: Manifest content is stored unmodified
 - **WHEN** a valid archive is imported
@@ -249,7 +251,7 @@ The system SHALL NOT use the request's declared `Content-Type` for the `file` fi
 
 ### Requirement: Standalone SKILL.md content validation
 
-The system SHALL decode a standalone `SKILL.md` upload as strict UTF-8, rejecting (`400`) any byte sequence that is not valid UTF-8. The system SHALL parse the manifest's YAML frontmatter and require non-empty string `name` and `description` fields, rejecting (`400`) a manifest with missing frontmatter, malformed YAML, or an empty or non-string `name` or `description` — using the exact same parsing and validation rules already applied to a `SKILL.md` entry inside an archive.
+The system SHALL decode a standalone `SKILL.md` upload as strict UTF-8, rejecting (`400`) any byte sequence that is not valid UTF-8. The system SHALL parse the manifest's YAML frontmatter and require non-empty string `name` and `description` fields, rejecting (`400`) a manifest with missing frontmatter, malformed YAML, an empty or non-string `name` or `description`, or a `name`/`description` over its 256/2000-character limit — using the exact same parsing and validation rules already applied to a `SKILL.md` entry inside an archive.
 
 The system SHALL derive the destination Skill path from the manifest's `name` field using the same path-safety contract the archive-import and manual Skill-creation flows already apply to a Skill's destination path. The system SHALL NOT rewrite or otherwise modify the uploaded `SKILL.md` content; only the destination path is computed from `name`.
 
@@ -288,3 +290,4 @@ The system SHALL NOT apply the archive-specific compressed-ingress limit (`SKILL
 #### Scenario: A standalone manifest within the per-file limit is not subject to archive-specific limits
 - **WHEN** a standalone `SKILL.md` upload is larger than would be allowed inside an archive's per-entry check only due to archive-specific overhead accounting, but is within `SKILL_FILE_UPLOAD_MAX_BYTES`
 - **THEN** the upload is accepted for content validation and is not rejected on the basis of any archive-specific limit
+

@@ -1,9 +1,5 @@
-# Spec: application-create-api
+## MODIFIED Requirements
 
-## Purpose
-
-Defines the backend `POST /api/v1/applications` endpoint that creates a new DIAL Core application for the authenticated session user, including request/response DTOs, the DIAL Core body mapping, cache invalidation, and error mapping.
-## Requirements
 ### Requirement: Create application endpoint
 
 The system SHALL expose `POST /api/v1/applications` that creates a new application for the authenticated session user by calling DIAL Core.
@@ -153,4 +149,3 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 - **WHEN** DIAL Core times out or is unreachable
 - **THEN** the endpoint responds 503
-
