@@ -46,6 +46,10 @@ export interface ScenePlayerProps {
   dir?: 'ltr' | 'rtl';
   /** Simulates `prefers-reduced-motion: reduce`. */
   isReducedMotion?: boolean;
+  /** Exercise the composer-before-starters ordering used by the chat host. */
+  startersBelowComposer?: boolean;
+  /** Hide starters to exercise a composer-only host. */
+  showStarters?: boolean;
   /** Host scene and decoration selection for the event. */
   selection?: CelebrationEventSelection;
   /** Extra content inside the provider, such as playground controls. */
@@ -76,6 +80,8 @@ export const ScenePlayer: FC<ScenePlayerProps> = ({
   isMobile = false,
   dir = 'ltr',
   isReducedMotion = false,
+  startersBelowComposer = false,
+  showStarters = true,
   selection,
   children,
 }) => {
@@ -98,7 +104,10 @@ export const ScenePlayer: FC<ScenePlayerProps> = ({
         selection={selections}
         onNotify={setNotification}
       >
-        <StoryHostPage>
+        <StoryHostPage
+          startersBelowComposer={startersBelowComposer}
+          showStarters={showStarters}
+        >
           <CelebrationDecor />
         </StoryHostPage>
         <Autoplay sceneId={sceneId} />

@@ -7,8 +7,6 @@
   user-select: none;
 }
 .candy,
-.paw,
-.hiddenGrin,
 .skeleton,
 .portal {
   position: absolute;
@@ -53,48 +51,6 @@
     transform: translate(var(--drift), calc(100vh + 70px))
       rotate(calc(var(--turn) + 100deg));
     opacity: 0;
-  }
-}
-
-.paw {
-  left: var(--x);
-  top: var(--y);
-  inline-size: 22px;
-  block-size: 25px;
-  fill: #b4d5be;
-  filter: drop-shadow(0 0 3px #529482);
-  transform: rotate(var(--angle));
-  animation: paw-appear 3s ease-out var(--delay) both;
-}
-.hiddenGrin {
-  left: clamp(8px, var(--x), calc(100% - 100px));
-  top: var(--y);
-  inline-size: 85px;
-  filter: drop-shadow(0 0 5px #66ad8d);
-  animation: grin-appear 3s ease-in-out 6.4s both;
-}
-@keyframes paw-appear {
-  0% {
-    opacity: 0;
-  }
-  12%,
-  55% {
-    opacity: 0.8;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-@keyframes grin-appear {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  30%,
-  70% {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -278,10 +234,6 @@
   .skeleton {
     inline-size: 98px;
   }
-  .paw {
-    inline-size: 28px;
-    block-size: 32px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -291,12 +243,6 @@
   }
   .candy {
     top: var(--rest-y);
-  }
-  .paw {
-    opacity: 0.5;
-  }
-  .hiddenGrin {
-    opacity: 1;
   }
   .skeleton {
     transform: scaleX(var(--mirror));

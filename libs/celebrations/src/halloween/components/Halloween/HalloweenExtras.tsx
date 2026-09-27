@@ -97,68 +97,6 @@ export const HalloweenCandy: FC = () => {
   );
 };
 
-/** An unseen familiar crosses a winding path, leaving a brief grin at its end. */
-export const HalloweenFootprints: FC = () => {
-  const [path] = useState(() => {
-    const y = 28 + Math.random() * 20;
-    const reverse = Math.random() > 0.5;
-    return Array.from(
-      { length: 14 },
-      (_, index) =>
-        ({
-          '--x': `${reverse ? 88 - index * 5.5 : 6 + index * 5.5}vw`,
-          '--y': `${y + Math.sin(index * 0.4) * 12 + (index % 2 ? 4 : 0)}vh`,
-          '--angle': `${(reverse ? -90 : 90) + Math.cos(index * 0.4) * 18}deg`,
-          '--delay': `${index * 0.43}s`,
-        }) as CSSProperties,
-    );
-  });
-  return (
-    <div
-      className={styles.scene}
-      data-halloween-scene="footprints"
-      aria-hidden="true"
-    >
-      {path.map((style, index) => (
-        <svg
-          key={index}
-          className={styles.paw}
-          style={style}
-          viewBox="0 0 40 45"
-          focusable="false"
-        >
-          <path
-            d="M13 22Q20 14 27 22L34 33Q30 41 20 36Q9 41 6 33Z"
-            fill="#b4d5be"
-          />
-          <ellipse cx="7" cy="19" rx="4" ry="6" transform="rotate(-28 7 19)" />
-          <ellipse cx="15" cy="10" rx="4" ry="6" />
-          <ellipse cx="25" cy="10" rx="4" ry="6" />
-          <ellipse cx="33" cy="19" rx="4" ry="6" transform="rotate(28 33 19)" />
-        </svg>
-      ))}
-      <svg
-        className={styles.hiddenGrin}
-        style={path.at(-1)}
-        viewBox="0 0 110 80"
-        focusable="false"
-      >
-        <path
-          d="M12 20Q30 4 45 22Q26 36 12 20ZM65 22Q80 4 98 20Q84 36 65 22Z"
-          fill="#c9eab0"
-        />
-        <path d="M30 16V26M80 16V26" stroke="#182d31" strokeWidth="4" />
-        <path d="M18 45Q54 65 92 43Q65 89 18 45Z" fill="#e8edc5" />
-        <path
-          d="M35 53L39 66M50 58L52 71M66 56L65 69M80 51L76 62"
-          stroke="#2d4947"
-          strokeWidth="2"
-        />
-      </svg>
-    </div>
-  );
-};
-
 const Skeleton: FC = () => {
   const id = useId();
   return (

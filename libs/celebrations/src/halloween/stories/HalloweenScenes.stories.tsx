@@ -69,7 +69,17 @@ export const Candy: Story = {
 };
 
 export const Footprints: Story = {
-  args: { sceneId: HalloweenScene.Footprints },
+  args: { sceneId: HalloweenScene.Footprints, startersBelowComposer: true },
+  parameters: { celebrationScene: HalloweenScene.Footprints },
+};
+
+export const FootprintsStartersAbove: Story = {
+  args: { sceneId: HalloweenScene.Footprints, startersBelowComposer: false },
+  parameters: { celebrationScene: HalloweenScene.Footprints },
+};
+
+export const FootprintsComposerOnly: Story = {
+  args: { sceneId: HalloweenScene.Footprints, showStarters: false },
   parameters: { celebrationScene: HalloweenScene.Footprints },
 };
 

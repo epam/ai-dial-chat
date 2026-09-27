@@ -327,6 +327,30 @@ reads or React updates. Actual anchor changes can trigger a geometry recheck
 solely for cancellation. No audio, additional dependency or network request is
 introduced.
 
+Footprints reveal an invisible cat: alternating paws approach a starter card,
+press its edge, then leave the card sagging under the cat's weight. Eyes glance
+and blink before a grin appears. The cat jumps toward the composer ledge; the
+card rebounds and returns exactly, and the last prints and grin fade before the
+twelve-second deadline. The head peers over the open side of the card, keeping
+stacked starter labels clear. Only one idle starter button can be borrowed as
+an inert visual copy (at most 240×96px and 40 descendants); the composer is only
+measured. Selection checks at most twelve buttons through host-provided anchors.
+Starters can sit above or below the composer, including the real chat's layout.
+Without a suitable starter, a visible composer with enough headroom becomes the
+stage: paws walk along its top edge, a lightweight decorative outline dips under
+their weight, and the cat jumps to the opposite corner. The outline follows the
+input's bounds and corner radius; the live input and its contents are never
+copied, hidden or animated. This variant uses thirteen mobile or seventeen
+desktop animation tracks and works without a starter-list anchor.
+Missing or unsuitable composers keep a decorative route. Reduced motion or missing
+animation APIs show three static prints and the face without measuring the page.
+Input, focus, scroll, resize, source changes, hidden documents, motion/layout
+changes and unmount restore the original immediately. Mobile uses eight prints
+and desktop twelve; at most twenty transform/opacity animations and eighty
+keyframes per track are allowed. The detailed pads, eyes and grin use no SVG
+filters, per-frame geometry reads or React updates. Physical coordinates preserve
+contact in RTL without mirroring copied text.
+
 The raven scene tears small visual fragments from separated headings, buttons
 and history rows to build a nest on the main pumpkin. Each collector has its own
 pickup point and flight path, drops its piece briefly, then leaves in a separate

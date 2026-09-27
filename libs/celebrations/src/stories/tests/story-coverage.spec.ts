@@ -45,6 +45,31 @@ describe('Storybook coverage', () => {
     );
   });
 
+  it('covers Footprints with starters above, below and absent', () => {
+    const variants = Object.values(modules).flatMap((module) =>
+      Object.entries(module)
+        .filter(([name]) => name !== 'default')
+        .map(
+          ([, story]) =>
+            story as {
+              args?: {
+                sceneId?: string;
+                startersBelowComposer?: boolean;
+                showStarters?: boolean;
+              };
+            },
+        )
+        .filter(({ args }) => args?.sceneId === HalloweenScene.Footprints)
+        .map(({ args }) => args),
+    );
+    const orderings = variants
+      .filter((args) => args?.showStarters !== false)
+      .map((args) => args?.startersBelowComposer);
+    expect(orderings).toContain(true);
+    expect(orderings).toContain(false);
+    expect(variants.some((args) => args?.showStarters === false)).toBe(true);
+  });
+
   it('has a story for every event decor', () => {
     expect(covered('celebrationDecor')).toEqual(
       new Set(['halloween', 'new-year']),

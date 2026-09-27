@@ -4,11 +4,8 @@ import { HalloweenScene } from '../../types/halloween';
 import HalloweenBats from './HalloweenBats';
 import HalloweenBowling from './HalloweenBowling';
 import HalloweenCatScene from './HalloweenCatScene';
-import {
-  HalloweenCandy,
-  HalloweenFootprints,
-  HalloweenSkeletons,
-} from './HalloweenExtras';
+import { HalloweenCandy, HalloweenSkeletons } from './HalloweenExtras';
+import HalloweenFootprints from './HalloweenFootprints';
 import HalloweenGhosts from './HalloweenGhosts';
 import HalloweenMimic from './HalloweenMimic';
 import HalloweenMummy from './HalloweenMummy';
