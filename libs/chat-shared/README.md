@@ -49,7 +49,7 @@ Peers:
 
 - `react` ^19.2.8
 - `@epam/ai-dial-ui-kit` ^0.15.0-dev.20
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.7 \*
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.13 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -868,6 +868,7 @@ import {
 | `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists          |
 | `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types           |
 | `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders             |
+| `PUBLIC_BUCKET`                              | `public`, the DIAL Core bucket holding organization-wide resources        |
 | `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step         |
 | `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                       |
 | `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field      |

@@ -1,14 +1,22 @@
-import packageJson from '../../../package.json';
+/* The workspace root manifest is the only one the release pipeline stamps
+ * (`npm version <next> --no-git-tag-version` at the repo root, before the image
+ * is built); every `apps/*` and `libs/*` manifest keeps its scaffold version
+ * forever, so reading this project's own `package.json` reported `0.0.1` on
+ * every deployment that did not set `CHAT_VERSION`. Nx's boundary rule polices
+ * cross-project *source* imports; this reads build metadata, not another
+ * project's code. */
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import { version } from '../../../../../package.json';
 
 /**
- * Version of the running build, taken from `apps/chat-api/package.json`.
+ * Version of the running build, taken from the workspace root `package.json`.
  *
  * Imported statically (`resolveJsonModule`) rather than read from disk at
  * runtime: the value is inlined by the bundler, so it does not depend on the
  * `src` vs `dist` directory layout and cannot silently degrade to a
  * placeholder when a path guess misses.
  */
-export const PACKAGE_VERSION: string = packageJson.version;
+export const PACKAGE_VERSION: string = version;
 
 /**
  * Single precedence rule for the version string this service reports.

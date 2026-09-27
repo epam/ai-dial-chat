@@ -20,6 +20,9 @@
     "apiKey": "API key"
   },
   "chat": {
+    "reply": "Reply",
+    "replySelectionAvailable": "Reply to selected text is available",
+    "replyAttachmentAdded": "Text attached",
     "greetingMorning": "Good morning, {{name}}",
     "greetingMorningNoName": "Good morning",
     "greetingAfternoon": "Afternoon, {{name}}",
@@ -778,6 +781,9 @@
       "statusMissed": "Missed",
       "errorLabel": "Failed to load the scheduled task",
       "activeStatusLabel": "Active",
+      "completedFieldLabel": "Status",
+      "activeDisabledReasonCompleted": "Already ran — cannot be rescheduled",
+      "activeDisabledReasonExpired": "Activity window has ended — cannot be rescheduled",
       "pauseSuccess": "Task paused",
       "resumeSuccess": "Task resumed",
       "activeStatusUpdateError": "Failed to update the task's active status",

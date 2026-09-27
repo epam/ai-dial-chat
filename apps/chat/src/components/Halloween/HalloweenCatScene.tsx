@@ -1,69 +1,170 @@
-import { memo, useId, useMemo, type FC } from 'react';
-import { buildHalloweenWisps } from '../../utils/halloween';
-import styles from './Halloween.module.scss';
+import { useCallback, useEffect, useRef, useState, type FC } from 'react';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useReducedMotion } from '../../hooks/celebration/useReducedMotion';
+import { HalloweenBurst } from '../../types/halloween';
+import { loadHalloweenAnchorClasses } from '../../utils/halloween';
+import { animateCat } from '../../utils/halloween-cat-animation';
+import { buildCatPlan, type CatPlan } from '../../utils/halloween-cat-plan';
+import { getCatTargets } from '../../utils/halloween-cat-targets';
+import HalloweenCat from './HalloweenCat';
+import styles from './HalloweenCatScene.module.scss';
 
-/** A little familiar crosses the bottom edge while dim lights drift upward. */
+/** A curious cat tests gravity using reversible copies of nearby controls. */
 const HalloweenCatScene: FC = () => {
-  const id = useId();
-  const wisps = useMemo(() => buildHalloweenWisps(), []);
+  const isMobile = useIsMobile();
+  const reducedMotion = useReducedMotion();
+  const [initial] = useState(() => ({ isMobile, reducedMotion }));
+  const changed =
+    initial.isMobile !== isMobile || initial.reducedMotion !== reducedMotion;
+  const [supportsMotion] = useState(
+    () =>
+      typeof Element !== 'undefined' &&
+      typeof Element.prototype.animate === 'function',
+  );
+  const [plan, setPlan] = useState<CatPlan | null>(null);
+  const [ended, setEnded] = useState(false);
+  const stopped = useRef(false);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const copiesRef = useRef<HTMLDivElement>(null);
+  const actorRef = useRef<HTMLDivElement>(null);
+  const facingRef = useRef<HTMLDivElement>(null);
+  const stopScene = useCallback(() => {
+    stopped.current = true;
+    setEnded(true);
+  }, []);
+
+  useEffect(() => {
+    if (changed) stopScene();
+  }, [changed, stopScene]);
+
+  useEffect(() => {
+    if (changed || stopped.current || reducedMotion || !supportsMotion) return;
+    let disposed = false;
+    const cancel = () => {
+      disposed = true;
+      stopScene();
+    };
+    const interrupt = (event: Event) => {
+      if (
+        event.type === 'scroll' &&
+        event.target instanceof Node &&
+        hostRef.current?.contains(event.target)
+      )
+        return;
+      cancel();
+    };
+    const handleVisibility = () => {
+      if (document.hidden) cancel();
+    };
+    const events = [
+      'pointerdown',
+      'keydown',
+      'focusin',
+      'beforeinput',
+      'input',
+      'compositionstart',
+      'scroll',
+      'resize',
+    ];
+    events.forEach((event) => window.addEventListener(event, interrupt, true));
+    document.addEventListener('visibilitychange', handleVisibility);
+    const prepare = async () => {
+      const { composer, starterList } = await loadHalloweenAnchorClasses();
+      if (disposed || stopped.current) return;
+      setPlan(buildCatPlan(getCatTargets(composer, starterList), isMobile));
+    };
+    prepare();
+    return () => {
+      disposed = true;
+      events.forEach((event) =>
+        window.removeEventListener(event, interrupt, true),
+      );
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [changed, isMobile, reducedMotion, stopScene, supportsMotion]);
+
+  useEffect(() => {
+    if (
+      ended ||
+      changed ||
+      stopped.current ||
+      reducedMotion ||
+      !supportsMotion ||
+      !plan?.active ||
+      !hostRef.current ||
+      !copiesRef.current ||
+      !actorRef.current ||
+      !facingRef.current
+    )
+      return;
+    let disposed = false;
+    const stop = animateCat(
+      plan,
+      {
+        host: hostRef.current,
+        copies: copiesRef.current,
+        actor: actorRef.current,
+        facing: facingRef.current,
+      },
+      () => {
+        if (!disposed) stopScene();
+      },
+    );
+    return () => {
+      disposed = true;
+      stop();
+    };
+  }, [changed, ended, plan, reducedMotion, stopScene, supportsMotion]);
+
+  const stationary = reducedMotion || !supportsMotion;
   return (
-    <>
-      {wisps.map((style, index) => (
-        <span key={index} style={style} className={styles.wisp} />
-      ))}
-      <span className={styles.catTraveler}>
-        <svg
-          viewBox="0 0 100 90"
-          className={styles.catBody}
-          aria-hidden="true"
-          focusable="false"
+    <div
+      ref={hostRef}
+      className={styles.scene}
+      aria-hidden="true"
+      inert
+      data-halloween-scene={HalloweenBurst.Cat}
+      data-ready={stationary || !!plan}
+      data-ended={ended || changed}
+      data-stationary={stationary}
+    >
+      <div ref={copiesRef} className={styles.copies} />
+      {!stationary && plan?.active && plan.floor && (
+        <div
+          className={styles.floor}
+          data-cat-floor
+          style={{
+            left: plan.floor.x,
+            top: plan.floor.y,
+            width: plan.floor.width,
+          }}
+        />
+      )}
+      {!stationary && plan?.active ? (
+        <div
+          ref={actorRef}
+          className={styles.actor}
+          data-cat-actor
+          style={{ transform: `translate(${plan.rest.x}px, ${plan.rest.y}px)` }}
         >
-          <defs>
-            <linearGradient id={`${id}-fur`} x2="0.8" y2="1">
-              <stop stopColor="#73677b" />
-              <stop offset="0.5" stopColor="#302b3a" />
-              <stop offset="1" stopColor="#171621" />
-            </linearGradient>
-          </defs>
-          <path
-            className={styles.catTail}
-            d="M31 63C6 65 5 41 17 37C29 32 28 19 20 16"
-            fill="none"
-            stroke="#65596f"
-            strokeWidth="7"
-            strokeLinecap="round"
-          />
-          <path
-            d="M26 73Q19 59 29 46Q40 34 58 48L70 68L71 80L62 81L56 65L42 69L38 81L26 81Z"
-            fill={`url(#${id}-fur)`}
-            stroke="#a799b0"
-            strokeWidth="0.6"
-          />
-          <path
-            d="M48 38L45 17L58 26L69 25L82 16L80 38Q85 55 66 57Q47 55 48 38Z"
-            fill={`url(#${id}-fur)`}
-            stroke="#b9a5be"
-            strokeWidth="0.7"
-          />
-          <path d="M50 24L56 29L50 33ZM77 24L71 29L77 32Z" fill="#b08191" />
-          <g className={styles.catEyes}>
-            <path
-              d="M53 38Q59 32 63 39Q57 45 53 38ZM68 39Q73 32 78 37Q76 44 68 39Z"
-              fill="#cbd98d"
-            />
-            <path d="M59 36V41M73 36V41" stroke="#171621" strokeWidth="1.3" />
-          </g>
-          <path d="M64 44L68 44L66 47Z" fill="#c68f98" />
-          <path
-            d="M66 47L63 49M66 47L69 49M56 46L43 43M55 49L42 50M76 45L88 41M77 48L90 48"
-            fill="none"
-            stroke="#b9a5be"
-            strokeWidth="0.6"
-          />
-        </svg>
-      </span>
-    </>
+          <div
+            className={styles.art}
+            style={{ width: plan.size, height: (plan.size * 140) / 160 }}
+          >
+            <div ref={facingRef} className={styles.facing}>
+              <HalloweenCat />
+            </div>
+          </div>
+        </div>
+      ) : (
+        (stationary || plan) && (
+          <div className={styles.fallback} data-cat-fallback>
+            <HalloweenCat />
+          </div>
+        )
+      )}
+    </div>
   );
 };
 
-export default memo(HalloweenCatScene);
+export default HalloweenCatScene;

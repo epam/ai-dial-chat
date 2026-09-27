@@ -1,4 +1,7 @@
 export enum ChatI18nKeys {
+  Reply = 'chat.reply',
+  ReplySelectionAvailable = 'chat.replySelectionAvailable',
+  ReplyAttachmentAdded = 'chat.replyAttachmentAdded',
   Placeholder = 'chat.placeholder',
   GreetingMorning = 'chat.greetingMorning',
   GreetingMorningNoName = 'chat.greetingMorningNoName',
@@ -453,6 +456,9 @@ export enum ScheduledTasksI18nKeys {
   DetailStatusMissed = 'scheduledTasks.detail.statusMissed',
   DetailErrorLabel = 'scheduledTasks.detail.errorLabel',
   DetailActiveStatusLabel = 'scheduledTasks.detail.activeStatusLabel',
+  DetailCompletedFieldLabel = 'scheduledTasks.detail.completedFieldLabel',
+  DetailActiveDisabledReasonCompleted = 'scheduledTasks.detail.activeDisabledReasonCompleted',
+  DetailActiveDisabledReasonExpired = 'scheduledTasks.detail.activeDisabledReasonExpired',
   DetailPauseSuccess = 'scheduledTasks.detail.pauseSuccess',
   DetailResumeSuccess = 'scheduledTasks.detail.resumeSuccess',
   DetailActiveStatusUpdateError = 'scheduledTasks.detail.activeStatusUpdateError',

@@ -18,11 +18,12 @@ whose `json` is a function — rather than by importing either error class, so i
 shapes without the library knowing anything about the host's request layer.
 
 The existing `getApiErrorMessage`/`getApiErrorStatus` exports SHALL continue to work unchanged for
-callers that only need a message or status. `apps/chat/src/server-api/api-error.ts` SHALL re-export
-these `@epam/ai-dial-chat-hooks` names — `getApiErrorDetails`, `getApiErrorMessage`,
-`getApiErrorStatus`, `isConversationNotFoundError`, and the `ApiErrorDetails` type — until every one
-of its consumer files is migrated to import directly from `@epam/ai-dial-chat-hooks`, at which point
-the app file SHALL be removed.
+callers that only need a message or status. Every consumer SHALL import `getApiErrorDetails`,
+`getApiErrorMessage`, `getApiErrorStatus`, `isConversationNotFoundError`, and the `ApiErrorDetails`
+type directly from `@epam/ai-dial-chat-hooks`. The migration this requirement previously scheduled
+is complete: `apps/chat/src/server-api/api-error.ts`, which forwarded those five names during the
+migration window, no longer exists, and no host module SHALL stand between the package and its
+consumers.
 
 Resolution order SHALL be: parse a `traceparent` from the JSON error body first; if the body has no
 valid `traceparent` or cannot be parsed as JSON, fall back to the response's `traceparent` header.
@@ -59,11 +60,11 @@ existing behavior rather than diverging from it. The response body SHALL be read
   `Error` with a non-empty `message`
 - **THEN** `getApiErrorDetails` returns `message: null` rather than falling back to `Error.message`
 
-#### Scenario: `apps/chat` consumers resolve the same behavior through the re-export
-- **WHEN** any `apps/chat` consumer file imports `getApiErrorDetails` from
-  `apps/chat/src/server-api/api-error.ts` during the migration window
-- **THEN** it receives the exact same implementation and behavior as importing directly from
-  `@epam/ai-dial-chat-hooks`
+#### Scenario: Consumers import the helpers from the package
+- **WHEN** any `apps/chat` module needs `getApiErrorDetails`, `getApiErrorMessage`,
+  `getApiErrorStatus`, `isConversationNotFoundError`, or `ApiErrorDetails`
+- **THEN** it imports the name from `@epam/ai-dial-chat-hooks`, and no
+  `apps/chat/src/server-api/api-error.ts` module exists to forward it
 
 ### Requirement: Malformed or absent trace data is never surfaced
 `getApiErrorDetails` SHALL validate any candidate `traceparent` against the W3C Trace Context shape

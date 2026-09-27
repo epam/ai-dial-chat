@@ -3,15 +3,12 @@ import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
-import { HIDDEN_FILE } from '../../constants/dial.constants';
+import { PUBLIC_BUCKET, HIDDEN_FILE } from '../../constants/dial.constants';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationMetadataDto } from '../../openapi/openapi-response.dto';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
-import {
-  MAX_LIST_DISPLAY_NAME_ENRICHMENTS,
-  PUBLIC_BUCKET,
-} from '../constants/conversation.constants';
+import { MAX_LIST_DISPLAY_NAME_ENRICHMENTS } from '../constants/conversation.constants';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,

@@ -1,11 +1,11 @@
 import { BadGatewayException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PUBLIC_BUCKET } from '../../../constants/dial.constants';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import { PromptsResourceService } from '../../resource/prompts-resource.service';
 import { PromptsPublicService } from '../prompts-public.service';
 
 const TOKEN = 'test-token';
-const PUBLIC_BUCKET = 'public';
 
 const okResponse = (data: unknown) =>
   ({ data, response: { status: 200 } as Response }) as never;

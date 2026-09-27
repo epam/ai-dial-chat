@@ -15,6 +15,39 @@ import { buildFlyingCharacterPaths } from './flying-characters';
 export const isHalloweenSecretPhrase = (text: string): boolean =>
   matchesCelebrationPhrase(text, [HALLOWEEN_SECRET_PHRASE]);
 
+/** Public class hooks of the composer and starter list that scenes anchor to. */
+export interface HalloweenAnchorClasses {
+  composer: string;
+  starterList?: string;
+}
+
+let anchorClasses: Promise<HalloweenAnchorClasses> | undefined;
+
+/**
+ * Loads the anchor classes once. A StrictMode rehearsal, the real mount and
+ * later scenes share one pending import instead of racing duplicate ones.
+ */
+export const loadHalloweenAnchorClasses =
+  (): Promise<HalloweenAnchorClasses> => {
+    anchorClasses ??= (async () => {
+      const [composer, starters] = await Promise.allSettled([
+        import('@epam/ai-dial-conversation-input'),
+        import('@epam/ai-dial-starter-buttons'),
+      ]);
+      return {
+        composer:
+          composer.status === 'fulfilled'
+            ? composer.value.CONVERSATION_INPUT_CLASS.wrapper
+            : '',
+        starterList:
+          starters.status === 'fulfilled'
+            ? starters.value.STARTER_BUTTONS_CLASS.list
+            : undefined,
+      };
+    })();
+    return anchorClasses;
+  };
+
 /** A random float in `[min, max)`. */
 const between = (min: number, max: number): number =>
   min + Math.random() * (max - min);

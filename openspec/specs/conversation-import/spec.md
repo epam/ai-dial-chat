@@ -102,7 +102,7 @@ Before uploading, the system SHALL list the destination month folder once per im
 #### Scenario: JSON import has no attachment upload
 
 - **WHEN** a `.json` (no-archive) file is imported
-- **THEN** no attachment upload, and no destination-folder listing, occurs and attachment URLs are left unchanged
+- **THEN** no attachment upload, and no destination-folder listing, occurs; references into the user's own bucket or the public bucket are left unchanged, and references into any other bucket are dropped (see "Drop references the importing user cannot read")
 
 ### Requirement: Rewrite attachment references to new upload locations
 
@@ -124,6 +124,23 @@ A reference left unrewritten still points into the exporting user's bucket, whic
 
 - **WHEN** an archive attachment references `files/{oldBucket}/reports/q1.pdf#"><script>` and is uploaded as `q1.pdf`
 - **THEN** the attachment is still uploaded and its reference rewritten to `files/{userBucket}/uploads/<YYYY-MM>/q1.pdf`, with no anchor
+
+### Requirement: Drop references the importing user cannot read
+
+After rewriting the references it re-uploaded, the system SHALL remove every reference that still resolves to a `files/{bucket}/{path}` id in a bucket other than the importing user's own bucket or `public`. This covers a plain `.json` import, which carries no attachment bytes, and an archive attachment that was skipped (missing from the archive, failed validation, or exhausted its conflict retries). Such a reference points into the exporting user's bucket, so the importing user's preview fails with 403 (issue #9003); files exported before export-all stopped carrying references, and old-chat exports, still contain them.
+
+The removal SHALL cover the same three reference sites the rewrite covers: an entry of `custom_content.attachments[]` or `custom_content.stages[].attachments[]` whose `url` is foreign is removed; a foreign `reference_url` (with its `reference_type`) is removed from an otherwise valid attachment, which is removed only when it keeps neither `url` nor `data`; a citation whose `body.source.attachment.url` is foreign loses its `source` but keeps its quote, title and target. Each removed file's name SHALL be reported through the same skipped-attachment warning as an archive attachment that could not be uploaded, and the conversation SHALL still import. A file another user shared with the importing user is removed too — the import cannot tell it apart from one the user never had access to.
+
+#### Scenario: Another user's JSON export imports without inaccessible references
+
+- **GIVEN** a `.json` file whose conversation references `files/{otherBucket}/q1.pdf` and `files/{userBucket}/mine.pdf`
+- **WHEN** the current user imports it
+- **THEN** the saved conversation keeps only the `mine.pdf` attachment, and the job settles as a warning naming `q1.pdf`
+
+#### Scenario: A skipped archive attachment does not keep its source reference
+
+- **WHEN** an archive conversation references `files/{oldBucket}/absent.pdf` and the archive has no bytes for it
+- **THEN** the attachment is removed from the saved conversation and reported as skipped
 
 #### Scenario: Reference rewrite
 

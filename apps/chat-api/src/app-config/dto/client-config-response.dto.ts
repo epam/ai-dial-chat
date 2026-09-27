@@ -33,7 +33,7 @@ export class ClientConfigDto {
 
   @ApiProperty({
     description:
-      'Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.',
+      'Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Always a non-empty string.',
     type: String,
     example: '0.45.0',
   })

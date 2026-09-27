@@ -101,7 +101,11 @@ const HalloweenPumpkin: FC = () => {
           <path d="M80 85L72 100L87 100Z" />
           <path d="M35 101Q80 130 125 101L116 119L105 118L100 127L88 129L84 120L74 120L70 130L56 126L51 117L43 116Z" />
         </g>
-        <g className={styles.pumpkinLight} fill={`url(#${id}-candle)`}>
+        <g
+          className={styles.pumpkinLight}
+          fill={`url(#${id}-candle)`}
+          data-halloween-pumpkin-light="true"
+        >
           <g className={styles.pumpkinEyes}>
             <path d="M39 73L62 81Q55 65 39 73ZM121 73L98 81Q105 65 121 73Z" />
           </g>

@@ -28,6 +28,7 @@ const FIRST_LINE_INDENT_CLASS_NAME =
 /** Assistant-authored message bubble, start-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
+  contentRef,
   styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
@@ -170,7 +171,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                * The plain marker class (not a CSS-module hash) keeps the
                * indent selector above a static string Tailwind can generate.
                */}
-              <div className="cm-bubble-markdown min-w-0 max-w-full">
+              <div
+                ref={contentRef}
+                className="cm-bubble-markdown min-w-0 max-w-full"
+              >
                 <MDMessageViewer
                   content={text ?? ''}
                   isPlainText={responseFormat === ResponseFormat.PlainText}

@@ -6,7 +6,6 @@
   pointer-events: none;
   user-select: none;
 }
-.raven,
 .candy,
 .paw,
 .hiddenGrin,
@@ -14,86 +13,12 @@
 .portal {
   position: absolute;
 }
-.raven,
 .candy,
 .skeleton {
   svg {
     display: block;
     inline-size: 100%;
     block-size: auto;
-  }
-}
-
-.raven {
-  left: var(--x);
-  top: var(--y);
-  inline-size: var(--size);
-  filter: drop-shadow(0 1px 1px #d4e5cb90);
-  animation: raven-departure 8.6s ease-in var(--delay) both;
-  > svg {
-    transform: scaleX(var(--facing));
-  }
-}
-.ravenWing {
-  transform-origin: 48px 45px;
-  animation: raven-wing 8.6s ease-in-out var(--delay) both;
-}
-.ravenHead {
-  transform-origin: 48px 37px;
-  animation: raven-watch 8.6s ease-in-out var(--delay) both;
-}
-@keyframes raven-departure {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  10%,
-  47% {
-    opacity: 1;
-    transform: none;
-  }
-  54% {
-    transform: translateY(-12px);
-  }
-  95%,
-  100% {
-    opacity: 0;
-    transform: translate(var(--escape-x), -85vh) rotate(-12deg);
-  }
-}
-@keyframes raven-wing {
-  0%,
-  47% {
-    transform: scaleX(0.22) rotate(-15deg);
-  }
-  53%,
-  65%,
-  77%,
-  89%,
-  100% {
-    transform: scaleX(1) rotate(30deg);
-  }
-  59%,
-  71%,
-  83%,
-  95% {
-    transform: scaleX(0.7) rotate(-45deg);
-  }
-}
-@keyframes raven-watch {
-  0%,
-  12%,
-  50%,
-  100% {
-    transform: rotate(0);
-  }
-  22%,
-  27% {
-    transform: rotate(16deg);
-  }
-  36%,
-  40% {
-    transform: rotate(-12deg);
   }
 }
 
@@ -363,9 +288,6 @@
   .scene,
   .scene * {
     animation: none !important;
-  }
-  .ravenWing {
-    transform: scaleX(0.22);
   }
   .candy {
     top: var(--rest-y);
