@@ -894,7 +894,8 @@ the renderer receives `CatalogContentFileTreeRenderProps` — `nodes`,
 (which also closes the overlay), `onClose` (for Escape), `ariaLabel`, and
 `rowNameClassName` — and is expected to keep the tree contract: `role="tree"`,
 `aria-selected` on the displayed file, focus on it when mounted, and Escape
-calling `onClose`. Omitted, the built-in tree renders.
+calling `onClose`. Omitted, the built-in tree renders. `Catalog` forwards the
+same prop to its details panel.
 
 ```tsx
 import type { CatalogContentFileTreeRenderProps } from '@epam/ai-dial-catalog';

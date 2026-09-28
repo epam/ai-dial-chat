@@ -1,5 +1,6 @@
 import {
   Catalog,
+  type CatalogContentFileTreeRenderProps,
   type CatalogItem,
   CredentialsLevel,
   ToolsetAuthenticationType,
@@ -13,6 +14,7 @@ import {
   useCatalogToolsetCredentials,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
@@ -75,6 +77,11 @@ import {
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
+
+/* The details panel draws a skill's files with the same file-manager tree as the skill editor. */
+const renderContentFileTree = (props: CatalogContentFileTreeRenderProps) => (
+  <SkillContentFileTree {...props} />
+);
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -577,6 +584,7 @@ const CatalogView: FC<Props> = ({
         isDownloadVisible={isDownloadVisible}
         onLoadContentFile={onLoadContentFile}
         renderContentFilePreview={renderContentFilePreview}
+        renderContentFileTree={renderContentFileTree}
         onDelete={handleDelete}
         onUnshare={handleUnshare}
         isUnshareVisible={isUnshareVisible}

@@ -279,6 +279,32 @@ are deliberately absent — `DetailsPanel` hides those actions when they are not
 supplied, so no catalog page chrome comes along. The host owns the open state
 and the details fetch; the panel itself never fetches.
 
+### `SkillContentFileTree`
+
+```tsx
+import { Catalog } from '@epam/ai-dial-catalog';
+import type { CatalogContentFileTreeRenderProps } from '@epam/ai-dial-catalog';
+import { SkillContentFileTree } from '@epam/ai-dial-skills';
+
+const renderContentFileTree = (props: CatalogContentFileTreeRenderProps) => (
+  <SkillContentFileTree {...props} />
+);
+
+<Catalog
+  items={items}
+  favorites={favorites}
+  renderContentFileTree={renderContentFileTree}
+/>;
+```
+
+The file-manager-backed tree `SkillDetailsSidePanel` renders in its Content
+tab, exported so a host can hand the same tree to `Catalog` or `DetailsPanel`
+through `renderContentFileTree`. It is a read-only `DialFoldersTree` — no
+context menu, no rename, dotfiles shown — fully controlled by the panel's
+`CatalogContentFileTreeRenderProps`: folder toggles come back one id at a time
+through `onToggleFolder`, only files are selectable, the selected file is
+focused on mount, and Escape calls `onClose`.
+
 ### `SkillCatalogModal`
 
 ```tsx

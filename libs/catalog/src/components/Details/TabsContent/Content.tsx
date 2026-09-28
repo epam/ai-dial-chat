@@ -180,7 +180,7 @@ export const ContentTab: FC<ContentTabProps> = ({
             onOpenChange={onFileSelectorOpenChange}
             trigger={[]}
             matchReferenceWidth={false}
-            listClassName="w-[280px]"
+            listClassName="w-[280px] shadow-md"
             placement="bottom-start"
             renderOverlay={() =>
               renderFileTree ? (

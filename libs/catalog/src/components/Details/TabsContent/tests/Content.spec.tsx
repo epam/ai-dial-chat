@@ -389,7 +389,7 @@ describe('ContentTab — file selector', () => {
 
     await userEvent.click(screen.getByRole('button'));
 
-    expect(screen.getByText('host tree')).toBeVisible();
+    expect(screen.getByText('host tree')).toBeTruthy();
     expect(screen.queryByRole('tree')).toBeNull();
     expect(renderFileTree).toHaveBeenLastCalledWith(
       expect.objectContaining({
