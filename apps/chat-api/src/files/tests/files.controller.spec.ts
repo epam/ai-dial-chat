@@ -16,6 +16,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { memoryStorage } from 'multer';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHtmlPreviewCspHeader } from '../../config/csp';
 import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
@@ -509,6 +510,43 @@ describe('FilesController — download', () => {
       .get('/api/v1/files/download')
       .query({ bucket: 'my-bucket', path: 'file.pdf' })
       .expect(503);
+  });
+
+  it('keeps the forwarded headers unmodified for a non-HTML response', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/download')
+      .query({ bucket: 'my-bucket', path: 'folder/file.pdf' })
+      .expect(200);
+
+    expect(res.headers['content-security-policy']).toBeUndefined();
+  });
+
+  it('overwrites the response CSP with the preview policy for an HTML response', async () => {
+    const body = '<html><body>Hi</body></html>';
+    service.downloadFile.mockResolvedValue({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(body));
+          controller.close();
+        },
+      }),
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'content-disposition': 'attachment; filename="page.html"',
+        'content-length': String(body.length),
+        'content-security-policy-report-only': "default-src 'self'",
+      },
+    });
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/download')
+      .query({ bucket: 'my-bucket', path: 'folder/page.html' })
+      .expect(200);
+
+    expect(res.headers['content-security-policy']).toBe(
+      createHtmlPreviewCspHeader(),
+    );
+    expect(res.headers['content-security-policy-report-only']).toBeUndefined();
   });
 });
 

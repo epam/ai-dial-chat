@@ -8,6 +8,7 @@ import {
   buildFrameSrcDirective,
   buildPermissionsPolicyHeader,
   createHelmetOptions,
+  createHtmlPreviewCspHeader,
   extractOrigin,
   isOriginAllowedForIframe,
 } from '../csp';
@@ -213,6 +214,29 @@ describe('Helmet security headers', () => {
       'upgrade-insecure-requests',
     );
     expect(response.headers['strict-transport-security']).toBeUndefined();
+  });
+});
+
+describe('createHtmlPreviewCspHeader', () => {
+  it('allows inline scripts and styles without a nonce requirement', () => {
+    const directives = createHtmlPreviewCspHeader().split('; ');
+
+    expect(directives).toContain(
+      "script-src 'unsafe-inline' 'unsafe-eval' data: blob: https:",
+    );
+    expect(directives).toContain("style-src 'unsafe-inline' https:");
+    expect(directives).toContain("style-src-attr 'unsafe-inline'");
+  });
+
+  it('restricts embedding to this app only, and blocks plugin content', () => {
+    const directives = createHtmlPreviewCspHeader().split('; ');
+
+    expect(directives).toContain("frame-ancestors 'self'");
+    expect(directives).toContain("object-src 'none'");
+  });
+
+  it('returns the same header value on every call', () => {
+    expect(createHtmlPreviewCspHeader()).toBe(createHtmlPreviewCspHeader());
   });
 });
 

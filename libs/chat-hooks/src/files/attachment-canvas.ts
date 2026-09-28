@@ -454,9 +454,15 @@ export const resolveCodeCanvasContent = async (
 
 /**
  * Resolves an HTML canvas content payload from a DisplayAttachment.
- * Fetches and inlines the HTML as `srcdoc` when the attachment has a download URL or inline data.
- * Returns `null` if no source is available, or an `ErrorCanvasContent` on fetch failure.
- * Rejects `srcdoc` payloads larger than 1 MiB to prevent browser truncation.
+ * When the attachment has a same-origin download URL, that URL is the
+ * primary render target (`isSameOriginUrl: true`) so the preview loads via
+ * `src` and gets its own response-level CSP instead of inheriting the host
+ * document's — the fetched text is only attached as `srcdoc` for the "View
+ * source" toggle, and is dropped (not the preview) when it exceeds 1 MiB.
+ * With no download URL (local file or inline data), falls back to `srcdoc`
+ * only, rejecting payloads larger than 1 MiB to prevent browser truncation.
+ * Returns `null` if no source is available, or an `ErrorCanvasContent` on
+ * fetch failure.
  */
 export const resolveHtmlCanvasContent = async (
   attachment: DisplayAttachment,
@@ -465,9 +471,20 @@ export const resolveHtmlCanvasContent = async (
   const result = await resolveAttachmentText(attachment, resolvers);
   if (result == null) return null;
   if (typeof result !== 'string') return result;
+
+  const downloadUrl = resolvers.resolveDialUrl(attachment) ?? undefined;
+  if (downloadUrl != null) {
+    const srcdoc = result.length <= HTML_SRCDOC_SIZE_LIMIT ? result : undefined;
+    return {
+      type: AttachmentContentType.Html,
+      url: downloadUrl,
+      isSameOriginUrl: true,
+      srcdoc,
+    };
+  }
+
   if (result.length > HTML_SRCDOC_SIZE_LIMIT) return null;
-  const url = resolvers.resolveDialUrl(attachment) ?? undefined;
-  return { type: AttachmentContentType.Html, srcdoc: result, url };
+  return { type: AttachmentContentType.Html, srcdoc: result };
 };
 
 /**

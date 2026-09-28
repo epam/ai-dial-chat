@@ -173,3 +173,32 @@ export const createHelmetOptions = (
       }
     : false,
 });
+
+/**
+ * Builds the CSP for an HTML file's `/download` response so it can render
+ * live in the attachment-preview iframe (`src=`, not `srcdoc`) with its
+ * inline scripts/styles intact. Deliberately far more permissive than
+ * `createHelmetOptions`'s app-shell policy: the iframe loading this response
+ * is always sandboxed with `allow-scripts` only (no `allow-same-origin`), so
+ * the previewed document runs at an opaque origin with no access to this
+ * app's cookies, session, or APIs no matter what this CSP allows.
+ * `frame-ancestors 'self'` is fixed rather than parameterized by
+ * `ALLOWED_IFRAME_ORIGINS` — that setting controls who may embed *this app*,
+ * not who may embed one of its own download responses, which only this
+ * app's own document ever does.
+ */
+export const createHtmlPreviewCspHeader = (): string => {
+  const directives: [string, string][] = [
+    ['default-src', "'self' data: blob: https:"],
+    ['script-src', "'unsafe-inline' 'unsafe-eval' data: blob: https:"],
+    ['style-src', "'unsafe-inline' https:"],
+    ['style-src-attr', "'unsafe-inline'"],
+    ['img-src', "'self' data: blob: https:"],
+    ['font-src', "'self' data: https:"],
+    ['media-src', "'self' data: blob: https:"],
+    ['connect-src', "'self' https:"],
+    ['object-src', "'none'"],
+    ['frame-ancestors', "'self'"],
+  ];
+  return directives.map(([key, value]) => `${key} ${value}`).join('; ');
+};

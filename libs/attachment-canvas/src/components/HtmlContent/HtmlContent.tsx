@@ -61,10 +61,14 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       setIsBlocked(false);
     }, [content]);
 
+    const isSameOriginUrl =
+      content.isSameOriginUrl === true && content.url != null;
+    const isSrcdoc = !isSameOriginUrl && content.srcdoc != null;
+
     const handleLoad = useCallback(
       (_e: SyntheticEvent<HTMLIFrameElement>) => {
         setIsLoading(false);
-        if (content.srcdoc != null) return;
+        if (isSrcdoc || isSameOriginUrl) return;
         try {
           const doc = iframeRef.current?.contentDocument;
           if (doc == null) {
@@ -74,7 +78,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
           setIsBlocked(true);
         }
       },
-      [content.srcdoc],
+      [isSrcdoc, isSameOriginUrl],
     );
 
     const handleError = useCallback(() => {
@@ -117,7 +121,6 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       );
     }
 
-    const isSrcdoc = content.srcdoc != null;
     const iframeSrc = !isSrcdoc ? content.url : undefined;
     const iframeSrcdoc = isSrcdoc ? content.srcdoc : undefined;
 
@@ -135,7 +138,9 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
           src={iframeSrc}
           srcDoc={iframeSrcdoc}
           sandbox={
-            isSrcdoc ? 'allow-scripts' : 'allow-scripts allow-same-origin'
+            isSrcdoc || isSameOriginUrl
+              ? 'allow-scripts'
+              : 'allow-scripts allow-same-origin'
           }
           className={mergeClasses(
             'h-full w-full border-none',

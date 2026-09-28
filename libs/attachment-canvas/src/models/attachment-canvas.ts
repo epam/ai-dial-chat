@@ -200,10 +200,12 @@ export interface CodeCanvasContent {
 export interface HtmlCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
   type: AttachmentContentType.Html;
-  /** Full HTML text rendered via `srcdoc` in a sandboxed iframe. Used for file attachments. */
+  /** Full HTML text rendered via `srcdoc` in a sandboxed iframe. Used for local (non-downloadable) file attachments, and as a "View source" fallback alongside `url`. */
   srcdoc?: string;
-  /** External URL rendered via `src` in a sandboxed iframe. Used for external link sources. */
+  /** URL rendered via `src` in a sandboxed iframe when `srcdoc` is absent, or in preference to `srcdoc` when `isSameOriginUrl` is set. Also used as the download-button/"Open in new tab" target. */
   url?: string;
+  /** True when `url` is this app's own same-origin file-download endpoint rather than a genuinely external site. Governs iframe handling: `src` takes precedence over `srcdoc`, the sandbox omits `allow-same-origin`, and block-detection skips the `contentDocument` check (the iframe is an opaque origin either way). */
+  isSameOriginUrl?: boolean;
 }
 
 /** Content payload for a custom-visualizer attachment rendered inside a sandboxed iframe. */

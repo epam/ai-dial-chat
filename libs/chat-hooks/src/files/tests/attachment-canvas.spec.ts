@@ -23,6 +23,7 @@ import {
   clearAttachmentCache,
   hasAttachmentTextSource,
   referenceAttachmentToPdfCanvasContent,
+  resolveHtmlCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
@@ -58,6 +59,7 @@ const MOCK_OOXML_EXTENSION_TO_FILE_TYPE: Record<string, string> = {
 vi.mock('@epam/ai-dial-attachment-canvas', () => ({
   AttachmentContentType: {
     Error: 'error',
+    Html: 'html',
     Image: 'image',
     Json: 'json',
     Markdown: 'markdown',
@@ -521,6 +523,90 @@ describe('resolveJsonCanvasContent', () => {
     expect(result).toEqual({
       type: AttachmentContentType.Json,
       value: { via: 'reference' },
+    });
+  });
+});
+
+describe('resolveHtmlCanvasContent', () => {
+  const oversizedHtml = `<html>${'a'.repeat(1_048_577)}</html>`;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+  });
+
+  it('returns url + isSameOriginUrl + srcdoc when a DIAL download URL resolves and the text is small', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve('<html><body>Hi</body></html>'),
+      }),
+    );
+    const result = await resolveHtmlCanvasContent(
+      makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Html,
+      url: '/download?path=path/page.html',
+      isSameOriginUrl: true,
+      srcdoc: '<html><body>Hi</body></html>',
+    });
+  });
+
+  it('returns url + isSameOriginUrl with no srcdoc when a DIAL download URL resolves but the text is oversized', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(oversizedHtml),
+      }),
+    );
+    const result = await resolveHtmlCanvasContent(
+      makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Html,
+      url: '/download?path=path/page.html',
+      isSameOriginUrl: true,
+      srcdoc: undefined,
+    });
+  });
+
+  it('returns srcdoc only when there is no DIAL download URL and the text is small', async () => {
+    const result = await resolveHtmlCanvasContent(
+      makeLocalAttachment('page.html', '<html><body>Local</body></html>'),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Html,
+      srcdoc: '<html><body>Local</body></html>',
+    });
+  });
+
+  it('returns null when there is no DIAL download URL and the text is oversized', async () => {
+    const result = await resolveHtmlCanvasContent(
+      makeLocalAttachment('page.html', oversizedHtml),
+      resolvers,
+    );
+    expect(result).toBeNull();
+  });
+
+  it('propagates an ErrorCanvasContent when the fetch fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+    );
+    const result = await resolveHtmlCanvasContent(
+      makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.Forbidden,
+      url: '/download?path=path/page.html',
     });
   });
 });

@@ -776,6 +776,24 @@ requires a separately isolated viewer document; client-side SPA navigation does
 not replace the document's CSP. The separately deployed MCP sandbox has its own
 policy and is not changed by `CSP_MODE`.
 
+`GET /api/v1/files/download` overwrites its own `Content-Security-Policy`
+header — built by `createHtmlPreviewCspHeader()` — whenever the downloaded
+file's `content-type` starts with `text/html`, and removes any
+`Content-Security-Policy-Report-Only` header from that response. Every other
+download keeps the app's normal enforced/report-only policy unmodified. This
+lets the chat app preview an HTML attachment by loading this route's response
+directly into an iframe (`src=`, not `srcdoc`) without the previewed file's
+own inline `<script>`/`<style>` being blocked by the strict policy the chat
+document enforces for itself — an arbitrary previewed HTML file cannot be
+expected to carry a nonce or avoid inline styles. `frame-ancestors 'self'` is
+fixed rather than driven by `ALLOWED_IFRAME_ORIGINS`, since only this app's
+own document ever embeds one of its own download responses. As with the
+WebAssembly exception above, this relaxation is scoped to one response and
+never substitutes for document policy: the property that actually stops a
+previewed HTML file from reading this app's cookies, session, or APIs is the
+iframe's `sandbox="allow-scripts"` (no `allow-same-origin`) the chat frontend
+sets, which holds regardless of how permissive this response's CSP is.
+
 ### Security
 
 - **Environment Variable Validation**: Required variables are validated at startup using class-validator

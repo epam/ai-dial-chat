@@ -24,6 +24,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { createHtmlPreviewCspHeader } from '../config/csp';
 import { ArchiveUploadInterceptor } from './archive-upload.interceptor';
 import { CopyFilesDto, CopyFilesResponseDto } from './dto/copy-files.dto';
 import {
@@ -575,6 +576,18 @@ export class FilesController {
 
     for (const [key, value] of Object.entries(headers)) {
       res.setHeader(key, value);
+    }
+
+    /*
+     * HTML previews render via `src=` against this route (not `srcdoc`), so
+     * this response needs its own relaxed CSP instead of inheriting the SPA
+     * shell's strict/enforced policy. Safety comes from the preview iframe's
+     * sandbox (`allow-scripts` only, no `allow-same-origin`), not from this
+     * header — see `createHtmlPreviewCspHeader`.
+     */
+    if (headers['content-type']?.startsWith('text/html')) {
+      res.setHeader('Content-Security-Policy', createHtmlPreviewCspHeader());
+      res.removeHeader('Content-Security-Policy-Report-Only');
     }
 
     await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(

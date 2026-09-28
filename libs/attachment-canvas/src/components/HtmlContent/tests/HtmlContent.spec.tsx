@@ -60,3 +60,56 @@ describe('HtmlContent — blocked state', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 });
+
+describe('HtmlContent — src/srcdoc precedence and sandbox', () => {
+  it('renders local srcdoc-only content via srcdoc with no allow-same-origin', () => {
+    renderContent({
+      type: AttachmentContentType.Html,
+      srcdoc: '<p>Hi</p>',
+    });
+
+    const iframe = screen.getByTitle('page.html');
+    expect(iframe.getAttribute('srcdoc')).toBe('<p>Hi</p>');
+    expect(iframe.getAttribute('src')).toBeNull();
+    expect(iframe.getAttribute('sandbox')).toBe('allow-scripts');
+  });
+
+  it('renders a same-origin download URL via src even when srcdoc is also present, with no allow-same-origin', () => {
+    renderContent({
+      type: AttachmentContentType.Html,
+      url,
+      isSameOriginUrl: true,
+      srcdoc: '<p>Hi</p>',
+    });
+
+    const iframe = screen.getByTitle('page.html');
+    expect(iframe.getAttribute('src')).toBe(url);
+    expect(iframe.getAttribute('srcdoc')).toBeNull();
+    expect(iframe.getAttribute('sandbox')).toBe('allow-scripts');
+  });
+
+  it('renders an external URL via src with allow-same-origin', () => {
+    renderContent({ type: AttachmentContentType.Html, url });
+
+    const iframe = screen.getByTitle('page.html');
+    expect(iframe.getAttribute('src')).toBe(url);
+    expect(iframe.getAttribute('srcdoc')).toBeNull();
+    expect(iframe.getAttribute('sandbox')).toBe(
+      'allow-scripts allow-same-origin',
+    );
+  });
+
+  it('skips block-detection for a same-origin download URL', () => {
+    renderContent({
+      type: AttachmentContentType.Html,
+      url,
+      isSameOriginUrl: true,
+    });
+    loadBlockedIframe();
+
+    expect(screen.getByTitle('page.html')).toBeTruthy();
+    expect(
+      screen.queryByText('This page cannot be displayed in preview'),
+    ).toBeNull();
+  });
+});
