@@ -7398,6 +7398,10 @@
           "skillsSupported": {
             "type": "boolean",
             "description": "Whether the deployment supports custom skills in chat requests"
+          },
+          "tools": {
+            "type": "boolean",
+            "description": "Whether the deployment supports tools/functions in chat completion requests"
           }
         },
         "required": ["systemPrompt", "temperature"]
