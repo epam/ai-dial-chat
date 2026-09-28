@@ -638,21 +638,23 @@ export const useDialFileListing = ({
         setIsSearching(false);
         return;
       }
+      /*
+       * Results are the unfiltered recursive listing: `DialFileManager` calls
+       * `onSearchFiles` once per search session and applies the name filter
+       * for every later query itself. Pre-filtering here by the first query
+       * would leave nothing for a replacement query to match (issue #9125).
+       */
       searchDebounceRef.current = setTimeout(() => {
         searchDebounceRef.current = null;
-        const lowerQuery = query.toLowerCase();
 
-        // Shared root: filter already-loaded root items from the cache (no BFF call).
+        // Shared root: reuse already-loaded root items from the cache (no BFF call).
         if (activeTab === DialFileManagerTabs.Shared && folderPath === '') {
           searchCancelRef.current?.();
           searchCancelRef.current = null;
           setIsSearching(true);
           const rootItems = cache.get('') ?? [];
-          const matched = rootItems.filter((item) =>
-            item.name.toLowerCase().includes(lowerQuery),
-          );
           setSearchResults(
-            matched.map((item) =>
+            rootItems.map((item) =>
               mapSearchItem(item, item.bucket ?? bucket, rootLabel),
             ),
           );
@@ -675,11 +677,8 @@ export const useDialFileListing = ({
               sharedRootMetaRef.current,
             );
             if (cancelled) return;
-            const matched = searchItems.filter((item) =>
-              item.name.toLowerCase().includes(lowerQuery),
-            );
             setSearchResults(
-              matched.map((item) =>
+              searchItems.map((item) =>
                 mapSearchItem(item, item.bucket ?? bucket, rootLabel),
               ),
             );

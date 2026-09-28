@@ -36,7 +36,7 @@ export interface FileManagerController {
   onSearchFiles: (folder: string, query: string) => void;
   /** Search: true while a search request is in flight. */
   isSearching: boolean;
-  /** Search: flat list of matching files, or null when search is not active. */
+  /** Search: flat, unfiltered recursive listing of the current folder, or null when search is not active. */
   searchResults: DialFile[] | null;
   /** Search: clears results and exits search mode. */
   clearSearchResults: () => void;

@@ -243,6 +243,40 @@ describe('useDialFileListing', () => {
       }
     });
 
+    it('returns the unfiltered recursive listing so a replacement query can still match', async () => {
+      vi.mocked(filesApi.listFiles).mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: ['A.svg', 'B.svg'].map((name) => ({
+          name,
+          path: name,
+          folderId: `${BUCKET}:`,
+          nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+          bucket: BUCKET,
+        })),
+        nextToken: undefined,
+      });
+
+      const { result } = renderListing();
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      vi.useFakeTimers();
+      try {
+        act(() => result.current.onSearchFiles('/', 'A.svg'));
+        act(() => {
+          vi.advanceTimersByTime(300);
+        });
+        await act(() => Promise.resolve());
+
+        expect(result.current.searchResults?.map((r) => r.name)).toEqual([
+          'A.svg',
+          'B.svg',
+        ]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it('reconstructs virtual path for a nested file returned by search', async () => {
       const nestedItem: ListFilesItemDto = {
         name: 'summary.pdf',

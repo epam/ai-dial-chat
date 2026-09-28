@@ -73,9 +73,10 @@ set `error` as before.
 `onSearchFiles` SHALL ignore its `folder` parameter and always search from
 the hook's own `folderPath`, SHALL debounce for 300ms, and SHALL cancel any
 in-flight search before starting a newer one so a slower stale response can
-never overwrite a newer result. Searching the Shared tab's root SHALL filter
-already-cached root items client-side instead of issuing a recursive listing
-call.
+never overwrite a newer result. Results SHALL be the unfiltered recursive
+listing; `DialFileManager` applies the name filter. Searching the Shared tab's
+root SHALL return the already-cached root items instead of issuing a
+recursive listing call.
 
 #### Scenario: A newer search cancels an in-flight older search
 
@@ -87,7 +88,7 @@ call.
 
 - **WHEN** `onSearchFiles` is called while `activeTab = Shared` and
   `folderPath` is the Shared root
-- **THEN** results are filtered from the already-cached root listing and no
+- **THEN** results come from the already-cached root listing and no
   additional `DialFilesApi.listSharedFiles`/`listFiles` call is made
 
 ### Requirement: Folder-expand and destination-popup preload deduplicate concurrent fetches
