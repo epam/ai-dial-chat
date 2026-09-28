@@ -1,5 +1,6 @@
 import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
+import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
 import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -254,7 +255,116 @@ describe('useDialFileUploadBatch', () => {
         result.current.cancelUpload();
       });
 
-      await waitFor(() => expect(result.current.uploadBatchState).toBeNull());
+      await waitFor(() =>
+        expect(
+          result.current.uploadBatchState?.files.map((file) => file.status),
+        ).toEqual([
+          FileUploadStatus.Cancelled,
+          FileUploadStatus.Cancelled,
+          FileUploadStatus.Cancelled,
+        ]),
+      );
+    });
+
+    it('cancels one file without touching the rest of the batch', async () => {
+      const filesApi = makeFilesApi();
+      vi.mocked(filesApi.uploadFile).mockImplementation(
+        (_bucket, path, _file, options) =>
+          new Promise((resolve, reject) => {
+            if (path !== 'file-0.pdf') {
+              resolve({ url: `files/${BUCKET}/${path}` });
+              return;
+            }
+            const opts = options as { signal?: AbortSignal };
+            opts.signal?.addEventListener('abort', () => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            });
+          }),
+      );
+
+      const { result } = renderUploadBatch({ filesApi });
+      act(() => {
+        result.current.onUploadFiles(
+          Array.from({ length: 2 }, (_, i) => ({
+            name: `file-${i}.pdf`,
+            fileContent: new File(['data'], `file-${i}.pdf`),
+          })),
+          '/My files',
+        );
+      });
+
+      await waitFor(() =>
+        expect(result.current.uploadBatchState?.files[1].status).toBe(
+          FileUploadStatus.Completed,
+        ),
+      );
+      const firstId = result.current.uploadBatchState?.files[0].id ?? '';
+
+      act(() => {
+        result.current.cancelUploadFile(firstId);
+      });
+
+      await waitFor(() =>
+        expect(result.current.uploadBatchState?.files[0].status).toBe(
+          FileUploadStatus.Cancelled,
+        ),
+      );
+      expect(result.current.uploadBatchState?.files[1].status).toBe(
+        FileUploadStatus.Completed,
+      );
+    });
+
+    it('appends a new batch to files still listed from an earlier one', async () => {
+      const { result } = renderUploadBatch();
+
+      act(() => {
+        result.current.onUploadFiles(
+          [{ name: 'a.pdf', fileContent: new File([], 'a.pdf') }],
+          '/My files',
+        );
+      });
+      await waitFor(() =>
+        expect(result.current.uploadBatchState?.files[0].status).toBe(
+          FileUploadStatus.Completed,
+        ),
+      );
+
+      act(() => {
+        result.current.onUploadFiles(
+          [{ name: 'b.pdf', fileContent: new File([], 'b.pdf') }],
+          '/My files',
+        );
+      });
+
+      await waitFor(() =>
+        expect(
+          result.current.uploadBatchState?.files.map((file) => file.name),
+        ).toEqual(['a.pdf', 'b.pdf']),
+      );
+      const [first, second] = result.current.uploadBatchState?.files ?? [];
+      expect(first.id).not.toBe(second.id);
+    });
+
+    it('empties the queue on clearUploadBatch', async () => {
+      const { result } = renderUploadBatch();
+
+      act(() => {
+        result.current.onUploadFiles(
+          [{ name: 'a.pdf', fileContent: new File([], 'a.pdf') }],
+          '/My files',
+        );
+      });
+      await waitFor(() =>
+        expect(result.current.uploadBatchState?.files[0].status).toBe(
+          FileUploadStatus.Completed,
+        ),
+      );
+
+      act(() => {
+        result.current.clearUploadBatch();
+      });
+
+      expect(result.current.uploadBatchState).toBeNull();
     });
   });
 
@@ -302,7 +412,7 @@ describe('useDialFileUploadBatch', () => {
       );
     });
 
-    it('always invalidates the destination folder and clears batch state on completion', async () => {
+    it('always invalidates the destination folder and keeps the settled row on completion', async () => {
       const { result, invalidateFolders, bumpRetry } = renderUploadBatch();
 
       act(() => {
@@ -312,8 +422,12 @@ describe('useDialFileUploadBatch', () => {
         );
       });
 
-      await waitFor(() => expect(result.current.uploadBatchState).toBeNull());
-      expect(invalidateFolders).toHaveBeenCalledWith(['reports/']);
+      await waitFor(() =>
+        expect(invalidateFolders).toHaveBeenCalledWith(['reports/']),
+      );
+      expect(result.current.uploadBatchState?.files[0].status).toBe(
+        FileUploadStatus.Completed,
+      );
       expect(bumpRetry).toHaveBeenCalled();
     });
   });
@@ -339,7 +453,11 @@ describe('useDialFileUploadBatch', () => {
         );
       });
 
-      await waitFor(() => expect(result.current.uploadBatchState).toBeNull());
+      await waitFor(() =>
+        expect(result.current.uploadBatchState?.files[0].status).toBe(
+          FileUploadStatus.Completed,
+        ),
+      );
       expect(onNotification).not.toHaveBeenCalled();
       expect(invalidateFolders).toHaveBeenCalledWith(['reports/']);
       expect(bumpRetry).toHaveBeenCalled();

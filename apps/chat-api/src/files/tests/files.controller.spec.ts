@@ -670,13 +670,29 @@ describe('FilesController — createFolder', () => {
     expect(service.createFolder).not.toHaveBeenCalled();
   });
 
-  it('returns 400 for name starting with dot', async () => {
+  it('returns 201 for a hidden folder name starting with a dot', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/files/folders')
       .send({ bucket: 'my-bucket', name: '.hidden' })
-      .expect(400);
-    expect(service.createFolder).not.toHaveBeenCalled();
+      .expect(201);
+    expect(service.createFolder).toHaveBeenCalledWith(
+      'my-bucket',
+      '',
+      '.hidden',
+      TEST_USER.at,
+    );
   });
+
+  it.each(['.', '..', '...'])(
+    'returns 400 for name consisting only of dots (%s)',
+    async (name) => {
+      await request(app.getHttpServer())
+        .post('/api/v1/files/folders')
+        .send({ bucket: 'my-bucket', name })
+        .expect(400);
+      expect(service.createFolder).not.toHaveBeenCalled();
+    },
+  );
 
   it('returns 400 for name containing slash', async () => {
     await request(app.getHttpServer())

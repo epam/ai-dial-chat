@@ -52,7 +52,7 @@ class CreateFolderDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  @Matches(/^[^/\\.\0][^/\\\0]{0,253}$/)
+  @Matches(/^(?!\.+$)[^/\\\0]{1,254}$/)  // leading dot allowed (hidden folder); dot-only names rejected
   @IsNotEqual(MARKER_NAME)  // custom validator: rejects '.dial_folder'
   @ApiProperty({ description: 'New folder name (no slashes, no traversal, not the reserved marker name)', example: '2026' })
   name!: string;
@@ -167,7 +167,10 @@ Rules, evaluated **in this order** by `@epam/ai-dial-react-file-manager`, which 
 the first match (synchronous — no BFF call):
 1. Empty name → error key `dialFileManager.folderNameEmpty`
 2. Contains `..` anywhere → error key `dialFileManager.nameConsecutiveDots`
-3. Starts with `.` → error key `dialFileManager.folderNameHidden`
+3. Starts with `.` → **soft warning, not an error**: the package shows its own
+   `hiddenItemWarning` ("A dot at the start of the name will make the item hidden") and
+   still lets the user confirm. `onCreateFolderValidate` does not reject a leading dot, so
+   the folder is created as a hidden folder and appears once "Show hidden files" is on.
 4. Duplicate sibling name (case-insensitive check against `parentFolder.items`) → error key `dialFileManager.folderConflict`
 5. Contains a path separator or a forbidden symbol from `forbiddenSymbolsRegExp` → error key `dialFileManager.folderNameInvalidChars`
 6. Equals `.dial_folder` → error key `dialFileManager.folderNameReserved`
@@ -210,7 +213,6 @@ setRetryCounter((c) => c + 1);
 | `dialFileManager.folderConflict` | `"A folder with this name already exists"` |
 | `dialFileManager.folderNameEmpty` | `"Folder name cannot be empty"` |
 | `dialFileManager.folderNameInvalidChars` | `"Folder name should not contain special symbols {{notAllowedSymbols}}"` |
-| `dialFileManager.folderNameHidden` | `"Folder name cannot start with a dot"` |
 | `dialFileManager.nameConsecutiveDots` | `"Name cannot contain consecutive dots"` — shared with rename validation |
 | `dialFileManager.folderNameReserved` | `"This folder name is reserved"` |
 | `dialFileManager.folderNameTooLong` | `"Folder name is too long"` |
@@ -327,11 +329,14 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 
 ---
 
-### Scenario: Folder name starts with dot (reserved)
+### Scenario: Folder name starts with dot (hidden folder)
 
 - **GIVEN** the user types `.hidden-folder`
-- **WHEN** `onCreateFolderValidate` runs
-- **THEN** the `folderNameHidden` error is returned inline
+- **WHEN** the name is validated
+- **THEN** the package shows the hidden-item soft warning inline and `onCreateFolderValidate` returns `null`
+- **AND** confirming calls `createFolder` and the BFF creates `.hidden-folder/`
+- **AND** the folder is not listed until "Show hidden files" is toggled on, then it is listed
+- **AND** a name consisting only of dots (`.`, `..`) is rejected by `CreateFolderDto` with `400 Bad Request`
 
 ---
 
