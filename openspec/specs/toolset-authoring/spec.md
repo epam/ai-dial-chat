@@ -23,6 +23,8 @@ The Metadata section SHALL allow editing the toolset avatar, name, version, desc
 
 The Version field SHALL be validated against the shared `builder-form` library's default `VERSION_PATTERN` (via `validateDeploymentCreationFields` with `validateVersionPattern: true`) — letters, digits, dots, underscores, and dashes are all allowed, unlike the stricter dot-separated-numeric-only pattern the Quick App and Custom App editors use. A non-empty version that contains any other character SHALL surface a version-invalid error (`toolsetEditor.general.versionInvalid`, "Version may only contain letters, digits, dots, underscores, and dashes") under the Version field and SHALL keep the Save button disabled.
 
+The Name field SHALL be at most 256 characters and SHALL NOT contain control characters. The Description field SHALL be at most 2000 characters (see `entity-field-limits`). The host SHALL pass the translated `editor.fieldTooLong` and `editor.nameControlCharacters` messages as `labels.validation.nameTooLong`, `nameControlCharacters` and `descriptionTooLong`, so these errors appear inline under their fields. The BFF's DTO message SHALL NOT surface as a toast for a rule the client already enforces.
+
 #### Scenario: Version format error
 - **WHEN** a user types a version containing a character outside letters, digits, dots, underscores, and dashes (e.g. a space or `/`)
 - **THEN** a version-invalid error is shown under the Version field and the Save button stays disabled
@@ -46,6 +48,10 @@ The Version field SHALL be validated against the shared `builder-form` library's
 #### Scenario: Name is required
 - **WHEN** a user clears the name field and attempts to save
 - **THEN** the system shows a required-field error for the name and blocks the save
+
+#### Scenario: Name with a line break is flagged inline
+- **WHEN** a user pastes a name containing a line break
+- **THEN** "Remove line breaks, tabs and other control characters." is shown under the Name field, Save stays disabled, and no top-of-screen notification is raised
 
 ### Requirement: Create and update requests forward additional locales
 The create and update requests issued by the Save flow SHALL compose any
@@ -160,3 +166,4 @@ The success notification SHALL be raised through `useOperationNotification` with
 #### Scenario: Save failure
 - **WHEN** the backend returns an error during save
 - **THEN** the editor remains open, shows an error notification, clears the saving state, and shows no success notification
+

@@ -66,6 +66,8 @@ export interface ToolsetFormErrors {
   name?: string;
   /** Validation message for the Metadata version field. */
   version?: string;
+  /** Validation message for the Metadata description field. */
+  description?: string;
   /** Validation message for the Setup endpoint field. */
   endpoint?: string;
   /** Validation message for the API-key header field. */

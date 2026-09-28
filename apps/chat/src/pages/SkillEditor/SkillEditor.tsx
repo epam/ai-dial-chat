@@ -33,6 +33,7 @@ import { SkillFilePreview } from '../../components/SkillFilePreview/SkillFilePre
 import { isSafeReturnUrl } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
+  EditorI18nKeys,
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -225,6 +226,7 @@ const SkillEditorPage: FC = () => {
   const submitMessages = useMemo<SkillEditorSubmitMessages>(
     () => ({
       required: t(SkillEditorI18nKeys.ErrorRequired),
+      tooLong: (count) => t(EditorI18nKeys.FieldTooLong, { count }),
       instructionsFrontmatter: t(
         SkillEditorI18nKeys.ErrorInstructionsFrontmatter,
       ),

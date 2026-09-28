@@ -237,6 +237,17 @@ import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/v
 const errors = validateScheduledTaskFormValues(values, { now: new Date() });
 ```
 
+`validateScheduledTaskTextField` checks a single free-text field against the
+limits shared by every entity editor — display name 256 characters without
+control characters, description 500, instructions 50000 — so a host can
+surface an over-limit value while the user is still typing:
+
+```ts
+import { validateScheduledTaskTextField } from '@epam/ai-dial-scheduled-tasks/validation';
+
+const code = validateScheduledTaskTextField('displayName', values.displayName);
+```
+
 ## Public class names
 
 A host embedding this package cannot style it through its CSS-module locals —

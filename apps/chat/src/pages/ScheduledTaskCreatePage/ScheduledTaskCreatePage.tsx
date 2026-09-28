@@ -39,6 +39,7 @@ import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
+  getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
   mapScheduledTaskApiError,
 } from '../../utils/scheduled-task-form-validation';
@@ -142,10 +143,14 @@ const ScheduledTaskCreatePage: FC = () => {
         if (field === 'modelId' || field === 'skillUrl') delete next.skillUrl;
         if (field === 'prompt' || field === 'skillUrl') delete next.prompt;
         delete next[field as keyof ScheduledTaskCreateFormErrors];
+        const liveError = getLiveScheduledTaskFieldError(field, value, t);
+        if (liveError) {
+          next[field as keyof ScheduledTaskCreateFormErrors] = liveError;
+        }
         return next;
       });
     },
-    [],
+    [t],
   );
 
   const handleModelSelect = useCallback(

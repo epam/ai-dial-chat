@@ -97,6 +97,8 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         onChange={(value) => onChange({ description: value })}
         labelProps={{ label: labels.description.label }}
         placeholder={labels.description.placeholder}
+        error={errors.description || undefined}
+        invalid={!!errors.description}
         containerClassName={styles?.field}
         className={RESIZABLE_TEXTAREA_CLASS_NAME}
         resize={TextareaResize.Vertical}

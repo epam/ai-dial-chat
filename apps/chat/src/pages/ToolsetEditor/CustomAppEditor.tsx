@@ -1,5 +1,4 @@
 import {
-  DeploymentCreationFieldErrorCode,
   SEMVER_VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-builder-form';
@@ -33,7 +32,6 @@ import {
   ToolsetEditorSteps,
 } from '../../constants/toolsets';
 import {
-  AppsEditorI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   CustomAppI18nKeys,
@@ -57,6 +55,10 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
+import {
+  getLiveDeploymentCreationErrors,
+  translateDeploymentCreationErrors,
+} from '../../utils/entity-field-validation';
 import { PRIMARY_LOCALE, resolveLocalizedText } from '../../utils/locale';
 import CustomAppEditorView from './CustomAppEditorView';
 
@@ -230,14 +232,21 @@ const CustomAppEditor: FC = () => {
 
   const handleGeneralChange = useCallback(
     (patch: Partial<CustomAppGeneralFormData>) => {
-      setGeneralForm((prev) => ({ ...prev, ...patch }));
+      const nextForm = { ...generalForm, ...patch };
+      const changedKeys = Object.keys(patch);
+      const liveErrors = getLiveDeploymentCreationErrors(
+        validateDeploymentCreationFields(nextForm),
+        changedKeys,
+        t,
+      );
+      setGeneralForm(nextForm);
       setGeneralErrors((prev) => {
         const next = { ...prev };
-        for (const key of Object.keys(patch)) delete next[key];
-        return next;
+        for (const key of changedKeys) delete next[key];
+        return { ...next, ...liveErrors };
       });
     },
-    [],
+    [generalForm, t],
   );
 
   const handleSettingsChange = useCallback(
@@ -254,24 +263,16 @@ const CustomAppEditor: FC = () => {
     [],
   );
 
-  const computeGeneralErrors = useCallback((): Record<string, string> => {
-    const errors: Record<string, string> = {};
-
-    if (!generalForm.name.trim()) {
-      errors.name = t(EditorI18nKeys.NameRequired);
-    }
-
-    const generalCodes = validateDeploymentCreationFields(generalForm, {
-      validateVersionPattern: SEMVER_VERSION_PATTERN,
-    });
-    if (
-      generalCodes.version === DeploymentCreationFieldErrorCode.InvalidFormat
-    ) {
-      errors.version = t(AppsEditorI18nKeys.GeneralFormVersionInvalid);
-    }
-
-    return errors;
-  }, [generalForm, t]);
+  const computeGeneralErrors = useCallback(
+    (): Record<string, string> =>
+      translateDeploymentCreationErrors(
+        validateDeploymentCreationFields(generalForm, {
+          validateVersionPattern: SEMVER_VERSION_PATTERN,
+        }),
+        t,
+      ) as Record<string, string>,
+    [generalForm, t],
+  );
 
   const validateGeneralForm = useCallback((): boolean => {
     const errors = computeGeneralErrors();

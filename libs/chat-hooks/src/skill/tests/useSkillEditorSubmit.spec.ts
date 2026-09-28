@@ -22,6 +22,7 @@ const PASTED_MANIFEST = [
 
 const messages: SkillEditorSubmitMessages = {
   required: 'This field is required',
+  tooLong: (maxLength) => `Use ${maxLength} characters or fewer.`,
   instructionsFrontmatter: 'Front matter belongs in the fields above',
   nameInvalid: 'Invalid name',
   nameConflict: 'Name already taken',
@@ -100,6 +101,49 @@ const makeHarness = (isEditMode: boolean): Harness => {
     },
   };
 };
+
+describe('useSkillEditorSubmit length limits', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('blocks a submit whose name, description and instructions are over their limits', async () => {
+    const { client, params } = makeHarness(false);
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    await act(async () => {
+      await result.current.handleSubmit(
+        makeValues({
+          name: 'a'.repeat(257),
+          description: 'a'.repeat(2001),
+          instructions: 'a'.repeat(50001),
+        }),
+      );
+    });
+
+    expect(result.current.errors).toEqual({
+      name: 'Use 256 characters or fewer.',
+      description: 'Use 2000 characters or fewer.',
+      instructions: 'Use 50000 characters or fewer.',
+    });
+    expect(client.createSkill).not.toHaveBeenCalled();
+  });
+
+  it('shows the too-long message while typing and clears it once back under the limit', () => {
+    const { params } = makeHarness(false);
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    act(() => {
+      result.current.handleValuesChange(makeValues({ name: 'a'.repeat(257) }));
+    });
+    expect(result.current.errors.name).toBe('Use 256 characters or fewer.');
+
+    act(() => {
+      result.current.handleValuesChange(makeValues({ name: 'a'.repeat(256) }));
+    });
+    expect(result.current.errors.name).toBeUndefined();
+  });
+});
 
 describe('useSkillEditorSubmit front-matter guard', () => {
   beforeEach(() => {

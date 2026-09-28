@@ -144,7 +144,7 @@ Example response (with `?limit=20&offset=0&search=daily&sort=firstToRun`):
 }
 ```
 
-or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in place of `date`. `displayName`, `trigger` (exactly one of `date` or `cron.fields`), `model`, and a string `prompt` are required; `skillUrl` is optional and nullable, and empty/whitespace-only prompt is allowed only with an effective skill; `description` is optional (`@IsOptional() @IsString() @MaxLength(500)`) and, when omitted or empty, MUST NOT be sent to DIAL Scheduler. The DTO SHALL NOT accept a client-supplied `service_id` or `stream` field — both are fixed/derived server-side (see below) and are not client-controllable.
+or with `"trigger": { "cron": { "fields": { "minute": "0", "hour": "*" } } }` in place of `date`. `displayName`, `trigger` (exactly one of `date` or `cron.fields`), `model`, and a string `prompt` are required; `displayName` is `@MaxLength(256)` and rejects control characters (`@Matches(/^[^\p{Cc}]*$/u)`), and `prompt` is `@MaxLength(50000)` (bounds from `apps/chat-api/src/common/validators/entity-field-limits.ts`, see `entity-field-limits`); `skillUrl` is optional and nullable, and empty/whitespace-only prompt is allowed only with an effective skill; `description` is optional (`@IsOptional() @IsString() @MaxLength(500)`) and, when omitted or empty, MUST NOT be sent to DIAL Scheduler. The DTO SHALL NOT accept a client-supplied `service_id` or `stream` field — both are fixed/derived server-side (see below) and are not client-controllable.
 
 The service SHALL build the upstream body server-side with `service_id` set from `SCHEDULER_SERVICE_ID` (read once at `ScheduledTasksService` construction; see the "SCHEDULER_APP_ID and SCHEDULER_SERVICE_ID environment configuration" requirement) and `properties`:
 
@@ -194,6 +194,11 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 
 - **WHEN** `displayName`, `trigger`, or `model` is missing/empty, `prompt` is missing or not a string, or both trimmed `prompt` and the effective skill are empty
 - **THEN** the response is `400 Bad Request` and DIAL Core is never called
+
+#### Scenario: Over-limit display name or instructions is rejected
+
+- **WHEN** `displayName` is longer than 256 characters or contains a control character such as a line break, or `prompt` is longer than 50000 characters
+- **THEN** the response is `400 Bad Request` and DIAL Core is never called; a printable `displayName` (including letters such as `p` or `C` and braces) is accepted
 
 #### Scenario: Both trigger variants or neither is rejected
 
@@ -947,3 +952,4 @@ Swagger SHALL describe these typed bodies and status codes; generation via `npm 
 
 - **WHEN** deployment resolution returns 404 or fails with 502/503 during save
 - **THEN** no task mutation occurs and the client retains the form, distinguishes deployment-unavailable from task-not-found, and allows retry/correction
+
