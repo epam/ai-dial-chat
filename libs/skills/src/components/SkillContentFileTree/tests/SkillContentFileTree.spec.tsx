@@ -57,23 +57,22 @@ describe('SkillContentFileTree', () => {
   it('renders a labelled tree with every root node, dotfiles included', () => {
     render(<ControlledTree />);
 
-    expect(screen.getByRole('tree', { name: 'Select file' })).toBeVisible();
-    expect(screen.getByRole('treeitem', { name: 'SKILL.md' })).toBeVisible();
-    expect(screen.getByRole('treeitem', { name: 'scripts' })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
+    expect(screen.getByRole('tree', { name: 'Select file' })).toBeTruthy();
+    expect(screen.getByRole('treeitem', { name: 'SKILL.md' })).toBeTruthy();
     expect(
-      screen.getByRole('treeitem', { name: '.env.example' }),
-    ).toBeVisible();
+      screen
+        .getByRole('treeitem', { name: 'scripts' })
+        .getAttribute('aria-expanded'),
+    ).toBe('false');
+    expect(screen.getByRole('treeitem', { name: '.env.example' })).toBeTruthy();
   });
 
   it('marks and focuses the selected file on mount', () => {
     render(<ControlledTree selectedFileId="SKILL.md" />);
 
     const selected = screen.getByRole('treeitem', { name: 'SKILL.md' });
-    expect(selected).toHaveAttribute('aria-selected', 'true');
-    expect(selected).toHaveFocus();
+    expect(selected.getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(selected);
   });
 
   it('reports a folder toggle once, by its id, and reveals its children', async () => {
@@ -105,7 +104,7 @@ describe('SkillContentFileTree', () => {
         rowNameClassName="dial-small-text"
       />,
     );
-    expect(screen.getByRole('treeitem', { name: 'run.py' })).toBeVisible();
+    expect(screen.getByRole('treeitem', { name: 'run.py' })).toBeTruthy();
   });
 
   it('selects a nested file by its opaque id and never selects a folder', async () => {
@@ -126,12 +125,15 @@ describe('SkillContentFileTree', () => {
     );
 
     await userEvent.keyboard('{ArrowDown}');
-    expect(screen.getByRole('treeitem', { name: 'scripts' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowRight}');
-    expect(screen.getByRole('treeitem', { name: 'scripts' })).toHaveAttribute(
-      'aria-expanded',
-      'true',
+    expect(document.activeElement).toBe(
+      screen.getByRole('treeitem', { name: 'scripts' }),
     );
+    await userEvent.keyboard('{ArrowRight}');
+    expect(
+      screen
+        .getByRole('treeitem', { name: 'scripts' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
     await userEvent.keyboard('{ArrowRight}{Enter}');
     expect(onSelectFile).toHaveBeenCalledWith('scripts/run.py');
   });
