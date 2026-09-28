@@ -11,7 +11,10 @@ import type {
   ToolsetAuthenticationType,
 } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
-import type { CatalogContentFilePreview } from './item-details-data';
+import type {
+  CatalogContentFilePreview,
+  CatalogContentFileTreeRenderProps,
+} from './item-details-data';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
@@ -620,6 +623,15 @@ export interface DetailsPanelProps {
    * panel; `fileName` is the basename resolved from the supplied tree.
    */
   renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
+  /**
+   * Renders the Content tab's file selector tree in place of the built-in
+   * one, e.g. a file-manager tree so the details panel matches an editor's.
+   * The panel keeps owning expansion, selection and the overlay; omitted, the
+   * built-in tree renders.
+   */
+  renderContentFileTree?: (
+    props: CatalogContentFileTreeRenderProps,
+  ) => ReactNode;
   /**
    * Called immediately when the "Delete" button is clicked, with no
    * confirmation step. Shown only when the item's `isMyApp` is `true` and

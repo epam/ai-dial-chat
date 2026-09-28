@@ -11,6 +11,7 @@ import {
 import { FC, type ReactNode } from 'react';
 import type {
   CatalogContentFilePreview,
+  CatalogContentFileTreeRenderProps,
   CatalogContentTreeNode,
 } from '../../../models/item-details-data';
 import type { ItemDetailsStyles } from '../../../models/item-details-props';
@@ -63,6 +64,8 @@ export interface ContentTabProps {
   filePreview?: CatalogContentFilePreview | null;
   /** Host-rendered picked-file preview. Takes precedence over `filePreview`. */
   filePreviewContent?: ReactNode;
+  /** Renders the selector's tree in place of the built-in one. Omitted, the built-in tree renders. */
+  renderFileTree?: (props: CatalogContentFileTreeRenderProps) => ReactNode;
   /** Color and typography overrides for the body text, headings, and placeholder highlights. */
   detailsStyles?: ItemDetailsStyles;
 }
@@ -90,6 +93,7 @@ export const ContentTab: FC<ContentTabProps> = ({
   fileUnsupportedLabel = 'Preview is not supported for this file',
   filePreview,
   filePreviewContent,
+  renderFileTree,
   detailsStyles,
 }) => {
   const bodyClassName =
@@ -110,6 +114,17 @@ export const ContentTab: FC<ContentTabProps> = ({
   const handleSelectFile = (fileId: string) => {
     onSelectFile?.(fileId);
     onFileSelectorOpenChange(false);
+  };
+
+  const fileTreeProps: CatalogContentFileTreeRenderProps = {
+    nodes: fileNodes,
+    selectedFileId,
+    expandedFolderIds,
+    onToggleFolder,
+    onSelectFile: handleSelectFile,
+    onClose: () => onFileSelectorOpenChange(false),
+    ariaLabel: fileSelectorAriaLabel,
+    rowNameClassName: bodyClassName,
   };
 
   /*
@@ -167,18 +182,13 @@ export const ContentTab: FC<ContentTabProps> = ({
             matchReferenceWidth={false}
             listClassName="w-[280px]"
             placement="bottom-start"
-            renderOverlay={() => (
-              <ContentFileTree
-                nodes={fileNodes}
-                selectedFileId={selectedFileId}
-                expandedFolderIds={expandedFolderIds}
-                onToggleFolder={onToggleFolder}
-                onSelectFile={handleSelectFile}
-                onClose={() => onFileSelectorOpenChange(false)}
-                ariaLabel={fileSelectorAriaLabel}
-                rowNameClassName={bodyClassName}
-              />
-            )}
+            renderOverlay={() =>
+              renderFileTree ? (
+                renderFileTree(fileTreeProps)
+              ) : (
+                <ContentFileTree {...fileTreeProps} />
+              )
+            }
           >
             <InlineSelectTrigger
               label={selectedFileName}

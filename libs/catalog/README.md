@@ -882,6 +882,33 @@ basename; fetching, MIME handling, state, and rendering remain host-owned.
 />
 ```
 
+#### Custom file tree
+
+`renderContentFileTree(props)` replaces the built-in tree inside the file
+selector overlay — e.g. with a file-manager tree, which is how
+`@epam/ai-dial-skills`' `SkillDetailsSidePanel` matches the skill editor. The
+catalog itself never imports a file manager. The panel keeps owning the
+trigger, the file count, expansion, selection and the overlay's open state;
+the renderer receives `CatalogContentFileTreeRenderProps` — `nodes`,
+`selectedFileId`, `expandedFolderIds`, `onToggleFolder`, `onSelectFile`
+(which also closes the overlay), `onClose` (for Escape), `ariaLabel`, and
+`rowNameClassName` — and is expected to keep the tree contract: `role="tree"`,
+`aria-selected` on the displayed file, focus on it when mounted, and Escape
+calling `onClose`. Omitted, the built-in tree renders.
+
+```tsx
+import type { CatalogContentFileTreeRenderProps } from '@epam/ai-dial-catalog';
+
+<DetailsPanel
+  item={skillItem}
+  isOpen
+  onClose={handleClose}
+  renderContentFileTree={(props: CatalogContentFileTreeRenderProps) => (
+    <HostFileTree {...props} />
+  )}
+/>;
+```
+
 `onLoadContentFilePreview` is an additive, richer alternative to
 `onLoadContentFile`: instead of a plain string always rendered as Markdown, it
 resolves a `CatalogContentFilePreview` — `{ type: 'markdown', text }`,

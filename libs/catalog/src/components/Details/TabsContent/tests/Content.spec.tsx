@@ -373,6 +373,62 @@ describe('ContentTab — file selector', () => {
 
     expect(screen.queryByRole('status')).toBeNull();
   });
+
+  it('renders a host-supplied file tree in place of the built-in one', async () => {
+    const renderFileTree = vi.fn(() => <div>host tree</div>);
+    render(
+      <ControlledContentTab
+        content="Body"
+        files={nestedFiles}
+        selectedFileId="SKILL.md"
+        expandedFolderIds={new Set(['scripts'])}
+        fileSelectorAriaLabel="Pick a file"
+        renderFileTree={renderFileTree}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button'));
+
+    expect(screen.getByText('host tree')).toBeVisible();
+    expect(screen.queryByRole('tree')).toBeNull();
+    expect(renderFileTree).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        nodes: nestedFiles,
+        selectedFileId: 'SKILL.md',
+        expandedFolderIds: new Set(['scripts']),
+        ariaLabel: 'Pick a file',
+        rowNameClassName: 'dial-small-text',
+      }),
+    );
+  });
+
+  it('closes the selector when a host-supplied tree picks a file or closes', async () => {
+    const onSelectFile = vi.fn();
+    render(
+      <ControlledContentTab
+        content="Body"
+        files={flatFiles}
+        selectedFileId="SKILL.md"
+        onSelectFile={onSelectFile}
+        renderFileTree={({ onSelectFile: pick, onClose }) => (
+          <div>
+            <button onClick={() => pick('analyzer.md')}>pick</button>
+            <button onClick={onClose}>dismiss</button>
+          </div>
+        )}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'SKILL.md' }));
+    await userEvent.click(screen.getByRole('button', { name: 'pick' }));
+    expect(onSelectFile).toHaveBeenCalledWith('analyzer.md');
+    expect(screen.queryByRole('button', { name: 'pick' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'SKILL.md' }));
+    await userEvent.click(screen.getByRole('button', { name: 'dismiss' }));
+    expect(onSelectFile).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'dismiss' })).toBeNull();
+  });
 });
 
 describe('ContentTab — file preview', () => {
