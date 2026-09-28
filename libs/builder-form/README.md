@@ -35,7 +35,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.20`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.21`
 
 ## Components
 
@@ -230,8 +230,6 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
     deleteConfirmItemsLabel: 'items?',
     deleteConfirmLabel: 'Delete',
     deleteCancelLabel: 'Cancel',
-    uploadProgressTitle: 'Uploading',
-    cancelLabel: 'Cancel',
   }}
 />;
 ```

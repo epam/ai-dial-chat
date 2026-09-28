@@ -11,8 +11,16 @@ import {
   NOT_ALLOWED_SYMBOLS_REGEXP,
   PrimaryButton,
   Spinner,
+  TransferQueue,
 } from '@epam/ai-dial-ui-kit';
-import { memo, useEffect, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import type { FileManagerController } from '../file-manager-controller';
 import {
@@ -26,8 +34,7 @@ import type {
 } from '../labels';
 import { OperationLoaderModal } from '../OperationLoaderModal/OperationLoaderModal';
 import { getParentFolderPath } from '../path';
-import { FileUploadStatus } from '../upload-batch';
-import { UploadProgressModal } from '../UploadProgressModal/UploadProgressModal';
+import { toUploadQueueItems } from '../upload-queue';
 import { useGridEditingScroll } from '../useGridEditingScroll/useGridEditingScroll';
 
 type DestinationFolderPopupOptions =
@@ -156,6 +163,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     onValidateUpload,
     uploadBatchState,
     cancelUpload,
+    cancelUploadFile,
     clearUploadBatch,
     onCreateFolder,
     onCreateFolderValidate,
@@ -426,10 +434,16 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     ],
   );
 
-  const handleUploadCancel = (): void => {
+  /* The queue confirms first when work is still running, so closing it aborts whatever is left. */
+  const handleUploadQueueClose = useCallback((): void => {
     cancelUpload();
     clearUploadBatch();
-  };
+  }, [cancelUpload, clearUploadBatch]);
+
+  const uploadQueueItems = useMemo(
+    () => toUploadQueueItems(uploadBatchState?.files ?? []),
+    [uploadBatchState],
+  );
 
   const fileMetadataPopupOptions = useMemo(
     () => ({
@@ -467,16 +481,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     },
     labels,
   );
-
-  const uploadProgressText = useMemo(() => {
-    if (uploadBatchState == null) {
-      return '';
-    }
-    const done = uploadBatchState.files.filter(
-      (file) => file.status !== FileUploadStatus.Uploading,
-    ).length;
-    return labels.getUploadProgressText(done, uploadBatchState.files.length);
-  }, [uploadBatchState, labels]);
 
   const emptyStateCopy = useMemo((): EmptyStateCopy => {
     if (searchResults != null && !isSearching) {
@@ -580,15 +584,15 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         </div>
       )}
 
-      {uploadBatchState != null && (
-        <UploadProgressModal
-          batchState={uploadBatchState}
-          uploadProgressTitle={labels.uploadProgressTitle}
-          uploadProgressText={uploadProgressText}
-          cancelLabel={labels.cancelLabel}
-          onCancel={handleUploadCancel}
+      <div className="fixed bottom-4 end-4 z-[70]">
+        <TransferQueue
+          title={labels.getUploadQueueTitle(uploadQueueItems.length)}
+          items={uploadQueueItems}
+          onClose={handleUploadQueueClose}
+          onCancelItem={cancelUploadFile}
+          labels={labels.uploadQueueLabels}
         />
-      )}
+      </div>
 
       {(isCopying || isMoving) && (
         <OperationLoaderModal

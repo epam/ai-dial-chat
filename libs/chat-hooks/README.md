@@ -82,7 +82,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.20
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.21
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -1762,8 +1762,6 @@ const FileManagerHost = ({
           return `Name must be at most ${error.maxLength} characters`;
         case 'duplicateName':
           return `"${error.existingName}" already exists here`;
-        case 'leadingDot':
-          return 'Name cannot start with a dot';
       }
     },
   });
@@ -1955,7 +1953,7 @@ const { onUnshareFiles, onRemoveFilesAccess, isUnsharing, isRemovingAccess } =
 
 ### useDialFileUploadBatch
 
-Runs a concurrency-limited (`UPLOAD_CONCURRENCY`-worker) upload batch against the injected `DialFilesApi`, including per-file conflict resolution, cancellation, and a ZIP-archive extraction path via `onUploadArchive`.
+Runs a concurrency-limited (`UPLOAD_CONCURRENCY`-worker) upload batch against the injected `DialFilesApi`, including per-file conflict resolution, per-file or whole-queue cancellation, and a ZIP-archive extraction path via `onUploadArchive`. A batch started while earlier uploads are still listed is appended to them, and settled entries stay in `uploadBatchState` until `clearUploadBatch`.
 
 ```tsx
 import { useDialFileUploadBatch } from '@epam/ai-dial-chat-hooks';
@@ -1977,7 +1975,7 @@ const { onUploadFiles, uploadBatchState, cancelUpload, clearUploadBatch } =
 
 **Parameters** (`UseDialFileUploadBatchOptions`): `filesApi`, `bucket`, `rootLabel`, `activeTab`, `cache`, `sharedRootMetaRef`, `invalidateFolders`, `bumpRetry` are required (all but `filesApi`/`bucket`/`rootLabel`/`activeTab` come straight from `useDialFileListing`'s result); `onNotification` is optional.
 
-**Returns** (`UseDialFileUploadBatchResult`): `onUploadFiles`, `onUploadArchive`, plus (per `UseDialFileManagerResult`'s equivalent fields) `onValidateUpload`, `uploadBatchState: FileUploadBatchState | null`, `cancelUpload`, `clearUploadBatch`.
+**Returns** (`UseDialFileUploadBatchResult`): `onUploadFiles`, `onUploadArchive`, plus (per `UseDialFileManagerResult`'s equivalent fields) `onValidateUpload`, `uploadBatchState: FileUploadBatchState | null`, `cancelUpload`, `cancelUploadFile(id)`, `clearUploadBatch`.
 
 ### useGridEditingScroll
 
@@ -2003,10 +2001,10 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 - **`DialFilesApi`** — the operation port every file-manager hook that performs network I/O accepts as a parameter, mirroring the host's own files-API transport (list/upload/download/create/rename/move/copy/delete/share methods) instead of a configured REST client.
 - **`FileManagerNotification`** — the structured toast event file-manager hooks emit through `onNotification`, carrying a `variant` (`NotificationVariant`), an optional `reason` (`FileManagerNotificationReason`), and optional interpolation data (`count`, `name`, `folder`, `names`, `restCount`).
 - **`FileManagerNotificationReason`** — library-owned enum identifying why a hook is surfacing a notification (e.g. `FolderLoadFailed`, `FolderCreateFailed`, `FilesDeleted`, `UploadCompleted`, `UnshareFailed`) — see the exported enum for the full member list.
-- **`FileNameValidationErrorReason`** — library-owned enum identifying why a file/folder name failed validation: `Empty`, `ForbiddenSymbols`, `ReservedName`, `TooLong`, `DuplicateName`, `LeadingDot`.
-- **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`, `{ reason: FileNameValidationErrorReason.LeadingDot }`.
+- **`FileNameValidationErrorReason`** — library-owned enum identifying why a file/folder name failed validation: `Empty`, `ForbiddenSymbols`, `ReservedName`, `TooLong`, `DuplicateName`.
+- **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`.
 - **`FileOperationSuccessEvent`** — the structured success event `useDialFileMutations` emits through `onOperationSuccess`, carrying a `kind` (`FileOperationKind`) plus optional `name`/`count`/`destinationFolderName`/`isFolder`.
-- **`FileOperationKind`** — library-owned enum identifying which mutation just succeeded: `FolderCreated`, `FileRenamed`, `FileDownloaded`, `FilesDownloaded`, `FileCopied`, `FilesCopied`, `FileMoved`, `FilesMoved`.
+- **`FileOperationKind`** — library-owned enum identifying which mutation just succeeded: `FolderCreated`, `FileRenamed`, `FileDownloaded`, `FilesDownloaded`, `FileCopied`, `FilesCopied`, `FileMoved`, `FilesMoved`, `FileDuplicated`, `FilesDuplicated` (a copy whose every item stays in its own source folder — the Duplicate action).
 - **`DownloadDestinationHandlers`** / **`DownloadDestination`** / **`DownloadDestinationType`** — the host-injected "Save As" / blob-download seam for `useDialFileMutations.onDownloadFiles`. `DownloadDestinationType` is `Blob | Stream | Cancelled`; `DownloadDestination` is the matching discriminated union (the `Stream` member carries a `WritableStream<Uint8Array>`); `DownloadDestinationHandlers` is `{ resolveDestination(filename, mimeType), triggerDownload(response, fallbackName, destination) }`.
 - **`FileUploadStatus`** / **`FileUploadEntry`** / **`FileUploadBatchState`** — an upload batch's progress model. `FileUploadStatus` is `Queued | Uploading | Completed | Failed | Cancelled`; `FileUploadEntry` is `{ id, name, status, percent? }`; `FileUploadBatchState` is `{ files: FileUploadEntry[], isOpen: boolean }`.
 - **`DialFileManagerVariant`** / **`DialFileManagerActionProfile`** — identify which host is driving `useDialFileManager` (`Attach | Standalone | FolderPicker`) and which action set that gates (`Attach | Browse | Full`); `deriveActionProfile(variant)` maps the former to the latter.

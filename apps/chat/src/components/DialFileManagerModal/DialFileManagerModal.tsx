@@ -31,6 +31,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
 
 interface Props {
@@ -58,8 +59,6 @@ interface Props {
   deleteConfirmBody: (names: string[]) => ReactNode;
   deleteConfirmLabel: string;
   deleteCancelLabel: string;
-  uploadProgressTitle: string;
-  cancelLabel: string;
   allowedTypes?: string[];
   maxSelectableFileSize?: number;
   maximumAttachmentsAmount?: number;
@@ -101,8 +100,6 @@ const DialFileManagerModal: FC<Props> = ({
   deleteConfirmBody,
   deleteConfirmLabel,
   deleteCancelLabel,
-  uploadProgressTitle,
-  cancelLabel,
   allowedTypes,
   maxSelectableFileSize,
   maximumAttachmentsAmount,
@@ -294,11 +291,7 @@ const DialFileManagerModal: FC<Props> = ({
     [bucket],
   );
 
-  const getUploadProgressText = useCallback(
-    (done: number, total: number) =>
-      t(DialFileManagerI18nKeys.UploadProgressSummary, { done, total }),
-    [t],
-  );
+  const uploadQueueLabels = useUploadQueueLabels();
 
   const renameValidationMessages = useMemo(
     () => ({
@@ -431,9 +424,7 @@ const DialFileManagerModal: FC<Props> = ({
       deleteConfirmBody,
       deleteConfirmLabel,
       deleteCancelLabel,
-      uploadProgressTitle,
-      cancelLabel,
-      getUploadProgressText,
+      ...uploadQueueLabels,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
@@ -478,9 +469,7 @@ const DialFileManagerModal: FC<Props> = ({
       deleteConfirmBody,
       deleteConfirmLabel,
       deleteCancelLabel,
-      uploadProgressTitle,
-      cancelLabel,
-      getUploadProgressText,
+      uploadQueueLabels,
       emptyStateByTab,
       treeHeaderByTab,
       renameValidationMessages,

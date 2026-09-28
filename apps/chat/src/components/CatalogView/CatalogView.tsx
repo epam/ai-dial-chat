@@ -15,7 +15,7 @@ import {
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -125,17 +125,21 @@ const CatalogView: FC<Props> = ({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
-  const initialDetailsItemId = itemIdParam;
+  const [initialDetailsItemId, setInitialDetailsItemId] = useState(itemIdParam);
 
   /*
-   * `itemId` is a one-shot signal from a shared-invitation redirect (see
-   * SharedInvitationPage) meant to open the details panel once. Clearing it
-   * here keeps it from lingering in the URL, so a later navigation back to
-   * the same deployment's shared link isn't ignored just because the param
-   * still equals a value Catalog already consumed once before.
+   * `itemId` is a one-shot signal — from a shared-invitation redirect (see
+   * SharedInvitationPage) or the skill editor after a create — meant to open
+   * the details panel once. Clearing it here keeps it from lingering in the
+   * URL, so a later navigation back to the same deployment's shared link isn't
+   * ignored just because the param still equals a value Catalog already
+   * consumed once before. The id itself is held in state until the item is
+   * listed (see below): the catalog may still be loading when the param is
+   * cleared.
    */
   useEffect(() => {
     if (!itemIdParam) return;
+    setInitialDetailsItemId(itemIdParam);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -281,6 +285,20 @@ const CatalogView: FC<Props> = ({
     isCatalogHideMyAppsEnabled,
     persistedFilterTopics,
   });
+
+  /*
+   * Released once the item is listed: Catalog's own effect (a child, so it
+   * runs first in the same commit) has opened the panel by then, and handing
+   * it `undefined` afterwards resets its applied-id guard for the next signal.
+   */
+  useEffect(() => {
+    if (
+      initialDetailsItemId != null &&
+      visibleCatalogItems.some((item) => item.id === initialDetailsItemId)
+    ) {
+      setInitialDetailsItemId(undefined);
+    }
+  }, [initialDetailsItemId, visibleCatalogItems]);
 
   const { activeTab, setActiveTab } =
     useCatalogActiveTabPreference(availableTabIds);

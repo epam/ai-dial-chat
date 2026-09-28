@@ -1,3 +1,4 @@
+import { isUploadInProgress } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerActions,
@@ -183,7 +184,7 @@ export const useDialFileManager = ({
       mutations.isMoving ||
       sharing.isUnsharing ||
       sharing.isRemovingAccess ||
-      upload.uploadBatchState != null,
+      isUploadInProgress(upload.uploadBatchState),
     [
       mutations.isCreatingFolder,
       mutations.isDownloading,
@@ -234,6 +235,7 @@ export const useDialFileManager = ({
     onValidateUpload: upload.onValidateUpload,
     uploadBatchState: upload.uploadBatchState,
     cancelUpload: upload.cancelUpload,
+    cancelUploadFile: upload.cancelUploadFile,
     clearUploadBatch: upload.clearUploadBatch,
     onCreateFolder: mutations.onCreateFolder,
     onCreateFolderValidate,

@@ -12,6 +12,7 @@ import {
   DialFileManagerTabs,
 } from '@epam/ai-dial-react-file-manager';
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import DialFileManagerShell from '../DialFileManagerShell';
 
@@ -133,6 +134,7 @@ const baseHookResult: UseDialFileManagerResult = {
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),
+  cancelUploadFile: vi.fn(),
   clearUploadBatch: vi.fn(),
   onCreateFolder: vi.fn(),
   onCreateFolderValidate: vi.fn(),
@@ -208,9 +210,7 @@ const baseLabels: DialFileManagerShellLabels = {
   deleteConfirmBody: () => 'This cannot be undone.',
   deleteConfirmLabel: 'Delete',
   deleteCancelLabel: 'Cancel',
-  uploadProgressTitle: 'Uploading files',
-  cancelLabel: 'Cancel',
-  getUploadProgressText: (done, total) => `${done} of ${total}`,
+  getUploadQueueTitle: (count) => `Uploading ${count} files`,
   searchEmptyStateTitle: 'No results',
   folderEmptyStateTitle: 'This folder is empty',
   forbiddenSymbolsTooltip: 'Forbidden symbols',
@@ -313,19 +313,63 @@ describe('DialFileManagerShell', () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
-  it('shows the upload progress modal when an upload batch is active', () => {
+  it('shows the upload queue with one row per file while a batch is listed', () => {
     renderShell({
       uploadBatchState: {
         isOpen: true,
-        files: [{ id: '1', name: 'a.pdf', status: FileUploadStatus.Uploading }],
+        files: [
+          { id: '1', name: 'a.pdf', status: FileUploadStatus.Uploading },
+          { id: '2', name: 'b.pdf', status: FileUploadStatus.Completed },
+        ],
       },
     });
-    expect(screen.getByText(baseLabels.uploadProgressTitle)).toBeTruthy();
+    expect(screen.getByText('Uploading 2 files')).toBeTruthy();
+    expect(screen.getByText('a.pdf')).toBeTruthy();
+    expect(screen.getByText('b.pdf')).toBeTruthy();
   });
 
-  it('does not render the upload progress modal when there is no active batch', () => {
+  it('does not render the upload queue when there is no batch', () => {
     renderShell({ uploadBatchState: null });
-    expect(screen.queryByText(baseLabels.uploadProgressTitle)).toBeNull();
+    expect(screen.queryByText(/^Uploading /)).toBeNull();
+  });
+
+  it('cancels one file from its queue row', async () => {
+    const cancelUploadFile = vi.fn();
+    renderShell({
+      cancelUploadFile,
+      uploadBatchState: {
+        isOpen: true,
+        files: [
+          { id: 'f1', name: 'a.pdf', status: FileUploadStatus.Uploading },
+        ],
+      },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Cancel "a.pdf"' }),
+    );
+
+    expect(cancelUploadFile).toHaveBeenCalledWith('f1');
+  });
+
+  it('aborts what is left and clears the queue when it is closed', async () => {
+    const cancelUpload = vi.fn();
+    const clearUploadBatch = vi.fn();
+    renderShell({
+      cancelUpload,
+      clearUploadBatch,
+      uploadBatchState: {
+        isOpen: true,
+        files: [
+          { id: 'f1', name: 'a.pdf', status: FileUploadStatus.Completed },
+        ],
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(cancelUpload).toHaveBeenCalledOnce();
+    expect(clearUploadBatch).toHaveBeenCalledOnce();
   });
 
   it('sets destinationFolderPopupOptions.sourceFolder to the common parent when all selected items share one', () => {
@@ -608,7 +652,7 @@ describe('DialFileManagerShell', () => {
       expectNoConsolidatedOverlay();
     });
 
-    it('does not render the overlay while an upload batch is active, showing UploadProgressModal instead', () => {
+    it('does not render the overlay while an upload batch is active, showing the upload queue instead', () => {
       renderShell({
         uploadBatchState: {
           isOpen: true,
@@ -617,7 +661,7 @@ describe('DialFileManagerShell', () => {
           ],
         },
       });
-      expect(screen.getByText(baseLabels.uploadProgressTitle)).toBeTruthy();
+      expect(screen.getByText('Uploading 1 files')).toBeTruthy();
       expectNoConsolidatedOverlay();
     });
 
