@@ -77,11 +77,11 @@ they are hashed at build time — nor through DOM order or ARIA attributes, whic
 are structure and accessibility contracts rather than styling ones. Selected
 elements therefore carry a stable public class.
 
-| Key       | Class                          | Element                                                |
-| --------- | ------------------------------ | ------------------------------------------------------ |
-| `panel`   | `dial-settings-panel-panel`    | The panel root                                         |
-| `tabList` | `dial-settings-panel-tab-list` | The vertical tab list holding the section rows         |
-| `tab`     | `dial-settings-panel-tab`      | Every section row, selected or not                     |
+| Key       | Class                          | Element                                        |
+| --------- | ------------------------------ | ---------------------------------------------- |
+| `panel`   | `dial-settings-panel-panel`    | The panel root                                 |
+| `tabList` | `dial-settings-panel-tab-list` | The vertical tab list holding the section rows |
+| `tab`     | `dial-settings-panel-tab`      | Every section row, selected or not             |
 
 ```tsx
 import { SETTINGS_PANEL_CLASS } from '@epam/ai-dial-settings-panel';
