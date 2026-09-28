@@ -186,17 +186,22 @@ export const createHelmetOptions = (
  * `ALLOWED_IFRAME_ORIGINS` — that setting controls who may embed *this app*,
  * not who may embed one of its own download responses, which only this
  * app's own document ever does.
+ * `script-src` omits `'unsafe-eval'` and `connect-src` is `'none'`: a
+ * previewed HTML file needs inline scripts/styles to render, but not
+ * `eval`/`Function`/string-timers or outbound `fetch`/`XHR`/WebSocket — so
+ * neither is granted, narrowing what a malicious attachment's script could do
+ * inside its already-sandboxed, cookie-less iframe.
  */
 export const createHtmlPreviewCspHeader = (): string => {
   const directives: [string, string][] = [
     ['default-src', "'self' data: blob: https:"],
-    ['script-src', "'unsafe-inline' 'unsafe-eval' data: blob: https:"],
+    ['script-src', "'unsafe-inline' data: blob: https:"],
     ['style-src', "'unsafe-inline' https:"],
     ['style-src-attr', "'unsafe-inline'"],
     ['img-src', "'self' data: blob: https:"],
     ['font-src', "'self' data: https:"],
     ['media-src', "'self' data: blob: https:"],
-    ['connect-src', "'self' https:"],
+    ['connect-src', "'none'"],
     ['object-src', "'none'"],
     ['frame-ancestors', "'self'"],
   ];

@@ -222,7 +222,7 @@ describe('createHtmlPreviewCspHeader', () => {
     const directives = createHtmlPreviewCspHeader().split('; ');
 
     expect(directives).toContain(
-      "script-src 'unsafe-inline' 'unsafe-eval' data: blob: https:",
+      "script-src 'unsafe-inline' data: blob: https:",
     );
     expect(directives).toContain("style-src 'unsafe-inline' https:");
     expect(directives).toContain("style-src-attr 'unsafe-inline'");
@@ -233,6 +233,14 @@ describe('createHtmlPreviewCspHeader', () => {
 
     expect(directives).toContain("frame-ancestors 'self'");
     expect(directives).toContain("object-src 'none'");
+  });
+
+  it('does not permit eval or outbound network access from the previewed document', () => {
+    const header = createHtmlPreviewCspHeader();
+    const directives = header.split('; ');
+
+    expect(header).not.toContain("'unsafe-eval'");
+    expect(directives).toContain("connect-src 'none'");
   });
 
   it('returns the same header value on every call', () => {
