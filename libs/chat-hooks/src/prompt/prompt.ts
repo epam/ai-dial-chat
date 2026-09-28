@@ -1,9 +1,3 @@
-import {
-  ENTITY_DESCRIPTION_MAX_LENGTH,
-  ENTITY_INSTRUCTIONS_MAX_LENGTH,
-  ENTITY_NAME_MAX_LENGTH,
-} from '@epam/ai-dial-chat-shared';
-
 /** Why a prompt-editor field failed client-side validation. */
 export enum PromptFieldError {
   /** The field is required and was left empty. */
@@ -24,14 +18,21 @@ export enum PromptFieldError {
  */
 const PROMPT_NAME_PATTERN = /^(?!\.{1,2}$)[a-zA-Z0-9 _.-]+$/;
 
+/*
+ * These equal `ENTITY_*_MAX_LENGTH` from `@epam/ai-dial-chat-shared` but are
+ * spelled out rather than imported: this module ships in the `./utils` entry,
+ * which must load without `chat-shared` installed (the cold-load probes
+ * enforce it). `tests/prompt.spec.ts` pins them to the shared constants.
+ */
+
 /** Maximum name length accepted by `CreatePromptDto.name`. */
-export const PROMPT_NAME_MAX_LENGTH = ENTITY_NAME_MAX_LENGTH;
+export const PROMPT_NAME_MAX_LENGTH = 256;
 
 /** Maximum description length accepted by `CreatePromptDto.description`. */
-export const PROMPT_DESCRIPTION_MAX_LENGTH = ENTITY_DESCRIPTION_MAX_LENGTH;
+export const PROMPT_DESCRIPTION_MAX_LENGTH = 2000;
 
 /** Maximum body length accepted by `CreatePromptDto.content`. */
-export const PROMPT_CONTENT_MAX_LENGTH = ENTITY_INSTRUCTIONS_MAX_LENGTH;
+export const PROMPT_CONTENT_MAX_LENGTH = 50000;
 
 /** How close to a length limit the remaining-characters counter starts announcing. */
 export const PROMPT_COUNTER_ANNOUNCE_THRESHOLD = 10;
