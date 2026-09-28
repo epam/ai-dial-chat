@@ -1,4 +1,11 @@
-import { EditorLayout } from '@epam/ai-dial-builder-form';
+import {
+  DEFAULT_METADATA_FORM_LABELS,
+  EntityEditor,
+  MetadataField,
+  MetadataForm,
+  type DeploymentCreationFormValues,
+  type MetadataFormLabels,
+} from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
   MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
@@ -7,14 +14,7 @@ import {
   mergeClasses,
   useAvailableHeightCap,
 } from '@epam/ai-dial-chat-shared';
-import {
-  Input,
-  Label,
-  NeutralButton,
-  PrimaryButton,
-  Spinner,
-  Textarea,
-} from '@epam/ai-dial-ui-kit';
+import { Label, NeutralButton, Spinner } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
  * Only needed once `LazyMarkdownEditor` actually renders (below). Importing
@@ -31,6 +31,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useState,
 } from 'react';
 import { PROMPT_EDITOR_CLASS } from '../../constants/public-class-names';
@@ -51,9 +52,15 @@ const EMPTY_VALUES: PromptEditorValues = {
   content: '',
 };
 
+const METADATA_FIELDS = [MetadataField.Name, MetadataField.Description];
+
 const DEFAULT_DESCRIPTION_MAX_LENGTH = 2000;
 const DEFAULT_CONTENT_MAX_LENGTH = 50000;
 const DEFAULT_ANNOUNCE_THRESHOLD = 10;
+
+/* One centred column holding Name, Description and Instructions. */
+const FORM_CLASS_NAME =
+  'mx-auto w-full max-w-[1180px] gap-5 px-4 py-6 desktop:px-8 desktop:py-6';
 
 /*
  * Instructions fill the form down to the bottom of the screen. The gap matches
@@ -125,6 +132,62 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     [],
   );
 
+  /* MetadataForm edits the shared deployment shape; the prompt keeps only Name and Description. */
+  const metadataValues = useMemo<DeploymentCreationFormValues>(
+    () => ({
+      name: values.name,
+      description: values.description,
+      iconUrl: '',
+      version: '',
+      topics: [],
+      otherLocales: [],
+    }),
+    [values.name, values.description],
+  );
+
+  const handleMetadataChange = useCallback(
+    (patch: Partial<DeploymentCreationFormValues>) => {
+      setValues((previous) => ({
+        ...previous,
+        ...(patch.name !== undefined && { name: patch.name }),
+        ...(patch.description !== undefined && {
+          description: patch.description,
+        }),
+      }));
+    },
+    [],
+  );
+
+  const metadataErrors = useMemo(
+    () => ({ name: errors?.name, description: errors?.description }),
+    [errors?.name, errors?.description],
+  );
+
+  const metadataLabels = useMemo<MetadataFormLabels>(
+    () => ({
+      form: {
+        ...DEFAULT_METADATA_FORM_LABELS,
+        name: {
+          label: labels?.nameLabel ?? 'Name',
+          placeholder: labels?.namePlaceholder ?? 'Prompt name',
+        },
+        description: {
+          label: labels?.descriptionLabel ?? 'Description',
+          placeholder:
+            labels?.descriptionPlaceholder ?? 'What this prompt is for',
+        },
+        // The fields sit in the prompt form itself, not in a separately named group.
+        ariaLabel: undefined,
+      },
+    }),
+    [
+      labels?.nameLabel,
+      labels?.namePlaceholder,
+      labels?.descriptionLabel,
+      labels?.descriptionPlaceholder,
+    ],
+  );
+
   const handleSubmit = useCallback(() => {
     if (isSaving) return;
     onSubmit(values);
@@ -133,37 +196,43 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   const title = isEditMode
     ? (labels?.editTitle ?? 'Edit prompt')
     : (labels?.createTitle ?? 'Create prompt');
+  const submitLabel = isEditMode
+    ? (labels?.saveLabel ?? 'Save')
+    : (labels?.createLabel ?? 'Create');
+
+  const editorLabels = useMemo(
+    () => ({
+      cancelLabel: labels?.cancelLabel ?? 'Cancel',
+      backAriaLabel: labels?.backButtonAriaLabel ?? 'Back to prompts',
+      savingStatusLabel: labels?.savingStatusLabel ?? 'Saving',
+    }),
+    [
+      labels?.cancelLabel,
+      labels?.backButtonAriaLabel,
+      labels?.savingStatusLabel,
+    ],
+  );
 
   const cssVars = buildCssVars({
     '--pe-content-error': colors?.contentErrorText,
   });
 
-  const actions = (
-    <>
-      <NeutralButton
-        label={labels?.cancelLabel ?? 'Cancel'}
-        onClick={onCancel}
-        disabled={isSaving}
-      />
-      <PrimaryButton
-        label={labels?.saveLabel ?? 'Save'}
-        iconBefore={isSaving ? <Spinner size={16} ariaLabel="" /> : undefined}
-        onClick={handleSubmit}
-        disabled={isSaving}
-      />
-    </>
-  );
+  const editorProps = {
+    title,
+    onBack,
+    onCancel,
+    onSubmit: handleSubmit,
+    submitLabel,
+    labels: editorLabels,
+    metadataTitle: null,
+  };
 
   if (isLoading) {
     return (
-      <EditorLayout
-        title={title}
-        onBack={onBack}
-        backAriaLabel={labels?.backButtonAriaLabel ?? 'Back to prompts'}
-        actions={actions}
-        isSaving={isSaving}
-        labels={{ savingStatusLabel: labels?.savingStatusLabel }}
-        leftContent={
+      <EntityEditor
+        {...editorProps}
+        isSubmitting={isSaving}
+        metadata={
           <div
             role="status"
             aria-label={labels?.loadingAriaLabel ?? 'Loading prompt'}
@@ -178,15 +247,10 @@ export const PromptEditor: FC<PromptEditorProps> = ({
 
   if (hasLoadError) {
     return (
-      <EditorLayout
-        title={title}
-        onBack={onBack}
-        backAriaLabel={labels?.backButtonAriaLabel ?? 'Back to prompts'}
-        actions={actions}
-        isSaving={false}
-        labels={{ savingStatusLabel: labels?.savingStatusLabel }}
-        leftContent={
-          <div role="alert" className="flex flex-col items-start gap-3 p-8">
+      <EntityEditor
+        {...editorProps}
+        metadata={
+          <div role="alert" className="flex flex-col items-start gap-3">
             <p className={mergeClasses('m-0', helperTextClassName)}>
               {labels?.loadErrorMessage ??
                 "Couldn't load this prompt. Please try again."}
@@ -217,47 +281,27 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     labels?.charactersRemaining?.(count) ?? `${count} characters remaining`;
 
   return (
-    <EditorLayout
-      title={title}
-      onBack={onBack}
-      backAriaLabel={labels?.backButtonAriaLabel ?? 'Back to prompts'}
-      actions={actions}
-      isSaving={isSaving}
-      labels={{ savingStatusLabel: labels?.savingStatusLabel }}
-      leftContent={
-        <div
-          className={mergeClasses(
-            'mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-5 px-4 py-6 desktop:px-8',
-            PROMPT_EDITOR_CLASS.form,
-          )}
-          style={cssVars}
-        >
-          <Input
-            id="prompt-name"
-            value={values.name}
-            labelProps={{ label: labels?.nameLabel ?? 'Name', required: true }}
-            placeholder={labels?.namePlaceholder ?? 'Prompt name'}
-            invalid={errors?.name != null}
-            error={errors?.name}
-            onChange={(value) => setField('name', value ?? '')}
+    <EntityEditor
+      {...editorProps}
+      isSubmitting={isSaving}
+      metadataSectionClassName={mergeClasses(
+        FORM_CLASS_NAME,
+        PROMPT_EDITOR_CLASS.form,
+      )}
+      metadata={
+        <>
+          <MetadataForm
+            values={metadataValues}
+            errors={metadataErrors}
+            onChange={handleMetadataChange}
+            fields={METADATA_FIELDS}
+            labels={metadataLabels}
           />
-
-          <Textarea
-            id="prompt-description"
-            value={values.description}
-            labelProps={{ label: labels?.descriptionLabel ?? 'Description' }}
-            placeholder={
-              labels?.descriptionPlaceholder ?? 'What this prompt is for'
-            }
-            invalid={errors?.description != null}
-            error={errors?.description}
-            onChange={(value) => setField('description', value)}
-          />
-
           <div
             role="group"
             aria-labelledby={contentLabelId}
             className="flex flex-1 flex-col gap-2"
+            style={cssVars}
           >
             {/*
              * htmlFor is what names the editor's textarea; without it the
@@ -311,13 +355,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
               </p>
             )}
           </div>
-
           <span role="status" aria-live="polite" className="sr-only">
             {descriptionRemaining != null &&
               buildCounterMessage(descriptionRemaining)}
             {contentRemaining != null && buildCounterMessage(contentRemaining)}
           </span>
-        </div>
+        </>
       }
     />
   );

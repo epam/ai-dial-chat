@@ -16,6 +16,13 @@ host through `fileActions.extractArchive` / `fileActions.pickFromFileSystem`,
 and the host decides what "created" means when `onSubmit` fires. That keeps the same form
 usable by any host whose skill storage differs from DIAL Core's.
 
+The form renders on the shared `EntityEditor` shell from
+`@epam/ai-dial-builder-form`, the same one every entity editor uses: the
+Files pane on the left, and on the right the selected file. For `SKILL.md`
+that is Name and Description (the shared `MetadataForm`) followed by the
+Instructions editor, which fills the height left below them; for a supporting
+file it is its preview.
+
 ## Installation
 
 Requires UI Kit ^0.15.0-dev.20 or later with the public `/editors` entry.
@@ -192,12 +199,21 @@ component derives no meaning from the values it reports:
 />
 ```
 
-The header is rendered by `EditorLayout` (from `@epam/ai-dial-builder-form`).
+The header is rendered by `EntityEditor` (from `@epam/ai-dial-builder-form`).
 Pass `onBack` (called when the back arrow is activated), `title` (the page
 heading), and optionally `backAriaLabel` (accessible label for the arrow,
 defaults to `'Back'`). The header, including the back arrow, Cancel/Create
-actions, and saving status, appears on all viewports — no separate mobile
-header is needed from the host.
+actions, and saving status, appears on all viewports; on mobile the actions
+move to a fixed bottom bar. The primary button reads `labels.createLabel`
+(default `'Create'`), so a host editing an existing skill passes its own Save
+label there.
+
+On mobile the column stacks the Files pane as a collapsed "Editing file"
+accordion, then the selected file. Its heading is `SKILL.md` for the manifest,
+or `labels.selectedFileHeading(name)` for a supporting file; Name and
+Description show only while `SKILL.md` is selected. `submitError` and
+`conflict` (with its "Reload latest" action) render in a `role="alert"` region
+above the selected file.
 
 ## Types
 
@@ -238,7 +254,7 @@ file-tree entries are `addLabel`, `createFolderLabel`, `uploadFilesLabel`,
 colors the Add-menu icons (`'text-secondary'` by default);
 `removeIconClassName` colors the Delete icon.
 
-`styles.colors` (`SkillEditorColors`) overrides the section-heading, Instructions-label, and border colors as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`) and then to a hard-coded hex when no theme is present:
+`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`) and then to a hard-coded hex when no theme is present:
 
 ```tsx
 <SkillEditor

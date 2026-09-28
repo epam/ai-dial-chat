@@ -70,7 +70,6 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `react` ^19.2.8
 - `@epam/ai-dial-attachment-canvas` \*
 - `@epam/ai-dial-attachment-input` \*
-- `@epam/ai-dial-builder-form` \*
 - `@epam/ai-dial-catalog` \*
 - `@epam/ai-dial-chat-overlay` \*
 - `@epam/ai-dial-chat-shared` \*
@@ -128,30 +127,30 @@ kinds still need the package installed for `tsc`/the bundler to resolve the spec
 building that entry; the distinction is about what the code does with the import, not about
 whether you need to `npm install` it.
 
-| Entry point               | Runtime peers beyond `react`                                                                                                                        | Type-only peers                                                                         |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                      | `@epam/ai-dial-builder-form`, `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
-| `./viewport-layout`       | —                                                                                                                                                   | —                                                                                       |
-| `./scroll-anchoring`      | —                                                                                                                                                   | —                                                                                       |
-| `./conversation`          | `@epam/ai-dial-chat-shared`                                                                                                                         | `@epam/ai-dial-publish-panel`                                                           |
-| `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                                                       |
-| `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                                                       |
-| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                                                            |
-| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                                                       |
-| `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`                                                             |
-| `./source-content`        | —                                                                                                                                                   | —                                                                                       |
-| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                                                       |
-| `./skills-state`          | —                                                                                                                                                   | —                                                                                       |
-| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | —                                                                                       |
-| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                                                       |
-| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                                                       |
-| `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                                                       |
-| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                                                       |
-| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-builder-form`                               |
-| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                                                       |
-| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                                                       |
+| Entry point               | Runtime peers beyond `react`                                                                                                                        | Type-only peers                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                      | `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
+| `./viewport-layout`       | —                                                                                                                                                   | —                                                         |
+| `./scroll-anchoring`      | —                                                                                                                                                   | —                                                         |
+| `./conversation`          | `@epam/ai-dial-chat-shared`                                                                                                                         | `@epam/ai-dial-publish-panel`                             |
+| `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                         |
+| `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
+| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                              |
+| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                         |
+| `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`                               |
+| `./source-content`        | —                                                                                                                                                   | —                                                         |
+| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                         |
+| `./skills-state`          | —                                                                                                                                                   | —                                                         |
+| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | —                                                         |
+| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
+| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                         |
+| `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                         |
+| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                         |
+| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`                               |
+| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                         |
+| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                         |
 
-Six of the peers above (`@epam/ai-dial-builder-form`, `@epam/ai-dial-catalog`,
+Five of the peers above (`@epam/ai-dial-catalog`,
 `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-publish-panel`,
 `@epam/ai-dial-scheduled-tasks`, `@epam/ai-dial-skill-editor`) were already declared in
 `package.json#peerDependencies` but missing from this section before this table was added.
@@ -2373,15 +2372,18 @@ popup.sessionStorage.setItem(
 );
 ```
 
-### encodeToolsetId / decodeToolsetId / isPublicToolsetId
+### encodeToolsetId / decodeToolsetId / normalizeToolsetId / isPublicToolsetId / resolveToolsetCredentialsLevel / selectToolsetAuthStatus
 
-`encodeToolsetId` percent-encodes each `/`-separated segment of a toolset id so it satisfies the backend's id pattern, keeping `/` as a literal separator — the counterpart of `encodeDeploymentId` on the applications side. `decodeToolsetId` inverts it, passing a malformed percent-encoded segment through unchanged rather than throwing, since it decodes externally-sourced ids. `isPublicToolsetId` reports whether an id lives in the org-wide `public` bucket.
+`encodeToolsetId` percent-encodes each `/`-separated segment of a toolset id so it satisfies the backend's id pattern, keeping `/` as a literal separator — the counterpart of `encodeDeploymentId` on the applications side. `decodeToolsetId` inverts it, passing a malformed percent-encoded segment through unchanged rather than throwing, since it decodes externally-sourced ids. `normalizeToolsetId` decodes then re-encodes, which is idempotent whether the id it receives is already percent-encoded or raw — use it instead of `encodeToolsetId` at a boundary that cannot guarantee which form it gets (e.g. a `postMessage` payload from an embedded iframe), since encoding an already-encoded id a second time double-escapes it and the backend only ever undoes one layer. `isPublicToolsetId` reports whether an id lives in the org-wide `public` bucket. `resolveToolsetCredentialsLevel` resolves the level a toolset's login applies to from that same public/private convention — `User` for a public-bucket toolset, `Global` otherwise — so every login surface (the sign-in-interrupt dialog, the QuickApps editor iframe bridge, `useToolsetLogin`) picks the same level for the same toolset. `selectToolsetAuthStatus` then picks the matching `userLevelAuthStatus`/`globalAuthStatus` field off a toolset's `authSettings` for that level.
 
 ```ts
 import {
   decodeToolsetId,
   encodeToolsetId,
   isPublicToolsetId,
+  normalizeToolsetId,
+  resolveToolsetCredentialsLevel,
+  selectToolsetAuthStatus,
 } from '@epam/ai-dial-chat-hooks';
 
 encodeToolsetId('toolsets/b/My Toolset__1.0.0');
@@ -2390,7 +2392,19 @@ encodeToolsetId('toolsets/b/My Toolset__1.0.0');
 decodeToolsetId('toolsets/b/My%20Toolset__1.0.0');
 // 'toolsets/b/My Toolset__1.0.0'
 
+normalizeToolsetId('toolsets/b/My Toolset__1.0.0');
+// 'toolsets/b/My%20Toolset__1.0.0' (same result for either input form)
+normalizeToolsetId('toolsets/b/My%20Toolset__1.0.0');
+// 'toolsets/b/My%20Toolset__1.0.0'
+
 isPublicToolsetId('toolsets/public/jira__1.0.0'); // true
+
+const credentialsLevel = resolveToolsetCredentialsLevel(
+  'toolsets/b/jira__1.0.0',
+); // ToolsetCredentialsLevel.Global
+
+selectToolsetAuthStatus(toolset.authSettings, credentialsLevel);
+// toolset.authSettings?.globalAuthStatus
 ```
 
 ### getToolsetRedirectUri / buildToolsetAuthorizeUrl
@@ -2809,14 +2823,26 @@ This is the only export that needs `@epam/ai-dial-chat-overlay`, so it lives beh
 
 Pure mappers from DIAL Core deployment/prompt/skill/toolset DTOs into `@epam/ai-dial-catalog`'s `CatalogItem`/`CatalogItemTabData` shapes. Every label is a fixed English string — i18n stays at the app edge, passed in via a `*Labels` parameter.
 
-### encodeDeploymentId / findDeploymentByIdOrReference
+### encodeDeploymentId / decodeDeploymentId / normalizeDeploymentId / findDeploymentByIdOrReference
 
-Percent-encodes each `/`-separated segment of a deployment/application id, and finds a deployment matching an id or (fallback) `reference`.
+`encodeDeploymentId` percent-encodes each `/`-separated segment of a deployment/application id, keeping `/` as a literal separator. `decodeDeploymentId` inverts it, passing a malformed percent-encoded segment through unchanged rather than throwing, since it decodes externally-sourced ids (the settings iframe's postMessage protocol). `normalizeDeploymentId` decodes then re-encodes, which is idempotent whether the id it receives is already percent-encoded or raw — use it instead of `encodeDeploymentId` at a boundary that cannot guarantee which form it gets (e.g. a `postMessage` payload from an embedded iframe), since encoding an already-encoded id a second time double-escapes it and the backend only ever undoes one layer. `findDeploymentByIdOrReference` finds a deployment matching an id or (fallback) `reference`.
 
 ```ts
-import { encodeDeploymentId } from '@epam/ai-dial-chat-hooks';
+import {
+  decodeDeploymentId,
+  encodeDeploymentId,
+  normalizeDeploymentId,
+} from '@epam/ai-dial-chat-hooks';
 
 encodeDeploymentId('applications/bucket/My App__1.0');
+// 'applications/bucket/My%20App__1.0'
+
+decodeDeploymentId('applications/bucket/My%20App__1.0');
+// 'applications/bucket/My App__1.0'
+
+normalizeDeploymentId('applications/bucket/My App__1.0');
+// 'applications/bucket/My%20App__1.0' (same result for either input form)
+normalizeDeploymentId('applications/bucket/My%20App__1.0');
 // 'applications/bucket/My%20App__1.0'
 ```
 

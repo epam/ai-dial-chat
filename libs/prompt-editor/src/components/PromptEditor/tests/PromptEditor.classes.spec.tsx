@@ -1,5 +1,5 @@
+import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
 import { render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PROMPT_EDITOR_CLASS } from '../../../constants/public-class-names';
 import { PromptEditor } from '../PromptEditor';
@@ -9,15 +9,37 @@ import { PromptEditor } from '../PromptEditor';
  * fails silently — the build passes and a host's stylesheet simply stops
  * applying — so it is asserted here rather than left to review.
  *
- * The form column carries no role of its own, so each case locates a control
+ * The section roots carry no role of its own, so each case locates a control
  * inside it by role and then walks up: a class that landed on an unrelated
  * node cannot satisfy that.
  */
 
-vi.mock('@epam/ai-dial-builder-form', () => ({
-  EditorLayout: ({ leftContent }: { leftContent?: ReactNode }) => (
-    <div>{leftContent}</div>
-  ),
+vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-builder-form')>();
+  /* Stamps the section classes the editor hands the shell, around the real MetadataForm. */
+  return {
+    ...actual,
+    EntityEditor: ({
+      metadata,
+      setup,
+      metadataSectionClassName,
+      setupSectionClassName,
+    }: EntityEditorProps) => (
+      <div>
+        <div className={metadataSectionClassName}>{metadata}</div>
+        <div className={setupSectionClassName}>{setup}</div>
+      </div>
+    ),
+  };
+});
+
+/* The real editor pulls vendor CSS the test runner cannot load. */
+vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
+  LazyMarkdownEditor: () =>
+    Promise.resolve({
+      MarkdownEditor: ({ id }: { id?: string }) => <textarea id={id} />,
+    }),
 }));
 
 /*
@@ -30,10 +52,16 @@ const closestWithClass = (from: Element, className: string): Element | null =>
   from.closest(`.${className}`);
 
 describe('PromptEditor — public class names', () => {
-  it('stamps the form column that holds the fields', () => {
+  it('stamps the form column that holds Name, Description and Instructions', () => {
     render(<PromptEditor onSubmit={vi.fn()} onCancel={vi.fn()} />);
 
-    const nameField = screen.getByRole('textbox', { name: /Name/ });
-    expect(closestWithClass(nameField, PROMPT_EDITOR_CLASS.form)).toBeTruthy();
+    const form = closestWithClass(
+      screen.getByRole('textbox', { name: /Name/ }),
+      PROMPT_EDITOR_CLASS.form,
+    );
+    expect(form).toBeTruthy();
+    expect(
+      form?.contains(screen.getByRole('group', { name: /Instructions/ })),
+    ).toBe(true);
   });
 });

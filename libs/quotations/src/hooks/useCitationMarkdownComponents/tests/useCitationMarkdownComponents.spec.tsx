@@ -61,7 +61,8 @@ const buildLabelsForGroup = (group: AnnotationGroup) => ({
       `${current} / ${total}`,
     preview: 'Preview',
     openInBrowser: 'Open in browser',
-    download: 'Download',
+    showMore: 'Show more',
+    showLess: 'Show less',
   },
   markerLabels: {
     ariaLabel: `Citation from ${group.sourceName}`,
@@ -251,7 +252,15 @@ describe('useCitationMarkdownComponents', () => {
   });
 
   it('delegates the open-in-browser action to onOpenInBrowser directly', async () => {
-    const annotation = makeAnnotation();
+    const annotation: Annotation = {
+      body: {
+        title: 'Example',
+        source: {
+          type: 'attachment',
+          attachment: { type: 'text/html', url: 'https://example.com/a' },
+        },
+      },
+    };
     const group = makeGroup({
       primaryAnnotation: annotation,
       annotations: [annotation],
@@ -264,11 +273,33 @@ describe('useCitationMarkdownComponents', () => {
     await userEvent.click(
       screen.getByRole('button', { name: `Citation from ${group.sourceName}` }),
     );
-    /* The card's non-preview action is labelled "Download" for a non-HTML
-       source with a preview action available, but always triggers onOpenInBrowser. */
-    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Open in browser' }),
+    );
 
     expect(callbacks.onOpenInBrowser).toHaveBeenCalledWith(annotation);
+  });
+
+  it('previews directly on marker click without opening the card when isPreviewOpen is set', async () => {
+    const annotation = makeAnnotation();
+    const group = makeGroup({
+      primaryAnnotation: annotation,
+      annotations: [annotation],
+    });
+    const callbacks = makeCallbacks({ isPreviewOpen: true });
+    render(
+      <Host content="Hello world" groups={[group]} callbacks={callbacks} />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: `Citation from ${group.sourceName}` }),
+    );
+
+    expect(callbacks.onPreview).toHaveBeenCalledExactlyOnceWith(
+      annotation,
+      group,
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('calls buildLabels once per rendered marker with the correct group', () => {
