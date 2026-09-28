@@ -207,7 +207,9 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes
 conversation data. Interaction, scrolling, resizing, navigation or enabling reduced
-motion cancels the borrowing immediately. With closed or empty history, only the
+motion cancels the borrowing immediately, including typing in an already-focused
+composer. Changing, moving, resizing or hiding a borrowed row or its container
+also restores the originals. With closed or empty history, only the
 portal artwork appears. Reduced motion shows a static rift and leaves history alone.
 Every scene notification includes a hint for the event's secret chat phrase.
 
@@ -255,8 +257,10 @@ welcome-heading and conversation-history corners, plus the main pumpkin's body.
 The pumpkin gets a target before the history limit is filled and remains clickable.
 A single canvas draws at most
 30 times per second, reusing finished silk and spider artwork. Target geometry is
-read only at scene setup; real controls retain their focus and behavior. Scrolling,
-resizing or hiding the tab stops the scene, and reduced motion shows a static web.
+captured at scene setup and rechecked only on relevant DOM or resize notifications,
+never per frame; real controls retain their focus and behavior. Changing or removing
+an anchor, scrolling, resizing or hiding the tab stops the scene, and reduced motion
+shows a static web.
 
 Ghosts possess separate small interface elements: their inert visual copies
 float and grow eyes, while one brave ghost tries to frighten the main pumpkin.
@@ -416,7 +420,8 @@ The Halloween train stops with an empty final wagon, picks up the main pumpkin
 and departs with smoke from its chimney and side vents. Boarding uses the pumpkin's
 actual screen position; its decorative copy rides behind the wagon front while
 the original labelled button retains focus and layout. The scene restores the
-pumpkin on completion or interaction and shows static artwork under reduced motion.
+pumpkin on completion or interaction, or when its source or container changes,
+moves, resizes or disappears. Reduced motion shows static artwork.
 Train direction follows the pumpkin's side, including RTL.
 
 `createHalloweenEvent({ trainSoundtrackUrl })` optionally accepts a supplied
