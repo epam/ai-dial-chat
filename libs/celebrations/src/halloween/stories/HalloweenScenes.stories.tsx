@@ -64,7 +64,16 @@ export const Ravens: Story = {
 };
 
 export const Candy: Story = {
-  args: { sceneId: HalloweenScene.Candy },
+  args: { sceneId: HalloweenScene.Candy, startersBelowComposer: true },
+  parameters: { celebrationScene: HalloweenScene.Candy },
+};
+
+export const CandyStartersAbove: Story = {
+  args: { sceneId: HalloweenScene.Candy, startersBelowComposer: false },
+  parameters: { celebrationScene: HalloweenScene.Candy },
+};
+export const CandyComposerOnly: Story = {
+  args: { sceneId: HalloweenScene.Candy, showStarters: false },
   parameters: { celebrationScene: HalloweenScene.Candy },
 };
 

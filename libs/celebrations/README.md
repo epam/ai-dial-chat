@@ -327,6 +327,27 @@ reads or React updates. Actual anchor changes can trigger a geometry recheck
 solely for cancellation. No audio, additional dependency or network request is
 introduced.
 
+Candy stages a 35-second contest over fallen sweets. Candy bounces from measured
+composer/starter edges and settles along the bottom. Two ravens land and peck;
+a mummy janitor sweeps and scares them off. The returning flock drives the mummy
+out of the opposite edge and resumes feeding. The mummy returns with exactly two
+skeleton janitors; together they drive the birds away, clear the sweets and leave.
+The provider unmounts the scene after 35.5 seconds. Mobile keeps all story beats
+with twelve sweets and four returning birds; desktop uses eighteen sweets and
+six returning birds. Both start with two birds and end with three janitors.
+
+Candy only measures host elements: no input, card or control is copied, hidden
+or animated. Starters may be above or below the composer; a composer-only host
+still supplies collision geometry. Without safe targets, candy falls to the
+floor and the full contest continues. RTL mirrors the cast and entry sides while
+contacts retain the physical host geometry. Reduced motion or unavailable motion
+APIs show a static cast without measuring targets. Typing, pointer/focus, scrolling,
+resize, source changes, hidden documents, changed environment and unmount cancel
+all owned effects. Tracks animate only transform/opacity; there is no physics
+engine, animation-frame loop, repeated layout polling or animated filter.
+Limits are 60/80 mobile/desktop tracks, 400/520 SVG nodes, 160 keyframes per track,
+four composer candidates, twelve starter candidates and two/three selected edges.
+
 Footprints reveal an invisible cat: alternating paws approach a starter card,
 press its edge, then leave the card sagging under the cat's weight. Eyes glance
 and blink before a grin appears. The cat jumps toward the composer ledge; the

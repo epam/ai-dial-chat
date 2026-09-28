@@ -1,4 +1,5 @@
 import { HalloweenScene } from '../types/halloween';
+import { CANDY_DEADLINE_MS } from '../utils/halloween-candy-plan';
 
 /**
  * Tuning values for the Halloween easter egg. Everything here is decorative:
@@ -109,7 +110,7 @@ export const HALLOWEEN_SCENE_DURATIONS: Partial<
   [HalloweenScene.Train]: 12000,
   [HalloweenScene.Portal]: 10000,
   [HalloweenScene.Ravens]: 13000,
-  [HalloweenScene.Candy]: 11000,
+  [HalloweenScene.Candy]: CANDY_DEADLINE_MS,
   [HalloweenScene.Footprints]: 12000,
   [HalloweenScene.Skeletons]: 10000,
   [HalloweenScene.Cauldron]: 9000,

@@ -6,51 +6,15 @@
   pointer-events: none;
   user-select: none;
 }
-.candy,
 .skeleton,
 .portal {
   position: absolute;
 }
-.candy,
 .skeleton {
   svg {
     display: block;
     inline-size: 100%;
     block-size: auto;
-  }
-}
-
-.candy {
-  left: var(--x);
-  top: -60px;
-  inline-size: var(--size);
-  animation: candy-fall 7.8s ease-in var(--delay) both;
-  filter: drop-shadow(0 2px 2px #19213155);
-}
-@keyframes candy-fall {
-  0% {
-    transform: translateY(0) rotate(0);
-    opacity: 0;
-  }
-  8%,
-  82% {
-    opacity: 1;
-  }
-  65% {
-    transform: translate(var(--drift), calc(100vh - 80px)) rotate(var(--turn));
-  }
-  75% {
-    transform: translate(var(--drift), calc(100vh - 145px))
-      rotate(calc(var(--turn) + 30deg));
-  }
-  84% {
-    transform: translate(var(--drift), calc(100vh - 80px))
-      rotate(calc(var(--turn) + 65deg));
-  }
-  100% {
-    transform: translate(var(--drift), calc(100vh + 70px))
-      rotate(calc(var(--turn) + 100deg));
-    opacity: 0;
   }
 }
 
@@ -240,9 +204,6 @@
   .scene,
   .scene * {
     animation: none !important;
-  }
-  .candy {
-    top: var(--rest-y);
   }
   .skeleton {
     transform: scaleX(var(--mirror));

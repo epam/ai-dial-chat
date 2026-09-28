@@ -47,7 +47,9 @@ describe('additional Halloween scenes', () => {
       const scene = halloween.scenes.find((candidate) => candidate.id === id);
       expect(halloween.clickSceneIds).toContain(id);
       expect(scene?.durationMs).toBeGreaterThanOrEqual(10000);
-      expect(scene?.durationMs).toBeLessThanOrEqual(14000);
+      expect(scene?.durationMs).toBeLessThanOrEqual(
+        id === HalloweenScene.Candy ? 35500 : 14000,
+      );
       const key = scene?.labelId as keyof typeof HALLOWEEN_LABELS;
       expect(HALLOWEEN_LABELS[key]).toContain('{{phrase}}');
       expect(HALLOWEEN_LABELS[key]).toContain('start-page chat');
@@ -70,7 +72,7 @@ describe('additional Halloween scenes', () => {
     const { container, rerender } = render(
       <HalloweenBurstOverlay burst={HalloweenScene.Candy} />,
     );
-    expect(container.querySelectorAll('svg')).toHaveLength(mobile ? 18 : 32);
+    expect(container.querySelector('[data-candy-static]')).not.toBeNull();
     rerender(<HalloweenBurstOverlay burst={HalloweenScene.Ravens} />);
     expect(container.querySelectorAll('[data-raven-art]')).toHaveLength(
       mobile ? 5 : 8,

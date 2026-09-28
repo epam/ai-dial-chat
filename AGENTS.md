@@ -48,6 +48,7 @@ Fourth exception, narrower still: `libs/chat-hooks` may host a DIAL-Core-respons
 
 Use these local skills directly:
 
+- `./.claude/skills/celebration-scene-ideas/SKILL.md` for celebration scene ideas, animation improvements, and SVG character quality. Include scene-specific performance budgets and use OpenSpec propose/apply when implementation is requested.
 - `./.agents/skills/address-current-branch-review/SKILL.md` for processing unresolved GitHub review threads on the current branch. Fix requests do not authorize inline replies; reply only after the user explicitly asks and the pushed fix is visible in the PR.
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
 - `./.claude/skills/refactoring-audit/SKILL.md` for deep refactoring/tech-debt audits and local planning docs (`refactoring-backend.md`, `refactoring-frontend.md`)
