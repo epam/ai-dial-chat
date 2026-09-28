@@ -942,7 +942,7 @@ import type { FileManagerController } from '@epam/ai-dial-chat-shared';
 
 ### DialFileManagerShellLabels
 
-Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n. `treeHeaderByTab` and `emptyStateByTab` are keyed by every `DialFileManagerTabs` member, `all` included.
+Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n. `treeHeaderByTab` and `emptyStateByTab` are keyed by every `DialFileManagerTabs` member, `all` included. The optional `searchPlaceholderByTab` sets the search field placeholder for the browsed folder's source tab (`sectionTab ?? activeTab`); a tab without an entry keeps the file manager's default.
 
 ```ts
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';

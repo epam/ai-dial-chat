@@ -36,6 +36,7 @@ const capturedDialFileManagerProps: {
     onGetInfo?: unknown;
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedTreeOptions;
+    navigationPanelOptions?: { placeholder?: string };
     bulkActionsToolbarOptions?: CapturedActionLabels;
     toolbarOptions?: {
       newActions?: { uploadArchive?: { label?: string } };
@@ -87,6 +88,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
       treeOptions?: CapturedTreeOptions;
+      navigationPanelOptions?: { placeholder?: string };
       bulkActionsToolbarOptions?: CapturedActionLabels;
       toolbarOptions?: {
         newActions?: { uploadArchive?: { label?: string } };
@@ -869,6 +871,40 @@ describe('DialFileManagerShell', () => {
         capturedDialFileManagerProps.current?.toolbarOptions?.newActions
           ?.uploadArchive,
       ).toBeUndefined();
+    });
+  });
+
+  describe('search placeholder', () => {
+    const labels: DialFileManagerShellLabels = {
+      ...baseLabels,
+      searchPlaceholderByTab: {
+        [DialFileManagerTabs.MyFiles]: 'Search in My files',
+        [DialFileManagerTabs.Shared]: 'Search in Shared with me files',
+        [DialFileManagerTabs.Organization]: 'Search in Organization files',
+      },
+    };
+    const placeholder = (): string | undefined =>
+      capturedDialFileManagerProps.current?.navigationPanelOptions?.placeholder;
+
+    it('names the storage of the selected tab', () => {
+      renderShell({}, new Set(), {
+        activeTab: DialFileManagerTabs.Shared,
+        labels,
+      });
+      expect(placeholder()).toBe('Search in Shared with me files');
+    });
+
+    it('names the browsed section on the All tab', () => {
+      renderShell({ sectionTab: DialFileManagerTabs.Organization }, new Set(), {
+        activeTab: DialFileManagerTabs.All,
+        labels,
+      });
+      expect(placeholder()).toBe('Search in Organization files');
+    });
+
+    it('leaves the default placeholder when the host passes none', () => {
+      renderShell();
+      expect(placeholder()).toBeUndefined();
     });
   });
 });

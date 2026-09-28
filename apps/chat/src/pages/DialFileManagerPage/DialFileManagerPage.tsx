@@ -29,6 +29,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
 const SECTION_TABS = [
@@ -194,6 +195,7 @@ const DialFileManagerPage: FC = () => {
   );
 
   const uploadQueueLabels = useUploadQueueLabels();
+  const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
   const labels: DialFileManagerShellLabels = useMemo(
     () => ({
@@ -276,6 +278,7 @@ const DialFileManagerPage: FC = () => {
       deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
       deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
       ...uploadQueueLabels,
+      searchPlaceholderByTab,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
@@ -307,6 +310,7 @@ const DialFileManagerPage: FC = () => {
       renameValidationMessages,
       conflictResolutionPopupOptions,
       uploadQueueLabels,
+      searchPlaceholderByTab,
     ],
   );
 

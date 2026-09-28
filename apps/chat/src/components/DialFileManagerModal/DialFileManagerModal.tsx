@@ -31,6 +31,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
 
@@ -293,6 +294,7 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   const uploadQueueLabels = useUploadQueueLabels();
+  const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
   const renameValidationMessages = useMemo(
     () => ({
@@ -429,6 +431,7 @@ const DialFileManagerModal: FC<Props> = ({
       deleteConfirmLabel,
       deleteCancelLabel,
       ...uploadQueueLabels,
+      searchPlaceholderByTab,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
@@ -474,6 +477,7 @@ const DialFileManagerModal: FC<Props> = ({
       deleteConfirmLabel,
       deleteCancelLabel,
       uploadQueueLabels,
+      searchPlaceholderByTab,
       emptyStateByTab,
       treeHeaderByTab,
       renameValidationMessages,

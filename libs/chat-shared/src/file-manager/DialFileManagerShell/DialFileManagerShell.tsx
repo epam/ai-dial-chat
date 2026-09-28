@@ -534,6 +534,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             onSelectedPathsChange={onSelectedPathsChange}
             navigationPanelOptions={{
               searchable: true,
+              placeholder: labels.searchPlaceholderByTab?.[gateTab],
             }}
             hideSearchPathItemName={true}
             onSearchFiles={onSearchFiles}
