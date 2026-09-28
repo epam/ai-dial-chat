@@ -64,10 +64,12 @@ button.accessTriggerBtn {
   }
 }
 
-/* The access rows are the kit's `MenuItem`, which owns their hover, focus and
-   checked treatments as well as the trailing check; only the label colour is
-   themed here. */
-.accessMenuItemLabel {
+/* The access rows are the kit's `Dropdown` items, which own their hover, focus
+   and checked treatments as well as the trailing check; only the label colour
+   is themed here. The class sits on the row, so the rule targets the label
+   span inside it — that outranks the row's own `text-primary` whichever
+   stylesheet loads first, and leaves the check icon on the row colour. */
+.accessMenuItem > span {
   color: var(--shp-menu-item-label, var(--text-primary, #161b2d));
 }
 

@@ -27,16 +27,17 @@ Core principle: the chat application is assembled from a set of **independently 
 
 ## Monorepo & Tooling
 
-| Tool               | Role                                                           |
-| ------------------ | -------------------------------------------------------------- |
-| **Nx 23**          | Monorepo orchestration, task pipeline, caching, affected graph |
-| **npm workspaces** | Package management                                             |
-| **React 19**       | UI framework for all libraries and the frontend app            |
-| **NestJS 11**      | Backend API server (`apps/chat-api`)                           |
-| **TypeScript 6.0** | Strict mode, `noUnusedLocals`, `noUnusedParameters`            |
-| **Vite 8**         | Frontend bundler                                               |
-| **Vitest 4**       | Test runner (frontend + backend unit tests)                    |
-| **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                 |
+| Tool               | Role                                                                                                  |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| **Nx 23**          | Monorepo orchestration, task pipeline, caching, affected graph                                        |
+| **npm workspaces** | Package management                                                                                    |
+| **React 19**       | UI framework for all libraries and the frontend app                                                   |
+| **NestJS 11**      | Backend API server (`apps/chat-api`)                                                                  |
+| **TypeScript 6.0** | Strict mode, `noUnusedLocals`, `noUnusedParameters`                                                   |
+| **Vite 8**         | Frontend bundler                                                                                      |
+| **Vitest 4**       | Test runner (frontend + backend unit tests)                                                           |
+| **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                                                        |
+| **Storybook 10**   | Lib-local component catalogue (`libs/celebrations/.storybook`, React/Vite); built in CI, not deployed |
 
 ```
 root/
@@ -45,7 +46,7 @@ root/
 │   ├── chat-api/              # NestJS — backend API server (port 5000)
 │   ├── chat-overlay-sandbox/  # Static host page for exercising the overlay (port 4300)
 │   └── mcp-app-sandbox/       # Separate-origin MCP Apps sandbox proxy (port 3100)
-├── libs/                      # 28 @epam/* libraries — see Libraries below
+├── libs/                      # 29 @epam/* libraries — see Libraries below
 ├── docs/                      # Architecture, requirements, auth, theming, overlay migration
 ├── openspec/
 │   ├── config.yaml            # Tech stack, commands, architecture rules for AI agents
@@ -132,6 +133,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-chat-api-client`       | `chat-api-client`       | Generated OpenAPI client for the chat API (see the exception below)                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `@epam/ai-dial-chat-overlay`          | `chat-overlay`          | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `@epam/ai-dial-catalog`               | `catalog`               | Catalog for browsing models, applications, tools, prompts, and skills                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `@epam/ai-dial-celebrations`          | `celebrations`          | Seasonal start-page celebrations: `CelebrationProvider`, `useCelebration`, `CelebrationDecor`, and lazily loaded `./halloween` / `./new-year` events whose scenes and decor behaviors hosts enable per event; covered by a lib-local Storybook                                                                                                                                                                                                                                     |
 | `@epam/ai-dial-conversation-input`    | `conversation-input`    | Message composer — model selection, attachments, voice input, edit mode                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `@epam/ai-dial-conversation-messages` | `conversation-messages` | Message bubbles with actions and source citations                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `@epam/ai-dial-conversation-panel`    | `conversation-panel`    | Virtualized conversation-history sidebar with grouping, tabs, and search                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -217,12 +219,21 @@ apps/chat/src/
 
 Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `AppsEditor`, `ToolsetEditor`, `ToolsetAuthCallback`, `PromptEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `SettingsPage`, `NotFound`, and `auth/`.
 
-`SettingsPage` is always available — it is behind no feature flag. It renders a
-vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list declared
-in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum
-member plus one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
-`Preferences` is the tab selected on arrival, so `GET /api/v1/user/usage` is not requested until
-the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
+`SettingsPage` renders a vertical tab rail via `@epam/ai-dial-settings-panel`, with the tab list
+declared in `hooks/useSettingsTabConfig.tsx` — adding a tab is one `SettingsTabs` enum member plus
+one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
+
+Each tab is a location. `ROUTES.SettingsTab` (`/settings/:tab`) is a single dynamic pattern rather
+than one route per tab, so adding a tab stays a config change; `app/settings-routes.tsx` registers
+it alongside the bare `ROUTES.Settings`, applying the `OverlayFeature.HideSettingsPage` gate to
+both so neither path mounts the lazy chunk while the page is hidden. `SettingsPage` reads the
+segment from the URL — it holds no selection state — resolves it against the ids the config
+returned, and redirects a bare, unknown, or withheld segment to the first configured tab. Build a
+concrete path with `getSettingsTabRoute` (`constants/routes.ts`, beside the other route builders)
+rather than interpolating the pattern.
+
+`Preferences` is the first configured tab and therefore the redirect target, so
+`GET /api/v1/user/usage` is not requested until the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
 boundaries, and DIAL Core reports each one's exclusive end as an optional `resetsAt` instant.
 `UsageTab` formats those at the application edge (`utils/usage-reset-time.ts` — the only place
 `Date`/`Intl` touch a reset time) and passes preformatted strings into `@epam/ai-dial-usage-dashboard`,
@@ -304,7 +315,7 @@ Current implementation uses **React Context** with no external state library. Th
 | `ActiveScheduledTaskContext`  | Scheduled task currently being viewed or edited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UserConfigContext`           | Per-user preferences persisted through `/api/v1/user-config`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `CelebrationContext`          | Start-page event selection from `config.activeEventId` (`UI_EVENT`), lazy event loading, random scene playback, per-scene cleanup and optional secret phrase interception with an independent random scene pool (no consecutive repeats). Halloween and New Year supply independent event modules; navigation cancels playback. Decoration stays click-through, honors reduced motion and persists no state. The hook is inert outside its optional provider.                                                                                                                                                        |
+| `CelebrationHost`             | Adapts the app to `@epam/ai-dial-celebrations`: passes `config.activeEventId` (`UI_EVENT`) only on `/` once the user config is ready, the navigation key as the reset key, labels translated from the `halloween.*` / `newYear.*` keys, the success toast, `useIsMobile` and the composer/starter/history anchors. The library owns playback, random scene selection, secret-phrase interception and cleanup; its `useCelebration` hook is inert outside the provider.                                                                                                                                               |
 | `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
@@ -312,7 +323,7 @@ Context pattern (reference: `ThemeContext.tsx`):
 - `createContext<T | undefined>(undefined)`
 - `useMemo` on context value to prevent consumer re-renders
 - Guard consumer hook throws a clear error when used outside the provider —
-  the one exception is `CelebrationContext`, whose default value is an inert,
+  the one exception is `useCelebration` from `@epam/ai-dial-celebrations`, whose default value is an inert,
   disabled easter egg, so a decorative feature cannot break a tree that skips
   its provider
 
@@ -361,6 +372,9 @@ see [PDF citation metadata](../apps/chat-api/README.md#pdf-citation-metadata).
 - Handles `[DONE]` termination marker
 - Supports `AbortSignal` for cancellation
 - Ignores comment lines (those starting with `:`), as every SSE reader in the repo must
+- Reports a lost connection (a rejected `fetch` or a failed read) and a stream silent for 45 s — keepalives included, re-checked immediately on `visibilitychange`/`online`/`pageshow` — as a `StreamInterruptedError`. `useConversationStream` then re-fetches the conversation and rejoins the still-running generation through `completions/attach` (falling back to `watch`), shows the saved answer if it already finished, and shows the error banner only if neither applies (issue #8959; OpenSpec capability `generation-stream-recovery`)
+
+`conversations/completions`, `conversations/completions/attach`, and `conversations/watch` each write a `: keepalive` comment every 15 s while open. On `completions` the tick is skipped while the last relayed upstream slice ended mid-line, so the comment never splits an SSE line.
 
 Every `chat-api` SSE response (`conversations/completions`, `conversations/watch`, `client-channel/subscribe`) is opened through `startSseResponse` (`apps/chat-api/src/common/utils/sse.ts`), which sets the event-stream headers, flushes them, and immediately writes a `: init` comment. Firefox does not hand a streamed response to the `fetch()` caller until the first body byte arrives, and these endpoints flush headers long before their first real event exists — without the comment, Firefox leaves the request pending, so the client-channel id never resolves and `useConversationStream` blocks on `waitForChannel` before it even sends the completion request — this is now the ordinary cold-start path for the first completion after mount or after an idle disconnect, not an edge case, since the subscription is opened by that same completion rather than in advance.
 
@@ -522,7 +536,7 @@ prefix is fixed in `auth.controller.ts`, not derived from `API_PREFIX`.
 
 No endpoint in this domain carries a per-route rate limit — repo-wide rate limiting was removed from `apps/chat-api`.
 
-`GET /api/v1/conversations/list` returns the complete history when both `limit` and `nextToken` are omitted. The BFF follows personal and public bucket cursors independently in batches of 1000, adds shared conversations once, and sorts the combined list by latest activity before bounded display-name enrichment. The conversation panel uses this full-history mode. An explicit `limit` or `nextToken` requests one page per bucket and returns a compound continuation cursor; with only `nextToken`, the page size is 100. A failed personal page fails the request rather than returning a truncated history; public and shared sources remain best-effort.
+`GET /api/v1/conversations/list` returns the complete history when both `limit` and `nextToken` are omitted. The BFF follows personal and public bucket cursors independently in batches of 1000, adds shared conversations once — ordered by when the user accepted the share (`sharedBy[].acceptedAt`, newest first, then by name), since DIAL Core reports no activity time for them — and sorts the combined list by latest activity (a stable sort, so the shared order is kept) before bounded display-name enrichment. The conversation panel uses this full-history mode. An explicit `limit` or `nextToken` requests one page per bucket and returns a compound continuation cursor; with only `nextToken`, the page size is 100. A failed personal page fails the request rather than returning a truncated history; public and shared sources remain best-effort. Items carry DIAL Core's `createdAt` when it reports one (never for shared items). The panel shows one row per scheduled task: `ConversationPanelView` collapses a task's run conversations (`bucket` + `scheduleId`) to the newest by `createdAt` — or to the run currently open — while `ConversationsContext` keeps the full list, which the task banner, History unread marks, and mark-as-viewed depend on.
 
 | Method   | Path                                       | Description                                                                             |
 | -------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |

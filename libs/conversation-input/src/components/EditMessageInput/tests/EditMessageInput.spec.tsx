@@ -141,3 +141,77 @@ describe('EditMessageInput — message length cap', () => {
     expect(onSave).toHaveBeenCalled();
   });
 });
+
+describe('EditMessageInput — skill mentions', () => {
+  it('renders a seeded activeMentions range as a highlighted run', () => {
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        message="hello /report world"
+        activeMentions={[{ start: 6, length: 7 }]}
+      />,
+    );
+
+    /* The textarea is aria-hidden while a mention is active — the mirror's
+       un-hidden ChatSkill chip carries the accessible name instead — so the
+       role query must opt into hidden elements here. */
+    const textarea = screen.getByRole('textbox', {
+      hidden: true,
+    }) as HTMLTextAreaElement;
+    expect(textarea.value).toBe('hello /report world');
+    expect(screen.getByText('/report')).toBeTruthy();
+  });
+
+  it('forwards commandMenu so the slash palette opens inside the edit textarea', async () => {
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        commandMenu={{
+          triggerPrefix: '/',
+          renderMenu: () => <div>Skills palette</div>,
+        }}
+      />,
+    );
+
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: '/' } });
+
+    expect(await screen.findByText('Skills palette')).toBeTruthy();
+  });
+
+  it('forwards menuOverlays to the external add button, even when hideAttachFile is set', async () => {
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        hideAttachFile
+        menuOverlays={[
+          {
+            key: 'skills',
+            title: 'Skills',
+            icon: null,
+            renderOverlay: () => <div>Skills overlay</div>,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByLabelText('Add')).toBeTruthy();
+    expect(screen.queryByText('Attach file')).toBeNull();
+
+    fireEvent.click(screen.getByLabelText('Add'));
+    fireEvent.click(await screen.findByText('Skills'));
+
+    expect(await screen.findByText('Skills overlay')).toBeTruthy();
+  });
+
+  it('renders no add button at all when both hideAttachFile and menuOverlays are absent-equivalent', () => {
+    render(
+      <EditMessageInput onCancel={vi.fn()} onSave={vi.fn()} hideAttachFile />,
+    );
+
+    expect(screen.queryByLabelText('Add')).toBeNull();
+  });
+});

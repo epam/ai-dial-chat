@@ -10,6 +10,9 @@ export interface ChatSkillLabels {
   unsupportedTooltipLabel?: string;
 }
 
+/** How a skill chip opens its description card. */
+export type ChatSkillDetailsTrigger = 'hover' | 'click';
+
 /** Props for the ChatSkill component. */
 export interface ChatSkillProps {
   /** Display name, rendered after the `/` prefix in the button's label. */
@@ -41,6 +44,11 @@ export interface ChatSkillProps {
    * `isUnsupported` is set. Defaults to `'bg-error'`.
    */
   unsupportedClassName?: string;
+  /**
+   * How the description card opens. Defaults to `'hover'` so existing hosts
+   * retain their hover-and-focus behaviour.
+   */
+  detailsTrigger?: ChatSkillDetailsTrigger;
   /** Called with the skill's path when the tooltip's "View details" button is clicked. */
   onViewDetails: (path: string) => void;
   /** Localizable string overrides. */

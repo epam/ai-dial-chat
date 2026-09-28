@@ -1,6 +1,8 @@
 import * as useUsageDataModule from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { FC } from 'react';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BasicI18nKeys,
@@ -12,6 +14,9 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { useSettingsTabConfig } from '../../../hooks/useSettingsTabConfig';
+import { ROUTES } from '../../../types/routes';
+import { SettingsTabs } from '../../../types/settings-tabs';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import SettingsPage from '../SettingsPage';
 
@@ -27,6 +32,22 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
+
+/*
+ * Partially mocked so two cases can withhold tabs the real config always
+ * returns; `beforeEach` restores the real implementation for everyone else.
+ */
+vi.mock('../../../hooks/useSettingsTabConfig', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('../../../hooks/useSettingsTabConfig')
+    >();
+
+  return {
+    ...actual,
+    useSettingsTabConfig: vi.fn(actual.useSettingsTabConfig),
+  };
+});
 
 /*
  * PreferencesTab renders as the default tab, so this suite has to satisfy its
@@ -64,6 +85,36 @@ vi.mocked(useUsageDataModule.useUsageData).mockReturnValue({
   usageError: undefined,
 });
 
+/*
+ * The active tab is the URL, so each case mounts the real route pair: the bare
+ * /settings entry and the per-tab one, exactly as `app.tsx` registers them.
+ * `LocationProbe` lets a case assert where a redirect or a tab click landed
+ * without reaching into history.
+ */
+const LOCATION_LABEL = 'location';
+
+const LocationProbe: FC = () => (
+  <span data-location={useLocation().pathname}>{LOCATION_LABEL}</span>
+);
+
+const currentPath = () =>
+  screen.getByText(LOCATION_LABEL).getAttribute('data-location');
+
+const renderAt = (initialPath: string) =>
+  render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <LocationProbe />
+      <Routes>
+        {[ROUTES.Settings, ROUTES.SettingsTab].map((path) => (
+          <Route key={path} path={path} element={<SettingsPage />} />
+        ))}
+      </Routes>
+    </MemoryRouter>,
+  );
+
+const renderPreferences = () =>
+  renderAt(`${ROUTES.Settings}/${SettingsTabs.Preferences}`);
+
 describe('SettingsPage', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -82,10 +133,16 @@ describe('SettingsPage', () => {
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(vi.fn()),
     );
+    const actualTabConfig = await vi.importActual<
+      typeof import('../../../hooks/useSettingsTabConfig')
+    >('../../../hooks/useSettingsTabConfig');
+    vi.mocked(useSettingsTabConfig).mockImplementation(
+      actualTabConfig.useSettingsTabConfig,
+    );
   });
 
   it('renders two tabs, Preferences then Usage, with Preferences selected by default', () => {
-    render(<SettingsPage />);
+    renderPreferences();
 
     const tabs = screen.getAllByRole('tab');
     expect(tabs).toHaveLength(2);
@@ -96,7 +153,7 @@ describe('SettingsPage', () => {
   });
 
   it('renders the Preferences pane on mount', () => {
-    render(<SettingsPage />);
+    renderPreferences();
 
     expect(
       screen.getByText(SettingsI18nKeys.PreferencesDescription),
@@ -104,7 +161,7 @@ describe('SettingsPage', () => {
   });
 
   it('swaps the pane and moves selection when Usage is activated', async () => {
-    render(<SettingsPage />);
+    renderPreferences();
 
     await userEvent.click(
       screen.getByRole('tab', { name: new RegExp(BasicI18nKeys.Usage) }),
@@ -119,7 +176,7 @@ describe('SettingsPage', () => {
   });
 
   it('moves focus and selection to Usage on ArrowDown from Preferences', async () => {
-    render(<SettingsPage />);
+    renderPreferences();
 
     screen.getAllByRole('tab')[0].focus();
     await userEvent.keyboard('{ArrowDown}');
@@ -136,15 +193,78 @@ describe('SettingsPage', () => {
   });
 
   it('puts only the active tab in the tab order', () => {
-    render(<SettingsPage />);
+    renderPreferences();
 
     const tabs = screen.getAllByRole('tab');
     expect(tabs[0].getAttribute('tabindex')).toBe('0');
     expect(tabs[1].getAttribute('tabindex')).toBe('-1');
   });
 
+  describe('the route decides the tab', () => {
+    it('renders the tab named by the URL', () => {
+      renderAt(`${ROUTES.Settings}/${SettingsTabs.Usage}`);
+
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+      expect(tabs[0].getAttribute('aria-selected')).toBe('false');
+    });
+
+    it('moves the URL to the tab that was activated', async () => {
+      renderPreferences();
+
+      await userEvent.click(
+        screen.getByRole('tab', { name: new RegExp(BasicI18nKeys.Usage) }),
+      );
+
+      expect(currentPath()).toBe(`${ROUTES.Settings}/${SettingsTabs.Usage}`);
+    });
+
+    it('redirects the bare settings URL to the first configured tab', () => {
+      renderAt(ROUTES.Settings);
+
+      expect(currentPath()).toBe(
+        `${ROUTES.Settings}/${SettingsTabs.Preferences}`,
+      );
+    });
+
+    it('redirects a tab whose config entry is withheld', () => {
+      vi.mocked(useSettingsTabConfig).mockReturnValue({
+        items: [{ id: SettingsTabs.Preferences, label: 'Preferences' }],
+        tabComponents: { [SettingsTabs.Preferences]: () => <span /> },
+      });
+
+      renderAt(`${ROUTES.Settings}/${SettingsTabs.Usage}`);
+
+      expect(currentPath()).toBe(
+        `${ROUTES.Settings}/${SettingsTabs.Preferences}`,
+      );
+    });
+
+    it('renders the empty shell without navigating when no tab is configured', () => {
+      vi.mocked(useSettingsTabConfig).mockReturnValue({
+        items: [],
+        tabComponents: {},
+      });
+
+      renderAt(ROUTES.Settings);
+
+      expect(screen.queryByRole('tab')).toBeNull();
+      /* Still the URL it was given: a redirect with no valid target would loop. */
+      expect(currentPath()).toBe(ROUTES.Settings);
+    });
+
+    it('redirects an unknown tab segment to the first configured tab', () => {
+      renderAt(`${ROUTES.Settings}/does-not-exist`);
+
+      expect(currentPath()).toBe(
+        `${ROUTES.Settings}/${SettingsTabs.Preferences}`,
+      );
+      expect(screen.getAllByRole('tab')).toHaveLength(2);
+    });
+  });
+
   it('exposes a tablist for the panel', () => {
-    render(<SettingsPage />);
+    renderPreferences();
 
     expect(screen.getByRole('tablist')).toBeTruthy();
   });
@@ -156,13 +276,13 @@ describe('SettingsPage', () => {
    * open Usage — that deferral is the point of the next two tests.
    */
   it('does not fetch usage data until the Usage tab is opened', () => {
-    render(<SettingsPage />);
+    renderPreferences();
 
     expect(useUsageDataModule.useUsageData).not.toHaveBeenCalled();
   });
 
   it('fetches usage data once the Usage tab is activated', async () => {
-    render(<SettingsPage />);
+    renderPreferences();
 
     await userEvent.click(
       screen.getByRole('tab', { name: new RegExp(BasicI18nKeys.Usage) }),

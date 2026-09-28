@@ -14,7 +14,7 @@ interface UseTextInsertionParams {
  * `input` event React listens for, so the component's `onChange` runs exactly as it
  * does for a keystroke. Used only where the browser cannot perform the edit itself.
  */
-const applyValueThroughReact = (
+export const applyValueThroughReact = (
   textarea: HTMLTextAreaElement,
   value: string,
   selectionStart: number,

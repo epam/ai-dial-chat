@@ -9,7 +9,11 @@ import {
   ToolsetAuthTypes,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -36,6 +40,7 @@ const AUTH_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
 const ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
   'name',
   'version',
+  'description',
   'endpoint',
   ...AUTH_ERROR_FIELDS,
 ];
@@ -202,6 +207,25 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
       });
       if (generalCodes.name === DeploymentCreationFieldErrorCode.Required) {
         nextErrors.name = validationLabels?.nameRequired ?? 'Name is required';
+      } else if (
+        generalCodes.name === DeploymentCreationFieldErrorCode.TooLong
+      ) {
+        nextErrors.name =
+          validationLabels?.nameTooLong ??
+          `Use ${ENTITY_NAME_MAX_LENGTH} characters or fewer.`;
+      } else if (
+        generalCodes.name === DeploymentCreationFieldErrorCode.ControlCharacters
+      ) {
+        nextErrors.name =
+          validationLabels?.nameControlCharacters ??
+          'Remove line breaks, tabs and other control characters.';
+      }
+      if (
+        generalCodes.description === DeploymentCreationFieldErrorCode.TooLong
+      ) {
+        nextErrors.description =
+          validationLabels?.descriptionTooLong ??
+          `Use ${ENTITY_DESCRIPTION_MAX_LENGTH} characters or fewer.`;
       }
       if (
         generalCodes.version === DeploymentCreationFieldErrorCode.InvalidFormat

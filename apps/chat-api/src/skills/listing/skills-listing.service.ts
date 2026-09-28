@@ -12,6 +12,7 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { StringUtils } from '../../common/utils/string-utils';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import { DialClientService } from '../../dial/dial-client.service';
 import type {
   SkillCatalogListResponseDto,
@@ -29,7 +30,6 @@ import {
 type DialSkillItem = DialMetadataBase & { items?: DialMetadataBase[] };
 type SharedSkillItem = DialMetadataBase & { permissions?: string[] };
 
-const PUBLIC_BUCKET = 'public';
 const CATALOG_PAGE_SIZE = 1000;
 /**
  * Upstream pages one listing request consumes before answering with what it

@@ -10,7 +10,7 @@ import NotificationContainer from './components/Notification/NotificationContain
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import AppConfigProvider from './context/AppConfigContext';
 import { UserProvider } from './context/auth/UserContext';
-import { CelebrationProvider } from './context/CelebrationContext';
+import { CelebrationHost } from './context/CelebrationHost';
 import { ClientChannelProvider } from './context/ClientChannelContext';
 import { ConversationPanelProvider } from './context/ConversationPanelContext';
 import { ConversationsProvider } from './context/ConversationsContext';
@@ -54,7 +54,7 @@ root.render(
             <ThemeProvider>
               <AppConfigProvider>
                 <UiFeaturesProvider>
-                  <CelebrationProvider>
+                  <CelebrationHost>
                     <SourcesSidebarProvider>
                       <AttachmentCanvasProvider>
                         <ConversationPanelProvider>
@@ -99,7 +99,7 @@ root.render(
                         </ConversationPanelProvider>
                       </AttachmentCanvasProvider>
                     </SourcesSidebarProvider>
-                  </CelebrationProvider>
+                  </CelebrationHost>
                 </UiFeaturesProvider>
               </AppConfigProvider>
             </ThemeProvider>

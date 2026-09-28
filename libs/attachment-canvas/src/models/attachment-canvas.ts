@@ -10,7 +10,7 @@ import type {
   CallToolResult,
   Implementation,
 } from '@modelcontextprotocol/sdk/types.js';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import {
   AttachmentContentType,
   AttachmentErrorType,
@@ -495,6 +495,8 @@ export interface AttachmentCanvasProps {
   content: AttachmentCanvasContent;
   /** File name displayed as the panel title. */
   fileName?: string;
+  /** Host-supplied controls rendered in the header before the title. */
+  leftActions?: ReactNode;
   /** User-visible strings. */
   labels: AttachmentCanvasLabels;
   /** Called when the user activates the download button. When omitted the download button is hidden. Hidden automatically when content type is `Unsupported`. */

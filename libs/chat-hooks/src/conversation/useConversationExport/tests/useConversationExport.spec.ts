@@ -386,6 +386,38 @@ describe('useConversationExport', () => {
     expect(onSuccess).toHaveBeenCalledOnce();
   });
 
+  it('strips attachment references from an export-all', async () => {
+    const { result } = renderExport();
+    listConversations.mockResolvedValueOnce({
+      items: [
+        { id: 'a', title: 'A', sharedWithMe: false, publishedWithMe: false },
+      ],
+    });
+    getConversation.mockResolvedValue(
+      makeConversation({
+        messages: [
+          {
+            role: 'user' as Conversation['messages'][number]['role'],
+            content: 'Take a look',
+            timestamp: '2026-07-10T00:00:00.000Z',
+            custom_content: {
+              attachments: [{ title: 'q1.pdf', url: 'files/bucket-a/q1.pdf' }],
+            },
+          },
+        ],
+      }),
+    );
+
+    await act(() => result.current.exportAll());
+
+    const [blob] = vi.mocked(triggerBlobDownload).mock.calls[0];
+    const text = await readBlobAsText(blob as Blob);
+    expect(text).not.toContain('files/bucket-a/q1.pdf');
+    const envelope = JSON.parse(text);
+    expect(envelope.history[0].messages[0].content).toBe('Take a look');
+    expect(envelope.history[0].messages[0].custom_content).toBeUndefined();
+  });
+
   it('dismisses a finished job', async () => {
     const { result } = renderExport();
     await act(() =>

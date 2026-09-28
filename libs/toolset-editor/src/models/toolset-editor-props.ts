@@ -16,6 +16,12 @@ import type { ToolsetOAuthLoginHandler } from './toolset-oauth-login';
 export interface ToolsetEditorValidationLabels {
   /** Message for a missing name. Defaults to `'Name is required'`. */
   nameRequired?: string;
+  /** Message for a name over the shared length limit. Defaults to `'Use 256 characters or fewer.'`. */
+  nameTooLong?: string;
+  /** Message for a name containing control characters. Defaults to `'Remove line breaks, tabs and other control characters.'`. */
+  nameControlCharacters?: string;
+  /** Message for a description over the shared length limit. Defaults to `'Use 2000 characters or fewer.'`. */
+  descriptionTooLong?: string;
   /** Message for a malformed version. Defaults to `'Version may only contain letters, digits, dots, underscores, and dashes'`. */
   versionInvalid?: string;
   /** Message for a missing endpoint. Defaults to `'Endpoint is required'`. */

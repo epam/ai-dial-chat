@@ -52,7 +52,11 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       className,
     }: {
       headerActions?: ReactNode;
-      conversations?: Array<{ id: string; isUnread?: boolean }>;
+      conversations?: Array<{
+        id: string;
+        isUnread?: boolean;
+        leadingIcon?: ReactNode;
+      }>;
       getActions?: (item: { id: string }) => Array<{
         key: string;
         label: ReactNode;
@@ -90,6 +94,11 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
               />
               {item.isUnread && (
                 <span aria-label={`unread indicator ${item.id}`} />
+              )}
+              {item.leadingIcon && (
+                <span data-testid={`leading icon ${item.id}`}>
+                  {item.leadingIcon}
+                </span>
               )}
               {(getActions?.(item) ?? []).map((action) =>
                 // eslint-disable-next-line testing-library/no-node-access -- `action.children` is this mock's own action-data shape, not a DOM node
@@ -946,6 +955,126 @@ describe('ConversationPanelView — mark conversation viewed on open', () => {
     );
 
     expect(screen.queryByLabelText('unread indicator task1')).toBeNull();
+  });
+});
+
+describe('ConversationPanelView — one row per scheduled task', () => {
+  const taskRun = (runId: string, createdAt: number, isUnread = false) => ({
+    id: `conversations/bucket/.scheduler/s1/gpt-4__Daily__${runId}`,
+    title: 'Daily',
+    isPinned: false,
+    createdAt,
+    updatedAt: createdAt,
+    sharedWithMe: false,
+    publishedWithMe: false,
+    isReadonly: false,
+    isScheduledTask: true,
+    scheduleId: 's1',
+    runId,
+    isUnread,
+  });
+  const plainChat = {
+    id: 'conversations/bucket/gpt-4__Plain chat',
+    title: 'Plain chat',
+    isPinned: false,
+    updatedAt: 50,
+    sharedWithMe: false,
+    publishedWithMe: false,
+    isReadonly: false,
+    isScheduledTask: false,
+  };
+  const oldest = taskRun('run-a', 100);
+  const older = taskRun('run-b', 200, true);
+  const newest = taskRun('run-c', 300);
+
+  const mockContextList = (
+    conversations: unknown[],
+    overrides: Record<string, unknown> = {},
+  ) => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations,
+      ...overrides,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  };
+
+  const rowFor = (runId: string) =>
+    screen.queryByRole('button', { name: new RegExp(`__${runId}$`) });
+
+  it('renders several runs of one task as a single row for the newest run', () => {
+    mockContextList([oldest, newest, older, plainChat]);
+
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={undefined}
+      />,
+    );
+
+    expect(rowFor('run-c')).toBeTruthy();
+    expect(rowFor('run-a')).toBeNull();
+    expect(rowFor('run-b')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: /gpt-4__Plain chat$/ }),
+    ).toBeTruthy();
+  });
+
+  it('gives every task row the scheduled-task icon and no TASK label', () => {
+    mockContextList([newest, plainChat]);
+
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={undefined}
+      />,
+    );
+
+    expect(screen.getByTestId(/^leading icon .*__run-c$/)).toBeTruthy();
+    expect(screen.queryByTestId(/^leading icon .*Plain chat$/)).toBeNull();
+    expect(screen.queryByText('TASK')).toBeNull();
+  });
+
+  it('shows the next run once the shown run is gone from the list', () => {
+    mockContextList([oldest, older, newest]);
+    const { rerender } = render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={undefined}
+      />,
+    );
+    expect(rowFor('run-c')).toBeTruthy();
+
+    mockContextList([oldest, older]);
+    /* A fresh callback defeats the view's `memo`, standing in for the
+       re-render a real context update would trigger. */
+    rerender(
+      <ConversationPanelView
+        {...defaultProps}
+        onClose={vi.fn()}
+        activeConversationId={undefined}
+      />,
+    );
+
+    expect(rowFor('run-b')).toBeTruthy();
+    expect(rowFor('run-c')).toBeNull();
+  });
+
+  it('shows an opened older run as the task row and still marks it viewed', () => {
+    const mockMarkConversationViewed = vi.fn();
+    mockContextList([oldest, older, newest], {
+      markConversationViewed: mockMarkConversationViewed,
+    });
+
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={older.id}
+      />,
+    );
+
+    expect(rowFor('run-b')).toBeTruthy();
+    expect(rowFor('run-c')).toBeNull();
+    expect(mockMarkConversationViewed).toHaveBeenCalledWith(older.id);
   });
 });
 
@@ -2142,10 +2271,13 @@ describe('ConversationPanelView — revoke access', () => {
   };
 
   /* The default lookup resolves one recipient, so the menu entry carries the
-   * counted label; the confirmation's own button keeps the plain one. */
-  const openRevokeConfirmation = () => {
+   * counted label; the confirmation's own button keeps the plain one. The
+   * count arrives asynchronously after openRowMenu's own wait (which only
+   * confirms the request was issued), so the counted label must be awaited
+   * here rather than queried synchronously. */
+  const openRevokeConfirmation = async () => {
     fireEvent.click(
-      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      await screen.findByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
     );
     return screen.getByRole('dialog');
   };
@@ -2257,7 +2389,7 @@ describe('ConversationPanelView — revoke access', () => {
   it('clicking Revoke access opens confirmation without calling the revoke API', async () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
 
     expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
     expect(revokeSharedAccess).not.toHaveBeenCalled();
@@ -2273,7 +2405,7 @@ describe('ConversationPanelView — revoke access', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     const confirmButton = within(dialog).getByRole('button', {
       name: REVOKE_BUTTON,
     });
@@ -2299,7 +2431,7 @@ describe('ConversationPanelView — revoke access', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
     );
@@ -2324,7 +2456,7 @@ describe('ConversationPanelView — revoke access', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
     );
@@ -2345,7 +2477,7 @@ describe('ConversationPanelView — revoke access', () => {
 
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
     );
@@ -2360,7 +2492,7 @@ describe('ConversationPanelView — revoke access', () => {
   it('cancel closes the popup without calling the revoke API', async () => {
     render(<ConversationPanelView {...defaultProps} />);
     await openRowMenu();
-    const dialog = openRevokeConfirmation();
+    const dialog = await openRevokeConfirmation();
     fireEvent.click(
       within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
     );
@@ -2374,7 +2506,7 @@ describe('ConversationPanelView — revoke access', () => {
     try {
       render(<ConversationPanelView {...defaultProps} />);
       await openRowMenu();
-      const dialog = openRevokeConfirmation();
+      const dialog = await openRevokeConfirmation();
       expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
       expect(
         within(dialog).getByRole('button', { name: REVOKE_BUTTON }),

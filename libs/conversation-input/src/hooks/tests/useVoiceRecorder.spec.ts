@@ -144,12 +144,14 @@ describe('useVoiceRecorder', () => {
   it('ignores an old result after discard and a new recording', async () => {
     let resolve!: (text: string) => void;
     let signal!: AbortSignal;
-    const { result, onTranscript } = setup((_file, nextSignal) => {
-      signal = nextSignal;
-      return new Promise((done) => {
-        resolve = done;
-      });
-    });
+    const { result, onTranscript } = setup(
+      (_file: File, nextSignal: AbortSignal) => {
+        signal = nextSignal;
+        return new Promise((done) => {
+          resolve = done;
+        });
+      },
+    );
     await start(result);
     act(() => result.current.stopRecording());
     act(() => result.current.discardRecording());

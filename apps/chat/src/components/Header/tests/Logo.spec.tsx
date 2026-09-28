@@ -8,7 +8,7 @@ import Logo from '../Logo';
 const celebration = vi.hoisted(() => ({
   event: null as { iconUrl: string } | null,
 }));
-vi.mock('../../../context/CelebrationContext', () => ({
+vi.mock('@epam/ai-dial-celebrations', () => ({
   useCelebration: () => celebration,
 }));
 

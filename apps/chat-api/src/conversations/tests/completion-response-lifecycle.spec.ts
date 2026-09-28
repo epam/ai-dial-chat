@@ -310,6 +310,167 @@ describe('streamCompletion — downstream response lifecycle under backpressure'
   });
 });
 
+describe('streamCompletion — SSE keepalive', () => {
+  const KEEPALIVE = ': keepalive\n\n';
+  const KEEPALIVE_INTERVAL_MS = 15_000;
+
+  /** A response that drains immediately and records every written payload as text. */
+  const createRecordingResponse = () => {
+    const written: string[] = [];
+    const writable = new Writable({
+      write(chunk: Buffer, _encoding, callback) {
+        written.push(chunk.toString());
+        callback();
+      },
+    });
+    Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
+    return { res: writable as unknown as ExpressResponse, written };
+  };
+
+  const countKeepalives = (written: string[]) =>
+    written.filter((payload) => payload === KEEPALIVE).length;
+
+  /**
+   * A generation that opens the stream and then yields each step's chunk
+   * only when the test releases it, so a silent upstream phase can be held
+   * open while the keepalive interval is advanced.
+   */
+  const makeControlledStreamingService = (chunks: string[]) => {
+    const releases: Array<() => void> = [];
+    const service = {
+      streamCompletion: vi.fn().mockImplementation(async function* (
+        ...args: unknown[]
+      ) {
+        (args[ON_READY_TO_STREAM_ARG] as () => void)();
+        for (const chunk of chunks) {
+          await new Promise<void>((resolve) => releases.push(resolve));
+          yield Buffer.from(chunk);
+        }
+        await new Promise<void>((resolve) => releases.push(resolve));
+      }),
+    };
+    const releaseNext = async () => {
+      await waitUntil(() => releases.length > 0, 'the generator to wait');
+      releases.shift()?.();
+      await new Promise((resolve) => setImmediate(resolve));
+    };
+    return { service, releaseNext };
+  };
+
+  it('sends a keepalive comment while the generation is silent', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const { res, written } = createRecordingResponse();
+    const { service, releaseNext } = makeControlledStreamingService([
+      'data: {"choices":[]}\n\n',
+    ]);
+
+    const handled = makeController(
+      service as unknown as ReturnType<typeof makeStreamingService>,
+      makeGenerationService(),
+    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+    await releaseNext();
+    await vi.advanceTimersByTimeAsync(40_000);
+    expect(countKeepalives(written)).toBe(2);
+
+    await releaseNext();
+    await handled;
+  });
+
+  it('skips a keepalive tick while the last relayed slice ends mid-line', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const { res, written } = createRecordingResponse();
+    const { service, releaseNext } = makeControlledStreamingService([
+      'data: {"choices":[{"delta":{"content":"Hel',
+      'lo"}}]}\n\n',
+    ]);
+
+    const handled = makeController(
+      service as unknown as ReturnType<typeof makeStreamingService>,
+      makeGenerationService(),
+    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+    await releaseNext();
+    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 2);
+    expect(countKeepalives(written)).toBe(0);
+
+    await releaseNext();
+    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS);
+    expect(countKeepalives(written)).toBe(1);
+    // The comment follows the completed line, never splits it.
+    expect(written.slice(-2)).toEqual(['lo"}}]}\n\n', KEEPALIVE]);
+
+    await releaseNext();
+    await handled;
+  });
+
+  it('writes no keepalive after the client closes the response', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const { res, written } = createRecordingResponse();
+    const { service, releaseNext } = makeControlledStreamingService([
+      'data: {"choices":[]}\n\n',
+    ]);
+
+    const handled = makeController(
+      service as unknown as ReturnType<typeof makeStreamingService>,
+      makeGenerationService(),
+    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+    await releaseNext();
+    (res as unknown as Writable).emit('close');
+    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 3);
+    expect(countKeepalives(written)).toBe(0);
+
+    await releaseNext();
+    await handled;
+  });
+
+  it('writes no keepalive and keeps the rejection when the generation fails before the stream opens', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const { res, written } = createRecordingResponse();
+    const conflict = new Error('Generation is already active');
+    const service = {
+      /* Rejects on the first `next()`, before `onReadyToStream` is ever called. */
+      streamCompletion: vi.fn().mockImplementation(() => ({
+        [Symbol.asyncIterator]: () => ({
+          next: () => Promise.reject(conflict),
+        }),
+      })),
+    };
+
+    await expect(
+      makeController(
+        service as unknown as ReturnType<typeof makeStreamingService>,
+        makeGenerationService(),
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined),
+    ).rejects.toBe(conflict);
+    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 2);
+
+    expect(written).toEqual([]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('leaves no keepalive timer behind once the generation finishes', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const { res } = createRecordingResponse();
+    const { service, releaseNext } = makeControlledStreamingService([
+      'data: {"choices":[]}\n\n',
+    ]);
+
+    const handled = makeController(
+      service as unknown as ReturnType<typeof makeStreamingService>,
+      makeGenerationService(),
+    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+    await releaseNext();
+    expect(vi.getTimerCount()).toBe(1);
+    await releaseNext();
+    await handled;
+
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
 describe('streamCompletion — downstream response lifecycle over real HTTP', () => {
   /*
    * 8 MiB of intent, so that even a socket whose underlying write never

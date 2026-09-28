@@ -34,6 +34,14 @@ export interface SharePopoverLabels {
   expiryNote?: string;
   /** `aria-label` on the QR placeholder image. Defaults to `"QR code for the share link"`. */
   qrCodeAriaLabel?: string;
+  /** QR-view button that copies the QR code image. Defaults to `"Copy"`. */
+  qrCopyButtonLabel?: string;
+  /** QR-view Copy button label after copying, also announced to screen readers. Defaults to `"Copied"`. */
+  qrCopiedButtonLabel?: string;
+  /** QR-view button that downloads the QR code as a PNG. Defaults to `"Download"`. */
+  qrDownloadButtonLabel?: string;
+  /** File name for the downloaded QR code PNG. Defaults to `"share-qr-code.png"`. */
+  qrDownloadFileName?: string;
   /** `aria-label` for the loading skeleton. Defaults to `"Creating share link…"`. */
   loadingLabel?: string;
   /** Error message shown when share-link creation fails. */

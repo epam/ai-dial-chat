@@ -120,26 +120,25 @@ export const ModelSelectorControl: FC<Props> = ({
   if (isMobile) {
     return (
       <>
-        <Tooltip tooltip={selectedLabel}>
-          <GhostIconButton
-            icon={
-              <div className="flex items-center gap-1">
-                {iconNode}
-                {caretIcon}
-              </div>
-            }
-            aria-label={selectorAriaLabel}
-            onClick={() => {
-              if (!isDisabled) setIsModelSheetOpen(true);
-            }}
-            className={mergeClasses(
-              'w-[50px]',
-              styles.modelSelectorButton,
-              disabledIconClassName,
-              CONVERSATION_INPUT_CLASS.modelSelectorButton,
-            )}
-          />
-        </Tooltip>
+        <GhostIconButton
+          tooltipProps={{ tooltip: selectedLabel }}
+          icon={
+            <div className="flex items-center gap-1">
+              {iconNode}
+              {caretIcon}
+            </div>
+          }
+          aria-label={selectorAriaLabel}
+          onClick={() => {
+            if (!isDisabled) setIsModelSheetOpen(true);
+          }}
+          className={mergeClasses(
+            'w-[50px]',
+            styles.modelSelectorButton,
+            disabledIconClassName,
+            CONVERSATION_INPUT_CLASS.modelSelectorButton,
+          )}
+        />
         {modelPickerOverlay ? (
           <BottomSheetShell
             isOpen={isModelSheetOpen}

@@ -32,6 +32,7 @@ import ConversationPanelView from '../components/ConversationPanel/ConversationP
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
+import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
 import Navigation from '../components/Navigation/Navigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -60,12 +61,12 @@ import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 import { configurePdfWorker } from '../utils/pdf';
+import { renderSettingsRoutes } from './settings-routes';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
-const SettingsPage = lazy(() => import('../pages/SettingsPage/SettingsPage'));
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
 );
@@ -356,21 +357,7 @@ const App: FC = () => {
                   </RouteErrorBoundary>
                 }
               />
-              <Route
-                path={ROUTES.Settings}
-                element={
-                  isSettingsPageHidden ? (
-                    /* Keeps a direct /settings URL from bypassing the hidden entries. */
-                    <Navigate to={ROUTES.Root} replace />
-                  ) : (
-                    <RouteErrorBoundary>
-                      <Suspense fallback={<RouteFallback />}>
-                        <SettingsPage />
-                      </Suspense>
-                    </RouteErrorBoundary>
-                  )
-                }
-              />
+              {renderSettingsRoutes(isSettingsPageHidden)}
               <Route
                 path={ROUTES.FileManager}
                 element={
@@ -576,6 +563,7 @@ const App: FC = () => {
                 AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
               ),
             }}
+            leftActions={isMobile ? <SourcesSidebarToggle /> : undefined}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
             maxWidth={canvasMaxWidth}

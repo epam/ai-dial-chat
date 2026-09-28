@@ -1,7 +1,18 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PublishHistoryEntry } from '../../../models/publish';
+import { formatPublishedDate } from '../../../utils/format-published-date';
 import { PublishHistoryList } from '../PublishHistoryList';
+
+/*
+ * The util's own spec covers its real Intl formatting; mocking it here keeps
+ * the component test stable across locales, timezones and ICU builds.
+ */
+vi.mock('../../../utils/format-published-date', () => ({
+  formatPublishedDate: vi.fn(
+    (publishedAt: number) => `formatted:${publishedAt}`,
+  ),
+}));
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -19,6 +30,10 @@ const entries: PublishHistoryEntry[] = [
 ];
 
 describe('PublishHistoryList', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders the empty-state message when there are no entries', () => {
     render(<PublishHistoryList entries={[]} />);
     expect(
@@ -62,15 +77,24 @@ describe('PublishHistoryList', () => {
     expect(screen.queryByText('Shared credentials')).toBeNull();
   });
 
-  it('renders a relative date within the last week', () => {
-    render(<PublishHistoryList entries={[entries[0]]} />);
-    expect(screen.getByText(/3 days ago/)).toBeTruthy();
+  it('renders each entry with the date produced by formatPublishedDate', () => {
+    render(<PublishHistoryList entries={entries} />);
+    expect(
+      screen.getByText(`formatted:${entries[0].publishedAt}`),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(`formatted:${entries[1].publishedAt}`),
+    ).toBeTruthy();
   });
 
-  it('renders an exact date once older than a week', () => {
-    render(<PublishHistoryList entries={[entries[1]]} />);
-    expect(screen.queryByText(/days ago/)).toBeNull();
-    expect(screen.getByText(/[A-Z][a-z]{2} \d{1,2}, \d{4}/)).toBeTruthy();
+  it('passes each entry timestamp to formatPublishedDate', () => {
+    render(<PublishHistoryList entries={entries} />);
+    expect(vi.mocked(formatPublishedDate)).toHaveBeenCalledWith(
+      entries[0].publishedAt,
+    );
+    expect(vi.mocked(formatPublishedDate)).toHaveBeenCalledWith(
+      entries[1].publishedAt,
+    );
   });
 
   it('does not render the destination folder path, since this list is already scoped to it', () => {

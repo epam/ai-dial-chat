@@ -1,9 +1,7 @@
 import { StringUtils } from '../../common/utils/string-utils';
+import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
-import {
-  COMPOUND_TOKEN_PREFIX,
-  PUBLIC_BUCKET,
-} from '../constants/conversation.constants';
+import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
 /*

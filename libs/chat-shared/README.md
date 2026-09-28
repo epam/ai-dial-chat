@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.18`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.20`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.18
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.20
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.13 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -257,7 +257,7 @@ import type {
 ```
 
 - `CustomVisualizer` — one MIME → visualizer mapping. `contentType` is **required** and accepts a comma-separated MIME list. One attachment per iframe.
-- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together.
+- `ApplicationVisualizer` — one application → grouped visualizer mapping, keyed in `ApplicationVisualizerRegistry` by application id. `contentType` is **optional**: when omitted, the entry claims every attachment that carries a URL. Every claimed attachment goes to one iframe together. Optional `borderless` and `withoutTitle` tell the host to render the inline frame without its border chrome, or without its header title text.
 - `GroupedAttachmentsData` / `GroupedAttachmentItem` — the grouped payload the host builds from the claimed attachments. Each item's `url` is absolute, resolved by the host before sending.
 
 In both types, `title` is the postMessage protocol namespace rather than a display label: the iframe-side application must be constructed with the identical string as its `appName`, so it must never be localised. `passAuthInfo` and `passExplicitToken` are accepted for configuration parity and are inert — auth is server-side and the browser holds no access token.
@@ -754,6 +754,11 @@ import {
   MARKDOWN_TABLE_CSV_MIME_TYPE,
   getUtf8ByteLength,
   truncateToUtf8Bytes,
+  ENTITY_NAME_MAX_LENGTH,
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  exceedsMaxLength,
+  hasControlCharacters,
   sanitizeConversationName,
   stripTrailingDots,
   PROHIBITED_CONVERSATION_NAME_CHARS_RE,
@@ -761,6 +766,11 @@ import {
   resolvePromptParams,
   buildPromptParamDefaults,
 } from '@epam/ai-dial-chat-shared';
+
+// Length limits shared by every entity editor (prompts, skills, toolsets,
+// applications, scheduled tasks): name 256, description 2000, instructions 50000.
+const isNameTooLong = exceedsMaxLength(name.trim(), ENTITY_NAME_MAX_LENGTH);
+const isNameMultiline = hasControlCharacters(name); // line breaks, tabs, NUL, …
 
 // Merge conditional class names — the only supported way to compose classes.
 // Conflicting utilities collapse to the last one, including the workspace
@@ -867,6 +877,7 @@ import {
 | `MIME_TYPE_WILDCARD`                         | `*/*`, the "any type accepted" sentinel in attachment allowlists          |
 | `MIME_TYPE_AUDIO_PREFIX`                     | `audio/`, used to detect transcription-capable attachment types           |
 | `HIDDEN_FILE`                                | `.dial_folder`, the marker file DIAL Core writes into folders             |
+| `PUBLIC_BUCKET`                              | `public`, the DIAL Core bucket holding organization-wide resources        |
 | `BASE_MD_ICON_PROPS` / `BASE_LG_ICON_PROPS`  | Default `size`/`stroke` pairs for Tabler icons at each scale step         |
 | `ENTITY_TYPE_COLOR` / `ENTITY_TYPE_BG_COLOR` | `CatalogEntityType` → text and surface color tokens                       |
 | `TAG_INPUT_TAG_CLASS_NAME`                   | `tagClassName` for `TagInput`, so its tags stay visible in the field      |

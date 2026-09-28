@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines the `/apps-editor` route: a two-step (General → Settings) application authoring flow that creates an application via the backend and then hands off configuration to the schema's own editor, embedded as an iframe and driven by a postMessage save protocol.
-
 ## Requirements
-
 ### Requirement: Apps-editor route exists and is accessible
 
 `apps/chat/src/types/routes.ts` SHALL add `AppsEditor = '/apps-editor'` to the `ROUTES` enum.
@@ -292,8 +290,6 @@ preview — and SHALL surface the failure the same way `SAVE_ERROR` from the ifr
 
 ---
 
-
-
 ### Requirement: Shared editor header component
 
 `apps/chat/src/components/EditorHeader/EditorHeader.tsx` SHALL be a presentational component shared by `AppsEditor` and `ToolsetEditorHeader` (in turn used by `ToolsetEditor` and `CustomAppEditor`), replacing the header markup each previously duplicated. It SHALL render a fully different markup tree for mobile vs. desktop, branching on `useIsMobile()` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts` (a JS branch is required here because mobile collapses the step list into a dropdown and the trailing actions into a kebab menu — not just a CSS layout change).
@@ -409,14 +405,16 @@ State owned locally via `useState`:
 
 `initialValues`, when supplied, SHALL seed `values` exactly once (guarded by a ref) so later edits are never overwritten by a re-render of the host.
 
-Client-side validation SHALL run through `validateDeploymentCreationFields` with `validateNamePattern` enabled and `validateVersionPattern` set to the library's exported `SEMVER_VERSION_PATTERN`: the Name field is required and must match the allowed-character pattern, and the Version field — when non-empty — must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`), stricter than the shared library's default character-set-only version pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
+Client-side validation SHALL run through `validateDeploymentCreationFields` with `validateNamePattern` enabled and `validateVersionPattern` set to the library's exported `SEMVER_VERSION_PATTERN`, with codes translated by `translateDeploymentCreationErrors` (`apps/chat/src/utils/entity-field-validation.ts`): the Name field is required, at most 256 characters and must match the allowed-character pattern, the Description field is at most 2000 characters (see `entity-field-limits`), and the Version field — when non-empty — must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`), stricter than the shared library's default character-set-only version pattern. No URL format validation is performed on the icon URL field; that is enforced server-side only.
 
 Submitting the form (via the imperative `submit()` handle, or the underlying `<form onSubmit>` if the user presses Enter):
 - Is a no-op while `isSubmitting` is already true.
-- Validates the fields above and renders `editor.nameRequired`, `appsEditor.generalForm.nameInvalid`, or `appsEditor.generalForm.versionInvalid` without calling the API when any check fails.
+- Validates the fields above and renders `editor.nameRequired`, `editor.fieldTooLong`, `appsEditor.generalForm.nameInvalid`, or `appsEditor.generalForm.versionInvalid` under the failing field without calling the API when any check fails.
 - When `appId` is set (an existing app is being edited), SHALL NOT call the create API at all — it invokes `onCreated(appId, name, iconUrl)` so the flow simply advances to the Settings step, leaving persistence to the Settings-step save.
 - Otherwise calls `createApplication({ name, type: schemaId, description, iconUrl, version, topics, applicationProperties, locales, primaryLocale })` via the server-api wrapper, where `applicationProperties` seeds an empty orchestrator/contexts/tool_sets object for a Quick App schema and is omitted for any other schema.
 - On success, invokes `onCreated(appId, name, iconUrl)`.
+
+Every change of the Name or Description field SHALL also re-check that field through `getLiveDeploymentCreationErrors`, so a too-long or control-character value is shown inline as the user types (see `entity-field-limits`). A required-field error is not raised on change.
 
 Cancelling is handled by the parent `AppsEditor` page via the shared header's `onCancel`, not by `GeneralForm` itself.
 
@@ -440,6 +438,12 @@ interface Props {
 - **THEN** the form shows a validation error (`appsEditor.generalForm.nameRequired`)
 - **AND** the API is NOT called
 
+#### Scenario: Over-long name is flagged while typing and blocks submission
+
+- **WHEN** the user types a 257-character Name and clicks Next
+- **THEN** "Use 256 characters or fewer." (`editor.fieldTooLong`) is shown under Name as soon as the 257th character is typed
+- **AND** the API is NOT called
+
 #### Scenario: Valid form submits and calls onCreated
 
 - **WHEN** the user fills in Name and clicks Next
@@ -460,8 +464,6 @@ interface Props {
 
 - **WHEN** the page renders at a mobile viewport (`≤768px`)
 - **THEN** the form fields and the Preview card render as two full-width sections stacked vertically, both reachable by scrolling the page, instead of a fixed-height two-column row
-
----
 
 ### Requirement: Settings step (step 2)
 
@@ -738,3 +740,4 @@ The external editor integration SHALL rely on the advertised query parameter: ho
 
 - **WHEN** the trusted request targets an application whose listing has no authenticated services
 - **THEN** the host dialog displays the localized no-credentials-required state and remains closable
+

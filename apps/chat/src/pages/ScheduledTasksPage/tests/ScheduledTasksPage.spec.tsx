@@ -78,9 +78,14 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     onCardClick,
     banner,
   }: {
-    labels: { title: string; createButtonLabel: string; retryLabel: string };
+    labels: {
+      title: string;
+      createButtonLabel: string;
+      retryLabel: string;
+      cardLabels?: { newBadgeLabel?: string; completedBadgeLabel?: string };
+    };
     onCreateClick: () => void;
-    items: { id: string }[];
+    items: { id: string; isCompleted?: boolean }[];
     error: Error | null;
     onRetry: () => void;
     searchQuery: string;
@@ -103,10 +108,12 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <button onClick={onCreateClick}>{labels.createButtonLabel}</button>
       <button onClick={() => onSearchQueryChange('daily')}>set search</button>
       <button onClick={onLoadMore}>load more</button>
+      <span>completedBadgeLabel:{labels.cardLabels?.completedBadgeLabel}</span>
       {items.map((item) => (
-        <button key={item.id} onClick={() => onCardClick?.(item.id)}>
-          card:{item.id}
-        </button>
+        <div key={item.id}>
+          <button onClick={() => onCardClick?.(item.id)}>card:{item.id}</button>
+          <span>completed:{String(item.isCompleted)}</span>
+        </div>
       ))}
       {banner}
     </div>
@@ -520,5 +527,43 @@ describe('ScheduledTasksPage', () => {
       );
       expect(screen.queryByRole('alert')).toBeNull();
     });
+  });
+});
+
+describe('ScheduledTasksPage — completed state', () => {
+  it('maps a completed DTO through to the lib items and passes the completed badge label', () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    useScheduledTasksMock.mockReturnValue({
+      items: [
+        {
+          id: 'sched_done',
+          displayName: 'One-time report',
+          trigger: { date: '2020-01-01T00:00:00.000Z' },
+          triggerType: 'date',
+          isActive: false,
+          isCompleted: true,
+          nextRunTime: null,
+        },
+      ],
+      searchQuery: '',
+      setSearchQuery: setSearchQueryMock,
+      sortKey: 'firstToRun',
+      setSortKey: setSortKeyMock,
+      isLoading: false,
+      isLoadingMore: false,
+      error: null,
+      hasMore: false,
+      loadMore: loadMoreMock,
+      refetch: refetchMock,
+    });
+    renderScheduledTasksPage();
+
+    expect(screen.getByText('card:sched_done')).toBeTruthy();
+    expect(screen.getByText('completed:true')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'completedBadgeLabel:scheduledTasks.card.completedBadgeLabel',
+      ),
+    ).toBeTruthy();
   });
 });

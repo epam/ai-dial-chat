@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { ROUTES } from '../../types/routes';
+import { SettingsTabs } from '../../types/settings-tabs';
 import {
   getConversationRoute,
   getScheduledTaskDetailRoute,
   getScheduledTaskEditRoute,
+  getSettingsTabRoute,
   normalizeConversationId,
 } from '../routes';
 
@@ -105,5 +108,38 @@ describe('getScheduledTaskEditRoute', () => {
     expect(getScheduledTaskEditRoute('sched 123/x')).toBe(
       '/scheduled-tasks/sched%20123%2Fx/edit',
     );
+  });
+});
+
+describe('getSettingsTabRoute', () => {
+  const allTabs = Object.values(SettingsTabs);
+
+  it('puts the tab in a path segment, never a query parameter', () => {
+    const route = getSettingsTabRoute(SettingsTabs.Usage);
+
+    expect(route).toBe('/settings/usage');
+    expect(route).not.toContain('?');
+  });
+
+  it('nests every tab under the settings route', () => {
+    for (const tab of allTabs) {
+      expect(getSettingsTabRoute(tab).startsWith(`${ROUTES.Settings}/`)).toBe(
+        true,
+      );
+    }
+  });
+
+  /*
+   * The guard that matters: the segment is the enum value verbatim, so a
+   * future tab id carrying a space or a slash would produce a path that does
+   * not resolve back to it.
+   */
+  it.each(allTabs)('round-trips the %s tab through its path', (tab) => {
+    const segments = new URL(
+      getSettingsTabRoute(tab),
+      'https://example.test',
+    ).pathname.split('/');
+
+    expect(decodeURIComponent(segments[segments.length - 1])).toBe(tab);
   });
 });

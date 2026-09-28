@@ -77,12 +77,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.13
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.18
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.20
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -490,6 +490,10 @@ const ChatMessageList = ({
 
 ### usePageFileDrag
 
+`onFilesConsumed` acknowledges the `pendingFiles` batch from the render that
+provided the callback. Files dropped after that render remain queued, allowing
+hosts to merge drops with other generated files without losing a newer batch.
+
 Detects files being dragged over the whole page (using `document`-level drag events with an enter/leave counter to avoid flicker from child-element boundary crossings) and exposes the dropped files once dropped.
 
 ```tsx
@@ -529,6 +533,111 @@ const ComposerWithFileDrop = ({
 | `isDragging`      | `boolean`    | Whether a file drag is currently over the page.               |
 | `pendingFiles`    | `File[]`     | Files dropped on the page, pending consumption by the caller. |
 | `onFilesConsumed` | `() => void` | Clears `pendingFiles` after the caller has processed them.    |
+
+### useMessageSelectionReply
+
+The hook and its types are exported from both `@epam/ai-dial-chat-hooks` and
+`@epam/ai-dial-chat-hooks/conversation`.
+
+Captures visible text selected inside a registered message body and feeds one UTF-8
+`text/plain` Reply file into an existing composer attachment queue. The host supplies
+the scope identifier, eligibility policy and its ordinary page-drop batch; it retains
+ownership of model capability, upload, translated labels and rendering.
+
+This composition accepts completed assistant text. For a transcript, register each
+user/assistant `MessageBubble` with the same `reply.contentRef`. The host derives
+`canAttachText` from read-only/edit/streaming state, composer availability and MIME
+permissions; upload and validation callbacks remain application-owned.
+
+```tsx
+import { useMessageSelectionReply } from '@epam/ai-dial-chat-hooks/conversation';
+import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  ConversationInput,
+  type ConversationInputProps,
+} from '@epam/ai-dial-conversation-input';
+import {
+  MessageBubble,
+  MessageSelectionReply,
+  type MessageSelectionReplyLabels,
+} from '@epam/ai-dial-conversation-messages';
+import '@epam/ai-dial-conversation-input/styles.css';
+import '@epam/ai-dial-conversation-messages/styles.css';
+
+interface ReplyConversationProps {
+  conversationId: string;
+  text: string;
+  canAttachText: boolean;
+  labels: MessageSelectionReplyLabels;
+  portalContainer?: HTMLElement | null;
+  onUploadAttachment: NonNullable<ConversationInputProps['onUploadAttachment']>;
+  onSend: NonNullable<ConversationInputProps['onSend']>;
+  validateAttachment?: ConversationInputProps['validateAttachment'];
+  maximumAttachmentsAmount?: number;
+  onAttachmentsLimitExceeded?: ConversationInputProps['onAttachmentsLimitExceeded'];
+}
+
+const ReplyConversationBody = ({
+  conversationId,
+  text,
+  canAttachText,
+  labels,
+  portalContainer,
+  ...attachmentCallbacks
+}: ReplyConversationProps) => {
+  const pageDrop = usePageFileDrag(canAttachText);
+  const reply = useMessageSelectionReply({
+    conversationId,
+    enabled: canAttachText,
+    droppedFiles: pageDrop.pendingFiles,
+    onDroppedFilesConsumed: pageDrop.onFilesConsumed,
+  });
+
+  return (
+    <>
+      <MessageBubble
+        role={MessageRole.Assistant}
+        text={text}
+        contentRef={reply.contentRef}
+      />
+      <MessageSelectionReply
+        rect={reply.selection?.rect}
+        actionRef={reply.actionRef}
+        onReply={reply.onReply}
+        addedRevision={reply.addedRevision}
+        labels={labels}
+        portalContainer={portalContainer}
+      />
+      <ConversationInput
+        {...attachmentCallbacks}
+        isAttachmentsEnabled={canAttachText}
+        focusRequestId={reply.focusRequestId}
+        pendingDropFiles={reply.pendingFiles}
+        onDropFilesConsumed={reply.onFilesConsumed}
+        onAttachmentsChange={reply.onAttachmentsChange}
+      />
+    </>
+  );
+};
+
+export const ReplyConversation = (props: ReplyConversationProps) => (
+  <ReplyConversationBody key={props.conversationId} {...props} />
+);
+```
+
+The key deliberately resets the composer and drop queue on conversation changes:
+changing the hook's `conversationId` alone clears only its selection and unconsumed
+Reply files, not attachments already accepted by `ConversationInput`. Old upload
+results therefore cannot appear in the next conversation's composer. Within the
+same conversation Reply preserves the existing draft and attachments. If the host
+also observes attachments, compose its callback with `reply.onAttachmentsChange`
+so accepted-insertion announcements continue to work.
+
+For a modal or locally themed surface, pass a same-document `portalContainer`
+inside that surface; pass `null` while its callback ref has not mounted. See
+[MessageSelectionReply](../conversation-messages/README.md#messageselectionreply)
+for appearance overrides and portal placement.
 
 ### useViewportWidth / usePanelMaxWidth
 
@@ -808,7 +917,7 @@ const VoiceComposer = ({
 
 Import warning jobs retain unique skipped attachment names in `warningNames`, matching the names emitted through `onWarning`. Pass them to the host warning label to identify skipped files in persistent queue rows. Retrying a job clears its previous warning code and names.
 
-A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Each imported conversation is stored under a fresh `{deploymentId}__{title}__{uuid}` path — collision-free, and with the conversation's own `name` (sanitized to what DIAL Core accepts in a resource name, and reported back that way in `onSuccess`) as the title segment rather than the first-message title the export file embedded. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
+A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Only a `.dial`/`.zip` export carries attachments: a `.json` export — without-attachments or export-all — omits every attachment reference, and an import drops any reference still pointing into a bucket other than the importing user's own or `public` (reporting it as a skipped attachment), so a file exported by one user never leaves another with unreadable previews. Each imported conversation is stored under a fresh `{deploymentId}__{title}__{uuid}` path — collision-free, and with the conversation's own `name` (sanitized to what DIAL Core accepts in a resource name, and reported back that way in `onSuccess`) as the title segment rather than the first-message title the export file embedded. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
 
 ```tsx
 import { ConversationTransferErrorCode } from '@epam/ai-dial-chat-shared';
@@ -923,21 +1032,23 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name                        | Type                                | Description                                                                                                                                                                                                                                                                                                       |
-| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                        |
-| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                          |
-| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                           |
-| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                     |
-| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                              |
-| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                              |
-| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                                                                                             |
-| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                   |
-| `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed stream. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors is set to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error. |
+| Name                        | Type                                | Description                                                                                                                                                                                                                                                                                                                            |
+| --------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                                             |
+| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                                               |
+| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                                                |
+| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                                          |
+| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                                                   |
+| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                                                   |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                                                                                                                  |
+| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                                        |
+| `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
 **Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event.
+
+When the transport reports a `StreamInterruptedError` — the connection was lost or went silent, as a laptop sleep or phone lock mid-generation causes — the hook does not show an error right away, because the backend-owned generation usually keeps running. The path stays streaming and stoppable, and the partial answer stays on screen, while the hook re-fetches the conversation through `transport.getConversation` (retrying a rejected fetch after 1, 2, 4, 8 and 16 s, or as soon as the browser reports `online`). If the server copy still ends in this turn's unresolved placeholder, the hook rejoins the generation through the same attach/watch flow as `resumeIfAwaitingGeneration`; if the answer is already saved, it shows it; otherwise it settles with `streamErrorMessage: ''`, as for any transport error. `handleStop` keeps working throughout.
 
 Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
 
@@ -2072,12 +2183,31 @@ onError: (error: Error) => {
 };
 ```
 
-An in-band `data: {"error":{"message":…}}` chunk — DIAL Core itself reporting a failure mid-stream — is reported as a `StreamUpstreamError`, whose `message` is upstream text intended for the user. Every other failure (a rejected `fetch`, a non-OK status other than `409`, a missing body, a stream that breaks mid-read) stays a plain `Error` with technical detail. `useConversationStream` shows a `StreamUpstreamError`'s text on the message bubble and replaces any other non-conflict error with `''`, so a custom `ConversationStreamTransport` must raise `StreamUpstreamError` for upstream text it wants the user to see:
+An in-band `data: {"error":{"message":…}}` chunk — DIAL Core itself reporting a failure mid-stream — is reported as a `StreamUpstreamError`, whose `message` is upstream text intended for the user. A network-level failure — a rejected `fetch`, or a stream that breaks mid-read after a 2xx response — is reported as a `StreamInterruptedError` whose `cause` is the original error, and so is a stream that receives no byte (keepalive comments included) for `idleTimeoutMs`, which defaults to `DEFAULT_STREAM_IDLE_TIMEOUT_MS` (45 s) and is re-checked immediately on `visibilitychange`, `online` and `pageshow`. Every other failure (a non-OK status other than `409`, a missing body) stays a plain `Error` with technical detail. `useConversationStream` shows a `StreamUpstreamError`'s text on the message bubble and replaces any other non-conflict error with `''`, so a custom `ConversationStreamTransport` must raise `StreamUpstreamError` for upstream text it wants the user to see:
 
 ```ts
 import { StreamUpstreamError } from '@epam/ai-dial-chat-hooks';
 
 options.onError(new StreamUpstreamError('Rate limit exceeded'));
+```
+
+A custom transport that raises `StreamInterruptedError` for a lost connection opts into the hook's recovery; one that never raises it keeps the plain error behaviour. The idle timeout can be tuned per host:
+
+```ts
+import {
+  createChatStreamApi,
+  DEFAULT_STREAM_IDLE_TIMEOUT_MS,
+  StreamInterruptedError,
+} from '@epam/ai-dial-chat-hooks';
+
+const chatStreamApi = createChatStreamApi({
+  getCsrfToken,
+  setCsrfToken,
+  completionsBasePath: '/api/v1/conversations',
+  idleTimeoutMs: DEFAULT_STREAM_IDLE_TIMEOUT_MS * 2,
+});
+
+options.onError(new StreamInterruptedError(new TypeError('Failed to fetch')));
 ```
 
 ### getApiErrorDetails / getApiErrorMessage / getApiErrorStatus / isConversationNotFoundError
@@ -2696,12 +2826,38 @@ const api = kind && buildConnectApi(baseUrl, toolsetId, kind);
 
 ### mapDeploymentLimitsToInput
 
-Maps a deployment's monthly token-limit response into a display-ready `MonthlyUsageLimit` (`used`/`total`/`remaining`/`usedPercent`), or `undefined` when the backend reports no usable limit.
+Maps a deployment-limits response into display-ready `CatalogItemLimits` for a conversation-input usage affordance, or `undefined` when nothing reports a usable limit. It emits up to two groups: the deployment's day/week/month **token** limits, formatted with compact K/M notation, followed by the caller's day/week/month **cost** budget, formatted as currency. The worst-case `CatalogLimitStatus` is taken across the capped rows of both.
+
+The cost stats on a deployment-limits response are the caller's own budget and span every deployment, not the one that was queried — the same figures come back whichever deployment is asked. They are therefore listed as their own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
+
+**Only limits at or past 75% of their cap are mapped** — the same threshold `CatalogLimitStatus` uses for running-low. The affordance this feeds is a warning, not a dashboard: a deployment at 2% of its token allowance listed beside an account budget at 90% buries the figure worth acting on. When nothing reaches the threshold the function returns `undefined`, which is how a host removes the affordance entirely. A period whose total is the uncapped sentinel (`total >= Number.MAX_SAFE_INTEGER`) has no ratio and is therefore never listed.
+
+Minute and request stats are not mapped either: a rolling-minute counter changes between two openings of a popover for reasons the viewer cannot attribute to their own actions. Labels and value/aria formatters are injected through a `ConversationInputLimitsLabels` object so the function stays i18n-free.
+
+Pass `formatResetTime` to add each period's reset line. The function never parses or formats a timestamp itself: it hands the raw `resetsAt` to the callback and stores only the strings it returns, as a present-or-all-absent trio. Omit the callback, or return `undefined` from it, and the row renders without a reset line.
 
 ```ts
-import { mapDeploymentLimitsToInput } from '@epam/ai-dial-chat-hooks';
+import {
+  mapDeploymentLimitsToInput,
+  type ConversationInputLimitsLabels,
+} from '@epam/ai-dial-chat-hooks';
 
-const usage = mapDeploymentLimitsToInput(deploymentLimitsDto);
+const labels: ConversationInputLimitsLabels = {
+  tokenGroup: 'Token limits',
+  costGroup: 'Cost limits · all agents',
+  periodDay: 'Today',
+  periodWeek: 'This week',
+  periodMonth: 'This month',
+  formatValueLabel: (used, total) => `${used} / ${total}`,
+  formatProgressAriaLabel: ({ label, used, total }) =>
+    `${label}: ${used} of ${total} used`,
+};
+
+const limits = mapDeploymentLimitsToInput(
+  deploymentLimitsDto,
+  labels,
+  formatResetTime,
+);
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits
@@ -3328,6 +3484,21 @@ const manifestText = buildSkillManifest({
 const { frontmatter, instructions } = parseSkillManifest(manifestText);
 ```
 
+### getSkillFieldLengthViolations / SKILL_TEXT_FIELD_MAX_LENGTHS
+
+Returns, for each of a skill's `name`, `description` and `instructions` values that is longer than its limit once trimmed, the limit it exceeds (256, 2000 and 50000 — the shared entity limits from `@epam/ai-dial-chat-shared`). `useSkillEditorSubmit` uses it to show `messages.tooLong(limit)` as the user types and to block a submit.
+
+```ts
+import {
+  getSkillFieldLengthViolations,
+  SKILL_TEXT_FIELD_MAX_LENGTHS,
+} from '@epam/ai-dial-chat-hooks';
+
+const violations = getSkillFieldLengthViolations(values);
+// e.g. { name: 256 } when values.name is 300 characters long
+const nameLimit = SKILL_TEXT_FIELD_MAX_LENGTHS.name;
+```
+
 ### parseSkillManifestDocument
 
 Splits a `SKILL.md` into its frontmatter fields (`name`, `description`, and recognised `about.*` fields) and its prose body. Never throws — a file with no frontmatter fence resolves to the whole input as `body`.
@@ -3421,7 +3592,7 @@ if (loadState === SkillEditorLoadState.Loading) {
 
 ### useSkillEditorSubmit
 
-Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself.
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook.
 
 `isSubmitErrorRetryable` is `true` only when `submitError` came from something a plain re-send can clear, such as an unavailable service; `retrySubmit` then re-sends the failed attempt's values, reusing the manifest and file blobs it already built. Pair the two to offer the action only where it can help — `onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}` on `SkillEditor`.
 
@@ -3466,10 +3637,14 @@ const {
   loadedPathRef,
   etagRef,
   returnUrl,
+  getCreateReturnUrl: (path) =>
+    `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
   refetchSkills,
   client,
   messages: {
     required: 'Required',
+    tooLong: (maxLength) => `Use ${maxLength} characters or fewer.`,
+    instructionsFrontmatter: 'Front matter belongs in the fields above',
     nameInvalid: 'Invalid name',
     nameConflict: 'A skill with this name already exists',
     archiveTooLarge: 'The uploaded content is too large',
@@ -3489,7 +3664,9 @@ const {
 
 ### useSkillFileActions
 
-Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
+Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), creating empty folders, expanding `.zip` archives for staging, and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
+
+The returned `fileActions` also carries `onCreateFolder` (adds a folder node, ignoring an existing path), `validateFolderPath` (`messages.pathInvalid` for a path `isValidSkillRelativePath` rejects), and `extractArchive` (reads a `.zip` with `fflate`, skipping directory, `__MACOSX/` and `.DS_Store` entries; path and size limits apply afterwards through `validateBatch`). The optional `pickFromFileSystem` param is passed through unchanged as `fileActions.pickFromFileSystem` — the host owns the picker, buckets and downloads.
 
 ```ts
 import { useSkillFileActions } from '@epam/ai-dial-chat-hooks';
@@ -3521,6 +3698,8 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
       manifestImportDeclined: 'Manifest import was declined',
       saveError: 'Could not save the skill',
     },
+    // Optional: enables the editor's "Open DIAL file system" entry.
+    pickFromFileSystem: openHostFilePicker,
   });
 ```
 
@@ -3645,7 +3824,7 @@ const { results, batchErrors, manifestCandidate } =
 ### Supporting types and constants
 
 - **`SkillSource`** — which skill namespace a catalog skill item came from: `Personal`, `SharedWithMe`, `Public`.
-- **`PUBLIC_SKILL_BUCKET`** — the DIAL Core bucket holding organisation-wide skills.
+- **`PUBLIC_SKILL_BUCKET`** — the DIAL Core bucket holding organisation-wide skills. Deprecated: an alias of `PUBLIC_BUCKET` from `@epam/ai-dial-chat-shared`.
 - **`SKILL_MANIFEST_MAX_BYTES`** / **`SKILL_LISTING_PAGE_SIZE`** / **`SKILL_LISTING_MAX_PAGES`** — size/pagination bounds for skill manifest reads and skill listings.
 - **`SkillEntityDetails`** — a skill's parsed manifest details (`{ about?: SkillAboutDetails }`).
 - **`ParsedSkillResourceUrl`** / **`parseSkillResourceUrl`** — splits a `skills/{bucket}/{path}` resource URL into its bucket and path, or `null` if it doesn't match that shape.
@@ -3782,7 +3961,7 @@ Five hooks and two utility functions extracted from `ConversationPanelView.tsx` 
 
 ### useConversationPanelItems
 
-Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and task badges through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
+Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and scheduled-task row presentation through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
 
 ```tsx
 import { useConversationPanelItems } from '@epam/ai-dial-chat-hooks';
@@ -3800,9 +3979,9 @@ const conversations = useConversationPanelItems({
   resolveIconTooltip: (d: DeploymentItemDto | undefined, fallback: string) =>
     d?.displayName ?? fallback,
   resolveHref: (id) => `/chat/${id}`,
-  resolveTaskBadge: (item: ConversationListItemDto) =>
+  resolveTaskPresentation: (item: ConversationListItemDto) =>
     item.isScheduledTask
-      ? { label: 'Task', isUnread: item.isUnread ?? false }
+      ? { leadingIcon: taskIcon, isUnread: item.isUnread ?? false }
       : undefined,
 });
 ```
@@ -3811,18 +3990,20 @@ const conversations = useConversationPanelItems({
 
 **Parameters** (`UseConversationPanelItemsParams`):
 
-| Name                    | Type                                                                                   | Description                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `items`                 | `ConversationListItemDto[]`                                                            | Raw DTOs from the API.                                                   |
-| `deployments`           | `DeploymentItemDto[]`                                                                  | Current deployment catalogue used for icon/tooltip resolution.           |
-| `isDeploymentsLoading`  | `boolean`                                                                              | When `true`, all items are returned with `isIconLoading: true`.          |
-| `toPanelConversationId` | `(id: string) => string`                                                               | Maps a DTO `id` to the panel-space identifier.                           |
-| `resolveIconUrl`        | `(deployment?: DeploymentItemDto) => string \| undefined`                              | Returns the resolved icon URL for a deployment.                          |
-| `resolveIconTooltip`    | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`            | Returns the tooltip text for the icon.                                   |
-| `resolveHref`           | `(id: string) => string`                                                               | Converts a panel-space ID to a navigation href.                          |
-| `resolveTaskBadge`      | `(item: ConversationListItemDto) => { label: string; isUnread: boolean } \| undefined` | Optional; returns the badge descriptor for scheduled-task conversations. |
+| Name                      | Type                                                                                             | Description                                                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`                   | `ConversationListItemDto[]`                                                                      | Raw DTOs from the API.                                                                                                                                                                             |
+| `deployments`             | `DeploymentItemDto[]`                                                                            | Current deployment catalogue used for icon/tooltip resolution.                                                                                                                                     |
+| `isDeploymentsLoading`    | `boolean`                                                                                        | When `true`, all items are returned with `isIconLoading: true`.                                                                                                                                    |
+| `toPanelConversationId`   | `(id: string) => string`                                                                         | Maps a DTO `id` to the panel-space identifier.                                                                                                                                                     |
+| `resolveIconUrl`          | `(deployment?: DeploymentItemDto) => string \| undefined`                                        | Returns the resolved icon URL for a deployment.                                                                                                                                                    |
+| `resolveIconTooltip`      | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`                      | Returns the tooltip text for the icon.                                                                                                                                                             |
+| `resolveHref`             | `(id: string) => string`                                                                         | Converts a panel-space ID to a navigation href.                                                                                                                                                    |
+| `resolveTaskPresentation` | `(item: ConversationListItemDto) => { leadingIcon?: ReactNode; isUnread: boolean } \| undefined` | Optional; returns the row presentation for scheduled-task conversations. `leadingIcon` (a host-rendered, `aria-hidden` node) replaces the deployment avatar; `isUnread` drives the unread styling. |
 
-**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs.
+**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs. The hook maps every item it is given; collapsing a scheduled task's runs into one row is left to the host.
+
+`resolveTaskPresentation` replaced `resolveTaskBadge` (`{ label, isUnread }`) when the conversation panel dropped its TASK pill.
 
 ### getConversationSource
 

@@ -18,6 +18,13 @@ export enum PromptFieldError {
  */
 const PROMPT_NAME_PATTERN = /^(?!\.{1,2}$)[a-zA-Z0-9 _.-]+$/;
 
+/*
+ * These equal `ENTITY_*_MAX_LENGTH` from `@epam/ai-dial-chat-shared` but are
+ * spelled out rather than imported: this module ships in the `./utils` entry,
+ * which must load without `chat-shared` installed (the cold-load probes
+ * enforce it). `tests/prompt.spec.ts` pins them to the shared constants.
+ */
+
 /** Maximum name length accepted by `CreatePromptDto.name`. */
 export const PROMPT_NAME_MAX_LENGTH = 256;
 

@@ -63,6 +63,25 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     classes.filter(Boolean).join(' '),
   Tooltip: ({ children }: { children: ReactNode }) => children,
   EllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  MenuItem: ({
+    label,
+    icon,
+    trailing,
+    onClick,
+    'aria-current': ariaCurrent,
+  }: {
+    label: ReactNode;
+    icon?: ReactNode;
+    trailing?: ReactNode;
+    onClick?: () => void;
+    'aria-current'?: AriaAttributes['aria-current'];
+  }) => (
+    <button type="button" aria-current={ariaCurrent} onClick={onClick}>
+      {icon}
+      {label}
+      {trailing}
+    </button>
+  ),
   IconButton: ({
     'aria-label': ariaLabel,
     'aria-current': ariaCurrent,

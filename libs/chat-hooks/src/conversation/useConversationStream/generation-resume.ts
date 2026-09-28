@@ -79,6 +79,52 @@ const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
  */
 const RESUME_BUFFER_GENERATION_ID = 'awaiting-resume';
 
+/*
+ * Retry delays for the conversation re-fetch that follows an interrupted
+ * stream: six attempts over ~31 s, covering a network that rejoins a few
+ * seconds after the device wakes, without leaving the composer blocked
+ * indefinitely when it never does.
+ */
+export const RECOVERY_REFETCH_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
+
+/** Resolves after `delayMs`, or as soon as the browser reports it is back online. */
+const waitForRetry = (delayMs: number): Promise<void> =>
+  new Promise<void>((resolve) => {
+    const hasWindow = typeof window !== 'undefined';
+    const handleReady = () => {
+      clearTimeout(timer);
+      if (hasWindow) window.removeEventListener('online', handleReady);
+      resolve();
+    };
+    const timer = setTimeout(handleReady, delayMs);
+    if (hasWindow) window.addEventListener('online', handleReady);
+  });
+
+/**
+ * Returns the conversation from `load`, retrying rejected attempts on the
+ * {@link RECOVERY_REFETCH_DELAYS_MS} schedule; `null` once every attempt has
+ * failed or `shouldStop` turns true between attempts.
+ */
+export const fetchConversationForRecovery = async (
+  load: () => Promise<Conversation>,
+  shouldStop: () => boolean,
+): Promise<Conversation | null> => {
+  for (
+    let attempt = 0;
+    attempt <= RECOVERY_REFETCH_DELAYS_MS.length;
+    attempt++
+  ) {
+    if (shouldStop()) return null;
+    try {
+      return await load();
+    } catch {
+      if (attempt === RECOVERY_REFETCH_DELAYS_MS.length) return null;
+      await waitForRetry(RECOVERY_REFETCH_DELAYS_MS[attempt]);
+    }
+  }
+  return null;
+};
+
 /** One event on the `attachToGeneration` SSE stream (`generation-live-replay`). */
 type GenerationAttachEvent =
   | { type: 'snapshot'; message: Message }
@@ -141,6 +187,16 @@ const readSseEvents = async <TEvent>(
   }
 };
 
+/** Internal options a resume started by the stream hook itself passes; the public API passes none. */
+export interface ResumeGenerationOptions {
+  /** Initial buffered message, used instead of the stored placeholder — the live partial answer a dropped stream had already shown. */
+  seedMessage?: Message;
+  /** Called once when the resume has resolved or lost ownership of the path to a newer generation. */
+  onSettled?: () => void;
+  /** Resumes even though the path is already in `resumingPathsRef`, for a caller that reserved it itself. */
+  skipDedupe?: boolean;
+}
+
 /** Host-owned state {@link createResumeIfAwaitingGeneration} reads/writes through. */
 export interface ResumeIfAwaitingGenerationDeps {
   transport: ConversationStreamTransport;
@@ -179,11 +235,20 @@ export const createResumeIfAwaitingGeneration = ({
   isPathDisplayed,
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
 }: ResumeIfAwaitingGenerationDeps) => {
-  return (currentConversationId: string, conversation: Conversation): void => {
-    if (!isAwaitingGenerationResume(conversation)) return;
+  return (
+    currentConversationId: string,
+    conversation: Conversation,
+    options: ResumeGenerationOptions = {},
+  ): void => {
+    if (!isAwaitingGenerationResume(conversation)) {
+      options.onSettled?.();
+      return;
+    }
 
     const conversationPath = getConversationPath(currentConversationId);
-    if (resumingPathsRef.current.has(conversationPath)) return;
+    /* Another resume already owns this path and will settle it. */
+    if (!options.skipDedupe && resumingPathsRef.current.has(conversationPath))
+      return;
     resumingPathsRef.current.add(conversationPath);
     addStreamingPath(conversationPath);
 
@@ -191,7 +256,7 @@ export const createResumeIfAwaitingGeneration = ({
     const resumedBuffer: BufferedGeneration = {
       generationId: RESUME_BUFFER_GENERATION_ID,
       messageIndex,
-      message: conversation.messages[messageIndex],
+      message: options.seedMessage ?? conversation.messages[messageIndex],
     };
     bufferedGenerationsRef.current.set(conversationPath, resumedBuffer);
     const ownsBuffer = () =>
@@ -373,9 +438,14 @@ export const createResumeIfAwaitingGeneration = ({
       return !ownsBuffer();
     };
 
+    /* `finish` has already run (or ownership was lost) by the time either run returns. */
     const resume = async () => {
-      const handled = await runAttach();
-      if (!handled) await runWatch();
+      try {
+        const handled = await runAttach();
+        if (!handled) await runWatch();
+      } finally {
+        options.onSettled?.();
+      }
     };
     void resume();
   };

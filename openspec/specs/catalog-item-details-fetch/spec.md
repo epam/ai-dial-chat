@@ -16,7 +16,14 @@ The lib MUST remain host-agnostic: `onFetchDetails` accepts only a `CatalogItem`
 
 When `onFetchDetails` resolves data, it SHALL **replace** any statically-provided `item.details` for the currently open item wholesale — fetched data is considered more current, and the panel does not merge the two. A host whose fetch covers only part of the panel must therefore rebuild the rest of the sections it still wants shown; the prompt branch below is the worked example. When `onFetchDetails` is not provided, or resolves `undefined`, behavior is unchanged from today: the panel falls back to `item.details` if present, otherwise hides the corresponding tabs.
 
-`CatalogItemTabData` SHALL support an optional `limits?: CatalogItemLimits` field. When present, `DetailsPanel` SHALL add a `Limits` tab after `Pricing` and before `API`; when absent, the tab is hidden. `CatalogItemLimits` SHALL contain app-resolved progress rows only (`label`, `used`, `total`, optional `isUnlimited`, `valueLabel`, `usedLabel`, `totalLabel`, `noteLabel`, `captionLabel`, `ariaLabel`) so `libs/catalog` remains host-agnostic and never imports generated API clients, server-api wrappers, DIAL Core DTOs, auth/session state, route knowledge, or endpoint paths. Every visible string on a row is preformatted by the app; the lib formats nothing itself.
+`CatalogItemTabData` SHALL support an optional `limits?: CatalogItemLimits` field. When present, `DetailsPanel` SHALL add a `Limits` tab after `Pricing` and before `API`; when absent, the tab is hidden. `CatalogItemLimits` SHALL contain app-resolved progress rows only (`label`, `used`, `total`, optional `isUnlimited`, `valueLabel`, `usedLabel`, `totalLabel`, `noteLabel`, `captionLabel`, `ariaLabel`, `resetLabel`, `resetIsoValue`, `resetAriaLabel`) so `libs/catalog` remains host-agnostic and never imports generated API clients, server-api wrappers, DIAL Core DTOs, auth/session state, route knowledge, or endpoint paths. Every visible string on a row is preformatted by the app; the lib formats nothing itself.
+
+The three reset fields are optional and SHALL be treated as a present-or-all-absent trio. They carry
+preformatted display strings only: `resetLabel` is the visible line, `resetIsoValue` is the original
+UTC instant for a `<time dateTime>` attribute, and `resetAriaLabel` is the spoken expansion. A row
+that omits them SHALL render exactly as it did before they existed. The catalog's own adapter
+(`mapDeploymentLimitsDtoToCatalogLimits`) does not set them, so the details panel's `Limits` tab is
+unaffected by their addition.
 
 #### Scenario: Details panel fetches on open
 
@@ -43,6 +50,81 @@ When `onFetchDetails` resolves data, it SHALL **replace** any statically-provide
 - **WHEN** an existing consumer of `Catalog` does not pass `onFetchDetails`
 - **THEN** it continues to compile and render without change
 
+#### Scenario: A row without reset fields is unchanged
+
+- **WHEN** a `CatalogItemLimits` row omits `resetLabel`, `resetIsoValue`, and `resetAriaLabel`
+- **THEN** the rendered row is identical to its pre-change rendering, with no reset element in the
+  DOM
+
+#### Scenario: The catalog details panel is unaffected
+
+- **WHEN** a user opens a model's details panel and the `Limits` tab renders
+- **THEN** its DOM is identical to the pre-change rendering, because the catalog's adapter sets none
+  of the reset fields
+
+---
+
+### Requirement: `LimitsTab` is a public, reusable export of `@epam/ai-dial-catalog`
+
+`libs/catalog/src/index.ts` SHALL export the `LimitsTab` component, the `LimitsTabProps` and
+`LimitsTabColors` types, and the `LimitRowLayout` enum, so a host can render a `CatalogItemLimits`
+value outside the catalog details panel. `LimitsTabColors`
+(`libs/catalog/src/models/limits-props.ts`) SHALL be changed from a module-private interface to an
+exported one.
+
+`LimitsTab` SHALL accept `layout?: LimitRowLayout`, defaulting to `LimitRowLayout.Inline` — the
+arrangement the details panel already renders, with the label column beside a fixed-width column
+holding the used/total pair above a narrow progress bar. `LimitRowLayout.Stacked` SHALL instead put
+the label and the value on one line, followed by a full-width progress bar and then the reset
+caption, and SHALL color the value through the `valueDanger` token once the row has reached its
+limit. The default SHALL leave the details panel's rendered output unchanged.
+
+`LimitRow` and `LimitGroupSection` SHALL remain internal: the public contract is the whole list, not
+an individual row, so row-level markup stays free to change without a breaking release.
+
+`LimitsTab` SHALL remain presentation-only. It SHALL NOT import a generated API client, a DIAL Core
+DTO, an endpoint path, `react-i18next`, a locale, a timezone, or a date/time `Intl` constructor. It
+SHALL receive every visible string preformatted by its host, and SHALL continue to render `null`
+when `limits` is absent or every group has no rows.
+
+`libs/catalog/README.md` SHALL document the new export with a minimal, compiling usage example and
+SHALL list the three new optional row fields. `npm run validate:docs` SHALL pass, which requires the
+README and `src/index.ts` to agree in both directions.
+
+#### Scenario: A host outside the catalog renders the tab
+
+- **WHEN** an application imports `LimitsTab` from `@epam/ai-dial-catalog` and passes it a
+  `CatalogItemLimits` value
+- **THEN** it renders the groups and rows without the details panel, the catalog shell, or any
+  catalog item being involved
+
+#### Scenario: The default layout leaves the details panel unchanged
+
+- **WHEN** `LimitsTab` is rendered without a `layout` prop
+- **THEN** each row renders the inline arrangement the details panel shipped before the prop existed
+
+#### Scenario: The stacked layout moves the bar under the label line
+
+- **WHEN** `LimitsTab` is rendered with `LimitRowLayout.Stacked`
+- **THEN** each row shows its label and a single combined value on one line, a full-width progress
+  bar beneath them, and the reset caption below that
+
+#### Scenario: Empty input renders nothing
+
+- **WHEN** `LimitsTab` is given `undefined`, or a `limits` value whose every group has zero rows
+- **THEN** it renders `null`
+
+#### Scenario: Architecture guard — the component stays presentation-only
+
+- **WHEN** `libs/catalog`'s limits components are linted and type-checked
+- **THEN** no file among them imports a generated API client, a backend DTO, `react-i18next`, or a
+  date/time `Intl` constructor, and the module-boundary lint passes
+
+#### Scenario: README and exports agree
+
+- **WHEN** `npm run validate:docs` runs
+- **THEN** it confirms that every name `libs/catalog/README.md` imports from the package is actually
+  exported, including `LimitsTab`
 ---
 
 ### Requirement: `CatalogView` wires `onFetchDetails` to the new backend endpoint

@@ -6,19 +6,24 @@ import {
   SkillFileCandidateKind,
   SkillFileValidationStatus,
   type SkillEditorFileActions,
+  type SkillFileSourceEntry,
   type SkillFileUploadCandidate,
 } from '../../../models/skill-editor-props';
+import { SkillFileUploadMode } from '../../../types/skill-file-upload-mode';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
+  ButtonAppearance: { Solid: 'solid', Ghost: 'ghost', Link: 'link' },
   PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
   Popup: ({
     open,
     header,
     children,
     footer,
+    mainButtons,
     onClose,
     closeAriaLabel,
   }: {
@@ -26,6 +31,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     header: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
+    mainButtons?: {
+      label?: ReactNode;
+      onClick?: () => void;
+      disabled?: boolean;
+    }[];
     onClose: () => void;
     closeAriaLabel?: string;
   }) =>
@@ -35,6 +45,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         <button onClick={onClose}>{closeAriaLabel ?? 'Close'}</button>
         {children}
         {footer}
+        {mainButtons?.map((button, index) => (
+          <button
+            key={index}
+            onClick={button.onClick}
+            disabled={button.disabled}
+          >
+            {button.label}
+          </button>
+        ))}
       </div>
     ) : null,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
@@ -42,21 +61,29 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label,
     ariaLabel,
     multiple,
+    accept,
     onChange,
+    onReject,
   }: {
     label: ReactNode;
     ariaLabel?: string;
     multiple?: boolean;
+    accept?: string;
     onChange: (files: File[]) => void;
+    onReject?: (files: File[]) => void;
   }) => (
     <div>
       <span>{label}</span>
       <input
         type="file"
         multiple={multiple}
+        accept={accept}
         aria-label={ariaLabel}
         onChange={(event) => onChange(Array.from(event.target.files ?? []))}
       />
+      {onReject && (
+        <button onClick={() => onReject([])}>Simulate rejected drop</button>
+      )}
     </div>
   ),
   GhostButton: ({
@@ -285,5 +312,92 @@ describe('SkillFileUploadDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('prefixes staged paths with the target folder', async () => {
+    render(
+      <SkillFileUploadDialog
+        isOpen
+        onClose={vi.fn()}
+        fileActions={buildFileActions()}
+        targetFolderPath="docs"
+      />,
+    );
+
+    stageFile(new File(['x'], 'a.md'));
+
+    expect(await screen.findByText('docs/a.md')).toBeTruthy();
+  });
+
+  it('stages host-supplied entries when it opens, normalizing separators', async () => {
+    render(
+      <SkillFileUploadDialog
+        isOpen
+        onClose={vi.fn()}
+        fileActions={buildFileActions()}
+        targetFolderPath="docs"
+        initialEntries={[{ path: 'refs\\a.md', file: new File(['x'], 'a.md') }]}
+      />,
+    );
+
+    expect(await screen.findByText('docs/refs/a.md')).toBeTruthy();
+  });
+
+  it('accepts only zip archives in archive mode and reports a rejected drop', async () => {
+    render(
+      <SkillFileUploadDialog
+        isOpen
+        onClose={vi.fn()}
+        fileActions={{ ...buildFileActions(), extractArchive: vi.fn() }}
+        mode={SkillFileUploadMode.Archive}
+      />,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Upload archive from device' }),
+    ).toBeTruthy();
+    expect(screen.getByLabelText('Upload files').getAttribute('accept')).toBe(
+      '.zip,application/zip',
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Simulate rejected drop' }),
+    );
+
+    expect(screen.getByRole('alert').textContent).toBe(
+      "Couldn't read this archive",
+    );
+  });
+
+  it('keeps Add disabled while an archive is being read', async () => {
+    let resolveExtraction:
+      ((entries: SkillFileSourceEntry[]) => void) | undefined;
+    render(
+      <SkillFileUploadDialog
+        isOpen
+        onClose={vi.fn()}
+        fileActions={{
+          ...buildFileActions(),
+          extractArchive: () =>
+            new Promise((resolve) => {
+              resolveExtraction = resolve;
+            }),
+        }}
+        mode={SkillFileUploadMode.Archive}
+      />,
+    );
+
+    stageFile(new File(['zip'], 'a.zip'));
+
+    expect(await screen.findByText('Reading archive')).toBeTruthy();
+    expect(
+      (screen.getByRole('button', { name: 'Add' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+
+    resolveExtraction?.([{ path: 'a.md', file: new File(['x'], 'a.md') }]);
+
+    expect(await screen.findByText('a.md')).toBeTruthy();
+    expect(screen.queryByText('Reading archive')).toBeNull();
   });
 });

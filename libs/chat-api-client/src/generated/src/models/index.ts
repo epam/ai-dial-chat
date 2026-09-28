@@ -651,6 +651,18 @@ export interface ApplicationVisualizerDto {
    * @memberof ApplicationVisualizerDto
    */
   passExplicitToken?: boolean;
+  /**
+   * When true, the inline frame renders without its border, rounded corners, background, and header divider. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  borderless?: boolean;
+  /**
+   * When true, the inline frame hides its header title text; the header actions stay visible. Carried over from legacy Chat 0.x.
+   * @type {boolean}
+   * @memberof ApplicationVisualizerDto
+   */
+  withoutTitle?: boolean;
 }
 /**
  *
@@ -926,7 +938,7 @@ export interface Check200Response {
    */
   timestamp?: string;
   /**
-   * Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.
+   * Application version. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Matches the appVersion reported by the client config endpoint.
    * @type {string}
    * @memberof Check200Response
    */
@@ -957,7 +969,7 @@ export interface ClientConfigDto {
    */
   activeEventId: string | null;
   /**
-   * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.
+   * Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Always a non-empty string.
    * @type {string}
    * @memberof ClientConfigDto
    */
@@ -1249,6 +1261,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   title: string;
+  /**
+   * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  createdAt?: number;
   /**
    * Unix epoch milliseconds of the last update.
    * @type {number}
@@ -2204,6 +2222,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof CreatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
   /**
    *
    * @type {boolean}
@@ -6096,6 +6120,12 @@ export interface ScheduledTaskDto {
    */
   isActive?: boolean;
   /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof ScheduledTaskDto
+   */
+  isCompleted?: boolean;
+  /**
    *
    * @type {boolean}
    * @memberof ScheduledTaskDto
@@ -7864,6 +7894,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   isActive?: boolean;
+  /**
+   * True when the schedule can no longer produce a future run: either a one-time (date-trigger) schedule whose newest run terminated with Success or Error, or a recurring schedule whose cron activity window has closed with no upcoming run. Undefined when the run-history check failed; computed by ScheduledTasksService, not by fromUpstreamSchedule (which cannot see runs).
+   * @type {boolean}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  isCompleted?: boolean;
   /**
    *
    * @type {boolean}
