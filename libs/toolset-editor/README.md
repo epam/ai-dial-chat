@@ -1,9 +1,10 @@
 # @epam/ai-dial-toolset-editor
 
 Host-agnostic form for authoring and editing a DIAL MCP toolset: the composed
-`ToolsetEditor` (Metadata + Setup two-column layout, validation, save/persist
-orchestration, and the API-key login flow) plus the shared `GeneralForm`
-metadata field set that the Custom App editor also consumes.
+`ToolsetEditor` (the shared `EntityEditor` Metadata + Setup layout from
+`@epam/ai-dial-builder-form`, validation, save/persist orchestration, and the
+API-key login flow) plus a deprecated `GeneralForm` wrapper kept for existing
+callers.
 
 The lib is deliberately passive about everything a host owns. It holds the form
 state, the dirty-field/error state, and the draft toolset id created by the
@@ -51,7 +52,7 @@ import '@epam/ai-dial-toolset-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.20`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.21`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-chat-hooks` `*`
 
@@ -151,10 +152,11 @@ whole; an omitted group falls back to the library's English defaults.
 
 ### `GeneralForm`
 
-The Metadata field set on its own, for editors that need it without the
-toolset Setup section (the Custom App editor's General step is the in-repo
-consumer). It wraps `DeploymentCreationForm` and the `AvatarPickerModal` from
-`@epam/ai-dial-builder-form`.
+**Deprecated** — render `MetadataForm` from `@epam/ai-dial-builder-form`
+instead. `GeneralForm` keeps its props for existing callers (nothing in this
+repository renders it any more) and is now a thin wrapper over `MetadataForm`: it adds
+the toolset-flavoured default labels and resolves the picked avatar through
+`dialFileToAttachment` from `@epam/ai-dial-chat-hooks`.
 
 ```tsx
 import { GeneralForm } from '@epam/ai-dial-toolset-editor';

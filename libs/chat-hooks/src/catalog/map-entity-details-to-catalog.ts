@@ -77,6 +77,8 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
         label: 'Reasoning efforts',
         value: c.reasoningEfforts.join(' · '),
       });
+    if (c.hasSkills != null)
+      specs.push({ label: 'Skills', value: c.hasSkills });
 
     if (specs.length > 0) sections.push({ title: 'Capabilities', specs });
   }
@@ -240,6 +242,8 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
       });
     if (c.hasConfiguration != null)
       specs.push({ label: 'Configuration schema', value: c.hasConfiguration });
+    if (c.hasSkills != null)
+      specs.push({ label: 'Skills', value: c.hasSkills });
 
     if (specs.length > 0) sections.push({ title: 'Capabilities', specs });
   }
@@ -415,6 +419,7 @@ interface DeploymentCapabilities {
   hasConfiguration?: boolean;
   hasChatCompletion?: boolean;
   hasResponsesApi?: boolean;
+  hasSkills?: boolean;
   reasoningEfforts?: string[];
 }
 
@@ -442,6 +447,7 @@ const mapFeaturesToCapabilities = (
     hasConfiguration: features.hasConfigurationSchema,
     hasChatCompletion: features.chatCompletion,
     hasResponsesApi: features.responsesApi,
+    hasSkills: features.skillsSupported,
     reasoningEfforts: features.reasoningEfforts,
   };
 };

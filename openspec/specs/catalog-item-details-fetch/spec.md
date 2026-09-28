@@ -524,12 +524,20 @@ they are collected but intentionally unrendered, kept for a future or other cons
 toolset's `Capabilities` section — which, before this change, only ever rendered a subset of
 these now-hidden flags — SHALL therefore never render at all (its `specs` array is always
 empty). Model and application `Capabilities` sections continue to render `Tools`, `Parallel
-tool calls`, `Reasoning efforts` (model only), and `Configuration schema` (application only).
+tool calls`, `Reasoning efforts` (model only), and `Configuration schema` (application only),
+and SHALL additionally render a `Skills` row driven by a new `hasSkills` flag, mapped from
+`DeploymentFeaturesDetailsDto.skillsSupported` via `mapFeaturesToCapabilities`. Unlike the
+seven flags above, `hasSkills` is not deliberately hidden: it SHALL be added to
+`ModelCapabilities` and `AgentCapabilities` and rendered as the last row of each entity's
+`Capabilities` section, following the same plain-string-literal, boolean Yes/No row pattern as
+the existing rows. `ToolsetCapabilities` SHALL NOT gain a `hasSkills` field, since the
+toolset `Capabilities` section never renders.
 
 **Feature flag:** Not gated. **RTL impact:** None (label text only). **i18n impact:** New keys
 `catalog.details.modelSpecification.inputModalities`/`.outputModalities` added to
 `translation-keys.ts`/`en.json`; the seven hidden capability rows had no i18n keys to remove
-(they were untranslated string literals).
+(they were untranslated string literals); the new `Skills` row likewise uses a plain,
+untranslated string literal, consistent with the other rows in this section.
 
 #### Scenario: Wildcard MIME types render as group labels
 
@@ -561,7 +569,32 @@ tool calls`, `Reasoning efforts` (model only), and `Configuration schema` (appli
 - **WHEN** a model's `features` includes `mcp`, `cache`, `urlAttachments`, `folderAttachments`,
   `seed`, `systemPrompt`, `allowResume`, `tools: true`, and `parallelToolCalls: true`
 - **THEN** the model's `Capabilities` section renders only `Tools` and `Parallel tool calls`
-  (plus `Reasoning efforts` when present), with no rows for the seven hidden flags
+  (plus `Reasoning efforts` when present, plus `Skills` when `skillsSupported` is present),
+  with no rows for the seven hidden flags
+
+#### Scenario: Model Capabilities section renders Skills when supported
+
+- **WHEN** a model's `features` includes `skillsSupported: true`
+- **THEN** the model's `Capabilities` section renders a `Skills` row with value `true`, after
+  the `Tools`, `Parallel tool calls`, and `Reasoning efforts` rows
+
+#### Scenario: Agent Capabilities section renders Skills when supported
+
+- **WHEN** an application's `features` includes `skillsSupported: true`
+- **THEN** the application's `Capabilities` section renders a `Skills` row with value `true`,
+  after the `Tools`, `Parallel tool calls`, and `Configuration schema` rows
+
+#### Scenario: Skills row is omitted when the backend does not report the flag
+
+- **WHEN** a model's or application's `features` omits `skillsSupported` entirely
+- **THEN** the entity's `Capabilities` section renders no `Skills` row, consistent with how
+  every other optional Capabilities row is omitted when its backing flag is absent
+
+#### Scenario: Toolset Capabilities section still never renders, even with skillsSupported present
+
+- **WHEN** a toolset's `features` includes `skillsSupported: true`
+- **THEN** the toolset's Overview tab data contains no `Capabilities` section at all, since
+  `ToolsetCapabilities` does not carry `hasSkills`
 
 ### Requirement: The About tab is the only surface that reads `item.description`
 

@@ -121,6 +121,7 @@ const makeController = (
     onValidateUpload: vi.fn(),
     uploadBatchState: null,
     cancelUpload: vi.fn(),
+    cancelUploadFile: vi.fn(),
     clearUploadBatch: vi.fn(),
     onCreateFolder: vi.fn(),
     onCreateFolderValidate: vi.fn(),

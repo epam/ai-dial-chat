@@ -1,0 +1,134 @@
+/* Illustration pigments; layout and calculated poses stay in the scene. */
+.orange {
+  fill: var(--candy-orange, #e99042);
+}
+.corn {
+  fill: var(--candy-gold, #f4c962);
+  stroke: var(--candy-gold-edge, #9b6537);
+  stroke-width: 1.2;
+}
+.cream {
+  fill: var(--candy-cream, #fff3d0);
+}
+.green {
+  fill: var(--candy-green, #84bca0);
+  stroke: var(--candy-green-edge, #376356);
+  stroke-width: 1.2;
+}
+.purple {
+  fill: var(--candy-purple, #aa89cc);
+  stroke: var(--candy-purple-edge, #5a416f);
+  stroke-width: 1.2;
+}
+.wrapperFold {
+  fill: var(--candy-wrapper-shadow, #263349);
+  opacity: 0.25;
+}
+.stripe {
+  fill: none;
+  stroke: var(--candy-cream, #fff3d0);
+  stroke-width: 5;
+  opacity: 0.65;
+}
+.glint {
+  fill: none;
+  stroke: var(--candy-shine, #fff8e0);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.featherLight {
+  stop-color: var(--candy-feather-light, #8990a6);
+}
+.featherMid {
+  stop-color: var(--candy-feather-mid, #394254);
+}
+.featherDark {
+  stop-color: var(--candy-feather-dark, #111a2a);
+}
+.feather {
+  fill: var(--candy-feather-dark, #111a2a);
+  stroke: var(--candy-feather-edge, #8a93a8);
+  stroke-width: 0.8;
+}
+.outline {
+  stroke: var(--candy-feather-edge, #8a93a8);
+  stroke-width: 0.8;
+}
+.featherLine {
+  fill: none;
+  stroke: var(--candy-feather-light, #a6afc5);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+.claw {
+  fill: none;
+  stroke: var(--candy-claw, #a9a296);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.beak {
+  fill: var(--candy-beak, #555966);
+  stroke: var(--candy-beak-edge, #c3bba4);
+  stroke-width: 0.7;
+}
+.beakLine {
+  fill: none;
+  stroke: var(--candy-beak-edge, #c3bba4);
+  stroke-width: 1;
+}
+.eye {
+  fill: var(--candy-eye, #ebd48d);
+}
+.ink {
+  fill: var(--candy-ink, #19282b);
+}
+.inkLine {
+  fill: none;
+  stroke: var(--candy-ink, #19282b);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.linen {
+  fill: var(--candy-linen, #cab990);
+  stroke: var(--candy-linen-edge, #75674f);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.bone {
+  fill: var(--candy-bone, #e1dcc4);
+  stroke: var(--candy-bone-edge, #7b8277);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.seam {
+  fill: none;
+  stroke: var(--candy-seam, #857558);
+  stroke-width: 1.5;
+}
+.apron {
+  fill: var(--candy-apron, #496c77);
+  stroke: var(--candy-apron-edge, #263f4b);
+  stroke-width: 1.5;
+}
+.apronLight {
+  fill: var(--candy-apron-light, #7a9a9b);
+}
+.handle {
+  fill: none;
+  stroke: var(--candy-wood, #927047);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.bristles {
+  fill: var(--candy-straw, #c2a469);
+  stroke: var(--candy-straw-edge, #75603f);
+  stroke-width: 1.2;
+}
+.bristleLines {
+  fill: none;
+  stroke: var(--candy-straw-edge, #75603f);
+  stroke-width: 1;
+}
+.binding {
+  fill: var(--candy-binding, #9d6956);
+}

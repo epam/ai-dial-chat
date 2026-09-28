@@ -8,6 +8,7 @@ import type {
   DialFileManager,
   DialFileManagerTabs,
 } from '@epam/ai-dial-react-file-manager';
+import type { TransferQueueLabels } from '@epam/ai-dial-ui-kit';
 import type { ComponentProps, ReactNode } from 'react';
 
 type DialFileManagerComponentProps = ComponentProps<typeof DialFileManager>;
@@ -111,12 +112,10 @@ export interface DialFileManagerShellLabels {
   deleteConfirmLabel: string;
   /** Cancel-button label in the delete confirmation dialog. */
   deleteCancelLabel: string;
-  /** Title for the upload progress modal. */
-  uploadProgressTitle: string;
-  /** Cancel-button label in the upload progress modal. */
-  cancelLabel: string;
-  /** Returns upload progress text (e.g. "3 of 5 uploaded"). */
-  getUploadProgressText: (done: number, total: number) => string;
+  /** Returns the upload queue heading for the number of files in it (e.g. "Uploading 5 files"). */
+  getUploadQueueTitle: (count: number) => string;
+  /** Translated strings for the upload `TransferQueue`; unset ones fall back to the kit's English defaults. */
+  uploadQueueLabels?: Partial<TransferQueueLabels>;
   /** Empty-state title when a search yields no results. */
   searchEmptyStateTitle: string;
   /** Empty-state title for an empty subfolder. */

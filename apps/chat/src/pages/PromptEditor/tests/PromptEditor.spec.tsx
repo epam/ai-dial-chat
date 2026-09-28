@@ -1,7 +1,7 @@
+import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
@@ -14,41 +14,42 @@ import {
 } from '../../../server-api/prompts.api';
 import PromptEditor from '../PromptEditor';
 
-vi.mock('@epam/ai-dial-builder-form', () => ({
-  EditorLayout: ({
-    title,
-    onBack,
-    backAriaLabel,
-    isSaving,
-    labels,
-    actions,
-    leftContent,
-    rightContent,
-  }: {
-    title?: string;
-    onBack?: () => void;
-    backAriaLabel?: string;
-    isSaving?: boolean;
-    labels?: { savingStatusLabel?: string };
-    actions?: ReactNode;
-    leftContent?: ReactNode;
-    rightContent?: ReactNode;
-  }) => (
-    <div>
-      <button aria-label={backAriaLabel} onClick={onBack} />
-      <h1>{title}</h1>
-      <span role="status">
-        {isSaving ? (labels?.savingStatusLabel ?? 'Saving') : ''}
-      </span>
-      <div>{actions}</div>
-      <div>{leftContent}</div>
-      <div>{rightContent}</div>
-    </div>
-  ),
-  EditorSection: ({ children }: { children?: ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-builder-form')>();
+  /* The real shell renders its actions twice (header + mobile bar); the stub renders them once. */
+  return {
+    ...actual,
+    EntityEditor: ({
+      title,
+      onBack,
+      onCancel,
+      onSubmit,
+      submitLabel,
+      isSubmitting,
+      metadata,
+      setup,
+      labels,
+    }: EntityEditorProps) => (
+      <div>
+        <button
+          type="button"
+          aria-label={labels?.backAriaLabel}
+          onClick={onBack}
+        />
+        <h1>{title}</h1>
+        <button type="button" disabled={isSubmitting} onClick={onCancel}>
+          {labels?.cancelLabel}
+        </button>
+        <button type="button" disabled={isSubmitting} onClick={onSubmit}>
+          {submitLabel}
+        </button>
+        <div>{metadata}</div>
+        <div>{setup}</div>
+      </div>
+    ),
+  };
+});
 
 vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
@@ -173,6 +174,10 @@ describe('PromptEditor', () => {
     render(<PromptEditor />);
 
     expect(screen.getByText('promptEditor.createTitle')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'buttons.create' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'promptEditor.backButtonLabel' }),
+    ).toBeTruthy();
     expect(getPrompt).not.toHaveBeenCalled();
   });
 
@@ -190,6 +195,7 @@ describe('PromptEditor', () => {
     );
     expect(screen.getByText('promptEditor.editTitle')).toBeTruthy();
     expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'buttons.save' })).toBeTruthy();
   });
 
   it('shows an error state with retry when the prompt cannot be loaded', async () => {
@@ -213,7 +219,7 @@ describe('PromptEditor', () => {
     render(<PromptEditor />);
 
     await fillRequiredFields('summarize', 'Summarize:');
-    await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
     await waitFor(() =>
       expect(createPrompt).toHaveBeenCalledWith({
@@ -238,7 +244,7 @@ describe('PromptEditor', () => {
       await screen.findByPlaceholderText('promptEditor.contentPlaceholder'),
       'Summarize:',
     );
-    await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
     expect(createPrompt).not.toHaveBeenCalled();
     expect(screen.getByText('promptEditor.error.required')).toBeTruthy();
@@ -248,7 +254,7 @@ describe('PromptEditor', () => {
     render(<PromptEditor />);
 
     await fillRequiredFields('Work/summarize', 'Summarize:');
-    await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
     expect(createPrompt).not.toHaveBeenCalled();
     expect(screen.getByText('promptEditor.error.nameInvalid')).toBeTruthy();
@@ -266,7 +272,7 @@ describe('PromptEditor', () => {
     );
     await user.click(contentField);
     await user.paste('x'.repeat(50001));
-    await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
     expect(createPrompt).not.toHaveBeenCalled();
     expect(screen.getByText('promptEditor.error.contentTooLong')).toBeTruthy();
@@ -283,7 +289,7 @@ describe('PromptEditor', () => {
 
     render(<PromptEditor />);
     await fillRequiredFields('summarize', 'Summarize:');
-    await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
     expect(
       await screen.findByText('promptEditor.error.nameConflict'),
@@ -296,7 +302,7 @@ describe('PromptEditor', () => {
 
     render(<PromptEditor />);
     await fillRequiredFields('summarize', 'Summarize:');
-    await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
     await waitFor(() =>
       expect(showNotification).toHaveBeenCalledWith(

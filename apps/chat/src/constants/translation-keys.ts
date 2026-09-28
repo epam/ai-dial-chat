@@ -514,7 +514,10 @@ export enum DialFileManagerI18nKeys {
   Upload = 'dialFileManager.upload',
   NewFolder = 'dialFileManager.newFolder',
   Downloading = 'dialFileManager.downloading',
-  UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
+  UploadQueueTitle = 'dialFileManager.uploadQueueTitle',
+  UploadQueueCancelFileAriaLabel = 'dialFileManager.uploadQueueCancelFileAriaLabel',
+  UploadQueueFileProgressAriaLabel = 'dialFileManager.uploadQueueFileProgressAriaLabel',
+  UploadQueueProgressAriaLabel = 'dialFileManager.uploadQueueProgressAriaLabel',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
   MaxSizeOnly = 'dialFileManager.maxSizeOnly',
   UploadFileTooLarge = 'dialFileManager.uploadFileTooLarge',
@@ -547,7 +550,6 @@ export enum DialFileManagerI18nKeys {
   FolderLoadError = 'dialFileManager.folderLoadError',
   FolderNameInvalidChars = 'dialFileManager.folderNameInvalidChars',
   FolderNameEmpty = 'dialFileManager.folderNameEmpty',
-  FolderNameHidden = 'dialFileManager.folderNameHidden',
   FolderNameReserved = 'dialFileManager.folderNameReserved',
   FolderNameTooLong = 'dialFileManager.folderNameTooLong',
   FolderNameDuplicate = 'dialFileManager.folderConflict',
@@ -575,14 +577,19 @@ export enum DialFileManagerI18nKeys {
   MoveAction = 'dialFileManager.moveAction',
   CopyingLabel = 'dialFileManager.copyingLabel',
   MovingLabel = 'dialFileManager.movingLabel',
-  ItemCopiedSuccessfully = 'dialFileManager.itemCopiedSuccessfully',
+  FileCopiedSuccessfully = 'dialFileManager.fileCopiedSuccessfully',
+  FolderCopiedSuccessfully = 'dialFileManager.folderCopiedSuccessfully',
   ItemsCopiedSuccessfully = 'dialFileManager.itemsCopiedSuccessfully',
-  ItemMovedSuccessfully = 'dialFileManager.itemMovedSuccessfully',
+  CopiedToFolder = 'dialFileManager.copiedToFolder',
+  FileMovedSuccessfully = 'dialFileManager.fileMovedSuccessfully',
+  FolderMovedSuccessfully = 'dialFileManager.folderMovedSuccessfully',
   ItemsMovedSuccessfully = 'dialFileManager.itemsMovedSuccessfully',
-  ItemCopiedToFolder = 'dialFileManager.itemCopiedToFolder',
-  ItemsCopiedToFolder = 'dialFileManager.itemsCopiedToFolder',
-  ItemMovedToFolder = 'dialFileManager.itemMovedToFolder',
-  ItemsMovedToFolder = 'dialFileManager.itemsMovedToFolder',
+  MovedToFolder = 'dialFileManager.movedToFolder',
+  FileDuplicatedSuccessfully = 'dialFileManager.fileDuplicatedSuccessfully',
+  FolderDuplicatedSuccessfully = 'dialFileManager.folderDuplicatedSuccessfully',
+  ItemsDuplicatedSuccessfully = 'dialFileManager.itemsDuplicatedSuccessfully',
+  DuplicatedToSameFolder = 'dialFileManager.duplicatedToSameFolder',
+  ItemsDuplicatedToSameFolder = 'dialFileManager.itemsDuplicatedToSameFolder',
   CopyError = 'dialFileManager.copyError',
   CopyPartialError = 'dialFileManager.copyPartialError',
   MoveError = 'dialFileManager.moveError',
@@ -605,7 +612,6 @@ export enum DialFileManagerI18nKeys {
   SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
-  UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
   UnshareAction = 'dialFileManager.unshareAction',
   UnsharingLabel = 'dialFileManager.unsharingLabel',
   RemoveAccessAction = 'dialFileManager.removeAccessAction',
@@ -790,6 +796,7 @@ export enum ConversationExportI18nKeys {
   ErrorUnknown = 'conversationExport.errorUnknown',
   /* Queue chrome shared with the import queue — one instance of each string. */
   CanceledLabel = 'conversationExport.canceledLabel',
+  SucceededLabel = 'conversationExport.succeededLabel',
   CollapseQueueAriaLabel = 'conversationExport.collapseQueueAriaLabel',
   ExpandQueueAriaLabel = 'conversationExport.expandQueueAriaLabel',
   CloseQueueAriaLabel = 'conversationExport.closeQueueAriaLabel',
@@ -933,12 +940,10 @@ export enum FooterMessageI18nKeys {
 }
 
 export enum EditorI18nKeys {
-  StepGeneral = 'editor.stepGeneral',
-  StepsNavAriaLabel = 'editor.stepsNavAriaLabel',
-  StepOfTotal = 'editor.stepOfTotal',
-  MoreActionsLabel = 'editor.moreActionsLabel',
-  SaveButton = 'editor.saveButton',
-  NextButton = 'editor.nextButton',
+  BackAriaLabel = 'editor.backAriaLabel',
+  SavingStatus = 'editor.savingStatus',
+  MetadataSectionTitle = 'editor.metadataSectionTitle',
+  SetupSectionTitle = 'editor.setupSectionTitle',
   NameLabel = 'editor.nameLabel',
   NameRequired = 'editor.nameRequired',
   FieldTooLong = 'editor.fieldTooLong',
@@ -1105,6 +1110,9 @@ export enum SkillArchiveImportI18nKeys {
 }
 
 export enum AppsEditorI18nKeys {
+  CreateTitle = 'appsEditor.createTitle',
+  EditTitle = 'appsEditor.editTitle',
+  DefaultTypeName = 'appsEditor.defaultTypeName',
   GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
   GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
   GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
@@ -1125,14 +1133,9 @@ export enum ToolsetEditorI18nKeys {
   // Page header
   CreateTitle = 'toolsetEditor.createTitle',
   EditTitle = 'toolsetEditor.editTitle',
-  BackAriaLabel = 'toolsetEditor.backAriaLabel',
-  MetadataSectionTitle = 'toolsetEditor.metadataSectionTitle',
-  SetupSectionTitle = 'toolsetEditor.setupSectionTitle',
-  SavingStatus = 'toolsetEditor.savingStatus',
   // General form
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
-  TopicsPlaceholder = 'toolsetEditor.general.topicsPlaceholder',
   VersionInvalid = 'toolsetEditor.general.versionInvalid',
   // Settings form
   EndpointCaption = 'toolsetEditor.settings.endpointCaption',
@@ -1271,7 +1274,13 @@ export enum NotificationI18nKeys {
   RequestIdCopyFailedStatus = 'notification.requestId.copyFailedStatus',
 }
 
+export enum ApplicationEditorI18nKeys {
+  SetupPendingCreate = 'applicationEditor.setupPendingCreate',
+}
+
 export enum CustomAppI18nKeys {
+  CreateTitle = 'customApp.createTitle',
+  EditTitle = 'customApp.editTitle',
   // General form placeholders
   NamePlaceholder = 'customApp.general.namePlaceholder',
   DescriptionPlaceholder = 'customApp.general.descriptionPlaceholder',

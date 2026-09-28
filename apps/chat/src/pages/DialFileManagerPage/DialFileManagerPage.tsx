@@ -8,9 +8,11 @@ import {
   formatFileSize,
   type DialFileManagerShellLabels,
 } from '@epam/ai-dial-chat-shared';
-import { useDialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
+  useDialFileManagerTabs,
+} from '@epam/ai-dial-react-file-manager';
+import {
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
@@ -26,6 +28,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();
@@ -42,6 +45,7 @@ const DialFileManagerPage: FC = () => {
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
+      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -101,6 +105,7 @@ const DialFileManagerPage: FC = () => {
           DialFileManagerI18nKeys.OrganizationEmptyStateDescription,
         ),
       },
+      [DialFileManagerTabs.All]: { title: '', description: '' },
       [DialFileManagerTabs.Review]: { title: '', description: '' },
     }),
     [t],
@@ -113,6 +118,7 @@ const DialFileManagerPage: FC = () => {
       ),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
+      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -163,6 +169,8 @@ const DialFileManagerPage: FC = () => {
     }),
     [t],
   );
+
+  const uploadQueueLabels = useUploadQueueLabels();
 
   const labels: DialFileManagerShellLabels = useMemo(
     () => ({
@@ -244,10 +252,7 @@ const DialFileManagerPage: FC = () => {
       ),
       deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
       deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
-      uploadProgressTitle: t(DialFileManagerI18nKeys.UploadProgressTitle),
-      cancelLabel: t(ButtonsI18nKeys.Cancel),
-      getUploadProgressText: (done, total) =>
-        t(DialFileManagerI18nKeys.UploadProgressSummary, { done, total }),
+      ...uploadQueueLabels,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
@@ -278,6 +283,7 @@ const DialFileManagerPage: FC = () => {
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
+      uploadQueueLabels,
     ],
   );
 

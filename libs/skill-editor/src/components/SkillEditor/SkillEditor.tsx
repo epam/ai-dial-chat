@@ -1,6 +1,15 @@
-import { EditorLayout } from '@epam/ai-dial-builder-form';
+import {
+  DEFAULT_METADATA_FORM_LABELS,
+  EntityEditor,
+  MetadataField,
+  MetadataForm,
+  type DeploymentCreationFormValues,
+  type EntityEditorProps,
+  type MetadataFormLabels,
+} from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
+  MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
@@ -26,12 +35,9 @@ import {
   ElementSize,
   ErrorText,
   GhostButton,
-  Input,
   Label,
-  NeutralButton,
   PrimaryButton,
   Spinner,
-  Textarea,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
@@ -54,6 +60,7 @@ import '@uiw/react-md-editor/markdown-editor.css';
 import {
   ComponentType,
   FC,
+  ReactNode,
   Suspense,
   lazy,
   useCallback,
@@ -106,6 +113,18 @@ type MarkdownEditorComponent = ComponentType<{
   ariaLabel?: string;
 }>;
 
+const METADATA_FIELDS = [MetadataField.Name, MetadataField.Description];
+
+/* Instructions fill the column to the bottom, ending on the column's `py-6`. */
+const INSTRUCTIONS_EDITOR_BOTTOM_GAP = 24;
+/* Filling never shrinks the editor below a usable height. */
+const INSTRUCTIONS_EDITOR_MIN_HEIGHT = 300;
+
+/* Paddings of the Files column and the selected-file column, as before the shared editor. */
+const FILES_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
+const SETUP_SECTION_CLASS_NAME =
+  'gap-4 px-4 py-6 desktop:gap-5 desktop:px-8 desktop:py-6';
+
 const LazyMarkdown = lazy(async () => {
   const { MarkdownEditor } = await LazyMarkdownEditor();
   return { default: MarkdownEditor as MarkdownEditorComponent };
@@ -150,10 +169,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     description: initialValues?.description ?? '',
     instructions: initialValues?.instructions ?? '',
   });
-  const descriptionId = useId();
   const instructionsId = useId();
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
-  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
+  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>({
+    bottomGap: INSTRUCTIONS_EDITOR_BOTTOM_GAP,
+    minHeight: INSTRUCTIONS_EDITOR_MIN_HEIGHT,
+  });
   const valuesRef = useRef(values);
   const updateValues = (patch: Partial<SkillEditorValues>) => {
     const next = { ...valuesRef.current, ...patch };
@@ -341,14 +362,19 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     ),
     errorClassName: styles.refineError,
   };
-  const layoutStyles = colors?.border
-    ? {
-        colors: {
-          headerBorderColor: colors.border,
-          sidebarBorderColor: colors.border,
-        },
-      }
-    : undefined;
+  const editorStyles: EntityEditorProps['styles'] = {
+    layout: colors?.border
+      ? {
+          colors: {
+            headerBorderColor: colors.border,
+            sidebarBorderColor: colors.border,
+          },
+        }
+      : undefined,
+    section: colors?.title
+      ? { colors: { titleColor: colors.title } }
+      : undefined,
+  };
 
   const folderNameMessages = useMemo(
     () => ({
@@ -648,36 +674,95 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     </div>
   );
 
-  const actions = (
-    <>
-      <NeutralButton
-        label={t.cancelLabel ?? 'Cancel'}
-        onClick={handleCancel}
-        disabled={isSubmitting}
-      />
-      <PrimaryButton
-        label={t.createLabel ?? 'Create'}
-        iconBefore={
-          isSubmitting ? <Spinner size={16} ariaLabel="" /> : undefined
-        }
-        onClick={handleSubmit}
-        disabled={isSubmitting || isRefining || isLoading || hasLoadError}
-      />
-    </>
+  /* MetadataForm edits the shared deployment shape; the skill keeps only Name and Description. */
+  const metadataValues = useMemo<DeploymentCreationFormValues>(
+    () => ({
+      name: values.name,
+      description: values.description,
+      iconUrl: '',
+      version: '',
+      topics: [],
+      otherLocales: [],
+    }),
+    [values.name, values.description],
   );
+  const metadataErrors = useMemo(
+    () => ({ name: errors?.name, description: errors?.description }),
+    [errors?.name, errors?.description],
+  );
+  const metadataLabels = useMemo<MetadataFormLabels>(
+    () => ({
+      form: {
+        ...DEFAULT_METADATA_FORM_LABELS,
+        name: {
+          label: t.nameLabel ?? 'Name',
+          placeholder: t.namePlaceholder ?? 'good-morning-breakfast',
+        },
+        description: {
+          label: t.descriptionLabel ?? 'Description',
+          placeholder:
+            t.descriptionPlaceholder ??
+            'What this skill does and when to use it',
+        },
+        // The SKILL.md heading above the fields already names them.
+        ariaLabel: undefined,
+      },
+    }),
+    [
+      t.nameLabel,
+      t.namePlaceholder,
+      t.descriptionLabel,
+      t.descriptionPlaceholder,
+    ],
+  );
+  const handleMetadataChange = (
+    patch: Partial<DeploymentCreationFormValues>,
+  ) => {
+    if (patch.name !== undefined) updateValues({ name: patch.name });
+    if (patch.description !== undefined) {
+      descriptionRefinement.reset();
+      updateValues({ description: patch.description });
+    }
+  };
+  const renderRefinableDescription = onRefineDescription
+    ? (textarea: ReactNode, fieldId: string) => (
+        <TextRefinementField
+          isEnabled
+          fieldId={fieldId}
+          required
+          label={t.descriptionLabel ?? 'Description'}
+          labels={t}
+          refinement={descriptionRefinement}
+          disabled={isRefining || isSubmitting}
+          {...refinementStyles}
+        >
+          {textarea}
+        </TextRefinementField>
+      )
+    : undefined;
+
+  const editorProps = {
+    title,
+    onBack: handleBack,
+    onCancel: handleCancel,
+    onSubmit: handleSubmit,
+    submitLabel: t.createLabel ?? 'Create',
+    isSubmitDisabled: isRefining || isLoading || hasLoadError,
+    labels: {
+      cancelLabel: t.cancelLabel ?? 'Cancel',
+      backAriaLabel: backAriaLabel ?? 'Back',
+      savingStatusLabel: t.savingStatusLabel ?? 'Saving',
+    },
+    styles: editorStyles,
+    metadataTitle: null,
+  };
 
   if (isLoading) {
     return (
       <div dir={dir} className="relative flex min-h-0 flex-1 flex-col">
-        <EditorLayout
-          title={title}
-          onBack={handleBack}
-          backAriaLabel={backAriaLabel}
-          actions={actions}
-          isSaving={false}
-          labels={{ savingStatusLabel: t.savingStatusLabel }}
-          styles={layoutStyles}
-          leftContent={
+        <EntityEditor
+          {...editorProps}
+          metadata={
             <div
               role="status"
               aria-label={t.loadingAriaLabel ?? 'Loading skill'}
@@ -694,15 +779,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   if (hasLoadError) {
     return (
       <div dir={dir} className="relative flex min-h-0 flex-1 flex-col">
-        <EditorLayout
-          title={title}
-          onBack={handleBack}
-          backAriaLabel={backAriaLabel}
-          actions={actions}
-          isSaving={false}
-          labels={{ savingStatusLabel: t.savingStatusLabel }}
-          styles={layoutStyles}
-          leftContent={
+        <EntityEditor
+          {...editorProps}
+          metadata={
             <div role="alert" className="flex flex-col items-center gap-4 p-8">
               <ErrorText
                 text={
@@ -721,6 +800,98 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     );
   }
 
+  const isManifestSelected = selectedPath === SKILL_MANIFEST_PATH;
+  const setupTitle = isManifestSelected
+    ? SKILL_MANIFEST_PATH
+    : (t.selectedFileHeading?.(selectedNode?.name ?? selectedPath) ??
+      selectedNode?.name ??
+      selectedPath);
+
+  const alert =
+    submitError != null || conflict != null ? (
+      <div className="flex flex-col gap-2">
+        {submitError != null && (
+          <div className="flex items-center gap-2">
+            <ErrorText text={submitError} />
+            {onRetrySubmit != null && (
+              <GhostButton
+                label={t.retryLabel ?? 'Retry'}
+                onClick={onRetrySubmit}
+              />
+            )}
+          </div>
+        )}
+        {conflict != null && (
+          <div className="flex items-center gap-2">
+            <ErrorText text={conflict.message} />
+            <GhostButton
+              label={t.reloadLatestLabel ?? 'Reload latest'}
+              onClick={onReloadLatest}
+            />
+          </div>
+        )}
+      </div>
+    ) : undefined;
+
+  const instructionsEditor = (
+    <TextRefinementField
+      isEnabled={Boolean(onRefineInstructions)}
+      fieldId={instructionsId}
+      required
+      labelClassName={mergeClasses(styles.helperText, helperTextClassName)}
+      label={t.instructionsLabel ?? 'Instructions'}
+      labels={t}
+      refinement={instructionsRefinement}
+      disabled={isRefining || isSubmitting}
+      {...refinementStyles}
+    >
+      <div className="flex flex-1 flex-col gap-2">
+        {!onRefineInstructions && (
+          <Label
+            htmlFor={instructionsId}
+            className={mergeClasses(styles.helperText, helperTextClassName)}
+            label={t.instructionsLabel ?? 'Instructions'}
+            required
+          />
+        )}
+        <div
+          ref={instructionsCapRef}
+          className={mergeClasses(
+            MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+            MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
+            MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+          )}
+        >
+          <Suspense
+            fallback={
+              <Spinner
+                ariaLabel={t.instructionsLoadingAriaLabel ?? 'Loading'}
+              />
+            }
+          >
+            <LazyMarkdown
+              id={instructionsId}
+              ariaLabel={t.instructionsLabel ?? 'Instructions'}
+              value={values.instructions}
+              onChange={(value) => {
+                instructionsRefinement.reset();
+                updateValues({ instructions: value });
+              }}
+              theme={instructionsEditorTheme}
+              placeholder={
+                t.instructionsPlaceholder ??
+                'Write the skill instructions in Markdown'
+              }
+            />
+          </Suspense>
+        </div>
+        {errors?.instructions != null && (
+          <ErrorText text={errors.instructions} />
+        )}
+      </div>
+    </TextRefinementField>
+  );
+
   return (
     <div
       dir={dir}
@@ -736,18 +907,14 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         labels={labels}
       />
 
-      <EditorLayout
-        title={title}
-        onBack={handleBack}
-        backAriaLabel={backAriaLabel}
-        actions={actions}
-        isSaving={isSubmitting}
-        labels={{ savingStatusLabel: t.savingStatusLabel }}
-        styles={layoutStyles}
-        leftContent={
+      <EntityEditor
+        {...editorProps}
+        isSubmitting={isSubmitting}
+        metadataSectionClassName={FILES_SECTION_CLASS_NAME}
+        metadata={
           <>
             {/* Mobile: collapsible file-list summary, collapsed by default. */}
-            <div className="px-4 py-4 desktop:hidden">
+            <div className="desktop:hidden">
               <Accordion
                 title={t.editingFileLabel ?? 'Editing file'}
                 description={selectedNode?.name ?? SKILL_MANIFEST_PATH}
@@ -760,174 +927,48 @@ export const SkillEditor: FC<SkillEditorProps> = ({
             </div>
 
             {/* Desktop: always-visible Files panel. */}
-            <div className="hidden px-8 py-6 desktop:block">
+            <div className="hidden desktop:block">
               {renderFilesPane(SkillFilesPane.Desktop)}
             </div>
           </>
         }
-        rightContent={
-          <div className="flex flex-1 flex-col gap-4 px-4 py-6 desktop:gap-5 desktop:px-8">
-            {submitError != null && (
-              <div role="alert" className="flex items-center gap-2">
-                <ErrorText text={submitError} />
-                {onRetrySubmit != null && (
-                  <GhostButton
-                    label={t.retryLabel ?? 'Retry'}
-                    onClick={onRetrySubmit}
-                  />
-                )}
-              </div>
-            )}
-            {conflict != null && (
-              <div role="alert" className="flex items-center gap-2">
-                <ErrorText text={conflict.message} />
-                <GhostButton
-                  label={t.reloadLatestLabel ?? 'Reload latest'}
-                  onClick={onReloadLatest}
-                />
-              </div>
-            )}
-
-            <h2 className={mergeClasses(styles.title, titleClassName)}>
-              {selectedPath === SKILL_MANIFEST_PATH
-                ? SKILL_MANIFEST_PATH
-                : (t.selectedFileHeading?.(
-                    selectedNode?.name ?? selectedPath,
-                  ) ??
-                  selectedNode?.name ??
-                  selectedPath)}
-            </h2>
-
-            {selectedPath === SKILL_MANIFEST_PATH ? (
-              <>
-                <Input
-                  labelProps={{
-                    label: t.nameLabel ?? 'Name',
-                    required: true,
-                  }}
-                  value={values.name}
-                  onChange={(value) => updateValues({ name: value ?? '' })}
-                  placeholder={t.namePlaceholder ?? 'good-morning-breakfast'}
-                  caption={
-                    errors?.name
-                      ? undefined
-                      : (t.nameCaption ??
-                        "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.")
-                  }
-                  error={errors?.name}
-                  invalid={!!errors?.name}
-                  disabled={isNameReadOnly}
-                />
-                <TextRefinementField
-                  isEnabled={Boolean(onRefineDescription)}
-                  fieldId={descriptionId}
-                  required
-                  label={t.descriptionLabel ?? 'Description'}
-                  labels={t}
-                  refinement={descriptionRefinement}
-                  disabled={isRefining || isSubmitting}
-                  {...refinementStyles}
-                >
-                  <Textarea
-                    id={descriptionId}
-                    aria-required
-                    labelProps={
-                      onRefineDescription
-                        ? undefined
-                        : {
-                            label: t.descriptionLabel ?? 'Description',
-                            required: true,
-                          }
+        alert={alert}
+        setupTitle={setupTitle}
+        setupSectionClassName={SETUP_SECTION_CLASS_NAME}
+        setup={
+          isManifestSelected ? (
+            <>
+              <MetadataForm
+                values={metadataValues}
+                errors={metadataErrors}
+                onChange={handleMetadataChange}
+                fields={METADATA_FIELDS}
+                isDescriptionRequired
+                isNameReadOnly={isNameReadOnly}
+                nameCaption={
+                  errors?.name
+                    ? undefined
+                    : (t.nameCaption ??
+                      "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.")
+                }
+                renderDescription={renderRefinableDescription}
+                labels={metadataLabels}
+              />
+              {instructionsEditor}
+            </>
+          ) : (
+            <>
+              {selectedNode?.kind === SkillFileNodeKind.File &&
+                (supportingFileContent ?? (
+                  <CaptionText
+                    text={
+                      t.supportingFileNote ??
+                      'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
                     }
-                    value={values.description}
-                    placeholder={
-                      t.descriptionPlaceholder ??
-                      'What this skill does and when to use it'
-                    }
-                    onChange={(value) => {
-                      descriptionRefinement.reset();
-                      updateValues({ description: value });
-                    }}
-                    error={errors?.description}
-                    invalid={!!errors?.description}
                   />
-                </TextRefinementField>
-                <TextRefinementField
-                  isEnabled={Boolean(onRefineInstructions)}
-                  fieldId={instructionsId}
-                  required
-                  labelClassName={mergeClasses(
-                    styles.helperText,
-                    helperTextClassName,
-                  )}
-                  label={t.instructionsLabel ?? 'Instructions'}
-                  labels={t}
-                  refinement={instructionsRefinement}
-                  disabled={isRefining || isSubmitting}
-                  {...refinementStyles}
-                >
-                  <div className="flex flex-1 flex-col gap-2">
-                    {!onRefineInstructions && (
-                      <Label
-                        htmlFor={instructionsId}
-                        className={mergeClasses(
-                          styles.helperText,
-                          helperTextClassName,
-                        )}
-                        label={t.instructionsLabel ?? 'Instructions'}
-                        required
-                      />
-                    )}
-                    <div
-                      ref={instructionsCapRef}
-                      className={mergeClasses(
-                        MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
-                        MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
-                      )}
-                    >
-                      <Suspense
-                        fallback={
-                          <Spinner
-                            ariaLabel={
-                              t.instructionsLoadingAriaLabel ?? 'Loading'
-                            }
-                          />
-                        }
-                      >
-                        <LazyMarkdown
-                          id={instructionsId}
-                          ariaLabel={t.instructionsLabel ?? 'Instructions'}
-                          value={values.instructions}
-                          onChange={(value) => {
-                            instructionsRefinement.reset();
-                            updateValues({ instructions: value });
-                          }}
-                          theme={instructionsEditorTheme}
-                          placeholder={
-                            t.instructionsPlaceholder ??
-                            'Write the skill instructions in Markdown'
-                          }
-                        />
-                      </Suspense>
-                    </div>
-                    {errors?.instructions != null && (
-                      <ErrorText text={errors.instructions} />
-                    )}
-                  </div>
-                </TextRefinementField>
-              </>
-            ) : (
-              selectedNode?.kind === SkillFileNodeKind.File &&
-              (supportingFileContent ?? (
-                <CaptionText
-                  text={
-                    t.supportingFileNote ??
-                    'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
-                  }
-                />
-              ))
-            )}
-          </div>
+                ))}
+            </>
+          )
         }
       />
 

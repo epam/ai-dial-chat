@@ -36,11 +36,11 @@ through the injected `DialFilesApi` port.
 
 `onCreateFolderValidate` and `onRenameValidate` SHALL return a discriminated
 `FileNameValidationError` (`empty`, `forbiddenSymbols`, `reservedName`,
-`tooLong`, `duplicateName`, `leadingDot` — folder-creation only) or `null`
+`tooLong`, `duplicateName`) or `null`
 for a valid name, and SHALL NOT import `react-i18next` or produce a
 pre-rendered message string. Validation SHALL check, in order: empty,
 forbidden symbols (including a caller-supplied `forbiddenSymbolsRegExp`),
-leading dot (creation only), the reserved marker name, length over 255
+the reserved marker name, length over 255
 characters, and case-insensitive sibling-name conflict.
 
 #### Scenario: A forbidden-symbol name is rejected with the offending symbols

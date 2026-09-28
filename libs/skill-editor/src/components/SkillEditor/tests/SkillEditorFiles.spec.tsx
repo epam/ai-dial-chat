@@ -163,6 +163,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },
+  TextareaResize: { Vertical: 'vertical' },
+  TagInput: () => null,
   Accordion: ({
     title,
     children,
@@ -691,6 +693,50 @@ describe('SkillEditor — files pane', () => {
     expect(
       screen.getAllByRole('heading', { name: 'notes.md' })[0],
     ).toBeTruthy();
+  });
+
+  it('shows the SKILL.md Name and Description only while SKILL.md is selected', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      initialValues: { name: 'good-morning', description: 'Says hi' },
+      files: [
+        { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+      ],
+    });
+
+    expect(screen.getByRole('heading', { name: 'SKILL.md' })).toBeTruthy();
+    expect(screen.getByDisplayValue('good-morning')).toBeTruthy();
+    expect(screen.getByDisplayValue('Says hi')).toBeTruthy();
+
+    await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
+
+    expect(
+      screen.getAllByRole('heading', { name: 'notes.md' })[0],
+    ).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'SKILL.md' })).toBeNull();
+    expect(screen.queryByDisplayValue('good-morning')).toBeNull();
+    expect(screen.queryByDisplayValue('Says hi')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Metadata' })).toBeNull();
+  });
+
+  it('orders the Editing file accordion, then the SKILL.md heading, then Name in the stacked mobile column', () => {
+    renderEditor();
+
+    const filesAccordion = screen.getByRole('heading', {
+      name: 'Editing file',
+    });
+    const manifestHeading = screen.getByRole('heading', { name: 'SKILL.md' });
+    const nameField = screen.getByRole('textbox', { name: /Name/ });
+
+    expect(
+      filesAccordion.compareDocumentPosition(manifestHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      manifestHeading.compareDocumentPosition(nameField) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Metadata' })).toBeNull();
   });
 
   it('renders supportingFileContent for a selected supporting file', async () => {

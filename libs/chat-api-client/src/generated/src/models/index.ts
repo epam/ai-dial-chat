@@ -2765,6 +2765,12 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   skillsSupported?: boolean;
+  /**
+   * Whether the deployment supports tools/functions in chat completion requests
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  tools?: boolean;
 }
 /**
  *

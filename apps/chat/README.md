@@ -54,160 +54,22 @@ Existing conversations send text normally. The current modules are:
 | `halloween` | Ghosts, connected web, bats, cat, witches, ghost train, portal, ravens, candy rain, invisible paw prints, dancing skeletons | `trick or treat` → random descending spiders, cauldron, mimic, pumpkin bowling or mummy |
 | `new-year`  | Snow, confetti, flying sleighs                                                                                              | `happy new year` → confetti                                                             |
 
-The Halloween portal briefly pulls visual copies of up to two adjacent, visible
-conversation-history rows into its claw, then restores the rows. It never changes
-conversation data. Interaction, scrolling, resizing, navigation or enabling reduced
-motion cancels the borrowing immediately. With closed or empty history, only the
-portal artwork appears. Reduced motion shows a static rift and leaves history alone.
-Every scene notification includes a hint for the event's secret chat phrase.
-
-The four new message-only surprises interact with the existing page through
-inert visual copies. A mummy walks in from the side, braces against the chat input
-and strains twice without moving it, then slowly pushes it completely offscreen.
-The input returns at the end; its draft and focus are preserved throughout.
-A cauldron pulls two chats into its brew and releases them as bubbles; a toothy
-mimic curls a shaded tongue in front of and behind two neighboring chats and pulls
-them into its mouth, keeping them attached to the tongue tip, then chews and spits them back. A pumpkin
-rolls into the visible history and scatters only the rows whose visible titles
-its body touches (up to six), starting each row's motion at contact, before they regroup.
-Original layout and conversation data never change. Copies disappear and originals
-return immediately on typing, composition, clicking, focus changes, scrolling,
-resizing, source changes, navigation or reduced motion. Unavailable or unusually
-large targets fall back to artwork alone. The mummy can use a focused composer;
-history scenes skip focused rows. The mummy animates for twelve seconds and
-unmounts after thirteen; the other three animate for eight and unmount after nine.
-Repeated secret messages select randomly without consecutive repeats, independently
-of pumpkin clicks. The new scenes are exclusive to messages and show a static
-illustration with reduced motion enabled.
-
-Descending spiders can now borrow up to three visible welcome-page elements:
-the greeting, model selector, attachment control and sometimes a history row.
-They descend, weave fine curved silk strands around their prizes, then climb above the viewport carrying
-the copies. Each carrier and its cargo share a transform. Originals retain layout
-and focus and return within eleven seconds; interaction cancels the theft
-immediately. Focused or expanded controls are skipped. Missing targets keep the
-decorative spider drop; reduced motion leaves the page untouched and shows static
-spiders. Existing public selectors provide all targets without changes to core
-page components or libraries.
-
-The connected-web scene keeps 54 spiders on mobile and 80 on desktop, with
-slightly larger bodies and small webs that also attach to visible composer,
-welcome-heading and conversation-history corners, plus the main pumpkin's body.
-The pumpkin gets a target before the history limit is filled and remains clickable.
-A single canvas draws at most
-30 times per second, reusing finished silk and spider artwork. Target geometry is
-read only at scene setup; real controls retain their focus and behavior. Scrolling,
-resizing or hiding the tab stops the scene, and reduced motion shows a static web.
-
-Ghosts possess separate small interface elements: their inert visual copies
-float and grow eyes, while one brave ghost tries to frighten the main pumpkin.
-The pumpkin answers with a glowing grin; the ghost recoils and hides with its
-tail exposed before the flock peeks out and flees along staggered, separate paths.
-The scene borrows at most three elements on mobile and five on desktop, each
-with at most 60 descendants, without cloning the composer or changing drafts.
-Focused, expanded, editable, hidden and clipped controls are skipped. Original
-elements return within twelve seconds; interaction, source changes, scrolling,
-resizing, navigation and motion-preference changes stop the scene immediately.
-Missing anchors retain the decorative crossing flock. Reduced motion or missing
-animation support shows stationary ghosts without borrowing elements. Targeting
-and playback stay in the Halloween layer and work in both LTR and RTL.
-
-The cat tests gravity on nearby buttons: it walks in on four legs, jumps onto the
-composer and sits there glancing at the viewer and down at its prize, then hops
-down beside up to two small controls. It moves each button gradually over two
-paw pushes, looking at the viewer, at the button while pushing, and back at the
-viewer, until its prizes fall off their ledges. The last button rebounds,
-startling the cat before it sits to groom and leaves. A seated drawing sits,
-pushes and grooms; a standing drawing with a diagonal gait walks and jumps. Paw
-contact and falling copies share one 25-second timeline; the Cat scene unmounts
-after 25.5 seconds. Only safe idle buttons are copied (at most sixty descendants
-and 300×96/24000px² each).
-The composer stays live, preserving its draft, focus, selection and position.
-Interaction or real anchor changes restore controls immediately; unrelated toast
-portal removal leaves playback running. One eligible button keeps the same
-testing/rebound story; no usable anchors retain a decorative crossing cat.
-Reduced motion or missing animation support shows a stationary cat without
-borrowing UI. All targeting and animation remain in the Halloween layer.
-
-The bat scene stages a failed wake-up attempt: a sleepy bat hangs under the
-composer while two helpers fan it. Their wing downstrokes rock nearby small
-controls, cards or history rows after a short distance-dependent delay. Stronger
-opposing currents spin
-the helpers away separately; the sleeper opens one eye, yawns, crawls to a nearby
-idle button (or along the composer edge) and flies away last. The 17.5-second
-scene uses at most three mobile/five desktop visual copies with at most sixty
-descendants each. The composer remains untouched. Interaction or anchor changes
-restore originals immediately. Missing attachment space retains the old flight;
-reduced motion or missing animation support uses stationary bats. SVG and
-precomputed animations keep playback free of repeated layout measurements, in
-both LTR and RTL. Flight paths carry momentum through turns, approaches slow
-before landing, wingbeats change pace continuously and borrowed surfaces settle
-with damped motion. Jointed outer wings fold on recovery and spread on the power
-stroke, accompanied by a slight body lift. Airflow has no rays, streaks or drawn
-vortex. The scene unmounts after eighteen seconds.
-
-The raven scene tears small visual fragments from separated headings, buttons
-and history rows to build a nest on the main pumpkin. Each collector has its own
-pickup point and flight path, drops its piece briefly, then leaves in a separate
-direction without gathering over the nest. Two other birds tug opposite ends of
-a conversation, then one lets go and the other recoils into the nest with its
-prize. The pumpkin shakes and the borrowed row returns. With no eligible visible
-history, the pair uses a composer-border strip instead. Five birds on mobile and
-eight on desktop share precomputed motion with their cargo. Copies are limited
-to one small row in five visual sections and three/six small fragments from
-subtrees of at most 16 descendants; the composer is never cloned. Input, focus,
-scrolling, resizing, target changes or scene replacement cancel playback and
-restore the interface. Reduced motion shows stationary artwork. All targeting
-stays in the Halloween layer, using physical coordinates for both LTR and RTL.
-
-The Halloween train stops with an empty final wagon, picks up the main pumpkin
-and departs with smoke from its chimney and side vents. Boarding uses the pumpkin's
-actual screen position; its decorative copy rides behind the wagon front while
-the original labelled button retains focus and layout. The scene restores the
-pumpkin on completion or interaction and shows static artwork under reduced motion.
-Train direction follows the pumpkin's side, including RTL.
-
-`HALLOWEEN_TRAIN_AUDIO_SRC` in `src/constants/halloween.ts` optionally accepts a
-supplied audio asset URL. It is unset by default, so the train stays silent and
-makes no audio request.
-Configured playback is bounded to the scene, stops on interruption and gracefully
-handles browser playback rejection. Reduced motion always stays silent.
+The celebrations themselves live in
+[`@epam/ai-dial-celebrations`](../../libs/celebrations/README.md), which documents
+every scene, decoration behavior and the runtime. The app only adapts itself to
+the library in [`CelebrationHost`](src/context/CelebrationHost.tsx): it passes the
+configured event on `/` once the user config is ready, the navigation key as the
+reset key, labels translated from the existing `halloween.*` and `newYear.*` keys,
+the success toast as the notification sink, `useIsMobile`, and the composer,
+starter-list and history-panel anchors. The app keeps every scene enabled.
 
 ### Adding an event
 
-Use [the New Year definition](src/celebrations/new-year.ts) as the example and
-implement the [CelebrationEvent contract](src/types/celebration.ts):
-
-1. Add event components and resources in the app. The `Decoration` component
-   receives `onActivate`; it does not import the provider or select scenes.
-2. Export a default definition with `id`, optional `iconUrl`, `Decoration`,
-   `scenes`, `clickSceneIds` and `notificationTitleKey`. Every scene supplies
-   an `id`, `Component`, `durationMs` and typed `notificationKey`. Its duration
-   must include delayed arrivals and departures. An optional `secretTrigger`
-   supplies `phrases`, `hintPhrase` and `sceneIds`. The runtime samples distinct
-   valid IDs without consecutive repeats, independently of click selection.
-   A singleton pool can repeat; an empty or entirely invalid pool leaves messages
-   untouched. Both selection histories reset on navigation or event changes.
-3. Add one dynamic import to [the event registry](src/celebrations/registry.ts).
-   New IDs require no backend enum, provider, header or composer changes.
-4. Add translated labels/messages. Scenes for an event with a secret phrase
-   include `{{phrase}}` in their notification; the runtime interpolates the
-   module's `hintPhrase`. Phrases match the entire normalized input and support
-   non-Latin characters; omitting a trigger leaves all text untouched.
-5. Reuse [FlyingCharacters](src/components/FlyingCharacters/FlyingCharacters.tsx)
-   and [flight paths](src/utils/flying-characters.ts) where appropriate. Every
-   custom animation supplies a visible static frame under reduced motion,
-   stays decorative and non-interactive, and supports the mobile/desktop
-   breakpoints and RTL. A scene renders artwork inside the shared viewport
-   layer rather than creating its own portal.
-
-The shared provider owns one active scene, random selection without consecutive
-repeats when alternatives exist, replacement and cleanup. Event changes and
-navigation cancel playback and pending imports. Loading, unknown IDs and module
-failures leave the ordinary chat available; no input is intercepted until the
-selected module is ready. Missing providers are intentionally inert. Seasonal
-icons replace existing navigation/header slots only, preserving theme wordmarks
-and the browser-tab favicon. No event state is persisted.
+1. Add the event to the library as a new entry point; see the library README.
+2. Register its loader in `EVENTS` and its translated labels in
+   [`CelebrationHost`](src/context/CelebrationHost.tsx), adding the keys to
+   `translation-keys.ts` and `en.json`.
+3. New IDs require no backend enum, provider, header or composer changes.
 
 ## Content Security Policy
 
