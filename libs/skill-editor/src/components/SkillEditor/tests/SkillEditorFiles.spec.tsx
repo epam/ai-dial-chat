@@ -29,21 +29,25 @@ const fakeMouseEvent = new MouseEvent('click') as unknown as ReactMouseEvent;
  * Menu items render as buttons; a submenu (`children`) renders as a list
  * named after its parent entry, so tests can scope with `within`.
  */
-const renderMenuItems = (items: DropdownItem[]): ReactNode =>
-  items.map((item) =>
-    item.children ? (
-      <ul key={item.key} aria-label={String(item.label)}>
-        {renderMenuItems(item.children)}
+const renderMenuItems = (
+  items: DropdownItem[],
+  onSelect?: () => void,
+): ReactNode =>
+  items.map(({ key, label, children: subItems, onClick }) =>
+    subItems ? (
+      <ul key={key} aria-label={String(label)}>
+        {renderMenuItems(subItems, onSelect)}
       </ul>
     ) : (
       <button
-        key={item.key}
+        key={key}
         role="menuitem"
-        onClick={() =>
-          item.onClick?.({ key: item.key, domEvent: fakeMouseEvent })
-        }
+        onClick={() => {
+          onClick?.({ key, domEvent: fakeMouseEvent });
+          onSelect?.();
+        }}
       >
-        {item.label}
+        {label}
       </button>
     ),
   );
@@ -133,8 +137,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
           {label}
         </button>
         {isOpen && (
-          <div role="menu" onClick={() => setIsOpen(false)}>
-            {renderMenuItems(items)}
+          <div role="menu">
+            {renderMenuItems(items, () => setIsOpen(false))}
           </div>
         )}
       </div>
@@ -272,6 +276,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
   ButtonAppearance: { Solid: 'solid', Ghost: 'ghost', Link: 'link' },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
   Popup: ({
     open,
@@ -845,13 +850,11 @@ describe('SkillEditor — Add dropdown', () => {
   });
 
   it('renders the Add trigger inside a right-to-left root', () => {
-    const { container } = renderEditor({ dir: 'rtl' });
+    renderEditor({ dir: 'rtl' });
 
-    const root = container.querySelector('[dir="rtl"]');
-    expect(root).toBeTruthy();
-    expect(
-      within(root as HTMLElement).getAllByRole('button', { name: 'Add' })[0],
-    ).toBeTruthy();
+    const addTrigger = screen.getAllByRole('button', { name: 'Add' })[0];
+    // eslint-disable-next-line testing-library/no-node-access -- the root surface has no role or text to query; the assertion is about the trigger's ancestry
+    expect(addTrigger.closest('[dir="rtl"]')).toBeTruthy();
   });
 });
 
@@ -887,9 +890,13 @@ describe('SkillEditor — node menu', () => {
     renderEditor({ files: [docsFile] }, fullFileActions());
 
     // Scope to a.md's own row; the implied docs folder has an Add sibling of its own.
-    const fileRow = screen
-      .getAllByRole('button', { name: 'a.md' })[0]
-      .closest('li') as HTMLElement;
+    const [fileRow] = screen
+      .getAllByRole('listitem')
+      .filter(
+        (row) =>
+          within(row).queryByRole('button', { name: 'a.md' }) &&
+          within(row).queryAllByRole('listitem').length === 0,
+      );
     const sibling = within(fileRow).getByRole('list', { name: 'Add sibling' });
     await user.click(
       within(sibling).getByRole('menuitem', {

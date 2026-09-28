@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
 import { SkillAddSource } from '../../types/skill-add-source';
+import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
 import {
   buildDialFileTree,
   joinSkillPath,

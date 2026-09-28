@@ -370,7 +370,8 @@ describe('SkillFileUploadDialog', () => {
   });
 
   it('keeps Add disabled while an archive is being read', async () => {
-    let resolveExtraction: (entries: SkillFileSourceEntry[]) => void = () => {};
+    let resolveExtraction:
+      ((entries: SkillFileSourceEntry[]) => void) | undefined;
     render(
       <SkillFileUploadDialog
         isOpen
@@ -394,7 +395,7 @@ describe('SkillFileUploadDialog', () => {
         .disabled,
     ).toBe(true);
 
-    resolveExtraction([{ path: 'a.md', file: new File(['x'], 'a.md') }]);
+    resolveExtraction?.([{ path: 'a.md', file: new File(['x'], 'a.md') }]);
 
     expect(await screen.findByText('a.md')).toBeTruthy();
     expect(screen.queryByText('Reading archive')).toBeNull();

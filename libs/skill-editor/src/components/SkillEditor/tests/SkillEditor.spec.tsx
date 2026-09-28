@@ -192,6 +192,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
   ButtonAppearance: { Solid: 'solid', Ghost: 'ghost', Link: 'link' },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
   Popup: ({
     open,
@@ -638,6 +639,6 @@ describe('SkillEditor — public class names', () => {
       SKILL_EDITOR_CLASS.root,
     );
     expect(root).toBeTruthy();
-    expect(root!.getAttribute('dir')).toBe('rtl');
+    expect(root?.getAttribute('dir')).toBe('rtl');
   });
 });
