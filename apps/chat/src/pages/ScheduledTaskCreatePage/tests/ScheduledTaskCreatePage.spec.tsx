@@ -431,13 +431,6 @@ describe('ScheduledTaskCreatePage', () => {
     );
   });
 
-  it('hides the entire selector when skill usage is disabled', () => {
-    useFeatureFlagMock.mockImplementation(
-      (key) => key === 'scheduledTasksEnabled',
-    );
-    renderAtRoute('/scheduled-tasks/new');
-    expect(screen.queryByLabelText('skillUrl')).toBeNull();
-  });
   beforeEach(() => {
     vi.clearAllMocks();
     useFeatureFlagMock.mockReturnValue(true);

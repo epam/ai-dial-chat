@@ -758,8 +758,7 @@
       "errorNotification": "Failed to create the scheduled task",
       "skillLabel": "Skill",
       "skillPlaceholder": "Choose a skill",
-      "instructionsOrSkillRequired": "Choose a skill or write instructions.",
-      "instructionsOnlySubtitle": "Write custom instructions for this task."
+      "instructionsOrSkillRequired": "Choose a skill or write instructions."
     },
     "detail": {
       "repeatsLabel": "Repeats",
