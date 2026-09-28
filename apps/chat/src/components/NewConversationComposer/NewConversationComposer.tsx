@@ -3,6 +3,7 @@ import {
   FileDndOverlay,
   isMimeTypeAllowed,
 } from '@epam/ai-dial-attachment-input';
+import { CelebrationDecor, useCelebration } from '@epam/ai-dial-celebrations';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import {
   AttachmentValidationErrorReason,
@@ -47,7 +48,6 @@ import {
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
-import { useCelebration } from '../../context/CelebrationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -62,7 +62,6 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { resolveLocalizedText } from '../../utils/locale';
-import CelebrationDecor from '../CelebrationDecor/CelebrationDecor';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 

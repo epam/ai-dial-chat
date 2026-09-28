@@ -1,0 +1,2 @@
+/* Utilities the scenes use in TSX; the published build adds them to index.css. */
+@tailwind utilities;

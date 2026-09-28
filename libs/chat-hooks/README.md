@@ -1032,21 +1032,23 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name                        | Type                                | Description                                                                                                                                                                                                                                                                                                       |
-| --------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                        |
-| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                          |
-| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                           |
-| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                     |
-| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                              |
-| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                              |
-| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                                                                                             |
-| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                   |
-| `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed stream. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors is set to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error. |
+| Name                        | Type                                | Description                                                                                                                                                                                                                                                                                                                            |
+| --------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                                             |
+| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                                               |
+| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                                                |
+| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                                          |
+| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                                                   |
+| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                                                   |
+| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects.                                                                                                                                                                                                                                                                                  |
+| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                                        |
+| `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`.
 
 **Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event.
+
+When the transport reports a `StreamInterruptedError` — the connection was lost or went silent, as a laptop sleep or phone lock mid-generation causes — the hook does not show an error right away, because the backend-owned generation usually keeps running. The path stays streaming and stoppable, and the partial answer stays on screen, while the hook re-fetches the conversation through `transport.getConversation` (retrying a rejected fetch after 1, 2, 4, 8 and 16 s, or as soon as the browser reports `online`). If the server copy still ends in this turn's unresolved placeholder, the hook rejoins the generation through the same attach/watch flow as `resumeIfAwaitingGeneration`; if the answer is already saved, it shows it; otherwise it settles with `streamErrorMessage: ''`, as for any transport error. `handleStop` keeps working throughout.
 
 Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on) for hosts that need the same checks outside the hook.
 
@@ -2181,12 +2183,31 @@ onError: (error: Error) => {
 };
 ```
 
-An in-band `data: {"error":{"message":…}}` chunk — DIAL Core itself reporting a failure mid-stream — is reported as a `StreamUpstreamError`, whose `message` is upstream text intended for the user. Every other failure (a rejected `fetch`, a non-OK status other than `409`, a missing body, a stream that breaks mid-read) stays a plain `Error` with technical detail. `useConversationStream` shows a `StreamUpstreamError`'s text on the message bubble and replaces any other non-conflict error with `''`, so a custom `ConversationStreamTransport` must raise `StreamUpstreamError` for upstream text it wants the user to see:
+An in-band `data: {"error":{"message":…}}` chunk — DIAL Core itself reporting a failure mid-stream — is reported as a `StreamUpstreamError`, whose `message` is upstream text intended for the user. A network-level failure — a rejected `fetch`, or a stream that breaks mid-read after a 2xx response — is reported as a `StreamInterruptedError` whose `cause` is the original error, and so is a stream that receives no byte (keepalive comments included) for `idleTimeoutMs`, which defaults to `DEFAULT_STREAM_IDLE_TIMEOUT_MS` (45 s) and is re-checked immediately on `visibilitychange`, `online` and `pageshow`. Every other failure (a non-OK status other than `409`, a missing body) stays a plain `Error` with technical detail. `useConversationStream` shows a `StreamUpstreamError`'s text on the message bubble and replaces any other non-conflict error with `''`, so a custom `ConversationStreamTransport` must raise `StreamUpstreamError` for upstream text it wants the user to see:
 
 ```ts
 import { StreamUpstreamError } from '@epam/ai-dial-chat-hooks';
 
 options.onError(new StreamUpstreamError('Rate limit exceeded'));
+```
+
+A custom transport that raises `StreamInterruptedError` for a lost connection opts into the hook's recovery; one that never raises it keeps the plain error behaviour. The idle timeout can be tuned per host:
+
+```ts
+import {
+  createChatStreamApi,
+  DEFAULT_STREAM_IDLE_TIMEOUT_MS,
+  StreamInterruptedError,
+} from '@epam/ai-dial-chat-hooks';
+
+const chatStreamApi = createChatStreamApi({
+  getCsrfToken,
+  setCsrfToken,
+  completionsBasePath: '/api/v1/conversations',
+  idleTimeoutMs: DEFAULT_STREAM_IDLE_TIMEOUT_MS * 2,
+});
+
+options.onError(new StreamInterruptedError(new TypeError('Failed to fetch')));
 ```
 
 ### getApiErrorDetails / getApiErrorMessage / getApiErrorStatus / isConversationNotFoundError
@@ -3463,6 +3484,21 @@ const manifestText = buildSkillManifest({
 const { frontmatter, instructions } = parseSkillManifest(manifestText);
 ```
 
+### getSkillFieldLengthViolations / SKILL_TEXT_FIELD_MAX_LENGTHS
+
+Returns, for each of a skill's `name`, `description` and `instructions` values that is longer than its limit once trimmed, the limit it exceeds (256, 2000 and 50000 — the shared entity limits from `@epam/ai-dial-chat-shared`). `useSkillEditorSubmit` uses it to show `messages.tooLong(limit)` as the user types and to block a submit.
+
+```ts
+import {
+  getSkillFieldLengthViolations,
+  SKILL_TEXT_FIELD_MAX_LENGTHS,
+} from '@epam/ai-dial-chat-hooks';
+
+const violations = getSkillFieldLengthViolations(values);
+// e.g. { name: 256 } when values.name is 300 characters long
+const nameLimit = SKILL_TEXT_FIELD_MAX_LENGTHS.name;
+```
+
 ### parseSkillManifestDocument
 
 Splits a `SKILL.md` into its frontmatter fields (`name`, `description`, and recognised `about.*` fields) and its prose body. Never throws — a file with no frontmatter fence resolves to the whole input as `body`.
@@ -3607,6 +3643,8 @@ const {
   client,
   messages: {
     required: 'Required',
+    tooLong: (maxLength) => `Use ${maxLength} characters or fewer.`,
+    instructionsFrontmatter: 'Front matter belongs in the fields above',
     nameInvalid: 'Invalid name',
     nameConflict: 'A skill with this name already exists',
     archiveTooLarge: 'The uploaded content is too large',
@@ -3626,7 +3664,9 @@ const {
 
 ### useSkillFileActions
 
-Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
+Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), creating empty folders, expanding `.zip` archives for staging, and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
+
+The returned `fileActions` also carries `onCreateFolder` (adds a folder node, ignoring an existing path), `validateFolderPath` (`messages.pathInvalid` for a path `isValidSkillRelativePath` rejects), and `extractArchive` (reads a `.zip` with `fflate`, skipping directory, `__MACOSX/` and `.DS_Store` entries; path and size limits apply afterwards through `validateBatch`). The optional `pickFromFileSystem` param is passed through unchanged as `fileActions.pickFromFileSystem` — the host owns the picker, buckets and downloads.
 
 ```ts
 import { useSkillFileActions } from '@epam/ai-dial-chat-hooks';
@@ -3658,6 +3698,8 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
       manifestImportDeclined: 'Manifest import was declined',
       saveError: 'Could not save the skill',
     },
+    // Optional: enables the editor's "Open DIAL file system" entry.
+    pickFromFileSystem: openHostFilePicker,
   });
 ```
 

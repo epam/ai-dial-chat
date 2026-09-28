@@ -1,6 +1,5 @@
 import {
   AvatarPickerModal,
-  DeploymentCreationFieldErrorCode,
   DeploymentCreationForm,
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormLabels,
@@ -45,6 +44,10 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { createApplication } from '../../server-api/applications';
 import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
+import {
+  getLiveDeploymentCreationErrors,
+  translateDeploymentCreationErrors,
+} from '../../utils/entity-field-validation';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   buildAdditionalLocaleOptions,
@@ -201,13 +204,22 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   );
 
   const handleChange = (patch: Partial<DeploymentCreationFormValues>) => {
-    setValues((prev) => ({ ...prev, ...patch }));
+    const nextValues = { ...values, ...patch };
+    const changedKeys = Object.keys(patch);
+    const liveErrors = getLiveDeploymentCreationErrors(
+      validateDeploymentCreationFields(nextValues, {
+        validateNamePattern: true,
+      }),
+      changedKeys,
+      t,
+    );
+    setValues(nextValues);
     setErrors((prev) => {
       const next = { ...prev };
-      for (const key of Object.keys(patch)) {
+      for (const key of changedKeys) {
         delete next[key as keyof DeploymentCreationFormFieldErrors];
       }
-      return next;
+      return { ...next, ...liveErrors };
     });
   };
 
@@ -218,22 +230,8 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       validateNamePattern: true,
       validateVersionPattern: SEMVER_VERSION_PATTERN,
     });
-    if (codes.name || codes.version) {
-      let nameError: string | undefined;
-      if (codes.name === DeploymentCreationFieldErrorCode.Required) {
-        nameError = t(EditorI18nKeys.NameRequired);
-      } else if (
-        codes.name === DeploymentCreationFieldErrorCode.InvalidFormat
-      ) {
-        nameError = t(AppsEditorI18nKeys.GeneralFormNameInvalid);
-      }
-
-      setErrors({
-        name: nameError,
-        version: codes.version
-          ? t(AppsEditorI18nKeys.GeneralFormVersionInvalid)
-          : undefined,
-      });
+    if (codes.name || codes.version || codes.description) {
+      setErrors(translateDeploymentCreationErrors(codes, t));
       return;
     }
 

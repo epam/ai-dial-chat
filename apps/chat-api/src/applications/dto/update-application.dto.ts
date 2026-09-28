@@ -13,10 +13,15 @@ import {
   Min,
   ValidateIf,
   ValidateNested,
+  MaxLength,
 } from 'class-validator';
 import { LocaleTextEntryDto } from '../../common/dto/locale-text-entry.dto';
 import { LOCALIZED_TEXT_SCHEMA } from '../../common/types/localized-text';
 import type { LocalizedText } from '../../common/types/localized-text';
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '../../common/validators/entity-field-limits';
 import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
@@ -33,18 +38,23 @@ import { IsValidResourceReference } from '../../common/validators/resource-refer
  * (plain-endpoint) apps where version is a General-step field.
  */
 export class UpdateApplicationBodyDto {
-  @ApiProperty({ example: 'My App' })
+  @ApiProperty({ example: 'My App', maxLength: ENTITY_NAME_MAX_LENGTH })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(ENTITY_NAME_MAX_LENGTH)
   @Matches(/^[a-zA-Z0-9 _.-]+$/, {
     message:
       'name must contain only letters, digits, spaces, underscores, dots, and dashes',
   })
   name!: string;
 
-  @ApiPropertyOptional({ example: 'A custom application.' })
+  @ApiPropertyOptional({
+    example: 'A custom application.',
+    maxLength: ENTITY_DESCRIPTION_MAX_LENGTH,
+  })
   @IsString()
   @IsOptional()
+  @MaxLength(ENTITY_DESCRIPTION_MAX_LENGTH)
   description?: string;
 
   @ApiPropertyOptional({
@@ -76,7 +86,16 @@ export class UpdateApplicationBodyDto {
   @ApiPropertyOptional({ example: 'https://api.example.com/chat' })
   @IsString()
   @IsOptional()
-  @IsUrl({ require_tld: false, require_protocol: true })
+  /*
+   * `allow_trailing_dot` accepts fully-qualified hostnames such as
+   * `svc.cluster.local.` (common for in-cluster Kubernetes services), which
+   * creation already stores unvalidated — see Issue #9103.
+   */
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+    allow_trailing_dot: true,
+  })
   endpoint?: string;
 
   @ApiPropertyOptional()

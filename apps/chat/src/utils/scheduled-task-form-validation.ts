@@ -1,5 +1,10 @@
 import { ScheduledTaskErrorCode } from '@epam/ai-dial-chat-api-client';
 import {
+  ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '@epam/ai-dial-chat-shared';
+import {
+  DESCRIPTION_MAX_LENGTH,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
   TIME_OF_DAY_PATTERN,
@@ -7,6 +12,8 @@ import {
 import {
   ScheduledTaskValidationErrorCode,
   validateScheduledTaskFormValues,
+  validateScheduledTaskTextField,
+  type ScheduledTaskTextField,
   type ScheduledTaskValidationErrors,
 } from '@epam/ai-dial-scheduled-tasks/validation';
 import type { TFunction } from 'i18next';
@@ -37,6 +44,11 @@ const VALIDATION_ERROR_KEYS: Record<
 > = {
   [ScheduledTaskValidationErrorCode.DisplayNameRequired]:
     EditorI18nKeys.NameRequired,
+  [ScheduledTaskValidationErrorCode.DisplayNameTooLong]:
+    EditorI18nKeys.FieldTooLong,
+  [ScheduledTaskValidationErrorCode.DisplayNameControlCharacters]:
+    EditorI18nKeys.NameControlCharacters,
+  [ScheduledTaskValidationErrorCode.PromptTooLong]: EditorI18nKeys.FieldTooLong,
   [ScheduledTaskValidationErrorCode.ModelRequired]:
     ScheduledTasksI18nKeys.CreateModelRequired,
   [ScheduledTaskValidationErrorCode.PromptRequired]:
@@ -46,7 +58,7 @@ const VALIDATION_ERROR_KEYS: Record<
   [ScheduledTaskValidationErrorCode.SkillUnsupported]:
     SkillSelectorI18nKeys.UnsupportedTooltipLabel,
   [ScheduledTaskValidationErrorCode.DescriptionTooLong]:
-    ScheduledTasksI18nKeys.CreateDescriptionMaxLengthError,
+    EditorI18nKeys.FieldTooLong,
   [ScheduledTaskValidationErrorCode.RunAtInvalid]:
     ScheduledTasksI18nKeys.CreateRunAtRequired,
   [ScheduledTaskValidationErrorCode.TimeInvalid]:
@@ -63,6 +75,16 @@ const VALIDATION_ERROR_KEYS: Record<
     ScheduledTasksI18nKeys.CreateEndDateBeforeStartError,
 };
 
+/** Limit interpolated into the shared "Use {{count}} characters or fewer." message. */
+const VALIDATION_ERROR_MAX_LENGTHS: Partial<
+  Record<ScheduledTaskValidationErrorCode, number>
+> = {
+  [ScheduledTaskValidationErrorCode.DisplayNameTooLong]: ENTITY_NAME_MAX_LENGTH,
+  [ScheduledTaskValidationErrorCode.DescriptionTooLong]: DESCRIPTION_MAX_LENGTH,
+  [ScheduledTaskValidationErrorCode.PromptTooLong]:
+    ENTITY_INSTRUCTIONS_MAX_LENGTH,
+};
+
 /** Translates shared validation codes at the application edge. */
 export const mapScheduledTaskValidationErrors = (
   errors: ScheduledTaskValidationErrors,
@@ -71,9 +93,36 @@ export const mapScheduledTaskValidationErrors = (
   Object.fromEntries(
     Object.entries(errors).map(([field, code]) => [
       field,
-      t(VALIDATION_ERROR_KEYS[code]),
+      t(VALIDATION_ERROR_KEYS[code], {
+        count: VALIDATION_ERROR_MAX_LENGTHS[code],
+      }),
     ]),
   );
+
+const TEXT_FIELDS = new Set<string>(['displayName', 'description', 'prompt']);
+
+/**
+ * Returns the as-you-type error for a changed free-text field (over-limit
+ * length, or a control character in the name), or `undefined` when the field
+ * is fine or is not a free-text field.
+ */
+export const getLiveScheduledTaskFieldError = (
+  field: keyof ScheduledTaskCreateFormValues,
+  value: unknown,
+  t: TFunction,
+): string | undefined => {
+  if (!TEXT_FIELDS.has(field) || (value != null && typeof value !== 'string'))
+    return undefined;
+  const code = validateScheduledTaskTextField(
+    field as ScheduledTaskTextField,
+    value ?? undefined,
+  );
+  return code
+    ? t(VALIDATION_ERROR_KEYS[code], {
+        count: VALIDATION_ERROR_MAX_LENGTHS[code],
+      })
+    : undefined;
+};
 
 /** Maps stable BFF validation codes to the same localized form messages. */
 export const mapScheduledTaskApiError = (

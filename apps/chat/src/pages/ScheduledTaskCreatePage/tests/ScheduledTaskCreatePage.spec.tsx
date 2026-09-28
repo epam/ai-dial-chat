@@ -666,9 +666,7 @@ describe('ScheduledTaskCreatePage', () => {
     );
 
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
-    expect(
-      screen.getByText('scheduledTasks.create.descriptionMaxLengthError'),
-    ).toBeTruthy();
+    expect(screen.getByText('editor.fieldTooLong')).toBeTruthy();
   });
 
   it('blocks submit with an inline error when endDate is not after startDate', async () => {

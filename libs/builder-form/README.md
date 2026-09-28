@@ -215,7 +215,8 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
     hiddenFilesLabel: 'Hidden files',
     showHiddenFilesLabel: 'Show hidden files',
     hideHiddenFilesLabel: 'Hide hidden files',
-    getSelectionLabel: (count) => `${count} selected`,
+    getSelectionLabel: (count) =>
+      count === 1 ? 'item selected' : 'items selected',
     uploadFilesLabel: 'Upload',
     newFolderLabel: 'New folder',
     downloadLabel: 'Download',
@@ -298,7 +299,7 @@ import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
 
 ### validateDeploymentCreationFields
 
-Pure validation returning untranslated error codes. Pattern checks are opt-in, because the allowed character set differs by deployment kind.
+Pure validation returning untranslated error codes. Length and control-character checks always run — the name must be at most `ENTITY_NAME_MAX_LENGTH` (256) characters with no line breaks or tabs, and the description at most `ENTITY_DESCRIPTION_MAX_LENGTH` (2000), both from `@epam/ai-dial-chat-shared`. Pattern checks are opt-in, because the allowed character set differs by deployment kind. Pass the translated `description` message back through `errors.description`; `DeploymentCreationForm` renders it under the field.
 
 ```tsx
 import {
@@ -338,6 +339,7 @@ import { DeploymentCreationFieldErrorCode } from '@epam/ai-dial-builder-form';
 DeploymentCreationFieldErrorCode.Required; // field left empty
 DeploymentCreationFieldErrorCode.InvalidFormat; // value fails its pattern
 DeploymentCreationFieldErrorCode.TooLong; // value exceeds its maximum length
+DeploymentCreationFieldErrorCode.ControlCharacters; // name contains a line break, tab, …
 ```
 
 ## Types

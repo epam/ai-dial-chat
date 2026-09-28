@@ -4,6 +4,7 @@ import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
   GenerationConflictError,
   GenerationPersistenceError,
+  StreamInterruptedError,
   StreamUpstreamError,
 } from '../create-chat-stream-api';
 
@@ -160,17 +161,12 @@ describe('createChatStreamApi', () => {
     expect(error.message).toBe('Model overloaded');
   });
 
-  describe('transport failures stay untagged', () => {
+  describe('non-network transport failures stay untagged', () => {
     const expectUntagged = (error: Error) => {
       expect(error).not.toBeInstanceOf(StreamUpstreamError);
       expect(error).not.toBeInstanceOf(GenerationConflictError);
+      expect(error).not.toBeInstanceOf(StreamInterruptedError);
     };
-
-    it('leaves a rejected fetch untagged', async () => {
-      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
-
-      expectUntagged(await failStreamRequest());
-    });
 
     it('leaves a 502 response untagged', async () => {
       fetchMock.mockResolvedValue(new Response(null, { status: 502 }));
@@ -186,20 +182,238 @@ describe('createChatStreamApi', () => {
       expectUntagged(error);
       expect(error.message).toBe('No response body');
     });
+  });
 
-    it('leaves a stream that breaks mid-read untagged', async () => {
+  describe('network failures are reported as interruptions', () => {
+    it('reports a rejected fetch as a StreamInterruptedError carrying the cause', async () => {
+      const cause = new TypeError('Failed to fetch');
+      fetchMock.mockRejectedValue(cause);
+
+      const error = await failStreamRequest();
+
+      expect(error).toBeInstanceOf(StreamInterruptedError);
+      expect(error.cause).toBe(cause);
+    });
+
+    it('reports a stream that breaks mid-read as a StreamInterruptedError carrying the cause', async () => {
+      const cause = new TypeError('network error');
       fetchMock.mockResolvedValue(
         new Response(
           new ReadableStream<Uint8Array>({
             pull(controller) {
-              controller.error(new TypeError('network error'));
+              controller.error(cause);
             },
           }),
           { status: 200 },
         ),
       );
 
-      expectUntagged(await failStreamRequest());
+      const error = await failStreamRequest();
+
+      expect(error).toBeInstanceOf(StreamInterruptedError);
+      expect(error.cause).toBe(cause);
+    });
+
+    it('reports nothing when the caller aborts the stream', async () => {
+      const abort = new AbortController();
+      const onError = vi.fn();
+      const onComplete = vi.fn();
+      fetchMock.mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () =>
+              reject(new DOMException('Aborted', 'AbortError')),
+            );
+          }),
+      );
+
+      makeApi().streamCompletion('gpt-4o__Hello__uuid', 'hello', 'gpt-4o', {
+        onChunk: vi.fn(),
+        onComplete,
+        onError,
+        signal: abort.signal,
+      });
+      abort.abort();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(onError).not.toHaveBeenCalled();
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('idle watchdog', () => {
+    const IDLE_TIMEOUT_MS = 45_000;
+    const encoder = new TextEncoder();
+
+    /** A 2xx stream the test feeds by hand; it never ends on its own. */
+    const openControlledStream = () => {
+      let streamController!: ReadableStreamDefaultController<Uint8Array>;
+      fetchMock.mockResolvedValue(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              streamController = controller;
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+      const onChunk = vi.fn();
+      const onComplete = vi.fn();
+      const onError = vi.fn();
+      makeApi().streamCompletion('gpt-4o__Hello__uuid', 'hello', 'gpt-4o', {
+        onChunk,
+        onComplete,
+        onError,
+      });
+      return {
+        onChunk,
+        onComplete,
+        onError,
+        push: (text: string) => streamController.enqueue(encoder.encode(text)),
+        end: () => streamController.close(),
+      };
+    };
+
+    const setVisibility = (state: DocumentVisibilityState) => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => state,
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      Reflect.deleteProperty(document, 'visibilityState');
+    });
+
+    it('reports a StreamInterruptedError once no byte has arrived for the idle timeout', async () => {
+      const stream = openControlledStream();
+      await vi.advanceTimersByTimeAsync(0);
+      stream.push('data: {"choices":[]}\n\n');
+      await vi.advanceTimersByTimeAsync(IDLE_TIMEOUT_MS - 1);
+      expect(stream.onError).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(IDLE_TIMEOUT_MS);
+
+      expect(stream.onError).toHaveBeenCalledOnce();
+      expect(stream.onError.mock.calls[0][0]).toBeInstanceOf(
+        StreamInterruptedError,
+      );
+      expect(stream.onComplete).not.toHaveBeenCalled();
+    });
+
+    it('stays open while keepalive comments keep arriving', async () => {
+      const stream = openControlledStream();
+      await vi.advanceTimersByTimeAsync(0);
+      for (let tick = 0; tick < 12; tick += 1) {
+        stream.push(': keepalive\n\n');
+        await vi.advanceTimersByTimeAsync(15_000);
+      }
+
+      expect(stream.onError).not.toHaveBeenCalled();
+      expect(stream.onChunk).not.toHaveBeenCalled();
+    });
+
+    it('detects a stall immediately when the page becomes visible past the deadline', async () => {
+      const stream = openControlledStream();
+      await vi.advanceTimersByTimeAsync(0);
+      /* Timers do not run while the device sleeps; only the wall clock moves. */
+      vi.setSystemTime(Date.now() + IDLE_TIMEOUT_MS * 4);
+
+      setVisibility('visible');
+
+      expect(stream.onError).toHaveBeenCalledOnce();
+      expect(stream.onError.mock.calls[0][0]).toBeInstanceOf(
+        StreamInterruptedError,
+      );
+    });
+
+    it('detects a stall immediately when the network comes back past the deadline', async () => {
+      const stream = openControlledStream();
+      await vi.advanceTimersByTimeAsync(0);
+      vi.setSystemTime(Date.now() + IDLE_TIMEOUT_MS * 2);
+
+      window.dispatchEvent(new Event('online'));
+
+      expect(stream.onError).toHaveBeenCalledOnce();
+    });
+
+    it('keeps a healthy stream open when the page becomes visible before the deadline', async () => {
+      const stream = openControlledStream();
+      await vi.advanceTimersByTimeAsync(0);
+      stream.push('data: {"choices":[]}\n\n');
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      setVisibility('visible');
+      window.dispatchEvent(new Event('online'));
+
+      expect(stream.onError).not.toHaveBeenCalled();
+    });
+
+    it('delivers nothing read after the watchdog fired', async () => {
+      const stream = openControlledStream();
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(IDLE_TIMEOUT_MS);
+      expect(stream.onError).toHaveBeenCalledOnce();
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(stream.onChunk).not.toHaveBeenCalled();
+      expect(stream.onComplete).not.toHaveBeenCalled();
+    });
+
+    it('releases its listeners and timer once the stream completes', async () => {
+      const removeDocumentListener = vi.spyOn(document, 'removeEventListener');
+      const removeWindowListener = vi.spyOn(window, 'removeEventListener');
+      const stream = openControlledStream();
+      await vi.advanceTimersByTimeAsync(0);
+
+      stream.end();
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(stream.onComplete).toHaveBeenCalledOnce();
+      expect(removeDocumentListener).toHaveBeenCalledWith(
+        'visibilitychange',
+        expect.any(Function),
+      );
+      expect(removeWindowListener).toHaveBeenCalledWith(
+        'online',
+        expect.any(Function),
+      );
+      expect(removeWindowListener).toHaveBeenCalledWith(
+        'pageshow',
+        expect.any(Function),
+      );
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(IDLE_TIMEOUT_MS * 2);
+      expect(stream.onError).not.toHaveBeenCalled();
+    });
+
+    it('honours a host-supplied idle timeout', async () => {
+      fetchMock.mockResolvedValue(
+        new Response(new ReadableStream<Uint8Array>(), { status: 200 }),
+      );
+      const onError = vi.fn();
+      createChatStreamApi({
+        getCsrfToken,
+        setCsrfToken,
+        completionsBasePath: '/api/v1/conversations',
+        fetchImpl: fetchMock,
+        idleTimeoutMs: 5_000,
+      }).streamCompletion('gpt-4o__Hello__uuid', 'hello', 'gpt-4o', {
+        onChunk: vi.fn(),
+        onComplete: vi.fn(),
+        onError,
+      });
+      await vi.advanceTimersByTimeAsync(5_000);
+
+      expect(onError).toHaveBeenCalledOnce();
     });
   });
 

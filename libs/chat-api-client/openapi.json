@@ -7181,7 +7181,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My App"
+            "example": "My App",
+            "maxLength": 256
           },
           "type": {
             "type": "string",
@@ -7190,7 +7191,8 @@
           },
           "description": {
             "type": "string",
-            "example": "A custom application."
+            "example": "A custom application.",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -7268,11 +7270,13 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My App"
+            "example": "My App",
+            "maxLength": 256
           },
           "description": {
             "type": "string",
-            "example": "A custom application."
+            "example": "A custom application.",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -9033,7 +9037,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My toolset"
+            "example": "My toolset",
+            "maxLength": 256
           },
           "version": {
             "type": "string",
@@ -9041,7 +9046,8 @@
           },
           "description": {
             "type": "string",
-            "example": "My toolset description"
+            "example": "My toolset description",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -12301,7 +12307,8 @@
         "properties": {
           "displayName": {
             "type": "string",
-            "example": "Daily summary"
+            "example": "Daily summary",
+            "maxLength": 256
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
@@ -12313,7 +12320,8 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox",
-            "description": "Instructions; may be empty when the effective task has a skill."
+            "description": "Instructions; may be empty when the effective task has a skill.",
+            "maxLength": 50000
           },
           "skillUrl": {
             "type": "string",
@@ -12521,7 +12529,8 @@
         "properties": {
           "displayName": {
             "type": "string",
-            "example": "Daily summary"
+            "example": "Daily summary",
+            "maxLength": 256
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
@@ -12533,7 +12542,8 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox",
-            "description": "Instructions; may be empty when the effective task has a skill."
+            "description": "Instructions; may be empty when the effective task has a skill.",
+            "maxLength": 50000
           },
           "skillUrl": {
             "type": "string",
