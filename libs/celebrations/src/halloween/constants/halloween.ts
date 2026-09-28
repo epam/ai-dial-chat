@@ -87,7 +87,7 @@ export const HALLOWEEN_CLICK_BURSTS = [
   HalloweenScene.Candy,
   HalloweenScene.Footprints,
   HalloweenScene.Skeletons,
-  сщ,
+  HalloweenScene.Spiders,
 ] as const;
 
 /** Message-only surprises; pumpkin clicks never sample this pool. */
