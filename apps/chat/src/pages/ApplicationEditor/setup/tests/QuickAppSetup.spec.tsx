@@ -1,11 +1,12 @@
 import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createRef, forwardRef, useImperativeHandle } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ApplicationEditorI18nKeys,
   AppsEditorI18nKeys,
+  ButtonsI18nKeys,
 } from '../../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../../context/DeploymentsContext';
 import type { ApplicationSetupHandle } from '../../../../models/application-editor';
@@ -61,13 +62,16 @@ const METADATA: DeploymentCreationFormValues = {
 
 const mockRefetchDeployments = vi.fn();
 const mockOnReadyChange = vi.fn();
+const mockOnSubmit = vi.fn();
 
 const mountSetup = ({
   appId,
   schemaId = SCHEMA_WITH_EDITOR.id,
+  isSubmitting = false,
 }: {
   appId?: string;
   schemaId?: string;
+  isSubmitting?: boolean;
 }) => {
   const ref = createRef<ApplicationSetupHandle>();
   render(
@@ -82,6 +86,8 @@ const mountSetup = ({
         appId={appId}
         metadata={METADATA}
         isPreviewing={false}
+        onSubmit={mockOnSubmit}
+        isSubmitting={isSubmitting}
         onReadyChange={mockOnReadyChange}
       />
     </MemoryRouter>,
@@ -112,6 +118,26 @@ describe('QuickAppSetup', () => {
     ).toBeTruthy();
     expect(screen.queryByText('embedded-editor')).toBeNull();
     expect(mockOnReadyChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('runs the page submit from the pending-create Create button', () => {
+    mountSetup({});
+
+    fireEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Create }),
+    );
+
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the pending-create Create button while submitting', () => {
+    mountSetup({ isSubmitting: true });
+
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', {
+        name: ButtonsI18nKeys.Create,
+      }).disabled,
+    ).toBe(true);
   });
 
   it('shows the no-editor placeholder and resolves a save without posting a message', async () => {
