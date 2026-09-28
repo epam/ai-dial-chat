@@ -152,14 +152,27 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
     [],
   );
 
-  return {
-    draft,
-    anchors,
-    onDraftChange,
-    insertMention,
-    onBackspaceAtCaret,
-    orderedSkills,
-    reset,
-    seedFromMessage,
-  };
+  /* Memoized so callers keying effects/callbacks on the whole result get a stable reference — see openspec/changes/fix-skill-mention-render-loop. */
+  return useMemo(
+    () => ({
+      draft,
+      anchors,
+      onDraftChange,
+      insertMention,
+      onBackspaceAtCaret,
+      orderedSkills,
+      reset,
+      seedFromMessage,
+    }),
+    [
+      draft,
+      anchors,
+      onDraftChange,
+      insertMention,
+      onBackspaceAtCaret,
+      orderedSkills,
+      reset,
+      seedFromMessage,
+    ],
+  );
 };

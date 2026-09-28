@@ -155,6 +155,12 @@ The button's visibility SHALL NOT consult the selected deployment's skills suppo
 - **WHEN** the user uses a skill in chat and then navigates away and back to `/` (or reloads after the state was consumed)
 - **THEN** the composer does not silently re-add the stale skill selection
 
+#### Scenario: Selecting the routed skill does not re-render in a loop
+
+- **WHEN** `ConversationRoute` mounts with a `skillId` in router state
+- **THEN** it SHALL call `selectSkillByUrl` at most once for that arrival — guarded by a "consumed" ref (the same pattern `routeDeploymentId`'s effect already uses), not solely by `navigate(pathname, { replace: true, state: null })` clearing the router state — because React Router wraps that state-clearing update in `React.startTransition` (low priority): as long as nothing gates repeat calls, `selectSkillByUrl`'s own state updates (mention tracking) keep producing higher-priority renders that starve the pending transition indefinitely, so the effect re-fires and calls `selectSkillByUrl` again in an unbounded loop (regression: [#9109](https://github.com/epam/ai-dial-chat/issues/9109) — `history.replaceState()` firing hundreds of times per second, navigation and typing unresponsive until reload)
+- **AND** the mention-tracking hook backing the composer (`useSkillMentions`) SHALL also return a referentially stable result across renders that don't change its draft/anchors, so that callbacks derived from it (`seedSkillMentions`, `selectSkillByUrl`) don't manufacture spurious identity churn on top of the guard above
+
 #### Scenario: Flag disabled — Skill header unchanged
 
 - **WHEN** `features.skillUsageEnabled` is disabled and the user opens a skill's details panel
