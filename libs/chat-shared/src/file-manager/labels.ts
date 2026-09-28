@@ -51,7 +51,7 @@ export interface DialFileManagerShellLabels {
   showHiddenFilesLabel: string;
   /** Label shown when hidden files are currently hidden. */
   hideHiddenFilesLabel: string;
-  /** Returns a bulk-selection count label (e.g. "3 selected"). */
+  /** Returns the text shown after the selection-count badge; the file manager renders the count itself, so omit it (e.g. "items selected"). */
   getSelectionLabel: (count: number) => string;
   /** Label for the "Upload files" action in the New menu. */
   uploadFilesLabel: string;

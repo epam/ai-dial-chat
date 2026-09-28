@@ -21,6 +21,7 @@ const mockDownloadFile = vi.mocked(filesApi.downloadFile);
 const dialFile = (overrides: Partial<DialFile> = {}): DialFile => ({
   id: 'files/other-bucket/docs/notes.md',
   path: '/My files/docs/notes.md',
+  folderId: 'docs',
   name: 'notes.md',
   nodeType: DialFileNodeType.ITEM,
   bucket: 'other-bucket',

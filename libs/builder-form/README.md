@@ -215,7 +215,8 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
     hiddenFilesLabel: 'Hidden files',
     showHiddenFilesLabel: 'Show hidden files',
     hideHiddenFilesLabel: 'Hide hidden files',
-    getSelectionLabel: (count) => `${count} selected`,
+    getSelectionLabel: (count) =>
+      count === 1 ? 'item selected' : 'items selected',
     uploadFilesLabel: 'Upload',
     newFolderLabel: 'New folder',
     downloadLabel: 'Download',
