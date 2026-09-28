@@ -2258,6 +2258,32 @@ import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';
 getLastDeploymentId(conversation.messages); // string | null
 ```
 
+### getToolConfigurationFromFormSchema / getLatestToolConfiguration / getFormSchemaToolSyncKey
+
+Let a DIAL app drive a tools-menu toggle from an assistant message's `custom_content.form_schema`. A property counts when it carries a boolean `default`, or, with no `default`, a `oneOf` with exactly one entry whose `const` is a boolean. `getToolConfigurationFromFormSchema` returns those values keyed by property name. `getLatestToolConfiguration` returns the last user message's `configuration_value` overlaid by the `form_schema` values of the assistant messages after it, for restoring a (re-)loaded conversation. `getFormSchemaToolSyncKey` returns the last assistant message's values restricted to the given tool ids plus a key that changes only when those values do, so a host applies each app value once and keeps a later user toggle.
+
+```ts
+import {
+  getFormSchemaToolSyncKey,
+  getLatestToolConfiguration,
+  getToolConfigurationFromFormSchema,
+} from '@epam/ai-dial-chat-hooks';
+
+getToolConfigurationFromFormSchema({
+  properties: { deep_research: { type: 'boolean', default: false } },
+}); // { deep_research: false }
+
+restoreToolConfiguration(getLatestToolConfiguration(conversation.messages));
+
+const sync = getFormSchemaToolSyncKey(conversationId, conversation.messages, [
+  'deep_research',
+]);
+if (sync && sync.key !== appliedKeyRef.current) {
+  appliedKeyRef.current = sync.key;
+  restoreToolConfiguration(sync.values);
+}
+```
+
 ### getTimeOfDayGreeting
 
 Returns a time-of-day greeting string (morning/afternoon/evening/night, with/without a first name) from a pre-translated `GreetingTranslations` object.
