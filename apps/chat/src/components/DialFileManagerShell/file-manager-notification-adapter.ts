@@ -336,8 +336,6 @@ export const buildValidationErrorMessage = (
           : DialFileManagerI18nKeys.FolderNameInvalidChars,
         { notAllowedSymbols: error.symbols ?? NOT_ALLOWED_SYMBOLS },
       );
-    case FileNameValidationErrorReason.LeadingDot:
-      return t(DialFileManagerI18nKeys.FolderNameHidden);
     case FileNameValidationErrorReason.ReservedName:
       return t(
         isRename

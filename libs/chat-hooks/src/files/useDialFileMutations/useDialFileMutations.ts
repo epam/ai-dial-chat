@@ -187,8 +187,6 @@ export const useDialFileMutations = ({
           reason: FileNameValidationErrorReason.ForbiddenSymbols,
           symbols: NOT_ALLOWED_SYMBOLS,
         };
-      } else if (name.startsWith('.')) {
-        error = { reason: FileNameValidationErrorReason.LeadingDot };
       } else if (name === RESERVED_MARKER_NAME) {
         error = { reason: FileNameValidationErrorReason.ReservedName };
       } else if (name.length > 255) {

@@ -369,13 +369,6 @@ describe('buildValidationErrorMessage', () => {
     expect(message).toBe('dialFileManager.folderNameInvalidChars');
   });
 
-  it('uses the folder-hidden wording for a leading dot', () => {
-    const message = buildValidationErrorMessage(t, {
-      reason: FileNameValidationErrorReason.LeadingDot,
-    });
-    expect(message).toBe('dialFileManager.folderNameHidden');
-  });
-
   it('uses folder wording for a reserved name (no item)', () => {
     const message = buildValidationErrorMessage(t, {
       reason: FileNameValidationErrorReason.ReservedName,

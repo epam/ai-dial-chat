@@ -108,7 +108,6 @@ export enum FileNameValidationErrorReason {
   ReservedName = 'reservedName',
   TooLong = 'tooLong',
   DuplicateName = 'duplicateName',
-  LeadingDot = 'leadingDot',
 }
 
 /**
@@ -127,8 +126,7 @@ export type FileNameValidationError =
   | {
       reason: FileNameValidationErrorReason.DuplicateName;
       existingName: string;
-    }
-  | { reason: FileNameValidationErrorReason.LeadingDot };
+    };
 
 /**
  * Kind of mutation `useDialFileMutations` just completed successfully, for

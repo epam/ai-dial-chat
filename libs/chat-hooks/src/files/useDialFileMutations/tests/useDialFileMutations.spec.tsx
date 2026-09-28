@@ -227,7 +227,7 @@ describe('useDialFileMutations', () => {
       expect(filesApi.createFolder).not.toHaveBeenCalled();
     });
 
-    it('does not call createFolder for a name starting with a dot', async () => {
+    it('calls createFolder for a hidden name starting with a dot', async () => {
       const { result, filesApi } = renderMutations({ folderPath: '' });
 
       await act(async () => {
@@ -238,7 +238,11 @@ describe('useDialFileMutations', () => {
         );
       });
 
-      expect(filesApi.createFolder).not.toHaveBeenCalled();
+      expect(filesApi.createFolder).toHaveBeenCalledWith({
+        bucket: BUCKET,
+        parentPath: '',
+        name: '.hidden',
+      });
     });
 
     it('does not call createFolder for the reserved marker name', async () => {

@@ -551,7 +551,6 @@ export enum DialFileManagerI18nKeys {
   FolderLoadError = 'dialFileManager.folderLoadError',
   FolderNameInvalidChars = 'dialFileManager.folderNameInvalidChars',
   FolderNameEmpty = 'dialFileManager.folderNameEmpty',
-  FolderNameHidden = 'dialFileManager.folderNameHidden',
   FolderNameReserved = 'dialFileManager.folderNameReserved',
   FolderNameTooLong = 'dialFileManager.folderNameTooLong',
   FolderNameDuplicate = 'dialFileManager.folderConflict',
