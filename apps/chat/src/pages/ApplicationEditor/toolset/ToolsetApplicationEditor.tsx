@@ -296,8 +296,8 @@ const ToolsetApplicationEditor: FC = () => {
       layout: {
         createTitle: t(ToolsetEditorI18nKeys.CreateTitle),
         editTitle: t(ToolsetEditorI18nKeys.EditTitle),
-        backAriaLabel: t(ToolsetEditorI18nKeys.BackAriaLabel),
-        savingStatusLabel: t(ToolsetEditorI18nKeys.SavingStatus),
+        backAriaLabel: t(EditorI18nKeys.BackAriaLabel),
+        savingStatusLabel: t(EditorI18nKeys.SavingStatus),
         metadataSectionTitle: t(EditorI18nKeys.MetadataSectionTitle),
         setupSectionTitle: t(EditorI18nKeys.SetupSectionTitle),
         cancelLabel: t(ButtonsI18nKeys.Cancel),

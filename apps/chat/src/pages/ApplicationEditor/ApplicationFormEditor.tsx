@@ -28,7 +28,6 @@ import { useNavigate, useSearchParams } from 'react-router';
 import {
   ButtonsI18nKeys,
   EditorI18nKeys,
-  ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -107,6 +106,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const [setup, setSetup] = useState<ApplicationSetupValues>(
     definition.defaultSetup,
   );
+  // Latest setup values, so a blur in the same event cycle as a change validates the new value.
+  const latestSetupRef = useRef(setup);
   const [setupErrors, setSetupErrors] = useState<SetupErrors>({});
   const [isLoadingSetup, setIsLoadingSetup] = useState(
     isEditMode && Boolean(definition.loadSetup),
@@ -131,7 +132,10 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     const load = async () => {
       try {
         const loaded = await loadSetup(appId, deploymentRef.current);
-        if (!cancelled) setSetup(loaded);
+        if (!cancelled) {
+          latestSetupRef.current = loaded;
+          setSetup(loaded);
+        }
       } catch {
         if (!cancelled) {
           showErrorNotification({
@@ -179,7 +183,9 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
 
   const handleSetupChange = useCallback(
     (patch: Partial<ApplicationSetupValues>) => {
-      setSetup((prev) => ({ ...prev, ...patch }));
+      const nextSetup = { ...latestSetupRef.current, ...patch };
+      latestSetupRef.current = nextSetup;
+      setSetup(nextSetup);
       setSetupErrors((prev) => {
         const next = { ...prev };
         for (const key of Object.keys(patch)) delete next[key];
@@ -191,9 +197,9 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
 
   const handleSetupFieldBlur = useCallback(
     (field: string) => {
-      const fieldError = (definition.validateSetup(setup, t) as SetupErrors)[
-        field
-      ];
+      const fieldError = (
+        definition.validateSetup(latestSetupRef.current, t) as SetupErrors
+      )[field];
       setSetupErrors((prev) => {
         const next = { ...prev };
         if (fieldError) next[field] = fieldError;
@@ -201,7 +207,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
         return next;
       });
     },
-    [definition, setup, t],
+    [definition, t],
   );
 
   const handleCancel = useCallback(() => {
@@ -393,8 +399,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
           extraActions={extraActions}
           hideStandardActions={isPreviewing}
           labels={{
-            backAriaLabel: t(ToolsetEditorI18nKeys.BackAriaLabel),
-            savingStatusLabel: t(ToolsetEditorI18nKeys.SavingStatus),
+            backAriaLabel: t(EditorI18nKeys.BackAriaLabel),
+            savingStatusLabel: t(EditorI18nKeys.SavingStatus),
             metadataTitle: t(EditorI18nKeys.MetadataSectionTitle),
             setupTitle: t(EditorI18nKeys.SetupSectionTitle),
             cancelLabel: t(ButtonsI18nKeys.Cancel),
@@ -428,11 +434,14 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
           }
         />
       </div>
+      {/* Always mounted so screen readers announce the label when it is filled in. */}
+      <span role="status" aria-live="polite" className="sr-only">
+        {isBusy ? overlayLabel : ''}
+      </span>
       {isBusy && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-backdrop"
-          aria-label={overlayLabel}
-          aria-live="polite"
+          aria-hidden="true"
         >
           <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
             <Spinner />

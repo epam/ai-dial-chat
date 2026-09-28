@@ -941,6 +941,8 @@ export enum FooterMessageI18nKeys {
 }
 
 export enum EditorI18nKeys {
+  BackAriaLabel = 'editor.backAriaLabel',
+  SavingStatus = 'editor.savingStatus',
   MetadataSectionTitle = 'editor.metadataSectionTitle',
   SetupSectionTitle = 'editor.setupSectionTitle',
   NameLabel = 'editor.nameLabel',
@@ -1132,8 +1134,6 @@ export enum ToolsetEditorI18nKeys {
   // Page header
   CreateTitle = 'toolsetEditor.createTitle',
   EditTitle = 'toolsetEditor.editTitle',
-  BackAriaLabel = 'toolsetEditor.backAriaLabel',
-  SavingStatus = 'toolsetEditor.savingStatus',
   // General form
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',

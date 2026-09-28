@@ -83,6 +83,11 @@ const renderIframe = (
   ref?: Ref<AppEditorIframeHandle>,
 ) => render(<AppEditorIframe {...DEFAULT_PROPS} {...props} ref={ref} />);
 
+/** Window of the rendered embedded editor, the only trusted message source. */
+const getEditorWindow = () =>
+  (screen.queryByTitle('QuickApp') as HTMLIFrameElement | null)
+    ?.contentWindow ?? null;
+
 describe('AppEditorIframe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -466,12 +471,16 @@ describe('AppEditorIframe — toolset login request', () => {
     channel.close();
   };
 
-  const sendLoginRequest = (toolsetId: string) => {
+  const sendLoginRequest = (
+    toolsetId: string,
+    source: MessageEventSource | null = getEditorWindow(),
+  ) => {
     fireEvent(
       window,
       new MessageEvent('message', {
         data: { type: AppsEditorEvent.RequestToolsetLogin, toolsetId },
         origin: 'https://editor.example.com',
+        source,
       }),
     );
   };
@@ -511,6 +520,15 @@ describe('AppEditorIframe — toolset login request', () => {
     const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
     return vi.spyOn(iframe.contentWindow as Window, 'postMessage');
   };
+
+  it('ignores a login request that does not come from the embedded editor window', () => {
+    renderIframe();
+
+    sendLoginRequest('toolsets/b/my__1.0.0', window);
+
+    expect(window.open).not.toHaveBeenCalled();
+    expect(toolsetsApi.getToolset).not.toHaveBeenCalled();
+  });
 
   it('posts popup-blocked without calling getToolset when the browser blocks the popup', async () => {
     Object.defineProperty(window, 'open', {
@@ -802,12 +820,16 @@ describe('AppEditorIframe — toolset login request', () => {
 });
 
 describe('AppEditorIframe — toolset logout request', () => {
-  const sendLogoutRequest = (toolsetId: string) => {
+  const sendLogoutRequest = (
+    toolsetId: string,
+    source: MessageEventSource | null = getEditorWindow(),
+  ) => {
     fireEvent(
       window,
       new MessageEvent('message', {
         data: { type: AppsEditorEvent.RequestToolsetLogout, toolsetId },
         origin: 'https://editor.example.com',
+        source,
       }),
     );
   };
@@ -924,6 +946,14 @@ describe('AppEditorIframe — toolset logout request', () => {
         origin: 'https://evil.example.com',
       }),
     );
+    expect(toolsetsApi.logoutToolset).not.toHaveBeenCalled();
+  });
+
+  it('ignores a logout request that does not come from the embedded editor window', () => {
+    renderIframe();
+
+    sendLogoutRequest('toolsets/b/my__1.0.0', window);
+
     expect(toolsetsApi.logoutToolset).not.toHaveBeenCalled();
   });
 });

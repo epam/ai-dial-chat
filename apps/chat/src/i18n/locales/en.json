@@ -1071,6 +1071,8 @@
     "invitationAcceptError": "This share link is invalid or has expired."
   },
   "editor": {
+    "backAriaLabel": "Back to catalog",
+    "savingStatus": "Saving",
     "metadataSectionTitle": "Metadata",
     "setupSectionTitle": "Setup",
     "nameLabel": "Name",
@@ -1133,8 +1135,6 @@
   "toolsetEditor": {
     "createTitle": "Create toolset",
     "editTitle": "Edit toolset",
-    "backAriaLabel": "Back to catalog",
-    "savingStatus": "Saving",
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",

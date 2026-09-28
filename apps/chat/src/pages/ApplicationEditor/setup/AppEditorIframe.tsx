@@ -417,6 +417,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             break;
           case AppsEditorEvent.RequestToolsetLogin:
             if (
+              event.source === iframeRef.current?.contentWindow &&
               typeof event.data?.toolsetId === 'string' &&
               event.data.toolsetId
             ) {
@@ -425,6 +426,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             break;
           case AppsEditorEvent.RequestToolsetLogout:
             if (
+              event.source === iframeRef.current?.contentWindow &&
               typeof event.data?.toolsetId === 'string' &&
               event.data.toolsetId
             ) {
