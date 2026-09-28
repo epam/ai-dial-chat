@@ -2,8 +2,9 @@ import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
   getConversationPath,
+  getFormSchemaToolSyncKey,
   getLastDeploymentId,
-  getLastUserMessageToolConfiguration,
+  getLatestToolConfiguration,
   isAwaitingGenerationResume,
   isConversationNotFoundError,
   shouldWatchForDisplayNameUpdate,
@@ -93,6 +94,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const displayNameWatchKeyRef = useRef<string | null>(null);
   const notificationShownForRef = useRef<string | null>(null);
   const restoredToolConfigIdRef = useRef<string | null>(null);
+  /* Key of the last assistant `form_schema` tool values applied to the toggles. */
+  const appliedFormSchemaKeyRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
@@ -117,6 +120,16 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       />
     ),
   });
+  const toolIdsSignature = toolsMenuItems.map(({ id }) => id).join('\n');
+  const toolIds = useMemo(
+    () => (toolIdsSignature ? toolIdsSignature.split('\n') : []),
+    [toolIdsSignature],
+  );
+  /* Read by `loadConversation` without making it depend on the tool list. */
+  const toolIdsRef = useRef(toolIds);
+  useEffect(() => {
+    toolIdsRef.current = toolIds;
+  }, [toolIds]);
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
   const { user } = useUser();
@@ -223,6 +236,27 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
   }, [conversation?.messages, setMessages]);
+
+  /*
+   * A DIAL app can switch a tool toggle per assistant message through its
+   * `form_schema` (e.g. `deep_research` on while a run streams, off with the
+   * final report). Each distinct value is applied once, so a toggle the user
+   * flips afterwards survives re-renders until the app sends a new value.
+   * Waits for the load-time restore of this id: until then `conversation`
+   * may still hold the previous conversation's messages.
+   */
+  useEffect(() => {
+    if (!conversationId || !conversation) return;
+    if (restoredToolConfigIdRef.current !== conversationId) return;
+    const sync = getFormSchemaToolSyncKey(
+      conversationId,
+      conversation.messages,
+      toolIds,
+    );
+    if (!sync || sync.key === appliedFormSchemaKeyRef.current) return;
+    appliedFormSchemaKeyRef.current = sync.key;
+    restoreToolConfiguration(sync.values);
+  }, [conversation, conversationId, restoreToolConfiguration, toolIds]);
 
   /*
    * Switching to another conversation resets the sidebar, matching how the
@@ -420,9 +454,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         }
         if (restoredToolConfigIdRef.current !== id) {
           restoredToolConfigIdRef.current = id;
-          restoreToolConfiguration(
-            getLastUserMessageToolConfiguration(result.messages),
-          );
+          restoreToolConfiguration(getLatestToolConfiguration(result.messages));
+          appliedFormSchemaKeyRef.current =
+            getFormSchemaToolSyncKey(id, result.messages, toolIdsRef.current)
+              ?.key ?? null;
         }
 
         const lastMsg = result.messages[result.messages.length - 1];

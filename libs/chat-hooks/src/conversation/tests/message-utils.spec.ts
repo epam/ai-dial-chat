@@ -6,8 +6,11 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
+  getFormSchemaToolSyncKey,
   getLastDeploymentId,
   getLastUserMessageToolConfiguration,
+  getLatestToolConfiguration,
+  getToolConfigurationFromFormSchema,
   isMessageStreaming,
   messageHasStages,
 } from '../message-utils';
@@ -227,5 +230,205 @@ describe('messageHasStages', () => {
       },
     };
     expect(messageHasStages(msg)).toBe(true);
+  });
+});
+
+/*
+ * ---------------------------------------------------------------------------
+ * form_schema-driven tool configuration
+ * ---------------------------------------------------------------------------
+ */
+
+const withFormSchema = (
+  message: Message,
+  properties: Record<string, Record<string, unknown>>,
+): Message => ({
+  ...message,
+  custom_content: { form_schema: { type: 'object', properties } },
+});
+
+const userWithConfig = (value: Record<string, unknown>): Message => ({
+  ...userMessage(),
+  custom_content: { configuration_value: value },
+});
+
+describe('getToolConfigurationFromFormSchema', () => {
+  it('returns undefined when there is no schema', () => {
+    expect(getToolConfigurationFromFormSchema(undefined)).toBeUndefined();
+  });
+
+  it('reads a boolean default, true or false', () => {
+    expect(
+      getToolConfigurationFromFormSchema({
+        properties: {
+          deep_research: { type: 'boolean', default: true },
+          web_search: { type: 'boolean', default: false },
+        },
+      }),
+    ).toEqual({ deep_research: true, web_search: false });
+  });
+
+  it('falls back to the const of a single-option oneOf', () => {
+    expect(
+      getToolConfigurationFromFormSchema({
+        properties: {
+          deep_research: { oneOf: [{ const: false, title: 'Off' }] },
+        },
+      }),
+    ).toEqual({ deep_research: false });
+  });
+
+  it('prefers default over a single-option oneOf', () => {
+    expect(
+      getToolConfigurationFromFormSchema({
+        properties: {
+          deep_research: { default: true, oneOf: [{ const: false }] },
+        },
+      }),
+    ).toEqual({ deep_research: true });
+  });
+
+  it('ignores a multi-option oneOf, since no option is marked selected', () => {
+    expect(
+      getToolConfigurationFromFormSchema({
+        properties: {
+          deep_research: { oneOf: [{ const: true }, { const: false }] },
+        },
+      }),
+    ).toBeUndefined();
+  });
+
+  it('ignores non-boolean values such as numeric button consts', () => {
+    expect(
+      getToolConfigurationFromFormSchema({
+        properties: {
+          deep_research: { default: 'yes' },
+          button: { 'dial:widget': 'buttons', oneOf: [{ const: 1 }] },
+        },
+      }),
+    ).toBeUndefined();
+  });
+});
+
+describe('getLatestToolConfiguration', () => {
+  it('returns the last user configuration when no assistant message follows it', () => {
+    expect(
+      getLatestToolConfiguration([userWithConfig({ deep_research: true })]),
+    ).toEqual({ deep_research: true });
+  });
+
+  it('lets a later assistant form_schema override the user configuration', () => {
+    const messages = [
+      userWithConfig({ deep_research: true, web_search: true }),
+      withFormSchema(assistantMessage(), {
+        deep_research: { type: 'boolean', default: false },
+      }),
+    ];
+    expect(getLatestToolConfiguration(messages)).toEqual({
+      deep_research: false,
+      web_search: true,
+    });
+  });
+
+  it('ignores an assistant form_schema that precedes the last user message', () => {
+    const messages = [
+      userWithConfig({ deep_research: false }),
+      withFormSchema(assistantMessage(), {
+        deep_research: { type: 'boolean', default: true },
+      }),
+      userWithConfig({ deep_research: false }),
+      assistantMessage(),
+    ];
+    expect(getLatestToolConfiguration(messages)).toEqual({
+      deep_research: false,
+    });
+  });
+
+  it('uses assistant values when the conversation has no user configuration', () => {
+    const messages = [
+      userMessage(),
+      withFormSchema(assistantMessage(), {
+        deep_research: { type: 'boolean', default: true },
+      }),
+    ];
+    expect(getLatestToolConfiguration(messages)).toEqual({
+      deep_research: true,
+    });
+  });
+
+  it('returns undefined for an empty list', () => {
+    expect(getLatestToolConfiguration([])).toBeUndefined();
+  });
+});
+
+describe('getFormSchemaToolSyncKey', () => {
+  const onSchema = { deep_research: { type: 'boolean', default: true } };
+
+  it('returns the known tool values of the last assistant message', () => {
+    const result = getFormSchemaToolSyncKey(
+      'c1',
+      [
+        userMessage(),
+        withFormSchema(assistantMessage(), {
+          ...onSchema,
+          web_search: { type: 'boolean', default: true },
+        }),
+      ],
+      ['deep_research'],
+    );
+    expect(result?.values).toEqual({ deep_research: true });
+  });
+
+  it('returns undefined when the last message is a user message', () => {
+    expect(
+      getFormSchemaToolSyncKey(
+        'c1',
+        [withFormSchema(assistantMessage(), onSchema), userMessage()],
+        ['deep_research'],
+      ),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when no value matches a current tool', () => {
+    expect(
+      getFormSchemaToolSyncKey(
+        'c1',
+        [userMessage(), withFormSchema(assistantMessage(), onSchema)],
+        [],
+      ),
+    ).toBeUndefined();
+  });
+
+  it('keeps the same key for an identical schema re-created by a later chunk', () => {
+    const first = getFormSchemaToolSyncKey(
+      'c1',
+      [userMessage(), withFormSchema(assistantMessage('a'), onSchema)],
+      ['deep_research'],
+    );
+    const second = getFormSchemaToolSyncKey(
+      'c1',
+      [userMessage(), withFormSchema(assistantMessage('ab'), { ...onSchema })],
+      ['deep_research'],
+    );
+    expect(second?.key).toBe(first?.key);
+  });
+
+  it('changes the key when the app sends a different value', () => {
+    const on = getFormSchemaToolSyncKey(
+      'c1',
+      [userMessage(), withFormSchema(assistantMessage(), onSchema)],
+      ['deep_research'],
+    );
+    const off = getFormSchemaToolSyncKey(
+      'c1',
+      [
+        userMessage(),
+        withFormSchema(assistantMessage(), {
+          deep_research: { type: 'boolean', default: false },
+        }),
+      ],
+      ['deep_research'],
+    );
+    expect(off?.key).not.toBe(on?.key);
   });
 });
