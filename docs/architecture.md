@@ -27,16 +27,17 @@ Core principle: the chat application is assembled from a set of **independently 
 
 ## Monorepo & Tooling
 
-| Tool               | Role                                                           |
-| ------------------ | -------------------------------------------------------------- |
-| **Nx 23**          | Monorepo orchestration, task pipeline, caching, affected graph |
-| **npm workspaces** | Package management                                             |
-| **React 19**       | UI framework for all libraries and the frontend app            |
-| **NestJS 11**      | Backend API server (`apps/chat-api`)                           |
-| **TypeScript 6.0** | Strict mode, `noUnusedLocals`, `noUnusedParameters`            |
-| **Vite 8**         | Frontend bundler                                               |
-| **Vitest 4**       | Test runner (frontend + backend unit tests)                    |
-| **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                 |
+| Tool               | Role                                                                                                  |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| **Nx 23**          | Monorepo orchestration, task pipeline, caching, affected graph                                        |
+| **npm workspaces** | Package management                                                                                    |
+| **React 19**       | UI framework for all libraries and the frontend app                                                   |
+| **NestJS 11**      | Backend API server (`apps/chat-api`)                                                                  |
+| **TypeScript 6.0** | Strict mode, `noUnusedLocals`, `noUnusedParameters`                                                   |
+| **Vite 8**         | Frontend bundler                                                                                      |
+| **Vitest 4**       | Test runner (frontend + backend unit tests)                                                           |
+| **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                                                        |
+| **Storybook 10**   | Lib-local component catalogue (`libs/celebrations/.storybook`, React/Vite); built in CI, not deployed |
 
 ```
 root/
@@ -45,7 +46,7 @@ root/
 │   ├── chat-api/              # NestJS — backend API server (port 5000)
 │   ├── chat-overlay-sandbox/  # Static host page for exercising the overlay (port 4300)
 │   └── mcp-app-sandbox/       # Separate-origin MCP Apps sandbox proxy (port 3100)
-├── libs/                      # 28 @epam/* libraries — see Libraries below
+├── libs/                      # 29 @epam/* libraries — see Libraries below
 ├── docs/                      # Architecture, requirements, auth, theming, overlay migration
 ├── openspec/
 │   ├── config.yaml            # Tech stack, commands, architecture rules for AI agents
@@ -132,6 +133,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-chat-api-client`       | `chat-api-client`       | Generated OpenAPI client for the chat API (see the exception below)                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `@epam/ai-dial-chat-overlay`          | `chat-overlay`          | Embeddable `ChatOverlay` / `ChatOverlayManager` and the postMessage protocol                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `@epam/ai-dial-catalog`               | `catalog`               | Catalog for browsing models, applications, tools, prompts, and skills                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `@epam/ai-dial-celebrations`          | `celebrations`          | Seasonal start-page celebrations: `CelebrationProvider`, `useCelebration`, `CelebrationDecor`, and lazily loaded `./halloween` / `./new-year` events whose scenes and decor behaviors hosts enable per event; covered by a lib-local Storybook                                                                                                                                                                                                                                     |
 | `@epam/ai-dial-conversation-input`    | `conversation-input`    | Message composer — model selection, attachments, voice input, edit mode                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `@epam/ai-dial-conversation-messages` | `conversation-messages` | Message bubbles with actions and source citations                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `@epam/ai-dial-conversation-panel`    | `conversation-panel`    | Virtualized conversation-history sidebar with grouping, tabs, and search                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -313,7 +315,7 @@ Current implementation uses **React Context** with no external state library. Th
 | `ActiveScheduledTaskContext`  | Scheduled task currently being viewed or edited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UserConfigContext`           | Per-user preferences persisted through `/api/v1/user-config`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `NotificationContext`         | Toast notifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `CelebrationContext`          | Start-page event selection from `config.activeEventId` (`UI_EVENT`), lazy event loading, random scene playback, per-scene cleanup and optional secret phrase interception with an independent random scene pool (no consecutive repeats). Halloween and New Year supply independent event modules; navigation cancels playback. Decoration stays click-through, honors reduced motion and persists no state. The hook is inert outside its optional provider.                                                                                                                                                        |
+| `CelebrationHost`             | Adapts the app to `@epam/ai-dial-celebrations`: passes `config.activeEventId` (`UI_EVENT`) only on `/` once the user config is ready, the navigation key as the reset key, labels translated from the `halloween.*` / `newYear.*` keys, the success toast, `useIsMobile` and the composer/starter/history anchors. The library owns playback, random scene selection, secret-phrase interception and cleanup; its `useCelebration` hook is inert outside the provider.                                                                                                                                               |
 | `ClientChannelContext`        | DIAL Core client-channel id, pending `toolset/signin` and `external-service/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation. The subscription is demand-driven: it opens only when a completion request calls `ensureConnected()`/`waitForChannel()`, never merely from mounting or returning to a streaming-capable route; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-sign-in-during-a-completion-toolsets-and-application-external-services) |
 
 Context pattern (reference: `ThemeContext.tsx`):
@@ -321,7 +323,7 @@ Context pattern (reference: `ThemeContext.tsx`):
 - `createContext<T | undefined>(undefined)`
 - `useMemo` on context value to prevent consumer re-renders
 - Guard consumer hook throws a clear error when used outside the provider —
-  the one exception is `CelebrationContext`, whose default value is an inert,
+  the one exception is `useCelebration` from `@epam/ai-dial-celebrations`, whose default value is an inert,
   disabled easter egg, so a decorative feature cannot break a tree that skips
   its provider
 
