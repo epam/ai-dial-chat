@@ -2373,15 +2373,17 @@ popup.sessionStorage.setItem(
 );
 ```
 
-### encodeToolsetId / decodeToolsetId / isPublicToolsetId
+### encodeToolsetId / decodeToolsetId / isPublicToolsetId / resolveToolsetCredentialsLevel / selectToolsetAuthStatus
 
-`encodeToolsetId` percent-encodes each `/`-separated segment of a toolset id so it satisfies the backend's id pattern, keeping `/` as a literal separator — the counterpart of `encodeDeploymentId` on the applications side. `decodeToolsetId` inverts it, passing a malformed percent-encoded segment through unchanged rather than throwing, since it decodes externally-sourced ids. `isPublicToolsetId` reports whether an id lives in the org-wide `public` bucket.
+`encodeToolsetId` percent-encodes each `/`-separated segment of a toolset id so it satisfies the backend's id pattern, keeping `/` as a literal separator — the counterpart of `encodeDeploymentId` on the applications side. `decodeToolsetId` inverts it, passing a malformed percent-encoded segment through unchanged rather than throwing, since it decodes externally-sourced ids. `isPublicToolsetId` reports whether an id lives in the org-wide `public` bucket. `resolveToolsetCredentialsLevel` resolves the level a toolset's login applies to from that same public/private convention — `User` for a public-bucket toolset, `Global` otherwise — so every login surface (the sign-in-interrupt dialog, the QuickApps editor iframe bridge, `useToolsetLogin`) picks the same level for the same toolset. `selectToolsetAuthStatus` then picks the matching `userLevelAuthStatus`/`globalAuthStatus` field off a toolset's `authSettings` for that level.
 
 ```ts
 import {
   decodeToolsetId,
   encodeToolsetId,
   isPublicToolsetId,
+  resolveToolsetCredentialsLevel,
+  selectToolsetAuthStatus,
 } from '@epam/ai-dial-chat-hooks';
 
 encodeToolsetId('toolsets/b/My Toolset__1.0.0');
@@ -2391,6 +2393,13 @@ decodeToolsetId('toolsets/b/My%20Toolset__1.0.0');
 // 'toolsets/b/My Toolset__1.0.0'
 
 isPublicToolsetId('toolsets/public/jira__1.0.0'); // true
+
+const credentialsLevel = resolveToolsetCredentialsLevel(
+  'toolsets/b/jira__1.0.0',
+); // ToolsetCredentialsLevel.Global
+
+selectToolsetAuthStatus(toolset.authSettings, credentialsLevel);
+// toolset.authSettings?.globalAuthStatus
 ```
 
 ### getToolsetRedirectUri / buildToolsetAuthorizeUrl

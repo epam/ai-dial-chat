@@ -7,6 +7,8 @@ import {
   mapToolsetCredentials,
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,
+  resolveToolsetCredentialsLevel,
+  selectToolsetAuthStatus,
   subscribeToolsetLoginSuccess,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
@@ -271,7 +273,8 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           return;
         }
 
-        const credentialsLevel = ToolsetCredentialsLevel.User;
+        const credentialsLevel =
+          resolveToolsetCredentialsLevel(encodedToolsetId);
         const initiation = navigateToolsetOAuthPopup(
           popup,
           auth,
@@ -323,7 +326,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
          */
         try {
           const refreshed = await getToolset(encodedToolsetId);
-          const statusField = refreshed.authSettings?.userLevelAuthStatus;
+          const statusField = selectToolsetAuthStatus(
+            refreshed.authSettings,
+            credentialsLevel,
+          );
           if (statusField === 'SIGNED_IN') {
             postToolsetLoginResult(targetOrigin, {
               toolsetId,

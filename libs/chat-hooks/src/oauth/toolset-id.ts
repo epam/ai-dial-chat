@@ -1,4 +1,6 @@
+import type { DialToolsetAuthSettingsDto } from '@epam/ai-dial-chat-api-client';
 import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
+import { ToolsetCredentialsLevel } from './types';
 
 const TOOLSETS_ID_PREFIX = 'toolsets/';
 
@@ -44,3 +46,37 @@ export const isPublicToolsetId = (toolsetId: string): boolean => {
   const bucket = toolsetId.slice(TOOLSETS_ID_PREFIX.length).split('/')[0];
   return bucket === PUBLIC_BUCKET;
 };
+
+/**
+ * Resolves which credentials level a toolset's login applies to, per DIAL
+ * Core's public/private toolset convention: a `public`-bucket toolset is
+ * shared credentials-wise at `User` level, while a private/workspace toolset
+ * is scoped at `Global` level. Every surface that drives a toolset login
+ * (the sign-in-interrupt dialog, the QuickApps editor iframe bridge,
+ * `useToolsetLogin`) must resolve the level this way rather than assuming one.
+ */
+export const resolveToolsetCredentialsLevel = (
+  toolsetId: string,
+): ToolsetCredentialsLevel.User | ToolsetCredentialsLevel.Global =>
+  isPublicToolsetId(toolsetId)
+    ? ToolsetCredentialsLevel.User
+    : ToolsetCredentialsLevel.Global;
+
+/**
+ * Picks the auth-status field matching one credentials level out of a
+ * toolset's `authSettings` — DIAL Core reports `userLevelAuthStatus` and
+ * `globalAuthStatus` as independent fields rather than one status keyed by
+ * level.
+ */
+export const selectToolsetAuthStatus = (
+  authSettings:
+    | Pick<
+        DialToolsetAuthSettingsDto,
+        'userLevelAuthStatus' | 'globalAuthStatus'
+      >
+    | undefined,
+  credentialsLevel: ToolsetCredentialsLevel,
+): string | undefined =>
+  credentialsLevel === ToolsetCredentialsLevel.User
+    ? authSettings?.userLevelAuthStatus
+    : authSettings?.globalAuthStatus;
