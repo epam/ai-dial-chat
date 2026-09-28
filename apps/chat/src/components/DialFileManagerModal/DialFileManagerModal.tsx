@@ -12,12 +12,12 @@ import {
   type FileManagerAttachModalLabels,
 } from '@epam/ai-dial-chat-shared';
 import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
-import type {
-  DialFile,
-  FileManagerGridRow,
-} from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
+  type DialFile,
+  type FileManagerGridRow,
+} from '@epam/ai-dial-react-file-manager';
+import {
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
@@ -120,6 +120,7 @@ const DialFileManagerModal: FC<Props> = ({
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
+      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -346,6 +347,10 @@ const DialFileManagerModal: FC<Props> = ({
           DialFileManagerI18nKeys.OrganizationEmptyStateDescription,
         ),
       },
+      [DialFileManagerTabs.All]: {
+        title: emptyTitle,
+        description: emptyDescription,
+      },
       [DialFileManagerTabs.Review]: {
         title: emptyTitle,
         description: emptyDescription,
@@ -361,6 +366,7 @@ const DialFileManagerModal: FC<Props> = ({
       ),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
+      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],

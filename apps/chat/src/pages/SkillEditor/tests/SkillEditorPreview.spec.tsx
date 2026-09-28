@@ -379,6 +379,19 @@ describe('SkillEditor page — supporting file preview', () => {
  * is text-previewable but its MIME is not routed, so the code resolver is the
  * last one consulted and a `null` from it closes the canvas outright.
  */
+/*
+ * Name stays in Metadata while a supporting file is selected, and the kit
+ * renders its helper caption with role="alert" too, so pick the preview error.
+ */
+const findPreviewAlert = async () => {
+  const alerts = await screen.findAllByRole('alert');
+  const previewAlert = alerts.find((alert) =>
+    alert.textContent?.includes('attachmentCanvas.loadErrorLabel'),
+  );
+  if (!previewAlert) throw new Error('No preview load-error alert rendered');
+  return previewAlert;
+};
+
 describe('SkillEditor page — a failed supporting-file preview', () => {
   const user = userEvent.setup({ delay: null });
 
@@ -410,7 +423,7 @@ describe('SkillEditor page — a failed supporting-file preview', () => {
 
     await selectFile(user, 'script.py');
 
-    const alert = await screen.findByRole('alert');
+    const alert = await findPreviewAlert();
     expect(alert.textContent).toContain('attachmentCanvas.loadErrorLabel');
     expect(screen.getByRole('button', { name: 'buttons.retry' })).toBeTruthy();
   });
@@ -422,7 +435,7 @@ describe('SkillEditor page — a failed supporting-file preview', () => {
       new File(['print("hi")'], 'script.py', { type: 'text/plain' }),
     );
     await selectFile(user, 'script.py');
-    await screen.findByRole('alert');
+    await findPreviewAlert();
 
     codeContentFails = false;
     await user.click(screen.getByRole('button', { name: 'buttons.retry' }));
@@ -432,7 +445,7 @@ describe('SkillEditor page — a failed supporting-file preview', () => {
         screen.getByRole('group', { name: 'script.py' }).textContent,
       ).toContain('print'),
     );
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('attachmentCanvas.loadErrorLabel')).toBeNull();
   });
 
   it('clears the failure when a different supporting file is selected', async () => {
@@ -446,7 +459,7 @@ describe('SkillEditor page — a failed supporting-file preview', () => {
       new File(['# Hello there'], 'notes.md', { type: 'text/markdown' }),
     );
     await selectFile(user, 'script.py');
-    await screen.findByRole('alert');
+    await findPreviewAlert();
 
     await selectFile(user, 'notes.md');
 
@@ -455,6 +468,6 @@ describe('SkillEditor page — a failed supporting-file preview', () => {
         screen.getByRole('group', { name: 'notes.md' }).textContent,
       ).toContain('Hello there'),
     );
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('attachmentCanvas.loadErrorLabel')).toBeNull();
   });
 });

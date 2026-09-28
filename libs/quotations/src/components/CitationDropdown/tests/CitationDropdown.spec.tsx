@@ -39,7 +39,6 @@ const cardLabels = {
     `${current} / ${total}`,
   preview: 'Preview',
   openInBrowser: 'Open in browser',
-  download: 'Download',
 };
 
 const markerLabels = {
@@ -53,6 +52,7 @@ const Wrapper = (props: {
   onPreview?: (annotation: Annotation) => void;
   isPreviewable?: (annotation: Annotation) => boolean;
   onOpenInBrowser: (annotation: Annotation) => void;
+  isPreviewOpen?: boolean;
 }) => {
   const citationCard = useCitationCard();
   return (
@@ -135,8 +135,9 @@ describe('CitationDropdown', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
-    await userEvent.click(screen.getByRole('button', { name: 'Download' }));
-    expect(onOpenInBrowser).toHaveBeenLastCalledWith(pdfAnnotation);
+    expect(
+      screen.queryByRole('button', { name: 'Open in browser' }),
+    ).toBeNull();
 
     await userEvent.click(screen.getByRole('button', { name: 'Previous' }));
     expect(screen.queryByRole('button', { name: 'Preview' })).toBeNull();
@@ -148,6 +149,36 @@ describe('CitationDropdown', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(onPreview).toHaveBeenCalledExactlyOnceWith(pdfAnnotation);
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('previews directly on marker click without showing the card when the preview panel is open', async () => {
+    const group = makeGroup();
+    const onPreview = vi.fn();
+    render(
+      <Wrapper
+        group={group}
+        onPreview={onPreview}
+        onOpenInBrowser={vi.fn()}
+        isPreviewOpen
+      />,
+    );
+    await userEvent.click(screen.getByRole('button'));
+    expect(onPreview).toHaveBeenCalledExactlyOnceWith(group.primaryAnnotation);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('still opens the card when the preview panel is open but the annotation is not previewable', async () => {
+    render(
+      <Wrapper
+        group={makeGroup()}
+        onPreview={vi.fn()}
+        isPreviewable={() => false}
+        onOpenInBrowser={vi.fn()}
+        isPreviewOpen
+      />,
+    );
+    await userEvent.click(screen.getByRole('button'));
+    expect(screen.getByRole('dialog')).toBeTruthy();
   });
 
   it('opens the popup with a Preview button when onPreview is provided', async () => {

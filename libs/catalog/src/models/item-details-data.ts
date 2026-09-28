@@ -193,6 +193,30 @@ export interface CatalogContentFolderNode {
 export type CatalogContentTreeNode =
   CatalogContentFileNode | CatalogContentFolderNode;
 
+/**
+ * What the Content tab hands a host-rendered file tree (`renderContentFileTree`).
+ * Expansion and selection stay owned by the panel; the tree only reports
+ * intent back through the callbacks.
+ */
+export interface CatalogContentFileTreeRenderProps {
+  /** Root-level folder and file nodes to render. */
+  nodes: CatalogContentTreeNode[];
+  /** Id of the file currently displayed. The tree marks its row selected and focuses it on mount. */
+  selectedFileId?: string;
+  /** Ids of folders currently expanded. */
+  expandedFolderIds: ReadonlySet<string>;
+  /** Called with a folder's id when it should expand or collapse. */
+  onToggleFolder: (folderId: string) => void;
+  /** Called with a file's id when it is picked. Closes the selector overlay. */
+  onSelectFile: (fileId: string) => void;
+  /** Called on Escape, to close the selector overlay without changing the selection. */
+  onClose: () => void;
+  /** Accessible name for the tree. */
+  ariaLabel: string;
+  /** Typography class the panel applies to its own body text. */
+  rowNameClassName: string;
+}
+
 /** A picked file's content, resolved and typed for safe read-only rendering. */
 export interface CatalogContentMarkdownPreview {
   /** Discriminates this preview as Markdown. */

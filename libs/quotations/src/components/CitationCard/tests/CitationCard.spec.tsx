@@ -40,7 +40,6 @@ const defaultLabels = {
     `${current} / ${total}`,
   preview: 'Preview',
   openInBrowser: 'Open in browser',
-  download: 'Download',
 };
 
 const defaultProps = (
@@ -118,6 +117,28 @@ describe('CitationCard', () => {
       screen.getByRole('button', { name: 'Open in browser' }),
     );
     expect(onOpenInBrowser).toHaveBeenCalledWith(group.annotations[0]);
+  });
+
+  it('shows only Preview, with no Download or Open in browser, for a previewable file', () => {
+    render(<CitationCard {...defaultProps()} />);
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Open in browser' }),
+    ).toBeNull();
+  });
+
+  it('shows the file extension in the header for a previewable file', () => {
+    render(<CitationCard {...defaultProps()} />);
+    expect(screen.getByText('.pdf')).toBeTruthy();
+    expect(screen.queryByText('report.pdf')).toBeNull();
+  });
+
+  it('shows the source name in the header for a web link', () => {
+    render(
+      <CitationCard {...defaultProps({ group: makeGroup(1, 'text/html') })} />,
+    );
+    expect(screen.getByText('report.pdf')).toBeTruthy();
   });
 
   it('hides the Preview button when onPreview is omitted', () => {
