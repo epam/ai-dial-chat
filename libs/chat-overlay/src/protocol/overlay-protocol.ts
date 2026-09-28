@@ -376,6 +376,26 @@ export interface ChatOverlayOptions {
      */
     autoSignInProvider?: string;
   };
+  /**
+   * Legacy automatic sign-in options, translated into `auth` for hosts that
+   * still pass the old chat's shape. `auth.autoSignInProvider` wins when both
+   * are set.
+   * @deprecated Use `auth.autoSignInProvider` with a `providerUiModes` entry.
+   */
+  signInOptions?: LegacySignInOptions;
+}
+
+/**
+ * Legacy `signInOptions` shape accepted by `ChatOverlayOptions`.
+ * @deprecated Use `ChatOverlayOptions.auth` instead.
+ */
+export interface LegacySignInOptions {
+  /** Starts login for `signInProvider` without a user click when `true`. */
+  autoSignIn?: boolean;
+  /** Provider id to sign in with, as returned by `GET /api/v1/auth/providers`. */
+  signInProvider?: string;
+  /** Maps `signInProvider` to `OverlayAuthUiMode.External` instead of `SameWindow` when `true`. */
+  signInInNewWindow?: boolean;
 }
 
 /** Payload of a `SET_OVERLAY_OPTIONS` request. */
