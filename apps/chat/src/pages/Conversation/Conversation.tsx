@@ -120,9 +120,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       />
     ),
   });
-  const toolIdsSignature = toolsMenuItems.map(({ id }) => id).join('\n');
+  /*
+   * `toolsMenuItems` is a new array on every render (the inline `toolIcon`
+   * is part of its memo), so the ids are memoised by value instead.
+   */
+  const toolIdsSignature = JSON.stringify(toolsMenuItems.map(({ id }) => id));
   const toolIds = useMemo(
-    () => (toolIdsSignature ? toolIdsSignature.split('\n') : []),
+    (): string[] => JSON.parse(toolIdsSignature),
     [toolIdsSignature],
   );
   /* Read by `loadConversation` without making it depend on the tool list. */

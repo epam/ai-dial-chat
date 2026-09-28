@@ -167,8 +167,12 @@ export const getFormSchemaToolSyncKey = (
     last.custom_content?.form_schema,
   );
   if (!resolved) return undefined;
+  /* Sorted so a reordered deployment schema does not re-apply the same values. */
   const values = Object.fromEntries(
-    toolIds.filter((id) => id in resolved).map((id) => [id, resolved[id]]),
+    toolIds
+      .filter((id) => id in resolved)
+      .sort()
+      .map((id) => [id, resolved[id]]),
   );
   if (Object.keys(values).length === 0) return undefined;
   return {

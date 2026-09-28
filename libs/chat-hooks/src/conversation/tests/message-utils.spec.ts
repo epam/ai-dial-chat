@@ -452,6 +452,23 @@ describe('getFormSchemaToolSyncKey', () => {
     expect(second?.key).toBe(first?.key);
   });
 
+  it('keeps the same key when the tool ids arrive in a different order', () => {
+    const messages = [
+      userMessage(),
+      withFormSchema(assistantMessage(), {
+        ...onSchema,
+        web_search: { type: 'boolean', default: false },
+      }),
+    ];
+    expect(
+      getFormSchemaToolSyncKey('c1', messages, ['web_search', 'deep_research'])
+        ?.key,
+    ).toBe(
+      getFormSchemaToolSyncKey('c1', messages, ['deep_research', 'web_search'])
+        ?.key,
+    );
+  });
+
   it('changes the key when the app sends a different value', () => {
     const on = getFormSchemaToolSyncKey(
       'c1',
