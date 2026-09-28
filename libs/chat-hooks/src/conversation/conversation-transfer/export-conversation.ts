@@ -1,4 +1,5 @@
 import type {
+  Annotation,
   Conversation,
   ExportFolder,
   ExportFormat,
@@ -15,17 +16,34 @@ export const EXPORT_APP_NAME = 'ai_dial';
 const stripStageAttachments = (stages: Stage[]): Stage[] =>
   stages.map(({ attachments: _attachments, ...stage }) => stage);
 
-/** Drops `custom_content.attachments` and every stage's attachments, omitting `custom_content` when nothing else remains in it. */
+/** Drops the cited source document from every annotation, keeping its quote, title and target. */
+const stripAnnotationSources = (annotations: Annotation[]): Annotation[] =>
+  annotations.map((annotation) => {
+    if (annotation.body?.source == null) return annotation;
+    const { source: _source, ...body } = annotation.body;
+    return { ...annotation, body };
+  });
+
+/**
+ * Drops `custom_content.attachments`, every stage's attachments and every
+ * citation's source document, omitting `custom_content` when nothing else
+ * remains in it.
+ */
 const stripMessageAttachments = (message: Message): Message => {
   const customContent = message.custom_content;
   if (!customContent) return message;
 
-  const { attachments, stages, ...keptContent } = customContent;
-  if (attachments == null && stages == null) return message;
+  const { attachments, stages, annotations, ...keptContent } = customContent;
+  if (attachments == null && stages == null && annotations == null) {
+    return message;
+  }
 
   const strippedContent = {
     ...keptContent,
     ...(stages ? { stages: stripStageAttachments(stages) } : {}),
+    ...(annotations
+      ? { annotations: stripAnnotationSources(annotations) }
+      : {}),
   };
   if (Object.keys(strippedContent).length > 0) {
     return { ...message, custom_content: strippedContent };
@@ -35,7 +53,7 @@ const stripMessageAttachments = (message: Message): Message => {
   return messageWithoutContent as Message;
 };
 
-/** Returns the conversation with every message- and stage-level attachment reference removed. */
+/** Returns the conversation with every message-, stage- and citation-level attachment reference removed. */
 export const stripConversationAttachments = (
   conversation: Conversation,
 ): Conversation => ({

@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.19 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.21 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -235,6 +235,17 @@ deterministic validation.
 import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/validation';
 
 const errors = validateScheduledTaskFormValues(values, { now: new Date() });
+```
+
+`validateScheduledTaskTextField` checks a single free-text field against the
+limits shared by every entity editor — display name 256 characters without
+control characters, description 500, instructions 50000 — so a host can
+surface an over-limit value while the user is still typing:
+
+```ts
+import { validateScheduledTaskTextField } from '@epam/ai-dial-scheduled-tasks/validation';
+
+const code = validateScheduledTaskTextField('displayName', values.displayName);
 ```
 
 ## Public class names

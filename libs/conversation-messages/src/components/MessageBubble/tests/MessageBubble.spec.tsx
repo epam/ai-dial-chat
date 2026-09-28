@@ -57,6 +57,28 @@ afterEach(() => {
 });
 
 describe('MessageBubble', () => {
+  it.each([MessageRole.User, MessageRole.Assistant])(
+    'exposes only the text body for %s messages',
+    (role) => {
+      const contentRef = { current: null as HTMLDivElement | null };
+      render(
+        <MessageBubble
+          role={role}
+          text="Selected passage"
+          contentRef={contentRef}
+          afterContent={<button>Stage control</button>}
+          attachments={[ATTACHMENT]}
+        />,
+      );
+      expect(
+        contentRef.current?.contains(screen.getByText('Selected passage')),
+      ).toBe(true);
+      expect(contentRef.current?.textContent).toBe('Selected passage');
+      expect(
+        contentRef.current?.contains(screen.queryByText('report.pdf')),
+      ).toBe(false);
+    },
+  );
   it('renders the provided text content', () => {
     render(<MessageBubble text="Hello world" role={MessageRole.User} />);
     expect(screen.getByText('Hello world')).toBeTruthy();

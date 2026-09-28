@@ -82,8 +82,6 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
           deleteConfirmBody={deleteConfirmBody}
           deleteConfirmLabel={labels.deleteConfirmLabel}
           deleteCancelLabel={labels.deleteCancelLabel}
-          uploadProgressTitle={labels.uploadProgressTitle}
-          cancelLabel={labels.cancelLabel}
         />
       )}
     </Suspense>

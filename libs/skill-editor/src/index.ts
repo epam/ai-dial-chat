@@ -11,6 +11,7 @@ export type {
   SkillEditorValues,
   SkillFileBatchError,
   SkillFileCommitResult,
+  SkillFileSourceEntry,
   SkillFileTreeNode,
   SkillFileUploadCandidate,
   SkillFileValidationResult,
@@ -20,4 +21,5 @@ export {
   SkillFileValidationStatus,
 } from './models/skill-editor-props';
 export { SkillFileNodeKind } from './types/skill-file-node-kind';
+export { SkillFileUploadMode } from './types/skill-file-upload-mode';
 export { SKILL_EDITOR_CLASS } from './constants/public-class-names';

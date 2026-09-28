@@ -67,6 +67,22 @@ const getArchiveConflictUploadFallback = (
     : undefined;
 };
 
+let entryIdCounter = 0;
+
+/* Unique across batches, since a new batch is appended to one still on screen. */
+const createEntryId = (): string => {
+  entryIdCounter += 1;
+  return `${Date.now()}-${entryIdCounter}`;
+};
+
+const appendEntries = (
+  prev: FileUploadBatchState | null,
+  entries: FileUploadEntry[],
+): FileUploadBatchState => ({
+  files: [...(prev?.files ?? []), ...entries],
+  isOpen: true,
+});
+
 /** Options accepted by `useDialFileUploadBatch`. */
 export interface UseDialFileUploadBatchOptions {
   /** Injected operation port used for every upload network call. */
@@ -107,15 +123,17 @@ export interface UseDialFileUploadBatchResult {
   ) => Promise<FileUploadValidationResult>;
   uploadBatchState: FileUploadBatchState | null;
   cancelUpload: () => void;
+  cancelUploadFile: (id: string) => void;
   clearUploadBatch: () => void;
 }
 
 /**
  * Manages upload batches (single-file and ZIP-archive extraction), including
- * concurrency-limited progress tracking and abort. Invalidates the shared
- * listing cache for the destination folder through `invalidateFolders`/
- * `bumpRetry` after a batch settles — it never holds its own copy of the
- * cache.
+ * concurrency-limited progress tracking and per-file abort. A batch started
+ * while another is on screen is appended to it, and settled entries stay in
+ * `uploadBatchState` until `clearUploadBatch`. Invalidates the shared listing
+ * cache for the destination folder through `invalidateFolders`/`bumpRetry`
+ * after a batch settles — it never holds its own copy of the cache.
  */
 export const useDialFileUploadBatch = ({
   filesApi,
@@ -130,7 +148,8 @@ export const useDialFileUploadBatch = ({
 }: UseDialFileUploadBatchOptions): UseDialFileUploadBatchResult => {
   const [uploadBatchState, setUploadBatchState] =
     useState<FileUploadBatchState | null>(null);
-  const uploadAbortControllerRef = useRef<AbortController | null>(null);
+  /* One controller per file still queued or uploading, keyed by entry id. */
+  const abortControllersRef = useRef(new Map<string, AbortController>());
 
   const uploadArchiveToFolder = useCallback(
     (file: File, name: string, destinationFolder: string) => {
@@ -138,19 +157,16 @@ export const useDialFileUploadBatch = ({
         destinationFolder,
         rootLabel,
       );
+      const entryId = createEntryId();
 
-      setUploadBatchState({
-        files: [
-          {
-            id: `${Date.now()}-archive`,
-            name,
-            status: FileUploadStatus.Uploading,
-          },
-        ],
-        isOpen: true,
-      });
+      setUploadBatchState((prev) =>
+        appendEntries(prev, [
+          { id: entryId, name, status: FileUploadStatus.Uploading },
+        ]),
+      );
 
       const run = async (): Promise<void> => {
+        let status = FileUploadStatus.Failed;
         try {
           const { results } = await filesApi.uploadArchive(
             file,
@@ -169,15 +185,18 @@ export const useDialFileUploadBatch = ({
               names,
               restCount,
             });
-          } else if (failedCount > 0) {
-            onNotification?.({
-              variant: NotificationVariant.Error,
-              reason:
-                FileManagerNotificationReason.UploadArchivePartiallyFailed,
-              count: failedCount,
-              names,
-              restCount,
-            });
+          } else {
+            status = FileUploadStatus.Completed;
+            if (failedCount > 0) {
+              onNotification?.({
+                variant: NotificationVariant.Error,
+                reason:
+                  FileManagerNotificationReason.UploadArchivePartiallyFailed,
+                count: failedCount,
+                names,
+                restCount,
+              });
+            }
           }
         } catch {
           onNotification?.({
@@ -187,7 +206,9 @@ export const useDialFileUploadBatch = ({
         } finally {
           invalidateFolders([destinationApiPath]);
           bumpRetry();
-          setUploadBatchState(null);
+          setUploadBatchState((prev) =>
+            updateEntry(prev, entryId, { status, percent: 100 }),
+          );
         }
       };
 
@@ -210,16 +231,17 @@ export const useDialFileUploadBatch = ({
         return;
       }
 
-      const controller = new AbortController();
-      uploadAbortControllerRef.current = controller;
-
-      const entries: FileUploadEntry[] = files.map((f, i) => ({
-        id: `${Date.now()}-${i}`,
+      const entries: FileUploadEntry[] = files.map((f) => ({
+        id: createEntryId(),
         name: f.name,
         status: FileUploadStatus.Queued,
       }));
+      const controllers = abortControllersRef.current;
+      for (const entry of entries) {
+        controllers.set(entry.id, new AbortController());
+      }
 
-      setUploadBatchState({ files: entries, isOpen: true });
+      setUploadBatchState((prev) => appendEntries(prev, entries));
 
       const destinationApiPath = virtualPathToApiPath(
         destinationFolder,
@@ -244,21 +266,26 @@ export const useDialFileUploadBatch = ({
         let nextIndex = 0;
         let successCount = 0;
         let failedCount = 0;
+        let canceledCount = 0;
 
         const worker = async () => {
           while (nextIndex < files.length) {
             const i = nextIndex++;
             const file = files[i];
+            const { id } = entries[i];
+            const controller = controllers.get(id);
 
-            if (controller.signal.aborted) {
+            if (controller == null || controller.signal.aborted) {
+              canceledCount += 1;
+              controllers.delete(id);
               setUploadBatchState((prev) =>
-                updateEntry(prev, i, FileUploadStatus.Cancelled),
+                updateEntry(prev, id, FileUploadStatus.Cancelled),
               );
               continue;
             }
 
             setUploadBatchState((prev) =>
-              updateEntry(prev, i, {
+              updateEntry(prev, id, {
                 status: FileUploadStatus.Uploading,
                 percent: 0,
               }),
@@ -278,7 +305,7 @@ export const useDialFileUploadBatch = ({
                   uploadMode,
                   onProgress: (percent) => {
                     setUploadBatchState((prev) =>
-                      updateEntry(prev, i, {
+                      updateEntry(prev, id, {
                         status: FileUploadStatus.Uploading,
                         percent,
                       }),
@@ -287,20 +314,23 @@ export const useDialFileUploadBatch = ({
                 },
               );
               setUploadBatchState((prev) =>
-                updateEntry(prev, i, {
+                updateEntry(prev, id, {
                   status: FileUploadStatus.Completed,
                   percent: 100,
                 }),
               );
               successCount += 1;
             } catch {
-              const status = controller.signal.aborted
-                ? FileUploadStatus.Cancelled
-                : FileUploadStatus.Failed;
-              if (status === FileUploadStatus.Failed) {
+              let status = FileUploadStatus.Failed;
+              if (controller.signal.aborted) {
+                status = FileUploadStatus.Cancelled;
+                canceledCount += 1;
+              } else {
                 failedCount += 1;
               }
-              setUploadBatchState((prev) => updateEntry(prev, i, status));
+              setUploadBatchState((prev) => updateEntry(prev, id, status));
+            } finally {
+              controllers.delete(id);
             }
           }
         };
@@ -309,13 +339,14 @@ export const useDialFileUploadBatch = ({
           Array.from({ length: UPLOAD_CONCURRENCY }, () => worker()),
         );
 
-        if (!controller.signal.aborted) {
+        /* A batch the user canceled outright gets no toast — the queue already says so. */
+        if (canceledCount < files.length) {
           if (successCount === 0 && failedCount > 0) {
             onNotification?.({
               variant: NotificationVariant.Error,
               reason: FileManagerNotificationReason.UploadFailed,
             });
-          } else {
+          } else if (successCount > 0) {
             onNotification?.({
               variant: NotificationVariant.Success,
               reason: FileManagerNotificationReason.UploadCompleted,
@@ -326,8 +357,6 @@ export const useDialFileUploadBatch = ({
 
         invalidateFolders([destinationApiPath]);
         bumpRetry();
-        uploadAbortControllerRef.current = null;
-        setUploadBatchState(null);
       };
 
       void processBatch();
@@ -367,8 +396,14 @@ export const useDialFileUploadBatch = ({
     [],
   );
 
+  const cancelUploadFile = useCallback((id: string) => {
+    abortControllersRef.current.get(id)?.abort();
+  }, []);
+
   const cancelUpload = useCallback(() => {
-    uploadAbortControllerRef.current?.abort();
+    for (const controller of abortControllersRef.current.values()) {
+      controller.abort();
+    }
   }, []);
 
   const clearUploadBatch = useCallback(() => {
@@ -381,6 +416,7 @@ export const useDialFileUploadBatch = ({
     onValidateUpload,
     uploadBatchState,
     cancelUpload,
+    cancelUploadFile,
     clearUploadBatch,
   };
 };

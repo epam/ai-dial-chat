@@ -3,7 +3,6 @@ import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
-  PUBLIC_SKILL_BUCKET,
   SkillEditorLoadState,
   SKILL_MANIFEST_FILE,
   useSkillEditorLoad,
@@ -14,6 +13,7 @@ import {
   type SkillEditorSubmitMessages,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
+import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
@@ -30,6 +30,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { SkillFilePreview } from '../../components/SkillFilePreview/SkillFilePreview';
+import SkillFileSystemModal from '../../components/SkillFileSystemModal/SkillFileSystemModal';
 import { isSafeReturnUrl } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
@@ -41,6 +42,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
+import { useSkillFileSystemPicker } from '../../hooks/skills/useSkillFileSystemPicker';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import {
@@ -111,7 +113,7 @@ const SkillEditorPage: FC = () => {
       const decoded = decodeURIComponent(rawId);
       const parsed = parseSkillResourceUrl(decoded);
       if (parsed != null) {
-        return parsed.bucket === PUBLIC_SKILL_BUCKET ? null : parsed;
+        return parsed.bucket === PUBLIC_BUCKET ? null : parsed;
       }
       return personalBucket && isValidSkillRelativePath(decoded)
         ? { bucket: personalBucket, path: decoded }
@@ -209,6 +211,8 @@ const SkillEditorPage: FC = () => {
     [t],
   );
 
+  const fileSystemPicker = useSkillFileSystemPicker(bucket);
+
   const { fileActions, pendingManifestImport, resolveManifestImport } =
     useSkillFileActions({
       files,
@@ -221,11 +225,13 @@ const SkillEditorPage: FC = () => {
       isDirty,
       setSelectedPath,
       messages: fileActionsMessages,
+      pickFromFileSystem: fileSystemPicker.pickFromFileSystem,
     });
 
   const submitMessages = useMemo<SkillEditorSubmitMessages>(
     () => ({
       required: t(SkillEditorI18nKeys.ErrorRequired),
+      tooLong: (count) => t(EditorI18nKeys.FieldTooLong, { count }),
       instructionsFrontmatter: t(
         SkillEditorI18nKeys.ErrorInstructionsFrontmatter,
       ),
@@ -349,8 +355,28 @@ const SkillEditorPage: FC = () => {
       ...refinementLabels,
       filesHeading: t(SkillEditorI18nKeys.FilesHeading),
       filesTreeAriaLabel: t(SkillEditorI18nKeys.FilesTreeAriaLabel),
-      addUploadLabel: t(SkillEditorI18nKeys.AddUploadLabel),
-      removeLabel: t(SkillEditorI18nKeys.RemoveLabel),
+      addLabel: t(ButtonsI18nKeys.Add),
+      createFolderLabel: t(SkillEditorI18nKeys.CreateFolder),
+      uploadFilesLabel: t(SkillEditorI18nKeys.UploadDialogTitle),
+      uploadArchiveLabel: t(SkillEditorI18nKeys.UploadArchive),
+      openFileSystemLabel: t(SkillEditorI18nKeys.OpenFileSystem),
+      addChildLabel: t(SkillEditorI18nKeys.AddChild),
+      addSiblingLabel: t(SkillEditorI18nKeys.AddSibling),
+      deleteLabel: t(ButtonsI18nKeys.Delete),
+      newFolderDefaultName: t(SkillEditorI18nKeys.NewFolderDefaultName),
+      folderNameRequiredError: t(SkillEditorI18nKeys.FolderNameRequired),
+      folderNameInvalidError: t(SkillEditorI18nKeys.FolderNameInvalid),
+      folderNameDuplicateError: t(SkillEditorI18nKeys.FolderNameDuplicate),
+      uploadArchiveDialogTitle: t(SkillEditorI18nKeys.UploadArchive),
+      uploadArchiveDropZoneLabel: t(SkillEditorI18nKeys.UploadArchiveDropZone),
+      uploadArchiveDropZoneMobileLabel: t(
+        SkillEditorI18nKeys.UploadArchiveDropZoneMobile,
+      ),
+      uploadArchiveErrorMessage: t(SkillEditorI18nKeys.UploadArchiveError),
+      uploadArchiveEmptyMessage: t(SkillEditorI18nKeys.UploadArchiveEmpty),
+      uploadArchiveExtractingAriaLabel: t(
+        SkillEditorI18nKeys.UploadArchiveExtractingAriaLabel,
+      ),
       editingFileLabel: t(SkillEditorI18nKeys.EditingFileLabel),
       nameLabel: t(SkillEditorI18nKeys.NameLabel),
       namePlaceholder: t(SkillEditorI18nKeys.NamePlaceholder),
@@ -499,6 +525,13 @@ const SkillEditorPage: FC = () => {
         onConfirm={confirmReloadLatest}
         onCancel={() => setPendingReload(false)}
         onClose={() => setPendingReload(false)}
+      />
+
+      <SkillFileSystemModal
+        isOpen={fileSystemPicker.isOpen}
+        bucket={bucket}
+        onAttach={fileSystemPicker.handleAttach}
+        onClose={fileSystemPicker.handleClose}
       />
 
       <ConfirmationPopup

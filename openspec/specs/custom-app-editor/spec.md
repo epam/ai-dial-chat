@@ -3,9 +3,7 @@
 ## Purpose
 
 The Custom App editor page: its settings form, create and edit flows, validation, and the loading and saving overlays.
-
 ## Requirements
-
 ### Requirement: Custom App editor page
 The system SHALL provide a `CustomAppEditor` page that reuses `ToolsetEditorHeader` and a new `CustomAppEditorView`. The editor has two steps: General and Settings. The General step reuses `GeneralForm`, imported from `@epam/ai-dial-toolset-editor` (the toolset-editor lib exports it precisely so non-toolset editors can share the Metadata field set). The Settings step renders `CustomAppSettingsForm`. The editor supports both **create** and **edit** modes; edit mode is entered when `ToolsetEditorQuery.Id` is present in the URL.
 
@@ -87,7 +85,7 @@ On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create 
 - **THEN** the create request body carries no `type` field and no `application_type_schema_id`
 
 ### Requirement: General step validation — name and version
-`CustomAppEditor` SHALL validate the `name` field as required and the `version` field against the shared `DeploymentCreationForm`'s exported `SEMVER_VERSION_PATTERN` (via `validateDeploymentCreationFields` from `@epam/ai-dial-builder-form`, passing `validateVersionPattern: SEMVER_VERSION_PATTERN`), stricter than that library's default character-set-only version pattern: a non-empty version must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`). Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. The Next button SHALL stay disabled while either field is invalid. The version-invalid error message SHALL be `"Version format is invalid (example: 0.0.1)"` (`appsEditor.generalForm.versionInvalid`).
+`CustomAppEditor` SHALL validate the General step through `validateDeploymentCreationFields` from `@epam/ai-dial-builder-form`, passing `validateVersionPattern: SEMVER_VERSION_PATTERN`, and translate its codes with `translateDeploymentCreationErrors` (`apps/chat/src/utils/entity-field-validation.ts`). The `name` field is required, at most 256 characters, and free of control characters. The `description` field is at most 2000 characters. The `version` field is checked against the shared `DeploymentCreationForm`'s exported `SEMVER_VERSION_PATTERN`, which is stricter than that library's default character-set-only version pattern: a non-empty version must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`). Each field SHALL be re-validated on blur, independently of the other, so an error shown for one field does not get cleared by fixing the other. A too-long or control-character error SHALL additionally appear as soon as the value changes (see `entity-field-limits`). The Next button SHALL stay disabled while any General field is invalid. The version-invalid error message SHALL be `"Version format is invalid (example: 0.0.1)"` (`appsEditor.generalForm.versionInvalid`).
 
 #### Scenario: Name required error on blur
 - **WHEN** the Name field is blank and loses focus
@@ -97,8 +95,12 @@ On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create 
 - **WHEN** the Version field contains a value that is not entirely dot-separated numeric segments (e.g. contains letters) and loses focus
 - **THEN** a version-invalid error ("Version format is invalid (example: 0.0.1)") is shown under the Version field
 
+#### Scenario: Over-long name shows while typing
+- **WHEN** the user types a 257th character into the Name field
+- **THEN** "Use 256 characters or fewer." (`editor.fieldTooLong`) is shown under the Name field without waiting for blur
+
 #### Scenario: Next disabled while General step invalid
-- **WHEN** the Name or Version field currently holds an invalid value
+- **WHEN** the Name, Description or Version field currently holds an invalid value
 - **THEN** the Next button is disabled
 
 ### Requirement: Save validation — name required
@@ -206,3 +208,4 @@ Today a successful save only navigates away, so a user who saves and lands back 
 
 - **WHEN** the create or save request fails
 - **THEN** the existing error notification (with the API message and trace id) is shown, the editor stays open, and no success notification is raised
+

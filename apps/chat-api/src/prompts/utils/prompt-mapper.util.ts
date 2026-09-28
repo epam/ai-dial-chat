@@ -5,8 +5,6 @@ import { FOLDER_SENTINEL } from '../constants/prompt.constants';
 import type { PromptFolderResponseDto } from '../dto/prompt-folder-response.dto';
 import type { PromptResponseDto } from '../dto/prompt-response.dto';
 
-export const PUBLIC_BUCKET = 'public';
-
 /* Prompt payload stored in DIAL Core. Timestamps remain resource metadata. */
 export type CorePrompt = components['schemas']['Prompt'];
 export type PromptMetadataItem = components['schemas']['ResourceItemMetadata'];

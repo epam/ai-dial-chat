@@ -82,6 +82,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {trailing}
     </button>
   ),
+  Button: ({
+    'aria-label': ariaLabel,
+    iconBefore,
+    onClick,
+  }: {
+    'aria-label'?: string;
+    iconBefore?: ReactNode;
+    onClick?: () => void;
+  }) => (
+    <button type="button" aria-label={ariaLabel} onClick={onClick}>
+      {iconBefore}
+    </button>
+  ),
   IconButton: ({
     'aria-label': ariaLabel,
     'aria-current': ariaCurrent,

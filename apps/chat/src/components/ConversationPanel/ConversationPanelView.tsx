@@ -32,12 +32,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationPanel,
-  ImportExportQueue,
   RenameConversationPopup,
   type ConversationItem,
   type ConversationMove,
   type ConversationPanelStyles,
-  type ImportExportQueueLabels,
   type RenameConversationPopupLabels,
 } from '@epam/ai-dial-conversation-panel';
 import {
@@ -48,7 +46,9 @@ import {
   Popup,
   PopupSize,
   RadioGroup,
+  TransferQueue,
   type DropdownItem,
+  type TransferQueueLabels,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconCopy,
@@ -74,6 +74,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { CELEBRATION_HISTORY_CLASS } from '../../constants/celebration';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -96,6 +97,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { useConversationPublishHistory } from '../../hooks/useConversationPublishHistory/useConversationPublishHistory';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
+import { useTransferQueueLabels } from '../../hooks/useTransferQueueLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import {
   conversationsApi,
@@ -114,7 +116,6 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
-import { CELEBRATION_HISTORY_CLASS } from '../../utils/celebration-history';
 import { collapseScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,
@@ -125,6 +126,7 @@ import {
   getExportErrorKey,
   getExportFailureToastKey,
   getImportErrorKey,
+  toTransferQueueItems,
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -480,53 +482,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     count: importJobs.length,
   });
 
-  /*
-   * Both queues share the direction-agnostic chrome (collapse/expand/close,
-   * the close-confirmation copy and the "Canceled" label), so those strings
-   * live once under the export key set rather than being duplicated under the
-   * import one.
-   */
-  const sharedQueueLabels = useMemo(
-    () => ({
-      canceledLabel: t(ConversationExportI18nKeys.CanceledLabel),
-      collapseQueueAriaLabel: t(
-        ConversationExportI18nKeys.CollapseQueueAriaLabel,
-      ),
-      expandQueueAriaLabel: t(ConversationExportI18nKeys.ExpandQueueAriaLabel),
-      closeQueueAriaLabel: t(ConversationExportI18nKeys.CloseQueueAriaLabel),
-      closeQueueConfirmHeader: t(
-        ConversationExportI18nKeys.CloseQueueConfirmHeader,
-      ),
-      closeQueueConfirmDescriptionInProgress: t(
-        ConversationExportI18nKeys.CloseQueueConfirmDescriptionInProgress,
-      ),
-      closeQueueConfirmDescriptionFailed: t(
-        ConversationExportI18nKeys.CloseQueueConfirmDescriptionFailed,
-      ),
-      closeQueueConfirmDescriptionMixed: t(
-        ConversationExportI18nKeys.CloseQueueConfirmDescriptionMixed,
-      ),
-      closeLabel: t(ButtonsI18nKeys.Close),
-      cancelLabel: t(ButtonsI18nKeys.Cancel),
-      queueProgressValueText: (completed: number, total: number) =>
-        t(ConversationExportI18nKeys.QueueProgressValueText, {
-          completed,
-          count: total,
-        }),
-    }),
-    [t],
-  );
+  const sharedQueueLabels = useTransferQueueLabels();
 
-  const exportQueueLabels = useMemo<ImportExportQueueLabels>(
+  const exportQueueLabels = useMemo<Partial<TransferQueueLabels>>(
     () => ({
       ...sharedQueueLabels,
-      cancelJobAriaLabel: (fileName) =>
+      cancelItemAriaLabel: (fileName) =>
         t(ConversationExportI18nKeys.CancelJobAriaLabel, { fileName }),
-      jobProgressAriaLabel: (fileName) =>
+      itemProgressAriaLabel: (fileName) =>
         t(ConversationExportI18nKeys.JobProgressAriaLabel, { fileName }),
-      jobErrorMessage: (code) => t(getExportErrorKey(code)),
-      jobWarningMessage: () =>
-        t(ConversationExportI18nKeys.WarningAttachmentSkipped),
+      failedMessage: t(ConversationExportI18nKeys.ErrorUnknown),
+      warningMessage: t(ConversationExportI18nKeys.WarningAttachmentSkipped),
       queueProgressAriaLabel: t(
         ConversationExportI18nKeys.QueueProgressAriaLabel,
       ),
@@ -534,25 +500,44 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [sharedQueueLabels, t],
   );
 
-  const importQueueLabels = useMemo<ImportExportQueueLabels>(
+  const importQueueLabels = useMemo<Partial<TransferQueueLabels>>(
     () => ({
       ...sharedQueueLabels,
-      cancelJobAriaLabel: (fileName) =>
+      cancelItemAriaLabel: (fileName) =>
         t(ConversationImportI18nKeys.CancelJobAriaLabel, { fileName }),
-      jobProgressAriaLabel: (fileName) =>
+      itemProgressAriaLabel: (fileName) =>
         t(ConversationImportI18nKeys.JobProgressAriaLabel, { fileName }),
-      jobErrorMessage: (code) => t(getImportErrorKey(code)),
-      jobWarningMessage: (_code, names) =>
-        names?.length
-          ? t(ConversationImportI18nKeys.WarningAttachmentSkipped, {
-              names: formatTransferNameList(names, t),
-            })
-          : t(ConversationImportI18nKeys.JobWarningAttachmentSkipped),
+      failedMessage: t(ConversationImportI18nKeys.ErrorUnknown),
+      warningMessage: t(ConversationImportI18nKeys.JobWarningAttachmentSkipped),
       queueProgressAriaLabel: t(
         ConversationImportI18nKeys.QueueProgressAriaLabel,
       ),
     }),
     [sharedQueueLabels, t],
+  );
+
+  const exportQueueItems = useMemo(
+    () =>
+      toTransferQueueItems(exportJobs, {
+        getErrorMessage: (code) => t(getExportErrorKey(code)),
+        getWarningMessage: () =>
+          t(ConversationExportI18nKeys.WarningAttachmentSkipped),
+      }),
+    [exportJobs, t],
+  );
+
+  const importQueueItems = useMemo(
+    () =>
+      toTransferQueueItems(importJobs, {
+        getErrorMessage: (code) => t(getImportErrorKey(code)),
+        getWarningMessage: (_code, names) =>
+          names?.length
+            ? t(ConversationImportI18nKeys.WarningAttachmentSkipped, {
+                names: formatTransferNameList(names, t),
+              })
+            : t(ConversationImportI18nKeys.JobWarningAttachmentSkipped),
+      }),
+    [importJobs, t],
   );
 
   const renameLabels = useMemo<RenameConversationPopupLabels>(
@@ -1164,7 +1149,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           selectedUnpublishFolder != null
             ? folders.find((folder) => folder === selectedUnpublishFolder)
             : folders[0];
-        if (!folderPath) return;
+        /* `folderPath` is legitimately `''` for a conversation published at
+         * the public root, so this must reject "not found" (`undefined`),
+         * not every falsy value — an `if (!folderPath)` check here silently
+         * dropped every unpublish request for a root-folder publication. */
+        if (folderPath == null) return;
 
         try {
           await unpublishConversation(path, folderPath);
@@ -1335,18 +1324,18 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       <div className="fixed bottom-4 end-4 z-[70] flex flex-col-reverse gap-2">
-        <ImportExportQueue
+        <TransferQueue
           title={importQueueTitle}
-          jobs={importJobs}
+          items={importQueueItems}
           onClose={dismissAllImports}
-          onCancel={cancelImportJob}
+          onCancelItem={cancelImportJob}
           labels={importQueueLabels}
         />
-        <ImportExportQueue
+        <TransferQueue
           title={exportQueueTitle}
-          jobs={exportJobs}
+          items={exportQueueItems}
           onClose={dismissAllExports}
-          onCancel={cancelExportJob}
+          onCancelItem={cancelExportJob}
           labels={exportQueueLabels}
         />
       </div>
@@ -1396,7 +1385,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   })
                 : t(ConversationUnpublishI18nKeys.ConfirmMessage, {
                     name: pendingUnpublish?.title ?? '',
-                    folder: unpublishFolders[0] ?? '',
+                    folder: getPublishFolderLabel(unpublishFolders[0] ?? '', t),
                   })}
             </span>
             {hasUnpublishFolderChoice && (
@@ -1410,7 +1399,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 disabled={isUnpublishing}
                 items={unpublishFolders.map((folder) => ({
                   value: folder,
-                  label: folder,
+                  label: getPublishFolderLabel(folder, t),
                 }))}
                 radioClassName="dial-small-text text-primary"
               />

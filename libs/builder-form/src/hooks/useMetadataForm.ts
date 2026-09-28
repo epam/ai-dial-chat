@@ -5,7 +5,10 @@ import type {
   UseMetadataFormOptions,
   UseMetadataFormResult,
 } from '../models/use-metadata-form';
-import type { DeploymentCreationFormErrorCodes } from '../models/validation';
+import {
+  DeploymentCreationFieldErrorCode,
+  type DeploymentCreationFormErrorCodes,
+} from '../models/validation';
 import {
   areMetadataValuesEqual,
   hasNoMetadataErrors,
@@ -20,6 +23,16 @@ interface MetadataFormState {
   hasAttemptedSubmit: boolean;
   submitAttemptCount: number;
 }
+
+/*
+ * Codes shown while the user is still typing. A required-field error waits
+ * for blur/submit so an empty field is not flagged the moment it is focused;
+ * a too-long or control-character value is flagged at once.
+ */
+const LIVE_ERROR_CODES = new Set<DeploymentCreationFieldErrorCode>([
+  DeploymentCreationFieldErrorCode.TooLong,
+  DeploymentCreationFieldErrorCode.ControlCharacters,
+]);
 
 const createState = (
   values: DeploymentCreationFormValues,
@@ -38,7 +51,8 @@ const createState = (
  *
  * Every editor used to hand-roll its own rule for when a metadata error shows
  * up (on blur, on submit, always). This hook gives all of them one rule:
- * an error is visible once its field was touched, and every error is visible
+ * an error is visible once its field was touched (a too-long or
+ * control-character value shows at once), and every error is visible
  * after a submit attempt. It returns error codes, so translation stays with
  * the host.
  */
@@ -73,11 +87,21 @@ export const useMetadataForm = ({
       return errorCodes;
     }
 
+    const visibleWhen = (
+      code: DeploymentCreationFieldErrorCode | undefined,
+      isTouched: boolean | undefined,
+    ) => (code && (isTouched || LIVE_ERROR_CODES.has(code)) ? code : undefined);
+
     return {
-      name: state.touched[MetadataField.Name] ? errorCodes.name : undefined,
-      version: state.touched[MetadataField.Version]
-        ? errorCodes.version
-        : undefined,
+      name: visibleWhen(errorCodes.name, state.touched[MetadataField.Name]),
+      version: visibleWhen(
+        errorCodes.version,
+        state.touched[MetadataField.Version],
+      ),
+      description: visibleWhen(
+        errorCodes.description,
+        state.touched[MetadataField.Description],
+      ),
     };
   }, [errorCodes, state.hasAttemptedSubmit, state.touched]);
 

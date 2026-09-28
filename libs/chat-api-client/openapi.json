@@ -27,7 +27,7 @@
                     "version": {
                       "type": "string",
                       "example": "1.0.0",
-                      "description": "Application version. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Matches the appVersion reported by the client config endpoint."
+                      "description": "Application version. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Matches the appVersion reported by the client config endpoint."
                     },
                     "buildId": {
                       "type": "string",
@@ -6836,7 +6836,7 @@
           },
           "appVersion": {
             "type": "string",
-            "description": "Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the application package.json version when that env var is unset or blank. Always a non-empty string.",
+            "description": "Version string of the running chat application. Sourced from CHAT_VERSION; falls back to the workspace root package.json version — the one the release pipeline stamps — when that env var is unset or blank. Always a non-empty string.",
             "example": "0.45.0"
           },
           "asrModelId": {
@@ -7181,7 +7181,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My App"
+            "example": "My App",
+            "maxLength": 256
           },
           "type": {
             "type": "string",
@@ -7190,7 +7191,8 @@
           },
           "description": {
             "type": "string",
-            "example": "A custom application."
+            "example": "A custom application.",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -7268,11 +7270,13 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My App"
+            "example": "My App",
+            "maxLength": 256
           },
           "description": {
             "type": "string",
-            "example": "A custom application."
+            "example": "A custom application.",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -7394,6 +7398,10 @@
           "skillsSupported": {
             "type": "boolean",
             "description": "Whether the deployment supports custom skills in chat requests"
+          },
+          "tools": {
+            "type": "boolean",
+            "description": "Whether the deployment supports tools/functions in chat completion requests"
           }
         },
         "required": ["systemPrompt", "temperature"]
@@ -9033,7 +9041,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "My toolset"
+            "example": "My toolset",
+            "maxLength": 256
           },
           "version": {
             "type": "string",
@@ -9041,7 +9050,8 @@
           },
           "description": {
             "type": "string",
-            "example": "My toolset description"
+            "example": "My toolset description",
+            "maxLength": 2000
           },
           "iconUrl": {
             "type": "string",
@@ -12301,7 +12311,8 @@
         "properties": {
           "displayName": {
             "type": "string",
-            "example": "Daily summary"
+            "example": "Daily summary",
+            "maxLength": 256
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
@@ -12313,7 +12324,8 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox",
-            "description": "Instructions; may be empty when the effective task has a skill."
+            "description": "Instructions; may be empty when the effective task has a skill.",
+            "maxLength": 50000
           },
           "skillUrl": {
             "type": "string",
@@ -12521,7 +12533,8 @@
         "properties": {
           "displayName": {
             "type": "string",
-            "example": "Daily summary"
+            "example": "Daily summary",
+            "maxLength": 256
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
@@ -12533,7 +12546,8 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox",
-            "description": "Instructions; may be empty when the effective task has a skill."
+            "description": "Instructions; may be empty when the effective task has a skill.",
+            "maxLength": 50000
           },
           "skillUrl": {
             "type": "string",

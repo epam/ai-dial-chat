@@ -10,6 +10,10 @@ import {
   ToolsetAuthTypes,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TOOLSET_EDITOR_CLASS } from '../../constants/public-class-names';
@@ -384,6 +388,27 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
 
     if (metadataErrorCodes.name === DeploymentCreationFieldErrorCode.Required) {
       nextErrors.name = validationLabels?.nameRequired ?? 'Name is required';
+    } else if (
+      metadataErrorCodes.name === DeploymentCreationFieldErrorCode.TooLong
+    ) {
+      nextErrors.name =
+        validationLabels?.nameTooLong ??
+        `Use ${ENTITY_NAME_MAX_LENGTH} characters or fewer.`;
+    } else if (
+      metadataErrorCodes.name ===
+      DeploymentCreationFieldErrorCode.ControlCharacters
+    ) {
+      nextErrors.name =
+        validationLabels?.nameControlCharacters ??
+        'Remove line breaks, tabs and other control characters.';
+    }
+    if (
+      metadataErrorCodes.description ===
+      DeploymentCreationFieldErrorCode.TooLong
+    ) {
+      nextErrors.description =
+        validationLabels?.descriptionTooLong ??
+        `Use ${ENTITY_DESCRIPTION_MAX_LENGTH} characters or fewer.`;
     }
     if (
       metadataErrorCodes.version ===

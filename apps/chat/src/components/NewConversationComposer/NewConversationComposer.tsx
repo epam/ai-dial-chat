@@ -3,6 +3,7 @@ import {
   FileDndOverlay,
   isMimeTypeAllowed,
 } from '@epam/ai-dial-attachment-input';
+import { CelebrationDecor, useCelebration } from '@epam/ai-dial-celebrations';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import {
   AttachmentValidationErrorReason,
@@ -47,7 +48,6 @@ import {
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
-import { useCelebration } from '../../context/CelebrationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -62,7 +62,6 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { resolveLocalizedText } from '../../utils/locale';
-import CelebrationDecor from '../CelebrationDecor/CelebrationDecor';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
@@ -489,8 +488,14 @@ const NewConversationComposer: FC<Props> = ({
           ),
         }}
       />
+      {/* `flex-auto shrink-0` (1 0 auto) lets the region grow past the
+          viewport when the welcome content is tall, so the wrapper above
+          scrolls instead of `justify-center` clipping both ends. The
+          symmetric `desktop:py-16` keeps overflowing content clear of the
+          absolutely positioned 64px desktop header without shifting the
+          centered layout. */}
       <div
-        className="relative flex flex-1 flex-col items-center justify-center overflow-hidden p-4 [container-type:inline-size] desktop:p-8"
+        className="relative flex flex-auto shrink-0 flex-col items-center justify-center overflow-hidden p-4 [container-type:inline-size] desktop:px-8 desktop:py-16"
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
@@ -673,8 +678,6 @@ const NewConversationComposer: FC<Props> = ({
           )}
           deleteConfirmLabel={t(ButtonsI18nKeys.Delete)}
           deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
-          uploadProgressTitle={t(DialFileManagerI18nKeys.UploadProgressTitle)}
-          cancelLabel={t(ButtonsI18nKeys.Cancel)}
         />
       )}
     </div>

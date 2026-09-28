@@ -78,6 +78,12 @@ export class DeploymentFeaturesDto {
       'Whether the deployment supports custom skills in chat requests',
   })
   skillsSupported?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether the deployment supports tools/functions in chat completion requests',
+  })
+  tools?: boolean;
 }
 
 export class DeploymentItemDto {

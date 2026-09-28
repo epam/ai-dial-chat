@@ -2707,9 +2707,7 @@ describe('ConversationPanelView — unpublish confirmation', () => {
     );
     expect(confirmButton().hasAttribute('disabled')).toBe(true);
 
-    await userEvent.click(
-      dialog().getByRole('radio', { name: 'Organization/Ops' }),
-    );
+    await userEvent.click(dialog().getByRole('radio', { name: 'Ops' }));
 
     expect(confirmButton().hasAttribute('disabled')).toBe(false);
 

@@ -8,6 +8,7 @@ import {
 } from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
+  MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
@@ -57,6 +58,15 @@ const DEFAULT_DESCRIPTION_MAX_LENGTH = 2000;
 const DEFAULT_CONTENT_MAX_LENGTH = 50000;
 const DEFAULT_ANNOUNCE_THRESHOLD = 10;
 
+/*
+ * Instructions fill the form down to the bottom of the screen. The gap matches
+ * the form's `py-6`, so the filled editor ends on the form's padding.
+ */
+const CONTENT_EDITOR_BOTTOM_GAP = 24;
+
+/* The editor's previous fixed height; filling never shrinks it below that. */
+const CONTENT_EDITOR_MIN_HEIGHT = 480;
+
 /** Returns the remaining character count when it is close enough to announce. */
 const getRemainingCharacters = (
   value: string,
@@ -98,7 +108,10 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   });
   const contentLabelId = useId();
   const contentEditorId = useId();
-  const contentEditorCapRef = useAvailableHeightCap<HTMLDivElement>();
+  const contentEditorCapRef = useAvailableHeightCap<HTMLDivElement>({
+    bottomGap: CONTENT_EDITOR_BOTTOM_GAP,
+    minHeight: CONTENT_EDITOR_MIN_HEIGHT,
+  });
 
   /* Hosts that load asynchronously re-seed the form through `initialValues`. */
   useEffect(() => {
@@ -310,6 +323,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
             ref={contentEditorCapRef}
             className={mergeClasses(
               MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+              MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
               MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
             )}
           >

@@ -73,7 +73,9 @@ export interface FileManagerController {
   uploadBatchState: FileUploadBatchState | null;
   /** Upload: abort all in-flight and queued uploads. */
   cancelUpload: () => void;
-  /** Upload: dismiss the progress modal after the batch has settled. */
+  /** Upload: abort one queued or in-flight upload by its entry id. */
+  cancelUploadFile: (id: string) => void;
+  /** Upload: empty the upload queue. */
   clearUploadBatch: () => void;
 
   /** Folder creation: called when user confirms a new folder name. */

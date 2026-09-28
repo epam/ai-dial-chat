@@ -36,7 +36,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.19`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.21`
 
 ## Components
 
@@ -216,7 +216,8 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
     hiddenFilesLabel: 'Hidden files',
     showHiddenFilesLabel: 'Show hidden files',
     hideHiddenFilesLabel: 'Hide hidden files',
-    getSelectionLabel: (count) => `${count} selected`,
+    getSelectionLabel: (count) =>
+      count === 1 ? 'item selected' : 'items selected',
     uploadFilesLabel: 'Upload',
     newFolderLabel: 'New folder',
     downloadLabel: 'Download',
@@ -230,8 +231,6 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
     deleteConfirmItemsLabel: 'items?',
     deleteConfirmLabel: 'Delete',
     deleteCancelLabel: 'Cancel',
-    uploadProgressTitle: 'Uploading',
-    cancelLabel: 'Cancel',
   }}
 />;
 ```
@@ -410,7 +409,7 @@ import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
 
 ### validateDeploymentCreationFields
 
-Pure validation returning untranslated error codes. Pattern checks are opt-in, because the allowed character set differs by deployment kind.
+Pure validation returning untranslated error codes. Length and control-character checks always run — the name must be at most `ENTITY_NAME_MAX_LENGTH` (256) characters with no line breaks or tabs, and the description at most `ENTITY_DESCRIPTION_MAX_LENGTH` (2000), both from `@epam/ai-dial-chat-shared`. Pattern checks are opt-in, because the allowed character set differs by deployment kind. Pass the translated `description` message back through `errors.description`; `DeploymentCreationForm` renders it under the field.
 
 ```tsx
 import {
@@ -446,7 +445,7 @@ input with the same rule the validator applies.
 
 ### useMetadataForm
 
-Headless metadata state: values, touched fields, and validation through `validateDeploymentCreationFields`. An error is visible once its field has been touched (`markTouched`, typically on blur), and every error is visible after `attemptSubmit()`, which returns whether the values are valid. `initialValues` seed the form once per `reseedKey`, so a host re-render never overwrites the user's edits. It returns error codes, not messages.
+Headless metadata state: values, touched fields, and validation through `validateDeploymentCreationFields`. An error is visible once its field has been touched (`markTouched`, typically on blur) — a `TooLong` or `ControlCharacters` code shows as soon as the value is typed — and every error is visible after `attemptSubmit()`, which returns whether the values are valid. `initialValues` seed the form once per `reseedKey`, so a host re-render never overwrites the user's edits. It returns error codes, not messages.
 
 Pass `submitAttemptCount` to `MetadataForm`'s `focusRequestKey`: focus then moves to the first invalid field on each submit attempt, and an error that appears on blur never pulls focus back from the field the user just moved to.
 
@@ -487,6 +486,7 @@ import { DeploymentCreationFieldErrorCode } from '@epam/ai-dial-builder-form';
 DeploymentCreationFieldErrorCode.Required; // field left empty
 DeploymentCreationFieldErrorCode.InvalidFormat; // value fails its pattern
 DeploymentCreationFieldErrorCode.TooLong; // value exceeds its maximum length
+DeploymentCreationFieldErrorCode.ControlCharacters; // name contains a line break, tab, …
 ```
 
 ```tsx

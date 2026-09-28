@@ -34,9 +34,14 @@ export class CreateFolderDto {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[^/\\\0.][^/\\\0]{0,253}$/, {
+  /*
+   * A leading dot is allowed — it creates a hidden folder, shown when the
+   * file manager's "Show hidden files" toggle is on. A name made only of dots
+   * (`.`, `..`) would resolve to a relative path segment, so it is rejected.
+   */
+  @Matches(/^(?!\.+$)[^/\\\0]{1,254}$/, {
     message:
-      'name must not start with / \\ . or null; must not contain / \\ or null; max 254 characters',
+      'name must not consist only of dots; must not contain / \\ or null; max 254 characters',
   })
   @IsNotReservedMarkerName()
   @MaxLength(254)

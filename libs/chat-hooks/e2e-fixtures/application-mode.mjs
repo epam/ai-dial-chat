@@ -75,12 +75,12 @@ function Conversation() {
       };
       for (const key of ['onPathChange','retry','onSearchFiles','clearSearchResults','onExpandedPathsChange',
         'onFolderPopupPathChange','onUploadFiles','onUploadArchive','cancelUpload','clearUploadBatch',
-        'onDownloadFiles','onDeleteFiles','onMoveToFiles','onCopyFiles','cancelCopyMove','onUnshareFiles',
+        'cancelUploadFile','onDownloadFiles','onDeleteFiles','onMoveToFiles','onCopyFiles','cancelCopyMove','onUnshareFiles',
         'onRemoveFilesAccess','onGetInfo','clearMetadata']) controller[key] = noop;
       controller.onCreateFolder = async()=>{};
       controller.onCreateFolderValidate = controller.onRenameValidate = ()=>null;
       mount('files', mod.DialFileManagerShell, {
-        controller, labels:{treeHeaderByTab:{my_files:'Files'},emptyStateByTab:{my_files:{}}},
+        controller, labels:{treeHeaderByTab:{my_files:'Files'},emptyStateByTab:{my_files:{}},getUploadQueueTitle:()=>'Uploads'},
         activeTab:'my_files',tabs:[],onTabChange:noop,selectedPaths:new Set(),onSelectedPathsChange:noop,
         variant:'standalone',actionProfile:'full'
       });

@@ -1,5 +1,6 @@
+import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
+
 const TOOLSETS_ID_PREFIX = 'toolsets/';
-const PUBLIC_BUCKET_SEGMENT = 'public';
 
 /**
  * Percent-encodes each `/`-separated segment of a toolset id so it satisfies
@@ -41,5 +42,5 @@ export const decodeToolsetId = (id: string): string =>
 export const isPublicToolsetId = (toolsetId: string): boolean => {
   if (!toolsetId.startsWith(TOOLSETS_ID_PREFIX)) return false;
   const bucket = toolsetId.slice(TOOLSETS_ID_PREFIX.length).split('/')[0];
-  return bucket === PUBLIC_BUCKET_SEGMENT;
+  return bucket === PUBLIC_BUCKET;
 };

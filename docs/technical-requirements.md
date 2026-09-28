@@ -28,6 +28,29 @@ This document defines functional and non-functional requirements for the initial
 | FR-1.8 | Conversation Input warns when a deployment token allowance or the caller's cost budget passes 75%                          | Should   |
 | FR-1.9 | The trigger reveals the worst capped period's percentage and opens a `Usage Limit` popover listing every configured period | Should   |
 
+#### Selected-text attachments
+
+Reply stays hidden while selection is in progress and appears after pointer release
+or completion of keyboard selection, including repeated selections.
+
+Selecting visible text within a single completed user or assistant message exposes
+Reply. Activation creates a UTF-8 `text/plain` file named `reply-<uuid>.txt` and adds
+it to the current composer using the existing attachment lifecycle, without
+altering its typed draft or sending automatically. File contents preserve the
+selected whitespace, Unicode and line breaks. The composer receives focus; uploaded
+files are sent as ordinary URL attachments. Size/count validation, progress,
+retry/removal and failed-send restoration match other files.
+
+Reply requires an editable composer, text-compatible model and enabled file input.
+It is unavailable during streaming/editing or in read-only views. Selections across
+messages, control-only selections and selections in attachments, embedded apps and
+stage output are excluded. Inline citations/annotations and links within message
+text do not prevent Reply; selected marker labels follow native selection text.
+The floating action supports keyboard and touch, viewport clamping, logical RTL
+layout and polite accessibility announcements. Escape/outside interaction or
+selection/source invalidation dismisses it; navigation cannot carry a pending
+selection into another conversation.
+
 #### Token-usage limits control
 
 The app-owned `UsageLimitsControl` is passed to the isolated Conversation Input
@@ -259,7 +282,9 @@ Simplest path for initial release: client-side truncation from `conversation.mes
 
 **What was done:**
 
-- `ar.json` created with full translation coverage (`apps/chat/src/i18n/locales/ar.json`)
+- Only English resources are currently shipped. The earlier full Arabic coverage
+  decision describes intent, not the implementation. Reply adds English strings
+  only; additional translations are outside this feature's scope.
 - `applyDocumentDirection` wired to `i18n.on('languageChanged')` — sets `document.documentElement.dir` and `lang` on every locale switch
 - All layout components migrated from physical Tailwind utilities to CSS logical properties
 - Directional icons mirrored via `rtl:scale-x-[-1]`

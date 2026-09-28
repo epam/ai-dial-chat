@@ -41,8 +41,10 @@ export const usePageFileDrag = (
   }, [isAttachmentsAllowed, isEnabled]);
 
   const onFilesConsumed = useCallback(() => {
-    setPendingFiles([]);
-  }, []);
+    setPendingFiles((current) =>
+      current.filter((file) => !pendingFiles.includes(file)),
+    );
+  }, [pendingFiles]);
 
   useEffect(() => {
     const isFileDrag = (e: DragEvent) =>
@@ -77,7 +79,7 @@ export const usePageFileDrag = (
       if (isAttachmentsAllowedRef.current) {
         const files = Array.from(e.dataTransfer?.files ?? []);
         if (files.length > 0) {
-          setPendingFiles(files);
+          setPendingFiles((current) => [...current, ...files]);
         }
       }
     };

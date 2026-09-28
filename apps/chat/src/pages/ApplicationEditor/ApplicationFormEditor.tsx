@@ -49,8 +49,8 @@ import { ROUTES } from '../../types/routes';
 import {
   deploymentToMetadata,
   resolveReturnUrl,
-  toMetadataErrorMessages,
 } from '../../utils/application-editor';
+import { translateDeploymentCreationErrors } from '../../utils/entity-field-validation';
 import { buildAdditionalLocaleOptions } from '../../utils/locale';
 
 interface Props {
@@ -163,7 +163,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
 
   const metadataErrors = useMemo(
-    () => toMetadataErrorMessages(metadata.visibleErrorCodes, t),
+    () => translateDeploymentCreationErrors(metadata.visibleErrorCodes, t),
     [metadata.visibleErrorCodes, t],
   );
 

@@ -43,7 +43,7 @@ export const DEFAULT_AVATAR_PICKER_LABELS: AvatarPickerModalLabels = {
   showHiddenFilesLabel: 'Show hidden files',
   hideHiddenFilesLabel: 'Hide hidden files',
   getSelectionLabel: (count: number) =>
-    count === 1 ? `${count} item selected` : `${count} items selected`,
+    count === 1 ? 'item selected' : 'items selected',
   uploadFilesLabel: 'Files',
   newFolderLabel: 'Folder',
   downloadLabel: 'Download',
@@ -57,6 +57,4 @@ export const DEFAULT_AVATAR_PICKER_LABELS: AvatarPickerModalLabels = {
   deleteConfirmItemsLabel: 'items?',
   deleteConfirmLabel: 'Delete',
   deleteCancelLabel: 'Cancel',
-  uploadProgressTitle: 'Uploading files',
-  cancelLabel: 'Cancel',
 };
