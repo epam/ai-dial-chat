@@ -86,7 +86,16 @@ export class UpdateApplicationBodyDto {
   @ApiPropertyOptional({ example: 'https://api.example.com/chat' })
   @IsString()
   @IsOptional()
-  @IsUrl({ require_tld: false, require_protocol: true })
+  /*
+   * `allow_trailing_dot` accepts fully-qualified hostnames such as
+   * `svc.cluster.local.` (common for in-cluster Kubernetes services), which
+   * creation already stores unvalidated — see Issue #9103.
+   */
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+    allow_trailing_dot: true,
+  })
   endpoint?: string;
 
   @ApiPropertyOptional()
