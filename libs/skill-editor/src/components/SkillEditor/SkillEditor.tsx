@@ -766,7 +766,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           </>
         }
         rightContent={
-          <div className="flex flex-1 flex-col gap-4 px-4 py-6 desktop:gap-5 desktop:px-8">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-6 desktop:gap-5 desktop:px-8">
             {submitError != null && (
               <div role="alert" className="flex items-center gap-2">
                 <ErrorText text={submitError} />
@@ -917,15 +917,18 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 </TextRefinementField>
               </>
             ) : (
-              selectedNode?.kind === SkillFileNodeKind.File &&
-              (supportingFileContent ?? (
-                <CaptionText
-                  text={
-                    t.supportingFileNote ??
-                    'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
-                  }
-                />
-              ))
+              selectedNode?.kind === SkillFileNodeKind.File && (
+                <div className="flex min-h-0 flex-1 flex-col">
+                  {supportingFileContent ?? (
+                    <CaptionText
+                      text={
+                        t.supportingFileNote ??
+                        'This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.'
+                      }
+                    />
+                  )}
+                </div>
+              )
             )}
           </div>
         }
