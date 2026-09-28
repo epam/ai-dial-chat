@@ -134,8 +134,15 @@ export type {
   TopicTagProps,
 } from './components/TopicTag/TopicTag';
 
-export { InfoCard } from './components/InfoCard/InfoCard';
-export type { InfoCardProps } from './components/InfoCard/InfoCard';
+/*
+ * Re-exported from `@epam/ai-dial-chat-shared`, where the confirmation
+ * presentation now lives so the full-page delete flows can share it. Kept
+ * under the catalog's original names so existing hosts keep compiling.
+ */
+export {
+  ConfirmationIdentityCard as InfoCard,
+  type ConfirmationIdentityCardProps as InfoCardProps,
+} from '@epam/ai-dial-chat-shared';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
 export type {

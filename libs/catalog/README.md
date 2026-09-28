@@ -434,6 +434,11 @@ Tinted card showing a catalog item's identity, used to anchor a message to the
 item it is about. Defaults to the `Info` surface; pass `Danger` for destructive
 messaging.
 
+Re-exported under this name from `@epam/ai-dial-chat-shared`, where it is
+`ConfirmationIdentityCard`: the confirmation presentation is shared rather
+than catalog-owned, so a confirmation outside this panel can show the same
+card. It accepts any `EntityHeaderItem`, of which `CatalogItem` is one.
+
 ```tsx
 import {
   InfoCard,
@@ -592,7 +597,10 @@ import {
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 
-/* CatalogEntityType is owned by @epam/ai-dial-chat-shared, not this lib. */
+/*
+ * CatalogEntityType is owned by @epam/ai-dial-chat-shared, not this lib, and
+ * DetailsConfirmationVariant re-exports that package's ConfirmationVariant.
+ */
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 CatalogEntityType.Model; // 'MODEL'
@@ -621,6 +629,10 @@ Every confirmation replaces the panel's details content in place - there is
 no modal. `DetailsConfirmationKind` names the active step, and each kind
 resolves its title, copy, consequence bullets, confirm label, loading status
 text, and palette from `detailsTexts`.
+
+The step itself is rendered by `ConfirmationView` and `ConfirmationFooter` from
+`@epam/ai-dial-chat-shared`, so a confirmation shown outside this panel can
+reuse the same content and action row.
 
 `Delete`, `RevokeAccess`, and `Unpublish` render with the danger palette;
 `Unshare` and `Logout` with the info one. `DeleteApiKey` is the only kind

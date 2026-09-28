@@ -1,4 +1,3 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DangerButton,
   DIAL_ICON_SIZE,
@@ -9,8 +8,22 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconTrashX } from '@tabler/icons-react';
 import { FC } from 'react';
-import { DetailsConfirmationVariant } from '../../../types/details-confirmation';
+import { ConfirmationVariant } from '../../types/confirmation';
+import { buildCssVars } from '../../utils/build-css-vars';
+import { mergeClasses } from '../../utils/merge-class';
 import styles from './ConfirmationView.module.scss';
+
+/** Color overrides for `ConfirmationFooter`. */
+export interface ConfirmationFooterColors {
+  /** Top border color of the action row. Defaults to `--stroke-tertiary`. */
+  border?: string;
+}
+
+/** Style overrides for `ConfirmationFooter`. */
+export interface ConfirmationFooterStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ConfirmationFooterColors;
+}
 
 /** Props for `ConfirmationFooter`. */
 export interface ConfirmationFooterProps {
@@ -18,8 +31,8 @@ export interface ConfirmationFooterProps {
   confirmLabel: string;
   /** Label of the cancel button. */
   cancelLabel: string;
-  /** Palette of the confirm button; `Danger` also gives it a leading trash icon. Default: `DetailsConfirmationVariant.Info`. */
-  variant?: DetailsConfirmationVariant;
+  /** Palette of the confirm button; `Danger` also gives it a leading trash icon. Default: `ConfirmationVariant.Info`. */
+  variant?: ConfirmationVariant;
   /** Whether the confirmed action is in flight. Default: `false`. */
   isLoading?: boolean;
   /**
@@ -31,24 +44,30 @@ export interface ConfirmationFooterProps {
   isConfirmDisabled?: boolean;
   /** Status text announced to assistive tech while the action is in flight. */
   loadingStatusLabel?: string;
+  /** Style overrides. */
+  styles?: ConfirmationFooterStyles;
   /** Called when the user confirms. */
   onConfirm: () => void;
   /** Called when the user cancels. */
   onCancel: () => void;
 }
 
-/** Action row pinned to the bottom of the details panel while a confirmation step is open. */
+/** Action row pinned to the bottom of a confirmation step: a text Cancel and a variant-colored confirm button. */
 export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
   confirmLabel,
   cancelLabel,
-  variant = DetailsConfirmationVariant.Info,
+  variant = ConfirmationVariant.Info,
   isLoading = false,
   isConfirmDisabled = false,
   loadingStatusLabel,
+  styles: stylesProp,
   onConfirm,
   onCancel,
 }) => {
-  const isDanger = variant === DetailsConfirmationVariant.Danger;
+  const isDanger = variant === ConfirmationVariant.Danger;
+  const cssVars = buildCssVars({
+    '--cfm-footer-border': stylesProp?.colors?.border,
+  });
 
   const iconBefore = (() => {
     if (isLoading) {
@@ -70,6 +89,7 @@ export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
 
   return (
     <div
+      style={cssVars}
       className={mergeClasses(
         'flex items-center justify-end gap-2 px-6 py-4 rtl:flex-row-reverse rtl:justify-start',
         styles.footer,

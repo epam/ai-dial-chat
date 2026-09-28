@@ -1,3 +1,11 @@
+/*
+ * The confirmation step's presentation — identity card, copy, consequence
+ * bullets, and action row — is shared with the full-page delete flows, so it
+ * lives in `@epam/ai-dial-chat-shared`. Only the set of steps the catalog's
+ * details panel can show is catalog-specific and declared here.
+ */
+export { ConfirmationVariant as DetailsConfirmationVariant } from '@epam/ai-dial-chat-shared';
+
 /** Identifies which confirmation step the catalog details panel is currently showing in place of its details content. */
 export enum DetailsConfirmationKind {
   /** Owner-side deletion of the item for everyone. */
@@ -17,12 +25,4 @@ export enum DetailsConfirmationKind {
    * describes a request, never a completed removal.
    */
   Unpublish = 'unpublish',
-}
-
-/** Palette a confirmation step is rendered with. */
-export enum DetailsConfirmationVariant {
-  /** Irreversible loss for everyone — red identity card and a danger confirm button. */
-  Danger = 'danger',
-  /** Affects only the current user and is recoverable — blue identity card and a neutral confirm button. */
-  Info = 'info',
 }

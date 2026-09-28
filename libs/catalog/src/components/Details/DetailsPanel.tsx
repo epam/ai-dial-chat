@@ -1,6 +1,8 @@
 import {
   buildCssVars,
   CatalogEntityType,
+  ConfirmationFooter,
+  ConfirmationView,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import type {
@@ -59,8 +61,6 @@ import {
 } from '../../utils/toolset-credentials';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
-import { ConfirmationFooter } from './ConfirmationView/ConfirmationFooter';
-import { ConfirmationView } from './ConfirmationView/ConfirmationView';
 import { CredentialsBanner } from './Credentials/CredentialsBanner/CredentialsBanner';
 import { CredentialsManagementPanel } from './Credentials/CredentialsManagementPanel/CredentialsManagementPanel';
 import styles from './DetailsPanel.module.scss';
@@ -275,11 +275,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-grid-cell-text': detailsColors?.gridCellText,
     '--cat-grid-cell-divider': detailsColors?.gridCellDivider,
     '--cat-grid-row-even-bg': detailsColors?.gridRowEvenBackground,
-    '--cat-info-card-bg': detailsColors?.infoCardBackground,
-    '--cat-info-card-danger-bg': detailsColors?.infoCardDangerBackground,
-    '--cat-confirm-message-text': detailsColors?.confirmMessageText,
-    '--cat-confirm-consequence-text': detailsColors?.confirmConsequenceText,
-    '--cat-confirm-footer-border': detailsColors?.confirmFooterBorder,
     '--cat-cred-surface-bg': detailsColors?.credentialsSurfaceBackground,
     '--cat-cred-active-icon': detailsColors?.credentialsActiveIcon,
     '--cat-cred-banner-icon-bg': detailsColors?.credentialsBannerIconBackground,
@@ -1206,6 +1201,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 confirmationContent.cardVariant ?? confirmationContent.variant
               }
               messageClassName={confirmMessageClassName}
+              styles={{
+                colors: {
+                  messageText: detailsColors?.confirmMessageText,
+                  consequenceText: detailsColors?.confirmConsequenceText,
+                  cardBackground: detailsColors?.infoCardBackground,
+                  cardDangerBackground: detailsColors?.infoCardDangerBackground,
+                },
+              }}
             >
               {confirmation === DetailsConfirmationKind.Unpublish &&
                 publishedFolders.length > 1 && (
@@ -1473,6 +1476,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             isLoading={isConfirming}
             isConfirmDisabled={isConfirmDisabled}
             loadingStatusLabel={confirmationContent.loadingStatusLabel}
+            styles={{ colors: { border: detailsColors?.confirmFooterBorder } }}
             onConfirm={handleConfirm}
             onCancel={handleCancelConfirmation}
           />

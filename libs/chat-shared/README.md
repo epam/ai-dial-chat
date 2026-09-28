@@ -644,6 +644,80 @@ inline after the name instead, or pass `children` to render arbitrary content
 in the row instead of the entity header. The legacy top-level `colors` prop is
 still accepted; new consumers should use `styles.colors`.
 
+### ConfirmationIdentityCard
+
+Tinted card echoing the resource a confirmation is about, so the user sees
+exactly what the action will affect. Defaults to the `Info` surface; pass
+`ConfirmationVariant.Danger` for destructive messaging. Pass `children`
+instead of `item` for a resource that is not an `EntityHeaderItem`.
+
+```tsx
+import {
+  ConfirmationIdentityCard,
+  ConfirmationVariant,
+} from '@epam/ai-dial-chat-shared';
+
+<ConfirmationIdentityCard item={item} variant={ConfirmationVariant.Danger} />;
+```
+
+### ConfirmationView
+
+Body of an in-place confirmation step: the identity card, the confirmation
+copy, and an optional consequence list. Presentational only — the caller owns
+the state and the action itself. Pair it with
+[`ConfirmationFooter`](#confirmationfooter). `@epam/ai-dial-catalog`'s details
+panel renders the two as an in-panel sub-view; a caller with a dialog instead
+renders them as its body and footer, which is why they are two components
+rather than one.
+
+```tsx
+import {
+  ConfirmationView,
+  ConfirmationVariant,
+} from '@epam/ai-dial-chat-shared';
+
+<ConfirmationView
+  item={item}
+  variant={ConfirmationVariant.Danger}
+  message={
+    <>
+      Are you sure you want to delete <strong>{item.name}</strong>? This action
+      is permanent and cannot be undone.
+    </>
+  }
+  consequences={['Users who rely on it will lose access', 'Cannot be undone']}
+/>;
+```
+
+Pass `identity` to replace the default card for a resource that has no
+`EntityHeaderItem`, and `children` for a step that needs an input before it can
+be confirmed — the caller owns that input's state and disables confirming
+until it is satisfied.
+
+### ConfirmationFooter
+
+Action row for a confirmation step: a text Cancel and a confirm button colored
+by `variant`, which for `Danger` also carries a leading trash icon. `isLoading`
+swaps that icon for a spinner, disables both actions, and announces
+`loadingStatusLabel` politely; `isConfirmDisabled` blocks only confirming, so a
+step whose input is unsatisfied can still be cancelled.
+
+```tsx
+import {
+  ConfirmationFooter,
+  ConfirmationVariant,
+} from '@epam/ai-dial-chat-shared';
+
+<ConfirmationFooter
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  variant={ConfirmationVariant.Danger}
+  loadingStatusLabel="Deleting"
+  onConfirm={handleDelete}
+  onCancel={handleCancel}
+/>;
+```
+
 ### TextRefinementField
 
 Label row with kit `GhostButton` "Refine with AI" / Undo actions, plus a polite
