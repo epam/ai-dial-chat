@@ -2,10 +2,11 @@ import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
 import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
 import {
   decodeToolsetId,
-  encodeToolsetId,
   mapDeploymentDetailsDtoToEntityDetails,
   mapToolsetCredentials,
   navigateToolsetOAuthPopup,
+  normalizeDeploymentId,
+  normalizeToolsetId,
   openToolsetOAuthPopup,
   resolveToolsetCredentialsLevel,
   selectToolsetAuthStatus,
@@ -230,14 +231,18 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       async (toolsetId: string) => {
         if (!targetOrigin) return;
         /*
-         * The iframe sends the raw, human-readable id (e.g. contains a real
-         * space) — the toolsets API requires the already-percent-encoded
-         * form (`%20`, not a real space) everywhere it's used as a path
-         * segment or body identifier. `toolsetId` (raw) is only ever used to
-         * echo the request back to the iframe below; every backend call
-         * uses `encodedToolsetId`.
+         * The iframe is expected to send the raw, human-readable id (e.g.
+         * contains a real space) — the toolsets API requires the
+         * already-percent-encoded form (`%20`, not a real space) everywhere
+         * it's used as a path segment or body identifier. `normalizeToolsetId`
+         * (rather than `encodeToolsetId` directly) guards against an iframe
+         * that sends an already-encoded id instead: encoding that a second
+         * time would double-escape it (`%20` → `%2520`) and 404 against the
+         * backend. `toolsetId` (raw, as received) is only ever used to echo
+         * the request back to the iframe below; every backend call uses
+         * `encodedToolsetId`.
          */
-        const encodedToolsetId = encodeToolsetId(toolsetId);
+        const encodedToolsetId = normalizeToolsetId(toolsetId);
 
         const popup = openToolsetOAuthPopup();
         if (!popup) {
@@ -362,8 +367,9 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const handleToolsetLogoutRequest = useCallback(
       async (toolsetId: string) => {
         if (!targetOrigin) return;
-        const encodedToolsetId = encodeToolsetId(toolsetId);
-        const credentialsLevel = ToolsetCredentialsLevel.User;
+        const encodedToolsetId = normalizeToolsetId(toolsetId);
+        const credentialsLevel =
+          resolveToolsetCredentialsLevel(encodedToolsetId);
 
         try {
           await logoutToolset(encodedToolsetId, {
@@ -400,7 +406,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
               typeof event.data.appId === 'string' &&
               event.data.appId.length > 0
             ) {
-              setCredentialsAppId(encodeToolsetId(event.data.appId));
+              setCredentialsAppId(normalizeDeploymentId(event.data.appId));
             }
             break;
           case `${displayName}/${AppsEditorEvent.ReadyToInteract}`:

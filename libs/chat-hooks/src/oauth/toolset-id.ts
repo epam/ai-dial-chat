@@ -48,6 +48,20 @@ export const isPublicToolsetId = (toolsetId: string): boolean => {
 };
 
 /**
+ * Encodes a toolset id to its single-encoded form regardless of whether the
+ * value received it in was already percent-encoded or the raw,
+ * human-readable form — decoding first then re-encoding once is idempotent
+ * either way, since `decodeToolsetId` on a raw (unencoded) id is a no-op.
+ * Use this instead of `encodeToolsetId` at a boundary that cannot guarantee
+ * which form it receives, such as a `postMessage` payload from an embedded
+ * iframe: calling `encodeToolsetId` directly on a value the sender already
+ * encoded escapes the existing `%` characters a second time (`%20` becomes
+ * `%2520`), which the backend only ever undoes once and so 404s on.
+ */
+export const normalizeToolsetId = (toolsetId: string): string =>
+  encodeToolsetId(decodeToolsetId(toolsetId));
+
+/**
  * Resolves which credentials level a toolset's login applies to, per DIAL
  * Core's public/private toolset convention: a `public`-bucket toolset is
  * shared credentials-wise at `User` level, while a private/workspace toolset
