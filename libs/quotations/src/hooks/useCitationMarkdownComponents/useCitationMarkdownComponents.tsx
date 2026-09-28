@@ -24,6 +24,8 @@ export interface UseCitationMarkdownComponentsCallbacks {
   isPreviewable?(annotation: Annotation): boolean;
   /** Called when a citation marker's open-in-browser action is invoked. */
   onOpenInBrowser(annotation: Annotation): void;
+  /** Whether the host's preview panel is open; a marker click then previews directly instead of showing the card. Defaults to `false`. */
+  isPreviewOpen?: boolean;
   /** Builds the translated label bundles used by a given citation group's card and marker. */
   buildLabels(group: AnnotationGroup): {
     cardLabels: CitationCardLabels;
@@ -109,7 +111,13 @@ export const useCitationMarkdownComponents = (
   isCompactTypography = false,
   fallbackGroups: AnnotationGroup[] = EMPTY_FALLBACK_GROUPS,
 ): { processedContent: string; markdownComponents: Components } => {
-  const { onPreview, isPreviewable, onOpenInBrowser, buildLabels } = callbacks;
+  const {
+    onPreview,
+    isPreviewable,
+    onOpenInBrowser,
+    isPreviewOpen = false,
+    buildLabels,
+  } = callbacks;
 
   const processedContent = useMemo(() => {
     if (isStreaming) return stripCitTagsWhileStreaming(content);
@@ -145,6 +153,7 @@ export const useCitationMarkdownComponents = (
           onPreview={(annotation) => onPreview(annotation, group)}
           isPreviewable={isPreviewable}
           onOpenInBrowser={onOpenInBrowser}
+          isPreviewOpen={isPreviewOpen}
           cardLabels={cardLabels}
           markerLabels={markerLabels}
         />
@@ -207,6 +216,7 @@ export const useCitationMarkdownComponents = (
     onPreview,
     isPreviewable,
     onOpenInBrowser,
+    isPreviewOpen,
     buildLabels,
     isCompactTypography,
     hasCitElement,

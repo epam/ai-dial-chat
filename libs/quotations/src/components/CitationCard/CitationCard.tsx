@@ -15,7 +15,10 @@ import {
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { FC, ReactNode } from 'react';
 import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
-import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
+import {
+  getSourceFileExtension,
+  type AnnotationGroup,
+} from '../../utils/group-annotations-by-source';
 import styles from './CitationCard.module.scss';
 
 /** User-visible strings for `CitationCard`. */
@@ -32,8 +35,6 @@ export interface CitationCardLabels {
   preview: string;
   /** Label for the "Open in browser" button. */
   openInBrowser: string;
-  /** Label for the "Download" button. */
-  download: string;
 }
 
 /** Color overrides for `CitationCard`, applied as CSS custom properties with app theme fallbacks. */
@@ -75,12 +76,12 @@ export interface CitationCardProps {
   /**
    * Called when the user clicks the "Preview" button. Omit when the group has
    * nothing previewable (e.g. reference-only chunks) — the "Preview" button is
-   * hidden and the remaining button is always labelled "Open in browser".
+   * hidden and an "Open in browser" button is shown instead.
    */
   onPreview?: (annotation: Annotation) => void;
-  /** Called when the user clicks the "Open in browser"/"Download" button. */
+  /** Called when the user clicks the "Open in browser" button, shown for web links and non-previewable sources. */
   onOpenInBrowser: (annotation: Annotation) => void;
-  /** Optional icon rendered before the source name in the card header. */
+  /** Optional icon rendered before the header text (the file extension for a previewable file, otherwise the source name). */
   headerIcon?: ReactNode;
   /** User-visible strings. */
   labels: CitationCardLabels;
@@ -110,6 +111,9 @@ export const CitationCard: FC<CitationCardProps> = ({
     onPreview == null ||
     sourceContentType === MIMEType.HTML ||
     sourceContentType === MIMEType.XHTML;
+  const headerText =
+    (isWebLink ? undefined : getSourceFileExtension(annotation)) ??
+    group.sourceName;
 
   const sourceNameClassName =
     typography?.sourceNameClassName ?? 'dial-tiny-text';
@@ -144,7 +148,7 @@ export const CitationCard: FC<CitationCardProps> = ({
         <div className="flex min-w-0 items-center gap-1">
           {headerIcon}
           <EllipsisTooltip
-            text={group.sourceName}
+            text={headerText}
             className={mergeClasses(
               sourceNameClassName,
               'min-w-0',
@@ -232,11 +236,13 @@ export const CitationCard: FC<CitationCardProps> = ({
             onClick={() => onPreview(annotation)}
           />
         )}
-        <PrimaryButton
-          label={isWebLink ? labels.openInBrowser : labels.download}
-          size={ElementSize.Small}
-          onClick={() => onOpenInBrowser(annotation)}
-        />
+        {isWebLink && (
+          <PrimaryButton
+            label={labels.openInBrowser}
+            size={ElementSize.Small}
+            onClick={() => onOpenInBrowser(annotation)}
+          />
+        )}
       </div>
     </div>
   );
