@@ -21,6 +21,7 @@ vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
       submitLabel,
       isSubmitting,
       metadata,
+      metadataTitle,
       setup,
       setupTitle,
       metadataSectionClassName,
@@ -44,7 +45,9 @@ vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
           {submitLabel}
         </button>
         <section className={metadataSectionClassName}>
-          <h2>{labels?.metadataTitle}</h2>
+          {metadataTitle !== null && (
+            <h2>{metadataTitle ?? labels?.metadataTitle}</h2>
+          )}
           {metadata}
         </section>
         {setup != null && (
