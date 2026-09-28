@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines the backend `POST /api/v1/applications` endpoint that creates a new DIAL Core application for the authenticated session user, including request/response DTOs, the DIAL Core body mapping, cache invalidation, and error mapping.
-
 ## Requirements
-
 ### Requirement: Create application endpoint
 
 The system SHALL expose `POST /api/v1/applications` that creates a new application for the authenticated session user by calling DIAL Core.
@@ -29,10 +27,11 @@ The endpoint SHALL:
 **Request DTO** (`CreateApplicationBodyDto`):
 ```ts
 {
-  name: string;          // required, @IsString, @IsNotEmpty, @Matches(/^[a-zA-Z0-9 _.-]+$/)
+  name: string;          // required, @IsString, @IsNotEmpty, @MaxLength(256),
+                         //   @Matches(/^[a-zA-Z0-9 _.-]+$/)
   type?: string;         // optional — schema ID (e.g. "https://mydial.epam.com/..."); omit for a plain
                          //   custom application with no schema type. @IsString, @IsNotEmpty, @IsOptional
-  description?: string;  // optional, @IsString, @IsOptional
+  description?: string;  // optional, @IsString, @IsOptional, @MaxLength(2000)
   iconUrl?: string;      // optional, @IsString, @IsOptional, @IsValidResourceReference (https?:// URL or a
                          //   DIAL file id "files/{bucket}/{path}", no traversal segments)
   version?: string;      // optional, @IsString, @IsOptional, @Matches(/^[a-zA-Z0-9._-]+$/)
@@ -46,7 +45,7 @@ The endpoint SHALL:
 }
 ```
 
-The `name` and `version` allowlist patterns exist so the `{name}__{version}` resource path can be built without escaping surprises; they are the server-side counterpart of the editor's own inline validation.
+The `name` and `version` allowlist patterns exist so the `{name}__{version}` resource path can be built without escaping surprises; they are the server-side counterpart of the editor's own inline validation. The `name` and `description` length bounds come from `apps/chat-api/src/common/validators/entity-field-limits.ts` (see `entity-field-limits`) and appear as `maxLength` in the OpenAPI spec; `UpdateApplicationBodyDto` carries the same two bounds.
 
 **Body mapping to DIAL Core** (the SDK's `DialApplication` shape). Every field beyond the two always-present ones SHALL be omitted rather than sent empty:
 ```ts
@@ -120,6 +119,11 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 - **WHEN** an authenticated user calls `POST /api/v1/applications` with a `name` containing characters outside letters, digits, spaces, underscores, dots, and dashes
 - **THEN** the endpoint responds 400 and no DIAL Core call is made
 
+#### Scenario: A name or description over its limit returns 400
+
+- **WHEN** an authenticated user calls `POST /api/v1/applications` with a 257-character `name` or a 2001-character `description`
+- **THEN** the endpoint responds 400 and no DIAL Core call is made
+
 #### Scenario: Bucket resolves but is empty
 
 - **WHEN** the bucket lookup succeeds but returns no bucket value
@@ -149,3 +153,4 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 - **WHEN** DIAL Core times out or is unreachable
 - **THEN** the endpoint responds 503
+

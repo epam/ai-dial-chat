@@ -40,6 +40,8 @@ export interface DeploymentCreationFormFieldErrors {
   name?: string;
   /** Error message for the version field. */
   version?: string;
+  /** Error message for the description field. */
+  description?: string;
 }
 
 /** Label and placeholder text for a single field, supplied by the host app. */
