@@ -159,6 +159,30 @@ const HalloweenSkeletons: FC = () => {
             )}
             {actor('showman', plan.showman.scale, false)}
             {actor('partner', plan.partner.scale, true)}
+            {plan.word && (
+              <div
+                className="absolute top-0 whitespace-nowrap opacity-0"
+                data-skeleton-word
+                style={{
+                  left: 0,
+                  right: 'auto',
+                  width: plan.word.width,
+                  height: plan.word.height,
+                  lineHeight: `${plan.word.height}px`,
+                  ...plan.word.target.font,
+                }}
+              >
+                {/* The layer mirrors in RTL; the copied text must not. */}
+                <span
+                  className="block"
+                  style={{
+                    transform: plan.targets.rtl ? 'scaleX(-1)' : undefined,
+                  }}
+                >
+                  {plan.word.target.text}
+                </span>
+              </div>
+            )}
             <div
               className="absolute top-0 opacity-0"
               data-skeleton-free-skull

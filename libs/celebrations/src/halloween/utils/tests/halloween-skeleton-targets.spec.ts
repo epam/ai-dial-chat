@@ -85,12 +85,62 @@ describe('getSkeletonTargets', () => {
     );
   });
 
+  describe('greeting word', () => {
+    let heading: HTMLElement;
+    beforeEach(() => {
+      vi.stubGlobal('CSS', { highlights: new Map() });
+      vi.stubGlobal('Highlight', class {});
+      document.body.innerHTML =
+        '<main role="region"><h1>Good evening, <b>Valery</b>!</h1><div class="input-shell"><textarea></textarea></div></main>';
+      composer = document.querySelector('.input-shell')!;
+      heading = document.querySelector('h1')!;
+      measure(composer, new DOMRect(340, 720, 600, 120));
+      measure(heading, new DOMRect(500, 600, 280, 44));
+      Range.prototype.getBoundingClientRect = () =>
+        new DOMRect(700, 604, 90, 36);
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      Reflect.deleteProperty(Range.prototype, 'getBoundingClientRect');
+    });
+
+    it('takes the last word of the greeting without changing it', () => {
+      const html = heading.outerHTML;
+      const { word } = getSkeletonTargets({
+        ...anchors,
+        welcomeRegion: '[role="region"]',
+      });
+      expect(word?.text).toBe('Valery');
+      expect(word?.heading).toBe(heading);
+      expect(word?.range.toString()).toBe('Valery');
+      expect(heading.outerHTML).toBe(html);
+    });
+
+    it('falls back to the greeting itself when there is no name', () => {
+      heading.textContent = 'Good evening';
+      expect(
+        getSkeletonTargets({ ...anchors, welcomeRegion: '[role="region"]' })
+          .word?.text,
+      ).toBe('evening');
+    });
+
+    it('skips the word without the Highlight API or a visible heading', () => {
+      const withRegion = { ...anchors, welcomeRegion: '[role="region"]' };
+      vi.stubGlobal('Highlight', undefined);
+      expect(getSkeletonTargets(withRegion).word).toBeUndefined();
+      vi.stubGlobal('Highlight', class {});
+      heading.style.visibility = 'hidden';
+      expect(getSkeletonTargets(withRegion).word).toBeUndefined();
+    });
+  });
+
   it('returns a floor-only target without anchors', () => {
     expect(getSkeletonTargets({})).toEqual({
       width: 1280,
       height: 900,
       rtl: false,
       composer: undefined,
+      word: undefined,
     });
   });
 });

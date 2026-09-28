@@ -1,13 +1,26 @@
 import type { CelebrationSnapshotTarget } from '../../utils/celebration-snapshots';
-import type { SkeletonTargets } from './halloween-skeleton-targets';
+import type {
+  SkeletonGreetingWord,
+  SkeletonTargets,
+} from './halloween-skeleton-targets';
 
 /** Includes both skeletons dropping below the viewport. */
 export const SKELETON_MS = 11500;
 export const SKELETON_DEADLINE_MS = SKELETON_MS + 500;
 /** Maximum precomputed frames in any one track. */
 export const SKELETON_FRAME_LIMIT = 80;
-/** Showman 9 + partner 8 + free skull 3 + composer outline 1. */
-export const SKELETON_ANIMATION_LIMIT = 21;
+/** Showman 9 + partner 8 + free skull 3 + composer outline 1 + stolen word 1. */
+export const SKELETON_ANIMATION_LIMIT = 22;
+/** Raised arm direction used to grab the greeting word. */
+export const SKELETON_GRAB_ARM = -75;
+/** Smallest hop, in art units, when the word is within standing reach. */
+export const SKELETON_MIN_HOP = 12;
+/** Forward arm direction while running off with the word. */
+export const SKELETON_CARRY_ARM = -12;
+/** The stolen word hides at the grab contact. */
+export const SKELETON_WORD_HIDE = 10450;
+/** The thrown-back word lands in place and the original reappears. */
+export const SKELETON_WORD_RESTORE = 11400;
 
 /** Independently animated groups of the skeleton artwork. */
 export enum SkeletonPart {
@@ -26,6 +39,7 @@ export enum SkeletonContactKind {
   Impact = 'impact',
   Catch = 'catch',
   Place = 'place',
+  Grab = 'grab',
 }
 
 /** Pivots and contact points in the 100×170 skeleton viewBox. */
@@ -118,6 +132,19 @@ export interface SkeletonPlan {
   outline: Keyframe[];
   contacts: SkeletonContact[];
   holds: SkeletonHold[];
+  /** The greeting word the partner steals, when it is reachable. */
+  word?: SkeletonWordPlan;
+}
+
+/** Decorative copy of the greeting's last word and its restoration schedule. */
+export interface SkeletonWordPlan {
+  target: SkeletonGreetingWord;
+  width: number;
+  height: number;
+  frames: Keyframe[];
+  holds: SkeletonHold[];
+  hideAt: number;
+  restoreAt: number;
 }
 
 type Key = [time: number, ...values: number[]];
@@ -599,55 +626,224 @@ export const buildSkeletonPlan = (
   bSkull.add(smooth, [9700, 0], [9850, -14], [10050, 0]);
   bArmL.add(smooth, [9750, 0], [9880, 60], [10050, 0]);
 
-  /* Celebration hop, then both drop backwards off the edge. */
+  /* The partner can reach the greeting's last word from the edge. */
+  const found = ledge ? targets.word : undefined;
+  const wordBox = found && {
+    x: rtl
+      ? width - found.rect.left - found.rect.width / 2
+      : found.rect.left + found.rect.width / 2,
+    y: found.rect.top + found.rect.height / 2,
+    top: found.rect.top,
+    width: found.rect.width,
+    height: found.rect.height,
+  };
+  const grabFacing = wordBox && wordBox.x >= backX + 50 * sB ? 1 : -1;
+  const grip = wordBox && { x: wordBox.x, y: wordBox.top + 2 };
+  /* A high word needs a jump with a raised arm; a word within standing reach
+     (the real chat's greeting sits right above the composer) needs only a
+     small hop, with the arm angle solved for the word. */
+  const raised = grip && reach(grip, yB, 0, grabFacing, SKELETON_GRAB_ARM);
+  const hopY = yB - SKELETON_MIN_HOP * sB;
+  const lowered =
+    grip && raised && raised.y > hopY
+      ? reach(grip, hopY, 0, grabFacing)
+      : undefined;
+  const grabPose = lowered ?? raised;
+  const grab =
+    found &&
+    wordBox &&
+    grabPose &&
+    found.rect.bottom <= stageY - 8 &&
+    wordBox.x >= left &&
+    wordBox.x <= right &&
+    grabPose.x + 50 * sB >= left &&
+    grabPose.x + 50 * sB <= right &&
+    /* A clamped solve cannot touch the word, so it is not a grab. */
+    (!lowered || Math.abs(lowered.y - hopY) < 0.5) &&
+    yB - grabPose.y >= 0 &&
+    yB - grabPose.y <= 110 * sB
+      ? { found, box: wordBox, pose: grabPose }
+      : undefined;
+  const wordTrack = new Track();
+  const wordHolds: SkeletonHold[] = [];
+
+  /* Showman celebrates; without a theft the partner joins, then both drop. */
   aRoot.add(smooth, [10100, aAfter, yA]);
   aRoot.add(easeOut, [10250, aAfter, yA - 12]);
   aRoot.add(easeIn, [10450, aAfter, yA]);
-  bRoot.add(smooth, [10100, backX, yB]);
-  bRoot.add(easeOut, [10250, backX, yB - 14]);
-  bRoot.add(easeIn, [10450, backX, yB]);
   aBody.add(smooth, [10100, 0, 1.05, 0.94], [10250, 0, 0.97, 1.05]);
   aBody.add(smooth, [10450, 0], [SKELETON_MS, 0]);
-  bBody.add(smooth, [10100, 0, 1.06, 0.93], [10250, 0, 0.96, 1.06]);
-  bBody.add(smooth, [10450, 0], [SKELETON_MS, 0]);
-  [aArmL, bArmL].forEach((arm) =>
-    arm.add(smooth, [10100, 0], [10250, 120], [10450, 20], [11300, 30]),
-  );
-  [aArmR, bArmR].forEach((arm) =>
-    arm.add(smooth, [10100, 0], [10250, -120], [10450, -20], [11300, -30]),
-  );
-  arc(
-    aRoot,
-    { x: aAfter, y: yA },
-    { x: aAfter - 40, y: below + 20 },
-    10550,
-    11300,
-    30 * s,
-  );
-  arc(
-    bRoot,
-    { x: backX, y: yB },
-    { x: backX + 40, y: below + 20 },
-    10600,
-    11300,
-    30 * sB,
-  );
-  aRoot.add('linear', [11350, aAfter - 40, below + 20, 0]);
-  aRoot.add('linear', [SKELETON_MS, aAfter - 40, below + 20, 0]);
-  bRoot.add('linear', [11350, backX + 40, below + 20, 0]);
-  bRoot.add('linear', [SKELETON_MS, backX + 40, below + 20, 0]);
-  contact(10550, SkeletonContactKind.Landing, {
-    x: aAfter + 50 * s,
-    y: stageY,
-  });
-  [aLegL, aLegR, bLegL, bLegR].forEach((leg, i) =>
-    leg.add(
-      smooth,
-      [10500, 0],
-      [10750, i % 2 ? -25 : 25],
-      [SKELETON_MS, i % 2 ? -25 : 25],
-    ),
-  );
+  if (grab) {
+    const { pose, box } = grab;
+    const chase = aAfter + grabFacing * 60;
+    aArmL.add(smooth, [10100, 0], [10250, 120], [10450, 20]);
+    aArmR.add(smooth, [10100, 0], [10250, -120], [10450, -20]);
+    /* "Hey!" - arms out at the thief, then after him. */
+    aArmL.add(easeOut, [10650, 20], [10780, 75]);
+    aArmR.add(easeOut, [10650, -20], [10780, -75]);
+    aArmL.add(smooth, [11250, 40]);
+    aArmR.add(smooth, [11250, -40]);
+    aSkull.add(smooth, [10650, 0, 1, 1], [10780, grabFacing * 12, 1, 1]);
+    aRoot.add(smooth, [10850, aAfter, yA]);
+    arc(
+      aRoot,
+      { x: aAfter, y: yA },
+      { x: chase, y: below + 20 },
+      10850,
+      11250,
+      28 * s,
+    );
+    aRoot.add('linear', [11300, chase, below + 20, 0]);
+    aRoot.add('linear', [SKELETON_MS, chase, below + 20, 0]);
+    contact(10850, SkeletonContactKind.Landing, {
+      x: aAfter + 50 * s,
+      y: stageY,
+    });
+
+    const escape = { x: pose.x + grabFacing * 60, y: below + 20 };
+    bFacing.add(step, [10100, grabFacing]);
+    bSkull.add(smooth, [10100, 0], [10220, -16], [10450, 0]);
+    bBody.add(smooth, [10100, 0], [10250, 10]);
+    bBody.add('linear', [10450, 0], [11150, 0], [SKELETON_MS, 0]);
+    bRoot.add(smooth, [10100, backX, yB], [10250, backX, yB]);
+    arc(
+      bRoot,
+      { x: backX, y: yB },
+      { x: pose.x, y: pose.y },
+      10250,
+      10450,
+      18 * sB,
+    );
+    bRoot.add(
+      'linear',
+      [10550, pose.x, mix(pose.y, yB, 0.35)],
+      [10700, pose.x, yB],
+      [10800, pose.x, yB],
+    );
+    arc(bRoot, { x: pose.x, y: yB }, escape, 10800, 11150, 26 * sB);
+    bRoot.add('linear', [11200, escape.x, escape.y, 0]);
+    bRoot.add('linear', [SKELETON_MS, escape.x, escape.y, 0]);
+    contact(10250, SkeletonContactKind.Landing, {
+      x: backX + 50 * sB,
+      y: stageY,
+    });
+    contact(10450, SkeletonContactKind.Grab, { x: box.x, y: box.top + 2 });
+    contact(10700, SkeletonContactKind.Landing, {
+      x: pose.x + 50 * sB,
+      y: stageY,
+    });
+    bArmR.add(smooth, [10100, 0], [10250, 12]);
+    bArmR.add(
+      'linear',
+      [10450, pose.direction - SKELETON_ARM_REST],
+      /* Lowered forward so the loot dangles beside the body, not over the face. */
+      [10700, SKELETON_CARRY_ARM - SKELETON_ARM_REST],
+      [11150, SKELETON_CARRY_ARM - SKELETON_ARM_REST],
+    );
+    bArmL.add(smooth, [10250, 40], [10450, -30], [10800, 60], [11150, 30]);
+    [bLegL, bLegR].forEach((leg, side) =>
+      leg.add(
+        smooth,
+        [10250, side ? -12 : 12],
+        [10450, side ? 8 : -8],
+        [10700, 0],
+        [10800, 0],
+        [11000, side ? -25 : 25],
+        [SKELETON_MS, side ? -25 : 25],
+      ),
+    );
+    [aLegL, aLegR].forEach((leg, i) =>
+      leg.add(
+        smooth,
+        [10850, 0],
+        [11050, i ? -25 : 25],
+        [SKELETON_MS, i ? -25 : 25],
+      ),
+    );
+
+    /* The word dangles from the same sampled pose, then flies home. */
+    const home = { x: box.x, y: box.y };
+    wordTrack.add(
+      'linear',
+      [0, home.x, home.y, 0, 0],
+      [SKELETON_WORD_HIDE, home.x, home.y, 0, 0],
+    );
+    let last = home;
+    for (let t = SKELETON_WORD_HIDE; t <= 11100; t += 50) {
+      const [x, y] = bRoot.sample(t);
+      const [dy] = bBody.sample(t);
+      const [rotation] = bArmR.sample(t);
+      const hand = skeletonHandPoint(
+        { x, y },
+        sB,
+        grabFacing,
+        dy,
+        rotation + SKELETON_ARM_REST,
+      );
+      last = { x: hand.x, y: hand.y + box.height / 2 - 2 };
+      wordHolds.push({ time: t, hand, skull: last });
+      wordTrack.add('linear', [
+        t,
+        last.x,
+        last.y,
+        6 * Math.sin((t - SKELETON_WORD_HIDE) / 130),
+        1,
+      ]);
+    }
+    arc(wordTrack, last, home, 11100, SKELETON_WORD_RESTORE, 90 * s, (t) => [
+      -360 * (1 - t),
+      1,
+    ]);
+    wordTrack.add(
+      'linear',
+      [SKELETON_WORD_RESTORE, home.x, home.y, 0, 0],
+      [SKELETON_MS, home.x, home.y, 0, 0],
+    );
+  } else {
+    bRoot.add(smooth, [10100, backX, yB]);
+    bRoot.add(easeOut, [10250, backX, yB - 14]);
+    bRoot.add(easeIn, [10450, backX, yB]);
+    bBody.add(smooth, [10100, 0, 1.06, 0.93], [10250, 0, 0.96, 1.06]);
+    bBody.add(smooth, [10450, 0], [SKELETON_MS, 0]);
+    [aArmL, bArmL].forEach((arm) =>
+      arm.add(smooth, [10100, 0], [10250, 120], [10450, 20], [11300, 30]),
+    );
+    [aArmR, bArmR].forEach((arm) =>
+      arm.add(smooth, [10100, 0], [10250, -120], [10450, -20], [11300, -30]),
+    );
+    arc(
+      aRoot,
+      { x: aAfter, y: yA },
+      { x: aAfter - 40, y: below + 20 },
+      10550,
+      11300,
+      30 * s,
+    );
+    arc(
+      bRoot,
+      { x: backX, y: yB },
+      { x: backX + 40, y: below + 20 },
+      10600,
+      11300,
+      30 * sB,
+    );
+    aRoot.add('linear', [11350, aAfter - 40, below + 20, 0]);
+    aRoot.add('linear', [SKELETON_MS, aAfter - 40, below + 20, 0]);
+    bRoot.add('linear', [11350, backX + 40, below + 20, 0]);
+    bRoot.add('linear', [SKELETON_MS, backX + 40, below + 20, 0]);
+    contact(10550, SkeletonContactKind.Landing, {
+      x: aAfter + 50 * s,
+      y: stageY,
+    });
+    [aLegL, aLegR, bLegL, bLegR].forEach((leg, i) =>
+      leg.add(
+        smooth,
+        [10500, 0],
+        [10750, i % 2 ? -25 : 25],
+        [SKELETON_MS, i % 2 ? -25 : 25],
+      ),
+    );
+  }
   [aArmL, aArmR, bArmL, bArmR, aSkull, bSkull].forEach((track) =>
     track.add('linear', [SKELETON_MS, ...track.sample(SKELETON_MS)]),
   );
@@ -668,7 +864,13 @@ export const buildSkeletonPlan = (
     [6250, 1.2],
     [7850, 2],
     [9650, 2.2],
-    [10550, 1.5],
+    ...(grab
+      ? [
+          [10250, 1.2],
+          [10700, 2],
+          [10850, 1.2],
+        ]
+      : [[10550, 1.5]]),
   ].forEach(([time, depth]) =>
     outline.add(
       easeOut,
@@ -681,7 +883,12 @@ export const buildSkeletonPlan = (
 
   return {
     targets,
-    anchors: ledge && composer ? [composer] : [],
+    anchors: [
+      ...(ledge && composer ? [composer] : []),
+      ...(grab
+        ? [{ element: grab.found.heading, rect: grab.found.headingRect }]
+        : []),
+    ],
     ledge: ledge && {
       left: ledge.left,
       top: ledge.top,
@@ -737,5 +944,17 @@ export const buildSkeletonPlan = (
       : [],
     contacts: contacts.sort((a, b) => a.time - b.time),
     holds,
+    word: grab && {
+      target: grab.found,
+      width: grab.box.width,
+      height: grab.box.height,
+      frames: wordTrack.frames(([x, y, angle, opacity]) => ({
+        transform: `translate(${round(x - grab.box.width / 2)}px, ${round(y - grab.box.height / 2)}px) rotate(${round(angle)}deg)`,
+        opacity,
+      })),
+      holds: wordHolds,
+      hideAt: SKELETON_WORD_HIDE,
+      restoreAt: SKELETON_WORD_RESTORE,
+    },
   };
 };

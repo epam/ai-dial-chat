@@ -5,6 +5,7 @@ import {
   type SkeletonActorTracks,
   type SkeletonPlan,
 } from './halloween-skeleton-plan';
+import { SKELETON_WORD_HIGHLIGHT } from './halloween-skeleton-targets';
 
 /** One finite clock; the measured composer is observed, never animated. */
 export const animateSkeletons = (
@@ -15,7 +16,16 @@ export const animateSkeletons = (
   const animations: Animation[] = [];
   let stopped = false;
   let deadline: ReturnType<typeof setTimeout> | undefined;
-  const { anchors } = plan;
+  let hideWord: ReturnType<typeof setTimeout> | undefined;
+  let showWord: ReturnType<typeof setTimeout> | undefined;
+  const { anchors, word } = plan;
+  /* Only the glyph paint is hidden; the heading's DOM and text never change. */
+  const restoreWord = () => {
+    clearTimeout(hideWord);
+    clearTimeout(showWord);
+    if (word && CSS.highlights?.get(SKELETON_WORD_HIGHLIGHT))
+      CSS.highlights.delete(SKELETON_WORD_HIGHLIGHT);
+  };
   const events = [
     'pointerdown',
     'keydown',
@@ -30,6 +40,7 @@ export const animateSkeletons = (
     if (stopped) return;
     stopped = true;
     clearTimeout(deadline);
+    restoreWord();
     observer.disconnect();
     resize.disconnect();
     animations.forEach((animation) => animation.cancel());
@@ -150,6 +161,7 @@ export const animateSkeletons = (
       plan.skull.face,
     );
     if (plan.ledge) animate('[data-skeleton-ledge]', plan.outline);
+    if (word) animate('[data-skeleton-word]', word.frames);
     observer.observe(document.documentElement, {
       subtree: true,
       childList: true,
@@ -172,6 +184,17 @@ export const animateSkeletons = (
     events.forEach((name) => document.addEventListener(name, interrupt, true));
     window.addEventListener('resize', stop);
     deadline = setTimeout(stop, SKELETON_MS);
+    if (word) {
+      hideWord = setTimeout(
+        () =>
+          CSS.highlights.set(
+            SKELETON_WORD_HIGHLIGHT,
+            new Highlight(word.target.range),
+          ),
+        word.hideAt,
+      );
+      showWord = setTimeout(restoreWord, word.restoreAt);
+    }
   } catch {
     stop();
   }

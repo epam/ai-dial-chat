@@ -123,6 +123,45 @@ describe('HalloweenSkeletons', () => {
       expect(stop).toHaveBeenCalledOnce();
     },
   );
+  it('renders an unmirrored copy of the greeting word in RTL', async () => {
+    vi.mocked(getSkeletonTargets).mockReturnValue({
+      width: 1280,
+      height: 900,
+      rtl: true,
+      composer: {
+        element: document.createElement('div'),
+        rect: new DOMRect(340, 720, 600, 120),
+      },
+      word: {
+        heading: document.createElement('h1'),
+        headingRect: new DOMRect(500, 560, 280, 44),
+        range: document.createRange(),
+        rect: new DOMRect(560, 590, 90, 40),
+        text: 'Valery',
+        font: {
+          fontFamily: 'Inter',
+          fontSize: '32px',
+          fontWeight: '600',
+          fontStyle: 'normal',
+          letterSpacing: 'normal',
+          color: 'rgb(1, 2, 3)',
+          textTransform: 'none',
+        },
+      },
+    });
+    const view = render(<HalloweenSkeletons />);
+    await waitFor(() => expect(animateSkeletons).toHaveBeenCalledOnce());
+    const copy = view.container.querySelector<HTMLElement>(
+      '[data-skeleton-word]',
+    )!;
+    expect(copy.textContent).toBe('Valery');
+    expect(copy.style.fontSize).toBe('32px');
+    expect(copy.style.color).toBe('rgb(1, 2, 3)');
+    expect(copy.querySelector<HTMLElement>('span')!.style.transform).toBe(
+      'scaleX(-1)',
+    );
+  });
+
   it('mirrors only the artwork layer in RTL', async () => {
     vi.mocked(getSkeletonTargets).mockReturnValue({
       width: 1280,

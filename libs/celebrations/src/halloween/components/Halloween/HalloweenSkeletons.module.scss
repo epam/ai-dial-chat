@@ -65,6 +65,10 @@
   stroke-width: 1;
   stroke-linejoin: round;
 }
+/* Hides only the borrowed greeting word's glyphs while its copy is carried away. */
+::highlight(celebration-skeleton-word) {
+  color: transparent;
+}
 /* Mirrors the composer's measured rounded outline; it never covers the input. */
 .ledge {
   border-color: var(--skeleton-ledge, #e6dfc5b3);

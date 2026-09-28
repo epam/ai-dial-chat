@@ -67,7 +67,8 @@ describe('Skeleton lost-skull plan', () => {
     (mobile) => {
       const plan = buildSkeletonPlan(targets(), mobile);
       const all = tracks(plan);
-      expect(all).toHaveLength(SKELETON_ANIMATION_LIMIT);
+      /* No greeting word in these targets: everything except the word copy. */
+      expect(all).toHaveLength(SKELETON_ANIMATION_LIMIT - 1);
       all.forEach((frames) => {
         expect(frames.length).toBeLessThanOrEqual(SKELETON_FRAME_LIMIT);
         expect(frames[0].offset).toBe(0);
@@ -239,10 +240,118 @@ describe('Skeleton lost-skull plan', () => {
     expect(plan.anchors).toEqual([]);
     expect(plan.outline).toEqual([]);
     expect(plan.stageY).toBe(894);
-    expect(tracks(plan)).toHaveLength(SKELETON_ANIMATION_LIMIT - 1);
+    expect(tracks(plan)).toHaveLength(SKELETON_ANIMATION_LIMIT - 2);
     expect(plan.contacts.map((c) => c.kind)).toContain(
       SkeletonContactKind.Place,
     );
+  });
+
+  describe('greeting word theft', () => {
+    const heading = document.createElement('h1');
+    const word = (rect: DOMRect) => ({
+      heading,
+      headingRect: new DOMRect(500, 560, 280, 44),
+      range: document.createRange(),
+      rect,
+      text: 'Valery',
+      font: {
+        fontFamily: 'Inter',
+        fontSize: '32px',
+        fontWeight: '600',
+        fontStyle: 'normal',
+        letterSpacing: 'normal',
+        color: 'rgb(0, 0, 0)',
+        textTransform: 'none',
+      },
+    });
+    const reachable = new DOMRect(700, 590, 90, 40);
+
+    it.each([false, true])(
+      'hides the word at the grab and keeps its copy on the partner hand, mobile=%s',
+      (mobile) => {
+        const plan = buildSkeletonPlan(
+          targets({ word: word(reachable) }),
+          mobile,
+        );
+        expect(plan.word).toBeDefined();
+        expect(tracks(plan).length + 1).toBe(SKELETON_ANIMATION_LIMIT);
+        expect(plan.word!.frames.length).toBeLessThanOrEqual(
+          SKELETON_FRAME_LIMIT,
+        );
+        expect(plan.anchors.map((a) => a.element)).toContain(heading);
+        const grab = plan.contacts.find(
+          (c) => c.kind === SkeletonContactKind.Grab,
+        )!;
+        expect(grab.time).toBe(plan.word!.hideAt);
+        const { partner } = plan;
+        plan.word!.holds.forEach(({ time, hand, skull: center }) => {
+          const [x, y] = sampleAt(partner.root, time, px);
+          const [, dy] = sampleAt(partner.parts.body!, time, px);
+          const [rotation] = sampleAt(partner.parts['arm-right']!, time, angle);
+          const facing = hand.x >= x + 50 * partner.scale ? 1 : -1;
+          const expected = skeletonHandPoint(
+            { x, y },
+            partner.scale,
+            facing,
+            dy,
+            rotation + SKELETON_ARM_REST,
+          );
+          expect(hand.x).toBeCloseTo(expected.x, 0);
+          expect(hand.y).toBeCloseTo(expected.y, 0);
+          const [wx, wy] = sampleAt(plan.word!.frames, time, px);
+          expect(wx + 45).toBeCloseTo(center.x, 0);
+          expect(wy + 20).toBeCloseTo(center.y, 0);
+        });
+        /* The copy starts and ends exactly over the original word. */
+        const first = plan.word!.holds[0];
+        expect(first.skull.x).toBeCloseTo(745, 1);
+        expect(first.skull.y).toBeCloseTo(610, 1);
+        const [hx, hy] = sampleAt(plan.word!.frames, plan.word!.restoreAt, px);
+        expect([hx, hy]).toEqual([700, 590]);
+        expect(plan.word!.restoreAt).toBeLessThan(SKELETON_MS);
+      },
+    );
+
+    it.each([false, true])(
+      'grabs a greeting that sits right above the composer, as in the chat, mobile=%s',
+      (mobile) => {
+        /* The real chat renders the heading 36px above the input, below reach height. */
+        const low = new DOMRect(700, 640, 90, 44);
+        const plan = buildSkeletonPlan(targets({ word: word(low) }), mobile);
+        expect(plan.word).toBeDefined();
+        const first = plan.word!.holds[0];
+        expect(first.skull.x).toBeCloseTo(745, 1);
+        expect(first.skull.y).toBeCloseTo(662, 1);
+        expect(first.hand.y).toBeCloseTo(642, 1);
+      },
+    );
+
+    it('mirrors the word position in RTL', () => {
+      const plan = buildSkeletonPlan(
+        targets({ rtl: true, word: word(new DOMRect(490, 590, 90, 40)) }),
+        false,
+      );
+      expect(plan.word!.holds[0].skull.x).toBeCloseTo(1280 - 535, 1);
+    });
+
+    it.each([
+      ['below the stage', new DOMRect(700, 760, 90, 40)],
+      ['too high to reach', new DOMRect(700, 200, 90, 40)],
+      ['outside the stage band', new DOMRect(60, 590, 90, 40)],
+    ])('keeps the previous ending when the word is %s', (_, rect) => {
+      const plan = buildSkeletonPlan(targets({ word: word(rect) }), false);
+      expect(plan.word).toBeUndefined();
+      expect(plan.anchors.map((a) => a.element)).not.toContain(heading);
+      expect(tracks(plan)).toHaveLength(SKELETON_ANIMATION_LIMIT - 1);
+    });
+
+    it('never steals without a composer stage', () => {
+      const plan = buildSkeletonPlan(
+        targets({ composer: undefined, word: word(reachable) }),
+        false,
+      );
+      expect(plan.word).toBeUndefined();
+    });
   });
 
   it('is deterministic for identical geometry', () => {

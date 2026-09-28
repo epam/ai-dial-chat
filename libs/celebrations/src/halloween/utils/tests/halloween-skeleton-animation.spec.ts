@@ -106,7 +106,7 @@ describe('animateSkeletons', () => {
   it('keeps draft, selection, focus and DOM intact without measuring during playback', () => {
     const html = fixture.outerHTML;
     play();
-    expect(recorded).toHaveLength(SKELETON_ANIMATION_LIMIT);
+    expect(recorded).toHaveLength(SKELETON_ANIMATION_LIMIT - 1);
     expect(recorded.every((a) => host.contains(a.element))).toBe(true);
     expect(fixture.outerHTML).toBe(html);
     expect(draft.value).toBe('Private draft');
@@ -217,6 +217,92 @@ describe('animateSkeletons', () => {
     play();
     expect(recorded).toHaveLength(17);
     stopped();
+  });
+
+  describe('greeting word', () => {
+    const highlights = new Map<string, unknown>();
+    let heading: HTMLElement;
+    beforeEach(() => {
+      highlights.clear();
+      vi.stubGlobal('CSS', { highlights });
+      vi.stubGlobal(
+        'Highlight',
+        class {
+          constructor(readonly range: Range) {}
+        },
+      );
+      heading = document.createElement('h1');
+      heading.textContent = 'Good evening, Valery';
+      document.body.append(heading);
+      const text = heading.firstChild!;
+      const range = document.createRange();
+      range.setStart(text, 14);
+      range.setEnd(text, 20);
+      vi.spyOn(heading, 'getBoundingClientRect').mockReturnValue(
+        new DOMRect(500, 480, 280, 44),
+      );
+      plan = buildSkeletonPlan(
+        {
+          width: 1280,
+          height: 900,
+          rtl: false,
+          composer: {
+            element: fixture,
+            rect: new DOMRect(400, 600, 500, 100),
+          },
+          word: {
+            heading,
+            headingRect: new DOMRect(500, 480, 280, 44),
+            range,
+            rect: new DOMRect(700, 490, 90, 40),
+            text: 'Valery',
+            font: {
+              fontFamily: 'Inter',
+              fontSize: '32px',
+              fontWeight: '600',
+              fontStyle: 'normal',
+              letterSpacing: 'normal',
+              color: 'rgb(0, 0, 0)',
+              textTransform: 'none',
+            },
+          },
+        },
+        false,
+      );
+      host.insertAdjacentHTML('beforeend', '<div data-skeleton-word></div>');
+    });
+    afterEach(() => heading.remove());
+
+    it('hides only the word at the grab and restores it when the copy lands', () => {
+      expect(plan.word).toBeDefined();
+      const html = heading.outerHTML;
+      play();
+      expect(recorded).toHaveLength(SKELETON_ANIMATION_LIMIT);
+      expect(highlights.size).toBe(0);
+      vi.advanceTimersByTime(plan.word!.hideAt);
+      expect(highlights.has('celebration-skeleton-word')).toBe(true);
+      expect(heading.outerHTML).toBe(html);
+      vi.advanceTimersByTime(plan.word!.restoreAt - plan.word!.hideAt);
+      expect(highlights.size).toBe(0);
+      vi.advanceTimersByTime(SKELETON_MS);
+      stopped();
+    });
+
+    it.each(['keydown', 'heading change'])(
+      'restores the word immediately on %s',
+      async (kind) => {
+        play();
+        vi.advanceTimersByTime(plan.word!.hideAt + 100);
+        expect(highlights.size).toBe(1);
+        if (kind === 'keydown') document.dispatchEvent(new Event('keydown'));
+        else {
+          heading.textContent = 'Good evening';
+          await Promise.resolve();
+        }
+        expect(highlights.size).toBe(0);
+        stopped();
+      },
+    );
   });
 
   it('shares one start time across all tracks', () => {
