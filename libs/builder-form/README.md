@@ -242,6 +242,7 @@ The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` tit
 - `isSubmitting` disables Cancel and the primary button and announces `labels.savingStatusLabel`.
 - `isSubmitDisabled` disables only the primary button. Use it for a host-owned readiness reason (an embedded editor that is not ready to save), not for validation — a submit attempt with invalid fields should show the errors instead.
 - `extraActions` render before Cancel; `hideStandardActions` hides Cancel and the primary button so only they remain (e.g. while a preview is open).
+- `metadataTitle` replaces the Metadata heading; `null` renders the section without one, for left-column content that carries its own heading.
 - `metadataFooter` renders below the Metadata section in the left column.
 - `setup` fills the Setup section; without it the left column takes the full width. `setupTitle` replaces the section heading.
 - `alert` renders in a `role="alert"` region above the Setup section (above Metadata when there is no Setup).

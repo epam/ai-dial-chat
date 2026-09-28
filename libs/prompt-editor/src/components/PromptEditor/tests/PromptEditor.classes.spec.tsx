@@ -52,21 +52,16 @@ const closestWithClass = (from: Element, className: string): Element | null =>
   from.closest(`.${className}`);
 
 describe('PromptEditor — public class names', () => {
-  it('stamps the Metadata section that holds Name and Description', () => {
+  it('stamps the form column that holds Name, Description and Instructions', () => {
     render(<PromptEditor onSubmit={vi.fn()} onCancel={vi.fn()} />);
 
-    const nameField = screen.getByRole('textbox', { name: /Name/ });
-    expect(closestWithClass(nameField, PROMPT_EDITOR_CLASS.form)).toBeTruthy();
-  });
-
-  it('stamps the Setup section that holds the Instructions editor', () => {
-    render(<PromptEditor onSubmit={vi.fn()} onCancel={vi.fn()} />);
-
-    const instructionsGroup = screen.getByRole('group', {
-      name: /Instructions/,
-    });
+    const form = closestWithClass(
+      screen.getByRole('textbox', { name: /Name/ }),
+      PROMPT_EDITOR_CLASS.form,
+    );
+    expect(form).toBeTruthy();
     expect(
-      closestWithClass(instructionsGroup, PROMPT_EDITOR_CLASS.setup),
-    ).toBeTruthy();
+      form?.contains(screen.getByRole('group', { name: /Instructions/ })),
+    ).toBe(true);
   });
 });

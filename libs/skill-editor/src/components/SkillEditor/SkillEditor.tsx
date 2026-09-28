@@ -9,6 +9,7 @@ import {
 } from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
+  MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
   mergeClasses,
@@ -35,7 +36,6 @@ import {
   ErrorText,
   GhostButton,
   Label,
-  NeutralButton,
   PrimaryButton,
   Spinner,
   type DropdownItem,
@@ -115,6 +115,16 @@ type MarkdownEditorComponent = ComponentType<{
 
 const METADATA_FIELDS = [MetadataField.Name, MetadataField.Description];
 
+/* Instructions fill the column to the bottom, ending on the column's `py-6`. */
+const INSTRUCTIONS_EDITOR_BOTTOM_GAP = 24;
+/* Filling never shrinks the editor below a usable height. */
+const INSTRUCTIONS_EDITOR_MIN_HEIGHT = 300;
+
+/* Paddings of the Files column and the selected-file column, as before the shared editor. */
+const FILES_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
+const SETUP_SECTION_CLASS_NAME =
+  'gap-4 px-4 py-6 desktop:gap-5 desktop:px-8 desktop:py-6';
+
 const LazyMarkdown = lazy(async () => {
   const { MarkdownEditor } = await LazyMarkdownEditor();
   return { default: MarkdownEditor as MarkdownEditorComponent };
@@ -161,7 +171,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   });
   const instructionsId = useId();
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
-  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
+  const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>({
+    bottomGap: INSTRUCTIONS_EDITOR_BOTTOM_GAP,
+    minHeight: INSTRUCTIONS_EDITOR_MIN_HEIGHT,
+  });
   const valuesRef = useRef(values);
   const updateValues = (patch: Partial<SkillEditorValues>) => {
     const next = { ...valuesRef.current, ...patch };
@@ -691,7 +704,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
             t.descriptionPlaceholder ??
             'What this skill does and when to use it',
         },
-        // The Metadata section heading already names the field set.
+        // The SKILL.md heading above the fields already names them.
         ariaLabel: undefined,
       },
     }),
@@ -736,12 +749,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     submitLabel: t.createLabel ?? 'Create',
     isSubmitDisabled: isRefining || isLoading || hasLoadError,
     labels: {
-      metadataTitle: t.metadataSectionTitle ?? 'Metadata',
       cancelLabel: t.cancelLabel ?? 'Cancel',
       backAriaLabel: backAriaLabel ?? 'Back',
       savingStatusLabel: t.savingStatusLabel ?? 'Saving',
     },
     styles: editorStyles,
+    metadataTitle: null,
   };
 
   if (isLoading) {
@@ -845,6 +858,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           ref={instructionsCapRef}
           className={mergeClasses(
             MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+            MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
             MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
           )}
         >
@@ -896,28 +910,11 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       <EntityEditor
         {...editorProps}
         isSubmitting={isSubmitting}
+        metadataSectionClassName={FILES_SECTION_CLASS_NAME}
         metadata={
-          <MetadataForm
-            values={metadataValues}
-            errors={metadataErrors}
-            onChange={handleMetadataChange}
-            fields={METADATA_FIELDS}
-            isDescriptionRequired
-            isNameReadOnly={isNameReadOnly}
-            nameCaption={
-              errors?.name
-                ? undefined
-                : (t.nameCaption ??
-                  "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.")
-            }
-            renderDescription={renderRefinableDescription}
-            labels={metadataLabels}
-          />
-        }
-        metadataFooter={
           <>
             {/* Mobile: collapsible file-list summary, collapsed by default. */}
-            <div className="px-4 pb-4 desktop:hidden">
+            <div className="desktop:hidden">
               <Accordion
                 title={t.editingFileLabel ?? 'Editing file'}
                 description={selectedNode?.name ?? SKILL_MANIFEST_PATH}
@@ -930,16 +927,35 @@ export const SkillEditor: FC<SkillEditorProps> = ({
             </div>
 
             {/* Desktop: always-visible Files panel. */}
-            <div className="hidden px-6 pb-6 desktop:block">
+            <div className="hidden desktop:block">
               {renderFilesPane(SkillFilesPane.Desktop)}
             </div>
           </>
         }
         alert={alert}
         setupTitle={setupTitle}
+        setupSectionClassName={SETUP_SECTION_CLASS_NAME}
         setup={
           isManifestSelected ? (
-            instructionsEditor
+            <>
+              <MetadataForm
+                values={metadataValues}
+                errors={metadataErrors}
+                onChange={handleMetadataChange}
+                fields={METADATA_FIELDS}
+                isDescriptionRequired
+                isNameReadOnly={isNameReadOnly}
+                nameCaption={
+                  errors?.name
+                    ? undefined
+                    : (t.nameCaption ??
+                      "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.")
+                }
+                renderDescription={renderRefinableDescription}
+                labels={metadataLabels}
+              />
+              {instructionsEditor}
+            </>
           ) : (
             <>
               {selectedNode?.kind === SkillFileNodeKind.File &&

@@ -385,7 +385,6 @@ const SkillEditorPage: FC = () => {
       descriptionPlaceholder: t(SkillEditorI18nKeys.DescriptionPlaceholder),
       instructionsLabel: t(SkillEditorI18nKeys.InstructionsLabel),
       instructionsPlaceholder: t(SkillEditorI18nKeys.InstructionsPlaceholder),
-      metadataSectionTitle: t(EditorI18nKeys.MetadataSectionTitle),
       createLabel: isEditMode
         ? t(SkillEditorI18nKeys.SaveLabel)
         : t(ButtonsI18nKeys.Create),

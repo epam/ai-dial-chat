@@ -85,10 +85,6 @@ export interface PromptEditorLabels {
   createLabel?: string;
   /** Primary button label in edit mode. Defaults to `'Save'`. */
   saveLabel?: string;
-  /** Heading of the section holding Name and Description. Defaults to `'Metadata'`. */
-  metadataSectionTitle?: string;
-  /** Heading of the section holding the Instructions editor. Defaults to `'Setup'`. */
-  setupSectionTitle?: string;
   /** Cancel button label. Defaults to `'Cancel'`. */
   cancelLabel?: string;
   /** Retry button label shown in the load-error state. Defaults to `'Retry'`. */

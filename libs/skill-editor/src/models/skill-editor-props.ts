@@ -155,8 +155,6 @@ export interface SkillFileSourceEntry {
 
 /** Text overrides for `SkillEditor`. Every field has an English default. */
 export interface SkillEditorLabels extends TextRefinementLabels {
-  /** Heading of the left section holding Name and Description. Defaults to `'Metadata'`. */
-  metadataSectionTitle?: string;
   /** Files pane heading. Defaults to `'Files'`. */
   filesHeading?: string;
   /** Accessible name of the file tree region. Defaults to `'Skill files'`. */

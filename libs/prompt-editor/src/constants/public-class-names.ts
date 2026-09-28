@@ -9,10 +9,8 @@
  * renaming one or moving it to a different element — both are breaking changes.
  */
 export const PROMPT_EDITOR_CLASS = {
-  /** The Metadata section that holds the Name and Description fields. */
+  /** The editor's form column that holds Name, Description and Instructions. */
   form: 'dial-prompt-editor-form',
-  /** The Setup section that holds the Instructions editor. */
-  setup: 'dial-prompt-editor-setup',
   /** The folder picker row rendered by `PromptFolderField`. */
   folderField: 'dial-prompt-editor-folder-field',
 } as const;

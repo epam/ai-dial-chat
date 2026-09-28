@@ -58,6 +58,10 @@ const DEFAULT_DESCRIPTION_MAX_LENGTH = 2000;
 const DEFAULT_CONTENT_MAX_LENGTH = 50000;
 const DEFAULT_ANNOUNCE_THRESHOLD = 10;
 
+/* One centred column holding Name, Description and Instructions. */
+const FORM_CLASS_NAME =
+  'mx-auto w-full max-w-[1180px] gap-5 px-4 py-6 desktop:px-8 desktop:py-6';
+
 /*
  * Instructions fill the form down to the bottom of the screen. The gap matches
  * the form's `py-6`, so the filled editor ends on the form's padding.
@@ -172,7 +176,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
           placeholder:
             labels?.descriptionPlaceholder ?? 'What this prompt is for',
         },
-        // The Metadata section heading already names the field set.
+        // The fields sit in the prompt form itself, not in a separately named group.
         ariaLabel: undefined,
       },
     }),
@@ -198,15 +202,11 @@ export const PromptEditor: FC<PromptEditorProps> = ({
 
   const editorLabels = useMemo(
     () => ({
-      metadataTitle: labels?.metadataSectionTitle ?? 'Metadata',
-      setupTitle: labels?.setupSectionTitle ?? 'Setup',
       cancelLabel: labels?.cancelLabel ?? 'Cancel',
       backAriaLabel: labels?.backButtonAriaLabel ?? 'Back to prompts',
       savingStatusLabel: labels?.savingStatusLabel ?? 'Saving',
     }),
     [
-      labels?.metadataSectionTitle,
-      labels?.setupSectionTitle,
       labels?.cancelLabel,
       labels?.backButtonAriaLabel,
       labels?.savingStatusLabel,
@@ -224,6 +224,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     onSubmit: handleSubmit,
     submitLabel,
     labels: editorLabels,
+    metadataTitle: null,
   };
 
   if (isLoading) {
@@ -283,7 +284,10 @@ export const PromptEditor: FC<PromptEditorProps> = ({
     <EntityEditor
       {...editorProps}
       isSubmitting={isSaving}
-      metadataSectionClassName={PROMPT_EDITOR_CLASS.form}
+      metadataSectionClassName={mergeClasses(
+        FORM_CLASS_NAME,
+        PROMPT_EDITOR_CLASS.form,
+      )}
       metadata={
         <>
           <MetadataForm
@@ -293,69 +297,70 @@ export const PromptEditor: FC<PromptEditorProps> = ({
             fields={METADATA_FIELDS}
             labels={metadataLabels}
           />
+          <div
+            role="group"
+            aria-labelledby={contentLabelId}
+            className="flex flex-1 flex-col gap-2"
+            style={cssVars}
+          >
+            {/*
+             * htmlFor is what names the editor's textarea; without it the
+             * label is only visible text sitting above an unnamed control.
+             */}
+            <Label
+              id={contentLabelId}
+              htmlFor={contentEditorId}
+              label={labels?.contentLabel ?? 'Instructions'}
+              required
+              className={contentLabelClassName}
+            />
+            <div
+              ref={contentEditorCapRef}
+              className={mergeClasses(
+                MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
+                MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
+                MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
+              )}
+            >
+              <Suspense
+                fallback={
+                  <Spinner
+                    ariaLabel={
+                      labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
+                    }
+                  />
+                }
+              >
+                <MarkdownEditor
+                  id={contentEditorId}
+                  value={values.content}
+                  onChange={(value) => setField('content', value)}
+                  height={480}
+                  placeholder={
+                    labels?.contentPlaceholder ??
+                    'Write the prompt instructions'
+                  }
+                  theme={markdownEditorTheme}
+                />
+              </Suspense>
+            </div>
+            {errors?.content != null && (
+              <p
+                className={mergeClasses(
+                  helperTextClassName,
+                  styles.contentError,
+                )}
+              >
+                {errors.content}
+              </p>
+            )}
+          </div>
           <span role="status" aria-live="polite" className="sr-only">
             {descriptionRemaining != null &&
               buildCounterMessage(descriptionRemaining)}
             {contentRemaining != null && buildCounterMessage(contentRemaining)}
           </span>
         </>
-      }
-      setupSectionClassName={PROMPT_EDITOR_CLASS.setup}
-      setup={
-        <div
-          role="group"
-          aria-labelledby={contentLabelId}
-          className="flex flex-1 flex-col gap-2"
-          style={cssVars}
-        >
-          {/*
-           * htmlFor is what names the editor's textarea; without it the
-           * label is only visible text sitting above an unnamed control.
-           */}
-          <Label
-            id={contentLabelId}
-            htmlFor={contentEditorId}
-            label={labels?.contentLabel ?? 'Instructions'}
-            required
-            className={contentLabelClassName}
-          />
-          <div
-            ref={contentEditorCapRef}
-            className={mergeClasses(
-              MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
-              MARKDOWN_EDITOR_FILL_HEIGHT_CLASS_NAME,
-              MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
-            )}
-          >
-            <Suspense
-              fallback={
-                <Spinner
-                  ariaLabel={
-                    labels?.contentLoadingAriaLabel ?? 'Loading prompt editor'
-                  }
-                />
-              }
-            >
-              <MarkdownEditor
-                id={contentEditorId}
-                value={values.content}
-                onChange={(value) => setField('content', value)}
-                height={480}
-                placeholder={
-                  labels?.contentPlaceholder ?? 'Write the prompt instructions'
-                }
-                theme={markdownEditorTheme}
-              />
-            </Suspense>
-          </div>
-          {errors?.content != null && (
-            <p
-              className={mergeClasses(helperTextClassName, styles.contentError)}
-            >
-              {errors.content}
-            </p>
-          )}
-        </div>
       }
     />
   );

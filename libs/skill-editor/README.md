@@ -17,10 +17,11 @@ and the host decides what "created" means when `onSubmit` fires. That keeps the 
 usable by any host whose skill storage differs from DIAL Core's.
 
 The form renders on the shared `EntityEditor` shell from
-`@epam/ai-dial-builder-form`, the same one every entity editor uses: a
-"Metadata" section with Name and Description (the shared `MetadataForm`) and
-the Files pane below it on the left, and a "Setup" section on the right that
-holds the selected file's editor or preview.
+`@epam/ai-dial-builder-form`, the same one every entity editor uses: the
+Files pane on the left, and on the right the selected file. For `SKILL.md`
+that is Name and Description (the shared `MetadataForm`) followed by the
+Instructions editor, which fills the height left below them; for a supporting
+file it is its preview.
 
 ## Installation
 
@@ -207,12 +208,12 @@ move to a fixed bottom bar. The primary button reads `labels.createLabel`
 (default `'Create'`), so a host editing an existing skill passes its own Save
 label there.
 
-On mobile the column stacks Metadata, then the Files pane as a collapsed
-"Editing file" accordion, then Setup. The Setup heading is `SKILL.md` for the
-manifest, or `labels.selectedFileHeading(name)` for a supporting file; Name and
-Description stay in Metadata whichever file is selected. `submitError` and
+On mobile the column stacks the Files pane as a collapsed "Editing file"
+accordion, then the selected file. Its heading is `SKILL.md` for the manifest,
+or `labels.selectedFileHeading(name)` for a supporting file; Name and
+Description show only while `SKILL.md` is selected. `submitError` and
 `conflict` (with its "Reload latest" action) render in a `role="alert"` region
-above the Setup section.
+above the selected file.
 
 ## Types
 

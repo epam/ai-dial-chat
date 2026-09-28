@@ -94,11 +94,11 @@ describe('PromptEditor', () => {
     expect(screen.getByRole('heading', { name: 'Create prompt' })).toBeTruthy();
   });
 
-  it('renders Name and Description under Metadata and Instructions under Setup, without version, avatar, tags, or folder', () => {
+  it('renders Name, Description and Instructions in one column, without section headings, version, avatar, tags, or folder', () => {
     renderEditor();
 
-    expect(screen.getByRole('heading', { name: 'Metadata' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Setup' })).toBeTruthy();
+    expect(screen.queryAllByRole('heading', { level: 2 })).toHaveLength(0);
+    expect(screen.getByRole('group', { name: /Instructions/ })).toBeTruthy();
     expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
     expect(screen.getByRole('textbox', { name: /Description/ })).toBeTruthy();
     expect(screen.queryByText('Avatar')).toBeNull();
@@ -260,15 +260,11 @@ describe('PromptEditor', () => {
       labels: {
         createTitle: 'Neuer Prompt',
         createLabel: 'Erstellen',
-        metadataSectionTitle: 'Metadaten',
-        setupSectionTitle: 'Einrichtung',
       },
     });
 
     expect(screen.getByRole('heading', { name: 'Neuer Prompt' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Erstellen' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Metadaten' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Einrichtung' })).toBeTruthy();
   });
 
   it('labels the primary button Create in create mode and Save in edit mode', () => {

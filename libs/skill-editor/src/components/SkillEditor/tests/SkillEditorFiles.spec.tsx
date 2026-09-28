@@ -695,7 +695,7 @@ describe('SkillEditor — files pane', () => {
     ).toBeTruthy();
   });
 
-  it('keeps the SKILL.md Name and Description in Metadata while a supporting file fills Setup', async () => {
+  it('shows the SKILL.md Name and Description only while SKILL.md is selected', async () => {
     const user = userEvent.setup({ delay: null });
     renderEditor({
       initialValues: { name: 'good-morning', description: 'Says hi' },
@@ -704,34 +704,39 @@ describe('SkillEditor — files pane', () => {
       ],
     });
 
-    await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
-
-    expect(screen.getByRole('heading', { name: 'Metadata' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'SKILL.md' })).toBeTruthy();
     expect(screen.getByDisplayValue('good-morning')).toBeTruthy();
     expect(screen.getByDisplayValue('Says hi')).toBeTruthy();
+
+    await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
+
     expect(
       screen.getAllByRole('heading', { name: 'notes.md' })[0],
     ).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'SKILL.md' })).toBeNull();
+    expect(screen.queryByDisplayValue('good-morning')).toBeNull();
+    expect(screen.queryByDisplayValue('Says hi')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Metadata' })).toBeNull();
   });
 
-  it('orders Metadata, then the Editing file accordion, then Setup in the stacked mobile column', () => {
+  it('orders the Editing file accordion, then the SKILL.md heading, then Name in the stacked mobile column', () => {
     renderEditor();
 
-    const metadataHeading = screen.getByRole('heading', { name: 'Metadata' });
     const filesAccordion = screen.getByRole('heading', {
       name: 'Editing file',
     });
-    const setupHeading = screen.getByRole('heading', { name: 'SKILL.md' });
+    const manifestHeading = screen.getByRole('heading', { name: 'SKILL.md' });
+    const nameField = screen.getByRole('textbox', { name: /Name/ });
 
     expect(
-      metadataHeading.compareDocumentPosition(filesAccordion) &
+      filesAccordion.compareDocumentPosition(manifestHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
-      filesAccordion.compareDocumentPosition(setupHeading) &
+      manifestHeading.compareDocumentPosition(nameField) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Metadata' })).toBeNull();
   });
 
   it('renders supportingFileContent for a selected supporting file', async () => {
