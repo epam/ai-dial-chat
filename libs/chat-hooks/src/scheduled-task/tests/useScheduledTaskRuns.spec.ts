@@ -268,6 +268,8 @@ describe('shared useScheduledTaskRuns', () => {
         await advance(15_000);
       }
 
+      /* 1 initial + 20 polls — the 21st timer tick is never scheduled
+         because the interval is cleared when failureCount reaches 20. */
       expect(listScheduledTaskRuns).toHaveBeenCalledTimes(21);
     });
 
