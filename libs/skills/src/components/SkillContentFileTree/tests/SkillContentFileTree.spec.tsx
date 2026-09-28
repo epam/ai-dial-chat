@@ -72,7 +72,7 @@ describe('SkillContentFileTree', () => {
 
     const selected = screen.getByRole('treeitem', { name: 'SKILL.md' });
     expect(selected.getAttribute('aria-selected')).toBe('true');
-    expect(document.activeElement).toBe(selected);
+    expect(selected).toBe(document.activeElement);
   });
 
   it('reports a folder toggle once, by its id, and reveals its children', async () => {
@@ -125,8 +125,8 @@ describe('SkillContentFileTree', () => {
     );
 
     await userEvent.keyboard('{ArrowDown}');
-    expect(document.activeElement).toBe(
-      screen.getByRole('treeitem', { name: 'scripts' }),
+    expect(screen.getByRole('treeitem', { name: 'scripts' })).toBe(
+      document.activeElement,
     );
     await userEvent.keyboard('{ArrowRight}');
     expect(
