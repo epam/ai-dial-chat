@@ -68,6 +68,17 @@ export const writeSseChunk = (
   return { written: true, needsDrain };
 };
 
+const NEWLINE_BYTE = 0x0a;
+
+/**
+ * True when `chunk`'s last byte is `\n` — the only point where a handler may
+ * interleave its own SSE comment into a relayed stream without splitting a line.
+ */
+export const endsWithNewline = (chunk: Uint8Array | string): boolean => {
+  if (typeof chunk === 'string') return chunk.endsWith('\n');
+  return chunk.length > 0 && chunk[chunk.length - 1] === NEWLINE_BYTE;
+};
+
 /**
  * Resolves on whichever comes first: the response's `'drain'` event, the
  * given `signal` aborting (connection closed / upstream error), or

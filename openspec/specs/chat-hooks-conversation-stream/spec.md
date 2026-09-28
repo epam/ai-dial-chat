@@ -38,12 +38,18 @@ in-band `{ error: { message } }` SSE chunk — the hook SHALL write that
 error's `message` to `streamErrorMessage`, because it is upstream text
 intended for the user.
 
-Every other error (a failed `fetch`, a non-OK HTTP status other than 409,
-a missing response body, an exception thrown while reading the stream, or
-any error a custom transport raises) is transport detail: the hook SHALL
-write `streamErrorMessage: ''` so the host renders its localized fallback,
-and SHALL NOT surface that error's `message` to the user. A transport
-failure is still never disguised as a conflict.
+When the transport reports a `StreamInterruptedError` — the network
+connection carrying the stream was lost or stalled while the backend-owned
+generation may still be running — the hook SHALL NOT settle the generation
+as failed; it SHALL enter recovery as `generation-stream-recovery` defines,
+and SHALL write `streamErrorMessage: ''` only if that recovery cannot
+resolve the generation.
+
+Every other error (a non-OK HTTP status other than 409, a missing response
+body, or any other error a custom transport raises) is transport detail:
+the hook SHALL write `streamErrorMessage: ''` so the host renders its
+localized fallback, and SHALL NOT surface that error's `message` to the
+user. A transport failure is still never disguised as a conflict.
 
 `useConversationStream` SHALL accept an optional
 `onStreamError?: (error: Error) => void` parameter and SHALL call it once
@@ -53,9 +59,12 @@ or report it. The lib itself SHALL NOT log it or choose a logging
 destination.
 
 `libs/chat-hooks` SHALL export `StreamUpstreamError` (an `Error` subclass
-with `name === 'StreamUpstreamError'`) alongside `GenerationConflictError`,
-and the built-in `createChatStreamApi` transport SHALL raise it for every
-in-band SSE error chunk.
+with `name === 'StreamUpstreamError'`) and `StreamInterruptedError` (an
+`Error` subclass with `name === 'StreamInterruptedError'`) alongside
+`GenerationConflictError`. The built-in `createChatStreamApi` transport
+SHALL raise `StreamUpstreamError` for every in-band SSE error chunk, and
+`StreamInterruptedError` for the network-level failures listed in
+`generation-stream-recovery`.
 
 #### Scenario: Conflict shows the host's message
 - **WHEN** `onError` receives a `GenerationConflictError`
@@ -69,10 +78,16 @@ in-band SSE error chunk.
   `'Rate limit exceeded'`
 
 #### Scenario: A transport error is hidden behind the fallback
-- **WHEN** `onError` receives `new TypeError('Failed to fetch')`, or
-  `new Error('Stream request failed with status 502')`
+- **WHEN** `onError` receives `new TypeError('Failed to fetch')` from a
+  custom transport, or `new Error('Stream request failed with status 502')`
 - **THEN** the assistant placeholder's `streamErrorMessage` is `''`, and
   `isStreaming` / `canStopStreaming` return to `false`
+
+#### Scenario: An interruption enters recovery instead of the fallback
+- **WHEN** `onError` receives a `StreamInterruptedError`
+- **THEN** no `streamErrorMessage` is written immediately, `isStreaming`
+  stays `true`, and the hook re-fetches the conversation through
+  `transport.getConversation` per `generation-stream-recovery`
 
 #### Scenario: The host still receives the raw error
 - **WHEN** `onError` receives any error and the host passed `onStreamError`
@@ -85,11 +100,17 @@ in-band SSE error chunk.
 - **THEN** it calls `onError` with a `StreamUpstreamError` whose `message`
   is `'Model overloaded'`
 
-#### Scenario: The built-in transport leaves transport failures untagged
-- **WHEN** `fetch` rejects, the response is non-OK and not 409, the body
-  is missing, or `reader.read()` throws a non-abort error
+#### Scenario: The built-in transport leaves non-network failures untagged
+- **WHEN** the response is non-OK and not 409, or the body is missing
 - **THEN** `onError` receives an error that is neither a
-  `StreamUpstreamError` nor a `GenerationConflictError`
+  `StreamUpstreamError`, a `GenerationConflictError`, nor a
+  `StreamInterruptedError`
+
+#### Scenario: The built-in transport tags network failures as interruptions
+- **WHEN** `fetch` rejects, or `reader.read()` throws a non-abort error
+  after a 2xx response
+- **THEN** `onError` receives a `StreamInterruptedError` whose `cause` is
+  the original error
 
 ### Requirement: Per-path streaming state with stale-chunk rejection
 The hook SHALL track streaming state per conversation path (not as a
