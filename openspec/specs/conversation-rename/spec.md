@@ -188,7 +188,7 @@ The conversation name input SHALL enforce the following naming conventions at th
 - Trailing dots (`.`) are **automatically removed** from the value before it is passed to `onSave`. Dots at the start of or inside the name are preserved.
 
 Implementation:
-- `sanitizeConversationName(name: string): string` and `stripTrailingDots(name: string): string` SHALL be exported from `@epam/ai-dial-chat-shared`'s string utilities (consolidated alongside `getUtf8ByteLength`, which already lived there). `@epam/ai-dial-chat-hooks` SHALL re-export the same names for compatibility rather than declaring a second implementation.
+- `sanitizeConversationName(name: string): string` and `stripTrailingDots(name: string): string` SHALL be exported from `@epam/ai-dial-chat-shared`'s string utilities (consolidated alongside `getUtf8ByteLength`, which already lived there). Every consumer SHALL import them from `@epam/ai-dial-chat-shared`; `@epam/ai-dial-chat-hooks` SHALL neither re-export nor redeclare them, and its own modules that need one (such as `files/file-name.ts` and `skill/useSkillFileActions.ts` for `getUtf8ByteLength`) SHALL import it from `@epam/ai-dial-chat-shared` directly.
 - The `RenameConversationPopup` component's `onChange` handler calls `sanitizeConversationName` so prohibited characters never appear in the field.
 - Before calling `onSave`, the value is trimmed and then passed through `stripTrailingDots`.
 
@@ -217,8 +217,9 @@ Implementation:
 - **WHEN** the input value is `"v1.2.release"`
 - **THEN** `onSave` receives `"v1.2.release"`
 
-#### Scenario: `chat-hooks` re-exports rather than redeclares the utilities
+#### Scenario: `chat-hooks` neither re-exports nor redeclares the utilities
 
 - **WHEN** `libs/chat-hooks` is type-checked
-- **THEN** `sanitizeConversationName`, `stripTrailingDots`, and `getUtf8ByteLength` resolve via a
-  re-export from `@epam/ai-dial-chat-shared`, with no duplicate implementation in `chat-hooks`
+- **THEN** `sanitizeConversationName`, `stripTrailingDots`, and `getUtf8ByteLength` resolve through a
+  direct import from `@epam/ai-dial-chat-shared`, with no duplicate implementation in `chat-hooks`
+  and no re-export from its barrel

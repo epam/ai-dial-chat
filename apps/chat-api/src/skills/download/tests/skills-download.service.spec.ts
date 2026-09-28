@@ -127,6 +127,41 @@ describe('SkillsDownloadService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
+    it('maps an empty-bodied 403 (SDK error undefined) to ForbiddenException instead of streaming it', async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: makeResponse(403, { 'content-length': '0' }),
+      });
+      await expect(
+        service.downloadSkill('other-bucket', 'team-a/docs-helper', 'token'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it("maps a 403 on the caller's own bucket to NotFoundException", async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: makeResponse(403, { 'content-length': '0' }),
+      });
+      await expect(
+        service.downloadSkill(
+          'my-bucket',
+          'never-created',
+          'token',
+          'my-bucket',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("keeps a 403 on another user's bucket as ForbiddenException", async () => {
+      const { service } = makeService({
+        error: "You don't have an access to: skills/other-bucket/x",
+        response: makeResponse(403, {}, null),
+      });
+      await expect(
+        service.downloadSkill('other-bucket', 'x', 'token', 'my-bucket'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
     it('maps 405 to MethodNotAllowedException', async () => {
       const { service } = makeService({
         error: true,
@@ -204,6 +239,38 @@ describe('SkillsDownloadService', () => {
           'token',
         ),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it("maps an empty-bodied 403 on the caller's own bucket to NotFoundException", async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: makeResponse(403, { 'content-length': '0' }),
+      });
+      await expect(
+        service.downloadSkillFile(
+          'my-bucket',
+          'never-created',
+          'SKILL.md',
+          'token',
+          'my-bucket',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("maps an empty-bodied 403 on another user's bucket to ForbiddenException", async () => {
+      const { service } = makeService({
+        error: undefined,
+        response: makeResponse(403, { 'content-length': '0' }),
+      });
+      await expect(
+        service.downloadSkillFile(
+          'other-bucket',
+          'team-a/docs-helper',
+          'SKILL.md',
+          'token',
+          'my-bucket',
+        ),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

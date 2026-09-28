@@ -2,6 +2,10 @@ import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import { ShareLinkAccess, type SharePopoverProps } from '@epam/ai-dial-share';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  ButtonsI18nKeys,
+  ShareI18nKeys,
+} from '../../../constants/translation-keys';
 import { shareApi } from '../../../server-api/api-client';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer';
 
@@ -136,6 +140,29 @@ describe('ShareConversationPopoverContainer', () => {
 
     expect(mockSharePopover).toHaveBeenCalledWith(
       expect.objectContaining({ onClose }),
+      undefined,
+    );
+  });
+
+  it('passes translated QR copy and download labels to SharePopover', () => {
+    mockUseShareLink();
+
+    render(
+      <ShareConversationPopoverContainer
+        conversationPath="path-6"
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({
+          qrCopyButtonLabel: ButtonsI18nKeys.Copy,
+          qrCopiedButtonLabel: ShareI18nKeys.CopiedButtonLabel,
+          qrDownloadButtonLabel: ButtonsI18nKeys.Download,
+          qrDownloadFileName: ShareI18nKeys.QrDownloadFileName,
+        }),
+      }),
       undefined,
     );
   });

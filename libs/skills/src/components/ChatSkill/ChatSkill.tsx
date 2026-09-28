@@ -1,6 +1,12 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { InteractiveTooltip, TooltipPlacement } from '@epam/ai-dial-ui-kit';
-import { useLayoutEffect, useRef, useState, type FC } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FC,
+  type KeyboardEvent,
+} from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
@@ -18,6 +24,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
   labelClassName = 'dial-body-paragraph-text text-accent',
   unsupportedLabelClassName = 'text-error',
   unsupportedClassName = 'bg-error',
+  detailsTrigger = 'hover',
   onViewDetails,
   labels = {},
 }) => {
@@ -27,17 +34,27 @@ export const ChatSkill: FC<ChatSkillProps> = ({
   } = labels;
 
   /*
-   * The tooltip is uncontrolled (the kit opens it on hover/focus) and exposes
-   * no imperative close, so a "View details" click remounts it — the fresh
-   * instance's open state starts closed. This mirrors the favorites rows,
-   * whose tooltip unmounts with the Add menu on the same click; reopening
-   * takes a fresh hover or focus, not the pointer already resting on the chip.
+   * Hover mode leaves the tooltip uncontrolled. Click mode supplies its open
+   * state, disabling the kit's hover/focus triggers while retaining dismissal.
+   * A "View details" click remounts the card in its closed state.
    */
   const [tooltipGeneration, setTooltipGeneration] = useState(0);
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+  const isClickTriggered = detailsTrigger === 'click';
 
   const handleViewDetails = () => {
+    setIsTooltipOpen(false);
     setTooltipGeneration((generation) => generation + 1);
     onViewDetails(path);
+  };
+
+  const openTooltipOnKeyboardActivation = (event: KeyboardEvent) => {
+    if (!isClickTriggered || (event.key !== 'Enter' && event.key !== ' ')) {
+      return;
+    }
+
+    event.preventDefault();
+    setIsTooltipOpen(true);
   };
 
   /*
@@ -58,6 +75,8 @@ export const ChatSkill: FC<ChatSkillProps> = ({
       key={tooltipGeneration}
       asChild
       placement={TooltipPlacement.Top}
+      open={isClickTriggered ? isTooltipOpen : undefined}
+      onOpenChange={isClickTriggered ? setIsTooltipOpen : undefined}
       contentClassName="max-w-[550px]"
       content={
         isUnsupported ? (
@@ -92,6 +111,8 @@ export const ChatSkill: FC<ChatSkillProps> = ({
           SKILLS_CLASS.chip,
         )}
         aria-label={`/${name}`}
+        onClick={isClickTriggered ? () => setIsTooltipOpen(true) : undefined}
+        onKeyDown={openTooltipOnKeyboardActivation}
       >
         <span
           ref={slashRef}

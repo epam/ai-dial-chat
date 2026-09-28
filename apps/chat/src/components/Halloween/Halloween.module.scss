@@ -182,56 +182,6 @@
   }
 }
 
-@keyframes halloween-weave {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes halloween-weaver {
-  from {
-    offset-distance: 0%;
-  }
-  to {
-    offset-distance: 100%;
-  }
-}
-
-@keyframes halloween-web-fade {
-  0% {
-    opacity: 0;
-  }
-  12%,
-  78% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes halloween-web-escape {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 0, 0);
-  }
-  10%,
-  64% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-  96% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(var(--web-escape-x), var(--web-escape-y), 0);
-  }
-}
-
 .pumpkinButton.pumpkinButton {
   inline-size: clamp(88px, 9vw, 132px);
   block-size: clamp(88px, 9vw, 132px);
@@ -280,80 +230,6 @@
   transform-box: fill-box;
   transform-origin: center;
   transition: transform 180ms ease;
-}
-
-.webNetwork {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  fill: none;
-  stroke: var(--text-primary);
-  stroke-width: 0.6;
-  animation: halloween-web-fade 14s ease-in-out both;
-}
-
-:global([dir='rtl']) .webNetwork {
-  transform: scaleX(-1);
-}
-
-.webBridge {
-  opacity: 0.24;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: halloween-weave 3.4s ease-in-out var(--web-delay) both;
-}
-
-.webPatch {
-  position: absolute;
-  inset-inline-start: var(--web-x);
-  inset-block-start: var(--web-y);
-  inline-size: var(--web-size);
-  aspect-ratio: 1;
-  color: var(--text-primary, #161b2d);
-  transform: translate(-50%, -50%);
-}
-
-:global([dir='rtl']) .webPatch {
-  transform: translate(50%, -50%);
-}
-
-.webDrawing,
-.webRunner {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  overflow: visible;
-}
-
-.webDrawing {
-  animation: halloween-web-fade 14s ease-in-out both;
-}
-
-.webRunner {
-  animation: halloween-web-escape var(--web-run-duration)
-    cubic-bezier(0.45, 0, 0.7, 1) var(--web-delay) both;
-}
-
-.webSpoke,
-.webSilk {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: halloween-weave 0.8s linear var(--web-delay) both;
-}
-
-.webSilk {
-  animation-duration: var(--web-weave-duration);
-  animation-delay: calc(var(--web-delay) + 0.8s);
-}
-
-.webWeaver {
-  offset-distance: 0%;
-  offset-rotate: auto 90deg;
-  offset-anchor: 0px 0px;
-  animation: halloween-weaver var(--web-weave-duration) linear
-    calc(var(--web-delay) + 0.8s) both;
 }
 
 @keyframes halloween-wingbeat {
@@ -486,19 +362,12 @@
   .ghost,
   .ghostBody,
   .pumpkin,
-  .webNetwork,
-  .webBridge,
-  .webDrawing,
-  .webRunner,
   .batWing,
   .catTraveler,
   .catBody,
   .catTail,
   .catEyes,
   .wisp,
-  .webSpoke,
-  .webSilk,
-  .webWeaver,
   .pumpkinButton.pumpkinButton:is(:hover, :focus-visible, :active) .pumpkinBody,
   .pumpkinButton.pumpkinButton:is(:hover, :focus-visible, :active)
     .pumpkinLight {
@@ -512,16 +381,6 @@
   .wisp {
     top: var(--wisp-rest-y);
     opacity: 0.6;
-  }
-
-  .webBridge,
-  .webSpoke,
-  .webSilk {
-    stroke-dashoffset: 0;
-  }
-
-  .webWeaver {
-    offset-distance: 100%;
   }
 
   /* The spider never takes an offset in this mode — see

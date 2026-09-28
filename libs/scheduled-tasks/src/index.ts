@@ -33,6 +33,8 @@ export type {
 export type { ScheduledTaskItem } from './models/scheduled-task-item';
 export { ScheduledTaskPresentationStatus } from './models/scheduled-task-item';
 export { ScheduledTasksSortKey } from './types/scheduled-tasks-sort-key';
+export { ScheduledTaskStatus } from './types/scheduled-task-status';
+export { getScheduledTaskStatus } from './utils/scheduled-task-status';
 export { ScheduledTaskCreateForm } from './components/ScheduledTaskCreateForm/ScheduledTaskCreateForm';
 export type {
   ScheduledTaskCreateFormProps,

@@ -77,12 +77,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.4
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.13
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.18
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.20
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -490,6 +490,10 @@ const ChatMessageList = ({
 
 ### usePageFileDrag
 
+`onFilesConsumed` acknowledges the `pendingFiles` batch from the render that
+provided the callback. Files dropped after that render remain queued, allowing
+hosts to merge drops with other generated files without losing a newer batch.
+
 Detects files being dragged over the whole page (using `document`-level drag events with an enter/leave counter to avoid flicker from child-element boundary crossings) and exposes the dropped files once dropped.
 
 ```tsx
@@ -529,6 +533,111 @@ const ComposerWithFileDrop = ({
 | `isDragging`      | `boolean`    | Whether a file drag is currently over the page.               |
 | `pendingFiles`    | `File[]`     | Files dropped on the page, pending consumption by the caller. |
 | `onFilesConsumed` | `() => void` | Clears `pendingFiles` after the caller has processed them.    |
+
+### useMessageSelectionReply
+
+The hook and its types are exported from both `@epam/ai-dial-chat-hooks` and
+`@epam/ai-dial-chat-hooks/conversation`.
+
+Captures visible text selected inside a registered message body and feeds one UTF-8
+`text/plain` Reply file into an existing composer attachment queue. The host supplies
+the scope identifier, eligibility policy and its ordinary page-drop batch; it retains
+ownership of model capability, upload, translated labels and rendering.
+
+This composition accepts completed assistant text. For a transcript, register each
+user/assistant `MessageBubble` with the same `reply.contentRef`. The host derives
+`canAttachText` from read-only/edit/streaming state, composer availability and MIME
+permissions; upload and validation callbacks remain application-owned.
+
+```tsx
+import { useMessageSelectionReply } from '@epam/ai-dial-chat-hooks/conversation';
+import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  ConversationInput,
+  type ConversationInputProps,
+} from '@epam/ai-dial-conversation-input';
+import {
+  MessageBubble,
+  MessageSelectionReply,
+  type MessageSelectionReplyLabels,
+} from '@epam/ai-dial-conversation-messages';
+import '@epam/ai-dial-conversation-input/styles.css';
+import '@epam/ai-dial-conversation-messages/styles.css';
+
+interface ReplyConversationProps {
+  conversationId: string;
+  text: string;
+  canAttachText: boolean;
+  labels: MessageSelectionReplyLabels;
+  portalContainer?: HTMLElement | null;
+  onUploadAttachment: NonNullable<ConversationInputProps['onUploadAttachment']>;
+  onSend: NonNullable<ConversationInputProps['onSend']>;
+  validateAttachment?: ConversationInputProps['validateAttachment'];
+  maximumAttachmentsAmount?: number;
+  onAttachmentsLimitExceeded?: ConversationInputProps['onAttachmentsLimitExceeded'];
+}
+
+const ReplyConversationBody = ({
+  conversationId,
+  text,
+  canAttachText,
+  labels,
+  portalContainer,
+  ...attachmentCallbacks
+}: ReplyConversationProps) => {
+  const pageDrop = usePageFileDrag(canAttachText);
+  const reply = useMessageSelectionReply({
+    conversationId,
+    enabled: canAttachText,
+    droppedFiles: pageDrop.pendingFiles,
+    onDroppedFilesConsumed: pageDrop.onFilesConsumed,
+  });
+
+  return (
+    <>
+      <MessageBubble
+        role={MessageRole.Assistant}
+        text={text}
+        contentRef={reply.contentRef}
+      />
+      <MessageSelectionReply
+        rect={reply.selection?.rect}
+        actionRef={reply.actionRef}
+        onReply={reply.onReply}
+        addedRevision={reply.addedRevision}
+        labels={labels}
+        portalContainer={portalContainer}
+      />
+      <ConversationInput
+        {...attachmentCallbacks}
+        isAttachmentsEnabled={canAttachText}
+        focusRequestId={reply.focusRequestId}
+        pendingDropFiles={reply.pendingFiles}
+        onDropFilesConsumed={reply.onFilesConsumed}
+        onAttachmentsChange={reply.onAttachmentsChange}
+      />
+    </>
+  );
+};
+
+export const ReplyConversation = (props: ReplyConversationProps) => (
+  <ReplyConversationBody key={props.conversationId} {...props} />
+);
+```
+
+The key deliberately resets the composer and drop queue on conversation changes:
+changing the hook's `conversationId` alone clears only its selection and unconsumed
+Reply files, not attachments already accepted by `ConversationInput`. Old upload
+results therefore cannot appear in the next conversation's composer. Within the
+same conversation Reply preserves the existing draft and attachments. If the host
+also observes attachments, compose its callback with `reply.onAttachmentsChange`
+so accepted-insertion announcements continue to work.
+
+For a modal or locally themed surface, pass a same-document `portalContainer`
+inside that surface; pass `null` while its callback ref has not mounted. See
+[MessageSelectionReply](../conversation-messages/README.md#messageselectionreply)
+for appearance overrides and portal placement.
 
 ### useViewportWidth / usePanelMaxWidth
 
@@ -808,7 +917,7 @@ const VoiceComposer = ({
 
 Import warning jobs retain unique skipped attachment names in `warningNames`, matching the names emitted through `onWarning`. Pass them to the host warning label to identify skipped files in persistent queue rows. Retrying a job clears its previous warning code and names.
 
-A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Each imported conversation is stored under a fresh `{deploymentId}__{title}__{uuid}` path — collision-free, and with the conversation's own `name` (sanitized to what DIAL Core accepts in a resource name, and reported back that way in `onSuccess`) as the title segment rather than the first-message title the export file embedded. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
+A shared conversation-transfer capability: `useConversationExport` downloads one or all conversations as a JSON (`.json`) or `.dial`/`.zip` archive; `useConversationImport` parses a selected file and re-persists its conversations, re-uploading any archive attachments and rewriting their references. Only a `.dial`/`.zip` export carries attachments: a `.json` export — without-attachments or export-all — omits every attachment reference, and an import drops any reference still pointing into a bucket other than the importing user's own or `public` (reporting it as a skipped attachment), so a file exported by one user never leaves another with unreadable previews. Each imported conversation is stored under a fresh `{deploymentId}__{title}__{uuid}` path — collision-free, and with the conversation's own `name` (sanitized to what DIAL Core accepts in a resource name, and reported back that way in `onSuccess`) as the title segment rather than the first-message title the export file embedded. Both share the same job-queue semantics — `jobs`, `cancelJob`, `dismissJob`, `retryJob`, `dismissAll` — and report determinate per-job progress plus outcomes through structured, translation-free `onSuccess`/`onWarning`/`onError` callbacks instead of calling a notification system themselves. A transfer that delivers its file but skips some attachments settles at `Warning` carrying a `warningCode`, so a partial result is distinguishable from a clean one without reading the event stream. Job identity is always structured data (`ConversationTransferSubject`), never pre-rendered text. `cancelJob` and `dismissJob` differ: both abort the job's in-flight requests, but `cancelJob` leaves the job in `jobs` with status `Canceled` so the UI can keep showing it, while `dismissJob` removes it.
 
 ```tsx
 import { ConversationTransferErrorCode } from '@epam/ai-dial-chat-shared';
@@ -3447,7 +3556,7 @@ if (loadState === SkillEditorLoadState.Loading) {
 
 ### useSkillEditorSubmit
 
-Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself.
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook.
 
 `isSubmitErrorRetryable` is `true` only when `submitError` came from something a plain re-send can clear, such as an unavailable service; `retrySubmit` then re-sends the failed attempt's values, reusing the manifest and file blobs it already built. Pair the two to offer the action only where it can help — `onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}` on `SkillEditor`.
 
@@ -3492,6 +3601,8 @@ const {
   loadedPathRef,
   etagRef,
   returnUrl,
+  getCreateReturnUrl: (path) =>
+    `/catalog?itemId=${encodeURIComponent(`skills/${bucket}/${path}`)}`,
   refetchSkills,
   client,
   messages: {
@@ -3671,7 +3782,7 @@ const { results, batchErrors, manifestCandidate } =
 ### Supporting types and constants
 
 - **`SkillSource`** — which skill namespace a catalog skill item came from: `Personal`, `SharedWithMe`, `Public`.
-- **`PUBLIC_SKILL_BUCKET`** — the DIAL Core bucket holding organisation-wide skills.
+- **`PUBLIC_SKILL_BUCKET`** — the DIAL Core bucket holding organisation-wide skills. Deprecated: an alias of `PUBLIC_BUCKET` from `@epam/ai-dial-chat-shared`.
 - **`SKILL_MANIFEST_MAX_BYTES`** / **`SKILL_LISTING_PAGE_SIZE`** / **`SKILL_LISTING_MAX_PAGES`** — size/pagination bounds for skill manifest reads and skill listings.
 - **`SkillEntityDetails`** — a skill's parsed manifest details (`{ about?: SkillAboutDetails }`).
 - **`ParsedSkillResourceUrl`** / **`parseSkillResourceUrl`** — splits a `skills/{bucket}/{path}` resource URL into its bucket and path, or `null` if it doesn't match that shape.
@@ -3808,7 +3919,7 @@ Five hooks and two utility functions extracted from `ConversationPanelView.tsx` 
 
 ### useConversationPanelItems
 
-Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and task badges through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
+Maps `ConversationListItemDto[]` to `ConversationItem[]` for `ConversationPanel`, resolving icons, tooltips, hrefs, and scheduled-task row presentation through injected callbacks so the hook stays free of `/api` routes, `resolveCatalogIconUrl`, or routing utilities.
 
 ```tsx
 import { useConversationPanelItems } from '@epam/ai-dial-chat-hooks';
@@ -3826,9 +3937,9 @@ const conversations = useConversationPanelItems({
   resolveIconTooltip: (d: DeploymentItemDto | undefined, fallback: string) =>
     d?.displayName ?? fallback,
   resolveHref: (id) => `/chat/${id}`,
-  resolveTaskBadge: (item: ConversationListItemDto) =>
+  resolveTaskPresentation: (item: ConversationListItemDto) =>
     item.isScheduledTask
-      ? { label: 'Task', isUnread: item.isUnread ?? false }
+      ? { leadingIcon: taskIcon, isUnread: item.isUnread ?? false }
       : undefined,
 });
 ```
@@ -3837,18 +3948,20 @@ const conversations = useConversationPanelItems({
 
 **Parameters** (`UseConversationPanelItemsParams`):
 
-| Name                    | Type                                                                                   | Description                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `items`                 | `ConversationListItemDto[]`                                                            | Raw DTOs from the API.                                                   |
-| `deployments`           | `DeploymentItemDto[]`                                                                  | Current deployment catalogue used for icon/tooltip resolution.           |
-| `isDeploymentsLoading`  | `boolean`                                                                              | When `true`, all items are returned with `isIconLoading: true`.          |
-| `toPanelConversationId` | `(id: string) => string`                                                               | Maps a DTO `id` to the panel-space identifier.                           |
-| `resolveIconUrl`        | `(deployment?: DeploymentItemDto) => string \| undefined`                              | Returns the resolved icon URL for a deployment.                          |
-| `resolveIconTooltip`    | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`            | Returns the tooltip text for the icon.                                   |
-| `resolveHref`           | `(id: string) => string`                                                               | Converts a panel-space ID to a navigation href.                          |
-| `resolveTaskBadge`      | `(item: ConversationListItemDto) => { label: string; isUnread: boolean } \| undefined` | Optional; returns the badge descriptor for scheduled-task conversations. |
+| Name                      | Type                                                                                             | Description                                                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`                   | `ConversationListItemDto[]`                                                                      | Raw DTOs from the API.                                                                                                                                                                             |
+| `deployments`             | `DeploymentItemDto[]`                                                                            | Current deployment catalogue used for icon/tooltip resolution.                                                                                                                                     |
+| `isDeploymentsLoading`    | `boolean`                                                                                        | When `true`, all items are returned with `isIconLoading: true`.                                                                                                                                    |
+| `toPanelConversationId`   | `(id: string) => string`                                                                         | Maps a DTO `id` to the panel-space identifier.                                                                                                                                                     |
+| `resolveIconUrl`          | `(deployment?: DeploymentItemDto) => string \| undefined`                                        | Returns the resolved icon URL for a deployment.                                                                                                                                                    |
+| `resolveIconTooltip`      | `(deployment?: DeploymentItemDto, fallback: string) => string \| undefined`                      | Returns the tooltip text for the icon.                                                                                                                                                             |
+| `resolveHref`             | `(id: string) => string`                                                                         | Converts a panel-space ID to a navigation href.                                                                                                                                                    |
+| `resolveTaskPresentation` | `(item: ConversationListItemDto) => { leadingIcon?: ReactNode; isUnread: boolean } \| undefined` | Optional; returns the row presentation for scheduled-task conversations. `leadingIcon` (a host-rendered, `aria-hidden` node) replaces the deployment avatar; `isUnread` drives the unread styling. |
 
-**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs.
+**Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs. The hook maps every item it is given; collapsing a scheduled task's runs into one row is left to the host.
+
+`resolveTaskPresentation` replaced `resolveTaskBadge` (`{ label, isUnread }`) when the conversation panel dropped its TASK pill.
 
 ### getConversationSource
 

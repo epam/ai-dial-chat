@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { strToU8, zipSync } from 'fflate';
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { useUser } from '../../../context/auth/UserContext';
 import { ConversationPanelProvider } from '../../../context/ConversationPanelContext';
 import { useNotification } from '../../../context/NotificationContext';
@@ -201,7 +201,13 @@ const buildSkillResponse = (
 describe('SkillEditor page — supporting file preview', () => {
   const user = userEvent.setup({ delay: null });
 
+  /*
+   * A fake clock with `shouldAdvanceTime` keeps the preview pipeline's
+   * timer-driven waits (waitFor polling, lazy-mount settles) off the real
+   * clock, so pass/fail does not depend on CI machine speed.
+   */
   beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.clearAllMocks();
     mockSearchParams = new URLSearchParams();
     vi.mocked(useUser).mockReturnValue({
@@ -211,6 +217,10 @@ describe('SkillEditor page — supporting file preview', () => {
       createNotificationContextValue(vi.fn()),
     );
     refetchSkills.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('opens a Markdown preview when a Markdown supporting file is selected, with no BFF call', async () => {
@@ -363,7 +373,9 @@ describe('SkillEditor page — supporting file preview', () => {
 describe('SkillEditor page — a failed supporting-file preview', () => {
   const user = userEvent.setup({ delay: null });
 
+  /* Same fake-clock rationale as the preview describe above. */
   beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.clearAllMocks();
     mockSearchParams = new URLSearchParams();
     codeContentFails = true;
@@ -374,6 +386,10 @@ describe('SkillEditor page — a failed supporting-file preview', () => {
       createNotificationContextValue(vi.fn()),
     );
     refetchSkills.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows an error with a retry control instead of an indefinite spinner', async () => {

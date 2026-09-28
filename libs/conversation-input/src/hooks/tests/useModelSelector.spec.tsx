@@ -1,6 +1,6 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
-import { renderHook } from '@testing-library/react';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { renderHook } from '@testing-library/react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';

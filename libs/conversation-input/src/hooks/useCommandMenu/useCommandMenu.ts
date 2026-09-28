@@ -153,7 +153,6 @@ export const useCommandMenu = ({ config, message }: UseCommandMenuParams) => {
       setDismissedWordStart(null);
       setActiveWordStart(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, message]);
 
   const dismiss = useCallback(() => {

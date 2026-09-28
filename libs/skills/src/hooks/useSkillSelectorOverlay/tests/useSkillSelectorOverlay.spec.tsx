@@ -29,6 +29,28 @@ const getOnSelect = (
     .onSelect;
 
 describe('useSkillSelectorOverlay', () => {
+  it('forwards the configured trigger only to active mention chips', () => {
+    const { result } = renderHook(() =>
+      useSkillSelectorOverlay({
+        ...baseOptions,
+        activeMentionDetailsTrigger: 'click',
+      }),
+    );
+
+    act(() => {
+      result.current.seedSkillMentions('/abc', [{ url: abcSkill.url }]);
+    });
+
+    const activeChip = result.current.activeMentions[0]
+      .render!() as ReactElement;
+    const historyChip = result.current.renderHistorySkills([
+      { url: abcSkill.url },
+    ]) as ReactElement[];
+
+    expect(activeChip.props).toMatchObject({ detailsTrigger: 'click' });
+    expect(historyChip[0].props).not.toHaveProperty('detailsTrigger');
+  });
+
   it('tracks a mention selected via the slash command menu', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 

@@ -19,6 +19,7 @@ import {
 } from '../conversation-transfer/build-upload-path';
 import { formatDateYM } from '../conversation-transfer/date';
 import {
+  dropForeignAttachmentRefs,
   getFolderBreadcrumb,
   parseImportEnvelope,
   planAttachmentUploads,
@@ -253,7 +254,8 @@ export interface UseConversationImportResult {
  * `.dial`/`.zip`, v5 envelope, old- or new-chat origin) once per file, then
  * re-uploads any archive attachments to `uploads/<YYYY-MM>/` —
  * disambiguating a name collision with a ` (n)` suffix instead of rejecting
- * it — rewrites attachment references (and renamed titles), regenerates each
+ * it — rewrites attachment references (and renamed titles), drops any
+ * reference still pointing into another user's bucket, regenerates each
  * conversation's id/path with a fresh UUID (collision-free save, no replace
  * dialog), and persists every conversation through the injected
  * `conversationsApi`. One job per imported file, not per conversation.
@@ -428,7 +430,14 @@ export const useConversationImport = ({
             targetMap = result.targetMap;
           }
 
-          const rewritten = rewriteAttachmentUrls(conversation, targetMap);
+          const { conversation: rewritten, droppedNames } =
+            dropForeignAttachmentRefs(
+              rewriteAttachmentUrls(conversation, targetMap),
+              bucket,
+            );
+          for (const droppedName of droppedNames) {
+            skippedAttachmentNames.add(droppedName);
+          }
           const { conversation: regenerated, subPath } = rebaseConversationId(
             rewritten,
             bucket,

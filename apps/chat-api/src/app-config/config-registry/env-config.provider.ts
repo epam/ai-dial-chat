@@ -356,8 +356,8 @@ export class EnvConfigProvider implements ConfigProvider {
    * Parses `APPLICATION_VISUALIZERS` fail-open: invalid JSON or a value that
    * is not a plain object (an array included) yields `{}`; each entry is
    * validated independently, so one malformed entry never drops the others.
-   * Unrecognized fields on an entry (e.g. legacy display flags that 1.0 has
-   * no successor for) are logged and ignored, never causing the entry itself
+   * Unrecognized fields on an entry (e.g. the legacy `expanded` flag that 1.0
+   * has no successor for) are logged and ignored, never causing the entry itself
    * to be dropped.
    */
   private parseApplicationVisualizers(
@@ -444,6 +444,8 @@ export class EnvConfigProvider implements ConfigProvider {
           'mobileHeight',
           'passAuthInfo',
           'passExplicitToken',
+          'borderless',
+          'withoutTitle',
         ]);
         const unknownKeys = Object.keys(rawEntry as object).filter(
           (k) => !knownFields.has(k),
@@ -472,6 +474,8 @@ export class EnvConfigProvider implements ConfigProvider {
           mobileHeight: dto.mobileHeight,
           passAuthInfo: dto.passAuthInfo,
           passExplicitToken: dto.passExplicitToken,
+          borderless: dto.borderless,
+          withoutTitle: dto.withoutTitle,
         };
       },
     );

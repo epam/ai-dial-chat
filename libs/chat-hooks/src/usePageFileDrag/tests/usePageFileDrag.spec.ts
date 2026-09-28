@@ -23,6 +23,20 @@ afterEach(() => {
 });
 
 describe('usePageFileDrag', () => {
+  it('preserves newer dropped files when an earlier batch is acknowledged', () => {
+    const { result } = renderHook(() => usePageFileDrag());
+    const first = new File(['a'], 'a.txt');
+    const second = new File(['b'], 'b.txt');
+    act(() =>
+      document.dispatchEvent(makeDragEvent('drop', ['Files'], [first])),
+    );
+    const acknowledge = result.current.onFilesConsumed;
+    act(() =>
+      document.dispatchEvent(makeDragEvent('drop', ['Files'], [second])),
+    );
+    act(acknowledge);
+    expect(result.current.pendingFiles).toEqual([second]);
+  });
   it('isDragging becomes true on dragenter with Files type', () => {
     const { result } = renderHook(() => usePageFileDrag());
     act(() => {

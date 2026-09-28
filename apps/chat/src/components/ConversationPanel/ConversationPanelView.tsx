@@ -115,6 +115,7 @@ import {
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
 import { CELEBRATION_HISTORY_CLASS } from '../../utils/celebration-history';
+import { collapseScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -128,6 +129,7 @@ import {
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { getPublishFolderLabel } from '../../utils/publish';
+import ScheduledTasksIcon from '../Icons/ScheduledTasksIcon/ScheduledTasksIcon';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
 
@@ -139,6 +141,20 @@ const PublishConversationPanelContainer = lazy(
 const PANEL_STYLES: ConversationPanelStyles = {
   itemIconBadgeClassName: 'rounded-lg',
 };
+
+/*
+ * A scheduled-task conversation always shows the Scheduled tasks glyph in a
+ * tinted tile instead of its deployment avatar. One shared element keeps the
+ * panel items' memoised output stable.
+ */
+const SCHEDULED_TASK_ICON = (
+  <span
+    className="flex size-6 items-center justify-center rounded-lg bg-blue p-1 text-blue"
+    aria-hidden
+  >
+    <ScheduledTasksIcon size={16} />
+  </span>
+);
 
 /*
  * Desktop-only filter. Mobile file pickers match `accept` against the MIME type
@@ -558,7 +574,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     toPanelConversationId,
   });
 
-  const taskBadgeLabel = t(ConversationPanelI18nKeys.TaskBadgeLabel);
   const unreadIndicatorLabel = t(
     ConversationPanelI18nKeys.UnreadIndicatorLabel,
   );
@@ -581,23 +596,37 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const resolveHref = useCallback((id: string) => getConversationRoute(id), []);
 
-  const resolveTaskBadge = useCallback(
+  const resolveTaskPresentation = useCallback(
     (item: ConversationListItemDto) =>
       item.isScheduledTask
-        ? { label: taskBadgeLabel, isUnread: item.isUnread ?? false }
+        ? { leadingIcon: SCHEDULED_TASK_ICON, isUnread: item.isUnread ?? false }
         : undefined,
-    [taskBadgeLabel],
+    [],
+  );
+
+  /*
+   * The panel shows one row per scheduled task. This is a display derivation
+   * only: every other consumer (active-conversation sync, task banner, History
+   * unread marks) keeps reading the full `items` list from the context.
+   */
+  const panelItems = useMemo(
+    () =>
+      collapseScheduledTaskConversations(items, {
+        activeConversationId,
+        conversationIdsMatch,
+      }),
+    [items, activeConversationId],
   );
 
   const conversations = useConversationPanelItems({
-    items,
+    items: panelItems,
     deployments,
     isDeploymentsLoading,
     toPanelConversationId,
     resolveIconUrl,
     resolveIconTooltip,
     resolveHref,
-    resolveTaskBadge,
+    resolveTaskPresentation,
   });
 
   const filterLabels = useMemo(

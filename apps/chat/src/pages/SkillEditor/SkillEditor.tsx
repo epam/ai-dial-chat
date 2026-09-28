@@ -3,7 +3,6 @@ import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
-  PUBLIC_SKILL_BUCKET,
   SkillEditorLoadState,
   SKILL_MANIFEST_FILE,
   useSkillEditorLoad,
@@ -14,6 +13,7 @@ import {
   type SkillEditorSubmitMessages,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
+import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
@@ -96,7 +96,6 @@ const SkillEditorPage: FC = () => {
     rawReturnUrl != null && isSafeReturnUrl(rawReturnUrl)
       ? rawReturnUrl
       : ROUTES.Catalog;
-
   const personalBucket = user?.bucket;
 
   const rawId = searchParams.get(EditorQuery.Id);
@@ -111,7 +110,7 @@ const SkillEditorPage: FC = () => {
       const decoded = decodeURIComponent(rawId);
       const parsed = parseSkillResourceUrl(decoded);
       if (parsed != null) {
-        return parsed.bucket === PUBLIC_SKILL_BUCKET ? null : parsed;
+        return parsed.bucket === PUBLIC_BUCKET ? null : parsed;
       }
       return personalBucket && isValidSkillRelativePath(decoded)
         ? { bucket: personalBucket, path: decoded }
@@ -122,6 +121,13 @@ const SkillEditorPage: FC = () => {
   }, [isEditMode, personalBucket, rawId]);
   const bucket = skillResource?.bucket;
   const skillPath = skillResource?.path;
+  const getCreateReturnUrl = useCallback(
+    (path: string) =>
+      `${ROUTES.Catalog}?${new URLSearchParams({
+        itemId: `skills/${bucket}/${path}`,
+      }).toString()}`,
+    [bucket],
+  );
 
   const {
     loadState,
@@ -256,6 +262,7 @@ const SkillEditorPage: FC = () => {
     loadedPathRef,
     etagRef,
     returnUrl,
+    getCreateReturnUrl,
     refetchSkills,
     client: skillEditorSubmitClient,
     messages: submitMessages,

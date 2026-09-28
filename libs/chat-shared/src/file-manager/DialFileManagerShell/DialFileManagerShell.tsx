@@ -327,10 +327,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       isNewButtonDisabled,
       disabledNewButtonTooltip,
       newActions: {
-        uploadFiles: { label: labels.uploadFilesLabel },
-        newFolder: { label: labels.newFolderLabel },
+        uploadFiles: { label: labels.uploadFilesLabel, icon: null },
+        newFolder: { label: labels.newFolderLabel, icon: null },
         ...(showUploadArchiveAction
-          ? { uploadArchive: { label: labels.uploadArchiveAction } }
+          ? { uploadArchive: { label: labels.uploadArchiveAction, icon: null } }
           : {}),
       },
     }),

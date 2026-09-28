@@ -85,6 +85,7 @@ import {
   useCallback,
   useMemo,
   type ReactNode,
+  type Ref,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -155,6 +156,7 @@ const isCitationPreviewable = (annotation: Annotation): boolean => {
 };
 
 interface Props {
+  contentRef?: Ref<HTMLDivElement>;
   msg: MessageType;
   index: number;
   totalCount: number;
@@ -324,6 +326,7 @@ interface Props {
 
 const ConversationMessageItem: FC<Props> = ({
   msg,
+  contentRef,
   index,
   totalCount,
   isAssistantTyping,
@@ -625,6 +628,8 @@ const ConversationMessageItem: FC<Props> = ({
       height:
         (isMobile ? (entry.mobileHeight ?? entry.height) : entry.height) ??
         DEFAULT_VISUALIZER_HEIGHT,
+      isBorderless: entry.borderless === true,
+      isTitleHidden: entry.withoutTitle === true,
     };
   }, [
     effectiveDeploymentId,
@@ -816,6 +821,7 @@ const ConversationMessageItem: FC<Props> = ({
     <CitationCardProvider value={citationCard}>
       <MessageBubble
         role={msg.role}
+        contentRef={contentRef}
         text={messageText}
         textSegments={textSegments}
         beforeContent={beforeContent}
@@ -958,6 +964,8 @@ const ConversationMessageItem: FC<Props> = ({
                   <InlineGroupedVisualizer
                     content={groupedVisualizer.content}
                     height={groupedVisualizer.height}
+                    isBorderless={groupedVisualizer.isBorderless}
+                    isTitleHidden={groupedVisualizer.isTitleHidden}
                     onExpand={handleExpandGroupedVisualizer}
                     expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
                     actionsGroupAriaLabel={t(

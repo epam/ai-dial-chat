@@ -193,12 +193,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
     <div role="status">{ariaLabel}</div>
   ),
+  ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
+  ButtonAppearance: { Solid: 'solid', Ghost: 'ghost', Link: 'link' },
   PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
   Popup: ({
     open,
     header,
     children,
     footer,
+    mainButtons,
     onClose,
     closeAriaLabel,
   }: {
@@ -206,6 +209,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     header: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
+    mainButtons?: {
+      label?: ReactNode;
+      onClick?: () => void;
+      disabled?: boolean;
+    }[];
     onClose: () => void;
     closeAriaLabel?: string;
   }) =>
@@ -218,6 +226,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         <button onClick={onClose}>{closeAriaLabel ?? 'Close'}</button>
         {children}
         {footer}
+        {mainButtons?.map((button, index) => (
+          <button
+            key={index}
+            onClick={button.onClick}
+            disabled={button.disabled}
+          >
+            {button.label}
+          </button>
+        ))}
       </div>
     ) : null,
   GhostIconButton: ({

@@ -243,11 +243,39 @@ interface ConversationItem {
   iconTooltip?: string;
   isIconLoading?: boolean;
   href?: string;
-  showTaskBadge?: boolean;
-  taskBadgeLabel?: string;
+  leadingIcon?: ReactNode;
   isUnread?: boolean;
 }
 ```
+
+- `leadingIcon` replaces the deployment avatar (`iconUrl`, `iconTooltip` and
+  `isIconLoading` are then ignored). The panel gives it no meaning of its own:
+  pass a decorative, `aria-hidden` node that fits the 24px avatar slot.
+- `isUnread` sets the title in `dial-small-semi-text` and renders a dot at the
+  row's trailing edge, with a visually hidden `unreadIndicatorLabel`. While the
+  row's actions trigger is visible (hover, focus, open menu) the dot is hidden
+  and the trigger takes its place; the label keeps announcing the state. The
+  dot color is `colors.unreadDot`.
+
+```tsx
+import type { ConversationItem } from '@epam/ai-dial-conversation-panel';
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconCalendarTime } from '@tabler/icons-react';
+
+const item: ConversationItem = {
+  id: 'bucket/gpt-4__Daily digest__run-1',
+  title: 'Daily digest',
+  leadingIcon: (
+    <IconCalendarTime size={24} stroke={DIAL_KIT_ICON_STROKE} aria-hidden />
+  ),
+  isUnread: true,
+};
+```
+
+**Breaking since the TASK pill was removed:** `showTaskBadge`, `taskBadgeLabel`,
+`ConversationColors.taskBadgeBorder` / `taskBadgeBackground` / `taskBadgeText`,
+and `ConversationPanelStyles.taskBadgeClassName` no longer exist. Pass
+`leadingIcon` to mark a row and keep passing `isUnread`.
 
 The panel does not sort — it renders `conversations` in the order given, so
 recency ordering is the host's job. Grouping is derived from `isPinned` and

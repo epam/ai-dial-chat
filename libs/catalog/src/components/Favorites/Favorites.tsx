@@ -3,7 +3,11 @@ import {
   ItemHeader,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  ElementSize,
+  GhostIconButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
   FC,
@@ -414,21 +418,21 @@ export const Favorites: FC<FavoritesProps> = ({
                   styles.pageNav,
                 )}
               >
-                <button
+                <GhostIconButton
+                  size={ElementSize.Small}
                   aria-label={prevPageAriaLabel}
                   disabled={favPage === 1}
                   onClick={() => setFavPage((p) => p - 1)}
-                  className={mergeClasses(
-                    'flex size-[22px] cursor-pointer items-center justify-center rounded-full border-none bg-transparent',
-                    styles.navBtn,
-                  )}
-                >
-                  <IconChevronLeft
-                    size={14}
-                    className="rtl:scale-x-[-1]"
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                </button>
+                  className={mergeClasses('rounded-full', styles.navBtn)}
+                  icon={
+                    <IconChevronLeft
+                      size={14}
+                      aria-hidden
+                      className="rtl:scale-x-[-1]"
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
+                  }
+                />
                 <span
                   className={mergeClasses(
                     'min-w-[32px] select-none px-1 text-center',
@@ -438,21 +442,21 @@ export const Favorites: FC<FavoritesProps> = ({
                 >
                   {favPage} / {favTotalPages}
                 </span>
-                <button
+                <GhostIconButton
+                  size={ElementSize.Small}
                   aria-label={nextPageAriaLabel}
                   disabled={favPage === favTotalPages}
                   onClick={() => setFavPage((p) => p + 1)}
-                  className={mergeClasses(
-                    'flex size-[22px] cursor-pointer items-center justify-center rounded-full border-none bg-transparent',
-                    styles.navBtn,
-                  )}
-                >
-                  <IconChevronRight
-                    size={14}
-                    className="rtl:scale-x-[-1]"
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                </button>
+                  className={mergeClasses('rounded-full', styles.navBtn)}
+                  icon={
+                    <IconChevronRight
+                      size={14}
+                      aria-hidden
+                      className="rtl:scale-x-[-1]"
+                      stroke={DIAL_KIT_ICON_STROKE}
+                    />
+                  }
+                />
               </div>
             ) : undefined
           }

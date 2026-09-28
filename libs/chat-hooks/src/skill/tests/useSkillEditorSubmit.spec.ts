@@ -184,6 +184,24 @@ describe('useSkillEditorSubmit front-matter guard', () => {
   });
 });
 
+describe('useSkillEditorSubmit navigation', () => {
+  it('uses the host-provided destination for a created skill', async () => {
+    const { params } = makeHarness(false);
+    params.getCreateReturnUrl = (path) =>
+      `/catalog?itemId=skills%2Fbucket-1%2F${path}`;
+
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeValues({ name: 'New skill' }));
+    });
+
+    expect(params.onNavigate).toHaveBeenCalledWith(
+      '/catalog?itemId=skills%2Fbucket-1%2Fnew-skill',
+    );
+  });
+});
+
 describe('useSkillEditorSubmit retryable failures', () => {
   beforeEach(() => {
     vi.clearAllMocks();
