@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QUOTATIONS_CLASS } from '../../../constants/public-class-names';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
 import { CitationCard } from '../CitationCard';
@@ -40,6 +40,8 @@ const defaultLabels = {
     `${current} / ${total}`,
   preview: 'Preview',
   openInBrowser: 'Open in browser',
+  showMore: 'Show more',
+  showLess: 'Show less',
 };
 
 const defaultProps = (
@@ -181,6 +183,72 @@ describe('CitationCard', () => {
       'ReallyLongUnbrokenTitleTokenThatWouldOtherwiseOverflowTheFixedWidthCard',
     );
     expect(title.className).toContain('break-words');
+  });
+});
+
+/* jsdom does no layout, so `scrollHeight`/`clientHeight` are both 0 unless a
+ * test stubs them to simulate a quote that overflows its line clamp. */
+const stubQuoteOverflow = (overflowing: boolean) => {
+  const scrollHeight = vi
+    .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+    .mockReturnValue(overflowing ? 400 : 100);
+  const clientHeight = vi
+    .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+    .mockReturnValue(100);
+  return () => {
+    scrollHeight.mockRestore();
+    clientHeight.mockRestore();
+  };
+};
+
+describe('CitationCard — long quotes', () => {
+  let restore: () => void = () => undefined;
+
+  afterEach(() => restore());
+
+  it('hides the toggle when the quote fits', () => {
+    restore = stubQuoteOverflow(false);
+    render(<CitationCard {...defaultProps()} />);
+
+    expect(screen.queryByRole('button', { name: 'Show more' })).toBeFalsy();
+  });
+
+  it('expands a clamped quote into a scrollable region and collapses it back', async () => {
+    restore = stubQuoteOverflow(true);
+    render(<CitationCard {...defaultProps()} />);
+
+    const toggle = screen.getByRole('button', { name: 'Show more' });
+    // eslint-disable-next-line testing-library/no-node-access -- the quote is the unlabeled region the toggle's aria-controls points at; it has no role or name to query
+    const quote = document.getElementById(
+      toggle.getAttribute('aria-controls') ?? '',
+    ) as HTMLElement;
+    expect(quote.textContent).toContain('Quote 0');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(quote.className).toContain('line-clamp-6');
+
+    await userEvent.click(toggle);
+
+    const collapse = screen.getByRole('button', { name: 'Show less' });
+    expect(collapse.getAttribute('aria-expanded')).toBe('true');
+    expect(quote.className).not.toContain('line-clamp-6');
+    expect(quote.className).toContain('overflow-y-auto');
+    expect(quote.tabIndex).toBe(0);
+
+    await userEvent.click(collapse);
+
+    expect(screen.getByRole('button', { name: 'Show more' })).toBeTruthy();
+    expect(quote.className).toContain('line-clamp-6');
+  });
+
+  it('collapses again when switching to another citation', async () => {
+    restore = stubQuoteOverflow(true);
+    const props = defaultProps({ group: makeGroup(2) });
+    const { rerender } = render(<CitationCard {...props} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show more' }));
+    rerender(<CitationCard {...props} activeIndex={1} />);
+
+    expect(screen.getByRole('button', { name: 'Show more' })).toBeTruthy();
   });
 });
 

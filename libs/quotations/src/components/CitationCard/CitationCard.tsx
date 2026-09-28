@@ -10,10 +10,19 @@ import {
   ElementSize,
   EllipsisTooltip,
   GhostIconButton,
+  LinkButton,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { FC, ReactNode } from 'react';
+import {
+  FC,
+  ReactNode,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 import {
   getSourceFileExtension,
@@ -35,6 +44,10 @@ export interface CitationCardLabels {
   preview: string;
   /** Label for the "Open in browser" button. */
   openInBrowser: string;
+  /** Label for the toggle that expands a quote cut off at the collapsed height. */
+  showMore: string;
+  /** Label for the toggle that collapses an expanded quote. */
+  showLess: string;
 }
 
 /** Color overrides for `CitationCard`, applied as CSS custom properties with app theme fallbacks. */
@@ -131,6 +144,33 @@ export const CitationCard: FC<CitationCardProps> = ({
     '--cc-source-name-text': colors?.sourceNameText,
   });
 
+  const quote = annotation.body?.quote;
+  const quoteId = useId();
+  const quoteRef = useRef<HTMLDivElement>(null);
+  const [isQuoteExpanded, setIsQuoteExpanded] = useState(false);
+  const [isQuoteClamped, setIsQuoteClamped] = useState(false);
+
+  /* Every citation opens collapsed, including one reached via the switcher. */
+  useEffect(() => {
+    setIsQuoteExpanded(false);
+  }, [activeIndex, quote]);
+
+  /* The toggle only appears when the collapsed quote actually overflows its
+   * line clamp. Measuring is skipped while expanded so "Show less" stays
+   * available; re-measuring on resize covers font loading and width changes. */
+  useLayoutEffect(() => {
+    const element = quoteRef.current;
+    if (!element || isQuoteExpanded) return;
+
+    const measure = () =>
+      setIsQuoteClamped(element.scrollHeight > element.clientHeight + 1);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [quote, isQuoteExpanded]);
+
   return (
     <div
       role="dialog"
@@ -202,24 +242,43 @@ export const CitationCard: FC<CitationCardProps> = ({
               {annotation.body.title}
             </p>
           )}
-          {(annotation.body?.quote || hasSwitcher) && (
-            <div
-              className={mergeClasses(
-                quoteClassName,
-                styles.quote,
-                'line-clamp-6 break-words',
-                hasSwitcher && 'min-h-[3lh]',
-              )}
-            >
-              {annotation.body?.quote && (
-                <MarkdownRenderer
-                  content={annotation.body.quote}
-                  classNames={{
-                    p: mergeClasses(quoteClassName, styles.quote),
-                    ul: mergeClasses(quoteClassName, 'ps-3'),
-                    ol: mergeClasses(quoteClassName, 'ps-3'),
-                    strong: quoteStrongClassName,
-                  }}
+          {(quote || hasSwitcher) && (
+            <div className="flex flex-col items-start gap-1">
+              <div
+                ref={quoteRef}
+                id={quoteId}
+                /* An expanded quote scrolls, and a scrollable region must be
+                 * reachable from the keyboard. */
+                tabIndex={isQuoteExpanded ? 0 : undefined}
+                className={mergeClasses(
+                  quoteClassName,
+                  styles.quote,
+                  'w-full break-words',
+                  isQuoteExpanded
+                    ? 'max-h-[min(20rem,50vh)] overflow-y-auto'
+                    : 'line-clamp-6',
+                  hasSwitcher && 'min-h-[3lh]',
+                )}
+              >
+                {quote && (
+                  <MarkdownRenderer
+                    content={quote}
+                    classNames={{
+                      p: mergeClasses(quoteClassName, styles.quote),
+                      ul: mergeClasses(quoteClassName, 'ps-3'),
+                      ol: mergeClasses(quoteClassName, 'ps-3'),
+                      strong: quoteStrongClassName,
+                    }}
+                  />
+                )}
+              </div>
+              {isQuoteClamped && (
+                <LinkButton
+                  label={isQuoteExpanded ? labels.showLess : labels.showMore}
+                  size={ElementSize.Small}
+                  aria-expanded={isQuoteExpanded}
+                  aria-controls={quoteId}
+                  onClick={() => setIsQuoteExpanded((expanded) => !expanded)}
                 />
               )}
             </div>
