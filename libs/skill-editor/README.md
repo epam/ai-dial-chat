@@ -103,9 +103,8 @@ the `files` prop and never exposes a rename/move/delete affordance.
 `fileActions.validatePath` runs before a device upload is accepted —
 returning a message blocks it and shows the message inline. Removing any
 other node requires the user to confirm a popup before
-`fileActions.onRemoveNode` is called. The library currently offers only
-"Upload from device" as an Add action; it does not support creating an empty
-file or folder.
+`fileActions.onRemoveNode` is called. The library's only Add action (labelled "Add" by default) opens the device
+upload dialog; it does not support creating an empty file or folder.
 
 `onValuesChange` reports the complete current `SkillEditorValues` whenever the
 user edits `name`, `description`, or `instructions` — including a paste into

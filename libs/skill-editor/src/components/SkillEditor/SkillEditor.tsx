@@ -276,7 +276,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
    * Files dropped anywhere on the editor surface (not just inside the
    * already-open dialog's own drop zone) open the upload dialog and stage
    * them immediately — dragging in from the OS shouldn't first require
-   * clicking "Upload from device".
+   * clicking "Add".
    */
   const handleSurfaceFilesDropped = useCallback(
     (droppedFileList: File[]) => {

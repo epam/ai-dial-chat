@@ -127,7 +127,7 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   filesTreeAriaLabel?: string;
   /**
    * Label of the control that opens the device file picker to add a
-   * supporting file. Defaults to `'Upload from device'`.
+   * supporting file. Defaults to `'Add'`.
    */
   addUploadLabel?: string;
   /** Accessible label of a node's remove action. Defaults to `'Remove'`. */

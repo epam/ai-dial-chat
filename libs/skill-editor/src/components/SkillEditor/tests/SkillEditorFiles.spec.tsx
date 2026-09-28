@@ -81,6 +81,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
+  ElementSize: { Small: 'small', Standard: 'standard' },
   EditorThemes: { dark: 'dark', light: 'light' },
   Accordion: ({
     title,
@@ -289,9 +290,7 @@ const buildFileActions = (
 });
 
 const openUploadDialog = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(
-    screen.getAllByRole('button', { name: 'Upload from device' })[0],
-  );
+  await user.click(screen.getAllByRole('button', { name: 'Add' })[0]);
 };
 
 const stageFile = (file: File) => {
@@ -360,7 +359,9 @@ describe('SkillEditor — files pane', () => {
     stageFile(file);
     expect(await screen.findByText('analyzer.md')).toBeTruthy();
 
-    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Add' }),
+    );
 
     expect(commitBatch).toHaveBeenCalledWith([
       expect.objectContaining({ file, path: 'analyzer.md' }),
@@ -395,8 +396,11 @@ describe('SkillEditor — files pane', () => {
       await screen.findByText('A file already exists at this path'),
     ).toBeTruthy();
     expect(
-      (screen.getByRole('button', { name: 'Add' }) as HTMLButtonElement)
-        .disabled,
+      (
+        within(screen.getByRole('dialog')).getByRole('button', {
+          name: 'Add',
+        }) as HTMLButtonElement
+      ).disabled,
     ).toBe(true);
     expect(commitBatch).not.toHaveBeenCalled();
   });
@@ -426,7 +430,9 @@ describe('SkillEditor — files pane', () => {
     stageFile(new File(['content'], 'huge.md'));
     await screen.findByText('huge.md');
 
-    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Add' }),
+    );
 
     expect(
       await screen.findByText('This skill package is too large to upload.'),
@@ -496,7 +502,7 @@ describe('SkillEditor — files pane', () => {
     ).toBeTruthy();
   });
 
-  it('opens the upload dialog and stages a file dropped anywhere on the editor surface, without clicking Upload from device first', async () => {
+  it('opens the upload dialog and stages a file dropped anywhere on the editor surface, without clicking Add first', async () => {
     renderEditor();
     const file = new File(['content'], 'notes.md');
 
