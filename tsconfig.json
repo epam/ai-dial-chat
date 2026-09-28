@@ -98,6 +98,9 @@
     },
     {
       "path": "./libs/skills"
+    },
+    {
+      "path": "./libs/celebrations"
     }
   ],
   "compilerOptions": {

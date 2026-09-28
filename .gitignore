@@ -61,3 +61,6 @@ vitest.config.*.timestamp*
 .nx/self-healing
 
 .nx/migrate-runs
+
+# Storybook build output
+storybook-static
