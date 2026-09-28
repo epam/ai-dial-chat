@@ -2,6 +2,7 @@ export { ChatSkill } from './components/ChatSkill/ChatSkill';
 export { FavoriteSkillsPanel } from './components/FavoriteSkillsPanel/FavoriteSkillsPanel';
 export { SkillArchiveUploadDialog } from './components/SkillArchiveUploadDialog/SkillArchiveUploadDialog';
 export { SkillCatalogModal } from './components/SkillCatalogModal/SkillCatalogModal';
+export { SkillContentFileTree } from './components/SkillContentFileTree/SkillContentFileTree';
 export { SkillDetailsSidePanel } from './components/SkillDetailsSidePanel/SkillDetailsSidePanel';
 export { SkillInfoTooltipContent } from './components/SkillInfoTooltipContent/SkillInfoTooltipContent';
 export { useSkillMentions } from './hooks/useSkillMentions/useSkillMentions';
