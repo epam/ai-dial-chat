@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import {
   BOLD_MARKDOWN_SAMPLE,
@@ -45,5 +45,63 @@ describe('EntityMarkdownDescription', () => {
         rawMarkdown: BOLD_MARKDOWN_SAMPLE,
       }),
     ).toThrow();
+  });
+
+  describe('isInlinePreview', () => {
+    const FORMATTED_DESCRIPTION = [
+      '<h1>This is heading 1</h1>',
+      '<p>This is some text.</p>',
+      '<hr>',
+    ].join('\n');
+
+    it('renders formatting as block elements by default', () => {
+      render(
+        <EntityMarkdownDescription>
+          {FORMATTED_DESCRIPTION}
+        </EntityMarkdownDescription>,
+      );
+
+      expect(
+        screen.getByRole('heading', { name: 'This is heading 1' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('separator')).toBeInTheDocument();
+    });
+
+    it('renders headings and paragraphs as inline text and drops separators', () => {
+      render(
+        <EntityMarkdownDescription isInlinePreview>
+          {FORMATTED_DESCRIPTION}
+        </EntityMarkdownDescription>,
+      );
+
+      expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+      expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+      expect(screen.getByText(/This is heading 1/)).toBeInTheDocument();
+      expect(screen.getByText(/This is some text\./)).toBeInTheDocument();
+    });
+
+    it('keeps words from adjacent blocks separated', () => {
+      render(
+        <EntityMarkdownDescription isInlinePreview>
+          {'<h1>This is heading 1</h1><p>This is some text.</p>'}
+        </EntityMarkdownDescription>,
+      );
+
+      expect(document.body).toHaveTextContent(
+        'This is heading 1 This is some text.',
+      );
+    });
+
+    it('keeps inline emphasis', () => {
+      render(
+        <EntityMarkdownDescription isInlinePreview>
+          {BOLD_MARKDOWN_SAMPLE}
+        </EntityMarkdownDescription>,
+      );
+
+      expect(
+        screen.getByText('bolded text', { selector: 'strong' }),
+      ).toBeInTheDocument();
+    });
   });
 });
