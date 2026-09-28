@@ -758,7 +758,7 @@ describe('AppEditorIframe — toolset login request', () => {
       .mockResolvedValueOnce({
         id: 't',
         toolset: 't',
-        authSettings: { userLevelAuthStatus: 'SIGNED_IN' },
+        authSettings: { globalAuthStatus: 'SIGNED_IN' },
       } as DialToolsetDto);
     const postMessageSpy = mountIframeAndSpyOnPostMessage();
 
@@ -773,7 +773,7 @@ describe('AppEditorIframe — toolset login request', () => {
         expect(postMessageSpy).toHaveBeenCalledWith(
           expect.objectContaining({
             success: true,
-            credentialsLevel: 'USER',
+            credentialsLevel: ToolsetCredentialsLevel.Global,
           }),
           'https://editor.example.com',
         ),
@@ -870,7 +870,7 @@ describe('AppEditorIframe — toolset logout request', () => {
         'toolsets/b/My%20Toolset__1.0.0',
         {
           url: 'toolsets/b/My%20Toolset__1.0.0',
-          credentialsLevel: 'USER',
+          credentialsLevel: ToolsetCredentialsLevel.Global,
         },
       ),
     );
@@ -880,7 +880,7 @@ describe('AppEditorIframe — toolset logout request', () => {
           type: AppsEditorEvent.ToolsetLogoutResult,
           toolsetId: 'toolsets/b/My Toolset__1.0.0',
           success: true,
-          credentialsLevel: 'USER',
+          credentialsLevel: ToolsetCredentialsLevel.Global,
         }),
         'https://editor.example.com',
       ),
