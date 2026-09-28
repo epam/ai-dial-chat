@@ -263,7 +263,10 @@ const QuickAppSetup: FC<Props> = ({
     <div className="flex min-h-[640px] flex-1 flex-col gap-2">
       {saveError && <ErrorMessageNotification message={saveError} />}
       <div className="relative min-h-0 flex-1">
-        <div className={mergeClasses('size-full', isPreviewing && 'hidden')}>
+        {/* Absolutely positioned, so the iframe gets a definite height to fill. */}
+        <div
+          className={mergeClasses('absolute inset-0', isPreviewing && 'hidden')}
+        >
           <AppEditorIframe
             ref={iframeRef}
             schema={schema}
@@ -278,7 +281,7 @@ const QuickAppSetup: FC<Props> = ({
         {/* Kept mounted and hidden, so a preview session survives toggling back to the editor. */}
         <div
           className={mergeClasses(
-            'absolute inset-0 size-full',
+            'absolute inset-0',
             !isPreviewing && 'hidden',
           )}
         >

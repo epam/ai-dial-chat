@@ -46,6 +46,11 @@ export interface EntityEditorProps {
   hideStandardActions?: boolean;
   /** Content of the Metadata section in the left column. */
   metadata: ReactNode;
+  /**
+   * Heading of the Metadata section; overrides `labels.metadataTitle`.
+   * `null` renders the section without a heading, for a left column whose content carries its own.
+   */
+  metadataTitle?: string | null;
   /** Extra left-column content rendered below the Metadata section. */
   metadataFooter?: ReactNode;
   /** Content of the Setup section in the right column. When absent, the left column fills the width. */

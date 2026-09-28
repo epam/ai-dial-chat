@@ -7,6 +7,8 @@ import { EditorLayout } from '../EditorLayout/EditorLayout';
 import { EditorSection } from '../EditorSection/EditorSection';
 
 const SECTION_CLASS_NAME = 'border-0 p-4 desktop:p-6';
+/* On desktop the Setup section fills the column, so full-height content (an embedded editor) can stretch. */
+const SETUP_SECTION_CLASS_NAME = 'desktop:flex-1';
 const ALERT_CLASS_NAME = 'px-4 pt-4 desktop:px-6 desktop:pt-6';
 
 /** Standard entity editor: header with Cancel and a primary action, a Metadata column and a Setup column. */
@@ -21,6 +23,7 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
   extraActions,
   hideStandardActions = false,
   metadata,
+  metadataTitle,
   metadataFooter,
   setup,
   setupTitle,
@@ -71,7 +74,11 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
         <>
           {!hasSetup && alertRegion}
           <EditorSection
-            title={labels?.metadataTitle ?? 'Metadata'}
+            title={
+              metadataTitle === null
+                ? undefined
+                : (metadataTitle ?? labels?.metadataTitle ?? 'Metadata')
+            }
             styles={styles?.section}
             className={mergeClasses(
               SECTION_CLASS_NAME,
@@ -93,6 +100,7 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
               styles={styles?.section}
               className={mergeClasses(
                 SECTION_CLASS_NAME,
+                SETUP_SECTION_CLASS_NAME,
                 setupSectionClassName,
                 BUILDER_FORM_CLASS.setupSection,
               )}
