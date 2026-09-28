@@ -372,6 +372,26 @@ keyframes per track are allowed. The detailed pads, eyes and grin use no SVG
 filters, per-frame geometry reads or React updates. Physical coordinates preserve
 contact in RTL without mirroring copied text.
 
+Skeletons lose a skull on the composer edge. Two dancers spring onto the input's
+top edge, whose decorative outline dips after each landing, and dance a short
+jig. The showman's over-eager nod launches his skull over the partner; it
+bounces, rolls to the composer corner and teeters while the headless body gropes
+the wrong way. The partner lunges, catches it at the corner, carries it back and
+hops to place it — backwards — until a spin turns the face forward. Both
+celebrate and drop below the viewport; the provider unmounts the scene after
+twelve seconds. Hand and skull share one precomputed pose, so the skull stays on
+the hand from catch to placement, including the partner's turn. The composer is
+only measured (at most four candidates): nothing is copied, hidden or animated.
+Without a visible composer at least 220px (200px mobile) wide and 150px below the
+top, the same story plays on the viewport floor. Mobile keeps the full cast at a
+smaller scale within a 320px band. RTL mirrors the artwork layer so the corner is
+the physical inline end. Reduced motion or missing animation APIs show a static
+partner offering the skull to the headless showman without measuring the page.
+Input, focus, scroll, resize, composer changes, hidden documents, changed
+environment and unmount cancel playback. Limits are 21 transform/opacity
+animations, 80 keyframes per track and 100 SVG nodes, with no filters or
+per-frame geometry reads.
+
 The raven scene tears small visual fragments from separated headings, buttons
 and history rows to build a nest on the main pumpkin. Each collector has its own
 pickup point and flight path, drops its piece briefly, then leaves in a separate

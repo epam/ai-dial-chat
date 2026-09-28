@@ -8,7 +8,7 @@ import {
   pickPortalRows,
   type PortalLayout,
 } from '../../utils/halloween-portal';
-import styles from './HalloweenExtras.module.scss';
+import styles from './HalloweenPortal.module.scss';
 
 /** A transient rift borrows visual snapshots; it never owns conversation data. */
 const HalloweenPortal: FC = () => {
