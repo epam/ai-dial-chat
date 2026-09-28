@@ -133,6 +133,12 @@ export const useDialFileListing = ({
     Map<string, string[] | undefined>
   >(() => new Map());
   const [isLoading, setIsLoading] = useState(isActive);
+  /* Mirror an `isActive` flip during render, so an activated section never paints as loaded-but-empty before the listing effect runs. */
+  const [wasActive, setWasActive] = useState(isActive);
+  if (wasActive !== isActive) {
+    setWasActive(isActive);
+    setIsLoading(isActive);
+  }
   const [error, setError] = useState<string | null>(null);
   const [retryCounter, setRetryCounter] = useState(0);
   const [sharedRootIds, setSharedRootIds] = useState<string[] | undefined>(

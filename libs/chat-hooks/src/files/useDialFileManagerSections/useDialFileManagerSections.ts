@@ -37,7 +37,8 @@ export interface UseDialFileManagerSectionsResult extends UseDialFileManagerResu
   sectionTab: DialFileManagerTabs;
 }
 
-const SECTION_TABS = [
+/** Source tabs `useDialFileManagerSections` can merge into the All tab, in display order. */
+export const DIAL_FILE_MANAGER_SECTION_TABS: readonly DialFileManagerTabs[] = [
   DialFileManagerTabs.MyFiles,
   DialFileManagerTabs.Shared,
   DialFileManagerTabs.Organization,
@@ -57,7 +58,10 @@ export const useDialFileManagerSections = ({
   ...managerOptions
 }: UseDialFileManagerSectionsOptions): UseDialFileManagerSectionsResult => {
   const enabledSections = useMemo(
-    () => sections.filter((section) => SECTION_TABS.includes(section.tab)),
+    () =>
+      sections.filter((section) =>
+        DIAL_FILE_MANAGER_SECTION_TABS.includes(section.tab),
+      ),
     [sections],
   );
   const isAll = activeTab === DialFileManagerTabs.All;
@@ -136,6 +140,21 @@ export const useDialFileManagerSections = ({
     (path: string | undefined): UseDialFileManagerResult =>
       resultFor(sectionTabOf(path) ?? browsedTab),
     [resultFor, sectionTabOf, browsedTab],
+  );
+  /* Splits a batch by owning section, so a selection spanning sections never reaches another section's bucket. */
+  const groupBySection = useCallback(
+    <T>(
+      items: T[],
+      pathOf: (item: T) => string | undefined,
+    ): [DialFileManagerTabs, T[]][] => {
+      const groups = new Map<DialFileManagerTabs, T[]>();
+      items.forEach((item) => {
+        const tab = sectionTabOf(pathOf(item)) ?? browsedTab;
+        groups.set(tab, [...(groups.get(tab) ?? []), item]);
+      });
+      return [...groups];
+    },
+    [sectionTabOf, browsedTab],
   );
 
   const { onNotification } = managerOptions;
@@ -236,16 +255,24 @@ export const useDialFileManagerSections = ({
   );
   const onDownloadFiles = useCallback(
     (files: DialFile[]): void =>
-      routedResult(files[0]?.path).onDownloadFiles(files),
-    [routedResult],
+      groupBySection(files, (file) => file.path).forEach(([tab, slice]) =>
+        resultFor(tab).onDownloadFiles(slice),
+      ),
+    [groupBySection, resultFor],
   );
   const onDeleteFiles = useCallback(
-    (items: DialDeletedItem[], sourceFolder: string): void =>
-      routedResult(items[0]?.sourceUrl ?? sourceFolder).onDeleteFiles(
-        items,
-        sourceFolder,
-      ),
-    [routedResult],
+    (items: DialDeletedItem[], sourceFolder: string): void => {
+      const sourceTab = sectionTabOf(sourceFolder);
+      groupBySection(items, (item) => item.sourceUrl ?? sourceFolder).forEach(
+        ([tab, slice]) =>
+          /* `sourceFolder` names a folder of one section only; the others report their own root. */
+          resultFor(tab).onDeleteFiles(
+            slice,
+            tab === sourceTab ? sourceFolder : '',
+          ),
+      );
+    },
+    [groupBySection, resultFor, sectionTabOf],
   );
   const onRenameValidate = useCallback(
     (value: string, item: DialFile): string | null =>
@@ -254,13 +281,17 @@ export const useDialFileManagerSections = ({
   );
   const onUnshareFiles = useCallback(
     (files: DialFile[]): void =>
-      routedResult(files[0]?.path).onUnshareFiles(files),
-    [routedResult],
+      groupBySection(files, (file) => file.path).forEach(([tab, slice]) =>
+        resultFor(tab).onUnshareFiles(slice),
+      ),
+    [groupBySection, resultFor],
   );
   const onRemoveFilesAccess = useCallback(
     (files: DialFile[]): void =>
-      routedResult(files[0]?.path).onRemoveFilesAccess(files),
-    [routedResult],
+      groupBySection(files, (file) => file.path).forEach(([tab, slice]) =>
+        resultFor(tab).onRemoveFilesAccess(slice),
+      ),
+    [groupBySection, resultFor],
   );
   const onGetInfo = useCallback(
     (file: DialFile): void => {
@@ -302,8 +333,14 @@ export const useDialFileManagerSections = ({
     [isSameSectionTransfer, refuseCrossSectionTransfer, routedResult],
   );
 
+  const cancelCopyMove = useCallback(
+    (): void =>
+      enabledSections.forEach(({ tab }) => resultFor(tab).cancelCopyMove()),
+    [enabledSections, resultFor],
+  );
+
   const singleTabResult = useMemo((): UseDialFileManagerSectionsResult => {
-    const sectionTab = SECTION_TABS.includes(activeTab)
+    const sectionTab = DIAL_FILE_MANAGER_SECTION_TABS.includes(activeTab)
       ? activeTab
       : DialFileManagerTabs.MyFiles;
     return { ...resultFor(sectionTab), sectionTab };
@@ -362,8 +399,7 @@ export const useDialFileManagerSections = ({
       onCopyFiles,
       isCopying: isAnySection((result) => result.isCopying),
       isMoving: isAnySection((result) => result.isMoving),
-      cancelCopyMove: () =>
-        enabledResults.forEach((result) => result.cancelCopyMove()),
+      cancelCopyMove,
       sharedWithMeIds:
         sharedWithMeIdLists.length > 0 ? sharedWithMeIdLists.flat() : undefined,
       sharedByMePaths: unionPathSets(
@@ -400,6 +436,7 @@ export const useDialFileManagerSections = ({
     onRenameValidate,
     onMoveToFiles,
     onCopyFiles,
+    cancelCopyMove,
     onUnshareFiles,
     onRemoveFilesAccess,
     onGetInfo,

@@ -1778,20 +1778,19 @@ const FileManagerHost = ({
 
 ### useDialFileManagerSections
 
-Runs one `useDialFileManager` per source tab (My files, Shared, Organization). On a single tab it returns that section's result; on `DialFileManagerTabs.All` it merges each enabled section's root into one tree and routes every callback to the section whose `rootLabel` is the path's first segment, so each top-level folder keeps its own tab's columns, upload rules, and actions. Copy/move between sections is refused with a `CrossSectionTransferUnsupported` notification.
+Runs one `useDialFileManager` per source tab (My files, Shared, Organization). On a single tab it returns that section's result; on `DialFileManagerTabs.All` it merges each enabled section's root into one tree and routes every callback to the section whose `rootLabel` is the path's first segment, so each top-level folder keeps its own tab's columns, upload rules, and actions. A download, delete, unshare, or remove-access batch that spans sections is split into one call per owning section. Copy/move between sections is refused with a `CrossSectionTransferUnsupported` notification. `DIAL_FILE_MANAGER_SECTION_TABS` lists the source tabs the hook can merge, in display order.
 
 ```tsx
 import {
+  DIAL_FILE_MANAGER_SECTION_TABS,
   useDialFileManagerSections,
   type DialFileManagerSection,
 } from '@epam/ai-dial-chat-hooks';
 import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 
-const sections: DialFileManagerSection[] = [
-  { tab: DialFileManagerTabs.MyFiles, rootLabel: 'My files' },
-  { tab: DialFileManagerTabs.Shared, rootLabel: 'Shared' },
-  { tab: DialFileManagerTabs.Organization, rootLabel: 'Organization' },
-];
+const sections: DialFileManagerSection[] = DIAL_FILE_MANAGER_SECTION_TABS.map(
+  (tab) => ({ tab, rootLabel: rootLabels[tab] }), // host-translated folder names
+);
 
 const fileManager = useDialFileManagerSections({
   ...managerOptions, // the same options useDialFileManager takes, minus rootLabel

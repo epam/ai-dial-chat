@@ -1,4 +1,5 @@
 import {
+  DIAL_FILE_MANAGER_SECTION_TABS,
   DialFileManagerActionProfile,
   DialFileManagerVariant,
   useDialFileManagerSections,
@@ -32,12 +33,6 @@ import { useUser } from '../../context/auth/UserContext';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
-const SECTION_TABS = [
-  DialFileManagerTabs.MyFiles,
-  DialFileManagerTabs.Shared,
-  DialFileManagerTabs.Organization,
-];
-
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();
   const {
@@ -68,7 +63,7 @@ const DialFileManagerPage: FC = () => {
   // Every configured source tab becomes a top-level folder of the All tab.
   const sections = useMemo(
     (): DialFileManagerSection[] =>
-      SECTION_TABS.filter(
+      DIAL_FILE_MANAGER_SECTION_TABS.filter(
         (tab) => fileManagerTabs == null || fileManagerTabs.includes(tab),
       ).map((tab) => ({ tab, rootLabel: tabLabels[tab] })),
     [fileManagerTabs, tabLabels],

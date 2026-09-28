@@ -335,6 +335,77 @@ describe('useDialFileManagerSections', () => {
       await waitFor(() => expect(filesApi.deleteFiles).toHaveBeenCalledOnce());
     });
 
+    it('splits a delete spanning two sections into one request per section', async () => {
+      vi.mocked(filesApi.deleteFiles).mockResolvedValue({ results: [] });
+      const { result } = renderSections();
+      await waitForSettled(result);
+
+      act(() =>
+        result.current.onDeleteFiles(
+          [
+            {
+              sourceUrl: '/My files/reports/old.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+            {
+              sourceUrl: '/Shared/team-docs/plan.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/reports',
+        ),
+      );
+
+      await waitFor(() =>
+        expect(filesApi.deleteFiles).toHaveBeenCalledTimes(2),
+      );
+      expect(filesApi.deleteFiles).toHaveBeenCalledWith([
+        expect.objectContaining({ bucket: BUCKET, name: 'old.pdf' }),
+      ]);
+      expect(filesApi.deleteFiles).toHaveBeenCalledWith([
+        expect.objectContaining({ bucket: OWNER_BUCKET, name: 'plan.pdf' }),
+      ]);
+    });
+
+    it('downloads files from two sections through their own sections', async () => {
+      vi.mocked(filesApi.downloadFile).mockImplementation(() =>
+        Promise.resolve(new Response('x')),
+      );
+      const { result } = renderSections();
+      await waitForSettled(result);
+
+      act(() =>
+        result.current.onDownloadFiles([
+          {
+            name: 'old.pdf',
+            path: '/My files/reports/old.pdf',
+            folderId: `${BUCKET}:files/${BUCKET}/reports/`,
+            bucket: BUCKET,
+            nodeType: DialFileNodeType.ITEM,
+          },
+          {
+            name: 'plan.pdf',
+            path: '/Shared/team-docs/plan.pdf',
+            folderId: `${OWNER_BUCKET}:files/${OWNER_BUCKET}/team-docs/`,
+            bucket: OWNER_BUCKET,
+            nodeType: DialFileNodeType.ITEM,
+          },
+        ]),
+      );
+
+      await waitFor(() =>
+        expect(filesApi.downloadFile).toHaveBeenCalledTimes(2),
+      );
+      expect(filesApi.downloadFile).toHaveBeenCalledWith(
+        BUCKET,
+        expect.stringContaining('reports/old.pdf'),
+      );
+      expect(filesApi.downloadFile).toHaveBeenCalledWith(
+        OWNER_BUCKET,
+        expect.stringContaining('team-docs/plan.pdf'),
+      );
+    });
+
     it('keeps the upload queue visible after navigating to another section', async () => {
       vi.mocked(filesApi.uploadFile).mockImplementation(
         () => new Promise(() => undefined),

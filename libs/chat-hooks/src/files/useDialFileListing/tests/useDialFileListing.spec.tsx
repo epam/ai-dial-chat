@@ -2,6 +2,7 @@ import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
 import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialFilesApi } from '../../dial-files-api';
 import type { UseDialFileListingOptions } from '../useDialFileListing';
@@ -130,6 +131,35 @@ describe('useDialFileListing', () => {
       expect(filesApi.listFiles).toHaveBeenCalledWith(
         expect.objectContaining({ bucket: BUCKET, path: '' }),
       );
+    });
+
+    it('commits the activating render as loading, before the listing effect runs', async () => {
+      const committed: { isActive: boolean; isLoading: boolean }[] = [];
+      const { rerender } = renderHook(
+        ({ isActive }: { isActive: boolean }) => {
+          const listing = useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            isActive,
+          });
+          /* A layout effect sees each committed value before the hook's own passive effects run. */
+          useLayoutEffect(() => {
+            committed.push({ isActive, isLoading: listing.isLoading });
+          });
+          return listing;
+        },
+        { initialProps: { isActive: false } },
+      );
+      rerender({ isActive: true });
+
+      expect(committed).toContainEqual({ isActive: true, isLoading: true });
+      expect(committed).not.toContainEqual({
+        isActive: true,
+        isLoading: false,
+      });
+      await waitFor(() => expect(filesApi.listFiles).toHaveBeenCalledOnce());
     });
 
     it('ignores folder expansion while inactive', async () => {

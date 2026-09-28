@@ -205,4 +205,10 @@ export const unionPathSets = (
 export const hasSamePaths = (
   a: ReadonlySet<string>,
   b: ReadonlySet<string>,
-): boolean => a.size === b.size && [...a].every((path) => b.has(path));
+): boolean => {
+  if (a.size !== b.size) return false;
+  for (const path of a) {
+    if (!b.has(path)) return false;
+  }
+  return true;
+};
