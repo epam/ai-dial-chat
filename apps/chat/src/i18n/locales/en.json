@@ -840,8 +840,6 @@
     "upload": "Files",
     "newFolder": "Folder",
     "downloading": "Preparing download…",
-    "uploadProgressTitle": "Uploading files",
-    "uploadProgressSummary": "{{done}} of {{total}} complete",
     "checkInternetConnection": "Please check your internet connection and try again.",
     "uploadFailed": "Upload failed",
     "uploadSuccess": "The file has been uploaded successfully to “{{parentPath}}”",
