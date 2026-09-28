@@ -14,6 +14,7 @@ import {
   isMessageStreaming,
   messageHasStages,
 } from '../message-utils';
+import { getStartersFromSchema } from '../starter-option';
 
 /*
  * ---------------------------------------------------------------------------
@@ -307,6 +308,44 @@ describe('getToolConfigurationFromFormSchema', () => {
         },
       }),
     ).toBeUndefined();
+  });
+});
+
+/* A toggle sent as a buttons widget whose single option carries the current value. */
+const buttonsToggleForm = {
+  additionalProperties: false,
+  properties: {
+    deep_research: {
+      'dial:widget': 'buttons',
+      oneOf: [
+        {
+          const: false,
+          'dial:widgetOptions': {
+            confirmationMessage: null,
+            populateText: null,
+            submit: false,
+          },
+          title: 'Deep research',
+        },
+      ],
+      title: 'Deep research',
+      type: 'boolean',
+    },
+  },
+  required: ['deep_research'],
+  title: 'DeepResearchToggleForm',
+  type: 'object',
+};
+
+describe('getToolConfigurationFromFormSchema — single-option buttons widget', () => {
+  it('reads the toggle state from the single buttons option', () => {
+    expect(getToolConfigurationFromFormSchema(buttonsToggleForm)).toEqual({
+      deep_research: false,
+    });
+  });
+
+  it('offers no starter buttons for it', () => {
+    expect(getStartersFromSchema(buttonsToggleForm).starters).toEqual([]);
   });
 });
 
