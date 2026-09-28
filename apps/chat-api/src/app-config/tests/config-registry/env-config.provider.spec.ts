@@ -405,6 +405,17 @@ describe('EnvConfigProvider', () => {
       ]);
     });
 
+    it('accepts all as a recognized tab id', async () => {
+      const { provider } = makeProvider({
+        FILE_MANAGER_AVAILABLE_TABS: ['all', 'my_files', 'shared'],
+      });
+      expect(await provider.resolve('fileManager.availableTabs', ctx)).toEqual([
+        'all',
+        'my_files',
+        'shared',
+      ]);
+    });
+
     it('drops unknown ids and keeps only recognized tabs', async () => {
       const { provider } = makeProvider({
         FILE_MANAGER_AVAILABLE_TABS: ['my_files', 'review', 'bogus'],

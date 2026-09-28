@@ -6,6 +6,7 @@ import {
 import { safeDecodeURI, stripTrailingSlashes } from '../shared/string-utils';
 import {
   PATH_SEPARATOR_REGEXP,
+  type DialFileManagerSection,
   type SharedRootMeta,
 } from './dial-file-manager.model';
 import { DialFileManagerActionProfile } from './file-manager-variant';
@@ -176,3 +177,32 @@ export const resolveOwnerCoords = (
   const subPath = firstSlash === -1 ? '' : apiPath.slice(firstSlash + 1);
   return { bucket: meta.bucket, path: rootPathInBucket + subPath };
 };
+
+/** Returns the section whose root label is the first segment of `virtualPath`, or `undefined` when none matches. */
+export const resolveSectionByPath = <TSection extends DialFileManagerSection>(
+  virtualPath: string,
+  sections: readonly TSection[],
+): TSection | undefined => {
+  const withLeadingSlash = virtualPath.startsWith('/')
+    ? virtualPath
+    : `/${virtualPath}`;
+  return sections.find((section) => {
+    const root = `/${section.rootLabel}`;
+    return withLeadingSlash === root || withLeadingSlash.startsWith(`${root}/`);
+  });
+};
+
+/** Returns a new set containing every path from each of `pathSets`. */
+export const unionPathSets = (
+  pathSets: readonly ReadonlySet<string>[],
+): Set<string> => {
+  const union = new Set<string>();
+  pathSets.forEach((paths) => paths.forEach((path) => union.add(path)));
+  return union;
+};
+
+/** Returns `true` when both sets contain exactly the same paths. */
+export const hasSamePaths = (
+  a: ReadonlySet<string>,
+  b: ReadonlySet<string>,
+): boolean => a.size === b.size && [...a].every((path) => b.has(path));

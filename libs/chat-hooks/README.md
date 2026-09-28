@@ -77,7 +77,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.13
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.15
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -1706,7 +1706,7 @@ and `FormatResetTime` keep their names; only their owning package changes. See t
 
 ## File Manager
 
-A domain-specific set of hooks (and their supporting types/utilities) implementing the DIAL file manager: browsing/search, upload, create/rename/move/copy/delete, sharing, and metadata, composed against an injected `DialFilesApi` port instead of a configured REST client or React context. `useDialFileManager` is the composed entry point most consumers reach for; the six sub-hooks it composes (`useDialFileListing`, `useDialFileMetadata`, `useDialFileMutations`, `useDialFileSharing`, `useDialFileUploadBatch`) and the two standalone hooks (`useDialFileManagerTabConfig`, `useGridEditingScroll`) are exported individually for hosts that need only part of the surface, or that render `@epam/ai-dial-react-file-manager`'s `DialFileManager` grid directly.
+A domain-specific set of hooks (and their supporting types/utilities) implementing the DIAL file manager: browsing/search, upload, create/rename/move/copy/delete, sharing, and metadata, composed against an injected `DialFilesApi` port instead of a configured REST client or React context. `useDialFileManager` is the composed entry point most consumers reach for, and `useDialFileManagerSections` composes three of them for hosts that offer the combined All tab; the six sub-hooks it composes (`useDialFileListing`, `useDialFileMetadata`, `useDialFileMutations`, `useDialFileSharing`, `useDialFileUploadBatch`) and the two standalone hooks (`useDialFileManagerTabConfig`, `useGridEditingScroll`) are exported individually for hosts that need only part of the surface, or that render `@epam/ai-dial-react-file-manager`'s `DialFileManager` grid directly.
 
 None of these hooks call `react-i18next` or read an application context: every user-visible string arrives through a `labels`/`buildValidationErrorMessage`/`disabledNewButtonTooltip` parameter, and every failure/success is reported through a structured, translation-free event (`FileManagerNotification`, `FileOperationSuccessEvent`) the host maps to its own toast/notification copy.
 
@@ -1772,9 +1772,41 @@ const FileManagerHost = ({
 
 #### API
 
-**Parameters** (`UseDialFileManagerOptions`): `filesApi`, `bucket`, `labels`, `locale`, `disabledNewButtonTooltip`, `downloadDestination`, and `buildValidationErrorMessage` are required; `rootLabel` (default `'My files'`), `activeTab` (default `MyFiles`), `variant` (default `Attach`), `actionProfile`, `forbiddenSymbolsRegExp`, `onNotification`, and `onOperationSuccess` are optional. See the exported `UseDialFileManagerOptions` type for the complete shape.
+**Parameters** (`UseDialFileManagerOptions`): `filesApi`, `bucket`, `labels`, `locale`, `disabledNewButtonTooltip`, `downloadDestination`, and `buildValidationErrorMessage` are required; `rootLabel` (default `'My files'`), `activeTab` (default `MyFiles`), `isActive` (default `true`; `false` issues no request), `sessionKey` (a change resets navigation like a tab switch), `variant` (default `Attach`), `actionProfile`, `forbiddenSymbolsRegExp`, `onNotification`, and `onOperationSuccess` are optional. See the exported `UseDialFileManagerOptions` type for the complete shape.
 
 **Returns** (`UseDialFileManagerResult`): the full set of props `DialFileManager` needs — `items`, `isLoading`, `path`/`onPathChange`, search (`onSearchFiles`/`searchResults`/`isSearching`), tree expand state, upload (`onUploadFiles`/`onUploadArchive`/`uploadBatchState`), create/rename/move/copy/delete callbacks and their `isXxx` flags, sharing (`onUnshareFiles`/`onRemoveFilesAccess`), metadata (`onGetInfo`/`fileMetadata`), `actionLabels`, `visibleColumns`, and the aggregate `isAnyOperationInProgress`. See the exported `UseDialFileManagerResult` type for the complete shape.
+
+### useDialFileManagerSections
+
+Runs one `useDialFileManager` per source tab (My files, Shared, Organization). On a single tab it returns that section's result; on `DialFileManagerTabs.All` it merges each enabled section's root into one tree and routes every callback to the section whose `rootLabel` is the path's first segment, so each top-level folder keeps its own tab's columns, upload rules, and actions. Copy/move between sections is refused with a `CrossSectionTransferUnsupported` notification.
+
+```tsx
+import {
+  useDialFileManagerSections,
+  type DialFileManagerSection,
+} from '@epam/ai-dial-chat-hooks';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+
+const sections: DialFileManagerSection[] = [
+  { tab: DialFileManagerTabs.MyFiles, rootLabel: 'My files' },
+  { tab: DialFileManagerTabs.Shared, rootLabel: 'Shared' },
+  { tab: DialFileManagerTabs.Organization, rootLabel: 'Organization' },
+];
+
+const fileManager = useDialFileManagerSections({
+  ...managerOptions, // the same options useDialFileManager takes, minus rootLabel
+  activeTab: DialFileManagerTabs.All,
+  sections,
+});
+
+fileManager.sectionTab; // source tab of the browsed folder — never All
+```
+
+#### API
+
+**Parameters** (`UseDialFileManagerSectionsOptions`): every `UseDialFileManagerOptions` field except `rootLabel`, `activeTab`, `isActive` and `sessionKey`, plus the required `activeTab` (any tab, including `All`) and `sections` (enabled source tabs in display order, each with a distinct translated `rootLabel`).
+
+**Returns** (`UseDialFileManagerSectionsResult`): a `UseDialFileManagerResult` plus `sectionTab`. On All, tree/sharing path sets are unions across sections, operation flags are OR'ed, and the upload queue follows whichever section holds a batch.
 
 ### useDialFileListing
 
@@ -1795,7 +1827,7 @@ const { items, isLoading, path, onPathChange, onSearchFiles, searchResults } =
 
 #### API
 
-**Parameters** (`UseDialFileListingOptions`): `filesApi`, `bucket`, `rootLabel`, `activeTab` are required; `onNotification` is optional.
+**Parameters** (`UseDialFileListingOptions`): `filesApi`, `bucket`, `rootLabel`, `activeTab` are required; `onNotification`, `isActive` (default `true`; while `false` the hook issues no `DialFilesApi` call and reports `isLoading: false`), and `sessionKey` (a change resets cache and navigation exactly like an `activeTab` change) are optional.
 
 **Returns** (`UseDialFileListingResult`): `items`, `isLoading`, `error`, `path`/`folderPath`/`onPathChange`, `retry`, search (`onSearchFiles`/`isSearching`/`searchResults`/`clearSearchResults`), tree state (`expandedPaths`/`loadedPaths`/`onExpandedPathsChange`), folder-popup preload state, `sharedWithMeIds`/`sharedByMePaths`/`currentFolder`, and the cache-ownership seam other sub-hooks consume (`cache`, `listingPermissionsCache`, `sharedRootMetaRef`, `setFolderPath`, `invalidateFolders`, `mergeCreatedFolder`, `bumpRetry`).
 

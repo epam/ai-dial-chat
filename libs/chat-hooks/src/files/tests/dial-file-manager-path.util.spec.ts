@@ -1,5 +1,6 @@
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
+  DialFileManagerTabs,
   DialFileNodeType,
   DialFilePermission,
 } from '@epam/ai-dial-react-file-manager';
@@ -18,6 +19,7 @@ import {
   normalizeVirtualPath,
   parseNewFolderVirtualPath,
   resolveOwnerCoords,
+  resolveSectionByPath,
 } from '../dial-file-manager-path.util';
 import type { SharedRootMeta } from '../dial-file-manager.model';
 import { DialFileManagerActionProfile } from '../file-manager-variant';
@@ -288,5 +290,40 @@ describe('resolveOwnerCoords', () => {
     expect(
       resolveOwnerCoords('sharedFolder/sub', sharedRootMeta, 'my-bucket'),
     ).toEqual({ bucket: 'owner-bucket', path: 'reports/sub' });
+  });
+});
+
+describe('resolveSectionByPath', () => {
+  const sections = [
+    { tab: DialFileManagerTabs.MyFiles, rootLabel: 'My files' },
+    { tab: DialFileManagerTabs.Shared, rootLabel: 'Shared' },
+    { tab: DialFileManagerTabs.Organization, rootLabel: 'Organization' },
+  ];
+
+  it('resolves a section root path', () => {
+    expect(resolveSectionByPath('/Shared', sections)?.tab).toBe(
+      DialFileManagerTabs.Shared,
+    );
+  });
+
+  it('resolves a nested path with or without a leading slash', () => {
+    expect(resolveSectionByPath('/Organization/docs/', sections)?.tab).toBe(
+      DialFileManagerTabs.Organization,
+    );
+    expect(resolveSectionByPath('My files/reports/q1.pdf', sections)?.tab).toBe(
+      DialFileManagerTabs.MyFiles,
+    );
+  });
+
+  it('does not match a root label that is only a prefix of the first segment', () => {
+    expect(resolveSectionByPath('/Shared stuff/a', sections)).toBeUndefined();
+    expect(resolveSectionByPath('/My files/Shared stuff/', sections)?.tab).toBe(
+      DialFileManagerTabs.MyFiles,
+    );
+  });
+
+  it('returns undefined for a path outside every section', () => {
+    expect(resolveSectionByPath('/Elsewhere/a', sections)).toBeUndefined();
+    expect(resolveSectionByPath('/', sections)).toBeUndefined();
   });
 });

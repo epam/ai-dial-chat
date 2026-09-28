@@ -98,6 +98,109 @@ describe('useDialFileListing', () => {
     expect(filesApi.listPublicFiles).toHaveBeenCalled();
   });
 
+  describe('isActive', () => {
+    it('issues no request and reports not loading while inactive', async () => {
+      const { result } = renderListing({ isActive: false });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(filesApi.listFiles).not.toHaveBeenCalled();
+      expect(filesApi.listSharedByMe).not.toHaveBeenCalled();
+      expect(result.current.items).toHaveLength(1);
+      expect(result.current.items[0].path).toBe('/My files');
+    });
+
+    it('loads the root once when it becomes active', async () => {
+      const { result, rerender } = renderHook(
+        ({ isActive }: { isActive: boolean }) =>
+          useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            isActive,
+          }),
+        { initialProps: { isActive: false } },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(filesApi.listFiles).not.toHaveBeenCalled();
+
+      rerender({ isActive: true });
+
+      await waitFor(() => expect(filesApi.listFiles).toHaveBeenCalledOnce());
+      expect(filesApi.listFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ bucket: BUCKET, path: '' }),
+      );
+    });
+
+    it('ignores folder expansion while inactive', async () => {
+      const { result } = renderListing({ isActive: false });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() =>
+        result.current.onExpandedPathsChange(new Set(['/My files/reports'])),
+      );
+
+      expect(filesApi.listFiles).not.toHaveBeenCalled();
+      expect(result.current.expandedPaths.size).toBe(0);
+    });
+  });
+
+  describe('sessionKey', () => {
+    it('resets navigation and cache when the session key changes', async () => {
+      const { result, rerender } = renderHook(
+        ({ sessionKey }: { sessionKey: string }) =>
+          useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            sessionKey,
+          }),
+        { initialProps: { sessionKey: 'all' } },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onPathChange('/My files/reports/'));
+      await waitFor(() =>
+        expect(result.current.path).toBe('/My files/reports/'),
+      );
+      act(() =>
+        result.current.onExpandedPathsChange(new Set(['/My files/reports'])),
+      );
+      await waitFor(() => expect(result.current.expandedPaths.size).toBe(1));
+
+      rerender({ sessionKey: 'my_files' });
+
+      await waitFor(() => expect(result.current.path).toBe('/My files'));
+      expect(result.current.expandedPaths.size).toBe(0);
+      expect(result.current.cache.has('reports/')).toBe(false);
+    });
+
+    it('keeps navigation when re-rendered with the same session key', async () => {
+      const { result, rerender } = renderHook(
+        ({ sessionKey }: { sessionKey: string }) =>
+          useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            sessionKey,
+          }),
+        { initialProps: { sessionKey: 'all' } },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() => result.current.onPathChange('/My files/reports/'));
+      await waitFor(() =>
+        expect(result.current.path).toBe('/My files/reports/'),
+      );
+
+      rerender({ sessionKey: 'all' });
+
+      expect(result.current.path).toBe('/My files/reports/');
+      expect(result.current.cache.has('')).toBe(true);
+    });
+  });
+
   it('falls back to the parent folder when the current folder 404s (e.g. emptied and removed)', async () => {
     vi.mocked(filesApi.listFiles).mockImplementation((query) => {
       if (query.path === 'reports/') {

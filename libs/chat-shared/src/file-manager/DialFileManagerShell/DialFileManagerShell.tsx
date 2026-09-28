@@ -195,7 +195,11 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     isFileMetadataLoading,
     onGetInfo,
     clearMetadata,
+    sectionTab,
   } = controller;
+
+  /* Per-tab rules follow the browsed folder's source tab; the strip keeps `activeTab`. */
+  const gateTab = sectionTab ?? activeTab;
 
   const [destinationFolderPath, setDestinationFolderPath] = useState<
     string | undefined
@@ -206,7 +210,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   useEffect(() => {
     resetGridEditingScroll();
-  }, [activeTab, resetGridEditingScroll]);
+  }, [gateTab, resetGridEditingScroll]);
 
   const actionLabels = useMemo(() => {
     const result: Partial<Record<DialFileManagerActions, string>> = {};
@@ -323,7 +327,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   const showUploadArchiveAction =
     variant === DialFileManagerVariant.Standalone &&
     actionProfile === DialFileManagerActionProfile.Full &&
-    activeTab === DialFileManagerTabs.MyFiles &&
+    gateTab === DialFileManagerTabs.MyFiles &&
     uploadEnabled;
 
   const toolbarOptions = useMemo(
@@ -490,7 +494,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     if (isInSubfolder) {
       return { title: labels.folderEmptyStateTitle, description: '' };
     }
-    return labels.emptyStateByTab[activeTab];
+    return labels.emptyStateByTab[gateTab];
   }, [
     searchResults,
     isSearching,
@@ -498,7 +502,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     labels.searchEmptyStateTitle,
     labels.folderEmptyStateTitle,
     labels.emptyStateByTab,
-    activeTab,
+    gateTab,
   ]);
 
   return (

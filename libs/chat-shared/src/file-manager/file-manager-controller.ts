@@ -3,6 +3,7 @@ import type {
   DialDeletedItem,
   DialFile,
   DialFileManagerActions,
+  DialFileManagerTabs,
   DialUploadFileItem,
   FileManagerColumnKey,
 } from '@epam/ai-dial-react-file-manager';
@@ -158,4 +159,7 @@ export interface FileManagerController {
   onGetInfo: (file: DialFile) => void;
   /** Metadata: resets fileMetadata/isFileMetadataLoading; passed to fileMetadataPopupOptions.clearMetadata. */
   clearMetadata: () => void;
+
+  /** Source tab of the browsed folder, never `All`; omitted by single-source controllers. */
+  sectionTab?: DialFileManagerTabs;
 }

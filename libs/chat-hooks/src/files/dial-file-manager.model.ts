@@ -2,6 +2,7 @@ import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
 import {
   DialFilePermission,
   FileManagerColumnKey,
+  type DialFileManagerTabs,
 } from '@epam/ai-dial-react-file-manager';
 
 /** Max number of files uploaded concurrently within a single upload batch. */
@@ -53,6 +54,14 @@ export interface SharedRootMeta {
   bucket: string;
   /** DIAL Core URL of the shared root item, e.g. "files/owner-bucket/some-folder/" */
   dialCorePath: string;
+}
+
+/** One source tab rendered as a top-level folder of the All view. */
+export interface DialFileManagerSection {
+  /** Source tab backing this section — `MyFiles`, `Shared` or `Organization`. */
+  tab: DialFileManagerTabs;
+  /** Display name of the section's top-level folder; also the first segment of its virtual paths. */
+  rootLabel: string;
 }
 
 export interface PreparedCopyMoveItem<TDto> {

@@ -48,6 +48,10 @@ export interface UseDialFileListingOptions {
   activeTab: DialFileManagerTabs;
   /** Called with a structured event when a folder-load operation fails. */
   onNotification?: (notification: FileManagerNotification) => void;
+  /** When false, the hook issues no `DialFilesApi` call and reports `isLoading: false`. Defaults to `true`. */
+  isActive?: boolean;
+  /** Changing this value resets cache and navigation exactly like an `activeTab` change. Defaults to `undefined`. */
+  sessionKey?: string;
 }
 
 /** Values returned by `useDialFileListing`. */
@@ -114,6 +118,8 @@ export const useDialFileListing = ({
   rootLabel,
   activeTab,
   onNotification,
+  isActive = true,
+  sessionKey,
 }: UseDialFileListingOptions): UseDialFileListingResult => {
   const [folderPath, setFolderPath] = useState('');
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
@@ -126,7 +132,7 @@ export const useDialFileListing = ({
   const [listingPermissionsCache, setListingPermissionsCache] = useState<
     Map<string, string[] | undefined>
   >(() => new Map());
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(isActive);
   const [error, setError] = useState<string | null>(null);
   const [retryCounter, setRetryCounter] = useState(0);
   const [sharedRootIds, setSharedRootIds] = useState<string[] | undefined>(
@@ -160,11 +166,12 @@ export const useDialFileListing = ({
     () => new Set(),
   );
 
-  // Clear cache and reset path on tab switch
-  const prevTabRef = useRef(activeTab);
+  // Clear cache and reset path on tab switch or session change
+  const sessionId = `${activeTab}|${sessionKey ?? ''}`;
+  const prevSessionRef = useRef(sessionId);
   useEffect(() => {
-    if (prevTabRef.current === activeTab) return;
-    prevTabRef.current = activeTab;
+    if (prevSessionRef.current === sessionId) return;
+    prevSessionRef.current = sessionId;
     setCache(new Map());
     setListingPermissionsCache(new Map());
     setFolderPath('');
@@ -183,7 +190,7 @@ export const useDialFileListing = ({
     setSearchResults(null);
     setIsSearching(false);
     setExpandedPaths(new Set());
-  }, [activeTab]);
+  }, [sessionId]);
 
   useEffect(() => {
     return () => {
@@ -199,6 +206,10 @@ export const useDialFileListing = ({
    * needed to satisfy the standalone page's "load root listing on open"
    * requirement; it falls out of this effect's existing dependency array. */
   useEffect(() => {
+    if (!isActive) {
+      setIsLoading(false);
+      return;
+    }
     let cancelled = false;
     setIsLoading(true);
     setError(null);
@@ -262,12 +273,20 @@ export const useDialFileListing = ({
     return () => {
       cancelled = true;
     };
-  }, [activeTab, bucket, filesApi, folderPath, retryCounter, rootLabel]);
+  }, [
+    activeTab,
+    bucket,
+    filesApi,
+    folderPath,
+    isActive,
+    retryCounter,
+    rootLabel,
+  ]);
 
   /* sharedByMePaths is bucket-scoped (not folder-scoped) — fetched once per
    * my_files tab activation/retry, independent of the folder-listing effect above. */
   useEffect(() => {
-    if (activeTab !== DialFileManagerTabs.MyFiles) {
+    if (!isActive || activeTab !== DialFileManagerTabs.MyFiles) {
       setSharedByMePaths(new Set());
       return;
     }
@@ -297,7 +316,7 @@ export const useDialFileListing = ({
     return () => {
       cancelled = true;
     };
-  }, [activeTab, bucket, filesApi, retryCounter, rootLabel]);
+  }, [activeTab, bucket, filesApi, isActive, retryCounter, rootLabel]);
 
   const items = useMemo(
     (): DialFile[] => [
@@ -470,6 +489,7 @@ export const useDialFileListing = ({
 
   const onFolderPopupPathChange = useCallback(
     (nextPath?: string) => {
+      if (!isActive) return;
       const apiPath =
         nextPath == null ? '' : virtualPathToApiPath(nextPath, rootLabel);
       const virtualPath = nextPath == null ? `/${rootLabel}` : nextPath;
@@ -534,7 +554,7 @@ export const useDialFileListing = ({
 
       void loadFolder();
     },
-    [activeTab, bucket, filesApi, onNotification, rootLabel],
+    [activeTab, bucket, filesApi, isActive, onNotification, rootLabel],
   );
 
   const loadedPaths = useMemo(() => {
@@ -551,6 +571,7 @@ export const useDialFileListing = ({
 
   const onExpandedPathsChange = useCallback(
     (paths: Set<string>) => {
+      if (!isActive) return;
       /*
        * Collapsed folders drop out of `paths` — clear their errored state so
        * re-expanding the same folder later retries instead of staying blocked.
@@ -606,7 +627,15 @@ export const useDialFileListing = ({
         void loadFolder();
       });
     },
-    [activeTab, bucket, filesApi, expandedPaths, onNotification, rootLabel],
+    [
+      activeTab,
+      bucket,
+      filesApi,
+      expandedPaths,
+      isActive,
+      onNotification,
+      rootLabel,
+    ],
   );
 
   const clearSearchResults = useCallback(() => {
@@ -622,6 +651,7 @@ export const useDialFileListing = ({
 
   const onSearchFiles = useCallback(
     (_folder: string, query: string) => {
+      if (!isActive) return;
       if (searchDebounceRef.current != null) {
         clearTimeout(searchDebounceRef.current);
         searchDebounceRef.current = null;
@@ -692,7 +722,7 @@ export const useDialFileListing = ({
         void runSearch();
       }, 300);
     },
-    [activeTab, bucket, cache, filesApi, folderPath, rootLabel],
+    [activeTab, bucket, cache, filesApi, folderPath, isActive, rootLabel],
   );
 
   const path = folderPath ? `/${rootLabel}/${folderPath}` : `/${rootLabel}`;

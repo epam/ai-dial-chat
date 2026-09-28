@@ -49,7 +49,7 @@ Peers:
 
 - `react` ^19.2.8
 - `@epam/ai-dial-ui-kit` ^0.15.0-dev.21
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.13 \*
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.15 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -932,7 +932,9 @@ import { DialFileManagerShell } from '@epam/ai-dial-chat-shared/file-manager';
 
 ### FileManagerController
 
-Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` (or `UseDialFileManagerSectionsResult`) value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+
+The optional `sectionTab` is the source tab of the browsed folder when the host shows the combined All tab. The shell gates its per-tab behaviour — the upload-archive toolbar entry, the root empty state — on `sectionTab ?? activeTab`, while `activeTab` stays the tab-strip value and the `treeHeaderByTab` key.
 
 ```ts
 import type { FileManagerController } from '@epam/ai-dial-chat-shared';
@@ -940,7 +942,7 @@ import type { FileManagerController } from '@epam/ai-dial-chat-shared';
 
 ### DialFileManagerShellLabels
 
-Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n.
+Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n. `treeHeaderByTab` and `emptyStateByTab` are keyed by every `DialFileManagerTabs` member, `all` included.
 
 ```ts
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';

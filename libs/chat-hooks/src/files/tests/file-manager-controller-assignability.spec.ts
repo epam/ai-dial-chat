@@ -1,6 +1,7 @@
 import type { FileManagerController } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { UseDialFileManagerResult } from '../dial-file-manager.types';
+import type { UseDialFileManagerSectionsResult } from '../useDialFileManagerSections/useDialFileManagerSections';
 
 /*
  * Compile-time assignability assertion: UseDialFileManagerResult must satisfy
@@ -9,12 +10,21 @@ import type { UseDialFileManagerResult } from '../dial-file-manager.types';
  */
 type AssertAssignable<Target, Source extends Target> = Source;
 type _Proof = AssertAssignable<FileManagerController, UseDialFileManagerResult>;
+type _SectionsProof = AssertAssignable<
+  FileManagerController,
+  UseDialFileManagerSectionsResult
+>;
 
 describe('FileManagerController assignability', () => {
   it('UseDialFileManagerResult is structurally assignable to FileManagerController', () => {
     /* The compile-time assertion above is the real test. This runtime
        assertion exists only so the test runner counts it. */
     const proof: _Proof = {} as UseDialFileManagerResult;
+    expect(proof).toBeDefined();
+  });
+
+  it('UseDialFileManagerSectionsResult is structurally assignable to FileManagerController', () => {
+    const proof: _SectionsProof = {} as UseDialFileManagerSectionsResult;
     expect(proof).toBeDefined();
   });
 

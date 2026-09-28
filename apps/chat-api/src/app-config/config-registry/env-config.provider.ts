@@ -13,7 +13,7 @@ import { ApplicationVisualizerDto } from '../dto/application-visualizer.dto';
 import { CustomVisualizerDto } from '../dto/custom-visualizer.dto';
 import { CONFIG_DEFINITIONS } from './config-registry.constants';
 
-const FILE_MANAGER_ALLOWED_TABS = ['my_files', 'shared', 'organization'];
+const FILE_MANAGER_ALLOWED_TABS = ['all', 'my_files', 'shared', 'organization'];
 
 @Injectable()
 export class EnvConfigProvider implements ConfigProvider {

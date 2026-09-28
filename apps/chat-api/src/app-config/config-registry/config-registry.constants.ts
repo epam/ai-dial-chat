@@ -316,10 +316,10 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     type: 'config',
     valueType: 'json',
     visibility: 'client',
-    defaultValue: ['my_files', 'shared', 'organization'],
+    defaultValue: ['all', 'my_files', 'shared', 'organization'],
     critical: false,
     description:
-      'Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs when FILE_MANAGER_AVAILABLE_TABS is unset or resolves to no valid ids.',
+      'Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs when FILE_MANAGER_AVAILABLE_TABS is unset or resolves to no valid ids.',
     owner: 'chat-team',
     envVar: 'FILE_MANAGER_AVAILABLE_TABS',
   },
