@@ -67,7 +67,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(ToolsetActions.setToolsetDetails());
+      dispatch(ToolsetActions.clearToolsetDetails());
       void router.push({
         pathname: Routes.ToolsetEditor,
         query: {
