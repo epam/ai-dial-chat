@@ -3,7 +3,6 @@
 ## Purpose
 
 Specifies the standalone `/files` route: its registration (`apps/chat/src/types/routes.ts`, `apps/chat/src/app/app.tsx`), its navigation entry, and `DialFileManagerPage` (`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx`) — a thin host that reuses `DialFileManagerShell` and `useDialFileManager`'s `standalone`/`browse` variant (from the `file-manager-shell` capability) to browse and manage files outside the conversation attach flow, with no page chrome of its own.
-
 ## Requirements
 ### Requirement: File Manager route registration
 
@@ -30,14 +29,44 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 
 ### Requirement: DialFileManagerPage component
 
-`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx` SHALL be a top-level `FC` that: resolves `bucket` via `useUser()` from `apps/chat/src/context/auth/UserContext.tsx` (`user?.bucket ?? ''`, matching the attach modal's existing pattern); reads `maxSelectableFileSize` from `useAppConfig().config.maxAttachmentFileSizeBytes`; calls `useDialFileManager({ bucket, variant: 'standalone', actionProfile: 'browse' })` (unchanged — size enforcement does not flow through this hook); wires notifications via `useNotification()`; and renders `DialFileManagerShell` fed by the hook's result, filling the full page with no additional chrome, forwarding `maxSelectableFileSize` (for existing-file selection, grid `isRowSelectable`, see `dial-file-manager-attach-validation`) and a translated `oversizedUploadMessage` (built from the i18n key `dialFileManager.uploadFileTooLarge`, e.g. "Max file size is {{maxSize}}.") to `DialFileManagerShell`, which forwards both, respectively, as `<DialFileManager>`'s `maxSelectableFileSize` and `maxFileSize`/`uploadValidationMessages.oversizedFiles` props — the same AppConfig-sourced value now gates both existing-file selection and the ui-kit's own pre-upload size check, matching the attach modal. It SHALL NOT render `DialPopup`, any attach footer, or a page title/header, and SHALL NOT pass `allowedTypes`, `maximumAttachmentsAmount`, `canAttachFolders`, or `onAttach`.
+`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx` SHALL be a top-level `FC` that does the following.
 
-This closes a pre-existing gap: before this change, `DialFileManagerPage` passed no size context at all, so the standalone page's existing-file selection was completely unrestricted by size (unlike the attach modal, which already passed `maxSelectableFileSize`) and its own "New → Upload files" flow never engaged the ui-kit's built-in `maxFileSize` pre-upload check, which the app had also never wired up anywhere.
+**Inputs:**
+
+- Resolves `bucket` via `useUser()` from `apps/chat/src/context/auth/UserContext.tsx` (`user?.bucket ?? ''`, matching the attach modal's existing pattern).
+- Reads `maxSelectableFileSize` from `useAppConfig().config.maxAttachmentFileSizeBytes`.
+- Reads `fileManagerTabs` from `useAppConfig().config.fileManagerTabs`.
+
+**Tabs:**
+
+- Tracks the active tab via `useDialFileManagerTabs(tabLabels, DialFileManagerTabs.All)`, filtered through `useDialFileManagerTabConfig(…, fileManagerTabs)`.
+- `tabLabels[All]` is `t(DialFileManagerI18nKeys.TabAll)`.
+
+**File manager composition:**
+
+- Calls `useDialFileManagerSections({ …hostOptions, bucket, activeTab, sections, variant: DialFileManagerVariant.Standalone, actionProfile: DialFileManagerActionProfile.Full, forbiddenSymbolsRegExp })` from `@epam/ai-dial-chat-hooks` in place of a single `useDialFileManager`.
+- `sections` lists every source tab (`my_files`, `shared`, `organization`, in that order) enabled by `fileManagerTabs`, each paired with its translated tab label as `rootLabel`. The label keys are `dialFileManager.tab.myFiles`, `dialFileManager.tab.shared` and `basic.organization`.
+- `sections` is `useMemo`'d on `fileManagerTabs` and `t`.
+
+**Rendering:**
+
+- Renders `DialFileManagerShell` fed by the composer's result, including its `sectionTab`, filling the full page with no additional chrome.
+- `treeHeaderByTab[All]` is `t(DialFileManagerI18nKeys.MyFilesTreeHeader)`.
+- Clears the grid selection whenever the active tab or the composer's `sectionTab` changes.
+- Forwards `maxSelectableFileSize` (for existing-file selection and grid `isRowSelectable`; see `dial-file-manager-attach-validation`) and a translated `oversizedUploadMessage` (built from the i18n key `dialFileManager.uploadFileTooLarge`) to `DialFileManagerShell`. The shell forwards them to `<DialFileManager>` as `maxSelectableFileSize` and as `maxFileSize`/`uploadValidationMessages.oversizedFiles` respectively.
+
+**Exclusions:** the page SHALL NOT render `DialPopup`, any attach footer, or a page title/header. It SHALL NOT pass `allowedTypes`, `maximumAttachmentsAmount`, `canAttachFolders`, or `onAttach`.
+
+#### Scenario: Page opens on the All tab
+
+- **WHEN** `DialFileManagerPage` mounts with the default `fileManagerTabs` (`['all', 'my_files', 'shared', 'organization']`)
+- **THEN** the active tab is `DialFileManagerTabs.All`, and the All chip is rendered first and pressed
+- **AND** the grid shows the root of `My files` (`path === '/My files'` for the `en` label)
 
 #### Scenario: Root listing loads without user interaction
 
 - **WHEN** `DialFileManagerPage` mounts
-- **THEN** the root folder listing for the user's bucket is fetched and rendered without requiring the user to navigate or click anything (relies on `useDialFileManager`'s existing standalone mount-load behavior)
+- **THEN** the root folder listing for the user's bucket is fetched and rendered without the user navigating or clicking anything
 
 #### Scenario: No attach affordances are rendered
 
@@ -49,17 +78,22 @@ This closes a pre-existing gap: before this change, `DialFileManagerPage` passed
 - **WHEN** a user switches between My files, Shared with me, and Organization tabs on the standalone page
 - **THEN** the same columns, dates, and per-tab actions (upload, delete, rename, download) appear as they do in the attach modal for the same tab
 
+#### Scenario: Deployment without all opens on My files
+
+- **WHEN** `fileManagerTabs` is `['my_files', 'shared', 'organization']`
+- **THEN** no All chip is rendered, and the page opens on `DialFileManagerTabs.MyFiles` via the tab-config correction
+
 #### Scenario: Standalone page enforces the same size limit as the attach modal
 
 - **WHEN** `useAppConfig().config.maxAttachmentFileSizeBytes` resolves to `536870912`
 - **THEN** `DialFileManagerPage` passes `maxSelectableFileSize: 536870912` into `DialFileManagerShell`
 - **AND** an existing file in storage larger than that is not selectable in the standalone page's grid, matching the attach modal's `isRowSelectable` behavior
-- **AND** a freshly-picked local file larger than that is rejected by the ui-kit's own `maxFileSize` check before `onUploadFiles`/any `POST /api/v1/files` request
+- **AND** a freshly-picked local file larger than that is rejected by the ui-kit's own `maxFileSize` check before `onUploadFiles` or any `POST /api/v1/files` request
 
 #### Scenario: Size limit falls back to the default before AppConfig loads
 
 - **WHEN** `DialFileManagerPage` mounts before `AppConfig`'s initial fetch has resolved
-- **THEN** `maxSelectableFileSize` is `536870912` (the `AppConfig` default), not `undefined` — the page never briefly renders with no size restriction at all
+- **THEN** `maxSelectableFileSize` is `536870912` (the `AppConfig` default), not `undefined`, so the page never briefly renders without a size restriction
 
 ### Requirement: Standalone page responsive layout
 
