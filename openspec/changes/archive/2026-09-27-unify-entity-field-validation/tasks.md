@@ -11,8 +11,10 @@ then wires them end to end.
       `libs/chat-shared/src/utils/entity-field-limits.ts`, export them from
       `libs/chat-shared/src/index.ts`, and unit-test them in
       `libs/chat-shared/src/utils/tests/entity-field-limits.spec.ts`.
-- [x] 1.2 Alias `PROMPT_*_MAX_LENGTH` to the shared constants in
-      `libs/chat-hooks/src/prompt/prompt.ts`.
+- [x] 1.2 Pin `PROMPT_*_MAX_LENGTH` (`libs/chat-hooks/src/prompt/prompt.ts`) to the shared
+      constants with a test in `libs/chat-hooks/src/prompt/tests/prompt.spec.ts`. Keep them
+      literal, because the `./utils` entry must not import `chat-shared` at runtime (commit
+      `dae37acdb`).
 - [x] 1.3 Add `editor.fieldTooLong` / `editor.nameControlCharacters` to
       `apps/chat/src/i18n/locales/en.json` and `EditorI18nKeys`.
 

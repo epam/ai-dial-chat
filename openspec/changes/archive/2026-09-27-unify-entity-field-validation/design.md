@@ -14,8 +14,11 @@ limits already existed in three unrelated places: `PROMPT_*_MAX_LENGTH` in
 `scheduled-tasks`, `skill-editor`, `prompt-editor`) and of `chat-hooks`, so it is the one module
 all of them can import without adding a dependency edge. The backend cannot import a frontend
 package, so `apps/chat-api/src/common/validators/entity-field-limits.ts` carries the same three
-numbers, with a comment pointing at its frontend twin. The Prompt constants now alias the shared
-ones rather than restating 256/2000/50000.
+numbers, with a comment pointing at its frontend twin. The Prompt constants
+(`PROMPT_*_MAX_LENGTH`) keep their literal 256/2000/50000 values: `prompt.ts` ships in
+`chat-hooks`'s `./utils` entry, which the cold-load probes install without `chat-shared`, so a
+runtime import there would break that entry. `libs/chat-hooks/src/prompt/tests/prompt.spec.ts` pins
+them to the shared constants instead.
 
 ### D2 — Validators return codes; the app translates
 
