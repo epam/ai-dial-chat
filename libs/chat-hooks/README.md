@@ -3664,7 +3664,9 @@ const {
 
 ### useSkillFileActions
 
-Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
+Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), creating empty folders, expanding `.zip` archives for staging, and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
+
+The returned `fileActions` also carries `onCreateFolder` (adds a folder node, ignoring an existing path), `validateFolderPath` (`messages.pathInvalid` for a path `isValidSkillRelativePath` rejects), and `extractArchive` (reads a `.zip` with `fflate`, skipping directory, `__MACOSX/` and `.DS_Store` entries; path and size limits apply afterwards through `validateBatch`). The optional `pickFromFileSystem` param is passed through unchanged as `fileActions.pickFromFileSystem` — the host owns the picker, buckets and downloads.
 
 ```ts
 import { useSkillFileActions } from '@epam/ai-dial-chat-hooks';
@@ -3696,6 +3698,8 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
       manifestImportDeclined: 'Manifest import was declined',
       saveError: 'Could not save the skill',
     },
+    // Optional: enables the editor's "Open DIAL file system" entry.
+    pickFromFileSystem: openHostFilePicker,
   });
 ```
 

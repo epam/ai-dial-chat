@@ -34,6 +34,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  ButtonDropdown: ({ label }: { label: ReactNode }) => (
+    <button aria-haspopup="menu">{label}</button>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },
@@ -189,6 +192,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
   ButtonAppearance: { Solid: 'solid', Ghost: 'ghost', Link: 'link' },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
   Popup: ({
     open,
@@ -267,6 +271,9 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconArrowNarrowLeft: () => <svg />,
+  IconDatabase: () => <svg />,
+  IconFileZip: () => <svg />,
+  IconFolderPlus: () => <svg />,
   IconPlus: () => <svg />,
   IconTrashX: () => <svg />,
   IconUpload: () => <svg />,
@@ -632,6 +639,6 @@ describe('SkillEditor — public class names', () => {
       SKILL_EDITOR_CLASS.root,
     );
     expect(root).toBeTruthy();
-    expect(root!.getAttribute('dir')).toBe('rtl');
+    expect(root?.getAttribute('dir')).toBe('rtl');
   });
 });
