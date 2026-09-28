@@ -74,6 +74,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { CELEBRATION_HISTORY_CLASS } from '../../constants/celebration';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -115,7 +116,6 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
-import { CELEBRATION_HISTORY_CLASS } from '../../utils/celebration-history';
 import { collapseScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,
@@ -1149,7 +1149,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           selectedUnpublishFolder != null
             ? folders.find((folder) => folder === selectedUnpublishFolder)
             : folders[0];
-        if (!folderPath) return;
+        /* `folderPath` is legitimately `''` for a conversation published at
+         * the public root, so this must reject "not found" (`undefined`),
+         * not every falsy value — an `if (!folderPath)` check here silently
+         * dropped every unpublish request for a root-folder publication. */
+        if (folderPath == null) return;
 
         try {
           await unpublishConversation(path, folderPath);
@@ -1381,7 +1385,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                   })
                 : t(ConversationUnpublishI18nKeys.ConfirmMessage, {
                     name: pendingUnpublish?.title ?? '',
-                    folder: unpublishFolders[0] ?? '',
+                    folder: getPublishFolderLabel(unpublishFolders[0] ?? '', t),
                   })}
             </span>
             {hasUnpublishFolderChoice && (
@@ -1395,7 +1399,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 disabled={isUnpublishing}
                 items={unpublishFolders.map((folder) => ({
                   value: folder,
-                  label: folder,
+                  label: getPublishFolderLabel(folder, t),
                 }))}
                 radioClassName="dial-small-text text-primary"
               />

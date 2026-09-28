@@ -1,0 +1,50 @@
+/* Layered illustration pigments stay readable on both light and dark surfaces. */
+.paw {
+  fill: var(--footprint-pad, #a2c7b5);
+  stroke: var(--footprint-edge, #45645e);
+  stroke-width: 1.2;
+}
+.padLight {
+  fill: none;
+  stroke: var(--footprint-light, #e0edcf);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.eye {
+  fill: var(--footprint-eye, #c9dd8d);
+  stroke: var(--footprint-edge, #45645e);
+  stroke-width: 1.4;
+}
+.pupil {
+  fill: var(--footprint-ink, #233b38);
+}
+.eyeLight {
+  fill: none;
+  stroke: var(--footprint-light, #f6f6d8);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.lid,
+.teeth,
+.smile {
+  fill: none;
+  stroke: var(--footprint-ink, #233b38);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mouth {
+  fill: var(--footprint-tooth, #eee7c7);
+  stroke: var(--footprint-edge, #45645e);
+  stroke-width: 1.2;
+}
+
+.ledge {
+  border-color: var(--footprint-pad, #a2c7b5);
+}
+
+/* WAAPI owns visibility only while the activation is alive. */
+.scene[data-ready='false'],
+.scene[data-ended='true'] {
+  visibility: hidden;
+}

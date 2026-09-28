@@ -1,3 +1,4 @@
+import { useCelebration } from '@epam/ai-dial-celebrations';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   NavigationPanel,
@@ -17,7 +18,6 @@ import {
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
-import { useCelebration } from '../../context/CelebrationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';

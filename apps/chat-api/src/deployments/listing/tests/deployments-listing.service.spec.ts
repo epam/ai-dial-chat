@@ -727,6 +727,89 @@ describe('DeploymentsListingService', () => {
       expect(result.deployments).toHaveLength(2);
       expect(result.deployments[0].features?.skillsSupported).toBe(true);
       expect(result.deployments[1].features?.skillsSupported).toBeUndefined();
+      expect(result.deployments[1].features?.tools).toBe(true);
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'deployments:list:user1',
+        expect.any(Array),
+        30_000,
+      );
+    });
+
+    it('maps features.tools true for a model with tool-calling support', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, features: { tools: true } }],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.tools).toBe(true);
+    });
+
+    it('maps features.tools true for an application with tool-calling support', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, features: { tools: true } }],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.tools).toBe(true);
+    });
+
+    it('omits features.tools when tools is absent or non-boolean', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockModel, features: { system_prompt: true } },
+          { ...mockApplication, features: { tools: 'yes' } },
+        ],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].features?.tools).toBeUndefined();
+      expect(result.deployments[1].features?.tools).toBeUndefined();
+    });
+
+    it('maps differing tools values without changing list caching', async () => {
+      const { service, sdkClient, cacheManager } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockModel, features: { tools: true } },
+          { ...mockApplication, features: { tools: false } },
+        ],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments).toHaveLength(2);
+      expect(result.deployments[0].features?.tools).toBe(true);
+      expect(result.deployments[1].features?.tools).toBeUndefined();
       expect(cacheManager.set).toHaveBeenCalledWith(
         'deployments:list:user1',
         expect.any(Array),

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Celebration Scene Ideas'
+  short_description: 'Story-driven scenes that interact with the page'
+  default_prompt: "Use $celebration-scene-ideas to propose a New Year scene that interacts with page components, using this repository's Halloween scenes as references."
