@@ -26,6 +26,7 @@ export interface ModelCapabilities {
   hasResume?: boolean;
   hasChatCompletion?: boolean;
   hasResponsesApi?: boolean;
+  hasSkills?: boolean;
   reasoningEfforts?: string[];
 }
 
@@ -104,6 +105,7 @@ export interface AgentCapabilities {
   hasConfiguration?: boolean;
   hasChatCompletion?: boolean;
   hasResponsesApi?: boolean;
+  hasSkills?: boolean;
 }
 
 /** Input-attachment configuration for an agent (application) deployment. */
