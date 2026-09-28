@@ -429,6 +429,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
               appId={appId || undefined}
               metadata={metadata.values}
               isPreviewing={isPreviewing}
+              onSubmit={handleSubmit}
+              isSubmitting={isSaving}
               onReadyChange={setIsSetupReady}
             />
           }

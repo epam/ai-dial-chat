@@ -165,6 +165,25 @@ describe('EntityEditor', () => {
     expect(getFirstButton('Abbrechen')).toBeTruthy();
   });
 
+  it('uses metadataTitle over labels.metadataTitle, and renders no heading for null', () => {
+    const { unmount } = renderEditor({
+      metadataTitle: 'Files',
+      labels: { metadataTitle: 'Metadaten' },
+    });
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Files' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Metadaten' })).toBeNull();
+    unmount();
+
+    renderEditor({ metadataTitle: null });
+    expect(screen.queryByRole('heading', { name: 'Metadata' })).toBeNull();
+    expect(screen.getByText('metadata fields')).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Setup' }),
+    ).toBeTruthy();
+  });
+
   it('renders under dir="rtl" with no physical-direction classes on its sections', () => {
     renderEditor({ dir: 'rtl' });
 

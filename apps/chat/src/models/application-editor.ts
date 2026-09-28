@@ -38,6 +38,10 @@ export interface ApplicationSetupProps<TSetup> {
   metadata: DeploymentCreationFormValues;
   /** Whether the header's preview mode is on. */
   isPreviewing: boolean;
+  /** Runs the page's primary action, the same as the header's Create/Save button. */
+  onSubmit: () => void;
+  /** Whether the page is persisting right now. */
+  isSubmitting: boolean;
   /** Reports whether the Setup can be saved right now; `false` disables the primary button in edit mode. */
   onReadyChange: (isReady: boolean) => void;
   /** Handle a kind whose Setup saves itself exposes to the page. */

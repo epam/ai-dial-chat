@@ -1,6 +1,6 @@
 import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import {
   memo,
@@ -16,6 +16,7 @@ import { useSearchParams } from 'react-router';
 import {
   AppsEditorI18nKeys,
   ApplicationEditorI18nKeys,
+  ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import type {
@@ -57,6 +58,8 @@ const QuickAppSetup: FC<Props> = ({
   appId,
   metadata,
   isPreviewing,
+  onSubmit,
+  isSubmitting,
   onReadyChange,
   ref,
 }) => {
@@ -245,9 +248,16 @@ const QuickAppSetup: FC<Props> = ({
 
   if (!appId) {
     return (
-      <p className="dial-small-text text-secondary">
-        {t(ApplicationEditorI18nKeys.SetupPendingCreate)}
-      </p>
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+        <p className="dial-small-text text-secondary">
+          {t(ApplicationEditorI18nKeys.SetupPendingCreate)}
+        </p>
+        <PrimaryButton
+          label={t(ButtonsI18nKeys.Create)}
+          disabled={isSubmitting}
+          onClick={onSubmit}
+        />
+      </div>
     );
   }
 
