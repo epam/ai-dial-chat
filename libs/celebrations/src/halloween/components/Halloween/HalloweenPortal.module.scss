@@ -1,0 +1,123 @@
+/* Artwork uses physical viewport coordinates so paths do not reverse in RTL. */
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.portal {
+  position: absolute;
+  filter: drop-shadow(0 0 8px #73ceac);
+  transform-origin: center;
+  animation: rift-open 9s ease-in-out both;
+}
+.portalEyes {
+  animation: rift-eyes 9s ease-in-out both;
+}
+.armCanvas {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px #102b2699);
+}
+.portalArm {
+  animation: claw-reach 9s ease-in-out both;
+}
+.clawFinger {
+  animation: claw-grip 9s ease-in-out both;
+}
+@keyframes rift-open {
+  0% {
+    opacity: 0;
+    transform: scale(0.02, 0.15);
+  }
+  8% {
+    opacity: 1;
+    transform: scale(0.08, 0.8);
+  }
+  20%,
+  68% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(0.02, 1.12);
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(0, 0.1);
+  }
+}
+@keyframes rift-eyes {
+  0%,
+  12%,
+  68%,
+  100% {
+    opacity: 0;
+  }
+  22%,
+  27%,
+  32%,
+  60% {
+    opacity: 1;
+  }
+  29% {
+    opacity: 0.1;
+  }
+}
+@keyframes claw-reach {
+  0%,
+  17% {
+    opacity: 0;
+    transform: scale(0.02);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(0.22);
+  }
+  34%,
+  42% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  63% {
+    opacity: 1;
+    transform: scale(0.05);
+  }
+  66%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes claw-grip {
+  0%,
+  34%,
+  100% {
+    transform: rotate(-10deg);
+  }
+  40%,
+  65% {
+    transform: rotate(16deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene,
+  .scene * {
+    animation: none !important;
+  }
+  .portal,
+  .portalEyes {
+    opacity: 1;
+    transform: none;
+  }
+  .portalArm {
+    display: none;
+  }
+}
