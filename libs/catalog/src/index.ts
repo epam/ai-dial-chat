@@ -35,6 +35,7 @@ export type {
   ApiResource,
   CatalogContentFileNode,
   CatalogContentFolderNode,
+  CatalogContentFileTreeRenderProps,
   CatalogContentTreeNode,
   CatalogContentFilePreview,
   CatalogContentMarkdownPreview,

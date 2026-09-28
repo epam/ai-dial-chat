@@ -15,3 +15,11 @@ vi.stubGlobal(
     }
   },
 );
+
+/*
+ * jsdom has no layout engine, so the kit Dropdown behind each file-tree row
+ * calls this browser-only API on pointer events.
+ */
+if (!document.elementFromPoint) {
+  document.elementFromPoint = () => null;
+}

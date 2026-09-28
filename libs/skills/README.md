@@ -25,7 +25,8 @@ different skills. The send-time semantics of a selected skill stay app-owned.
 `SkillDetailsSidePanel` composes `@epam/ai-dial-catalog`'s exported
 `DetailsPanel` into a right-anchored skill details panel. It adds no chrome of
 its own: the host supplies the `CatalogItem`, the details data, and every
-action.
+action. Its Content-tab file selector is the file manager's `DialFoldersTree`,
+the same tree the skill editor renders.
 
 `ChatSkill` renders a single used skill — a `/name` ghost button whose
 interactive tooltip shows the skill's description and a "View details" action —
@@ -54,6 +55,8 @@ import '@epam/ai-dial-skills/styles.css';
 - `react` `^19.2.8`
 - `@epam/ai-dial-ui-kit` `^0.15.0-dev.21`
 - `@epam/ai-dial-chat-shared` `*`
+- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.15` — `SkillDetailsSidePanel`
+  renders its `DialFoldersTree`
 
 ## Components
 
@@ -268,10 +271,39 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 A thin wrapper over `@epam/ai-dial-catalog`'s `DetailsPanel` narrowed to the
 actions a skill details surface offers: favorite toggle, close, "Use in chat",
 and content-file previews. Skills open on the content-first tab exactly as
-they do on the Catalog page. Publish, share, credentials, and download props
+they do on the Catalog page. The Content tab's file selector is drawn with the
+file manager's `DialFoldersTree` (read-only: no context menu, no rename), so a
+skill's files look and navigate the same as in the skill editor; the panel
+still owns expansion and selection. Publish, share, credentials, and download props
 are deliberately absent — `DetailsPanel` hides those actions when they are not
 supplied, so no catalog page chrome comes along. The host owns the open state
 and the details fetch; the panel itself never fetches.
+
+### `SkillContentFileTree`
+
+```tsx
+import { Catalog } from '@epam/ai-dial-catalog';
+import type { CatalogContentFileTreeRenderProps } from '@epam/ai-dial-catalog';
+import { SkillContentFileTree } from '@epam/ai-dial-skills';
+
+const renderContentFileTree = (props: CatalogContentFileTreeRenderProps) => (
+  <SkillContentFileTree {...props} />
+);
+
+<Catalog
+  items={items}
+  favorites={favorites}
+  renderContentFileTree={renderContentFileTree}
+/>;
+```
+
+The file-manager-backed tree `SkillDetailsSidePanel` renders in its Content
+tab, exported so a host can hand the same tree to `Catalog` or `DetailsPanel`
+through `renderContentFileTree`. It is a read-only `DialFoldersTree` — no
+context menu, no rename, dotfiles shown — fully controlled by the panel's
+`CatalogContentFileTreeRenderProps`: folder toggles come back one id at a time
+through `onToggleFolder`, only files are selectable, the selected file is
+focused on mount, and Escape calls `onClose`.
 
 ### `SkillCatalogModal`
 
