@@ -75,19 +75,27 @@ export const EntityMarkdownDescription = ({
       return baseComponents;
     }
 
-    const AsInline = ({ children }: { children?: ReactNode }) => (
-      <span>{children} </span>
+    const HeadingAsText = ({ children }: { children?: ReactNode }) => (
+      <>
+        <span>{children}</span>{' '}
+      </>
+    );
+
+    const InlineParagraph = ({ children }: { children?: ReactNode }) => (
+      <>
+        <p className="inline">{children}</p>{' '}
+      </>
     );
 
     return {
       ...baseComponents,
-      h1: AsInline,
-      h2: AsInline,
-      h3: AsInline,
-      h4: AsInline,
-      h5: AsInline,
-      h6: AsInline,
-      p: AsInline,
+      h1: HeadingAsText,
+      h2: HeadingAsText,
+      h3: HeadingAsText,
+      h4: HeadingAsText,
+      h5: HeadingAsText,
+      h6: HeadingAsText,
+      p: InlineParagraph,
       hr: () => null,
     };
   }, [allowedImageSources, isInlinePreview]);

@@ -67,7 +67,7 @@ describe('EntityMarkdownDescription', () => {
       expect(screen.getByRole('separator')).toBeInTheDocument();
     });
 
-    it('renders headings and paragraphs as inline text and drops separators', () => {
+    it('renders headings as plain text and drops separators', () => {
       render(
         <EntityMarkdownDescription isInlinePreview>
           {FORMATTED_DESCRIPTION}
@@ -76,8 +76,19 @@ describe('EntityMarkdownDescription', () => {
 
       expect(screen.queryByRole('heading')).not.toBeInTheDocument();
       expect(screen.queryByRole('separator')).not.toBeInTheDocument();
-      expect(screen.getByText(/This is heading 1/)).toBeInTheDocument();
-      expect(screen.getByText(/This is some text\./)).toBeInTheDocument();
+      expect(screen.getByText('This is heading 1')).toBeInTheDocument();
+    });
+
+    it('keeps paragraphs as inline <p> elements', () => {
+      render(
+        <EntityMarkdownDescription isInlinePreview>
+          {FORMATTED_DESCRIPTION}
+        </EntityMarkdownDescription>,
+      );
+
+      expect(
+        screen.getByText('This is some text.', { selector: 'p' }),
+      ).toHaveClass('inline');
     });
 
     it('keeps words from adjacent blocks separated', () => {
