@@ -48,6 +48,24 @@ const makeMessage = (content: string): ConversationMessageDto => ({
   timestamp: '2026-01-01T00:00:00.000Z',
 });
 
+const startAttachRequest = async (app: INestApplication) =>
+  await request(app.getHttpServer())
+    .post('/conversations/completions/attach')
+    .send({ path: PATH })
+    .expect(200);
+
+const waitForSubscribers = async (
+  service: ConversationGenerationService,
+  ownerKey: string,
+  count = 1,
+) => {
+  await vi.waitFor(() => {
+    const attachment = service.attach(ownerKey, PATH);
+    expect(attachment?.emitter.listenerCount('chunk')).toBe(count);
+    expect(attachment?.emitter.listenerCount('terminal')).toBe(count);
+  });
+};
+
 describe('POST /conversations/completions/attach (integration)', () => {
   let app: INestApplication;
   let generationService: ConversationGenerationService;
