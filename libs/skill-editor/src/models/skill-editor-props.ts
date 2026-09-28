@@ -117,6 +117,40 @@ export interface SkillEditorFileActions {
   ) => Promise<SkillFileCommitResult>;
   /** Called after the user confirms removing a non-protected node already present in the tree. */
   onRemoveNode: (path: string) => void;
+  /**
+   * Called with the full relative path of a folder the user named inline via
+   * "Create folder". Omit to hide every "Create folder" entry. The host adds
+   * the folder node to `files`; the library never mutates `files` itself.
+   */
+  onCreateFolder?: (path: string) => void;
+  /**
+   * Host path rule for a folder being named inline, run after the library's
+   * own empty/separator/duplicate checks. Returns an error message to block
+   * the name, or `undefined` to accept it.
+   */
+  validateFolderPath?: (path: string) => string | undefined;
+  /**
+   * Expands a picked `.zip` into its files, with paths relative to the
+   * archive root. Rejects for an unreadable archive. Omit to hide every
+   * "Upload archive from device" entry. The returned entries are staged in
+   * the upload dialog and go through `validateBatch`/`commitBatch` like any
+   * device file.
+   */
+  extractArchive?: (archive: File) => Promise<SkillFileSourceEntry[]>;
+  /**
+   * Opens the host's file-system picker and resolves with the picked files,
+   * or `undefined` when the user cancels. Omit to hide every "Open DIAL file
+   * system" entry. The returned entries are staged in the upload dialog.
+   */
+  pickFromFileSystem?: () => Promise<SkillFileSourceEntry[] | undefined>;
+}
+
+/** A file supplied by a host source (an archive entry or a file-system pick), with its path relative to the add target. */
+export interface SkillFileSourceEntry {
+  /** Relative path, using `/` separators, below the folder the user is adding to. */
+  path: string;
+  /** The file's content. */
+  file: File;
 }
 
 /** Text overrides for `SkillEditor`. Every field has an English default. */
@@ -126,12 +160,49 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   /** Accessible name of the file tree region. Defaults to `'Skill files'`. */
   filesTreeAriaLabel?: string;
   /**
-   * Label of the control that opens the device file picker to add a
-   * supporting file. Defaults to `'Add'`.
+   * @deprecated Use `uploadFilesLabel`. Still used as its fallback.
    */
   addUploadLabel?: string;
-  /** Accessible label of a node's remove action. Defaults to `'Remove'`. */
+  /**
+   * @deprecated Use `deleteLabel`. Still used as its fallback.
+   */
   removeLabel?: string;
+  /** Label of the Files pane's Add dropdown trigger. Defaults to `'Add'`. */
+  addLabel?: string;
+  /** Add-menu entry that creates a folder inline. Defaults to `'Create folder'`. */
+  createFolderLabel?: string;
+  /** Add-menu entry that opens the upload dialog for device files. Defaults to `'Upload files from device'`. */
+  uploadFilesLabel?: string;
+  /** Add-menu entry that opens the upload dialog for a `.zip` archive. Defaults to `'Upload archive from device'`. */
+  uploadArchiveLabel?: string;
+  /** Add-menu entry that opens the host's file-system picker. Defaults to `'Open DIAL file system'`. */
+  openFileSystemLabel?: string;
+  /** Folder context-menu submenu that adds inside the folder. Defaults to `'Add child'`. */
+  addChildLabel?: string;
+  /** Node context-menu submenu that adds next to the node. Defaults to `'Add sibling'`. */
+  addSiblingLabel?: string;
+  /** Node context-menu action that removes the node. Defaults to `'Delete'`. */
+  deleteLabel?: string;
+  /** Name prefilled in a folder being created inline. Defaults to `'New folder'`. */
+  newFolderDefaultName?: string;
+  /** Inline error for an empty folder name. Defaults to `'Enter a folder name'`. */
+  folderNameRequiredError?: string;
+  /** Inline error for a folder name containing a separator or equal to `.`/`..`. Defaults to `"Folder name can't contain / or \, or be . or .."`. */
+  folderNameInvalidError?: string;
+  /** Inline error for a folder name that matches a sibling. Defaults to `'An item with this name already exists here'`. */
+  folderNameDuplicateError?: string;
+  /** Upload dialog title in archive mode. Defaults to `'Upload archive from device'`. */
+  uploadArchiveDialogTitle?: string;
+  /** Archive-mode drop-zone copy at the `desktop` breakpoint. Defaults to `'Drag and drop a .zip archive or click here to upload'`. */
+  uploadArchiveDropZoneLabel?: string;
+  /** Archive-mode drop-zone copy at the `mobile` breakpoint. Defaults to `'Click here to upload a .zip archive'`. */
+  uploadArchiveDropZoneMobileLabel?: string;
+  /** Error shown when an archive can't be read. Defaults to `"Couldn't read this archive"`. */
+  uploadArchiveErrorMessage?: string;
+  /** Error shown when an archive contains no files. Defaults to `'This archive has no files'`. */
+  uploadArchiveEmptyMessage?: string;
+  /** Accessible label of the spinner shown while an archive is expanded. Defaults to `'Reading archive'`. */
+  uploadArchiveExtractingAriaLabel?: string;
   /** Collapsed mobile summary label. Defaults to `'Editing file'`. */
   editingFileLabel?: string;
   /** Main-pane heading, given the selected node's name. Defaults to the name itself. */
@@ -227,8 +298,10 @@ export interface SkillEditorTypography {
   titleClassName?: string;
   /** Typography class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text'`. */
   helperTextClassName?: string;
-  /** Color class applied to the file tree "Remove" context-menu icon. Defaults to `'text-secondary'`. */
+  /** Color class applied to the file tree "Delete" context-menu icon. Defaults to `'text-secondary'`. */
   removeIconClassName?: string;
+  /** Color class applied to the file tree Add-menu entry icons. Defaults to `'text-secondary'`. */
+  menuIconClassName?: string;
 }
 
 /** Grouped style overrides for `SkillEditor`. */

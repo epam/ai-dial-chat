@@ -21,7 +21,7 @@ export interface AvatarPickerModalLabels {
   showHiddenFilesLabel: string;
   /** Label for the action that hides hidden files again. */
   hideHiddenFilesLabel: string;
-  /** Returns the selection-count summary text for the given count. */
+  /** Returns the text shown after the selection-count badge; the file manager renders the count itself, so omit it (e.g. "items selected"). */
   getSelectionLabel: (count: number) => string;
   /** Label for the upload-files action. */
   uploadFilesLabel: string;
@@ -83,7 +83,7 @@ export interface AvatarPickerFileManagerModalProps {
   showHiddenFilesLabel: string;
   /** Label for the action that hides hidden files again. */
   hideHiddenFilesLabel: string;
-  /** Returns the selection-count summary text for the given count. */
+  /** Returns the text shown after the selection-count badge; the file manager renders the count itself, so omit it (e.g. "items selected"). */
   getSelectionLabel: (count: number) => string;
   /** Label for the upload-files action. */
   uploadFilesLabel: string;

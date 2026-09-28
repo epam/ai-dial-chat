@@ -9,6 +9,10 @@ import {
   ToolsetCredentialsLevel,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '@epam/ai-dial-chat-shared';
 import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
@@ -283,6 +287,13 @@ const ToolsetEditorPage: FC = () => {
       },
       validation: {
         nameRequired: t(EditorI18nKeys.NameRequired),
+        nameTooLong: t(EditorI18nKeys.FieldTooLong, {
+          count: ENTITY_NAME_MAX_LENGTH,
+        }),
+        nameControlCharacters: t(EditorI18nKeys.NameControlCharacters),
+        descriptionTooLong: t(EditorI18nKeys.FieldTooLong, {
+          count: ENTITY_DESCRIPTION_MAX_LENGTH,
+        }),
         versionInvalid: t(ToolsetEditorI18nKeys.VersionInvalid),
         endpointRequired: t(ToolsetEditorI18nKeys.EndpointRequired),
         endpointInvalid: t(ToolsetEditorI18nKeys.EndpointInvalid),

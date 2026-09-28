@@ -21,6 +21,7 @@ export * from './types/code-editor';
 export * from './types/file-manager-node';
 export * from './utils/annotation';
 export * from './utils/string-utils';
+export * from './utils/entity-field-limits';
 export * from './utils/merge-class';
 export * from './utils/build-css-vars';
 export * from './utils/message';

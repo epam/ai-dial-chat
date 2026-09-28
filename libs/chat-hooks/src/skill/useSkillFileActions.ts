@@ -3,6 +3,7 @@ import {
   SkillFileNodeKind,
   type SkillEditorFileActions,
   type SkillEditorValues,
+  type SkillFileSourceEntry,
   type SkillFileTreeNode,
   type SkillFileUploadCandidate,
 } from '@epam/ai-dial-skill-editor';
@@ -11,9 +12,11 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   buildSkillManifest,
   buildSkillManifestFromFrontmatter,
+  isValidSkillRelativePath,
   nameFromPath,
   SKILL_MANIFEST_FILE,
 } from './skill';
+import { extractSkillArchive } from './skill-archive';
 import {
   validateSkillFileBatch,
   type SkillFileBatchValidationMessages,
@@ -52,6 +55,12 @@ export interface UseSkillFileActionsParams {
   setSelectedPath: Dispatch<SetStateAction<string>>;
   /** Localized messages, resolved by the host. */
   messages: SkillFileActionsMessages;
+  /**
+   * Opens the host's file-system picker; passed through unchanged as
+   * `fileActions.pickFromFileSystem`. Omit to hide the editor's "Open DIAL
+   * file system" entry.
+   */
+  pickFromFileSystem?: () => Promise<SkillFileSourceEntry[] | undefined>;
 }
 
 /** Return value of {@link useSkillFileActions}. */
@@ -64,10 +73,17 @@ export interface UseSkillFileActionsResult {
   resolveManifestImport: (accepted: boolean) => void;
 }
 
+/*
+ * A folder is checked with the file rules applied to a child inside it, so
+ * the reserved-name and reserved-first-segment rules cover it too.
+ */
+const FOLDER_PROBE_SEGMENT = 'probe';
+
 /**
  * Owns the Skill Editor's batch file upload workflow: validating a staged
  * batch, committing it atomically (supporting files plus an optional
- * `SKILL.md` manifest import, with a confirmation gate), and removing
+ * `SKILL.md` manifest import, with a confirmation gate), creating empty
+ * folders, expanding `.zip` archives for staging, and removing
  * already-committed nodes.
  */
 export const useSkillFileActions = ({
@@ -81,6 +97,7 @@ export const useSkillFileActions = ({
   isDirty,
   setSelectedPath,
   messages,
+  pickFromFileSystem,
 }: UseSkillFileActionsParams): UseSkillFileActionsResult => {
   const [pendingManifestImport, setPendingManifestImport] = useState(false);
   const manifestImportResolveRef = useRef<((accepted: boolean) => void) | null>(
@@ -246,6 +263,26 @@ export const useSkillFileActions = ({
             : prev,
         );
       },
+      onCreateFolder: (path) => {
+        setFiles((prev) =>
+          prev.some((node) => node.path === path)
+            ? prev
+            : [
+                ...prev,
+                {
+                  path,
+                  name: nameFromPath(path),
+                  kind: SkillFileNodeKind.Folder,
+                },
+              ],
+        );
+      },
+      validateFolderPath: (path) =>
+        isValidSkillRelativePath(`${path}/${FOLDER_PROBE_SEGMENT}`)
+          ? undefined
+          : messages.pathInvalid,
+      extractArchive: extractSkillArchive,
+      pickFromFileSystem,
     }),
     [
       buildBatchValidationContext,
@@ -259,6 +296,7 @@ export const useSkillFileActions = ({
       setLoadedValues,
       setSelectedPath,
       messages,
+      pickFromFileSystem,
     ],
   );
 

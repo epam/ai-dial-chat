@@ -58,7 +58,7 @@ const DEFAULT_AVATAR_PICKER_LABELS: AvatarPickerModalLabels = {
   showHiddenFilesLabel: 'Show hidden files',
   hideHiddenFilesLabel: 'Hide hidden files',
   getSelectionLabel: (count: number) =>
-    count === 1 ? `${count} item selected` : `${count} items selected`,
+    count === 1 ? 'item selected' : 'items selected',
   uploadFilesLabel: 'Files',
   newFolderLabel: 'Folder',
   downloadLabel: 'Download',

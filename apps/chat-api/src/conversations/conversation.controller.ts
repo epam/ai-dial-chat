@@ -22,6 +22,7 @@ import {
   type SessionUser,
 } from '../auth/session/session.types';
 import {
+  endsWithNewline,
   releaseSseResponse,
   SSE_DRAIN_TIMEOUT_MS,
   SSE_KEEPALIVE_PAYLOAD,
@@ -292,7 +293,10 @@ export class ConversationController {
       dto.model,
       dto.custom_content,
       ownerKey,
-      () => startSseResponse(res),
+      () => {
+        startSseResponse(res);
+        startKeepalive();
+      },
       sub,
       dto.clientChannelId,
       timezone,
@@ -354,6 +358,35 @@ export class ConversationController {
         responseState = SseResponseState.BackpressureDetached;
       }
     };
+    /*
+     * A periodic comment keeps a quiet generation phase (a long "Thinking"
+     * stage) from looking dead to intermediaries and to the client's idle
+     * watchdog (issue #8959). The relay yields raw upstream byte slices that
+     * can end mid-line, so a tick only writes on a line boundary — a comment
+     * spliced into a partial line would corrupt that SSE frame. A skipped tick
+     * loses nothing: bytes are flowing.
+     */
+    let isAtLineBoundary = true;
+    let keepaliveTimer: ReturnType<typeof setInterval> | undefined;
+    const writeToClient = (chunk: Uint8Array | string): void => {
+      try {
+        writeSseChunk(res, chunk);
+        isAtLineBoundary = endsWithNewline(chunk);
+        if (res.writableLength > SSE_COMPLETION_MAX_BUFFERED_BYTES) {
+          detachForBackpressure();
+        }
+      } catch {
+        detachForBackpressure();
+      }
+    };
+
+    const startKeepalive = (): void => {
+      keepaliveTimer = setInterval(() => {
+        if (responseState !== SseResponseState.Streaming || !isAtLineBoundary)
+          return;
+        writeToClient(SSE_KEEPALIVE_PAYLOAD);
+      }, SSE_KEEPALIVE_INTERVAL_MS);
+    };
     try {
       for await (const chunk of stream) {
         /*
@@ -363,19 +396,13 @@ export class ConversationController {
          * backend-owned work.
          */
         if (responseState !== SseResponseState.Streaming) continue;
-        try {
-          writeSseChunk(res, chunk);
-          if (res.writableLength > SSE_COMPLETION_MAX_BUFFERED_BYTES) {
-            detachForBackpressure();
-          }
-        } catch {
-          detachForBackpressure();
-        }
+        writeToClient(chunk);
       }
     } catch (err) {
       hasFailedBeforeStreamOpened = !res.headersSent;
       throw err;
     } finally {
+      if (keepaliveTimer) clearInterval(keepaliveTimer);
       res.off('close', handleClose);
       /*
        * Reached only after the generator has returned, which it does only

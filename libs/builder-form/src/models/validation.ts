@@ -6,6 +6,8 @@ export enum DeploymentCreationFieldErrorCode {
   InvalidFormat = 'invalid-format',
   /** The field's value exceeds its maximum length. */
   TooLong = 'too-long',
+  /** The name contains a control character (line break, tab, …). */
+  ControlCharacters = 'control-characters',
 }
 
 /** Untranslated error codes returned by `validateDeploymentCreationFields`. */
@@ -14,6 +16,8 @@ export interface DeploymentCreationFormErrorCodes {
   name?: DeploymentCreationFieldErrorCode;
   /** Error code for the version field, if invalid. */
   version?: DeploymentCreationFieldErrorCode;
+  /** Error code for the description field, if invalid. */
+  description?: DeploymentCreationFieldErrorCode;
 }
 
 /** Optional pattern-check toggles for field validation. */

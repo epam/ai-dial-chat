@@ -1,3 +1,7 @@
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { DeploymentCreationFormValues } from '../models/deployment-creation-form';
 import { DeploymentCreationFieldErrorCode } from '../models/validation';
@@ -42,6 +46,40 @@ describe('validateDeploymentCreationFields', () => {
       name: 'bad/name!',
     });
     expect(errors.name).toBeUndefined();
+  });
+
+  it('returns a too-long error for a name over the shared limit', () => {
+    const errors = validateDeploymentCreationFields({
+      ...baseValues,
+      name: 'a'.repeat(ENTITY_NAME_MAX_LENGTH + 1),
+    });
+    expect(errors.name).toBe(DeploymentCreationFieldErrorCode.TooLong);
+  });
+
+  it('accepts a name exactly at the shared limit', () => {
+    const errors = validateDeploymentCreationFields({
+      ...baseValues,
+      name: 'a'.repeat(ENTITY_NAME_MAX_LENGTH),
+    });
+    expect(errors.name).toBeUndefined();
+  });
+
+  it('returns a control-characters error for a name with a line break', () => {
+    const errors = validateDeploymentCreationFields({
+      ...baseValues,
+      name: 'first\nsecond',
+    });
+    expect(errors.name).toBe(
+      DeploymentCreationFieldErrorCode.ControlCharacters,
+    );
+  });
+
+  it('returns a too-long error for a description over the shared limit', () => {
+    const errors = validateDeploymentCreationFields({
+      ...baseValues,
+      description: 'a'.repeat(ENTITY_DESCRIPTION_MAX_LENGTH + 1),
+    });
+    expect(errors.description).toBe(DeploymentCreationFieldErrorCode.TooLong);
   });
 
   it('returns an invalid-format error for a bad version when the pattern check is enabled', () => {

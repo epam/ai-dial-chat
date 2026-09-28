@@ -55,6 +55,27 @@ export class StreamUpstreamError extends Error {
   }
 }
 
+/**
+ * Reported through `onError` when the network connection carrying a
+ * completion stream is lost (a rejected `fetch`, or a read that fails after a
+ * 2xx response) or goes silent past the idle timeout — what a laptop sleep or
+ * a phone lock mid-generation produces. The backend-owned generation may
+ * still be running, so the caller can recover it rather than treat the
+ * response as failed. `cause` holds the original error, when there is one.
+ */
+export class StreamInterruptedError extends Error {
+  constructor(cause?: unknown) {
+    super('The completion stream was interrupted', { cause });
+    this.name = 'StreamInterruptedError';
+  }
+}
+
+/*
+ * Three backend keepalive intervals (15 s each): one lost or late keepalive
+ * plus jitter never trips it, while a dead socket is still caught promptly.
+ */
+export const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 45_000;
+
 /** Callbacks {@link streamCompletion} reports streamed completion events through. */
 export interface ChatStreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -75,7 +96,80 @@ export interface CreateChatStreamApiDeps {
   getTimezone?: () => string | undefined;
   /** `fetch` implementation to issue requests through. Defaults to the global `fetch`. */
   fetchImpl?: typeof fetch;
+  /**
+   * How long an open completion stream may go without receiving a byte
+   * (keepalive comments included) before it is reported as a
+   * {@link StreamInterruptedError}. Defaults to {@link DEFAULT_STREAM_IDLE_TIMEOUT_MS}.
+   */
+  idleTimeoutMs?: number;
 }
+
+/**
+ * Watches an open stream for silence. Re-armed on every received byte, and
+ * re-checked immediately when the page becomes visible, the network comes
+ * back, or the page is restored from the back/forward cache: timers are
+ * frozen or throttled while a device sleeps, so waking is exactly when a dead
+ * socket has to be noticed. A no-op outside a browser.
+ */
+const watchStreamIdle = (
+  idleTimeoutMs: number,
+  onIdle: () => void,
+): { touch: () => void; stop: () => void } => {
+  let lastByteAt = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let isStopped = false;
+
+  const check = () => {
+    if (isStopped) return;
+    const idleFor = Date.now() - lastByteAt;
+    if (idleFor >= idleTimeoutMs) {
+      onIdle();
+      return;
+    }
+    clearTimeout(timer);
+    timer = setTimeout(check, idleTimeoutMs - idleFor);
+  };
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') check();
+  };
+
+  const hasDom =
+    typeof window !== 'undefined' && typeof document !== 'undefined';
+  if (hasDom) {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', check);
+    window.addEventListener('pageshow', check);
+  }
+  timer = setTimeout(check, idleTimeoutMs);
+
+  return {
+    touch: () => {
+      lastByteAt = Date.now();
+    },
+    stop: () => {
+      if (isStopped) return;
+      isStopped = true;
+      clearTimeout(timer);
+      if (hasDom) {
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange,
+        );
+        window.removeEventListener('online', check);
+        window.removeEventListener('pageshow', check);
+      }
+    },
+  };
+};
+
+/*
+ * Matched by name, not `instanceof Error`: an aborted `fetch` rejects with a
+ * `DOMException`, which is not an `Error` instance in every runtime.
+ */
+const isAbortError = (err: unknown): boolean =>
+  typeof err === 'object' &&
+  err != null &&
+  (err as { name?: unknown }).name === 'AbortError';
 
 const parseSSELine = (
   line: string,
@@ -206,8 +300,8 @@ export const createChatStreamApi = (
           }),
         });
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        onError(err instanceof Error ? err : new Error(String(err)));
+        if (isAbortError(err)) return;
+        onError(new StreamInterruptedError(err));
         return;
       }
 
@@ -233,21 +327,41 @@ export const createChatStreamApi = (
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let hasError = false;
+      /* Exactly one of `onComplete`/`onError` is reported per stream. */
+      let isSettled = false;
+      /* Set once the idle watchdog cancels the reader: nothing read after that is delivered. */
+      let isCancelledForIdle = false;
 
       const handleError = (err: Error) => {
-        hasError = true;
+        if (isSettled) return;
+        isSettled = true;
+        idleWatch.stop();
         onError(err);
       };
+      /*
+       * The reader is cancelled by this transport, not through the caller's
+       * `signal`: that signal belongs to the caller's generation lifecycle,
+       * and aborting it would read as a user stop or a superseding request.
+       */
+      const idleWatch = watchStreamIdle(
+        deps.idleTimeoutMs ?? DEFAULT_STREAM_IDLE_TIMEOUT_MS,
+        () => {
+          isCancelledForIdle = true;
+          handleError(new StreamInterruptedError());
+          reader.cancel().catch(() => undefined);
+        },
+      );
 
       try {
         while (true) {
           const { done, value } = await reader.read();
+          if (isCancelledForIdle) break;
 
           if (done) {
             if (buffer.trim()) parseSSELine(buffer, onChunk, handleError);
             break;
           }
+          idleWatch.touch();
 
           buffer += decoder.decode(value, { stream: true });
 
@@ -258,11 +372,15 @@ export const createChatStreamApi = (
             parseSSELine(line, onChunk, handleError);
           }
         }
-        if (!hasError) onComplete();
+        if (!isSettled) {
+          isSettled = true;
+          onComplete();
+        }
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        onError(err instanceof Error ? err : new Error(String(err)));
+        if (isAbortError(err)) return;
+        handleError(new StreamInterruptedError(err));
       } finally {
+        idleWatch.stop();
         reader.releaseLock();
       }
     };

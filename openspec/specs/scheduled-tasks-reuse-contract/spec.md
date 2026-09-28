@@ -3,12 +3,15 @@
 ## Purpose
 
 Define the public validation, request lifecycle, presentation and stylesheet contracts that let applications reuse Scheduled Tasks without private DOM or CSS patches.
-
 ## Requirements
-
 ### Requirement: Shared schedule validation returns host-translatable field errors
 
-`@epam/ai-dial-scheduled-tasks/validation` SHALL export a pure validator over existing form values and explicit clock/lead options. It SHALL validate all active schedule fields, description length and activity boundaries defined in design.md section 4. Errors SHALL identify a field and a typed code, with no translated strings, network calls or ambient clock reads. Inactive draft fields SHALL not invalidate another repeat mode.
+`@epam/ai-dial-scheduled-tasks/validation` SHALL export a pure validator over existing form values and explicit clock/lead options. It SHALL validate all active schedule fields, description length (500), display-name length (256) and control characters, instructions length (50000) and activity boundaries defined in design.md section 4. The same entry SHALL export `validateScheduledTaskTextField(field, value)` for a single `displayName`/`description`/`prompt` value (checked trimmed; an empty value passes) so a host can report `DisplayNameTooLong`, `DisplayNameControlCharacters`, `DescriptionTooLong` or `PromptTooLong` while the user types. Errors SHALL identify a field and a typed code, with no translated strings, network calls or ambient clock reads. Inactive draft fields SHALL not invalidate another repeat mode.
+
+#### Scenario: Text fields over their limits return typed codes
+
+- **WHEN** a draft has a 257-character display name, a 501-character description and 50001-character instructions
+- **THEN** validation returns `DisplayNameTooLong`, `DescriptionTooLong` and `PromptTooLong` for those fields; a display name containing a tab returns `DisplayNameControlCharacters`
 
 #### Scenario: Weekly and monthly require valid day selections
 
@@ -207,3 +210,4 @@ The existing packed `tools/scheduled-tasks-consumer-fixture` SHALL exercise skil
 
 - **WHEN** a host omits all new optional props and submits an instruction-only task
 - **THEN** existing code typechecks and the established form/validation behavior remains available
+

@@ -1,3 +1,9 @@
+import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+  exceedsMaxLength,
+  hasControlCharacters,
+} from '@epam/ai-dial-chat-shared';
 import type { DeploymentCreationFormValues } from '../models/deployment-creation-form';
 import type {
   DeploymentCreationFormErrorCodes,
@@ -24,8 +30,16 @@ export const validateDeploymentCreationFields = (
   const trimmedName = values.name.trim();
   if (!trimmedName) {
     errors.name = DeploymentCreationFieldErrorCode.Required;
+  } else if (exceedsMaxLength(trimmedName, ENTITY_NAME_MAX_LENGTH)) {
+    errors.name = DeploymentCreationFieldErrorCode.TooLong;
   } else if (options.validateNamePattern && !NAME_PATTERN.test(trimmedName)) {
     errors.name = DeploymentCreationFieldErrorCode.InvalidFormat;
+  } else if (hasControlCharacters(trimmedName)) {
+    errors.name = DeploymentCreationFieldErrorCode.ControlCharacters;
+  }
+
+  if (exceedsMaxLength(values.description, ENTITY_DESCRIPTION_MAX_LENGTH)) {
+    errors.description = DeploymentCreationFieldErrorCode.TooLong;
   }
 
   const trimmedVersion = values.version.trim();

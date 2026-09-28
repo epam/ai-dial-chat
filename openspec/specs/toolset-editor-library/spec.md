@@ -2,9 +2,7 @@
 
 ## Purpose
 Specifies `libs/toolset-editor`'s host-agnostic `ToolsetEditor` and `GeneralForm` React components: their public package surface, host-isolation boundary (no REST/i18n/routing knowledge, no `@epam/ai-dial-chat-api-client` import), form-state ownership with re-seeding, validation and dirty-field error surfacing, save/persist orchestration through injected callbacks, the injected auth-actions boundary for the OAuth login/logout flow, the Connect-section gating, and accessibility/RTL support.
-
 ## Requirements
-
 ### Requirement: Public package surface
 `libs/toolset-editor/src/index.ts` SHALL export the composed `ToolsetEditor` component, the shared `GeneralForm` component (also consumed by the Custom App editor), and every TypeScript type reachable through their props (`ToolsetEditorProps`/`ToolsetEditorLabels` with its nested `layout`/`general`/`settings`/`validation` label groups, `GeneralFormProps`/`GeneralFormLabels`, `SettingsFormLabels`, `AuthSectionLabels`, `ConnectMcpUrlContentLabels`, the form models `ToolsetFormData`/`ToolsetAuthFormData`/`DeploymentGeneralFormData`/`ToolsetFormErrors`, the injected-auth request shapes `ToolsetLoginRequest`/`ToolsetLogoutRequest`/`ToolsetAuthActions`, the `ToolsetTransportType` enum, the `DEFAULT_TOOLSET_NAME`/`DEFAULT_TOOLSET_VERSION` constants, and the pure utils `getDefaultToolsetForm`, `getStorageSafeUniqueToolsetName`, `isValidEndpointUrl`, `normalizeReturnedEndpointUrl`, `isToolsetAuthValid`, `isToolsetFormValid`). The internal `SettingsForm`, `AuthSection`, and `ConnectMcpUrlContent` components SHALL NOT be re-exported from the barrel — only `ToolsetEditor` and `GeneralForm` render them.
 
@@ -55,14 +53,18 @@ This is the first `libs/*` (besides the `chat-hooks` exception) dependency on `@
 - **THEN** the editor resets its form values, errors, dirty fields, and draft toolset id to a fresh-edit state
 
 ### Requirement: Validation and dirty-field error surfacing
-`ToolsetEditor` SHALL validate the form through the lib's own `isToolsetFormValid`/`isValidEndpointUrl` utils (which delegate the name/version checks to `builder-form`'s `validateDeploymentCreationFields` with `validateVersionPattern: true`), building error messages from the `labels.validation` group. Field errors SHALL surface only for fields the user has touched (the dirty-field set); patches that change `authenticationType`, `withLogin`, or `isLoggedIn` SHALL clear all auth-field errors at once. The Save action SHALL stay disabled until `isToolsetFormValid` passes.
+`ToolsetEditor` SHALL validate the form through the lib's own `isToolsetFormValid`/`isValidEndpointUrl` utils (which delegate the name/version/description checks to `builder-form`'s `validateDeploymentCreationFields` with `validateVersionPattern: true`), building error messages from the `labels.validation` group. That group SHALL include `nameTooLong`, `nameControlCharacters` and `descriptionTooLong`, which default to `Use 256 characters or fewer.`, `Remove line breaks, tabs and other control characters.` and `Use 2000 characters or fewer.` respectively. Field errors SHALL surface only for fields the user has touched (the dirty-field set, which includes `name`, `version` and `description`), and SHALL be recomputed on every change of a touched field, so an over-limit name or description is flagged while the user types. Patches that change `authenticationType`, `withLogin`, or `isLoggedIn` SHALL clear all auth-field errors at once. The Save action SHALL stay disabled until `isToolsetFormValid` passes.
 
 #### Scenario: Untouched invalid fields show no error
 - **WHEN** the editor opens with an empty endpoint and the user edits only the name
 - **THEN** no endpoint error is shown, because the endpoint field is not dirty
 
+#### Scenario: Over-long name shows inline while typing
+- **WHEN** the user types a 257-character name
+- **THEN** `labels.validation.nameTooLong` is shown under the Name field and Save is disabled, with no notification raised
+
 #### Scenario: Save is disabled while the form is invalid
-- **WHEN** any validation rule fails (missing name/endpoint, invalid version or endpoint URL, incomplete auth configuration)
+- **WHEN** any validation rule fails (missing, over-long or control-character name, over-long description, missing endpoint, invalid version or endpoint URL, incomplete auth configuration)
 - **THEN** the Save/Create action is disabled until the failing fields are corrected
 
 #### Scenario: Switching auth type clears auth errors
@@ -106,7 +108,6 @@ The internal `AuthSection` SHALL run the login/logout flows through the `authAct
 #### Scenario: A second click during an in-flight login is ignored
 - **WHEN** the login flow is busy (`isAuthBusy`)
 - **THEN** the Log In action is disabled and no second `onOAuthLogin` call starts
-
 
 ### Requirement: Connect section gating
 The Connect toolset section SHALL render inside the Setup section only when the host supplies a `buildMcpUrl` resolver (i.e. an external core URL is configured) AND a persisted toolset id exists (edit mode, or a draft id created during the create session by Log In/Save). The composed editor resolves the URL by calling `buildMcpUrl` with the current persisted id and passes the resolved string to the internal SettingsForm; it SHALL never construct the URL itself. When either condition is absent the section SHALL NOT render.
@@ -162,3 +163,4 @@ The lib SHALL keep the existing accessible patterns: the Connect section's copy 
 #### Scenario: Renders correctly under an RTL ancestor
 - **WHEN** the editor is mounted under an ancestor with `dir="rtl"`
 - **THEN** its layout flips via inherited CSS logical properties with no prop or i18n call telling it to do so
+

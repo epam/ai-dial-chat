@@ -1,5 +1,11 @@
 import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { strToU8, zipSync } from 'fflate';
 import type { ReactNode } from 'react';
@@ -159,15 +165,18 @@ const uploadFile = async (
   user: ReturnType<typeof userEvent.setup>,
   file: File,
 ) => {
+  await user.click(screen.getAllByRole('button', { name: 'buttons.add' })[0]);
   await user.click(
-    screen.getAllByRole('button', { name: 'skillEditor.addUploadLabel' })[0],
+    await screen.findByRole('menuitem', {
+      name: 'skillEditor.uploadDialogTitle',
+    }),
   );
   /* The upload input is visually hidden and has no accessible role/label/text; no semantic query applies. */
   // eslint-disable-next-line testing-library/no-node-access
   const input = document.querySelector('input[type="file"]');
   fireEvent.change(input as Element, { target: { files: [file] } });
   await waitFor(() => expect(screen.getAllByText(file.name)[0]).toBeTruthy());
-  const addButton = screen.getByRole('button', {
+  const addButton = within(screen.getByRole('dialog')).getByRole('button', {
     name: 'buttons.add',
   }) as HTMLButtonElement;
   await waitFor(() => expect(addButton.disabled).toBe(false));
