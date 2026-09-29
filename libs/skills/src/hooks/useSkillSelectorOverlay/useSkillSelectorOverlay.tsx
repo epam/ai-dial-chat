@@ -25,10 +25,20 @@ import type {
   UseSkillSelectorOverlayOptions,
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
+import { SkillUnresolvedReason } from '../../types/skill-unresolved-reason';
 import { matchSkillMentions } from '../../utils/skill-mention-matching';
 import { findSlashQueryAtCaret } from '../../utils/skill-mention-tracking';
-import { getSkillFallbackName } from '../../utils/skill-url';
+import { getSkillFallbackName, getSkillUrlBucket } from '../../utils/skill-url';
 import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
+
+/** `Deleted` when the url's own bucket, `NotShared` otherwise. */
+const resolveUnresolvedReason = (
+  url: string,
+  viewerBucket: string,
+): SkillUnresolvedReason =>
+  getSkillUrlBucket(url) === viewerBucket
+    ? SkillUnresolvedReason.Deleted
+    : SkillUnresolvedReason.NotShared;
 
 /* Shared with the slash command menu's own `CommandMenuConfig.triggerPrefix` below. */
 const SKILL_TRIGGER_PREFIX = '/';
@@ -47,6 +57,7 @@ export const useSkillSelectorOverlay = ({
   sharedWithMe,
   publicSkills,
   favoriteIds,
+  viewerBucket,
   onToggleFavorite,
   labels,
   historyChipLabelClassName,
@@ -59,6 +70,8 @@ export const useSkillSelectorOverlay = ({
     backLabel = 'Back',
     catalogModalTitleLabel = 'Use skill',
     emptyQueryHintLabel = 'Type to filter',
+    deletedTooltipLabel,
+    notSharedTooltipLabel,
     panelLabels,
   } = labels ?? {};
 
@@ -258,6 +271,10 @@ export const useSkillSelectorOverlay = ({
         const skillEntry = entries[mention.skillIndex];
         const skill = skillByUrl.get(skillEntry.url);
         const name = skill?.name ?? getSkillFallbackName(skillEntry.url);
+        const unresolvedReason =
+          skill == null
+            ? resolveUnresolvedReason(skillEntry.url, viewerBucket)
+            : undefined;
 
         segments.push(
           <ChatSkill
@@ -266,8 +283,13 @@ export const useSkillSelectorOverlay = ({
             path={skillEntry.url}
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
+            unresolvedReason={unresolvedReason}
             onViewDetails={setDetailsSkillId}
-            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+            labels={{
+              viewDetailsLabel: panelLabels?.viewDetailsLabel,
+              deletedTooltipLabel,
+              notSharedTooltipLabel,
+            }}
           />,
         );
         cursor = mention.start + mention.length;
@@ -279,7 +301,15 @@ export const useSkillSelectorOverlay = ({
 
       return segments;
     },
-    [resolveName, skillByUrl, historyChipLabelClassName, panelLabels],
+    [
+      resolveName,
+      skillByUrl,
+      historyChipLabelClassName,
+      panelLabels,
+      viewerBucket,
+      deletedTooltipLabel,
+      notSharedTooltipLabel,
+    ],
   );
 
   /*
@@ -296,6 +326,10 @@ export const useSkillSelectorOverlay = ({
       return entries.map((entry) => {
         const skill = skillByUrl.get(entry.url);
         const name = skill?.name ?? getSkillFallbackName(entry.url);
+        const unresolvedReason =
+          skill == null
+            ? resolveUnresolvedReason(entry.url, viewerBucket)
+            : undefined;
 
         return (
           <ChatSkill
@@ -304,13 +338,25 @@ export const useSkillSelectorOverlay = ({
             path={entry.url}
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
+            unresolvedReason={unresolvedReason}
             onViewDetails={setDetailsSkillId}
-            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+            labels={{
+              viewDetailsLabel: panelLabels?.viewDetailsLabel,
+              deletedTooltipLabel,
+              notSharedTooltipLabel,
+            }}
           />
         );
       });
     },
-    [skillByUrl, historyChipLabelClassName, panelLabels],
+    [
+      skillByUrl,
+      historyChipLabelClassName,
+      panelLabels,
+      viewerBucket,
+      deletedTooltipLabel,
+      notSharedTooltipLabel,
+    ],
   );
 
   const renderOverlay = useCallback(
