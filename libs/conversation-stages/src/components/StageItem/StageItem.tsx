@@ -7,7 +7,7 @@ import {
   EllipsisTooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
-import { FC, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import type {
   StagesPanelLabels,
   StageTypography,
@@ -40,13 +40,16 @@ const StageAttachmentRow: FC<{
   clickLabel?: string;
   onAttachmentClick?: StageItemProps['onAttachmentClick'];
 }> = ({ attachments, clickLabel, onAttachmentClick }) => {
-  const handleClick = (id: string) => {
-    const attachment = attachments.find((a) => a.id === id);
-    if (attachment) onAttachmentClick?.(attachment);
-  };
+  const handleClick = useCallback(
+    (id: string) => {
+      const attachment = attachments.find((a) => a.id === id);
+      if (attachment) onAttachmentClick?.(attachment);
+    },
+    [attachments, onAttachmentClick],
+  );
 
   return (
-    <div role="list" aria-label={clickLabel} className="flex flex-wrap gap-3">
+    <div role="list" className="flex flex-wrap gap-3">
       {attachments.map((attachment) => (
         <div key={attachment.id} role="listitem">
           <AttachmentCard

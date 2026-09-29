@@ -44,6 +44,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     copyAriaLabel,
     failedAriaLabel,
     attemptLabel,
+    attachmentClickLabel,
   } = labels ?? {};
 
   const [isOpen, setIsOpen] = useState(isStreaming);
@@ -91,6 +92,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     runningAriaLabel,
     failedAriaLabel,
     attemptLabel,
+    attachmentClickLabel,
   };
 
   if (stages.length === 1) {

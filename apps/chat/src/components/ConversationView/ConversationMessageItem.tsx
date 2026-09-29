@@ -678,9 +678,10 @@ const ConversationMessageItem: FC<Props> = ({
         );
         return;
       }
-      if (attachment.referenceUrl) {
+      const linkUrl = attachment.referenceUrl ?? attachment.url;
+      if (linkUrl) {
         window.open(
-          resolveMarkdownUrl(attachment.referenceUrl),
+          resolveMarkdownUrl(linkUrl),
           '_blank',
           'noopener,noreferrer',
         );
