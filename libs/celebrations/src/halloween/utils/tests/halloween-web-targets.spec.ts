@@ -80,6 +80,23 @@ describe('Halloween web interface anchors', () => {
     vi.restoreAllMocks();
   });
 
+  it('reports only selected source identities, including the inset pumpkin body', () => {
+    const row = addRow();
+    const { button } = addPumpkin();
+    const sources: HTMLElement[] = [];
+    const targets = getHalloweenWebTargets(anchors, (element) =>
+      sources.push(element),
+    );
+    expect(sources).toEqual([
+      composer,
+      getFixtureElement(region, 'h1'),
+      button,
+      row,
+    ]);
+    expect(targets).toHaveLength(sources.length);
+    expect(targets[2].width).toBeCloseTo(120 * 0.68);
+  });
+
   it('uses the composer perimeter, welcome heading and history without nested duplicates or mutations', () => {
     addRow();
     const input = getFixtureElement(composer, 'textarea');
