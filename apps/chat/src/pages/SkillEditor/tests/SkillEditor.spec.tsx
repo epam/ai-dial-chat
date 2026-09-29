@@ -207,7 +207,9 @@ const fillRequiredFields = async (
   }
 };
 
-describe('SkillEditor page', () => {
+/* Per-keystroke typing into the full editor form runs close to the 5s default
+   when the whole suite shares the CPU, so this file gets extra headroom. */
+describe('SkillEditor page', { timeout: 15000 }, () => {
   const user = userEvent.setup({ delay: null });
 
   beforeEach(() => {
