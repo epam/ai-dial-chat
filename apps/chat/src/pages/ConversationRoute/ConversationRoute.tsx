@@ -274,9 +274,19 @@ const ConversationRoute: FC = () => {
    * prompt cases above, so a later back-navigation to `/` cannot re-apply a
    * stale pick — and `history.state` surviving a reload cannot keep
    * re-selecting it.
+   *
+   * `hasConsumedRouteSkillIdRef` mirrors `hasConsumedRouteDeploymentRef`
+   * above: `navigate`'s state-clearing update is wrapped by React Router in
+   * `startTransition` (low priority), so until it commits `routeSkillId` is
+   * still set and any re-render that re-runs this effect would call
+   * `selectSkill` again — the ref guard makes the arrival one-shot
+   * regardless of how long that transition takes (issue #9109's render
+   * loop).
    */
+  const hasConsumedRouteSkillIdRef = useRef(false);
   useEffect(() => {
-    if (routeSkillId == null) return;
+    if (routeSkillId == null || hasConsumedRouteSkillIdRef.current) return;
+    hasConsumedRouteSkillIdRef.current = true;
     selectSkill(routeSkillId);
     navigate(pathname, { replace: true, state: null });
   }, [routeSkillId, selectSkill, navigate, pathname]);
