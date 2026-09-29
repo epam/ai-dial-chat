@@ -194,6 +194,65 @@ describe('useConversationHandlers', () => {
       );
     });
 
+    it.each([
+      [false, true],
+      [true, false],
+    ])(
+      'regenerates with the current tool toggle (stored deep_research: %s, current: %s)',
+      (storedValue, currentValue) => {
+        const conversation = makeConversation({
+          messages: [
+            {
+              role: 'user' as never,
+              content: 'hi',
+              timestamp: 't',
+              custom_content: {
+                configuration_value: { deep_research: storedValue },
+                attachments: [
+                  {
+                    title: 'a.pdf',
+                    url: 'files/bucket/a.pdf',
+                    type: 'application/pdf',
+                  },
+                ],
+              } as never,
+            },
+            {
+              role: 'assistant' as never,
+              content: 'partial',
+              timestamp: 't',
+              wasStoppedByUser: true,
+            },
+          ],
+        });
+        const { result } = renderHook(() =>
+          useHarness({
+            conversation,
+            toolConfigurationValue: { deep_research: currentValue },
+          }),
+        );
+
+        act(() => result.current.handlers.handleRegenerateMessage(1));
+
+        const expectedCustomContent = {
+          configuration_value: { deep_research: currentValue },
+          attachments: [expect.objectContaining({ title: 'a.pdf' })],
+        };
+        expect(result.current.startStream).toHaveBeenCalledWith(
+          conversation.id,
+          'hi',
+          1,
+          'selected-model',
+          expectedCustomContent,
+          expect.any(String),
+          'regenerate',
+        );
+        expect(result.current.conversation?.messages[0].custom_content).toEqual(
+          expectedCustomContent,
+        );
+      },
+    );
+
     it('does nothing while streaming', () => {
       const conversation = makeConversation({
         messages: [

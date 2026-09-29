@@ -215,6 +215,54 @@ describe('buildConversationHistory', () => {
       expect(conversation.messages[2].custom_content?.state).toBeUndefined();
     });
 
+    it('persists the new configuration_value on the regenerated user message', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'q' },
+        { role: ConversationMessageRole.Assistant, content: 'old answer' },
+      ]);
+      conv.messages[0].custom_content = {
+        configuration_value: { deep_research: false },
+        state: { step: 1 },
+      };
+
+      const { conversation } = buildConversationHistory(
+        CompletionMode.Regenerate,
+        conv,
+        undefined,
+        1,
+        { configuration_value: { deep_research: true } },
+        'gpt-4o',
+      );
+
+      expect(conversation.messages[0].custom_content).toEqual({
+        configuration_value: { deep_research: true },
+        state: { step: 1 },
+      });
+    });
+
+    it('keeps the stored configuration_value when none is sent', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'q' },
+        { role: ConversationMessageRole.Assistant, content: 'old answer' },
+      ]);
+      conv.messages[0].custom_content = {
+        configuration_value: { deep_research: true },
+      };
+
+      const { conversation } = buildConversationHistory(
+        CompletionMode.Regenerate,
+        conv,
+        undefined,
+        1,
+        undefined,
+        'gpt-4o',
+      );
+
+      expect(
+        conversation.messages[0].custom_content?.configuration_value,
+      ).toEqual({ deep_research: true });
+    });
+
     it('throws BadRequestException when messageIndex is missing', () => {
       const conv = makeConversation([]);
       expect(() =>

@@ -141,6 +141,13 @@ for `handleUploadAttachment`.
 - **THEN** the outgoing `custom_content.configuration_value` includes
   `toolConfigurationValue`
 
+#### Scenario: Regenerate uses the current tool toggles, not the stored ones
+- **WHEN** a tool toggle (e.g. Deep Research) is switched on or off after the
+  original send and `handleRegenerateMessage` is called
+- **THEN** the outgoing `custom_content.configuration_value` is the current
+  `toolConfigurationValue`, the user message's other `custom_content` is kept,
+  and the regenerated user message carries the new configuration
+
 #### Scenario: Concurrent offline upload failures are batched
 - **WHEN** multiple attachments fail to upload while offline within the
   debounce window
