@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { SkillListingEntry } from '../../../models/favorite-skill-item';
 import type { UseSkillSelectorOverlayOptions } from '../../../models/skill-selector-overlay';
+import { SkillUnresolvedReason } from '../../../types/skill-unresolved-reason';
 import { useSkillSelectorOverlay } from '../useSkillSelectorOverlay';
 
 const abcSkill: SkillListingEntry = { url: 'skills/bucket/abc', name: 'abc' };
@@ -12,6 +13,7 @@ const baseOptions: UseSkillSelectorOverlayOptions = {
   isSkillsSupported: true,
   skills: [abcSkill, csdSkill],
   favoriteIds: new Set(),
+  viewerBucket: 'bucket',
   onToggleFavorite: vi.fn(),
   renderCatalogContent: () => null,
   detailsPanelComponent: () => null,
@@ -274,6 +276,50 @@ describe('useSkillSelectorOverlay', () => {
         result.current.renderHistorySkillSegments('hello', undefined),
       ).toBeNull();
     });
+
+    it("marks an unresolved entry in the viewer's own bucket as deleted", () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const historySegments = result.current.renderHistorySkillSegments(
+        '/gone',
+        [{ url: 'skills/bucket/gone' }],
+      );
+
+      expect((historySegments?.[0] as ReactElement).props).toMatchObject({
+        unresolvedReason: SkillUnresolvedReason.Deleted,
+      });
+    });
+
+    it('marks an unresolved entry in a foreign bucket as not-shared', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const historySegments = result.current.renderHistorySkillSegments(
+        '/foreign',
+        [{ url: 'skills/other-bucket/foreign' }],
+      );
+
+      expect((historySegments?.[0] as ReactElement).props).toMatchObject({
+        unresolvedReason: SkillUnresolvedReason.NotShared,
+      });
+    });
+
+    it('leaves unresolvedReason unset for a resolved entry', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const historySegments = result.current.renderHistorySkillSegments(
+        '/abc',
+        [{ url: abcSkill.url }],
+      );
+
+      expect(
+        (historySegments?.[0] as ReactElement).props as {
+          unresolvedReason?: string;
+        },
+      ).toHaveProperty('unresolvedReason', undefined);
+    });
   });
 
   describe('renderHistorySkills', () => {
@@ -296,6 +342,42 @@ describe('useSkillSelectorOverlay', () => {
 
       expect(result.current.renderHistorySkills([])).toBeNull();
       expect(result.current.renderHistorySkills(undefined)).toBeNull();
+    });
+
+    it("marks an unresolved entry in the viewer's own bucket as deleted", () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      const historyChips = result.current.renderHistorySkills([
+        { url: 'skills/bucket/gone' },
+      ]) as ReactElement[];
+
+      expect(historyChips[0].props).toMatchObject({
+        unresolvedReason: SkillUnresolvedReason.Deleted,
+      });
+    });
+
+    it('marks an unresolved entry in a foreign bucket as not-shared', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      const historyChips = result.current.renderHistorySkills([
+        { url: 'skills/other-bucket/foreign' },
+      ]) as ReactElement[];
+
+      expect(historyChips[0].props).toMatchObject({
+        unresolvedReason: SkillUnresolvedReason.NotShared,
+      });
+    });
+
+    it('leaves unresolvedReason unset for a resolved entry', () => {
+      const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+      const historyChips = result.current.renderHistorySkills([
+        { url: abcSkill.url },
+      ]) as ReactElement[];
+
+      expect(
+        historyChips[0].props as { unresolvedReason?: string },
+      ).toHaveProperty('unresolvedReason', undefined);
     });
   });
 
