@@ -3788,7 +3788,7 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
 
 ### useSkillArchiveImport
 
-Headless controller for a skill-archive-upload flow: dialog visibility, an exact-`SKILL.md`/`.zip` filename precheck, in-flight exclusion, and import completion. Accepts the host's already-configured `importArchive` request and observes completion/failure through `onImported`/`onError` — it never imports app contexts, i18n, notification transports, or a configured API client, and error outcomes are semantic values (`SkillArchiveImportErrorKind`) rather than translation keys. Available from both the package root and `./skill-editor`.
+Headless controller for a skill-archive-upload flow: dialog visibility, an exact-`SKILL.md`/`.zip` filename precheck, in-flight exclusion, and import completion. The dialog stays open while the request runs and closes only on success; a failure leaves it open with `errorKind` set so the host can render the message inline and the user can pick another file. `closeDialog` aborts an in-flight request through the `AbortSignal` passed to `importArchive`, so a hanging upload never locks the flow. Accepts the host's already-configured `importArchive` request and observes completion/failure through `onImported`/`onError` — it never imports app contexts, i18n, notification transports, or a configured API client, and error outcomes are semantic values (`SkillArchiveImportErrorKind`) rather than translation keys. Available from both the package root and `./skill-editor`.
 
 ```ts
 import {
@@ -3806,6 +3806,7 @@ interface SkillImportResult {
 const {
   isDialogOpen,
   status,
+  isUploading,
   selectionRejectionReason,
   errorKind,
   openDialog,
@@ -3813,13 +3814,13 @@ const {
   handleFilesSelected,
   handleFilesRejected,
 } = useSkillArchiveImport<SkillImportResult>({
-  importArchive: (file) => skillsApi.importSkillArchive(file),
+  importArchive: (file, signal) => skillsApi.importSkillArchive(file, signal),
   onImported: async (result) => {
     notifySuccess(`"${result.name}" has been created.`);
     await refetchSkills();
   },
   onError: (error, kind) => {
-    showErrorNotification(translateErrorKind(kind));
+    reportImportFailure(error, kind); // optional side channel — the dialog stays open either way
   },
 });
 

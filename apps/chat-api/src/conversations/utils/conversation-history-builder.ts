@@ -136,6 +136,25 @@ export const buildConversationHistory = (
     const truncated = isModelChange
       ? clearStateFromMessages(messages.slice(0, messageIndex))
       : messages.slice(0, messageIndex);
+    /*
+     * Tool toggles may have changed since the original send; persist the
+     * configuration this regeneration runs with on the user message it
+     * answers, so a reload restores the toggles the answer was built with.
+     */
+    const configurationValue = customContent?.configuration_value;
+    const userIndex = truncated.length - 1;
+    if (
+      configurationValue &&
+      truncated[userIndex]?.role === ConversationMessageRole.User
+    ) {
+      truncated[userIndex] = {
+        ...truncated[userIndex],
+        custom_content: {
+          ...truncated[userIndex].custom_content,
+          configuration_value: configurationValue,
+        },
+      };
+    }
     const assistantPlaceholder = makeAssistantPlaceholder(model);
     truncated.push(assistantPlaceholder);
     return {

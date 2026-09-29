@@ -1,4 +1,4 @@
-import { FileDropzone, Popup, PopupSize } from '@epam/ai-dial-ui-kit';
+import { FileDropzone, Popup, PopupSize, Spinner } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import type { SkillArchiveUploadDialogProps } from '../../models/skill-archive-upload-dialog-props';
 
@@ -12,6 +12,7 @@ const DEFAULT_ACCEPT = '.zip,.md';
 export const SkillArchiveUploadDialog: FC<SkillArchiveUploadDialogProps> = ({
   isOpen,
   errorText,
+  isUploading = false,
   accept = DEFAULT_ACCEPT,
   labels,
   onClose,
@@ -25,6 +26,7 @@ export const SkillArchiveUploadDialog: FC<SkillArchiveUploadDialogProps> = ({
     formatsLabel = 'File formats .zip and SKILL.md',
     fileInputAriaLabel = 'Upload a skill ZIP archive or a SKILL.md file',
     closeAriaLabel = 'Close',
+    uploadingAriaLabel = 'Uploading skill',
   } = labels ?? {};
 
   return (
@@ -35,7 +37,7 @@ export const SkillArchiveUploadDialog: FC<SkillArchiveUploadDialogProps> = ({
       closeAriaLabel={closeAriaLabel}
       onClose={onClose}
     >
-      <div className="px-6 py-4">
+      <div className="flex flex-col gap-4 px-6 py-4">
         <FileDropzone
           label={
             <>
@@ -46,10 +48,12 @@ export const SkillArchiveUploadDialog: FC<SkillArchiveUploadDialogProps> = ({
           description={formatsLabel}
           ariaLabel={fileInputAriaLabel}
           accept={accept}
-          errorText={errorText}
+          disabled={isUploading}
+          errorText={isUploading ? undefined : errorText}
           onChange={onFilesSelected}
           onReject={onFilesRejected}
         />
+        {isUploading && <Spinner ariaLabel={uploadingAriaLabel} />}
       </div>
     </Popup>
   );
