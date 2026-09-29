@@ -2334,6 +2334,21 @@ import { isCustomAppSchema } from '@epam/ai-dial-chat-hooks';
 isCustomAppSchema({ id: 'custom_app' }); // true
 ```
 
+### getRunnerSchemas
+
+Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. `useCatalogEditNavigation` builds one Create option per returned schema.
+
+```ts
+import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
+
+getRunnerSchemas([
+  { id: 'quickapps2' },
+  { id: 'mind-map' },
+  { id: 'mind-map' },
+  { id: 'custom_app' },
+]); // [{ id: 'quickapps2' }, { id: 'mind-map' }]
+```
+
 ### isValidAbsoluteUrl / parseFeaturesData / isValidFeaturesData
 
 Validation helpers for a custom application's `featuresData` JSON field: `isValidAbsoluteUrl` checks a well-formed `http(s)://` URL, `parseFeaturesData` parses the field, and `isValidFeaturesData` checks it contains only the allowed keys (`rate_endpoint`, `configuration_endpoint`).
@@ -3402,28 +3417,28 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Parameters** (`UseCatalogEditNavigationParams`):
 
-| Name                                                                          | Type                                                        | Description                                                                                        |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `deployments`                                                                 | `DeploymentItemDto[]`                                       | Used to tell a custom app apart from a quick app when routing Edit.                                |
-| `isCustomAppsEnabled`                                                         | `boolean`                                                   | Gates the custom-app editor route and Create option.                                               |
-| `isSchemaAppsEnabled`                                                         | `boolean`                                                   | Gates the quick-app Create option.                                                                 |
-| `isHideCustomAppCreationEnabled`                                              | `boolean`                                                   | Hides the quick-app and custom-app Create options.                                                 |
-| `isToolsetsEnabled`                                                           | `boolean`                                                   | Gates the toolset Create option.                                                                   |
-| `isPromptsEnabled`                                                            | `boolean`                                                   | Gates the prompt Create option.                                                                    |
-| `quickAppSchemaId`                                                            | `string \| undefined`                                       | The quick-app schema id, or `undefined` when none exists.                                          |
-| `urls`                                                                        | `CatalogEditNavigationUrls`                                 | Injected editor-route URL builders.                                                                |
-| `onNavigate`                                                                  | `(url: string) => void`                                     | Navigates the host to a URL built by `urls`.                                                       |
-| `deletePrompt`                                                                | `(id: string) => Promise<unknown>`                          | Deletes a personal or shared prompt.                                                               |
-| `deleteToolset`                                                               | `(id: string) => Promise<unknown>`                          | Deletes a toolset.                                                                                 |
-| `deleteSkill`                                                                 | `(bucket: string, path: string) => Promise<unknown>`        | Deletes a skill package.                                                                           |
-| `deleteApplication`                                                           | `(id: string) => Promise<unknown>`                          | Deletes a deployment/application.                                                                  |
-| `refetchPrompts` / `refetchToolsets` / `refetchSkills` / `refetchDeployments` | `() => Promise<void>`                                       | Refreshes the deleted item's list.                                                                 |
-| `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary. |
-| `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                 |
-| `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                         |
-| `onSkillUploadClick`                                                          | `() => void`                                                | Called when the Create menu's Skill → Upload option is picked.                                     |
+| Name                                                                          | Type                                                        | Description                                                                                         |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `deployments`                                                                 | `DeploymentItemDto[]`                                       | Used to tell a custom app apart from a schema-based app, and to find its schema, when routing Edit. |
+| `isCustomAppsEnabled`                                                         | `boolean`                                                   | Gates the custom-app editor route and Create option.                                                |
+| `isSchemaAppsEnabled`                                                         | `boolean`                                                   | Gates the runner (schema-based app) Create options.                                                 |
+| `isHideCustomAppCreationEnabled`                                              | `boolean`                                                   | Hides the runner and custom-app Create options.                                                     |
+| `isToolsetsEnabled`                                                           | `boolean`                                                   | Gates the toolset Create option.                                                                    |
+| `isPromptsEnabled`                                                            | `boolean`                                                   | Gates the prompt Create option.                                                                     |
+| `schemas`                                                                     | `ApplicationSchemaSummaryDto[]`                             | Application schemas (runners); each one except the custom-app schema gets its own Create option.    |
+| `urls`                                                                        | `CatalogEditNavigationUrls`                                 | Injected editor-route URL builders.                                                                 |
+| `onNavigate`                                                                  | `(url: string) => void`                                     | Navigates the host to a URL built by `urls`.                                                        |
+| `deletePrompt`                                                                | `(id: string) => Promise<unknown>`                          | Deletes a personal or shared prompt.                                                                |
+| `deleteToolset`                                                               | `(id: string) => Promise<unknown>`                          | Deletes a toolset.                                                                                  |
+| `deleteSkill`                                                                 | `(bucket: string, path: string) => Promise<unknown>`        | Deletes a skill package.                                                                            |
+| `deleteApplication`                                                           | `(id: string) => Promise<unknown>`                          | Deletes a deployment/application.                                                                   |
+| `refetchPrompts` / `refetchToolsets` / `refetchSkills` / `refetchDeployments` | `() => Promise<void>`                                       | Refreshes the deleted item's list.                                                                  |
+| `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary.  |
+| `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                  |
+| `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                          |
+| `onSkillUploadClick`                                                          | `() => void`                                                | Called when the Create menu's Skill → Upload option is picked.                                      |
 
-`CatalogEditNavigationUrls` has one URL-builder pair per item kind — `buildPromptEditUrl(promptId)` / `buildPromptCreateUrl()`, and the same edit/create pair for `Skill`, `Toolset`, and `CustomApp` — plus `buildQuickAppEditUrl(schemaId, appId)` / `buildQuickAppCreateUrl(schemaId)`.
+`CatalogEditNavigationUrls` has one URL-builder pair per item kind — `buildPromptEditUrl(promptId)` / `buildPromptCreateUrl()`, and the same edit/create pair for `Skill`, `Toolset`, and `CustomApp` — plus `buildQuickAppEditUrl(schemaId, appId)` / `buildQuickAppCreateUrl(schemaId)`, which every runner schema (the quick app included) uses.
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
@@ -3465,7 +3480,7 @@ const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
   isHideCustomAppCreationEnabled,
   isToolsetsEnabled,
   isPromptsEnabled,
-  quickAppSchemaId,
+  schemas,
   urls,
   onNavigate: navigate,
   deletePrompt,

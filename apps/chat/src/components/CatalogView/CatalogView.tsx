@@ -259,7 +259,6 @@ const CatalogView: FC<Props> = ({
   }, [skillsError, showErrorNotification, t]);
 
   const {
-    quickAppSchemaId,
     quickAppDeploymentIds,
     catalogItems,
     visibleCatalogItems,
@@ -530,7 +529,7 @@ const CatalogView: FC<Props> = ({
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
     isPromptsEnabled,
-    quickAppSchemaId,
+    schemas,
     urls: catalogEditUrls,
     onNavigate: navigate,
     deletePrompt,

@@ -1,9 +1,16 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
-import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ApplicationSchemaSummaryDto,
+  DeploymentItemDto,
+} from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { useCallback, useMemo } from 'react';
 import { getApiErrorDetails } from '../../api-error/api-error';
+import {
+  getRunnerSchemas,
+  isQuickAppSchema,
+} from '../../shared/application-schema';
 import { parseSkillResourceUrl } from '../../skill/skill-types';
 import { findDeploymentByIdOrReference } from '../deployment-id';
 
@@ -47,9 +54,9 @@ export interface CatalogEditNavigationUrls {
   buildCustomAppEditUrl(appId: string): string;
   /** URL to create a new custom (schema-less) app. */
   buildCustomAppCreateUrl(): string;
-  /** URL to edit an existing quick app under the given schema. */
+  /** URL to edit an existing schema-based app (quick app or any other runner) under the given schema. */
   buildQuickAppEditUrl(schemaId: string, appId: string): string;
-  /** URL to create a new quick app under the given schema. */
+  /** URL to create a new schema-based app (quick app or any other runner) under the given schema. */
   buildQuickAppCreateUrl(schemaId: string): string;
 }
 
@@ -61,8 +68,8 @@ export interface UseCatalogEditNavigationParams {
   isHideCustomAppCreationEnabled: boolean;
   isToolsetsEnabled: boolean;
   isPromptsEnabled: boolean;
-  /** The quick-app schema id resolved by `useCatalogItems`, or `undefined` when no quick-app schema exists. */
-  quickAppSchemaId: string | undefined;
+  /** Application type schemas (runners) loaded at startup; each one except the custom-app schema gets its own Create option. */
+  schemas: ApplicationSchemaSummaryDto[];
   /** Already-configured editor-route URL builders. */
   urls: CatalogEditNavigationUrls;
   /** Navigates the host to a URL built by `urls`. */
@@ -109,7 +116,7 @@ export const useCatalogEditNavigation = ({
   isHideCustomAppCreationEnabled,
   isToolsetsEnabled,
   isPromptsEnabled,
-  quickAppSchemaId,
+  schemas,
   urls,
   onNavigate,
   deletePrompt,
@@ -125,6 +132,8 @@ export const useCatalogEditNavigation = ({
   onNotify,
   onSkillUploadClick,
 }: UseCatalogEditNavigationParams): UseCatalogEditNavigationResult => {
+  const runnerSchemas = useMemo(() => getRunnerSchemas(schemas), [schemas]);
+
   const handleEdit = useCallback(
     (item: CatalogItem) => {
       if (item.type === CatalogEntityType.Prompt) {
@@ -152,10 +161,14 @@ export const useCatalogEditNavigation = ({
         return;
       }
 
-      if (!quickAppSchemaId) return;
-      onNavigate(urls.buildQuickAppEditUrl(quickAppSchemaId, item.id));
+      const schemaId =
+        runnerSchemas.find(
+          (schema) => schema.id === deployment?.applicationTypeSchemaId,
+        )?.id ?? runnerSchemas.find((schema) => isQuickAppSchema(schema))?.id;
+      if (!schemaId) return;
+      onNavigate(urls.buildQuickAppEditUrl(schemaId, item.id));
     },
-    [deployments, isCustomAppsEnabled, quickAppSchemaId, onNavigate, urls],
+    [deployments, isCustomAppsEnabled, runnerSchemas, onNavigate, urls],
   );
 
   const handleDelete = useCallback(
@@ -207,16 +220,15 @@ export const useCatalogEditNavigation = ({
   const createOptions = useMemo<DropdownItem[]>(() => {
     const options: DropdownItem[] = [];
 
-    if (
-      quickAppSchemaId &&
-      isSchemaAppsEnabled &&
-      !isHideCustomAppCreationEnabled
-    ) {
-      options.push({
-        key: 'quick-app',
-        label: labels.createQuickApp,
-        onClick: () =>
-          onNavigate(urls.buildQuickAppCreateUrl(quickAppSchemaId)),
+    if (isSchemaAppsEnabled && !isHideCustomAppCreationEnabled) {
+      runnerSchemas.forEach((schema) => {
+        options.push({
+          key: `runner:${schema.id}`,
+          label: isQuickAppSchema(schema)
+            ? labels.createQuickApp
+            : schema.displayName || schema.id,
+          onClick: () => onNavigate(urls.buildQuickAppCreateUrl(schema.id)),
+        });
       });
     }
 
@@ -263,7 +275,7 @@ export const useCatalogEditNavigation = ({
 
     return options;
   }, [
-    quickAppSchemaId,
+    runnerSchemas,
     onNavigate,
     urls,
     isPromptsEnabled,
