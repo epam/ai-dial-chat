@@ -1,8 +1,8 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
 import {
+  DialFileManagerTabs,
   DialFilePermission,
   FileManagerColumnKey,
-  type DialFileManagerTabs,
 } from '@epam/ai-dial-react-file-manager';
 
 /** Max number of files uploaded concurrently within a single upload batch. */
@@ -56,11 +56,18 @@ export interface SharedRootMeta {
   dialCorePath: string;
 }
 
+/** Source tabs `useDialFileManagerSections` can merge into the All tab, in display order. */
+export const DIAL_FILE_MANAGER_SECTION_TABS: readonly DialFileManagerTabs[] = [
+  DialFileManagerTabs.MyFiles,
+  DialFileManagerTabs.Shared,
+  DialFileManagerTabs.Organization,
+];
+
 /** One source tab rendered as a top-level folder of the All view. */
 export interface DialFileManagerSection {
   /** Source tab backing this section — `MyFiles`, `Shared` or `Organization`. */
   tab: DialFileManagerTabs;
-  /** Display name of the section's top-level folder; also the first segment of its virtual paths. */
+  /** Display name of the section's top-level folder; also the first segment of its virtual paths. An empty, slash-containing or repeated label is replaced by the tab id. */
   rootLabel: string;
 }
 

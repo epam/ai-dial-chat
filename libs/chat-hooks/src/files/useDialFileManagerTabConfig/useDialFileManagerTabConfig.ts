@@ -4,6 +4,7 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import type { FilterChipItem } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useMemo } from 'react';
+import { DIAL_FILE_MANAGER_SECTION_TABS } from '../dial-file-manager.model';
 
 /** Values returned by `useDialFileManagerTabConfig`. */
 export interface UseDialFileManagerTabConfigResult {
@@ -17,12 +18,6 @@ export interface UseDialFileManagerTabConfigResult {
  */
 const TAB_PRIORITY_ORDER = [
   DialFileManagerTabs.All,
-  DialFileManagerTabs.MyFiles,
-  DialFileManagerTabs.Shared,
-  DialFileManagerTabs.Organization,
-];
-
-const SOURCE_TABS = [
   DialFileManagerTabs.MyFiles,
   DialFileManagerTabs.Shared,
   DialFileManagerTabs.Organization,
@@ -51,8 +46,8 @@ export const useDialFileManagerTabConfig = (
       if (!isConfigured(tabId)) return false;
       if (tabId !== DialFileManagerTabs.All) return true;
       return (
-        SOURCE_TABS.filter((tab) => isConfigured(tab)).length >=
-        MIN_SOURCE_TABS_FOR_ALL
+        DIAL_FILE_MANAGER_SECTION_TABS.filter((tab) => isConfigured(tab))
+          .length >= MIN_SOURCE_TABS_FOR_ALL
       );
     },
     [fileManagerTabs],

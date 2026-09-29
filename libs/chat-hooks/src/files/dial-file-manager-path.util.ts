@@ -212,3 +212,20 @@ export const hasSamePaths = (
   }
   return true;
 };
+
+/** Returns `sections` with every root label usable as a unique first path segment, falling back to the tab id. */
+export const withRoutableRootLabels = <TSection extends DialFileManagerSection>(
+  sections: readonly TSection[],
+): TSection[] => {
+  const usedLabels = new Set<string>();
+  return sections.map((section) => {
+    const label = section.rootLabel.trim();
+    const isRoutable =
+      label !== '' && !label.includes('/') && !usedLabels.has(label);
+    const rootLabel = isRoutable ? label : section.tab;
+    usedLabels.add(rootLabel);
+    return rootLabel === section.rootLabel
+      ? section
+      : { ...section, rootLabel };
+  });
+};

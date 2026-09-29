@@ -489,6 +489,101 @@ describe('useDialFileManagerSections', () => {
     });
   });
 
+  describe('cross-section copy and move', () => {
+    it('refuses a copy whose items come from two sections', async () => {
+      const { result } = renderSections();
+      await waitForSettled(result);
+
+      act(() =>
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/a.pdf',
+              destinationUrl: '/My files/b/a.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+            {
+              sourceUrl: '/Organization/docs/b.pdf',
+              destinationUrl: '/My files/b/b.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/b',
+        ),
+      );
+
+      expect(filesApi.copyFiles).not.toHaveBeenCalled();
+      expect(onNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Warning,
+        reason: FileManagerNotificationReason.CrossSectionTransferUnsupported,
+      });
+    });
+
+    it('ignores an empty copy without a warning', async () => {
+      const { result } = renderSections();
+      await waitForSettled(result);
+
+      act(() => result.current.onCopyFiles([], '/My files'));
+
+      expect(filesApi.copyFiles).not.toHaveBeenCalled();
+      expect(onNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sections outside the browsed one', () => {
+    it('reports a failed Shared root once while My files is browsed', async () => {
+      vi.mocked(filesApi.listSharedFiles).mockRejectedValue(new Error('500'));
+      const { result, rerender } = renderSections();
+      await waitForSettled(result);
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Error,
+          reason: FileManagerNotificationReason.FolderLoadFailed,
+        }),
+      );
+      rerender({});
+      expect(onNotification).toHaveBeenCalledOnce();
+      expect(result.current.sectionTab).toBe(DialFileManagerTabs.MyFiles);
+      expect(result.current.error).toBeNull();
+
+      act(() => result.current.onPathChange('/Shared'));
+
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+    });
+
+    it('shows a loading root while another section is browsed', async () => {
+      vi.mocked(filesApi.listPublicFiles).mockImplementation(
+        () => new Promise(() => undefined),
+      );
+      const { result } = renderSections();
+      await waitForSettled(result);
+
+      expect(result.current.folderPopupLoadingPaths.has('/Organization')).toBe(
+        true,
+      );
+    });
+  });
+
+  describe('root labels', () => {
+    it('falls back to the tab id for a repeated or slash-containing label', async () => {
+      const { result } = renderSections({
+        sections: [
+          { tab: DialFileManagerTabs.MyFiles, rootLabel: 'Files' },
+          { tab: DialFileManagerTabs.Shared, rootLabel: 'Files' },
+          { tab: DialFileManagerTabs.Organization, rootLabel: 'Org/Public' },
+        ],
+      });
+      await waitForSettled(result);
+
+      expect(result.current.items.map((item) => item.path)).toEqual([
+        '/Files',
+        `/${DialFileManagerTabs.Shared}`,
+        `/${DialFileManagerTabs.Organization}`,
+      ]);
+    });
+  });
+
   describe('tab switches', () => {
     it('resets a My files subfolder when switching from All to My files', async () => {
       const { result, rerender } = renderSections();
