@@ -26,8 +26,12 @@ import type {
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
 import { matchSkillMentions } from '../../utils/skill-mention-matching';
+import { findSlashQueryAtCaret } from '../../utils/skill-mention-tracking';
 import { getSkillFallbackName } from '../../utils/skill-url';
 import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
+
+/* Shared with the slash command menu's own `CommandMenuConfig.triggerPrefix` below. */
+const SKILL_TRIGGER_PREFIX = '/';
 
 /**
  * Owns the Skills Add-menu flow: the favorites overlay, the "Use skill"
@@ -187,6 +191,35 @@ export const useSkillSelectorOverlay = ({
     [mentions],
   );
 
+  /*
+   * The Add-menu's own selection path (`renderOverlay` below) has no
+   * autocomplete state of its own — `caretPosition` is just wherever the
+   * caret sat when the `+` menu opened, which may or may not be sitting in a
+   * typed `/query` the user was filtering the slash menu with before
+   * clicking away from it. If it is, strip that raw text first so the
+   * mention is inserted in its place instead of being inserted next to text
+   * that would otherwise still be sent — mirroring the slash menu's own
+   * `close({ consumeQuery: true })`. Returns the position the mention should
+   * be inserted at: the query's own start when one was consumed, `caretPosition`
+   * unchanged otherwise.
+   */
+  const consumeQueryAtCaret = useCallback(
+    (caretPosition: number): number => {
+      const query = findSlashQueryAtCaret(
+        mentions.draft,
+        caretPosition,
+        SKILL_TRIGGER_PREFIX,
+      );
+      if (query == null) return caretPosition;
+
+      mentions.onDraftChange(
+        mentions.draft.slice(0, query.start) + mentions.draft.slice(query.end),
+      );
+      return query.start;
+    },
+    [mentions],
+  );
+
   const resetSkillMentions = useCallback(() => {
     mentions.reset();
     setMessageRevision((revision) => revision + 1);
@@ -296,16 +329,21 @@ export const useSkillSelectorOverlay = ({
         /* The Add menu mounts overlays inside a `role="menu"` container. */
         isMenu
         onSelect={(item) => {
-          insertAndPush(item.id, item.name, caretPosition);
+          insertAndPush(
+            item.id,
+            item.name,
+            consumeQueryAtCaret(caretPosition),
+          );
           onClose();
         }}
         onToggleFavorite={onToggleFavorite}
         onBrowse={() => {
-          setBrowseCaretPosition(caretPosition);
+          setBrowseCaretPosition(consumeQueryAtCaret(caretPosition));
           onClose();
           setIsCatalogOpen(true);
         }}
         onViewDetails={(item) => {
+          consumeQueryAtCaret(caretPosition);
           /* Closing the Add menu unmounts the overlay and its open tooltip. */
           onClose();
           setDetailsSkillId(item.id);
@@ -313,7 +351,13 @@ export const useSkillSelectorOverlay = ({
         labels={panelLabels}
       />
     ),
-    [favoriteSkillItems, insertAndPush, onToggleFavorite, panelLabels],
+    [
+      favoriteSkillItems,
+      insertAndPush,
+      consumeQueryAtCaret,
+      onToggleFavorite,
+      panelLabels,
+    ],
   );
 
   const skillMenuOverlay = useMemo<MenuOverlayConfig | undefined>(
@@ -349,7 +393,7 @@ export const useSkillSelectorOverlay = ({
     () =>
       isSkillsEnabled
         ? {
-            triggerPrefix: '/',
+            triggerPrefix: SKILL_TRIGGER_PREFIX,
             menuLabel: addMenuLabel,
             emptyQueryHint: emptyQueryHintLabel,
             renderMenu: ({
