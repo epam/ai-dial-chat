@@ -15,7 +15,6 @@ import {
   PromptSelectorI18nKeys,
   SkillSelectorI18nKeys,
 } from '../../constants/translation-keys';
-import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -60,10 +59,9 @@ export interface AppSkillSelectorOverlayResult extends UseSkillSelectorOverlayRe
 }
 
 /**
- * Host wiring for the lib's skill selector overlay hook: the
- * `skillUsageEnabled` feature flag, the deployment's skills support signal,
- * the skills and favorites contexts, i18n labels, the catalog picker
- * content, and the app-owned details panel component.
+ * Host wiring for the lib's skill selector overlay hook: the deployment's
+ * skills support signal, the skills and favorites contexts, i18n labels, the
+ * catalog picker content, and the app-owned details panel component.
  */
 export const useSkillSelectorOverlay = ({
   isSkillsSupported,
@@ -71,7 +69,6 @@ export const useSkillSelectorOverlay = ({
   /** Whether the input's current deployment supports skills (`features.skillsSupported === true`). */
   isSkillsSupported: boolean;
 }): AppSkillSelectorOverlayResult => {
-  const isEnabled = useFeatureFlag('skillUsageEnabled');
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { skills, sharedWithMe, publicSkills } = useSkills();
@@ -118,7 +115,6 @@ export const useSkillSelectorOverlay = ({
     : 'dial-body-text text-accent';
 
   const overlay = useHostAgnosticSkillSelectorOverlay({
-    isEnabled,
     isSkillsSupported,
     skills,
     sharedWithMe,

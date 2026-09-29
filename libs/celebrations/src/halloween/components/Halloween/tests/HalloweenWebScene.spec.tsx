@@ -113,6 +113,19 @@ describe('HalloweenWebScene', () => {
     expect(mocks.stop).not.toHaveBeenCalled();
   });
 
+  it('hands selected source identities to playback for cancellation', async () => {
+    const source = document.createElement('button');
+    mocks.targets.mockImplementationOnce((_anchors, onSelect) => {
+      onSelect(source);
+      return [{ left: 24, top: 60, width: 200, height: 40 }];
+    });
+    const view = render(<HalloweenWebScene />);
+    await waitFor(() => expect(mocks.animate).toHaveBeenCalledTimes(1));
+    expect(mocks.animate.mock.calls[0][2]).toMatchObject({ targets: [source] });
+    view.unmount();
+    expect(mocks.stop).toHaveBeenCalledOnce();
+  });
+
   it('stops motion and paints the same plan when reduced motion changes live', async () => {
     const view = render(<HalloweenWebScene />);
     await waitFor(() => expect(mocks.animate).toHaveBeenCalledTimes(1));

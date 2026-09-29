@@ -65,7 +65,6 @@ const ScheduledTaskEditPage: FC = () => {
 
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
-  const isSkillSelectionEnabled = useFeatureFlag('skillUsageEnabled');
   const skillLabelId = useId();
   const skillErrorId = useId();
   const navigate = useNavigate();
@@ -160,7 +159,7 @@ const ScheduledTaskEditPage: FC = () => {
     };
   }, [isEnabled, scheduleId, taskFetchToken]);
 
-  const labels = useScheduledTaskFormLabels('edit', isSkillSelectionEnabled);
+  const labels = useScheduledTaskFormLabels('edit');
 
   const handleFieldChange = useCallback(
     <K extends keyof ScheduledTaskCreateFormValues>(
@@ -315,17 +314,15 @@ const ScheduledTaskEditPage: FC = () => {
       skillLabelId={skillLabelId}
       skillErrorId={skillErrorId}
       skillSelector={
-        isSkillSelectionEnabled ? (
-          <ScheduledTaskSkillField
-            value={values.skillUrl}
-            onChange={(value) => handleFieldChange('skillUrl', value)}
-            isSkillsSupported={isSkillsSupported}
-            isDisabled={isSubmitting}
-            isInvalid={Boolean(effectiveErrors.skillUrl)}
-            labelledById={skillLabelId}
-            describedById={effectiveErrors.skillUrl ? skillErrorId : undefined}
-          />
-        ) : undefined
+        <ScheduledTaskSkillField
+          value={values.skillUrl}
+          onChange={(value) => handleFieldChange('skillUrl', value)}
+          isSkillsSupported={isSkillsSupported}
+          isDisabled={isSubmitting}
+          isInvalid={Boolean(effectiveErrors.skillUrl)}
+          labelledById={skillLabelId}
+          describedById={effectiveErrors.skillUrl ? skillErrorId : undefined}
+        />
       }
       modelSelector={
         <DeploymentSelectorFieldTrigger
