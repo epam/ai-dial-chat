@@ -210,7 +210,9 @@ describe('useDialFileListing', () => {
       const rootItem: ListFilesItemDto = {
         name: 'reports',
         path: `${BUCKET}/reports/`,
+        folderId: `${BUCKET}:`,
         nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+        bucket: BUCKET,
       };
       vi.mocked(filesApi.listFiles).mockResolvedValue({
         bucket: BUCKET,
