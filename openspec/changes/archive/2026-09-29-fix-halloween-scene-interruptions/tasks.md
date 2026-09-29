@@ -27,3 +27,13 @@ Run `npm run test:file -- libs/celebrations/src/halloween/utils/tests/halloween-
 ### Verification
 
 Use resolved Nx targets for the celebrations library, `npm run validate:docs`, `npm run validate:agent-docs` if the commit scope taxonomy changes, and `openspec validate fix-halloween-scene-interruptions --strict`. Record any unrelated baseline failures rather than changing other projects.
+
+## 4. Mobile playback follow-up
+
+- [x] 4.1 Add and verify Mummy mobile preparation regressions: settling, bounded delay, input cancellation, reduced motion and disposal. Preserve all playback keyframes.
+- [x] 4.2 Add and verify Bowling's no-history roll, interruption/completion cleanup and viewport bounds; correct mobile Storybook history visibility.
+- [x] 4.3 Recheck all 16 scenes with touch at mobile sizes in Chromium and WebKit; check changed scenes at 360/900/1280/1920, RTL, reduced motion and the real-app startup reproduction. Document measured budgets and limitations.
+- [x] 4.4 Update documentation, run appropriate checks and the five-axis review.
+
+Finalization requested by the user: sync and archive this change and
+`halloween-skeleton-steal-greeting-word`, then update the existing draft PR.

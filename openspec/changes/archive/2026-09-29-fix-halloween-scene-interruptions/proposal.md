@@ -7,6 +7,8 @@ The Halloween audit reproduced hidden history rows while typing in an already-fo
 - Cancel Portal borrowing on keyboard, input and composition events.
 - Cancel Portal, Train and Web when their existing targets change, move, resize or disappear, with event-driven observation and complete observer cleanup.
 - Add regression coverage and update the celebrations README.
+- Let mobile Mummy preparation settle after activation-time viewport changes before borrowing the composer.
+- Play Bowling's existing pumpkin roll when no visible history rows are available, and make the Storybook host hide history at mobile widths.
 
 ## Capabilities
 
@@ -16,7 +18,7 @@ None.
 
 ### Modified Capabilities
 
-- `halloween-easter-egg`: Define restoration on input and target invalidation for Portal, Train and Web.
+- `halloween-easter-egg`: Define restoration on input and target invalidation for Portal, Train and Web, mobile Mummy preparation and Bowling playback without history.
 
 ## Impact
 
@@ -28,7 +30,7 @@ Follow the bounded mutation/geometry checks in `libs/celebrations/src/halloween/
 
 ## Non-goals
 
-Preserve every scene's plot, cast, timings, keyframes, artwork, mobile variants and reduced-motion composition. Do not change the other thirteen scenes or Storybook's controls.
+Preserve every scene's plot, cast, playback timings, keyframes, artwork and reduced-motion composition. Mobile startup and missing-history playback fixes do not add characters, alternate UI targets or new story beats.
 
 ## Acceptance criteria
 

@@ -35,11 +35,11 @@ composer. Selected mobile and desktop screenshots were inspected.
   unrelated toast removal, normal completion and idempotent disposal are also
   covered by unit/integration tests.
 
-The browser harness hides the fixture's history below 1280 pixels and preserves
-native `matchMedia` so media changes reach real listeners. Stock Storybook controls
-do not model those conditions: its history remains open on mobile and its
-`matchMedia` replacement has no-op listeners. This existing fixture limitation is
-outside this fix. Screenshots use `caret: 'initial'` to avoid Playwright mutating
+The initial browser harness hid the fixture's history below 1280 pixels and preserved
+native `matchMedia` so media changes reached real listeners. The mobile follow-up
+below fixes the fixture's history visibility. Stock Storybook's
+`matchMedia` replacement still has no-op listeners, so live media changes require
+the initial harness. Screenshots use `caret: 'initial'` to avoid Playwright mutating
 the source textarea style and triggering cancellation itself.
 
 Local audit artifacts: `/tmp/halloween-audit`; fix matrix, profiles and screenshots:
@@ -98,3 +98,77 @@ the primary checkout or ran zero affected tasks are excluded from this evidence.
 
 No blocking code-review findings remain; cross-browser/device coverage is limited
 to the environment stated above.
+
+## Mobile playback follow-up — 2026-09-29
+
+The user reported that the input-pushing mummy was entirely absent on mobile.
+Normal touch and secret-phrase activation worked in Chromium and WebKit, including
+with the real frontend and composer (API responses mocked locally). A controlled
+360×800 → 360×600 resize 40 ms after submission reproduced the missing mummy:
+all three WAAPI tracks were cancelled and the actor was hidden before its entrance.
+This establishes an activation-time viewport defect, not the exact cause on the
+user's unidentified physical device. Bowling independently remained static with
+closed mobile history.
+
+Mobile Mummy now prepares after a 120 ms quiet viewport interval, capped at 600 ms,
+and still cancels pending work on user interaction. Bowling without history plays
+its existing travel/spin tracks with no borrowed UI. Playback keyframes, artwork,
+story beats and provider deadlines are unchanged. Storybook now hides history
+below the real desktop breakpoint instead of masking this condition.
+
+### Browser and performance evidence
+
+- **128 cases passed:** each of Chromium and WebKit ran all 16 scenes at 360/900
+  with touch and closed history (32 cases), plus Mummy/Bowling at
+  360/900/1280/1920 × LTR/RTL × normal/reduced motion (32 cases). Normal changed-scene
+  cases also tapped the live input and checked immediate animation/copy cleanup.
+- Every normal scene had active scene-layer animation or Web's canvas; no page
+  errors or horizontal document overflow. The mobile bowling fallback had exactly
+  two tracks and zero snapshots. Changed scenes had no tracks/copies in reduced
+  motion. Selected phone/tablet/desktop screenshots were visually inspected.
+- Real-app secret-phrase reproduction passed in **Chromium and WebKit** after the
+  same early resize: Mummy retained three WAAPI tracks and one inert composer copy
+  at 2.5 and 7 seconds. Chromium additionally completed the provider deadline with
+  no scene or copy remaining and the original composer visible with an empty draft.
+- Four Chromium profiles (Mummy/Bowling × 360/1280) sampled two seconds after
+  preparation: **zero geometry reads originating from either scene**; page task
+  duration deltas were 6–18 ms and layout duration deltas 0.2–0.6 ms. These short,
+  unthrottled desktop-host samples include the fixture/decor and are not phone FPS
+  or memory benchmarks.
+- The first matrix attempt passed all 64 mobile-scene cases, then stopped because
+  a QA textarea selector matched both the original and inert copy. The remaining
+  64 cases passed after changing the harness to the live textbox's accessible role.
+  No product change was made for this harness error.
+
+Local evidence: `/tmp/halloween-mobile-final/` (browser JSON, profiles and PNGs),
+`/tmp/halloween-mobile-app-resize-fixed.log`,
+`/tmp/halloween-mobile-app-resize-webkit-fixed.log` and
+`/tmp/halloween-mobile-app-completion.log`. Physical iOS/Android, real software
+keyboard transitions and an authenticated backend session remain untested.
+
+### Regression checks and review
+
+- New expectations failed before implementation (26 failures); the focused suite
+  then passed all 46 tests. Full celebrations suite: **61 files / 1006 tests**.
+- Celebrations lint, typecheck and build passed; docs and both strict change
+  validations passed. Affected typecheck passed. Affected lint still reports only
+  the previously established `CatalogView.tsx:18` baseline error; separately run
+  affected tests still have the same chat Blob-content failure, 2632 passing and
+  one skipped. The first-pass full-verification limitations above still apply.
+- Correctness: bounded preparation, all input/IME/focus/scroll cancellation paths,
+  missing history, natural completion, unmount and reduced-motion disposal are
+  covered. Desktop collisions and Mummy keyframes are untouched.
+- Readability/architecture: two small private lifecycle helpers remain owned by
+  the corresponding scenes; host integration stays in existing anchors/isMobile.
+  No app imports, public contract, dependency or localization changes.
+- Security: no new snapshot path or interactive clone; no network/persistence.
+- Performance: preparation owns at most two timers, removes listeners before
+  playback and never polls geometry; standalone Bowling owns two tracks and one
+  timer with idempotent cleanup. No blocking self-review findings.
+
+### Archive verification
+
+OpenSpec 1.3.1 native archive completed with validation and spec synchronization
+enabled. Both complete changes were moved with their `.openspec.yaml` metadata.
+All six delta requirements match the main Halloween spec, every unrelated
+requirement was preserved, and `openspec validate --specs` passed all 352 specs.

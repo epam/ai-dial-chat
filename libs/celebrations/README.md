@@ -222,12 +222,19 @@ mimic curls a shaded tongue in front of and behind two neighboring chats and pul
 them into its mouth, keeping them attached to the tongue tip, then chews and spits them back. A pumpkin
 rolls into the visible history and scatters only the rows whose visible titles
 its body touches (up to six), starting each row's motion at contact, before they regroup.
+With closed or empty history, the pumpkin still rolls across the viewport using
+the same travel and spin animations, without borrowing UI.
 Original layout and conversation data never change. Copies disappear and originals
 return immediately on typing, composition, clicking, focus changes, scrolling,
 resizing, source changes, navigation or reduced motion. Unavailable or unusually
 large targets fall back to artwork alone. The mummy can use a focused composer;
 history scenes skip focused rows. The mummy animates for twelve seconds and
 unmounts after thirteen; the other three animate for eight and unmount after nine.
+On mobile, the mummy waits for 120 ms of viewport stability before measuring the
+composer, up to 600 ms, so an activation-time keyboard/browser-chrome transition
+does not cancel its entrance. Input, focus, pointer interaction, document scrolling,
+hidden tabs or unmount cancel this preparation; viewport changes during playback
+still stop the scene immediately.
 Repeated secret messages select randomly without consecutive repeats, independently
 of pumpkin clicks. The new scenes are exclusive to messages and show a static
 illustration with reduced motion enabled.
