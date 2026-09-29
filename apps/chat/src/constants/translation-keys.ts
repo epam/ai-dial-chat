@@ -1256,6 +1256,8 @@ export enum VoiceRecordingI18nKeys {
 export enum ToolsI18nKeys {
   MenuTitle = 'tools.menuTitle',
   RemoveTool = 'tools.removeTool',
+  StateOn = 'tools.stateOn',
+  StateOff = 'tools.stateOff',
 }
 
 export enum ConversationInputI18nKeys {
