@@ -336,7 +336,8 @@ import { SkillArchiveUploadDialog } from '@epam/ai-dial-skills';
 
 <SkillArchiveUploadDialog
   isOpen={isDialogOpen}
-  errorText={selectionError}
+  errorText={errorText}
+  isUploading={isUploading}
   accept=".zip,.md"
   labels={{
     dialogTitle: 'Upload skill',
@@ -345,6 +346,7 @@ import { SkillArchiveUploadDialog } from '@epam/ai-dial-skills';
     formatsLabel: 'File formats .zip and SKILL.md',
     fileInputAriaLabel: 'Upload a skill ZIP archive or a SKILL.md file',
     closeAriaLabel: 'Close',
+    uploadingAriaLabel: 'Uploading skill',
   }}
   onClose={closeDialog}
   onFilesSelected={handleFilesSelected}
@@ -353,7 +355,7 @@ import { SkillArchiveUploadDialog } from '@epam/ai-dial-skills';
 ```
 
 Presentation for a skill-archive upload: a `Popup` with a drop area showing the accepted formats
-and any local rejection message. It has no dependency on an import controller — wire
+and any rejection or upload-failure message. While `isUploading` is set the drop area is disabled and a spinner is shown; the dialog is expected to stay open until the upload succeeds, so a failure is shown in place. It has no dependency on an import controller — wire
 `onFilesSelected`/`onFilesRejected` to `@epam/ai-dial-chat-hooks`' `useSkillArchiveImport` (or an
 equivalent host controller). Every label falls back to an English default, so `labels` may be
 omitted entirely for an English-only host.

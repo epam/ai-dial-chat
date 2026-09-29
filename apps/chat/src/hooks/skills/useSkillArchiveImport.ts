@@ -51,9 +51,13 @@ interface UseSkillArchiveImportResult {
   statusMessage: string | undefined;
   /** Localized rejection message for the drop zone; `undefined` when nothing was rejected. */
   selectionError: string | undefined;
+  /** Localized message for the drop zone — a local rejection or a failed import; `undefined` when there is none. */
+  errorText: string | undefined;
+  /** Whether an import request is in flight; the dialog stays open meanwhile. */
+  isUploading: boolean;
   /** Opens the upload dialog, unless an import is already in flight. */
   openDialog: () => void;
-  /** Closes the upload dialog and clears any rejection message. */
+  /** Closes the upload dialog, aborting an in-flight import, and clears any error. */
   closeDialog: () => void;
   /** Wire to the dialog drop zone's `onChange`. */
   handleFilesSelected: (files: File[]) => void;
@@ -83,29 +87,29 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
     [notifyOperationSuccess, refetchSkills],
   );
 
+  /*
+   * Every failure is rendered inline in the still-open dialog. Only the unmapped/unexpected
+   * case also raises a toast, since that is the one place the trace id is shown — the mapped
+   * kinds (validation, collision, rate limit, service unavailable) already tell the user
+   * exactly what happened.
+   */
   const onError = useCallback(
     async (error: unknown, kind: SkillArchiveImportErrorKind) => {
-      const message = t(ERROR_I18N_KEYS[kind]);
+      if (kind !== SkillArchiveImportErrorKind.Generic) return;
 
-      /* Trace ids are only meaningful for the unmapped/unexpected case — the mapped kinds
-       * (validation, collision, rate limit, service unavailable) already tell the user exactly
-       * what happened. */
-      const requestId =
-        kind === SkillArchiveImportErrorKind.Generic
-          ? (await getApiErrorDetails(error)).traceId
-          : undefined;
-
+      const { traceId } = await getApiErrorDetails(error);
       showErrorNotification({
         title: t(SkillArchiveImportI18nKeys.ErrorTitle),
-        message,
-        requestId,
+        message: t(ERROR_I18N_KEYS[kind]),
+        requestId: traceId,
       });
     },
     [showErrorNotification, t],
   );
 
   const importArchive = useCallback(
-    (file: File) => requestSkillArchiveImport(file),
+    (file: File, signal: AbortSignal) =>
+      requestSkillArchiveImport(file, signal),
     [],
   );
 
@@ -148,11 +152,18 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
       ? t(SkillArchiveImportI18nKeys.ErrorUnsupportedFilename)
       : undefined;
 
+  const importError =
+    controller.status === SkillArchiveImportStatus.Error && controller.errorKind
+      ? t(ERROR_I18N_KEYS[controller.errorKind])
+      : undefined;
+
   return {
     isDialogOpen: controller.isDialogOpen,
     status: controller.status,
     statusMessage,
     selectionError,
+    errorText: selectionError ?? importError,
+    isUploading: controller.isUploading,
     openDialog: controller.openDialog,
     closeDialog: controller.closeDialog,
     handleFilesSelected: controller.handleFilesSelected,
