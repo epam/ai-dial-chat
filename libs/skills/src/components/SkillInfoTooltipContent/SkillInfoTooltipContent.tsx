@@ -5,18 +5,47 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
 } from '@epam/ai-dial-ui-kit';
-import { IconEye } from '@tabler/icons-react';
+import { IconEye, IconLock, IconTrash } from '@tabler/icons-react';
 import type { FC } from 'react';
 import type { SkillInfoTooltipContentProps } from '../../models/skill-info-tooltip-content-props';
+import { SkillUnresolvedReason } from '../../types/skill-unresolved-reason';
 
-/** Inner content of a skill's interactive tooltip: the description above a "View details" link action, or the unsupported-model message alone. */
+/** Inner content of a skill's interactive tooltip: the description above a "View details" link action, the unsupported-model message alone, or an unresolved-skill message alone. */
 export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
   description,
   unsupportedMessage,
+  unresolvedReason,
+  deletedMessage,
+  notSharedMessage,
   viewDetailsLabel = 'View details',
   onViewDetails,
   viewDetailsTabIndex,
 }) => {
+  /*
+   * An unresolved url replaces the whole content: an icon plus a fixed
+   * message, no description and no "View details" action — there is no
+   * metadata to fetch and no panel to open. Takes precedence over the
+   * unsupported-model state (the two never co-occur in practice, but this
+   * ordering documents which wins if they somehow did).
+   */
+  if (unresolvedReason != null) {
+    const isDeleted = unresolvedReason === SkillUnresolvedReason.Deleted;
+    const Icon = isDeleted ? IconTrash : IconLock;
+    const message = isDeleted ? deletedMessage : notSharedMessage;
+
+    return (
+      <div className="flex flex-row items-center gap-2">
+        <Icon
+          size={DIAL_ICON_SIZE.MD}
+          stroke={DIAL_KIT_ICON_STROKE}
+          aria-hidden
+          className="shrink-0 text-secondary"
+        />
+        <p className="dial-tiny-text text-start text-primary">{message}</p>
+      </div>
+    );
+  }
+
   /*
    * The unsupported state replaces the whole content: the message alone, no
    * description and no "View details" action — the skill cannot be sent as

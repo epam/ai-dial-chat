@@ -48,6 +48,7 @@ export type { UseSkillMentionsResult } from './hooks/useSkillMentions/useSkillMe
 export type { ResolvedSkillMention } from './utils/skill-mention-matching';
 export type { TextChange } from './utils/skill-mention-tracking';
 export { SKILLS_CLASS } from './constants/public-class-names';
+export { SkillUnresolvedReason } from './types/skill-unresolved-reason';
 export { SkillSelectorField } from './components/SkillSelectorField/SkillSelectorField';
 export type {
   SkillSelectorFieldProps,

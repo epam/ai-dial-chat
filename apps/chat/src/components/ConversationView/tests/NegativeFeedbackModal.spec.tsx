@@ -63,7 +63,7 @@ describe('NegativeFeedbackModal', () => {
     const user = userEvent.setup();
     render(<NegativeFeedbackModal onClose={vi.fn()} onSubmit={vi.fn()} />);
 
-    await user.selectOptions(screen.getByRole('combobox'), 'Ui bug');
+    await user.selectOptions(screen.getByRole('combobox'), 'UI bug');
 
     expect(
       screen
@@ -104,6 +104,22 @@ describe('NegativeFeedbackModal', () => {
 
     expect(onSubmit).toHaveBeenCalledWith('Overactive refusal');
   });
+
+  it.each(['UI bug', 'Should have searched the web'])(
+    'submits the "%s" category with its exact spelling',
+    async (category) => {
+      const onSubmit = vi.fn();
+      const user = userEvent.setup();
+      render(<NegativeFeedbackModal onClose={vi.fn()} onSubmit={onSubmit} />);
+
+      await user.selectOptions(screen.getByRole('combobox'), category);
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.Send }),
+      );
+
+      expect(onSubmit).toHaveBeenCalledWith(category);
+    },
+  );
 
   it('hides the comment textarea when dislike-comment is disabled', () => {
     mockUseUiFeature.mockReturnValue(false);
