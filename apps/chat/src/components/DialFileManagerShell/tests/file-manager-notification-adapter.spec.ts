@@ -315,6 +315,18 @@ describe('buildFileManagerNotificationOptions', () => {
     });
   });
 
+  it('maps a refused cross-section transfer to a translated warning', () => {
+    expect(
+      buildFileManagerNotificationOptions(t, {
+        variant: NotificationVariant.Warning,
+        reason: FileManagerNotificationReason.CrossSectionTransferUnsupported,
+      }),
+    ).toEqual({
+      variant: NotificationVariant.Warning,
+      message: 'dialFileManager.crossSectionTransferUnsupported',
+    });
+  });
+
   it('falls back to the notification message when reason is absent', () => {
     const result = buildFileManagerNotificationOptions(t, {
       variant: NotificationVariant.Error,

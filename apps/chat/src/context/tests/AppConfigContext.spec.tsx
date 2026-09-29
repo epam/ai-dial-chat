@@ -55,6 +55,7 @@ describe('AppConfigContext', () => {
     expect(result.current.config.activeEventId).toBeNull();
     expect(result.current.config.dialCoreExternalUrl).toBeNull();
     expect(result.current.config.fileManagerTabs).toEqual([
+      'all',
       'my_files',
       'shared',
       'organization',
@@ -372,6 +373,7 @@ describe('AppConfigContext', () => {
 
     expect(result.current.config.dialCoreExternalUrl).toBeNull();
     expect(result.current.config.fileManagerTabs).toEqual([
+      'all',
       'my_files',
       'shared',
       'organization',

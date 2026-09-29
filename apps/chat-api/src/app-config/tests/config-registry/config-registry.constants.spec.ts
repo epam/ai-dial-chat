@@ -18,6 +18,22 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
+  it('contains the fileManager.availableTabs entry with all listed first', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'fileManager.availableTabs',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'fileManager.availableTabs',
+      type: 'config',
+      valueType: 'json',
+      visibility: 'client',
+      defaultValue: ['all', 'my_files', 'shared', 'organization'],
+      critical: false,
+      envVar: 'FILE_MANAGER_AVAILABLE_TABS',
+    });
+  });
+
   it('contains the applicationVisualizers entry with the expected shape', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'applicationVisualizers',
