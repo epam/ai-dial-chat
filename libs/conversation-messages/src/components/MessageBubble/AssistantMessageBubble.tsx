@@ -14,6 +14,7 @@ import { FC, useMemo } from 'react';
 import { CONVERSATION_MESSAGES_CLASS } from '../../constants/public-class-names';
 import { useInlineStartIndent } from '../../hooks/useInlineStartIndent/useInlineStartIndent';
 import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
+import { copySelectionWithoutStyles } from '../../utils/clipboard';
 import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
 
@@ -105,6 +106,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
       role="group"
       aria-label={assistantMessageAriaLabel}
       style={cssVars}
+      onCopy={copySelectionWithoutStyles}
       className={mergeClasses('flex w-full items-start gap-3', className)}
     >
       {hasDeploymentIcon && (
