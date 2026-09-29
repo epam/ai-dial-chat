@@ -138,10 +138,13 @@ const DeploymentSelectorPanel: FC<Props> = ({
             pinnedItem,
             ...favorites.filter((item) => item.id !== pinnedItem.id),
           ];
+    /* Entities tagged with an operator HIDDEN_ENTITY_TAGS tag stay out of the
+       picker the same way the Catalog drops them (Issue #9150). */
     return quickItems.filter(
       (f) =>
-        f.type === CatalogEntityType.Model ||
-        f.type === CatalogEntityType.Agent,
+        !f.isHidden &&
+        (f.type === CatalogEntityType.Model ||
+          f.type === CatalogEntityType.Agent),
     );
   }, [favorites, pinnedItem]);
 
