@@ -381,7 +381,7 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 ### Requirement: show-header-logo renders the theme logo in the desktop top bar
 
-`ChatLayout`'s desktop top bar SHALL render the theme logo, centered between the start-side conversation controls and the end-side sources toggle, when `isEnabled('show-header-logo')` is `true`. Nothing SHALL render there when the key is off, and the bar's other controls SHALL keep their positions either way. The key SHALL NOT affect the mobile `Header`, which renders the logo whenever `header` is on, nor the desktop navigation rail. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+`ChatLayout`'s desktop top bar SHALL render the theme logo, centered between the start-side conversation controls and the end-side sources toggle, when `isEnabled('show-header-logo')` is `true`. Nothing SHALL render there when the key is off, and the bar's other controls SHALL keep their positions either way. The mobile `Header` renders the logo whenever `header` is on; when `header` is off and this key is on, the mobile `Header` SHALL still render, carrying only the logo and none of its buttons. Below the desktop breakpoint `Logo` shows the theme `favicon`, or a smaller full `logo` when the theme defines no `favicon`. The key SHALL NOT affect the desktop navigation rail. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
 
 **Accessibility:** The logo reuses `Logo`'s existing labeled link; no new interactive control is introduced.
 
@@ -395,7 +395,48 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 #### Scenario: Nothing renders when the key is off
 
 - **WHEN** `isEnabled('show-header-logo')` is `false`
-- **THEN** the desktop top bar renders no logo, and the mobile header's logo is unaffected
+- **THEN** the desktop top bar renders no logo, and the mobile header renders only when `header` is on
+
+#### Scenario: The mobile header carries only the logo when header is off
+
+- **WHEN** `isEnabled('show-header-logo')` is `true` and `isEnabled('header')` is `false`
+- **THEN** the mobile header renders the logo link and no buttons
+
+### Requirement: starters-below-greeting moves the starters between the greeting and the input
+
+`NewConversationComposer` SHALL pass the starter intro text and the starter buttons to `ConversationInput`'s `belowWelcomeSlot`, rendering them between the greeting and the input, when `isEnabled('starters-below-greeting')` is `true`, and SHALL render them below the input when the key is off. The key SHALL NOT change which starters render or how `show-all-starters` lays them out. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+
+**Accessibility:** The starters keep their existing labeled list; moving them earlier in the DOM puts them before the input in tab order, matching their visual position.
+
+**i18n impact:** None.
+
+#### Scenario: The starters render under the greeting when the key is on
+
+- **WHEN** `isEnabled('starters-below-greeting')` is `true` and the deployment has starters
+- **THEN** the starters render after the greeting and before the input
+
+#### Scenario: The starters stay below the input when the key is off
+
+- **WHEN** `isEnabled('starters-below-greeting')` is `false`
+- **THEN** the starters render after the input
+
+### Requirement: hide-greeting removes the empty-chat greeting
+
+`NewConversationComposer` SHALL pass no `welcomeText` to `ConversationInput` when `isEnabled('hide-greeting')` is `true`, so the empty-chat screen renders neither the time-of-day greeting nor the welcome-screen description that `ConversationInput` renders only under it. With the key off the greeting SHALL render as before. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+
+**Accessibility:** The greeting is the screen's `<h1>`; the welcome region keeps its `aria-label`, so the screen stays named without it.
+
+**i18n impact:** None.
+
+#### Scenario: The greeting is hidden when the key is on
+
+- **WHEN** `isEnabled('hide-greeting')` is `true`
+- **THEN** the empty-chat screen renders no greeting and no welcome-screen description
+
+#### Scenario: The greeting renders when the key is off
+
+- **WHEN** `isEnabled('hide-greeting')` is `false`
+- **THEN** the empty-chat screen renders the time-of-day greeting
 
 ### Requirement: Isolated-view override takes precedence over every other source
 
