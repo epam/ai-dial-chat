@@ -273,7 +273,7 @@ describe('ApplicationsService', () => {
         body,
       );
       expect(result).toEqual({
-        id: 'applications/test-bucket/My%20App__0.0.1',
+        id: 'applications/test-bucket/My%20App__1.0.0',
       });
       expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
     });
@@ -296,12 +296,12 @@ describe('ApplicationsService', () => {
       );
     });
 
-    it('defaults version to 0.0.1 when not provided', async () => {
+    it('defaults version to 1.0.0 when not provided', async () => {
       const { service } = makeService();
       mockCreateApplicationSdk(service);
 
       const result = await service.createApplication('user1', 't', body);
-      expect(result.id).toContain('__0.0.1');
+      expect(result.id).toContain('__1.0.0');
     });
 
     it('maps DTO fields to DIAL Core SDK application body', async () => {
@@ -988,6 +988,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
     const deploymentsDetailsService = new DeploymentsDetailsService(
       dialClient,
       cacheManager as never,
+      { get: vi.fn() } as never,
     );
     const applicationsService = new ApplicationsService(
       dialClient,

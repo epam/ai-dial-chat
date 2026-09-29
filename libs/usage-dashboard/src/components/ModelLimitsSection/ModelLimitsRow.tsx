@@ -117,7 +117,7 @@ export const ModelLimitsRow: FC<ModelLimitsRowProps> = ({
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
           <span className={mergeClasses(modelTypeClassName, styles.modelType)}>
-            {labels.modelTypeLabel}
+            {row.typeLabel || labels.modelTypeLabel}
           </span>
           <div className="flex min-w-0 items-center gap-1 overflow-hidden">
             <span
