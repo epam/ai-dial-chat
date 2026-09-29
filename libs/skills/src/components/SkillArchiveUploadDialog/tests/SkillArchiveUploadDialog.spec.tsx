@@ -110,6 +110,28 @@ describe('SkillArchiveUploadDialog', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('disables the drop zone and shows a spinner while uploading', () => {
+    renderDialog({ isUploading: true, errorText: 'Stale error' });
+
+    expect(
+      getFileInput('Upload a skill ZIP archive or a SKILL.md file').disabled,
+    ).toBe(true);
+    expect(screen.getByLabelText('Uploading skill')).toBeTruthy();
+    expect(screen.queryByText('Stale error')).toBeNull();
+  });
+
+  it('keeps the drop zone usable and shows the error once an upload fails', () => {
+    renderDialog({ errorText: "This archive isn't a valid skill package." });
+
+    expect(
+      getFileInput('Upload a skill ZIP archive or a SKILL.md file').disabled,
+    ).toBe(false);
+    expect(
+      screen.getByText("This archive isn't a valid skill package."),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText('Uploading skill')).toBeNull();
+  });
+
   it('renders under an RTL ancestor with the same labels and behavior', async () => {
     const onClose = vi.fn();
     render(

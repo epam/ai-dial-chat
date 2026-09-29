@@ -759,8 +759,7 @@
       "errorNotification": "Failed to create the scheduled task",
       "skillLabel": "Skill",
       "skillPlaceholder": "Choose a skill",
-      "instructionsOrSkillRequired": "Choose a skill or write instructions.",
-      "instructionsOnlySubtitle": "Write custom instructions for this task."
+      "instructionsOrSkillRequired": "Choose a skill or write instructions."
     },
     "detail": {
       "repeatsLabel": "Repeats",
@@ -942,7 +941,14 @@
     "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
     "folderPickerEmptyStateTitle": "This folder is empty",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
+    "crossSectionTransferUnsupported": "Copying and moving between My files, Shared, and Organization isn't supported yet.",
+    "searchPlaceholder": {
+      "myFiles": "Search in My files",
+      "shared": "Search in Shared with me files",
+      "organization": "Search in Organization files"
+    },
     "tab": {
+      "all": "All",
       "myFiles": "My Files",
       "shared": "Shared with Me"
     },
@@ -1563,6 +1569,8 @@
     "tokensColumnLabel": "Tokens",
     "statusColumnLabel": "Status",
     "modelTypeLabel": "Model",
+    "applicationTypeLabel": "Agent",
+    "includesCalledModelsLabel": "Includes cost of models it called",
     "noLimitLabel": "No limit",
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"

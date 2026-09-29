@@ -134,6 +134,7 @@ describe('AppConfigService', () => {
       expect(result.config.defaultDeploymentId).toBeNull();
       expect(result.config.dialCoreExternalUrl).toBeNull();
       expect(result.config.fileManagerTabs).toEqual([
+        'all',
         'my_files',
         'shared',
         'organization',
@@ -1292,13 +1293,13 @@ describe('AppConfigService', () => {
         'fileManager.availableTabs',
         'fileManagerTabs',
         'x',
-        ['my_files', 'shared', 'organization'],
+        ['all', 'my_files', 'shared', 'organization'],
       ],
       [
         'fileManager.availableTabs',
         'fileManagerTabs',
         null,
-        ['my_files', 'shared', 'organization'],
+        ['all', 'my_files', 'shared', 'organization'],
       ],
       ['fileManager.availableTabs', 'fileManagerTabs', [1, null], [1, null]],
       [
@@ -1406,7 +1407,6 @@ describe('AppConfigService', () => {
       expect(Object.keys(result.features)).toEqual([
         'footer',
         'asrEnabled',
-        'skillUsageEnabled',
         'liveChatInteraction',
         'scheduledTasksEnabled',
         'defaultDeploymentPinned',
@@ -1435,6 +1435,7 @@ describe('AppConfigService', () => {
         'https://admin.example.com',
       ]);
       expect(viewer.config.fileManagerTabs).toEqual([
+        'all',
         'my_files',
         'shared',
         'organization',

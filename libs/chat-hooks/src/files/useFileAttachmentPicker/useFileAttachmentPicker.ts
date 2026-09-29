@@ -36,9 +36,9 @@ export interface UseFileAttachmentPickerOptions {
   forbiddenSymbolsRegExp?: RegExp;
   /** Host-translated label per tab; also supplies the active tab's root-folder label. */
   tabLabels: Record<DialFileManagerTabs, string>;
-  /** Tab ids the host's configuration allows. `undefined` allows every tab. */
+  /** Tab ids the host's configuration allows. `undefined` allows every tab. `all` is never offered. */
   allowedTabs?: string[];
-  /** Initial active tab. Defaults to `DialFileManagerTabs.MyFiles`. */
+  /** Initial active tab. Defaults to `DialFileManagerTabs.MyFiles`; `All` is treated as the default. */
   initialTab?: DialFileManagerTabs;
   /** MIME types eligible for selection/upload. Empty or absent allows every type. */
   allowedTypes?: string[];
@@ -90,11 +90,22 @@ export const useFileAttachmentPicker = ({
   maxSelectableFileSize,
   canAttachFolders = false,
 }: UseFileAttachmentPickerOptions): UseFileAttachmentPickerResult => {
+  /* The picker composes a single-source manager, which cannot list the combined All tab. */
   const {
     activeTab,
     handleTabChange: handleTabChangeRaw,
     tabs: allTabs,
-  } = useDialFileManagerTabs(tabLabels, initialTab);
+  } = useDialFileManagerTabs(
+    tabLabels,
+    initialTab === DialFileManagerTabs.All ? undefined : initialTab,
+  );
+  const pickerAllowedTabs = useMemo(
+    () =>
+      (allowedTabs ?? Object.values(DialFileManagerTabs)).filter(
+        (tab) => tab !== DialFileManagerTabs.All,
+      ),
+    [allowedTabs],
+  );
 
   const [selectedPaths, setSelectedPaths] = useState(() => new Set<string>());
 
@@ -121,7 +132,7 @@ export const useFileAttachmentPicker = ({
     activeTab,
     onTabChange,
     allTabs,
-    allowedTabs,
+    pickerAllowedTabs,
   );
 
   const rootLabel =

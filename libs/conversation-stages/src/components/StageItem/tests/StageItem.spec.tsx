@@ -3,14 +3,20 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { StageItem } from '../StageItem';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 14, MD: 16 },
-  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
-    <span role="status" aria-label={ariaLabel} />
-  ),
-  EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
-}));
+/* Disclosures are the real kit `Accordion`, so their button, region and inert state are what a user gets. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { Accordion } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    Accordion,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    DIAL_ICON_SIZE: { SM: 14, MD: 16 },
+    Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+      <span role="status" aria-label={ariaLabel} />
+    ),
+    EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
+  };
+});
 
 vi.mock('@epam/ai-dial-attachment-input', () => ({
   AttachmentCard: ({ attachment }: { attachment: { name: string } }) => (

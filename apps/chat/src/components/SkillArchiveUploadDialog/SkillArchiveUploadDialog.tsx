@@ -11,8 +11,10 @@ import {
 interface Props {
   /** Whether the dialog is open. */
   isOpen: boolean;
-  /** Rejection message rendered under the drop area; omit when nothing was rejected. */
+  /** Rejection or import-failure message rendered under the drop area; omit when there is none. */
   errorText?: string;
+  /** Whether an import is in flight; disables the drop area and shows a spinner. */
+  isUploading?: boolean;
   /** Called on Escape, the close button, or an outside click. */
   onClose: () => void;
   /** Called with the picked or dropped files that `accept` allowed through. */
@@ -28,6 +30,7 @@ interface Props {
 const SkillArchiveUploadDialog: FC<Props> = ({
   isOpen,
   errorText,
+  isUploading,
   onClose,
   onFilesSelected,
   onFilesRejected,
@@ -38,6 +41,7 @@ const SkillArchiveUploadDialog: FC<Props> = ({
     <SkillArchiveUploadDialogBase
       isOpen={isOpen}
       errorText={errorText}
+      isUploading={isUploading}
       accept={SKILL_ARCHIVE_ACCEPT}
       labels={{
         dialogTitle: t(SkillArchiveImportI18nKeys.DialogTitle),
@@ -48,6 +52,7 @@ const SkillArchiveUploadDialog: FC<Props> = ({
         formatsLabel: t(SkillArchiveImportI18nKeys.DialogFormats),
         fileInputAriaLabel: t(SkillArchiveImportI18nKeys.FileInputAriaLabel),
         closeAriaLabel: t(ButtonsI18nKeys.Close),
+        uploadingAriaLabel: t(SkillArchiveImportI18nKeys.StatusUploading),
       }}
       onClose={onClose}
       onFilesSelected={onFilesSelected}

@@ -1,4 +1,5 @@
 import type { CelebrationHistoryRow } from '../../utils/celebration-history';
+import { observeSceneTargets } from '../../utils/scene-targets';
 
 export interface PortalPoint {
   x: number;
@@ -76,36 +77,27 @@ export const animatePortalRows = (
   const copies: HTMLElement[] = [];
   let stopped = false;
   let deadline: ReturnType<typeof setTimeout> | undefined;
-  const fingerprints = rows.map(({ element }) => ({
-    text: element.textContent,
-    href: element.querySelector('a')?.getAttribute('href'),
-  }));
+  let stopObserving: (() => void) | undefined;
+  const events = [
+    'scroll',
+    'pointerdown',
+    'focusin',
+    'keydown',
+    'beforeinput',
+    'input',
+    'compositionstart',
+    'visibilitychange',
+  ];
   const stop = () => {
     if (stopped) return;
     stopped = true;
     clearTimeout(deadline);
     animations.forEach((animation) => animation.cancel());
     copies.forEach((copy) => copy.remove());
-    observer.disconnect();
-    document.removeEventListener('scroll', stop, true);
-    document.removeEventListener('pointerdown', stop, true);
-    document.removeEventListener('focusin', stop, true);
-    document.removeEventListener('visibilitychange', stop);
+    stopObserving?.();
+    events.forEach((event) => document.removeEventListener(event, stop, true));
     window.removeEventListener('resize', stop);
   };
-  const observer = new MutationObserver(() => {
-    if (
-      rows.some(
-        ({ element }, index) =>
-          !element.isConnected ||
-          element.closest('[inert], [aria-hidden="true"]') ||
-          element.textContent !== fingerprints[index].text ||
-          element.querySelector('a')?.getAttribute('href') !==
-            fingerprints[index].href,
-      )
-    )
-      stop();
-  });
 
   try {
     rows.forEach(({ element, rect }, index) => {
@@ -175,17 +167,12 @@ export const animatePortalRows = (
         ),
       );
     });
-    observer.observe(document.body, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ['href', 'inert', 'aria-hidden'],
-    });
-    document.addEventListener('scroll', stop, true);
-    document.addEventListener('pointerdown', stop, true);
-    document.addEventListener('focusin', stop, true);
-    document.addEventListener('visibilitychange', stop);
+    stopObserving = observeSceneTargets(
+      rows.map(({ element }) => element),
+      stop,
+      [host],
+    );
+    events.forEach((event) => document.addEventListener(event, stop, true));
     window.addEventListener('resize', stop);
     deadline = setTimeout(stop, 9000);
   } catch {

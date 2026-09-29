@@ -301,6 +301,15 @@ overlay.destroy();
 `theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
 not pass `domain`, `hostDomain`, the request timeout, or loader settings to it.
 
+`modelId` takes a deployment id or a deployment reference. It is applied to the
+current selection as soon as the deployment list loads, and it stays the
+default for every new chat opened in the overlay for the rest of the session.
+It outranks the user's own saved selection, their "Default agent for new
+chats" preference, and the operator's pinned default, so a first-time user
+opens on the host's agent too. An explicit pick in the model selector still
+wins for the current chat. An unknown `modelId` is ignored, and the default
+agent is chosen the usual way.
+
 ### Iframe attributes and browser permissions
 
 The library owns the `<iframe>` element and its security attributes; they are
@@ -765,6 +774,8 @@ hide-user-settings
 hide-keyboard-shortcuts
 hide-navigation-menu
 show-all-starters
+starters-below-greeting
+hide-greeting
 hide-footer-version
 show-agent-description
 disable-input-history-navigation
@@ -811,6 +822,18 @@ With the key on, every starter is rendered as its own row and the dropdown is
 gone. It does not change which starters the deployment exposes, only their
 layout.
 
+`starters-below-greeting` moves the conversation starters on the empty-chat
+screen, together with the starter intro text, from below the input to between
+the greeting and the input, so a user sees them before starting to type. It
+combines with `show-all-starters`, which still controls how the row lays the
+starters out.
+
+`hide-greeting` removes the time-of-day greeting ("Good morning, …") from the
+empty-chat screen. The operator's welcome-screen description is rendered only
+under that greeting, so it disappears too. Without the greeting the input keeps
+the wider active-chat width. Starters placed with `starters-below-greeting`
+then sit directly above the input.
+
 `hide-footer-version` removes the application version label from the footer
 (the `v0.45.0` text in its trailing corner). The label is diagnostic chrome
 rather than operator copy, so the operator's `footer` capability flag does not
@@ -849,8 +872,11 @@ picker.
 between the conversation-panel and new-chat buttons and the sources toggle, so
 an embed that hides the navigation rail still carries the brand. It uses the
 theme's full `logo` image; a theme that defines only a `favicon` shows nothing
-there. The mobile header already shows the logo whenever `header` is on, and
-this key does not change it.
+there. Below the desktop breakpoint the logo sits in the mobile header, which
+shows it whenever `header` is on; with `header` off, `show-header-logo` still
+renders that header row, carrying only the logo and none of its buttons. The
+mobile header shows the theme's `favicon`, or a smaller full `logo` when the
+theme defines no `favicon`.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is

@@ -3,6 +3,7 @@ import {
   buildRenamedConversationPath,
   getConversationTitleFromName,
   getConversationName,
+  isApplicationDeploymentPath,
   prepareEntityName,
 } from '../utils/conversation.utils';
 
@@ -168,6 +169,16 @@ describe('conversation naming helpers', () => {
   });
 
   describe('conversation filename parsing', () => {
+    it('recognizes application deployments under a scheduled task path', () => {
+      expect(
+        isApplicationDeploymentPath(
+          '.scheduler/schedule-id/applications/bucket',
+        ),
+      ).toBe(true);
+      expect(isApplicationDeploymentPath('applications/bucket')).toBe(true);
+      expect(isApplicationDeploymentPath('.scheduler/schedule-id')).toBe(false);
+    });
+
     it('extracts a title after a versioned application deployment ID', () => {
       expect(
         getConversationTitleFromName(

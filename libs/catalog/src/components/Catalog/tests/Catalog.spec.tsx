@@ -521,6 +521,22 @@ describe('Catalog', () => {
     expect(screen.queryByText('Your favorites')).toBeNull();
   });
 
+  it('does not render CatalogFavorites when every favorite is hidden', () => {
+    const hiddenFav = {
+      id: 'f1',
+      type: CatalogEntityType.Model,
+      name: 'Claude',
+      version: '1',
+      lastUsed: 'now',
+      description: '',
+      folder: [],
+      topics: [],
+      isHidden: true,
+    };
+    render(<Catalog items={[]} favorites={[hiddenFav]} />);
+    expect(screen.queryByText('Your favorites')).toBeNull();
+  });
+
   it('applies horizontal and vertical padding to the empty state in the default grid view', () => {
     render(<Catalog items={[]} favorites={[]} />);
     const grid = screen.getByRole('grid', { name: 'catalog grid' });

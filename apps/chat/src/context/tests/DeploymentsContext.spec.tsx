@@ -24,6 +24,7 @@ const contextMocks = vi.hoisted(() => ({
   setSelectedDeployment: vi.fn(),
   showNotification: vi.fn(),
   userSub: 'user-1' as string | undefined,
+  overlayModelId: undefined as string | null | undefined,
 }));
 
 vi.mock('../../server-api/deployments.api');
@@ -52,6 +53,13 @@ vi.mock('../UserConfigContext', () => ({
     selectedDeploymentId: contextMocks.selectedDeploymentId,
     setSelectedDeployment: contextMocks.setSelectedDeployment,
   }),
+}));
+/* `undefined` renders outside overlay mode, as useOptionalOverlay does. */
+vi.mock('../overlay/OverlayContext', () => ({
+  useOptionalOverlay: () =>
+    contextMocks.overlayModelId === undefined
+      ? undefined
+      : { modelId: contextMocks.overlayModelId },
 }));
 vi.mock('../NotificationContext', () => ({
   useNotification: () =>
@@ -95,6 +103,7 @@ describe('DeploymentsContext', () => {
     contextMocks.isDefaultDeploymentPinned = false;
     contextMocks.setSelectedDeployment.mockResolvedValue(undefined);
     contextMocks.userSub = 'user-1';
+    contextMocks.overlayModelId = undefined;
     mockGetDeployments.mockResolvedValue(mockResponse);
     mockGetApplicationSchemas.mockResolvedValue(emptySchemas);
     mockListToolsets.mockResolvedValue({ data: [] });
@@ -1644,6 +1653,134 @@ describe('DeploymentsContext', () => {
       act(() => result.current.deployments.restoreDefaultSelection());
 
       expect(result.current.deployments.selectedItemId).toBe(mockItem2.id);
+    });
+  });
+
+  /*
+   * The embedding host's `modelId` (SET_OVERLAY_OPTIONS) must be the default
+   * for every new overlay chat. It used to be applied once and then clobbered
+   * by restoreDefaultSelection, so only users whose persisted selection
+   * happened to match saw the host's agent.
+   */
+  describe('overlay modelId', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    const renderDeployments = () =>
+      renderHook(() => useDeployments(), { wrapper: DeploymentsProvider });
+
+    it('selects the overlay model for a first-time user over the pinned operator default', async () => {
+      contextMocks.overlayModelId = mockItem2.id;
+      contextMocks.isDefaultDeploymentPinned = true;
+      contextMocks.defaultDeploymentId = mockItem1.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('prefers the overlay model over the persisted selection and the named preference', async () => {
+      contextMocks.overlayModelId = mockItem2.id;
+      contextMocks.selectedDeploymentId = mockItem1.id;
+      localStorage.setItem(StorageKey.DefaultAgent, mockItem1.id);
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('restoreDefaultSelection returns to the overlay model after another model was restored', async () => {
+      contextMocks.overlayModelId = mockItem2.id;
+      contextMocks.selectedDeploymentId = mockItem1.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() => result.current.restoreSelectedItemId(mockItem1.id));
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
+
+      act(() => result.current.restoreDefaultSelection());
+
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('matches the overlay model by deployment reference', async () => {
+      mockGetDeployments.mockResolvedValue({
+        deployments: [mockItem1, { ...mockItem2, reference: 'my-app-ref' }],
+      });
+      contextMocks.overlayModelId = 'my-app-ref';
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('falls through to the normal resolution when the overlay model is unknown', async () => {
+      contextMocks.overlayModelId = 'missing-model';
+      contextMocks.selectedDeploymentId = mockItem2.id;
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('re-resolves to an overlay model that arrives after the catalog loaded', async () => {
+      contextMocks.overlayModelId = null;
+
+      const { result, rerender } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
+
+      contextMocks.overlayModelId = mockItem2.id;
+      rerender();
+
+      await waitFor(() =>
+        expect(result.current.selectedItemId).toBe(mockItem2.id),
+      );
+    });
+
+    /*
+     * useOverlayPendingModel clears pendingModelId even when the first fetch
+     * failed; the persistent modelId is what still lands the host's agent
+     * once a later refetch populates the catalog.
+     */
+    it('selects the overlay model after a failed initial fetch is followed by a successful refetch', async () => {
+      contextMocks.overlayModelId = mockItem2.id;
+      mockGetDeployments.mockRejectedValueOnce(new Error('Network error'));
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.error).toBeInstanceOf(Error);
+      expect(result.current.selectedItemId).toBeNull();
+
+      await act(async () => {
+        await result.current.refetchDeployments();
+      });
+
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
+    it('keeps an explicit in-session pick over the overlay model', async () => {
+      contextMocks.overlayModelId = mockItem2.id;
+
+      const { result, rerender } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      act(() => result.current.setSelectedItemId(mockItem1.id));
+      rerender();
+
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
     });
   });
 });

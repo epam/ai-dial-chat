@@ -13,7 +13,7 @@ export enum ToolsetTransportType {
 export const DEFAULT_TOOLSET_NAME = 'New toolset';
 
 /** Default display version seeded into a new toolset form. */
-export const DEFAULT_TOOLSET_VERSION = '0.0.1';
+export const DEFAULT_TOOLSET_VERSION = '1.0.0';
 
 /** Icon shown for each toolset authentication-type segment; labels arrive via the auth labels. */
 export const AUTH_TYPE_ICONS: Record<ToolsetAuthTypes, TablerIcon> = {

@@ -1,4 +1,5 @@
 import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import {
   useAttachmentAction,
   isDownloadableAttachment,
@@ -83,7 +84,8 @@ const attachmentDisplayResolvers: AttachmentDisplayResolvers = {
 const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { handleClose, isOpen, messages } = useSourcesSidebar();
+  const { handleClose, isOpen, messages, conversationModelId } =
+    useSourcesSidebar();
   const { uploaded, generated, sources } = useConversationSources(
     messages,
     attachmentDisplayResolvers,
@@ -129,14 +131,24 @@ const ConversationSourcesPanelContainer: FC = () => {
     [navigate],
   );
 
-  const taskModel = activeScheduledTask.task?.model;
+  /*
+   * The Details section describes this run, so its Model field must show the
+   * deployment the run actually used — the run conversation's own model id,
+   * already published to the sources sidebar with its messages — not the
+   * schedule's current `model`, which a later edit may have changed after
+   * this run fired.
+   */
   const modelDisplayName = useMemo(() => {
-    if (!taskModel) return undefined;
-    const deployment = deploymentItems.find((item) => item.id === taskModel);
+    if (!conversationModelId) return undefined;
+    const deployment = findDeploymentByIdOrReference(
+      deploymentItems,
+      conversationModelId,
+    );
     return deployment
-      ? resolveLocalizedText(deployment.displayName, language) || taskModel
-      : taskModel;
-  }, [taskModel, deploymentItems, language]);
+      ? resolveLocalizedText(deployment.displayName, language) ||
+          conversationModelId
+      : conversationModelId;
+  }, [conversationModelId, deploymentItems, language]);
 
   const historyLabels = useMemo(
     () => ({
@@ -193,7 +205,7 @@ const ConversationSourcesPanelContainer: FC = () => {
         instructionsLabel={t(ScheduledTasksI18nKeys.CreateInstructionsLabel)}
         skillLabel={t(ScheduledTasksI18nKeys.CreateSkillLabel)}
         skillDisplayName={skillDisplayName}
-        modelDisplayName={modelDisplayName as string}
+        modelDisplayName={modelDisplayName}
         instructionsMarkdown={activeScheduledTask.task?.prompt}
         renderInstructions={(markdown) => (
           <MDMessageViewer content={markdown} />

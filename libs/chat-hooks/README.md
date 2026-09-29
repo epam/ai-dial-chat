@@ -76,12 +76,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.15
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.16
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.21
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.23
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -1620,12 +1620,14 @@ Keep `formatResetTime` referentially stable (for example with `useCallback`) —
 
 ### mapUserUsageToModelLimits
 
-Maps `usage.deployments` into the `rows` array for `ModelLimitsSection`, joined with display metadata from a list of `DeploymentItemDto`. Only deployments that have nonzero usage in at least one displayed period are included. Requires two host-owned callbacks to keep URL construction and locale resolution out of this function:
+Maps `usage.deployments` into the `rows` array for `ModelLimitsSection`, joined with display metadata from the `Model` and `Application` entries of a list of `DeploymentItemDto` (toolsets never enrich a row). Ids are compared through `normalizeDeploymentId`, so a custom application id matches whether either side is raw or percent-encoded; the row's `id` stays the `usage.deployments` key. Only deployments that have nonzero usage in at least one displayed period are included. Requires two host-owned callbacks to keep URL construction and locale resolution out of this function:
 
 - `resolveIconUrl(iconUrl)` — resolves a deployment's raw `iconUrl` to the URL the avatar should load (typically the host's own icon-proxy endpoint).
 - `resolveDisplayName(name, locale)` — resolves a localized-text map or plain string to the display name for the active locale.
 
 Cost and Tokens cells use the same `total >= 2 ** 53` sentinel test. A sentinel Cost `total` produces an `Unlimited` cell showing attributed spend with no cap; a genuinely finite one produces a `Finite` cell whose status folds into the row's overall Status alongside finite Tokens statuses.
+
+A deployment enriched from an `Application` item becomes an agent row: its `typeLabel` is `t(USAGE_MODEL_LIMITS_I18N_KEYS.applicationTypeLabel)`, its Tokens cells are always `Unavailable` (DIAL Core writes no token counters for applications), an `Unlimited` Cost cell carries `supportingLabel: t(USAGE_MODEL_LIMITS_I18N_KEYS.includesCalledModelsLabel)`, and only its Cost stats decide whether the row is included. An application's cost includes the cost of the models it called, which appear as their own rows, so rows must never be summed. Model rows and unmatched ids are built exactly as before and carry no `typeLabel`.
 
 ```tsx
 import {
@@ -1649,18 +1651,18 @@ const rows = mapUserUsageToModelLimits(
 
 **Parameters**:
 
-| Name                 | Type                                                                                      | Description                                                            |
-| -------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `usage`              | `UserLimitStatsResponseDto \| undefined`                                                  | The already-fetched usage response.                                    |
-| `deploymentItems`    | `DeploymentItemDto[]`                                                                     | Enrichment-only model metadata; row order follows `usage.deployments`. |
-| `activeLocale`       | `string`                                                                                  | Passed to `resolveDisplayName`.                                        |
-| `t`                  | `(key: string, options?) => string`                                                       | Translate callback.                                                    |
-| `resolveIconUrl`     | `(iconUrl: string \| undefined) => string \| undefined`                                   | Host-owned icon URL resolver.                                          |
-| `resolveDisplayName` | `(name: string \| Record<string, string> \| undefined \| null, locale: string) => string` | Host-owned display-name resolver.                                      |
+| Name                 | Type                                                                                      | Description                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `usage`              | `UserLimitStatsResponseDto \| undefined`                                                  | The already-fetched usage response.                                                    |
+| `deploymentItems`    | `DeploymentItemDto[]`                                                                     | Enrichment-only model and application metadata; row order follows `usage.deployments`. |
+| `activeLocale`       | `string`                                                                                  | Passed to `resolveDisplayName`.                                                        |
+| `t`                  | `(key: string, options?) => string`                                                       | Translate callback.                                                                    |
+| `resolveIconUrl`     | `(iconUrl: string \| undefined) => string \| undefined`                                   | Host-owned icon URL resolver.                                                          |
+| `resolveDisplayName` | `(name: string \| Record<string, string> \| undefined \| null, locale: string) => string` | Host-owned display-name resolver.                                                      |
 
 **Returns**: `ModelLimitRow[]` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
 
-`USAGE_MODEL_LIMITS_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`.
+`USAGE_MODEL_LIMITS_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`, including `applicationTypeLabel` (`usage.applicationTypeLabel`) and `includesCalledModelsLabel` (`usage.includesCalledModelsLabel`) for agent rows.
 
 ### mapOverallCostLimitsToPeriodStatuses
 
@@ -1705,7 +1707,7 @@ and `FormatResetTime` keep their names; only their owning package changes. See t
 
 ## File Manager
 
-A domain-specific set of hooks (and their supporting types/utilities) implementing the DIAL file manager: browsing/search, upload, create/rename/move/copy/delete, sharing, and metadata, composed against an injected `DialFilesApi` port instead of a configured REST client or React context. `useDialFileManager` is the composed entry point most consumers reach for; the six sub-hooks it composes (`useDialFileListing`, `useDialFileMetadata`, `useDialFileMutations`, `useDialFileSharing`, `useDialFileUploadBatch`) and the two standalone hooks (`useDialFileManagerTabConfig`, `useGridEditingScroll`) are exported individually for hosts that need only part of the surface, or that render `@epam/ai-dial-react-file-manager`'s `DialFileManager` grid directly.
+A domain-specific set of hooks (and their supporting types/utilities) implementing the DIAL file manager: browsing/search, upload, create/rename/move/copy/delete, sharing, and metadata, composed against an injected `DialFilesApi` port instead of a configured REST client or React context. `useDialFileManager` is the composed entry point most consumers reach for, and `useDialFileManagerSections` composes three of them for hosts that offer the combined All tab; the six sub-hooks it composes (`useDialFileListing`, `useDialFileMetadata`, `useDialFileMutations`, `useDialFileSharing`, `useDialFileUploadBatch`) and the two standalone hooks (`useDialFileManagerTabConfig`, `useGridEditingScroll`) are exported individually for hosts that need only part of the surface, or that render `@epam/ai-dial-react-file-manager`'s `DialFileManager` grid directly.
 
 None of these hooks call `react-i18next` or read an application context: every user-visible string arrives through a `labels`/`buildValidationErrorMessage`/`disabledNewButtonTooltip` parameter, and every failure/success is reported through a structured, translation-free event (`FileManagerNotification`, `FileOperationSuccessEvent`) the host maps to its own toast/notification copy.
 
@@ -1771,9 +1773,40 @@ const FileManagerHost = ({
 
 #### API
 
-**Parameters** (`UseDialFileManagerOptions`): `filesApi`, `bucket`, `labels`, `locale`, `disabledNewButtonTooltip`, `downloadDestination`, and `buildValidationErrorMessage` are required; `rootLabel` (default `'My files'`), `activeTab` (default `MyFiles`), `variant` (default `Attach`), `actionProfile`, `forbiddenSymbolsRegExp`, `onNotification`, and `onOperationSuccess` are optional. See the exported `UseDialFileManagerOptions` type for the complete shape.
+**Parameters** (`UseDialFileManagerOptions`): `filesApi`, `bucket`, `labels`, `locale`, `disabledNewButtonTooltip`, `downloadDestination`, and `buildValidationErrorMessage` are required; `rootLabel` (default `'My files'`), `activeTab` (default `MyFiles`), `isActive` (default `true`; `false` issues no request), `sessionKey` (a change resets navigation like a tab switch), `variant` (default `Attach`), `actionProfile`, `forbiddenSymbolsRegExp`, `onNotification`, and `onOperationSuccess` are optional. See the exported `UseDialFileManagerOptions` type for the complete shape.
 
 **Returns** (`UseDialFileManagerResult`): the full set of props `DialFileManager` needs — `items`, `isLoading`, `path`/`onPathChange`, search (`onSearchFiles`/`searchResults`/`isSearching`), tree expand state, upload (`onUploadFiles`/`onUploadArchive`/`uploadBatchState`), create/rename/move/copy/delete callbacks and their `isXxx` flags, sharing (`onUnshareFiles`/`onRemoveFilesAccess`), metadata (`onGetInfo`/`fileMetadata`), `actionLabels`, `visibleColumns`, and the aggregate `isAnyOperationInProgress`. See the exported `UseDialFileManagerResult` type for the complete shape.
+
+### useDialFileManagerSections
+
+Runs one `useDialFileManager` per source tab (My files, Shared, Organization). On a single tab it returns that section's result; on `DialFileManagerTabs.All` it merges each enabled section's root into one tree and routes every callback to the section whose `rootLabel` is the path's first segment, so each top-level folder keeps its own tab's columns, upload rules, and actions. A download, delete, unshare, or remove-access batch that spans sections is split into one call per owning section. A copy or move is refused with a `CrossSectionTransferUnsupported` notification unless every item and the destination are in one section. A root label that is empty, contains `/`, or repeats an earlier one is replaced by the tab id, since paths are routed by their first segment. A section still loading outside the browsed one reports its folder in `folderPopupLoadingPaths`, and a root listing that fails there is reported once as a `FolderLoadFailed` notification. `DIAL_FILE_MANAGER_SECTION_TABS` lists the source tabs the hook can merge, in display order.
+
+```tsx
+import {
+  DIAL_FILE_MANAGER_SECTION_TABS,
+  useDialFileManagerSections,
+  type DialFileManagerSection,
+} from '@epam/ai-dial-chat-hooks';
+import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
+
+const sections: DialFileManagerSection[] = DIAL_FILE_MANAGER_SECTION_TABS.map(
+  (tab) => ({ tab, rootLabel: rootLabels[tab] }), // host-translated folder names
+);
+
+const fileManager = useDialFileManagerSections({
+  ...managerOptions, // the same options useDialFileManager takes, minus rootLabel
+  activeTab: DialFileManagerTabs.All,
+  sections,
+});
+
+fileManager.sectionTab; // source tab of the browsed folder — never All
+```
+
+#### API
+
+**Parameters** (`UseDialFileManagerSectionsOptions`): every `UseDialFileManagerOptions` field except `rootLabel`, `activeTab`, `isActive` and `sessionKey`, plus the required `activeTab` (any tab, including `All`) and `sections` (enabled source tabs in display order, each with a distinct translated `rootLabel`).
+
+**Returns** (`UseDialFileManagerSectionsResult`): a `UseDialFileManagerResult` plus `sectionTab`. On All, tree/sharing path sets are unions across sections, operation flags are OR'ed, and the upload queue follows whichever section holds a batch.
 
 ### useDialFileListing
 
@@ -1794,7 +1827,7 @@ const { items, isLoading, path, onPathChange, onSearchFiles, searchResults } =
 
 #### API
 
-**Parameters** (`UseDialFileListingOptions`): `filesApi`, `bucket`, `rootLabel`, `activeTab` are required; `onNotification` is optional.
+**Parameters** (`UseDialFileListingOptions`): `filesApi`, `bucket`, `rootLabel`, `activeTab` are required; `onNotification`, `isActive` (default `true`; while `false` the hook issues no `DialFilesApi` call and reports `isLoading: false`), and `sessionKey` (a change resets cache and navigation exactly like an `activeTab` change) are optional.
 
 **Returns** (`UseDialFileListingResult`): `items`, `isLoading`, `error`, `path`/`folderPath`/`onPathChange`, `retry`, search (`onSearchFiles`/`isSearching`/`searchResults`/`clearSearchResults`), tree state (`expandedPaths`/`loadedPaths`/`onExpandedPathsChange`), folder-popup preload state, `sharedWithMeIds`/`sharedByMePaths`/`currentFolder`, and the cache-ownership seam other sub-hooks consume (`cache`, `listingPermissionsCache`, `sharedRootMetaRef`, `setFolderPath`, `invalidateFolders`, `mergeCreatedFolder`, `bumpRetry`).
 
@@ -3755,7 +3788,7 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
 
 ### useSkillArchiveImport
 
-Headless controller for a skill-archive-upload flow: dialog visibility, an exact-`SKILL.md`/`.zip` filename precheck, in-flight exclusion, and import completion. Accepts the host's already-configured `importArchive` request and observes completion/failure through `onImported`/`onError` — it never imports app contexts, i18n, notification transports, or a configured API client, and error outcomes are semantic values (`SkillArchiveImportErrorKind`) rather than translation keys. Available from both the package root and `./skill-editor`.
+Headless controller for a skill-archive-upload flow: dialog visibility, an exact-`SKILL.md`/`.zip` filename precheck, in-flight exclusion, and import completion. The dialog stays open while the request runs and closes only on success; a failure leaves it open with `errorKind` set so the host can render the message inline and the user can pick another file. `closeDialog` aborts an in-flight request through the `AbortSignal` passed to `importArchive`, so a hanging upload never locks the flow. Accepts the host's already-configured `importArchive` request and observes completion/failure through `onImported`/`onError` — it never imports app contexts, i18n, notification transports, or a configured API client, and error outcomes are semantic values (`SkillArchiveImportErrorKind`) rather than translation keys. Available from both the package root and `./skill-editor`.
 
 ```ts
 import {
@@ -3773,6 +3806,7 @@ interface SkillImportResult {
 const {
   isDialogOpen,
   status,
+  isUploading,
   selectionRejectionReason,
   errorKind,
   openDialog,
@@ -3780,13 +3814,13 @@ const {
   handleFilesSelected,
   handleFilesRejected,
 } = useSkillArchiveImport<SkillImportResult>({
-  importArchive: (file) => skillsApi.importSkillArchive(file),
+  importArchive: (file, signal) => skillsApi.importSkillArchive(file, signal),
   onImported: async (result) => {
     notifySuccess(`"${result.name}" has been created.`);
     await refetchSkills();
   },
   onError: (error, kind) => {
-    showErrorNotification(translateErrorKind(kind));
+    reportImportFailure(error, kind); // optional side channel — the dialog stays open either way
   },
 });
 

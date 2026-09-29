@@ -269,6 +269,8 @@ Items from all three data sources are merged and sorted by `updatedAt` descendin
 
 **Scheduler metadata.** For every merged item (from any of the three data sources), the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result, and `isUnread` set to `true` unless the item's `id` is present in the viewed-ids set from `ScheduledTaskUnreadService.getViewedIds`, in which case `isUnread: false`. When `parseScheduledTaskConversationPath` returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted. This detection is independent per item — a scheduler-created conversation that also happens to be shared or published is still tagged and marked unread/viewed using its own resource id, not any other copy's id.
 
+**Scheduler conversation titles.** For filename-derived titles from any of the three data sources, the service SHALL recognize an application deployment path both at `applications/...` and beneath `.scheduler/{scheduleId}/applications/...`. The application version belongs to the deployment id, not the displayed conversation title: a filename `Daily%20plan__0.0.1__Todoist__{runId}` beneath `.scheduler/{scheduleId}/applications/{bucket}/` yields `title: "Todoist"` while its full `id` remains unchanged. This rule SHALL NOT treat a numeric title on a plain model deployment as an application version (for example, `model__18__{runId}` yields `title: "18"`). An authoritative stored display name remains governed by the display-name resolution requirement below.
+
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
 **Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). If the user bucket call fails, the endpoint returns the error to the client. In complete-history mode this applies to **every** page of the walk, not just the first: a failure on any personal-bucket page fails the whole request rather than returning a silently truncated history, and a failure on any public-bucket page drops the public contribution (including the pages already collected) while the request still succeeds.
@@ -300,6 +302,12 @@ Error codes:
 
 - **WHEN** `getSharedResources` returns a conversation
 - **THEN** the response item SHALL have `sharedWithMe: true` and `publishedWithMe: false`
+
+#### Scenario: Scheduled application run displays its title without the application version
+
+- **GIVEN** DIAL Core metadata for `conversations/bucket/.scheduler/sched_abc/applications/bucket/Daily%20plan__0.0.1__Todoist__bc56151e-296d-469f-80f6-61fbb3e5a98a`
+- **WHEN** `GET /api/v1/conversations/list` returns that item
+- **THEN** its `title` is `"Todoist"`, its `id` retains `Daily%20plan__0.0.1__Todoist__bc56151e-296d-469f-80f6-61fbb3e5a98a`, and its `isScheduledTask` is `true`
 
 #### Scenario: getSharedResources is called with CONVERSATION filter
 

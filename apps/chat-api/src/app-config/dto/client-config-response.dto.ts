@@ -121,9 +121,9 @@ export class ClientConfigDto {
 
   @ApiProperty({
     description:
-      'Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.',
+      'Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs.',
     type: [String],
-    example: ['my_files', 'shared', 'organization'],
+    example: ['all', 'my_files', 'shared', 'organization'],
   })
   fileManagerTabs!: string[];
 

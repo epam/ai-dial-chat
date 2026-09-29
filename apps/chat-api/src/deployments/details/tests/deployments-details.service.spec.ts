@@ -1,3 +1,4 @@
+import { createSDK } from '@epam/ai-dial-typescript-sdk';
 import {
   BadGatewayException,
   Logger,
@@ -6,7 +7,15 @@ import {
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../../dial/dial-client.service';
+import { DeploymentType } from '../../dto/deployment-type';
 import { DeploymentsDetailsService } from '../deployments-details.service';
+
+const configWith = (defaultKinds: DeploymentType[] | undefined) =>
+  ({
+    get: vi.fn((key: string) =>
+      key === 'USER_USAGE_DEPLOYMENT_TYPES' ? defaultKinds : undefined,
+    ),
+  }) as never;
 
 function makeService() {
   const store = new Map<string, unknown>();
@@ -48,6 +57,7 @@ function makeService() {
   const service = new DeploymentsDetailsService(
     dialClient,
     cacheManager as never,
+    configWith([DeploymentType.Model, DeploymentType.Application]),
   );
 
   return { service, sdkClient, cacheManager };
@@ -370,6 +380,72 @@ describe('DeploymentsDetailsService', () => {
       await expect(service.getUserUsage('token')).rejects.toThrow(
         BadGatewayException,
       );
+    });
+  });
+
+  /*
+   * Drives the real SDK client against a stubbed `fetch`, so these assert the
+   * URL DIAL Core actually receives rather than the SDK call's arguments.
+   */
+  describe.each([
+    ['getUserLimits', '/v1/user/limits'],
+    ['getUserUsage', '/v1/user/usage'],
+  ] as const)('%s deploymentTypes forwarding', (method, path) => {
+    const sendRequest = async (
+      requested: DeploymentType[] | undefined,
+      defaultKinds: DeploymentType[] = [
+        DeploymentType.Model,
+        DeploymentType.Application,
+      ],
+    ) => {
+      const fetchStub = vi.fn(
+        async () =>
+          new Response(JSON.stringify({ deployments: {} }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+      );
+      const dialClient = {
+        client: createSDK({ baseUrl: 'http://dial-core', fetch: fetchStub }),
+      } as unknown as DialClientService;
+      const service = new DeploymentsDetailsService(
+        dialClient,
+        {} as never,
+        configWith(defaultKinds),
+      );
+
+      await service[method]('token', requested);
+
+      const [request] = fetchStub.mock.calls[0] as unknown as [Request];
+      const url = new URL(request.url);
+      expect(url.pathname).toBe(path);
+      return url.searchParams.getAll('deploymentTypes');
+    };
+
+    it('sends the requested kinds as one comma-joined value', async () => {
+      expect(
+        await sendRequest([DeploymentType.Model, DeploymentType.Application]),
+      ).toEqual(['model,application']);
+    });
+
+    it.each([undefined, []])(
+      'falls back to the configured default kinds when the request names %j',
+      async (requested) => {
+        expect(await sendRequest(requested)).toEqual(['model,application']);
+        expect(await sendRequest(requested, [DeploymentType.Model])).toEqual([
+          'model',
+        ]);
+      },
+    );
+
+    it('lets the requested kinds override the configured default', async () => {
+      expect(
+        await sendRequest([DeploymentType.Application], [DeploymentType.Model]),
+      ).toEqual(['application']);
+    });
+
+    it('sends no deploymentTypes when neither the request nor config names any', async () => {
+      expect(await sendRequest(undefined, [])).toEqual([]);
     });
   });
 

@@ -53,9 +53,9 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.21`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.23`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.15` — `SkillDetailsSidePanel`
+- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.16` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
 
 ## Components
@@ -123,8 +123,9 @@ omitted. The form field uses full-width panels and 44px minimum-height rows.
 
 The chat overlay's compatibility signal also depends on the selected reference,
 independently of catalog loading or deletion; unresolved selections keep a
-fallback chip and remain removable. The existing `isEnabled` gate still hides
-the chat flow and its outgoing selection when disabled.
+fallback chip and remain removable. `isSkillsSupported` still hides the chat
+flow's entry points and folds an existing selection into the unsupported
+state when the deployment does not support skills.
 
 ### `ChatSkill`
 
@@ -335,7 +336,8 @@ import { SkillArchiveUploadDialog } from '@epam/ai-dial-skills';
 
 <SkillArchiveUploadDialog
   isOpen={isDialogOpen}
-  errorText={selectionError}
+  errorText={errorText}
+  isUploading={isUploading}
   accept=".zip,.md"
   labels={{
     dialogTitle: 'Upload skill',
@@ -344,6 +346,7 @@ import { SkillArchiveUploadDialog } from '@epam/ai-dial-skills';
     formatsLabel: 'File formats .zip and SKILL.md',
     fileInputAriaLabel: 'Upload a skill ZIP archive or a SKILL.md file',
     closeAriaLabel: 'Close',
+    uploadingAriaLabel: 'Uploading skill',
   }}
   onClose={closeDialog}
   onFilesSelected={handleFilesSelected}
@@ -352,7 +355,7 @@ import { SkillArchiveUploadDialog } from '@epam/ai-dial-skills';
 ```
 
 Presentation for a skill-archive upload: a `Popup` with a drop area showing the accepted formats
-and any local rejection message. It has no dependency on an import controller — wire
+and any rejection or upload-failure message. While `isUploading` is set the drop area is disabled and a spinner is shown; the dialog is expected to stay open until the upload succeeds, so a failure is shown in place. It has no dependency on an import controller — wire
 `onFilesSelected`/`onFilesRejected` to `@epam/ai-dial-chat-hooks`' `useSkillArchiveImport` (or an
 equivalent host controller). Every label falls back to an English default, so `labels` may be
 omitted entirely for an English-only host.
@@ -388,7 +391,6 @@ const {
   renderHistorySkillSegments,
   renderHistorySkills,
 }: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
-  isEnabled: isSkillUsageEnabled,
   isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   skills,
   sharedWithMe,
@@ -436,9 +438,9 @@ is the entry for the `menuOverlays` prop of
 favorites panel in search mode over the typed query, with
 `labels.emptyQueryHintLabel` as its empty-query hint, rendered in listbox
 mode so ArrowDown/ArrowUp and Enter in the input pick a skill. Both entries are
-`undefined` while `isEnabled` is `false` or `isSkillsSupported` is `false`
-(the current deployment does not support skills), so the host omits the
-menu item and the slash dropdown entirely; the hook renders
+`undefined` while `isSkillsSupported` is `false` (the current deployment does
+not support skills), so the host omits the menu item and the slash dropdown
+entirely; the hook renders
 `FavoriteSkillsPanel` as both entries' content, forwarding
 `labels.panelLabels`. `skillCatalogModal` renders the lib's `SkillCatalogModal`
 shell with `labels.catalogModalTitleLabel` as its title and
@@ -460,8 +462,7 @@ currently-tracked mention's character range, for the composer's
 host already does with that callback. `onBackspaceAtCaret` and
 `caretPositionOverride` forward straight to the composer's identically-named
 props. `isSkillUnsupported` is `true` while at least one mention exists and
-`isSkillsSupported` is `false` (always `false` while `isEnabled` is `false`):
-hosts fold it into their send-disabled condition — a live-composing mention
+`isSkillsSupported` is `false`: hosts fold it into their send-disabled condition — a live-composing mention
 has no per-mention error styling of its own (it's a plain highlighted run,
 not a `ChatSkill`), so this boolean is the only unsupported-state signal
 while composing. `selectedSkills` is the send-time
@@ -485,8 +486,8 @@ assistant text is model-generated markdown and never authors positioned
 mentions. Both resolve each entry's name and description from the injected
 listing pools matched on its url (the name falling back to the url's last
 non-empty segment, the description omitted when no pool carries the url),
-and share the same "View details" panel; both return `null` while `isEnabled`
-is `false` or the array is empty/absent, and a mention
+and share the same "View details" panel; both return `null` while the array
+is empty/absent, and a mention
 `renderHistorySkillSegments` cannot locate in `content` is simply omitted
 from the render. The chips render beside the bubble's first text line, so
 pass `historyChipLabelClassName` with the label class the bubbles' body text

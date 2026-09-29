@@ -4,17 +4,13 @@ import {
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Accordion,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   EllipsisTooltip,
-  LinkButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconCheck,
-  IconChevronDown,
-  IconChevronRight,
-} from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import { FC, useEffect, useRef, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import type { CollapsedGroupProps } from '../../models/collapsed-group';
@@ -215,51 +211,31 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         CONVERSATION_STAGES_CLASS.group,
       )}
     >
-      <LinkButton
-        className={mergeClasses(
+      {/* `-mt-2` turns the kit's 12px spacer, plus the panel's `pt-1`, into
+          the 8px the stages have always sat below the summary line. */}
+      <Accordion
+        title={summary}
+        expanded={isOpen}
+        onToggle={setIsOpen}
+        className="overflow-visible py-0"
+        headerClassName={mergeClasses(
+          'justify-start gap-1 rounded-none px-0',
           styles.toggleButton,
           CONVERSATION_STAGES_CLASS.groupToggle,
         )}
-        textClassName="min-w-0"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={isOpen}
-        iconAfter={
-          isOpen ? (
-            <IconChevronDown
-              size={12}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ) : (
-            <IconChevronRight
-              size={12}
-              className="rtl:scale-x-[-1]"
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          )
-        }
-        label={summary}
-      />
-      <div
-        className={mergeClasses(
-          'grid transition-[grid-template-rows] duration-300 ease-in-out',
-          isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-        )}
+        contentClassName={mergeClasses('-mt-2 px-0', styles.groupRegion)}
       >
-        <div className="overflow-hidden">
-          <StagesPanel
-            stages={stages}
-            isStreaming={isStreaming}
-            styles={{
-              colors: panelColors,
-              typography: groupStyles?.typography,
-            }}
-            labels={panelLabels}
-            className="pt-1"
-          />
-        </div>
-      </div>
+        <StagesPanel
+          stages={stages}
+          isStreaming={isStreaming}
+          styles={{
+            colors: panelColors,
+            typography: groupStyles?.typography,
+          }}
+          labels={panelLabels}
+          className="pt-1"
+        />
+      </Accordion>
     </div>
   );
 };

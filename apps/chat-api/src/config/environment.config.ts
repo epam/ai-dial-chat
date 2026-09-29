@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsNotEmpty,
   IsBoolean,
   IsEnum,
@@ -13,6 +14,10 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import {
+  DeploymentType,
+  normalizeDeploymentTypesInput,
+} from '../deployments/dto/deployment-type';
 import { CspMode } from './csp';
 
 export enum ApplicationLogLevel {
@@ -207,6 +212,26 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   DIAL_ROLES_FIELD?: string = 'dial_roles';
+
+  /*
+   * Deployment kinds `GET /user/limits` and `GET /user/usage` report when the
+   * request names none, forwarded to DIAL Core as `deploymentTypes`. Defaults
+   * to models and applications, so Settings → Usage shows the spend DIAL Core
+   * attributes to routers; `model` restores the model-only report.
+   */
+  @IsOptional()
+  @Transform(({ value }) => {
+    const normalized = normalizeDeploymentTypesInput(value ?? '');
+    return Array.isArray(normalized) && normalized.length === 0
+      ? [DeploymentType.Model, DeploymentType.Application]
+      : normalized;
+  })
+  @IsArray()
+  @IsEnum(DeploymentType, { each: true })
+  USER_USAGE_DEPLOYMENT_TYPES?: DeploymentType[] = [
+    DeploymentType.Model,
+    DeploymentType.Application,
+  ];
 
   // Auth providers
   @IsOptional()
@@ -704,10 +729,11 @@ export class EnvironmentVariables {
   TRANSCRIPTION_PROMPT?: string;
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   LLM_CONVERSATION_NAMING_ENABLED?: boolean = false;
@@ -830,10 +856,11 @@ export class EnvironmentVariables {
   ENABLED_UI_FEATURES?: string[] | null = null;
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   LIVE_CHAT_INTERACTION_ENABLED?: boolean = false;
@@ -851,20 +878,6 @@ export class EnvironmentVariables {
   })
   @IsBoolean()
   RESPONSES_API_ENABLED?: boolean = false;
-
-  @IsOptional()
-  @Transform(({ obj, key }) => {
-    /* Reads the raw source value (not `value`, which class-transformer's
-     * enableImplicitConversion may have already coerced to `true` for any
-     * non-empty string, including the literal string "false") so an env var
-     * explicitly set to "false"/"0"/"no" parses to `false` as intended. */
-    const raw = (obj as Record<string, unknown>)[key];
-    if (raw == null) return undefined;
-    if (typeof raw === 'boolean') return raw;
-    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
-  })
-  @IsBoolean()
-  SKILL_USAGE_ENABLED?: boolean = false;
 
   @IsOptional()
   @IsString()
@@ -885,10 +898,11 @@ export class EnvironmentVariables {
   LIVE_CHAT_INTERACTION_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   SCHEDULED_TASKS_ENABLED?: boolean = false;

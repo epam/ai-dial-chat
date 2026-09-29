@@ -5,6 +5,13 @@ import { QUOTATIONS_CLASS } from '../../../constants/public-class-names';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
 import { CitationCard } from '../CitationCard';
 
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
+  FileIcon: ({ fileExtension }: { fileExtension?: string }) => (
+    <span data-testid="file-icon" data-extension={fileExtension} />
+  ),
+}));
+
 const makeGroup = (
   count = 1,
   attachmentType = 'application/pdf',
@@ -134,6 +141,28 @@ describe('CitationCard', () => {
     render(<CitationCard {...defaultProps()} />);
     expect(screen.getByText('.pdf')).toBeTruthy();
     expect(screen.queryByText('report.pdf')).toBeNull();
+  });
+
+  it('draws the file-type icon for a previewable file by default', () => {
+    render(<CitationCard {...defaultProps()} />);
+    expect(screen.getByTestId('file-icon').dataset.extension).toBe('.pdf');
+  });
+
+  it('uses the host headerIcon instead of the default file-type icon', () => {
+    render(
+      <CitationCard
+        {...defaultProps({ headerIcon: <span data-testid="host-icon" /> })}
+      />,
+    );
+    expect(screen.getByTestId('host-icon')).toBeTruthy();
+    expect(screen.queryByTestId('file-icon')).toBeNull();
+  });
+
+  it('draws no header icon for a web link', () => {
+    render(
+      <CitationCard {...defaultProps({ group: makeGroup(1, 'text/html') })} />,
+    );
+    expect(screen.queryByTestId('file-icon')).toBeNull();
   });
 
   it('shows the source name in the header for a web link', () => {

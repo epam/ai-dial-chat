@@ -13,7 +13,7 @@ The endpoint SHALL:
 - Accept a `CreateApplicationBodyDto` request body validated by NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted).
 - Use the session `accessToken` as a Bearer token for all DIAL Core calls, issued through the `@epam/ai-dial-typescript-sdk` client rather than raw `fetch`.
 - First resolve the user's storage bucket via the client's `getUserBucket`, and reject with 502 when it succeeds but returns no bucket.
-- Construct the application path as `{name}__{version}` (`appPath`), where `version` defaults to `'0.0.1'` when not supplied; URL-encode it (`encodedPath`) only for the outgoing DIAL Core request.
+- Construct the application path as `{name}__{version}` (`appPath`), where `version` defaults to `'1.0.0'` when not supplied; URL-encode it (`encodedPath`) only for the outgoing DIAL Core request.
 - Create the application via the client's `saveCustomApplication(bucket, encodedPath, …)` with a mapped body (see below).
 - On success, invalidate the `applications:list:<userSub>` cache entry via `cacheManager.del` and return `{ id: "applications/{bucket}/{appPath}" }` — the **unencoded** path, matching the resource id format used elsewhere (e.g. `listApplications`).
 - Map DIAL Core non-2xx responses to the appropriate HTTP status using `mapDialHttpStatus`, and transport-level failures via `handleDialFetchError`.
@@ -52,7 +52,7 @@ The `name` and `version` allowlist patterns exist so the `{name}__{version}` res
 {
   displayName: toLocalizedValue(displayName),   // always — a plain string, or a localized object
                                                 //   when additional locales were supplied
-  displayVersion: body.version ?? '0.0.1',      // always
+  displayVersion: body.version ?? '1.0.0',      // always
   application_type_schema_id: body.type,        // only when `type` is supplied
   application_properties: remainingProps,       // only when non-empty after the hoist below
   description,                                  // only when the composed value is non-null

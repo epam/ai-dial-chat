@@ -26,6 +26,7 @@ describe('SourcesSidebarContext', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
     expect(result.current.isOpen).toBe(false);
     expect(result.current.messages).toEqual([]);
+    expect(result.current.conversationModelId).toBeUndefined();
   });
 
   it('open() opens when closed', () => {
@@ -56,6 +57,16 @@ describe('SourcesSidebarContext', () => {
     act(() => result.current.setMessages([]));
     expect(result.current.messages).toEqual([]);
     expect(result.current.isOpen).toBe(true);
+  });
+
+  it('setConversationModelId sets and clears the model id without changing isOpen', () => {
+    const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
+    act(() => result.current.handleOpen());
+    act(() => result.current.setConversationModelId('gpt-4o'));
+    expect(result.current.conversationModelId).toBe('gpt-4o');
+    expect(result.current.isOpen).toBe(true);
+    act(() => result.current.setConversationModelId(undefined));
+    expect(result.current.conversationModelId).toBeUndefined();
   });
 
   it('close() preserves messages', () => {

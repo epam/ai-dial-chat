@@ -43,7 +43,7 @@ const HalloweenBowling: FC = () => {
       viewport.clientWidth,
       viewport.clientHeight,
     );
-    if (!next?.hits.length) return;
+    if (!next) return;
     setPlan(next);
     return animateBowling(next, host, actor, spin, () => setEnded(true));
   }, [anchors, reducedMotion]);

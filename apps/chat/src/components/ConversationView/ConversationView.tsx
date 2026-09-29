@@ -87,7 +87,7 @@ import {
   PromptSelectorI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -342,17 +342,14 @@ const ConversationView: FC<Props> = ({
   } = useSkillSelectorOverlay({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
-  const isSkillUsageEnabled = useFeatureFlag('skillUsageEnabled');
   /*
-   * The skills an edit send writes. While the flag is on, the edit instance's
-   * selection IS the edited message's mention state (seeded on edit start),
-   * so an empty array means the user removed every mention. While the flag
-   * is off, `undefined` tells `handleEditMessage` to preserve the message's
-   * original skills untouched.
+   * The skills an edit send writes. The edit instance's selection IS the
+   * edited message's mention state (seeded on edit start), so an empty array
+   * means the user removed every mention.
    */
   const editSkills = useMemo<RequestSkill[] | undefined>(
-    () => (isSkillUsageEnabled ? (editSelectedSkills ?? []) : undefined),
-    [isSkillUsageEnabled, editSelectedSkills],
+    () => editSelectedSkills ?? [],
+    [editSelectedSkills],
   );
 
   /*
@@ -1113,7 +1110,7 @@ const ConversationView: FC<Props> = ({
           <FabButton
             aria-label={t(ChatI18nKeys.ScrollToBottom)}
             onClick={scrollToBottom}
-            className="absolute bottom-0 left-1/2 -translate-x-1/2"
+            className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2"
           />
         )}
       </div>

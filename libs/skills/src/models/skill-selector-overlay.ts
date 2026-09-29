@@ -42,20 +42,15 @@ export interface SkillSelectorOverlayLabels {
 /** Options accepted by `useSkillSelectorOverlay`. */
 export interface UseSkillSelectorOverlayOptions {
   /**
-   * Whether the skill flow is enabled. While `false` the hook returns empty
-   * outputs: no menu entry, no modal, no panel, no chips.
-   */
-  isEnabled: boolean;
-  /**
    * Whether the input's current deployment supports skills. While `false`
-   * (with the flow enabled) the entry points are omitted — no Add-menu item
-   * and no slash menu — but a tracked mention stays in the draft text and
-   * folds into `isSkillUnsupported` for the host's own send-disabled
-   * condition. The host resolves this from its own deployment data. Note: a
-   * live-composing mention has no per-mention error styling of its own (it
-   * renders as a plain highlighted run, not a `ChatSkill`); only the sent
-   * `custom_content.skills`/history rendering, and this boolean fold, reflect
-   * the unsupported state.
+   * the entry points are omitted — no Add-menu item and no slash menu — but
+   * a tracked mention stays in the draft text and folds into
+   * `isSkillUnsupported` for the host's own send-disabled condition. The
+   * host resolves this from its own deployment data. Note: a live-composing
+   * mention has no per-mention error styling of its own (it renders as a
+   * plain highlighted run, not a `ChatSkill`); only the sent
+   * `custom_content.skills`/history rendering, and this boolean fold,
+   * reflect the unsupported state.
    */
   isSkillsSupported: boolean;
   /** The user's own skills. */
@@ -100,28 +95,27 @@ export interface UseSkillSelectorOverlayOptions {
 export interface UseSkillSelectorOverlayResult {
   /**
    * The Skills entry for the `menuOverlays` prop of
-   * `ConversationInput`/`EditMessageInput`/`Input`. `undefined` while the flow
-   * is disabled or the current deployment does not support skills: the host
-   * omits the entry entirely when this is `undefined`, so a stub renderer
-   * would leave the menu item in place with nothing behind it.
+   * `ConversationInput`/`EditMessageInput`/`Input`. `undefined` while the
+   * current deployment does not support skills: the host omits the entry
+   * entirely when this is `undefined`, so a stub renderer would leave the
+   * menu item in place with nothing behind it.
    */
   skillMenuOverlay?: MenuOverlayConfig;
   /**
    * The Skills entry for the `commandMenu` prop of
    * `ConversationInput`/`EditMessageInput`/`Input`: typing `/` into an empty
    * textarea opens the favorites panel in search mode above the input.
-   * `undefined` while the flow is disabled or the current deployment does not
-   * support skills, disabling the slash menu entirely.
+   * `undefined` while the current deployment does not support skills,
+   * disabling the slash menu entirely.
    */
   commandMenu?: CommandMenuConfig;
   /**
    * The browse modal element. Render at a stable level outside the popover
-   * (e.g. next to the input); `null` while `isEnabled` is `false`.
+   * (e.g. next to the input).
    */
   skillCatalogModal: ReactNode;
   /**
    * The skill details side panel opened by a row tooltip's "View details".
-   * `null` while `isEnabled` is `false`.
    */
   skillDetailsPanel: ReactNode;
   /**
@@ -146,7 +140,7 @@ export interface UseSkillSelectorOverlayResult {
    * Every currently-tracked skill mention's character range within the
    * composer's live draft text, for `ConversationInput`/`EditMessageInput`/
    * `Input`'s `activeMentions` prop (the live-composing highlighted-run
-   * render). Empty while nothing is mentioned or the flow is disabled.
+   * render). Empty while nothing is mentioned.
    */
   activeMentions: HighlightedTextRange[];
   /**
@@ -179,15 +173,14 @@ export interface UseSkillSelectorOverlayResult {
   /**
    * Whether at least one skill is mentioned while the current deployment does
    * not support skills — hosts must fold this into their send-disabled
-   * conditions. Always `false` while `isEnabled` is `false`.
+   * conditions.
    */
   isSkillUnsupported: boolean;
   /**
    * Every currently-tracked mention as the send-time `custom_content.skills`
    * payload, in left-to-right text order — `undefined` while nothing is
-   * mentioned or the flow is disabled, so `custom_content.skills` is omitted
-   * entirely. Cleared to `undefined` by `resetSkillMentions` after a
-   * successful send.
+   * mentioned, so `custom_content.skills` is omitted entirely. Cleared to
+   * `undefined` by `resetSkillMentions` after a successful send.
    */
   selectedSkills: RequestSkill[] | undefined;
   /**
@@ -214,9 +207,9 @@ export interface UseSkillSelectorOverlayResult {
    * `textSegments` prop. Resolves each entry's name from the listing pools
    * matched on its url, falling back to the url's last non-empty segment,
    * sharing the "View details" panel with the favorite rows. Returns `null`
-   * while `isEnabled` is `false` or `skills` is empty/absent; a mention
-   * `matchSkillMentions` cannot locate in `content` is simply omitted from
-   * the render (see `matchSkillMentions`'s own doc for that heuristic).
+   * while `skills` is empty/absent; a mention `matchSkillMentions` cannot
+   * locate in `content` is simply omitted from the render (see
+   * `matchSkillMentions`'s own doc for that heuristic).
    */
   renderHistorySkillSegments: (
     content: string,
@@ -227,8 +220,8 @@ export interface UseSkillSelectorOverlayResult {
    * ignoring text position — for `AssistantMessageBubble`'s `beforeContent`
    * slot, since assistant text is model-generated markdown and never
    * authors positioned mentions. Each entry's name/description resolve the
-   * same way as `renderHistorySkillSegments`. Returns `null` while
-   * `isEnabled` is `false` or the array is empty/absent.
+   * same way as `renderHistorySkillSegments`. Returns `null` while the
+   * array is empty/absent.
    */
   renderHistorySkills: (skills: RequestSkill[] | undefined) => ReactNode;
 }

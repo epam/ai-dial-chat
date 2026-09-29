@@ -61,7 +61,7 @@ describe('useSkillArchiveImport', () => {
     expect(result.current.selectionRejectionReason).toBeUndefined();
   });
 
-  it('submits a ZIP file once, closes the dialog, and reaches success', async () => {
+  it('submits a ZIP file once, keeps the dialog open while uploading, and closes it on success', async () => {
     const options = buildOptions();
     const { result } = renderHook(() => useSkillArchiveImport(options));
     const file = new File(['zip bytes'], 'skill.zip');
@@ -76,7 +76,10 @@ describe('useSkillArchiveImport', () => {
     });
 
     expect(options.importArchive).toHaveBeenCalledOnce();
-    expect(options.importArchive).toHaveBeenCalledWith(file);
+    expect(options.importArchive).toHaveBeenCalledWith(
+      file,
+      expect.any(AbortSignal),
+    );
     expect(result.current.isDialogOpen).toBe(false);
     expect(options.onImported).toHaveBeenCalledOnce();
     expect(options.onImported).toHaveBeenCalledWith({
@@ -96,7 +99,10 @@ describe('useSkillArchiveImport', () => {
     });
 
     expect(options.importArchive).toHaveBeenCalledOnce();
-    expect(options.importArchive).toHaveBeenCalledWith(file);
+    expect(options.importArchive).toHaveBeenCalledWith(
+      file,
+      expect.any(AbortSignal),
+    );
     expect(result.current.status).toBe(SkillArchiveImportStatus.Success);
   });
 
@@ -158,13 +164,13 @@ describe('useSkillArchiveImport', () => {
     const file = new File(['zip bytes'], 'skill.zip');
 
     act(() => {
-      result.current.handleFilesSelected([file]);
-    });
-
-    act(() => {
       result.current.openDialog();
     });
-    expect(result.current.isDialogOpen).toBe(false);
+    act(() => {
+      result.current.handleFilesSelected([file]);
+    });
+    expect(result.current.isDialogOpen).toBe(true);
+    expect(result.current.isUploading).toBe(true);
 
     act(() => {
       result.current.handleFilesSelected([file]);
@@ -176,6 +182,7 @@ describe('useSkillArchiveImport', () => {
       await Promise.resolve();
     });
     expect(result.current.status).toBe(SkillArchiveImportStatus.Success);
+    expect(result.current.isUploading).toBe(false);
 
     await act(async () => {
       result.current.handleFilesSelected([file]);
@@ -183,6 +190,108 @@ describe('useSkillArchiveImport', () => {
     });
 
     expect(options.importArchive).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the dialog open with the classified error after a failed import, so another file can be picked', async () => {
+    const importArchive = vi
+      .fn()
+      .mockRejectedValueOnce({ response: new Response(null, { status: 400 }) })
+      .mockResolvedValueOnce({ name: 'docs-helper' });
+    const options = buildOptions({ importArchive });
+    const { result } = renderHook(() => useSkillArchiveImport(options));
+
+    act(() => {
+      result.current.openDialog();
+    });
+    await act(async () => {
+      result.current.handleFilesSelected([new File(['text'], 'broken.zip')]);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.isDialogOpen).toBe(true);
+    expect(result.current.isUploading).toBe(false);
+    expect(result.current.errorKind).toBe(
+      SkillArchiveImportErrorKind.Validation,
+    );
+
+    await act(async () => {
+      result.current.handleFilesSelected([new File(['zip'], 'skill.zip')]);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(importArchive).toHaveBeenCalledTimes(2);
+    expect(result.current.errorKind).toBeUndefined();
+    expect(result.current.isDialogOpen).toBe(false);
+    expect(result.current.status).toBe(SkillArchiveImportStatus.Success);
+  });
+
+  it('aborts an in-flight import when the dialog is closed and lets it be reopened immediately', async () => {
+    let rejectImport: (error: unknown) => void = () => undefined;
+    let receivedSignal: AbortSignal | undefined;
+    const options = buildOptions({
+      importArchive: vi.fn().mockImplementation(
+        (_file: File, signal: AbortSignal) =>
+          new Promise<Result>((_resolve, reject) => {
+            receivedSignal = signal;
+            rejectImport = reject;
+          }),
+      ),
+    });
+    const { result } = renderHook(() => useSkillArchiveImport(options));
+
+    act(() => {
+      result.current.openDialog();
+    });
+    act(() => {
+      result.current.handleFilesSelected([new File(['zip'], 'skill.zip')]);
+    });
+    act(() => {
+      result.current.closeDialog();
+    });
+
+    expect(receivedSignal?.aborted).toBe(true);
+    expect(result.current.isDialogOpen).toBe(false);
+    expect(result.current.isUploading).toBe(false);
+
+    act(() => {
+      result.current.openDialog();
+    });
+    expect(result.current.isDialogOpen).toBe(true);
+
+    await act(async () => {
+      rejectImport({ response: new Response(null, { status: 502 }) });
+      await Promise.resolve();
+    });
+
+    expect(options.onError).not.toHaveBeenCalled();
+    expect(result.current.errorKind).toBeUndefined();
+    expect(result.current.status).toBe(SkillArchiveImportStatus.Idle);
+  });
+
+  it('clears a previous request failure when the dialog is reopened', async () => {
+    const options = buildOptions({
+      importArchive: vi
+        .fn()
+        .mockRejectedValue({ response: new Response(null, { status: 422 }) }),
+    });
+    const { result } = renderHook(() => useSkillArchiveImport(options));
+
+    await act(async () => {
+      result.current.handleFilesSelected([new File(['zip'], 'skill.zip')]);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => {
+      result.current.closeDialog();
+    });
+    act(() => {
+      result.current.openDialog();
+    });
+
+    expect(result.current.errorKind).toBeUndefined();
+    expect(result.current.status).toBe(SkillArchiveImportStatus.Idle);
   });
 
   it('classifies a mapped failure and invokes onError once without calling onImported', async () => {

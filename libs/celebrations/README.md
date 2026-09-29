@@ -207,7 +207,9 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes
 conversation data. Interaction, scrolling, resizing, navigation or enabling reduced
-motion cancels the borrowing immediately. With closed or empty history, only the
+motion cancels the borrowing immediately, including typing in an already-focused
+composer. Changing, moving, resizing or hiding a borrowed row or its container
+also restores the originals. With closed or empty history, only the
 portal artwork appears. Reduced motion shows a static rift and leaves history alone.
 Every scene notification includes a hint for the event's secret chat phrase.
 
@@ -220,12 +222,19 @@ mimic curls a shaded tongue in front of and behind two neighboring chats and pul
 them into its mouth, keeping them attached to the tongue tip, then chews and spits them back. A pumpkin
 rolls into the visible history and scatters only the rows whose visible titles
 its body touches (up to six), starting each row's motion at contact, before they regroup.
+With closed or empty history, the pumpkin still rolls across the viewport using
+the same travel and spin animations, without borrowing UI.
 Original layout and conversation data never change. Copies disappear and originals
 return immediately on typing, composition, clicking, focus changes, scrolling,
 resizing, source changes, navigation or reduced motion. Unavailable or unusually
 large targets fall back to artwork alone. The mummy can use a focused composer;
 history scenes skip focused rows. The mummy animates for twelve seconds and
 unmounts after thirteen; the other three animate for eight and unmount after nine.
+On mobile, the mummy waits for 120 ms of viewport stability before measuring the
+composer, up to 600 ms, so an activation-time keyboard/browser-chrome transition
+does not cancel its entrance. Input, focus, pointer interaction, document scrolling,
+hidden tabs or unmount cancel this preparation; viewport changes during playback
+still stop the scene immediately.
 Repeated secret messages select randomly without consecutive repeats, independently
 of pumpkin clicks. The new scenes are exclusive to messages and show a static
 illustration with reduced motion enabled.
@@ -255,8 +264,10 @@ welcome-heading and conversation-history corners, plus the main pumpkin's body.
 The pumpkin gets a target before the history limit is filled and remains clickable.
 A single canvas draws at most
 30 times per second, reusing finished silk and spider artwork. Target geometry is
-read only at scene setup; real controls retain their focus and behavior. Scrolling,
-resizing or hiding the tab stops the scene, and reduced motion shows a static web.
+captured at scene setup and rechecked only on relevant DOM or resize notifications,
+never per frame; real controls retain their focus and behavior. Changing or removing
+an anchor, scrolling, resizing or hiding the tab stops the scene, and reduced motion
+shows a static web.
 
 Ghosts possess separate small interface elements: their inert visual copies
 float and grow eyes, while one brave ghost tries to frighten the main pumpkin.
@@ -416,7 +427,8 @@ The Halloween train stops with an empty final wagon, picks up the main pumpkin
 and departs with smoke from its chimney and side vents. Boarding uses the pumpkin's
 actual screen position; its decorative copy rides behind the wagon front while
 the original labelled button retains focus and layout. The scene restores the
-pumpkin on completion or interaction and shows static artwork under reduced motion.
+pumpkin on completion or interaction, or when its source or container changes,
+moves, resizes or disappears. Reduced motion shows static artwork.
 Train direction follows the pumpkin's side, including RTL.
 
 `createHalloweenEvent({ trainSoundtrackUrl })` optionally accepts a supplied

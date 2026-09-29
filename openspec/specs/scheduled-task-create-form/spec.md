@@ -685,7 +685,7 @@ Edit state SHALL distinguish loading, ready, not-found, load-error and unsupport
 
 ### Requirement: Scheduled task configuration exposes a controlled optional Skill field
 
-Create and edit SHALL render Skill above Instructions when the host's `skillUsageEnabled` is enabled. `ScheduledTaskCreateForm` SHALL accept optional `skillSelector: ReactNode`, `skillLabelId`, `skillErrorId`, and `labels.skillLabel`, and render its own label/error markup only when the slot is supplied. The host SHALL provide unique matching label/error IDs to the composed control. The library SHALL add `skillUrl?: string` to form values and `skillUrl?: string` to localized errors; it SHALL NOT resolve catalog data or feature flags.
+Create and edit SHALL render Skill above Instructions. `ScheduledTaskCreateForm` SHALL accept optional `skillSelector: ReactNode`, `skillLabelId`, `skillErrorId`, and `labels.skillLabel`, and render its own label/error markup only when the slot is supplied. The host SHALL provide unique matching label/error IDs to the composed control. The library SHALL add `skillUrl?: string` to form values and `skillUrl?: string` to localized errors; it SHALL NOT resolve catalog data or feature flags.
 
 Existing page-local controlled form values SHALL own selection. `SkillSelectorField` from `@epam/ai-dial-skills` SHALL report replacement/removal through `onFieldChange('skillUrl', value)` via the app adapter. No new context or second uncontrolled selection state SHALL be introduced. The library minimum save guard SHALL accept nonblank instructions or a nonempty skill, and SHALL reject a skill field error; checked preparation remains mandatory before writing.
 
@@ -724,18 +724,12 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 #### Scenario: Capability recovers after a server rejection
 
 - **WHEN** a save returns `scheduledTaskSkillUnsupported` and deployment support subsequently changes from false to true
-- **THEN** the stale server error clears and the unchanged draft can be submitted again, including when the Skill field is hidden
+- **THEN** the stale server error clears and the unchanged draft can be submitted again
 - **AND** unrelated rerenders do not clear a server rejection while capability data remains unchanged
-
-#### Scenario: Feature-disabled editing is non-destructive
-
-- **WHEN** `skillUsageEnabled` is false and an existing task has a saved skill
-- **THEN** the Skill field is not rendered but the loaded reference stays in the draft and subsequent save
-- **AND** an unsupported model/skill combination still blocks save with the shared message in a visible form-level alert
 
 ### Requirement: Scheduled Skill UI preserves localization accessibility and responsive behavior
 
-The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, `scheduledTasks.create.instructionsOnlySubtitle`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` when enabled and `skillSelector.unsupportedTooltipLabel` for all unsupported messages. Existing `scheduledTasksEnabled` route gating and `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` resolution SHALL remain unchanged; no new flag/role is introduced.
+The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, and `skillSelector.removeSkillLabel`; reuse `scheduledTasks.create.configurationSectionSubtitle` and `skillSelector.unsupportedTooltipLabel` for all unsupported messages. Existing `scheduledTasksEnabled` route gating and `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` resolution SHALL remain unchanged; no new flag/role is introduced.
 
 The field SHALL support keyboard opening/selection/removal, Escape dismissal and focus restoration, unique label/error associations, `aria-invalid`, `aria-expanded`, and live error/status announcements. Touch removal SHALL not depend on hover. The field SHALL fit scheduler's existing container-responsive form at 360px and desktop sizes with wrapped long references, logical spacing, appropriate directional-icon mirroring, and AAA contrast. Library code SHALL inherit direction rather than read locale. Host labels/catalog callbacks SHALL have stable memoized identities; async resolution SHALL ignore stale results. No new cache or telemetry is required.
 

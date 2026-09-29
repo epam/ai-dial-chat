@@ -1,3 +1,5 @@
+import { observeSceneTargets } from '../../utils/scene-targets';
+
 export const HALLOWEEN_TRAIN_MS = 11000;
 
 export interface HalloweenTrainPlan {
@@ -103,7 +105,7 @@ export const animateHalloweenTrain = (
       : undefined;
   let stopped = false;
   let timer = 0;
-  let observer: MutationObserver | undefined;
+  let stopObserving: (() => void) | undefined;
   let audio: HTMLAudioElement | undefined;
   const documentEvents = [
     'pointerdown',
@@ -119,7 +121,7 @@ export const animateHalloweenTrain = (
     if (stopped) return;
     stopped = true;
     window.clearTimeout(timer);
-    observer?.disconnect();
+    stopObserving?.();
     documentEvents.forEach((event) =>
       document.removeEventListener(event, stop, true),
     );
@@ -247,10 +249,9 @@ export const animateHalloweenTrain = (
   );
   window.addEventListener('resize', stop);
   if (actors.source) {
-    observer = new MutationObserver(() => {
-      if (!actors.source?.isConnected) stop();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    stopObserving = observeSceneTargets([actors.source], stop, [
+      actors.carrier,
+    ]);
   }
   timer = window.setTimeout(stop, HALLOWEEN_TRAIN_MS);
   return stop;

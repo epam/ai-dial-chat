@@ -16,13 +16,14 @@ import {
   MUMMY_ANIMATION_MS,
   type MummyPushLayout,
 } from '../../utils/halloween-mummy';
+import { prepareMobileMummy } from '../../utils/halloween-mummy-preparation';
 import styles from './HalloweenMummy.module.scss';
 
 /** A stubborn visitor braces, fails twice, then shoves the composer out of view. */
 const HalloweenMummy: FC = () => {
   const id = useId();
   const reducedMotion = useReducedMotion();
-  const { anchors } = useCelebrationEnvironment();
+  const { anchors, isMobile } = useCelebrationEnvironment();
   const copiesRef = useRef<HTMLDivElement>(null);
   const actorRef = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<MummyPushLayout | null>(null);
@@ -66,12 +67,20 @@ const HalloweenMummy: FC = () => {
         setEnded(true),
       );
     };
-    prepare();
+    const stopPreparation = isMobile
+      ? prepareMobileMummy(prepare, () => {
+          disposed = true;
+          setReady(true);
+          setEnded(true);
+        })
+      : undefined;
+    if (!isMobile) prepare();
     return () => {
       disposed = true;
+      stopPreparation?.();
       stop?.();
     };
-  }, [anchors, reducedMotion]);
+  }, [anchors, isMobile, reducedMotion]);
   const isStatic = reducedMotion || !layout;
   return (
     <div
