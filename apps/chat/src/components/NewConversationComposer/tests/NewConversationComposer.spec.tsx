@@ -3,7 +3,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { type DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
-import { Suspense } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -28,6 +28,8 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     inputClassName,
     autoFocus,
     onSend,
+    belowWelcomeSlot,
+    welcomeText,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
@@ -35,10 +37,13 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     inputClassName?: string;
     autoFocus?: boolean;
     onSend?: (message: string, attachments: never[]) => Promise<void>;
+    belowWelcomeSlot?: ReactNode;
+    welcomeText?: string;
   }) => {
     capturedInputProps.onSend = onSend;
     return (
       <div data-testid="conversation-input">
+        {belowWelcomeSlot}
         Conversation input
         <output aria-label="deployments">
           {deployments === undefined
@@ -51,6 +56,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
         <output aria-label="send-disabled">{String(!!isSendDisabled)}</output>
         <output aria-label="input-class-name">{inputClassName ?? ''}</output>
         <output aria-label="auto-focus">{String(!!autoFocus)}</output>
+        <output aria-label="welcome-text">{welcomeText ?? 'undefined'}</output>
       </div>
     );
   },
@@ -236,6 +242,66 @@ describe('NewConversationComposer', () => {
       introText.compareDocumentPosition(starterButton) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('passes intro text and starter content into the below-welcome slot when starters-below-greeting is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.StartersBelowGreeting,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          introText="Choose how to start"
+          onCreateConversation={vi.fn()}
+        >
+          <button type="button">Draft</button>
+        </NewConversationComposer>
+      </Suspense>,
+    );
+
+    const input = await screen.findByTestId('conversation-input');
+    expect(input.contains(screen.getByText('Choose how to start'))).toBe(true);
+    expect(input.contains(screen.getByRole('button', { name: 'Draft' }))).toBe(
+      true,
+    );
+  });
+
+  it('passes the greeting to the conversation input by default', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+
+    const welcomeText = await screen.findByLabelText('welcome-text');
+    expect(welcomeText.textContent).not.toBe('undefined');
+  });
+
+  it('omits the greeting when hide-greeting is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideGreeting,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+
+    const welcomeText = await screen.findByLabelText('welcome-text');
+    expect(welcomeText.textContent).toBe('undefined');
   });
 
   it('passes chatSettings through when both chat-settings and empty-chat-settings are enabled', async () => {

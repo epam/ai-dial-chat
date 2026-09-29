@@ -52,6 +52,8 @@ export const KNOWN_UI_FEATURES: ReadonlySet<string> = new Set([
   'hide-keyboard-shortcuts',
   'voice-input',
   'show-all-starters',
+  'starters-below-greeting',
+  'hide-greeting',
   'hide-footer-version',
   'show-agent-description',
   'disable-input-history-navigation',
