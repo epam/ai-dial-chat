@@ -35,6 +35,18 @@ export interface SkillSelectorOverlayLabels {
    * is open with an empty query. Defaults to `'Type to filter'`.
    */
   emptyQueryHintLabel?: string;
+  /**
+   * History tooltip message shown, with a trash-can icon, for a history
+   * entry whose url is the viewer's own bucket but resolves to no loaded
+   * listing entry. Defaults to `ChatSkill`'s own default text.
+   */
+  deletedTooltipLabel?: string;
+  /**
+   * History tooltip message shown, with a lock icon, for a history entry
+   * whose url is a foreign bucket and resolves to no loaded listing entry.
+   * Defaults to `ChatSkill`'s own default text.
+   */
+  notSharedTooltipLabel?: string;
   /** Labels forwarded to the favorites panel rendered as the overlay. */
   panelLabels?: FavoriteSkillsPanelLabels;
 }
@@ -61,6 +73,16 @@ export interface UseSkillSelectorOverlayOptions {
   publicSkills?: SkillListingEntry[];
   /** Ids (`skills/{bucket}/{path}` URLs) of the user's favorited skills. */
   favoriteIds: ReadonlySet<string>;
+  /**
+   * The viewer's own DIAL Core storage bucket (as it appears in a
+   * `skills/{bucket}/{path}` url). Used only to tell "the viewer's own skill
+   * was deleted" apart from "a foreign skill was never shared with the
+   * viewer" when a history entry's url resolves to no loaded listing entry
+   * (see `renderHistorySkillSegments`/`renderHistorySkills`'s
+   * `unresolvedReason`). A plain resolved value — this lib reads no
+   * auth/user context of its own.
+   */
+  viewerBucket: string;
   /** Removes a skill from favorites; fired by a row's star button. */
   onToggleFavorite: (id: string) => void;
   /** Localizable string overrides. */
@@ -205,11 +227,15 @@ export interface UseSkillSelectorOverlayResult {
    * ordered array interleaving plain-text runs and `ChatSkill` elements at
    * each mention's actual text position — for `UserMessageBubble`'s
    * `textSegments` prop. Resolves each entry's name from the listing pools
-   * matched on its url, falling back to the url's last non-empty segment,
-   * sharing the "View details" panel with the favorite rows. Returns `null`
-   * while `skills` is empty/absent; a mention `matchSkillMentions` cannot
-   * locate in `content` is simply omitted from the render (see
-   * `matchSkillMentions`'s own doc for that heuristic).
+   * matched on its url, falling back to the url's last non-empty segment;
+   * when a url matches no pool, the rendered `ChatSkill` also carries
+   * `unresolvedReason` (`'deleted'` when the url's bucket equals
+   * `viewerBucket`, `'not-shared'` otherwise), replacing the tooltip's
+   * description and "View details" button with a fixed icon-plus-message.
+   * Shares the "View details" panel with the favorite rows for resolved
+   * entries. Returns `null` while `skills` is empty/absent; a mention
+   * `matchSkillMentions` cannot locate in `content` is simply omitted from
+   * the render (see `matchSkillMentions`'s own doc for that heuristic).
    */
   renderHistorySkillSegments: (
     content: string,
@@ -219,9 +245,9 @@ export interface UseSkillSelectorOverlayResult {
    * Renders every entry of `skills` as a flat list of `ChatSkill` elements,
    * ignoring text position — for `AssistantMessageBubble`'s `beforeContent`
    * slot, since assistant text is model-generated markdown and never
-   * authors positioned mentions. Each entry's name/description resolve the
-   * same way as `renderHistorySkillSegments`. Returns `null` while the
-   * array is empty/absent.
+   * authors positioned mentions. Each entry's name/description/
+   * `unresolvedReason` resolve the same way as `renderHistorySkillSegments`.
+   * Returns `null` while the array is empty/absent.
    */
   renderHistorySkills: (skills: RequestSkill[] | undefined) => ReactNode;
 }

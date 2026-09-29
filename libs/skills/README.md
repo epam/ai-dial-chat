@@ -161,6 +161,15 @@ carries `unsupportedClassName` (default `bg-error`), and the tooltip's content
 is the unsupported-model message alone (`labels.unsupportedTooltipLabel`) — no
 description paragraph and no "View details" button.
 
+`unresolvedReason` (`SkillUnresolvedReason`) is for a skill url the host
+could not resolve against any loaded listing. It takes precedence over
+`isUnsupported`; the `/{name}` label is unaffected (no color/class change),
+and the tooltip's content is a trash-can icon with `labels.deletedTooltipLabel`
+(for `SkillUnresolvedReason.Deleted`) or a lock icon with
+`labels.notSharedTooltipLabel` (for `SkillUnresolvedReason.NotShared`) — again
+no description paragraph and no "View details" button, since there is no
+metadata to fetch and no panel to open.
+
 ### `FavoriteSkillsPanel`
 
 ```tsx
@@ -242,6 +251,13 @@ While `unsupportedMessage` is set, the content is that message alone — no
 description paragraph and no "View details" button. That state is why
 `onViewDetails` is optional: the unsupported branch renders no button, so
 the callback goes unused there.
+
+While `unresolvedReason` (`SkillUnresolvedReason`) is set, it takes
+precedence over `unsupportedMessage`: the content is a `dial-tiny-text
+text-primary` message (`deletedMessage` for `SkillUnresolvedReason.Deleted`,
+`notSharedMessage` for `SkillUnresolvedReason.NotShared`) beside a
+`text-secondary` icon (`IconTrash` or `IconLock`, `DIAL_ICON_SIZE.MD`) — again
+no description paragraph and no "View details" button.
 
 `viewDetailsTabIndex` sets the "View details" button's `tabIndex`; pass `-1`
 to keep it clickable but out of the Tab sequence, as `FavoriteSkillsPanel`
@@ -394,11 +410,16 @@ const {
   sharedWithMe,
   publicSkills,
   favoriteIds,
+  viewerBucket: user.bucket,
   onToggleFavorite: (id) => unfavoriteSkill(id),
   labels: {
     addMenuLabel: 'Skills',
     backLabel: 'Back',
     emptyQueryHintLabel: 'Type to filter',
+    deletedTooltipLabel:
+      'This skill has been deleted. Its details are no longer available.',
+    notSharedTooltipLabel:
+      "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you.",
   },
   renderCatalogContent: (onSelect, onClose) => (
     <CatalogView onSelect={onSelect} onClose={onClose} />

@@ -15,6 +15,7 @@ import {
   PromptSelectorI18nKeys,
   SkillSelectorI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -71,6 +72,7 @@ export const useSkillSelectorOverlay = ({
 }): AppSkillSelectorOverlayResult => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const { user } = useUser();
   const { skills, sharedWithMe, publicSkills } = useSkills();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
 
@@ -93,6 +95,8 @@ export const useSkillSelectorOverlay = ({
       backLabel: t(NavigationI18nKeys.Back),
       catalogModalTitleLabel: t(SkillSelectorI18nKeys.ModalTitle),
       emptyQueryHintLabel: t(SkillSelectorI18nKeys.EmptyQueryHint),
+      deletedTooltipLabel: t(SkillSelectorI18nKeys.DeletedTooltipLabel),
+      notSharedTooltipLabel: t(SkillSelectorI18nKeys.NotSharedTooltipLabel),
       panelLabels: {
         myCollectionLabel: t(PromptSelectorI18nKeys.MyCollectionLabel),
         emptyHintLabel: t(SkillSelectorI18nKeys.EmptyHint),
@@ -120,6 +124,7 @@ export const useSkillSelectorOverlay = ({
     sharedWithMe,
     publicSkills,
     favoriteIds,
+    viewerBucket: user?.bucket ?? '',
     onToggleFavorite: handleToggleFavorite,
     labels,
     historyChipLabelClassName,
