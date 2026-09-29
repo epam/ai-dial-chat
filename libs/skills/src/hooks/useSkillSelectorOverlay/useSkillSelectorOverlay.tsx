@@ -320,11 +320,7 @@ export const useSkillSelectorOverlay = ({
         /* The Add menu mounts overlays inside a `role="menu"` container. */
         isMenu
         onSelect={(item) => {
-          insertAndPush(
-            item.id,
-            item.name,
-            consumeQueryAtCaret(caretPosition),
-          );
+          insertAndPush(item.id, item.name, consumeQueryAtCaret(caretPosition));
           onClose();
         }}
         onToggleFavorite={onToggleFavorite}
