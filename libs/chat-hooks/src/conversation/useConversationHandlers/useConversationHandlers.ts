@@ -235,6 +235,17 @@ export const useConversationHandlers = ({
 
       const modelId = resolveModelId();
 
+      /* The tool toggles may have changed since the original send (e.g. Deep
+       * Research switched on after stopping the answer), so regeneration uses
+       * the current toggle state rather than the stored one. */
+      const customContent: MessageCustomContent | undefined =
+        hasActiveToolConfig(toolConfigurationValue)
+          ? {
+              ...userMsg.custom_content,
+              configuration_value: toolConfigurationValue,
+            }
+          : userMsg.custom_content;
+
       const regeneratedMessage = {
         ...conversation.messages[messageIndex],
         content: '',
@@ -247,7 +258,8 @@ export const useConversationHandlers = ({
       const next = {
         ...conversation,
         messages: [
-          ...conversation.messages.slice(0, messageIndex),
+          ...conversation.messages.slice(0, messageIndex - 1),
+          { ...userMsg, custom_content: customContent },
           regeneratedMessage,
         ],
       };
@@ -264,7 +276,7 @@ export const useConversationHandlers = ({
         userMsg.content,
         messageIndex,
         modelId,
-        userMsg.custom_content,
+        customContent,
         generateUUID(),
         CompletionMode.Regenerate,
       );
@@ -277,6 +289,7 @@ export const useConversationHandlers = ({
       resolveModelId,
       setConversation,
       startStream,
+      toolConfigurationValue,
     ],
   );
 
