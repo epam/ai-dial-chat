@@ -25,6 +25,7 @@ describe('useOverlayProviderLogin', () => {
     registerActiveConversationBridge: vi.fn(),
     registerConversationListBridge: vi.fn(),
     pendingModelId: null,
+    modelId: null,
     authProviderUiModes,
     authAutoSignInProvider,
     clearPendingModelId: vi.fn(),

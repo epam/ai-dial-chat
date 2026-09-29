@@ -39,6 +39,8 @@ const cardLabels = {
     `${current} / ${total}`,
   preview: 'Preview',
   openInBrowser: 'Open in browser',
+  showMore: 'Show more',
+  showLess: 'Show less',
 };
 
 const markerLabels = {

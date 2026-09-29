@@ -9,7 +9,6 @@ const abcSkill: SkillListingEntry = { url: 'skills/bucket/abc', name: 'abc' };
 const csdSkill: SkillListingEntry = { url: 'skills/bucket/csd', name: 'csd' };
 
 const baseOptions: UseSkillSelectorOverlayOptions = {
-  isEnabled: true,
   isSkillsSupported: true,
   skills: [abcSkill, csdSkill],
   favoriteIds: new Set(),
@@ -237,18 +236,13 @@ describe('useSkillSelectorOverlay', () => {
     ]);
   });
 
-  it('returns disabled stub outputs while isEnabled is false', () => {
+  it('omits the entry points while the deployment does not support skills', () => {
     const { result } = renderHook(() =>
-      useSkillSelectorOverlay({ ...baseOptions, isEnabled: false }),
+      useSkillSelectorOverlay({ ...baseOptions, isSkillsSupported: false }),
     );
 
     expect(result.current.skillMenuOverlay).toBeUndefined();
     expect(result.current.commandMenu).toBeUndefined();
-    expect(result.current.message).toBe('');
-    expect(result.current.activeMentions).toEqual([]);
-    expect(result.current.selectedSkills).toBeUndefined();
-    expect(result.current.renderHistorySkillSegments('/abc', [])).toBeNull();
-    expect(result.current.renderHistorySkills([])).toBeNull();
   });
 
   describe('renderHistorySkillSegments', () => {

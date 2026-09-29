@@ -1,7 +1,7 @@
 import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useEffect, useState } from 'react';
+import { type Context, type ReactNode, useEffect, useState } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
@@ -10,9 +10,11 @@ import {
   useDeployments,
 } from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
+import * as OverlayContextMock from '../../context/overlay/OverlayContext';
 import { useAppConfig as mockUseAppConfig } from '../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../context/tests/notification-context-mock';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { useOverlayPendingModel } from '../../hooks/overlay/useOverlayPendingModel';
 import * as apiClient from '../../server-api/api-client';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as conversationsApi from '../../server-api/conversations.api';
@@ -115,9 +117,15 @@ vi.mock('../../context/IsolatedModelViewContext', () => ({
 }));
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
-vi.mock('../../context/overlay/OverlayContext', () => ({
-  useOptionalOverlay: () => undefined,
-}));
+/* Non-overlay tests render without a provider, so the context stays undefined. */
+vi.mock('../../context/overlay/OverlayContext', async () => {
+  const { createContext, useContext } = await import('react');
+  const _OverlayTestCtx = createContext<unknown>(undefined);
+  return {
+    useOptionalOverlay: () => useContext(_OverlayTestCtx),
+    _OverlayTestCtx,
+  };
+});
 vi.mock('../../hooks/keyboard-shortcut/useKeyboardShortcutPreference');
 vi.mock('../../hooks/useUiFeature', async () => {
   const { DEFAULT_ENABLED_UI_FEATURES } =
@@ -176,9 +184,27 @@ vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
   };
 });
 
+interface OverlayTestValue {
+  pendingModelId: string | null;
+  modelId: string | null;
+  clearPendingModelId: () => void;
+  notifyConversationLoaded: () => void;
+}
+
+const OverlayTestCtx = (
+  OverlayContextMock as unknown as {
+    _OverlayTestCtx: Context<OverlayTestValue | undefined>;
+  }
+)._OverlayTestCtx;
+
 const opusDeployment = {
   id: 'opus',
   displayName: 'Opus',
+  type: 'model' as const,
+};
+const sigmaDeployment = {
+  id: 'sigma',
+  displayName: 'Sigma',
   type: 'model' as const,
 };
 const whisperDeployment = {
@@ -216,6 +242,50 @@ const Harness = () => {
     </>
   );
 };
+
+/* Mirrors OverlayProvider's SET_OVERLAY_OPTIONS state: modelId stays, pendingModelId clears. */
+const OverlayStub = ({
+  modelId,
+  children,
+}: {
+  modelId: string;
+  children: ReactNode;
+}) => {
+  const [pendingModelId, setPendingModelId] = useState<string | null>(modelId);
+  return (
+    <OverlayTestCtx.Provider
+      value={{
+        pendingModelId,
+        modelId,
+        clearPendingModelId: () => setPendingModelId(null),
+        notifyConversationLoaded: vi.fn(),
+      }}
+    >
+      <output aria-label="Pending overlay model">
+        {pendingModelId ?? 'null'}
+      </output>
+      {children}
+    </OverlayTestCtx.Provider>
+  );
+};
+
+/* Stands in for app.tsx, which mounts the hook below DeploymentsProvider. */
+const OverlayPendingModelApplier = () => {
+  useOverlayPendingModel();
+  return null;
+};
+
+const renderOverlayHarness = (modelId: string) =>
+  render(
+    <MemoryRouter>
+      <OverlayStub modelId={modelId}>
+        <DeploymentsProvider>
+          <OverlayPendingModelApplier />
+          <Harness />
+        </DeploymentsProvider>
+      </OverlayStub>
+    </MemoryRouter>,
+  );
 
 const renderHarness = () =>
   render(
@@ -335,5 +405,83 @@ describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)'
       expect.anything(),
       expect.anything(),
     );
+  });
+
+  /*
+   * UAT regression: the overlay host's modelId used to be applied and then
+   * immediately replaced, because clearing pendingModelId re-ran
+   * ConversationRoute's restoreDefaultSelection. Only users whose persisted
+   * selection already matched saw the host's agent.
+   */
+  describe('overlay modelId', () => {
+    beforeEach(() => {
+      mockGetDeployments.mockResolvedValue({
+        deployments: [opusDeployment, sigmaDeployment, whisperDeployment],
+      });
+    });
+
+    it('keeps the overlay model for a first-time user after the pending id is cleared', async () => {
+      contextMocks.selectedDeploymentId = null;
+
+      renderOverlayHarness(sigmaDeployment.id);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Selected deployment').textContent).toBe(
+          sigmaDeployment.id,
+        );
+      });
+      /* Clearing the pending id re-runs ConversationRoute's default restore. */
+      await waitFor(() => {
+        expect(screen.getByLabelText('Pending overlay model').textContent).toBe(
+          'null',
+        );
+      });
+      expect(screen.getByLabelText('Selected deployment').textContent).toBe(
+        sigmaDeployment.id,
+      );
+    });
+
+    it('prefers the overlay model over a different persisted selection', async () => {
+      contextMocks.selectedDeploymentId = opusDeployment.id;
+
+      renderOverlayHarness(sigmaDeployment.id);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Selected deployment').textContent).toBe(
+          sigmaDeployment.id,
+        );
+      });
+      await waitFor(() => {
+        expect(screen.getByLabelText('Pending overlay model').textContent).toBe(
+          'null',
+        );
+      });
+      expect(screen.getByLabelText('Selected deployment').textContent).toBe(
+        sigmaDeployment.id,
+      );
+    });
+
+    it('returns to the overlay model for the next new chat after viewing another conversation', async () => {
+      contextMocks.selectedDeploymentId = opusDeployment.id;
+
+      renderOverlayHarness(sigmaDeployment.id);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Selected deployment').textContent).toBe(
+          sigmaDeployment.id,
+        );
+      });
+
+      await userEvent.click(screen.getByText('Open other conversation'));
+      expect(screen.getByText('Viewing conversation')).toBeTruthy();
+
+      await userEvent.click(screen.getByText('New chat'));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Selected deployment').textContent).toBe(
+          sigmaDeployment.id,
+        );
+      });
+    });
   });
 });

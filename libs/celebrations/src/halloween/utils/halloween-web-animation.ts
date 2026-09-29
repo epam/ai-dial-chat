@@ -1,3 +1,4 @@
+import { observeSceneTargets } from '../../utils/scene-targets';
 import type {
   HalloweenWebPlan,
   HalloweenWebThread,
@@ -94,13 +95,14 @@ interface Options {
   reducedMotion: boolean;
   color: string;
   pixelRatio?: number;
+  targets?: readonly Element[];
 }
 
 /** One scene clock, an incremental silk cache and bounded bitmap compositing. */
 export const animateHalloweenWeb = (
   canvas: HTMLCanvasElement,
   plan: HalloweenWebPlan,
-  { reducedMotion, color, pixelRatio = 1 }: Options,
+  { reducedMotion, color, pixelRatio = 1, targets = [] }: Options,
 ): (() => void) => {
   const context = canvas.getContext('2d');
   if (!context || plan.width <= 0 || plan.height <= 0) return () => undefined;
@@ -233,6 +235,7 @@ export const animateHalloweenWeb = (
   const stop = () => {
     if (stopped) return;
     stopped = true;
+    stopObserving();
     cancelAnimationFrame(frame);
     window.removeEventListener('resize', stop);
     window.removeEventListener('scroll', stop, true);
@@ -265,6 +268,7 @@ export const animateHalloweenWeb = (
   window.addEventListener('scroll', stop, { capture: true, passive: true });
   document.addEventListener('visibilitychange', onVisibility);
   canvas.addEventListener('contextlost', stop);
+  const stopObserving = observeSceneTargets(targets, stop, [canvas]);
   if (document.hidden) stop();
   else if (reducedMotion) draw(0);
   else frame = requestAnimationFrame(tick);

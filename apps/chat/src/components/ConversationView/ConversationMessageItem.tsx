@@ -526,6 +526,8 @@ const ConversationMessageItem: FC<Props> = ({
           t(CitationsI18nKeys.PopupSwitcher, { current, total }),
         preview: t(BasicI18nKeys.Preview),
         openInBrowser: t(CitationsI18nKeys.PopupOpenInBrowser),
+        showMore: t(ButtonsI18nKeys.ShowMore),
+        showLess: t(ButtonsI18nKeys.ShowLess),
       };
       const markerLabels = {
         ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
@@ -936,6 +938,8 @@ const ConversationMessageItem: FC<Props> = ({
                           openInBrowser: t(
                             CitationsI18nKeys.PopupOpenInBrowser,
                           ),
+                          showMore: t(ButtonsI18nKeys.ShowMore),
+                          showLess: t(ButtonsI18nKeys.ShowLess),
                         }}
                         markerLabels={{
                           ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {

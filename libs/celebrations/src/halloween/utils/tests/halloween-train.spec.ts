@@ -253,6 +253,30 @@ describe('pumpkin train playback', () => {
     expect(Audio).not.toHaveBeenCalled();
   });
 
+  it.each(['source', 'ancestor'])(
+    'restores the pumpkin on a %s CSS change without window resize',
+    async (target) => {
+      play();
+      (target === 'source' ? source : button).style.transform =
+        'translateY(90px)';
+      await Promise.resolve();
+      expect(onStop).toHaveBeenCalledOnce();
+      records.forEach(({ animation }) =>
+        expect(animation.cancel).toHaveBeenCalledOnce(),
+      );
+    },
+  );
+
+  it('ignores scene-owned mutations and unrelated toast removal', async () => {
+    const toast = document.createElement('aside');
+    document.body.append(toast);
+    play();
+    passenger.append(document.createElement('span'));
+    toast.remove();
+    await Promise.resolve();
+    expect(onStop).not.toHaveBeenCalled();
+  });
+
   it('synchronizes smoke and wheels with the journey and cancels them together', () => {
     const decorations = [
       { startTime: 0, cancel: vi.fn() },

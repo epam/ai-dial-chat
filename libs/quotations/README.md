@@ -56,6 +56,13 @@ file extension (e.g. `.pdf`) after the optional `headerIcon`. A web link, or a
 source with no `onPreview`, shows "Open in browser" instead and keeps the
 source name in the header.
 
+The quote is clamped to six lines. When it overflows, a `labels.showMore`
+toggle appears under it; expanding lifts the clamp and caps the quote at
+`min(20rem, 50vh)` with its own keyboard-focusable scroll, and
+`labels.showLess` collapses it again. The toggle carries `aria-expanded` /
+`aria-controls`, and every citation — including one reached through the
+switcher — opens collapsed.
+
 ```tsx
 import { CitationCard } from '@epam/ai-dial-quotations';
 
@@ -72,6 +79,8 @@ import { CitationCard } from '@epam/ai-dial-quotations';
     formatSwitcherText: (current, total) => `${current} / ${total}`,
     preview: 'Preview',
     openInBrowser: 'Open in browser',
+    showMore: 'Show more',
+    showLess: 'Show less',
   }}
 />;
 ```
@@ -157,6 +166,8 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
         formatSwitcherText: (current, total) => `${current} / ${total}`,
         preview: 'Preview',
         openInBrowser: 'Open in browser',
+        showMore: 'Show more',
+        showLess: 'Show less',
       },
       markerLabels: {
         ariaLabel: `Citation from ${group.sourceName}`,

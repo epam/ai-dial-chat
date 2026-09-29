@@ -1406,7 +1406,6 @@ describe('AppConfigService', () => {
       expect(Object.keys(result.features)).toEqual([
         'footer',
         'asrEnabled',
-        'skillUsageEnabled',
         'liveChatInteraction',
         'scheduledTasksEnabled',
         'defaultDeploymentPinned',

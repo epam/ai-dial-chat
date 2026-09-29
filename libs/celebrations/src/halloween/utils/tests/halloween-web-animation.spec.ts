@@ -91,7 +91,11 @@ describe('Halloween web canvas lifecycle', () => {
     pending.forEach((callback) => callback(timestamp));
   };
   const start = (
-    options: { reducedMotion?: boolean; pixelRatio?: number } = {},
+    options: {
+      reducedMotion?: boolean;
+      pixelRatio?: number;
+      targets?: Element[];
+    } = {},
   ) => {
     dispose = animateHalloweenWeb(canvas, plan, {
       color: '#ffffff',
@@ -269,6 +273,70 @@ describe('Halloween web canvas lifecycle', () => {
     document.dispatchEvent(new Event('visibilitychange'));
     expect(queue.size).toBe(1);
     expect(cancelAnimationFrame).not.toHaveBeenCalled();
+  });
+
+  it.each(['style', 'ancestor', 'remove', 'resize'])(
+    'releases surfaces when an anchor changes through %s',
+    async (cause) => {
+      const parent = document.createElement('section');
+      const target = document.createElement('button');
+      parent.append(target);
+      document.body.append(parent);
+      const measure = vi
+        .spyOn(target, 'getBoundingClientRect')
+        .mockReturnValue(new DOMRect(20, 40, 100, 60));
+      let notifyResize: (() => void) | undefined;
+      const disconnect = vi.fn();
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          constructor(callback: () => void) {
+            notifyResize = callback;
+          }
+          observe = vi.fn();
+          disconnect = disconnect;
+        },
+      );
+      start({ targets: [target] });
+      frameAt(0);
+      if (cause === 'style') target.style.transform = 'translateY(90px)';
+      if (cause === 'ancestor') parent.hidden = true;
+      if (cause === 'remove') parent.remove();
+      if (cause === 'resize') {
+        measure.mockReturnValue(new DOMRect(20, 40, 120, 60));
+        notifyResize?.();
+      }
+      await Promise.resolve();
+      expectReleased();
+      expect(disconnect).toHaveBeenCalledOnce();
+      parent.remove();
+    },
+  );
+
+  it('does not poll target layout while drawing and releases observation on completion', async () => {
+    const target = document.createElement('button');
+    document.body.append(target);
+    const measure = vi
+      .spyOn(target, 'getBoundingClientRect')
+      .mockReturnValue(new DOMRect(20, 40, 100, 60));
+    const disconnect = vi.fn();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = vi.fn();
+        disconnect = disconnect;
+      },
+    );
+    start({ targets: [target] });
+    const setupReads = measure.mock.calls.length;
+    for (const time of [0, 100, 200, 300, 14000]) frameAt(time);
+    expect(measure).toHaveBeenCalledTimes(setupReads);
+    expectReleased();
+    expect(disconnect).toHaveBeenCalledOnce();
+    target.style.display = 'none';
+    await Promise.resolve();
+    expect(disconnect).toHaveBeenCalledOnce();
+    target.remove();
   });
 
   it('does not schedule or draw a scene that starts in a hidden document', () => {
