@@ -205,7 +205,7 @@ surface errors at blur time. `GeneralFormLabels.form` and
 import { getDefaultToolsetForm } from '@epam/ai-dial-toolset-editor';
 
 const form = getDefaultToolsetForm(existingToolsetNames);
-// → name 'New toolset' (suffixed when it collides), version '0.0.1',
+// → name 'New toolset' (suffixed when it collides), version '1.0.0',
 //   protocol HTTP, auth: None / WithoutLogin / not logged in
 ```
 
@@ -279,7 +279,7 @@ Returns whether the whole editor form can be saved (name/version via
 
 - `DEFAULT_TOOLSET_NAME` — `'New toolset'`, the display name seeded into a
   new form.
-- `DEFAULT_TOOLSET_VERSION` — `'0.0.1'`, the display version seeded into a
+- `DEFAULT_TOOLSET_VERSION` — `'1.0.0'`, the display version seeded into a
   new form.
 - `AUTH_TYPE_ICONS` — icon per `ToolsetAuthTypes` segment; segment labels
   arrive through the auth labels, not this map.
