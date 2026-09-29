@@ -676,10 +676,11 @@ export class EnvironmentVariables {
   UTILITY_MODEL?: string;
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   LLM_CONVERSATION_NAMING_ENABLED?: boolean = false;
@@ -802,10 +803,11 @@ export class EnvironmentVariables {
   ENABLED_UI_FEATURES?: string[] | null = null;
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   LIVE_CHAT_INTERACTION_ENABLED?: boolean = false;
@@ -857,10 +859,11 @@ export class EnvironmentVariables {
   LIVE_CHAT_INTERACTION_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   SCHEDULED_TASKS_ENABLED?: boolean = false;

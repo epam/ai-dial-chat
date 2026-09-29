@@ -264,6 +264,27 @@ describe('validate', () => {
     expect(config.OVERLAY_SANDBOX_ENABLED).toBe(expected);
   });
 
+  describe.each([
+    'SCHEDULED_TASKS_ENABLED',
+    'LIVE_CHAT_INTERACTION_ENABLED',
+    'LLM_CONVERSATION_NAMING_ENABLED',
+  ] as const)('%s', (key) => {
+    it('defaults to false when unset', () => {
+      const config = validate({ ...baseConfig });
+      expect(config[key]).toBe(false);
+    });
+
+    it.each([
+      ['true', true],
+      ['false', false],
+      ['0', false],
+      ['no', false],
+    ])('parses %s as %s', (rawValue, expected) => {
+      const config = validate({ ...baseConfig, [key]: rawValue });
+      expect(config[key]).toBe(expected);
+    });
+  });
+
   it('parses publication filter sources up to 200 characters', () => {
     const source = 'a'.repeat(200);
     const config = validate({
