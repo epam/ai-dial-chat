@@ -478,8 +478,16 @@ const NewConversationComposer: FC<Props> = ({
           ),
         }}
       />
+      {/* `flex-auto shrink-0` (1 0 auto) lets the region grow past the
+          viewport when the welcome content is tall, so the wrapper above
+          scrolls instead of `justify-center` clipping both ends. The
+          symmetric `py-14` / `desktop:py-16` keeps overflowing content clear
+          of the absolutely positioned header (48px on mobile and in the
+          overlay, 64px on desktop) without shifting the centered layout —
+          otherwise a long agent description scrolls under the logo
+          (Issue #9036). */}
       <div
-        className="relative flex flex-1 flex-col items-center justify-center overflow-hidden p-4 [container-type:inline-size] desktop:p-8"
+        className="relative flex flex-auto shrink-0 flex-col items-center justify-center overflow-hidden px-4 py-14 [container-type:inline-size] desktop:px-8 desktop:py-16"
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
