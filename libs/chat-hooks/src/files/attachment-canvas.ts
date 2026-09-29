@@ -492,9 +492,7 @@ export const resolveHtmlCanvasContent = async (
       resolveSourceText: async () => {
         const result = await resolveAttachmentText(attachment, resolvers);
         if (result == null || typeof result !== 'string') {
-          throw new Error(
-            `Failed to resolve HTML source text for ${downloadUrl}`,
-          );
+          throw new Error('Failed to resolve HTML source text');
         }
         return result;
       },

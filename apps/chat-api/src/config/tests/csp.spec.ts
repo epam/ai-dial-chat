@@ -244,6 +244,12 @@ describe('createHtmlPreviewCspHeader', () => {
     );
   });
 
+  it('narrows default-src to self/data/blob, without a bare https: fallback', () => {
+    const directives = createHtmlPreviewCspHeader().split('; ');
+
+    expect(directives).toContain("default-src 'self' data: blob:");
+  });
+
   it('does not permit eval or outbound network access from the previewed document', () => {
     const header = createHtmlPreviewCspHeader();
     const directives = header.split('; ');

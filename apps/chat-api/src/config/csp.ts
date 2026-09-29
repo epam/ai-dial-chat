@@ -210,16 +210,18 @@ export const createHelmetOptions = (
  * `fetch`/`XHR`/WebSocket, loading further script resources, rewriting its
  * base URL, submitting forms, spawning workers, or framing further content —
  * so none of that is granted, narrowing what a malicious attachment's script
- * could do inside its already-sandboxed, cookie-less iframe. Without an
- * explicit `frame-src`, it would fall back to `default-src`'s `https:`,
- * letting the previewed document embed arbitrary HTTPS content (e.g. a
- * phishing overlay) even though it can't script that content.
+ * could do inside its already-sandboxed, cookie-less iframe. Each of these is
+ * given its own explicit `'none'` rather than left to `default-src`'s
+ * fallback, so a future accidental removal of one directive cannot silently
+ * reopen it through `default-src`. `default-src` itself is `'self' data:
+ * blob:` — no bare `https:` — since every fetch type that legitimately needs
+ * HTTPS (style/img/font/media) already has its own explicit directive above.
  */
 export const createHtmlPreviewCspHeader = (
   allowedIframeOrigins: string[] = [],
 ): string => {
   const directives: [string, string][] = [
-    ['default-src', "'self' data: blob: https:"],
+    ['default-src', "'self' data: blob:"],
     ['script-src', "'unsafe-inline'"],
     ['style-src', "'unsafe-inline' https:"],
     ['style-src-attr', "'unsafe-inline'"],
