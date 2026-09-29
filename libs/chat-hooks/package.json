@@ -143,14 +143,13 @@
     "react": "^19.2.8",
     "@epam/ai-dial-attachment-canvas": "*",
     "@epam/ai-dial-attachment-input": "*",
-    "@epam/ai-dial-builder-form": "*",
     "@epam/ai-dial-catalog": "*",
     "@epam/ai-dial-chat-overlay": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-mcp-apps": "*",
     "@epam/ai-dial-publish-panel": "*",
     "@epam/ai-dial-quotations": "*",
-    "@epam/ai-dial-react-file-manager": "^0.3.0-dev.13",
+    "@epam/ai-dial-react-file-manager": "^0.3.0-dev.15",
     "@epam/ai-dial-scheduled-tasks": "*",
     "@epam/ai-dial-share": "*",
     "@epam/ai-dial-skill-editor": "*",
@@ -166,9 +165,6 @@
       "optional": true
     },
     "@epam/ai-dial-attachment-input": {
-      "optional": true
-    },
-    "@epam/ai-dial-builder-form": {
       "optional": true
     },
     "@epam/ai-dial-catalog": {

@@ -25,7 +25,8 @@ different skills. The send-time semantics of a selected skill stay app-owned.
 `SkillDetailsSidePanel` composes `@epam/ai-dial-catalog`'s exported
 `DetailsPanel` into a right-anchored skill details panel. It adds no chrome of
 its own: the host supplies the `CatalogItem`, the details data, and every
-action.
+action. Its Content-tab file selector is the file manager's `DialFoldersTree`,
+the same tree the skill editor renders.
 
 `ChatSkill` renders a single used skill — a `/name` ghost button whose
 interactive tooltip shows the skill's description and a "View details" action —
@@ -54,6 +55,8 @@ import '@epam/ai-dial-skills/styles.css';
 - `react` `^19.2.8`
 - `@epam/ai-dial-ui-kit` `^0.15.0-dev.21`
 - `@epam/ai-dial-chat-shared` `*`
+- `@epam/ai-dial-react-file-manager` `^0.3.0-dev.15` — `SkillDetailsSidePanel`
+  renders its `DialFoldersTree`
 
 ## Components
 
@@ -120,8 +123,9 @@ omitted. The form field uses full-width panels and 44px minimum-height rows.
 
 The chat overlay's compatibility signal also depends on the selected reference,
 independently of catalog loading or deletion; unresolved selections keep a
-fallback chip and remain removable. The existing `isEnabled` gate still hides
-the chat flow and its outgoing selection when disabled.
+fallback chip and remain removable. `isSkillsSupported` still hides the chat
+flow's entry points and folds an existing selection into the unsupported
+state when the deployment does not support skills.
 
 ### `ChatSkill`
 
@@ -268,10 +272,39 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 A thin wrapper over `@epam/ai-dial-catalog`'s `DetailsPanel` narrowed to the
 actions a skill details surface offers: favorite toggle, close, "Use in chat",
 and content-file previews. Skills open on the content-first tab exactly as
-they do on the Catalog page. Publish, share, credentials, and download props
+they do on the Catalog page. The Content tab's file selector is drawn with the
+file manager's `DialFoldersTree` (read-only: no context menu, no rename), so a
+skill's files look and navigate the same as in the skill editor; the panel
+still owns expansion and selection. Publish, share, credentials, and download props
 are deliberately absent — `DetailsPanel` hides those actions when they are not
 supplied, so no catalog page chrome comes along. The host owns the open state
 and the details fetch; the panel itself never fetches.
+
+### `SkillContentFileTree`
+
+```tsx
+import { Catalog } from '@epam/ai-dial-catalog';
+import type { CatalogContentFileTreeRenderProps } from '@epam/ai-dial-catalog';
+import { SkillContentFileTree } from '@epam/ai-dial-skills';
+
+const renderContentFileTree = (props: CatalogContentFileTreeRenderProps) => (
+  <SkillContentFileTree {...props} />
+);
+
+<Catalog
+  items={items}
+  favorites={favorites}
+  renderContentFileTree={renderContentFileTree}
+/>;
+```
+
+The file-manager-backed tree `SkillDetailsSidePanel` renders in its Content
+tab, exported so a host can hand the same tree to `Catalog` or `DetailsPanel`
+through `renderContentFileTree`. It is a read-only `DialFoldersTree` — no
+context menu, no rename, dotfiles shown — fully controlled by the panel's
+`CatalogContentFileTreeRenderProps`: folder toggles come back one id at a time
+through `onToggleFolder`, only files are selectable, the selected file is
+focused on mount, and Escape calls `onClose`.
 
 ### `SkillCatalogModal`
 
@@ -356,7 +389,6 @@ const {
   renderHistorySkillSegments,
   renderHistorySkills,
 }: UseSkillSelectorOverlayResult = useSkillSelectorOverlay({
-  isEnabled: isSkillUsageEnabled,
   isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   skills,
   sharedWithMe,
@@ -404,9 +436,9 @@ is the entry for the `menuOverlays` prop of
 favorites panel in search mode over the typed query, with
 `labels.emptyQueryHintLabel` as its empty-query hint, rendered in listbox
 mode so ArrowDown/ArrowUp and Enter in the input pick a skill. Both entries are
-`undefined` while `isEnabled` is `false` or `isSkillsSupported` is `false`
-(the current deployment does not support skills), so the host omits the
-menu item and the slash dropdown entirely; the hook renders
+`undefined` while `isSkillsSupported` is `false` (the current deployment does
+not support skills), so the host omits the menu item and the slash dropdown
+entirely; the hook renders
 `FavoriteSkillsPanel` as both entries' content, forwarding
 `labels.panelLabels`. `skillCatalogModal` renders the lib's `SkillCatalogModal`
 shell with `labels.catalogModalTitleLabel` as its title and
@@ -428,8 +460,7 @@ currently-tracked mention's character range, for the composer's
 host already does with that callback. `onBackspaceAtCaret` and
 `caretPositionOverride` forward straight to the composer's identically-named
 props. `isSkillUnsupported` is `true` while at least one mention exists and
-`isSkillsSupported` is `false` (always `false` while `isEnabled` is `false`):
-hosts fold it into their send-disabled condition — a live-composing mention
+`isSkillsSupported` is `false`: hosts fold it into their send-disabled condition — a live-composing mention
 has no per-mention error styling of its own (it's a plain highlighted run,
 not a `ChatSkill`), so this boolean is the only unsupported-state signal
 while composing. `selectedSkills` is the send-time
@@ -453,8 +484,8 @@ assistant text is model-generated markdown and never authors positioned
 mentions. Both resolve each entry's name and description from the injected
 listing pools matched on its url (the name falling back to the url's last
 non-empty segment, the description omitted when no pool carries the url),
-and share the same "View details" panel; both return `null` while `isEnabled`
-is `false` or the array is empty/absent, and a mention
+and share the same "View details" panel; both return `null` while the array
+is empty/absent, and a mention
 `renderHistorySkillSegments` cannot locate in `content` is simply omitted
 from the render. The chips render beside the bubble's first text line, so
 pass `historyChipLabelClassName` with the label class the bubbles' body text

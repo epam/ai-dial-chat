@@ -109,6 +109,12 @@ export interface OverlayContextType {
   ) => void;
   /** Deployment id received via `SET_OVERLAY_OPTIONS`, awaiting application once deployments are available. */
   pendingModelId: string | null;
+  /**
+   * The most recent deployment id the host sent via `SET_OVERLAY_OPTIONS`.
+   * Unlike `pendingModelId` it is never cleared, so it keeps serving as the
+   * overlay's default for every new chat in the session, not just the first.
+   */
+  modelId: string | null;
   /** Trusted per-provider authentication UI modes received from the host. */
   authProviderUiModes: Record<string, string> | undefined;
   /** Trusted provider id the host asked to sign in with automatically. */
@@ -391,6 +397,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
     PendingConversationSelection[]
   >([]);
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
+  const [modelId, setModelId] = useState<string | null>(null);
   const [authProviderUiModes, setAuthProviderUiModes] = useState<
     Record<string, string> | undefined
   >();
@@ -863,6 +870,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setTheme(payload.theme);
       }
       if (payload?.modelId) {
+        setModelId(payload.modelId);
         setPendingModelId(payload.modelId);
       }
       if (payload?.overlayConversationId) {
@@ -978,6 +986,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       registerActiveConversationBridge,
       registerConversationListBridge,
       pendingModelId,
+      modelId,
       authProviderUiModes,
       authAutoSignInProvider,
       clearPendingModelId,
@@ -991,6 +1000,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       registerActiveConversationBridge,
       registerConversationListBridge,
       pendingModelId,
+      modelId,
       authProviderUiModes,
       authAutoSignInProvider,
       clearPendingModelId,

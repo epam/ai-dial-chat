@@ -9,7 +9,7 @@
  * renaming one or moving it to a different element — both are breaking changes.
  */
 export const PROMPT_EDITOR_CLASS = {
-  /** The editor's scrolling form column, inside the shared editor layout. */
+  /** The editor's form column that holds Name, Description and Instructions. */
   form: 'dial-prompt-editor-form',
   /** The folder picker row rendered by `PromptFolderField`. */
   folderField: 'dial-prompt-editor-folder-field',

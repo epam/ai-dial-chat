@@ -205,7 +205,7 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   uploadArchiveExtractingAriaLabel?: string;
   /** Collapsed mobile summary label. Defaults to `'Editing file'`. */
   editingFileLabel?: string;
-  /** Main-pane heading, given the selected node's name. Defaults to the name itself. */
+  /** Setup-section heading for a selected supporting file or folder, given its name. Defaults to the name itself; `SKILL.md` is always headed by its path. */
   selectedFileHeading?: (name: string) => string;
   /** Name field label. Defaults to `'Name'`. */
   nameLabel?: string;
@@ -282,7 +282,7 @@ export interface SkillEditorColors {
   refineActionText?: string;
   /** Refinement error color. Defaults to --text-error. */
   refineErrorText?: string;
-  /** Color of the "Files" and selected-file section headings. Defaults to `--text-primary`. */
+  /** Color of the "Files" heading and of the Metadata and Setup section headings. Defaults to `--text-primary`. */
   title?: string;
   /** Color of the hand-rendered Instructions field label. Defaults to `--text-secondary`. */
   helperText?: string;
@@ -294,7 +294,7 @@ export interface SkillEditorColors {
 export interface SkillEditorTypography {
   /** Refinement feedback typography. Defaults to 'dial-small-text'. */
   refineFeedbackClassName?: string;
-  /** Typography class applied to the "Files" and selected-file section headings. Defaults to `'dial-body-semi-text'`. */
+  /** Typography class applied to the "Files" heading. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** Typography class applied to the hand-rendered Instructions field label. Defaults to `'dial-tiny-semi-text'`. */
   helperTextClassName?: string;
@@ -341,11 +341,11 @@ export interface SkillEditorProps {
   isLoading?: boolean;
   /** Whether loading the skill failed; renders an error state with a retry instead of the form. Defaults to `false`. */
   hasLoadError?: boolean;
-  /** Whether a save is in flight; disables submission. Defaults to `false`. */
+  /** Whether a save is in flight; disables submission and Cancel. Defaults to `false`. */
   isSubmitting?: boolean;
   /** Inline validation messages to render under the fields. */
   errors?: SkillEditorErrors;
-  /** General submit-time error (e.g. a naming conflict or a server error) rendered in a `role="alert"` region. */
+  /** General submit-time error (e.g. a naming conflict or a server error) rendered in the `role="alert"` region above the Setup section. */
   submitError?: string;
   /**
    * A save-time conflict (e.g. a stale ETag), distinct from `submitError`.
@@ -360,7 +360,7 @@ export interface SkillEditorProps {
    * included in submitted values unchanged. The host sets this in edit mode,
    * since DIAL Core has no rename/move operation for a skill; the library
    * itself has no notion of "edit mode" and infers no policy from this flag
-   * beyond disabling the field.
+   * beyond rendering the field read-only.
    */
   isNameReadOnly?: boolean;
   /**

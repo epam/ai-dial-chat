@@ -16,6 +16,7 @@ import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type {
   CatalogContentFilePreview,
+  CatalogContentFileTreeRenderProps,
   CatalogItemDetailsFetchResult,
 } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
@@ -261,6 +262,13 @@ export interface CatalogProps {
    * own selection and passes the opaque file id and resolved basename only.
    */
   renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode;
+  /**
+   * Renders the details panel's Content-tab file selector tree in place of
+   * the built-in one. Forwarded to `DetailsPanel.renderContentFileTree`.
+   */
+  renderContentFileTree?: (
+    props: CatalogContentFileTreeRenderProps,
+  ) => ReactNode;
   /**
    * Called immediately when the "Delete" button in the details panel is
    * clicked, with no confirmation step. Shown only when the item's `isMyApp`

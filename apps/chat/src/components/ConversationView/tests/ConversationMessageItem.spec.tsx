@@ -1077,7 +1077,7 @@ describe('ConversationMessageItem — inline citations', () => {
    * `annotationsToPdfHighlights` never gathers more than one entry.
    */
   it.each([0, 1, 2, 3])(
-    'reproduces issue #8822: repeated PDF citation %i supports preview and download',
+    'reproduces issue #8822: repeated PDF citation %i supports preview without a download action',
     async (markerIndex) => {
       const message: Message = {
         role: MessageRole.Assistant,
@@ -1169,11 +1169,10 @@ describe('ConversationMessageItem — inline citations', () => {
       expect(screen.queryAllByRole('dialog')).toHaveLength(0);
       mockOpenCanvas.mockClear();
       await userEvent.click(marker);
-      await userEvent.click(
-        screen.getByRole('button', { name: ButtonsI18nKeys.Download }),
-      );
-      expect(clickSpy).toHaveBeenCalledOnce();
-      clickSpy.mockClear();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Download }),
+      ).toBeNull();
+      expect(clickSpy).not.toHaveBeenCalled();
 
       clickSpy.mockRestore();
     },

@@ -46,18 +46,18 @@ import {
   ButtonsI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
-import { useDeployments } from '../context/DeploymentsContext';
 import { useIsolatedModelView } from '../context/IsolatedModelViewContext';
-import { useOptionalOverlay } from '../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { usePdfPreviewLoader } from '../hooks/attachment/usePdfPreviewLoader';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
+import { useOverlayPendingModel } from '../hooks/overlay/useOverlayPendingModel';
 import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
+import { ApplicationEditorKind } from '../types/application-editor';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 import { configurePdfWorker } from '../utils/pdf';
@@ -79,12 +79,8 @@ const ScheduledTaskDetailPage = lazy(
 const ScheduledTaskEditPage = lazy(
   () => import('../pages/ScheduledTaskEditPage/ScheduledTaskEditPage'),
 );
-const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
-const ToolsetEditorPage = lazy(
-  () => import('../pages/ToolsetEditor/ToolsetEditor'),
-);
-const CustomAppEditorPage = lazy(
-  () => import('../pages/ToolsetEditor/CustomAppEditor'),
+const ApplicationEditorPage = lazy(
+  () => import('../pages/ApplicationEditor/ApplicationEditorPage'),
 );
 const PromptEditorPage = lazy(
   () => import('../pages/PromptEditor/PromptEditor'),
@@ -140,34 +136,8 @@ const App: FC = () => {
    */
   useConversationListBridge();
 
-  /*
-   * OverlayContext (an ancestor of DeploymentsProvider) cannot call
-   * useDeployments() itself, so it hands off a pending overlay-selected
-   * modelId here, where both contexts are reachable. Silently ignored if the
-   * id is not in the loaded deployments list — matches SET_OVERLAY_OPTIONS'
-   * "unknown modelId falls back to normal default-deployment resolution".
-   */
-  const overlay = useOptionalOverlay();
-  const {
-    items: deploymentItemsForOverlay,
-    isLoading: isDeploymentsLoading,
-    restoreSelectedItemId,
-  } = useDeployments();
-  useEffect(() => {
-    if (!overlay?.pendingModelId || isDeploymentsLoading) return;
-    const exists = deploymentItemsForOverlay.some(
-      (item) => item.id === overlay.pendingModelId,
-    );
-    if (exists) {
-      restoreSelectedItemId(overlay.pendingModelId);
-    }
-    overlay.clearPendingModelId();
-  }, [
-    overlay,
-    deploymentItemsForOverlay,
-    isDeploymentsLoading,
-    restoreSelectedItemId,
-  ]);
+  /* Applies an overlay host's modelId once deployments are loaded. */
+  useOverlayPendingModel();
 
   const [isNavOpen, setIsNavOpen] = useState(false);
   const closeNav = useCallback(() => setIsNavOpen(false), []);
@@ -418,7 +388,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <AppsEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.QuickApp}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
@@ -448,7 +420,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <ToolsetEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.Toolset}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
@@ -458,7 +432,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <CustomAppEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.CustomApp}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }

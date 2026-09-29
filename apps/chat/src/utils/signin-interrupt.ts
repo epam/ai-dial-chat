@@ -1,8 +1,7 @@
 import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
 import {
   getExternalServiceFallbackName,
-  isPublicToolsetId,
-  ToolsetCredentialsLevel,
+  resolveToolsetCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import type { ResolvedRowInfo } from '../models/signin-interrupt';
 import type { GetExternalServiceResponseDto } from '../server-api/external-services';
@@ -22,9 +21,7 @@ export const resolveToolsetInfo = (
   displayVersion: toolset?.displayVersion,
   authenticationType: toolset?.authSettings?.authenticationType as
     RowAuthType | undefined,
-  credentialsLevel: isPublicToolsetId(toolsetId)
-    ? ToolsetCredentialsLevel.User
-    : ToolsetCredentialsLevel.Global,
+  credentialsLevel: resolveToolsetCredentialsLevel(toolsetId),
   oauthSettings: {
     clientId: toolset?.authSettings?.clientId,
     authorizationEndpoint: toolset?.authSettings?.authorizationEndpoint,

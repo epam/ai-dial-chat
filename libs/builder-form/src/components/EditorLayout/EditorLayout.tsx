@@ -98,7 +98,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
           {leftContent}
         </div>
         {rightContent != null && (
-          <div className="desktop:flex-1 desktop:overflow-y-auto">
+          <div className="desktop:flex desktop:flex-1 desktop:flex-col desktop:overflow-y-auto">
             {rightContent}
           </div>
         )}

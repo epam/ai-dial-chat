@@ -215,11 +215,7 @@ export const SUBPATH_FIXTURES = [
   {
     name: 'utils',
     subpath: 'utils',
-    peers: [
-      '@epam/ai-dial-builder-form',
-      '@epam/ai-dial-chat-shared',
-      ...CHAT_SHARED_ROOT_PEERS,
-    ],
+    peers: ['@epam/ai-dial-chat-shared', ...CHAT_SHARED_ROOT_PEERS],
   },
   {
     name: 'usage',
@@ -247,7 +243,6 @@ export const SUBPATH_FIXTURES = [
 export const ALL_OPTIONAL_PEERS = [
   '@epam/ai-dial-attachment-canvas',
   '@epam/ai-dial-attachment-input',
-  '@epam/ai-dial-builder-form',
   '@epam/ai-dial-catalog',
   '@epam/ai-dial-chat-overlay',
   '@epam/ai-dial-chat-shared',
