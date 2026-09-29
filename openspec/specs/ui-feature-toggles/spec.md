@@ -420,6 +420,24 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 - **WHEN** `isEnabled('starters-below-greeting')` is `false`
 - **THEN** the starters render after the input
 
+### Requirement: hide-greeting removes the empty-chat greeting
+
+`NewConversationComposer` SHALL pass no `welcomeText` to `ConversationInput` when `isEnabled('hide-greeting')` is `true`, so the empty-chat screen renders neither the time-of-day greeting nor the welcome-screen description that `ConversationInput` renders only under it. With the key off the greeting SHALL render as before. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+
+**Accessibility:** The greeting is the screen's `<h1>`; the welcome region keeps its `aria-label`, so the screen stays named without it.
+
+**i18n impact:** None.
+
+#### Scenario: The greeting is hidden when the key is on
+
+- **WHEN** `isEnabled('hide-greeting')` is `true`
+- **THEN** the empty-chat screen renders no greeting and no welcome-screen description
+
+#### Scenario: The greeting renders when the key is off
+
+- **WHEN** `isEnabled('hide-greeting')` is `false`
+- **THEN** the empty-chat screen renders the time-of-day greeting
+
 ### Requirement: Isolated-view override takes precedence over every other source
 
 `TODO: remove in next release.` `UiFeaturesContext` SHALL expose `applyIsolatedViewOverride(features: Set<OverlayFeature> | null)`, called only by `useIsolatedModelView` (see `isolated-model-view`). When set to a non-null value, the effective UI-feature set SHALL become exactly that set, taking precedence over the overlay override, the server `enabledUiFeatures` baseline, and the compiled defaults — none of those other sources SHALL be consulted while the isolated-view override is active. When `null` (the default, and the value whenever isolated view is not active), the existing three-level priority chain (overlay override → server baseline → compiled defaults) SHALL apply unchanged.

@@ -13,8 +13,8 @@ import {
  * them in the same change as any `OverlayFeature` addition, removal, or rename.
  */
 describe('KNOWN_UI_FEATURES', () => {
-  it('has exactly 50 members, one per OverlayFeature key', () => {
-    expect(KNOWN_UI_FEATURES.size).toBe(50);
+  it('has exactly 51 members, one per OverlayFeature key', () => {
+    expect(KNOWN_UI_FEATURES.size).toBe(51);
   });
 
   it('includes representative transferable keys', () => {
@@ -45,6 +45,7 @@ describe('KNOWN_UI_FEATURES', () => {
   it('includes the starter-layout key', () => {
     expect(KNOWN_UI_FEATURES.has('show-all-starters')).toBe(true);
     expect(KNOWN_UI_FEATURES.has('starters-below-greeting')).toBe(true);
+    expect(KNOWN_UI_FEATURES.has('hide-greeting')).toBe(true);
   });
 
   it('includes the footer-version key', () => {

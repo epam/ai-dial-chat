@@ -396,6 +396,7 @@ const NewConversationComposer: FC<Props> = ({
   const isStartersBelowGreeting = useUiFeature(
     OverlayFeature.StartersBelowGreeting,
   );
+  const isGreetingHidden = useUiFeature(OverlayFeature.HideGreeting);
   const isAgentDescriptionEnabled = useUiFeature(
     OverlayFeature.ShowAgentDescription,
   );
@@ -530,28 +531,34 @@ const NewConversationComposer: FC<Props> = ({
           message={message}
           messageRevision={messageRevision}
           textInsertion={inputInsertion}
-          welcomeText={getTimeOfDayGreeting(
-            new Date().getHours(),
-            {
-              morningWithName: t(ChatI18nKeys.GreetingMorning, {
-                name: firstName,
-              }),
-              morningNoName: t(ChatI18nKeys.GreetingMorningNoName),
-              afternoonWithName: t(ChatI18nKeys.GreetingAfternoon, {
-                name: firstName,
-              }),
-              afternoonNoName: t(ChatI18nKeys.GreetingAfternoonNoName),
-              eveningWithName: t(ChatI18nKeys.GreetingEvening, {
-                name: firstName,
-              }),
-              eveningNoName: t(ChatI18nKeys.GreetingEveningNoName),
-              nightWithName: t(ChatI18nKeys.GreetingNight, {
-                name: firstName,
-              }),
-              nightNoName: t(ChatI18nKeys.GreetingNightNoName),
-            },
-            firstName || undefined,
-          )}
+          /* `ConversationInput` renders the description only under a
+             greeting, so `hide-greeting` removes both. */
+          welcomeText={
+            isGreetingHidden
+              ? undefined
+              : getTimeOfDayGreeting(
+                  new Date().getHours(),
+                  {
+                    morningWithName: t(ChatI18nKeys.GreetingMorning, {
+                      name: firstName,
+                    }),
+                    morningNoName: t(ChatI18nKeys.GreetingMorningNoName),
+                    afternoonWithName: t(ChatI18nKeys.GreetingAfternoon, {
+                      name: firstName,
+                    }),
+                    afternoonNoName: t(ChatI18nKeys.GreetingAfternoonNoName),
+                    eveningWithName: t(ChatI18nKeys.GreetingEvening, {
+                      name: firstName,
+                    }),
+                    eveningNoName: t(ChatI18nKeys.GreetingEveningNoName),
+                    nightWithName: t(ChatI18nKeys.GreetingNight, {
+                      name: firstName,
+                    }),
+                    nightNoName: t(ChatI18nKeys.GreetingNightNoName),
+                  },
+                  firstName || undefined,
+                )
+          }
           descriptionText={welcomeScreenDescription ?? undefined}
           belowWelcomeSlot={isStartersBelowGreeting ? startersBlock : undefined}
           placeholder={placeholder}

@@ -179,6 +179,11 @@ export enum OverlayFeature {
    */
   StartersBelowGreeting = 'starters-below-greeting',
   /**
+   * Hides the time-of-day greeting on the empty-chat screen, together with
+   * the welcome-screen description rendered under it.
+   */
+  HideGreeting = 'hide-greeting',
+  /**
    * Hides the application version label in the footer. The label is
    * diagnostic chrome an embedding host usually owns itself, and it is not
    * gated by the operator's `footer` capability flag.

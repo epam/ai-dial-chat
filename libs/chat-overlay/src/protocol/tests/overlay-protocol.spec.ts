@@ -165,10 +165,10 @@ describe('isOverlayMessageResponse', () => {
 });
 
 describe('OverlayFeature', () => {
-  it('has exactly 50 unique members', () => {
+  it('has exactly 51 unique members', () => {
     const values = Object.values(OverlayFeature);
-    expect(values).toHaveLength(50);
-    expect(new Set(values).size).toBe(50);
+    expect(values).toHaveLength(51);
+    expect(new Set(values).size).toBe(51);
   });
 
   it('includes the hide-keyboard-shortcuts feature key', () => {
@@ -203,6 +203,10 @@ describe('OverlayFeature', () => {
 
   it('includes the starters-below-greeting feature key', () => {
     expect(Object.values(OverlayFeature)).toContain('starters-below-greeting');
+  });
+
+  it('includes the hide-greeting feature key', () => {
+    expect(Object.values(OverlayFeature)).toContain('hide-greeting');
   });
 
   it('includes the hide-footer-version feature key', () => {

@@ -29,6 +29,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     autoFocus,
     onSend,
     belowWelcomeSlot,
+    welcomeText,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
@@ -37,6 +38,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     autoFocus?: boolean;
     onSend?: (message: string, attachments: never[]) => Promise<void>;
     belowWelcomeSlot?: ReactNode;
+    welcomeText?: string;
   }) => {
     capturedInputProps.onSend = onSend;
     return (
@@ -54,6 +56,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
         <output aria-label="send-disabled">{String(!!isSendDisabled)}</output>
         <output aria-label="input-class-name">{inputClassName ?? ''}</output>
         <output aria-label="auto-focus">{String(!!autoFocus)}</output>
+        <output aria-label="welcome-text">{welcomeText ?? 'undefined'}</output>
       </div>
     );
   },
@@ -264,6 +267,41 @@ describe('NewConversationComposer', () => {
     expect(input.contains(screen.getByRole('button', { name: 'Draft' }))).toBe(
       true,
     );
+  });
+
+  it('passes the greeting to the conversation input by default', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+
+    const welcomeText = await screen.findByLabelText('welcome-text');
+    expect(welcomeText.textContent).not.toBe('undefined');
+  });
+
+  it('omits the greeting when hide-greeting is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideGreeting,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+
+    const welcomeText = await screen.findByLabelText('welcome-text');
+    expect(welcomeText.textContent).toBe('undefined');
   });
 
   it('passes chatSettings through when both chat-settings and empty-chat-settings are enabled', async () => {

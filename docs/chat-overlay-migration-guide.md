@@ -775,6 +775,7 @@ hide-keyboard-shortcuts
 hide-navigation-menu
 show-all-starters
 starters-below-greeting
+hide-greeting
 hide-footer-version
 show-agent-description
 disable-input-history-navigation
@@ -826,6 +827,12 @@ screen, together with the starter intro text, from below the input to between
 the greeting and the input, so a user sees them before starting to type. It
 combines with `show-all-starters`, which still controls how the row lays the
 starters out.
+
+`hide-greeting` removes the time-of-day greeting ("Good morning, …") from the
+empty-chat screen. The operator's welcome-screen description is rendered only
+under that greeting, so it disappears too. Without the greeting the input keeps
+the wider active-chat width. Starters placed with `starters-below-greeting`
+then sit directly above the input.
 
 `hide-footer-version` removes the application version label from the footer
 (the `v0.45.0` text in its trailing corner). The label is diagnostic chrome
