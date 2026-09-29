@@ -1,7 +1,10 @@
 import { StringUtils } from '../../common/utils/string-utils';
 import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
-import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
+import {
+  COMPOUND_TOKEN_PREFIX,
+  SCHEDULER_SEGMENT,
+} from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
 /*
@@ -68,10 +71,18 @@ export const isUuid = (value: string): boolean => {
  * True when the folder path preceding a conversation's filename marks a
  * custom-application deployment (`applications/{bucket}/...`), the only
  * DIAL Core resource type whose id carries a `{name}__{version}` suffix.
+ * Scheduled runs place `.scheduler/{scheduleId}/` before the deployment path.
  */
 export const isApplicationDeploymentPath = (
   folderPath: string | undefined,
-): boolean => (folderPath ?? '').split('/')[0] === APPLICATIONS_PATH_SEGMENT;
+): boolean => {
+  const segments = (folderPath ?? '').split('/');
+  const deploymentSegments =
+    segments[0] === SCHEDULER_SEGMENT && segments[1]
+      ? segments.slice(2)
+      : segments;
+  return deploymentSegments[0] === APPLICATIONS_PATH_SEGMENT;
+};
 
 const getDeploymentNameParts = (
   filenameParts: string[],
