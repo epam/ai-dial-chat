@@ -18,7 +18,7 @@ folder sub-form's own state and delegates mutations through `folderActions`.
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.21 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.23 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -39,7 +39,7 @@ import '@epam/ai-dial-prompt-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.15.0-dev.21`
+- `@epam/ai-dial-ui-kit` `^0.15.0-dev.23`
 - `@epam/ai-dial-chat-shared` `*`
 
 Installed for you as dependencies: `@epam/ai-dial-builder-form`,
@@ -144,10 +144,10 @@ are structure and accessibility contracts rather than styling ones. Two
 elements therefore carry a stable public class, exported as
 `PROMPT_EDITOR_CLASS`.
 
-| Key           | Class                             | Element                                                      |
-| ------------- | --------------------------------- | ------------------------------------------------------------ |
-| `form`        | `dial-prompt-editor-form`         | The form column holding Name, Description and Instructions   |
-| `folderField` | `dial-prompt-editor-folder-field` | The folder picker row rendered by `PromptFolderField`        |
+| Key           | Class                             | Element                                                    |
+| ------------- | --------------------------------- | ---------------------------------------------------------- |
+| `form`        | `dial-prompt-editor-form`         | The form column holding Name, Description and Instructions |
+| `folderField` | `dial-prompt-editor-folder-field` | The folder picker row rendered by `PromptFolderField`      |
 
 The classes carry no declarations of their own: nothing in `styles.css` selects
 on them, so they change nothing until a host writes a rule. Renaming one, or

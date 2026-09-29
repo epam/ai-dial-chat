@@ -5,34 +5,40 @@ import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_STAGES_CLASS } from '../../../constants/public-class-names';
 import { CollapsedGroup } from '../CollapsedGroup';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 14, MD: 16 },
-  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
-    <span role="status" aria-label={ariaLabel} />
-  ),
-  EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
-  LinkButton: ({
-    label,
-    onClick,
-    className,
-    'aria-expanded': ariaExpanded,
-  }: {
-    label: ReactNode;
-    onClick?: () => void;
-    className?: string;
-    'aria-expanded'?: boolean;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={className}
-      aria-expanded={ariaExpanded}
-    >
-      {label}
-    </button>
-  ),
-}));
+/* Disclosures are the real kit `Accordion`, so their button, region and inert state are what a user gets. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { Accordion } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    Accordion,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    DIAL_ICON_SIZE: { SM: 14, MD: 16 },
+    Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+      <span role="status" aria-label={ariaLabel} />
+    ),
+    EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
+    LinkButton: ({
+      label,
+      onClick,
+      className,
+      'aria-expanded': ariaExpanded,
+    }: {
+      label: ReactNode;
+      onClick?: () => void;
+      className?: string;
+      'aria-expanded'?: boolean;
+    }) => (
+      <button
+        type="button"
+        onClick={onClick}
+        className={className}
+        aria-expanded={ariaExpanded}
+      >
+        {label}
+      </button>
+    ),
+  };
+});
 
 vi.mock('@epam/ai-dial-attachment-input', () => ({
   AttachmentCard: ({ attachment }: { attachment: { name: string } }) => (

@@ -392,6 +392,17 @@ describe('mapFileMetadataToDialFile', () => {
 });
 
 describe('fetchByTab', () => {
+  it('rejects the All tab without calling the files API', async () => {
+    const filesApi = makeFilesApi();
+
+    await expect(
+      fetchByTab(filesApi, DialFileManagerTabs.All, 'bucket', '', new Map()),
+    ).rejects.toThrow(Error);
+    expect(filesApi.listFiles).not.toHaveBeenCalled();
+    expect(filesApi.listSharedFiles).not.toHaveBeenCalled();
+    expect(filesApi.listPublicFiles).not.toHaveBeenCalled();
+  });
+
   it('dispatches to listPublicFiles for the Organization tab', async () => {
     const filesApi = makeFilesApi({
       listPublicFiles: vi.fn().mockResolvedValue({ items: [] }),

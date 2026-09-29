@@ -164,9 +164,13 @@ describe('CelebrationHost with the celebrations library', () => {
         </CelebrationHost>
       </MemoryRouter>,
     );
-    const gift = await screen.findByRole('button', {
-      name: 'newYear.giftLabel',
-    });
+    /* The New Year scene is a lazy chunk; its cold import can outlast the
+       default 1s findBy window when the whole suite runs in parallel. */
+    const gift = await screen.findByRole(
+      'button',
+      { name: 'newYear.giftLabel' },
+      { timeout: 5000 },
+    );
     await userEvent.click(gift);
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: 'newYear.toastTitle',

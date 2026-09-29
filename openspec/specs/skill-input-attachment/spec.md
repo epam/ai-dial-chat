@@ -262,11 +262,11 @@ When the input's text is empty and the user types `/`, a dropdown SHALL open abo
 
 While the dropdown is open with an empty query (the text area holds exactly the `/`), the config's `emptyQueryHint` — the app passes `skillSelector.emptyQueryHint` ("Type to filter") — SHALL render inside the text area immediately after the `/`, in the placeholder style: an `aria-hidden` overlay anchored at the first line's text start (the same offset the first line's indent uses, so it follows an inline-start slot when one is present), with an invisible mirror of the trigger prefix occupying exactly the prefix's rendered width ahead of the hint so no width measurement is needed. The hint SHALL disappear with the first query keystroke. The hint's appearance and disappearance SHALL NOT remount the text area: the overlay wrapper hosting the hint (the same wrapper that hosts the inline-start slot) is driven by the hint's configuration, not by the live menu/query state, so focus and the caret are preserved while typing — the caret stays where the user typed (after the `/` and any query characters), never reset to the text start.
 
-The dropdown SHALL stay open while the message continues to match a `/` followed by a whitespace-free, slash-free query. It SHALL close when the message stops matching (the `/` deleted, a space or second `/` typed), on Escape, and on outside click (a click back into the text area does not count as outside). If the user dismisses it with Escape or an outside click while the message still matches, it SHALL NOT reopen on subsequent keystrokes; it SHALL reopen only after the message stops matching and the user enters the trigger into the empty input again — by typing `/` or by pasting a trigger-shaped value (below).
+The dropdown SHALL stay open while the message continues to match a `/` followed by a whitespace-free, slash-free query. It SHALL close when the message stops matching (the `/` deleted, a space or second `/` typed), on Escape, and on outside click (a click back into the text area does not count as outside). Escape and outside click are not the same dismissal: Escape latches — if the user dismisses with Escape while the message still matches, the dropdown SHALL NOT reopen on subsequent keystrokes or caret moves; it SHALL reopen only after the message stops matching and the user enters the trigger into the empty input again (by typing `/` or by pasting a trigger-shaped value, below). An outside click does not latch — it closes the dropdown for the moment only, and the dropdown SHALL reopen with no need to retype the trigger as soon as the caret is back in the same still-matching `/query`: by editing it further (typing or deleting), by refocusing the text area (a click back in, or Tab), or by moving the caret into it with the keyboard (arrow keys, Home/End, Page Up/Down) while already focused. When the message holds more than one `/`-shaped run at once, the dropdown SHALL always belong to whichever one the caret is actually in — re-evaluated on every caret move, not remembered from whichever run last drove typing — and SHALL close when the caret leaves it for plain text or a different run, honoring that other run's own Escape latch if it has one.
 
 Pasting into the text area SHALL trigger the dropdown by the resulting value, not by the keystroke path: a paste made while the text area is empty whose result is exactly the trigger shape — the bare `/`, or `/` followed by a whitespace-free, slash-free query and nothing else — SHALL open the dropdown as if the same text had been typed: same query filter, same "Type to filter" empty-query hint for a bare `/`, same dismissal and selection rules. The paste SHALL insert its text as an ordinary paste; the trigger only opens the dropdown on top of the inserted text and SHALL NOT alter, trim, or consume it. Any paste whose result is not that exact shape — content containing whitespace after the query token (e.g. `/s sdf`), multiple lines, trailing text, or content not starting with `/` — SHALL be a regular paste that opens nothing. The paste trigger applies only when the text area was empty before the paste; pasting `/test` into an input that already holds text never opens the dropdown. A paste that brings the message into the trigger shape from a non-matching value re-enters the trigger for the dismissed-dropdown rule above: a dropdown dismissed earlier SHALL reopen when the user clears the input and pastes a fresh `/query`. This trigger lives in the generic `commandMenu` mechanism on `Input`, so it behaves identically on every input surface where the command menu is mounted — the new-conversation composer (main chat and AppsEditor preview) and the ongoing-conversation input.
 
-Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal. The Add-menu "Skills" item SHALL remain available unchanged alongside this entry point.
+Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal. The Add-menu "Skills" item SHALL remain available alongside this entry point; selecting a favorite row, activating Browse, or opening View details from the Add menu SHALL likewise consume a `/query`-shaped run touching the caret position the Add menu was opened from — e.g. text left over from a slash-dropdown session the user dismissed with an outside click without reopening it — so that text is never left behind to be sent as an ordinary message.
 
 #### Scenario: Typing "/" in an empty input
 
@@ -293,17 +293,42 @@ Selecting a row from the dropdown SHALL consume the slash text — the entire `/
 - **WHEN** the dropdown is open and the user deletes the `/`
 - **THEN** the dropdown closes
 
-#### Scenario: Dismissed until re-entered
+#### Scenario: Escape dismissal latches until re-entered
 
-- **WHEN** the user closes the open dropdown with Escape (or an outside click) while the message still reads `/my`, then types more characters
+- **WHEN** the user closes the open dropdown with Escape while the message still reads `/my`, then types more characters
 - **THEN** the dropdown stays closed
 - **AND WHEN** the user deletes the text back to empty and types `/` again
 - **THEN** the dropdown reopens
+
+#### Scenario: Outside click reopens without retyping the trigger
+
+- **WHEN** the user closes the open dropdown with an outside click while the message still reads `/my`
+- **THEN** the dropdown closes and `/my` stays in the input
+- **AND WHEN** the user, without editing the text, refocuses the text area — by clicking back into it, by Tab, or by moving the caret into `/my` with the keyboard
+- **THEN** the dropdown reopens, filtered by `my`
+
+#### Scenario: Editing a query the outside click closed keeps it in step
+
+- **WHEN** the dropdown closed on an outside click while the message read `/my`, and the text area is still focused
+- **THEN** typing another character, or deleting one, in `/my` reopens the dropdown filtered by the resulting query — with no need to refocus first
+
+#### Scenario: The caret decides which command word is open
+
+- **WHEN** the message holds two command-shaped runs at once, e.g. `/st some text /ready`, and the dropdown is open for `/st`
+- **AND** the caret moves — by click or by keyboard (arrow keys, Home/End, Page Up/Down) — into `/ready`
+- **THEN** the dropdown SHALL close for `/st` and reopen filtered by `ready`
+- **AND WHEN** the caret then moves into the plain text between the two runs
+- **THEN** the dropdown closes, with neither run's dropdown open
 
 #### Scenario: Selecting from the dropdown
 
 - **WHEN** the user picks a skill row in the slash dropdown (mouse or keyboard)
 - **THEN** the `/query` text is removed from the input, the dropdown closes, the skill becomes the input's selected skill rendered as `ChatSkill`, and focus is in the text area
+
+#### Scenario: Add-menu selection consumes a stray query left by an outside click
+
+- **WHEN** the text area reads `/qa` because an earlier dropdown session for it was dismissed with an outside click and never reopened, and the user opens the `+` menu and picks a favorite row (or Browse, or View details) under "Skills"
+- **THEN** the `/qa` text is removed from the input before the mention is inserted (or the browse/details action is applied), exactly as picking it from the slash dropdown itself would have
 
 #### Scenario: Space or second slash ends the session
 

@@ -1,12 +1,11 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
 import { mergeClasses, StageStatus } from '@epam/ai-dial-chat-shared';
+import { Accordion, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { FC } from 'react';
 import {
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  EllipsisTooltip,
-} from '@epam/ai-dial-ui-kit';
-import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
-import { FC, useState } from 'react';
+  STAGE_ACCORDION_CLASS_NAME,
+  STAGE_ACCORDION_HEADER_CLASS_NAME,
+} from '../../constants/stage-accordion';
 import type {
   StagesPanelLabels,
   StageTypography,
@@ -38,7 +37,6 @@ export const StageItem: FC<StageItemProps> = ({
   labels,
   nameOverride,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const {
     copyAriaLabel = 'Copy stage content',
     runningAriaLabel,
@@ -94,68 +92,46 @@ export const StageItem: FC<StageItemProps> = ({
           {durationLabel}
         </span>
       )}
-      {hasExpandableContent && (
-        <span className={mergeClasses('flex-none', styles.iconSecondary)}>
-          {isOpen ? (
-            <IconChevronDown
-              size={DIAL_ICON_SIZE.SM}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ) : (
-            <IconChevronRight
-              size={DIAL_ICON_SIZE.SM}
-              className="rtl:scale-x-[-1]"
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          )}
-        </span>
-      )}
     </>
   );
 
-  const rowClassName = mergeClasses(
-    'flex w-full items-center gap-2 px-2 py-1.5',
-    styles.row,
-  );
-
+  /* A stage with nothing to reveal is a plain row, not a disclosure. */
   if (!hasExpandableContent) {
-    return <div className={rowClassName}>{header}</div>;
-  }
-
-  return (
-    <div>
-      <div className={rowClassName}>
-        <button
-          type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
-          aria-expanded={isOpen}
-          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-start"
-        >
-          {header}
-        </button>
-      </div>
+    return (
       <div
         className={mergeClasses(
-          'grid overflow-hidden transition-[grid-template-rows] duration-[250ms] ease-in-out',
-          isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+          'flex w-full items-center gap-2 px-2 py-1.5',
+          styles.row,
         )}
       >
-        <div className="overflow-hidden">
-          <div className="mt-2 flex flex-col gap-3 py-1 ps-8">
-            {stage.content && (
-              <div className="max-h-[300px] overflow-y-auto">
-                <StageMarkdownContent
-                  content={stage.content}
-                  typography={typography}
-                  copyAriaLabel={copyAriaLabel}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        {header}
       </div>
-    </div>
+    );
+  }
+
+  /* The kit spacer above the content is 12px; `-mt-1` brings it to the 8px
+     the stage content has always sat below its row. */
+  return (
+    <Accordion
+      title={<span className="flex min-w-0 items-center gap-2">{header}</span>}
+      className={STAGE_ACCORDION_CLASS_NAME}
+      headerClassName={mergeClasses(
+        STAGE_ACCORDION_HEADER_CLASS_NAME,
+        styles.row,
+        styles.stageHeader,
+      )}
+      contentClassName={mergeClasses(
+        '-mt-1 flex flex-col gap-3 px-0 py-1 ps-8',
+        styles.stageRegion,
+      )}
+    >
+      <div className="max-h-[300px] overflow-y-auto">
+        <StageMarkdownContent
+          content={stage.content ?? ''}
+          typography={typography}
+          copyAriaLabel={copyAriaLabel}
+        />
+      </div>
+    </Accordion>
   );
 };
