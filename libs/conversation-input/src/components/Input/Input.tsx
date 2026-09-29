@@ -823,6 +823,8 @@ export const Input: FC<InputProps> = ({
                 onToolDismiss={handleToolDismiss}
                 canRemove={canRemoveTools}
                 removeLabel={toolsChipLabels?.removeLabel}
+                stateOnLabel={toolsChipLabels?.stateOnLabel}
+                stateOffLabel={toolsChipLabels?.stateOffLabel}
               />
             </div>
           )}

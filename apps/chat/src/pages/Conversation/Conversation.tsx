@@ -758,6 +758,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
           toolsChipLabels={{
             removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
+            stateOnLabel: t(ToolsI18nKeys.StateOn),
+            stateOffLabel: t(ToolsI18nKeys.StateOff),
           }}
           topContent={
             activeScheduledTaskStatus ===
