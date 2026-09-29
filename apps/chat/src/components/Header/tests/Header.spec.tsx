@@ -146,12 +146,24 @@ describe('Header', () => {
     ).toBeNull();
   });
 
-  it('does not render when the header feature is disabled', () => {
+  it('does not render when the header and show-header-logo features are disabled', () => {
     mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.Header,
+      (feature) =>
+        feature !== OverlayFeature.Header &&
+        feature !== OverlayFeature.ShowHeaderLogo,
     );
     renderHeader();
     expect(screen.queryByRole('banner')).toBeNull();
+  });
+
+  it('renders only the logo when show-header-logo is enabled without the header', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.ShowHeaderLogo,
+    );
+    renderHeader();
+    expect(screen.getByRole('banner')).toBeTruthy();
+    expect(screen.getByLabelText(ChatI18nKeys.Logo)).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('hides the conversations-panel-toggle button when the feature is disabled', () => {
