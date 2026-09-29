@@ -64,9 +64,10 @@ describe('FileManagerController', () => {
       isFileMetadataLoading: true,
       onGetInfo: true,
       clearMetadata: true,
+      sectionTab: true,
     } satisfies Record<ControllerKeys, true>;
 
-    expect(Object.keys(controllerKeys)).toHaveLength(52);
+    expect(Object.keys(controllerKeys)).toHaveLength(53);
   });
 });
 

@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.21`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.23`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.21
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.15 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.23
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.16 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -932,7 +932,9 @@ import { DialFileManagerShell } from '@epam/ai-dial-chat-shared/file-manager';
 
 ### FileManagerController
 
-Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` (or `UseDialFileManagerSectionsResult`) value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+
+The optional `sectionTab` is the source tab of the browsed folder when the host shows the combined All tab. The shell gates its per-tab behaviour — the upload-archive toolbar entry, the root empty state — on `sectionTab ?? activeTab`, while `activeTab` stays the tab-strip value and the `treeHeaderByTab` key.
 
 ```ts
 import type { FileManagerController } from '@epam/ai-dial-chat-shared';
@@ -940,7 +942,7 @@ import type { FileManagerController } from '@epam/ai-dial-chat-shared';
 
 ### DialFileManagerShellLabels
 
-Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n.
+Pre-translated strings the shell renders as-is. The shell never calls `useTranslation` — every host passes these via its own i18n. `treeHeaderByTab` and `emptyStateByTab` are keyed by every `DialFileManagerTabs` member, `all` included. The optional `searchPlaceholderByTab` sets the search field placeholder for the browsed folder's source tab (`sectionTab ?? activeTab`); a tab without an entry keeps the file manager's default.
 
 ```ts
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';

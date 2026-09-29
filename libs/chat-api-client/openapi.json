@@ -6885,8 +6885,8 @@
             "nullable": true
           },
           "fileManagerTabs": {
-            "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
-            "example": ["my_files", "shared", "organization"],
+            "description": "Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs.",
+            "example": ["all", "my_files", "shared", "organization"],
             "type": "array",
             "items": {
               "type": "string"

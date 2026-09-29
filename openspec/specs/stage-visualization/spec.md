@@ -96,7 +96,7 @@ A completion check MUST be driven only by the explicit `StageStatus.Completed` v
 
 ### Requirement: `StageItem` collapses/expands its content body
 
-Each `StageItem` SHALL render a header row (icon + name). When `stage.content` is present, or `stage.attachments` contains at least one entry, the item SHALL be a button that toggles an animated content body (CSS grid-rows transition). When both `stage.content` is absent/empty and `stage.attachments` is absent/empty, the item is a static row with no toggle.
+Each `StageItem` SHALL render a header row (icon + name). When `stage.content` is present, or `stage.attachments` contains at least one entry, the item SHALL render as the kit's `Accordion` component, whose header toggles the visibility of its content body. When both `stage.content` is absent/empty and `stage.attachments` is absent/empty, the item is a static row with no toggle.
 
 #### Scenario: Stage without content renders a plain row
 - **WHEN** `stage.content` is undefined or empty and `stage.attachments` is undefined or empty

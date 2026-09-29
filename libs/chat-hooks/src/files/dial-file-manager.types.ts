@@ -69,6 +69,8 @@ export enum FileManagerNotificationReason {
   UploadArchivePartiallyFailed = 'uploadArchivePartiallyFailed',
   /** `onUploadArchive`'s `uploadArchive` request itself rejected. */
   UploadArchiveRequestFailed = 'uploadArchiveRequestFailed',
+  /** A copy/move targeted a destination in a different All-view section from its source items; no request was made. */
+  CrossSectionTransferUnsupported = 'crossSectionTransferUnsupported',
 }
 
 /**
@@ -182,6 +184,10 @@ export interface UseDialFileManagerOptions {
   rootLabel?: string;
   /** Active tab — drives listing source and per-tab options. Defaults to MyFiles. */
   activeTab?: DialFileManagerTabs;
+  /** When false, the listing issues no `DialFilesApi` call and reports `isLoading: false`. Defaults to `true`. */
+  isActive?: boolean;
+  /** Changing this value resets cache and navigation exactly like an `activeTab` change. Defaults to `undefined`. */
+  sessionKey?: string;
   /** Called when a file-manager action should surface a toast notification. */
   onNotification?: (notification: FileManagerNotification) => void;
   /** Called when a mutation succeeds, instead of invoking an application notification service directly. */
@@ -240,7 +246,7 @@ export interface UseDialFileManagerResult {
   onSearchFiles: (folder: string, query: string) => void;
   /** Search: true while a search request is in flight. */
   isSearching: boolean;
-  /** Search: flat list of matching files, or null when search is not active. */
+  /** Search: flat, unfiltered recursive listing of the current folder, or null when search is not active. */
   searchResults: DialFile[] | null;
   /** Search: clears results and exits search mode. */
   clearSearchResults: () => void;

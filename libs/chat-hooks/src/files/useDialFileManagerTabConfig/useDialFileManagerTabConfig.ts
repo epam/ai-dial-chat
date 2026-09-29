@@ -4,6 +4,7 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import type { FilterChipItem } from '@epam/ai-dial-ui-kit';
 import { useCallback, useEffect, useMemo } from 'react';
+import { DIAL_FILE_MANAGER_SECTION_TABS } from '../dial-file-manager.model';
 
 /** Values returned by `useDialFileManagerTabConfig`. */
 export interface UseDialFileManagerTabConfigResult {
@@ -16,16 +17,21 @@ export interface UseDialFileManagerTabConfigResult {
  * useEffect (with its dependency array and priority logic) in each host.
  */
 const TAB_PRIORITY_ORDER = [
+  DialFileManagerTabs.All,
   DialFileManagerTabs.MyFiles,
   DialFileManagerTabs.Shared,
   DialFileManagerTabs.Organization,
 ];
+
+/* All combines the source tabs, so with fewer than two of them it would only duplicate one. */
+const MIN_SOURCE_TABS_FOR_ALL = 2;
 
 /**
  * Filters the file-manager's tab list down to the host's configured set and
  * resets `activeTab` to the highest-priority still-enabled tab when the
  * current one becomes excluded. A `fileManagerTabs` of `undefined` means no
  * restriction — every tab in `allTabs` stays enabled and no reset ever fires.
+ * The All tab is kept only while at least two source tabs are enabled.
  */
 export const useDialFileManagerTabConfig = (
   activeTab: DialFileManagerTabs,
@@ -34,8 +40,16 @@ export const useDialFileManagerTabConfig = (
   fileManagerTabs: string[] | undefined,
 ): UseDialFileManagerTabConfigResult => {
   const isTabEnabled = useCallback(
-    (tabId: string): boolean =>
-      fileManagerTabs == null || fileManagerTabs.includes(tabId),
+    (tabId: string): boolean => {
+      const isConfigured = (id: string): boolean =>
+        fileManagerTabs == null || fileManagerTabs.includes(id);
+      if (!isConfigured(tabId)) return false;
+      if (tabId !== DialFileManagerTabs.All) return true;
+      return (
+        DIAL_FILE_MANAGER_SECTION_TABS.filter((tab) => isConfigured(tab))
+          .length >= MIN_SOURCE_TABS_FOR_ALL
+      );
+    },
     [fileManagerTabs],
   );
 

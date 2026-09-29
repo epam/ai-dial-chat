@@ -160,6 +160,11 @@ export const buildFileManagerNotificationOptions = (
         variant,
         message: t(DialFileManagerI18nKeys.UploadArchiveError),
       };
+    case FileManagerNotificationReason.CrossSectionTransferUnsupported:
+      return {
+        variant,
+        message: t(DialFileManagerI18nKeys.CrossSectionTransferUnsupported),
+      };
     default:
       return { variant, message: notification.message ?? '' };
   }

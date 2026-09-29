@@ -180,6 +180,14 @@ export const fetchByTab = (
   folderPath: string,
   sharedRootMeta: Map<string, SharedRootMeta>,
 ): Promise<{ items: ListFilesItemDto[]; permissions?: string[] }> => {
+  // All is a composed view with no listing source of its own.
+  if (tab === DialFileManagerTabs.All) {
+    return Promise.reject(
+      new Error(
+        'fetchByTab cannot list the All tab; list each section instead',
+      ),
+    );
+  }
   if (tab === DialFileManagerTabs.Shared) {
     if (folderPath === '') {
       return filesApi

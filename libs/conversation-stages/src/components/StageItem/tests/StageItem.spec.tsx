@@ -4,14 +4,20 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { StageItem } from '../StageItem';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 14, MD: 16 },
-  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
-    <span role="status" aria-label={ariaLabel} />
-  ),
-  EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
-}));
+/* Disclosures are the real kit `Accordion`, so their button, region and inert state are what a user gets. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { Accordion } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    Accordion,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    DIAL_ICON_SIZE: { SM: 14, MD: 16 },
+    Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+      <span role="status" aria-label={ariaLabel} />
+    ),
+    EllipsisTooltip: ({ text }: { text: string }) => <>{text}</>,
+  };
+});
 
 vi.mock('@epam/ai-dial-attachment-input', () => ({
   AttachmentCard: ({
@@ -136,7 +142,8 @@ describe('StageItem — optional-field rendering', () => {
 });
 
 describe('StageItem — attachment rendering', () => {
-  it('renders a tile for each attachment, in order', () => {
+  it('renders a tile for each attachment, in order', async () => {
+    const user = userEvent.setup();
     render(
       <StageItem
         stage={{
@@ -149,6 +156,9 @@ describe('StageItem — attachment rendering', () => {
         isLive={false}
         typography={{}}
       />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
     );
     const tiles = screen.getAllByRole('button', { name: /First|Second/ });
     expect(tiles.map((el) => el.textContent)).toEqual(['First', 'Second']);
@@ -168,6 +178,9 @@ describe('StageItem — attachment rendering', () => {
         onAttachmentClick={onAttachmentClick}
       />,
     );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
     await user.click(screen.getByRole('button', { name: 'result.csv' }));
     expect(onAttachmentClick).toHaveBeenCalledOnce();
     expect(onAttachmentClick).toHaveBeenCalledWith(
@@ -178,7 +191,8 @@ describe('StageItem — attachment rendering', () => {
     );
   });
 
-  it('renders a tile for a reference-only attachment (no inline data)', () => {
+  it('renders a tile for a reference-only attachment (no inline data)', async () => {
+    const user = userEvent.setup();
     render(
       <StageItem
         stage={{
@@ -191,10 +205,14 @@ describe('StageItem — attachment rendering', () => {
         typography={{}}
       />,
     );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
     expect(screen.getByRole('button', { name: 'result.csv' })).toBeTruthy();
   });
 
-  it('renders the tile even when no onAttachmentClick handler is supplied', () => {
+  it('renders the tile even when no onAttachmentClick handler is supplied', async () => {
+    const user = userEvent.setup();
     render(
       <StageItem
         stage={{
@@ -204,6 +222,9 @@ describe('StageItem — attachment rendering', () => {
         isLive={false}
         typography={{}}
       />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
     );
     expect(screen.getByText('result.csv')).toBeTruthy();
   });

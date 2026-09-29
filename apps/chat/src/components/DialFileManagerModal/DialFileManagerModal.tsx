@@ -31,6 +31,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
 
@@ -117,10 +118,10 @@ const DialFileManagerModal: FC<Props> = ({
 
   const tabLabels = useMemo(
     () => ({
+      [DialFileManagerTabs.All]: t(DialFileManagerI18nKeys.TabAll),
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
-      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -293,6 +294,7 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   const uploadQueueLabels = useUploadQueueLabels();
+  const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
   const renameValidationMessages = useMemo(
     () => ({
@@ -331,12 +333,15 @@ const DialFileManagerModal: FC<Props> = ({
     [t],
   );
 
-  const emptyStateByTab = useMemo(
-    () => ({
-      [DialFileManagerTabs.MyFiles]: {
-        title: t(DialFileManagerI18nKeys.MyFilesEmptyStateTitle),
-        description: t(DialFileManagerI18nKeys.MyFilesEmptyStateDescription),
-      },
+  const emptyStateByTab = useMemo(() => {
+    const myFilesEmptyState = {
+      title: t(DialFileManagerI18nKeys.MyFilesEmptyStateTitle),
+      description: t(DialFileManagerI18nKeys.MyFilesEmptyStateDescription),
+    };
+    return {
+      // Never shown: the attach picker does not offer the All tab.
+      [DialFileManagerTabs.All]: myFilesEmptyState,
+      [DialFileManagerTabs.MyFiles]: myFilesEmptyState,
       [DialFileManagerTabs.Shared]: {
         title: t(DialFileManagerI18nKeys.SharedEmptyStateTitle),
         description: t(DialFileManagerI18nKeys.SharedEmptyStateDescription),
@@ -347,26 +352,21 @@ const DialFileManagerModal: FC<Props> = ({
           DialFileManagerI18nKeys.OrganizationEmptyStateDescription,
         ),
       },
-      [DialFileManagerTabs.All]: {
-        title: emptyTitle,
-        description: emptyDescription,
-      },
       [DialFileManagerTabs.Review]: {
         title: emptyTitle,
         description: emptyDescription,
       },
-    }),
-    [t, emptyTitle, emptyDescription],
-  );
+    };
+  }, [t, emptyTitle, emptyDescription]);
 
   const treeHeaderByTab = useMemo(
     () => ({
+      [DialFileManagerTabs.All]: t(DialFileManagerI18nKeys.MyFilesTreeHeader),
       [DialFileManagerTabs.MyFiles]: t(
         DialFileManagerI18nKeys.MyFilesTreeHeader,
       ),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
-      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -431,6 +431,7 @@ const DialFileManagerModal: FC<Props> = ({
       deleteConfirmLabel,
       deleteCancelLabel,
       ...uploadQueueLabels,
+      searchPlaceholderByTab,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
@@ -476,6 +477,7 @@ const DialFileManagerModal: FC<Props> = ({
       deleteConfirmLabel,
       deleteCancelLabel,
       uploadQueueLabels,
+      searchPlaceholderByTab,
       emptyStateByTab,
       treeHeaderByTab,
       renameValidationMessages,
