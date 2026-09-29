@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import {
   extractDialErrorMessage,
@@ -15,6 +16,7 @@ import {
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { resolveLocalizedValue } from '../../common/utils/localized-value';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import type {
   DeploymentLimitsResponseDto,
@@ -23,6 +25,7 @@ import type {
 import type { DeploymentConfigurationDto } from '../dto/deployment-configuration.dto';
 import type { DeploymentDetailsDto } from '../dto/deployment-details.dto';
 import { DeploymentItemType } from '../dto/deployment-item.dto';
+import type { DeploymentType } from '../dto/deployment-type';
 import {
   getNumber,
   isRecord,
@@ -51,6 +54,7 @@ export class DeploymentsDetailsService {
   constructor(
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
   ) {}
 
   /**
@@ -531,11 +535,39 @@ export class DeploymentsDetailsService {
     }
   }
 
-  async getUserLimits(accessToken: string): Promise<UserLimitStatsResponseDto> {
+  /*
+   * The request's deployment kinds, or the configured default when it names
+   * none, as `getUserLimits`/`getUserUsage` query params. DIAL Core reads the
+   * parameter once and splits it on commas (`LimitController`'s
+   * `getParam("deploymentTypes").split(",")`), while the SDK serializes an
+   * array as repeated keys — of which Core would read only the first kind. So
+   * the kinds are sent pre-joined as one value, which the SDK's array typing
+   * cannot express without the cast.
+   */
+  private buildUserStatsParams(deploymentTypes: DeploymentType[] | undefined) {
+    const kinds = deploymentTypes?.length
+      ? deploymentTypes
+      : this.configService.get('USER_USAGE_DEPLOYMENT_TYPES', { infer: true });
+    if (!kinds?.length) return undefined;
+
+    return {
+      query: {
+        deploymentTypes: [...new Set(kinds)].join(',') as unknown as (
+          'model' | 'application'
+        )[],
+      },
+    };
+  }
+
+  async getUserLimits(
+    accessToken: string,
+    deploymentTypes?: DeploymentType[],
+  ): Promise<UserLimitStatsResponseDto> {
     this.logger.debug('Fetching user limits from DIAL Core');
     try {
       const result = await this.dialClient.client.getUserLimits({
         headers: getBearerAuthHeaders(accessToken),
+        params: this.buildUserStatsParams(deploymentTypes),
       });
       if (result.error) {
         this.logger.debug(
@@ -570,11 +602,15 @@ export class DeploymentsDetailsService {
     }
   }
 
-  async getUserUsage(accessToken: string): Promise<UserLimitStatsResponseDto> {
+  async getUserUsage(
+    accessToken: string,
+    deploymentTypes?: DeploymentType[],
+  ): Promise<UserLimitStatsResponseDto> {
     this.logger.debug('Fetching user usage from DIAL Core');
     try {
       const result = await this.dialClient.client.getUserUsage({
         headers: getBearerAuthHeaders(accessToken),
+        params: this.buildUserStatsParams(deploymentTypes),
       });
       if (result.error) {
         this.logger.debug(

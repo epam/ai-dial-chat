@@ -252,18 +252,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'RESPONSES_API_ENABLED',
   },
   {
-    key: 'features.skillUsageEnabled',
-    type: 'feature',
-    valueType: 'boolean',
-    visibility: 'client',
-    defaultValue: false,
-    critical: false,
-    description:
-      'Client-visible kill switch for all skill-usage UI in the chat app: the catalog skill "Use in chat" primary action and the conversation input\'s Skills menu (favorites panel, browse modal, selected-skill chip). Exposed to the frontend client-config endpoint (visibility: client) because it gates UI; every entry point is hidden while false. Defaults to false — the backend contract for sending skills with completions is not designed yet, so the flag ships dark. Role-based rollout (SKILL_USAGE_ENABLED_ROLES) is not implemented — out of scope.',
-    owner: 'chat-team',
-    envVar: 'SKILL_USAGE_ENABLED',
-  },
-  {
     key: 'ui.activeEventId',
     type: 'config',
     valueType: 'string',
@@ -316,10 +304,10 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     type: 'config',
     valueType: 'json',
     visibility: 'client',
-    defaultValue: ['my_files', 'shared', 'organization'],
+    defaultValue: ['all', 'my_files', 'shared', 'organization'],
     critical: false,
     description:
-      'Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs when FILE_MANAGER_AVAILABLE_TABS is unset or resolves to no valid ids.',
+      'Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs when FILE_MANAGER_AVAILABLE_TABS is unset or resolves to no valid ids.',
     owner: 'chat-team',
     envVar: 'FILE_MANAGER_AVAILABLE_TABS',
   },

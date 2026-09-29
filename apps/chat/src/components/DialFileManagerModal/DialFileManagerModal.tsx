@@ -12,12 +12,12 @@ import {
   type FileManagerAttachModalLabels,
 } from '@epam/ai-dial-chat-shared';
 import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
-import type {
-  DialFile,
-  FileManagerGridRow,
-} from '@epam/ai-dial-react-file-manager';
 import {
   DialFileManagerTabs,
+  type DialFile,
+  type FileManagerGridRow,
+} from '@epam/ai-dial-react-file-manager';
+import {
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
@@ -31,6 +31,8 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
+import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
 
 interface Props {
@@ -58,8 +60,6 @@ interface Props {
   deleteConfirmBody: (names: string[]) => ReactNode;
   deleteConfirmLabel: string;
   deleteCancelLabel: string;
-  uploadProgressTitle: string;
-  cancelLabel: string;
   allowedTypes?: string[];
   maxSelectableFileSize?: number;
   maximumAttachmentsAmount?: number;
@@ -101,8 +101,6 @@ const DialFileManagerModal: FC<Props> = ({
   deleteConfirmBody,
   deleteConfirmLabel,
   deleteCancelLabel,
-  uploadProgressTitle,
-  cancelLabel,
   allowedTypes,
   maxSelectableFileSize,
   maximumAttachmentsAmount,
@@ -120,6 +118,7 @@ const DialFileManagerModal: FC<Props> = ({
 
   const tabLabels = useMemo(
     () => ({
+      [DialFileManagerTabs.All]: t(DialFileManagerI18nKeys.TabAll),
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
@@ -294,11 +293,8 @@ const DialFileManagerModal: FC<Props> = ({
     [bucket],
   );
 
-  const getUploadProgressText = useCallback(
-    (done: number, total: number) =>
-      t(DialFileManagerI18nKeys.UploadProgressSummary, { done, total }),
-    [t],
-  );
+  const uploadQueueLabels = useUploadQueueLabels();
+  const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
   const renameValidationMessages = useMemo(
     () => ({
@@ -337,12 +333,15 @@ const DialFileManagerModal: FC<Props> = ({
     [t],
   );
 
-  const emptyStateByTab = useMemo(
-    () => ({
-      [DialFileManagerTabs.MyFiles]: {
-        title: t(DialFileManagerI18nKeys.MyFilesEmptyStateTitle),
-        description: t(DialFileManagerI18nKeys.MyFilesEmptyStateDescription),
-      },
+  const emptyStateByTab = useMemo(() => {
+    const myFilesEmptyState = {
+      title: t(DialFileManagerI18nKeys.MyFilesEmptyStateTitle),
+      description: t(DialFileManagerI18nKeys.MyFilesEmptyStateDescription),
+    };
+    return {
+      // Never shown: the attach picker does not offer the All tab.
+      [DialFileManagerTabs.All]: myFilesEmptyState,
+      [DialFileManagerTabs.MyFiles]: myFilesEmptyState,
       [DialFileManagerTabs.Shared]: {
         title: t(DialFileManagerI18nKeys.SharedEmptyStateTitle),
         description: t(DialFileManagerI18nKeys.SharedEmptyStateDescription),
@@ -357,12 +356,12 @@ const DialFileManagerModal: FC<Props> = ({
         title: emptyTitle,
         description: emptyDescription,
       },
-    }),
-    [t, emptyTitle, emptyDescription],
-  );
+    };
+  }, [t, emptyTitle, emptyDescription]);
 
   const treeHeaderByTab = useMemo(
     () => ({
+      [DialFileManagerTabs.All]: t(DialFileManagerI18nKeys.MyFilesTreeHeader),
       [DialFileManagerTabs.MyFiles]: t(
         DialFileManagerI18nKeys.MyFilesTreeHeader,
       ),
@@ -431,9 +430,8 @@ const DialFileManagerModal: FC<Props> = ({
       deleteConfirmBody,
       deleteConfirmLabel,
       deleteCancelLabel,
-      uploadProgressTitle,
-      cancelLabel,
-      getUploadProgressText,
+      ...uploadQueueLabels,
+      searchPlaceholderByTab,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
@@ -478,9 +476,8 @@ const DialFileManagerModal: FC<Props> = ({
       deleteConfirmBody,
       deleteConfirmLabel,
       deleteCancelLabel,
-      uploadProgressTitle,
-      cancelLabel,
-      getUploadProgressText,
+      uploadQueueLabels,
+      searchPlaceholderByTab,
       emptyStateByTab,
       treeHeaderByTab,
       renameValidationMessages,

@@ -58,7 +58,7 @@ export const Catalog: FC<CatalogProps> = ({
   items,
   tabs: controlledTabs,
   topicOptions: controlledTopicOptions,
-  favorites,
+  favorites: favoritesProp,
   titles,
   browseHeaderRenderer,
   onToggleFavorite,
@@ -95,6 +95,7 @@ export const Catalog: FC<CatalogProps> = ({
   onLoadContentFile,
   onLoadContentFilePreview,
   renderContentFilePreview,
+  renderContentFileTree,
   onDelete,
   onUnshare,
   isUnshareVisible,
@@ -210,6 +211,11 @@ export const Catalog: FC<CatalogProps> = ({
   const filteredItems = useMemo(
     () => items.filter((item) => !item.isHidden),
     [items],
+  );
+
+  const favorites = useMemo(
+    () => favoritesProp.filter((item) => !item.isHidden),
+    [favoritesProp],
   );
 
   const allFilterValues = useMemo(
@@ -756,6 +762,7 @@ export const Catalog: FC<CatalogProps> = ({
           onLoadContentFile={onLoadContentFile}
           onLoadContentFilePreview={onLoadContentFilePreview}
           renderContentFilePreview={renderContentFilePreview}
+          renderContentFileTree={renderContentFileTree}
           onDelete={onDelete}
           onUnshare={onUnshare}
           isUnshareVisible={isUnshareVisible}

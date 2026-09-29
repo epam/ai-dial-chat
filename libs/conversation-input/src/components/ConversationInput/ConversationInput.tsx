@@ -10,6 +10,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   placeholder = 'Type a prompt or use "/" to select one',
   welcomeText,
   descriptionText,
+  belowWelcomeSlot,
   styles: stylesProp,
   className,
   inputClassName,
@@ -53,6 +54,13 @@ export const ConversationInput: FC<ConversationInputProps> = ({
               {descriptionText}
             </p>
           )}
+        </div>
+      )}
+      {belowWelcomeSlot != null && (
+        /* `empty:hidden` drops the flex gap when the slot renders nothing,
+           e.g. a starters component with no starters. */
+        <div className="flex w-full max-w-[700px] flex-col items-center empty:hidden">
+          {belowWelcomeSlot}
         </div>
       )}
       <div

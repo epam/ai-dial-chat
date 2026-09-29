@@ -2,9 +2,7 @@
 
 ## Purpose
 Specifies `apps/chat/src/pages/SkillEditor/SkillEditor.tsx`'s create-mode behavior: routing, bucket resolution, name normalization, client-side path safety, `SKILL.md` manifest construction, atomic create via the BFF's `createSkill`, its HTTP error mapping, required fields, submission state, responsive layout, and i18n coverage.
-
 ## Requirements
-
 ### Requirement: `/skill-editor` route in create mode
 The system SHALL register `ROUTES.SkillEditor = '/skill-editor'` and a lazy-loaded `apps/chat/src/pages/SkillEditor/SkillEditor.tsx` page, following the same `React.lazy` + `Suspense`/`RouteFallback` pattern used for `ROUTES.PromptEditor` in `apps/chat/src/app/app.tsx`. The route SHALL read an optional `returnUrl` query param; when absent or when it fails same-origin/local-path validation, the page SHALL default to `ROUTES.Catalog`.
 
@@ -169,6 +167,8 @@ The `SkillEditor` page SHALL interpret `createSkill` failures as follows and ren
 ### Requirement: Name, Description, and Instructions are all required
 Although DIAL Core's own `SKILL.md` validation (`SkillHandler.validate`) only requires non-empty `name`/`description`, the product's own create/edit form SHALL additionally require a non-empty `instructions` value, matching the design's required-field marker on all three fields. The `SkillEditor` page SHALL require non-empty `name`, `description`, and `instructions` values before allowing submission in both create and edit mode.
 
+Each value SHALL also be within its limit once trimmed — `name` 256, `description` 2000, `instructions` 50000 (`SKILL_TEXT_FIELD_MAX_LENGTHS` / `getSkillFieldLengthViolations` in `@epam/ai-dial-chat-hooks`, from the shared `entity-field-limits`). `useSkillEditorSubmit` SHALL show the host-supplied `messages.tooLong(limit)` (the app passes `editor.fieldTooLong`) under an over-limit field as soon as the value changes, clear it once the value is back within the limit, and block submission while any field is over its limit, in both create and edit mode. A required-field message takes precedence over a length message on submit.
+
 A non-empty `instructions` value SHALL additionally satisfy the "Instructions must not open with a YAML front-matter block" requirement. When both the required-field check and the front-matter check would fail (an empty value cannot open with a fence, so this cannot occur in practice), the required-field message takes precedence; the Instructions field SHALL render at most one message at a time.
 
 #### Scenario: Empty Instructions blocks submission
@@ -178,6 +178,10 @@ A non-empty `instructions` value SHALL additionally satisfy the "Instructions mu
 #### Scenario: Name and Description remain required
 - **WHEN** a user submits the form with an empty Name or Description
 - **THEN** the page shows the corresponding required-field error and does not call `createSkill`/`updateSkill`
+
+#### Scenario: Over-long fields are flagged while typing and block submission
+- **WHEN** a user types a 257-character Name (or a Description over 2000, or Instructions over 50000 characters)
+- **THEN** "Use 256 characters or fewer." (with the matching limit) appears under that field immediately, and submitting does not call `createSkill`/`updateSkill`
 
 #### Scenario: Only one Instructions message renders at a time
 - **WHEN** the Instructions field has a validation problem
@@ -302,3 +306,4 @@ this check.
 
 - **WHEN** any skill is successfully created through the editor
 - **THEN** the `skillManifest` sent to `createSkill` contains exactly one `---`-delimited front-matter block, at the very start of the file
+

@@ -22,66 +22,72 @@ vi.mock('../Filter.module.scss', () => ({
   },
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 16 },
-  MenuItemMark: { None: 'none', Check: 'check', Checkbox: 'checkbox' },
-  /* Mirrors the kit row's contract: the row is the button that carries the
+/* The trigger is the real kit `Button`, so its role, name and ARIA state are what a user gets. */
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const { Button } =
+    await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    Button,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    DIAL_ICON_SIZE: { SM: 16 },
+    MenuItemMark: { None: 'none', Check: 'check', Checkbox: 'checkbox' },
+    /* Mirrors the kit row's contract: the row is the button that carries the
      role and aria-checked, and the checkbox box is decorative. */
-  MenuItem: ({
-    label,
-    labelClassName,
-    selected,
-    ...rest
-  }: {
-    label?: React.ReactNode;
-    labelClassName?: string;
-    mark?: string;
-    selected?: boolean;
-  } & React.ButtonHTMLAttributes<HTMLButtonElement> & {
-      ref?: React.Ref<HTMLButtonElement>;
+    MenuItem: ({
+      label,
+      labelClassName,
+      selected,
+      ...rest
+    }: {
+      label?: React.ReactNode;
+      labelClassName?: string;
+      mark?: string;
+      selected?: boolean;
+    } & React.ButtonHTMLAttributes<HTMLButtonElement> & {
+        ref?: React.Ref<HTMLButtonElement>;
+      }) => (
+      <button type="button" {...rest}>
+        <span aria-hidden="true" data-selected={selected} />
+        <span className={labelClassName}>{label}</span>
+      </button>
+    ),
+    Dropdown: ({
+      children,
+      renderOverlay,
+    }: {
+      children: React.ReactNode;
+      renderOverlay?: () => React.ReactNode;
+      matchReferenceWidth?: boolean;
     }) => (
-    <button type="button" {...rest}>
-      <span aria-hidden="true" data-selected={selected} />
-      <span className={labelClassName}>{label}</span>
-    </button>
-  ),
-  Dropdown: ({
-    children,
-    renderOverlay,
-  }: {
-    children: React.ReactNode;
-    renderOverlay?: () => React.ReactNode;
-    matchReferenceWidth?: boolean;
-  }) => (
-    <div>
-      {children}
-      {renderOverlay?.()}
-    </div>
-  ),
-  PrimaryButton: ({
-    label,
-    className,
-    onClick,
-  }: {
-    label: string;
-    className?: string;
-    onClick?: () => void;
-  }) => (
-    <button className={className} onClick={onClick}>
-      {label}
-    </button>
-  ),
-  GhostButton: ({
-    label,
-    className,
-  }: {
-    label: string;
-    className?: string;
-    iconBefore?: React.ReactNode;
-    iconAfter?: React.ReactNode;
-  }) => <button className={className}>{label}</button>,
-}));
+      <div>
+        {children}
+        {renderOverlay?.()}
+      </div>
+    ),
+    PrimaryButton: ({
+      label,
+      className,
+      onClick,
+    }: {
+      label: string;
+      className?: string;
+      onClick?: () => void;
+    }) => (
+      <button className={className} onClick={onClick}>
+        {label}
+      </button>
+    ),
+    GhostButton: ({
+      label,
+      className,
+    }: {
+      label: string;
+      className?: string;
+      iconBefore?: React.ReactNode;
+      iconAfter?: React.ReactNode;
+    }) => <button className={className}>{label}</button>,
+  };
+});
 
 vi.mock('@tabler/icons-react', () => ({
   IconChevronDown: () => null,

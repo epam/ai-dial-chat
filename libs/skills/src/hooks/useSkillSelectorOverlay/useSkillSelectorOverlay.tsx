@@ -25,9 +25,23 @@ import type {
   UseSkillSelectorOverlayOptions,
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
+import { SkillUnresolvedReason } from '../../types/skill-unresolved-reason';
 import { matchSkillMentions } from '../../utils/skill-mention-matching';
-import { getSkillFallbackName } from '../../utils/skill-url';
+import { findSlashQueryAtCaret } from '../../utils/skill-mention-tracking';
+import { getSkillFallbackName, getSkillUrlBucket } from '../../utils/skill-url';
 import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
+
+/** `Deleted` when the url's own bucket, `NotShared` otherwise. */
+const resolveUnresolvedReason = (
+  url: string,
+  viewerBucket: string,
+): SkillUnresolvedReason =>
+  getSkillUrlBucket(url) === viewerBucket
+    ? SkillUnresolvedReason.Deleted
+    : SkillUnresolvedReason.NotShared;
+
+/* Shared with the slash command menu's own `CommandMenuConfig.triggerPrefix` below. */
+const SKILL_TRIGGER_PREFIX = '/';
 
 /**
  * Owns the Skills Add-menu flow: the favorites overlay, the "Use skill"
@@ -38,12 +52,12 @@ import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
  * the modal/panel components.
  */
 export const useSkillSelectorOverlay = ({
-  isEnabled,
   isSkillsSupported,
   skills,
   sharedWithMe,
   publicSkills,
   favoriteIds,
+  viewerBucket,
   onToggleFavorite,
   labels,
   historyChipLabelClassName,
@@ -56,16 +70,10 @@ export const useSkillSelectorOverlay = ({
     backLabel = 'Back',
     catalogModalTitleLabel = 'Use skill',
     emptyQueryHintLabel = 'Type to filter',
+    deletedTooltipLabel,
+    notSharedTooltipLabel,
     panelLabels,
   } = labels ?? {};
-
-  /*
-   * The entry-point gate: both the feature flag and the deployment's own
-   * support must hold. Tracked mentions, their removal, and the details panel
-   * survive an unsupported deployment — only the ways in are hidden — so
-   * unlike `isEnabled` this never blanks the whole result.
-   */
-  const isSkillsEnabled = isEnabled && isSkillsSupported;
 
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [detailsSkillId, setDetailsSkillId] = useState<string | null>(null);
@@ -187,6 +195,35 @@ export const useSkillSelectorOverlay = ({
     [mentions],
   );
 
+  /*
+   * The Add-menu's own selection path (`renderOverlay` below) has no
+   * autocomplete state of its own — `caretPosition` is just wherever the
+   * caret sat when the `+` menu opened, which may or may not be sitting in a
+   * typed `/query` the user was filtering the slash menu with before
+   * clicking away from it. If it is, strip that raw text first so the
+   * mention is inserted in its place instead of being inserted next to text
+   * that would otherwise still be sent — mirroring the slash menu's own
+   * `close({ consumeQuery: true })`. Returns the position the mention should
+   * be inserted at: the query's own start when one was consumed, `caretPosition`
+   * unchanged otherwise.
+   */
+  const consumeQueryAtCaret = useCallback(
+    (caretPosition: number): number => {
+      const query = findSlashQueryAtCaret(
+        mentions.draft,
+        caretPosition,
+        SKILL_TRIGGER_PREFIX,
+      );
+      if (query == null) return caretPosition;
+
+      mentions.onDraftChange(
+        mentions.draft.slice(0, query.start) + mentions.draft.slice(query.end),
+      );
+      return query.start;
+    },
+    [mentions],
+  );
+
   const resetSkillMentions = useCallback(() => {
     mentions.reset();
     setMessageRevision((revision) => revision + 1);
@@ -234,6 +271,10 @@ export const useSkillSelectorOverlay = ({
         const skillEntry = entries[mention.skillIndex];
         const skill = skillByUrl.get(skillEntry.url);
         const name = skill?.name ?? getSkillFallbackName(skillEntry.url);
+        const unresolvedReason =
+          skill == null
+            ? resolveUnresolvedReason(skillEntry.url, viewerBucket)
+            : undefined;
 
         segments.push(
           <ChatSkill
@@ -242,8 +283,13 @@ export const useSkillSelectorOverlay = ({
             path={skillEntry.url}
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
+            unresolvedReason={unresolvedReason}
             onViewDetails={setDetailsSkillId}
-            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+            labels={{
+              viewDetailsLabel: panelLabels?.viewDetailsLabel,
+              deletedTooltipLabel,
+              notSharedTooltipLabel,
+            }}
           />,
         );
         cursor = mention.start + mention.length;
@@ -255,7 +301,15 @@ export const useSkillSelectorOverlay = ({
 
       return segments;
     },
-    [resolveName, skillByUrl, historyChipLabelClassName, panelLabels],
+    [
+      resolveName,
+      skillByUrl,
+      historyChipLabelClassName,
+      panelLabels,
+      viewerBucket,
+      deletedTooltipLabel,
+      notSharedTooltipLabel,
+    ],
   );
 
   /*
@@ -272,6 +326,10 @@ export const useSkillSelectorOverlay = ({
       return entries.map((entry) => {
         const skill = skillByUrl.get(entry.url);
         const name = skill?.name ?? getSkillFallbackName(entry.url);
+        const unresolvedReason =
+          skill == null
+            ? resolveUnresolvedReason(entry.url, viewerBucket)
+            : undefined;
 
         return (
           <ChatSkill
@@ -280,13 +338,25 @@ export const useSkillSelectorOverlay = ({
             path={entry.url}
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
+            unresolvedReason={unresolvedReason}
             onViewDetails={setDetailsSkillId}
-            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+            labels={{
+              viewDetailsLabel: panelLabels?.viewDetailsLabel,
+              deletedTooltipLabel,
+              notSharedTooltipLabel,
+            }}
           />
         );
       });
     },
-    [skillByUrl, historyChipLabelClassName, panelLabels],
+    [
+      skillByUrl,
+      historyChipLabelClassName,
+      panelLabels,
+      viewerBucket,
+      deletedTooltipLabel,
+      notSharedTooltipLabel,
+    ],
   );
 
   const renderOverlay = useCallback(
@@ -296,16 +366,17 @@ export const useSkillSelectorOverlay = ({
         /* The Add menu mounts overlays inside a `role="menu"` container. */
         isMenu
         onSelect={(item) => {
-          insertAndPush(item.id, item.name, caretPosition);
+          insertAndPush(item.id, item.name, consumeQueryAtCaret(caretPosition));
           onClose();
         }}
         onToggleFavorite={onToggleFavorite}
         onBrowse={() => {
-          setBrowseCaretPosition(caretPosition);
+          setBrowseCaretPosition(consumeQueryAtCaret(caretPosition));
           onClose();
           setIsCatalogOpen(true);
         }}
         onViewDetails={(item) => {
+          consumeQueryAtCaret(caretPosition);
           /* Closing the Add menu unmounts the overlay and its open tooltip. */
           onClose();
           setDetailsSkillId(item.id);
@@ -313,12 +384,18 @@ export const useSkillSelectorOverlay = ({
         labels={panelLabels}
       />
     ),
-    [favoriteSkillItems, insertAndPush, onToggleFavorite, panelLabels],
+    [
+      favoriteSkillItems,
+      insertAndPush,
+      consumeQueryAtCaret,
+      onToggleFavorite,
+      panelLabels,
+    ],
   );
 
   const skillMenuOverlay = useMemo<MenuOverlayConfig | undefined>(
     () =>
-      isSkillsEnabled
+      isSkillsSupported
         ? {
             key: 'skills',
             title: addMenuLabel,
@@ -333,7 +410,7 @@ export const useSkillSelectorOverlay = ({
             backLabel,
           }
         : undefined,
-    [isSkillsEnabled, addMenuLabel, backLabel, renderOverlay],
+    [isSkillsSupported, addMenuLabel, backLabel, renderOverlay],
   );
 
   /*
@@ -347,9 +424,9 @@ export const useSkillSelectorOverlay = ({
    */
   const commandMenu = useMemo<CommandMenuConfig | undefined>(
     () =>
-      isSkillsEnabled
+      isSkillsSupported
         ? {
-            triggerPrefix: '/',
+            triggerPrefix: SKILL_TRIGGER_PREFIX,
             menuLabel: addMenuLabel,
             emptyQueryHint: emptyQueryHintLabel,
             renderMenu: ({
@@ -384,7 +461,7 @@ export const useSkillSelectorOverlay = ({
           }
         : undefined,
     [
-      isSkillsEnabled,
+      isSkillsSupported,
       addMenuLabel,
       emptyQueryHintLabel,
       favoriteSkillItems,
@@ -421,27 +498,6 @@ export const useSkillSelectorOverlay = ({
       />
     </Suspense>
   );
-
-  if (!isEnabled) {
-    return {
-      skillMenuOverlay: undefined,
-      commandMenu: undefined,
-      skillCatalogModal: null,
-      skillDetailsPanel: null,
-      message: '',
-      messageRevision: 0,
-      activeMentions: [],
-      onDraftChange: () => undefined,
-      onBackspaceAtCaret: () => undefined,
-      caretPositionOverride: undefined,
-      isSkillUnsupported: false,
-      selectedSkills: undefined,
-      resetSkillMentions: () => undefined,
-      seedSkillMentions: () => undefined,
-      renderHistorySkillSegments: () => null,
-      renderHistorySkills: () => null,
-    };
-  }
 
   return {
     skillMenuOverlay,

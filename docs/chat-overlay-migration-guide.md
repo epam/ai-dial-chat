@@ -137,7 +137,6 @@ supported:
 
 - `signInInSameWindow`
 - `signInOptions.logInHint`
-- `signInOptions.signInInNewWindow`
 - `signInOptions.validationUserEmail`
 - `signInOptions.explicitToken`
 
@@ -146,8 +145,10 @@ explicit token, that flow cannot currently be migrated one-to-one. The user
 completes the new chat's standard login flow instead — externally by default,
 or inside the iframe for a provider mapped to same-window login.
 
-`signInOptions.autoSignIn` and `signInOptions.signInProvider` do have a
-successor: `auth.autoSignInProvider`, described in
+`signInOptions.autoSignIn`, `signInOptions.signInProvider`, and
+`signInOptions.signInInNewWindow` are still accepted as a deprecated shape and
+translated into `auth.autoSignInProvider` plus a `providerUiModes` entry; their
+successor is described in
 [Start login automatically](#start-login-automatically).
 
 `signInOptions.explicitToken` has no replacement because the new chat
@@ -276,28 +277,38 @@ overlay.destroy();
 
 ### Changes to `ChatOverlayOptions`
 
-| Legacy option                         | New option or required action                                                                                             |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `domain`                              | Preserved. The library now derives the target origin from this URL.                                                       |
-| `hostDomain`                          | Removed. The library automatically sends `window.location.origin`.                                                        |
-| `theme`                               | Preserved.                                                                                                                |
-| `modelId`                             | Preserved.                                                                                                                |
-| `overlayConversationId`               | Preserved.                                                                                                                |
-| `auth.providerUiModes`                | New optional per-provider login mode map; defaults to `External`.                                                         |
-| `requestTimeout`                      | Preserved; defaults to `10000` ms.                                                                                        |
-| `loaderStyles`                        | Preserved as `Record<string, string>`.                                                                                    |
-| `loaderClass`                         | Preserved.                                                                                                                |
-| `loaderInnerHTML`                     | Preserved. Pass trusted HTML only.                                                                                        |
-| `loaderHideEvent`                     | Preserved, but now use `OverlayEventType`.                                                                                |
-| `enabledFeatures`                     | Accepts only `OverlayFeature[]`.                                                                                          |
-| `newConversationsFolderId`            | Removed because the new chat does not have conversation folders.                                                          |
-| `enabledFeaturesData`                 | Not supported.                                                                                                            |
-| `messageButtons`                      | Not supported.                                                                                                            |
-| `signInOptions`, `signInInSameWindow` | Removed as an object; `autoSignIn`/`signInProvider` live on as `auth.autoSignInProvider`. See the authentication section. |
+| Legacy option              | New option or required action                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `domain`                   | Preserved. The library now derives the target origin from this URL.                                                        |
+| `hostDomain`               | Removed. The library automatically sends `window.location.origin`.                                                         |
+| `theme`                    | Preserved.                                                                                                                 |
+| `modelId`                  | Preserved.                                                                                                                 |
+| `overlayConversationId`    | Preserved.                                                                                                                 |
+| `auth.providerUiModes`     | New optional per-provider login mode map; defaults to `External`.                                                          |
+| `requestTimeout`           | Preserved; defaults to `10000` ms.                                                                                         |
+| `loaderStyles`             | Preserved as `Record<string, string>`.                                                                                     |
+| `loaderClass`              | Preserved.                                                                                                                 |
+| `loaderInnerHTML`          | Preserved. Pass trusted HTML only.                                                                                         |
+| `loaderHideEvent`          | Preserved, but now use `OverlayEventType`.                                                                                 |
+| `enabledFeatures`          | Accepts only `OverlayFeature[]`.                                                                                           |
+| `newConversationsFolderId` | Removed because the new chat does not have conversation folders.                                                           |
+| `enabledFeaturesData`      | Not supported.                                                                                                             |
+| `messageButtons`           | Not supported.                                                                                                             |
+| `signInOptions`            | Deprecated but accepted: `autoSignIn`/`signInProvider`/`signInInNewWindow` are translated into `auth`; other keys ignored. |
+| `signInInSameWindow`       | Removed. Map the provider to `OverlayAuthUiMode.SameWindow` in `auth.providerUiModes`.                                     |
 
 `setOverlayOptions()` now accepts only fields that can be changed dynamically:
 `theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
 not pass `domain`, `hostDomain`, the request timeout, or loader settings to it.
+
+`modelId` takes a deployment id or a deployment reference. It is applied to the
+current selection as soon as the deployment list loads, and it stays the
+default for every new chat opened in the overlay for the rest of the session.
+It outranks the user's own saved selection, their "Default agent for new
+chats" preference, and the operator's pinned default, so a first-time user
+opens on the host's agent too. An explicit pick in the model selector still
+wins for the current chat. An unknown `modelId` is ignored, and the default
+agent is chosen the usual way.
 
 ### Iframe attributes and browser permissions
 
@@ -763,6 +774,8 @@ hide-user-settings
 hide-keyboard-shortcuts
 hide-navigation-menu
 show-all-starters
+starters-below-greeting
+hide-greeting
 hide-footer-version
 show-agent-description
 disable-input-history-navigation
@@ -809,6 +822,18 @@ With the key on, every starter is rendered as its own row and the dropdown is
 gone. It does not change which starters the deployment exposes, only their
 layout.
 
+`starters-below-greeting` moves the conversation starters on the empty-chat
+screen, together with the starter intro text, from below the input to between
+the greeting and the input, so a user sees them before starting to type. It
+combines with `show-all-starters`, which still controls how the row lays the
+starters out.
+
+`hide-greeting` removes the time-of-day greeting ("Good morning, …") from the
+empty-chat screen. The operator's welcome-screen description is rendered only
+under that greeting, so it disappears too. Without the greeting the input keeps
+the wider active-chat width. Starters placed with `starters-below-greeting`
+then sit directly above the input.
+
 `hide-footer-version` removes the application version label from the footer
 (the `v0.45.0` text in its trailing corner). The label is diagnostic chrome
 rather than operator copy, so the operator's `footer` capability flag does not
@@ -847,8 +872,11 @@ picker.
 between the conversation-panel and new-chat buttons and the sources toggle, so
 an embed that hides the navigation rail still carries the brand. It uses the
 theme's full `logo` image; a theme that defines only a `favicon` shows nothing
-there. The mobile header already shows the logo whenever `header` is on, and
-this key does not change it.
+there. Below the desktop breakpoint the logo sits in the mobile header, which
+shows it whenever `header` is on; with `header` off, `show-header-logo` still
+renders that header row, carrying only the logo and none of its buttons. The
+mobile header shows the theme's `favicon`, or a smaller full `logo` when the
+theme defines no `favicon`.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is
@@ -899,8 +927,16 @@ gate — logging one console warning — whenever one does not:
 
 #### Migrating a legacy `signInOptions` block
 
-A host that passed the provider in from its own configuration — the common
-legacy shape — moves both fields into `auth`:
+The legacy block keeps working unchanged: `ChatOverlay` still accepts
+`signInOptions: { autoSignIn: true, signInProvider }` as a deprecated option
+and translates it into `auth.autoSignInProvider` plus a `providerUiModes`
+entry — `SameWindow`, or `External` when `signInInNewWindow: true` is set. A
+mode already present in `auth.providerUiModes` for that provider is kept, and
+an explicit `auth.autoSignInProvider` wins over the legacy pair. The three
+conditions above still apply.
+
+To move off the deprecated shape, a host that passed the provider in from its
+own configuration — the common legacy shape — moves both fields into `auth`:
 
 ```diff
 - signInOptions: {

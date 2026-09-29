@@ -493,6 +493,32 @@ describe('ConversationListingService', () => {
       expect(result.items[0].title).toBe('hello');
     });
 
+    it('excludes the application version from a scheduled run title', async () => {
+      const runId = 'bc56151e-296d-469f-80f6-61fbb3e5a98a';
+      const scheduleId = 'a6985526-4785-4f38-8019-fc9e22fcbd90';
+      const filename = `Daily%20plan__0.0.1__Todoist__${runId}`;
+      mockMetadata([
+        {
+          url: `conversations/test-bucket/.scheduler/${scheduleId}/applications/test-bucket/${filename}`,
+          nodeType: 'FILE',
+          name: filename,
+          parentPath: `.scheduler/${scheduleId}/applications/test-bucket`,
+        },
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0]).toMatchObject({
+        title: 'Todoist',
+        isScheduledTask: true,
+        scheduleId,
+        runId,
+      });
+    });
+
     it('sets isPinned: true on items whose id is in the pins list', async () => {
       mockMetadata([
         { url: 'conversations/bucket/conv-1', nodeType: 'FILE' },
@@ -725,6 +751,95 @@ describe('ConversationListingService', () => {
       );
       expect(sharedItem?.sharedWithMe).toBe(true);
       expect(sharedItem?.publishedWithMe).toBe(false);
+    });
+
+    it('orders shared items by share acceptance time, newest first', async () => {
+      mockMetadata([]);
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'conversations/other-bucket/oldest',
+              name: 'oldest',
+              nodeType: 'ITEM',
+              sharedBy: [{ user: 'a', acceptedAt: 1000 }],
+            },
+            {
+              url: 'conversations/other-bucket/newest',
+              name: 'newest',
+              nodeType: 'ITEM',
+              sharedBy: [{ user: 'a', acceptedAt: 3000 }],
+            },
+            {
+              url: 'conversations/other-bucket/middle',
+              name: 'middle',
+              nodeType: 'ITEM',
+              sharedBy: [
+                { user: 'a', acceptedAt: 500 },
+                { user: 'b', acceptedAt: 2000 },
+              ],
+            },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items.map((item) => item.id)).toEqual([
+        'conversations/other-bucket/newest',
+        'conversations/other-bucket/middle',
+        'conversations/other-bucket/oldest',
+      ]);
+    });
+
+    it('orders shared items with equal or missing share time by name, after dated ones', async () => {
+      mockMetadata([]);
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'conversations/other-bucket/charlie',
+              name: 'charlie',
+              nodeType: 'ITEM',
+            },
+            {
+              url: 'conversations/other-bucket/bravo',
+              name: 'bravo',
+              nodeType: 'ITEM',
+              sharedBy: [{ user: 'a', acceptedAt: 1000 }],
+            },
+            {
+              url: 'conversations/other-bucket/alpha',
+              name: 'alpha',
+              nodeType: 'ITEM',
+              sharedBy: [{ user: 'a' }],
+            },
+            {
+              url: 'conversations/other-bucket/able',
+              name: 'able',
+              nodeType: 'ITEM',
+              sharedBy: [{ user: 'a', acceptedAt: 1000 }],
+            },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items.map((item) => item.id)).toEqual([
+        'conversations/other-bucket/able',
+        'conversations/other-bucket/bravo',
+        'conversations/other-bucket/alpha',
+        'conversations/other-bucket/charlie',
+      ]);
     });
 
     it('tags a user-bucket item created by a scheduled task with isScheduledTask, scheduleId, and runId', async () => {

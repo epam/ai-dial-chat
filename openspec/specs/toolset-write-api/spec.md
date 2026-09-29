@@ -21,6 +21,14 @@ field SHALL be required to be present in the request body — an entirely omitte
 `authSettings` SHALL fail DTO validation and SHALL NOT reach the DIAL Core call, regardless
 of whether its nested `authenticationType` is itself valid.
 
+The `name` field SHALL match `DISPLAY_NAME_PATTERN`
+(`apps/chat-api/src/common/validators/display-name.pattern.ts`): 1-256 characters with no
+control or surrogate characters. The same pattern applies to every additional-locale `name`.
+The optional `description` SHALL be `@MaxLength(2000)`. Both bounds come from
+`apps/chat-api/src/common/validators/entity-field-limits.ts` and appear as `maxLength` in the
+OpenAPI spec. There is no generated-client method change; `ToolsetBodyDto` only gains the
+`maxLength` metadata.
+
 #### Scenario: Successful create with a draft (empty) endpoint
 - **WHEN** an authenticated user POSTs a toolset body with `endpoint` set to an empty string
 - **THEN** the service proxies the create to DIAL Core and returns the created toolset
@@ -49,6 +57,11 @@ of whether its nested `authenticationType` is itself valid.
 #### Scenario: Invalid create body
 - **WHEN** the request body fails DTO validation
 - **THEN** the endpoint responds with a 400 and does not call DIAL Core
+
+#### Scenario: Name or description over its limit
+- **WHEN** an authenticated user POSTs a toolset body whose `name` is 257 characters or whose
+  `description` is 2001 characters (a 256-character name is accepted)
+- **THEN** the endpoint responds with a 400 naming that property and does not call DIAL Core
 
 #### Scenario: Endpoint using the sse:// scheme
 - **WHEN** an authenticated user POSTs a toolset body with `endpoint` set to
@@ -215,3 +228,4 @@ handler names suitable for the generated client (e.g. `createToolset`, `updateTo
 #### Scenario: Authentication required
 - **WHEN** a request to a write endpoint has no valid session cookie
 - **THEN** the endpoint responds with 401
+

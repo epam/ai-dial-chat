@@ -227,6 +227,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onLoadContentFile,
   onLoadContentFilePreview,
   renderContentFilePreview,
+  renderContentFileTree,
   renderCredentials,
   onDelete,
   onUnshare,
@@ -1403,6 +1404,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     content={promptContent?.content ?? ''}
                     filePreview={resolveContentFilePreview()}
                     filePreviewContent={renderedContentFilePreview}
+                    renderFileTree={renderContentFileTree}
                     description={promptContent?.description ?? item.description}
                     files={promptContent?.files}
                     selectedFileId={selectedFileId}

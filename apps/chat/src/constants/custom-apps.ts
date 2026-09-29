@@ -5,7 +5,7 @@ import type {
 
 export const DEFAULT_CUSTOM_APP_GENERAL_FORM: CustomAppGeneralFormData = {
   name: '',
-  version: '0.0.1',
+  version: '1.0.0',
   iconUrl: '',
   description: '',
   topics: [],

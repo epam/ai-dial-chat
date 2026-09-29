@@ -34,6 +34,10 @@
     color: var(--ci-chip-selected-text, var(--text-accent, #1d4ed8));
   }
 
+  .chipState {
+    color: var(--ci-chip-selected-text, var(--text-accent, #1d4ed8));
+  }
+
   .chipClose {
     color: var(--ci-chip-close, var(--text-accent, #1d4ed8));
   }
@@ -54,4 +58,8 @@
 
 .chipText {
   color: var(--ci-chip-text, var(--text-primary, #161b2d));
+}
+
+.chipState {
+  color: var(--ci-chip-state-text, var(--text-secondary, #57647a));
 }

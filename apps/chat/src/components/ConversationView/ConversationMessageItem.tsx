@@ -397,7 +397,7 @@ const ConversationMessageItem: FC<Props> = ({
   const { currentTheme } = useTheme();
   const applicationVisualizers = useApplicationVisualizers();
   const isMobile = useIsMobile();
-  const { openCanvas } = useAttachmentCanvas();
+  const { openCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const isLikesEnabled = useUiFeature(OverlayFeature.Likes);
   const isEditUserMessageHidden = useUiFeature(
     OverlayFeature.HideEditUserMessage,
@@ -526,7 +526,8 @@ const ConversationMessageItem: FC<Props> = ({
           t(CitationsI18nKeys.PopupSwitcher, { current, total }),
         preview: t(BasicI18nKeys.Preview),
         openInBrowser: t(CitationsI18nKeys.PopupOpenInBrowser),
-        download: t(ButtonsI18nKeys.Download),
+        showMore: t(ButtonsI18nKeys.ShowMore),
+        showLess: t(ButtonsI18nKeys.ShowLess),
       };
       const markerLabels = {
         ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
@@ -547,9 +548,15 @@ const ConversationMessageItem: FC<Props> = ({
       onPreview: handleCitationPreview,
       isPreviewable: isCitationPreviewable,
       onOpenInBrowser: handleCitationOpenInBrowser,
+      isPreviewOpen: isCanvasOpen,
       buildLabels: buildCitationLabels,
     }),
-    [handleCitationPreview, handleCitationOpenInBrowser, buildCitationLabels],
+    [
+      handleCitationPreview,
+      handleCitationOpenInBrowser,
+      isCanvasOpen,
+      buildCitationLabels,
+    ],
   );
   const { processedContent, markdownComponents } =
     useCitationMarkdownComponents(
@@ -896,6 +903,7 @@ const ConversationMessageItem: FC<Props> = ({
                           isPdfPagePreviewable ? onPreviewReference : undefined
                         }
                         onOpenInBrowser={handleOpenReferenceInBrowser}
+                        isPreviewOpen={isCanvasOpen}
                         icon={
                           <IconLink
                             size={14}
@@ -920,7 +928,8 @@ const ConversationMessageItem: FC<Props> = ({
                           openInBrowser: t(
                             CitationsI18nKeys.PopupOpenInBrowser,
                           ),
-                          download: t(ButtonsI18nKeys.Download),
+                          showMore: t(ButtonsI18nKeys.ShowMore),
+                          showLess: t(ButtonsI18nKeys.ShowLess),
                         }}
                         markerLabels={{
                           ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {

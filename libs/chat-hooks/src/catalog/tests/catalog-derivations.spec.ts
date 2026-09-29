@@ -97,6 +97,17 @@ describe('deriveFavoriteItems', () => {
     const item = makeItem('x', CatalogEntityType.Model);
     expect(deriveFavoriteItems([item])).toEqual([]);
   });
+
+  it('excludes favorited items that are hidden', () => {
+    const visible = makeItem('v', CatalogEntityType.Model, {
+      isUserFavorite: true,
+    });
+    const hidden = makeItem('h', CatalogEntityType.Model, {
+      isUserFavorite: true,
+      isHidden: true,
+    });
+    expect(deriveFavoriteItems([visible, hidden])).toEqual([visible]);
+  });
 });
 
 describe('deriveAvailableTabIds', () => {

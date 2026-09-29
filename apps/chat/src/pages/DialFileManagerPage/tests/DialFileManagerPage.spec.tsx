@@ -1,15 +1,17 @@
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
-  type UseDialFileManagerResult,
+  type UseDialFileManagerSectionsResult,
 } from '@epam/ai-dial-chat-hooks';
 import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
   DialFileNodeType,
-} from '@epam/ai-dial-ui-kit';
-import { render, screen } from '@testing-library/react';
+} from '@epam/ai-dial-react-file-manager';
+import { act, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -20,7 +22,7 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
   return {
     ...actual,
-    useDialFileManager: vi.fn(),
+    useDialFileManagerSections: vi.fn(),
   };
 });
 
@@ -66,15 +68,18 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   const { DialFileManagerActions: Actions, DialFileManagerTabs: Tabs } = actual;
   return {
     ...actual,
-    useDialFileManagerTabs: vi.fn().mockImplementation(() => ({
-      activeTab: mockActiveTab.value ?? Tabs.MyFiles,
-      handleTabChange: mockHandleTabChange,
-      tabs: [
-        { value: Tabs.MyFiles, label: 'My Files' },
-        { value: Tabs.Shared, label: 'Shared with Me' },
-        { value: Tabs.Organization, label: 'Organization' },
-      ],
-    })),
+    useDialFileManagerTabs: vi
+      .fn()
+      .mockImplementation((_labels: unknown, initialTab?: string) => ({
+        activeTab: mockActiveTab.value ?? initialTab ?? Tabs.MyFiles,
+        handleTabChange: mockHandleTabChange,
+        tabs: [
+          { value: Tabs.All, label: 'All' },
+          { value: Tabs.MyFiles, label: 'My Files' },
+          { value: Tabs.Shared, label: 'Shared with Me' },
+          { value: Tabs.Organization, label: 'Organization' },
+        ],
+      })),
     DialFileManager: ({
       items,
       gridOptions,
@@ -85,6 +90,8 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       maxSelectableFileSize,
       maxFileSize,
       uploadValidationMessages,
+      selectedPaths,
+      onSelectedPathsChange,
     }: {
       items?: { path: string }[];
       gridOptions?: {
@@ -98,7 +105,10 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       };
       treeOptions?: {
         tabs?: Array<{ value: string; label: string }>;
+        activeTab?: string;
       };
+      selectedPaths?: Set<string>;
+      onSelectedPathsChange?: (paths: Set<string>) => void;
       autoSelectUploadedItems?: boolean;
       maxSelectableFileSize?: number;
       maxFileSize?: number;
@@ -155,14 +165,36 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         )}
       >
         {items?.length ?? 0} items
+        <div role="group" aria-label="tabs">
+          {treeOptions?.tabs?.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              aria-pressed={tab.value === treeOptions.activeTab}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            onSelectedPathsChange?.(new Set(['/My files/report.pdf']))
+          }
+        >
+          Select report
+        </button>
+        <span>{selectedPaths?.size ?? 0} selected</span>
       </div>
     ),
   };
 });
 
-const mockUseDialFileManager = vi.mocked(chatHooksModule.useDialFileManager);
+const mockUseDialFileManager = vi.mocked(
+  chatHooksModule.useDialFileManagerSections,
+);
 
-const defaultHookResult: UseDialFileManagerResult = {
+const defaultHookResult: UseDialFileManagerSectionsResult = {
   items: [
     {
       id: 'report.pdf',
@@ -192,6 +224,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),
+  cancelUploadFile: vi.fn(),
   clearUploadBatch: vi.fn(),
   onCreateFolder: vi.fn(),
   onCreateFolderValidate: vi.fn(),
@@ -225,9 +258,11 @@ const defaultHookResult: UseDialFileManagerResult = {
   onGetInfo: vi.fn(),
   clearMetadata: vi.fn(),
   isAnyOperationInProgress: false,
+  sectionTab: DialFileManagerTabs.MyFiles,
 };
 
 beforeEach(() => {
+  vi.clearAllMocks();
   mockActiveTab.value = undefined;
   mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
   mockUseDialFileManager.mockReturnValue(defaultHookResult);
@@ -240,7 +275,7 @@ describe('DialFileManagerPage', () => {
     expect(screen.getByText('1 items')).toBeTruthy();
   });
 
-  it('calls useDialFileManager with standalone variant and full action profile on mount, without any user interaction', () => {
+  it('calls useDialFileManagerSections with standalone variant and full action profile on mount, without any user interaction', () => {
     render(<DialFileManagerPage />);
     expect(mockUseDialFileManager).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -364,5 +399,94 @@ describe('DialFileManagerPage — full action matrix on my_files', () => {
     expect(manager.getAttribute('data-has-copy')).toBe('false');
     expect(manager.getAttribute('data-has-move')).toBe('false');
     expect(manager.getAttribute('data-has-duplicate')).toBe('false');
+  });
+});
+
+describe('DialFileManagerPage — All tab', () => {
+  beforeEach(() => {
+    mockFileManagerTabs.value = ['all', 'my_files', 'shared', 'organization'];
+  });
+
+  it('opens on the All tab with every source tab as a section', () => {
+    render(<DialFileManagerPage />);
+
+    expect(
+      screen.getByRole('button', { name: 'All' }).getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(mockUseDialFileManager).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeTab: DialFileManagerTabs.All,
+        sections: [
+          {
+            tab: DialFileManagerTabs.MyFiles,
+            rootLabel: 'dialFileManager.tab.myFiles',
+          },
+          {
+            tab: DialFileManagerTabs.Shared,
+            rootLabel: 'dialFileManager.tab.shared',
+          },
+          {
+            tab: DialFileManagerTabs.Organization,
+            rootLabel: 'basic.organization',
+          },
+        ],
+      }),
+    );
+  });
+
+  it('only turns configured source tabs into sections', () => {
+    mockFileManagerTabs.value = ['all', 'my_files', 'organization'];
+    render(<DialFileManagerPage />);
+
+    const [options] = mockUseDialFileManager.mock.calls[0];
+    expect(options.sections.map((section) => section.tab)).toEqual([
+      DialFileManagerTabs.MyFiles,
+      DialFileManagerTabs.Organization,
+    ]);
+  });
+
+  it('switches to My files when the deployment does not list all', () => {
+    mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
+    render(<DialFileManagerPage />);
+
+    expect(screen.queryByRole('button', { name: 'All' })).toBeNull();
+    expect(mockHandleTabChange).toHaveBeenCalledWith(
+      DialFileManagerTabs.MyFiles,
+    );
+  });
+
+  it('keeps All as the first tab under a right-to-left document', () => {
+    document.documentElement.dir = 'rtl';
+    try {
+      render(<DialFileManagerPage />);
+      const tabs = within(
+        screen.getByRole('group', { name: 'tabs' }),
+      ).getAllByRole('button');
+      expect(tabs.map((tab) => tab.textContent)).toEqual([
+        'All',
+        'My Files',
+        'Shared with Me',
+        'Organization',
+      ]);
+    } finally {
+      document.documentElement.dir = '';
+    }
+  });
+
+  it('clears the selection when the browsed section changes', async () => {
+    let setSectionTab: (tab: DialFileManagerTabs) => void = () => undefined;
+    mockUseDialFileManager.mockImplementation(() => {
+      const [sectionTab, setTab] = useState(DialFileManagerTabs.MyFiles);
+      setSectionTab = setTab;
+      return { ...defaultHookResult, sectionTab };
+    });
+    const user = userEvent.setup();
+    render(<DialFileManagerPage />);
+    await user.click(screen.getByRole('button', { name: 'Select report' }));
+    expect(screen.getByText('1 selected')).toBeTruthy();
+
+    act(() => setSectionTab(DialFileManagerTabs.Shared));
+
+    expect(screen.getByText('0 selected')).toBeTruthy();
   });
 });

@@ -58,8 +58,8 @@ const isUnsupportedMarkdownFilename = (
 
 /** Options accepted by {@link useSkillArchiveImport}. */
 export interface UseSkillArchiveImportOptions<TResult> {
-  /** Submits the selected archive; the host owns request configuration and the client. */
-  importArchive: (file: File) => Promise<TResult>;
+  /** Submits the selected archive; the host owns the client. `signal` aborts when the dialog closes or the hook unmounts mid-upload. */
+  importArchive: (file: File, signal: AbortSignal) => Promise<TResult>;
   /** Called once after a successful import (and any awaited host follow-up) settles. */
   onImported: (result: TResult) => void | Promise<void>;
   /** Called once when the import request, or the host's follow-up in {@link onImported}, fails. */
@@ -74,13 +74,15 @@ export interface UseSkillArchiveImportResult {
   isDialogOpen: boolean;
   /** Current phase of the import. */
   status: SkillArchiveImportStatus;
+  /** Whether an import request is in flight; the dialog stays open until it succeeds. */
+  isUploading: boolean;
   /** Reason the current/last selection was rejected locally; `undefined` once cleared. */
   selectionRejectionReason: SkillArchiveSelectionRejectionReason | undefined;
   /** Classified failure of the last import request; `undefined` outside a request failure. */
   errorKind: SkillArchiveImportErrorKind | undefined;
-  /** Opens the dialog, unless an import is already in flight. */
+  /** Opens the dialog and clears any previous rejection or request failure. */
   openDialog: () => void;
-  /** Closes the dialog and clears any rejection reason. */
+  /** Closes the dialog, aborting an in-flight import, and clears any rejection reason. */
   closeDialog: () => void;
   /** Wire to the dialog drop zone's `onChange`. */
   handleFilesSelected: (files: File[]) => void;
@@ -90,7 +92,7 @@ export interface UseSkillArchiveImportResult {
 
 /**
  * Headless controller for the skill-archive upload flow: dialog visibility, the exact-filename
- * precheck, in-flight exclusion, and import completion. The host supplies the configured request
+ * precheck, in-flight exclusion, abort-on-close, and import completion. The host supplies the configured request
  * and observes completion/failure through the injected callbacks; the hook never imports app
  * contexts, i18n, or a configured API client.
  */
@@ -111,51 +113,72 @@ export const useSkillArchiveImport = <TResult>({
     SkillArchiveImportErrorKind | undefined
   >(undefined);
 
-  const isUploadingRef = useRef(false);
-  const isMountedRef = useRef(true);
+  /* The in-flight request's controller; `null` when idle. Aborting it detaches its outcome. */
+  const uploadAbortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  useEffect(
+    () => () => {
+      uploadAbortRef.current?.abort();
+      uploadAbortRef.current = null;
+    },
+    [],
+  );
 
   const submit = useCallback(
     async (file: File) => {
-      isUploadingRef.current = true;
+      const abortController = new AbortController();
+      uploadAbortRef.current = abortController;
+      const { signal } = abortController;
       setStatus(SkillArchiveImportStatus.Uploading);
       setErrorKind(undefined);
 
       try {
-        const result = await importArchive(file);
-        if (!isMountedRef.current) return;
+        const result = await importArchive(file, signal);
+        if (signal.aborted) return;
 
         await onImported(result);
-        if (!isMountedRef.current) return;
+        if (signal.aborted) return;
 
         setStatus(SkillArchiveImportStatus.Success);
+        setIsDialogOpen(false);
       } catch (error) {
-        if (!isMountedRef.current) return;
+        if (signal.aborted) return;
 
+        /*
+         * The dialog stays open, so the failure renders next to the drop zone and another file
+         * can be picked straight away.
+         */
         const kind = classifySkillArchiveImportError(getApiErrorStatus(error));
         setStatus(SkillArchiveImportStatus.Error);
         setErrorKind(kind);
         onError(error, kind);
       } finally {
-        isUploadingRef.current = false;
+        if (uploadAbortRef.current === abortController) {
+          uploadAbortRef.current = null;
+        }
       }
     },
     [importArchive, onImported, onError],
   );
 
   const openDialog = useCallback(() => {
-    if (isUploadingRef.current) return;
+    if (uploadAbortRef.current) return;
     setSelectionRejectionReason(undefined);
+    setErrorKind(undefined);
+    setStatus(SkillArchiveImportStatus.Idle);
     setIsDialogOpen(true);
   }, []);
 
+  /*
+   * Closing mid-upload aborts the request, so a slow or hanging backend can never leave the
+   * flow locked with no dialog to recover from.
+   */
   const closeDialog = useCallback(() => {
+    if (uploadAbortRef.current) {
+      uploadAbortRef.current.abort();
+      uploadAbortRef.current = null;
+      setStatus(SkillArchiveImportStatus.Idle);
+    }
     setIsDialogOpen(false);
     setSelectionRejectionReason(undefined);
   }, []);
@@ -165,7 +188,9 @@ export const useSkillArchiveImport = <TResult>({
    * another choice instead of being closed and reopened.
    */
   const rejectUnsupportedFilename = useCallback(() => {
+    if (uploadAbortRef.current) return;
     setStatus(SkillArchiveImportStatus.Error);
+    setErrorKind(undefined);
     setSelectionRejectionReason(
       SkillArchiveSelectionRejectionReason.UnsupportedFilename,
     );
@@ -174,7 +199,7 @@ export const useSkillArchiveImport = <TResult>({
   const handleFilesSelected = useCallback(
     (files: File[]) => {
       const file = files[0];
-      if (!file || isUploadingRef.current) return;
+      if (!file || uploadAbortRef.current) return;
 
       if (isUnsupportedMarkdownFilename(file.name, manifestFileName)) {
         rejectUnsupportedFilename();
@@ -182,7 +207,6 @@ export const useSkillArchiveImport = <TResult>({
       }
 
       setSelectionRejectionReason(undefined);
-      setIsDialogOpen(false);
       void submit(file);
     },
     [manifestFileName, rejectUnsupportedFilename, submit],
@@ -191,6 +215,7 @@ export const useSkillArchiveImport = <TResult>({
   return {
     isDialogOpen,
     status,
+    isUploading: status === SkillArchiveImportStatus.Uploading,
     selectionRejectionReason,
     errorKind,
     openDialog,

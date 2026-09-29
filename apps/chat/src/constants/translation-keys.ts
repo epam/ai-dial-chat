@@ -360,6 +360,8 @@ export enum SkillSelectorI18nKeys {
   ModalTitle = 'skillSelector.modalTitle',
   NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
   UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
+  DeletedTooltipLabel = 'skillSelector.deletedTooltipLabel',
+  NotSharedTooltipLabel = 'skillSelector.notSharedTooltipLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
 }
 
@@ -429,13 +431,11 @@ export enum ScheduledTasksI18nKeys {
   CreateModelPlaceholder = 'scheduledTasks.create.modelPlaceholder',
   CreateModelRequired = 'scheduledTasks.create.modelRequired',
   CreateDescriptionLabel = 'scheduledTasks.create.descriptionLabel',
-  CreateDescriptionMaxLengthError = 'scheduledTasks.create.descriptionMaxLengthError',
   CreateInstructionsLabel = 'scheduledTasks.create.instructionsLabel',
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
   CreateSkillLabel = 'scheduledTasks.create.skillLabel',
   CreateSkillPlaceholder = 'scheduledTasks.create.skillPlaceholder',
   CreateInstructionsOrSkillRequired = 'scheduledTasks.create.instructionsOrSkillRequired',
-  CreateInstructionsOnlySubtitle = 'scheduledTasks.create.instructionsOnlySubtitle',
   CreateSubmittingLabel = 'scheduledTasks.create.submittingLabel',
   CreateSuccessNotification = 'scheduledTasks.create.successNotification',
   CreateErrorNotification = 'scheduledTasks.create.errorNotification',
@@ -516,7 +516,10 @@ export enum DialFileManagerI18nKeys {
   Upload = 'dialFileManager.upload',
   NewFolder = 'dialFileManager.newFolder',
   Downloading = 'dialFileManager.downloading',
-  UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
+  UploadQueueTitle = 'dialFileManager.uploadQueueTitle',
+  UploadQueueCancelFileAriaLabel = 'dialFileManager.uploadQueueCancelFileAriaLabel',
+  UploadQueueFileProgressAriaLabel = 'dialFileManager.uploadQueueFileProgressAriaLabel',
+  UploadQueueProgressAriaLabel = 'dialFileManager.uploadQueueProgressAriaLabel',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
   MaxSizeOnly = 'dialFileManager.maxSizeOnly',
   UploadFileTooLarge = 'dialFileManager.uploadFileTooLarge',
@@ -549,7 +552,6 @@ export enum DialFileManagerI18nKeys {
   FolderLoadError = 'dialFileManager.folderLoadError',
   FolderNameInvalidChars = 'dialFileManager.folderNameInvalidChars',
   FolderNameEmpty = 'dialFileManager.folderNameEmpty',
-  FolderNameHidden = 'dialFileManager.folderNameHidden',
   FolderNameReserved = 'dialFileManager.folderNameReserved',
   FolderNameTooLong = 'dialFileManager.folderNameTooLong',
   FolderNameDuplicate = 'dialFileManager.folderConflict',
@@ -562,8 +564,13 @@ export enum DialFileManagerI18nKeys {
   ItemsDeletedFromFolder = 'dialFileManager.itemsDeletedFromFolder',
   AndOtherItems = 'dialFileManager.andOtherItems',
   SomeItemsNotDeleted = 'dialFileManager.someItemsNotDeleted',
+  TabAll = 'dialFileManager.tab.all',
+  SearchPlaceholderMyFiles = 'dialFileManager.searchPlaceholder.myFiles',
+  SearchPlaceholderShared = 'dialFileManager.searchPlaceholder.shared',
+  SearchPlaceholderOrganization = 'dialFileManager.searchPlaceholder.organization',
   TabMyFiles = 'dialFileManager.tab.myFiles',
   TabShared = 'dialFileManager.tab.shared',
+  CrossSectionTransferUnsupported = 'dialFileManager.crossSectionTransferUnsupported',
   RenamingLabel = 'dialFileManager.renamingLabel',
   RenameError = 'dialFileManager.renameError',
   RenamePartialError = 'dialFileManager.renamePartialError',
@@ -577,14 +584,19 @@ export enum DialFileManagerI18nKeys {
   MoveAction = 'dialFileManager.moveAction',
   CopyingLabel = 'dialFileManager.copyingLabel',
   MovingLabel = 'dialFileManager.movingLabel',
-  ItemCopiedSuccessfully = 'dialFileManager.itemCopiedSuccessfully',
+  FileCopiedSuccessfully = 'dialFileManager.fileCopiedSuccessfully',
+  FolderCopiedSuccessfully = 'dialFileManager.folderCopiedSuccessfully',
   ItemsCopiedSuccessfully = 'dialFileManager.itemsCopiedSuccessfully',
-  ItemMovedSuccessfully = 'dialFileManager.itemMovedSuccessfully',
+  CopiedToFolder = 'dialFileManager.copiedToFolder',
+  FileMovedSuccessfully = 'dialFileManager.fileMovedSuccessfully',
+  FolderMovedSuccessfully = 'dialFileManager.folderMovedSuccessfully',
   ItemsMovedSuccessfully = 'dialFileManager.itemsMovedSuccessfully',
-  ItemCopiedToFolder = 'dialFileManager.itemCopiedToFolder',
-  ItemsCopiedToFolder = 'dialFileManager.itemsCopiedToFolder',
-  ItemMovedToFolder = 'dialFileManager.itemMovedToFolder',
-  ItemsMovedToFolder = 'dialFileManager.itemsMovedToFolder',
+  MovedToFolder = 'dialFileManager.movedToFolder',
+  FileDuplicatedSuccessfully = 'dialFileManager.fileDuplicatedSuccessfully',
+  FolderDuplicatedSuccessfully = 'dialFileManager.folderDuplicatedSuccessfully',
+  ItemsDuplicatedSuccessfully = 'dialFileManager.itemsDuplicatedSuccessfully',
+  DuplicatedToSameFolder = 'dialFileManager.duplicatedToSameFolder',
+  ItemsDuplicatedToSameFolder = 'dialFileManager.itemsDuplicatedToSameFolder',
   CopyError = 'dialFileManager.copyError',
   CopyPartialError = 'dialFileManager.copyPartialError',
   MoveError = 'dialFileManager.moveError',
@@ -607,7 +619,6 @@ export enum DialFileManagerI18nKeys {
   SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
-  UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
   UnshareAction = 'dialFileManager.unshareAction',
   UnsharingLabel = 'dialFileManager.unsharingLabel',
   RemoveAccessAction = 'dialFileManager.removeAccessAction',
@@ -792,6 +803,7 @@ export enum ConversationExportI18nKeys {
   ErrorUnknown = 'conversationExport.errorUnknown',
   /* Queue chrome shared with the import queue — one instance of each string. */
   CanceledLabel = 'conversationExport.canceledLabel',
+  SucceededLabel = 'conversationExport.succeededLabel',
   CollapseQueueAriaLabel = 'conversationExport.collapseQueueAriaLabel',
   ExpandQueueAriaLabel = 'conversationExport.expandQueueAriaLabel',
   CloseQueueAriaLabel = 'conversationExport.closeQueueAriaLabel',
@@ -935,14 +947,14 @@ export enum FooterMessageI18nKeys {
 }
 
 export enum EditorI18nKeys {
-  StepGeneral = 'editor.stepGeneral',
-  StepsNavAriaLabel = 'editor.stepsNavAriaLabel',
-  StepOfTotal = 'editor.stepOfTotal',
-  MoreActionsLabel = 'editor.moreActionsLabel',
-  SaveButton = 'editor.saveButton',
-  NextButton = 'editor.nextButton',
+  BackAriaLabel = 'editor.backAriaLabel',
+  SavingStatus = 'editor.savingStatus',
+  MetadataSectionTitle = 'editor.metadataSectionTitle',
+  SetupSectionTitle = 'editor.setupSectionTitle',
   NameLabel = 'editor.nameLabel',
   NameRequired = 'editor.nameRequired',
+  FieldTooLong = 'editor.fieldTooLong',
+  NameControlCharacters = 'editor.nameControlCharacters',
   DescriptionLabel = 'editor.descriptionLabel',
   AvatarLabel = 'editor.avatarLabel',
   AddAvatarButtonLabel = 'editor.addAvatarButtonLabel',
@@ -1007,8 +1019,6 @@ export enum SkillEditorI18nKeys {
   ReturnedToManifestStatus = 'skillEditor.returnedToManifestStatus',
   FilesHeading = 'skillEditor.filesHeading',
   FilesTreeAriaLabel = 'skillEditor.filesTreeAriaLabel',
-  AddUploadLabel = 'skillEditor.addUploadLabel',
-  RemoveLabel = 'skillEditor.removeLabel',
   EditingFileLabel = 'skillEditor.editingFileLabel',
   NameLabel = 'skillEditor.nameLabel',
   NamePlaceholder = 'skillEditor.namePlaceholder',
@@ -1072,6 +1082,21 @@ export enum SkillEditorI18nKeys {
   ErrorManifestImportDeclined = 'skillEditor.error.manifestImportDeclined',
   ManifestImportConfirmTitle = 'skillEditor.manifestImportConfirmTitle',
   ManifestImportConfirmMessage = 'skillEditor.manifestImportConfirmMessage',
+  CreateFolder = 'skillEditor.createFolder',
+  UploadArchive = 'skillEditor.uploadArchive',
+  OpenFileSystem = 'skillEditor.openFileSystem',
+  AddChild = 'skillEditor.addChild',
+  AddSibling = 'skillEditor.addSibling',
+  NewFolderDefaultName = 'skillEditor.newFolderDefaultName',
+  FolderNameRequired = 'skillEditor.folderNameRequired',
+  FolderNameInvalid = 'skillEditor.folderNameInvalid',
+  FolderNameDuplicate = 'skillEditor.folderNameDuplicate',
+  UploadArchiveDropZone = 'skillEditor.uploadArchiveDropZone',
+  UploadArchiveDropZoneMobile = 'skillEditor.uploadArchiveDropZoneMobile',
+  UploadArchiveError = 'skillEditor.uploadArchiveError',
+  UploadArchiveEmpty = 'skillEditor.uploadArchiveEmpty',
+  UploadArchiveExtractingAriaLabel = 'skillEditor.uploadArchiveExtractingAriaLabel',
+  FileSystemDownloadError = 'skillEditor.fileSystemDownloadError',
 }
 
 export enum SkillArchiveImportI18nKeys {
@@ -1092,6 +1117,9 @@ export enum SkillArchiveImportI18nKeys {
 }
 
 export enum AppsEditorI18nKeys {
+  CreateTitle = 'appsEditor.createTitle',
+  EditTitle = 'appsEditor.editTitle',
+  DefaultTypeName = 'appsEditor.defaultTypeName',
   GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
   GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
   GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
@@ -1112,14 +1140,9 @@ export enum ToolsetEditorI18nKeys {
   // Page header
   CreateTitle = 'toolsetEditor.createTitle',
   EditTitle = 'toolsetEditor.editTitle',
-  BackAriaLabel = 'toolsetEditor.backAriaLabel',
-  MetadataSectionTitle = 'toolsetEditor.metadataSectionTitle',
-  SetupSectionTitle = 'toolsetEditor.setupSectionTitle',
-  SavingStatus = 'toolsetEditor.savingStatus',
   // General form
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
-  TopicsPlaceholder = 'toolsetEditor.general.topicsPlaceholder',
   VersionInvalid = 'toolsetEditor.general.versionInvalid',
   // Settings form
   EndpointCaption = 'toolsetEditor.settings.endpointCaption',
@@ -1235,6 +1258,8 @@ export enum VoiceRecordingI18nKeys {
 export enum ToolsI18nKeys {
   MenuTitle = 'tools.menuTitle',
   RemoveTool = 'tools.removeTool',
+  StateOn = 'tools.stateOn',
+  StateOff = 'tools.stateOff',
 }
 
 export enum ConversationInputI18nKeys {
@@ -1258,7 +1283,13 @@ export enum NotificationI18nKeys {
   RequestIdCopyFailedStatus = 'notification.requestId.copyFailedStatus',
 }
 
+export enum ApplicationEditorI18nKeys {
+  SetupPendingCreate = 'applicationEditor.setupPendingCreate',
+}
+
 export enum CustomAppI18nKeys {
+  CreateTitle = 'customApp.createTitle',
+  EditTitle = 'customApp.editTitle',
   // General form placeholders
   NamePlaceholder = 'customApp.general.namePlaceholder',
   DescriptionPlaceholder = 'customApp.general.descriptionPlaceholder',
@@ -1417,6 +1448,8 @@ export enum UsageI18nKeys {
   TokensColumnLabel = 'usage.tokensColumnLabel',
   StatusColumnLabel = 'usage.statusColumnLabel',
   ModelTypeLabel = 'usage.modelTypeLabel',
+  ApplicationTypeLabel = 'usage.applicationTypeLabel',
+  IncludesCalledModelsLabel = 'usage.includesCalledModelsLabel',
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',

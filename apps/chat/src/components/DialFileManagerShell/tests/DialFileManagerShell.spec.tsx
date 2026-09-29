@@ -4,6 +4,7 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
   type UseDialFileManagerResult,
+  type UseDialFileManagerSectionsResult,
 } from '@epam/ai-dial-chat-hooks';
 import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
@@ -12,6 +13,7 @@ import {
   DialFileManagerTabs,
 } from '@epam/ai-dial-react-file-manager';
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import DialFileManagerShell from '../DialFileManagerShell';
 
@@ -20,6 +22,8 @@ interface CapturedActionLabels {
 }
 
 interface CapturedTreeOptions extends CapturedActionLabels {
+  activeTab?: DialFileManagerTabs;
+  header?: string;
   loadedPaths?: Set<string>;
   loadingPaths?: Set<string>;
 }
@@ -32,6 +36,7 @@ const capturedDialFileManagerProps: {
     onGetInfo?: unknown;
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedTreeOptions;
+    navigationPanelOptions?: { placeholder?: string };
     bulkActionsToolbarOptions?: CapturedActionLabels;
     toolbarOptions?: {
       newActions?: { uploadArchive?: { label?: string } };
@@ -83,6 +88,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
       treeOptions?: CapturedTreeOptions;
+      navigationPanelOptions?: { placeholder?: string };
       bulkActionsToolbarOptions?: CapturedActionLabels;
       toolbarOptions?: {
         newActions?: { uploadArchive?: { label?: string } };
@@ -133,6 +139,7 @@ const baseHookResult: UseDialFileManagerResult = {
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),
+  cancelUploadFile: vi.fn(),
   clearUploadBatch: vi.fn(),
   onCreateFolder: vi.fn(),
   onCreateFolderValidate: vi.fn(),
@@ -208,19 +215,19 @@ const baseLabels: DialFileManagerShellLabels = {
   deleteConfirmBody: () => 'This cannot be undone.',
   deleteConfirmLabel: 'Delete',
   deleteCancelLabel: 'Cancel',
-  uploadProgressTitle: 'Uploading files',
-  cancelLabel: 'Cancel',
-  getUploadProgressText: (done, total) => `${done} of ${total}`,
+  getUploadQueueTitle: (count) => `Uploading ${count} files`,
   searchEmptyStateTitle: 'No results',
   folderEmptyStateTitle: 'This folder is empty',
   forbiddenSymbolsTooltip: 'Forbidden symbols',
   emptyStateByTab: {
+    [DialFileManagerTabs.All]: emptyStateCopy,
     [DialFileManagerTabs.MyFiles]: emptyStateCopy,
     [DialFileManagerTabs.Shared]: emptyStateCopy,
     [DialFileManagerTabs.Organization]: emptyStateCopy,
     [DialFileManagerTabs.Review]: emptyStateCopy,
   },
   treeHeaderByTab: {
+    [DialFileManagerTabs.All]: 'File storage',
     [DialFileManagerTabs.MyFiles]: 'My Files',
     [DialFileManagerTabs.Shared]: 'Shared with Me',
     [DialFileManagerTabs.Organization]: 'Organization',
@@ -257,18 +264,19 @@ const baseLabels: DialFileManagerShellLabels = {
 };
 
 const renderShell = (
-  hookResultOverrides?: Partial<UseDialFileManagerResult>,
+  hookResultOverrides?: Partial<UseDialFileManagerSectionsResult>,
   selectedPaths: Set<string> = new Set(),
   options: {
     activeTab?: DialFileManagerTabs;
     variant?: DialFileManagerVariant;
     actionProfile?: DialFileManagerActionProfile;
+    labels?: DialFileManagerShellLabels;
   } = {},
 ) =>
   render(
     <DialFileManagerShell
       hookResult={{ ...baseHookResult, ...hookResultOverrides }}
-      labels={baseLabels}
+      labels={options.labels ?? baseLabels}
       activeTab={options.activeTab ?? DialFileManagerTabs.MyFiles}
       tabs={[{ value: DialFileManagerTabs.MyFiles, label: 'My Files' }]}
       onTabChange={vi.fn()}
@@ -313,19 +321,63 @@ describe('DialFileManagerShell', () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
-  it('shows the upload progress modal when an upload batch is active', () => {
+  it('shows the upload queue with one row per file while a batch is listed', () => {
     renderShell({
       uploadBatchState: {
         isOpen: true,
-        files: [{ id: '1', name: 'a.pdf', status: FileUploadStatus.Uploading }],
+        files: [
+          { id: '1', name: 'a.pdf', status: FileUploadStatus.Uploading },
+          { id: '2', name: 'b.pdf', status: FileUploadStatus.Completed },
+        ],
       },
     });
-    expect(screen.getByText(baseLabels.uploadProgressTitle)).toBeTruthy();
+    expect(screen.getByText('Uploading 2 files')).toBeTruthy();
+    expect(screen.getByText('a.pdf')).toBeTruthy();
+    expect(screen.getByText('b.pdf')).toBeTruthy();
   });
 
-  it('does not render the upload progress modal when there is no active batch', () => {
+  it('does not render the upload queue when there is no batch', () => {
     renderShell({ uploadBatchState: null });
-    expect(screen.queryByText(baseLabels.uploadProgressTitle)).toBeNull();
+    expect(screen.queryByText(/^Uploading /)).toBeNull();
+  });
+
+  it('cancels one file from its queue row', async () => {
+    const cancelUploadFile = vi.fn();
+    renderShell({
+      cancelUploadFile,
+      uploadBatchState: {
+        isOpen: true,
+        files: [
+          { id: 'f1', name: 'a.pdf', status: FileUploadStatus.Uploading },
+        ],
+      },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Cancel "a.pdf"' }),
+    );
+
+    expect(cancelUploadFile).toHaveBeenCalledWith('f1');
+  });
+
+  it('aborts what is left and clears the queue when it is closed', async () => {
+    const cancelUpload = vi.fn();
+    const clearUploadBatch = vi.fn();
+    renderShell({
+      cancelUpload,
+      clearUploadBatch,
+      uploadBatchState: {
+        isOpen: true,
+        files: [
+          { id: 'f1', name: 'a.pdf', status: FileUploadStatus.Completed },
+        ],
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(cancelUpload).toHaveBeenCalledOnce();
+    expect(clearUploadBatch).toHaveBeenCalledOnce();
   });
 
   it('sets destinationFolderPopupOptions.sourceFolder to the common parent when all selected items share one', () => {
@@ -608,7 +660,7 @@ describe('DialFileManagerShell', () => {
       expectNoConsolidatedOverlay();
     });
 
-    it('does not render the overlay while an upload batch is active, showing UploadProgressModal instead', () => {
+    it('does not render the overlay while an upload batch is active, showing the upload queue instead', () => {
       renderShell({
         uploadBatchState: {
           isOpen: true,
@@ -617,7 +669,7 @@ describe('DialFileManagerShell', () => {
           ],
         },
       });
-      expect(screen.getByText(baseLabels.uploadProgressTitle)).toBeTruthy();
+      expect(screen.getByText('Uploading 1 files')).toBeTruthy();
       expectNoConsolidatedOverlay();
     });
 
@@ -745,6 +797,114 @@ describe('DialFileManagerShell', () => {
         capturedDialFileManagerProps.current?.toolbarOptions?.newActions
           ?.uploadArchive,
       ).toBeUndefined();
+    });
+  });
+
+  describe('All tab gating by sectionTab', () => {
+    const renderAll = (
+      sectionTab: DialFileManagerTabs,
+      overrides: Partial<UseDialFileManagerSectionsResult> = {},
+      labels?: DialFileManagerShellLabels,
+    ) =>
+      renderShell(
+        { uploadEnabled: true, sectionTab, ...overrides },
+        new Set(),
+        {
+          activeTab: DialFileManagerTabs.All,
+          variant: DialFileManagerVariant.Standalone,
+          actionProfile: DialFileManagerActionProfile.Full,
+          labels,
+        },
+      );
+
+    it('offers upload-archive on the All tab inside My files', () => {
+      renderAll(DialFileManagerTabs.MyFiles);
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toEqual({ label: baseLabels.uploadArchiveAction, icon: null });
+    });
+
+    it('hides upload-archive on the All tab inside Organization', () => {
+      renderAll(DialFileManagerTabs.Organization);
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
+
+    it('shows the browsed section empty state at a section root', () => {
+      renderAll(
+        DialFileManagerTabs.Shared,
+        { path: '/Shared' },
+        {
+          ...baseLabels,
+          emptyStateByTab: {
+            ...baseLabels.emptyStateByTab,
+            [DialFileManagerTabs.Shared]: {
+              title: 'Nothing shared with you yet',
+              description: '',
+            },
+          },
+        },
+      );
+      expect(screen.getByText('Nothing shared with you yet')).toBeTruthy();
+    });
+
+    it('keeps All as the strip value and tree header key', () => {
+      renderAll(DialFileManagerTabs.Shared);
+      expect(capturedDialFileManagerProps.current?.treeOptions?.activeTab).toBe(
+        DialFileManagerTabs.All,
+      );
+      expect(capturedDialFileManagerProps.current?.treeOptions?.header).toBe(
+        'File storage',
+      );
+    });
+
+    it('gates on activeTab when the controller has no sectionTab', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        activeTab: DialFileManagerTabs.Shared,
+        variant: DialFileManagerVariant.Standalone,
+        actionProfile: DialFileManagerActionProfile.Full,
+      });
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
+  });
+
+  describe('search placeholder', () => {
+    const labels: DialFileManagerShellLabels = {
+      ...baseLabels,
+      searchPlaceholderByTab: {
+        [DialFileManagerTabs.MyFiles]: 'Search in My files',
+        [DialFileManagerTabs.Shared]: 'Search in Shared with me files',
+        [DialFileManagerTabs.Organization]: 'Search in Organization files',
+      },
+    };
+    const placeholder = (): string | undefined =>
+      capturedDialFileManagerProps.current?.navigationPanelOptions?.placeholder;
+
+    it('names the storage of the selected tab', () => {
+      renderShell({}, new Set(), {
+        activeTab: DialFileManagerTabs.Shared,
+        labels,
+      });
+      expect(placeholder()).toBe('Search in Shared with me files');
+    });
+
+    it('names the browsed section on the All tab', () => {
+      renderShell({ sectionTab: DialFileManagerTabs.Organization }, new Set(), {
+        activeTab: DialFileManagerTabs.All,
+        labels,
+      });
+      expect(placeholder()).toBe('Search in Organization files');
+    });
+
+    it('leaves the default placeholder when the host passes none', () => {
+      renderShell();
+      expect(placeholder()).toBeUndefined();
     });
   });
 });

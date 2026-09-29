@@ -3,6 +3,7 @@ import type {
   DialDeletedItem,
   DialFile,
   DialFileManagerActions,
+  DialFileManagerTabs,
   DialUploadFileItem,
   FileManagerColumnKey,
 } from '@epam/ai-dial-react-file-manager';
@@ -36,7 +37,7 @@ export interface FileManagerController {
   onSearchFiles: (folder: string, query: string) => void;
   /** Search: true while a search request is in flight. */
   isSearching: boolean;
-  /** Search: flat list of matching files, or null when search is not active. */
+  /** Search: flat, unfiltered recursive listing of the current folder, or null when search is not active. */
   searchResults: DialFile[] | null;
   /** Search: clears results and exits search mode. */
   clearSearchResults: () => void;
@@ -73,7 +74,9 @@ export interface FileManagerController {
   uploadBatchState: FileUploadBatchState | null;
   /** Upload: abort all in-flight and queued uploads. */
   cancelUpload: () => void;
-  /** Upload: dismiss the progress modal after the batch has settled. */
+  /** Upload: abort one queued or in-flight upload by its entry id. */
+  cancelUploadFile: (id: string) => void;
+  /** Upload: empty the upload queue. */
   clearUploadBatch: () => void;
 
   /** Folder creation: called when user confirms a new folder name. */
@@ -156,4 +159,7 @@ export interface FileManagerController {
   onGetInfo: (file: DialFile) => void;
   /** Metadata: resets fileMetadata/isFileMetadataLoading; passed to fileMetadataPopupOptions.clearMetadata. */
   clearMetadata: () => void;
+
+  /** Source tab of the browsed folder, never `All`; omitted by single-source controllers. */
+  sectionTab?: DialFileManagerTabs;
 }

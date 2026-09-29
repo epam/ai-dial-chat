@@ -2,6 +2,7 @@ export { ChatSkill } from './components/ChatSkill/ChatSkill';
 export { FavoriteSkillsPanel } from './components/FavoriteSkillsPanel/FavoriteSkillsPanel';
 export { SkillArchiveUploadDialog } from './components/SkillArchiveUploadDialog/SkillArchiveUploadDialog';
 export { SkillCatalogModal } from './components/SkillCatalogModal/SkillCatalogModal';
+export { SkillContentFileTree } from './components/SkillContentFileTree/SkillContentFileTree';
 export { SkillDetailsSidePanel } from './components/SkillDetailsSidePanel/SkillDetailsSidePanel';
 export { SkillInfoTooltipContent } from './components/SkillInfoTooltipContent/SkillInfoTooltipContent';
 export { useSkillMentions } from './hooks/useSkillMentions/useSkillMentions';
@@ -47,6 +48,7 @@ export type { UseSkillMentionsResult } from './hooks/useSkillMentions/useSkillMe
 export type { ResolvedSkillMention } from './utils/skill-mention-matching';
 export type { TextChange } from './utils/skill-mention-tracking';
 export { SKILLS_CLASS } from './constants/public-class-names';
+export { SkillUnresolvedReason } from './types/skill-unresolved-reason';
 export { SkillSelectorField } from './components/SkillSelectorField/SkillSelectorField';
 export type {
   SkillSelectorFieldProps,

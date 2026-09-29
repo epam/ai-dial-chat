@@ -10,6 +10,11 @@ const ALL_TABS: FilterChipItem<DialFileManagerTabs>[] = [
   { value: DialFileManagerTabs.Organization, label: 'Organization' },
 ];
 
+const TABS_WITH_ALL: FilterChipItem<DialFileManagerTabs>[] = [
+  { value: DialFileManagerTabs.All, label: 'All' },
+  ...ALL_TABS,
+];
+
 describe('useDialFileManagerTabConfig', () => {
   it('preserves the default 3-tab set and never fires the reset', () => {
     const onTabChange = vi.fn();
@@ -124,5 +129,107 @@ describe('useDialFileManagerTabConfig', () => {
       'organization',
     ]);
     expect(onTabChange).not.toHaveBeenCalled();
+  });
+
+  describe('All tab', () => {
+    it('renders All first with the default four-tab config', () => {
+      const onTabChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManagerTabConfig(
+          DialFileManagerTabs.All,
+          onTabChange,
+          TABS_WITH_ALL,
+          ['all', 'my_files', 'shared', 'organization'],
+        ),
+      );
+
+      expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
+        'all',
+        'my_files',
+        'shared',
+        'organization',
+      ]);
+      expect(onTabChange).not.toHaveBeenCalled();
+    });
+
+    it('omits All when the config does not list it', () => {
+      const onTabChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManagerTabConfig(
+          DialFileManagerTabs.MyFiles,
+          onTabChange,
+          TABS_WITH_ALL,
+          ['my_files', 'shared', 'organization'],
+        ),
+      );
+
+      expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
+        'my_files',
+        'shared',
+        'organization',
+      ]);
+    });
+
+    it('hides All and corrects to the only source tab when one source is enabled', () => {
+      const onTabChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManagerTabConfig(
+          DialFileManagerTabs.All,
+          onTabChange,
+          TABS_WITH_ALL,
+          ['all', 'organization'],
+        ),
+      );
+
+      expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
+        'organization',
+      ]);
+      expect(onTabChange).toHaveBeenCalledWith(
+        DialFileManagerTabs.Organization,
+      );
+    });
+
+    it('keeps All while two sources stay enabled and corrects once only one remains', () => {
+      const onTabChange = vi.fn();
+
+      const { rerender } = renderHook(
+        ({ fileManagerTabs }: { fileManagerTabs: string[] }) =>
+          useDialFileManagerTabConfig(
+            DialFileManagerTabs.All,
+            onTabChange,
+            TABS_WITH_ALL,
+            fileManagerTabs,
+          ),
+        {
+          initialProps: {
+            fileManagerTabs: ['all', 'my_files', 'shared', 'organization'],
+          },
+        },
+      );
+
+      rerender({ fileManagerTabs: ['all', 'my_files', 'organization'] });
+      expect(onTabChange).not.toHaveBeenCalled();
+
+      rerender({ fileManagerTabs: ['all', 'my_files'] });
+      expect(onTabChange).toHaveBeenCalledWith(DialFileManagerTabs.MyFiles);
+    });
+
+    it('falls back to All first when the active tab is excluded', () => {
+      const onTabChange = vi.fn();
+
+      renderHook(() =>
+        useDialFileManagerTabConfig(
+          DialFileManagerTabs.Organization,
+          onTabChange,
+          TABS_WITH_ALL,
+          ['all', 'my_files', 'shared'],
+        ),
+      );
+
+      expect(onTabChange).toHaveBeenCalledWith(DialFileManagerTabs.All);
+    });
   });
 });

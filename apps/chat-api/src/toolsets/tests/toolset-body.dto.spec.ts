@@ -138,3 +138,23 @@ describe('ToolsetBodyDto — authSettings', () => {
     expect(errors.some((e) => e.property === 'authSettings')).toBe(true);
   });
 });
+
+describe('ToolsetBodyDto — name and description length', () => {
+  it('accepts a 256-character name', async () => {
+    const errors = await validateDto({ ...BASE_BODY, name: 'a'.repeat(256) });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects a 257-character name', async () => {
+    const errors = await validateDto({ ...BASE_BODY, name: 'a'.repeat(257) });
+    expect(errors.some((e) => e.property === 'name')).toBe(true);
+  });
+
+  it('rejects a description over 2000 characters', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      description: 'a'.repeat(2001),
+    });
+    expect(errors.some((e) => e.property === 'description')).toBe(true);
+  });
+});

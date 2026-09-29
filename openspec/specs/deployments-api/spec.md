@@ -110,7 +110,7 @@ The endpoint:
 - `owner?: string` — `owner` from DIAL Core's `DeploymentBase`; forwarded verbatim; omitted when DIAL Core does not provide it
 - `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
-- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the `mcp?: boolean` field, and the `responsesApi?: boolean` / `chatCompletion?: boolean` / `skillsSupported?: boolean` fields (see below)
+- `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the `mcp?: boolean` field, the `responsesApi?: boolean` / `chatCompletion?: boolean` / `skillsSupported?: boolean` fields, and the `tools?: boolean` field (see below)
 - `reference?: string` — `reference` from DIAL Core's raw deployment payload, forwarded verbatim; omitted when DIAL Core does not provide it. Callers MAY receive a deployment `id` elsewhere in the system (e.g. a stored conversation's `model` value) that actually holds this `reference` value instead of `id` — the frontend is responsible for matching against either field (see `deployment-reference-resolution`)
 
 `DeploymentItemDto.conversationStarters?: ConversationStartersDto` SHALL expose Quick Apps conversation starter settings mapped from `application_properties.conversation_starters`. It SHALL be set only for `type === 'application'` items with at least one valid starter.
@@ -130,7 +130,7 @@ Invalid or blank starters SHALL be omitted. If no valid starters remain, `conver
 
 These three signals are not mutually exclusive but are also not reliably combined — real DIAL Core list responses have been observed reporting MCP support through any one of them alone, with the other two absent, depending on the application's configuration.
 
-`DeploymentFeaturesDto.responsesApi?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.responses_api === true`, and `undefined` (omitted) otherwise — mirroring how `DeploymentFeaturesDetailsDto.responsesApi` is already populated for the deployment-details endpoint (`mapDeploymentFeatures`). `DeploymentFeaturesDto.chatCompletion?: boolean` SHALL be mapped the same way from `features.chat_completion`. `DeploymentFeaturesDto.skillsSupported?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.skills_supported === true` (DIAL Core PR #1976 — whether the deployment accepts custom skills in chat completion requests), and `undefined` (omitted) otherwise. All three fields SHALL be read defensively (absent/non-boolean source values map to `undefined`, never throw). None of these fields participates in any deployments-list caching key or filtering behavior; they are additive metadata only.
+`DeploymentFeaturesDto.responsesApi?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.responses_api === true`, and `undefined` (omitted) otherwise — mirroring how `DeploymentFeaturesDetailsDto.responsesApi` is already populated for the deployment-details endpoint (`mapDeploymentFeatures`). `DeploymentFeaturesDto.chatCompletion?: boolean` SHALL be mapped the same way from `features.chat_completion`. `DeploymentFeaturesDto.skillsSupported?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.skills_supported === true` (DIAL Core PR #1976 — whether the deployment accepts custom skills in chat completion requests), and `undefined` (omitted) otherwise. `DeploymentFeaturesDto.tools?: boolean` SHALL be `true` when the raw DIAL Core list entry has `features.tools === true` — mirroring how `DeploymentFeaturesDetailsDto.tools` is already populated for the deployment-details endpoint from the same underlying DIAL Core field — and `undefined` (omitted) otherwise. All four fields (`responsesApi`, `chatCompletion`, `skillsSupported`, `tools`) SHALL be read defensively (absent/non-boolean source values map to `undefined`, never throw). None of these fields participates in any deployments-list caching key or filtering behavior; they are additive metadata only.
 
 `DeploymentsResponseDto` SHALL wrap this as `{ deployments: DeploymentItemDto[] }`.
 
@@ -249,6 +249,21 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 
 - **WHEN** two DIAL Core deployments differ only in their `features.skills_supported` values
 - **THEN** both map to items in the same response with their respective `features.skillsSupported` values, and no cache key or list filtering considers the field
+
+#### Scenario: Item with tool-calling support maps features.tools true
+
+- **WHEN** a DIAL Core entry (model or application) has `features.tools: true`
+- **THEN** the mapped `DeploymentItemDto` has `features.tools: true`
+
+#### Scenario: Item without tool-calling support omits features.tools
+
+- **WHEN** a DIAL Core entry has no `features.tools` field, or a non-boolean value there
+- **THEN** the mapped `DeploymentItemDto`'s `features.tools` is `undefined`
+
+#### Scenario: features.tools does not change list caching or filtering
+
+- **WHEN** two DIAL Core deployments differ only in their `features.tools` values
+- **THEN** both map to items in the same response with their respective `features.tools` values, and no cache key or list filtering considers the field
 
 #### Scenario: reference mapped from DIAL Core
 

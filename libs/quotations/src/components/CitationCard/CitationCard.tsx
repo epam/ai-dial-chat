@@ -7,15 +7,29 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_KIT_ICON_STROKE,
+  DialItemType,
   ElementSize,
   EllipsisTooltip,
+  FileIcon,
   GhostIconButton,
+  LinkButton,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { FC, ReactNode } from 'react';
+import {
+  FC,
+  ReactNode,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
-import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
+import {
+  getSourceFileExtension,
+  type AnnotationGroup,
+} from '../../utils/group-annotations-by-source';
 import styles from './CitationCard.module.scss';
 
 /** User-visible strings for `CitationCard`. */
@@ -32,8 +46,10 @@ export interface CitationCardLabels {
   preview: string;
   /** Label for the "Open in browser" button. */
   openInBrowser: string;
-  /** Label for the "Download" button. */
-  download: string;
+  /** Label for the toggle that expands a quote cut off at the collapsed height. */
+  showMore: string;
+  /** Label for the toggle that collapses an expanded quote. */
+  showLess: string;
 }
 
 /** Color overrides for `CitationCard`, applied as CSS custom properties with app theme fallbacks. */
@@ -75,12 +91,16 @@ export interface CitationCardProps {
   /**
    * Called when the user clicks the "Preview" button. Omit when the group has
    * nothing previewable (e.g. reference-only chunks) — the "Preview" button is
-   * hidden and the remaining button is always labelled "Open in browser".
+   * hidden and an "Open in browser" button is shown instead.
    */
   onPreview?: (annotation: Annotation) => void;
-  /** Called when the user clicks the "Open in browser"/"Download" button. */
+  /** Called when the user clicks the "Open in browser" button, shown for web links and non-previewable sources. */
   onOpenInBrowser: (annotation: Annotation) => void;
-  /** Optional icon rendered before the source name in the card header. */
+  /**
+   * Optional icon rendered before the header text (the file extension for a
+   * previewable file, otherwise the source name). When omitted, a previewable
+   * file gets the UI kit's `FileIcon` glyph for its extension.
+   */
   headerIcon?: ReactNode;
   /** User-visible strings. */
   labels: CitationCardLabels;
@@ -110,6 +130,22 @@ export const CitationCard: FC<CitationCardProps> = ({
     onPreview == null ||
     sourceContentType === MIMEType.HTML ||
     sourceContentType === MIMEType.XHTML;
+  const fileExtension = isWebLink
+    ? undefined
+    : getSourceFileExtension(annotation);
+  const headerText = fileExtension ?? group.sourceName;
+  const resolvedHeaderIcon =
+    headerIcon ??
+    (fileExtension != null ? (
+      <FileIcon
+        type={DialItemType.File}
+        name={fileExtension}
+        fileExtension={fileExtension}
+        size={16}
+        decorative
+        className="shrink-0"
+      />
+    ) : undefined);
 
   const sourceNameClassName =
     typography?.sourceNameClassName ?? 'dial-tiny-text';
@@ -127,6 +163,33 @@ export const CitationCard: FC<CitationCardProps> = ({
     '--cc-source-name-text': colors?.sourceNameText,
   });
 
+  const quote = annotation.body?.quote;
+  const quoteId = useId();
+  const quoteRef = useRef<HTMLDivElement>(null);
+  const [isQuoteExpanded, setIsQuoteExpanded] = useState(false);
+  const [isQuoteClamped, setIsQuoteClamped] = useState(false);
+
+  /* Every citation opens collapsed, including one reached via the switcher. */
+  useEffect(() => {
+    setIsQuoteExpanded(false);
+  }, [activeIndex, quote]);
+
+  /* The toggle only appears when the collapsed quote actually overflows its
+   * line clamp. Measuring is skipped while expanded so "Show less" stays
+   * available; re-measuring on resize covers font loading and width changes. */
+  useLayoutEffect(() => {
+    const element = quoteRef.current;
+    if (!element || isQuoteExpanded) return;
+
+    const measure = () =>
+      setIsQuoteClamped(element.scrollHeight > element.clientHeight + 1);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [quote, isQuoteExpanded]);
+
   return (
     <div
       role="dialog"
@@ -142,9 +205,9 @@ export const CitationCard: FC<CitationCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1">
-          {headerIcon}
+          {resolvedHeaderIcon}
           <EllipsisTooltip
-            text={group.sourceName}
+            text={headerText}
             className={mergeClasses(
               sourceNameClassName,
               'min-w-0',
@@ -198,24 +261,43 @@ export const CitationCard: FC<CitationCardProps> = ({
               {annotation.body.title}
             </p>
           )}
-          {(annotation.body?.quote || hasSwitcher) && (
-            <div
-              className={mergeClasses(
-                quoteClassName,
-                styles.quote,
-                'line-clamp-6 break-words',
-                hasSwitcher && 'min-h-[3lh]',
-              )}
-            >
-              {annotation.body?.quote && (
-                <MarkdownRenderer
-                  content={annotation.body.quote}
-                  classNames={{
-                    p: mergeClasses(quoteClassName, styles.quote),
-                    ul: mergeClasses(quoteClassName, 'ps-3'),
-                    ol: mergeClasses(quoteClassName, 'ps-3'),
-                    strong: quoteStrongClassName,
-                  }}
+          {(quote || hasSwitcher) && (
+            <div className="flex flex-col items-start gap-1">
+              <div
+                ref={quoteRef}
+                id={quoteId}
+                /* An expanded quote scrolls, and a scrollable region must be
+                 * reachable from the keyboard. */
+                tabIndex={isQuoteExpanded ? 0 : undefined}
+                className={mergeClasses(
+                  quoteClassName,
+                  styles.quote,
+                  'w-full break-words',
+                  isQuoteExpanded
+                    ? 'max-h-[min(20rem,50vh)] overflow-y-auto'
+                    : 'line-clamp-6',
+                  hasSwitcher && 'min-h-[3lh]',
+                )}
+              >
+                {quote && (
+                  <MarkdownRenderer
+                    content={quote}
+                    classNames={{
+                      p: mergeClasses(quoteClassName, styles.quote),
+                      ul: mergeClasses(quoteClassName, 'ps-3'),
+                      ol: mergeClasses(quoteClassName, 'ps-3'),
+                      strong: quoteStrongClassName,
+                    }}
+                  />
+                )}
+              </div>
+              {isQuoteClamped && (
+                <LinkButton
+                  label={isQuoteExpanded ? labels.showLess : labels.showMore}
+                  size={ElementSize.Small}
+                  aria-expanded={isQuoteExpanded}
+                  aria-controls={quoteId}
+                  onClick={() => setIsQuoteExpanded((expanded) => !expanded)}
                 />
               )}
             </div>
@@ -232,11 +314,13 @@ export const CitationCard: FC<CitationCardProps> = ({
             onClick={() => onPreview(annotation)}
           />
         )}
-        <PrimaryButton
-          label={isWebLink ? labels.openInBrowser : labels.download}
-          size={ElementSize.Small}
-          onClick={() => onOpenInBrowser(annotation)}
-        />
+        {isWebLink && (
+          <PrimaryButton
+            label={labels.openInBrowser}
+            size={ElementSize.Small}
+            onClick={() => onOpenInBrowser(annotation)}
+          />
+        )}
       </div>
     </div>
   );

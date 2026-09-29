@@ -10,9 +10,12 @@ import { getApiErrorDetails, getApiErrorStatus } from '../api-error/api-error';
 import {
   buildSkillFilesPayload,
   buildSkillManifestForSubmit,
+  getSkillFieldLengthViolations,
   isValidSkillRelativePath,
   normalizeSkillName,
+  SKILL_TEXT_FIELD_MAX_LENGTHS,
   startsWithFrontmatterBlock,
+  type SkillTextField,
 } from './skill';
 import type { SkillFileContent } from './skill-file-preview';
 
@@ -72,6 +75,8 @@ export interface SkillEditorSubmitClient {
 export interface SkillEditorSubmitMessages {
   /** Shown when a required field is empty. */
   required: string;
+  /** Shown when a name, description or instructions value exceeds its length limit, given that limit. */
+  tooLong: (maxLength: number) => string;
   /**
    * Shown when the Instructions value opens with its own YAML frontmatter
    * block — pasting a whole `SKILL.md` in there would otherwise produce a
@@ -412,21 +417,41 @@ export const useSkillEditorSubmit = ({
   const handleValuesChange = useCallback(
     (values: SkillEditorValues) => {
       const hasFrontmatter = startsWithFrontmatterBlock(values.instructions);
+      const violations = getSkillFieldLengthViolations(values);
       setErrors((prev) => {
         /*
-         * Touch only this one message: a required-field or any other
-         * host-set `instructions` message must survive, and the other
-         * fields' errors are none of this check's business.
+         * Touch only the messages these live checks own (too long, and the
+         * instructions frontmatter one): a required-field or any other
+         * host-set message must survive until the next submit.
          */
-        const isShowing =
-          prev.instructions === messages.instructionsFrontmatter;
-        if (hasFrontmatter === isShowing) return prev;
-        if (hasFrontmatter) {
-          return { ...prev, instructions: messages.instructionsFrontmatter };
-        }
         const next = { ...prev };
-        delete next.instructions;
-        return next;
+        for (const field of Object.keys(
+          SKILL_TEXT_FIELD_MAX_LENGTHS,
+        ) as SkillTextField[]) {
+          const tooLongMessage = messages.tooLong(
+            SKILL_TEXT_FIELD_MAX_LENGTHS[field],
+          );
+          if (violations[field]) {
+            next[field] = tooLongMessage;
+          } else if (next[field] === tooLongMessage) {
+            delete next[field];
+          }
+        }
+        if (!violations.instructions) {
+          const isShowing =
+            next.instructions === messages.instructionsFrontmatter;
+          if (hasFrontmatter && !isShowing) {
+            next.instructions = messages.instructionsFrontmatter;
+          } else if (!hasFrontmatter && isShowing) {
+            delete next.instructions;
+          }
+        }
+        const isUnchanged =
+          Object.keys(next).length === Object.keys(prev).length &&
+          (Object.keys(next) as (keyof SkillEditorErrors)[]).every(
+            (key) => next[key] === prev[key],
+          );
+        return isUnchanged ? prev : next;
       });
     },
     [messages],
@@ -453,6 +478,12 @@ export const useSkillEditorSubmit = ({
          * block) must still be unable to reach `buildSkillManifestForSubmit`.
          */
         nextErrors.instructions = messages.instructionsFrontmatter;
+      }
+      const violations = getSkillFieldLengthViolations(values);
+      for (const field of Object.keys(violations) as SkillTextField[]) {
+        nextErrors[field] ??= messages.tooLong(
+          SKILL_TEXT_FIELD_MAX_LENGTHS[field],
+        );
       }
       if (Object.keys(nextErrors).length > 0) {
         setErrors(nextErrors);

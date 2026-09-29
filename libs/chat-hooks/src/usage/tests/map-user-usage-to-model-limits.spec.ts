@@ -35,6 +35,9 @@ const t: Translate = (key, params) => {
   }
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.spentLabel)
     return `${params?.amount} spent`;
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.applicationTypeLabel) return 'Agent';
+  if (key === USAGE_MODEL_LIMITS_I18N_KEYS.includesCalledModelsLabel)
+    return 'Includes cost of models it called';
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.todayPeriodDescription)
     return 'Today';
   if (key === USAGE_MODEL_LIMITS_I18N_KEYS.thisWeekPeriodDescription)
@@ -255,14 +258,14 @@ describe('mapUserUsageToModelLimits', () => {
     expect(row.avatarSrc).toBe('resolved:model-icon.svg');
   });
 
-  it('does not enrich a model row from a non-model deployment item', () => {
+  it('does not enrich a row from a toolset deployment item', () => {
     const [row] = mapUsage(
       withUsage({ shared_id: { dayTokenStats: { used: 1, total: 10 } } }),
       [
         modelItem({
           id: 'shared_id',
-          type: DeploymentItemDtoTypeEnum.Application,
-          displayName: 'Some App',
+          type: DeploymentItemDtoTypeEnum.Toolset,
+          displayName: 'Some Toolset',
         }),
       ],
     );
@@ -672,6 +675,141 @@ describe('mapUserUsageToModelLimits', () => {
 
       expect(row.day.tokens.kind).toBe(ModelLimitMetricKind.Unavailable);
       expect(row.status).toBe(ModelLimitStatus.Unavailable);
+    });
+  });
+
+  describe('application rows', () => {
+    const appItem = (
+      overrides: Partial<DeploymentItemDto> = {},
+    ): DeploymentItemDto => ({
+      id: 'llm-router',
+      displayName: 'LLM Router',
+      iconUrl: 'router.svg',
+      type: DeploymentItemDtoTypeEnum.Application,
+      ...overrides,
+    });
+    /* The shape DIAL Core reports for an application: no token counters. */
+    const routerStats: DeploymentLimitsResponseDto = {
+      dayTokenStats: { total: 10_000_000, used: 0 },
+      weekTokenStats: { total: 10_000_000, used: 0 },
+      monthTokenStats: { total: 10_000_000, used: 0 },
+      dayCostStats: { total: UNLIMITED_SENTINEL, used: 1.5 },
+      weekCostStats: { total: UNLIMITED_SENTINEL, used: 1.5 },
+      monthCostStats: { total: UNLIMITED_SENTINEL, used: 1.5 },
+    };
+
+    it('enriches the row with the application name, icon, and Agent caption', () => {
+      const [row] = mapUsage(
+        withUsage({ 'llm-router': routerStats }),
+        [appItem()],
+        { resolveIconUrl: (iconUrl) => `resolved:${iconUrl}` },
+      );
+
+      expect(row).toMatchObject({
+        id: 'llm-router',
+        name: 'LLM Router',
+        avatarSrc: 'resolved:router.svg',
+        typeLabel: 'Agent',
+      });
+    });
+
+    it('marks every Tokens cell unavailable despite a role token budget', () => {
+      const [row] = mapUsage(withUsage({ 'llm-router': routerStats }), [
+        appItem(),
+      ]);
+
+      for (const period of [row.day, row.week, row.month]) {
+        expect(period.tokens).toEqual({
+          kind: ModelLimitMetricKind.Unavailable,
+          ariaLabel: 'Not available',
+        });
+      }
+    });
+
+    it('shows spent cost with a note that it includes the models it called', () => {
+      const [row] = mapUsage(withUsage({ 'llm-router': routerStats }), [
+        appItem(),
+      ]);
+
+      expect(row.day.cost).toMatchObject({
+        kind: ModelLimitMetricKind.Unlimited,
+        usedLabel: expect.stringContaining('spent'),
+        supportingLabel: 'Includes cost of models it called',
+      });
+    });
+
+    it('excludes an application whose only nonzero stat is a token stat', () => {
+      const rows = mapUsage(
+        withUsage({
+          'llm-router': {
+            dayTokenStats: { total: 10_000_000, used: 30 },
+            dayCostStats: { total: UNLIMITED_SENTINEL, used: 0 },
+          },
+        }),
+        [appItem()],
+      );
+
+      expect(rows).toEqual([]);
+    });
+
+    it('takes its Status from the overall Cost budget', () => {
+      const [row] = mapUsage(
+        withUsage(
+          { 'llm-router': routerStats },
+          { dayCostStats: { total: 10, used: 8 } },
+        ),
+        [appItem()],
+      );
+
+      expect(row.status).toBe(ModelLimitStatus.RunningLow);
+    });
+
+    it.each([
+      [
+        'raw usage key, encoded item id',
+        'applications/abc/My App__1.0',
+        'applications/abc/My%20App__1.0',
+      ],
+      [
+        'encoded usage key, raw item id',
+        'applications/abc/My%20App__1.0',
+        'applications/abc/My App__1.0',
+      ],
+    ])(
+      'matches a custom application id with a %s',
+      (_label, usageKey, itemId) => {
+        const [row] = mapUsage(withUsage({ [usageKey]: routerStats }), [
+          appItem({ id: itemId, displayName: 'My App' }),
+        ]);
+
+        expect(row.id).toBe(usageKey);
+        expect(row.name).toBe('My App');
+        expect(row.typeLabel).toBe('Agent');
+      },
+    );
+
+    it('keeps an unmatched id as a model row without a type caption', () => {
+      const [row] = mapUsage(withUsage({ unknown: routerStats }), []);
+
+      expect(row.name).toBe('unknown');
+      expect(row.typeLabel).toBeUndefined();
+      expect(row.day.tokens.kind).not.toBe(ModelLimitMetricKind.Unavailable);
+    });
+
+    it('leaves model rows unchanged next to an application row', () => {
+      const modelStats: DeploymentLimitsResponseDto = {
+        dayTokenStats: { total: 1000, used: 100 },
+        dayCostStats: { total: UNLIMITED_SENTINEL, used: 1.5 },
+      };
+      const [alone] = mapUsage(withUsage({ 'gpt-4o': modelStats }));
+      const rows = mapUsage(
+        withUsage({ 'gpt-4o': modelStats, 'llm-router': routerStats }),
+        [modelItem(), appItem()],
+      );
+
+      expect(rows.map((row) => row.id)).toEqual(['gpt-4o', 'llm-router']);
+      expect(rows[0]).toEqual(alone);
+      expect(rows[0]).not.toHaveProperty('typeLabel');
     });
   });
 });

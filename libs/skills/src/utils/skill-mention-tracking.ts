@@ -116,3 +116,33 @@ export const findMentionAtCaret = (
   caretPosition: number,
 ): SkillMentionAnchor | undefined =>
   anchors.find((anchor) => anchor.start + anchor.length === caretPosition);
+
+/**
+ * The contiguous non-whitespace run touching `caretPosition` in `text`, when
+ * it is shaped like an as-yet-unselected slash query: starts with `prefix`
+ * and contains no second occurrence of it. `undefined` when the run at the
+ * caret isn't shaped that way. Mirrors the word shape the slash command menu
+ * opens for, so the Add-menu's own selection path can detect and consume the
+ * same typed `/query` text.
+ */
+export const findSlashQueryAtCaret = (
+  text: string,
+  caretPosition: number,
+  prefix: string,
+): { start: number; end: number } | undefined => {
+  let start = caretPosition;
+  while (start > 0 && !/\s/.test(text[start - 1])) {
+    start--;
+  }
+  let end = start;
+  while (end < text.length && !/\s/.test(text[end])) {
+    end++;
+  }
+
+  const word = text.slice(start, end);
+  if (!word.startsWith(prefix) || word.slice(prefix.length).includes(prefix)) {
+    return undefined;
+  }
+
+  return { start, end };
+};

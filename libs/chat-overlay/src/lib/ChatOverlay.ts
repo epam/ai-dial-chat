@@ -34,6 +34,7 @@ import {
 import { DEFAULT_LOADER_INNER_HTML } from './internal/default-loader';
 import { DeferredRequest } from './internal/deferred-request';
 import { setStyles } from './internal/dom-styles';
+import { resolveOverlayAuth } from './internal/legacy-sign-in';
 import {
   ensureOverlayStylesInjected,
   OverlayClassName,
@@ -357,14 +358,15 @@ export class ChatOverlay {
     if (this.options.enabledFeatures !== undefined) {
       payload.enabledFeatures = this.options.enabledFeatures;
     }
-    const authProviderUiModes = this.options.auth?.providerUiModes;
+    const auth = resolveOverlayAuth(this.options);
+    const authProviderUiModes = auth?.providerUiModes;
     if (
       authProviderUiModes !== undefined &&
       Object.keys(authProviderUiModes).length > 0
     ) {
       payload.authProviderUiModes = authProviderUiModes;
     }
-    const autoSignInProvider = this.options.auth?.autoSignInProvider?.trim();
+    const autoSignInProvider = auth?.autoSignInProvider?.trim();
     if (autoSignInProvider) {
       payload.authAutoSignInProvider = autoSignInProvider;
     }

@@ -298,6 +298,9 @@ export const mapToDeploymentItem = (
             ...(raw.features?.skills_supported === true && {
               skillsSupported: true,
             }),
+            ...(raw.features?.tools === true && {
+              tools: true,
+            }),
           }
         : undefined,
     maxInputAttachments:

@@ -295,6 +295,70 @@ describe('UsageTab', () => {
       );
     });
 
+    it('renders an agent row beside model rows with its caption and cost note', () => {
+      mockUseDeployments.mockReturnValue(
+        createDeploymentsContextValue({
+          items: [
+            {
+              id: 'gpt-4o',
+              displayName: 'GPT-4o',
+              type: DeploymentItemDtoTypeEnum.Model,
+            },
+            {
+              id: 'llm-router',
+              displayName: 'LLM Router',
+              type: DeploymentItemDtoTypeEnum.Application,
+            },
+          ],
+        }),
+      );
+      mockUseUsageData.mockReturnValue({
+        usage: {
+          deployments: {
+            'gpt-4o': { dayTokenStats: usableStats },
+            'llm-router': {
+              dayTokenStats: { used: 0, total: 10_000_000 },
+              dayCostStats: { used: 1.5, total: 2 ** 63 },
+            },
+          },
+        },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      render(<UsageTab />);
+
+      expect(screen.getByText('GPT-4o')).toBeTruthy();
+      expect(screen.getByText('LLM Router')).toBeTruthy();
+
+      const { rows } = modelLimitsSectionSpy.mock.lastCall?.[0] as {
+        rows: ModelLimitRow[];
+      };
+      const [modelRow, agentRow] = rows;
+      expect(modelRow).not.toHaveProperty('typeLabel');
+      expect(agentRow.typeLabel).toBe(UsageI18nKeys.ApplicationTypeLabel);
+      expect(agentRow.day.tokens.kind).toBe('unavailable');
+      expect(agentRow.day.cost.supportingLabel).toBe(
+        UsageI18nKeys.IncludesCalledModelsLabel,
+      );
+    });
+
+    it('keeps the usage fetcher identity stable across re-renders', () => {
+      mockUseUsageData.mockReturnValue({
+        usage: { deployments: {} },
+        isLoading: false,
+        usageError: undefined,
+      });
+
+      const { rerender } = render(<UsageTab />);
+      rerender(<UsageTab />);
+
+      const fetchers = new Set(
+        mockUseUsageData.mock.calls.map(([fetch]) => fetch),
+      );
+      expect(fetchers.size).toBe(1);
+    });
+
     it('passes overall Cost statuses from the aggregate-card budgets', () => {
       mockUseUsageData.mockReturnValue({
         usage: {

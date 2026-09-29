@@ -312,8 +312,8 @@ The picker SHALL be fully translated, keyboard-operable, direction-agnostic, and
 | `dialFileManager.hiddenFiles` | `"Hidden files"` |
 | `dialFileManager.showHiddenFiles` | `"Show hidden files"` |
 | `dialFileManager.hideHiddenFiles` | `"Hide hidden files"` |
-| `dialFileManager.itemsSelected_one` | `"{{count}} item selected"` |
-| `dialFileManager.itemsSelected_other` | `"{{count}} items selected"` |
+| `dialFileManager.itemsSelected_one` | `"item selected"` |
+| `dialFileManager.itemsSelected_other` | `"items selected"` |
 
 All `aria-label` values in `DialFileManagerModal` go through `t()`. No English strings are hardcoded in the app component.
 

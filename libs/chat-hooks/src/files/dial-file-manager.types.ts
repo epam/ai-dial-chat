@@ -69,6 +69,8 @@ export enum FileManagerNotificationReason {
   UploadArchivePartiallyFailed = 'uploadArchivePartiallyFailed',
   /** `onUploadArchive`'s `uploadArchive` request itself rejected. */
   UploadArchiveRequestFailed = 'uploadArchiveRequestFailed',
+  /** A copy/move targeted a destination in a different All-view section from its source items; no request was made. */
+  CrossSectionTransferUnsupported = 'crossSectionTransferUnsupported',
 }
 
 /**
@@ -108,7 +110,6 @@ export enum FileNameValidationErrorReason {
   ReservedName = 'reservedName',
   TooLong = 'tooLong',
   DuplicateName = 'duplicateName',
-  LeadingDot = 'leadingDot',
 }
 
 /**
@@ -127,8 +128,7 @@ export type FileNameValidationError =
   | {
       reason: FileNameValidationErrorReason.DuplicateName;
       existingName: string;
-    }
-  | { reason: FileNameValidationErrorReason.LeadingDot };
+    };
 
 /**
  * Kind of mutation `useDialFileMutations` just completed successfully, for
@@ -145,6 +145,9 @@ export enum FileOperationKind {
   FilesCopied = 'filesCopied',
   FileMoved = 'fileMoved',
   FilesMoved = 'filesMoved',
+  /** A copy whose every item landed in its own source folder (Duplicate). */
+  FileDuplicated = 'fileDuplicated',
+  FilesDuplicated = 'filesDuplicated',
 }
 
 /**
@@ -159,13 +162,15 @@ export interface FileOperationSuccessEvent {
   name?: string;
   /** Number of items the operation covered, when applicable. */
   count?: number;
-  /** Destination folder name, for copy/move operations. */
+  /**
+   * Destination folder as a slash-joined virtual path starting at the root
+   * label (e.g. `My files/reports`), for copy/move/duplicate operations.
+   */
   destinationFolderName?: string;
   /**
-   * Whether the affected item is a folder rather than a file. Only set for
-   * `fileRenamed`, since it is the only kind whose current wording depends
-   * on the item's node type (a rename toast reads "Folder renamed" vs.
-   * "File renamed").
+   * Whether the affected item is a folder rather than a file. Set for rename,
+   * copy, move, and duplicate events; on a multi-item event it describes the
+   * first successfully affected item (the one `name` refers to).
    */
   isFolder?: boolean;
 }
@@ -179,6 +184,10 @@ export interface UseDialFileManagerOptions {
   rootLabel?: string;
   /** Active tab — drives listing source and per-tab options. Defaults to MyFiles. */
   activeTab?: DialFileManagerTabs;
+  /** When false, the listing issues no `DialFilesApi` call and reports `isLoading: false`. Defaults to `true`. */
+  isActive?: boolean;
+  /** Changing this value resets cache and navigation exactly like an `activeTab` change. Defaults to `undefined`. */
+  sessionKey?: string;
   /** Called when a file-manager action should surface a toast notification. */
   onNotification?: (notification: FileManagerNotification) => void;
   /** Called when a mutation succeeds, instead of invoking an application notification service directly. */
@@ -237,7 +246,7 @@ export interface UseDialFileManagerResult {
   onSearchFiles: (folder: string, query: string) => void;
   /** Search: true while a search request is in flight. */
   isSearching: boolean;
-  /** Search: flat list of matching files, or null when search is not active. */
+  /** Search: flat, unfiltered recursive listing of the current folder, or null when search is not active. */
   searchResults: DialFile[] | null;
   /** Search: clears results and exits search mode. */
   clearSearchResults: () => void;
@@ -274,7 +283,9 @@ export interface UseDialFileManagerResult {
   uploadBatchState: FileUploadBatchState | null;
   /** Upload: abort all in-flight and queued uploads. */
   cancelUpload: () => void;
-  /** Upload: dismiss the progress modal after the batch has settled. */
+  /** Upload: abort one queued or in-flight upload by its entry id. */
+  cancelUploadFile: (id: string) => void;
+  /** Upload: empty the upload queue. */
   clearUploadBatch: () => void;
 
   /** Folder creation: called when user confirms a new folder name. */
@@ -363,7 +374,7 @@ export interface UseDialFileManagerResult {
   /**
    * True while any mutating file-manager operation is in flight: the OR of
    * `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`,
-   * `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`.
+   * `isMoving`, `isUnsharing`, `isRemovingAccess`, and any upload still queued or running.
    *
    * Deliberately excludes three flags, each already fully contained by its own
    * scoped loading UI:

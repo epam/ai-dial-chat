@@ -1,5 +1,6 @@
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
+  DialFileManagerTabs,
   DialFileNodeType,
   DialFilePermission,
 } from '@epam/ai-dial-react-file-manager';
@@ -18,6 +19,10 @@ import {
   normalizeVirtualPath,
   parseNewFolderVirtualPath,
   resolveOwnerCoords,
+  hasSamePaths,
+  resolveSectionByPath,
+  unionPathSets,
+  withRoutableRootLabels,
 } from '../dial-file-manager-path.util';
 import type { SharedRootMeta } from '../dial-file-manager.model';
 import { DialFileManagerActionProfile } from '../file-manager-variant';
@@ -288,5 +293,102 @@ describe('resolveOwnerCoords', () => {
     expect(
       resolveOwnerCoords('sharedFolder/sub', sharedRootMeta, 'my-bucket'),
     ).toEqual({ bucket: 'owner-bucket', path: 'reports/sub' });
+  });
+});
+
+describe('resolveSectionByPath', () => {
+  const sections = [
+    { tab: DialFileManagerTabs.MyFiles, rootLabel: 'My files' },
+    { tab: DialFileManagerTabs.Shared, rootLabel: 'Shared' },
+    { tab: DialFileManagerTabs.Organization, rootLabel: 'Organization' },
+  ];
+
+  it('resolves a section root path', () => {
+    expect(resolveSectionByPath('/Shared', sections)?.tab).toBe(
+      DialFileManagerTabs.Shared,
+    );
+  });
+
+  it('resolves a nested path with or without a leading slash', () => {
+    expect(resolveSectionByPath('/Organization/docs/', sections)?.tab).toBe(
+      DialFileManagerTabs.Organization,
+    );
+    expect(resolveSectionByPath('My files/reports/q1.pdf', sections)?.tab).toBe(
+      DialFileManagerTabs.MyFiles,
+    );
+  });
+
+  it('does not match a root label that is only a prefix of the first segment', () => {
+    expect(resolveSectionByPath('/Shared stuff/a', sections)).toBeUndefined();
+    expect(resolveSectionByPath('/My files/Shared stuff/', sections)?.tab).toBe(
+      DialFileManagerTabs.MyFiles,
+    );
+  });
+
+  it('returns undefined for a path outside every section', () => {
+    expect(resolveSectionByPath('/Elsewhere/a', sections)).toBeUndefined();
+    expect(resolveSectionByPath('/', sections)).toBeUndefined();
+  });
+});
+
+describe('hasSamePaths', () => {
+  it('treats two empty sets as equal', () => {
+    expect(hasSamePaths(new Set(), new Set())).toBe(true);
+  });
+
+  it('compares contents regardless of insertion order', () => {
+    expect(hasSamePaths(new Set(['/a', '/b']), new Set(['/b', '/a']))).toBe(
+      true,
+    );
+  });
+
+  it('rejects a strict subset and a same-size set with different paths', () => {
+    expect(hasSamePaths(new Set(['/a']), new Set(['/a', '/b']))).toBe(false);
+    expect(hasSamePaths(new Set(['/a']), new Set(['/b']))).toBe(false);
+  });
+});
+
+describe('unionPathSets', () => {
+  it('returns an empty set for no inputs', () => {
+    expect(unionPathSets([]).size).toBe(0);
+  });
+
+  it('merges overlapping sets without duplicates and without mutating them', () => {
+    const first = new Set(['/a', '/b']);
+    const union = unionPathSets([first, new Set(['/b', '/c'])]);
+
+    expect([...union].sort()).toEqual(['/a', '/b', '/c']);
+    expect(first.size).toBe(2);
+  });
+});
+
+describe('withRoutableRootLabels', () => {
+  it('keeps unique slash-free labels, returning the same section objects', () => {
+    const sections = [
+      { tab: DialFileManagerTabs.MyFiles, rootLabel: 'My files' },
+      { tab: DialFileManagerTabs.Shared, rootLabel: 'Shared' },
+    ];
+
+    expect(withRoutableRootLabels(sections)).toEqual(sections);
+    expect(withRoutableRootLabels(sections)[0]).toBe(sections[0]);
+  });
+
+  it('falls back to the tab id for an empty, slash-containing or repeated label', () => {
+    const labels = withRoutableRootLabels([
+      { tab: DialFileManagerTabs.MyFiles, rootLabel: 'Files' },
+      { tab: DialFileManagerTabs.Shared, rootLabel: 'Files' },
+      { tab: DialFileManagerTabs.Organization, rootLabel: 'Org/Public' },
+    ]).map((section) => section.rootLabel);
+
+    expect(labels).toEqual([
+      'Files',
+      DialFileManagerTabs.Shared,
+      DialFileManagerTabs.Organization,
+    ]);
+    expect(
+      withRoutableRootLabels([
+        { tab: DialFileManagerTabs.MyFiles, rootLabel: '  ' },
+      ])[0].rootLabel,
+    ).toBe(DialFileManagerTabs.MyFiles);
   });
 });

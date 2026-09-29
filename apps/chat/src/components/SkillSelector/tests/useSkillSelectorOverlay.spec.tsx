@@ -10,8 +10,8 @@ vi.mock('@epam/ai-dial-skills', () => ({
   getSkillFallbackName: (url: string) => url,
   useSkillSelectorOverlay: state.useHostOverlay,
 }));
-vi.mock('../../../context/AppConfigContext', () => ({
-  useFeatureFlag: () => true,
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ user: { bucket: 'my-bucket' } }),
 }));
 vi.mock('../../../context/FavoriteApplicationsContext', () => ({
   useFavoriteApplications: () => ({
@@ -39,6 +39,20 @@ describe('useSkillSelectorOverlay', () => {
 
     expect(state.useHostOverlay).toHaveBeenCalledWith(
       expect.not.objectContaining({ activeMentionDetailsTrigger: 'click' }),
+    );
+  });
+
+  it('forwards the viewer bucket and the unresolved-skill tooltip labels', () => {
+    renderHook(() => useSkillSelectorOverlay({ isSkillsSupported: true }));
+
+    expect(state.useHostOverlay).toHaveBeenCalledWith(
+      expect.objectContaining({
+        viewerBucket: 'my-bucket',
+        labels: expect.objectContaining({
+          deletedTooltipLabel: 'skillSelector.deletedTooltipLabel',
+          notSharedTooltipLabel: 'skillSelector.notSharedTooltipLabel',
+        }),
+      }),
     );
   });
 });

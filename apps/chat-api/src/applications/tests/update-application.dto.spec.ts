@@ -87,6 +87,23 @@ describe('UpdateApplicationBodyDto', () => {
     expect(errors).toHaveLength(0);
   });
 
+  it('passes with an in-cluster endpoint whose hostname has a trailing dot', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      endpoint:
+        'http://dial-echo.dial-echo.svc.cluster.local./openai/deployments/echo/chat/completions',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('passes with a single-label hostname endpoint', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      endpoint: 'http://application1/chat/completions',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
   it('rejects a non-URL endpoint (no protocol)', async () => {
     const errors = await validateDto({
       ...BASE_BODY,

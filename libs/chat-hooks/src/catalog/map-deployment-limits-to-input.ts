@@ -15,7 +15,7 @@ import type { FormatResetTime } from '../usage/map-usage-data-to-dashboard';
 export interface ConversationInputLimitsLabels {
   /** Heading of the group listing the selected deployment's token limits. */
   tokenGroup: string;
-  /** Heading of the group listing the caller's cost budget, which spans every deployment. */
+  /** Heading of the group listing the caller's cost budget and spend against it. */
   costGroup: string;
   /** Label for the current-UTC-day row, used by both groups. */
   periodDay: string;
@@ -53,11 +53,14 @@ const TOKEN_MAPPINGS: PeriodMapping[] = [
 ];
 
 /*
- * The cost stats on a deployment-limits response are the caller's own budget,
- * spanning every deployment rather than the one that was queried — the same
- * figures come back whichever deployment is asked. They are listed as their own
- * group, and never as a caption on a token row, so the spend is not read as
- * this model's alone.
+ * The cost stats on a deployment-limits response measure against the caller's
+ * own budget, not a per-deployment cap. Since DIAL Core #2032 their `used` is
+ * the caller's global spend plus the cost the queried deployment aggregated
+ * from deployments it called — zero for a plain model, so a model's figures
+ * are the same whichever model is asked, but a router's run higher (its
+ * descendants' cost is already in the global spend; the suspected double count
+ * is tracked upstream). They are listed as their own group, and never as a
+ * caption on a token row, so the spend is not read as this model's alone.
  */
 const COST_MAPPINGS: PeriodMapping[] = [
   { key: 'dayCostStats', labelField: 'periodDay' },

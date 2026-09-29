@@ -9,7 +9,7 @@ export interface AnnotationGroup {
    * cit ids citing the same document never share popup state.
    */
   groupKey: string;
-  /** The cited attachment's URL — used for Preview/Download. */
+  /** The cited attachment's URL — used for Preview/Open in browser. */
   sourceUrl: string;
   /**
    * Human-readable name derived from the URL: the last non-empty path segment
@@ -45,6 +45,25 @@ const deriveSourceName = (url: string): string => {
       .filter(Boolean);
     return segments.at(-1) ?? url;
   }
+};
+
+const FILE_EXTENSION_PATTERN = /\.([a-z0-9]{1,10})$/i;
+
+const extractExtension = (name: string | undefined): string | undefined => {
+  const match = name == null ? null : FILE_EXTENSION_PATTERN.exec(name.trim());
+  return match == null ? undefined : `.${match[1].toLowerCase()}`;
+};
+
+/** Returns the cited file's extension with a leading dot (e.g. `'.pdf'`), read from its URL and then its title, or `undefined` when neither carries one. */
+export const getSourceFileExtension = (
+  annotation: Annotation,
+): string | undefined => {
+  const attachment = annotation.body?.source?.attachment;
+  const url = attachment?.url;
+  return (
+    (url == null ? undefined : extractExtension(deriveSourceName(url))) ??
+    extractExtension(attachment?.title)
+  );
 };
 
 /** Resolves a group's display name: the attachment title when present, otherwise a name derived from its URL. */

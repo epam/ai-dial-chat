@@ -136,7 +136,7 @@ export class ApplicationsService {
         throw new BadGatewayException('DIAL Core returned an empty bucket');
       }
 
-      const version = body.version ?? '0.0.1';
+      const version = body.version ?? '1.0.0';
       const appPath = `${body.name}__${version}`;
       const encodedPath = encodeURIComponent(appPath);
 

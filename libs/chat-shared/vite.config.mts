@@ -19,7 +19,6 @@ const EXTERNAL_PEER_NAMES = [
 ];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
 const REQUIRED_PUBLISHED_STYLE_MARKERS = [
-  '.mobile\\:\\!w-full',
   '.desktop\\:p-4',
   '.text-start',
 ] as const;

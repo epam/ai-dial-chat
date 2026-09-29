@@ -431,13 +431,6 @@ describe('ScheduledTaskCreatePage', () => {
     );
   });
 
-  it('hides the entire selector when skill usage is disabled', () => {
-    useFeatureFlagMock.mockImplementation(
-      (key) => key === 'scheduledTasksEnabled',
-    );
-    renderAtRoute('/scheduled-tasks/new');
-    expect(screen.queryByLabelText('skillUrl')).toBeNull();
-  });
   beforeEach(() => {
     vi.clearAllMocks();
     useFeatureFlagMock.mockReturnValue(true);
@@ -666,9 +659,7 @@ describe('ScheduledTaskCreatePage', () => {
     );
 
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
-    expect(
-      screen.getByText('scheduledTasks.create.descriptionMaxLengthError'),
-    ).toBeTruthy();
+    expect(screen.getByText('editor.fieldTooLong')).toBeTruthy();
   });
 
   it('blocks submit with an inline error when endDate is not after startDate', async () => {

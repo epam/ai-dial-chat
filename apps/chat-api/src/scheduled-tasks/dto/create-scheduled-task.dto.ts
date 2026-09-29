@@ -10,16 +10,23 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
+import {
+  ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '../../common/validators/entity-field-limits';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
 import { ScheduleTriggerDto } from './schedule-trigger.dto';
 import { ScheduledTaskDto } from './scheduled-task.dto';
 import { IsValidSkillPathLength } from './skill-path-length.validator';
 
 export class CreateScheduledTaskBodyDto {
-  @ApiProperty({ example: 'Daily summary' })
+  @ApiProperty({ example: 'Daily summary', maxLength: ENTITY_NAME_MAX_LENGTH })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(256)
+  @MaxLength(ENTITY_NAME_MAX_LENGTH)
+  @Matches(/^[^\p{Cc}]*$/u, {
+    message: 'displayName must not contain control characters',
+  })
   displayName!: string;
 
   @ApiProperty({ type: ScheduleTriggerDto })
@@ -38,8 +45,10 @@ export class CreateScheduledTaskBodyDto {
     example: 'Summarize my inbox',
     description:
       'Instructions; may be empty when the effective task has a skill.',
+    maxLength: ENTITY_INSTRUCTIONS_MAX_LENGTH,
   })
   @IsString()
+  @MaxLength(ENTITY_INSTRUCTIONS_MAX_LENGTH)
   prompt!: string;
 
   @ApiPropertyOptional({

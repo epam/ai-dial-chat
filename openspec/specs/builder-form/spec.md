@@ -2,9 +2,7 @@
 
 ## Purpose
 Specifies `libs/builder-form`'s host-agnostic builder/editor form building blocks: the `BuilderFormContainer` page shell, the `EditorLayout`/`EditorSection` two-column editor layout, the `AddAvatar`/`AvatarPickerModal` avatar controls, and the `DeploymentCreationForm`/`DeploymentLocalesField` shared General-step field set with its validation — public package surface, host-isolation boundary (no i18n/routing/API knowledge), responsive layout behaviour, RTL/accessibility support, and the host/library division of responsibility shared by the scheduled-task, prompt, skill, toolset, Quick App, and Custom App editors.
-
 ## Requirements
-
 ### Requirement: Public package surface
 `libs/builder-form/src/index.ts` SHALL export `BuilderFormContainer`, `EditorLayout`, `EditorSection`, `AddAvatar`, `AvatarPickerModal`, `DeploymentCreationForm`, `DeploymentLocalesField`, `validateDeploymentCreationFields` with its patterns, `DeploymentCreationFieldErrorCode`, and every TypeScript type reachable through their props: `BuilderFormContainerProps`, `BuilderFormContainerStyles`, `BuilderFormContainerColors`, `BuilderFormHeaderLabels`, `BuilderFormHeaderStyles`, `BuilderFormHeaderColors`, `BuilderFormHeaderTypography`, `EditorLayoutProps`, `EditorLayoutLabels`, `EditorLayoutStyles`, `EditorSectionProps`, `EditorSectionStyles`, `AddAvatarProps`, `AddAvatarColors`, `AddAvatarStyles`, `AvatarPickerModalProps`, `AvatarPickerModalLabels`, `AvatarPickerFileManagerModalProps`, `DeploymentCreationFormProps`, `DeploymentCreationFormValues`, `DeploymentCreationFormLabels`, `DeploymentCreationFormFieldLabels`, `DeploymentCreationFormIconLabels`, `DeploymentCreationFormFieldErrors`, `DeploymentCreationFormLocaleEntry`, `DeploymentCreationFormLocaleOption`, `DeploymentCreationFormLocaleLabels`, `DeploymentCreationFormStyles`, `DeploymentCreationFormErrorCodes`, `DeploymentCreationFormValidationOptions`, `DeploymentLocalesFieldProps`. Internal-only helpers (the header and body components inside `BuilderFormContainer`) SHALL NOT be exported from the barrel. The package `libs/builder-form/package.json` SHALL declare `name: "@epam/ai-dial-builder-form"` with `description`, `license: "Apache-2.0"`, an `exports` map with source/types/import/default for `.`, `./package.json`, and `./styles.css`, and peer dependencies on `react`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, and `@tabler/icons-react`.
 
@@ -35,8 +33,6 @@ Specifies `libs/builder-form`'s host-agnostic builder/editor form building block
 - **WHEN** a host provides left content and main children without layout overrides
 - **THEN** side columns span the available width below 1280px and occupy 400px from 1280px, with a matching reserved end column when metadata is absent
 - **AND** the header and mobile footer expose one visible action pair at their respective breakpoints, independent of host utility CSS.
-
-
 
 ### Requirement: EditorLayout — header row
 `EditorLayout` SHALL render a header row containing:
@@ -136,8 +132,6 @@ Below the `desktop` breakpoint, `EditorLayout` SHALL render the same `actions` c
 - **WHEN** the supplied file manager reports a selected image within the host-provided restrictions
 - **THEN** the modal forwards the attachment to the host callback, and the host owns URL resolution and closing the modal.
 
-
-
 ### Requirement: Shared general creation form fields
 `libs/builder-form` SHALL export a controlled presentation component (`DeploymentCreationForm`) providing the
 field set common to Quick App and Toolset creation: avatar, name, description, version, and
@@ -145,10 +139,18 @@ topics. The component SHALL accept the current field values, field-level errors,
 `onChange` callback as props, and SHALL NOT hold its own copy of field state, call any
 network API, or trigger submission. The component SHALL NOT render an Intro field.
 
+`DeploymentCreationFormFieldErrors` SHALL carry optional `name`, `version` and `description`
+messages, already translated by the host. Each one SHALL render inline under its field
+through the kit field's `error`/`invalid` props.
+
 #### Scenario: Component renders all shared fields
 - **WHEN** a host app renders the shared component with a set of values
 - **THEN** it displays the avatar picker plus inputs for name, description, version, and
   topics reflecting those values
+
+#### Scenario: Description error renders under the description field
+- **WHEN** the host passes `errors.description`
+- **THEN** the Description textarea is marked invalid and shows that message beneath it
 
 ### Requirement: Avatar field delegates file selection to the host
 The icon/avatar field of `DeploymentCreationForm` SHALL render `AddAvatar` — a preview
@@ -172,13 +174,25 @@ identifiers.
 
 ### Requirement: Shared field validation function
 `libs/builder-form` SHALL export a pure `validateDeploymentCreationFields` function that
-takes the shared field values and an options object, and returns field-level errors: a
-required-name error when name is empty, a name-format error (opt-in via `validateNamePattern`)
-when name contains characters outside letters, digits, spaces, underscores, dots, and dashes
-(`NAME_PATTERN`), and a version-format error (opt-in via `validateVersionPattern`) for a
-non-empty version that fails the applicable version pattern. A non-empty version never produces
-a required error. The function SHALL NOT validate an `intro` field. The function SHALL have no
-side effects and SHALL NOT depend on i18n, routing, or network state.
+takes the shared field values and an options object, and returns field-level errors. It SHALL
+return:
+
+- a required-name error when the name is empty;
+- a too-long name error (`DeploymentCreationFieldErrorCode.TooLong`) when the trimmed name is
+  longer than `ENTITY_NAME_MAX_LENGTH` (256, from `@epam/ai-dial-chat-shared`);
+- a name-format error (opt-in via `validateNamePattern`) when the name contains characters
+  outside letters, digits, spaces, underscores, dots, and dashes (`NAME_PATTERN`);
+- a control-character name error (`DeploymentCreationFieldErrorCode.ControlCharacters`) when the
+  name contains a line break, tab or other control character;
+- a too-long description error (`description: TooLong`) when the description is longer than
+  `ENTITY_DESCRIPTION_MAX_LENGTH` (2000);
+- a version-format error (opt-in via `validateVersionPattern`) for a non-empty version that
+  fails the applicable version pattern.
+
+The length and control-character checks SHALL always run. For a name, the first failing check
+wins, in the order required, too long, pattern, control characters. A non-empty version never
+produces a required error. The function SHALL NOT validate an `intro` field. The function SHALL
+have no side effects and SHALL NOT depend on i18n, routing, or network state.
 
 `validateVersionPattern` SHALL accept either `true` — checking the non-empty version against the
 exported default `VERSION_PATTERN` (letters, digits, dots, underscores, dashes) — or a `RegExp`,
@@ -194,6 +208,18 @@ character-set check.
 #### Scenario: Name is required
 - **WHEN** the function is called with an empty name
 - **THEN** it returns a required-field error for name
+
+#### Scenario: Name over the shared limit
+- **WHEN** the function is called with a 257-character name
+- **THEN** it returns a too-long error for name; a 256-character name produces no error
+
+#### Scenario: Name with a control character
+- **WHEN** the function is called with a name containing a line break
+- **THEN** it returns a control-characters error for name
+
+#### Scenario: Description over the shared limit
+- **WHEN** the function is called with a 2001-character description
+- **THEN** it returns a too-long error for description
 
 #### Scenario: Default version pattern check
 - **WHEN** the function is called with `validateVersionPattern: true` and a non-empty version
@@ -389,3 +415,4 @@ BuilderFormHeader and its containing public shell SHALL accept and forward optio
 
 - **WHEN** a built-in back arrow renders under dir=rtl
 - **THEN** it mirrors while preserving keyboard focus and its accessible label.
+

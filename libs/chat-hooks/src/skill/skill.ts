@@ -1,4 +1,10 @@
 import {
+  ENTITY_DESCRIPTION_MAX_LENGTH,
+  ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+  exceedsMaxLength,
+} from '@epam/ai-dial-chat-shared';
+import {
   SkillFileNodeKind,
   type SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
@@ -85,6 +91,32 @@ export const normalizeSkillName = (input: string): string => {
    * offset (CodeQL js/polynomial-redos).
    */
   return hyphenated.replace(/^-/, '').replace(/-$/, '');
+};
+
+/** Skill editor text fields with a length limit. */
+export type SkillTextField = 'name' | 'description' | 'instructions';
+
+/** Length limit of each skill editor text field. */
+export const SKILL_TEXT_FIELD_MAX_LENGTHS: Record<SkillTextField, number> = {
+  name: ENTITY_NAME_MAX_LENGTH,
+  description: ENTITY_DESCRIPTION_MAX_LENGTH,
+  instructions: ENTITY_INSTRUCTIONS_MAX_LENGTH,
+};
+
+/** Returns the limit each over-long skill field exceeds, keyed by field; fields within their limit are omitted. */
+export const getSkillFieldLengthViolations = (
+  values: Record<SkillTextField, string>,
+): Partial<Record<SkillTextField, number>> => {
+  const violations: Partial<Record<SkillTextField, number>> = {};
+  for (const field of Object.keys(
+    SKILL_TEXT_FIELD_MAX_LENGTHS,
+  ) as SkillTextField[]) {
+    const maxLength = SKILL_TEXT_FIELD_MAX_LENGTHS[field];
+    if (exceedsMaxLength(values[field].trim(), maxLength)) {
+      violations[field] = maxLength;
+    }
+  }
+  return violations;
 };
 
 /** Skill fields serialized into the `SKILL.md` manifest. */

@@ -8,7 +8,7 @@ How selected skills travel with a user message: the custom_content.skills payloa
 
 ### Requirement: User message carries the selected skill
 
-`MessageCustomContent` (`libs/chat-shared/src/models/chat.ts`) SHALL retain the optional `skills?: RequestSkill[]` field, where `RequestSkill` is `{ url: string }` — each entry's `url` is the skill's resource path in the same URL form the skill listing and `CatalogItem.id` use (`skills/{bucket}/{path}`), matching DIAL Core's merged `RequestSkill` schema (Core PR #1956, 2026-09-11) unchanged. A message MAY now carry **any number** of skill mentions, not at most one. A skill mention is represented in the message text as the literal substring `/{name}` at the point the user selected it (from the `/` command menu or the Skills add-menu); `custom_content.skills` SHALL list one `{ url }` entry per mention, **in the same left-to-right order the mentions appear in the message text** — order is the only way to disambiguate two mentions whose displayed `/{name}` label is identical but which resolve to different skills (different `url`). Sending a user message with one or more mentions SHALL attach a `custom_content.skills` entry per mention, in that order, and SHALL clear every mention from the composer's draft afterwards, so the next message starts with none (per-message semantics, matching how attachments behave, extended from "the one selection" to "every mention"). Sending with no mentions SHALL NOT add the field. The field SHALL flow through the existing message `custom_content` channel — no new endpoint, request shape, or generated-client change is introduced. All skill-usage UI and payload construction SHALL render/execute only when the `features.skillUsageEnabled` flag is enabled for the session.
+`MessageCustomContent` (`libs/chat-shared/src/models/chat.ts`) SHALL retain the optional `skills?: RequestSkill[]` field, where `RequestSkill` is `{ url: string }` — each entry's `url` is the skill's resource path in the same URL form the skill listing and `CatalogItem.id` use (`skills/{bucket}/{path}`), matching DIAL Core's merged `RequestSkill` schema (Core PR #1956, 2026-09-11) unchanged. A message MAY now carry **any number** of skill mentions, not at most one. A skill mention is represented in the message text as the literal substring `/{name}` at the point the user selected it (from the `/` command menu or the Skills add-menu); `custom_content.skills` SHALL list one `{ url }` entry per mention, **in the same left-to-right order the mentions appear in the message text** — order is the only way to disambiguate two mentions whose displayed `/{name}` label is identical but which resolve to different skills (different `url`). Sending a user message with one or more mentions SHALL attach a `custom_content.skills` entry per mention, in that order, and SHALL clear every mention from the composer's draft afterwards, so the next message starts with none (per-message semantics, matching how attachments behave, extended from "the one selection" to "every mention"). Sending with no mentions SHALL NOT add the field. The field SHALL flow through the existing message `custom_content` channel — no new endpoint, request shape, or generated-client change is introduced.
 
 #### Scenario: Sending with a single mention
 
@@ -165,7 +165,7 @@ Entering edit mode on a user message that carries `custom_content.skills` SHALL 
 
 ### Requirement: Conversation history renders each skill mention inline
 
-A user message loaded from conversation history that carries `custom_content.skills` SHALL render one `ChatSkill` element per entry, each positioned inline at that mention's actual location within the message's flowing text — reconstructed by matching the ordered `custom_content.skills` urls against `/{name}` occurrences in the text (Decision 4 of `design.md`) — with the surrounding text word-flowing around each element and wrapping to full width. An assistant message that carries `custom_content.skills` (metadata the assistant's own text did not author) SHALL continue to render all of its entries together at the inline-start of the message's first text line, as today, since assistant text has no reliable mention positions to reconstruct against. Hovering/focusing any rendered element SHALL show the same interactive tooltip (description with its loading/absent states above the "View details" button) as before, and activating "View details" SHALL open the same skill details side panel the input flow opens (on the chat route). The bubble slot mechanism (`beforeContent` on `MessageBubble`, forwarded from `libs/conversation-messages`) is generalized from a single `ReactNode` to an ordered set of content, still owned entirely by the host (`libs/conversation-messages` SHALL NOT know about skills) — the user bubble renders the ordered content inline within its plain text, the assistant bubble keeps its existing single-slot overlay behavior for its (still single-position) leading group of chips.
+A user message loaded from conversation history that carries `custom_content.skills` SHALL render one `ChatSkill` element per entry, each positioned inline at that mention's actual location within the message's flowing text — reconstructed by matching the ordered `custom_content.skills` urls against `/{name}` occurrences in the text (Decision 4 of `design.md`) — with the surrounding text word-flowing around each element and wrapping to full width. An assistant message that carries `custom_content.skills` (metadata the assistant's own text did not author) SHALL continue to render all of its entries together at the inline-start of the message's first text line, as today, since assistant text has no reliable mention positions to reconstruct against. Hovering/focusing any rendered element SHALL show an interactive tooltip: for a resolved skill this is the description (with its loading/absent states) above the "View details" button, exactly as before, and activating "View details" SHALL open the same skill details side panel the input flow opens (on the chat route); for an unresolved skill (see "Skill metadata resolved from the carried url") the tooltip instead shows the fixed icon-plus-sentence content for that skill's unresolved reason, with no "View details" button. The bubble slot mechanism (`beforeContent` on `MessageBubble`, forwarded from `libs/conversation-messages`) is generalized from a single `ReactNode` to an ordered set of content, still owned entirely by the host (`libs/conversation-messages` SHALL NOT know about skills) — the user bubble renders the ordered content inline within its plain text, the assistant bubble keeps its existing single-slot overlay behavior for its (still single-position) leading group of chips.
 
 #### Scenario: History display with one mention
 
@@ -180,7 +180,12 @@ A user message loaded from conversation history that carries `custom_content.ski
 #### Scenario: History tooltip
 
 - **WHEN** the pointer rests on any history `ChatSkill` element
-- **THEN** the interactive tooltip opens showing the description (when resolved) and the "View details" button, and "View details" opens the skill details side panel
+- **THEN** the interactive tooltip opens — for a resolved skill showing the description (when resolved) and the "View details" button, and "View details" opens the skill details side panel; for an unresolved skill showing the icon and fixed sentence for that skill's unresolved reason, with no "View details" button
+
+#### Scenario: History tooltip for an unresolved skill
+
+- **WHEN** the pointer rests on a history `ChatSkill` element whose url is unresolved
+- **THEN** the interactive tooltip opens showing the icon and fixed sentence for that skill's unresolved reason (trash/`deleted` or lock/`not-shared`), and no "View details" button is rendered
 
 #### Scenario: Assistant message with multiple skill entries
 
@@ -201,17 +206,44 @@ A user message loaded from conversation history that carries `custom_content.ski
 
 ### Requirement: Skill metadata resolved from the carried url
 
-The wire payload carries only each skill's `url`; display metadata SHALL be resolved app-side per url: the skill's name from the loaded skill listing (`skills`, `sharedWithMe`, and `publicSkills` pools, matched on the entry's `url`); when the url is absent from every pool (a skill the viewer cannot access), the fallback display name SHALL be the url's last non-empty segment. This resolved name is also what history rendering and edit-mode reconstruction use as the expected `/{name}` text when matching a `custom_content.skills` entry against occurrences in the message text (see "Conversation history renders each skill mention inline" and "Editing a message restores its skill mentions"), left-to-right and in `custom_content.skills` array order, consuming each matched occurrence so a later entry never re-matches an already-consumed one. The description SHALL come from the existing per-session lazy description fetch (the same `SKILL.md` download-and-parse pipeline and session cache the favorites tooltip uses — history shares the cache, so a skill already resolved this session does not refetch, and opening history tooltips triggers the fetch with the same first-open callback semantics). A failed fetch or unresolvable url SHALL degrade silently: the element renders with its fallback name and a description-less tooltip, with no error notification and no retry this session.
+The wire payload carries only each skill's `url`; display metadata SHALL be resolved app-side per url: the skill's name from the loaded skill listing (`skills`, `sharedWithMe`, and `publicSkills` pools, matched on the entry's `url`); when the url is absent from every pool (a skill the viewer cannot access), the fallback display name SHALL be the url's last non-empty segment. This resolved name is also what history rendering and edit-mode reconstruction use as the expected `/{name}` text when matching a `custom_content.skills` entry against occurrences in the message text (see "Conversation history renders each skill mention inline" and "Editing a message restores its skill mentions"), left-to-right and in `custom_content.skills` array order, consuming each matched occurrence so a later entry never re-matches an already-consumed one. The description SHALL come from the existing per-session lazy description fetch (the same `SKILL.md` download-and-parse pipeline and session cache the favorites tooltip uses — history shares the cache, so a skill already resolved this session does not refetch, and opening history tooltips triggers the fetch with the same first-open callback semantics).
+
+When the url is absent from every pool, the element additionally carries one of two unresolved reasons, computed with no new request from data already available to the viewer — the url's `skills/{bucket}/{path}` bucket segment compared against the viewer's own bucket (the same identity `chat-hooks-skills-state`'s consumers and `SkillEditor` already read to distinguish a personal resource):
+
+- **`deleted`** — the url's bucket equals the viewer's own bucket. The viewer's own skill no longer exists.
+- **`not-shared`** — the url's bucket differs from the viewer's own bucket. A personal skill belonging to someone else (typically the conversation's owner) that was never shared with the viewer, or has since been unshared or deleted — these are indistinguishable from the viewer's side without an additional request, and the wording below does not need to distinguish them.
+
+For either unresolved reason, the tooltip SHALL show an icon and a fixed explanatory sentence in place of the description and the "View details" button — there is no metadata to fetch and no panel to open, and this replaces the previous description-less, button-retaining fallback:
+
+- `deleted`: a trash-can icon with the message "This skill has been deleted. Its details are no longer available."
+- `not-shared`: a lock icon with the message "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you."
+
+A failed description fetch for a **resolved** skill (the url matched a pool, only its description request failed or is still pending) is unaffected by this requirement and keeps degrading silently as before: description-less tooltip, "View details" button retained, no error notification, no retry this session.
 
 #### Scenario: Skill present in the listing
 
 - **WHEN** a history message's skill url matches an entry in the loaded listing
-- **THEN** the element renders that entry's name, and the tooltip resolves the description via the shared lazy fetch
+- **THEN** the element renders that entry's name, and the tooltip resolves the description via the shared lazy fetch, with the "View details" button present
 
 #### Scenario: Skill absent from the listing
 
 - **WHEN** a history message's skill url matches no loaded listing entry
-- **THEN** the element renders with the last url segment as its name and a description-less tooltip, with no error surfaced
+- **THEN** the element renders with the last url segment as its name, and the tooltip shows one of the two unresolved-reason variants (trash-can/`deleted` or lock/`not-shared`, per the bucket comparison below) instead of a description, with no "View details" button and no error surfaced
+
+#### Scenario: Own skill absent from the listing (deleted)
+
+- **WHEN** a history message's skill url matches no loaded listing entry, and the url's bucket segment equals the viewer's own bucket
+- **THEN** the tooltip shows a trash-can icon with "This skill has been deleted. Its details are no longer available."
+
+#### Scenario: Foreign personal skill absent from the listing (not shared)
+
+- **WHEN** a history message's skill url matches no loaded listing entry, and the url's bucket segment differs from the viewer's own bucket
+- **THEN** the tooltip shows a lock icon with "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you."
+
+#### Scenario: Description fetch fails for a resolved skill
+
+- **WHEN** a history message's skill url matches a loaded listing entry, but the lazy description fetch for it fails or has not settled
+- **THEN** the tooltip shows the "View details" button alone (unchanged from before this change) — this is not an unresolved-url case
 
 #### Scenario: Cache reuse
 
@@ -222,6 +254,11 @@ The wire payload carries only each skill's `url`; display metadata SHALL be reso
 
 - **WHEN** a message's text contains `/report` twice and `custom_content.skills` lists two different skills both named "report"
 - **THEN** the first occurrence of `/report` in reading order is matched to the first array entry and the second occurrence to the second array entry, regardless of which of the two skills happens to be alphabetically or otherwise "first"
+
+#### Scenario: Applies identically to assistant messages
+
+- **WHEN** an assistant message carries a `custom_content.skills` entry whose url is absent from every pool
+- **THEN** that entry's element shows the same unresolved tooltip (trash or lock, per the same bucket comparison) as it would on a user message — the unresolved-state logic does not distinguish message author
 
 ---
 
@@ -274,12 +311,18 @@ All payload-driven UI SHALL use logical Tailwind classes and CSS logical propert
 
 ### Requirement: Accessibility
 
-- The history `ChatSkill` element SHALL be keyboard-reachable and its tooltip SHALL open on focus, with the "View details" button operable from the keyboard.
+- The history `ChatSkill` element SHALL be keyboard-reachable and its tooltip SHALL open on focus, with the "View details" button — when rendered, i.e. for a resolved skill — operable from the keyboard.
+- For an unresolved skill, no "View details" button is rendered, so there is no such keyboard target; the tooltip's icon SHALL be `aria-hidden` and its sentence SHALL be reachable by the same focus/tooltip mechanism as a resolved skill's description.
 - The history element SHALL NOT offer a remove control (history is immutable display).
-- The element's accessible name SHALL be its visible `/{name}` label; decorative icons inside it SHALL be `aria-hidden`.
+- The element's accessible name SHALL be its visible `/{name}` label; decorative icons inside it (including the unresolved-state trash/lock icon) SHALL be `aria-hidden`.
 - Dynamic description resolution (loading → resolved) inside an open tooltip SHALL not trap or relocate focus.
 
 #### Scenario: Keyboard access in history
 
-- **WHEN** a keyboard user Tabs to a history `ChatSkill` element
+- **WHEN** a keyboard user Tabs to a history `ChatSkill` element whose url is resolved
 - **THEN** the tooltip opens, its "View details" button is reachable and activatable from the keyboard, and the skill details side panel opens on activation
+
+#### Scenario: Keyboard access in history to an unresolved skill
+
+- **WHEN** a keyboard user Tabs to a history `ChatSkill` element whose url is unresolved
+- **THEN** the tooltip opens showing the icon and sentence for that skill's unresolved reason, and no keyboard-actionable "View details" control is present

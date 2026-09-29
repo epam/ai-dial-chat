@@ -277,13 +277,20 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
     return (
       <Popup
         open={isOpen}
+        /*
+         * The kit styles and names a string header itself; a node header gets
+         * neither, so only fall back to one when a description has to sit
+         * under the title — and give that title the kit's heading treatment.
+         */
         header={
-          <div className="flex flex-col gap-1">
-            <span>{title}</span>
-            {headerDescription != null && (
+          headerDescription == null ? (
+            title
+          ) : (
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <h3 className="dial-h1-text truncate text-primary">{title}</h3>
               <p className="dial-small-text text-start">{headerDescription}</p>
-            )}
-          </div>
+            </div>
+          )
         }
         ariaLabel={title}
         size={PopupSize.Lg}

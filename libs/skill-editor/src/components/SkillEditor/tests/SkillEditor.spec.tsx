@@ -34,9 +34,14 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  ButtonDropdown: ({ label }: { label: ReactNode }) => (
+    <button aria-haspopup="menu">{label}</button>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   EditorThemes: { dark: 'dark', light: 'light' },
+  TextareaResize: { Vertical: 'vertical' },
+  TagInput: () => null,
   Accordion: ({
     title,
     children,
@@ -140,35 +145,46 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </label>
   ),
   Input: ({
+    id,
     labelProps,
     value,
     onChange,
     error,
+    caption,
     disabled,
+    readOnly,
   }: {
+    id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
     value?: string;
     onChange?: (value: string) => void;
     error?: string;
+    caption?: string;
     disabled?: boolean;
+    readOnly?: boolean;
   }) => (
     <label>
       {labelProps?.label}
       {labelProps?.required && ' *'}
+      {caption && <span>{caption}</span>}
       <input
+        id={id}
         value={value ?? ''}
         disabled={disabled}
+        readOnly={readOnly}
         onChange={(e) => onChange?.(e.target.value)}
       />
       {error && <span>{error}</span>}
     </label>
   ),
   Textarea: ({
+    id,
     labelProps,
     value,
     onChange,
     error,
   }: {
+    id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
     value?: string;
     onChange?: (value: string) => void;
@@ -178,6 +194,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {labelProps?.label}
       {labelProps?.required && ' *'}
       <textarea
+        id={id}
         value={value ?? ''}
         onChange={(e) => onChange?.(e.target.value)}
       />
@@ -189,6 +206,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
   ButtonAppearance: { Solid: 'solid', Ghost: 'ghost', Link: 'link' },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   PopupSize: { Sm: 'sm', Md: 'md', Lg: 'lg' },
   Popup: ({
     open,
@@ -267,6 +285,9 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconArrowNarrowLeft: () => <svg />,
+  IconDatabase: () => <svg />,
+  IconFileZip: () => <svg />,
+  IconFolderPlus: () => <svg />,
   IconPlus: () => <svg />,
   IconTrashX: () => <svg />,
   IconUpload: () => <svg />,
@@ -429,7 +450,7 @@ describe('SkillEditor', () => {
     expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
   });
 
-  it('disables the Name field when isNameReadOnly is set', () => {
+  it('renders the Name field read-only when isNameReadOnly is set', () => {
     renderEditor({
       isNameReadOnly: true,
       initialValues: { name: 'good-morning-breakfast' },
@@ -437,7 +458,7 @@ describe('SkillEditor', () => {
 
     expect(
       (screen.getByDisplayValue('good-morning-breakfast') as HTMLInputElement)
-        .disabled,
+        .readOnly,
     ).toBe(true);
   });
 
@@ -632,6 +653,6 @@ describe('SkillEditor — public class names', () => {
       SKILL_EDITOR_CLASS.root,
     );
     expect(root).toBeTruthy();
-    expect(root!.getAttribute('dir')).toBe('rtl');
+    expect(root?.getAttribute('dir')).toBe('rtl');
   });
 });

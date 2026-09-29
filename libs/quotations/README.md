@@ -51,6 +51,20 @@ import { CitationMarker } from '@epam/ai-dial-quotations';
 
 Popup card displaying a citation's title, quoted excerpt, and navigation controls.
 
+A previewable file shows only the "Preview" button, and its header shows the
+file extension (e.g. `.pdf`) after a file-type icon — the UI kit's `FileIcon`
+glyph for that extension, the same one a file manager row shows, unless the
+host passes its own `headerIcon`. A web link, or a
+source with no `onPreview`, shows "Open in browser" instead and keeps the
+source name in the header.
+
+The quote is clamped to six lines. When it overflows, a `labels.showMore`
+toggle appears under it; expanding lifts the clamp and caps the quote at
+`min(20rem, 50vh)` with its own keyboard-focusable scroll, and
+`labels.showLess` collapses it again. The toggle carries `aria-expanded` /
+`aria-controls`, and every citation — including one reached through the
+switcher — opens collapsed.
+
 ```tsx
 import { CitationCard } from '@epam/ai-dial-quotations';
 
@@ -67,7 +81,8 @@ import { CitationCard } from '@epam/ai-dial-quotations';
     formatSwitcherText: (current, total) => `${current} / ${total}`,
     preview: 'Preview',
     openInBrowser: 'Open in browser',
-    download: 'Download',
+    showMore: 'Show more',
+    showLess: 'Show less',
   }}
 />;
 ```
@@ -80,6 +95,11 @@ Pass the optional `isPreviewable(annotation)` callback to control Preview for
 each active annotation. When it returns `false`, the card shows only
 "Open in browser"; without it, providing `onPreview` enables Preview as before.
 Availability is checked again when the user switches annotations within a card.
+
+Pass `isPreviewOpen` while the host's preview panel is open: a marker click
+then calls `onPreview` for the active annotation directly, without showing the
+card, so the user can switch the previewed citation from badge to badge. A
+non-previewable annotation still opens the card.
 
 ```tsx
 import {
@@ -123,7 +143,8 @@ While `isStreaming` is `true`, `processedContent` hides only complete supported 
 The hook owns no PDF-detection, attachment-DTO, or canvas-opening logic — that belongs in the host's `onPreview` implementation.
 
 Its callbacks also accept optional `isPreviewable(annotation)`, forwarded to
-`CitationDropdown`. The host supplies its source classification policy: DIAL Chat
+`CitationDropdown`, and an optional `isPreviewOpen` boolean with the same
+meaning as the `CitationDropdown` prop. The host supplies its source classification policy: DIAL Chat
 keeps Preview for DIAL files and supported external file sources, and hides it
 for ordinary external web pages such as `https://data.imf.org/en/datasets/IMF.RES:WEO`.
 The library does not interpret DIAL file paths or decide which viewers the host supports.
@@ -147,7 +168,8 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
         formatSwitcherText: (current, total) => `${current} / ${total}`,
         preview: 'Preview',
         openInBrowser: 'Open in browser',
-        download: 'Download',
+        showMore: 'Show more',
+        showLess: 'Show less',
       },
       markerLabels: {
         ariaLabel: `Citation from ${group.sourceName}`,
