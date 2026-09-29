@@ -1023,7 +1023,7 @@ export interface ClientConfigDto {
    */
   mcpAppHostName?: string | null;
   /**
-   * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
+   * Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
    */

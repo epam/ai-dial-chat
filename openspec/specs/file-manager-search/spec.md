@@ -8,7 +8,7 @@ Recursive file search exposed by `useDialFileManager` and enabled in the file-ma
 
 ### Requirement: useDialFileManager exposes onSearchFiles for recursive file search
 
-`useDialFileManager` SHALL expose an `onSearchFiles(query: string) => void` callback. When called with a non-empty query, the hook SHALL fetch a recursive listing from the BFF using the active tab's listing function (`listFiles` / `listSharedFiles` / `listPublicFiles`) with `{ recursive: true }`, apply a client-side name-contains filter on the query, and expose the matching items through the existing `items` return value.
+`useDialFileManager` SHALL expose an `onSearchFiles(query: string) => void` callback. When called with a non-empty query, the hook SHALL fetch a recursive listing from the BFF using the active tab's listing function (`listFiles` / `listSharedFiles` / `listPublicFiles`) with `{ recursive: true }`, and expose the whole recursive listing, unfiltered, through `searchResults`. The hook SHALL NOT filter by the query: `DialFileManager` calls `onSearchFiles` once per search session and applies the case-insensitive name-contains filter for that query and every later one itself, so pre-filtering by the first query would hide matches for a replacement query.
 
 The hook SHALL debounce `onSearchFiles` calls by 300 ms. Any in-flight search request SHALL be cancelled (via `AbortController`) when a new query arrives or when the component unmounts.
 
@@ -24,8 +24,14 @@ No new BFF endpoint — reuses existing `listFiles` / `listSharedFiles` / `listP
 #### Scenario: Search returns matching files
 
 - **WHEN** user types "report" in the search field
-- **THEN** `items` contains all files across all subfolders whose name includes "report" (case-insensitive)
+- **THEN** the grid shows all files across all subfolders whose name includes "report" (case-insensitive)
 - **AND** `isSearching` transitions from `true` to `false` once results are loaded
+
+#### Scenario: Replacing a non-empty query searches the new query
+
+- **GIVEN** the current folder contains `A.svg` and `B.svg`
+- **WHEN** user searches "A.svg" and then replaces the whole query with "B.svg" without clearing it first
+- **THEN** the grid shows `B.svg`
 
 #### Scenario: Empty query restores folder view
 

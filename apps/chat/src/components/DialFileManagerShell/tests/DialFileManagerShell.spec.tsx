@@ -4,6 +4,7 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
   type UseDialFileManagerResult,
+  type UseDialFileManagerSectionsResult,
 } from '@epam/ai-dial-chat-hooks';
 import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
@@ -21,6 +22,8 @@ interface CapturedActionLabels {
 }
 
 interface CapturedTreeOptions extends CapturedActionLabels {
+  activeTab?: DialFileManagerTabs;
+  header?: string;
   loadedPaths?: Set<string>;
   loadingPaths?: Set<string>;
 }
@@ -33,6 +36,7 @@ const capturedDialFileManagerProps: {
     onGetInfo?: unknown;
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedTreeOptions;
+    navigationPanelOptions?: { placeholder?: string };
     bulkActionsToolbarOptions?: CapturedActionLabels;
     toolbarOptions?: {
       newActions?: { uploadArchive?: { label?: string } };
@@ -84,6 +88,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
       treeOptions?: CapturedTreeOptions;
+      navigationPanelOptions?: { placeholder?: string };
       bulkActionsToolbarOptions?: CapturedActionLabels;
       toolbarOptions?: {
         newActions?: { uploadArchive?: { label?: string } };
@@ -215,17 +220,17 @@ const baseLabels: DialFileManagerShellLabels = {
   folderEmptyStateTitle: 'This folder is empty',
   forbiddenSymbolsTooltip: 'Forbidden symbols',
   emptyStateByTab: {
+    [DialFileManagerTabs.All]: emptyStateCopy,
     [DialFileManagerTabs.MyFiles]: emptyStateCopy,
     [DialFileManagerTabs.Shared]: emptyStateCopy,
     [DialFileManagerTabs.Organization]: emptyStateCopy,
-    [DialFileManagerTabs.All]: emptyStateCopy,
     [DialFileManagerTabs.Review]: emptyStateCopy,
   },
   treeHeaderByTab: {
+    [DialFileManagerTabs.All]: 'File storage',
     [DialFileManagerTabs.MyFiles]: 'My Files',
     [DialFileManagerTabs.Shared]: 'Shared with Me',
     [DialFileManagerTabs.Organization]: 'Organization',
-    [DialFileManagerTabs.All]: '',
     [DialFileManagerTabs.Review]: '',
   },
   renameValidationMessages: { emptyName: 'Required', duplicateName: 'Taken' },
@@ -259,18 +264,19 @@ const baseLabels: DialFileManagerShellLabels = {
 };
 
 const renderShell = (
-  hookResultOverrides?: Partial<UseDialFileManagerResult>,
+  hookResultOverrides?: Partial<UseDialFileManagerSectionsResult>,
   selectedPaths: Set<string> = new Set(),
   options: {
     activeTab?: DialFileManagerTabs;
     variant?: DialFileManagerVariant;
     actionProfile?: DialFileManagerActionProfile;
+    labels?: DialFileManagerShellLabels;
   } = {},
 ) =>
   render(
     <DialFileManagerShell
       hookResult={{ ...baseHookResult, ...hookResultOverrides }}
-      labels={baseLabels}
+      labels={options.labels ?? baseLabels}
       activeTab={options.activeTab ?? DialFileManagerTabs.MyFiles}
       tabs={[{ value: DialFileManagerTabs.MyFiles, label: 'My Files' }]}
       onTabChange={vi.fn()}
@@ -791,6 +797,114 @@ describe('DialFileManagerShell', () => {
         capturedDialFileManagerProps.current?.toolbarOptions?.newActions
           ?.uploadArchive,
       ).toBeUndefined();
+    });
+  });
+
+  describe('All tab gating by sectionTab', () => {
+    const renderAll = (
+      sectionTab: DialFileManagerTabs,
+      overrides: Partial<UseDialFileManagerSectionsResult> = {},
+      labels?: DialFileManagerShellLabels,
+    ) =>
+      renderShell(
+        { uploadEnabled: true, sectionTab, ...overrides },
+        new Set(),
+        {
+          activeTab: DialFileManagerTabs.All,
+          variant: DialFileManagerVariant.Standalone,
+          actionProfile: DialFileManagerActionProfile.Full,
+          labels,
+        },
+      );
+
+    it('offers upload-archive on the All tab inside My files', () => {
+      renderAll(DialFileManagerTabs.MyFiles);
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toEqual({ label: baseLabels.uploadArchiveAction, icon: null });
+    });
+
+    it('hides upload-archive on the All tab inside Organization', () => {
+      renderAll(DialFileManagerTabs.Organization);
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
+
+    it('shows the browsed section empty state at a section root', () => {
+      renderAll(
+        DialFileManagerTabs.Shared,
+        { path: '/Shared' },
+        {
+          ...baseLabels,
+          emptyStateByTab: {
+            ...baseLabels.emptyStateByTab,
+            [DialFileManagerTabs.Shared]: {
+              title: 'Nothing shared with you yet',
+              description: '',
+            },
+          },
+        },
+      );
+      expect(screen.getByText('Nothing shared with you yet')).toBeTruthy();
+    });
+
+    it('keeps All as the strip value and tree header key', () => {
+      renderAll(DialFileManagerTabs.Shared);
+      expect(capturedDialFileManagerProps.current?.treeOptions?.activeTab).toBe(
+        DialFileManagerTabs.All,
+      );
+      expect(capturedDialFileManagerProps.current?.treeOptions?.header).toBe(
+        'File storage',
+      );
+    });
+
+    it('gates on activeTab when the controller has no sectionTab', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        activeTab: DialFileManagerTabs.Shared,
+        variant: DialFileManagerVariant.Standalone,
+        actionProfile: DialFileManagerActionProfile.Full,
+      });
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
+  });
+
+  describe('search placeholder', () => {
+    const labels: DialFileManagerShellLabels = {
+      ...baseLabels,
+      searchPlaceholderByTab: {
+        [DialFileManagerTabs.MyFiles]: 'Search in My files',
+        [DialFileManagerTabs.Shared]: 'Search in Shared with me files',
+        [DialFileManagerTabs.Organization]: 'Search in Organization files',
+      },
+    };
+    const placeholder = (): string | undefined =>
+      capturedDialFileManagerProps.current?.navigationPanelOptions?.placeholder;
+
+    it('names the storage of the selected tab', () => {
+      renderShell({}, new Set(), {
+        activeTab: DialFileManagerTabs.Shared,
+        labels,
+      });
+      expect(placeholder()).toBe('Search in Shared with me files');
+    });
+
+    it('names the browsed section on the All tab', () => {
+      renderShell({ sectionTab: DialFileManagerTabs.Organization }, new Set(), {
+        activeTab: DialFileManagerTabs.All,
+        labels,
+      });
+      expect(placeholder()).toBe('Search in Organization files');
+    });
+
+    it('leaves the default placeholder when the host passes none', () => {
+      renderShell();
+      expect(placeholder()).toBeUndefined();
     });
   });
 });

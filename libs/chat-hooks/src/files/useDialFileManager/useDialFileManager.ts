@@ -53,6 +53,8 @@ export const useDialFileManager = ({
   bucket,
   rootLabel = 'My files',
   activeTab = DialFileManagerTabs.MyFiles,
+  isActive,
+  sessionKey,
   onNotification,
   onOperationSuccess,
   forbiddenSymbolsRegExp,
@@ -72,6 +74,8 @@ export const useDialFileManager = ({
     rootLabel,
     activeTab,
     onNotification,
+    isActive,
+    sessionKey,
   });
 
   const upload = useDialFileUploadBatch({
