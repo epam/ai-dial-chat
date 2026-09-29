@@ -1,6 +1,10 @@
-import { IconBook2, IconFolderOpen, IconMessage } from '@tabler/icons-react';
+import {
+  IconClockHour3,
+  IconFolderOpen,
+  IconLayoutGrid,
+  IconMessageCircle,
+} from '@tabler/icons-react';
 import type { FC } from 'react';
-import ScheduledTasksIcon from '../components/Icons/ScheduledTasksIcon/ScheduledTasksIcon';
 import { ROUTES } from '../types/routes';
 import { NavigationI18nKeys } from './translation-keys';
 
@@ -17,18 +21,18 @@ export const NAVIGATION_CONFIG: NavigationItem[] = [
   {
     path: ROUTES.Root,
     matchPaths: [ROUTES.Conversations],
-    icon: IconMessage,
+    icon: IconMessageCircle,
     labelKey: NavigationI18nKeys.Home,
   },
   {
     path: ROUTES.ScheduledTasks,
-    icon: ScheduledTasksIcon,
+    icon: IconClockHour3,
     labelKey: NavigationI18nKeys.ScheduledTasks,
     featureFlag: 'scheduledTasksEnabled',
   },
   {
     path: ROUTES.Catalog,
-    icon: IconBook2,
+    icon: IconLayoutGrid,
     labelKey: NavigationI18nKeys.Catalog,
   },
   {

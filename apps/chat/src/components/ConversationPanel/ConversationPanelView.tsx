@@ -16,12 +16,12 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import {
   ConversationExportMode,
-  type ConversationTransferErrorEvent,
-  type ConversationTransferSuccessEvent,
   ConversationTransferWarningCode,
-  type ConversationTransferWarningEvent,
   useConversationExport,
   useConversationImport,
+  type ConversationTransferErrorEvent,
+  type ConversationTransferSuccessEvent,
+  type ConversationTransferWarningEvent,
 } from '@epam/ai-dial-chat-hooks/conversation-transfer';
 import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -51,6 +51,7 @@ import {
   type TransferQueueLabels,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconClockHour3,
   IconCopy,
   IconDownload,
   IconPencilMinus,
@@ -131,7 +132,6 @@ import {
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { getPublishFolderLabel } from '../../utils/publish';
-import ScheduledTasksIcon from '../Icons/ScheduledTasksIcon/ScheduledTasksIcon';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
 
@@ -154,7 +154,7 @@ const SCHEDULED_TASK_ICON = (
     className="flex size-6 items-center justify-center rounded-lg bg-blue p-1 text-blue"
     aria-hidden
   >
-    <ScheduledTasksIcon size={16} />
+    <IconClockHour3 size={16} />
   </span>
 );
 
