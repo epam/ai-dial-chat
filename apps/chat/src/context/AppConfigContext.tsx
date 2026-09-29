@@ -20,7 +20,7 @@ import { UserConfigStatus } from '../types/user-config-status';
 import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
-const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
+const DEFAULT_FILE_MANAGER_TABS = ['all', 'my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
 

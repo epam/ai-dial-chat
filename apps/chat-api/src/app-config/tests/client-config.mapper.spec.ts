@@ -104,6 +104,7 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       createDefaultClientConfig().fileManagerTabs.push('leaked');
 
       expect(createDefaultClientConfig().fileManagerTabs).toEqual([
+        'all',
         'my_files',
         'shared',
         'organization',
@@ -141,6 +142,7 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       );
 
       expect(first.fileManagerTabs).toEqual([
+        'all',
         'my_files',
         'shared',
         'organization',

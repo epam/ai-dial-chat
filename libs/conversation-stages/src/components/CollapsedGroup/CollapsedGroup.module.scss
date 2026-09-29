@@ -1,14 +1,35 @@
-.toggleButton {
+/*
+ * The summary line is the kit `Accordion` header. Its hover tint, caret size
+ * and colour, and the title's truncation are single-class utilities, so the
+ * doubled class keeps this line as it was: no tint, a 12px caret in the label
+ * colour, and a summary that wraps instead of being cut off.
+ */
+.toggleButton.toggleButton {
   color: var(--cs-cg-label, var(--text-secondary, #57647a));
   width: 100%;
   min-width: 0;
   /* A button centers its text by default, which misaligns a summary line that has to wrap. */
   text-align: start;
-  justify-content: flex-start !important;
 
   &:hover {
+    background: transparent;
     color: var(--cs-cg-label-hover, var(--text-primary, #161b2d));
   }
+
+  > svg {
+    width: 12px;
+    height: 12px;
+    color: inherit;
+  }
+
+  > span > span {
+    white-space: normal;
+  }
+}
+
+/* The kit region paints `text-primary`; the panel inherits the group's colour. */
+.groupRegion.groupRegion {
+  color: inherit;
 }
 
 .executedLabel {

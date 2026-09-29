@@ -126,6 +126,8 @@ export interface DialFileManagerShellLabels {
   emptyStateByTab: Record<DialFileManagerTabs, EmptyStateCopy>;
   /** Per-tab tree header label. */
   treeHeaderByTab: Record<DialFileManagerTabs, string>;
+  /** Search field placeholder per source tab of the browsed folder; a tab without an entry keeps the file manager's default. */
+  searchPlaceholderByTab?: Partial<Record<DialFileManagerTabs, string>>;
   /** Messages for inline rename validation. */
   renameValidationMessages: RenameValidationMessages;
   /** Options for the conflict resolution popup. */
