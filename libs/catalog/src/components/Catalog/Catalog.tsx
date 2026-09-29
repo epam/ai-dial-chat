@@ -29,7 +29,7 @@ export const Catalog: FC<CatalogProps> = ({
   items,
   tabs: controlledTabs,
   topicOptions: controlledTopicOptions,
-  favorites,
+  favorites: favoritesProp,
   titles,
   browseHeaderRenderer,
   onToggleFavorite,
@@ -177,6 +177,11 @@ export const Catalog: FC<CatalogProps> = ({
   const filteredItems = useMemo(
     () => items.filter((item) => !item.isHidden),
     [items],
+  );
+
+  const favorites = useMemo(
+    () => favoritesProp.filter((item) => !item.isHidden),
+    [favoritesProp],
   );
 
   const allFilterValues = useMemo(
