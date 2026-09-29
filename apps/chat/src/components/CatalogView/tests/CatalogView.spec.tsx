@@ -1375,8 +1375,8 @@ describe('CatalogView', () => {
       );
     });
 
-    /* A skill has no chat interface, so it never offers Use in chat; download, unshare, and revoke are all backed by DTOs that accept a skills path. */
-    it('hides Use in chat for a skill while offering download, unshare, and revoke', () => {
+    /* A skill is always usable in chat; download, unshare, and revoke are all backed by DTOs that accept a skills path. */
+    it('offers Use in chat for a skill alongside download, unshare, and revoke', () => {
       enableSkills();
       mockSkills();
 
@@ -1384,8 +1384,8 @@ describe('CatalogView', () => {
 
       const skillId = 'skills/my-bucket/analysis/revenue-skill';
       expect(
-        screen.queryByRole('button', { name: `use in chat ${skillId}` }),
-      ).toBeNull();
+        screen.getByRole('button', { name: `use in chat ${skillId}` }),
+      ).toBeTruthy();
       expect(
         screen.getByRole('button', { name: `download ${skillId}` }),
       ).toBeTruthy();

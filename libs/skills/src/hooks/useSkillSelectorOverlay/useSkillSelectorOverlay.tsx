@@ -38,7 +38,6 @@ import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
  * the modal/panel components.
  */
 export const useSkillSelectorOverlay = ({
-  isEnabled,
   isSkillsSupported,
   skills,
   sharedWithMe,
@@ -58,14 +57,6 @@ export const useSkillSelectorOverlay = ({
     emptyQueryHintLabel = 'Type to filter',
     panelLabels,
   } = labels ?? {};
-
-  /*
-   * The entry-point gate: both the feature flag and the deployment's own
-   * support must hold. Tracked mentions, their removal, and the details panel
-   * survive an unsupported deployment — only the ways in are hidden — so
-   * unlike `isEnabled` this never blanks the whole result.
-   */
-  const isSkillsEnabled = isEnabled && isSkillsSupported;
 
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [detailsSkillId, setDetailsSkillId] = useState<string | null>(null);
@@ -318,7 +309,7 @@ export const useSkillSelectorOverlay = ({
 
   const skillMenuOverlay = useMemo<MenuOverlayConfig | undefined>(
     () =>
-      isSkillsEnabled
+      isSkillsSupported
         ? {
             key: 'skills',
             title: addMenuLabel,
@@ -333,7 +324,7 @@ export const useSkillSelectorOverlay = ({
             backLabel,
           }
         : undefined,
-    [isSkillsEnabled, addMenuLabel, backLabel, renderOverlay],
+    [isSkillsSupported, addMenuLabel, backLabel, renderOverlay],
   );
 
   /*
@@ -347,7 +338,7 @@ export const useSkillSelectorOverlay = ({
    */
   const commandMenu = useMemo<CommandMenuConfig | undefined>(
     () =>
-      isSkillsEnabled
+      isSkillsSupported
         ? {
             triggerPrefix: '/',
             menuLabel: addMenuLabel,
@@ -384,7 +375,7 @@ export const useSkillSelectorOverlay = ({
           }
         : undefined,
     [
-      isSkillsEnabled,
+      isSkillsSupported,
       addMenuLabel,
       emptyQueryHintLabel,
       favoriteSkillItems,
@@ -421,27 +412,6 @@ export const useSkillSelectorOverlay = ({
       />
     </Suspense>
   );
-
-  if (!isEnabled) {
-    return {
-      skillMenuOverlay: undefined,
-      commandMenu: undefined,
-      skillCatalogModal: null,
-      skillDetailsPanel: null,
-      message: '',
-      messageRevision: 0,
-      activeMentions: [],
-      onDraftChange: () => undefined,
-      onBackspaceAtCaret: () => undefined,
-      caretPositionOverride: undefined,
-      isSkillUnsupported: false,
-      selectedSkills: undefined,
-      resetSkillMentions: () => undefined,
-      seedSkillMentions: () => undefined,
-      renderHistorySkillSegments: () => null,
-      renderHistorySkills: () => null,
-    };
-  }
 
   return {
     skillMenuOverlay,
