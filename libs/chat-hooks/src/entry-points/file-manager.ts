@@ -23,6 +23,7 @@ export {
 } from '../files/file-name';
 export * from '../files/useDialFileListing/useDialFileListing';
 export * from '../files/useDialFileManager/useDialFileManager';
+export * from '../files/useDialFileManagerSections/useDialFileManagerSections';
 export * from '../files/useDialFileManagerTabConfig/useDialFileManagerTabConfig';
 export * from '../files/useDialFileMetadata/useDialFileMetadata';
 export * from '../files/useDialFileMutations/useDialFileMutations';

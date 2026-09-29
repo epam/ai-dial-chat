@@ -1,8 +1,10 @@
 import {
+  DIAL_FILE_MANAGER_SECTION_TABS,
   DialFileManagerActionProfile,
   DialFileManagerVariant,
-  useDialFileManager,
+  useDialFileManagerSections,
   useDialFileManagerTabConfig,
+  type DialFileManagerSection,
 } from '@epam/ai-dial-chat-hooks';
 import {
   formatFileSize,
@@ -28,6 +30,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
 const DialFileManagerPage: FC = () => {
@@ -42,10 +45,10 @@ const DialFileManagerPage: FC = () => {
 
   const tabLabels = useMemo(
     () => ({
+      [DialFileManagerTabs.All]: t(DialFileManagerI18nKeys.TabAll),
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
-      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -55,10 +58,16 @@ const DialFileManagerPage: FC = () => {
     activeTab,
     handleTabChange,
     tabs: allTabs,
-  } = useDialFileManagerTabs(tabLabels, DialFileManagerTabs.MyFiles);
+  } = useDialFileManagerTabs(tabLabels, DialFileManagerTabs.All);
 
-  const rootLabel =
-    tabLabels[activeTab] || tabLabels[DialFileManagerTabs.MyFiles];
+  // Every configured source tab becomes a top-level folder of the All tab.
+  const sections = useMemo(
+    (): DialFileManagerSection[] =>
+      DIAL_FILE_MANAGER_SECTION_TABS.filter(
+        (tab) => fileManagerTabs == null || fileManagerTabs.includes(tab),
+      ).map((tab) => ({ tab, rootLabel: tabLabels[tab] })),
+    [fileManagerTabs, tabLabels],
+  );
 
   const { tabs } = useDialFileManagerTabConfig(
     activeTab,
@@ -67,11 +76,11 @@ const DialFileManagerPage: FC = () => {
     fileManagerTabs,
   );
 
-  const hookResult = useDialFileManager({
+  const hookResult = useDialFileManagerSections({
     ...hostOptions,
     bucket,
     activeTab,
-    rootLabel,
+    sections,
     variant: DialFileManagerVariant.Standalone,
     actionProfile: DialFileManagerActionProfile.Full,
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
@@ -81,6 +90,15 @@ const DialFileManagerPage: FC = () => {
     () => new Set(),
   );
 
+  /* Moving between All-tab sections changes the listing under the selection, so drop it. */
+  const [selectionSectionTab, setSelectionSectionTab] = useState(
+    hookResult.sectionTab,
+  );
+  if (selectionSectionTab !== hookResult.sectionTab) {
+    setSelectionSectionTab(hookResult.sectionTab);
+    setSelectedPaths(new Set());
+  }
+
   const handleTabChangeWithReset = useCallback(
     (tab: DialFileManagerTabs) => {
       setSelectedPaths(new Set());
@@ -89,12 +107,15 @@ const DialFileManagerPage: FC = () => {
     [handleTabChange],
   );
 
-  const emptyStateByTab = useMemo(
-    () => ({
-      [DialFileManagerTabs.MyFiles]: {
-        title: t(DialFileManagerI18nKeys.MyFilesEmptyStateTitle),
-        description: t(DialFileManagerI18nKeys.MyFilesEmptyStateDescription),
-      },
+  const emptyStateByTab = useMemo(() => {
+    const myFilesEmptyState = {
+      title: t(DialFileManagerI18nKeys.MyFilesEmptyStateTitle),
+      description: t(DialFileManagerI18nKeys.MyFilesEmptyStateDescription),
+    };
+    return {
+      // Never shown: the shell picks the empty state of the browsed section.
+      [DialFileManagerTabs.All]: myFilesEmptyState,
+      [DialFileManagerTabs.MyFiles]: myFilesEmptyState,
       [DialFileManagerTabs.Shared]: {
         title: t(DialFileManagerI18nKeys.SharedEmptyStateTitle),
         description: t(DialFileManagerI18nKeys.SharedEmptyStateDescription),
@@ -105,20 +126,18 @@ const DialFileManagerPage: FC = () => {
           DialFileManagerI18nKeys.OrganizationEmptyStateDescription,
         ),
       },
-      [DialFileManagerTabs.All]: { title: '', description: '' },
       [DialFileManagerTabs.Review]: { title: '', description: '' },
-    }),
-    [t],
-  );
+    };
+  }, [t]);
 
   const treeHeaderByTab: Record<DialFileManagerTabs, string> = useMemo(
     () => ({
+      [DialFileManagerTabs.All]: t(DialFileManagerI18nKeys.MyFilesTreeHeader),
       [DialFileManagerTabs.MyFiles]: t(
         DialFileManagerI18nKeys.MyFilesTreeHeader,
       ),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
-      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -171,6 +190,7 @@ const DialFileManagerPage: FC = () => {
   );
 
   const uploadQueueLabels = useUploadQueueLabels();
+  const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
   const labels: DialFileManagerShellLabels = useMemo(
     () => ({
@@ -253,6 +273,7 @@ const DialFileManagerPage: FC = () => {
       deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
       deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
       ...uploadQueueLabels,
+      searchPlaceholderByTab,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
@@ -284,6 +305,7 @@ const DialFileManagerPage: FC = () => {
       renameValidationMessages,
       conflictResolutionPopupOptions,
       uploadQueueLabels,
+      searchPlaceholderByTab,
     ],
   );
 
