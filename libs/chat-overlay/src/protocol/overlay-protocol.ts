@@ -206,7 +206,8 @@ export enum OverlayFeature {
   /**
    * Renders the theme logo in the desktop top bar, centered between the
    * conversation controls and the sources toggle. The mobile header shows the
-   * logo regardless of this key; `Header` still gates that surface.
+   * logo whenever `Header` is on; with `Header` off, this key still renders
+   * the mobile header row carrying only the logo.
    */
   ShowHeaderLogo = 'show-header-logo',
 }

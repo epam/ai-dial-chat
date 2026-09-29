@@ -858,8 +858,11 @@ picker.
 between the conversation-panel and new-chat buttons and the sources toggle, so
 an embed that hides the navigation rail still carries the brand. It uses the
 theme's full `logo` image; a theme that defines only a `favicon` shows nothing
-there. The mobile header already shows the logo whenever `header` is on, and
-this key does not change it.
+there. Below the desktop breakpoint the logo sits in the mobile header, which
+shows it whenever `header` is on; with `header` off, `show-header-logo` still
+renders that header row, carrying only the logo and none of its buttons. The
+mobile header shows the theme's `favicon`, or a smaller full `logo` when the
+theme defines no `favicon`.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is

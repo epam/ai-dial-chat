@@ -381,7 +381,7 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 ### Requirement: show-header-logo renders the theme logo in the desktop top bar
 
-`ChatLayout`'s desktop top bar SHALL render the theme logo, centered between the start-side conversation controls and the end-side sources toggle, when `isEnabled('show-header-logo')` is `true`. Nothing SHALL render there when the key is off, and the bar's other controls SHALL keep their positions either way. The key SHALL NOT affect the mobile `Header`, which renders the logo whenever `header` is on, nor the desktop navigation rail. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+`ChatLayout`'s desktop top bar SHALL render the theme logo, centered between the start-side conversation controls and the end-side sources toggle, when `isEnabled('show-header-logo')` is `true`. Nothing SHALL render there when the key is off, and the bar's other controls SHALL keep their positions either way. The mobile `Header` renders the logo whenever `header` is on; when `header` is off and this key is on, the mobile `Header` SHALL still render, carrying only the logo and none of its buttons. Below the desktop breakpoint `Logo` shows the theme `favicon`, or a smaller full `logo` when the theme defines no `favicon`. The key SHALL NOT affect the desktop navigation rail. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
 
 **Accessibility:** The logo reuses `Logo`'s existing labeled link; no new interactive control is introduced.
 
@@ -395,7 +395,12 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 #### Scenario: Nothing renders when the key is off
 
 - **WHEN** `isEnabled('show-header-logo')` is `false`
-- **THEN** the desktop top bar renders no logo, and the mobile header's logo is unaffected
+- **THEN** the desktop top bar renders no logo, and the mobile header renders only when `header` is on
+
+#### Scenario: The mobile header carries only the logo when header is off
+
+- **WHEN** `isEnabled('show-header-logo')` is `true` and `isEnabled('header')` is `false`
+- **THEN** the mobile header renders the logo link and no buttons
 
 ### Requirement: Isolated-view override takes precedence over every other source
 
