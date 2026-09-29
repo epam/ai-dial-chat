@@ -393,6 +393,9 @@ const NewConversationComposer: FC<Props> = ({
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
+  const isStartersBelowGreeting = useUiFeature(
+    OverlayFeature.StartersBelowGreeting,
+  );
   const isAgentDescriptionEnabled = useUiFeature(
     OverlayFeature.ShowAgentDescription,
   );
@@ -470,6 +473,21 @@ const NewConversationComposer: FC<Props> = ({
     ],
   );
 
+  /* The intro text and the starters move together: with
+     `starters-below-greeting` on they sit between the greeting and the input,
+     otherwise below the input. */
+  const startersBlock =
+    introText || children != null ? (
+      <>
+        {introText && (
+          <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">
+            {introText}
+          </p>
+        )}
+        {children}
+      </>
+    ) : null;
+
   return (
     <div className="flex flex-1 flex-col overflow-y-auto">
       <FileDndOverlay
@@ -535,6 +553,7 @@ const NewConversationComposer: FC<Props> = ({
             firstName || undefined,
           )}
           descriptionText={welcomeScreenDescription ?? undefined}
+          belowWelcomeSlot={isStartersBelowGreeting ? startersBlock : undefined}
           placeholder={placeholder}
           removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
           retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
@@ -612,12 +631,7 @@ const NewConversationComposer: FC<Props> = ({
             />
           }
         />
-        {introText && (
-          <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">
-            {introText}
-          </p>
-        )}
-        {children}
+        {!isStartersBelowGreeting && startersBlock}
       </div>
       <FooterMessage />
       {isDialFileManagerOpen && (

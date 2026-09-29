@@ -774,6 +774,7 @@ hide-user-settings
 hide-keyboard-shortcuts
 hide-navigation-menu
 show-all-starters
+starters-below-greeting
 hide-footer-version
 show-agent-description
 disable-input-history-navigation
@@ -819,6 +820,12 @@ dropdown; in a narrow embed that usually means one visible starter and a menu.
 With the key on, every starter is rendered as its own row and the dropdown is
 gone. It does not change which starters the deployment exposes, only their
 layout.
+
+`starters-below-greeting` moves the conversation starters on the empty-chat
+screen, together with the starter intro text, from below the input to between
+the greeting and the input, so a user sees them before starting to type. It
+combines with `show-all-starters`, which still controls how the row lays the
+starters out.
 
 `hide-footer-version` removes the application version label from the footer
 (the `v0.45.0` text in its trailing corner). The label is diagnostic chrome

@@ -3,7 +3,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { type DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
-import { Suspense } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -28,6 +28,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     inputClassName,
     autoFocus,
     onSend,
+    belowWelcomeSlot,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
@@ -35,10 +36,12 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     inputClassName?: string;
     autoFocus?: boolean;
     onSend?: (message: string, attachments: never[]) => Promise<void>;
+    belowWelcomeSlot?: ReactNode;
   }) => {
     capturedInputProps.onSend = onSend;
     return (
       <div data-testid="conversation-input">
+        {belowWelcomeSlot}
         Conversation input
         <output aria-label="deployments">
           {deployments === undefined
@@ -236,6 +239,31 @@ describe('NewConversationComposer', () => {
       introText.compareDocumentPosition(starterButton) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('passes intro text and starter content into the below-welcome slot when starters-below-greeting is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.StartersBelowGreeting,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          introText="Choose how to start"
+          onCreateConversation={vi.fn()}
+        >
+          <button type="button">Draft</button>
+        </NewConversationComposer>
+      </Suspense>,
+    );
+
+    const input = await screen.findByTestId('conversation-input');
+    expect(input.contains(screen.getByText('Choose how to start'))).toBe(true);
+    expect(input.contains(screen.getByRole('button', { name: 'Draft' }))).toBe(
+      true,
+    );
   });
 
   it('passes chatSettings through when both chat-settings and empty-chat-settings are enabled', async () => {

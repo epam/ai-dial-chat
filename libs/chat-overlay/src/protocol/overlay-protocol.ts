@@ -174,6 +174,11 @@ export enum OverlayFeature {
    */
   ShowAllStarters = 'show-all-starters',
   /**
+   * Moves the conversation starters on the empty-chat screen from below the
+   * input to between the greeting and the input.
+   */
+  StartersBelowGreeting = 'starters-below-greeting',
+  /**
    * Hides the application version label in the footer. The label is
    * diagnostic chrome an embedding host usually owns itself, and it is not
    * gated by the operator's `footer` capability flag.
