@@ -621,7 +621,11 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
 
     render(<ConversationSourcesPanelContainer />);
 
-    expect(screen.queryByText('Do the thing')).toBeNull();
+    /* The Accordion keeps collapsed content mounted, so keyboard reachability
+       is governed by the inert wrapper rather than by unmounting. */
+    const collapsedContent = screen.getByText('Do the thing');
+    // eslint-disable-next-line testing-library/no-node-access -- `inert` has no Testing Library query
+    expect(collapsedContent.closest('[inert]')).toBeTruthy();
   });
 
   it('navigates to the conversation route when a History run with a conversationId is activated', async () => {

@@ -236,6 +236,8 @@ export const Input = forwardRef<InputHandle, InputProps>(
       query,
       activeWordStart,
       dismiss,
+      closeOnOutsidePress,
+      handleCaretMove: handleCommandMenuCaretMove,
       handleValueChange,
       listboxId: commandMenuListboxId,
       overlayRef: commandMenuOverlayRef,
@@ -246,6 +248,52 @@ export const Input = forwardRef<InputHandle, InputProps>(
       config: commandMenu,
       message,
     });
+
+    /*
+     * `handleCommandMenuCaretMove` evaluates the word at a given caret
+     * position, so it needs that position resolved. A mouse click's own
+     * caret is already resolved by the time React's `onClick` fires, but the
+     * `focus` event that precedes it can fire before the browser has placed
+     * the caret — reading `selectionStart` there is unreliable across
+     * browsers — so `onFocus` defers one frame, by when it always has.
+     */
+    const handleTextareaClick = () => {
+      handleCommandMenuCaretMove(
+        textareaRef.current?.selectionStart ?? message.length,
+      );
+    };
+    const handleTextareaFocus = () => {
+      requestAnimationFrame(() => {
+        handleCommandMenuCaretMove(
+          textareaRef.current?.selectionStart ?? message.length,
+        );
+      });
+    };
+
+    /*
+     * Keyboard caret movement (Left/Right/Home/End/PageUp/PageDown) needs the
+     * same re-evaluation as a click, since it can carry the caret into or out
+     * of a command-shaped word with no `onChange` — the keys the command menu
+     * itself consumes for navigation (ArrowUp/ArrowDown/Enter, only while it's
+     * already open, see `handleCommandMenuKeyDown`) are excluded so this never
+     * double-processes those. `keyup`, not `keydown`, because the browser has
+     * already moved the caret to its new position by then.
+     */
+    const handleTextareaKeyUp = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (
+        e.key !== 'ArrowLeft' &&
+        e.key !== 'ArrowRight' &&
+        e.key !== 'Home' &&
+        e.key !== 'End' &&
+        e.key !== 'PageUp' &&
+        e.key !== 'PageDown'
+      ) {
+        return;
+      }
+      handleCommandMenuCaretMove(
+        e.currentTarget.selectionStart ?? message.length,
+      );
+    };
 
     /*
      * The command menu's empty-query hint: while the menu is open the value is
@@ -647,12 +695,23 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * Enter takes the active option instead of sending the message — with no
      * option active it does nothing rather than send. Shift+Enter and, in
      * MetaEnter mode, a bare Enter with nothing active keep inserting a
-     * newline, which closes the menu. Returns whether the key was consumed.
+     * newline, which closes the menu. Escape is handled here, not left to the
+     * `Dropdown`'s own floating-ui dismissal, so it can call the latching
+     * `dismiss()` and stop the event before it also reaches floating-ui's
+     * listener and gets folded into the *non*-latching outside-press path
+     * (`onOpenChange` below). Returns whether the key was consumed.
      */
     const handleCommandMenuKeyDown = (
       e: KeyboardEvent<HTMLTextAreaElement>,
     ): boolean => {
       if (!isMenuOpen || e.nativeEvent.isComposing) return false;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        dismiss();
+        return true;
+      }
 
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -823,7 +882,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
           onChange?.(e.target.value);
         }}
         onSelect={updateSelectionRects}
+        onFocus={handleTextareaFocus}
+        onClick={handleTextareaClick}
         onKeyDown={handleKeyDown}
+        onKeyUp={handleTextareaKeyUp}
         onPaste={handlePaste}
         /*
          * No suppression needed: a tracked mention's `/{name}` text is part of
@@ -893,7 +955,13 @@ export const Input = forwardRef<InputHandle, InputProps>(
             <Dropdown
               open={isMenuOpen}
               onOpenChange={(isOpen) => {
-                if (!isOpen) dismiss();
+                /*
+                 * Escape is intercepted earlier (`handleCommandMenuKeyDown`,
+                 * with `stopPropagation`) and never reaches this listener, so
+                 * a `false` here is always an outside click — the
+                 * non-latching close.
+                 */
+                if (!isOpen) closeOnOutsidePress();
               }}
               placement="top-start"
               trigger={[]}
