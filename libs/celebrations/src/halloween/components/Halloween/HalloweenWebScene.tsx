@@ -28,7 +28,10 @@ const HalloweenWebScene: FC = () => {
       await Promise.resolve();
       if (disposed) return;
       /* Without anchors the random connected mesh remains available. */
-      const targets = getHalloweenWebTargets(anchors);
+      const sources: HTMLElement[] = [];
+      const targets = getHalloweenWebTargets(anchors, (element) =>
+        sources.push(element),
+      );
       const canvas = canvasRef.current;
       if (!canvas) return;
       const { clientWidth: width, clientHeight: height } =
@@ -51,6 +54,7 @@ const HalloweenWebScene: FC = () => {
         reducedMotion,
         color: getComputedStyle(canvas).color,
         pixelRatio: window.devicePixelRatio,
+        targets: sources,
       });
     };
     prepare();

@@ -68,7 +68,7 @@ export const StoryHostPage: FC<StoryHostPageProps> = ({
     <div className="bg-layer-1 flex h-dvh min-w-0 overflow-hidden text-primary">
       <nav
         aria-label="Conversation history"
-        className="story-history w-1/3 max-w-60 shrink-0 overflow-y-auto border-e border-primary p-3"
+        className="story-history hidden w-1/3 max-w-60 shrink-0 overflow-y-auto border-e border-primary p-3 desktop:block"
       >
         <h2 className="mb-2">Today</h2>
         <ul className="flex flex-col gap-1">
