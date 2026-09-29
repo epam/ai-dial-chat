@@ -54,16 +54,26 @@ export interface UseCommandMenuParams {
  * stays open while that same word keeps matching, and closes the moment it
  * stops. Reaching the bare trigger character always (re)opens the menu, even
  * over a word an explicit dismissal previously closed; a dismissal otherwise
- * stays in effect only while the caret remains in that same word. Also drives
- * the menu's keyboard navigation: the arrows move an active option read off
- * the rendered overlay's DOM, and the active option is exposed via
- * `aria-activedescendant`.
+ * stays in effect only while the caret remains in that same word.
+ *
+ * Escape is the one explicit dismissal: it latches (`dismiss`) until the
+ * tracked word stops matching and the trigger is typed or pasted again — an
+ * outside click is a different gesture and only closes for the moment
+ * (`closeOnOutsidePress`), with no latch, so the same word reopens the menu
+ * on the next keystroke (`handleValueChange`) or the next time the caret
+ * lands back in it (`handleCaretMove`, driven by focus/click rather than by
+ * an edit — evaluated fresh off the given position every time, since a
+ * message can hold more than one command-shaped word at once).
+ *
+ * Also drives the menu's keyboard navigation: the arrows move an active
+ * option read off the rendered overlay's DOM, and the active option is
+ * exposed via `aria-activedescendant`.
  */
 export const useCommandMenu = ({ config, message }: UseCommandMenuParams) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   /* Start offset of the word the menu is currently open for, or was last open for. */
   const [activeWordStart, setActiveWordStart] = useState<number | null>(null);
-  /* Start offset of the word an explicit dismissal (Escape / outside click) closed. */
+  /* Start offset of the word an explicit dismissal (Escape) closed. */
   const [dismissedWordStart, setDismissedWordStart] = useState<number | null>(
     null,
   );
@@ -161,6 +171,46 @@ export const useCommandMenu = ({ config, message }: UseCommandMenuParams) => {
   }, [activeWordStart]);
 
   /*
+   * The non-latching close: an outside click, unlike Escape, isn't a
+   * deliberate "go away" gesture — it just moves focus elsewhere. Closes the
+   * menu for now without recording `dismissedWordStart`, so `handleCaretMove`
+   * and the next `handleValueChange` are both free to reopen it over the same
+   * word.
+   */
+  const closeOnOutsidePress = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+
+  /*
+   * Re-evaluates the word at the caret on a caret move that isn't itself an
+   * edit — a click, or the focus that follows one. A message can hold more
+   * than one command-shaped word at once (`/st some text /ready`), so which
+   * one (if any) the menu belongs to has to be read fresh off the actual
+   * caret position every time, never assumed to still be whichever word
+   * `activeWordStart` last pointed at — that word may no longer be where the
+   * caret is, or may not even still exist. `dismissedWordStart` is still
+   * honored, so clicking back into a word Escape closed leaves it closed.
+   */
+  const handleCaretMove = useCallback(
+    (caretPosition: number) => {
+      if (config == null) return;
+
+      const { start, end } = findWordAtCaret(message, caretPosition);
+      const word = message.slice(start, end);
+
+      if (!isCommandShaped(word, config.triggerPrefix)) {
+        setActiveWordStart(null);
+        setIsMenuOpen(false);
+        return;
+      }
+
+      setActiveWordStart(start);
+      setIsMenuOpen(dismissedWordStart !== start);
+    },
+    [config, message, dismissedWordStart],
+  );
+
+  /*
    * Keyboard navigation over the rendered menu: the options are read from the
    * overlay's DOM rather than from the host's data, because the host alone
    * decides what it lists (filtering, sections) — the contract is only that
@@ -233,6 +283,8 @@ export const useCommandMenu = ({ config, message }: UseCommandMenuParams) => {
     /** Start offset of the word driving the currently open menu, or `null` when closed. */
     activeWordStart,
     dismiss,
+    closeOnOutsidePress,
+    handleCaretMove,
     handleValueChange,
     listboxId,
     overlayRef,

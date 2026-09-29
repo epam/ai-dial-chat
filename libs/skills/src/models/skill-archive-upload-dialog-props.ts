@@ -12,14 +12,18 @@ export interface SkillArchiveUploadDialogLabels {
   fileInputAriaLabel?: string;
   /** Accessible name for the dialog's close button. Defaults to `'Close'`. */
   closeAriaLabel?: string;
+  /** Accessible name of the spinner shown while the upload is in flight. Defaults to `'Uploading skill'`. */
+  uploadingAriaLabel?: string;
 }
 
 /** Props for {@link SkillArchiveUploadDialog}. */
 export interface SkillArchiveUploadDialogProps {
   /** Whether the dialog is open. */
   isOpen: boolean;
-  /** Rejection message rendered under the drop area; omit when nothing was rejected. */
+  /** Rejection or upload-failure message rendered under the drop area; omit when there is none. */
   errorText?: string;
+  /** Whether an upload is in flight: the drop area is disabled and a spinner is shown. Defaults to `false`. */
+  isUploading?: boolean;
   /** `accept` value forwarded to the drop zone/native file input. Defaults to `'.zip,.md'`. */
   accept?: string;
   /** Labels rendered by the dialog; each falls back to an English default. */

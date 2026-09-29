@@ -29,6 +29,15 @@ Before submitting, the client SHALL perform a filename pre-check as a UX shortcu
 - **WHEN** a user triggers "Upload" while a previous import (archive or standalone manifest) for this user is still in flight
 - **THEN** the file picker or submission is prevented from starting a second concurrent import
 
+#### Scenario: A failed import is shown in the still-open dialog
+- **WHEN** the import request for a selected file fails with any status (e.g. `400` for a non-ZIP or a ZIP without `SKILL.md`, or `502`/`503` from an upstream timeout)
+- **THEN** the "Upload skill" dialog, which stayed open with its drop area disabled and a spinner shown while the request ran, remains open and renders the classified error message under the drop area, with the drop area enabled again so another file can be picked
+- **AND** only an unmapped/generic failure additionally raises an error toast, because that toast carries the request trace id
+
+#### Scenario: Closing the dialog mid-upload aborts the request
+- **WHEN** the user closes the "Upload skill" dialog while an import request is still in flight
+- **THEN** the request is aborted, its eventual outcome is ignored, and "Upload" reopens the dialog immediately in its idle state
+
 ### Requirement: `POST /api/v1/skills/import` accepts one ZIP archive or one standalone SKILL.md and creates a Skill atomically
 
 The system SHALL expose `POST /api/v1/skills/import` (`operationId: importSkillArchive`, unchanged) on the existing versioned Skills controller. The endpoint SHALL accept `multipart/form-data` with one required binary field `file`, use the authenticated user's bucket from `req.user.bucket` (never a client-supplied bucket), and — after full validation succeeds — perform exactly one atomic whole-Skill create against DIAL Core via the existing `uploadSkillFolder` call with `If-None-Match: *`, reusing the same Core-facing behavior `POST /api/v1/skills` already uses.

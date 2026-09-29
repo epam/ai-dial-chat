@@ -14,8 +14,8 @@ import {
   useCatalogToolsetCredentials,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -238,7 +238,8 @@ const CatalogView: FC<Props> = ({
   const {
     isDialogOpen: isSkillArchiveDialogOpen,
     statusMessage: skillArchiveStatusMessage,
-    selectionError: skillArchiveSelectionError,
+    errorText: skillArchiveErrorText,
+    isUploading: isSkillArchiveUploading,
     openDialog: openSkillArchiveDialog,
     closeDialog: closeSkillArchiveDialog,
     handleFilesSelected: handleSkillArchiveFilesSelected,
@@ -562,7 +563,8 @@ const CatalogView: FC<Props> = ({
     <>
       <SkillArchiveUploadDialog
         isOpen={isSkillArchiveDialogOpen}
-        errorText={skillArchiveSelectionError}
+        errorText={skillArchiveErrorText}
+        isUploading={isSkillArchiveUploading}
         onClose={closeSkillArchiveDialog}
         onFilesSelected={handleSkillArchiveFilesSelected}
         onFilesRejected={handleSkillArchiveFilesRejected}

@@ -23,6 +23,28 @@ describe('ConversationInput', () => {
     expect(screen.getByText('How can I help you?')).toBeTruthy();
   });
 
+  it('renders the below-welcome slot between the welcome heading and the input', () => {
+    render(
+      <ConversationInput
+        welcomeText="How can I help you?"
+        belowWelcomeSlot={<button type="button">Starter</button>}
+      />,
+    );
+    const heading = screen.getByRole('heading', {
+      name: 'How can I help you?',
+    });
+    const starter = screen.getByRole('button', { name: 'Starter' });
+    const textarea = screen.getByRole('textbox');
+    expect(
+      heading.compareDocumentPosition(starter) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      starter.compareDocumentPosition(textarea) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it('should keep welcome text visible when typing', () => {
     render(<ConversationInput welcomeText="How can I help you?" />);
     const textarea = screen.getByRole('textbox');

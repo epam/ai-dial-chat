@@ -21,11 +21,12 @@ export const filterHiddenOwnedItems = (
   hideOwned ? items.filter((item) => !item.isMyApp) : [...items];
 
 /**
- * Returns items marked as a user favorite, in original order.
+ * Returns items marked as a user favorite that are not hidden, in original order.
  */
 export const deriveFavoriteItems = (
   items: readonly CatalogItem[],
-): CatalogItem[] => items.filter((item) => item.isUserFavorite);
+): CatalogItem[] =>
+  items.filter((item) => item.isUserFavorite && !item.isHidden);
 
 /**
  * Returns the subset of `tabOrder` entries whose entity type is present in

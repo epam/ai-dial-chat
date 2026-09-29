@@ -428,6 +428,101 @@ describe('ModelLimitsSection', () => {
     });
   });
 
+  describe('row type caption and cost supporting label', () => {
+    const agentCost: ModelLimitMetricCell = {
+      kind: ModelLimitMetricKind.Unlimited,
+      usedLabel: '$1.50 spent',
+      supportingLabel: 'Includes cost of models it called',
+      ariaLabel: '$1.50 spent',
+    };
+    const agentRow: ModelLimitRow = {
+      ...baseRow,
+      id: 'llm-router',
+      name: 'LLM Router',
+      version: undefined,
+      typeLabel: 'Agent',
+      day: { tokens: baseRow.day.tokens, cost: agentCost },
+    };
+
+    it('shows a row-supplied type caption while other rows keep the section label', () => {
+      renderSection({ rows: [baseRow, agentRow] });
+
+      const [modelRow, routerRow] = screen
+        .getAllByRole('row')
+        .filter((row) => within(row).queryByText(/GPT-4o|LLM Router/));
+      expect(within(modelRow).getByText('Model')).toBeTruthy();
+      expect(within(routerRow).getByText('Agent')).toBeTruthy();
+      expect(within(routerRow).queryByText('Model')).toBeNull();
+    });
+
+    it('falls back to the section label for an empty type caption', () => {
+      renderSection({ rows: [{ ...baseRow, typeLabel: '' }] });
+
+      expect(screen.getByText('Model')).toBeTruthy();
+    });
+
+    it('shows the cost supporting label beneath the spent value in the same cell', () => {
+      renderSection({ rows: [agentRow] });
+
+      // Cells in order: Item, Today, This week, This month, Status.
+      const dayCell = screen.getAllByRole('cell')[1];
+      expect(within(dayCell).getByText('$1.50 spent')).toBeTruthy();
+      const supporting = within(dayCell).getByText(
+        'Includes cost of models it called',
+      );
+      expect(supporting.classList).toContain('break-words');
+    });
+
+    it('ignores a supporting label on an unavailable cost cell', () => {
+      renderSection({
+        rows: [
+          {
+            ...agentRow,
+            day: {
+              tokens: baseRow.day.tokens,
+              cost: {
+                kind: ModelLimitMetricKind.Unavailable,
+                supportingLabel: 'Includes cost of models it called',
+                ariaLabel: 'Unavailable',
+              },
+            },
+          },
+        ],
+      });
+
+      expect(
+        screen.queryByText('Includes cost of models it called'),
+      ).toBeNull();
+    });
+
+    it('renders only the spent line when no supporting label is given', () => {
+      renderSection();
+
+      const dayCell = screen.getAllByRole('cell')[1];
+      expect(within(dayCell).getAllByText(/spent/)).toHaveLength(1);
+      expect(
+        within(dayCell).queryByText('Includes cost of models it called'),
+      ).toBeNull();
+    });
+
+    it('renders both additions under an RTL ancestor', () => {
+      render(
+        <div dir="rtl">
+          <ModelLimitsSection
+            rows={[agentRow]}
+            labels={labels}
+            periodStatuses={periodStatuses}
+          />
+        </div>,
+      );
+
+      expect(screen.getByText('Agent')).toBeTruthy();
+      expect(
+        screen.getByText('Includes cost of models it called'),
+      ).toBeTruthy();
+    });
+  });
+
   describe('period header reset line', () => {
     const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
     const DAY_RESET_LABEL = 'Resets Sep 16, 2026, 2:00 AM GMT+2';

@@ -393,6 +393,10 @@ const NewConversationComposer: FC<Props> = ({
   );
   const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const isRemovableToolsEnabled = useUiFeature(OverlayFeature.RemovableTools);
+  const isStartersBelowGreeting = useUiFeature(
+    OverlayFeature.StartersBelowGreeting,
+  );
+  const isGreetingHidden = useUiFeature(OverlayFeature.HideGreeting);
   const isAgentDescriptionEnabled = useUiFeature(
     OverlayFeature.ShowAgentDescription,
   );
@@ -470,6 +474,21 @@ const NewConversationComposer: FC<Props> = ({
     ],
   );
 
+  /* The intro text and the starters move together: with
+     `starters-below-greeting` on they sit between the greeting and the input,
+     otherwise below the input. */
+  const startersBlock =
+    introText || children != null ? (
+      <>
+        {introText && (
+          <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">
+            {introText}
+          </p>
+        )}
+        {children}
+      </>
+    ) : null;
+
   return (
     <div className="flex flex-1 flex-col overflow-y-auto">
       <FileDndOverlay
@@ -491,11 +510,13 @@ const NewConversationComposer: FC<Props> = ({
       {/* `flex-auto shrink-0` (1 0 auto) lets the region grow past the
           viewport when the welcome content is tall, so the wrapper above
           scrolls instead of `justify-center` clipping both ends. The
-          symmetric `desktop:py-16` keeps overflowing content clear of the
-          absolutely positioned 64px desktop header without shifting the
-          centered layout. */}
+          symmetric `py-14` / `desktop:py-16` keeps overflowing content clear
+          of the absolutely positioned header (48px on mobile and in the
+          overlay, 64px on desktop) without shifting the centered layout —
+          otherwise a long agent description scrolls under the logo
+          (Issue #9036). */}
       <div
-        className="relative flex flex-auto shrink-0 flex-col items-center justify-center overflow-hidden p-4 [container-type:inline-size] desktop:px-8 desktop:py-16"
+        className="relative flex flex-auto shrink-0 flex-col items-center justify-center overflow-hidden px-4 py-14 [container-type:inline-size] desktop:px-8 desktop:py-16"
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
@@ -512,29 +533,36 @@ const NewConversationComposer: FC<Props> = ({
           message={message}
           messageRevision={messageRevision}
           textInsertion={inputInsertion}
-          welcomeText={getTimeOfDayGreeting(
-            new Date().getHours(),
-            {
-              morningWithName: t(ChatI18nKeys.GreetingMorning, {
-                name: firstName,
-              }),
-              morningNoName: t(ChatI18nKeys.GreetingMorningNoName),
-              afternoonWithName: t(ChatI18nKeys.GreetingAfternoon, {
-                name: firstName,
-              }),
-              afternoonNoName: t(ChatI18nKeys.GreetingAfternoonNoName),
-              eveningWithName: t(ChatI18nKeys.GreetingEvening, {
-                name: firstName,
-              }),
-              eveningNoName: t(ChatI18nKeys.GreetingEveningNoName),
-              nightWithName: t(ChatI18nKeys.GreetingNight, {
-                name: firstName,
-              }),
-              nightNoName: t(ChatI18nKeys.GreetingNightNoName),
-            },
-            firstName || undefined,
-          )}
+          /* `ConversationInput` renders the description only under a
+             greeting, so `hide-greeting` removes both. */
+          welcomeText={
+            isGreetingHidden
+              ? undefined
+              : getTimeOfDayGreeting(
+                  new Date().getHours(),
+                  {
+                    morningWithName: t(ChatI18nKeys.GreetingMorning, {
+                      name: firstName,
+                    }),
+                    morningNoName: t(ChatI18nKeys.GreetingMorningNoName),
+                    afternoonWithName: t(ChatI18nKeys.GreetingAfternoon, {
+                      name: firstName,
+                    }),
+                    afternoonNoName: t(ChatI18nKeys.GreetingAfternoonNoName),
+                    eveningWithName: t(ChatI18nKeys.GreetingEvening, {
+                      name: firstName,
+                    }),
+                    eveningNoName: t(ChatI18nKeys.GreetingEveningNoName),
+                    nightWithName: t(ChatI18nKeys.GreetingNight, {
+                      name: firstName,
+                    }),
+                    nightNoName: t(ChatI18nKeys.GreetingNightNoName),
+                  },
+                  firstName || undefined,
+                )
+          }
           descriptionText={welcomeScreenDescription ?? undefined}
+          belowWelcomeSlot={isStartersBelowGreeting ? startersBlock : undefined}
           placeholder={placeholder}
           removeLabel={t(AttachmentsI18nKeys.RemoveLabel)}
           retryLabel={t(AttachmentsI18nKeys.RetryLabel)}
@@ -612,12 +640,7 @@ const NewConversationComposer: FC<Props> = ({
             />
           }
         />
-        {introText && (
-          <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">
-            {introText}
-          </p>
-        )}
-        {children}
+        {!isStartersBelowGreeting && startersBlock}
       </div>
       <FooterMessage />
       {isDialFileManagerOpen && (

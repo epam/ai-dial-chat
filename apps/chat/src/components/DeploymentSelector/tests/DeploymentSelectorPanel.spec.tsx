@@ -245,6 +245,31 @@ describe('DeploymentSelectorPanel', () => {
       expect(rows[1].textContent).toContain('favorite-model');
     });
 
+    it('hides a pinned default and favorites tagged as hidden entities', () => {
+      renderPanel(
+        [
+          {
+            ...makeItem('hidden-favorite', CatalogEntityType.Model),
+            isHidden: true,
+          },
+          makeItem('visible-favorite', CatalogEntityType.Model),
+        ],
+        {
+          pinnedItem: {
+            ...makeItem('hidden-default', CatalogEntityType.Model),
+            isHidden: true,
+          },
+        },
+      );
+
+      expect(
+        screen.queryByRole('menuitemradio', { name: /hidden-/ }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('menuitemradio', { name: /visible-favorite/ }),
+      ).toBeTruthy();
+    });
+
     it('does not render the pinned default twice when it is already a favorite', () => {
       const pinnedItem = makeItem('default-model', CatalogEntityType.Model);
 

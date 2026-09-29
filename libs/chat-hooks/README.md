@@ -1620,12 +1620,14 @@ Keep `formatResetTime` referentially stable (for example with `useCallback`) —
 
 ### mapUserUsageToModelLimits
 
-Maps `usage.deployments` into the `rows` array for `ModelLimitsSection`, joined with display metadata from a list of `DeploymentItemDto`. Only deployments that have nonzero usage in at least one displayed period are included. Requires two host-owned callbacks to keep URL construction and locale resolution out of this function:
+Maps `usage.deployments` into the `rows` array for `ModelLimitsSection`, joined with display metadata from the `Model` and `Application` entries of a list of `DeploymentItemDto` (toolsets never enrich a row). Ids are compared through `normalizeDeploymentId`, so a custom application id matches whether either side is raw or percent-encoded; the row's `id` stays the `usage.deployments` key. Only deployments that have nonzero usage in at least one displayed period are included. Requires two host-owned callbacks to keep URL construction and locale resolution out of this function:
 
 - `resolveIconUrl(iconUrl)` — resolves a deployment's raw `iconUrl` to the URL the avatar should load (typically the host's own icon-proxy endpoint).
 - `resolveDisplayName(name, locale)` — resolves a localized-text map or plain string to the display name for the active locale.
 
 Cost and Tokens cells use the same `total >= 2 ** 53` sentinel test. A sentinel Cost `total` produces an `Unlimited` cell showing attributed spend with no cap; a genuinely finite one produces a `Finite` cell whose status folds into the row's overall Status alongside finite Tokens statuses.
+
+A deployment enriched from an `Application` item becomes an agent row: its `typeLabel` is `t(USAGE_MODEL_LIMITS_I18N_KEYS.applicationTypeLabel)`, its Tokens cells are always `Unavailable` (DIAL Core writes no token counters for applications), an `Unlimited` Cost cell carries `supportingLabel: t(USAGE_MODEL_LIMITS_I18N_KEYS.includesCalledModelsLabel)`, and only its Cost stats decide whether the row is included. An application's cost includes the cost of the models it called, which appear as their own rows, so rows must never be summed. Model rows and unmatched ids are built exactly as before and carry no `typeLabel`.
 
 ```tsx
 import {
@@ -1649,18 +1651,18 @@ const rows = mapUserUsageToModelLimits(
 
 **Parameters**:
 
-| Name                 | Type                                                                                      | Description                                                            |
-| -------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `usage`              | `UserLimitStatsResponseDto \| undefined`                                                  | The already-fetched usage response.                                    |
-| `deploymentItems`    | `DeploymentItemDto[]`                                                                     | Enrichment-only model metadata; row order follows `usage.deployments`. |
-| `activeLocale`       | `string`                                                                                  | Passed to `resolveDisplayName`.                                        |
-| `t`                  | `(key: string, options?) => string`                                                       | Translate callback.                                                    |
-| `resolveIconUrl`     | `(iconUrl: string \| undefined) => string \| undefined`                                   | Host-owned icon URL resolver.                                          |
-| `resolveDisplayName` | `(name: string \| Record<string, string> \| undefined \| null, locale: string) => string` | Host-owned display-name resolver.                                      |
+| Name                 | Type                                                                                      | Description                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `usage`              | `UserLimitStatsResponseDto \| undefined`                                                  | The already-fetched usage response.                                                    |
+| `deploymentItems`    | `DeploymentItemDto[]`                                                                     | Enrichment-only model and application metadata; row order follows `usage.deployments`. |
+| `activeLocale`       | `string`                                                                                  | Passed to `resolveDisplayName`.                                                        |
+| `t`                  | `(key: string, options?) => string`                                                       | Translate callback.                                                                    |
+| `resolveIconUrl`     | `(iconUrl: string \| undefined) => string \| undefined`                                   | Host-owned icon URL resolver.                                                          |
+| `resolveDisplayName` | `(name: string \| Record<string, string> \| undefined \| null, locale: string) => string` | Host-owned display-name resolver.                                                      |
 
 **Returns**: `ModelLimitRow[]` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
 
-`USAGE_MODEL_LIMITS_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`.
+`USAGE_MODEL_LIMITS_I18N_KEYS` is a const object of the default i18n key strings this function passes to `t`, including `applicationTypeLabel` (`usage.applicationTypeLabel`) and `includesCalledModelsLabel` (`usage.includesCalledModelsLabel`) for agent rows.
 
 ### mapOverallCostLimitsToPeriodStatuses
 
@@ -3786,7 +3788,7 @@ const { fileActions, pendingManifestImport, resolveManifestImport } =
 
 ### useSkillArchiveImport
 
-Headless controller for a skill-archive-upload flow: dialog visibility, an exact-`SKILL.md`/`.zip` filename precheck, in-flight exclusion, and import completion. Accepts the host's already-configured `importArchive` request and observes completion/failure through `onImported`/`onError` — it never imports app contexts, i18n, notification transports, or a configured API client, and error outcomes are semantic values (`SkillArchiveImportErrorKind`) rather than translation keys. Available from both the package root and `./skill-editor`.
+Headless controller for a skill-archive-upload flow: dialog visibility, an exact-`SKILL.md`/`.zip` filename precheck, in-flight exclusion, and import completion. The dialog stays open while the request runs and closes only on success; a failure leaves it open with `errorKind` set so the host can render the message inline and the user can pick another file. `closeDialog` aborts an in-flight request through the `AbortSignal` passed to `importArchive`, so a hanging upload never locks the flow. Accepts the host's already-configured `importArchive` request and observes completion/failure through `onImported`/`onError` — it never imports app contexts, i18n, notification transports, or a configured API client, and error outcomes are semantic values (`SkillArchiveImportErrorKind`) rather than translation keys. Available from both the package root and `./skill-editor`.
 
 ```ts
 import {
@@ -3804,6 +3806,7 @@ interface SkillImportResult {
 const {
   isDialogOpen,
   status,
+  isUploading,
   selectionRejectionReason,
   errorKind,
   openDialog,
@@ -3811,13 +3814,13 @@ const {
   handleFilesSelected,
   handleFilesRejected,
 } = useSkillArchiveImport<SkillImportResult>({
-  importArchive: (file) => skillsApi.importSkillArchive(file),
+  importArchive: (file, signal) => skillsApi.importSkillArchive(file, signal),
   onImported: async (result) => {
     notifySuccess(`"${result.name}" has been created.`);
     await refetchSkills();
   },
   onError: (error, kind) => {
-    showErrorNotification(translateErrorKind(kind));
+    reportImportFailure(error, kind); // optional side channel — the dialog stays open either way
   },
 });
 

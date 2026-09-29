@@ -298,4 +298,22 @@ describe('useSkillSelectorOverlay', () => {
       expect(result.current.renderHistorySkills(undefined)).toBeNull();
     });
   });
+
+  describe('reference stability (issue #9109)', () => {
+    it('keeps seedSkillMentions stable across a re-render that does not touch mentions', () => {
+      const { result, rerender } = renderHook(
+        (props: UseSkillSelectorOverlayOptions) =>
+          useSkillSelectorOverlay(props),
+        { initialProps: baseOptions },
+      );
+
+      const firstSeed = result.current.seedSkillMentions;
+
+      /* Same options, new object identity — mirrors a host re-render caused
+         by something unrelated to skills (e.g. a route change). */
+      rerender({ ...baseOptions });
+
+      expect(result.current.seedSkillMentions).toBe(firstSeed);
+    });
+  });
 });

@@ -662,6 +662,41 @@ describe('DeploymentsContext', () => {
     });
   });
 
+  it('skips hidden deployments when resolving the pinned default, the stored preference and the first-item fallback', async () => {
+    contextMocks.isDefaultDeploymentPinned = true;
+    contextMocks.defaultDeploymentId = mockItem1.id;
+    contextMocks.selectedDeploymentId = mockItem1.id;
+    mockGetDeployments.mockResolvedValue({
+      deployments: [{ ...mockItem1, isHidden: true }, mockItem2],
+    });
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+  });
+
+  it('keeps an explicitly restored hidden deployment selected', async () => {
+    mockGetDeployments.mockResolvedValue({
+      deployments: [mockItem1, { ...mockItem2, isHidden: true }],
+    });
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.restoreSelectedItemId(mockItem2.id);
+    });
+
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+  });
+
   it('throws when useDeployments is called outside DeploymentsProvider', () => {
     const consoleError = vi
       .spyOn(console, 'error')

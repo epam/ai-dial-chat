@@ -493,6 +493,32 @@ describe('ConversationListingService', () => {
       expect(result.items[0].title).toBe('hello');
     });
 
+    it('excludes the application version from a scheduled run title', async () => {
+      const runId = 'bc56151e-296d-469f-80f6-61fbb3e5a98a';
+      const scheduleId = 'a6985526-4785-4f38-8019-fc9e22fcbd90';
+      const filename = `Daily%20plan__0.0.1__Todoist__${runId}`;
+      mockMetadata([
+        {
+          url: `conversations/test-bucket/.scheduler/${scheduleId}/applications/test-bucket/${filename}`,
+          nodeType: 'FILE',
+          name: filename,
+          parentPath: `.scheduler/${scheduleId}/applications/test-bucket`,
+        },
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0]).toMatchObject({
+        title: 'Todoist',
+        isScheduledTask: true,
+        scheduleId,
+        runId,
+      });
+    });
+
     it('sets isPinned: true on items whose id is in the pins list', async () => {
       mockMetadata([
         { url: 'conversations/bucket/conv-1', nodeType: 'FILE' },

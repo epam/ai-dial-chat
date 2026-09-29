@@ -1,10 +1,10 @@
 import { safeDecodeURIComponent } from '../../common/utils/uri';
+import { SCHEDULER_SEGMENT } from '../constants/conversation.constants';
 import {
   getRunIdFromFilename,
   isApplicationDeploymentPath,
 } from './conversation.utils';
 
-const SCHEDULER_SEGMENT = '.scheduler';
 const SCHEDULE_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
 // Path shape: conversations/{bucket}/.scheduler/{scheduleId}/{...deploymentFolders}/{deploymentId}__{title}__{runId}
