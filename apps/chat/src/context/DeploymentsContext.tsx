@@ -161,6 +161,13 @@ const isDeploymentPresent = (
   id: string | null,
 ): boolean => id != null && deployments.some((d) => d.id === id);
 
+/* A deployment the operator hid via HIDDEN_ENTITY_TAGS must not become a new
+   chat's model through a stored or configured preference (Issue #9150). */
+const isDeploymentSelectable = (
+  deployments: DeploymentItemDto[],
+  id: string | null,
+): boolean => id != null && deployments.some((d) => d.id === id && !d.isHidden);
+
 /*
  * `pinnedDefaultId` is the operator default only when `defaultDeploymentPinned`
  * is on; `configuredDefaultId` is that default regardless of pinning. They are
@@ -206,29 +213,29 @@ const resolveInitialSelection = (
   if (
     defaultAgent != null &&
     !isDefaultAgentSentinel(defaultAgent) &&
-    isDeploymentPresent(deployments, defaultAgent)
+    isDeploymentSelectable(deployments, defaultAgent)
   ) {
     return defaultAgent;
   }
   if (
     defaultAgent === DefaultAgentMode.DefaultAgent &&
-    isDeploymentPresent(deployments, configuredDefaultId)
+    isDeploymentSelectable(deployments, configuredDefaultId)
   ) {
     return configuredDefaultId;
   }
   if (
     defaultAgent === DefaultAgentMode.LastUsedAgent &&
-    isDeploymentPresent(deployments, userConfigId)
+    isDeploymentSelectable(deployments, userConfigId)
   ) {
     return userConfigId;
   }
-  if (isDeploymentPresent(deployments, pinnedDefaultId)) {
+  if (isDeploymentSelectable(deployments, pinnedDefaultId)) {
     return pinnedDefaultId;
   }
-  if (isDeploymentPresent(deployments, userConfigId)) {
+  if (isDeploymentSelectable(deployments, userConfigId)) {
     return userConfigId;
   }
-  return deployments[0]?.id ?? null;
+  return (deployments.find((d) => !d.isHidden) ?? deployments[0])?.id ?? null;
 };
 
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
