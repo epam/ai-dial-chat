@@ -301,6 +301,15 @@ overlay.destroy();
 `theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
 not pass `domain`, `hostDomain`, the request timeout, or loader settings to it.
 
+`modelId` takes a deployment id or a deployment reference. It is applied to the
+current selection as soon as the deployment list loads, and it stays the
+default for every new chat opened in the overlay for the rest of the session.
+It outranks the user's own saved selection, their "Default agent for new
+chats" preference, and the operator's pinned default, so a first-time user
+opens on the host's agent too. An explicit pick in the model selector still
+wins for the current chat. An unknown `modelId` is ignored, and the default
+agent is chosen the usual way.
+
 ### Iframe attributes and browser permissions
 
 The library owns the `<iframe>` element and its security attributes; they are
