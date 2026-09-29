@@ -123,7 +123,7 @@ describe('InlineGroupedVisualizer', () => {
   it('draws the frame border by default', () => {
     const { container } = renderComponent();
 
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the frame root is a presentational wrapper with no accessible role to query
+    // eslint-disable-next-line testing-library/no-container -- the frame root is a presentational wrapper with no accessible role to query
     expect(container.firstElementChild?.classList.contains('border')).toBe(
       true,
     );
@@ -132,7 +132,7 @@ describe('InlineGroupedVisualizer', () => {
   it('drops the frame border and header divider when isBorderless is set', () => {
     const { container } = renderComponent({ isBorderless: true });
 
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- the frame root and header are presentational wrappers with no accessible role to query
+    // eslint-disable-next-line testing-library/no-node-access -- the frame root and header are presentational wrappers with no accessible role to query
     const frame = container.firstElementChild;
     // eslint-disable-next-line testing-library/no-node-access -- see above
     const header = frame?.firstElementChild;

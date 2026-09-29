@@ -144,10 +144,10 @@ are structure and accessibility contracts rather than styling ones. Two
 elements therefore carry a stable public class, exported as
 `PROMPT_EDITOR_CLASS`.
 
-| Key           | Class                             | Element                                                      |
-| ------------- | --------------------------------- | ------------------------------------------------------------ |
-| `form`        | `dial-prompt-editor-form`         | The form column holding Name, Description and Instructions   |
-| `folderField` | `dial-prompt-editor-folder-field` | The folder picker row rendered by `PromptFolderField`        |
+| Key           | Class                             | Element                                                    |
+| ------------- | --------------------------------- | ---------------------------------------------------------- |
+| `form`        | `dial-prompt-editor-form`         | The form column holding Name, Description and Instructions |
+| `folderField` | `dial-prompt-editor-folder-field` | The folder picker row rendered by `PromptFolderField`      |
 
 The classes carry no declarations of their own: nothing in `styles.css` selects
 on them, so they change nothing until a host writes a rule. Renaming one, or

@@ -14,8 +14,8 @@ import {
   useCatalogToolsetCredentials,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
