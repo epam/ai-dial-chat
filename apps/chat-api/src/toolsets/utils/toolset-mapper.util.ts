@@ -22,7 +22,7 @@ import {
 import { ToolsetAuthType } from '../dto/toolset-body.dto';
 import type { ToolsetBodyDto } from '../dto/toolset-body.dto';
 
-export const DEFAULT_TOOLSET_VERSION = '0.0.1';
+export const DEFAULT_TOOLSET_VERSION = '1.0.0';
 export const TOOLSET_RESOURCE_PREFIX = 'toolsets/';
 
 export type DialAuthSettings = components['schemas']['ResourceAuthSettings'];
