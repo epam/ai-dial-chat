@@ -80,10 +80,11 @@ describe('bowling motion lifecycle', () => {
     render(<HalloweenBowling />);
     expect(animate).not.toHaveBeenCalled();
   });
-  it('shows standalone artwork when history is unavailable', () => {
+  it('rolls without borrowing UI when history is unavailable', () => {
     const { find, animate } = setup(false);
     find.mockReturnValue([]);
     render(<HalloweenBowling />);
-    expect(animate).not.toHaveBeenCalled();
+    expect(animate).toHaveBeenCalledOnce();
+    expect(animate.mock.calls[0][0].hits).toEqual([]);
   });
 });

@@ -109,7 +109,18 @@ export const buildBowlingPlan = (
   viewportWidth: number,
   viewportHeight: number,
 ): BowlingPlan | null => {
-  if (!rows.length) return null;
+  if (!rows.length) {
+    if (viewportWidth < 96 || viewportHeight < 96) return null;
+    const radius = Math.min(44, viewportWidth * 0.09, viewportHeight * 0.09);
+    return {
+      startX: viewportWidth - radius - 16,
+      endX: -radius - 20,
+      y: viewportHeight * 0.55,
+      radius,
+      direction: -1,
+      hits: [],
+    };
+  }
   const measured = rows.map((row) => ({
     ...row,
     contactRect: getBowlingContactRect(row),
@@ -145,6 +156,33 @@ export const buildBowlingPlan = (
   return { startX, endX, y, radius, direction, hits };
 };
 
+/* Without row snapshots, the pumpkin still needs an interruption and completion owner. */
+const watchStandaloneRoll = (onStop: () => void): (() => void) => {
+  const events = [
+    'pointerdown',
+    'keydown',
+    'beforeinput',
+    'input',
+    'compositionstart',
+    'focusin',
+    'scroll',
+    'visibilitychange',
+  ];
+  let stopped = false;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    clearTimeout(deadline);
+    events.forEach((name) => document.removeEventListener(name, stop, true));
+    window.removeEventListener('resize', stop);
+    onStop();
+  };
+  const deadline = setTimeout(stop, BOWLING_ANIMATION_MS);
+  events.forEach((name) => document.addEventListener(name, stop, true));
+  window.addEventListener('resize', stop);
+  return stop;
+};
+
 /** Travel, spin and row impulses use one clock so a row never flies before contact. */
 export const animateBowling = (
   plan: BowlingPlan,
@@ -153,11 +191,7 @@ export const animateBowling = (
   spin: SVGElement,
   onStop?: () => void,
 ): (() => void) => {
-  if (
-    typeof actor.animate !== 'function' ||
-    typeof spin.animate !== 'function' ||
-    !plan.hits.length
-  )
+  if (typeof actor.animate !== 'function' || typeof spin.animate !== 'function')
     return () => undefined;
   const animations: Animation[] = [];
   const stopActor = () => {
@@ -211,6 +245,7 @@ export const animateBowling = (
     stopActor();
     return () => undefined;
   }
+  if (!plan.hits.length) return watchStandaloneRoll(stopActor);
   return animateCelebrationSnapshots(plan.hits, host, {
     durationMs: BOWLING_ANIMATION_MS,
     hideAt: (index) => plan.hits[index].contact,

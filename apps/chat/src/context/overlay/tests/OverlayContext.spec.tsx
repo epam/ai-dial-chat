@@ -623,6 +623,29 @@ describe('OverlayContext', () => {
         expect(responseCalls).toHaveLength(1);
       });
     });
+
+    it('keeps modelId after the pending model id is cleared', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-model',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            modelId: 'ask-sigma',
+          },
+        });
+      });
+
+      expect(result.current.pendingModelId).toBe('ask-sigma');
+      expect(result.current.modelId).toBe('ask-sigma');
+
+      act(() => result.current.clearPendingModelId());
+
+      expect(result.current.pendingModelId).toBeNull();
+      expect(result.current.modelId).toBe('ask-sigma');
+    });
   });
 
   describe('active-conversation bridge', () => {

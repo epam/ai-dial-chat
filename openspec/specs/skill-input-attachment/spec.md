@@ -6,33 +6,23 @@ How a skill is attached to the conversation input: the Skills entry in the Add m
 ## Requirements
 ### Requirement: Skills entry in the Add menu
 
-The Input's Add (`+`) menu SHALL show a "Skills" item (icon `IconBlocks`, i18n key `SkillSelectorI18nKeys.AddMenuLabel` (`skillSelector.addMenuLabel`) default "Skills") positioned directly below the "Prompts" item (or, when Prompts is absent, directly above "Chat settings"), on both the desktop dropdown and the mobile bottom sheet, only when the `features.skillUsageEnabled` feature flag is enabled for the session (frontend `useFeatureFlag('skillUsageEnabled')`, sourced from the client-config endpoint and the `SKILL_USAGE_ENABLED` env var — see the `config-registry-and-env-provider` delta). The favorite-skill data backing this item SHALL come from the already-loaded `SkillsContext` and `FavoriteApplicationsContext` state — no fetch is triggered by opening the menu.
+The Input's Add (`+`) menu SHALL show a "Skills" item (icon `IconBlocks`, i18n key `SkillSelectorI18nKeys.AddMenuLabel` (`skillSelector.addMenuLabel`) default "Skills") positioned directly below the "Prompts" item (or, when Prompts is absent, directly above "Chat settings"), on both the desktop dropdown and the mobile bottom sheet. The favorite-skill data backing this item SHALL come from the already-loaded `SkillsContext` and `FavoriteApplicationsContext` state — no fetch is triggered by opening the menu.
 
-#### Scenario: Feature flag disabled
+#### Scenario: Menu opened
 
-- **WHEN** `features.skillUsageEnabled` is disabled for the session
-- **THEN** the Add menu SHALL NOT render a "Skills" item, on either desktop dropdown or mobile bottom sheet
-
-#### Scenario: Feature flag enabled, menu opened
-
-- **WHEN** `features.skillUsageEnabled` is enabled and the user opens the Add menu
+- **WHEN** the user opens the Add menu
 - **THEN** a "Skills" item with `IconBlocks` SHALL appear directly below the "Prompts" item and above "Chat settings"
 
 ---
 
 ### Requirement: Skill selection on all chat input surfaces
 
-The skill-selection entry points — the Add-menu "Skills" item, the inline selected-skill chip with its Backspace-at-start removal, the slash command dropdown, the "Use skill" browse modal, and the "View details" details side panel — SHALL be available on every conversation-input surface in `apps/chat` that composes messages, not only the main chat route. This explicitly includes the AppsEditor preview chat (`AppPreviewChat`): its pre-conversation composer (the shared `NewConversationComposer`) SHALL offer the same entry points backed by the same host wiring (`useSkillSelectorOverlay`) and the same `features.skillUsageEnabled` gating, and the details side panel SHALL open on the AppsEditor surface exactly as it opens on the chat route. Once the preview conversation exists, its ongoing-conversation input is the shared `ConversationView` and needs no separate wiring. Message-composition paths that carry no user-composed draft (quick-app starter auto-submit) SHALL NOT attach a skill.
+The skill-selection entry points — the Add-menu "Skills" item, the inline selected-skill chip with its Backspace-at-start removal, the slash command dropdown, the "Use skill" browse modal, and the "View details" details side panel — SHALL be available on every conversation-input surface in `apps/chat` that composes messages, not only the main chat route. This explicitly includes the AppsEditor preview chat (`AppPreviewChat`): its pre-conversation composer (the shared `NewConversationComposer`) SHALL offer the same entry points backed by the same host wiring (`useSkillSelectorOverlay`), and the details side panel SHALL open on the AppsEditor surface exactly as it opens on the chat route. Once the preview conversation exists, its ongoing-conversation input is the shared `ConversationView` and needs no separate wiring. Message-composition paths that carry no user-composed draft (quick-app starter auto-submit) SHALL NOT attach a skill.
 
 #### Scenario: Preview composer shows the entry points
 
-- **WHEN** `features.skillUsageEnabled` is enabled and the AppsEditor preview chat's empty state is shown
+- **WHEN** the AppsEditor preview chat's empty state is shown
 - **THEN** the Add menu offers the "Skills" item, the slash dropdown and browse modal work, and a selected skill renders as the inline `ChatSkill` chip
-
-#### Scenario: Feature flag disabled in the preview
-
-- **WHEN** `features.skillUsageEnabled` is disabled and the AppsEditor preview chat's empty state is shown
-- **THEN** the preview composer renders identically to before this capability — no "Skills" menu item, no slash dropdown, no inline chip
 
 #### Scenario: Starter auto-submit carries no skill
 
@@ -276,7 +266,7 @@ The dropdown SHALL stay open while the message continues to match a `/` followed
 
 Pasting into the text area SHALL trigger the dropdown by the resulting value, not by the keystroke path: a paste made while the text area is empty whose result is exactly the trigger shape — the bare `/`, or `/` followed by a whitespace-free, slash-free query and nothing else — SHALL open the dropdown as if the same text had been typed: same query filter, same "Type to filter" empty-query hint for a bare `/`, same dismissal and selection rules. The paste SHALL insert its text as an ordinary paste; the trigger only opens the dropdown on top of the inserted text and SHALL NOT alter, trim, or consume it. Any paste whose result is not that exact shape — content containing whitespace after the query token (e.g. `/s sdf`), multiple lines, trailing text, or content not starting with `/` — SHALL be a regular paste that opens nothing. The paste trigger applies only when the text area was empty before the paste; pasting `/test` into an input that already holds text never opens the dropdown. A paste that brings the message into the trigger shape from a non-matching value re-enters the trigger for the dismissed-dropdown rule above: a dropdown dismissed earlier SHALL reopen when the user clears the input and pastes a fresh `/query`. This trigger lives in the generic `commandMenu` mechanism on `Input`, so it behaves identically on every input surface where the command menu is mounted — the new-conversation composer (main chat and AppsEditor preview) and the ongoing-conversation input.
 
-Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal. The Add-menu "Skills" item SHALL remain available alongside this entry point; selecting a favorite row, activating Browse, or opening View details from the Add menu SHALL likewise consume a `/query`-shaped run touching the caret position the Add menu was opened from — e.g. text left over from a slash-dropdown session the user dismissed with an outside click without reopening it — so that text is never left behind to be sent as an ordinary message. The slash dropdown SHALL render only when the `features.skillUsageEnabled` flag is enabled.
+Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal. The Add-menu "Skills" item SHALL remain available alongside this entry point; selecting a favorite row, activating Browse, or opening View details from the Add menu SHALL likewise consume a `/query`-shaped run touching the caret position the Add menu was opened from — e.g. text left over from a slash-dropdown session the user dismissed with an outside click without reopening it — so that text is never left behind to be sent as an ordinary message.
 
 #### Scenario: Typing "/" in an empty input
 
@@ -369,11 +359,6 @@ Selecting a row from the dropdown SHALL consume the slash text — the entire `/
 
 - **WHEN** the user dismissed the open dropdown with Escape while the message still matched, then deletes the text back to empty and pastes `/my`
 - **THEN** the dropdown opens again
-
-#### Scenario: Feature flag disabled
-
-- **WHEN** `features.skillUsageEnabled` is disabled
-- **THEN** typing or pasting `/` in an empty input opens nothing
 
 ---
 
@@ -468,7 +453,7 @@ A skill's description SHALL come from the already-loaded skill listing (`SkillMe
 
 ### Requirement: Skill entry points require a deployment that supports skills
 
-In addition to the `features.skillUsageEnabled` flag conditions stated in the individual entry-point requirements, the skill-selection entry points SHALL render only when the conversation input's current deployment supports skills — `features.skillsSupported === true` on the listing-based `DeploymentItemDto` for the deployment the input will send to (an absent or `false`/`undefined` flag means not supported, matching DIAL Core's own `false` default). When the deployment does not support skills, the Add-menu "Skills" item, the slash `/` command dropdown, and the "Use skill" browse modal (reachable only through those two) SHALL NOT render on any input surface. The already-selected skill chip, its removal gesture, and the "View details" side panel SHALL remain available when a skill is already selected.
+The skill-selection entry points SHALL render only when the conversation input's current deployment supports skills — `features.skillsSupported === true` on the listing-based `DeploymentItemDto` for the deployment the input will send to (an absent or `false`/`undefined` flag means not supported, matching DIAL Core's own `false` default). When the deployment does not support skills, the Add-menu "Skills" item, the slash `/` command dropdown, and the "Use skill" browse modal (reachable only through those two) SHALL NOT render on any input surface. The already-selected skill chip, its removal gesture, and the "View details" side panel SHALL remain available when a skill is already selected.
 
 Each input surface resolves its own current deployment: the ongoing-conversation input and the new-conversation composer on the chat route use the selected deployment from `DeploymentsContext`/the composer's `selectedDeployment` prop; the AppsEditor preview chat uses the app deployment itself (its model is fixed to the app). The support value is host-computed and passed into the skill-selection wiring as a plain boolean — `libs/skills` imports no deployment types.
 
@@ -476,7 +461,7 @@ The Catalog page's "Use in chat" on a Skill is NOT an input-surface entry point 
 
 #### Scenario: Add menu hides the Skills item on a non-supporting model
 
-- **WHEN** `features.skillUsageEnabled` is enabled, the selected deployment's `features.skillsSupported` is not `true`, and the user opens the Add menu
+- **WHEN** the selected deployment's `features.skillsSupported` is not `true` and the user opens the Add menu
 - **THEN** no "Skills" item renders, on either desktop dropdown or mobile bottom sheet
 
 #### Scenario: Slash dropdown does not open on a non-supporting model

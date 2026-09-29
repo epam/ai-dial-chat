@@ -27,7 +27,6 @@ import {
   CatalogI18nKeys,
   FavoritesI18nKeys,
 } from '../../constants/translation-keys';
-import { useFeatureFlag } from '../../context/AppConfigContext';
 import { getPrompt, getPublicPrompt } from '../../server-api/prompts.api';
 import { downloadSkill } from '../../server-api/skills.api';
 import {
@@ -106,8 +105,6 @@ export const useCatalogItemActions = ({
   notifyOperationSuccess,
   onLoadSkillDetailsFile,
 }: UseCatalogItemActionsParams): UseCatalogItemActionsResult => {
-  const isSkillUsageEnabled = useFeatureFlag('skillUsageEnabled');
-
   /*
    * Reads a prompt item back through whichever endpoint owns it. `item.id` is
    * always the full `prompts/{bucket}/{path}` resource path — the owner
@@ -341,29 +338,25 @@ export const useCatalogItemActions = ({
     [onLoadSkillDetailsFile],
   );
 
-  const isPrimaryActionVisible = useCallback(
-    (item: CatalogItem) => {
-      /*
-       * A prompt contributes text rather than a runtime, so it is always
-       * usable in chat; `supportsChat` describes a deployment's interfaces
-       * and is absent on prompt items.
-       */
-      if (item.type === CatalogEntityType.Prompt) return true;
-      /*
-       * A skill is usable in chat while the `skillUsageEnabled` feature flag
-       * is on. Deferred condition: once the backend exposes whether the
-       * selected default model supports skills, this rule gains that signal
-       * alongside the flag instead of the flag alone.
-       */
-      if (item.type === CatalogEntityType.Skill) return isSkillUsageEnabled;
-      return (
-        (item.type === CatalogEntityType.Model ||
-          item.type === CatalogEntityType.Agent) &&
-        item.supportsChat !== false
-      );
-    },
-    [isSkillUsageEnabled],
-  );
+  const isPrimaryActionVisible = useCallback((item: CatalogItem) => {
+    /*
+     * A prompt contributes text rather than a runtime, so it is always
+     * usable in chat; `supportsChat` describes a deployment's interfaces
+     * and is absent on prompt items.
+     */
+    if (item.type === CatalogEntityType.Prompt) return true;
+    /*
+     * A skill is always usable in chat. Deferred condition: once the
+     * backend exposes whether the selected default model supports skills,
+     * this rule gains that signal.
+     */
+    if (item.type === CatalogEntityType.Skill) return true;
+    return (
+      (item.type === CatalogEntityType.Model ||
+        item.type === CatalogEntityType.Agent) &&
+      item.supportsChat !== false
+    );
+  }, []);
 
   return {
     fetchPromptDto,

@@ -24,6 +24,7 @@ const CLIPPING_OVERFLOW = /^(auto|scroll|hidden|clip)$/;
 /** Read existing app geometry once; seasonal webs never alter the real controls. */
 export const getHalloweenWebTargets = (
   anchors: CelebrationAnchors,
+  onSelect?: (element: HTMLElement) => void,
 ): HalloweenWebTarget[] => {
   const viewport = document.documentElement;
   const width = viewport.clientWidth;
@@ -115,6 +116,7 @@ export const getHalloweenWebTargets = (
     )
       return;
     selected.push(element);
+    onSelect?.(element);
     result.push({
       left: rect.left,
       top: rect.top,
