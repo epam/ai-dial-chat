@@ -113,7 +113,7 @@ export interface CatalogProps {
    * for the same reason as `tabs`.
    */
   topicOptions?: Set<string>;
-  /** Items to display in the Favorites section. */
+  /** Items to display in the Favorites section. Items with `isHidden` are not rendered. */
   favorites: CatalogItem[];
   /** Grouped text labels for headings and actions. */
   titles?: CatalogTitles;
