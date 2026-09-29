@@ -1562,6 +1562,8 @@
     "tokensColumnLabel": "Tokens",
     "statusColumnLabel": "Status",
     "modelTypeLabel": "Model",
+    "applicationTypeLabel": "Agent",
+    "includesCalledModelsLabel": "Includes cost of models it called",
     "noLimitLabel": "No limit",
     "unavailableLabel": "Not available",
     "unavailableBadgeLabel": "Unavailable"

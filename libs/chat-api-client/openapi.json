@@ -679,9 +679,24 @@
     },
     "/api/v1/user/limits": {
       "get": {
-        "description": "Returns rate-limit and calendar-period usage statistics for every model deployment visible to the caller, plus the caller's global cost-budget figures. The day, week, and month stats cover the current UTC day, week, and month; each may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "description": "Returns rate-limit and calendar-period usage statistics for every deployment of the requested kinds visible to the caller, plus the caller's global cost-budget figures. `deploymentTypes` selects models and/or applications; when omitted, the server-configured default kinds are reported. A deployment's cost includes the cost of deployments it called, so per-deployment cost figures overlap and are not additive. The day, week, and month stats cover the current UTC day, week, and month; each may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
         "operationId": "getUserLimits",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "deploymentTypes",
+            "required": false,
+            "in": "query",
+            "description": "Deployment kinds to report on, comma-separated or as repeated keys. When omitted, the server-configured default kinds are reported.",
+            "schema": {
+              "example": ["model", "application"],
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["model", "application"]
+              }
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successfully retrieved aggregate user limits",
@@ -692,6 +707,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid `deploymentTypes` value"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -712,9 +730,24 @@
     },
     "/api/v1/user/usage": {
       "get": {
-        "description": "Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the currently reported calendar periods (the current UTC day, week, and month). Each day, week, and month stat may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. Proxies GET /v1/user/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "description": "Returns the same shape as GET /user/limits, restricted to deployments the caller actually used within the currently reported calendar periods (the current UTC day, week, and month). Each day, week, and month stat may carry a `resetsAt` instant, which the response forwards verbatim from DIAL Core. `deploymentTypes` selects models and/or applications; when omitted, the server-configured default kinds are reported. A deployment's cost includes the cost of deployments it called, so per-deployment cost figures are not additive. Proxies GET /v1/user/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
         "operationId": "getUserUsage",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "deploymentTypes",
+            "required": false,
+            "in": "query",
+            "description": "Deployment kinds to report on, comma-separated or as repeated keys. When omitted, the server-configured default kinds are reported.",
+            "schema": {
+              "example": ["model", "application"],
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["model", "application"]
+              }
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successfully retrieved user usage",
@@ -725,6 +758,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid `deploymentTypes` value"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"

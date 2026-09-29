@@ -1439,6 +1439,8 @@ export enum UsageI18nKeys {
   TokensColumnLabel = 'usage.tokensColumnLabel',
   StatusColumnLabel = 'usage.statusColumnLabel',
   ModelTypeLabel = 'usage.modelTypeLabel',
+  ApplicationTypeLabel = 'usage.applicationTypeLabel',
+  IncludesCalledModelsLabel = 'usage.includesCalledModelsLabel',
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',

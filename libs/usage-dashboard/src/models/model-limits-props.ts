@@ -90,6 +90,8 @@ export interface ModelLimitRow {
   version?: string;
   /** Image URL for the model's avatar. When absent, an initials-based fallback derived from `name` is shown. */
   avatarSrc?: string;
+  /** Type caption shown above the name, e.g. `Agent`. When absent or empty, `labels.modelTypeLabel` is shown. */
+  typeLabel?: string;
   /** Cost and Tokens metrics for the current UTC day. */
   day: ModelLimitPeriodCell;
   /** Cost and Tokens metrics for the current UTC week. */
