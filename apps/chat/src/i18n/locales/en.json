@@ -1236,7 +1236,9 @@
   },
   "tools": {
     "menuTitle": "Tools",
-    "removeTool": "Remove {{label}}"
+    "removeTool": "Remove {{label}}",
+    "stateOn": "On",
+    "stateOff": "Off"
   },
   "conversationInput": {
     "usageLimits": {

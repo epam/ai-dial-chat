@@ -31,6 +31,8 @@ interface ToolsChipsColors {
   chipSelectedIcon?: string;
   /** Chip label text color while the tool is on. Defaults to `--text-accent`. */
   chipSelectedText?: string;
+  /** Color of the chip's ON/OFF state text while the tool is off. Defaults to `--text-secondary`; while on it follows `chipSelectedText`. */
+  chipStateText?: string;
   /** Icon color of the chip's × button. Defaults to `--text-secondary`, or `--text-accent` while the tool is on. */
   chipClose?: string;
   /** Icon color of the chip's × button on hover/focus. Defaults to `--text-primary`. */
@@ -51,6 +53,15 @@ export interface ToolsChipsProps {
   canRemove?: boolean;
   /** Returns the accessible label for a chip's × button. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
+  /**
+   * Visible state text appended after the tool label, e.g. `"ON"` while the
+   * tool is selected. The state renders only when both `stateOnLabel` and
+   * `stateOffLabel` are provided; it is visual only, since the chip already
+   * announces its state through `aria-pressed`.
+   */
+  stateOnLabel?: string;
+  /** Visible state text appended after the tool label while the tool is off, e.g. `"OFF"`. See `stateOnLabel`. */
+  stateOffLabel?: string;
   /** Typography overrides for the chip text. */
   typography?: ToolsChipsTypography;
   /** Color overrides applied as CSS custom properties. */
@@ -69,10 +80,14 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
   onToolDismiss,
   canRemove = true,
   removeLabel = defaultRemoveLabel,
+  stateOnLabel,
+  stateOffLabel,
   typography,
   colors,
 }) => {
   if (items.length === 0) return null;
+
+  const showState = Boolean(stateOnLabel && stateOffLabel);
 
   const cssVars = buildCssVars({
     '--ci-chip-bg': colors?.chipBg,
@@ -84,6 +99,7 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
     '--ci-chip-selected-border': colors?.chipSelectedBorder,
     '--ci-chip-selected-icon': colors?.chipSelectedIcon,
     '--ci-chip-selected-text': colors?.chipSelectedText,
+    '--ci-chip-state-text': colors?.chipStateText,
     '--ci-chip-close': colors?.chipClose,
     '--ci-chip-close-hover': colors?.chipCloseHover,
   });
@@ -120,7 +136,20 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
               )}
             >
               {item.label}
+              {showState && <span aria-hidden>:</span>}
             </span>
+            {showState && (
+              <span
+                className={mergeClasses(
+                  styles.chipState,
+                  typography?.fontClassName || 'dial-small-paragraph-text',
+                  'ms-1 shrink-0 uppercase tracking-wider',
+                )}
+                aria-hidden
+              >
+                {item.isSelected ? stateOnLabel : stateOffLabel}
+              </span>
+            )}
           </button>
           {canRemove && (
             <button
