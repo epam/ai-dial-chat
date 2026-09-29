@@ -1,44 +1,65 @@
+import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ComponentProps, ReactNode } from 'react';
+import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PromptEditor } from '../PromptEditor';
 
-vi.mock('@epam/ai-dial-builder-form', () => ({
-  EditorLayout: ({
-    title,
-    onBack,
-    backAriaLabel,
-    isSaving,
-    labels,
-    actions,
-    leftContent,
-    rightContent,
-  }: {
-    title?: string;
-    onBack?: () => void;
-    backAriaLabel?: string;
-    isSaving?: boolean;
-    labels?: { savingStatusLabel?: string };
-    actions?: ReactNode;
-    leftContent?: ReactNode;
-    rightContent?: ReactNode;
-  }) => (
-    <div>
-      <button aria-label={backAriaLabel} onClick={onBack} />
-      <h1>{title}</h1>
-      <span role="status">
-        {isSaving ? (labels?.savingStatusLabel ?? 'Saving') : ''}
-      </span>
-      <div>{actions}</div>
-      <div>{leftContent}</div>
-      <div>{rightContent}</div>
-    </div>
-  ),
-  EditorSection: ({ children }: { children?: ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-builder-form')>();
+  /* The real shell renders its actions twice (header + mobile bar); the stub
+     renders them once, keeps the real MetadataForm, and stamps the section
+     classes it is handed. */
+  return {
+    ...actual,
+    EntityEditor: ({
+      title,
+      onBack,
+      onCancel,
+      onSubmit,
+      submitLabel,
+      isSubmitting,
+      metadata,
+      metadataTitle,
+      setup,
+      setupTitle,
+      metadataSectionClassName,
+      setupSectionClassName,
+      labels,
+    }: EntityEditorProps) => (
+      <div>
+        <button
+          type="button"
+          aria-label={labels?.backAriaLabel}
+          onClick={onBack}
+        />
+        <h1>{title}</h1>
+        <span role="status">
+          {isSubmitting ? labels?.savingStatusLabel : ''}
+        </span>
+        <button type="button" disabled={isSubmitting} onClick={onCancel}>
+          {labels?.cancelLabel}
+        </button>
+        <button type="button" disabled={isSubmitting} onClick={onSubmit}>
+          {submitLabel}
+        </button>
+        <section className={metadataSectionClassName}>
+          {metadataTitle !== null && (
+            <h2>{metadataTitle ?? labels?.metadataTitle}</h2>
+          )}
+          {metadata}
+        </section>
+        {setup != null && (
+          <section className={setupSectionClassName}>
+            <h2>{setupTitle ?? labels?.setupTitle}</h2>
+            {setup}
+          </section>
+        )}
+      </div>
+    ),
+  };
+});
 
 vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
@@ -76,11 +97,15 @@ describe('PromptEditor', () => {
     expect(screen.getByRole('heading', { name: 'Create prompt' })).toBeTruthy();
   });
 
-  it('renders a flat form without section headings, a version field, or a folder picker', () => {
+  it('renders Name, Description and Instructions in one column, without section headings, version, avatar, tags, or folder', () => {
     renderEditor();
 
-    expect(screen.queryByText('Details')).toBeNull();
-    expect(screen.queryByText('Configuration')).toBeNull();
+    expect(screen.queryAllByRole('heading', { level: 2 })).toHaveLength(0);
+    expect(screen.getByRole('group', { name: /Instructions/ })).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: /Description/ })).toBeTruthy();
+    expect(screen.queryByText('Avatar')).toBeNull();
+    expect(screen.queryByText('Tags')).toBeNull();
     expect(screen.queryByText('Version')).toBeNull();
     expect(screen.queryByText('Folder')).toBeNull();
   });
@@ -132,7 +157,7 @@ describe('PromptEditor', () => {
       await screen.findByPlaceholderText('Write the prompt instructions'),
       'Summarize:',
     );
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(screen.getByRole('button', { name: 'Create' }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       name: 'summarize',
@@ -145,7 +170,7 @@ describe('PromptEditor', () => {
     const onSubmit = vi.fn();
     renderEditor({ onSubmit });
 
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(screen.getByRole('button', { name: 'Create' }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       name: '',
@@ -167,7 +192,7 @@ describe('PromptEditor', () => {
     const onSubmit = vi.fn();
     renderEditor({ isSaving: true, onSubmit });
 
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(screen.getByRole('button', { name: 'Create' }));
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(
@@ -234,10 +259,26 @@ describe('PromptEditor', () => {
   });
 
   it('applies label overrides', () => {
-    renderEditor({ labels: { createTitle: 'Neuer Prompt', saveLabel: 'OK' } });
+    renderEditor({
+      labels: {
+        createTitle: 'Neuer Prompt',
+        createLabel: 'Erstellen',
+      },
+    });
 
     expect(screen.getByRole('heading', { name: 'Neuer Prompt' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Erstellen' })).toBeTruthy();
+  });
+
+  it('labels the primary button Create in create mode and Save in edit mode', () => {
+    const { unmount } = renderEditor();
+    expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+    unmount();
+
+    renderEditor({ isEditMode: true, labels: { saveLabel: 'OK' } });
     expect(screen.getByRole('button', { name: 'OK' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
   });
   it('names the Instructions editor through its label', () => {
     renderEditor();

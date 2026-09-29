@@ -12,6 +12,7 @@ import {
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,
 } from '../popup';
+import { selectToolsetAuthStatus } from '../toolset-id';
 import {
   OAuthResourceKind,
   ToolsetAuthStatus,
@@ -226,10 +227,10 @@ export const useToolsetLogin = ({
        */
       try {
         const refreshed = await getToolset(toolsetId);
-        const statusField =
-          credentialsLevel === ToolsetCredentialsLevel.User
-            ? refreshed.authSettings?.userLevelAuthStatus
-            : refreshed.authSettings?.globalAuthStatus;
+        const statusField = selectToolsetAuthStatus(
+          refreshed.authSettings,
+          credentialsLevel,
+        );
         if (statusField === ToolsetAuthStatus.SignedIn) {
           emitToolsetLoginSuccess<ToolsetCredentialsLevel>({
             toolsetId,

@@ -224,6 +224,7 @@ const baseLabels: DialFileManagerShellLabels = {
     [DialFileManagerTabs.MyFiles]: emptyStateCopy,
     [DialFileManagerTabs.Shared]: emptyStateCopy,
     [DialFileManagerTabs.Organization]: emptyStateCopy,
+    [DialFileManagerTabs.All]: emptyStateCopy,
     [DialFileManagerTabs.Review]: emptyStateCopy,
   },
   treeHeaderByTab: {
@@ -231,6 +232,7 @@ const baseLabels: DialFileManagerShellLabels = {
     [DialFileManagerTabs.MyFiles]: 'My Files',
     [DialFileManagerTabs.Shared]: 'Shared with Me',
     [DialFileManagerTabs.Organization]: 'Organization',
+    [DialFileManagerTabs.All]: '',
     [DialFileManagerTabs.Review]: '',
   },
   renameValidationMessages: { emptyName: 'Required', duplicateName: 'Taken' },

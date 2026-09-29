@@ -62,9 +62,19 @@ describe('bowling contact geometry', () => {
     ]);
   });
 
-  it('leaves no hit rows when history is absent', () => {
-    expect(buildBowlingPlan([], 1280, 800)).toBeNull();
-  });
+  it.each([360, 900, 1280, 1920])(
+    'rolls through the viewport without hit rows at width %s',
+    (width) => {
+      const plan = buildBowlingPlan([], width, 600);
+      if (!plan) throw new Error('Expected a standalone roll');
+      expect(plan.hits).toEqual([]);
+      expect(plan.startX).toBeGreaterThan(plan.radius);
+      expect(plan.startX).toBeLessThan(width - plan.radius);
+      expect(plan.endX).toBeLessThan(-plan.radius);
+      expect(plan.y).toBeGreaterThan(plan.radius);
+      expect(plan.y).toBeLessThan(600 - plan.radius);
+    },
+  );
 
   it('hits the clipped visible title instead of the invisible trailing width of its row', () => {
     const row = rowsAt(10)[0];
@@ -209,4 +219,38 @@ describe('bowling collision playback', () => {
       );
     },
   );
+
+  it.each([
+    'pointerdown',
+    'keydown',
+    'beforeinput',
+    'input',
+    'compositionstart',
+    'focusin',
+    'scroll',
+    'visibilitychange',
+    'resize',
+    'deadline',
+    'unmount',
+  ])('releases the standalone roll on %s without touching live UI', (cause) => {
+    const plan = buildBowlingPlan([], 360, 800);
+    if (!plan) throw new Error('Expected a standalone roll');
+    const onStop = vi.fn();
+    stop = animateBowling(plan, host, actor, spin, onStop);
+    expect(animations).toHaveLength(2);
+    expect(host.children).toHaveLength(0);
+    expect(vi.mocked(actor.animate).mock.contexts).toEqual([actor, spin]);
+    if (cause === 'deadline') vi.advanceTimersByTime(BOWLING_ANIMATION_MS);
+    else if (cause === 'unmount') stop();
+    else
+      (cause === 'resize' ? window : document).dispatchEvent(new Event(cause));
+    stop();
+    animations.forEach((animation) =>
+      expect(animation.cancel).toHaveBeenCalledOnce(),
+    );
+    expect(onStop).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    document.dispatchEvent(new Event('pointerdown'));
+    expect(onStop).toHaveBeenCalledOnce();
+  });
 });

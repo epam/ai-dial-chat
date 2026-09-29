@@ -9,10 +9,7 @@ import {
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
 
 /** Keeps create/edit form copy and repeat options identical at the app edge. */
-export const useScheduledTaskFormLabels = (
-  mode: 'create' | 'edit',
-  isSkillSelectionEnabled = false,
-) => {
+export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
   const { t } = useTranslation();
   const refinementLabels = useTextRefinementLabels();
   return useMemo(
@@ -32,9 +29,7 @@ export const useScheduledTaskFormLabels = (
         ScheduledTasksI18nKeys.CreateConfigurationSectionTitle,
       ),
       configurationSectionSubtitle: t(
-        isSkillSelectionEnabled
-          ? ScheduledTasksI18nKeys.CreateConfigurationSectionSubtitle
-          : ScheduledTasksI18nKeys.CreateInstructionsOnlySubtitle,
+        ScheduledTasksI18nKeys.CreateConfigurationSectionSubtitle,
       ),
       skillLabel: t(ScheduledTasksI18nKeys.CreateSkillLabel),
       displayNameLabel: t(EditorI18nKeys.NameLabel),
@@ -88,6 +83,6 @@ export const useScheduledTaskFormLabels = (
           : ButtonsI18nKeys.Saving,
       ),
     }),
-    [mode, t, refinementLabels, isSkillSelectionEnabled],
+    [mode, t, refinementLabels],
   );
 };

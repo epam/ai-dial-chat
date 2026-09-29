@@ -128,6 +128,38 @@ describe('portal history illusion', () => {
     cancels.forEach((cancel) => expect(cancel).toHaveBeenCalledOnce());
   });
 
+  it.each(['keydown', 'beforeinput', 'input', 'compositionstart'])(
+    'restores rows on %s in a composer that was already focused',
+    (name) => {
+      const input = document.createElement('textarea');
+      document.body.append(input);
+      input.value = 'Keep this draft';
+      input.focus();
+      input.setSelectionRange(2, 6);
+      addRow('First');
+      borrow();
+      input.dispatchEvent(new Event(name, { bubbles: true }));
+      expect(host.children).toHaveLength(0);
+      cancels.forEach((cancel) => expect(cancel).toHaveBeenCalledOnce());
+      expect(document.activeElement).toBe(input);
+      expect(input.value).toBe('Keep this draft');
+      expect([input.selectionStart, input.selectionEnd]).toEqual([2, 6]);
+      input.remove();
+    },
+  );
+
+  it.each(['source', 'ancestor'])(
+    'restores rows after a %s CSS change without resizing the viewport',
+    async (target) => {
+      const { row } = addRow('First');
+      borrow();
+      (target === 'source' ? row : panel).style.transform = 'translateY(90px)';
+      await Promise.resolve();
+      expect(host.children).toHaveLength(0);
+      cancels.forEach((cancel) => expect(cancel).toHaveBeenCalledOnce());
+    },
+  );
+
   it.each(['remove', 'rename', 'recycle', 'close'])(
     'restores when virtual rows change: %s',
     async (change) => {

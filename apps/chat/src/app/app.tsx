@@ -58,6 +58,7 @@ import { useConversationPanelRouteState } from '../hooks/conversation-panel/useC
 import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
+import { ApplicationEditorKind } from '../types/application-editor';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 import { configurePdfWorker } from '../utils/pdf';
@@ -79,12 +80,8 @@ const ScheduledTaskDetailPage = lazy(
 const ScheduledTaskEditPage = lazy(
   () => import('../pages/ScheduledTaskEditPage/ScheduledTaskEditPage'),
 );
-const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
-const ToolsetEditorPage = lazy(
-  () => import('../pages/ToolsetEditor/ToolsetEditor'),
-);
-const CustomAppEditorPage = lazy(
-  () => import('../pages/ToolsetEditor/CustomAppEditor'),
+const ApplicationEditorPage = lazy(
+  () => import('../pages/ApplicationEditor/ApplicationEditorPage'),
 );
 const PromptEditorPage = lazy(
   () => import('../pages/PromptEditor/PromptEditor'),
@@ -418,7 +415,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <AppsEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.QuickApp}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
@@ -448,7 +447,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <ToolsetEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.Toolset}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }
@@ -458,7 +459,9 @@ const App: FC = () => {
                 element={
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
-                      <CustomAppEditorPage />
+                      <ApplicationEditorPage
+                        kind={ApplicationEditorKind.CustomApp}
+                      />
                     </Suspense>
                   </RouteErrorBoundary>
                 }

@@ -759,8 +759,7 @@
       "errorNotification": "Failed to create the scheduled task",
       "skillLabel": "Skill",
       "skillPlaceholder": "Choose a skill",
-      "instructionsOrSkillRequired": "Choose a skill or write instructions.",
-      "instructionsOnlySubtitle": "Write custom instructions for this task."
+      "instructionsOrSkillRequired": "Choose a skill or write instructions."
     },
     "detail": {
       "repeatsLabel": "Repeats",
@@ -1078,12 +1077,10 @@
     "invitationAcceptError": "This share link is invalid or has expired."
   },
   "editor": {
-    "stepGeneral": "General",
-    "stepsNavAriaLabel": "Editor steps",
-    "stepOfTotal": "Step {{current}} of {{total}}",
-    "moreActionsLabel": "More actions",
-    "saveButton": "Save & Exit",
-    "nextButton": "Next",
+    "backAriaLabel": "Back to catalog",
+    "savingStatus": "Saving",
+    "metadataSectionTitle": "Metadata",
+    "setupSectionTitle": "Setup",
     "nameLabel": "Name",
     "nameRequired": "Name is required",
     "fieldTooLong": "Use {{count}} characters or fewer.",
@@ -1095,7 +1092,7 @@
     "versionLabel": "Version",
     "versionPlaceholder": "e.g. 1.0.0",
     "topicsLabel": "Tags",
-    "topicsPlaceholder": "Add a topic",
+    "topicsPlaceholder": "Add tags, comma separated",
     "locales": {
       "summaryLabel": "Locales",
       "rowLabel": "Locale",
@@ -1111,7 +1108,13 @@
       "deleteAriaLabel": "Delete locale"
     }
   },
+  "applicationEditor": {
+    "setupPendingCreate": "Create the application to configure its setup."
+  },
   "appsEditor": {
+    "createTitle": "Create {{type}}",
+    "editTitle": "Edit {{type}}",
+    "defaultTypeName": "quick app",
     "exitPreviewButton": "Exit preview",
     "savingOverlay": "Saving in progress…",
     "previewChat": {
@@ -1138,14 +1141,9 @@
   "toolsetEditor": {
     "createTitle": "Create toolset",
     "editTitle": "Edit toolset",
-    "backAriaLabel": "Back to catalog",
-    "metadataSectionTitle": "Metadata",
-    "setupSectionTitle": "Setup",
-    "savingStatus": "Saving",
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",
-      "topicsPlaceholder": "Add tags, comma separated",
       "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
@@ -1254,6 +1252,8 @@
     }
   },
   "customApp": {
+    "createTitle": "Create custom app",
+    "editTitle": "Edit custom app",
     "settings": {
       "completionUrlLabel": "Chat completion URL",
       "completionUrlRequired": "Chat completion URL is required",
