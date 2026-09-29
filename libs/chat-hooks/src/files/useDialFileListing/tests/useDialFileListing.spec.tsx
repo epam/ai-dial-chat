@@ -206,6 +206,40 @@ describe('useDialFileListing', () => {
       expect(result.current.cache.has('reports/')).toBe(false);
     });
 
+    it('reloads the root listing when the session key changes while at the root', async () => {
+      const rootItem: ListFilesItemDto = {
+        name: 'reports',
+        path: `${BUCKET}/reports/`,
+        nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      };
+      vi.mocked(filesApi.listFiles).mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [rootItem],
+      });
+      const { result, rerender } = renderHook(
+        ({ sessionKey }: { sessionKey: string }) =>
+          useDialFileListing({
+            filesApi,
+            bucket: BUCKET,
+            rootLabel: 'My files',
+            activeTab: DialFileManagerTabs.MyFiles,
+            sessionKey,
+          }),
+        { initialProps: { sessionKey: 'all' } },
+      );
+      await waitFor(() => expect(result.current.cache.has('')).toBe(true));
+      vi.mocked(filesApi.listFiles).mockClear();
+
+      rerender({ sessionKey: 'my_files' });
+
+      await waitFor(() => expect(filesApi.listFiles).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(result.current.items[0].items).toHaveLength(1),
+      );
+      expect(result.current.isLoading).toBe(false);
+    });
+
     it('keeps navigation when re-rendered with the same session key', async () => {
       const { result, rerender } = renderHook(
         ({ sessionKey }: { sessionKey: string }) =>
