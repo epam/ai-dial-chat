@@ -7,9 +7,14 @@ import {
   EntityEditorAppTypes,
   ExpectedConstants,
   ToggleState,
+  UploadMenuOptions,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
+const stageContentTitle = 'Get content file:';
+const expectedStageContent = (fileUrl: string) =>
+  `${Attachment.flowerImageName}\n${stageContentTitle}\nLoaded file "${Attachment.flowerImageName}" (image/jpeg) from file:url::${fileUrl}.`;
+const expectedContextType = 'file';
 let modelNoAttachments: DialAIEntityModel;
 let modelAllAttachments: DialAIEntityModel;
 let modelSpecificAttachments: DialAIEntityModel;
@@ -154,8 +159,6 @@ dialTest(
     const imageUrl = await fileApiHelper.putFile(Attachment.flowerImageName);
     const messageIndex = 2;
     const messageStageIndex = 1;
-    const expectedStageContent = `${Attachment.flowerImageName}\nGet content file:\nLoaded file "${Attachment.flowerImageName}" (image/jpeg) from file:url::${imageUrl}.`;
-    const expectedContextType = 'file';
 
     await dialTest.step(
       'Open Quick app 2.0 creation page directly',
@@ -236,7 +239,7 @@ dialTest(
         await chatMessages.openMessageStage(messageIndex, messageStageIndex);
         await chatMessagesAssertion.assertElementContainsText(
           chatMessages.messageStageContent(messageIndex, messageStageIndex),
-          expectedStageContent,
+          expectedStageContent(imageUrl),
         );
         await dialHomePage.waitForExpectedResponses(
           () =>
@@ -254,6 +257,290 @@ dialTest(
             messageIndex,
             messageStageIndex,
             Attachment.flowerImageName,
+          ),
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  `[Quick app 2.0] 'Get context content' stage exists if model-orchestrator supports file format sent thru Attach file. "Allow orchestrator to process files" toggle is On`,
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    quickApp2EditorViewForm,
+    entityEditorHeader,
+    talkToAgentDialog,
+    fileApiHelper,
+    attachmentDropdownMenu,
+    fileManagerModalGrid,
+    fileManagerModal,
+    sendMessageInputAttachments,
+    entityDetailsModal,
+    baseAssertion,
+    dialHomePage,
+    sendMessage,
+    chat,
+    chatMessages,
+    chatMessagesAssertion,
+    apiAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMDIAL-4789');
+    const imageUrl = await fileApiHelper.putFile(Attachment.flowerImageName);
+    const firstResponseIndex = 2;
+    const secondResponseIndex = 4;
+    const messageStageIndex = 1;
+
+    await dialTest.step(
+      'Open Quick app 2.0 creation page directly',
+      async () => {
+        await marketplacePage.openCreateQuickApp2Page();
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: GeneratorUtil.randomApplicationName(),
+        });
+        await entityEditorGeneralForm.goNext();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open the model picker, select the model that supports attachments and set "Allow orchestrator to process files" toggle to ON',
+      async () => {
+        await quickApp2EditorViewForm.changeModelButton.click();
+        await talkToAgentDialog.marketplaceTab.click();
+        await talkToAgentDialog
+          .getSearch()
+          .inputField.fillInInput(modelAllAttachments.name as string);
+        await talkToAgentDialog
+          .getEntityByName(modelAllAttachments.name as string)
+          .click();
+        await baseAssertion.assertElementInnerText(
+          quickApp2EditorViewForm.orchestratorModelName,
+          [modelAllAttachments.name as string],
+        );
+        await quickApp2EditorViewForm.processFilesToggle.click();
+      },
+    );
+
+    await dialTest.step(
+      'Expand "User attachments" section and set attachment types and max attachments',
+      async () => {
+        await quickApp2EditorViewForm.setAttachments(['image/*'], '5');
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.attachmentTypesField,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step('Save the app', async () => {
+      await marketplacePage.waitForExpectedResponses(
+        () => entityEditorHeader.saveAndExitButton.hoverOver(),
+        [
+          { apiMethod: 'PUT', urlPattern: API.applicationCreateHost },
+          { apiMethod: 'GET', urlPattern: API.configurationHost },
+        ],
+      );
+      await entityEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+      await entityDetailsModal.waitForState();
+    });
+
+    await dialTest.step(
+      'Start using created app with the attachment',
+      async () => {
+        await entityDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated: false,
+        });
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        const attachmentCheckbox =
+          await fileManagerModalGrid.gridCheckboxByNameCell(
+            Attachment.flowerImageName,
+          );
+        await attachmentCheckbox.click();
+        await fileManagerModal.getAttachButton().click();
+        await sendMessageInputAttachments
+          .inputAttachmentName(Attachment.flowerImageName)
+          .waitForState();
+      },
+    );
+
+    await dialTest.step(
+      'Send the request and verify the context stage is not displayed in the response',
+      async () => {
+        const { completionRequest } = await chat.sendRequestWithButton(
+          'what is on picture?',
+        );
+        const appProperties = completionRequest.model.applicationProperties;
+        const appPropertiesContext = appProperties.contexts;
+        apiAssertion.assertValue(appPropertiesContext.length, 0);
+        apiAssertion.assertValue(
+          appProperties.orchestrator.attachment_strategy.type,
+          ORCHESTRATOR_ATTACHMENT_STRATEGY_VALUE?.type,
+        );
+        await chatMessages.openMessageStage(
+          firstResponseIndex,
+          messageStageIndex,
+        );
+        await chatMessagesAssertion.assertElementDoesNotContainText(
+          chatMessages.messageStageContent(
+            firstResponseIndex,
+            messageStageIndex,
+          ),
+          stageContentTitle,
+        );
+        await chatMessagesAssertion.assertElementsCount(
+          chatMessages.messageStages(firstResponseIndex),
+          messageStageIndex,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Send the next request without attaching the file and verify the context stage is displayed in the response',
+      async () => {
+        await chat.sendRequestWithButton('describe in details the picture');
+        await chatMessages.openMessageStage(
+          secondResponseIndex,
+          messageStageIndex,
+        );
+        await chatMessagesAssertion.assertElementContainsText(
+          chatMessages.messageStageContent(
+            secondResponseIndex,
+            messageStageIndex,
+          ),
+          expectedStageContent(imageUrl),
+        );
+        await dialHomePage.waitForExpectedResponses(
+          () =>
+            chatMessages
+              .messageStageAttachment(
+                secondResponseIndex,
+                messageStageIndex,
+                Attachment.flowerImageName,
+              )
+              .click(),
+          [{ apiMethod: 'GET', urlPattern: Attachment.flowerImageName }],
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getMessageStageAttachmentContent(
+            secondResponseIndex,
+            messageStageIndex,
+            Attachment.flowerImageName,
+          ),
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  `[Quick app 2.0] 'Get context content' stage exists if user sends link to external doc. "Allow orchestrator to process files" toggle is On`,
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    quickApp2EditorViewForm,
+    entityEditorHeader,
+    talkToAgentDialog,
+    entityDetailsModal,
+    baseAssertion,
+    dialHomePage,
+    chat,
+    chatMessages,
+    chatMessagesAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMDIAL-4790');
+    const messageIndex = 2;
+    const messageStageIndex = 1;
+    const externalUrl = `https://github.com/epam/ai-dial-chat/blob/development/docs/auth/auth-diagrams/07-cookie-structure.svg`;
+    const expectedFilename = externalUrl.substring(
+      externalUrl.lastIndexOf('/') + 1,
+    );
+    const expectedStageContent = `${externalUrl}\n${stageContentTitle}\nLoaded file "${expectedFilename}" (text/html) from file:url::${externalUrl}.`;
+
+    await dialTest.step(
+      'Open Quick app 2.0 creation page directly',
+      async () => {
+        await marketplacePage.openCreateQuickApp2Page();
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: GeneratorUtil.randomApplicationName(),
+        });
+        await entityEditorGeneralForm.goNext();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open the model picker, select the model that supports attachments and set "Allow orchestrator to process files" toggle to ON',
+      async () => {
+        await quickApp2EditorViewForm.changeModelButton.click();
+        await talkToAgentDialog.marketplaceTab.click();
+        await talkToAgentDialog
+          .getSearch()
+          .inputField.fillInInput(modelAllAttachments.name as string);
+        await talkToAgentDialog
+          .getEntityByName(modelAllAttachments.name as string)
+          .click();
+        await baseAssertion.assertElementInnerText(
+          quickApp2EditorViewForm.orchestratorModelName,
+          [modelAllAttachments.name as string],
+        );
+        await quickApp2EditorViewForm.processFilesToggle.click();
+      },
+    );
+
+    await dialTest.step('Save the app', async () => {
+      await marketplacePage.waitForExpectedResponses(
+        () => entityEditorHeader.saveAndExitButton.hoverOver(),
+        [
+          { apiMethod: 'PUT', urlPattern: API.applicationCreateHost },
+          { apiMethod: 'GET', urlPattern: API.configurationHost },
+        ],
+      );
+      await entityEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+      await entityDetailsModal.waitForState();
+    });
+
+    await dialTest.step(
+      'Send a request containing the link to external file and verify file is returned in the stage content',
+      async () => {
+        await entityDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated: false,
+        });
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await chat.sendRequestWithButton(`what is inside ${externalUrl}`);
+        await chatMessages.openMessageStage(messageIndex, messageStageIndex);
+        await chatMessagesAssertion.assertElementContainsText(
+          chatMessages.messageStageContent(messageIndex, messageStageIndex),
+          expectedStageContent,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.messageStageAttachment(
+            messageIndex,
+            messageStageIndex,
+            expectedFilename,
           ),
           'visible',
         );
