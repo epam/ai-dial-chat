@@ -10,9 +10,6 @@ vi.mock('@epam/ai-dial-skills', () => ({
   getSkillFallbackName: (url: string) => url,
   useSkillSelectorOverlay: state.useHostOverlay,
 }));
-vi.mock('../../../context/AppConfigContext', () => ({
-  useFeatureFlag: () => true,
-}));
 vi.mock('../../../context/FavoriteApplicationsContext', () => ({
   useFavoriteApplications: () => ({
     favoriteIds: new Set(),

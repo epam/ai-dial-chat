@@ -22,12 +22,14 @@ The provider SHALL:
 - Fetch deployments on mount using `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])` from `server-api/deployments.api.ts`, so `items` includes both chat-capable and MCP-capable models/applications.
 - Use a `cancelled` flag inside `useEffect` to guard against setState-on-unmount.
 - Use `useMemo` to memoize the context value.
-- Determine the initial `selectedItemId` using the following precedence (evaluated in order after deployments, user config, and app config are available). Step 2 is active only when `useFeatureFlag('defaultDeploymentPinned')` is `true`; while the flag is `false`, the provider skips step 2 and preserves the previous user-preference-first behavior:
+- Determine the initial `selectedItemId` through `resolveInitialSelection`, evaluated after deployments, user config, and app config are available. The full precedence is owned by `default-agent-preference` ("resolveInitialSelection consults the preference before the operator default"); in summary:
   1. Current in-memory `selectedItemId` if it is still present in the new `items` list (handles deployment list reload).
-  2. `useAppConfig().defaultDeploymentId` if non-null and present in `items`.
-  3. `useUserConfig().selectedDeploymentId` if non-null and present in `items`.
-  4. `items[0]?.id` (first sorted deployment).
-  5. `null` if `items` is empty.
+  2. In overlay mode, the host's `modelId` (`useOptionalOverlay()?.modelId`) if a deployment with that `id` or `reference` is in `items`.
+  3. The user's stored `Default agent for new chats` preference, resolved as `default-agent-preference` specifies.
+  4. `useAppConfig().defaultDeploymentId` if `useFeatureFlag('defaultDeploymentPinned')` is `true`, the id is non-null, and it is present in `items`; while the flag is `false` this step is skipped.
+  5. `useUserConfig().selectedDeploymentId` if non-null and present in `items`.
+  6. `items[0]?.id` (first sorted deployment).
+  7. `null` if `items` is empty.
 - When the deployments reload and the previously selected `id` is no longer in `items`, re-apply the full precedence chain from step 2 onward.
 - **NOT re-trigger the full deployments/schemas/toolsets fetch merely because `setSelectedItemId` is called.** `setSelectedItemId` optimistically updates `useUserConfig().selectedDeploymentId` before its persistence call resolves; the initial-load fetch (and the `isLoading` flag it drives) SHALL NOT react to that value changing after the initial load has already completed. If user/app config becomes known after deployments load, the provider SHALL re-sort and MAY re-evaluate an automatically resolved provisional selection without a network call. It SHALL NOT override a selection explicitly established by `setSelectedItemId` or `restoreSelectedItemId`.
 - Export a `useDeployments()` hook that throws a clear error when called outside the provider.
@@ -160,6 +162,11 @@ The state management pattern SHALL follow `ThemeContext.tsx` as the reference im
 
 - **WHEN** `resolvedSelectedDeploymentId` is already `"dep-a"` and the effect re-runs for an unrelated reason without `resolvedSelectedDeploymentId` changing
 - **THEN** `getDeploymentDetails` is not called again beyond the one call already made for `"dep-a"`
+
+#### Scenario: Overlay host modelId determines the initial selection
+
+- **WHEN** `useOptionalOverlay()?.modelId === "dep-b"`, deployments load with items `["dep-a", "dep-b"]`, `useFeatureFlag('defaultDeploymentPinned') === true`, `useAppConfig().defaultDeploymentId === "dep-a"`, and `useUserConfig().selectedDeploymentId === "dep-a"`
+- **THEN** `selectedItemId` is `"dep-b"`
 
 ---
 
@@ -395,14 +402,16 @@ This closes a defense-in-depth gap: even if a future code path (e.g. a different
 
 Calling `restoreDefaultSelection()` SHALL re-evaluate the same precedence chain used to determine the *initial* `selectedItemId` (see "DeploymentsContext owns deployment selection for conversation selector"), but starting from `inMemoryId = null` instead of the current in-memory `selectedItemId`:
 
-1. `useAppConfig().defaultDeploymentId` if `useFeatureFlag('defaultDeploymentPinned')` is `true`, the id is non-null, and it is present in `items`.
-2. `useUserConfig().selectedDeploymentId` if non-null and present in `items`.
-3. `items[0]?.id` (first sorted deployment).
-4. Leave `selectedItemId` unchanged if none of the above resolve (e.g. `items` is empty).
+1. In overlay mode, the host's `modelId` if a deployment with that `id` or `reference` is in `items`.
+2. The user's stored `Default agent for new chats` preference, resolved as `default-agent-preference` specifies.
+3. `useAppConfig().defaultDeploymentId` if `useFeatureFlag('defaultDeploymentPinned')` is `true`, the id is non-null, and it is present in `items`.
+4. `useUserConfig().selectedDeploymentId` if non-null and present in `items`.
+5. `items[0]?.id` (first sorted deployment).
+6. Leave `selectedItemId` unchanged if none of the above resolve (e.g. `items` is empty).
 
-`restoreDefaultSelection` SHALL NOT call `setSelectedDeployment` (it does not persist anything — the resolved value is, by construction, already either the persisted preference, the operator default, or a fallback) and SHALL NOT trigger a deployments/schemas/toolsets refetch.
+`restoreDefaultSelection` SHALL NOT call `setSelectedDeployment` (it does not persist anything — the resolved value is, by construction, already either the overlay host's model, the stored preference, the persisted selection, the operator default, or a fallback) and SHALL NOT trigger a deployments/schemas/toolsets refetch.
 
-**Memoisation:** `restoreDefaultSelection` SHALL be wrapped in `useCallback` with an empty dependency array, so its identity never changes for the lifetime of the provider. It SHALL read `items`, the latest persisted preference, and the effective operator default from refs. Neither `useUserConfig().selectedDeploymentId` changing after a manual deployment selection nor `items` being rebuilt by a deployments refetch may change its identity: the new-conversation route calls it from an effect keyed on that identity, so any change re-fires default restoration and discards the user's current selection.
+**Memoisation:** `restoreDefaultSelection` SHALL be wrapped in `useCallback` with an empty dependency array, so its identity never changes for the lifetime of the provider. It SHALL read `items`, the latest persisted preference, the stored `Default agent for new chats` preference, the overlay host's `modelId`, and the effective operator default from refs. Neither `useUserConfig().selectedDeploymentId` changing after a manual deployment selection nor `items` being rebuilt by a deployments refetch may change its identity: the new-conversation route calls it from an effect keyed on that identity, so any change re-fires default restoration and discards the user's current selection.
 
 #### Scenario: Deployments refetch does not reset the current selection
 
@@ -428,6 +437,11 @@ Calling `restoreDefaultSelection()` SHALL re-evaluate the same precedence chain 
 
 - **WHEN** pinning is enabled, the user manually selects a non-default deployment, and persistence updates `useUserConfig().selectedDeploymentId`
 - **THEN** `restoreDefaultSelection` retains its callback identity and the route does NOT re-run default restoration, so the manually selected deployment remains selected
+
+#### Scenario: restoreDefaultSelection returns to the overlay host's model
+
+- **WHEN** `useOptionalOverlay()?.modelId === "dep-b"`, `useUserConfig().selectedDeploymentId === "dep-a"`, `items` contains both, and in-memory `selectedItemId` currently holds `"dep-a"` (left over from `restoreSelectedItemId`)
+- **THEN** calling `restoreDefaultSelection()` sets `selectedItemId` to `"dep-b"`
 
 ---
 

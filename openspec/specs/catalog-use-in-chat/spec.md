@@ -131,21 +131,21 @@ The catalog details panel SHALL NOT render the "Use in chat" primary action butt
 
 ### Requirement: Use in chat on a Skill attaches the skill to the composer
 
-When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type `CatalogEntityType.Skill` and the `features.skillUsageEnabled` feature flag is enabled for the session, the system SHALL NOT change the selected deployment. Instead it SHALL navigate to `ROUTES.Root` (`/`) passing the skill's resource URL (`skills/{bucket}/{path}`, identical to the item's `CatalogItem.id`) as one-shot router state (`{ skillId: string }`), which `ConversationRoute` consumes on mount to seed the conversation input's selected skill — single selection, replacing any prior selection (see the `skill-input-attachment` capability) — and clears with `navigate(…, { replace: true })` so a later back-navigation or reload does not re-apply a stale selection. The currently selected deployment is left exactly as the user last set it.
+When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type `CatalogEntityType.Skill`, the system SHALL NOT change the selected deployment. Instead it SHALL navigate to `ROUTES.Root` (`/`) passing the skill's resource URL (`skills/{bucket}/{path}`, identical to the item's `CatalogItem.id`) as one-shot router state (`{ skillId: string }`), which `ConversationRoute` consumes on mount to seed the conversation input's selected skill — single selection, replacing any prior selection (see the `skill-input-attachment` capability) — and clears with `navigate(…, { replace: true })` so a later back-navigation or reload does not re-apply a stale selection. The currently selected deployment is left exactly as the user last set it.
 
-The skill details panel's header SHALL offer "Use in chat" as the primary action for a Skill while the flag is enabled; while it shows, the Download action SHALL render in the Manage menu instead of the primary slot. While the flag is disabled, the Skill header SHALL behave exactly as before this change — Download as the primary action, no "Use in chat".
+The skill details panel's header SHALL offer "Use in chat" as the primary action for a Skill; while it shows, the Download action SHALL render in the Manage menu instead of the primary slot.
 
-The button's visibility SHALL NOT consult the selected deployment's skills support: it renders for every Skill while the flag is enabled, regardless of which model the chat will open with. When the chat opens with a deployment whose `features.skillsSupported` is not `true`, the attached skill renders in the `ChatSkill` error state with sending disabled (see the `skill-input-attachment` capability's error-state requirement) — the visible error state, not a hidden button, communicates the mismatch. This resolves the previously deferred model-support condition: hiding the button was rejected because the catalog does not reliably know the chat route's live deployment selection, and the error state covers both this arrival path and later model switches with one mechanism.
+The button's visibility SHALL NOT consult the selected deployment's skills support: it renders for every Skill, regardless of which model the chat will open with. When the chat opens with a deployment whose `features.skillsSupported` is not `true`, the attached skill renders in the `ChatSkill` error state with sending disabled (see the `skill-input-attachment` capability's error-state requirement) — the visible error state, not a hidden button, communicates the mismatch. This resolves the previously deferred model-support condition: hiding the button was rejected because the catalog does not reliably know the chat route's live deployment selection, and the error state covers both this arrival path and later model switches with one mechanism.
 
 #### Scenario: Use in chat on a Skill adds it to the chat input
 
-- **WHEN** `features.skillUsageEnabled` is enabled and the user clicks "Use in chat" on a Skill in the catalog details panel
+- **WHEN** the user clicks "Use in chat" on a Skill in the catalog details panel
 - **THEN** the app navigates to `/` and the conversation input shows a chip for that skill in the accent-active control color
 - **AND** the selected deployment is unchanged from before the click
 
 #### Scenario: Use in chat on a Skill with an unsupported selected model
 
-- **WHEN** `features.skillUsageEnabled` is enabled, the chat route's currently selected deployment has `features.skillsSupported` not `true`, and the user clicks "Use in chat" on a Skill
+- **WHEN** the chat route's currently selected deployment has `features.skillsSupported` not `true`, and the user clicks "Use in chat" on a Skill
 - **THEN** the app navigates to `/` and the conversation input shows the skill's `ChatSkill` chip in the error state with its unsupported-model tooltip
 - **AND** sending is disabled until the user removes the skill or switches to a deployment that supports skills
 - **AND** the selected deployment is unchanged from before the click
@@ -161,14 +161,9 @@ The button's visibility SHALL NOT consult the selected deployment's skills suppo
 - **THEN** it SHALL call `selectSkillByUrl` at most once for that arrival — guarded by a "consumed" ref (the same pattern `routeDeploymentId`'s effect already uses), not solely by `navigate(pathname, { replace: true, state: null })` clearing the router state — because React Router wraps that state-clearing update in `React.startTransition` (low priority): as long as nothing gates repeat calls, `selectSkillByUrl`'s own state updates (mention tracking) keep producing higher-priority renders that starve the pending transition indefinitely, so the effect re-fires and calls `selectSkillByUrl` again in an unbounded loop (regression: [#9109](https://github.com/epam/ai-dial-chat/issues/9109) — `history.replaceState()` firing hundreds of times per second, navigation and typing unresponsive until reload)
 - **AND** the mention-tracking hook backing the composer (`useSkillMentions`) SHALL also return a referentially stable result across renders that don't change its draft/anchors, so that callbacks derived from it (`seedSkillMentions`, `selectSkillByUrl`) don't manufacture spurious identity churn on top of the guard above
 
-#### Scenario: Flag disabled — Skill header unchanged
+#### Scenario: Download moves to the Manage menu
 
-- **WHEN** `features.skillUsageEnabled` is disabled and the user opens a skill's details panel
-- **THEN** the header shows Download as the primary action and no "Use in chat" button, exactly as before this change
-
-#### Scenario: Flag enabled — Download moves to the Manage menu
-
-- **WHEN** `features.skillUsageEnabled` is enabled and the user opens a skill's details panel
+- **WHEN** the user opens a skill's details panel
 - **THEN** the header's primary action is "Use in chat" and Download is available in the Manage menu
 
 #### Scenario: Deployment selection and user config are untouched
