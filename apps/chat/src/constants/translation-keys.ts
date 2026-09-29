@@ -613,6 +613,7 @@ export enum DialFileManagerI18nKeys {
   MyFilesTreeHeader = 'dialFileManager.myFiles.treeHeader',
   MyFilesEmptyStateTitle = 'dialFileManager.myFiles.emptyStateTitle',
   MyFilesEmptyStateDescription = 'dialFileManager.myFiles.emptyStateDescription',
+  SharedRootFolder = 'dialFileManager.shared.rootFolder',
   SharedEmptyStateTitle = 'dialFileManager.shared.emptyStateTitle',
   SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
