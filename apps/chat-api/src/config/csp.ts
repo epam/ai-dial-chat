@@ -204,13 +204,16 @@ export const createHelmetOptions = (
  * an overlay host, the host's origin is also part of that chain and must be
  * allowed, or the whole embed fails the check.
  * `script-src` omits `'unsafe-eval'`, remote/data/blob script sources, and
- * `connect-src`/`base-uri`/`form-action`/`worker-src` are all `'none'`: a
- * previewed HTML file needs inline scripts/styles to render, but not
- * `eval`/`Function`/string-timers, outbound `fetch`/`XHR`/WebSocket, loading
- * further script resources, rewriting its base URL, submitting forms, or
- * spawning workers — so none of that is granted, narrowing what a malicious
- * attachment's script could do inside its already-sandboxed, cookie-less
- * iframe.
+ * `connect-src`/`base-uri`/`form-action`/`worker-src`/`frame-src`/`child-src`
+ * are all `'none'`: a previewed HTML file needs inline scripts/styles to
+ * render, but not `eval`/`Function`/string-timers, outbound
+ * `fetch`/`XHR`/WebSocket, loading further script resources, rewriting its
+ * base URL, submitting forms, spawning workers, or framing further content —
+ * so none of that is granted, narrowing what a malicious attachment's script
+ * could do inside its already-sandboxed, cookie-less iframe. Without an
+ * explicit `frame-src`, it would fall back to `default-src`'s `https:`,
+ * letting the previewed document embed arbitrary HTTPS content (e.g. a
+ * phishing overlay) even though it can't script that content.
  */
 export const createHtmlPreviewCspHeader = (
   allowedIframeOrigins: string[] = [],
@@ -228,6 +231,8 @@ export const createHtmlPreviewCspHeader = (
     ['base-uri', "'none'"],
     ['form-action', "'none'"],
     ['worker-src', "'none'"],
+    ['frame-src', "'none'"],
+    ['child-src', "'none'"],
     [
       'frame-ancestors',
       buildDownloadFrameAncestorsDirective(allowedIframeOrigins).join(' '),

@@ -266,6 +266,13 @@ describe('createHtmlPreviewCspHeader', () => {
     expect(directives).toContain("worker-src 'none'");
   });
 
+  it('blocks the previewed document from framing further content', () => {
+    const directives = createHtmlPreviewCspHeader().split('; ');
+
+    expect(directives).toContain("frame-src 'none'");
+    expect(directives).toContain("child-src 'none'");
+  });
+
   it('returns the same header value on every call', () => {
     expect(createHtmlPreviewCspHeader()).toBe(createHtmlPreviewCspHeader());
   });

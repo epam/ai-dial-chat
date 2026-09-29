@@ -13,10 +13,15 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
+import express from 'express';
+import helmet from 'helmet';
 import { memoryStorage } from 'multer';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createHtmlPreviewCspHeader } from '../../config/csp';
+import {
+  createHelmetOptions,
+  createHtmlPreviewCspHeader,
+} from '../../config/csp';
 import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
@@ -47,9 +52,15 @@ async function buildApp(
     fileSizeLimit?: number;
     injectUser?: boolean;
     allowedIframeOrigins?: string[];
+    useHelmet?: boolean;
   } = {},
 ): Promise<INestApplication> {
-  const { fileSizeLimit, injectUser = true, allowedIframeOrigins } = opts;
+  const {
+    fileSizeLimit,
+    injectUser = true,
+    allowedIframeOrigins,
+    useHelmet = false,
+  } = opts;
   const module: TestingModule = await Test.createTestingModule({
     imports: [
       MulterModule.register({
@@ -80,6 +91,15 @@ async function buildApp(
   }).compile();
 
   const app = module.createNestApplication();
+  if (useHelmet) {
+    app.use(
+      helmet(
+        createHelmetOptions(allowedIframeOrigins ?? []) as Parameters<
+          typeof helmet
+        >[0],
+      ),
+    );
+  }
   if (injectUser) {
     app.use(
       (
@@ -104,6 +124,29 @@ async function buildApp(
   await app.init();
   await app.listen(0, '127.0.0.1');
   return app;
+}
+
+/**
+ * Returns the `Content-Security-Policy` header Helmet alone produces for
+ * `allowedIframeOrigins`, from a bare Express app with no route-level
+ * override — the same shell policy `main.ts` applies globally. Used to prove
+ * the download endpoint's non-HTML path leaves that header untouched, rather
+ * than asserting it is merely `undefined` (which a Helmet-less test app would
+ * also satisfy, proving nothing about override behavior).
+ */
+async function getShellCspHeader(
+  allowedIframeOrigins: string[] = [],
+): Promise<string> {
+  const referenceApp = express();
+  referenceApp.use(
+    helmet(
+      createHelmetOptions(allowedIframeOrigins) as Parameters<typeof helmet>[0],
+    ),
+  );
+  referenceApp.get('/reference', (_req, res) => res.sendStatus(200));
+
+  const res = await request(referenceApp).get('/reference').expect(200);
+  return res.headers['content-security-policy'];
 }
 
 describe('FilesController — upload', () => {
@@ -523,12 +566,17 @@ describe('FilesController — download', () => {
   });
 
   it('keeps the forwarded headers unmodified for a non-HTML response', async () => {
+    await app.close();
+    app = await buildApp(service, { useHelmet: true });
+
     const res = await request(app.getHttpServer())
       .get('/api/v1/files/download')
       .query({ bucket: 'my-bucket', path: 'folder/file.pdf' })
       .expect(200);
 
-    expect(res.headers['content-security-policy']).toBeUndefined();
+    expect(res.headers['content-security-policy']).toBe(
+      await getShellCspHeader(),
+    );
   });
 
   it('overwrites the response CSP with the preview policy for an HTML response', async () => {
