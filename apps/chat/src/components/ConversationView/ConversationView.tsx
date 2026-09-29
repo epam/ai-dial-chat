@@ -1110,7 +1110,7 @@ const ConversationView: FC<Props> = ({
           <FabButton
             aria-label={t(ChatI18nKeys.ScrollToBottom)}
             onClick={scrollToBottom}
-            className="absolute bottom-0 left-1/2 -translate-x-1/2"
+            className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2"
           />
         )}
       </div>
