@@ -7,8 +7,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_KIT_ICON_STROKE,
+  DialItemType,
   ElementSize,
   EllipsisTooltip,
+  FileIcon,
   GhostIconButton,
   LinkButton,
   PrimaryButton,
@@ -94,7 +96,11 @@ export interface CitationCardProps {
   onPreview?: (annotation: Annotation) => void;
   /** Called when the user clicks the "Open in browser" button, shown for web links and non-previewable sources. */
   onOpenInBrowser: (annotation: Annotation) => void;
-  /** Optional icon rendered before the header text (the file extension for a previewable file, otherwise the source name). */
+  /**
+   * Optional icon rendered before the header text (the file extension for a
+   * previewable file, otherwise the source name). When omitted, a previewable
+   * file gets the UI kit's `FileIcon` glyph for its extension.
+   */
   headerIcon?: ReactNode;
   /** User-visible strings. */
   labels: CitationCardLabels;
@@ -124,9 +130,22 @@ export const CitationCard: FC<CitationCardProps> = ({
     onPreview == null ||
     sourceContentType === MIMEType.HTML ||
     sourceContentType === MIMEType.XHTML;
-  const headerText =
-    (isWebLink ? undefined : getSourceFileExtension(annotation)) ??
-    group.sourceName;
+  const fileExtension = isWebLink
+    ? undefined
+    : getSourceFileExtension(annotation);
+  const headerText = fileExtension ?? group.sourceName;
+  const resolvedHeaderIcon =
+    headerIcon ??
+    (fileExtension != null ? (
+      <FileIcon
+        type={DialItemType.File}
+        name={fileExtension}
+        fileExtension={fileExtension}
+        size={16}
+        decorative
+        className="shrink-0"
+      />
+    ) : undefined);
 
   const sourceNameClassName =
     typography?.sourceNameClassName ?? 'dial-tiny-text';
@@ -186,7 +205,7 @@ export const CitationCard: FC<CitationCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1">
-          {headerIcon}
+          {resolvedHeaderIcon}
           <EllipsisTooltip
             text={headerText}
             className={mergeClasses(

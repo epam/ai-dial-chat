@@ -76,7 +76,7 @@ import {
   ElementSize,
   ErrorMessageNotification,
 } from '@epam/ai-dial-ui-kit';
-import { IconFileTypePdf, IconLink } from '@tabler/icons-react';
+import { IconLink } from '@tabler/icons-react';
 import {
   FC,
   lazy,
@@ -904,16 +904,6 @@ const ConversationMessageItem: FC<Props> = ({
                         }
                         onOpenInBrowser={handleOpenReferenceInBrowser}
                         isPreviewOpen={isCanvasOpen}
-                        headerIcon={
-                          isPdfPagePreviewable ? (
-                            <IconFileTypePdf
-                              size={16}
-                              aria-hidden
-                              className="shrink-0 text-error"
-                              stroke={DIAL_KIT_ICON_STROKE}
-                            />
-                          ) : undefined
-                        }
                         icon={
                           <IconLink
                             size={14}

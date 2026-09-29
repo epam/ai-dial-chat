@@ -52,7 +52,9 @@ import { CitationMarker } from '@epam/ai-dial-quotations';
 Popup card displaying a citation's title, quoted excerpt, and navigation controls.
 
 A previewable file shows only the "Preview" button, and its header shows the
-file extension (e.g. `.pdf`) after the optional `headerIcon`. A web link, or a
+file extension (e.g. `.pdf`) after a file-type icon — the UI kit's `FileIcon`
+glyph for that extension, the same one a file manager row shows, unless the
+host passes its own `headerIcon`. A web link, or a
 source with no `onPreview`, shows "Open in browser" instead and keeps the
 source name in the header.
 

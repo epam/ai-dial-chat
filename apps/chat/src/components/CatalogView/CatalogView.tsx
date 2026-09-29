@@ -238,7 +238,8 @@ const CatalogView: FC<Props> = ({
   const {
     isDialogOpen: isSkillArchiveDialogOpen,
     statusMessage: skillArchiveStatusMessage,
-    selectionError: skillArchiveSelectionError,
+    errorText: skillArchiveErrorText,
+    isUploading: isSkillArchiveUploading,
     openDialog: openSkillArchiveDialog,
     closeDialog: closeSkillArchiveDialog,
     handleFilesSelected: handleSkillArchiveFilesSelected,
@@ -562,7 +563,8 @@ const CatalogView: FC<Props> = ({
     <>
       <SkillArchiveUploadDialog
         isOpen={isSkillArchiveDialogOpen}
-        errorText={skillArchiveSelectionError}
+        errorText={skillArchiveErrorText}
+        isUploading={isSkillArchiveUploading}
         onClose={closeSkillArchiveDialog}
         onFilesSelected={handleSkillArchiveFilesSelected}
         onFilesRejected={handleSkillArchiveFilesRejected}
