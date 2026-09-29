@@ -69,6 +69,18 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       setHasSourceFetchFailed(false);
     }, [content]);
 
+    const prevIsSourceViewRef = useRef(isSourceView);
+    if (prevIsSourceViewRef.current !== isSourceView) {
+      prevIsSourceViewRef.current = isSourceView;
+      /* Reset synchronously during render (not in an effect) so a retry
+       * after a failed fetch never paints the fallback iframe for a frame
+       * before `willFetchSourceText` below can recompute with the reset
+       * flag. */
+      if (isSourceView && hasSourceFetchFailed) {
+        setHasSourceFetchFailed(false);
+      }
+    }
+
     useEffect(() => {
       if (
         !isSourceView ||
