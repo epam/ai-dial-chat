@@ -319,9 +319,25 @@ import {
 label, header status, tooltip, or row status. The host derives `kind`, `usedPercent`, and `status`
 for every token/cost cell, supplies `Follows cost limit` through an unlimited token cell's optional
 `supportingLabel`, and combines model-token plus overall Cost limits into the final row `status`.
-Cost renders only its normalized attributed-spend `usedLabel` (or the unavailable state), even
-though the cell keeps its metric kind. All three periods are always present; there is no period
-selector state.
+Cost renders its normalized attributed-spend `usedLabel` (or the unavailable state), even though the
+cell keeps its metric kind, plus the cost cell's optional `supportingLabel` as a second line when the
+cell is not unavailable (for example `Includes cost of models it called` on an agent row). Each
+row's type caption is its optional `typeLabel` when non-empty, otherwise `labels.modelTypeLabel`;
+the library never decides which rows get one. All three periods are always present; there is no
+period selector state.
+
+```tsx
+import type { ModelLimitRow } from '@epam/ai-dial-usage-dashboard';
+
+declare const modelRow: ModelLimitRow; // a row built as in the example above
+
+const agentRow: ModelLimitRow = {
+  ...modelRow,
+  id: 'llm-router',
+  name: 'LLM Router',
+  typeLabel: 'Agent',
+};
+```
 
 The heading and row count remain visible when `rows` is empty; the table body switches to
 `labels.emptyStateLabel`.
@@ -342,7 +358,7 @@ The heading and row count remain visible when `rows` is empty; the table body sw
 - `ModelLimitPeriodCell` — `{ tokens: ModelLimitMetricCell, cost: ModelLimitMetricCell }`
 - `ModelLimitPeriodStatus` — `{ status, tooltipLabel?, resetLabel?, resetIsoValue?, resetAriaLabel? }`
 - `ModelLimitPeriodStatuses` — `{ day, week, month }`
-- `ModelLimitRow` — `{ id, name, version?, avatarSrc?, day, week, month, status }`
+- `ModelLimitRow` — `{ id, name, version?, avatarSrc?, typeLabel?, day, week, month, status }`
 - `ModelLimitsLabels` — `{ headingLabel, itemColumnLabel, dayColumnLabel, weekColumnLabel, monthColumnLabel, statusColumnLabel, tokensLabel, costLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel, emptyStateLabel }`
 - `ModelLimitsSectionProps` — `{ rows, labels, periodStatuses, styles? }`
 - `ModelLimitsStyles` — `{ colors?, typography? }`

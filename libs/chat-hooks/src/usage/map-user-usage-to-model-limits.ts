@@ -17,6 +17,7 @@ import {
   ModelLimitMetricKind,
   ModelLimitStatus,
 } from '@epam/ai-dial-usage-dashboard';
+import { normalizeDeploymentId } from '../catalog/deployment-id';
 export type { FormatResetTime } from './map-usage-data-to-dashboard';
 import type { FormatResetTime } from './map-usage-data-to-dashboard';
 
@@ -79,6 +80,10 @@ export const USAGE_MODEL_LIMITS_I18N_KEYS = {
   progressAriaLabel: 'usage.progressAriaLabel',
   /** Label for the spent-cost cell. Receives `{ amount: string }`. */
   spentLabel: 'usage.spentLabel',
+  /** Type caption for an application (agent) row. Receives no interpolation. */
+  applicationTypeLabel: 'usage.applicationTypeLabel',
+  /** Supporting label on an application row's spent cost. Receives no interpolation. */
+  includesCalledModelsLabel: 'usage.includesCalledModelsLabel',
 } as const;
 
 /**
@@ -398,15 +403,43 @@ const getRowStatus = (
   return ModelLimitStatus.Unavailable;
 };
 
+/*
+ * DIAL Core writes no token counters for an application, and the `total` it
+ * reports there is the role's token budget rather than the application's, so
+ * an application row's Tokens cells are always unavailable. Its cost is what
+ * DIAL Core aggregated from the deployments it called — already present as
+ * their own rows — so the spend carries a note that it includes them.
+ */
+const buildApplicationPeriodCell = (
+  deploymentStats: DeploymentLimitsResponseDto,
+  fields: PeriodFieldMapping,
+  t: Translate,
+): ModelLimitPeriodCell => {
+  const cost = buildCostMetricCell(deploymentStats[fields.cost], t);
+  return {
+    tokens: buildUnavailableCell(t),
+    cost:
+      cost.kind === ModelLimitMetricKind.Unlimited
+        ? {
+            ...cost,
+            supportingLabel: t(
+              USAGE_MODEL_LIMITS_I18N_KEYS.includesCalledModelsLabel,
+            ),
+          }
+        : cost,
+  };
+};
+
 /** Whether at least one displayed day/week/month Cost or Tokens stat has nonzero usage. */
 const hasUsageAcrossDisplayedPeriods = (
   stats: (LimitStatsDto | undefined)[],
 ): boolean => stats.some((stat) => isUsableStats(stat) && stat.used > 0);
 
 /**
- * Maps `usage.deployments` into `ModelLimitsSection`'s `rows` prop, joined with model identity
- * from `deploymentItems`. Rows are included only when any displayed period stat has nonzero usage.
- * Order follows `Object.keys(deployments)` — `deploymentItems` is enrichment-only.
+ * Maps `usage.deployments` into `ModelLimitsSection`'s `rows` prop, joined with model or application
+ * identity from `deploymentItems`. Rows are included only when any displayed period stat has nonzero
+ * usage (Cost stats only, for an application). Order follows `Object.keys(deployments)` —
+ * `deploymentItems` is enrichment-only.
  *
  * @param resolveIconUrl - Resolves a deployment's raw `iconUrl` to the URL the avatar should load.
  * @param resolveDisplayName - Resolves a localized-text map or plain string to the display name for `activeLocale`.
@@ -424,10 +457,18 @@ export const mapUserUsageToModelLimits = (
     return [];
   }
 
-  const modelItemById = new Map(
+  /*
+   * Keyed by normalized id: a custom application's id contains spaces and
+   * other reserved characters, and either side may carry it raw or encoded.
+   */
+  const itemById = new Map(
     deploymentItems
-      .filter((item) => item.type === DeploymentItemDtoTypeEnum.Model)
-      .map((item) => [item.id, item]),
+      .filter(
+        (item) =>
+          item.type === DeploymentItemDtoTypeEnum.Model ||
+          item.type === DeploymentItemDtoTypeEnum.Application,
+      )
+      .map((item) => [normalizeDeploymentId(item.id), item]),
   );
   const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
     usage,
@@ -437,13 +478,59 @@ export const mapUserUsageToModelLimits = (
 
   return Object.keys(deployments)
     .map((id) => {
-      const item = modelItemById.get(id);
+      const item = itemById.get(normalizeDeploymentId(id));
       const name =
         item != null
           ? resolveDisplayName(item.displayName, activeLocale) || item.id
           : id;
       const deploymentStats = deployments[id];
       const avatarSrc = resolveIconUrl(item?.iconUrl);
+
+      if (item?.type === DeploymentItemDtoTypeEnum.Application) {
+        const appDay = buildApplicationPeriodCell(
+          deploymentStats,
+          PERIOD_FIELD_MAPPINGS.day,
+          t,
+        );
+        const appWeek = buildApplicationPeriodCell(
+          deploymentStats,
+          PERIOD_FIELD_MAPPINGS.week,
+          t,
+        );
+        const appMonth = buildApplicationPeriodCell(
+          deploymentStats,
+          PERIOD_FIELD_MAPPINGS.month,
+          t,
+        );
+
+        return {
+          row: {
+            id,
+            name,
+            version: item.displayVersion,
+            avatarSrc,
+            typeLabel: t(USAGE_MODEL_LIMITS_I18N_KEYS.applicationTypeLabel),
+            day: appDay,
+            week: appWeek,
+            month: appMonth,
+            status: getRowStatus(
+              [appDay.tokens, appWeek.tokens, appMonth.tokens],
+              [appDay.cost, appWeek.cost, appMonth.cost],
+              [
+                periodStatuses.day.status,
+                periodStatuses.week.status,
+                periodStatuses.month.status,
+              ],
+            ),
+          },
+          // Token stats carry no information for an application.
+          hasUsage: hasUsageAcrossDisplayedPeriods(
+            Object.values(PERIOD_FIELD_MAPPINGS).map(
+              ({ cost }) => deploymentStats[cost],
+            ),
+          ),
+        };
+      }
 
       const day = buildPeriodCell(
         deploymentStats,

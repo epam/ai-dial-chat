@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsNotEmpty,
   IsBoolean,
   IsEnum,
@@ -13,6 +14,10 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import {
+  DeploymentType,
+  normalizeDeploymentTypesInput,
+} from '../deployments/dto/deployment-type';
 import { CspMode } from './csp';
 
 export enum ApplicationLogLevel {
@@ -203,6 +208,26 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   DIAL_ROLES_FIELD?: string = 'dial_roles';
+
+  /*
+   * Deployment kinds `GET /user/limits` and `GET /user/usage` report when the
+   * request names none, forwarded to DIAL Core as `deploymentTypes`. Defaults
+   * to models and applications, so Settings → Usage shows the spend DIAL Core
+   * attributes to routers; `model` restores the model-only report.
+   */
+  @IsOptional()
+  @Transform(({ value }) => {
+    const normalized = normalizeDeploymentTypesInput(value ?? '');
+    return Array.isArray(normalized) && normalized.length === 0
+      ? [DeploymentType.Model, DeploymentType.Application]
+      : normalized;
+  })
+  @IsArray()
+  @IsEnum(DeploymentType, { each: true })
+  USER_USAGE_DEPLOYMENT_TYPES?: DeploymentType[] = [
+    DeploymentType.Model,
+    DeploymentType.Application,
+  ];
 
   // Auth providers
   @IsOptional()

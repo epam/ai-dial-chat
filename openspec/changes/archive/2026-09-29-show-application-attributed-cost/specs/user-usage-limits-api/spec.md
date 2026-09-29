@@ -1,10 +1,4 @@
-# user-usage-limits-api Specification
-
-## Purpose
-
-The authenticated aggregate user-limits and user-usage endpoints (rate-limit and calendar-period usage statistics across every deployment visible to the caller), and the frontend server-api wrappers over the generated client methods.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Authenticated aggregate user limits endpoint
 
@@ -19,7 +13,6 @@ The endpoint:
 - SHALL return `200 OK` with a `UserLimitStatsResponseDto` body on success
 - MUST NOT cache the response server-side — every request MUST call DIAL Core (usage data is real-time)
 - MUST set `Cache-Control: private, no-store` on the HTTP response
-- SHALL apply per-route rate limiting of **60 req/min per IP** via `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError` (401, 500, 502, 503)
 - Controller handler name / OpenAPI operationId: **`getUserLimits`** → generated client method `getUserLimits({ deploymentTypes? })`
 - Without a `deploymentTypes` query parameter, reports the kinds configured in `USER_USAGE_DEPLOYMENT_TYPES` (default: models and applications). When the effective kinds include `application`, `deployments` MAY also contain config-defined and custom Applications keyed by their DIAL Core name (a custom application's key has the form `applications/<bucket>/<name>`). Toolsets, routes, and interceptors are never present
@@ -110,7 +103,6 @@ The endpoint:
 - SHALL return `200 OK` with a `UserLimitStatsResponseDto` body on success, using the identical field names and semantics as `GET /api/v1/user/limits`, including the optional `resetsAt` on each day/week/month stat
 - MUST NOT cache the response server-side — every request MUST call DIAL Core
 - MUST set `Cache-Control: private, no-store` on the HTTP response
-- SHALL apply per-route rate limiting of **60 req/min per IP** via `@Throttle({ default: { limit: 60, ttl: 60000 } })`
 - SHALL map upstream errors via `mapDialHttpStatus` / `handleDialFetchError` (401, 500, 502, 503)
 - Controller handler name / OpenAPI operationId: **`getUserUsage`** → generated client method `getUserUsage({ deploymentTypes? })`
 - A deployment absent from the `deployments` map means zero usage in the reported periods, not "unknown"
@@ -161,6 +153,8 @@ The endpoint's `@ApiOperation` description SHALL describe the restriction in cal
 
 - **WHEN** `UsageLimitsControl` renders the currently selected deployment's usage via `useDeploymentUsageLimits`
 - **THEN** it SHALL continue to call the existing `getDeploymentLimits` wrapper and `GET /api/v1/deployments/:deployment/limits` endpoint, unchanged by this capability
+
+## ADDED Requirements
 
 ### Requirement: Deployment kinds query parameter
 
