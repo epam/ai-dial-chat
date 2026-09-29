@@ -20,18 +20,27 @@ import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
  * `restoreDefaultSelection` fall back to another model.
  */
 export const useOverlayPendingModel = (): void => {
+  /*
+   * Depends on the two fields it uses rather than the whole context value,
+   * which changes on every unrelated overlay update (e.g. bridge registration).
+   */
   const overlay = useOptionalOverlay();
+  const pendingModelId = overlay?.pendingModelId ?? null;
+  const clearPendingModelId = overlay?.clearPendingModelId;
   const { items, isLoading, restoreSelectedItemId } = useDeployments();
 
   useEffect(() => {
-    if (!overlay?.pendingModelId || isLoading) return;
-    const deployment = findDeploymentByIdOrReference(
-      items,
-      overlay.pendingModelId,
-    );
+    if (!pendingModelId || !clearPendingModelId || isLoading) return;
+    const deployment = findDeploymentByIdOrReference(items, pendingModelId);
     if (deployment) {
       restoreSelectedItemId(deployment.id);
     }
-    overlay.clearPendingModelId();
-  }, [overlay, items, isLoading, restoreSelectedItemId]);
+    clearPendingModelId();
+  }, [
+    pendingModelId,
+    clearPendingModelId,
+    items,
+    isLoading,
+    restoreSelectedItemId,
+  ]);
 };

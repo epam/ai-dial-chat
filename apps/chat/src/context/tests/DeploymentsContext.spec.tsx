@@ -1749,6 +1749,28 @@ describe('DeploymentsContext', () => {
       );
     });
 
+    /*
+     * useOverlayPendingModel clears pendingModelId even when the first fetch
+     * failed; the persistent modelId is what still lands the host's agent
+     * once a later refetch populates the catalog.
+     */
+    it('selects the overlay model after a failed initial fetch is followed by a successful refetch', async () => {
+      contextMocks.overlayModelId = mockItem2.id;
+      mockGetDeployments.mockRejectedValueOnce(new Error('Network error'));
+
+      const { result } = renderDeployments();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.error).toBeInstanceOf(Error);
+      expect(result.current.selectedItemId).toBeNull();
+
+      await act(async () => {
+        await result.current.refetchDeployments();
+      });
+
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+
     it('keeps an explicit in-session pick over the overlay model', async () => {
       contextMocks.overlayModelId = mockItem2.id;
 
