@@ -235,7 +235,7 @@ concrete path with `getSettingsTabRoute` (`constants/routes.ts`, beside the othe
 rather than interpolating the pattern.
 
 `Preferences` is the first configured tab and therefore the redirect target, so
-`GET /api/v1/user/usage` is not requested until the user opens `Usage`. The day, week, and month figures are **calendar** windows anchored to UTC
+`GET /api/v1/user/usage` is not requested until the user opens `Usage`. The frontend sends no `deploymentTypes`, so which deployment kinds are listed is the BFF's `USER_USAGE_DEPLOYMENT_TYPES` (default models and applications); an application (agent) row's cost includes the cost of the models it called, which appear as their own rows. The day, week, and month figures are **calendar** windows anchored to UTC
 boundaries, and DIAL Core reports each one's exclusive end as an optional `resetsAt` instant.
 `UsageTab` formats those at the application edge (`utils/usage-reset-time.ts` — the only place
 `Date`/`Intl` touch a reset time) and passes preformatted strings into `@epam/ai-dial-usage-dashboard`,
@@ -570,14 +570,14 @@ The worker enters `finalizing` immediately before its single terminal-save attem
 
 #### Models & Deployments
 
-| Method | Path                                       | Description                                                                                              |
-| ------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `GET`  | `/api/v1/models`                           | List available models (cached)                                                                           |
-| `GET`  | `/api/deployments`                         | List available deployments                                                                               |
-| `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached)                                                 |
-| `GET`  | `/api/v1/deployments/{deployment}/limits`  | Rate-limit and calendar-period usage stats for one deployment                                            |
-| `GET`  | `/api/v1/user/limits`                      | Rate-limit and calendar-period usage stats for every visible deployment, plus global cost-budget figures |
-| `GET`  | `/api/v1/user/usage`                       | Same shape as `/api/v1/user/limits`, restricted to deployments used in the current UTC day/week/month    |
+| Method | Path                                       | Description                                                                                                                                                                                                                      |
+| ------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/v1/models`                           | List available models (cached)                                                                                                                                                                                                   |
+| `GET`  | `/api/deployments`                         | List available deployments                                                                                                                                                                                                       |
+| `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached)                                                                                                                                                                         |
+| `GET`  | `/api/v1/deployments/{deployment}/limits`  | Rate-limit and calendar-period usage stats for one deployment                                                                                                                                                                    |
+| `GET`  | `/api/v1/user/limits`                      | Rate-limit and calendar-period usage stats for every visible deployment of the kinds in the optional `deploymentTypes` (models and/or applications; default from `USER_USAGE_DEPLOYMENT_TYPES`), plus global cost-budget figures |
+| `GET`  | `/api/v1/user/usage`                       | Same shape as `/api/v1/user/limits`, restricted to deployments used in the current UTC day/week/month; takes the same `deploymentTypes`                                                                                          |
 
 #### Client Channel (`/api/v1/client-channel`)
 

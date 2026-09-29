@@ -36,8 +36,9 @@ const CostValue: FC<CostValueProps> = ({
 }) => {
   const { secondaryValueClassName = 'dial-tiny-text' } = typography;
   const isUnavailable = cell.kind === ModelLimitMetricKind.Unavailable;
+  const supportingLabel = isUnavailable ? undefined : cell.supportingLabel;
 
-  return (
+  const value = (
     <div className="flex min-w-0 items-baseline gap-1">
       <span className="sr-only">{label}: </span>
       <span
@@ -49,6 +50,23 @@ const CostValue: FC<CostValueProps> = ({
         title={isUnavailable ? unavailableLabel : cell.usedLabel}
       >
         {isUnavailable ? unavailableLabel : cell.usedLabel}
+      </span>
+    </div>
+  );
+
+  if (!supportingLabel) return value;
+
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      {value}
+      <span
+        className={mergeClasses(
+          'min-w-0 break-words',
+          secondaryValueClassName,
+          styles.secondaryValue,
+        )}
+      >
+        {supportingLabel}
       </span>
     </div>
   );

@@ -1,10 +1,4 @@
-# user-usage-limits-api Specification
-
-## Purpose
-
-The authenticated aggregate user-limits and user-usage endpoints (rate-limit and calendar-period usage statistics across every deployment visible to the caller), and the frontend server-api wrappers over the generated client methods.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Authenticated aggregate user limits endpoint
 
@@ -159,6 +153,8 @@ The endpoint's `@ApiOperation` description SHALL describe the restriction in cal
 
 - **WHEN** `UsageLimitsControl` renders the currently selected deployment's usage via `useDeploymentUsageLimits`
 - **THEN** it SHALL continue to call the existing `getDeploymentLimits` wrapper and `GET /api/v1/deployments/:deployment/limits` endpoint, unchanged by this capability
+
+## ADDED Requirements
 
 ### Requirement: Deployment kinds query parameter
 

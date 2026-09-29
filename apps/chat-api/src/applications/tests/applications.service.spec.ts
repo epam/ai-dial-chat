@@ -988,6 +988,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
     const deploymentsDetailsService = new DeploymentsDetailsService(
       dialClient,
       cacheManager as never,
+      { get: vi.fn() } as never,
     );
     const applicationsService = new ApplicationsService(
       dialClient,
