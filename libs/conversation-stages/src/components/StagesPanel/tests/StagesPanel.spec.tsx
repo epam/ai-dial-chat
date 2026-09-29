@@ -13,8 +13,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-attachment-input', () => ({
-  AttachmentCard: ({ attachment }: { attachment: { name: string } }) => (
-    <div>{attachment.name}</div>
+  AttachmentCard: ({
+    attachment,
+    onClick,
+  }: {
+    attachment: { id: string; name: string };
+    onClick?: (id: string) => void;
+  }) => (
+    <button type="button" onClick={() => onClick?.(attachment.id)}>
+      {attachment.name}
+    </button>
   ),
 }));
 
@@ -311,5 +319,30 @@ describe('StagesPanel', () => {
 
     expect(screen.getByText('40.0s')).toBeTruthy();
     expect(screen.queryByText('1m 20s')).toBeNull();
+  });
+
+  it('passes onAttachmentClick through to a rendered stage attachment tile', () => {
+    const onAttachmentClick = vi.fn();
+    const stageWithAttachment = {
+      index: 5,
+      name: 'Combined search',
+      status: StageStatus.Completed,
+      attachments: [
+        { title: 'result.csv', reference_url: 'files/abc/result.csv' },
+      ],
+    };
+    render(
+      <StagesPanel
+        stages={[stageWithAttachment]}
+        isStreaming={false}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+    expect(onAttachmentClick).toHaveBeenCalledOnce();
+    expect(onAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'result.csv' }),
+    );
   });
 });

@@ -35,6 +35,8 @@ interface StageGroupRowProps {
   typography?: StageTypography;
   /** User-visible strings. */
   labels?: StagesPanelLabels;
+  /** Called when a stage attachment tile is clicked/activated. See {@link StagesPanelProps.onAttachmentClick}. */
+  onAttachmentClick?: StagesPanelProps['onAttachmentClick'];
 }
 
 /** Expandable summary row for a collapsed `×N` group of identical stage attempts. */
@@ -43,6 +45,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   isLive,
   typography,
   labels,
+  onAttachmentClick,
 }) => {
   const {
     runningAriaLabel,
@@ -147,6 +150,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
                   isLive={isLive && attempt.status == null}
                   typography={typography}
                   labels={labels}
+                  onAttachmentClick={onAttachmentClick}
                 />
               </li>
             ))}
@@ -164,6 +168,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   className,
   styles: panelStyles,
   labels,
+  onAttachmentClick,
 }) => {
   const { colors, typography } = panelStyles ?? {};
 
@@ -206,6 +211,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                 isLive={isStreaming && row.stage.status == null}
                 typography={typography}
                 labels={labels}
+                onAttachmentClick={onAttachmentClick}
               />
             </li>
           ) : (
@@ -219,6 +225,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                 }
                 typography={typography}
                 labels={labels}
+                onAttachmentClick={onAttachmentClick}
               />
             </li>
           ),

@@ -2,6 +2,7 @@ import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   MessageRole,
+  StageStatus,
   type Annotation,
   type ApplicationVisualizer,
   type ApplicationVisualizerRegistry,
@@ -112,6 +113,43 @@ vi.mock('@epam/ai-dial-visualizer-connector', () => ({
 
 vi.mock('@epam/ai-dial-conversation-stages', () => ({
   StagesPanel: () => null,
+  CollapsedGroup: ({
+    stages,
+    onAttachmentClick,
+  }: {
+    stages: {
+      attachments?: {
+        title: string;
+        data?: string;
+        reference_url?: string;
+      }[];
+    }[];
+    onAttachmentClick?: (attachment: {
+      name: string;
+      data?: string;
+      referenceUrl?: string;
+    }) => void;
+  }) => (
+    <>
+      {stages
+        .flatMap((stage) => stage.attachments ?? [])
+        .map((attachment) => (
+          <button
+            key={attachment.title}
+            type="button"
+            onClick={() =>
+              onAttachmentClick?.({
+                name: attachment.title,
+                data: attachment.data,
+                referenceUrl: attachment.reference_url,
+              })
+            }
+          >
+            {attachment.title}
+          </button>
+        ))}
+    </>
+  ),
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
@@ -1342,6 +1380,69 @@ describe('ConversationMessageItem — Markdown table actions', () => {
       ChatI18nKeys.MarkdownTableTitle,
     );
     vi.unstubAllGlobals();
+  });
+});
+
+describe('ConversationMessageItem — stage attachment click handling', () => {
+  const renderWithStageAttachment = (attachment: {
+    title: string;
+    data?: string;
+    reference_url?: string;
+  }) =>
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{
+          role: MessageRole.Assistant,
+          content: 'Here are the results',
+          timestamp: '2024-01-01T00:00:05Z',
+          custom_content: {
+            stages: [
+              {
+                index: 0,
+                name: 'Combined search',
+                status: StageStatus.Completed,
+                attachments: [attachment],
+              },
+            ],
+          },
+        }}
+        index={1}
+      />,
+    );
+
+  it('opens a stage attachment with inline data as markdown in the attachment canvas', () => {
+    renderWithStageAttachment({
+      title: 'result.csv',
+      data: 'Some markdown search result',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      {
+        type: AttachmentContentType.Markdown,
+        text: 'Some markdown search result',
+      },
+      'result.csv',
+    );
+  });
+
+  it('opens a reference-only stage attachment (no inline data) in a new tab via the resolved download URL', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    renderWithStageAttachment({
+      title: 'result.csv',
+      reference_url: 'files/bucket-1/generated/report.txt',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+
+    expect(openSpy).toHaveBeenCalledWith(
+      '/api/v1/files/download?bucket=bucket-1&path=generated%2Freport.txt',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    openSpy.mockRestore();
   });
 });
 

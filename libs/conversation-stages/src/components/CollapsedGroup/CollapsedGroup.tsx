@@ -34,6 +34,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   labels,
   className,
   styles: groupStyles,
+  onAttachmentClick,
 }) => {
   const {
     executedLabel = 'Executed',
@@ -100,6 +101,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         className={className}
         styles={{ colors: panelColors, typography: groupStyles?.typography }}
         labels={panelLabels}
+        onAttachmentClick={onAttachmentClick}
       />
     );
   }
@@ -257,6 +259,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
             }}
             labels={panelLabels}
             className="pt-1"
+            onAttachmentClick={onAttachmentClick}
           />
         </div>
       </div>

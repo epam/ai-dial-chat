@@ -1,5 +1,5 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_STAGES_CLASS } from '../../../constants/public-class-names';
@@ -35,8 +35,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-attachment-input', () => ({
-  AttachmentCard: ({ attachment }: { attachment: { name: string } }) => (
-    <div>{attachment.name}</div>
+  AttachmentCard: ({
+    attachment,
+    onClick,
+  }: {
+    attachment: { id: string; name: string };
+    onClick?: (id: string) => void;
+  }) => (
+    <button type="button" onClick={() => onClick?.(attachment.id)}>
+      {attachment.name}
+    </button>
   ),
 }));
 
@@ -205,6 +213,49 @@ describe('CollapsedGroup — collapse-by-default-when-finished transition', () =
     );
     expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe(
       'false',
+    );
+  });
+});
+
+describe('CollapsedGroup — onAttachmentClick', () => {
+  const attachmentStage = {
+    index: 0,
+    name: 'Combined search',
+    status: StageStatus.Completed,
+    attachments: [
+      { title: 'result.csv', reference_url: 'files/abc/result.csv' },
+    ],
+  };
+
+  it('forwards onAttachmentClick to the inner panel for a single stage', () => {
+    const onAttachmentClick = vi.fn();
+    render(
+      <CollapsedGroup
+        stages={[attachmentStage]}
+        isStreaming={false}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+    expect(onAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'result.csv' }),
+    );
+  });
+
+  it('forwards onAttachmentClick to the inner panel for a multi-stage group', () => {
+    const onAttachmentClick = vi.fn();
+    render(
+      <CollapsedGroup
+        stages={[attachmentStage, completed(1, 'Step 2')]}
+        isStreaming={false}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Combined search/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+    expect(onAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'result.csv' }),
     );
   });
 });
