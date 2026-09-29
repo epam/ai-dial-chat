@@ -122,7 +122,6 @@ const DialFileManagerModal: FC<Props> = ({
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
-      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -353,10 +352,6 @@ const DialFileManagerModal: FC<Props> = ({
           DialFileManagerI18nKeys.OrganizationEmptyStateDescription,
         ),
       },
-      [DialFileManagerTabs.All]: {
-        title: emptyTitle,
-        description: emptyDescription,
-      },
       [DialFileManagerTabs.Review]: {
         title: emptyTitle,
         description: emptyDescription,
@@ -372,7 +367,6 @@ const DialFileManagerModal: FC<Props> = ({
       ),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
-      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],

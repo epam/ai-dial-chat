@@ -49,7 +49,6 @@ const DialFileManagerPage: FC = () => {
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
-      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -127,7 +126,6 @@ const DialFileManagerPage: FC = () => {
           DialFileManagerI18nKeys.OrganizationEmptyStateDescription,
         ),
       },
-      [DialFileManagerTabs.All]: { title: '', description: '' },
       [DialFileManagerTabs.Review]: { title: '', description: '' },
     };
   }, [t]);
@@ -140,7 +138,6 @@ const DialFileManagerPage: FC = () => {
       ),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
-      [DialFileManagerTabs.All]: '',
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
