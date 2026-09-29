@@ -17,6 +17,40 @@ export const encodeDeploymentId = (id: string): string =>
     .join('/');
 
 /**
+ * Inverse of `encodeDeploymentId` — decodes each `/`-separated segment back
+ * to its raw, human-readable form. A segment that isn't valid
+ * percent-encoding is passed through unchanged rather than throwing, since
+ * this decodes externally-sourced ids (the settings iframe's postMessage
+ * protocol).
+ */
+export const decodeDeploymentId = (id: string): string =>
+  id
+    .split('/')
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
+    .join('/');
+
+/**
+ * Encodes a deployment/application id to its single-encoded form regardless
+ * of whether the value it received was already percent-encoded or the raw,
+ * human-readable form — decoding first then re-encoding once is idempotent
+ * either way, since `decodeDeploymentId` on a raw (unencoded) id is a no-op.
+ * Use this instead of `encodeDeploymentId` at a boundary that cannot
+ * guarantee which form it receives, such as a `postMessage` payload from the
+ * settings iframe: calling `encodeDeploymentId` directly on a value the
+ * sender already encoded escapes the existing `%` characters a second time
+ * (`%20` becomes `%2520`), which the backend only ever undoes once and so
+ * 404s on.
+ */
+export const normalizeDeploymentId = (id: string): string =>
+  encodeDeploymentId(decodeDeploymentId(id));
+
+/**
  * Finds a deployment matching `idOrReference` by `id` first, falling back to
  * `reference` when no `id` matches. DIAL Core sometimes addresses a
  * deployment by `reference` in places that store a deployment id (e.g. a
