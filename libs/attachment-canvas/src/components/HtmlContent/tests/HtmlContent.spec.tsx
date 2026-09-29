@@ -1,17 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { HtmlCanvasContent } from '../../../models/attachment-canvas';
 import { AttachmentContentType } from '../../../types/attachment-canvas';
 import { HtmlContent } from '../HtmlContent';
 
 const url = 'https://example.com/docs/page.html';
 
-const renderContent = (content: HtmlCanvasContent) =>
+const renderContent = (content: HtmlCanvasContent, isSourceView = false) =>
   render(
     <HtmlContent
       content={content}
       labels={{}}
-      isSourceView={false}
+      isSourceView={isSourceView}
       title="page.html"
     />,
   );
@@ -111,5 +111,74 @@ describe('HtmlContent — src/srcdoc precedence and sandbox', () => {
     expect(
       screen.queryByText('This page cannot be displayed in preview'),
     ).toBeNull();
+  });
+});
+
+describe('HtmlContent — View source with a lazy resolver', () => {
+  it('does not call resolveSourceText while the source view is not shown', () => {
+    const resolveSourceText = vi.fn().mockResolvedValue('<p>Source</p>');
+    renderContent({
+      type: AttachmentContentType.Html,
+      url,
+      isSameOriginUrl: true,
+      resolveSourceText,
+    });
+
+    expect(resolveSourceText).not.toHaveBeenCalled();
+  });
+
+  it('fetches the source text lazily and renders it once the view toggles on', async () => {
+    const resolveSourceText = vi.fn().mockResolvedValue('<p>Source</p>');
+    renderContent(
+      {
+        type: AttachmentContentType.Html,
+        url,
+        isSameOriginUrl: true,
+        resolveSourceText,
+      },
+      true,
+    );
+
+    expect(resolveSourceText).toHaveBeenCalledOnce();
+    expect(await screen.findByText('<p>Source</p>')).toBeTruthy();
+  });
+
+  it('shows no iframe while the lazy fetch is in flight', async () => {
+    let resolveFetch: (text: string) => void = () => undefined;
+    const resolveSourceText = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+    renderContent(
+      {
+        type: AttachmentContentType.Html,
+        url,
+        isSameOriginUrl: true,
+        resolveSourceText,
+      },
+      true,
+    );
+
+    expect(screen.queryByTitle('page.html')).toBeNull();
+
+    resolveFetch('<p>Source</p>');
+    expect(await screen.findByText('<p>Source</p>')).toBeTruthy();
+  });
+
+  it('falls back to the iframe when the lazy fetch fails', async () => {
+    const resolveSourceText = vi.fn().mockRejectedValue(new Error('network'));
+    renderContent(
+      {
+        type: AttachmentContentType.Html,
+        url,
+        isSameOriginUrl: true,
+        resolveSourceText,
+      },
+      true,
+    );
+
+    expect(await screen.findByTitle('page.html')).toBeTruthy();
   });
 });

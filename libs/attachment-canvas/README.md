@@ -454,15 +454,17 @@ import { InlineGroupedVisualizer } from '@epam/ai-dial-attachment-canvas';
 
 - **`srcdoc` only** — a locally picked file with no backing download URL.
   Rendered via `srcDoc` in a sandboxed iframe (`sandbox="allow-scripts"`).
-- **`url` + `isSameOriginUrl: true`** (optionally alongside `srcdoc`) — an
-  attachment backed by this app's own file-download endpoint. Rendered via
-  `src` (not `srcdoc`, even when `srcdoc` is also present) with
-  `sandbox="allow-scripts"` and no `allow-same-origin`, so the previewed
-  document still runs at an opaque origin with no access to this app's
-  cookies or session. The backend gives this response its own relaxed CSP so
-  inline `<script>`/`<style>` in the previewed file are not blocked by the
-  host document's stricter policy — see `apps/chat-api/README.md`'s CSP
-  section. `srcdoc`, when present, only feeds the "View source" toggle.
+- **`url` + `isSameOriginUrl: true`** (with `resolveSourceText`, not
+  `srcdoc`) — an attachment backed by this app's own file-download endpoint.
+  Rendered via `src` with `sandbox="allow-scripts"` and no
+  `allow-same-origin`, so the previewed document still runs at an opaque
+  origin with no access to this app's cookies or session. The backend gives
+  this response its own relaxed CSP so inline `<script>`/`<style>` in the
+  previewed file are not blocked by the host document's stricter policy —
+  see `apps/chat-api/README.md`'s CSP section. The HTML text itself is not
+  fetched up front — `resolveSourceText` fetches it lazily, only when the
+  "View source" toggle is used, avoiding a duplicate fetch alongside the
+  iframe's own `src` load.
 - **`url` with `isSameOriginUrl` absent/false** — a genuinely external HTML
   source (e.g. a web-search citation). Rendered via `src` with
   `sandbox="allow-scripts allow-same-origin"`, safe because the URL is a
@@ -478,7 +480,7 @@ const sameOriginPreview: HtmlCanvasContent = {
   type: AttachmentContentType.Html,
   url: downloadUrl,
   isSameOriginUrl: true,
-  srcdoc: fetchedText, // optional, only enables "View source"
+  resolveSourceText: () => fetchHtmlText(downloadUrl), // lazy, only for "View source"
 };
 ```
 

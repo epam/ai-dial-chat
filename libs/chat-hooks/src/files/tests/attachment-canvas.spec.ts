@@ -535,44 +535,49 @@ describe('resolveHtmlCanvasContent', () => {
     clearAttachmentCache();
   });
 
-  it('returns url + isSameOriginUrl + srcdoc when a DIAL download URL resolves and the text is small', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        text: () => Promise.resolve('<html><body>Hi</body></html>'),
-      }),
-    );
+  it('returns url + isSameOriginUrl with a lazy resolveSourceText when a DIAL download URL resolves, without fetching eagerly', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve('<html><body>Hi</body></html>'),
+    });
+    vi.stubGlobal('fetch', fetchMock);
     const result = await resolveHtmlCanvasContent(
       makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
       resolvers,
     );
-    expect(result).toEqual({
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
       type: AttachmentContentType.Html,
       url: '/download?path=path/page.html',
       isSameOriginUrl: true,
-      srcdoc: '<html><body>Hi</body></html>',
     });
+
+    const sourceText = await (
+      result as { resolveSourceText: () => Promise<string> }
+    ).resolveSourceText();
+    expect(sourceText).toBe('<html><body>Hi</body></html>');
+    expect(fetchMock).toHaveBeenCalled();
   });
 
-  it('returns url + isSameOriginUrl with no srcdoc when a DIAL download URL resolves but the text is oversized', async () => {
+  it('resolveSourceText rejects when the lazy fetch fails', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        text: () => Promise.resolve(oversizedHtml),
-      }),
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
     );
     const result = await resolveHtmlCanvasContent(
       makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
       resolvers,
     );
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: AttachmentContentType.Html,
       url: '/download?path=path/page.html',
-      isSameOriginUrl: true,
-      srcdoc: undefined,
     });
+
+    await expect(
+      (
+        result as { resolveSourceText: () => Promise<string> }
+      ).resolveSourceText(),
+    ).rejects.toThrow();
   });
 
   it('returns srcdoc only when there is no DIAL download URL and the text is small', async () => {
@@ -592,22 +597,6 @@ describe('resolveHtmlCanvasContent', () => {
       resolvers,
     );
     expect(result).toBeNull();
-  });
-
-  it('propagates an ErrorCanvasContent when the fetch fails', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
-    );
-    const result = await resolveHtmlCanvasContent(
-      makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
-      resolvers,
-    );
-    expect(result).toEqual({
-      type: AttachmentContentType.Error,
-      errorType: AttachmentErrorType.Forbidden,
-      url: '/download?path=path/page.html',
-    });
   });
 });
 

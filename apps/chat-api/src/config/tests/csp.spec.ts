@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import request from 'supertest';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  buildDownloadFrameAncestorsDirective,
   buildFrameAncestorsDirective,
   buildFrameSrcDirective,
   buildPermissionsPolicyHeader,
@@ -218,21 +219,29 @@ describe('Helmet security headers', () => {
 });
 
 describe('createHtmlPreviewCspHeader', () => {
-  it('allows inline scripts and styles without a nonce requirement', () => {
+  it('allows inline scripts and styles without a nonce requirement, and does not widen script-src beyond inline', () => {
     const directives = createHtmlPreviewCspHeader().split('; ');
 
-    expect(directives).toContain(
-      "script-src 'unsafe-inline' data: blob: https:",
-    );
+    expect(directives).toContain("script-src 'unsafe-inline'");
     expect(directives).toContain("style-src 'unsafe-inline' https:");
     expect(directives).toContain("style-src-attr 'unsafe-inline'");
   });
 
-  it('restricts embedding to this app only, and blocks plugin content', () => {
+  it('restricts embedding to this app only by default, and blocks plugin content', () => {
     const directives = createHtmlPreviewCspHeader().split('; ');
 
     expect(directives).toContain("frame-ancestors 'self'");
     expect(directives).toContain("object-src 'none'");
+  });
+
+  it('includes configured iframe-embed origins in frame-ancestors, alongside self', () => {
+    const directives = createHtmlPreviewCspHeader([
+      'https://overlay.example.com',
+    ]).split('; ');
+
+    expect(directives).toContain(
+      "frame-ancestors 'self' https://overlay.example.com",
+    );
   });
 
   it('does not permit eval or outbound network access from the previewed document', () => {
@@ -243,8 +252,34 @@ describe('createHtmlPreviewCspHeader', () => {
     expect(directives).toContain("connect-src 'none'");
   });
 
+  it('sandboxes the previewed document at an opaque origin', () => {
+    const directives = createHtmlPreviewCspHeader().split('; ');
+
+    expect(directives).toContain('sandbox allow-scripts');
+  });
+
+  it('blocks base-tag rewriting, form submission, and worker creation', () => {
+    const directives = createHtmlPreviewCspHeader().split('; ');
+
+    expect(directives).toContain("base-uri 'none'");
+    expect(directives).toContain("form-action 'none'");
+    expect(directives).toContain("worker-src 'none'");
+  });
+
   it('returns the same header value on every call', () => {
     expect(createHtmlPreviewCspHeader()).toBe(createHtmlPreviewCspHeader());
+  });
+});
+
+describe('buildDownloadFrameAncestorsDirective', () => {
+  it('always includes self, even with no configured origins', () => {
+    expect(buildDownloadFrameAncestorsDirective([])).toEqual(["'self'"]);
+  });
+
+  it('appends configured origins after self', () => {
+    expect(
+      buildDownloadFrameAncestorsDirective(['https://overlay.example.com']),
+    ).toEqual(["'self'", 'https://overlay.example.com']);
   });
 });
 

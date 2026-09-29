@@ -13,6 +13,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBody,
@@ -25,6 +26,7 @@ import {
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { createHtmlPreviewCspHeader } from '../config/csp';
+import type { EnvironmentVariables } from '../config/environment.config';
 import { ArchiveUploadInterceptor } from './archive-upload.interceptor';
 import { CopyFilesDto, CopyFilesResponseDto } from './dto/copy-files.dto';
 import {
@@ -64,7 +66,10 @@ import { FilesService } from './files.service';
 @ApiTags('files')
 @Controller({ path: 'files', version: '1' })
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(
+    private readonly filesService: FilesService,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
+  ) {}
 
   @Post()
   @HttpCode(201)
@@ -581,13 +586,41 @@ export class FilesController {
     /*
      * HTML previews render via `src=` against this route (not `srcdoc`), so
      * this response needs its own relaxed CSP instead of inheriting the SPA
-     * shell's strict/enforced policy. Safety comes from the preview iframe's
-     * sandbox (`allow-scripts` only, no `allow-same-origin`), not from this
-     * header — see `createHtmlPreviewCspHeader`.
+     * shell's strict/enforced policy. The `sandbox` directive baked into
+     * `createHtmlPreviewCspHeader` is what makes that safe on its own — it
+     * forces the response to render at an opaque origin regardless of how
+     * it's loaded (the preview iframe's own `sandbox` attribute is
+     * additional defense-in-depth, not the primary control).
      */
-    if (headers['content-type']?.startsWith('text/html')) {
-      res.setHeader('Content-Security-Policy', createHtmlPreviewCspHeader());
+    if (headers['content-type']?.toLowerCase().startsWith('text/html')) {
+      const allowedIframeOrigins =
+        this.configService.get('ALLOWED_IFRAME_ORIGINS', { infer: true }) ?? [];
+      res.setHeader(
+        'Content-Security-Policy',
+        createHtmlPreviewCspHeader(allowedIframeOrigins),
+      );
+      /*
+       * `SAFE_DOWNLOAD_HEADERS` never forwards this today, but strip it
+       * defensively so a future widening of that allowlist can't leave a
+       * stale report-only policy sitting alongside the enforced one above.
+       */
       res.removeHeader('Content-Security-Policy-Report-Only');
+
+      /*
+       * DIAL Core forwards `Content-Disposition: attachment` verbatim even
+       * for HTML files, which makes the browser download the file instead
+       * of rendering it in the `src=` iframe. Rewrite it to `inline` for the
+       * preview response; an explicit "download to disk" action elsewhere
+       * uses a same-origin `<a download>` element, which browsers honor
+       * regardless of this header.
+       */
+      const disposition = headers['content-disposition'];
+      if (disposition != null) {
+        res.setHeader(
+          'Content-Disposition',
+          disposition.replace(/^attachment/i, 'inline'),
+        );
+      }
     }
 
     await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(

@@ -54,12 +54,49 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
 
     const [isLoading, setIsLoading] = useState(true);
     const [isBlocked, setIsBlocked] = useState(false);
+    const [fetchedSourceText, setFetchedSourceText] = useState<
+      string | undefined
+    >(undefined);
+    const [isSourceLoading, setIsSourceLoading] = useState(false);
+    const [hasSourceFetchFailed, setHasSourceFetchFailed] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     useEffect(() => {
       setIsLoading(true);
       setIsBlocked(false);
+      setFetchedSourceText(undefined);
+      setIsSourceLoading(false);
+      setHasSourceFetchFailed(false);
     }, [content]);
+
+    useEffect(() => {
+      if (
+        !isSourceView ||
+        content.srcdoc != null ||
+        content.resolveSourceText == null ||
+        fetchedSourceText != null
+      ) {
+        return;
+      }
+      let isCancelled = false;
+      const resolveSourceText = content.resolveSourceText;
+      const fetchSourceText = async (): Promise<void> => {
+        setIsSourceLoading(true);
+        try {
+          const text = await resolveSourceText();
+          if (!isCancelled) setFetchedSourceText(text);
+        } catch {
+          /* Falls through to the rendered iframe below; the toggle retries on the next click. */
+          if (!isCancelled) setHasSourceFetchFailed(true);
+        } finally {
+          if (!isCancelled) setIsSourceLoading(false);
+        }
+      };
+      void fetchSourceText();
+      return () => {
+        isCancelled = true;
+      };
+    }, [isSourceView, content, fetchedSourceText]);
 
     const isSameOriginUrl =
       content.isSameOriginUrl === true && content.url != null;
@@ -86,12 +123,36 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
       setIsBlocked(true);
     }, []);
 
-    if (isSourceView && content.srcdoc != null) {
+    const sourceText = content.srcdoc ?? fetchedSourceText;
+    const canViewSource =
+      content.srcdoc != null || content.resolveSourceText != null;
+    /* True from the very first render where `isSourceView` flips on, before
+     * the fetch effect below has had a chance to commit `isSourceLoading` —
+     * without it, that render would briefly show the live iframe instead of
+     * the spinner. */
+    const willFetchSourceText =
+      content.srcdoc == null &&
+      content.resolveSourceText != null &&
+      fetchedSourceText == null &&
+      !hasSourceFetchFailed;
+
+    if (
+      isSourceView &&
+      canViewSource &&
+      (sourceText != null || isSourceLoading || willFetchSourceText)
+    ) {
+      if (sourceText == null) {
+        return (
+          <div className="flex h-full items-center justify-center">
+            <Spinner />
+          </div>
+        );
+      }
       return (
         <CodeContent
           content={{
             type: AttachmentContentType.Code,
-            text: content.srcdoc,
+            text: sourceText,
             language: 'html',
           }}
           codeBlockTheme={codeBlockTheme}

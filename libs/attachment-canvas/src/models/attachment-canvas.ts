@@ -200,12 +200,14 @@ export interface CodeCanvasContent {
 export interface HtmlCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
   type: AttachmentContentType.Html;
-  /** Full HTML text rendered via `srcdoc` in a sandboxed iframe. Used for local (non-downloadable) file attachments, and as a "View source" fallback alongside `url`. */
+  /** Full HTML text rendered via `srcdoc` in a sandboxed iframe. Populated only when no `url` is available (local, non-downloadable file attachments); when `url` is set, "View source" instead calls `resolveSourceText`. */
   srcdoc?: string;
   /** URL rendered via `src` in a sandboxed iframe when `srcdoc` is absent, or in preference to `srcdoc` when `isSameOriginUrl` is set. Also used as the download-button/"Open in new tab" target. */
   url?: string;
-  /** True when `url` is this app's own same-origin file-download endpoint rather than a genuinely external site. Governs iframe handling: `src` takes precedence over `srcdoc`, the sandbox omits `allow-same-origin`, and block-detection skips the `contentDocument` check (the iframe is an opaque origin either way). */
+  /** True when `url`'s origin matches the embedding document's own origin. Forces the iframe sandbox to omit `allow-same-origin` — granting it would let a same-origin framed document reach this page's own cookies/storage — and makes `src` take precedence over `srcdoc`; also skips the `contentDocument` block-detection check, since the iframe is intentionally opaque-origin either way. */
   isSameOriginUrl?: boolean;
+  /** Lazily fetches the full HTML source text for the "View source" toggle. Used instead of an eagerly-populated `srcdoc` when `url` is set; absent when `srcdoc` is already populated. */
+  resolveSourceText?: () => Promise<string>;
 }
 
 /** Content payload for a custom-visualizer attachment rendered inside a sandboxed iframe. */

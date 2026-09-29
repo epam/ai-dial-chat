@@ -43,9 +43,13 @@ const MOCK_LIST_RESPONSE = {
 
 async function buildApp(
   service: unknown,
-  opts: { fileSizeLimit?: number; injectUser?: boolean } = {},
+  opts: {
+    fileSizeLimit?: number;
+    injectUser?: boolean;
+    allowedIframeOrigins?: string[];
+  } = {},
 ): Promise<INestApplication> {
-  const { fileSizeLimit, injectUser = true } = opts;
+  const { fileSizeLimit, injectUser = true, allowedIframeOrigins } = opts;
   const module: TestingModule = await Test.createTestingModule({
     imports: [
       MulterModule.register({
@@ -61,9 +65,15 @@ async function buildApp(
       {
         provide: ConfigService,
         useValue: {
-          get: vi.fn((key: string) =>
-            key === 'ARCHIVE_UPLOAD_MAX_BYTES' ? fileSizeLimit : undefined,
-          ),
+          get: vi.fn((key: string) => {
+            if (key === 'ARCHIVE_UPLOAD_MAX_BYTES') {
+              return fileSizeLimit;
+            }
+            if (key === 'ALLOWED_IFRAME_ORIGINS') {
+              return allowedIframeOrigins;
+            }
+            return undefined;
+          }),
         },
       },
     ],
@@ -544,9 +554,120 @@ describe('FilesController — download', () => {
       .expect(200);
 
     expect(res.headers['content-security-policy']).toBe(
-      createHtmlPreviewCspHeader(),
+      createHtmlPreviewCspHeader([]),
     );
     expect(res.headers['content-security-policy-report-only']).toBeUndefined();
+  });
+
+  it('matches on a mixed-case HTML content-type', async () => {
+    const body = '<html><body>Hi</body></html>';
+    service.downloadFile.mockResolvedValue({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(body));
+          controller.close();
+        },
+      }),
+      headers: {
+        'content-type': 'Text/HTML; charset=utf-8',
+        'content-disposition': 'attachment; filename="page.html"',
+        'content-length': String(body.length),
+      },
+    });
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/download')
+      .query({ bucket: 'my-bucket', path: 'folder/page.html' })
+      .expect(200);
+
+    expect(res.headers['content-security-policy']).toBe(
+      createHtmlPreviewCspHeader([]),
+    );
+  });
+
+  it('rewrites an attachment content-disposition to inline for an HTML response', async () => {
+    const body = '<html><body>Hi</body></html>';
+    service.downloadFile.mockResolvedValue({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(body));
+          controller.close();
+        },
+      }),
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'content-disposition': 'attachment; filename="page.html"',
+        'content-length': String(body.length),
+      },
+    });
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/download')
+      .query({ bucket: 'my-bucket', path: 'folder/page.html' })
+      .expect(200);
+
+    expect(res.headers['content-disposition']).toBe(
+      'inline; filename="page.html"',
+    );
+  });
+
+  it('includes the sandbox directive in the HTML preview CSP', async () => {
+    const body = '<html><body>Hi</body></html>';
+    service.downloadFile.mockResolvedValue({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(body));
+          controller.close();
+        },
+      }),
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'content-disposition': 'attachment; filename="page.html"',
+        'content-length': String(body.length),
+      },
+    });
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/download')
+      .query({ bucket: 'my-bucket', path: 'folder/page.html' })
+      .expect(200);
+
+    expect(res.headers['content-security-policy']).toContain(
+      'sandbox allow-scripts',
+    );
+  });
+
+  it('includes the configured overlay origins in frame-ancestors for an HTML response', async () => {
+    await app.close();
+    const body = '<html><body>Hi</body></html>';
+    service.downloadFile.mockResolvedValue({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(body));
+          controller.close();
+        },
+      }),
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'content-disposition': 'attachment; filename="page.html"',
+        'content-length': String(body.length),
+      },
+    });
+    app = await buildApp(service, {
+      allowedIframeOrigins: ['https://overlay-host.example.com'],
+    });
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/download')
+      .query({ bucket: 'my-bucket', path: 'folder/page.html' })
+      .expect(200);
+
+    expect(res.headers['content-security-policy']).toBe(
+      createHtmlPreviewCspHeader(['https://overlay-host.example.com']),
+    );
+    expect(res.headers['content-security-policy']).toContain(
+      "frame-ancestors 'self' https://overlay-host.example.com",
+    );
   });
 });
 
