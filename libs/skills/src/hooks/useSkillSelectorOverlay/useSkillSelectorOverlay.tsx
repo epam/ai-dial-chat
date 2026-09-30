@@ -85,6 +85,12 @@ export const useSkillSelectorOverlay = ({
    * argument.
    */
   const [browseCaretPosition, setBrowseCaretPosition] = useState(0);
+  /* Consumed `/query` (or replaced mention) to restore if "Use skill" is canceled — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
+  const [browseRestoreText, setBrowseRestoreText] = useState<{
+    position: number;
+    text: string;
+    mentionUrl?: string;
+  } | null>(null);
   const [messageRevision, setMessageRevision] = useState(0);
   const [caretPositionOverride, setCaretPositionOverride] = useState<
     number | undefined
@@ -220,6 +226,31 @@ export const useSkillSelectorOverlay = ({
         mentions.draft.slice(0, query.start) + mentions.draft.slice(query.end),
       );
       return query.start;
+    },
+    [mentions],
+  );
+
+  /* Non-mutating read of the same run `consumeQueryAtCaret`/`close({ consumeQuery: true })` would remove, plus its mention url when that run is an already-tracked anchor rather than unconfirmed text — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
+  const peekQueryAtCaret = useCallback(
+    (
+      caretPosition: number,
+    ): { position: number; text: string; mentionUrl?: string } | undefined => {
+      const query = findSlashQueryAtCaret(
+        mentions.draft,
+        caretPosition,
+        SKILL_TRIGGER_PREFIX,
+      );
+      if (query == null) return undefined;
+
+      const matchedAnchor = mentions.anchors.find(
+        (anchor) =>
+          anchor.start === query.start && anchor.start + anchor.length === query.end,
+      );
+      return {
+        position: query.start,
+        text: mentions.draft.slice(query.start, query.end),
+        mentionUrl: matchedAnchor?.url,
+      };
     },
     [mentions],
   );
@@ -371,7 +402,10 @@ export const useSkillSelectorOverlay = ({
         }}
         onToggleFavorite={onToggleFavorite}
         onBrowse={() => {
-          setBrowseCaretPosition(consumeQueryAtCaret(caretPosition));
+          const strayQuery = peekQueryAtCaret(caretPosition);
+          const position = consumeQueryAtCaret(caretPosition);
+          setBrowseCaretPosition(position);
+          setBrowseRestoreText(strayQuery ?? null);
           onClose();
           setIsCatalogOpen(true);
         }}
@@ -388,6 +422,7 @@ export const useSkillSelectorOverlay = ({
       favoriteSkillItems,
       insertAndPush,
       consumeQueryAtCaret,
+      peekQueryAtCaret,
       onToggleFavorite,
       panelLabels,
     ],
@@ -447,8 +482,19 @@ export const useSkillSelectorOverlay = ({
                 }}
                 onToggleFavorite={onToggleFavorite}
                 onBrowse={() => {
-                  close({ consumeQuery: true });
+                  const text = `${SKILL_TRIGGER_PREFIX}${query}`;
+                  const matchedAnchor = mentions.anchors.find(
+                    (anchor) =>
+                      anchor.start === caretPosition &&
+                      anchor.length === text.length,
+                  );
+                  close({ consumeQuery: true, returnFocus: false });
                   setBrowseCaretPosition(caretPosition);
+                  setBrowseRestoreText({
+                    position: caretPosition,
+                    text,
+                    mentionUrl: matchedAnchor?.url,
+                  });
                   setIsCatalogOpen(true);
                 }}
                 onViewDetails={(item) => {
@@ -466,17 +512,37 @@ export const useSkillSelectorOverlay = ({
       emptyQueryHintLabel,
       favoriteSkillItems,
       insertAndPush,
+      mentions.anchors,
       onToggleFavorite,
       panelLabels,
     ],
   );
 
+  /* Restores browseRestoreText on cancel — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
+  const handleCatalogClose = useCallback(() => {
+    setIsCatalogOpen(false);
+    if (browseRestoreText == null) return;
+
+    const { position, text, mentionUrl } = browseRestoreText;
+    if (mentionUrl != null) {
+      mentions.restoreMention(mentionUrl, text.slice(1), position);
+    } else {
+      mentions.onDraftChange(
+        mentions.draft.slice(0, position) + text + mentions.draft.slice(position),
+      );
+    }
+    setMessageRevision((revision) => revision + 1);
+    setCaretPositionOverride(position + text.length);
+    setBrowseRestoreText(null);
+  }, [browseRestoreText, mentions]);
+
   const skillCatalogModal = (
     <SkillCatalogModal
       isOpen={isCatalogOpen}
-      onClose={() => setIsCatalogOpen(false)}
+      onClose={handleCatalogClose}
       onSelect={(id) => {
         insertAndPush(id, resolveName(id), browseCaretPosition);
+        setBrowseRestoreText(null);
         setIsCatalogOpen(false);
       }}
       title={catalogModalTitleLabel}

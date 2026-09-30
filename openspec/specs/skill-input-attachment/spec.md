@@ -266,7 +266,11 @@ The dropdown SHALL stay open while the message continues to match a `/` followed
 
 Pasting into the text area SHALL trigger the dropdown by the resulting value, not by the keystroke path: a paste made while the text area is empty whose result is exactly the trigger shape — the bare `/`, or `/` followed by a whitespace-free, slash-free query and nothing else — SHALL open the dropdown as if the same text had been typed: same query filter, same "Type to filter" empty-query hint for a bare `/`, same dismissal and selection rules. The paste SHALL insert its text as an ordinary paste; the trigger only opens the dropdown on top of the inserted text and SHALL NOT alter, trim, or consume it. Any paste whose result is not that exact shape — content containing whitespace after the query token (e.g. `/s sdf`), multiple lines, trailing text, or content not starting with `/` — SHALL be a regular paste that opens nothing. The paste trigger applies only when the text area was empty before the paste; pasting `/test` into an input that already holds text never opens the dropdown. A paste that brings the message into the trigger shape from a non-matching value re-enters the trigger for the dismissed-dropdown rule above: a dropdown dismissed earlier SHALL reopen when the user clears the input and pastes a fresh `/query`. This trigger lives in the generic `commandMenu` mechanism on `Input`, so it behaves identically on every input surface where the command menu is mounted — the new-conversation composer (main chat and AppsEditor preview) and the ongoing-conversation input.
 
-Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal. The Add-menu "Skills" item SHALL remain available alongside this entry point; selecting a favorite row, activating Browse, or opening View details from the Add menu SHALL likewise consume a `/query`-shaped run touching the caret position the Add menu was opened from — e.g. text left over from a slash-dropdown session the user dismissed with an outside click without reopening it — so that text is never left behind to be sent as an ordinary message.
+Selecting a row from the dropdown SHALL consume the slash text — the entire `/query` string is removed from the input and never sent — select the skill (single-selection rule above), and return focus to the text area (a mouse selection moves focus to the row, which unmounts when the dropdown closes; keyboard selection never left the text area). Activating Browse SHALL likewise consume the slash text and open the "Use skill" browse modal, but SHALL NOT return focus to the text area: the generic `commandMenu` mechanism's `close({ consumeQuery, returnFocus })` option defaults `returnFocus` to `true` (the selection path above), but Browse SHALL pass `returnFocus: false`. Focusing the text area synchronously reruns the deferred (`requestAnimationFrame`) caret re-evaluation that decides whether the dropdown should be open — by design, the dropdown SHALL always show while the caret sits in a matching `/word` — and since the modal is about to take focus anyway via its own focus trap, refocusing the text area first only reopens the dropdown on top of the modal that is about to steal focus back. The Add-menu "Skills" item SHALL remain available alongside this entry point; selecting a favorite row, activating Browse, or opening View details from the Add menu SHALL likewise consume a `/query`-shaped run touching the caret position the Add menu was opened from — e.g. text left over from a slash-dropdown session the user dismissed with an outside click without reopening it — so that text is never left behind to be sent as an ordinary message.
+
+The consumed `/query` text SHALL be restored to the input if the "Use skill" browse modal is dismissed (X, Escape, or outside click) without a selection — from either entry point (slash dropdown or Add menu). A successful selection SHALL discard the saved text instead, since `insertAndPush` replaces it with the real `/{name}` mention. Restoring the text SHALL re-evaluate the caret's word and reopen the slash dropdown if it is again command-shaped at that position — the same re-evaluation a manual caret move or keystroke would trigger — since a purely programmatic draft change (unlike typing or clicking) does not otherwise reach that evaluation.
+
+The caret is not required to sit outside an already-selected skill's `/{name}` text to open "Use skill": both Browse entry points MAY consume an existing mention's own run exactly as they would a stray unconfirmed query, letting the user replace that skill by picking a different one from the modal. When the consumed run is an already-tracked mention rather than unconfirmed text, canceling SHALL restore it as a mention again — not as inert plain text — via `useSkillMentions`'s `restoreMention` (which re-registers the exact `{url, name}` anchor at the same position, distinct from `insertMention`'s new-selection path since it adds no trailing space and shifts no existing anchors beyond that one insertion). Both Browse call sites detect this by checking whether the consumed run's exact span already matches a tracked anchor before consuming it, since consuming through the normal diff-based `onDraftChange` path drops that anchor as an ordinary edit.
 
 #### Scenario: Typing "/" in an empty input
 
@@ -324,6 +328,31 @@ Selecting a row from the dropdown SHALL consume the slash text — the entire `/
 
 - **WHEN** the user picks a skill row in the slash dropdown (mouse or keyboard)
 - **THEN** the `/query` text is removed from the input, the dropdown closes, the skill becomes the input's selected skill rendered as `ChatSkill`, and focus is in the text area
+
+#### Scenario: Browse does not reopen the dropdown over the modal
+
+- **WHEN** the user activates Browse from the slash dropdown
+- **THEN** the `/query` text is removed, the dropdown closes and stays closed, and the "Use skill" browse modal renders with no frame where the dropdown reopens on top of it
+
+#### Scenario: Canceling the browse modal restores the consumed query
+
+- **WHEN** the user activates Browse (consuming `/query`) and then dismisses the modal without picking a skill
+- **THEN** `/query` reappears in the input at the same position, and the slash dropdown reopens over it
+
+#### Scenario: Selecting a skill discards the saved query instead of restoring it
+
+- **WHEN** the user activates Browse (consuming `/query`) and then picks a skill from the modal
+- **THEN** the input shows the selected skill's `/{name}` mention, not the original `/query` text
+
+#### Scenario: Canceling Browse over an existing mention restores it as a mention, not plain text
+
+- **WHEN** the caret rests on or inside an already-selected skill's `/{name}` mention, the user activates Browse (from either entry point), and then cancels the modal
+- **THEN** the mention reappears unchanged — still rendered as `ChatSkill`, still present in `custom_content.skills`, not inert plain text
+
+#### Scenario: Selecting from Browse over an existing mention replaces it
+
+- **WHEN** the caret rests on an already-selected skill's `/{name}` mention, the user activates Browse, and picks a different skill from the modal
+- **THEN** the original mention is replaced by the newly selected skill's `/{name}` mention
 
 #### Scenario: Add-menu selection consumes a stray query left by an outside click
 

@@ -22,11 +22,11 @@ import {
 } from 'react';
 import { List, type ListImperativeAPI } from 'react-window';
 import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
-import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
 import { ConversationPanelProps } from '../../models/panel-props';
 import type { RowRendererData, VirtualRow } from '../../models/virtual-row';
 import { VirtualRowKind } from '../../types/virtual-row';
 import {
+  getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
   SKELETON_ROW_COUNT,
@@ -139,7 +139,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const allowedDropGroupsRef = useRef<Set<FilterTab> | null>(null);
 
     const handleListResize = useCallback(({ height }: { height: number }) => {
-      setOverscanCount(Math.ceil((height / ITEM_ROW_HEIGHT) * 2));
+      setOverscanCount(getOverscanCount(height));
     }, []);
 
     const handleSearchChange = useCallback((value?: string) => {
@@ -335,6 +335,17 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       }
     }, [activeConversationId, groups, expandedGroups, virtualRows]);
 
+    /* Read at drag time so `onDragStart` keeps its identity across list
+       changes and `memo(ConversationRow)` is not defeated by it. */
+    const virtualRowsRef = useRef(virtualRows);
+    useEffect(() => {
+      virtualRowsRef.current = virtualRows;
+    }, [virtualRows]);
+    const handleRowDragStart = useCallback(
+      (id: string) => handleDragStart(id, virtualRowsRef.current),
+      [handleDragStart],
+    );
+
     const rowProps = useMemo<RowRendererData>(
       () => ({
         rows: virtualRows,
@@ -356,7 +367,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         draggingId,
         dragOverId,
         allowedDropGroups,
-        onDragStart: (id: string) => handleDragStart(id, virtualRows),
+        onDragStart: handleRowDragStart,
         onDragEnd: handleDragEnd,
         onDragOver: handleDragOver,
         onDragLeave: handleDragLeave,
@@ -380,7 +391,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         draggingId,
         dragOverId,
         allowedDropGroups,
-        handleDragStart,
+        handleRowDragStart,
         handleDragEnd,
         handleDragOver,
         handleDragLeave,

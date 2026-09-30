@@ -41,6 +41,10 @@ import ConversationPanelView from '../ConversationPanelView';
 
 /* Counts renders of the mocked lib panel, which stays `memo`-wrapped like the real one. */
 const panelRenderCount = vi.hoisted(() => ({ current: 0 }));
+/* Props of every render of the mocked lib panel, to compare identities across renders. */
+const panelPropsLog = vi.hoisted(
+  (): Array<{ conversations?: unknown; getActions?: unknown }> => [],
+);
 
 vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
   const actual =
@@ -79,6 +83,7 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
         className?: string;
       }) => {
         panelRenderCount.current += 1;
+        panelPropsLog.push({ conversations: panelConversations, getActions });
         return (
           <div
             role="region"
@@ -269,6 +274,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 });
 
 vi.mock('@tabler/icons-react', () => ({
+  IconClockHour3: () => null,
   IconCopy: () => null,
   IconDotsVertical: () => null,
   IconDownload: () => null,
@@ -621,6 +627,57 @@ describe('ConversationPanelView — memo boundary', () => {
     );
 
     expect(panelRenderCount.current).toBeGreaterThan(rendersAfterMount);
+  });
+});
+
+describe('ConversationPanelView — navigation keeps panel inputs', () => {
+  const ordinary = (id: string) => ({
+    id,
+    title: id,
+    isPinned: false,
+    updatedAt: 0,
+    sharedWithMe: false,
+    publishedWithMe: false,
+  });
+
+  it('keeps the conversations array and getActions when switching between ordinary conversations', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [ordinary('conv1'), ordinary('conv2')],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const { rerender } = render(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv1" />,
+    );
+    const before = panelPropsLog[panelPropsLog.length - 1];
+
+    rerender(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv2" />,
+    );
+    const after = panelPropsLog[panelPropsLog.length - 1];
+
+    expect(after).not.toBe(before);
+    expect(after.conversations).toBe(before.conversations);
+    expect(after.getActions).toBe(before.getActions);
+  });
+
+  it('still reports duplicating the open read-only conversation', async () => {
+    const onDuplicateReadonly = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [{ ...ordinary('conv1'), sharedWithMe: true }],
+      duplicateConversation: vi.fn().mockResolvedValue('conv1-copy'),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId="conv1"
+        onDuplicateReadonly={onDuplicateReadonly}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
+
+    await waitFor(() => expect(onDuplicateReadonly).toHaveBeenCalledOnce());
   });
 });
 
