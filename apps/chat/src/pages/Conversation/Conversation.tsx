@@ -377,6 +377,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       ChatI18nKeys.GenerationPersistenceError,
     ),
     onStreamError: logConversationStreamError,
+    /* One commit per frame while a reply streams, not one per network read. */
+    batchChunksPerFrame: true,
   });
 
   /*

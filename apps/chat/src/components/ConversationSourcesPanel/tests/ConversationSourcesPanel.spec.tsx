@@ -2,7 +2,7 @@ import type {
   ScheduledTaskDto,
   ScheduledTaskRunDto,
 } from '@epam/ai-dial-chat-api-client';
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
   MIMEType,
@@ -98,12 +98,18 @@ vi.mock('@epam/ai-dial-source-panel', () => ({
 }));
 
 let mockSidebarConversationModelId: string | undefined;
+let mockSidebarIsOpen = true;
+const mockSidebarMessages: Message[] = [];
+/* Messages argument of every `useConversationSources` call, in order. */
+const sourcesDerivationInputs: Message[][] = [];
 
 vi.mock('../../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => ({
     handleClose: mockHandleClose,
-    isOpen: true,
-    messages: [],
+    isOpen: mockSidebarIsOpen,
+  }),
+  useSourcesSidebarData: () => ({
+    messages: mockSidebarMessages,
     conversationModelId: mockSidebarConversationModelId,
   }),
 }));
@@ -183,11 +189,14 @@ vi.mock(
       >();
     return {
       ...actual,
-      useConversationSources: () => ({
-        uploaded: mockUploaded,
-        generated: mockGenerated,
-        sources: mockSources,
-      }),
+      useConversationSources: (messages: Message[]) => {
+        sourcesDerivationInputs.push(messages);
+        return {
+          uploaded: mockUploaded,
+          generated: mockGenerated,
+          sources: mockSources,
+        };
+      },
     };
   },
 );
@@ -250,6 +259,34 @@ const resetActiveScheduledTaskMock = () => {
   activeScheduledTaskMock.historyError = null;
   activeScheduledTaskMock.historyHasMore = false;
 };
+
+describe('ConversationSourcesPanelContainer — derivation while closed', () => {
+  afterEach(() => {
+    mockSidebarIsOpen = true;
+    sourcesDerivationInputs.length = 0;
+  });
+
+  it('derives sources from an empty list while the sidebar is closed', () => {
+    mockSidebarIsOpen = false;
+
+    render(<ConversationSourcesPanelContainer />);
+
+    const lastInput =
+      sourcesDerivationInputs[sourcesDerivationInputs.length - 1];
+    expect(lastInput).not.toBe(mockSidebarMessages);
+    expect(lastInput).toEqual([]);
+  });
+
+  it('derives sources from the published messages while the sidebar is open', () => {
+    mockSidebarIsOpen = true;
+
+    render(<ConversationSourcesPanelContainer />);
+
+    expect(sourcesDerivationInputs[sourcesDerivationInputs.length - 1]).toBe(
+      mockSidebarMessages,
+    );
+  });
+});
 
 describe('ConversationSourcesPanelContainer — download all', () => {
   beforeEach(() => {

@@ -277,6 +277,9 @@ describe('createResumeIfAwaitingGeneration — options', () => {
 
   const makeHarness = (
     transportOverrides: Partial<ConversationStreamTransport> = {},
+    depsOverrides: Partial<
+      Parameters<typeof createResumeIfAwaitingGeneration>[0]
+    > = {},
   ) => {
     const transport: ConversationStreamTransport = {
       streamCompletion: vi.fn(),
@@ -315,6 +318,7 @@ describe('createResumeIfAwaitingGeneration — options', () => {
       addStreamingPath: vi.fn(),
       removeStreamingPath: vi.fn(),
       isPathDisplayed: () => true,
+      ...depsOverrides,
     });
     return { transport, bufferedGenerationsRef, resumingPathsRef, resume };
   };
@@ -388,6 +392,53 @@ describe('createResumeIfAwaitingGeneration — options', () => {
     expect(bufferedGenerationsRef.current.get(PATH)?.generationId).toBe(
       'newer',
     );
+  });
+
+  it('queues replayed chunks on the frame scheduler and flushes them when the replay ends', async () => {
+    const events = makeEventStream();
+    const setConversation = vi.fn();
+    const frameScheduler = {
+      schedule: vi.fn(),
+      flush: vi.fn(),
+      cancel: vi.fn(),
+      cancelAll: vi.fn(),
+    };
+    const { transport, bufferedGenerationsRef, resume } = makeHarness(
+      { attachToGeneration: vi.fn().mockResolvedValue(events.stream) },
+      { setConversation, frameScheduler },
+    );
+    const onSettled = vi.fn();
+
+    resume(CONVERSATION_ID, makeConversation(), { onSettled });
+    await vi.waitFor(() =>
+      expect(transport.attachToGeneration).toHaveBeenCalled(),
+    );
+    const textChunk = (content: string) => ({
+      type: 'chunk',
+      chunk: {
+        id: 'response-1',
+        object: 'chat.completion.chunk',
+        choices: [{ index: 0, finish_reason: null, delta: { content } }],
+      },
+    });
+    events.emit(textChunk('a'));
+    events.emit(textChunk('b'));
+
+    await vi.waitFor(() =>
+      expect(frameScheduler.schedule).toHaveBeenCalledTimes(2),
+    );
+    expect(frameScheduler.schedule).toHaveBeenCalledWith(
+      PATH,
+      expect.any(Function),
+    );
+    expect(setConversation).not.toHaveBeenCalled();
+    expect(bufferedGenerationsRef.current.get(PATH)?.message.content).toBe(
+      'ab',
+    );
+
+    events.emit({ type: 'done' });
+    await vi.waitFor(() => expect(onSettled).toHaveBeenCalledOnce());
+    expect(frameScheduler.flush).toHaveBeenCalledWith(PATH);
   });
 
   it('calls onSettled immediately when the conversation is not awaiting a generation', () => {
