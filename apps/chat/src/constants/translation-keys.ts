@@ -69,6 +69,8 @@ export enum BasicI18nKeys {
   Usage = 'basic.usage',
   AttachFiles = 'basic.attachFiles',
   DeleteConfirmDescription = 'basic.deleteConfirmDescription',
+  ConsequenceCannotBeUndone = 'basic.consequenceCannotBeUndone',
+  DeletingStatus = 'basic.deletingStatus',
   CanView = 'basic.canView',
   CanEdit = 'basic.canEdit',
 }
@@ -291,7 +293,6 @@ export enum CatalogI18nKeys {
   DetailsDeleteConfirmMessage = 'catalog.details.delete.confirmMessage',
   DetailsDeleteConsequenceSharedConfigurations = 'catalog.details.delete.consequenceSharedConfigurations',
   DetailsDeleteConsequenceUsersLoseAccess = 'catalog.details.delete.consequenceUsersLoseAccess',
-  DetailsDeleteConsequenceCannotBeUndone = 'catalog.details.delete.consequenceCannotBeUndone',
   DetailsUnshareConfirmTitle = 'catalog.details.unshare.confirmTitle',
   DetailsUnshareConfirmMessage = 'catalog.details.unshare.confirmMessage',
   DetailsUnshareConsequenceYouLoseAccess = 'catalog.details.unshare.consequenceYouLoseAccess',
@@ -373,6 +374,7 @@ export enum NotFoundI18nKeys {
 }
 
 export enum ScheduledTasksI18nKeys {
+  TypeLabel = 'scheduledTasks.typeLabel',
   PageTitle = 'scheduledTasks.page.title',
   PageSubtitle = 'scheduledTasks.page.subtitle',
   CreateButtonLabel = 'scheduledTasks.toolbar.createButtonLabel',
@@ -465,8 +467,6 @@ export enum ScheduledTasksI18nKeys {
   DetailDeleteConfirmTitle = 'scheduledTasks.detail.deleteConfirmTitle',
   DetailDeleteConfirmDescription = 'scheduledTasks.detail.deleteConfirmDescription',
   DetailDeleteConsequenceConversationsAccessible = 'scheduledTasks.detail.deleteConsequenceConversationsAccessible',
-  DetailDeleteConsequenceCannotBeUndone = 'scheduledTasks.detail.deleteConsequenceCannotBeUndone',
-  DetailDeleteConfirmingLabel = 'scheduledTasks.detail.deleteConfirmingLabel',
   DetailDeleteSuccess = 'scheduledTasks.detail.deleteSuccess',
   DetailDeleteNotFoundError = 'scheduledTasks.detail.deleteNotFoundError',
   DetailDeleteRetryableError = 'scheduledTasks.detail.deleteRetryableError',
@@ -537,9 +537,13 @@ export enum DialFileManagerI18nKeys {
   UnsupportedFilesDescription = 'dialFileManager.unsupportedFilesDescription',
   TooManyFilesSelected = 'dialFileManager.tooManyFilesSelected',
   TooManyFilesDescription = 'dialFileManager.tooManyFilesDescription',
-  DeletingLabel = 'dialFileManager.deletingLabel',
   DeleteConfirmTitleSingle = 'dialFileManager.deleteConfirmTitleSingle',
   DeleteConfirmTitleMultiple = 'dialFileManager.deleteConfirmTitleMultiple',
+  DeleteConfirmMessageSingle = 'dialFileManager.deleteConfirmMessageSingle',
+  DeleteConfirmMessageMultiple = 'dialFileManager.deleteConfirmMessageMultiple',
+  DeleteConfirmItemCount = 'dialFileManager.deleteConfirmItemCount',
+  DeleteConfirmMoreItems = 'dialFileManager.deleteConfirmMoreItems',
+  /* Still the avatar picker's wording; it composes its own body from labels. */
   DeleteConfirmBodyMultiple = 'dialFileManager.deleteConfirmBodyMultiple',
   DeleteConfirmBodyItems = 'dialFileManager.deleteConfirmBodyItems',
   ConflictSingleTitle = 'dialFileManager.conflictSingleTitle',
@@ -692,7 +696,9 @@ export enum ConversationPanelI18nKeys {
   ActionsLabel = 'conversationPanel.actions.actionsLabel',
   PinLabel = 'conversationPanel.actions.pinLabel',
   UnpinLabel = 'conversationPanel.actions.unpinLabel',
+  TypeLabel = 'conversationPanel.typeLabel',
   DeleteConfirmTitle = 'conversationPanel.delete.deleteConfirmTitle',
+  DeleteConfirmMessage = 'conversationPanel.delete.confirmMessage',
   DeleteError = 'conversationPanel.delete.deleteError',
   RenameTitle = 'conversationPanel.rename.renameTitle',
   RenameInputPlaceholder = 'conversationPanel.rename.renameInputPlaceholder',

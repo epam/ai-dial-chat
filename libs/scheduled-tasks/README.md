@@ -8,7 +8,7 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 
 ## Installation
 
-Requires UI Kit ^0.15.0-dev.27 or later with the public `/editors` entry.
+Requires UI Kit ^0.15.0-dev.30 or later with the public `/editors` entry.
 The Markdown loader uses that entry, and library builds keep UI Kit subpaths
 external to preserve the editor's dynamic boundary in consuming applications.
 
@@ -180,9 +180,19 @@ import {
 ### ScheduledTaskDeleteConfirmation
 
 Controlled deletion presentation that leaves mutations, routing, notifications,
-and translated copy to the host. `isDeleting` prevents duplicate confirmation
-and dismissal callbacks. Use `styles.popupClassName` to apply a host popup width
-or other container styling.
+and translated copy to the host. The dialog frame is the kit's `Popup`; the
+identity card, the warning sentence, the consequence bullets, and the action row
+are [`ConfirmationIdentityCard`, `ConfirmationView` and
+`ConfirmationFooter`](../chat-shared/README.md#confirmationview) from
+`@epam/ai-dial-chat-shared`, so a delete confirmation reads the same here as in
+the catalog's details panel.
+
+`title` is a string rather than a node so the kit names the dialog with it.
+`body` is a node, which is how the host emphasises the task name inside its own
+translated sentence. `isDeleting` disables both actions — and the header close
+control, Escape and an outside click — puts a spinner in the confirm button, and
+announces `pendingLabel` politely. Use `styles.popupClassName` to apply a host
+popup width.
 
 ```tsx
 import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
@@ -190,15 +200,31 @@ import { ScheduledTaskDeleteConfirmation } from '@epam/ai-dial-scheduled-tasks';
 <ScheduledTaskDeleteConfirmation
   open={isDeleteOpen}
   taskName={task.displayName}
+  icon={<TaskIcon />}
+  typeLabel="Scheduled task"
   title="Delete task"
-  body="This action cannot be undone."
+  body={
+    <>
+      Are you sure you want to delete <strong>{task.displayName}</strong>? This
+      action is permanent and cannot be undone.
+    </>
+  }
+  consequences={[
+    'All run conversations will still be accessible',
+    'Cannot be undone',
+  ]}
   cancelLabel="Cancel"
   confirmLabel="Delete"
+  pendingLabel="Deleting…"
   isDeleting={isDeleting}
   onClose={closeDelete}
   onConfirm={deleteTask}
 />;
 ```
+
+`icon` and `typeLabel` are optional; the card falls back to the task name alone
+when neither is given. Pass `typeLabel` in sentence case — the label uppercases
+itself.
 
 ## Validation entry point
 

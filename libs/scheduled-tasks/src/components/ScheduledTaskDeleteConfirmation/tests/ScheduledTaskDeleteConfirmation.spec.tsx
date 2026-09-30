@@ -1,80 +1,101 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskDeleteConfirmation } from '../ScheduledTaskDeleteConfirmation';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  ButtonVariant: { Danger: 'danger' },
-  ButtonAppearance: { Ghost: 'ghost' },
-  Popup: ({
-    header,
-    children,
-    mainButtons,
-    onClose,
-  }: {
-    header: ReactNode;
-    children: ReactNode;
-    mainButtons: { label: string; onClick: () => void; disabled?: boolean }[];
-    onClose: () => void;
-  }) => (
-    <div role="dialog">
-      <button aria-label="Close" onClick={onClose}>
-        Close
-      </button>
-      <h1>{header}</h1>
-      {children}
-      {mainButtons.map((button) => (
-        <button
-          key={button.label}
-          disabled={button.disabled}
-          onClick={button.onClick}
-        >
-          {button.label}
-        </button>
-      ))}
-    </div>
-  ),
-}));
+const onConfirm = vi.fn();
+const onClose = vi.fn();
+
+const renderConfirmation = (
+  props?: Partial<Parameters<typeof ScheduledTaskDeleteConfirmation>[0]>,
+) =>
+  render(
+    <ScheduledTaskDeleteConfirmation
+      open
+      taskName="<task>"
+      typeLabel="Scheduled task"
+      title="Delete task"
+      body="This action is permanent."
+      consequences={['Runs remain accessible', 'Cannot be undone']}
+      cancelLabel="Cancel"
+      confirmLabel="Delete"
+      onConfirm={onConfirm}
+      onClose={onClose}
+      {...props}
+    />,
+  );
 
 describe('ScheduledTaskDeleteConfirmation', () => {
-  const props = {
-    open: true,
-    taskName: '<task>',
-    title: 'Delete task',
-    body: 'This action is permanent.',
-    consequences: ['Runs remain accessible'],
-    cancelLabel: 'Cancel',
-    confirmLabel: 'Delete',
-    onConfirm: vi.fn(),
-    onClose: vi.fn(),
-  };
-
   beforeEach(() => {
-    props.onConfirm.mockClear();
-    props.onClose.mockClear();
+    onConfirm.mockClear();
+    onClose.mockClear();
   });
 
-  it('renders host content as text and delegates idle cancel and confirm', () => {
-    render(<ScheduledTaskDeleteConfirmation {...props} />);
+  /* The title is passed as a string precisely so the kit names the dialog with
+   * it; a node header would leave the dialog unnamed. */
+  it('names the dialog with its title', () => {
+    renderConfirmation();
+
+    expect(screen.getByRole('dialog', { name: 'Delete task' })).toBeTruthy();
+  });
+
+  it('echoes the task identity and the host-composed warning', () => {
+    renderConfirmation();
+
+    expect(screen.getByText('Scheduled task')).toBeTruthy();
     expect(screen.getByText('<task>')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(props.onClose).toHaveBeenCalledOnce();
-    expect(props.onConfirm).toHaveBeenCalledOnce();
+    expect(screen.getByText('This action is permanent.')).toBeTruthy();
   });
 
-  it('prevents confirmation and dismissal while deletion is pending', () => {
-    render(
-      <ScheduledTaskDeleteConfirmation
-        {...props}
-        isDeleting
-        pendingLabel="Deleting"
-      />,
+  it('renders the host icon in the identity card', () => {
+    renderConfirmation({ icon: <svg aria-label="Task" /> });
+
+    expect(screen.getByLabelText('Task')).toBeTruthy();
+  });
+
+  it('lists the consequences in the order given', () => {
+    renderConfirmation();
+
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(
+      ['Runs remain accessible', 'Cannot be undone'],
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+  });
+
+  it('delegates confirm and cancel while idle', async () => {
+    renderConfirmation();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onConfirm).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('blocks both actions and announces progress while deletion is pending', async () => {
+    renderConfirmation({ isDeleting: true, pendingLabel: 'Deleting' });
+
     expect(
-      screen.getByRole('button', { name: 'Deleting' }).hasAttribute('disabled'),
+      screen.getByRole('button', { name: 'Delete' }).hasAttribute('disabled'),
     ).toBe(true);
-    expect(props.onClose).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('button', { name: 'Cancel' }).hasAttribute('disabled'),
+    ).toBe(true);
+    expect(screen.getByText('Deleting').getAttribute('aria-live')).toBe(
+      'polite',
+    );
+  });
+
+  it('keeps the dialog open when the close control is used mid-deletion', async () => {
+    renderConfirmation({ isDeleting: true, pendingLabel: 'Deleting' });
+
+    await userEvent.click(screen.getByRole('button', { name: /close/i }));
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('renders nothing when closed', () => {
+    renderConfirmation({ open: false });
+
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
