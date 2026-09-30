@@ -150,6 +150,48 @@ it. Chat HTML SHALL retain permission while its OOXML runtime uses that context.
 - **THEN** its policy has no WebAssembly permission, without affecting the
   permission granted to the executing chat document
 
+### Requirement: HTML file downloads carry their own preview-scoped CSP
+
+The file-download route SHALL overwrite the response's `Content-Security-Policy`
+header with a dedicated, more permissive policy — built by
+`createHtmlPreviewCspHeader()` in `apps/chat-api/src/config/csp.ts` — whenever the
+downloaded file's `content-type` starts with `text/html`, and SHALL remove any
+`Content-Security-Policy-Report-Only` header from that response. Every other
+download response SHALL keep the chat app's normal enforced/report-only policy
+from the global security-headers middleware, unmodified.
+
+This exists so an HTML file attachment can be previewed by loading this route's
+response directly into an iframe (`src=`, not `srcdoc`) without its inline
+`<script>`/`<style>` being blocked by the strict policy the chat app enforces for
+its own document — that policy has no `'unsafe-inline'`/`'unsafe-eval'`, but an
+arbitrary previewed HTML file cannot be expected to carry a nonce or avoid inline
+styles. The preview-scoped policy fixes `frame-ancestors 'self'` rather than
+reusing `ALLOWED_CONNECT_ORIGINS`/the iframe-origin allowlist, because only this
+app's own document ever embeds one of its own download responses.
+
+As with the WebAssembly exception above, this CSP relaxation is scoped to one
+response and never substitutes for document policy: the security property that
+actually prevents the previewed HTML from reading this app's cookies, session,
+or APIs is the iframe's `sandbox="allow-scripts"` (no `allow-same-origin`) set by
+the attachment-canvas viewer, which holds regardless of how permissive this
+response's CSP is. See the `attachment-canvas-html-viewer` spec's `HtmlContent`
+renderer requirement for the sandbox rationale.
+
+#### Scenario: HTML download gets the preview CSP
+- **WHEN** the file-download route returns a response whose `content-type` starts
+  with `text/html`
+- **THEN** the response's `Content-Security-Policy` header is
+  `createHtmlPreviewCspHeader()`'s value, not the global enforced/report-only
+  policy
+- **AND** no `Content-Security-Policy-Report-Only` header is present on that
+  response
+
+#### Scenario: Non-HTML download keeps the standard policy
+- **WHEN** the file-download route returns a response whose `content-type` does
+  not start with `text/html`
+- **THEN** the response's CSP headers are the global security-headers
+  middleware's unmodified output
+
 ### Requirement: Static routing compatibility
 
 The server SHALL preserve asset MIME types and missing-asset 404s, API route

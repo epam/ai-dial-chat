@@ -794,6 +794,31 @@ requires a separately isolated viewer document; client-side SPA navigation does
 not replace the document's CSP. The separately deployed MCP sandbox has its own
 policy and is not changed by `CSP_MODE`.
 
+`GET /api/v1/files/download` overwrites its own `Content-Security-Policy`
+header — built by `createHtmlPreviewCspHeader()` — whenever the downloaded
+file's `content-type` starts with `text/html`, and strips any
+`Content-Security-Policy-Report-Only` header from that response defensively
+(today's forwarded-header allowlist never includes it, but this holds even if
+that allowlist widens later). Every other download keeps the app's normal
+enforced/report-only policy unmodified. This lets the chat app
+preview an HTML attachment by loading this route's response directly into an
+iframe (`src=`, not `srcdoc`) without the previewed file's own inline
+`<script>`/`<style>` being blocked by the strict policy the chat document
+enforces for itself — an arbitrary previewed HTML file cannot be expected to
+carry a nonce or avoid inline styles. `frame-ancestors` is `'self'` plus
+`ALLOWED_IFRAME_ORIGINS`, the same as the rest of this section: `frame-ancestors`
+validates the whole ancestor chain, so when this app is itself embedded in an
+overlay host, the host's origin has to be listed too, not just this app's own.
+As with the WebAssembly exception above, this relaxation is scoped to one
+response and never substitutes for document policy: the property that
+actually stops a previewed HTML file from reading this app's cookies,
+session, or APIs is the CSP `sandbox="allow-scripts"` directive baked into
+`createHtmlPreviewCspHeader()` itself, which holds regardless of how the
+response is loaded — directly in a new tab or inside the preview iframe. The
+iframe's own `sandbox="allow-scripts"` attribute (no `allow-same-origin`) the
+chat frontend sets is additional defense-in-depth on top of that, not the
+primary control.
+
 ### Security
 
 - **Environment Variable Validation**: Required variables are validated at startup using class-validator
