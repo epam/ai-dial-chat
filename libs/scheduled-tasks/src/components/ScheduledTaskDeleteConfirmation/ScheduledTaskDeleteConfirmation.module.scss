@@ -1,0 +1,6 @@
+// Colors only; the identity card's own surface, the copy, and the action row
+// are themed by their `@epam/ai-dial-chat-shared` components.
+
+.typeLabel {
+  color: var(--stdc-type-label-text, var(--text-secondary, #57647a));
+}

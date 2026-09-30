@@ -5,14 +5,15 @@ import {
   ButtonsI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
+import ScheduledTasksIcon from '../Icons/ScheduledTasksIcon/ScheduledTasksIcon';
 import styles from './ScheduledTaskDeleteModal.module.scss';
 
 interface Props {
   /** Whether the dialog is open. */
   open: boolean;
-  /** Display name of the task being deleted, shown in the identity row and the warning sentence. */
+  /** Display name of the task being deleted, shown in the identity card and the warning sentence. */
   taskName: string;
-  /** Whether the delete request is in flight; swaps the confirm label for a busy label and disables the actions. Defaults to `false`. */
+  /** Whether the delete request is in flight; shows a spinner, announces progress, and disables the actions. Defaults to `false`. */
   isDeleting?: boolean;
   /** Fired when the user confirms deletion. */
   onConfirm: () => void;
@@ -28,7 +29,7 @@ const DELETE_CONSEQUENCE_KEYS = [
 ] as const;
 
 /**
- * Delete-task confirmation dialog: the task's identity row, the warning
+ * Delete-task confirmation dialog: the task's identity card, the warning
  * sentence with the bolded task name, and the unordered consequences list.
  */
 const ScheduledTaskDeleteModal: FC<Props> = ({
@@ -45,6 +46,8 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
       open={open}
       styles={{ popupClassName: styles.modal }}
       taskName={taskName}
+      icon={<ScheduledTasksIcon />}
+      typeLabel={t(ScheduledTasksI18nKeys.TypeLabel)}
       title={t(ScheduledTasksI18nKeys.DetailDeleteConfirmTitle)}
       body={
         <Trans

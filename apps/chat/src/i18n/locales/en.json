@@ -683,6 +683,7 @@
     "overlayDeniedSubtitle": "Attachments can't be added to message"
   },
   "scheduledTasks": {
+    "typeLabel": "Scheduled task",
     "page": {
       "navLabel": "Scheduled tasks",
       "title": "Scheduled tasks",

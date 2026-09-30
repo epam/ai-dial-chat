@@ -373,6 +373,7 @@ export enum NotFoundI18nKeys {
 }
 
 export enum ScheduledTasksI18nKeys {
+  TypeLabel = 'scheduledTasks.typeLabel',
   PageTitle = 'scheduledTasks.page.title',
   PageSubtitle = 'scheduledTasks.page.subtitle',
   CreateButtonLabel = 'scheduledTasks.toolbar.createButtonLabel',

@@ -4,52 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import ScheduledTaskDeleteModal from '../ScheduledTaskDeleteModal';
 import styles from '../ScheduledTaskDeleteModal.module.scss';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ButtonVariant: { Danger: 'danger', Neutral: 'neutral' },
-  ButtonAppearance: { Ghost: 'ghost' },
-  /* Mirrors the real popup: body children plus the footer buttons declared
-     as data. The test i18n mock returns keys, so labels render as their
-     translation keys. */
-  Popup: ({
-    open,
-    className,
-    header,
-    children,
-    mainButtons,
-  }: {
-    open: boolean;
-    className?: string;
-    header: React.ReactNode;
-    children?: React.ReactNode;
-    mainButtons?: {
-      label?: React.ReactNode;
-      onClick?: () => void;
-      disabled?: boolean;
-    }[];
-  }) =>
-    open ? (
-      <div
-        role="dialog"
-        className={className}
-        aria-labelledby="delete-dialog-title"
-      >
-        <h2 id="delete-dialog-title">{header}</h2>
-        {children}
-        {mainButtons?.map((button, index) => (
-          <button
-            key={index + '-' + String(button.label)}
-            onClick={button.onClick}
-            disabled={button.disabled}
-          >
-            {button.label}
-          </button>
-        ))}
-      </div>
-    ) : null,
-}));
-
+/*
+ * The kit's `Popup` renders for real here: mocking it hid that the dialog used
+ * to be handed a node header with no accessible name, and it is the kit that
+ * decides whether a `footer` node reaches the screen at all.
+ */
 const renderModal = (
   props?: Partial<React.ComponentProps<typeof ScheduledTaskDeleteModal>>,
 ) =>
@@ -64,30 +23,35 @@ const renderModal = (
   );
 
 describe('ScheduledTaskDeleteModal', () => {
-  it('renders the task name, warning sentence, and consequences list when open', () => {
+  it('names the dialog with the delete title and caps its width', () => {
     renderModal();
 
-    expect(
-      screen.getByRole('dialog', {
-        name: 'scheduledTasks.detail.deleteConfirmTitle',
-      }),
-    ).toBeTruthy();
-    expect(screen.getByRole('dialog').classList.contains(styles.modal)).toBe(
-      true,
-    );
+    const dialog = screen.getByRole('dialog', {
+      name: 'scheduledTasks.detail.deleteConfirmTitle',
+    });
+    expect(dialog.classList.contains(styles.modal)).toBe(true);
+  });
+
+  it('identifies the task by type and name', () => {
+    renderModal();
+
+    expect(screen.getByText('scheduledTasks.typeLabel')).toBeTruthy();
     expect(screen.getByText('Daily summary')).toBeTruthy();
-    /* The test Trans mock renders the i18nKey itself. */
+  });
+
+  it('renders the warning sentence and the consequences list', () => {
+    renderModal();
+
+    /* The suite-wide `Trans` mock renders the i18nKey itself. */
     expect(
       screen.getByText('scheduledTasks.detail.deleteConfirmDescription'),
     ).toBeTruthy();
-    expect(
-      screen.getByText(
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(
+      [
         'scheduledTasks.detail.deleteConsequenceConversationsAccessible',
-      ),
-    ).toBeTruthy();
-    expect(
-      screen.getByText('scheduledTasks.detail.deleteConsequenceCannotBeUndone'),
-    ).toBeTruthy();
+        'scheduledTasks.detail.deleteConsequenceCannotBeUndone',
+      ],
+    );
   });
 
   it('renders nothing when closed', () => {
@@ -118,11 +82,11 @@ describe('ScheduledTaskDeleteModal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('shows the busy label and disables the confirm action while deleting', () => {
+  it('freezes both actions and announces progress while deleting', () => {
     renderModal({ isDeleting: true });
 
     const confirmButton = screen.getByRole('button', {
-      name: 'scheduledTasks.detail.deleteConfirmingLabel',
+      name: 'buttons.delete',
     }) as HTMLButtonElement;
     expect(confirmButton.disabled).toBe(true);
 
@@ -132,5 +96,11 @@ describe('ScheduledTaskDeleteModal', () => {
       name: 'buttons.cancel',
     }) as HTMLButtonElement;
     expect(cancelButton.disabled).toBe(true);
+
+    expect(
+      screen
+        .getByText('scheduledTasks.detail.deleteConfirmingLabel')
+        .getAttribute('aria-live'),
+    ).toBe('polite');
   });
 });
