@@ -1,10 +1,17 @@
-import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import {
+  ScheduledTaskErrorCode,
+  type ScheduledTaskDto,
+} from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
+import {
+  ScheduledTasksI18nKeys,
+  ToolsetSigninI18nKeys,
+} from '../../constants/translation-keys';
 import {
   mapScheduledTaskDtoToItem,
   mapScheduledTaskDtosToItems,
+  resolveScheduledTaskErrorMessage,
 } from '../map-scheduled-task-dto';
 
 const fakeT = ((key: string, options?: Record<string, unknown>): string =>
@@ -297,4 +304,47 @@ describe('mapScheduledTaskDtosToItems', () => {
 
     expect(result.map((item) => item.id)).toEqual(['1', '2']);
   });
+});
+
+describe('resolveScheduledTaskErrorMessage', () => {
+  const t = ((key: string) => key) as TFunction;
+
+  it('prefers the admin-consent message over any upstream reason', () => {
+    expect(
+      resolveScheduledTaskErrorMessage(
+        {
+          code: ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired,
+          upstreamMessage: 'Application consent revoked',
+        },
+        ScheduledTasksI18nKeys.CreateErrorNotification,
+        t,
+      ),
+    ).toBe(ToolsetSigninI18nKeys.AdminConsentRequired);
+  });
+
+  it("shows DIAL Scheduler's reason when there is no known code", () => {
+    expect(
+      resolveScheduledTaskErrorMessage(
+        {
+          code: ScheduledTaskErrorCode.ScheduledTaskSkillUnsupported,
+          upstreamMessage: ' Quota exceeded for schedules ',
+        },
+        ScheduledTasksI18nKeys.EditErrorNotification,
+        t,
+      ),
+    ).toBe('Quota exceeded for schedules');
+  });
+
+  it.each([undefined, '', '   '])(
+    'falls back to the localized page message for upstream reason %j',
+    (upstreamMessage) => {
+      expect(
+        resolveScheduledTaskErrorMessage(
+          { upstreamMessage },
+          ScheduledTasksI18nKeys.EditErrorNotification,
+          t,
+        ),
+      ).toBe(ScheduledTasksI18nKeys.EditErrorNotification);
+    },
+  );
 });

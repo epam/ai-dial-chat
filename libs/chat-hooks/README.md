@@ -2247,8 +2247,16 @@ Host-agnostic API error/trace-ID normalization. Works identically for a generate
 ```ts
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 
-const { status, message, traceId } = await getApiErrorDetails(error);
+const { status, message, traceId, code, upstreamCode, upstreamMessage } =
+  await getApiErrorDetails(error);
 ```
+
+Besides `status`, `message` and `traceId`, the result carries the body's `code`
+(a stable domain code), `upstreamCode` and `upstreamMessage` (the code and
+reason of the service behind the API, when the API forwards them). Each is
+present only when the body holds it as a non-empty string. The library passes
+them through untouched — translating a code or deciding to display upstream
+text stays with the host.
 
 ## Locale Utilities
 

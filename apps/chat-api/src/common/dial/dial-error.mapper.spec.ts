@@ -17,6 +17,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   handleDialFetchError,
   handleDialSdkError,
+  isUpstreamTextExposable,
   mapDialHttpStatus,
 } from './dial-error.mapper';
 
@@ -144,6 +145,19 @@ describe('mapDialHttpStatus', () => {
       'DIAL Core error body for ctx: {"code":"bad"}',
     );
   });
+});
+
+describe('isUpstreamTextExposable', () => {
+  it.each([401, 403, 404])('hides upstream text for %i', (status) => {
+    expect(isUpstreamTextExposable(status)).toBe(false);
+  });
+
+  it.each([400, 405, 409, 412, 413, 422, 429, 500, 502, 503, 418])(
+    'exposes upstream text for %i, matching mapDialHttpStatus',
+    (status) => {
+      expect(isUpstreamTextExposable(status)).toBe(true);
+    },
+  );
 });
 
 describe('handleDialSdkError', () => {

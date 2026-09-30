@@ -1,11 +1,18 @@
-import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import {
+  ScheduledTaskErrorCode,
+  type ScheduledTaskDto,
+} from '@epam/ai-dial-chat-api-client';
+import type { ApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import {
   describeScheduledTaskTrigger,
   ScheduledTaskTriggerDescriptionKind as Kind,
 } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import type { ScheduledTaskItem } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
-import { ScheduledTasksI18nKeys as Keys } from '../constants/translation-keys';
+import {
+  ScheduledTasksI18nKeys as Keys,
+  ToolsetSigninI18nKeys,
+} from '../constants/translation-keys';
 
 /** Localizes the shared trigger descriptor in the browser's display timezone. */
 export const buildScheduleLabel = (
@@ -97,4 +104,22 @@ export const getDeleteErrorMessageKey = (status: number | undefined): Keys => {
     return Keys.DetailDeleteRetryableError;
   }
   return Keys.DetailDeleteGenericError;
+};
+
+/**
+ * Picks the notification text for a failed scheduled-task mutation: a revoked
+ * DIAL_NATIVE scheduler consent gets the localized "contact your
+ * administrator" message; otherwise DIAL Scheduler's own reason is shown as
+ * received; otherwise the page's localized fallback. The BFF's generic
+ * `message` is never shown — it is English-only and not actionable.
+ */
+export const resolveScheduledTaskErrorMessage = (
+  details: Pick<ApiErrorDetails, 'code' | 'upstreamMessage'>,
+  fallbackKey: Keys,
+  t: TFunction,
+): string => {
+  if (details.code === ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired)
+    return t(ToolsetSigninI18nKeys.AdminConsentRequired);
+  const upstreamMessage = details.upstreamMessage?.trim();
+  return upstreamMessage || t(fallbackKey);
 };
