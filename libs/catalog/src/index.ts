@@ -18,6 +18,7 @@ export {
 
 // Models
 export type {
+  CatalogCreateSearch,
   CatalogEmptyStateContext,
   CatalogProps,
   CatalogTitles,

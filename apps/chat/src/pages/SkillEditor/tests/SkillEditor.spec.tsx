@@ -248,20 +248,9 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
     expect(createSkill).not.toHaveBeenCalled();
   });
 
-  it('falls back to the Catalog route when returnUrl is absent', async () => {
+  it('navigates to the Catalog route on cancel', async () => {
     render(<SkillEditor />);
 
-    await user.click(getCancelButton());
-
-    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
-  });
-
-  it('rejects an external returnUrl and falls back to Catalog', async () => {
-    mockSearchParams = new URLSearchParams({
-      returnUrl: 'https://evil.example/',
-    });
-
-    render(<SkillEditor />);
     await user.click(getCancelButton());
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');

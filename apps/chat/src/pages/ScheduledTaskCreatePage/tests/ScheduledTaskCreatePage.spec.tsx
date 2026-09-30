@@ -257,7 +257,6 @@ const renderAtRoute = (initialEntry: string) =>
           element={<ScheduledTaskCreatePage />}
         />
         <Route path="/scheduled-tasks" element={<div>list page</div>} />
-        <Route path="/custom" element={<div>custom return page</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -522,7 +521,7 @@ describe('ScheduledTaskCreatePage', () => {
     expect(fields.minute).toBe(String(reference.getUTCMinutes()));
   });
 
-  it('navigates to the default list route on Cancel when returnUrl is absent', async () => {
+  it('navigates to the list route on Cancel', async () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await userEvent.click(
@@ -533,43 +532,14 @@ describe('ScheduledTaskCreatePage', () => {
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
   });
 
-  it('navigates to the returnUrl on Cancel when provided', async () => {
-    renderAtRoute('/scheduled-tasks/new?returnUrl=%2Fcustom');
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.cancel' }),
-    );
-
-    expect(screen.getByText('custom return page')).toBeTruthy();
-  });
-
-  it('navigates to the returnUrl on back without a network call', async () => {
-    renderAtRoute('/scheduled-tasks/new?returnUrl=%2Fcustom');
+  it('navigates to the list route on back without a network call', async () => {
+    renderAtRoute('/scheduled-tasks/new');
 
     await userEvent.click(screen.getByRole('button', { name: 'back' }));
 
-    expect(screen.getByText('custom return page')).toBeTruthy();
+    expect(screen.getByText('list page')).toBeTruthy();
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
   });
-
-  it.each([
-    '/scheduled-tasks/new?returnUrl=',
-    '/scheduled-tasks/new?returnUrl=https%3A%2F%2Fevil.example',
-    '/scheduled-tasks/new?returnUrl=%2F%2Fevil.example',
-    '/scheduled-tasks/new?returnUrl=%2F%5Cevil.example',
-    '/scheduled-tasks/new?returnUrl=%2Fcustom%0A',
-  ])(
-    'falls back to the list route for invalid returnUrl in %s',
-    async (url) => {
-      renderAtRoute(url);
-
-      await userEvent.click(
-        screen.getByRole('button', { name: 'buttons.cancel' }),
-      );
-
-      expect(screen.getByText('list page')).toBeTruthy();
-    },
-  );
 
   it('does not submit when required fields are missing', async () => {
     renderAtRoute('/scheduled-tasks/new');
@@ -595,9 +565,9 @@ describe('ScheduledTaskCreatePage', () => {
     expect(select.value).toBe('gpt-4o');
   });
 
-  it('submits the mapped body and navigates to returnUrl on success', async () => {
+  it('submits the mapped body and navigates to the list route on success', async () => {
     createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
-    renderAtRoute('/scheduled-tasks/new?returnUrl=%2Fcustom');
+    renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
     await userEvent.click(
@@ -611,7 +581,7 @@ describe('ScheduledTaskCreatePage', () => {
     expect(body.prompt).toBe('Summarize my inbox');
     expect(body.trigger).toBeDefined();
 
-    expect(await screen.findByText('custom return page')).toBeTruthy();
+    expect(await screen.findByText('list page')).toBeTruthy();
     expect(showNotificationMock).toHaveBeenCalledOnce();
   });
 

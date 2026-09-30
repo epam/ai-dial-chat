@@ -1,7 +1,10 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
-import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ApplicationSchemaSummaryDto,
+  DeploymentItemDto,
+} from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   CatalogEditNavigationLabels,
@@ -32,6 +35,11 @@ const labels: CatalogEditNavigationLabels = {
   createSkillUpload: 'Upload',
   createPrompt: 'Create prompt',
   deleteError: 'delete-error',
+};
+
+const quickAppSchema: ApplicationSchemaSummaryDto = {
+  id: 'foo-quickapps2',
+  displayName: 'Quick app 2.0',
 };
 
 const makeCatalogItem = (overrides?: Partial<CatalogItem>): CatalogItem => ({
@@ -70,7 +78,7 @@ const renderEditNavigation = (
       isHideCustomAppCreationEnabled: false,
       isToolsetsEnabled: true,
       isPromptsEnabled: true,
-      quickAppSchemaId: undefined,
+      schemas: [],
       urls,
       onNavigate,
       deletePrompt,
@@ -180,7 +188,7 @@ describe('useCatalogEditNavigation', () => {
 
     it('navigates to the quick app editor for a schema-driven application', () => {
       const { result, onNavigate } = renderEditNavigation({
-        quickAppSchemaId: 'quickapps2-schema',
+        schemas: [quickAppSchema],
       });
       const item = makeCatalogItem({
         id: 'applications/b/Quick One__1.0',
@@ -190,7 +198,33 @@ describe('useCatalogEditNavigation', () => {
       result.current.handleEdit(item);
 
       expect(onNavigate).toHaveBeenCalledWith(
-        'edit:quick-app:quickapps2-schema:applications/b/Quick One__1.0',
+        'edit:quick-app:foo-quickapps2:applications/b/Quick One__1.0',
+      );
+    });
+
+    it("opens the schema editor under the deployment's own runner schema", () => {
+      const deployments: DeploymentItemDto[] = [
+        {
+          id: 'applications/b/Mind Map__1.0',
+          displayName: 'Mind Map',
+          type: 'application',
+          isMy: true,
+          applicationTypeSchemaId: 'mind-map-schema',
+        } as DeploymentItemDto,
+      ];
+      const { result, onNavigate } = renderEditNavigation({
+        deployments,
+        schemas: [quickAppSchema, { id: 'mind-map-schema' }],
+      });
+      const item = makeCatalogItem({
+        id: 'applications/b/Mind Map__1.0',
+        type: CatalogEntityType.Agent,
+      });
+
+      result.current.handleEdit(item);
+
+      expect(onNavigate).toHaveBeenCalledWith(
+        'edit:quick-app:mind-map-schema:applications/b/Mind Map__1.0',
       );
     });
 
@@ -373,55 +407,164 @@ describe('useCatalogEditNavigation', () => {
 
     it('shows Create Quick App by default when a quick-app schema exists', () => {
       const { result } = renderEditNavigation({
-        quickAppSchemaId: 'foo-quickapps2',
+        schemas: [quickAppSchema],
       });
 
       expect(
         result.current.createOptions.find(
-          (option) => option.key === 'quick-app',
+          (option) => option.key === 'runner:foo-quickapps2',
         ),
       ).toBeTruthy();
     });
 
     it('hides Create Quick App when schema-apps is disabled', () => {
       const { result } = renderEditNavigation({
-        quickAppSchemaId: 'foo-quickapps2',
+        schemas: [quickAppSchema],
         isSchemaAppsEnabled: false,
       });
 
       expect(
         result.current.createOptions.find(
-          (option) => option.key === 'quick-app',
+          (option) => option.key === 'runner:foo-quickapps2',
         ),
       ).toBeUndefined();
     });
 
     it('hides Create Quick App when hide-custom-app-creation is enabled', () => {
       const { result } = renderEditNavigation({
-        quickAppSchemaId: 'foo-quickapps2',
+        schemas: [quickAppSchema],
         isHideCustomAppCreationEnabled: true,
       });
 
       expect(
         result.current.createOptions.find(
-          (option) => option.key === 'quick-app',
+          (option) => option.key === 'runner:foo-quickapps2',
         ),
       ).toBeUndefined();
     });
 
     it('navigates using the schema id from the Quick App create option', () => {
       const { result, onNavigate } = renderEditNavigation({
-        quickAppSchemaId: 'foo-quickapps2',
+        schemas: [quickAppSchema],
       });
 
       const quickAppOption = result.current.createOptions.find(
-        (option) => option.key === 'quick-app',
+        (option) => option.key === 'runner:foo-quickapps2',
       );
-      quickAppOption?.onClick?.({ key: 'quick-app', domEvent: {} as never });
+      quickAppOption?.onClick?.({
+        key: 'runner:foo-quickapps2',
+        domEvent: {} as never,
+      });
 
       expect(onNavigate).toHaveBeenCalledWith(
         'create:quick-app:foo-quickapps2',
       );
+    });
+
+    it('offers one create option per runner schema, deduplicated and without the custom-app schema', () => {
+      const { result, onNavigate } = renderEditNavigation({
+        isCustomAppsEnabled: true,
+        schemas: [
+          quickAppSchema,
+          { id: 'mind-map-schema', displayName: 'Mind Map' },
+          { id: 'mind-map-schema', displayName: 'Mind Map' },
+          { id: 'custom_app', displayName: 'Custom app' },
+          { displayName: 'No id' },
+        ],
+      });
+
+      expect(
+        result.current.createOptions.map((option) => [
+          option.key,
+          option.label,
+        ]),
+      ).toEqual([
+        ['runner:foo-quickapps2', 'Create quick app'],
+        ['runner:mind-map-schema', 'Mind Map'],
+        ['toolset', 'Create toolset'],
+        ['custom-app', 'Create custom app'],
+        ['skill', 'Skill'],
+        ['prompt', 'Create prompt'],
+      ]);
+
+      result.current.createOptions[1].onClick?.({
+        key: 'runner:mind-map-schema',
+        domEvent: {} as never,
+      });
+      expect(onNavigate).toHaveBeenCalledWith(
+        'create:quick-app:mind-map-schema',
+      );
+    });
+
+    it('sorts runner options alphabetically and lists at most 7 of them', () => {
+      const names = [
+        'Zeta',
+        'alpha',
+        'Mind map',
+        'Beta',
+        'OCR',
+        'Delta',
+        'Kappa',
+        'Gamma',
+        'Epsilon',
+        'Iota',
+        'Theta',
+        'Lambda',
+      ];
+      const { result } = renderEditNavigation({
+        schemas: names.map((name) => ({ id: name, displayName: name })),
+      });
+
+      const runnerLabels = result.current.createOptions
+        .filter((option) => option.key.startsWith('runner:'))
+        .map((option) => option.label);
+
+      expect(runnerLabels).toEqual([
+        'alpha',
+        'Beta',
+        'Delta',
+        'Epsilon',
+        'Gamma',
+        'Iota',
+        'Kappa',
+      ]);
+    });
+
+    it('filters runner and static options by the search query, case-insensitively', () => {
+      const { result } = renderEditNavigation({
+        schemas: [
+          quickAppSchema,
+          { id: 'mind-map', displayName: 'Mind map' },
+          { id: 'ocr', displayName: 'OCR' },
+        ],
+      });
+
+      act(() => result.current.createSearch?.onChange('MAP'));
+
+      expect(result.current.createSearch?.value).toBe('MAP');
+      expect(result.current.createOptions.map((option) => option.key)).toEqual([
+        'runner:mind-map',
+      ]);
+
+      act(() => result.current.createSearch?.onChange('upload'));
+
+      expect(result.current.createOptions.map((option) => option.key)).toEqual([
+        'skill',
+      ]);
+      expect(
+        result.current.createOptions[0].children?.map((child) => child.key),
+      ).toEqual(['skill-upload']);
+    });
+
+    it('offers no search field when no runner option is available', () => {
+      const { result: noRunners } = renderEditNavigation();
+      expect(noRunners.current.createSearch).toBeUndefined();
+
+      const { result: disabled } = renderEditNavigation({
+        schemas: [quickAppSchema],
+        isSchemaAppsEnabled: false,
+      });
+      expect(disabled.current.createSearch).toBeUndefined();
     });
 
     it('offers a Prompt create option only when the feature is enabled', () => {
