@@ -68,6 +68,8 @@ Depends on slice 1.
 
   **Verification:** `npm exec nx run @epam/chat:test-nested-stages-browser`. Also run `npm run test:file -- libs/conversation-stages/src/components/StagesPanel/tests/StagesPanel.spec.tsx` for the matching component behaviors. Close browsers/servers and keep generated fixture/build output outside tracked source.
 
+  **Note:** the browser test passed during implementation but was removed from the PR before merge; it is not committed, so the layout guarantees above are no longer checked automatically.
+
 - [x] 2.9 Verify the completed UI slice and library boundaries.
 
   **Verification:** `npm run verify:changed` once for this slice; `npm run build:quiet` because component styles and the library bundle changed. Inspect changed library imports against the architecture guard; verify no new app-aware behavior or unused public prop/export was introduced.
