@@ -106,18 +106,16 @@ export const AppIdentity: FC<AppIdentityProps> = ({
             <EllipsisTooltip
               text={query ? <Highlight text={name} query={query} /> : name}
               className={mergeClasses(
-                'min-w-0 flex-1',
+                version ? 'min-w-0 max-w-[66%] shrink-0' : 'min-w-0 flex-1',
                 typography?.nameClassName ?? 'dial-body-semi-text',
                 styles.name,
               )}
             />
             {version && (
-              /* Capped at 30% of the row so a long version truncates instead of
-                 squeezing the name out of the card. */
               <EllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'max-w-[30%] shrink-0 tabular-nums',
+                  'min-w-0 flex-1 text-end tabular-nums',
                   typography?.versionClassName ?? 'dial-tiny-text',
                   styles.version,
                 )}

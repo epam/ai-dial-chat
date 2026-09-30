@@ -22,11 +22,17 @@
 }
 
 .interactiveRow:hover {
-  background: var(--strhl-row-hover-bg, transparent);
+  background: var(
+    --strhl-row-hover-bg,
+    var(--bg-control-accent-alpha, #2764d90f)
+  );
 }
 
 .interactiveRow:focus-visible {
-  background: var(--strhl-row-focus-bg, var(--strhl-row-hover-bg, transparent));
+  background: var(
+    --strhl-row-focus-bg,
+    var(--strhl-row-hover-bg, var(--bg-control-accent-alpha, #2764d90f))
+  );
 }
 
 .unreadDot {

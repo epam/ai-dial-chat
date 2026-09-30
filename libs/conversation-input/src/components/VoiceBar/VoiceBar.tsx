@@ -3,11 +3,11 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ErrorText,
-  GhostIconButton,
+  NeutralIconButton,
   PrimaryIconButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlayerStopFilled, IconX } from '@tabler/icons-react';
+import { IconCheck, IconX } from '@tabler/icons-react';
 import {
   type CSSProperties,
   type FC,
@@ -191,7 +191,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
 
   const controls = (
     <div className="flex flex-shrink-0 items-center justify-end gap-1">
-      <GhostIconButton
+      <NeutralIconButton
         icon={
           <IconX
             size={DIAL_ICON_SIZE.LG}
@@ -205,7 +205,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       />
       {isRecording && (
         <PrimaryIconButton
-          icon={<IconPlayerStopFilled size={DIAL_ICON_SIZE.LG} aria-hidden />}
+          icon={<IconCheck size={DIAL_ICON_SIZE.LG} aria-hidden />}
           onClick={() => onStop?.()}
           autoFocus
           aria-label={stopLabel}
