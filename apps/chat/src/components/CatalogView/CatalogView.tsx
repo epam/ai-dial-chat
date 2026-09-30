@@ -454,53 +454,27 @@ const CatalogView: FC<Props> = ({
       `${route}?${new URLSearchParams(params).toString()}`;
     return {
       buildPromptEditUrl: (id) =>
-        buildUrl(ROUTES.PromptEditor, {
-          [EditorQuery.Id]: id,
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
-      buildPromptCreateUrl: () =>
-        buildUrl(ROUTES.PromptEditor, {
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
+        buildUrl(ROUTES.PromptEditor, { [EditorQuery.Id]: id }),
+      buildPromptCreateUrl: () => ROUTES.PromptEditor,
       buildSkillEditUrl: (id) =>
-        buildUrl(ROUTES.SkillEditor, {
-          [EditorQuery.Id]: id,
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
-      buildSkillCreateUrl: () =>
-        buildUrl(ROUTES.SkillEditor, {
-          [EditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
+        buildUrl(ROUTES.SkillEditor, { [EditorQuery.Id]: id }),
+      buildSkillCreateUrl: () => ROUTES.SkillEditor,
       buildToolsetEditUrl: (id) =>
-        buildUrl(ROUTES.ToolsetEditor, {
-          [ToolsetEditorQuery.Id]: id,
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
-      buildToolsetCreateUrl: () =>
-        buildUrl(ROUTES.ToolsetEditor, {
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
+        buildUrl(ROUTES.ToolsetEditor, { [ToolsetEditorQuery.Id]: id }),
+      buildToolsetCreateUrl: () => ROUTES.ToolsetEditor,
       buildCustomAppEditUrl: (id) =>
-        buildUrl(ROUTES.CustomAppEditor, {
-          [ToolsetEditorQuery.Id]: id,
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
-      buildCustomAppCreateUrl: () =>
-        buildUrl(ROUTES.CustomAppEditor, {
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        }),
+        buildUrl(ROUTES.CustomAppEditor, { [ToolsetEditorQuery.Id]: id }),
+      buildCustomAppCreateUrl: () => ROUTES.CustomAppEditor,
       buildQuickAppEditUrl: (schemaId, appId) =>
         buildUrl(ROUTES.AppsEditor, {
           [AppsEditorQuery.Step]: AppsEditorStep.Settings,
           [AppsEditorQuery.Schema]: schemaId,
-          [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
           [AppsEditorQuery.AppId]: appId,
         }),
       buildQuickAppCreateUrl: (schemaId) =>
         buildUrl(ROUTES.AppsEditor, {
           [AppsEditorQuery.Step]: AppsEditorStep.General,
           [AppsEditorQuery.Schema]: schemaId,
-          [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
           [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
         }),
     };
@@ -522,37 +496,38 @@ const CatalogView: FC<Props> = ({
     [t],
   );
 
-  const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
-    deployments,
-    isCustomAppsEnabled,
-    isSchemaAppsEnabled,
-    isHideCustomAppCreationEnabled,
-    isToolsetsEnabled,
-    isPromptsEnabled,
-    schemas,
-    urls: catalogEditUrls,
-    onNavigate: navigate,
-    deletePrompt,
-    deleteToolset,
-    deleteSkill,
-    deleteApplication,
-    refetchPrompts,
-    refetchToolsets,
-    refetchSkills,
-    refetchDeployments,
-    onDeleteSuccess: (item) =>
-      notifyOperationSuccess(
-        resolveCatalogItemEntity(
-          item.type,
-          findDeploymentByIdOrReference(deployments, item.id),
+  const { handleEdit, handleDelete, createOptions, createSearch } =
+    useCatalogEditNavigation({
+      deployments,
+      isCustomAppsEnabled,
+      isSchemaAppsEnabled,
+      isHideCustomAppCreationEnabled,
+      isToolsetsEnabled,
+      isPromptsEnabled,
+      schemas,
+      urls: catalogEditUrls,
+      onNavigate: navigate,
+      deletePrompt,
+      deleteToolset,
+      deleteSkill,
+      deleteApplication,
+      refetchPrompts,
+      refetchToolsets,
+      refetchSkills,
+      refetchDeployments,
+      onDeleteSuccess: (item) =>
+        notifyOperationSuccess(
+          resolveCatalogItemEntity(
+            item.type,
+            findDeploymentByIdOrReference(deployments, item.id),
+          ),
+          EntityOperation.Deleted,
+          { name: item.name },
         ),
-        EntityOperation.Deleted,
-        { name: item.name },
-      ),
-    labels: catalogEditNavigationLabels,
-    onNotify: showErrorNotification,
-    onSkillUploadClick: openSkillArchiveDialog,
-  });
+      labels: catalogEditNavigationLabels,
+      onNotify: showErrorNotification,
+      onSkillUploadClick: openSkillArchiveDialog,
+    });
 
   if (!isCatalogEnabled && !isSelectorMode) {
     return null;
@@ -576,6 +551,7 @@ const CatalogView: FC<Props> = ({
         isLoading={isLoading}
         favorites={favorites}
         createOptions={createOptions}
+        createSearch={createSearch}
         hideCreateButton={isSelectorMode}
         hidePageTitle={isSelectorMode}
         isFullWidth={isFullWidth}
@@ -659,6 +635,9 @@ const CatalogView: FC<Props> = ({
         titles={{
           pageTitle: t(NavigationI18nKeys.Catalog),
           createLabel: t(ButtonsI18nKeys.Create),
+          createSearchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+          createSearchClearLabel: t(BasicI18nKeys.ClearSearch),
+          createNoResultsLabel: t(BasicI18nKeys.NoResults),
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
           searchPlaceholder,

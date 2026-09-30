@@ -1,11 +1,11 @@
-import type { CatalogItem } from '@epam/ai-dial-catalog';
+import type { CatalogCreateSearch, CatalogItem } from '@epam/ai-dial-catalog';
 import type {
   ApplicationSchemaSummaryDto,
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { getApiErrorDetails } from '../../api-error/api-error';
 import {
   getRunnerSchemas,
@@ -13,6 +13,9 @@ import {
 } from '../../shared/application-schema';
 import { parseSkillResourceUrl } from '../../skill/skill-types';
 import { findDeploymentByIdOrReference } from '../deployment-id';
+
+/** Maximum number of runner options the Create menu lists at once. */
+const CREATE_MENU_RUNNER_LIMIT = 10;
 
 /** A host notification `useCatalogEditNavigation` asks to be shown for a failed delete. */
 export interface CatalogEditNavigationNotification {
@@ -100,7 +103,10 @@ export interface UseCatalogEditNavigationParams {
 export interface UseCatalogEditNavigationResult {
   handleEdit: (item: CatalogItem) => void;
   handleDelete: (item: CatalogItem) => Promise<void>;
+  /** The Create dropdown's items: runners sorted by label and capped at 10, then the static options, all filtered by `createSearch.value`. */
   createOptions: DropdownItem[];
+  /** The Create menu's search field state, or `undefined` when no runner option is offered. */
+  createSearch: CatalogCreateSearch | undefined;
 }
 
 /**
@@ -133,6 +139,9 @@ export const useCatalogEditNavigation = ({
   onSkillUploadClick,
 }: UseCatalogEditNavigationParams): UseCatalogEditNavigationResult => {
   const runnerSchemas = useMemo(() => getRunnerSchemas(schemas), [schemas]);
+  const [createSearchQuery, setCreateSearchQuery] = useState('');
+  const isRunnerCreationEnabled =
+    isSchemaAppsEnabled && !isHideCustomAppCreationEnabled;
 
   const handleEdit = useCallback(
     (item: CatalogItem) => {
@@ -218,21 +227,34 @@ export const useCatalogEditNavigation = ({
   );
 
   const createOptions = useMemo<DropdownItem[]>(() => {
+    const query = createSearchQuery.trim().toLocaleLowerCase();
+    const isMatch = (label: string) =>
+      !query || label.toLocaleLowerCase().includes(query);
     const options: DropdownItem[] = [];
 
-    if (isSchemaAppsEnabled && !isHideCustomAppCreationEnabled) {
-      runnerSchemas.forEach((schema) => {
-        options.push({
-          key: `runner:${schema.id}`,
+    if (isRunnerCreationEnabled) {
+      runnerSchemas
+        .map((schema) => ({
+          id: schema.id,
           label: isQuickAppSchema(schema)
             ? labels.createQuickApp
             : schema.displayName || schema.id,
-          onClick: () => onNavigate(urls.buildQuickAppCreateUrl(schema.id)),
+        }))
+        .sort((a, b) =>
+          a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+        )
+        .filter((runner) => isMatch(runner.label))
+        .slice(0, CREATE_MENU_RUNNER_LIMIT)
+        .forEach((runner) => {
+          options.push({
+            key: `runner:${runner.id}`,
+            label: runner.label,
+            onClick: () => onNavigate(urls.buildQuickAppCreateUrl(runner.id)),
+          });
         });
-      });
     }
 
-    if (isToolsetsEnabled) {
+    if (isToolsetsEnabled && isMatch(labels.createToolset)) {
       options.push({
         key: 'toolset',
         label: labels.createToolset,
@@ -240,7 +262,11 @@ export const useCatalogEditNavigation = ({
       });
     }
 
-    if (isCustomAppsEnabled && !isHideCustomAppCreationEnabled) {
+    if (
+      isCustomAppsEnabled &&
+      !isHideCustomAppCreationEnabled &&
+      isMatch(labels.createCustomApp)
+    ) {
       options.push({
         key: 'custom-app',
         label: labels.createCustomApp,
@@ -248,24 +274,31 @@ export const useCatalogEditNavigation = ({
       });
     }
 
-    options.push({
-      key: 'skill',
-      label: labels.createSkill,
-      children: [
-        {
-          key: 'skill-write-instructions',
-          label: labels.createSkillWriteInstructions,
-          onClick: () => onNavigate(urls.buildSkillCreateUrl()),
-        },
-        {
-          key: 'skill-upload',
-          label: labels.createSkillUpload,
-          onClick: onSkillUploadClick,
-        },
-      ],
-    });
+    const skillChildren: DropdownItem[] = [
+      {
+        key: 'skill-write-instructions',
+        label: labels.createSkillWriteInstructions,
+        onClick: () => onNavigate(urls.buildSkillCreateUrl()),
+      },
+      {
+        key: 'skill-upload',
+        label: labels.createSkillUpload,
+        onClick: onSkillUploadClick,
+      },
+    ];
+    // A query naming the Skill group keeps both children; otherwise only the matching ones.
+    const visibleSkillChildren = isMatch(labels.createSkill)
+      ? skillChildren
+      : skillChildren.filter((child) => isMatch(String(child.label)));
+    if (visibleSkillChildren.length > 0) {
+      options.push({
+        key: 'skill',
+        label: labels.createSkill,
+        children: visibleSkillChildren,
+      });
+    }
 
-    if (isPromptsEnabled) {
+    if (isPromptsEnabled && isMatch(labels.createPrompt)) {
       options.push({
         key: 'prompt',
         label: labels.createPrompt,
@@ -275,21 +308,31 @@ export const useCatalogEditNavigation = ({
 
     return options;
   }, [
+    createSearchQuery,
+    isRunnerCreationEnabled,
     runnerSchemas,
     onNavigate,
     urls,
     isPromptsEnabled,
     labels,
-    isSchemaAppsEnabled,
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
     isCustomAppsEnabled,
     onSkillUploadClick,
   ]);
 
+  const createSearch = useMemo<CatalogCreateSearch | undefined>(
+    () =>
+      isRunnerCreationEnabled && runnerSchemas.length > 0
+        ? { value: createSearchQuery, onChange: setCreateSearchQuery }
+        : undefined,
+    [isRunnerCreationEnabled, runnerSchemas.length, createSearchQuery],
+  );
+
   return {
     handleEdit,
     handleDelete,
     createOptions,
+    createSearch,
   };
 };

@@ -113,7 +113,7 @@ const queryAction = (name: string) =>
 const getNameInput = () =>
   screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false });
 
-const createSearch = `schema=${SCHEMA.id}&returnUrl=%2Fcatalog`;
+const createSearch = `schema=${SCHEMA.id}`;
 const editSearch = `${createSearch}&appId=${encodeURIComponent(APP_ID)}`;
 
 describe('ApplicationEditorPage — quick app', () => {

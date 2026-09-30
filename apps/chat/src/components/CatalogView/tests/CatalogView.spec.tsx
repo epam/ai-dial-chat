@@ -1220,7 +1220,7 @@ describe('CatalogView', () => {
       );
 
       expect(mockNavigate).toHaveBeenCalledWith(
-        '/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize&returnUrl=%2Fcatalog',
+        '/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize',
       );
     });
   });
@@ -1371,7 +1371,7 @@ describe('CatalogView', () => {
       );
 
       expect(mockNavigate).toHaveBeenCalledWith(
-        '/skill-editor?id=skills%2Fowner-bucket%2Fanalysis%2Frevenue-skill&returnUrl=%2Fcatalog',
+        '/skill-editor?id=skills%2Fowner-bucket%2Fanalysis%2Frevenue-skill',
       );
     });
 

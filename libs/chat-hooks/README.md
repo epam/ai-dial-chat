@@ -3442,11 +3442,12 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Returns** (`UseCatalogEditNavigationResult`):
 
-| Name            | Type                                   | Description                                                      |
-| --------------- | -------------------------------------- | ---------------------------------------------------------------- |
-| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.           |
-| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                       |
-| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags. |
+| Name            | Type                                   | Description                                                                                                                                                                 |
+| --------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handleEdit`    | `(item: CatalogItem) => void`          | Navigates to the right editor URL for the item's type.                                                                                                                      |
+| `handleDelete`  | `(item: CatalogItem) => Promise<void>` | Deletes the item and notifies the outcome.                                                                                                                                  |
+| `createOptions` | `DropdownItem[]`                       | The Create dropdown's items, gated by the enabled feature flags: runners sorted alphabetically and capped at 10, then the static options, all filtered by the search query. |
+| `createSearch`  | `CatalogCreateSearch \| undefined`     | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                           |
 
 ```tsx
 import {
@@ -3473,29 +3474,30 @@ const labels: CatalogEditNavigationLabels = {
   deleteError: t('catalog.details.deleteError'),
 };
 
-const { handleEdit, handleDelete, createOptions } = useCatalogEditNavigation({
-  deployments,
-  isCustomAppsEnabled,
-  isSchemaAppsEnabled,
-  isHideCustomAppCreationEnabled,
-  isToolsetsEnabled,
-  isPromptsEnabled,
-  schemas,
-  urls,
-  onNavigate: navigate,
-  deletePrompt,
-  deleteToolset,
-  deleteSkill,
-  deleteApplication,
-  refetchPrompts,
-  refetchToolsets,
-  refetchSkills,
-  refetchDeployments,
-  onDeleteSuccess: (item) => notifyOperationSuccess(item),
-  labels,
-  onNotify: showErrorNotification,
-  onSkillUploadClick: openSkillUploadDialog,
-});
+const { handleEdit, handleDelete, createOptions, createSearch } =
+  useCatalogEditNavigation({
+    deployments,
+    isCustomAppsEnabled,
+    isSchemaAppsEnabled,
+    isHideCustomAppCreationEnabled,
+    isToolsetsEnabled,
+    isPromptsEnabled,
+    schemas,
+    urls,
+    onNavigate: navigate,
+    deletePrompt,
+    deleteToolset,
+    deleteSkill,
+    deleteApplication,
+    refetchPrompts,
+    refetchToolsets,
+    refetchSkills,
+    refetchDeployments,
+    onDeleteSuccess: (item) => notifyOperationSuccess(item),
+    labels,
+    onNotify: showErrorNotification,
+    onSkillUploadClick: openSkillUploadDialog,
+  });
 ```
 
 ### useCatalogToolsetCredentials

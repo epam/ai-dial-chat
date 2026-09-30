@@ -64,7 +64,6 @@ const fakeDefinition = defineApplicationEditor<FakeSetup>({
   notifiableEntity: NotifiableEntity.CustomApp,
   createStrategy: ApplicationCreateStrategy.AllAtOnce,
   idQueryParam: 'id',
-  returnUrlQueryParam: 'returnUrl',
   messageKeys: {
     createTitle: CustomAppI18nKeys.CreateTitle,
     editTitle: CustomAppI18nKeys.EditTitle,
@@ -126,7 +125,7 @@ vi.mock(
 
 const renderFakeKind = () =>
   render(
-    <MemoryRouter initialEntries={['/fake-editor?returnUrl=%2Fcatalog']}>
+    <MemoryRouter initialEntries={['/fake-editor']}>
       <Routes>
         <Route
           path="/fake-editor"

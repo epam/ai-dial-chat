@@ -31,7 +31,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { SkillFilePreview } from '../../components/SkillFilePreview/SkillFilePreview';
 import SkillFileSystemModal from '../../components/SkillFileSystemModal/SkillFileSystemModal';
-import { isSafeReturnUrl } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   EditorI18nKeys,
@@ -94,11 +93,7 @@ const SkillEditorPage: FC = () => {
   const { closeCanvas } = useAttachmentCanvas();
   const { showNotification } = useNotification();
 
-  const rawReturnUrl = searchParams.get(EditorQuery.ReturnUrl);
-  const returnUrl =
-    rawReturnUrl != null && isSafeReturnUrl(rawReturnUrl)
-      ? rawReturnUrl
-      : ROUTES.Catalog;
+  const returnUrl = ROUTES.Catalog;
   const personalBucket = user?.bucket;
 
   const rawId = searchParams.get(EditorQuery.Id);

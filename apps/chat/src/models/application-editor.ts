@@ -103,8 +103,6 @@ export interface ApplicationEditorFormDefinition<TSetup> {
   createStrategy: ApplicationCreateStrategy;
   /** Query param holding the edited application's id. */
   idQueryParam: string;
-  /** Query param holding the URL to return to. */
-  returnUrlQueryParam: string;
   messageKeys: ApplicationEditorMessageKeys;
   /** Resolves the title when it needs interpolation, e.g. the schema's display name; defaults to the plain title keys. */
   getTitle?: (ctx: ApplicationEditorContext, isEditMode: boolean) => string;

@@ -58,7 +58,7 @@ const PromptEditorPage: FC = () => {
   const { refetchPrompts } = usePrompts();
 
   const promptId = searchParams.get(EditorQuery.Id) ?? undefined;
-  const returnUrl = searchParams.get(EditorQuery.ReturnUrl) ?? ROUTES.Catalog;
+  const returnUrl = ROUTES.Catalog;
   const isEditMode = promptId != null;
 
   const [loadedValues, setLoadedValues] = useState<PromptEditorValues>();

@@ -4,7 +4,7 @@ import type {
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   CatalogEditNavigationLabels,
@@ -188,7 +188,7 @@ describe('useCatalogEditNavigation', () => {
 
     it('navigates to the quick app editor for a schema-driven application', () => {
       const { result, onNavigate } = renderEditNavigation({
-        schemas: [{ id: 'quickapps2-schema' }],
+        schemas: [quickAppSchema],
       });
       const item = makeCatalogItem({
         id: 'applications/b/Quick One__1.0',
@@ -198,7 +198,7 @@ describe('useCatalogEditNavigation', () => {
       result.current.handleEdit(item);
 
       expect(onNavigate).toHaveBeenCalledWith(
-        'edit:quick-app:quickapps2-schema:applications/b/Quick One__1.0',
+        'edit:quick-app:foo-quickapps2:applications/b/Quick One__1.0',
       );
     });
 
@@ -494,6 +494,80 @@ describe('useCatalogEditNavigation', () => {
       expect(onNavigate).toHaveBeenCalledWith(
         'create:quick-app:mind-map-schema',
       );
+    });
+
+    it('sorts runner options alphabetically and lists at most 10 of them', () => {
+      const names = [
+        'Zeta',
+        'alpha',
+        'Mind map',
+        'Beta',
+        'OCR',
+        'Delta',
+        'Kappa',
+        'Gamma',
+        'Epsilon',
+        'Iota',
+        'Theta',
+        'Lambda',
+      ];
+      const { result } = renderEditNavigation({
+        schemas: names.map((name) => ({ id: name, displayName: name })),
+      });
+
+      const runnerLabels = result.current.createOptions
+        .filter((option) => option.key.startsWith('runner:'))
+        .map((option) => option.label);
+
+      expect(runnerLabels).toEqual([
+        'alpha',
+        'Beta',
+        'Delta',
+        'Epsilon',
+        'Gamma',
+        'Iota',
+        'Kappa',
+        'Lambda',
+        'Mind map',
+        'OCR',
+      ]);
+    });
+
+    it('filters runner and static options by the search query, case-insensitively', () => {
+      const { result } = renderEditNavigation({
+        schemas: [
+          quickAppSchema,
+          { id: 'mind-map', displayName: 'Mind map' },
+          { id: 'ocr', displayName: 'OCR' },
+        ],
+      });
+
+      act(() => result.current.createSearch?.onChange('MAP'));
+
+      expect(result.current.createSearch?.value).toBe('MAP');
+      expect(result.current.createOptions.map((option) => option.key)).toEqual([
+        'runner:mind-map',
+      ]);
+
+      act(() => result.current.createSearch?.onChange('upload'));
+
+      expect(result.current.createOptions.map((option) => option.key)).toEqual([
+        'skill',
+      ]);
+      expect(
+        result.current.createOptions[0].children?.map((child) => child.key),
+      ).toEqual(['skill-upload']);
+    });
+
+    it('offers no search field when no runner option is available', () => {
+      const { result: noRunners } = renderEditNavigation();
+      expect(noRunners.current.createSearch).toBeUndefined();
+
+      const { result: disabled } = renderEditNavigation({
+        schemas: [quickAppSchema],
+        isSchemaAppsEnabled: false,
+      });
+      expect(disabled.current.createSearch).toBeUndefined();
     });
 
     it('offers a Prompt create option only when the feature is enabled', () => {

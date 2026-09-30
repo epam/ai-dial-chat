@@ -45,10 +45,7 @@ import type {
 import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import {
-  deploymentToMetadata,
-  resolveReturnUrl,
-} from '../../utils/application-editor';
+import { deploymentToMetadata } from '../../utils/application-editor';
 import { translateDeploymentCreationErrors } from '../../utils/entity-field-validation';
 import { buildAdditionalLocaleOptions } from '../../utils/locale';
 
@@ -70,14 +67,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const isEditMode = Boolean(appId);
   const isMetadataFirst =
     definition.createStrategy === ApplicationCreateStrategy.MetadataFirst;
-  const returnUrl = useMemo(
-    () =>
-      resolveReturnUrl(
-        searchParams.get(definition.returnUrlQueryParam),
-        ROUTES.Catalog,
-      ),
-    [searchParams, definition.returnUrlQueryParam],
-  );
+  const returnUrl = ROUTES.Catalog;
   const context = useMemo<ApplicationEditorContext>(
     () => ({ searchParams, schemas, t }),
     [searchParams, schemas, t],
