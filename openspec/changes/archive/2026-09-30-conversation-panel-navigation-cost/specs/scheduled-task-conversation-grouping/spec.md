@@ -1,8 +1,5 @@
-# scheduled-task-conversation-grouping Specification
+## MODIFIED Requirements
 
-## Purpose
-Show one conversation-panel row per scheduled task instead of one per run, by collapsing a task's run conversations at the host's display layer while `ConversationsContext` keeps the full list that the task banner, History, and mark-as-viewed rely on.
-## Requirements
 ### Requirement: The conversation panel shows one representative row per scheduled task
 
 `apps/chat` SHALL export a pure function `collapseScheduledTaskConversations(items: ConversationListItemDto[], options: { activeConversationId?: string; conversationIdsMatch: (a: string, b: string) => boolean }): ConversationListItemDto[]` from `apps/chat/src/utils/collapse-scheduled-task-conversations.ts`. It has no React, i18n, context, or network dependency.
