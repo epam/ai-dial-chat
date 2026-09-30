@@ -3,6 +3,7 @@
 # ─────────────────────────────────────────────
 # Stage 0: install the package manager used during builds
 # ─────────────────────────────────────────────
+# Keep in sync with the root Dockerfile and apps/chat-api/Dockerfile when bumping the base image or npm.
 FROM node:24.21-alpine3.24 AS node-base
 
 # Pin npm for builds; remove its bundled dependencies from the final image below.

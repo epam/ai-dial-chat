@@ -62,6 +62,13 @@ own embedding allowlist. The BFF publishes its URL and host identity through
 client config; see [MCP Apps configuration](../apps/chat-api/README.md#mcp-apps-configuration)
 and the [sandbox deployment guide](../apps/mcp-app-sandbox/README.md).
 
+Three container images are released together, with the same tags per run:
+`ai-dial-chat` (root `Dockerfile`: BFF with the SPA and overlay sandbox
+bundled), `ai-dial-chat-bff` (`apps/chat-api/Dockerfile`: BFF only, for a
+frontend hosted elsewhere) and `ai-dial-chat-mcp-app-sandbox`
+(`apps/mcp-app-sandbox/Dockerfile`). See
+[Docker image (BFF only)](../apps/chat-api/README.md#docker-image-bff-only).
+
 ### Typechecking and verification
 
 Every project with a `typecheck` target (32 as of this writing, out of 33
