@@ -2,7 +2,7 @@ import { AttachmentCard } from '@epam/ai-dial-attachment-input';
 import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
 import { mergeClasses, StageStatus } from '@epam/ai-dial-chat-shared';
 import { Accordion, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import { FC, useCallback, useMemo, useState } from 'react';
+import { FC, ReactNode, useCallback, useMemo, useState } from 'react';
 import {
   STAGE_ACCORDION_CLASS_NAME,
   STAGE_ACCORDION_HEADER_CLASS_NAME,
@@ -31,6 +31,12 @@ export interface StageItemProps {
   nameOverride?: string;
   /** Called when a stage attachment tile is clicked/activated. Receives the mapped display attachment. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Nested list of this stage's child stages, rendered after its own markdown and attachments. Makes the row expandable on its own. */
+  childList?: ReactNode;
+  /** Controlled expanded state of the disclosure; uncontrolled (initially collapsed) when omitted. The body mounts only while expanded. */
+  isExpanded?: boolean;
+  /** Called with the next expanded state when the disclosure header is toggled. */
+  onToggle?: (isExpanded: boolean) => void;
 }
 
 /** Props for {@link StageAttachmentRow}. */
@@ -72,7 +78,7 @@ const StageAttachmentRow: FC<StageAttachmentRowProps> = ({
   );
 };
 
-/** Renders a single stage row, optionally expandable to show its content. */
+/** Renders a single stage row, optionally expandable to show its content and child stages. */
 export const StageItem: FC<StageItemProps> = ({
   stage,
   isLive,
@@ -80,8 +86,20 @@ export const StageItem: FC<StageItemProps> = ({
   labels,
   nameOverride,
   onAttachmentClick,
+  childList,
+  isExpanded,
+  onToggle,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  /* Uncontrolled fallback for a standalone item; panels pass `isExpanded`. */
+  const [isLocallyOpen, setIsLocallyOpen] = useState(false);
+  const isOpen = isExpanded ?? isLocallyOpen;
+  const handleToggle = useCallback(
+    (next: boolean) => {
+      if (isExpanded === undefined) setIsLocallyOpen(next);
+      onToggle?.(next);
+    },
+    [isExpanded, onToggle],
+  );
   const {
     copyAriaLabel = 'Copy stage content',
     runningAriaLabel,
@@ -97,7 +115,8 @@ export const StageItem: FC<StageItemProps> = ({
   const isMono = !nameOverride && isIdentifierLike(cleanedName);
   const isFailed = stage.status === StageStatus.Failed;
 
-  const hasExpandableContent = !!stage.content || !!stage.attachments?.length;
+  const hasOwnContent = !!stage.content || !!stage.attachments?.length;
+  const hasExpandableContent = hasOwnContent || childList != null;
 
   const header = (
     <>
@@ -160,11 +179,13 @@ export const StageItem: FC<StageItemProps> = ({
   }
 
   /* The kit spacer above the content is 12px; `-mt-1` brings it to the 8px
-     the stage content has always sat below its row. */
+     the stage content has always sat below its row. Own output keeps its
+     `ps-8` inset; the child list is a sibling of it, so only the child list's
+     own (capped) indentation accumulates with depth. */
   return (
     <Accordion
       expanded={isOpen}
-      onToggle={setIsOpen}
+      onToggle={handleToggle}
       title={<span className="flex min-w-0 items-center gap-2">{header}</span>}
       className={STAGE_ACCORDION_CLASS_NAME}
       headerClassName={mergeClasses(
@@ -173,26 +194,31 @@ export const StageItem: FC<StageItemProps> = ({
         styles.stageHeader,
       )}
       contentClassName={mergeClasses(
-        '-mt-1 flex flex-col gap-3 px-0 py-1 ps-8',
+        '-mt-1 flex min-w-0 flex-col gap-3 px-0 py-1',
         styles.stageRegion,
       )}
     >
-      {isOpen && stage.content && (
-        <div className="max-h-[300px] overflow-y-auto">
-          <StageMarkdownContent
-            content={stage.content}
-            typography={typography}
-            copyAriaLabel={copyAriaLabel}
-          />
+      {isOpen && hasOwnContent && (
+        <div className="flex min-w-0 flex-col gap-3 ps-8">
+          {stage.content && (
+            <div className="max-h-[300px] min-w-0 overflow-y-auto">
+              <StageMarkdownContent
+                content={stage.content}
+                typography={typography}
+                copyAriaLabel={copyAriaLabel}
+              />
+            </div>
+          )}
+          {displayAttachments.length > 0 && (
+            <StageAttachmentRow
+              attachments={displayAttachments}
+              clickLabel={attachmentClickLabel}
+              onAttachmentClick={onAttachmentClick}
+            />
+          )}
         </div>
       )}
-      {isOpen && displayAttachments.length > 0 && (
-        <StageAttachmentRow
-          attachments={displayAttachments}
-          clickLabel={attachmentClickLabel}
-          onAttachmentClick={onAttachmentClick}
-        />
-      )}
+      {isOpen && childList}
     </Accordion>
   );
 };

@@ -382,3 +382,80 @@ describe('StageItem — nameOverride (used for ×N attempts)', () => {
     expect(nameEl.className).not.toMatch(/monoName/);
   });
 });
+
+describe('StageItem — child stages', () => {
+  const childList = (
+    <ul role="list" aria-label="Child stages">
+      <li role="listitem">Child stage</li>
+    </ul>
+  );
+
+  it('renders a stage with only child stages as a disclosure', async () => {
+    const user = userEvent.setup();
+    render(
+      <StageItem
+        stage={{ index: 0, name: 'Plan', status: StageStatus.Completed }}
+        isLive={false}
+        childList={childList}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: /Plan/ });
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    await user.click(button);
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('renders own markdown, then attachments, then child stages', async () => {
+    const user = userEvent.setup();
+    render(
+      <StageItem
+        stage={{
+          index: 0,
+          name: 'Plan',
+          status: StageStatus.Completed,
+          content: 'Own output',
+          attachments: [{ title: 'doc.pdf', url: 'files/doc.pdf' }],
+        }}
+        isLive={false}
+        childList={childList}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Plan/ }));
+
+    const markdown = screen.getByText('Own output');
+    const attachment = screen.getByRole('button', { name: 'doc.pdf' });
+    const children = screen.getByRole('list', { name: 'Child stages' });
+    expect(
+      markdown.compareDocumentPosition(attachment) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      attachment.compareDocumentPosition(children) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: /Plan/ }).contains(children),
+    ).toBe(false);
+  });
+
+  it('follows a controlled expanded state and reports toggles', async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+    render(
+      <StageItem
+        stage={{ index: 0, name: 'Plan', status: StageStatus.Completed }}
+        isLive={false}
+        childList={childList}
+        isExpanded
+        onToggle={onToggle}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: /Plan/ });
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    await user.click(button);
+    expect(onToggle).toHaveBeenCalledWith(false);
+  });
+});

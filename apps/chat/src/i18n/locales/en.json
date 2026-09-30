@@ -418,7 +418,13 @@
     "stages": {
       "executed": "Executed",
       "step_one": "step",
-      "step_other": "steps"
+      "step_other": "steps",
+      "running": "Running",
+      "failed": "Failed",
+      "failedCount": "{{count}} failed",
+      "attempt": "Attempt {{number}}",
+      "copyContent": "Copy stage content",
+      "previewAttachment": "Preview search result"
     },
     "attachMenuDialFileSystem": "DIAL file system",
     "addMenuTitle": "Add",

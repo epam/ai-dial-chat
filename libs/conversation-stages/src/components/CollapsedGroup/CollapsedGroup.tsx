@@ -13,6 +13,7 @@ import {
 import { IconCheck } from '@tabler/icons-react';
 import { FC, useEffect, useRef, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
+import { useStageExpansion } from '../../hooks/useStageExpansion/useStageExpansion';
 import type { CollapsedGroupProps } from '../../models/collapsed-group';
 import {
   calculateStagesDurationSeconds,
@@ -20,7 +21,7 @@ import {
   formatTotalDuration,
 } from '../../utils/stage-name';
 import { findLiveStage } from '../../utils/stage-progress';
-import { StagesPanel } from '../StagesPanel/StagesPanel';
+import { StagesPanelView } from '../StagesPanel/StagesPanel';
 import styles from './CollapsedGroup.module.scss';
 
 /** Wraps `StagesPanel` with a collapsible summary line that tracks run state: live progress while streaming, one-line summary once finished. */
@@ -44,6 +45,15 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   } = labels ?? {};
 
   const [isOpen, setIsOpen] = useState(isStreaming);
+  /* Owned here, not by the panel, so choices survive the one-stage → group switch. */
+  const expansion = useStageExpansion();
+  const { reset: resetExpansion } = expansion;
+  const isGrouped = stages.length > 1;
+  useEffect(() => {
+    /* The summary unmounts the panel while closed; its disclosures restart
+       collapsed. A single stage has no summary, so its choice survives. */
+    if (isGrouped && !isOpen) resetExpansion();
+  }, [isGrouped, isOpen, resetExpansion]);
   const wasStreamingRef = useRef(isStreaming);
   useEffect(() => {
     if (wasStreamingRef.current && !isStreaming) {
@@ -93,9 +103,10 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
 
   if (stages.length === 1) {
     return (
-      <StagesPanel
+      <StagesPanelView
         stages={stages}
         isStreaming={isStreaming}
+        expansion={expansion}
         className={className}
         styles={{ colors: panelColors, typography: groupStyles?.typography }}
         labels={panelLabels}
@@ -230,9 +241,10 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         contentClassName={mergeClasses('-mt-2 px-0', styles.groupRegion)}
       >
         {isOpen && (
-          <StagesPanel
+          <StagesPanelView
             stages={stages}
             isStreaming={isStreaming}
+            expansion={expansion}
             styles={{
               colors: panelColors,
               typography: groupStyles?.typography,
