@@ -396,7 +396,7 @@ When `onEdit` is supplied, the component SHALL render the Edit button; when omit
 
 ### Requirement: Delete confirmation dialog gates the delete request
 
-`ScheduledTaskDetailPage` SHALL render a confirmation dialog (`ConfirmationPopup` from `@epam/ai-dial-ui-kit`, `variant={ConfirmationPopupVariant.Danger}`) that opens when the header's Delete action is activated and MUST NOT issue any `deleteScheduledTask` call until the dialog's destructive confirm action is explicitly activated. The dialog SHALL present a localized title and a description stating that deletion is permanent, the task will never run again, and the action cannot be undone, plus a `Cancel` action and a destructive `Delete` confirm action. Activating `Cancel`, pressing `Escape`, or otherwise closing the dialog SHALL close it without making any API call and SHALL NOT change any task state. While a delete request triggered by the confirm action is in flight, the dialog SHALL remain open, its confirm action SHALL render a loading state (`isLoading`) and be prevented from firing a second concurrent call (`disableConfirmButton`), and `Cancel`/`Escape`/close SHALL be inert until the request settles. When the dialog closes without a completed deletion (`Cancel`, `Escape`, close, or a failed request that the user dismisses), focus SHALL return to the header's Delete action.
+`ScheduledTaskDetailPage` SHALL render a confirmation dialog (`ScheduledTaskDeleteModal` in `apps/chat/src/components/ScheduledTaskDeleteModal/`, which renders `ScheduledTaskDeleteConfirmation` from `@epam/ai-dial-scheduled-tasks`, itself the shared `ConfirmationDialog` from `@epam/ai-dial-chat-shared` in its `ConfirmationPopupVariant.Danger` variant — see the `shared-delete-confirmation` spec) that opens when the header's Delete action is activated and MUST NOT issue any `deleteScheduledTask` call until the dialog's destructive confirm action is explicitly activated. The dialog SHALL present the title "Delete task"; an identity card with an `IconClockHour3` glyph, the type label `SCHEDULED TASK`, and the task name; the sentence "Are you sure you want to delete **{taskName}**? This action is permanent and cannot be undone." with the task name bold; the consequence bullets "All run conversations will still be accessible" and "Cannot be undone"; and a text `Cancel` action beside a destructive `Delete` confirm action with a leading trash icon. Activating `Cancel`, pressing `Escape`, or otherwise closing the dialog SHALL close it without making any API call and SHALL NOT change any task state. While a delete request triggered by the confirm action is in flight, the dialog SHALL remain open, its confirm action SHALL show a spinner in place of the trash icon and be disabled so it cannot fire a second concurrent call, the localized "Deleting…" status SHALL be announced through a polite live region (the confirm label itself stays "Delete", so the button keeps one accessible name), and `Cancel`/`Escape`/close SHALL be inert until the request settles. When the dialog closes without a completed deletion (`Cancel`, `Escape`, close, or a failed request that the user dismisses), focus SHALL return to the header's Delete action.
 
 #### Scenario: Opening the dialog makes no API call
 
@@ -421,7 +421,7 @@ When `onEdit` is supplied, the component SHALL render the Edit button; when omit
 #### Scenario: Repeated confirmation is prevented while a request is pending
 
 - **WHEN** the user activates the confirm action again while a previous `deleteScheduledTask` call for the same task is still in flight
-- **THEN** no second `deleteScheduledTask` call is made, and the confirm action renders a loading state throughout
+- **THEN** no second `deleteScheduledTask` call is made, and the confirm action stays disabled with a spinner throughout while its label stays "Delete"
 
 #### Scenario: Cancel, Escape, and close are inert while a request is pending
 
@@ -493,7 +493,8 @@ Every user-visible string on the Scheduled Task Detail page (section titles, bac
 #### Scenario: Delete-related keys are present in en.json
 
 - **WHEN** the change is applied
-- **THEN** `en.json` contains `scheduledTasks.detail.deleteButtonLabel`, `scheduledTasks.detail.deleteConfirmTitle`, `scheduledTasks.detail.deleteConfirmDescription`, `scheduledTasks.detail.deleteConfirmingLabel`, `scheduledTasks.detail.deleteSuccess`, `scheduledTasks.detail.deleteNotFoundError`, `scheduledTasks.detail.deleteRetryableError`, `scheduledTasks.detail.deleteGenericError`, and `scheduledTasks.detail.deletedStateLabel`
+- **THEN** `en.json` contains `scheduledTasks.detail.deleteConfirmTitle`, `scheduledTasks.detail.deleteConfirmDescription`, `scheduledTasks.detail.deleteConsequenceConversationsAccessible`, `scheduledTasks.detail.deleteSuccess`, `scheduledTasks.detail.deleteNotFoundError`, `scheduledTasks.detail.deleteRetryableError`, `scheduledTasks.detail.deleteGenericError`, `scheduledTasks.detail.deletedStateLabel`, and `scheduledTasks.typeLabel`
+- **AND** the Delete action, confirm button, and Cancel reuse `buttons.delete` / `buttons.cancel`, while the "Cannot be undone" bullet and the in-flight "Deleting…" status reuse `basic.consequenceCannotBeUndone` / `basic.deletingStatus`, with no `scheduledTasks.detail.*` duplicate of any of them
 
 #### Scenario: Lib receives strings, not translation keys
 
@@ -662,12 +663,12 @@ The app SHALL use trigger-only descriptions and host-resolved model display name
 
 ### Requirement: Delete confirmation presentation is reusable and host-configurable
 
-scheduled-tasks SHALL export ScheduledTaskDeleteConfirmation with controlled open/pending state, task name, host-provided title/body/consequences/action labels, callbacks, cancelAppearance (Ghost by default), and typed title/action styling. It SHALL render safe React content and contain no API, routing or i18n imports. The parent SHALL retain mutation, notification and navigation ownership.
+`@epam/ai-dial-scheduled-tasks` SHALL export `ScheduledTaskDeleteConfirmation`, a thin composition of the shared `ConfirmationDialog`, `ConfirmationIdentityCard`, and `ConfirmationIdentityRow` from `@epam/ai-dial-chat-shared` (see the `shared-delete-confirmation` spec), always in the `ConfirmationPopupVariant.Danger` variant. Its props are the controlled `open` and `isDeleting` state; `taskName`; a host-supplied `icon` and `typeLabel` for the identity card; host-provided `title` (a `string`, not a `ReactNode`, because the kit names the dialog only from a string header), `body` (`ReactNode`, so the host can bold the task name), `consequences`, `cancelLabel`, `confirmLabel`, and `pendingLabel`; `onConfirm` / `onClose`; and `styles` (`popupClassName`, `titleClassName`, `messageClassName` defaulting to `'dial-body-paragraph-text'`, and `colors.typeLabelText`). It SHALL NOT carry its own Tailwind colors, its own button row, or a cancel-appearance switch — Cancel is always the shared footer's text button. It SHALL render safe React content and contain no API, routing or i18n imports. The parent SHALL retain mutation, notification and navigation ownership.
 
 #### Scenario: Host supplies the complete deletion design
 
-- **WHEN** the host passes 'Delete task', the specified permanent-action body and four consequences, a 16px title style and ghost Cancel
-- **THEN** the confirmation renders that content and styling without private selectors or hardcoded package English.
+- **WHEN** the host passes the title 'Delete task', a clock icon, the type label 'Scheduled task', a body with the bolded task name, and the consequence bullets
+- **THEN** the confirmation renders the danger identity card (icon, uppercased type, name), the body, the bullets, a text Cancel, and a danger Delete with a leading trash icon, without private selectors or hardcoded package English.
 
 #### Scenario: Cancel and confirm have distinct effects
 

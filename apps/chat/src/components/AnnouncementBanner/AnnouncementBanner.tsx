@@ -132,8 +132,6 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
         }
         className={mergeClasses(
           'flex gap-4 border-b border-tertiary bg-layer-base px-4 py-2 text-primary desktop:px-14',
-          /* Expanded, the text is several lines tall and the controls belong
-             beside its first line rather than floating at its middle. */
           isExpanded ? 'items-start' : 'items-center',
           className,
         )}
@@ -142,9 +140,6 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
           id={textId}
           className={mergeClasses(
             'dial-small-paragraph-text flex min-w-0 flex-1 text-start',
-            /* Collapsed, title and description share one line, each clipped to
-               its own ellipsis. Expanded, they stack and wrap freely — the
-               whole point of the state is that nothing is cut off. */
             isExpanded ? 'flex-col gap-1' : 'flex-row gap-4',
           )}
         >
@@ -163,13 +158,7 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
             /* Links must read as links: both sanitizers strip `style` and
                `class`, so nothing an operator writes in ANNOUNCEMENT_DESCRIPTION
                can colour them — the wrapper has to.
-
-               `flex-1` (basis 0) makes the description yield the shared line to
-               the title rather than shrinking alongside it: with an auto basis
-               both spans shrink in proportion, leaving the description a sliver
-               of ellipsis instead of collapsing out of view. It applies only
-               while the two share a line — stacked, a zero basis would fight
-               the wrapped text for height. */
+             */
             <span
               ref={descriptionRef}
               className={mergeClasses(
@@ -181,9 +170,6 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
             />
           )}
         </p>
-        {/* Rendered only once something is actually hidden: a disclosure that
-            reveals nothing is noise on a strip this small. The chevron is
-            symmetric about the vertical axis, so it needs no rtl mirroring. */}
         {isTextClipped && (
           <StaticIconButton
             className="shrink-0"

@@ -42,9 +42,6 @@ describe('Logo', () => {
     const { container } = render(<Logo />);
 
     const logo = screen.getByLabelText(ChatI18nKeys.Logo);
-    /* This is a decorative background-image span with no accessible role
-       or text; asserting its inline style/class is CSS-level behavior with
-       no semantic query equivalent. */
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     const logoImage = container.querySelector('span.desktop\\:block');
     expect(logo).toBeTruthy();
