@@ -512,6 +512,7 @@ export const useSkillSelectorOverlay = ({
       emptyQueryHintLabel,
       favoriteSkillItems,
       insertAndPush,
+      mentions.anchors,
       onToggleFavorite,
       panelLabels,
     ],

@@ -29,6 +29,12 @@ const getOnSelect = (
   (element.props as { onSelect: (item: { id: string; name: string }) => void })
     .onSelect;
 
+/* Asserts `value` is present and narrows it, in place of a non-null assertion. */
+const assertDefined = <T,>(value: T | null | undefined): T => {
+  expect(value).toBeDefined();
+  return value as T;
+};
+
 describe('useSkillSelectorOverlay', () => {
   it('forwards the configured trigger only to active mention chips', () => {
     const { result } = renderHook(() =>
@@ -42,8 +48,9 @@ describe('useSkillSelectorOverlay', () => {
       result.current.seedSkillMentions('/abc', [{ url: abcSkill.url }]);
     });
 
-    const activeChip = result.current.activeMentions[0]
-      .render!() as ReactElement;
+    const activeChip = assertDefined(
+      result.current.activeMentions[0].render,
+    )() as ReactElement;
     const historyChip = result.current.renderHistorySkills([
       { url: abcSkill.url },
     ]) as ReactElement[];
@@ -56,7 +63,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
     const close = vi.fn();
-    const menu = result.current.commandMenu!.renderMenu({
+    const menu = assertDefined(result.current.commandMenu).renderMenu({
       query: '',
       caretPosition: 0,
       close,
@@ -86,7 +93,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
     act(() => {
-      const menu = result.current.commandMenu!.renderMenu({
+      const menu = assertDefined(result.current.commandMenu).renderMenu({
         query: '',
         caretPosition: 0,
         close: vi.fn(),
@@ -101,10 +108,9 @@ describe('useSkillSelectorOverlay', () => {
     });
 
     act(() => {
-      const overlay = result.current.skillMenuOverlay!.renderOverlay(
-        vi.fn(),
-        33,
-      ) as ReactElement;
+      const overlay = assertDefined(
+        result.current.skillMenuOverlay,
+      ).renderOverlay(vi.fn(), 33) as ReactElement;
       getOnSelect(overlay)({ id: csdSkill.url, name: csdSkill.name });
     });
 
@@ -135,7 +141,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
     act(() => {
-      const menu = result.current.commandMenu!.renderMenu({
+      const menu = assertDefined(result.current.commandMenu).renderMenu({
         query: '',
         caretPosition: 0,
         close: vi.fn(),
@@ -165,7 +171,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 
     act(() => {
-      const menu = result.current.commandMenu!.renderMenu({
+      const menu = assertDefined(result.current.commandMenu).renderMenu({
         query: '',
         caretPosition: 0,
         close: vi.fn(),
