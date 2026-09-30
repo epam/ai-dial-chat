@@ -1,4 +1,8 @@
-import { ConfirmationPopupVariant, Popup } from '@epam/ai-dial-ui-kit';
+import {
+  ConfirmationPopupVariant,
+  Popup,
+  PopupSize,
+} from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { ConfirmationFooter } from '../ConfirmationView/ConfirmationFooter';
 import {
@@ -22,6 +26,12 @@ export interface ConfirmationDialogProps extends ConfirmationViewProps {
   isConfirmDisabled?: boolean;
   /** Status text announced to assistive tech while the action is in flight. */
   loadingStatusLabel?: string;
+  /**
+   * Width cap of the dialog. Defaults to `PopupSize.Sm`, which is what a few
+   * lines of copy and two buttons need — the kit's own `Popup` defaults to
+   * `Md`, three times as wide.
+   */
+  size?: PopupSize;
   /** CSS class applied to the popup container, for example to constrain its width. */
   popupClassName?: string;
   /** CSS class applied to the dialog title. */
@@ -45,6 +55,7 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
   isLoading = false,
   isConfirmDisabled = false,
   loadingStatusLabel,
+  size = PopupSize.Sm,
   popupClassName,
   titleClassName,
   variant = ConfirmationPopupVariant.Info,
@@ -65,6 +76,7 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
     <Popup
       open={open}
       header={title}
+      size={size}
       className={popupClassName}
       titleClassName={titleClassName}
       onClose={handleClose}

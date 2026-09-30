@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import ScheduledTaskDeleteModal from '../ScheduledTaskDeleteModal';
-import styles from '../ScheduledTaskDeleteModal.module.scss';
 
 /*
  * The kit's `Popup` renders for real here: mocking it hid that the dialog used
@@ -23,13 +22,14 @@ const renderModal = (
   );
 
 describe('ScheduledTaskDeleteModal', () => {
-  it('names the dialog with the delete title and caps its width', () => {
+  it('names the dialog with the delete title', () => {
     renderModal();
 
-    const dialog = screen.getByRole('dialog', {
-      name: 'scheduledTasks.detail.deleteConfirmTitle',
-    });
-    expect(dialog.classList.contains(styles.modal)).toBe(true);
+    expect(
+      screen.getByRole('dialog', {
+        name: 'scheduledTasks.detail.deleteConfirmTitle',
+      }),
+    ).toBeTruthy();
   });
 
   it('identifies the task by type and name', () => {
@@ -49,7 +49,7 @@ describe('ScheduledTaskDeleteModal', () => {
     expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(
       [
         'scheduledTasks.detail.deleteConsequenceConversationsAccessible',
-        'scheduledTasks.detail.deleteConsequenceCannotBeUndone',
+        'basic.consequenceCannotBeUndone',
       ],
     );
   });
@@ -98,9 +98,7 @@ describe('ScheduledTaskDeleteModal', () => {
     expect(cancelButton.disabled).toBe(true);
 
     expect(
-      screen
-        .getByText('scheduledTasks.detail.deleteConfirmingLabel')
-        .getAttribute('aria-live'),
+      screen.getByText('basic.deletingStatus').getAttribute('aria-live'),
     ).toBe('polite');
   });
 });

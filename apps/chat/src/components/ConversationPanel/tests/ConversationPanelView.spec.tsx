@@ -274,6 +274,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconDownload: () => null,
   IconFileArrowLeft: () => null,
   IconFileArrowRight: () => null,
+  IconMessage: () => null,
   IconPencilMinus: () => null,
   IconPin: () => null,
   IconPinnedFilled: () => null,
@@ -369,6 +370,8 @@ vi.mock('react-i18next', async () => {
 
   return {
     useTranslation: () => translation,
+    /* Mirrors the suite-wide mock: the key itself, no markup. */
+    Trans: ({ i18nKey }: { i18nKey?: string }) => i18nKey ?? null,
   };
 });
 

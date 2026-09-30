@@ -7,7 +7,6 @@ import {
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
 import ScheduledTasksIcon from '../Icons/ScheduledTasksIcon/ScheduledTasksIcon';
-import styles from './ScheduledTaskDeleteModal.module.scss';
 
 interface Props {
   /** Whether the dialog is open. */
@@ -45,7 +44,6 @@ const ScheduledTaskDeleteModal: FC<Props> = ({
   return (
     <ScheduledTaskDeleteConfirmation
       open={open}
-      styles={{ popupClassName: styles.modal }}
       taskName={taskName}
       icon={<ScheduledTasksIcon />}
       typeLabel={t(ScheduledTasksI18nKeys.TypeLabel)}

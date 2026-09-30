@@ -4,8 +4,8 @@ import {
   ButtonAppearance,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
-  NeutralButton,
   NeutralIconButton,
+  StarterButton,
   mergeClasses,
 } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
@@ -155,9 +155,8 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               pillRefs.current[index] = el;
             }}
           >
-            <NeutralButton
+            <StarterButton
               label={starter.title}
-              appearance={ButtonAppearance.Outlined}
               onClick={() => onSelect(starter)}
             />
           </div>
