@@ -236,6 +236,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {errors.modelId && <span>{errors.modelId}</span>}
       {errors.prompt && <span>{errors.prompt}</span>}
       {errors.description && <span>{errors.description}</span>}
+      {errors.startDate && <span>{errors.startDate}</span>}
       {errors.endDate && <span>{errors.endDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button
@@ -272,6 +273,16 @@ const fillValidForm = async () => {
   fireEvent.change(screen.getByRole('textbox', { name: 'prompt' }), {
     target: { value: 'Summarize my inbox' },
   });
+};
+
+/* Submit validation reads the real clock, so window boundaries are built
+   runtime-relative — a hardcoded date becomes a past date the day after it
+   is written. */
+const localDateOnly = (offsetDays: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
 describe('ScheduledTaskCreatePage', () => {
@@ -632,18 +643,19 @@ describe('ScheduledTaskCreatePage', () => {
     expect(screen.getByText('editor.fieldTooLong')).toBeTruthy();
   });
 
-  it('blocks submit with an inline error when endDate is not after startDate', async () => {
+  it('blocks submit with an inline error when endDate is earlier than startDate', async () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'startDate' }),
-      '2026-08-31',
-    );
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'endDate' }),
-      '2026-08-01',
-    );
+    /* Submit validation reads the real clock, so the window is built
+       runtime-relative — a hardcoded date becomes a past date the day after
+       it is written. */
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: localDateOnly(10) },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: localDateOnly(5) },
+    });
     await userEvent.click(
       screen.getByRole('button', { name: 'buttons.create' }),
     );
@@ -651,6 +663,61 @@ describe('ScheduledTaskCreatePage', () => {
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
     expect(
       screen.getByText('scheduledTasks.create.endDateBeforeStartError'),
+    ).toBeTruthy();
+  });
+
+  it('submits a single-day window where endDate equals startDate', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: localDateOnly(1) },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: localDateOnly(1) },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByText('scheduledTasks.create.endDateBeforeStartError'),
+    ).toBeNull();
+  });
+
+  it('blocks submit with an inline error when startDate is in the past', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: localDateOnly(-1) },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.startDateInPast'),
+    ).toBeTruthy();
+  });
+
+  it('blocks submit with an inline error when endDate is in the past', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: localDateOnly(-1) },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.endDateInPast'),
     ).toBeTruthy();
   });
 
@@ -672,10 +739,10 @@ describe('ScheduledTaskCreatePage', () => {
 
     await fillValidForm();
     fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
-      target: { value: '2026-08-01' },
+      target: { value: localDateOnly(1) },
     });
     fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
-      target: { value: '2026-08-31' },
+      target: { value: localDateOnly(10) },
     });
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'repeat' }),
