@@ -186,6 +186,7 @@
     "yaml": "^2.9.0"
   },
   "overrides": {
+    "brace-expansion@^5.0.0": "^5.0.12",
     "express": "$express",
     "@epam/ai-dial-react-pdf-highlighter": "$@epam/ai-dial-react-pdf-highlighter",
     "dompurify": "3.4.15",
