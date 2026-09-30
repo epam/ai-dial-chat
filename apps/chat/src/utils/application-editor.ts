@@ -1,5 +1,8 @@
 import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
-import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ApplicationSchemaSummaryDto,
+  DeploymentItemDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   composeLocalePayload,
   decomposeLocalizedFields,
@@ -10,6 +13,7 @@ import type {
   ApplicationEditorPageDefinition,
   ApplicationSetupValues,
 } from '../models/application-editor';
+import { ApplicationEditorKind } from '../types/application-editor';
 import type { TriggerSaveGeneralPayload } from '../types/apps-editor';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 
@@ -18,6 +22,29 @@ export const defineApplicationEditor = <TSetup extends ApplicationSetupValues>(
   definition: ApplicationEditorFormDefinition<TSetup>,
 ): ApplicationEditorFormDefinition<ApplicationSetupValues> =>
   definition as unknown as ApplicationEditorFormDefinition<ApplicationSetupValues>;
+
+/** Returns the kind that edits apps of `schemaId`: a schema without an editor but with properties uses the schema form. */
+export const resolveSchemaEditorKind = (
+  schemas: ApplicationSchemaSummaryDto[],
+  schemaId: string | null,
+): ApplicationEditorKind => {
+  const schema = schemas.find((item) => item.id === schemaId);
+  return schema && !schema.editorUrl && schema.hasProperties
+    ? ApplicationEditorKind.SchemaApp
+    : ApplicationEditorKind.QuickApp;
+};
+
+/** Returns the required property names that have no value: absent, `null`, a blank string or an empty array. */
+export const getMissingRequiredProperties = (
+  properties: Record<string, unknown> | undefined,
+  requiredProperties: string[],
+): string[] =>
+  requiredProperties.filter((name) => {
+    const value = properties?.[name];
+    if (value == null) return true;
+    if (typeof value === 'string') return value.trim() === '';
+    return Array.isArray(value) && value.length === 0;
+  });
 
 /** Returns whether a registered kind renders its own page body. */
 export const isApplicationEditorPageDefinition = (

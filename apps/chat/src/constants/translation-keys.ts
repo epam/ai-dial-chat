@@ -1149,6 +1149,8 @@ export enum AppsEditorI18nKeys {
   ErrorSaveFailed = 'appsEditor.error.saveFailed',
   ErrorSaveTimeout = 'appsEditor.error.saveTimeout',
   ErrorSettingsNotReady = 'appsEditor.error.settingsNotReady',
+  SchemaFormLoadFailed = 'appsEditor.schemaForm.loadFailed',
+  SchemaFormRequiredMissing = 'appsEditor.schemaForm.requiredMissing',
 }
 
 export enum ToolsetEditorI18nKeys {

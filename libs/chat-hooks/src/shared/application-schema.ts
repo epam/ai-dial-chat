@@ -27,15 +27,32 @@ export const isQuickAppSchema = (schema?: QuickAppSchemaLike): boolean =>
     schema.displayName === 'Quick app 2.0');
 
 /** An application schema with a resolved id, as returned by {@link getRunnerSchemas}. */
-export type RunnerSchema<T extends QuickAppSchemaLike> = T & { id: string };
+export type RunnerSchema<T extends RunnerSchemaLike> = T & { id: string };
 
-/** Returns the schemas that create schema-based apps: unique by id, without id-less entries or the custom-app schema. */
-export const getRunnerSchemas = <T extends QuickAppSchemaLike>(
+/** Shape of an application schema sufficient to decide whether it can create apps. */
+export interface RunnerSchemaLike extends QuickAppSchemaLike {
+  /** URL of the schema's embedded editor, when it has one. */
+  editorUrl?: string;
+  /** Whether the schema's JSON schema declares at least one property. */
+  hasProperties?: boolean;
+}
+
+/** True when an app of `schema` can be configured, through its embedded editor or a form rendered from its properties. */
+export const hasSchemaSetup = (schema: RunnerSchemaLike): boolean =>
+  !!schema.editorUrl || schema.hasProperties === true;
+
+/** Returns the configurable schemas that create schema-based apps: unique by id, without id-less entries or the custom-app schema. */
+export const getRunnerSchemas = <T extends RunnerSchemaLike>(
   schemas: T[],
 ): RunnerSchema<T>[] => {
   const seenIds = new Set<string>();
   return schemas.filter((schema): schema is RunnerSchema<T> => {
-    if (!schema.id || isCustomAppSchema(schema) || seenIds.has(schema.id)) {
+    if (
+      !schema.id ||
+      isCustomAppSchema(schema) ||
+      !hasSchemaSetup(schema) ||
+      seenIds.has(schema.id)
+    ) {
       return false;
     }
     seenIds.add(schema.id);

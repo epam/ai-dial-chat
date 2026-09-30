@@ -2368,19 +2368,20 @@ import { isCustomAppSchema } from '@epam/ai-dial-chat-hooks';
 isCustomAppSchema({ id: 'custom_app' }); // true
 ```
 
-### getRunnerSchemas
+### getRunnerSchemas / hasSchemaSetup
 
-Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. `useCatalogEditNavigation` builds one Create option per returned schema.
+`getRunnerSchemas` returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries, the custom-app schema, and schemas that cannot be configured removed. `hasSchemaSetup` is the configurability check: a schema qualifies when it has an `editorUrl` (embedded editor) or `hasProperties: true` (a form rendered from its JSON schema). Both accept any `RunnerSchemaLike` (`id`, `displayName`, `editorUrl`, `hasProperties`). `useCatalogEditNavigation` builds one Create option per returned schema.
 
 ```ts
 import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
 
 getRunnerSchemas([
-  { id: 'quickapps2' },
-  { id: 'mind-map' },
-  { id: 'mind-map' },
-  { id: 'custom_app' },
-]); // [{ id: 'quickapps2' }, { id: 'mind-map' }]
+  { id: 'quickapps2', editorUrl: 'https://editor.example/quickapps' },
+  { id: 'mind-map', hasProperties: true },
+  { id: 'mind-map', hasProperties: true },
+  { id: 'bare', hasProperties: false },
+  { id: 'custom_app', editorUrl: 'https://editor.example/custom' },
+]); // [{ id: 'quickapps2', … }, { id: 'mind-map', … }]
 ```
 
 ### isValidAbsoluteUrl / parseFeaturesData / isValidFeaturesData

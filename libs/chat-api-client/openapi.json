@@ -7238,6 +7238,11 @@
           "iconUrl": {
             "type": "string",
             "example": "https://example.com/icon.png"
+          },
+          "hasProperties": {
+            "type": "boolean",
+            "description": "Whether the full JSON schema declares at least one property. Resolved only for schemas without an editor URL; absent otherwise.",
+            "example": true
           }
         }
       },

@@ -613,31 +613,31 @@ maps each backend domain to its base path.
 
 ### Versioned domains (`/api/v1/...`)
 
-| Base path             | Source folder          | Responsibility                                                  |
-| --------------------- | ---------------------- | --------------------------------------------------------------- |
-| `auth`                | `auth/`                | Provider list, login/callback, logout, session, CSRF, `me`      |
-| `client-config`       | `app-config/`          | Server-resolved client configuration and feature flags          |
-| `user-config`         | `user-config/`         | Per-user persisted preferences                                  |
-| `chat`                | `chat/`                | Chat completions, streamed over SSE                             |
-| `conversations`       | `conversations/`       | Conversation CRUD, plus publish operations                      |
-| `models`              | `models/`              | Available models                                                |
-| `deployments`         | `deployments/`         | Deployment metadata and usage limits                            |
-| `applications`        | `applications/`        | Application CRUD                                                |
-| `application-schemas` | `application-schemas/` | Quick App / custom application schemas                          |
-| `toolsets`            | `toolsets/`            | Toolsets and their credential state                             |
-| `skills`              | `skills/`              | Skill CRUD, metadata lookup, and skill file transfer            |
-| `prompts`             | `prompts/`             | Prompt CRUD and folders                                         |
-| `files`               | `files/`               | File upload/download, archive upload, ZIP streaming             |
-| `share`               | `share/`               | Share links and recipient management                            |
-| `catalog`             | `publish/`             | Publication requests and published-resource listing             |
-| `publish`             | `publish/`             | Publication rules                                               |
-| `rate`                | `rate/`                | Message rating (like/dislike) and feedback                      |
-| `transcription`       | `transcription/`       | Audio transcription through the ASR model                       |
-| `scheduled-tasks`     | `scheduled-tasks/`     | DIAL Scheduler proxy — schedules and run history                |
-| `client-channel`      | `client-channel/`      | Server-initiated interactions (mid-stream toolset sign-in), SSE |
-| `offline-credentials` | `offline-credentials/` | Offline credential consent flow                                 |
-| `external-services`   | `external-services/`   | External service registry and sign-in state                     |
-| `apps`                | `app/`                 | Root application controller                                     |
+| Base path             | Source folder          | Responsibility                                                                                   |
+| --------------------- | ---------------------- | ------------------------------------------------------------------------------------------------ |
+| `auth`                | `auth/`                | Provider list, login/callback, logout, session, CSRF, `me`                                       |
+| `client-config`       | `app-config/`          | Server-resolved client configuration and feature flags                                           |
+| `user-config`         | `user-config/`         | Per-user persisted preferences                                                                   |
+| `chat`                | `chat/`                | Chat completions, streamed over SSE                                                              |
+| `conversations`       | `conversations/`       | Conversation CRUD, plus publish operations                                                       |
+| `models`              | `models/`              | Available models                                                                                 |
+| `deployments`         | `deployments/`         | Deployment metadata and usage limits                                                             |
+| `applications`        | `applications/`        | Application CRUD                                                                                 |
+| `application-schemas` | `application-schemas/` | Quick App / custom application schemas; the list reports `hasProperties` for editor-less schemas |
+| `toolsets`            | `toolsets/`            | Toolsets and their credential state                                                              |
+| `skills`              | `skills/`              | Skill CRUD, metadata lookup, and skill file transfer                                             |
+| `prompts`             | `prompts/`             | Prompt CRUD and folders                                                                          |
+| `files`               | `files/`               | File upload/download, archive upload, ZIP streaming                                              |
+| `share`               | `share/`               | Share links and recipient management                                                             |
+| `catalog`             | `publish/`             | Publication requests and published-resource listing                                              |
+| `publish`             | `publish/`             | Publication rules                                                                                |
+| `rate`                | `rate/`                | Message rating (like/dislike) and feedback                                                       |
+| `transcription`       | `transcription/`       | Audio transcription through the ASR model                                                        |
+| `scheduled-tasks`     | `scheduled-tasks/`     | DIAL Scheduler proxy — schedules and run history                                                 |
+| `client-channel`      | `client-channel/`      | Server-initiated interactions (mid-stream toolset sign-in), SSE                                  |
+| `offline-credentials` | `offline-credentials/` | Offline credential consent flow                                                                  |
+| `external-services`   | `external-services/`   | External service registry and sign-in state                                                      |
+| `apps`                | `app/`                 | Root application controller                                                                      |
 
 `libs/chat-api-client` is generated from this surface. After changing any
 controller or DTO, run `npm run openapi` and `npm run openapi:check` — handler

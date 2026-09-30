@@ -40,7 +40,10 @@ const labels: CatalogEditNavigationLabels = {
 const quickAppSchema: ApplicationSchemaSummaryDto = {
   id: 'foo-quickapps2',
   displayName: 'Quick app 2.0',
+  editorUrl: 'https://editor.example/quickapps',
 };
+
+const EDITOR_URL = 'https://editor.example/runner';
 
 const makeCatalogItem = (overrides?: Partial<CatalogItem>): CatalogItem => ({
   id: 'tool-abc123',
@@ -214,7 +217,10 @@ describe('useCatalogEditNavigation', () => {
       ];
       const { result, onNavigate } = renderEditNavigation({
         deployments,
-        schemas: [quickAppSchema, { id: 'mind-map-schema' }],
+        schemas: [
+          quickAppSchema,
+          { id: 'mind-map-schema', editorUrl: EDITOR_URL },
+        ],
       });
       const item = makeCatalogItem({
         id: 'applications/b/Mind Map__1.0',
@@ -461,15 +467,32 @@ describe('useCatalogEditNavigation', () => {
       );
     });
 
-    it('offers one create option per runner schema, deduplicated and without the custom-app schema', () => {
+    it('offers one create option per configurable runner schema, deduplicated and without the custom-app schema', () => {
       const { result, onNavigate } = renderEditNavigation({
         isCustomAppsEnabled: true,
         schemas: [
           quickAppSchema,
-          { id: 'mind-map-schema', displayName: 'Mind Map' },
-          { id: 'mind-map-schema', displayName: 'Mind Map' },
-          { id: 'custom_app', displayName: 'Custom app' },
-          { displayName: 'No id' },
+          {
+            id: 'mind-map-schema',
+            displayName: 'Mind Map',
+            hasProperties: true,
+          },
+          {
+            id: 'mind-map-schema',
+            displayName: 'Mind Map',
+            hasProperties: true,
+          },
+          {
+            id: 'custom_app',
+            displayName: 'Custom app',
+            editorUrl: EDITOR_URL,
+          },
+          { displayName: 'No id', editorUrl: EDITOR_URL },
+          {
+            id: 'nothing-to-configure',
+            displayName: 'Bare',
+            hasProperties: false,
+          },
         ],
       });
 
@@ -512,7 +535,11 @@ describe('useCatalogEditNavigation', () => {
         'Lambda',
       ];
       const { result } = renderEditNavigation({
-        schemas: names.map((name) => ({ id: name, displayName: name })),
+        schemas: names.map((name) => ({
+          id: name,
+          displayName: name,
+          editorUrl: EDITOR_URL,
+        })),
       });
 
       const runnerLabels = result.current.createOptions
@@ -534,8 +561,8 @@ describe('useCatalogEditNavigation', () => {
       const { result } = renderEditNavigation({
         schemas: [
           quickAppSchema,
-          { id: 'mind-map', displayName: 'Mind map' },
-          { id: 'ocr', displayName: 'OCR' },
+          { id: 'mind-map', displayName: 'Mind map', editorUrl: EDITOR_URL },
+          { id: 'ocr', displayName: 'OCR', hasProperties: true },
         ],
       });
 

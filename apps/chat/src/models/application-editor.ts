@@ -151,6 +151,14 @@ export interface ApplicationEditorPageDefinition {
 /** Setup values of a kind whose configuration lives outside the page, e.g. in an embedded editor. */
 export type EmptyApplicationSetup = Record<string, never>;
 
+/** Setup values of a schema-based application configured through a form rendered from its JSON schema. */
+export interface SchemaApplicationSetup {
+  /** The application's `applicationProperties`; `undefined` until the form or the loaded application provides them. */
+  properties?: Record<string, unknown>;
+  /** Top-level property names the schema marks as required; filled in once the schema loads. */
+  requiredProperties: string[];
+}
+
 /** Setup values as the page handles them once a kind's own type is erased. */
 export type ApplicationSetupValues = object;
 

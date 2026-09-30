@@ -16,6 +16,7 @@ import {
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
 import { FC, useRef, useState } from 'react';
 import type { CatalogCreateSearch } from '../../models/catalog-props';
+import { highlightDropdownLabels } from '../../utils/create-menu';
 
 /** Props for the catalog Create button. */
 export interface CreateButtonProps {
@@ -53,7 +54,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
 
   if (search) {
     const searchItems: DropdownItem[] = options?.length
-      ? options
+      ? highlightDropdownLabels(options, search.value)
       : [
           {
             key: 'no-results',

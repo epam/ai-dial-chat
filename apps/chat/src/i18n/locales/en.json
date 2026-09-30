@@ -1154,6 +1154,10 @@
       "saveFailed": "Failed to save application settings. Please try again.",
       "saveTimeout": "Saving timed out. Please try again.",
       "settingsNotReady": "The Settings editor did not report readiness. Please reload and try again."
+    },
+    "schemaForm": {
+      "loadFailed": "Failed to load the application settings. Please try again.",
+      "requiredMissing": "Fill in all required settings."
     }
   },
   "toolsetEditor": {

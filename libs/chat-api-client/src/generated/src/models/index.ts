@@ -565,6 +565,12 @@ export interface ApplicationSchemaSummaryDto {
    * @memberof ApplicationSchemaSummaryDto
    */
   iconUrl?: string;
+  /**
+   * Whether the full JSON schema declares at least one property. Resolved only for schemas without an editor URL; absent otherwise.
+   * @type {boolean}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  hasProperties?: boolean;
 }
 /**
  *
