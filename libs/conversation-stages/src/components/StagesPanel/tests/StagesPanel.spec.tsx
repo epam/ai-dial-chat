@@ -19,8 +19,16 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 });
 
 vi.mock('@epam/ai-dial-attachment-input', () => ({
-  AttachmentCard: ({ attachment }: { attachment: { name: string } }) => (
-    <div>{attachment.name}</div>
+  AttachmentCard: ({
+    attachment,
+    onClick,
+  }: {
+    attachment: { id: string; name: string };
+    onClick?: (id: string) => void;
+  }) => (
+    <button type="button" onClick={() => onClick?.(attachment.id)}>
+      {attachment.name}
+    </button>
   ),
 }));
 
@@ -175,10 +183,19 @@ describe('StagesPanel', () => {
 
     const button = screen.getByRole('button');
     expect(button.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.getByText('Detailed stage output')).toBeTruthy();
+    /*
+     * `queryByText` is a plain DOM text search and does not respect `inert` —
+     * only role-based queries do — so the collapsed state is asserted on the
+     * region's own `inert` property instead.
+     */
+    const contentText = screen.getByText('Detailed stage output');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(contentText.closest('[inert]')).toBeTruthy();
 
     fireEvent.click(button);
     expect(button.getAttribute('aria-expanded')).toBe('true');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    expect(contentText.closest('[inert]')).toBeNull();
   });
 
   it('renders a stage without expandable content as a plain row (no button)', () => {
@@ -317,5 +334,31 @@ describe('StagesPanel', () => {
 
     expect(screen.getByText('40.0s')).toBeTruthy();
     expect(screen.queryByText('1m 20s')).toBeNull();
+  });
+
+  it('passes onAttachmentClick through to a rendered stage attachment tile', () => {
+    const onAttachmentClick = vi.fn();
+    const stageWithAttachment = {
+      index: 5,
+      name: 'Combined search',
+      status: StageStatus.Completed,
+      attachments: [
+        { title: 'result.csv', reference_url: 'files/abc/result.csv' },
+      ],
+    };
+    render(
+      <StagesPanel
+        stages={[stageWithAttachment]}
+        isStreaming={false}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Combined search/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+    expect(onAttachmentClick).toHaveBeenCalledOnce();
+    expect(onAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'result.csv' }),
+    );
   });
 });

@@ -196,6 +196,12 @@ const App: FC = () => {
     activeFilterRef.current = tab;
   }, []);
 
+  /* Stable, so `memo(ConversationPanelView)` holds across App re-renders. */
+  const handlePanelRequestedFilterChange = useCallback(
+    () => setPanelRequestedFilter(undefined),
+    [],
+  );
+
   useEffect(() => {
     if (!switchToMyChatsOnNavRef.current) return;
     switchToMyChatsOnNavRef.current = false;
@@ -256,7 +262,7 @@ const App: FC = () => {
           onSelectConversation={handleSelectConversation}
           onNewChat={handleNewChat}
           requestedFilter={panelRequestedFilter}
-          onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+          onRequestedFilterChange={handlePanelRequestedFilterChange}
           onActiveFilterChange={handlePanelActiveFilterChange}
           onDuplicateReadonly={handleDuplicateReadonly}
         />

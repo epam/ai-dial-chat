@@ -27,6 +27,18 @@ const baseValues: ScheduledTaskCreateFormValues = {
   prompt: 'Summarize my inbox',
 };
 
+/* Recurring-schedule conversion reads the timezone offset in effect "now",
+   so pin the clock to a summer date — the expectations below assume summer
+   offsets (e.g. Europe/Warsaw UTC+2, America/New_York UTC-4). */
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-07-15T12:00:00Z'));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('mapFormValuesToCreateBody', () => {
   beforeEach(() => {
     vi.stubEnv('TZ', 'UTC');

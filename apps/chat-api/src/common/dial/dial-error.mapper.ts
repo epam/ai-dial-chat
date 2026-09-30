@@ -15,6 +15,18 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 
+const UPSTREAM_TEXT_HIDDEN_STATUSES = new Set([401, 403, 404]);
+
+/**
+ * Whether upstream-supplied error text or codes may reach the client for this
+ * status. Mirrors `mapDialHttpStatus`, which never forwards `upstreamMessage`
+ * for 401/403/404 — keep the two in sync so every domain that exposes upstream
+ * details (e.g. scheduled tasks' `upstreamMessage`/`upstreamCode`) applies the
+ * same privacy rule.
+ */
+export const isUpstreamTextExposable = (status: number): boolean =>
+  !UPSTREAM_TEXT_HIDDEN_STATUSES.has(status);
+
 /**
  * Maps a DIAL Core HTTP status to the appropriate Nest exception. Shared by
  * the SDK-shaped (`handleDialSdkError`) and fetch-shaped (`handleDialFetchError`)

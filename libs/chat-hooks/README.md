@@ -76,12 +76,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.19
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.20
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.27
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.30
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.29.0
@@ -2247,8 +2247,16 @@ Host-agnostic API error/trace-ID normalization. Works identically for a generate
 ```ts
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 
-const { status, message, traceId } = await getApiErrorDetails(error);
+const { status, message, traceId, code, upstreamCode, upstreamMessage } =
+  await getApiErrorDetails(error);
 ```
+
+Besides `status`, `message` and `traceId`, the result carries the body's `code`
+(a stable domain code), `upstreamCode` and `upstreamMessage` (the code and
+reason of the service behind the API, when the API forwards them). Each is
+present only when the body holds it as a non-empty string. The library passes
+them through untouched — translating a code or deciding to display upstream
+text stays with the host.
 
 ## Locale Utilities
 

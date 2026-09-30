@@ -1269,6 +1269,41 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
    */
   const panelClassName = isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined;
 
+  /* Stable `labels` and `headerActions` keep `memo(ConversationPanel)` from
+     re-rendering every mounted row on each render of this view. */
+  const panelLabels = useMemo(
+    () => ({
+      title: t(ConversationPanelI18nKeys.Title),
+      emptyLabel: t(ConversationPanelI18nKeys.Empty),
+      noResultsLabel: t(BasicI18nKeys.NoResults),
+      newChatLabel: t(ButtonsI18nKeys.NewChat),
+      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+      searchClearLabel: t(BasicI18nKeys.ClearSearch),
+      filterLabels,
+      groupLabels,
+      actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+      unreadIndicatorLabel,
+      closeAriaLabel: t(ConversationPanelI18nKeys.ToggleAriaLabel),
+    }),
+    [t, filterLabels, groupLabels, unreadIndicatorLabel],
+  );
+
+  const panelHeaderActions = useMemo(
+    () => (
+      <ConversationPanelMenu
+        activeConversationId={activeConversationId}
+        onExportAll={isConversationExportHidden ? undefined : handleExportAll}
+        onImport={handleImportClick}
+      />
+    ),
+    [
+      activeConversationId,
+      isConversationExportHidden,
+      handleExportAll,
+      handleImportClick,
+    ],
+  );
+
   return (
     <>
       {isConversationsSectionEnabled && (
@@ -1281,19 +1316,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           activeFilter={requestedFilter}
           onActiveFilterChange={handleActiveFilterChange}
           isFilterTabsHidden={isConversationsFilterHidden}
-          labels={{
-            title: t(ConversationPanelI18nKeys.Title),
-            emptyLabel: t(ConversationPanelI18nKeys.Empty),
-            noResultsLabel: t(BasicI18nKeys.NoResults),
-            newChatLabel: t(ButtonsI18nKeys.NewChat),
-            searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
-            searchClearLabel: t(BasicI18nKeys.ClearSearch),
-            filterLabels,
-            groupLabels,
-            actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
-            unreadIndicatorLabel,
-            closeAriaLabel: t(ConversationPanelI18nKeys.ToggleAriaLabel),
-          }}
+          labels={panelLabels}
           onNewChat={onNewChat}
           getActions={getActions}
           onActionMenuOpen={handleActionMenuOpen}
@@ -1302,15 +1325,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           isOverlay={isMobile}
           styles={PANEL_STYLES}
           onMoveConversation={handleMoveConversation}
-          headerActions={
-            <ConversationPanelMenu
-              activeConversationId={activeConversationId}
-              onExportAll={
-                isConversationExportHidden ? undefined : handleExportAll
-              }
-              onImport={handleImportClick}
-            />
-          }
+          headerActions={panelHeaderActions}
         />
       )}
 
