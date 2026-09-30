@@ -667,9 +667,10 @@ Body of an in-place confirmation step: the identity card, the confirmation
 copy, and an optional consequence list. Presentational only — the caller owns
 the state and the action itself. Pair it with
 [`ConfirmationFooter`](#confirmationfooter). `@epam/ai-dial-catalog`'s details
-panel renders the two as an in-panel sub-view; a caller with a dialog instead
-renders them as its body and footer, which is why they are two components
-rather than one.
+panel renders the two as an in-panel sub-view, which is why they are two
+components rather than one; a caller with no panel to host the step wants
+[`ConfirmationDialog`](#confirmationdialog), which composes them into a
+centered dialog.
 
 ```tsx
 import { ConfirmationView } from '@epam/ai-dial-chat-shared';
@@ -712,6 +713,70 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
   loadingStatusLabel="Deleting"
   onConfirm={handleDelete}
   onCancel={handleCancel}
+/>;
+```
+
+### ConfirmationIdentityRow
+
+Identity of a resource that has no `EntityHeaderItem` — a conversation or a
+scheduled task, say — laid out as icon, type and name for
+[`ConfirmationIdentityCard`](#confirmationidentitycard)'s `children`, so those
+resources get the same card as a catalog entity. The icon comes from the host,
+which owns the glyph set; pass `typeLabel` in sentence case, since the default
+class uppercases it.
+
+```tsx
+import {
+  ConfirmationIdentityCard,
+  ConfirmationIdentityRow,
+} from '@epam/ai-dial-chat-shared';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
+
+<ConfirmationIdentityCard variant={ConfirmationPopupVariant.Danger}>
+  <ConfirmationIdentityRow
+    icon={<IconMessage aria-hidden />}
+    typeLabel="Chat"
+    name={conversation.title}
+  />
+</ConfirmationIdentityCard>;
+```
+
+### ConfirmationDialog
+
+[`ConfirmationView`](#confirmationview) and
+[`ConfirmationFooter`](#confirmationfooter) inside the kit's `Popup` — the same
+content block the catalog's details panel shows in place, for a surface with no
+panel to host it. It takes every `ConfirmationView` prop plus the dialog's own,
+and while `isLoading` is set it blocks every route out, not only the two
+buttons the footer disables: the header close control, Escape and an outside
+click all stop working, because dismissing mid-request would leave the surface
+behind contradicting an action that is still running.
+
+`title` is a string rather than a node so the kit names the dialog with it; a
+node header would open the dialog unnamed.
+
+```tsx
+import { ConfirmationDialog } from '@epam/ai-dial-chat-shared';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
+
+<ConfirmationDialog
+  open={isDeleteOpen}
+  title="Delete chat"
+  variant={ConfirmationPopupVariant.Danger}
+  item={item}
+  message={
+    <>
+      Are you sure you want to delete <strong>{item.name}</strong>? This action
+      is permanent and cannot be undone.
+    </>
+  }
+  consequences={['Cannot be undone']}
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  loadingStatusLabel="Deleting…"
+  isLoading={isDeleting}
+  onConfirm={handleDelete}
+  onClose={closeDelete}
 />;
 ```
 
