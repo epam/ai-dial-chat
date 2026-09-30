@@ -22,10 +22,14 @@ export interface NavigationPanelColors {
   itemText?: string;
   /** Icon color of the active item. */
   itemActiveText?: string;
-  /** Background of the active/selected item. */
+  /** Background of the active/selected item. Defaults to `--bg-control-accent-alpha-active`. */
   itemSelectedBackground?: string;
-  /** Item background on hover. */
+  /** Icon paint (`fill` for an `activeIcon`, `stroke` otherwise) of the active item. Defaults to a built-in blue-to-violet gradient. */
+  itemActiveIcon?: string;
+  /** Item background on hover and keyboard focus. Defaults to `transparent` on hover and `--bg-control-accent-alpha-hover` on focus. */
   itemHoverBackground?: string;
+  /** Icon `stroke` paint on hover and keyboard focus. Defaults to a built-in blue-to-violet gradient. */
+  itemHoverIcon?: string;
   /** Item background while pressed. */
   itemActiveBackground?: string;
 }
