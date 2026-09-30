@@ -67,6 +67,7 @@ import {
   memo,
   Suspense,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -116,7 +117,10 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
-import { collapseScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
+import {
+  applyActiveScheduledTaskRun,
+  groupScheduledTaskConversations,
+} from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -379,6 +383,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     conversationIdsMatch,
     toPanelConversationId,
   });
+  /* Read by row actions at click time, so `getActions` keeps its identity
+     across navigation and the panel does not rebuild every row's menu. */
+  const panelActiveConversationIdRef = useRef(panelActiveConversationId);
+  useEffect(() => {
+    panelActiveConversationIdRef.current = panelActiveConversationId;
+  }, [panelActiveConversationId]);
 
   const {
     pending: pendingDeleteId,
@@ -594,13 +604,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
    * only: every other consumer (active-conversation sync, task banner, History
    * unread marks) keeps reading the full `items` list from the context.
    */
+  const scheduledTaskGrouping = useMemo(
+    () => groupScheduledTaskConversations(items, { conversationIdsMatch }),
+    [items],
+  );
+  /* Keeps the grouping's own array unless an older run is open, so most
+     navigations leave the panel list — and every row — untouched. */
   const panelItems = useMemo(
     () =>
-      collapseScheduledTaskConversations(items, {
-        activeConversationId,
-        conversationIdsMatch,
-      }),
-    [items, activeConversationId],
+      applyActiveScheduledTaskRun(scheduledTaskGrouping, activeConversationId),
+    [scheduledTaskGrouping, activeConversationId],
   );
 
   const conversations = useConversationPanelItems({
@@ -758,12 +771,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           />
         ),
         onClick: async () => {
+          const activeIdAtClick = panelActiveConversationIdRef.current;
           try {
             const newPath = await duplicateConversation(contextId);
             if (
               isReadonlyItem &&
-              panelActiveConversationId &&
-              conversationIdsMatch(panelItem.id, panelActiveConversationId)
+              activeIdAtClick &&
+              conversationIdsMatch(panelItem.id, activeIdAtClick)
             ) {
               onDuplicateReadonly?.();
             }
@@ -995,7 +1009,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       t,
       pinConversation,
       duplicateConversation,
-      panelActiveConversationId,
       isConversationsSharingEnabled,
       isConversationsPublishingEnabled,
       isConversationExportHidden,

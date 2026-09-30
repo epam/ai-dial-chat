@@ -9,6 +9,7 @@ import type { RowRendererData } from '../../models/virtual-row';
 import { VirtualRowKind } from '../../types/virtual-row';
 import {
   getButtonPaddingEnd,
+  getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
   SKELETON_ROW_COUNT,
@@ -113,5 +114,19 @@ describe('getRowHeight', () => {
 
   it('FIRST_GROUP_HEADER_ROW_HEIGHT is smaller than GROUP_HEADER_ROW_HEIGHT (no top gap for first)', () => {
     expect(FIRST_GROUP_HEADER_ROW_HEIGHT).toBeLessThan(GROUP_HEADER_ROW_HEIGHT);
+  });
+});
+
+describe('getOverscanCount', () => {
+  it('keeps at least five rows for an unmeasured list', () => {
+    expect(getOverscanCount(0)).toBe(5);
+  });
+
+  it('keeps at least five rows for a list shorter than one row', () => {
+    expect(getOverscanCount(ITEM_ROW_HEIGHT - 1)).toBe(5);
+  });
+
+  it('overscans half a viewport on each side for a tall list', () => {
+    expect(getOverscanCount(900)).toBe(13);
   });
 });
