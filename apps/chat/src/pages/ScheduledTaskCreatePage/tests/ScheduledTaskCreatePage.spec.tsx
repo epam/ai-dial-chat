@@ -673,7 +673,7 @@ describe('ScheduledTaskCreatePage', () => {
     expect(screen.getByText('editor.fieldTooLong')).toBeTruthy();
   });
 
-  it('blocks submit with an inline error when endDate is not after startDate', async () => {
+  it('blocks submit with an inline error when endDate is earlier than startDate', async () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
@@ -694,6 +694,27 @@ describe('ScheduledTaskCreatePage', () => {
     expect(
       screen.getByText('scheduledTasks.create.endDateBeforeStartError'),
     ).toBeTruthy();
+  });
+
+  it('submits a single-day window where endDate equals startDate', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: localDateOnly(1) },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: localDateOnly(1) },
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByText('scheduledTasks.create.endDateBeforeStartError'),
+    ).toBeNull();
   });
 
   it('blocks submit with an inline error when startDate is in the past', async () => {
@@ -748,10 +769,10 @@ describe('ScheduledTaskCreatePage', () => {
 
     await fillValidForm();
     fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
-      target: { value: '2026-08-01' },
+      target: { value: localDateOnly(1) },
     });
     fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
-      target: { value: '2026-08-31' },
+      target: { value: localDateOnly(10) },
     });
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'repeat' }),

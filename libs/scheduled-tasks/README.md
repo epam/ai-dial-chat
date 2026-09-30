@@ -266,8 +266,11 @@ const errors = validateScheduledTaskFormValues(values, { now: new Date() });
 For a recurring schedule, an activity-window boundary earlier than the
 injected clock's local today is rejected with `StartDateInPast` /
 `EndDateInPast` — the same rule the form's date pickers enforce by making past
-days unselectable, applied to prefilled values (an older task opened for
-editing). `validateScheduledTaskTextField` checks a single free-text field against the
+days unselectable. An edit flow passes the hydrated boundary in
+`originalStartDate`/`originalEndDate`, and a value equal to that original is
+exempt: an older task opened for editing stays savable while its prefilled past
+window is unchanged, and only a boundary changed into the past is rejected.
+`validateScheduledTaskTextField` checks a single free-text field against the
 limits shared by every entity editor — display name 256 characters without
 control characters, description 500, instructions 50000 — so a host can
 surface an over-limit value while the user is still typing:

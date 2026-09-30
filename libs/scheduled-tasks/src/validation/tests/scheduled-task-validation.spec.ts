@@ -161,4 +161,47 @@ describe('validateScheduledTaskFormValues', () => {
       ),
     ).toEqual({});
   });
+
+  it('accepts a single-day window where endDate equals startDate', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-22', endDate: '2026-09-22' },
+        { now: localNow },
+      ),
+    ).toEqual({});
+  });
+
+  it('exempts an unchanged original boundary loaded from an older task', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-21', endDate: '2026-09-25' },
+        {
+          now: localNow,
+          originalStartDate: '2026-09-21',
+          originalEndDate: '2026-09-25',
+        },
+      ),
+    ).toEqual({});
+  });
+
+  it('still rejects a boundary changed to a different past date', () => {
+    const localNow = new Date(2026, 8, 22, 10, 0);
+
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, startDate: '2026-09-20' },
+        { now: localNow, originalStartDate: '2026-09-21' },
+      ),
+    ).toEqual({ startDate: ScheduledTaskValidationErrorCode.StartDateInPast });
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, endDate: '2026-09-20' },
+        { now: localNow, originalEndDate: '2026-09-21' },
+      ),
+    ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInPast });
+  });
 });

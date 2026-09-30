@@ -37,7 +37,6 @@ import {
   Suspense,
   useEffect,
   useId,
-  useMemo,
   useRef,
   useState,
   type FC,
@@ -133,11 +132,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   };
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const [timeBlurError, setTimeBlurError] = useState<string>();
-  /* Pinned at mount so past days stay unselectable in the start/end date
-   * pickers while the earliest selectable day stays fixed, instead of
-   * advancing on every re-render — the same pin `ScheduledTaskRunAtField`
+  /* Pinned at mount through a ref — `useMemo` is only a performance hint
+   * React may discard, and the earliest selectable day must stay fixed for
+   * the component's lifetime — the same pin `ScheduledTaskRunAtField`
    * applies to the one-shot run-at picker. */
-  const minDate = useMemo(() => new Date(), []);
+  const minDate = useRef(new Date()).current;
   const { colors, typography, layout } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =

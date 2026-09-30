@@ -382,9 +382,9 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 
 ### Requirement: Create-task page validates and converts the activity window to UTC boundaries
 
-`ScheduledTaskCreatePage`'s `DEFAULT_VALUES` SHALL include `startDate: undefined` and `endDate: undefined`. Before calling `createScheduledTask`, when both `values.startDate` and `values.endDate` are set and `endDate` is not strictly after `startDate`, the page SHALL set `errors.endDate` to a validation message and block submit; when either or both fields are empty, this check is skipped (both empty is valid — an unbounded recurring schedule). This check applies whenever `values.repeat !== 'oneTime'`, including `'hourly'`.
+`ScheduledTaskCreatePage`'s `DEFAULT_VALUES` SHALL include `startDate: undefined` and `endDate: undefined`. Before calling `createScheduledTask`, when both `values.startDate` and `values.endDate` are set and `endDate` is earlier than `startDate`, the page SHALL set `errors.endDate` to a validation message and block submit; `endDate` equal to `startDate` is a valid single-day window (the start boundary resolves to that day's `00:00:00.000` local and the end boundary to its `23:59:59.999`), so it MUST NOT be rejected. When either or both fields are empty, this check is skipped (both empty is valid — an unbounded recurring schedule). This check applies whenever `values.repeat !== 'oneTime'`, including `'hourly'`.
 
-The shared `validateScheduledTaskFormValues` (`libs/scheduled-tasks/src/validation`) SHALL additionally reject a recurring activity-window boundary earlier than the validating clock's local today, returning the `StartDateInPast`/`EndDateInPast` error codes — a boundary that is both past and mis-ordered reports the past-date code, which runs after the ordering check so the more actionable message wins. This check closes the path the pickers cannot: an older task's prefilled past dates (loaded through `mapScheduledTaskDtoToFormValues` on the edit page) reach submit validation even though the pickers only display them.
+The shared `validateScheduledTaskFormValues` (`libs/scheduled-tasks/src/validation`) SHALL additionally reject a recurring activity-window boundary earlier than the validating clock's local today, returning the `StartDateInPast`/`EndDateInPast` error codes — a boundary that is both past and mis-ordered reports the past-date code, which runs after the ordering check so the more actionable message wins. A boundary equal to the option's `originalStartDate`/`originalEndDate` SHALL be exempt: `ScheduledTaskEditPage` passes the hydrated boundaries in those options, so an older task's prefilled past window does not block saving unrelated edits, while a boundary changed into the past is still rejected. The create page passes no originals, so the rule applies to every boundary there.
 
 `mapFormValuesToCreateBody` (`apps/chat/src/utils/scheduled-task-trigger.ts`) SHALL build the `trigger.cron` object for any non-`'oneTime'` `repeat` value as `{ fields, ...(startDate ? { startDate: <iso> } : {}), ...(endDate ? { endDate: <iso> } : {}) }`, and MUST NOT include `startDate`/`endDate` when `repeat === 'oneTime'` (the one-time branch is unaffected by this change). The local calendar-day-to-UTC-instant conversion SHALL follow the same reference-`Date`-plus-UTC-getters technique `buildCronFields` already uses and documents in its own code comment, extended to cover this case: `startDate` converts to that local calendar day's `00:00:00.000` local time, then to its UTC ISO equivalent; `endDate` converts to that local calendar day's `23:59:59.999` local time, then to its UTC ISO equivalent, so the last local day the user selected is not cut off by the UTC conversion.
 
@@ -400,20 +400,35 @@ Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTas
 - **WHEN** `values.repeat !== 'oneTime'`, `startDate = '2026-08-01'`, `endDate = '2026-08-31'`, and the browser's local timezone is UTC+2
 - **THEN** the POST body's `trigger.cron.startDate` is `'2026-07-31T22:00:00.000Z'` (local midnight Aug 1 in UTC+2) and `trigger.cron.endDate` is `'2026-08-31T21:59:59.999Z'` (local 23:59:59.999 Aug 31 in UTC+2)
 
-#### Scenario: endDate not after startDate blocks submit with an inline error
+#### Scenario: endDate earlier than startDate blocks submit with an inline error
 
-- **WHEN** the user sets `endDate` equal to or earlier than `startDate` and activates Create
+- **WHEN** the user sets `endDate` earlier than `startDate` and activates Create
 - **THEN** `errors.endDate` is set to the `endDateBeforeStartError` message, no `createScheduledTask` call is made, and the form remains open
+
+#### Scenario: endDate equal to startDate is a valid single-day window
+
+- **WHEN** the user sets `startDate` and `endDate` to the same calendar day (not earlier than the validating clock's local today) and activates Create/Save
+- **THEN** no ordering error is set and submit proceeds — the window covers that full local day, from `00:00:00.000` to `23:59:59.999`
 
 #### Scenario: A past startDate blocks submit with an inline error
 
-- **WHEN** the user sets `startDate` earlier than the validating clock's local today (or an older task's past `startDate` is prefilled on the edit form) and activates Create/Save
+- **WHEN** the user sets `startDate` earlier than the validating clock's local today and activates Create/Save
 - **THEN** `errors.startDate` is set to the `startDateInPast` message, no `createScheduledTask`/`updateScheduledTask` call is made, and the form remains open
 
 #### Scenario: A past endDate blocks submit with an inline error
 
 - **WHEN** the user sets `endDate` earlier than the validating clock's local today (with `startDate` unset or valid) and activates Create/Save
 - **THEN** `errors.endDate` is set to the `endDateInPast` message, no `createScheduledTask`/`updateScheduledTask` call is made, and the form remains open
+
+#### Scenario: An unchanged prefilled past boundary still saves on the edit page
+
+- **WHEN** an older task's past `startDate` (or ended `endDate`) is prefilled on the edit form, the user leaves the boundary unchanged, and activates Save
+- **THEN** no past-date error is set and the `updateScheduledTask` call proceeds with the boundary preserved in `trigger.cron`
+
+#### Scenario: A boundary changed to a different past date blocks save on the edit page
+
+- **WHEN** an older task's past `startDate` is prefilled on the edit form and the user changes it to another date earlier than the validating clock's local today
+- **THEN** `errors.startDate` is set to the `startDateInPast` message and no `updateScheduledTask` call is made
 
 #### Scenario: A window starting on today is accepted
 

@@ -11,6 +11,7 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskEditPage from '../ScheduledTaskEditPage';
+
 vi.mock(
   '../../../components/ScheduledTaskSkillField/ScheduledTaskSkillField',
   () => ({
@@ -105,6 +106,7 @@ const refineTextMock = vi.fn();
 vi.mock('../../../server-api/text-refinement.api', () => ({
   refineText: (...args: unknown[]) => refineTextMock(...args),
 }));
+
 interface FormProps {
   onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
   onRefineInstructions?: (
@@ -622,6 +624,38 @@ describe('ScheduledTaskEditPage', () => {
     reference.setHours(8, 45, 0, 0);
     expect(fields.hour).toBe(String(reference.getUTCHours()));
     expect(fields.minute).toBe(String(reference.getUTCMinutes()));
+  });
+
+  it('saves an older task whose activity window already started, preserving the boundary', async () => {
+    const loadedStart = new Date('2020-01-01T00:00:00.000Z');
+    getScheduledTaskMock.mockResolvedValue({
+      ...baseTask,
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: loadedStart.toISOString(),
+          endDate: '2099-12-31T23:59:59.999Z',
+        },
+      },
+    });
+    updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
+    /* The body rebuilds the boundary from the loaded local calendar day via a
+       reference Date; compute the expectation the same way so the test holds
+       in any runner timezone. */
+    const expected = new Date(
+      loadedStart.getFullYear(),
+      loadedStart.getMonth(),
+      loadedStart.getDate(),
+    ).toISOString();
+    expect(updateScheduledTaskMock.mock.calls[0][1].trigger.cron).toMatchObject(
+      { startDate: expected },
+    );
   });
 
   it('navigates to the detail route without a network call when Cancel is activated', async () => {
