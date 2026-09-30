@@ -1,26 +1,63 @@
-import { GIFT_WRAPPING_MS, type GiftWrappingPlan } from './gift-wrapping-plan';
+import type { AnimationItem } from 'lottie-web';
+import {
+  GIFT_WRAPPING_MS,
+  type GiftWrappingComposition,
+} from './gift-wrapping-composition';
+import type { LottiePlayer } from './gift-wrapping-player';
 
 /** Plays the prepared scene and releases every resource on interruption. */
 export const animateGiftWrapping = (
-  plan: GiftWrappingPlan,
-  host: SVGSVGElement,
-  onStop: () => void,
+  plan: GiftWrappingComposition,
+  host: HTMLElement,
+  player: LottiePlayer,
+  onStop: (failed: boolean) => void,
 ): (() => void) => {
-  const animations: Animation[] = [];
+  let animation: AnimationItem | undefined;
   let stopped = false;
+  let playing = false;
   let deadline: ReturnType<typeof setTimeout> | undefined;
+  let readinessDeadline: ReturnType<typeof setTimeout> | undefined;
   let mutation: MutationObserver | undefined;
   let resize: ResizeObserver | undefined;
   const source = plan.target.source;
-  const stop = () => {
+  const finish = (failed: boolean) => {
     if (stopped) return;
     stopped = true;
     host.style.visibility = 'hidden';
     clearTimeout(deadline);
+    clearTimeout(readinessDeadline);
     mutation?.disconnect();
     resize?.disconnect();
-    animations.forEach((animation) => animation.cancel());
-    onStop();
+    if (animation) {
+      animation.removeEventListener('DOMLoaded', ready);
+      animation.removeEventListener('complete', stop);
+      animation.removeEventListener('data_failed', fail);
+      animation.removeEventListener('error', fail);
+      try {
+        animation.destroy();
+      } catch {
+        host.replaceChildren();
+      }
+    }
+    onStop(failed);
+  };
+  const stop = () => finish(false);
+  const fail = () => finish(true);
+  const ready = () => {
+    if (stopped || playing) return;
+    if (!animation?.isLoaded) {
+      fail();
+      return;
+    }
+    playing = true;
+    clearTimeout(readinessDeadline);
+    animation.removeEventListener('DOMLoaded', ready);
+    deadline = setTimeout(stop, GIFT_WRAPPING_MS);
+    try {
+      animation.play();
+    } catch {
+      fail();
+    }
   };
   const moved = () => {
     if (stopped || !source) return;
@@ -34,23 +71,23 @@ export const animateGiftWrapping = (
       stop();
   };
   try {
-    if (
-      plan.tracks.length > plan.animationLimit ||
-      plan.tracks.reduce((sum, track) => sum + track.frames.length, 0) >
-        plan.frameLimit
-    )
-      throw new Error('Gift wrapping exceeds its animation budget');
-    const start = document.timeline?.currentTime;
-    for (const track of plan.tracks) {
-      const element = host.querySelector(track.selector);
-      if (!element) throw new Error('Gift wrapping artwork is incomplete');
-      const animation = element.animate(track.frames, {
-        duration: GIFT_WRAPPING_MS,
-        fill: 'both',
-      });
-      animations.push(animation);
-      if (typeof start === 'number') animation.startTime = start;
-    }
+    animation = player.loadAnimation({
+      container: host,
+      renderer: 'svg',
+      loop: false,
+      autoplay: false,
+      animationData: plan.animationData,
+      rendererSettings: {
+        progressiveLoad: false,
+        preserveAspectRatio: 'xMidYMid meet',
+        focusable: false,
+      },
+    });
+    animation.setSubframe(true);
+    animation.addEventListener('DOMLoaded', ready);
+    animation.addEventListener('complete', stop);
+    animation.addEventListener('data_failed', fail);
+    animation.addEventListener('error', fail);
     if (source) {
       mutation = new MutationObserver((records) => {
         const relevant = records.filter(
@@ -100,9 +137,11 @@ export const animateGiftWrapping = (
       )
         resize.observe(ancestor);
     }
-    deadline = setTimeout(stop, GIFT_WRAPPING_MS);
+    /* Local vector data emits DOMLoaded after the renderer initializes. Waiting
+       also catches configuration errors emitted before loadAnimation returns. */
+    readinessDeadline = setTimeout(fail, 250);
   } catch {
-    stop();
+    fail();
   }
   return stop;
 };

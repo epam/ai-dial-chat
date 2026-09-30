@@ -22,7 +22,7 @@ export const getGiftWrappingTarget = (
   const candidates = anchors.composer
     ? document.getElementsByClassName(anchors.composer)
     : [];
-  const clearance = isMobile ? 104 : 140;
+  const clearance = isMobile ? 132 : 164;
   let rtl = getComputedStyle(document.documentElement).direction === 'rtl';
   for (let i = 0; i < Math.min(candidates.length, 4); i++) {
     const element = candidates[i];
