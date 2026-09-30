@@ -14,6 +14,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
+import { ScheduledTaskRateLimitException } from '../scheduled-task-rate-limit.exception';
 import { ScheduledTasksController } from '../scheduled-tasks.controller';
 import {
   fromUpstreamSchedule,
@@ -44,6 +45,8 @@ interface MockScheduledTasksService {
   listScheduledTasks: ReturnType<typeof vi.fn>;
   createScheduledTask: ReturnType<typeof vi.fn>;
   getScheduledTask: ReturnType<typeof vi.fn>;
+  getScheduledTaskRun: ReturnType<typeof vi.fn>;
+  startScheduledTask: ReturnType<typeof vi.fn>;
   updateScheduledTask: ReturnType<typeof vi.fn>;
   listScheduledTaskRuns: ReturnType<typeof vi.fn>;
   pauseScheduledTask: ReturnType<typeof vi.fn>;
@@ -97,6 +100,8 @@ describe('ScheduledTasksController (integration)', () => {
       listScheduledTasks: vi.fn(),
       createScheduledTask: vi.fn(),
       getScheduledTask: vi.fn(),
+      getScheduledTaskRun: vi.fn(),
+      startScheduledTask: vi.fn(),
       updateScheduledTask: vi.fn(),
       listScheduledTaskRuns: vi.fn(),
       pauseScheduledTask: vi.fn(),
@@ -751,6 +756,125 @@ describe('ScheduledTasksController (integration)', () => {
     });
   });
 
+  describe('GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId', () => {
+    it.each(['4', 'Wed, 30 Sep 2026 10:00:00 GMT'])(
+      'returns the Scheduler Retry-After header %s with its mapped error body',
+      async (retryAfter) => {
+        const body = {
+          statusCode: 429,
+          message: 'Rate limited',
+          upstreamCode: 'rate_limited',
+        };
+        service.getScheduledTaskRun.mockRejectedValue(
+          new ScheduledTaskRateLimitException(body, retryAfter),
+        );
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/scheduled-tasks/sched_123/runs/run_123')
+          .expect(429);
+        expect(response.headers['retry-after']).toBe(retryAfter);
+        expect(response.body).toEqual(body);
+      },
+    );
+    const run = {
+      id: 'run_123',
+      status: 'Success',
+      startTime: '2026-09-30T09:00:00Z',
+      endTime: '2026-09-30T09:00:01Z',
+      durationSeconds: 1,
+      conversationId: 'conversations/bucket/.scheduler/sched_123/run_123',
+    };
+
+    it('returns the mapped owned run with no-store caching', async () => {
+      service.getScheduledTaskRun.mockResolvedValue(run);
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs/run_123')
+        .expect(200);
+
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      expect(response.body).toEqual(run);
+      expect(service.getScheduledTaskRun).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'sched_123',
+        'run_123',
+      );
+    });
+
+    it.each([
+      '/api/v1/scheduled-tasks/..%2F..%2Fetc%2Fpasswd/runs/run_123',
+      '/api/v1/scheduled-tasks/sched_123/runs/..%2F..%2Fetc%2Fpasswd',
+    ])(
+      'rejects malformed path ids before calling the service: %s',
+      async (url) => {
+        await request(app.getHttpServer()).get(url).expect(400);
+        expect(service.getScheduledTaskRun).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      [401, new UnauthorizedException()],
+      [403, new HttpException('Forbidden', 403)],
+      [404, new NotFoundException()],
+      [429, new HttpException('Rate limited', 429)],
+      [502, new BadGatewayException()],
+      [503, new ServiceUnavailableException()],
+    ])('preserves service error status %i', async (status, error) => {
+      service.getScheduledTaskRun.mockRejectedValue(error);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks/sched_123/runs/run_missing')
+        .expect(status);
+    });
+  });
+
+  describe('POST /api/v1/scheduled-tasks/:scheduleId/run', () => {
+    const acceptedRun = {
+      id: 'run_123',
+      status: 'InProgress',
+      startTime: '2026-09-30T09:00:00Z',
+      endTime: null,
+    };
+
+    it('returns 202 and ignores an override body', async () => {
+      service.startScheduledTask.mockResolvedValue(acceptedRun);
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/run')
+        .send({ prompt: 'override the saved definition' })
+        .expect(202);
+
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      expect(response.body).toEqual(acceptedRun);
+      expect(service.startScheduledTask).toHaveBeenCalledTimes(1);
+      expect(service.startScheduledTask).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'sched_123',
+      );
+    });
+
+    it('rejects an invalid schedule id without calling the service', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/..%2F..%2Fetc%2Fpasswd/run')
+        .expect(400);
+
+      expect(service.startScheduledTask).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [404, new NotFoundException()],
+      [409, new ConflictException()],
+      [429, new HttpException('Rate limited', 429)],
+      [502, new BadGatewayException()],
+      [503, new ServiceUnavailableException()],
+    ])('preserves service error status %i', async (status, error) => {
+      service.startScheduledTask.mockRejectedValue(error);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks/sched_123/run')
+        .expect(status);
+    });
+  });
+
   describe('PUT /api/v1/scheduled-tasks/:scheduleId', () => {
     it('returns 200 with the updated schedule', async () => {
       service.updateScheduledTask.mockResolvedValue(mockSchedule);
@@ -1044,6 +1168,8 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
       listScheduledTasks: vi.fn(),
       createScheduledTask: vi.fn(),
       getScheduledTask: vi.fn(),
+      getScheduledTaskRun: vi.fn(),
+      startScheduledTask: vi.fn(),
       updateScheduledTask: vi.fn(),
       listScheduledTaskRuns: vi.fn(),
       pauseScheduledTask: vi.fn(),
@@ -1060,6 +1186,9 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
       .send(validCreateBody)
       .expect(403);
     await request(app.getHttpServer())
+      .post('/api/v1/scheduled-tasks/sched_123/run')
+      .expect(403);
+    await request(app.getHttpServer())
       .get('/api/v1/scheduled-tasks/sched_123')
       .expect(403);
     await request(app.getHttpServer())
@@ -1068,6 +1197,9 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
       .expect(403);
     await request(app.getHttpServer())
       .get('/api/v1/scheduled-tasks/sched_123/runs')
+      .expect(403);
+    await request(app.getHttpServer())
+      .get('/api/v1/scheduled-tasks/sched_123/runs/run_123')
       .expect(403);
     await request(app.getHttpServer())
       .post('/api/v1/scheduled-tasks/sched_123/pause')
@@ -1082,6 +1214,7 @@ describe('ScheduledTasksController — unauthenticated / feature-disabled', () =
     expect(service.listScheduledTasks).not.toHaveBeenCalled();
     expect(service.createScheduledTask).not.toHaveBeenCalled();
     expect(service.getScheduledTask).not.toHaveBeenCalled();
+    expect(service.getScheduledTaskRun).not.toHaveBeenCalled();
     expect(service.updateScheduledTask).not.toHaveBeenCalled();
     expect(service.listScheduledTaskRuns).not.toHaveBeenCalled();
     expect(service.pauseScheduledTask).not.toHaveBeenCalled();

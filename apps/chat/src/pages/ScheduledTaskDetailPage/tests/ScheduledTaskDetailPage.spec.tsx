@@ -1,6 +1,7 @@
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -44,6 +45,8 @@ const getScheduledTaskMock = vi.fn();
 const pauseScheduledTaskMock = vi.fn();
 const resumeScheduledTaskMock = vi.fn();
 const deleteScheduledTaskMock = vi.fn();
+const startScheduledTaskMock = vi.fn();
+const getScheduledTaskRunMock = vi.fn();
 vi.mock('../../../server-api/scheduled-tasks.api', () => ({
   getScheduledTask: (scheduleId: string) => getScheduledTaskMock(scheduleId),
   pauseScheduledTask: (scheduleId: string) =>
@@ -52,6 +55,9 @@ vi.mock('../../../server-api/scheduled-tasks.api', () => ({
     resumeScheduledTaskMock(scheduleId),
   deleteScheduledTask: (scheduleId: string) =>
     deleteScheduledTaskMock(scheduleId),
+  startScheduledTask: (scheduleId: string) =>
+    startScheduledTaskMock(scheduleId),
+  getScheduledTaskRun: (...args: unknown[]) => getScheduledTaskRunMock(...args),
 }));
 
 const showNotificationMock = vi.fn();
@@ -60,6 +66,91 @@ vi.mock('../../../context/NotificationContext', () => ({
 }));
 
 const getApiErrorDetailsMock = vi.fn();
+
+const useOfflineCredentialsGateMock = vi.fn();
+vi.mock('../../../hooks/offlineCredentials/useOfflineCredentialsGate', () => ({
+  OfflineCredentialsGateStatus: {
+    Checking: 'checking',
+    Hidden: 'hidden',
+    Available: 'available',
+    Unavailable: 'unavailable',
+    Error: 'error',
+  },
+  useOfflineCredentialsGate: () => useOfflineCredentialsGateMock(),
+}));
+
+const loginOfflineCredentialsMock = vi.fn();
+vi.mock('../../../hooks/offlineCredentials/useOfflineCredentialsLogin', () => ({
+  OfflineCredentialsLoginOutcomeType: {
+    Success: 'success',
+    Failure: 'failure',
+    PopupBlocked: 'popup-blocked',
+    Cancelled: 'cancelled',
+    TimedOut: 'timed-out',
+  },
+  useOfflineCredentialsLogin: () => ({ login: loginOfflineCredentialsMock }),
+}));
+
+vi.mock(
+  '../../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner',
+  () => ({
+    ScheduledTasksLoginBannerState: {
+      Shown: 'shown',
+      LoginInProgress: 'login-in-progress',
+      RetryPopupBlocked: 'retry-popup-blocked',
+      RetryCancelled: 'retry-cancelled',
+      RetryTimeout: 'retry-timeout',
+      RetryFailed: 'retry-failed',
+    },
+    default: ({
+      state,
+      title,
+      body,
+      loginButtonLabel,
+      retryButtonLabel,
+      loggingInLabel,
+      liveAnnouncement,
+      onLogIn,
+    }: {
+      state?: string;
+      title: string;
+      body: string;
+      loginButtonLabel: string;
+      retryButtonLabel: string;
+      loggingInLabel: string;
+      liveAnnouncement: string;
+      onLogIn?: () => void;
+    }) => {
+      if (!state) {
+        return <span role="status">{liveAnnouncement}</span>;
+      }
+
+      let primaryLabel = loginButtonLabel;
+      if (state === 'login-in-progress') {
+        primaryLabel = loggingInLabel;
+      } else if (state.startsWith('retry-')) {
+        primaryLabel = retryButtonLabel;
+      }
+
+      return (
+        <div role="alert">
+          <span>{title}</span>
+          <span>{body}</span>
+          {onLogIn && (
+            <button
+              type="button"
+              disabled={state === 'login-in-progress'}
+              onClick={onLogIn}
+            >
+              {primaryLabel}
+            </button>
+          )}
+          <span role="status">{liveAnnouncement}</span>
+        </div>
+      );
+    },
+  }),
+);
 
 const useScheduledTaskRunsMock = vi.fn();
 vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskRuns', () => ({
@@ -92,8 +183,11 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     labels,
     onBack,
     onEdit,
+    onStartNow,
     onDelete,
     isDeleting,
+    isStarting,
+    isStartNowDisabled,
     isDeleted,
     isCompleted,
     isActive,
@@ -124,16 +218,21 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       historyErrorLabel: string;
       historyRetryLabel: string;
       editButtonLabel: string;
+      startNowButtonLabel?: string;
       deleteButtonLabel: string;
       deletedStateLabel: string;
       activeStatusLabel: string;
       activeStatusAnnouncement?: string;
+      startStatusAnnouncement?: string;
       completedFieldLabel: string;
     };
     onBack: () => void;
     onEdit?: () => void;
+    onStartNow?: () => void;
     onDelete?: () => void;
     isDeleting?: boolean;
+    isStarting?: boolean;
+    isStartNowDisabled?: boolean;
     isDeleted?: boolean;
     isCompleted?: boolean;
     isActive?: boolean;
@@ -179,6 +278,9 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       )}
       <span>nextRunLabel:{nextRunLabel}</span>
       <span>runs:{runs.length}</span>
+      {labels.startStatusAnnouncement && (
+        <span role="status">{labels.startStatusAnnouncement}</span>
+      )}
       {runs.map((run) => (
         <button key={run.id} onClick={() => onRunClick?.(run)}>
           run:{run.id}:{run.isUnread ? 'unread' : 'read'}
@@ -198,6 +300,14 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {onEdit && (
         <button onClick={onEdit} disabled={isDeleting}>
           {labels.editButtonLabel}
+        </button>
+      )}
+      {onStartNow && (
+        <button
+          onClick={onStartNow}
+          disabled={isStarting || isStartNowDisabled}
+        >
+          {isStarting ? 'starting' : labels.startNowButtonLabel}
         </button>
       )}
       {!isDeleted && !isCompleted && isActive !== undefined && (
@@ -350,6 +460,14 @@ describe('ScheduledTaskDetailPage', () => {
     });
     getApiErrorStatusMock.mockReturnValue(undefined);
     getApiErrorDetailsMock.mockResolvedValue({ traceId: undefined });
+    startScheduledTaskMock.mockReset();
+    getScheduledTaskRunMock.mockReset();
+    useOfflineCredentialsGateMock.mockReturnValue({
+      status: 'hidden',
+      connect: undefined,
+      refetch: vi.fn(),
+    });
+    loginOfflineCredentialsMock.mockReset();
   });
 
   it('renders NotFound when scheduledTasksEnabled is false, without calling getScheduledTask', () => {
@@ -379,6 +497,372 @@ describe('ScheduledTaskDetailPage', () => {
       true,
       undefined,
     );
+  });
+
+  it('prepends an accepted manual run without hiding it behind pending History', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    });
+    useScheduledTaskRunsMock.mockReturnValue({
+      items: [],
+      isLoading: true,
+      isLoadingMore: false,
+      error: null,
+      hasMore: false,
+      loadMore: vi.fn(),
+      refetch: vi.fn(),
+    });
+    startScheduledTaskMock.mockResolvedValue({
+      id: 'run_started',
+      status: 'InProgress',
+      startTime: '2026-09-30T09:00:00Z',
+    });
+    renderDetailPage();
+
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.detail.startNow',
+      }),
+    );
+
+    expect(startScheduledTaskMock).toHaveBeenCalledWith('sched_123');
+    expect(await screen.findByText('runs:1')).toBeTruthy();
+    expect(
+      screen
+        .getByText('scheduledTasks.detail.startAccepted')
+        .getAttribute('role'),
+    ).toBe('status');
+    expect(showNotificationMock).toHaveBeenCalled();
+  });
+
+  it('does not notify after leaving while a start error is being decoded', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Task',
+      trigger: {},
+    });
+    startScheduledTaskMock.mockRejectedValue(new Error('deleted'));
+    let resolveDetails!: (details: { status: number }) => void;
+    getApiErrorDetailsMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveDetails = resolve;
+      }),
+    );
+    const { unmount } = renderDetailPage();
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.detail.startNow',
+      }),
+    );
+    await waitFor(() => expect(getApiErrorDetailsMock).toHaveBeenCalled());
+    unmount();
+    await act(async () => {
+      resolveDetails({ status: 409 });
+    });
+    expect(showNotificationMock).not.toHaveBeenCalled();
+  });
+
+  it('announces the accepted run once after duplicate activation', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Task',
+      trigger: {},
+    });
+    startScheduledTaskMock.mockResolvedValue({
+      id: 'run_started',
+      status: 'InProgress',
+      startTime: '2026-09-30T09:00:00Z',
+    });
+    renderDetailPage();
+    const button = await screen.findByRole('button', {
+      name: 'scheduledTasks.detail.startNow',
+    });
+    // eslint-disable-next-line testing-library/no-unnecessary-act -- Both activations must occur before React commits the disabled button.
+    act(() => {
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
+    await screen.findByText('scheduledTasks.detail.startAccepted');
+    expect(startScheduledTaskMock).toHaveBeenCalledTimes(1);
+    expect(showNotificationMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts again after a polled completion even while History still reports InProgress', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Task',
+      trigger: {},
+    });
+    const run = {
+      id: 'run_started',
+      status: 'InProgress',
+      startTime: '2026-09-30T09:00:00Z',
+    };
+    startScheduledTaskMock.mockResolvedValue(run);
+    getScheduledTaskRunMock.mockImplementation(async () => {
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [run],
+        isLoading: false,
+        hasMore: false,
+        error: null,
+      });
+      return { ...run, status: 'Success' };
+    });
+    renderDetailPage();
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.detail.startNow',
+      }),
+    );
+    await screen.findByText(
+      'scheduledTasks.detail.runFinished',
+      {},
+      { timeout: 5000 },
+    );
+    const button = screen.getByRole('button', {
+      name: 'scheduledTasks.detail.startNow',
+    });
+    expect(button).toHaveProperty('disabled', false);
+    startScheduledTaskMock.mockResolvedValue({ ...run, id: 'run_2' });
+    await userEvent.click(button);
+    expect(startScheduledTaskMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('rechecks a previously connected credential gate when a new run fails at credentials', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Task',
+      trigger: {},
+    });
+    const connect = {
+      clientId: 'offline-client',
+      authorizationEndpoint: 'https://dial.example.test/oauth',
+      scopes: [],
+    };
+    const refetch = vi.fn(async () => {
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect,
+        refetch,
+      });
+    });
+    useOfflineCredentialsGateMock.mockReturnValue({
+      status: 'hidden',
+      connect: undefined,
+      refetch,
+    });
+    startScheduledTaskMock.mockResolvedValue({
+      id: 'run_started',
+      status: 'InProgress',
+      startTime: '2026-09-30T09:00:00Z',
+    });
+    getScheduledTaskRunMock.mockResolvedValue({
+      id: 'run_started',
+      status: 'Error',
+      resultStage: 'credentials',
+      startTime: '2026-09-30T09:00:00Z',
+    });
+    renderDetailPage();
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.detail.startNow',
+      }),
+    );
+    expect(
+      await screen.findByRole(
+        'button',
+        { name: 'buttons.logIn' },
+        { timeout: 5000 },
+      ),
+    ).toBeTruthy();
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(startScheduledTaskMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains the accepted run and a scoped retry when initial History fails', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Task',
+      trigger: {},
+    });
+    const refetch = vi.fn();
+    useScheduledTaskRunsMock.mockReturnValue({
+      items: [],
+      isLoading: false,
+      error: new Error('History unavailable'),
+      hasMore: false,
+      refetch,
+    });
+    startScheduledTaskMock.mockResolvedValue({
+      id: 'run_started',
+      status: 'InProgress',
+      startTime: '2026-09-30T09:00:00Z',
+    });
+    renderDetailPage();
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: 'scheduledTasks.detail.startNow',
+      }),
+    );
+    expect(await screen.findByText('runs:1')).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toContain(
+      'scheduledTasks.detail.historyError',
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
+    );
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('runs:1')).toBeTruthy();
+  });
+
+  it('offers offline-credentials recovery for a credentials-stage run without automatically starting another run', async () => {
+    const refetchOfflineCredentials = vi.fn();
+    const connect = {
+      clientId: 'offline-client',
+      authorizationEndpoint: 'https://dial.example.test/oauth',
+      scopes: ['openid'],
+    };
+    useOfflineCredentialsGateMock.mockReturnValue({
+      status: 'available',
+      connect,
+      refetch: refetchOfflineCredentials,
+    });
+    loginOfflineCredentialsMock.mockResolvedValue({ type: 'success' });
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    });
+    useScheduledTaskRunsMock.mockReturnValue({
+      items: [
+        {
+          id: 'run_credentials',
+          status: 'Error',
+          resultStage: 'credentials',
+          startTime: '2026-09-30T09:00:00Z',
+        },
+      ],
+      isLoading: false,
+      isLoadingMore: false,
+      error: null,
+      hasMore: false,
+      loadMore: vi.fn(),
+      refetch: vi.fn(),
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText('scheduledTasks.detail.runCredentialsRequired'),
+    ).toBeTruthy();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.logIn' }),
+    );
+
+    await waitFor(() =>
+      expect(loginOfflineCredentialsMock).toHaveBeenCalledWith(
+        connect,
+        refetchOfflineCredentials,
+      ),
+    );
+    expect(startScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      await screen.findByText(
+        'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
+      ),
+    ).toBeTruthy();
+  });
+
+  it.each([
+    ['popup-blocked', 'retry-popup-blocked'],
+    ['cancelled', 'retry-cancelled'],
+    ['failure', 'retry-failed'],
+  ])(
+    'keeps credential recovery user-driven after a %s login outcome',
+    async (outcome, expectedState) => {
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: {
+          clientId: 'offline-client',
+          authorizationEndpoint: 'https://dial.example.test/oauth',
+          scopes: [],
+        },
+        refetch: vi.fn(),
+      });
+      loginOfflineCredentialsMock.mockResolvedValue({ type: outcome });
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: {},
+      });
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [
+          {
+            id: 'run_credentials',
+            status: 'Error',
+            resultStage: 'credentials',
+            startTime: '2026-09-30T09:00:00Z',
+          },
+        ],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'buttons.logIn' }),
+      );
+
+      expect(
+        await screen.findByRole('button', { name: 'buttons.retry' }),
+      ).toBeTruthy();
+      expect(loginOfflineCredentialsMock).toHaveBeenCalledOnce();
+      expect(startScheduledTaskMock).not.toHaveBeenCalled();
+      expect(expectedState).toMatch(/^retry-/);
+    },
+  );
+
+  it('reports a deleted start response with its trace and disables Start now until the task is reloaded', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Daily summary',
+      trigger: {},
+    });
+    startScheduledTaskMock.mockRejectedValue(new Error('deleted'));
+    getApiErrorDetailsMock.mockResolvedValue({
+      status: 409,
+      traceId: 'trace-deleted-run',
+    });
+    renderDetailPage();
+
+    const startButton = await screen.findByRole('button', {
+      name: 'scheduledTasks.detail.startNow',
+    });
+    await userEvent.click(startButton);
+
+    await waitFor(() =>
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'scheduledTasks.detail.startDeleted',
+          requestId: 'trace-deleted-run',
+        }),
+      ),
+    );
+    expect(startButton).toHaveProperty('disabled', true);
+    await userEvent.click(startButton);
+    expect(startScheduledTaskMock).toHaveBeenCalledOnce();
   });
 
   it("passes the loaded task's nextRunTime to useScheduledTaskRuns once resolved, undefined beforehand", async () => {

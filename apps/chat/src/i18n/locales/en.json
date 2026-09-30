@@ -796,7 +796,19 @@
       "deleteNotFoundError": "This task has already been deleted or could not be found",
       "deleteRetryableError": "Couldn't delete the task — it hasn't been removed and you can safely try again",
       "deleteGenericError": "Failed to delete the scheduled task",
-      "deletedStateLabel": "Deleted"
+      "deletedStateLabel": "Deleted",
+      "startNow": "Start now",
+      "starting": "Starting…",
+      "startAccepted": "Task started. Execution is in progress.",
+      "startBusy": "A task run is already in progress.",
+      "startNotFound": "Task not found.",
+      "startDeleted": "A deleted task cannot be run.",
+      "startError": "Could not confirm that the task started. Check History before trying again.",
+      "runStatusUnavailable": "Could not refresh the run status.",
+      "runStatusDelayed": "This run has not reported completion yet. Refresh its status.",
+      "refreshRunStatus": "Refresh status",
+      "runCredentialsRequired": "Sign in to DIAL Chat to run this task.",
+      "runFinished": "Task run finished: {{status}}."
     },
     "edit": {
       "pageTitle": "Edit scheduled task",

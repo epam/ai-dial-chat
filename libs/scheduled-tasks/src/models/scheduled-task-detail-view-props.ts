@@ -8,6 +8,10 @@ export interface ScheduledTaskDetailViewLabels {
   backAriaLabel: string;
   /** Label for the header's Edit action. Shown only when `onEdit` is supplied. */
   editButtonLabel: string;
+  /** Label for the header's manual execution action. Shown only when `onStartNow` is supplied. */
+  startNowButtonLabel?: string;
+  /** Label displayed while a manual execution request is pending. */
+  startingLabel?: string;
   /** Label for the header's destructive Delete action. Shown only when `onDelete` is supplied. */
   deleteButtonLabel: string;
   /** Label of the read-only indicator shown next to the title when `isDeleted` is `true`. */
@@ -30,6 +34,8 @@ export interface ScheduledTaskDetailViewLabels {
   completedFieldLabel: string;
   /** Announced via `aria-live` after a pause/resume mutation completes, separate from the switch's own accessible name. Empty string announces nothing. */
   activeStatusAnnouncement?: string;
+  /** Announced via `aria-live` after a manual run is accepted. Empty string announces nothing. */
+  startStatusAnnouncement?: string;
   /** Title of the Configuration section. */
   configurationTitle: string;
   /** Label for the instructions field. */
@@ -122,6 +128,12 @@ export interface ScheduledTaskDetailViewProps {
   onBack: () => void;
   /** Called when the user activates the header's Edit action. When omitted, no Edit action renders. Suppressed while `isDeleted` is `true`. */
   onEdit?: () => void;
+  /** Called when the user activates the header's manual execution action. When omitted, no Start now action renders. */
+  onStartNow?: () => void;
+  /** When `true`, the manual execution action is pending and renders disabled. Defaults to `false`. */
+  isStarting?: boolean;
+  /** When `true`, the manual execution action renders disabled for host-owned eligibility state. Defaults to `false`. */
+  isStartNowDisabled?: boolean;
   /** Called when the user activates the header's destructive Delete action. When omitted, no Delete action renders. Suppressed while `isDeleted` is `true`. The component opens no dialog and performs no network call itself. */
   onDelete?: () => void;
   /** When `true`, the Delete action, Edit action, and Active switch render disabled rather than being removed. Defaults to `false`. */

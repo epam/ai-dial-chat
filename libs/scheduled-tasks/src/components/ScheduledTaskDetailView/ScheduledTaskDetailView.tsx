@@ -18,6 +18,7 @@ import type { TabItem } from '@epam/ai-dial-ui-kit';
 import {
   IconArrowNarrowLeft,
   IconPencilMinus,
+  IconPlayerPlay,
   IconTrashX,
 } from '@tabler/icons-react';
 import { type CSSProperties, type FC, type ReactNode, useState } from 'react';
@@ -43,6 +44,9 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   labels,
   onBack,
   onEdit,
+  onStartNow,
+  isStarting = false,
+  isStartNowDisabled = false,
   onDelete,
   isDeleting = false,
   isDeleted = false,
@@ -222,7 +226,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
     >
       <div
         className={mergeClasses(
-          'flex h-16 shrink-0 items-center justify-between gap-2 px-8',
+          'flex min-h-16 shrink-0 items-center justify-between gap-2 px-4 py-2 desktop:h-16 desktop:flex-nowrap desktop:px-8 desktop:py-0',
           styles.header,
         )}
       >
@@ -271,7 +275,12 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
           )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div
+          className={mergeClasses(
+            'flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 desktop:flex-none desktop:flex-nowrap',
+            styles.headerActions,
+          )}
+        >
           {!isDeleted && !isCompleted && isActive !== undefined && (
             <>
               <Switch
@@ -307,7 +316,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
               }
               onClick={onDelete}
               disabled={isDeleting}
-              className="shrink-0"
+              className="min-h-11 shrink-0"
             />
           )}
 
@@ -323,8 +332,29 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
               }
               onClick={onEdit}
               disabled={isDeleting}
-              className="shrink-0"
+              className="min-h-11 shrink-0"
             />
+          )}
+          {!isDeleted && onStartNow && labels.startNowButtonLabel && (
+            <div aria-busy={isStarting}>
+              <NeutralButton
+                label={
+                  isStarting
+                    ? (labels.startingLabel ?? labels.startNowButtonLabel)
+                    : labels.startNowButtonLabel
+                }
+                iconBefore={
+                  <IconPlayerPlay
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
+                onClick={onStartNow}
+                disabled={isDeleting || isStarting || isStartNowDisabled}
+                className="min-h-11 shrink-0"
+              />
+            </div>
           )}
         </div>
       </div>
@@ -359,6 +389,11 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       {labels.activeStatusAnnouncement != null && (
         <span role="status" aria-live="polite" className="sr-only">
           {labels.activeStatusAnnouncement}
+        </span>
+      )}
+      {labels.startStatusAnnouncement != null && (
+        <span role="status" aria-live="polite" className="sr-only">
+          {labels.startStatusAnnouncement}
         </span>
       )}
 

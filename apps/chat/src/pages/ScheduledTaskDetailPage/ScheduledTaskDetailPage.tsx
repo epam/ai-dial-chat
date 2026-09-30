@@ -1,4 +1,7 @@
-import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import {
+  ScheduledTaskRunDtoStatusEnum,
+  type ScheduledTaskDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
   getApiErrorStatus,
@@ -7,11 +10,13 @@ import {
   ScheduledTaskDetailView,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
+import { GhostButton } from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FC,
 } from 'react';
@@ -19,6 +24,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import ScheduledTaskDeleteModal from '../../components/ScheduledTaskDeleteModal/ScheduledTaskDeleteModal';
+import ScheduledTasksLoginBanner, {
+  ScheduledTasksLoginBannerState,
+} from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
 import {
   getConversationRoute,
   getScheduledTaskEditRoute,
@@ -33,8 +41,21 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import {
+  OfflineCredentialsGateStatus,
+  useOfflineCredentialsGate,
+} from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
+import {
+  OfflineCredentialsLoginOutcomeType,
+  useOfflineCredentialsLogin,
+} from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
 import { useScheduledTaskSkillDisplayName } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayName';
+import {
+  mergeScheduledTaskRuns,
+  ScheduledTaskRunStatusFeedback,
+  useStartScheduledTask,
+} from '../../hooks/scheduled-tasks/useStartScheduledTask';
 import { useStaleGuard } from '../../hooks/useStaleGuard';
 import {
   deleteScheduledTask,
@@ -52,6 +73,29 @@ import {
 } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
 import NotFoundPage from '../NotFound/NotFound';
+
+const resolveCredentialsBannerState = ({
+  isCredentialsRequired,
+  isLoggingIn,
+  retryState,
+  status,
+}: {
+  isCredentialsRequired: boolean;
+  isLoggingIn: boolean;
+  retryState: ScheduledTasksLoginBannerState | undefined;
+  status: OfflineCredentialsGateStatus;
+}): ScheduledTasksLoginBannerState | undefined => {
+  if (!isCredentialsRequired) return undefined;
+  if (isLoggingIn) return ScheduledTasksLoginBannerState.LoginInProgress;
+  if (retryState) return retryState;
+  if (
+    status === OfflineCredentialsGateStatus.Available ||
+    status === OfflineCredentialsGateStatus.Unavailable
+  ) {
+    return ScheduledTasksLoginBannerState.Shown;
+  }
+  return undefined;
+};
 
 const ScheduledTaskDetailPage: FC = () => {
   const { t } = useTranslation();
@@ -72,14 +116,29 @@ const ScheduledTaskDetailPage: FC = () => {
   const [taskFetchToken, setTaskFetchToken] = useState(0);
   const [isActiveUpdating, setIsActiveUpdating] = useState(false);
   const [activeStatusAnnouncement, setActiveStatusAnnouncement] = useState('');
+  const [startStatusAnnouncement, setStartStatusAnnouncement] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isStartRejectedAsDeleted, setIsStartRejectedAsDeleted] =
+    useState(false);
+  const [credentialsRetryState, setCredentialsRetryState] = useState<
+    ScheduledTasksLoginBannerState | undefined
+  >(undefined);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [credentialsStatusAnnouncement, setCredentialsStatusAnnouncement] =
+    useState('');
   /*
    * Supersession guard for pause/resume: a check goes stale when the page
    * unmounts, a newer toggle begins, or the user navigates to a different
    * schedule (this page component stays mounted across scheduleId changes).
    */
   const beginActiveChangeGuard = useStaleGuard(scheduleId);
+  const beginStartGuard = useStaleGuard(`${scheduleId}:${isEnabled}`);
+  const startFeedbackPending = useRef(false);
+
+  useEffect(() => {
+    startFeedbackPending.current = false;
+  }, [scheduleId, isEnabled]);
 
   const {
     items: runDtos,
@@ -96,6 +155,34 @@ const ScheduledTaskDetailPage: FC = () => {
     isEnabled && Boolean(scheduleId),
     task?.nextRunTime,
   );
+
+  const isTaskDeleted = task?.isDeleted === true;
+  const {
+    status: credentialsStatus,
+    connect: offlineCredentialsConnect,
+    refetch: refetchOfflineCredentials,
+  } = useOfflineCredentialsGate();
+  const { login: loginOfflineCredentials } = useOfflineCredentialsLogin();
+  const {
+    acceptedRuns,
+    isStarting,
+    isRefreshingStatus,
+    refreshStatus,
+    statusFeedback,
+    start: startTask,
+    terminalRun,
+  } = useStartScheduledTask({
+    scheduleId,
+    enabled: isEnabled,
+    canStart:
+      Boolean(task) &&
+      !isTaskDeleted &&
+      !isTaskLoading &&
+      !isDeleting &&
+      !isActiveUpdating &&
+      !isStartRejectedAsDeleted,
+    loadedRuns: runDtos,
+  });
 
   useEffect(() => {
     if (!isEnabled || !scheduleId) {
@@ -121,6 +208,7 @@ const ScheduledTaskDetailPage: FC = () => {
         const result = await getScheduledTask(scheduleId);
         if (!cancelled.value) {
           setTask(result);
+          setIsStartRejectedAsDeleted(result.isDeleted === true);
         }
       } catch (err) {
         if (!cancelled.value) {
@@ -148,10 +236,74 @@ const ScheduledTaskDetailPage: FC = () => {
     };
   }, [isEnabled, scheduleId, taskFetchToken]);
 
-  const runItems: ScheduledTaskRunItem[] = useMemo(
-    () => mapScheduledTaskRunDtosToItems(runDtos, t, conversations),
-    [runDtos, t, conversations],
+  const mergedRunDtos = useMemo(
+    () => mergeScheduledTaskRuns(acceptedRuns, runDtos),
+    [acceptedRuns, runDtos],
   );
+  const announcedTerminalRun = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!terminalRun) return;
+    const announcementKey = `${terminalRun.id}:${terminalRun.status}`;
+    if (announcedTerminalRun.current === announcementKey) return;
+
+    announcedTerminalRun.current = announcementKey;
+    setStartStatusAnnouncement(
+      t(ScheduledTasksI18nKeys.DetailRunFinished, {
+        status: terminalRun.status,
+      }),
+    );
+  }, [t, terminalRun]);
+
+  useEffect(() => {
+    if (statusFeedback === ScheduledTaskRunStatusFeedback.Unavailable) {
+      setStartStatusAnnouncement(
+        t(ScheduledTasksI18nKeys.DetailRunStatusUnavailable),
+      );
+    }
+    if (statusFeedback === ScheduledTaskRunStatusFeedback.Delayed) {
+      setStartStatusAnnouncement(
+        t(ScheduledTasksI18nKeys.DetailRunStatusDelayed),
+      );
+    }
+  }, [statusFeedback, t]);
+
+  const runStatusMessage =
+    statusFeedback === ScheduledTaskRunStatusFeedback.Unavailable
+      ? t(ScheduledTasksI18nKeys.DetailRunStatusUnavailable)
+      : statusFeedback === ScheduledTaskRunStatusFeedback.Delayed
+        ? t(ScheduledTasksI18nKeys.DetailRunStatusDelayed)
+        : undefined;
+  const runItems: ScheduledTaskRunItem[] = useMemo(
+    () => mapScheduledTaskRunDtosToItems(mergedRunDtos, t, conversations),
+    [mergedRunDtos, t, conversations],
+  );
+  const isCredentialsRequired = mergedRunDtos.some(
+    (run) =>
+      run.status === ScheduledTaskRunDtoStatusEnum.Error &&
+      run.resultStage === 'credentials',
+  );
+  const credentialsRunId = mergedRunDtos.find(
+    (run) =>
+      run.status === ScheduledTaskRunDtoStatusEnum.Error &&
+      run.resultStage === 'credentials',
+  )?.id;
+  const checkedCredentialsRun = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!isEnabled || !credentialsRunId) return;
+    const key = `${scheduleId}:${credentialsRunId}`;
+    if (checkedCredentialsRun.current === key) return;
+    checkedCredentialsRun.current = key;
+    /* A run can discover revoked credentials after the route's initial check. */
+    void refetchOfflineCredentials();
+  }, [credentialsRunId, isEnabled, refetchOfflineCredentials, scheduleId]);
+  const credentialsBannerState = resolveCredentialsBannerState({
+    isCredentialsRequired,
+    isLoggingIn,
+    retryState: credentialsRetryState,
+    status: credentialsStatus,
+  });
 
   const handleRunClick = useCallback(
     (run: ScheduledTaskRunItem) => {
@@ -237,9 +389,12 @@ const ScheduledTaskDetailPage: FC = () => {
       activeStatusLabel: t(ScheduledTasksI18nKeys.DetailActiveStatusLabel),
       completedFieldLabel: t(ScheduledTasksI18nKeys.DetailCompletedFieldLabel),
       activeStatusAnnouncement,
+      startNowButtonLabel: t(ScheduledTasksI18nKeys.DetailStartNow),
+      startingLabel: t(ScheduledTasksI18nKeys.DetailStarting),
+      startStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
     }),
-    [t, activeStatusAnnouncement],
+    [t, activeStatusAnnouncement, startStatusAnnouncement],
   );
 
   const handleBack = () => {
@@ -404,6 +559,94 @@ const ScheduledTaskDetailPage: FC = () => {
     isDeleting,
   ]);
 
+  const handleStartNow = useCallback(async () => {
+    if (startFeedbackPending.current) return;
+    startFeedbackPending.current = true;
+    const isStale = beginStartGuard();
+    try {
+      const acceptedRun = await startTask();
+      if (!acceptedRun || isStale()) return;
+
+      const message = t(ScheduledTasksI18nKeys.DetailStartAccepted);
+      setStartStatusAnnouncement(message);
+      showSuccessNotification({ message });
+    } catch (err) {
+      if (isStale()) return;
+      const details = await getApiErrorDetails(err);
+      if (isStale()) return;
+      if (details.status === 409) {
+        setIsStartRejectedAsDeleted(true);
+      }
+      const messageKey =
+        details.status === 404
+          ? ScheduledTasksI18nKeys.DetailStartNotFound
+          : details.status === 409
+            ? ScheduledTasksI18nKeys.DetailStartDeleted
+            : ScheduledTasksI18nKeys.DetailStartError;
+      showErrorNotification({
+        message: t(messageKey),
+        requestId: details.traceId,
+      });
+    } finally {
+      if (!isStale()) startFeedbackPending.current = false;
+    }
+  }, [
+    beginStartGuard,
+    showErrorNotification,
+    showSuccessNotification,
+    startTask,
+    t,
+  ]);
+
+  const handleOfflineCredentialsLogin = useCallback(() => {
+    if (!offlineCredentialsConnect) return;
+    setIsLoggingIn(true);
+    setCredentialsRetryState(undefined);
+    setCredentialsStatusAnnouncement('');
+
+    const run = async (): Promise<void> => {
+      const outcome = await loginOfflineCredentials(
+        offlineCredentialsConnect,
+        refetchOfflineCredentials,
+      );
+      setIsLoggingIn(false);
+
+      switch (outcome.type) {
+        case OfflineCredentialsLoginOutcomeType.Success:
+          setCredentialsStatusAnnouncement(
+            t(
+              ScheduledTasksI18nKeys.OfflineCredentialsBannerSuccessAnnouncement,
+            ),
+          );
+          setCredentialsRetryState(undefined);
+          break;
+        case OfflineCredentialsLoginOutcomeType.PopupBlocked:
+          setCredentialsRetryState(
+            ScheduledTasksLoginBannerState.RetryPopupBlocked,
+          );
+          break;
+        case OfflineCredentialsLoginOutcomeType.Cancelled:
+          setCredentialsRetryState(
+            ScheduledTasksLoginBannerState.RetryCancelled,
+          );
+          break;
+        case OfflineCredentialsLoginOutcomeType.TimedOut:
+          setCredentialsRetryState(ScheduledTasksLoginBannerState.RetryTimeout);
+          break;
+        case OfflineCredentialsLoginOutcomeType.Failure:
+        default:
+          setCredentialsRetryState(ScheduledTasksLoginBannerState.RetryFailed);
+          break;
+      }
+    };
+    void run();
+  }, [
+    loginOfflineCredentials,
+    offlineCredentialsConnect,
+    refetchOfflineCredentials,
+    t,
+  ]);
+
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;
   }
@@ -416,16 +659,23 @@ const ScheduledTaskDetailPage: FC = () => {
     return <NotFoundPage />;
   }
 
-  const isTaskDeleted = task?.isDeleted === true;
-
   return (
     <>
       <ScheduledTaskDetailView
         labels={labels}
         onBack={handleBack}
         onEdit={task && !isTaskDeleted ? handleEdit : undefined}
+        onStartNow={task && !isTaskDeleted ? handleStartNow : undefined}
         onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
         isDeleting={isDeleting}
+        isStarting={isStarting}
+        isStartNowDisabled={
+          isDeleting ||
+          isActiveUpdating ||
+          isTaskLoading ||
+          isStartRejectedAsDeleted ||
+          mergedRunDtos.some((run) => run.status === 'InProgress')
+        }
         isDeleted={isTaskDeleted}
         isCompleted={isTaskCompleted}
         isActive={isTaskDeleted ? undefined : task?.isActive}
@@ -446,9 +696,9 @@ const ScheduledTaskDetailPage: FC = () => {
         instructionsMarkdown={task?.prompt}
         skillDisplayName={skillDisplayName}
         runs={runItems}
-        runsIsLoading={runsIsLoading}
+        runsIsLoading={runsIsLoading && mergedRunDtos.length === 0}
         runsIsLoadingMore={runsIsLoadingMore}
-        runsError={runsError}
+        runsError={mergedRunDtos.length === 0 ? runsError : null}
         onRunsRetry={refetchRuns}
         runsLoadMoreError={runsLoadMoreError}
         onRunsRetryLoadMore={retryRunsLoadMore}
@@ -456,6 +706,66 @@ const ScheduledTaskDetailPage: FC = () => {
         onRunsLoadMore={onRunsLoadMore}
         onRunClick={handleRunClick}
       />
+      {runsError && mergedRunDtos.length > 0 && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center gap-2 px-4 py-2"
+        >
+          <span>{labels.historyErrorLabel}</span>
+          <GhostButton
+            label={labels.historyRetryLabel}
+            onClick={refetchRuns}
+            className="min-h-11"
+          />
+        </div>
+      )}
+      <ScheduledTasksLoginBanner
+        state={credentialsBannerState}
+        title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
+        body={t(ScheduledTasksI18nKeys.DetailRunCredentialsRequired)}
+        loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
+        retryButtonLabel={t(ButtonsI18nKeys.Retry)}
+        loggingInLabel={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
+        )}
+        popupBlockedMessage={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
+        )}
+        cancelledMessage={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
+        )}
+        timeoutMessage={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
+        )}
+        failedMessage={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
+        )}
+        liveAnnouncement={credentialsStatusAnnouncement}
+        onLogIn={
+          offlineCredentialsConnect ? handleOfflineCredentialsLogin : undefined
+        }
+      />
+      {runStatusMessage && (
+        <div
+          aria-live="polite"
+          role={
+            statusFeedback === ScheduledTaskRunStatusFeedback.Unavailable
+              ? 'alert'
+              : 'status'
+          }
+        >
+          <span>{runStatusMessage}</span>
+          {statusFeedback === ScheduledTaskRunStatusFeedback.Delayed && (
+            <button
+              type="button"
+              disabled={isRefreshingStatus}
+              onClick={() => void refreshStatus()}
+            >
+              {t(ScheduledTasksI18nKeys.DetailRefreshRunStatus)}
+            </button>
+          )}
+        </div>
+      )}
       <ScheduledTaskDeleteModal
         open={isDeleteDialogOpen}
         taskName={task?.displayName ?? ''}

@@ -471,33 +471,33 @@ apps/chat-api/src/
 
 Business controllers are versioned; three infrastructure controllers are deliberately not.
 
-| Base path                           | Domain                                                    |
-| ----------------------------------- | --------------------------------------------------------- |
-| `/api/v1/auth`                      | OIDC login, callback, refresh, logout, profile, providers |
-| `/api/v1/conversations`             | Conversation CRUD, completions, publish                   |
-| `/api/v1/chat`                      | Direct DIAL Core completion proxy                         |
-| `/api/v1/models`                    | Model listing                                             |
-| `/api/v1/deployments`               | Deployment listing and per-deployment details             |
-| `/api/v1/applications`              | Application CRUD                                          |
-| `/api/v1/application-schemas`       | Application schema metadata                               |
-| `/api/v1/skills`                    | Skill CRUD and metadata lookup                            |
-| `/api/v1/toolsets`                  | Toolset CRUD and auth flows                               |
-| `/api/v1/prompts`                   | Prompt CRUD                                               |
-| `/api/v1/files`                     | File upload, listing, download                            |
-| `/api/v1/share`                     | Share links and recipients                                |
-| `/api/v1/publish` `/api/v1/catalog` | Publication rules and published-entity access             |
-| `/api/v1/scheduled-tasks`           | Scheduled task CRUD and runs                              |
-| `/api/v1/client-channel`            | Client-channel SSE relay                                  |
-| `/api/v1/external-services`         | External-service metadata and credentials                 |
-| `/api/v1/offline-credentials`       | Long-lived credentials for background runs                |
-| `/api/v1/text-refinement`           | Draft refinement without persistence                      |
-| `/api/v1/transcription`             | Speech-to-text                                            |
-| `/api/v1/rate`                      | Message rating                                            |
-| `/api/v1/user-config`               | Per-user preferences                                      |
-| `/api/v1/client-config`             | Client configuration document                             |
-| `/api/apps`                         | App metadata — unversioned                                |
-| `/api/themes`                       | Theme configuration and icons — unversioned               |
-| `/api/health`                       | Health check — unversioned                                |
+| Base path                           | Domain                                                     |
+| ----------------------------------- | ---------------------------------------------------------- |
+| `/api/v1/auth`                      | OIDC login, callback, refresh, logout, profile, providers  |
+| `/api/v1/conversations`             | Conversation CRUD, completions, publish                    |
+| `/api/v1/chat`                      | Direct DIAL Core completion proxy                          |
+| `/api/v1/models`                    | Model listing                                              |
+| `/api/v1/deployments`               | Deployment listing and per-deployment details              |
+| `/api/v1/applications`              | Application CRUD                                           |
+| `/api/v1/application-schemas`       | Application schema metadata                                |
+| `/api/v1/skills`                    | Skill CRUD and metadata lookup                             |
+| `/api/v1/toolsets`                  | Toolset CRUD and auth flows                                |
+| `/api/v1/prompts`                   | Prompt CRUD                                                |
+| `/api/v1/files`                     | File upload, listing, download                             |
+| `/api/v1/share`                     | Share links and recipients                                 |
+| `/api/v1/publish` `/api/v1/catalog` | Publication rules and published-entity access              |
+| `/api/v1/scheduled-tasks`           | Scheduled task CRUD, manual-run acceptance, and run status |
+| `/api/v1/client-channel`            | Client-channel SSE relay                                   |
+| `/api/v1/external-services`         | External-service metadata and credentials                  |
+| `/api/v1/offline-credentials`       | Long-lived credentials for background runs                 |
+| `/api/v1/text-refinement`           | Draft refinement without persistence                       |
+| `/api/v1/transcription`             | Speech-to-text                                             |
+| `/api/v1/rate`                      | Message rating                                             |
+| `/api/v1/user-config`               | Per-user preferences                                       |
+| `/api/v1/client-config`             | Client configuration document                              |
+| `/api/apps`                         | App metadata — unversioned                                 |
+| `/api/themes`                       | Theme configuration and icons — unversioned                |
+| `/api/health`                       | Health check — unversioned                                 |
 
 #### Scheduled tasks
 
@@ -509,6 +509,14 @@ saving a skill-bearing task. The mapper writes the encoded reference into the
 first user message's `custom_content.skills` in the Scheduler completion payload;
 this repository contains no task-run worker. Sparse lists need not include that
 payload. See the [API contract](../apps/chat-api/README.md#scheduled-task-skill-contract).
+
+Manual `POST /api/v1/scheduled-tasks/:scheduleId/run` execution is bodyless and
+returns an accepted run; it does not alter schedule metadata or resume an
+exhausted automatic trigger. The client observes that run through
+`GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId`, retaining ordinary
+History pagination and using the existing offline-credentials sign-in flow only
+when an Error row projects `resultStage: "credentials"`. Start requests are
+never retried automatically.
 
 Reusable selection lives in `skills` (`SkillSelectorField`), validation and
 presentation in `scheduled-tasks`, and checked request mapping in `chat-hooks`.
