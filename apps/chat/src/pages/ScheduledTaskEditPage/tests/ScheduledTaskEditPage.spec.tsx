@@ -122,6 +122,8 @@ interface FormProps {
     repeat: string;
     time: string;
     minute?: string;
+    startDate?: string;
+    endDate?: string;
   };
   errors: Record<string, string | undefined>;
   skillSelector?: ReactNode;
@@ -205,11 +207,17 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.time}
         onChange={(e) => onFieldChange('time', e.target.value)}
       />
+      <input
+        aria-label="startDate"
+        value={values.startDate ?? ''}
+        onChange={(e) => onFieldChange('startDate', e.target.value)}
+      />
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
       {skillSelector}
       {errors.skillUrl && <span>{errors.skillUrl}</span>}
       {errors.displayName && <span>{errors.displayName}</span>}
+      {errors.startDate && <span>{errors.startDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button
         onClick={onSubmit}
@@ -656,6 +664,30 @@ describe('ScheduledTaskEditPage', () => {
     expect(updateScheduledTaskMock.mock.calls[0][1].trigger.cron).toMatchObject(
       { startDate: expected },
     );
+  });
+
+  it('blocks save when the start date is changed to a different past date', async () => {
+    getScheduledTaskMock.mockResolvedValue({
+      ...baseTask,
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: '2020-01-01T00:00:00.000Z',
+          endDate: '2099-12-31T23:59:59.999Z',
+        },
+      },
+    });
+    renderEditPage();
+
+    const startDateInput = await screen.findByLabelText('startDate');
+    await userEvent.clear(startDateInput);
+    await userEvent.type(startDateInput, '2019-06-15');
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    expect(updateScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.startDateInPast'),
+    ).toBeTruthy();
   });
 
   it('navigates to the detail route without a network call when Cancel is activated', async () => {
