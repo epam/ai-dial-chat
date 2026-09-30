@@ -21,13 +21,14 @@ import { useAppConfig as mockUseAppConfig } from './app-config-context-mock';
 
 const contextMocks = vi.hoisted(() => ({
   userSub: 'user-1' as string | undefined,
+  setPinnedConversation: vi.fn(),
 }));
 
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/user-config.api');
 vi.mock('../UserConfigContext', () => ({
   useUserConfig: () => ({
-    setPinnedConversation: vi.fn().mockResolvedValue(undefined),
+    setPinnedConversation: contextMocks.setPinnedConversation,
   }),
 }));
 
@@ -98,6 +99,7 @@ const seedConversations = [
 beforeEach(() => {
   vi.clearAllMocks();
   contextMocks.userSub = 'user-1';
+  contextMocks.setPinnedConversation.mockResolvedValue(undefined);
   mockUseAppConfig.mockReturnValue({
     config: { overlayAllowedOrigins: ['https://partner.example.com'] },
   });
@@ -218,6 +220,72 @@ describe('ConversationsContext — background refresh', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.conversations).toEqual(seedConversations);
     expect(result.current.error).toBe(refreshError);
+  });
+});
+
+describe('ConversationsContext — no-op updates keep the list reference', () => {
+  const renderLoaded = async () => {
+    const view = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(view.result.current.isLoading).toBe(false));
+    return view;
+  };
+
+  it('keeps the list when a title is set to its current value', async () => {
+    const { result } = await renderLoaded();
+    const before = result.current.conversations;
+
+    act(() => {
+      result.current.updateConversationTitle('conv2', 'Chat 2');
+    });
+
+    expect(result.current.conversations).toBe(before);
+  });
+
+  it('replaces only the renamed item when a title changes', async () => {
+    const { result } = await renderLoaded();
+    const before = result.current.conversations;
+
+    act(() => {
+      result.current.updateConversationTitle('conv2', 'Renamed');
+    });
+
+    const after = result.current.conversations;
+    expect(after).not.toBe(before);
+    expect(after[1].title).toBe('Renamed');
+    expect(after[0]).toBe(before[0]);
+    expect(after[2]).toBe(before[2]);
+  });
+
+  it('keeps the list when removing an id that is not in it', async () => {
+    const { result } = await renderLoaded();
+    const before = result.current.conversations;
+
+    act(() => {
+      result.current.removeConversationFromList('missing');
+    });
+
+    expect(result.current.conversations).toBe(before);
+  });
+
+  it('keeps the list when pinning to the current pin state and still persists it', async () => {
+    const { result } = await renderLoaded();
+    const before = result.current.conversations;
+
+    let pinPromise!: Promise<void>;
+    act(() => {
+      pinPromise = result.current.pinConversation('conv1', false);
+    });
+
+    expect(result.current.conversations).toBe(before);
+    await act(async () => {
+      await pinPromise;
+    });
+    expect(contextMocks.setPinnedConversation).toHaveBeenCalledWith(
+      'conv1',
+      false,
+    );
   });
 });
 

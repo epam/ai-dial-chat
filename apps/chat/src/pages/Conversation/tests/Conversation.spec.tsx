@@ -301,6 +301,29 @@ describe('ConversationPage — a conversation the backend no longer has', () => 
     expect(removeConversationFromList).not.toHaveBeenCalled();
     expect(routerMocks.navigate).not.toHaveBeenCalledWith(ROUTES.Root);
   });
+
+  it('passes the loaded name to updateConversationTitle once', async () => {
+    const updateConversationTitle = vi.fn();
+    mockUseConversations.mockReturnValue({
+      ...mockUseConversations(),
+      updateConversationTitle,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+
+    render(<ConversationPage />);
+
+    await waitFor(() =>
+      expect(updateConversationTitle).toHaveBeenCalledWith(
+        CONVERSATION_ID,
+        'Hello',
+      ),
+    );
+    expect(updateConversationTitle).toHaveBeenCalledOnce();
+  });
 });
 
 describe('ConversationPage — onConversationDeleted', () => {
