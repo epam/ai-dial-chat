@@ -423,7 +423,7 @@ describe('DialFileManagerPage — All tab', () => {
           },
           {
             tab: DialFileManagerTabs.Shared,
-            rootLabel: 'dialFileManager.tab.shared',
+            rootLabel: 'dialFileManager.shared.rootFolder',
           },
           {
             tab: DialFileManagerTabs.Organization,

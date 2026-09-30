@@ -196,6 +196,12 @@ export const useDialFileListing = ({
     setSearchResults(null);
     setIsSearching(false);
     setExpandedPaths(new Set());
+    /*
+     * The cache was just emptied, but a session change that keeps `activeTab`,
+     * `folderPath` and `isActive` (All ↔ My files keeps the My files section
+     * active at its root) re-triggers no listing dependency — refetch explicitly.
+     */
+    setRetryCounter((c) => c + 1);
   }, [sessionId]);
 
   useEffect(() => {

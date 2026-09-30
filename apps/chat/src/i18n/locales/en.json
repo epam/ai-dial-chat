@@ -960,6 +960,7 @@
       "emptyStateDescription": "Upload files to your personal storage"
     },
     "shared": {
+      "rootFolder": "Shared",
       "emptyStateTitle": "No shared files",
       "emptyStateDescription": "Files shared with you will appear here"
     },
