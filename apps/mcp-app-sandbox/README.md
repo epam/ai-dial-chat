@@ -30,6 +30,11 @@ client-config pipeline.
 
 Deploy this app on its own host/port, distinct from `apps/chat`'s.
 
+The image uses `node:24.21-alpine3.24`, matching the main chat image. npm is
+available during the build and dependency installation, then removed together
+with npx, its bundled dependencies, and its cache. The runtime starts with `node`
+and does not support npm commands.
+
 Build the production Docker image from the repo root:
 
 ```bash

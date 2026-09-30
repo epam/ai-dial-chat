@@ -36,6 +36,14 @@ component used by Toolset creation's General step.
 - **WHEN** a user clears the name field and attempts to save
 - **THEN** the system shows a required-field error for the name and blocks the save
 
+#### Scenario: Created name survives the in-place editor transition
+- **WHEN** a user creates a Quick App and the editor switches to its settings in the same session
+- **THEN** the submitted name remains in the Metadata form while the deployments list refreshes
+
+#### Scenario: Reloaded editor restores the persisted name
+- **WHEN** a user reloads a newly created Quick App's editor
+- **THEN** the Metadata form shows the application's persisted name once the deployment resolves
+
 ### Requirement: Create request forwards form fields
 On save, the editor SHALL submit the General step field values to the create-application
 endpoint via the generated `@epam/chat-api-client` `ApplicationsApi`, through the

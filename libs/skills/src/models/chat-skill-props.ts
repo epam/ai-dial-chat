@@ -1,3 +1,5 @@
+import type { SkillUnresolvedReason } from '../types/skill-unresolved-reason';
+
 /** Localizable string labels for {@link ChatSkillProps}'s component. */
 export interface ChatSkillLabels {
   /** Label for the tooltip's "View details" action. Defaults to `'View details'`. */
@@ -8,6 +10,18 @@ export interface ChatSkillLabels {
    * remove the skill or select a different model to proceed.
    */
   unsupportedTooltipLabel?: string;
+  /**
+   * Message shown alone in the tooltip, with a trash-can icon, while
+   * `unresolvedReason` is `SkillUnresolvedReason.Deleted`, stating that the
+   * skill has been deleted and its details are no longer available.
+   */
+  deletedTooltipLabel?: string;
+  /**
+   * Message shown alone in the tooltip, with a lock icon, while
+   * `unresolvedReason` is `SkillUnresolvedReason.NotShared`, stating that the
+   * viewer lacks access to the skill and should ask the chat owner to share it.
+   */
+  notSharedTooltipLabel?: string;
 }
 
 /** How a skill chip opens its description card. */
@@ -32,6 +46,15 @@ export interface ChatSkillProps {
    * "View details" button.
    */
   isUnsupported?: boolean;
+  /**
+   * Why this skill's url resolved to no loaded listing entry (absent from
+   * every pool). While set, it takes precedence over `isUnsupported` and the
+   * tooltip shows a fixed icon-plus-message for that reason alone — no
+   * description paragraph and no "View details" button, since there is no
+   * metadata to fetch and no panel to open. The `/{name}` label itself is
+   * unaffected — it keeps rendering with `labelClassName` alone.
+   */
+  unresolvedReason?: SkillUnresolvedReason;
   /** CSS class applied to the `/name` label. Defaults to `'dial-body-paragraph-text'`. */
   labelClassName?: string;
   /**

@@ -4,7 +4,7 @@ import {
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
 import { Accordion, EllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import { CONVERSATION_STAGES_CLASS } from '../../constants/public-class-names';
 import {
   STAGE_ACCORDION_CLASS_NAME,
@@ -34,6 +34,8 @@ interface StageGroupRowProps {
   typography?: StageTypography;
   /** User-visible strings. */
   labels?: StagesPanelLabels;
+  /** Called when a stage attachment tile is clicked/activated. See {@link StagesPanelProps.onAttachmentClick}. */
+  onAttachmentClick?: StagesPanelProps['onAttachmentClick'];
 }
 
 /** Expandable summary row for a collapsed `×N` group of identical stage attempts. */
@@ -42,12 +44,14 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   isLive,
   typography,
   labels,
+  onAttachmentClick,
 }) => {
   const {
     runningAriaLabel,
     failedAriaLabel,
     attemptLabel = (n: number) => `Attempt ${n}`,
   } = labels ?? {};
+  const [isOpen, setIsOpen] = useState(false);
   const hasUnresolved = row.attempts?.some((a) => a.status == null) ?? false;
   const hasFailed = row.attempts?.some((a) => a.status === StageStatus.Failed);
   const groupStatus = hasUnresolved
@@ -108,6 +112,8 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
      always sat below its summary row. */
   return (
     <Accordion
+      expanded={isOpen}
+      onToggle={setIsOpen}
       title={header}
       className={STAGE_ACCORDION_CLASS_NAME}
       headerClassName={mergeClasses(
@@ -119,17 +125,19 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
       contentClassName={mergeClasses('-mt-2 px-0 ps-6', styles.stageRegion)}
     >
       <ul role="list" className="flex flex-col gap-0.5">
-        {row.attempts?.map((attempt, i) => (
-          <li key={attempt.index} role="listitem">
-            <StageItem
-              stage={attempt}
-              nameOverride={attemptLabel(i + 1)}
-              isLive={isLive && attempt.status == null}
-              typography={typography}
-              labels={labels}
-            />
-          </li>
-        ))}
+        {isOpen &&
+          row.attempts?.map((attempt, i) => (
+            <li key={attempt.index} role="listitem">
+              <StageItem
+                stage={attempt}
+                nameOverride={attemptLabel(i + 1)}
+                isLive={isLive && attempt.status == null}
+                typography={typography}
+                labels={labels}
+                onAttachmentClick={onAttachmentClick}
+              />
+            </li>
+          ))}
       </ul>
     </Accordion>
   );
@@ -142,6 +150,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   className,
   styles: panelStyles,
   labels,
+  onAttachmentClick,
 }) => {
   const { colors, typography } = panelStyles ?? {};
 
@@ -184,6 +193,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                 isLive={isStreaming && row.stage.status == null}
                 typography={typography}
                 labels={labels}
+                onAttachmentClick={onAttachmentClick}
               />
             </li>
           ) : (
@@ -197,6 +207,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                 }
                 typography={typography}
                 labels={labels}
+                onAttachmentClick={onAttachmentClick}
               />
             </li>
           ),

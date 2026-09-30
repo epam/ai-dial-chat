@@ -405,18 +405,14 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * is owned by this component — a host-side removal would race the lib.
      */
     const handleCloseCommandMenu = useCallback(
-      (options?: { consumeQuery?: boolean }) => {
+      (options?: { consumeQuery?: boolean; returnFocus?: boolean }) => {
         if (commandMenu == null) return;
 
         dismiss();
         if (!options?.consumeQuery) return;
 
-        /*
-         * A selection made by mouse moved focus to the menu row, and that row
-         * unmounts with the menu — return focus to the textarea so typing
-         * continues where the consumed `/query` left off.
-         */
-        textareaRef.current?.focus();
+        /* Return focus to the textarea (skipped for `returnFocus: false` — see the `commandMenu` doc on `close`). */
+        if (options.returnFocus !== false) textareaRef.current?.focus();
 
         if (activeWordStart == null) return;
 
@@ -469,6 +465,8 @@ export const Input = forwardRef<InputHandle, InputProps>(
         caretPositionOverride,
         caretPositionOverride,
       );
+      /* Re-evaluates the command menu for this new caret position — a programmatic restore can land the caret back in a matching `/word`. */
+      handleCommandMenuCaretMove(caretPositionOverride);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [message]);
 
@@ -1160,6 +1158,8 @@ export const Input = forwardRef<InputHandle, InputProps>(
           onToolDismiss={handleToolDismiss}
           canRemove={canRemoveTools}
           removeLabel={toolsChipLabels?.removeLabel}
+          stateOnLabel={toolsChipLabels?.stateOnLabel}
+          stateOffLabel={toolsChipLabels?.stateOffLabel}
         />
       </div>
     );

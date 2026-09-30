@@ -6,11 +6,17 @@
 .item {
   color: var(--np-item-text, var(--text-secondary, #57647a));
 
-  &:hover {
-    background: var(
-      --np-item-hover-bg,
-      var(--bg-control-accent-alpha-hover, #2764d924)
-    );
+  /* Hover paints only the glyph: the button background stays unchanged
+     unless a host opts in through `--np-item-hover-bg`. */
+  &:not(.itemActive):hover {
+    background: var(--np-item-hover-bg, transparent);
+  }
+
+  /* Scoped to inactive items: the focus selector outranks `.itemActive svg`
+     and `.itemFilled svg`, so unscoped it would restroke the active glyph. */
+  &:not(.itemActive):hover svg,
+  a:focus-visible > &:not(.itemActive) svg {
+    stroke: var(--np-item-hover-icon, currentColor);
   }
 
   &:active {
@@ -20,18 +26,38 @@
     );
   }
 
-  a:focus-visible > & {
+  /* The link wrapper is `display: contents` and draws no outline, so the
+     background stays as the keyboard focus indicator. */
+  a:focus-visible > &:not(.itemActive) {
     background: var(
       --np-item-hover-bg,
       var(--bg-control-accent-alpha-hover, #2764d924)
     );
   }
+
+  /* The selected background already fills the active item, so keyboard
+     focus there draws a ring instead. */
+  a:focus-visible > &.itemActive {
+    outline: 2px solid var(--np-item-active-text, var(--text-accent, #1d4ed8));
+    outline-offset: -2px;
+  }
 }
 
-.itemActive {
+.item.itemActive {
   background: var(
     --np-item-selected-bg,
-    var(--bg-control-accent-alpha, #2764d90f)
+    var(--bg-control-accent-alpha-active, #2764d933)
   );
   color: var(--np-item-active-text, var(--text-accent, #1d4ed8));
+
+  svg {
+    stroke: var(--np-item-active-icon, currentColor);
+  }
+}
+
+/* A filled `activeIcon` is painted by `fill`; the stroke stays off so hover
+   does not outline the solid glyph. */
+.item.itemFilled svg {
+  fill: var(--np-item-active-icon, currentColor);
+  stroke: none;
 }

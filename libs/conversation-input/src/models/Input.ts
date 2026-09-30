@@ -135,6 +135,10 @@ export interface ModelMenuStyles {
 export interface ToolsChipLabels {
   /** Returns the accessible label for a chip's × button, which drops the tool from the input. Receives the tool label. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
+  /** Visible state text shown after the tool label while the tool is on, e.g. `"ON"`. Renders only when `stateOffLabel` is also set. */
+  stateOnLabel?: string;
+  /** Visible state text shown after the tool label while the tool is off, e.g. `"OFF"`. Renders only when `stateOnLabel` is also set. */
+  stateOffLabel?: string;
 }
 
 /** A host-injected overlay entry for the `+` menu: a menu item whose submenu renders host-owned content. */
@@ -168,11 +172,11 @@ export interface CommandMenuContext {
   /** Character offset where the triggering word (prefix + query) starts in the textarea's current value. */
   caretPosition: number;
   /**
-   * Closes the menu. Pass `{ consumeQuery: true }` to also remove the trigger
-   * prefix and query from the textarea (the selection path — the `/query`
-   * text is never sent); the default close leaves the text untouched.
+   * Closes the menu. `{ consumeQuery: true }` also removes the trigger
+   * prefix and query from the textarea; `{ returnFocus: false }` skips
+   * refocusing the textarea (see the host's own doc for when to use it).
    */
-  close: (options?: { consumeQuery?: boolean }) => void;
+  close: (options?: { consumeQuery?: boolean; returnFocus?: boolean }) => void;
   /**
    * Id the menu puts on its `role="listbox"` element. The textarea references
    * it through `aria-controls` while the menu is open.

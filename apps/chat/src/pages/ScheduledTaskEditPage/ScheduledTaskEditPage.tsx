@@ -47,6 +47,7 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveScheduledTaskErrorMessage } from '../../utils/map-scheduled-task-dto';
 import {
   getLiveScheduledTaskFieldError,
   mapScheduledTaskValidationErrors,
@@ -219,7 +220,8 @@ const ScheduledTaskEditPage: FC = () => {
       });
       navigate(returnUrl);
     } catch (error) {
-      const { traceId, code } = await getApiErrorDetails(error);
+      const details = await getApiErrorDetails(error);
+      const { code } = details;
       const fieldErrors = mapScheduledTaskApiError(code, t);
       if (fieldErrors) {
         setErrors(fieldErrors);
@@ -236,8 +238,12 @@ const ScheduledTaskEditPage: FC = () => {
       }
 
       showErrorNotification({
-        message: t(ScheduledTasksI18nKeys.EditErrorNotification),
-        requestId: traceId,
+        message: resolveScheduledTaskErrorMessage(
+          details,
+          ScheduledTasksI18nKeys.EditErrorNotification,
+          t,
+        ),
+        requestId: details.traceId,
       });
       setIsSubmitting(false);
     }

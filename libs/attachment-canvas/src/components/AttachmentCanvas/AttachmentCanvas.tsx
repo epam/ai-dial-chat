@@ -202,7 +202,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   const showHtmlToggle =
     !isLoading &&
     content.type === AttachmentContentType.Html &&
-    content.srcdoc != null;
+    (content.srcdoc != null || content.resolveSourceText != null);
 
   const showCopyText =
     !isLoading &&

@@ -187,12 +187,10 @@ describe('ConversationView Reply attachment flow', () => {
     await waitFor(() => expect(mocks.notify).toHaveBeenCalled());
     expect(upload).not.toHaveBeenCalled();
     expect(
-      (
-        screen.getByRole('button', {
-          name: 'chat.sendMessage',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+      screen
+        .getByRole('button', { name: 'chat.sendMessage' })
+        .getAttribute('aria-disabled'),
+    ).toBe('true');
   });
 
   it('does not insert an old upload into a different conversation', async () => {
@@ -258,12 +256,10 @@ describe('ConversationView Reply attachment flow', () => {
     await waitFor(() => expect(upload).toHaveBeenCalledTimes(2));
     await waitFor(() =>
       expect(
-        (
-          screen.getByRole('button', {
-            name: 'chat.sendMessage',
-          }) as HTMLButtonElement
-        ).disabled,
-      ).toBe(false),
+        screen
+          .getByRole('button', { name: 'chat.sendMessage' })
+          .getAttribute('aria-disabled'),
+      ).not.toBe('true'),
     );
     fireEvent.click(screen.getByRole('button', { name: 'chat.sendMessage' }));
     await waitFor(() => expect(send).toHaveBeenCalledOnce());
@@ -290,12 +286,10 @@ describe('ConversationView Reply attachment flow', () => {
     fireEvent.click(await selectPassage());
     const retry = await screen.findByRole('button', { name: /retry/i });
     expect(
-      (
-        screen.getByRole('button', {
-          name: 'chat.sendMessage',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+      screen
+        .getByRole('button', { name: 'chat.sendMessage' })
+        .getAttribute('aria-disabled'),
+    ).toBe('true');
     fireEvent.click(retry);
     await screen.findByText('reply');
     expect(upload).toHaveBeenCalledTimes(2);
@@ -372,12 +366,10 @@ describe('ConversationView Reply attachment flow', () => {
     expect(document.activeElement).toBe(textarea);
     await waitFor(() =>
       expect(
-        (
-          screen.getByRole('button', {
-            name: 'chat.sendMessage',
-          }) as HTMLButtonElement
-        ).disabled,
-      ).toBe(false),
+        screen
+          .getByRole('button', { name: 'chat.sendMessage' })
+          .getAttribute('aria-disabled'),
+      ).not.toBe('true'),
     );
     fireEvent.click(screen.getByRole('button', { name: 'chat.sendMessage' }));
     await waitFor(() => expect(send).toHaveBeenCalledOnce());
@@ -412,12 +404,10 @@ describe('ConversationView Reply attachment flow', () => {
     fireEvent.click(await selectPassage());
     await waitFor(() => expect(upload).toHaveBeenCalledOnce());
     expect(
-      (
-        screen.getByRole('button', {
-          name: 'chat.sendMessage',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+      screen
+        .getByRole('button', { name: 'chat.sendMessage' })
+        .getAttribute('aria-disabled'),
+    ).toBe('true');
     await act(async () =>
       finish({ url: 'files/bucket/reply.txt', name: 'reply.txt' }),
     );

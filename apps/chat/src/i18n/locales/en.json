@@ -64,11 +64,11 @@
     "negativeFeedbackTitle": "Send negative feedback",
     "feedbackTypeLabel": "What type of feedback you want to give?",
     "feedbackCategories": {
-      "uiBug": "Ui bug",
+      "uiBug": "UI bug",
       "overactiveRefusal": "Overactive refusal",
       "incompleteResponse": "Incomplete response",
       "shouldHaveTriggeredThinking": "Should have triggered thinking",
-      "shouldHaveSearchedTheWeb": "Should have search the web"
+      "shouldHaveSearchedTheWeb": "Should have searched the web"
     },
     "feedbackCommentPlaceholder": "Type an optional comment to your feedback",
     "likeToastTitle": "Thank you for your positive feedback!",
@@ -328,6 +328,8 @@
     "modalTitle": "Use skill",
     "noMatchingSkillsLabel": "No matching skills",
     "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
+    "deletedTooltipLabel": "This skill has been deleted. Its details are no longer available.",
+    "notSharedTooltipLabel": "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you.",
     "viewDetailsLabel": "View details",
     "removeSkillLabel": "Remove skill"
   },
@@ -950,7 +952,7 @@
     "tab": {
       "all": "All",
       "myFiles": "My Files",
-      "shared": "Shared with Me"
+      "shared": "Shared"
     },
     "myFiles": {
       "treeHeader": "File storage",
@@ -958,6 +960,7 @@
       "emptyStateDescription": "Upload files to your personal storage"
     },
     "shared": {
+      "rootFolder": "Shared",
       "emptyStateTitle": "No shared files",
       "emptyStateDescription": "Files shared with you will appear here"
     },
@@ -1234,7 +1237,9 @@
   },
   "tools": {
     "menuTitle": "Tools",
-    "removeTool": "Remove {{label}}"
+    "removeTool": "Remove {{label}}",
+    "stateOn": "On",
+    "stateOff": "Off"
   },
   "conversationInput": {
     "usageLimits": {

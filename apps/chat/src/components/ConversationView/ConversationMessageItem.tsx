@@ -669,6 +669,27 @@ const ConversationMessageItem: FC<Props> = ({
     onRegenerateMessage?.(index);
   }, [onRegenerateMessage, index]);
 
+  const handleStageAttachmentClick = useCallback(
+    (attachment: DisplayAttachment) => {
+      if (attachment.data) {
+        openCanvas(
+          { type: AttachmentContentType.Markdown, text: attachment.data },
+          attachment.name,
+        );
+        return;
+      }
+      const linkUrl = attachment.url ?? attachment.referenceUrl;
+      if (linkUrl) {
+        window.open(
+          resolveMarkdownUrl(linkUrl),
+          '_blank',
+          'noopener,noreferrer',
+        );
+      }
+    },
+    [openCanvas],
+  );
+
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
     if (attachment)
@@ -956,6 +977,7 @@ const ConversationMessageItem: FC<Props> = ({
                   stages={msg.custom_content?.stages ?? []}
                   isStreaming={isStreaming}
                   labels={{ executedLabel, stepsLabel }}
+                  onAttachmentClick={handleStageAttachmentClick}
                 />
               )}
               {groupedVisualizer != null &&

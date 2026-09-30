@@ -29,6 +29,8 @@ export interface UseSkillMentionsResult {
    * inserted.
    */
   insertMention: (url: string, name: string, atCaretIndex: number) => boolean;
+  /** Splices `/${name}` back into the draft at `atIndex` and re-tracks it as a mention, with no trailing-space logic — for restoring an exact previous mention, not inserting a new one. */
+  restoreMention: (url: string, name: string, atIndex: number) => void;
   /**
    * Looks up the mention whose run ends exactly at `caretPosition`, without
    * mutating `draft`/`anchors`. The caller (`Input.tsx`) uses the returned
@@ -106,6 +108,22 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
     [],
   );
 
+  /* Re-inserts a mention removed to open "Use skill" after a canceled browse — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
+  const restoreMention = useCallback(
+    (url: string, name: string, atIndex: number) => {
+      const prevDraft = draftRef.current;
+      const text = `/${name}`;
+      const nextDraft =
+        prevDraft.slice(0, atIndex) + text + prevDraft.slice(atIndex);
+
+      draftRef.current = nextDraft;
+      setDraft(nextDraft);
+      /* No trailing space to account for: it was never removed, so `insertAnchor`'s shift covers just `text.length`. */
+      setAnchors((prevAnchors) => insertAnchor(prevAnchors, atIndex, url, name, false));
+    },
+    [],
+  );
+
   const onBackspaceAtCaret = useCallback(
     (caretPosition: number): SkillMentionAnchor | undefined =>
       findMentionAtCaret(anchorsRef.current, caretPosition),
@@ -159,6 +177,7 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
       anchors,
       onDraftChange,
       insertMention,
+      restoreMention,
       onBackspaceAtCaret,
       orderedSkills,
       reset,
@@ -169,6 +188,7 @@ export const useSkillMentions = (): UseSkillMentionsResult => {
       anchors,
       onDraftChange,
       insertMention,
+      restoreMention,
       onBackspaceAtCaret,
       orderedSkills,
       reset,

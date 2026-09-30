@@ -2,7 +2,7 @@ import { RateI18nKeys } from './translation-keys';
 
 export const FEEDBACK_CATEGORIES = [
   {
-    value: 'Ui bug',
+    value: 'UI bug',
     i18nKey: RateI18nKeys.FeedbackCategoryUiBug,
   },
   {
@@ -18,7 +18,7 @@ export const FEEDBACK_CATEGORIES = [
     i18nKey: RateI18nKeys.FeedbackCategoryShouldHaveTriggeredThinking,
   },
   {
-    value: 'Should have search the web',
+    value: 'Should have searched the web',
     i18nKey: RateI18nKeys.FeedbackCategoryShouldHaveSearchedTheWeb,
   },
 ] as const;

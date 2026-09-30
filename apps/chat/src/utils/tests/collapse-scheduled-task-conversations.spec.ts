@@ -1,6 +1,10 @@
 import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
-import { collapseScheduledTaskConversations } from '../collapse-scheduled-task-conversations';
+import {
+  applyActiveScheduledTaskRun,
+  collapseScheduledTaskConversations,
+  groupScheduledTaskConversations,
+} from '../collapse-scheduled-task-conversations';
 import { conversationIdsMatch } from '../conversation-id-match';
 
 const conversation = (
@@ -157,4 +161,80 @@ describe('collapseScheduledTaskConversations', () => {
     expect(result).not.toBe(items);
     expect(items).toHaveLength(2);
   });
+});
+
+describe('groupScheduledTaskConversations + applyActiveScheduledTaskRun', () => {
+  const group = (items: ConversationListItemDto[]) =>
+    groupScheduledTaskConversations(items, { conversationIdsMatch });
+
+  const chatOne = conversation('conversations/bucket/gpt-4__One');
+  const chatTwo = conversation('conversations/bucket/gpt-4__Two');
+  const older = run('b', { createdAt: 100 });
+  const newest = run('c', { createdAt: 200 });
+
+  it('keeps the collapsed list reference when an ordinary conversation is active', () => {
+    const grouping = group([chatOne, older, newest, chatTwo]);
+
+    const first = applyActiveScheduledTaskRun(grouping, chatOne.id);
+    const second = applyActiveScheduledTaskRun(grouping, chatTwo.id);
+
+    expect(second).toBe(first);
+    expect(ids(first)).toEqual(ids([chatOne, newest, chatTwo]));
+  });
+
+  it('keeps the collapsed list reference for no active id or an unknown id', () => {
+    const grouping = group([chatOne, older, newest]);
+    const base = applyActiveScheduledTaskRun(grouping, undefined);
+
+    expect(applyActiveScheduledTaskRun(grouping, 'conversations/nope')).toBe(
+      base,
+    );
+  });
+
+  it('keeps the collapsed list reference when the newest run is active', () => {
+    const grouping = group([older, newest]);
+    const base = applyActiveScheduledTaskRun(grouping, undefined);
+
+    const result = applyActiveScheduledTaskRun(grouping, newest.id);
+
+    expect(result).toBe(base);
+    expect(result).toEqual([newest]);
+  });
+
+  it('returns a new list showing an active older run', () => {
+    const grouping = group([chatOne, newest, older]);
+    const base = applyActiveScheduledTaskRun(grouping, undefined);
+
+    const result = applyActiveScheduledTaskRun(grouping, older.id);
+
+    expect(result).not.toBe(base);
+    expect(ids(result)).toEqual(ids([chatOne, older]));
+  });
+
+  const pinned = run('p', { createdAt: 50, isPinned: true });
+  const otherTask = run('x', { scheduleId: 's2' });
+  const shared = run('s', { bucket: 'other', sharedWithMe: true });
+  const cases: Array<[string, ConversationListItemDto[], string | undefined]> =
+    [
+      ['no active id', [chatOne, older, newest, pinned, chatTwo], undefined],
+      ['ordinary active', [chatOne, older, newest], chatTwo.id],
+      ['older run active', [newest, chatOne, older], older.id],
+      [
+        'older run active via route id',
+        [newest, older],
+        older.id.replace(/^conversations\//, ''),
+      ],
+      ['pinned run active', [pinned, older, newest], pinned.id],
+      ['other task active', [older, newest, otherTask], otherTask.id],
+      ['other bucket', [older, shared, newest], shared.id],
+    ];
+
+  it.each(cases)(
+    'matches the single-pass result (%s)',
+    (_label, items, activeId) => {
+      expect(applyActiveScheduledTaskRun(group(items), activeId)).toEqual(
+        collapse(items, activeId),
+      );
+    },
+  );
 });

@@ -30,6 +30,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   labels,
   className,
   styles: groupStyles,
+  onAttachmentClick,
 }) => {
   const {
     executedLabel = 'Executed',
@@ -39,6 +40,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     copyAriaLabel,
     failedAriaLabel,
     attemptLabel,
+    attachmentClickLabel,
   } = labels ?? {};
 
   const [isOpen, setIsOpen] = useState(isStreaming);
@@ -86,6 +88,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     runningAriaLabel,
     failedAriaLabel,
     attemptLabel,
+    attachmentClickLabel,
   };
 
   if (stages.length === 1) {
@@ -96,6 +99,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         className={className}
         styles={{ colors: panelColors, typography: groupStyles?.typography }}
         labels={panelLabels}
+        onAttachmentClick={onAttachmentClick}
       />
     );
   }
@@ -225,16 +229,19 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         )}
         contentClassName={mergeClasses('-mt-2 px-0', styles.groupRegion)}
       >
-        <StagesPanel
-          stages={stages}
-          isStreaming={isStreaming}
-          styles={{
-            colors: panelColors,
-            typography: groupStyles?.typography,
-          }}
-          labels={panelLabels}
-          className="pt-1"
-        />
+        {isOpen && (
+          <StagesPanel
+            stages={stages}
+            isStreaming={isStreaming}
+            styles={{
+              colors: panelColors,
+              typography: groupStyles?.typography,
+            }}
+            labels={panelLabels}
+            className="pt-1"
+            onAttachmentClick={onAttachmentClick}
+          />
+        )}
       </Accordion>
     </div>
   );

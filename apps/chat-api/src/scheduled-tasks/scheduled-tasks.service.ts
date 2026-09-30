@@ -2,6 +2,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
   Inject,
   Injectable,
   Logger,
@@ -11,7 +12,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import {
+  extractDialErrorMessage,
   handleDialFetchError,
+  isUpstreamTextExposable,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
@@ -19,6 +22,8 @@ import { EnvironmentVariables } from '../config/environment.config';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import { ExternalServiceAuthType } from '../external-services/dto/external-service.dto';
+import { ExternalServicesService } from '../external-services/external-services.service';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
 import type { ListScheduledTaskRunsQueryDto } from './dto/list-scheduled-task-runs-query.dto';
 import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task-runs.dto';
@@ -42,6 +47,34 @@ import { ScheduleAction } from './types/schedule-action.enum';
 import { ScheduledTaskErrorCode } from './types/scheduled-task-error-code.enum';
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
+const UPSTREAM_MESSAGE_MAX_LENGTH = 1000;
+const UPSTREAM_CODE_PATTERN = /^[A-Za-z0-9_.:-]{1,128}$/;
+
+interface UpstreamErrorFields {
+  upstreamMessage?: string;
+  upstreamCode?: string;
+}
+
+/*
+ * The reason and code DIAL Scheduler returned, sanitized for the client: the
+ * message is trimmed and capped, the code must be a safe token. The raw body
+ * itself is never forwarded.
+ */
+const extractUpstreamErrorFields = (body: unknown): UpstreamErrorFields => {
+  const fields: UpstreamErrorFields = {};
+  const message = extractDialErrorMessage(body)?.trim();
+  if (message) {
+    fields.upstreamMessage = message.slice(0, UPSTREAM_MESSAGE_MAX_LENGTH);
+  }
+  if (body !== null && typeof body === 'object') {
+    const record = body as { code?: unknown; error?: { code?: unknown } };
+    const code = record.error?.code ?? record.code;
+    if (typeof code === 'string' && UPSTREAM_CODE_PATTERN.test(code)) {
+      fields.upstreamCode = code;
+    }
+  }
+  return fields;
+};
 const LIST_CACHE_EPOCH_TTL_MS = 24 * 60 * 60 * 1000;
 
 /*
@@ -78,6 +111,7 @@ export class ScheduledTasksService {
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly deploymentsService: DeploymentsService,
+    private readonly externalServicesService: ExternalServicesService,
   ) {
     this.schedulerAppId = configService.get('SCHEDULER_APP_ID', {
       infer: true,
@@ -348,12 +382,7 @@ export class ScheduledTasksService {
         } catch {
           errorBody = undefined;
         }
-        return mapDialHttpStatus(
-          response.status,
-          context,
-          this.logger,
-          errorBody,
-        );
+        return this.throwUpstreamError(response.status, context, errorBody);
       }
 
       if (!parseJson) {
@@ -373,6 +402,38 @@ export class ScheduledTasksService {
       return handleDialFetchError(err, context, this.logger, this.timeoutMs);
     } finally {
       clearTimeout(timeoutId);
+    }
+  }
+
+  /*
+   * Maps a non-2xx Scheduler response exactly as `mapDialHttpStatus` does —
+   * same status, exception type and generic `message` — and, where the shared
+   * exposure rule allows, adds Scheduler's own reason and code as
+   * `upstreamMessage`/`upstreamCode` so the client can show them.
+   */
+  private throwUpstreamError(
+    status: number,
+    context: string,
+    errorBody: unknown,
+  ): never {
+    try {
+      return mapDialHttpStatus(status, context, this.logger, errorBody);
+    } catch (err) {
+      if (!(err instanceof HttpException) || !isUpstreamTextExposable(status)) {
+        throw err;
+      }
+      const fields = extractUpstreamErrorFields(errorBody);
+      if (!fields.upstreamMessage && !fields.upstreamCode) throw err;
+      const mapped = err.getResponse();
+      /* Extend the freshly built body in place so the exception subtype survives. */
+      if (typeof mapped === 'object' && mapped !== null) {
+        Object.assign(mapped, fields);
+        throw err;
+      }
+      throw new HttpException(
+        { statusCode: err.getStatus(), message: mapped, ...fields },
+        err.getStatus(),
+      );
     }
   }
 
@@ -487,6 +548,7 @@ export class ScheduledTasksService {
     body: CreateScheduledTaskBodyDto,
     bucket = '',
   ): Promise<ScheduledTaskDto> {
+    await this.assertSchedulerConsent(accessToken);
     await this.validateConfiguration(body, accessToken, bucket);
     const payload = toUpstreamSchedulePayload(
       body,
@@ -563,6 +625,7 @@ export class ScheduledTasksService {
     bucket = '',
   ): Promise<ScheduledTaskDto> {
     const serviceId = this.getSchedulerServiceId();
+    await this.assertSchedulerConsent(accessToken);
     const saved = await this.getScheduledTask(accessToken, scheduleId);
     const effectiveBody = {
       ...body,
@@ -586,6 +649,48 @@ export class ScheduledTasksService {
 
     await this.invalidateListCache(userSub);
     return fromUpstreamSchedule(result);
+  }
+
+  /*
+   * A DIAL_NATIVE scheduler service runs every schedule on the user's behalf
+   * under an application consent an administrator can revoke at any time.
+   * Once revoked, DIAL Scheduler only fails later with an opaque 5xx, so the
+   * consent is read fresh (never cached) before every operation that makes a
+   * schedule run. Only an explicit SIGNED_OUT blocks: a failed lookup or a
+   * status Core does not report leaves the decision to DIAL Scheduler itself.
+   */
+  private async assertSchedulerConsent(accessToken: string): Promise<void> {
+    const appId = this.getSchedulerAppId();
+    const serviceId = this.getSchedulerServiceId();
+    let service;
+    try {
+      service = await this.externalServicesService.getExternalService(
+        accessToken,
+        appId,
+        serviceId,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Could not read consent status of scheduler service "${serviceId}"; deferring to DIAL Scheduler`,
+        err instanceof Error ? err.message : undefined,
+      );
+      return;
+    }
+    if (
+      service.authenticationType === ExternalServiceAuthType.DialNative &&
+      service.appLevelAuthStatus === 'SIGNED_OUT'
+    ) {
+      this.logger.warn(
+        `Scheduler service "${serviceId}" has no application consent; rejecting the operation`,
+      );
+      throw new ForbiddenException({
+        statusCode: 403,
+        error: 'Forbidden',
+        code: ScheduledTaskErrorCode.AdminConsentRequired,
+        message:
+          "A DIAL administrator must approve this application's access before you can continue.",
+      });
+    }
   }
 
   private async validateConfiguration(
@@ -703,6 +808,7 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
   ): Promise<ScheduledTaskDto> {
+    await this.assertSchedulerConsent(accessToken);
     return this.performScheduleAction(
       userSub,
       accessToken,

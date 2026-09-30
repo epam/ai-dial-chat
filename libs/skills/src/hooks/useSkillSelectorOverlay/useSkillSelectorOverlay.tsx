@@ -25,10 +25,20 @@ import type {
   UseSkillSelectorOverlayOptions,
   UseSkillSelectorOverlayResult,
 } from '../../models/skill-selector-overlay';
+import { SkillUnresolvedReason } from '../../types/skill-unresolved-reason';
 import { matchSkillMentions } from '../../utils/skill-mention-matching';
 import { findSlashQueryAtCaret } from '../../utils/skill-mention-tracking';
-import { getSkillFallbackName } from '../../utils/skill-url';
+import { getSkillFallbackName, getSkillUrlBucket } from '../../utils/skill-url';
 import { useSkillMentions } from '../useSkillMentions/useSkillMentions';
+
+/** `Deleted` when the url's own bucket, `NotShared` otherwise. */
+const resolveUnresolvedReason = (
+  url: string,
+  viewerBucket: string,
+): SkillUnresolvedReason =>
+  getSkillUrlBucket(url) === viewerBucket
+    ? SkillUnresolvedReason.Deleted
+    : SkillUnresolvedReason.NotShared;
 
 /* Shared with the slash command menu's own `CommandMenuConfig.triggerPrefix` below. */
 const SKILL_TRIGGER_PREFIX = '/';
@@ -47,6 +57,7 @@ export const useSkillSelectorOverlay = ({
   sharedWithMe,
   publicSkills,
   favoriteIds,
+  viewerBucket,
   onToggleFavorite,
   labels,
   historyChipLabelClassName,
@@ -59,6 +70,8 @@ export const useSkillSelectorOverlay = ({
     backLabel = 'Back',
     catalogModalTitleLabel = 'Use skill',
     emptyQueryHintLabel = 'Type to filter',
+    deletedTooltipLabel,
+    notSharedTooltipLabel,
     panelLabels,
   } = labels ?? {};
 
@@ -72,6 +85,12 @@ export const useSkillSelectorOverlay = ({
    * argument.
    */
   const [browseCaretPosition, setBrowseCaretPosition] = useState(0);
+  /* Consumed `/query` (or replaced mention) to restore if "Use skill" is canceled — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
+  const [browseRestoreText, setBrowseRestoreText] = useState<{
+    position: number;
+    text: string;
+    mentionUrl?: string;
+  } | null>(null);
   const [messageRevision, setMessageRevision] = useState(0);
   const [caretPositionOverride, setCaretPositionOverride] = useState<
     number | undefined
@@ -211,6 +230,31 @@ export const useSkillSelectorOverlay = ({
     [mentions],
   );
 
+  /* Non-mutating read of the same run `consumeQueryAtCaret`/`close({ consumeQuery: true })` would remove, plus its mention url when that run is an already-tracked anchor rather than unconfirmed text — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
+  const peekQueryAtCaret = useCallback(
+    (
+      caretPosition: number,
+    ): { position: number; text: string; mentionUrl?: string } | undefined => {
+      const query = findSlashQueryAtCaret(
+        mentions.draft,
+        caretPosition,
+        SKILL_TRIGGER_PREFIX,
+      );
+      if (query == null) return undefined;
+
+      const matchedAnchor = mentions.anchors.find(
+        (anchor) =>
+          anchor.start === query.start && anchor.start + anchor.length === query.end,
+      );
+      return {
+        position: query.start,
+        text: mentions.draft.slice(query.start, query.end),
+        mentionUrl: matchedAnchor?.url,
+      };
+    },
+    [mentions],
+  );
+
   const resetSkillMentions = useCallback(() => {
     mentions.reset();
     setMessageRevision((revision) => revision + 1);
@@ -258,6 +302,10 @@ export const useSkillSelectorOverlay = ({
         const skillEntry = entries[mention.skillIndex];
         const skill = skillByUrl.get(skillEntry.url);
         const name = skill?.name ?? getSkillFallbackName(skillEntry.url);
+        const unresolvedReason =
+          skill == null
+            ? resolveUnresolvedReason(skillEntry.url, viewerBucket)
+            : undefined;
 
         segments.push(
           <ChatSkill
@@ -266,8 +314,13 @@ export const useSkillSelectorOverlay = ({
             path={skillEntry.url}
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
+            unresolvedReason={unresolvedReason}
             onViewDetails={setDetailsSkillId}
-            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+            labels={{
+              viewDetailsLabel: panelLabels?.viewDetailsLabel,
+              deletedTooltipLabel,
+              notSharedTooltipLabel,
+            }}
           />,
         );
         cursor = mention.start + mention.length;
@@ -279,7 +332,15 @@ export const useSkillSelectorOverlay = ({
 
       return segments;
     },
-    [resolveName, skillByUrl, historyChipLabelClassName, panelLabels],
+    [
+      resolveName,
+      skillByUrl,
+      historyChipLabelClassName,
+      panelLabels,
+      viewerBucket,
+      deletedTooltipLabel,
+      notSharedTooltipLabel,
+    ],
   );
 
   /*
@@ -296,6 +357,10 @@ export const useSkillSelectorOverlay = ({
       return entries.map((entry) => {
         const skill = skillByUrl.get(entry.url);
         const name = skill?.name ?? getSkillFallbackName(entry.url);
+        const unresolvedReason =
+          skill == null
+            ? resolveUnresolvedReason(entry.url, viewerBucket)
+            : undefined;
 
         return (
           <ChatSkill
@@ -304,13 +369,25 @@ export const useSkillSelectorOverlay = ({
             path={entry.url}
             labelClassName={historyChipLabelClassName}
             description={skill?.description}
+            unresolvedReason={unresolvedReason}
             onViewDetails={setDetailsSkillId}
-            labels={{ viewDetailsLabel: panelLabels?.viewDetailsLabel }}
+            labels={{
+              viewDetailsLabel: panelLabels?.viewDetailsLabel,
+              deletedTooltipLabel,
+              notSharedTooltipLabel,
+            }}
           />
         );
       });
     },
-    [skillByUrl, historyChipLabelClassName, panelLabels],
+    [
+      skillByUrl,
+      historyChipLabelClassName,
+      panelLabels,
+      viewerBucket,
+      deletedTooltipLabel,
+      notSharedTooltipLabel,
+    ],
   );
 
   const renderOverlay = useCallback(
@@ -325,7 +402,10 @@ export const useSkillSelectorOverlay = ({
         }}
         onToggleFavorite={onToggleFavorite}
         onBrowse={() => {
-          setBrowseCaretPosition(consumeQueryAtCaret(caretPosition));
+          const strayQuery = peekQueryAtCaret(caretPosition);
+          const position = consumeQueryAtCaret(caretPosition);
+          setBrowseCaretPosition(position);
+          setBrowseRestoreText(strayQuery ?? null);
           onClose();
           setIsCatalogOpen(true);
         }}
@@ -342,6 +422,7 @@ export const useSkillSelectorOverlay = ({
       favoriteSkillItems,
       insertAndPush,
       consumeQueryAtCaret,
+      peekQueryAtCaret,
       onToggleFavorite,
       panelLabels,
     ],
@@ -401,8 +482,19 @@ export const useSkillSelectorOverlay = ({
                 }}
                 onToggleFavorite={onToggleFavorite}
                 onBrowse={() => {
-                  close({ consumeQuery: true });
+                  const text = `${SKILL_TRIGGER_PREFIX}${query}`;
+                  const matchedAnchor = mentions.anchors.find(
+                    (anchor) =>
+                      anchor.start === caretPosition &&
+                      anchor.length === text.length,
+                  );
+                  close({ consumeQuery: true, returnFocus: false });
                   setBrowseCaretPosition(caretPosition);
+                  setBrowseRestoreText({
+                    position: caretPosition,
+                    text,
+                    mentionUrl: matchedAnchor?.url,
+                  });
                   setIsCatalogOpen(true);
                 }}
                 onViewDetails={(item) => {
@@ -420,17 +512,37 @@ export const useSkillSelectorOverlay = ({
       emptyQueryHintLabel,
       favoriteSkillItems,
       insertAndPush,
+      mentions.anchors,
       onToggleFavorite,
       panelLabels,
     ],
   );
 
+  /* Restores browseRestoreText on cancel — see the skill-input-attachment spec's "Slash command dropdown" requirement. */
+  const handleCatalogClose = useCallback(() => {
+    setIsCatalogOpen(false);
+    if (browseRestoreText == null) return;
+
+    const { position, text, mentionUrl } = browseRestoreText;
+    if (mentionUrl != null) {
+      mentions.restoreMention(mentionUrl, text.slice(1), position);
+    } else {
+      mentions.onDraftChange(
+        mentions.draft.slice(0, position) + text + mentions.draft.slice(position),
+      );
+    }
+    setMessageRevision((revision) => revision + 1);
+    setCaretPositionOverride(position + text.length);
+    setBrowseRestoreText(null);
+  }, [browseRestoreText, mentions]);
+
   const skillCatalogModal = (
     <SkillCatalogModal
       isOpen={isCatalogOpen}
-      onClose={() => setIsCatalogOpen(false)}
+      onClose={handleCatalogClose}
       onSelect={(id) => {
         insertAndPush(id, resolveName(id), browseCaretPosition);
+        setBrowseRestoreText(null);
         setIsCatalogOpen(false);
       }}
       title={catalogModalTitleLabel}

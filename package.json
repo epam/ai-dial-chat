@@ -126,10 +126,10 @@
     "webpack": "5.110.3"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.3.0-dev.16",
+    "@epam/ai-dial-react-file-manager": "0.3.0-dev.19",
     "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.1",
     "@epam/ai-dial-shared": "0.48.0",
-    "@epam/ai-dial-ui-kit": "^0.15.0-dev.23",
+    "@epam/ai-dial-ui-kit": "^0.15.0-dev.27",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",
@@ -186,6 +186,7 @@
     "yaml": "^2.9.0"
   },
   "overrides": {
+    "brace-expansion@^5.0.0": "^5.0.12",
     "express": "$express",
     "@epam/ai-dial-react-pdf-highlighter": "$@epam/ai-dial-react-pdf-highlighter",
     "dompurify": "3.4.15",

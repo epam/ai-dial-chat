@@ -38,6 +38,7 @@ const handlersMocks = vi.hoisted(() => ({
  */
 const streamMocks = vi.hoisted(() => ({
   startStream: vi.fn(),
+  batchChunksPerFrame: undefined as boolean | undefined,
   setConversation: undefined as
     | undefined
     | ((update: (prev: Conversation | null) => Conversation | null) => void),
@@ -152,8 +153,10 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
     ...actual,
     useConversationStream: (params: {
       state: { setConversation: typeof streamMocks.setConversation };
+      batchChunksPerFrame?: boolean;
     }) => {
       streamMocks.setConversation = params.state.setConversation;
+      streamMocks.batchChunksPerFrame = params.batchChunksPerFrame;
       return {
         startStream: streamMocks.startStream,
         handleStop: vi.fn(),
@@ -300,6 +303,43 @@ describe('ConversationPage — a conversation the backend no longer has', () => 
     await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
     expect(removeConversationFromList).not.toHaveBeenCalled();
     expect(routerMocks.navigate).not.toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('passes the loaded name to updateConversationTitle once', async () => {
+    const updateConversationTitle = vi.fn();
+    mockUseConversations.mockReturnValue({
+      ...mockUseConversations(),
+      updateConversationTitle,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+
+    render(<ConversationPage />);
+
+    await waitFor(() =>
+      expect(updateConversationTitle).toHaveBeenCalledWith(
+        CONVERSATION_ID,
+        'Hello',
+      ),
+    );
+    expect(updateConversationTitle).toHaveBeenCalledOnce();
+  });
+});
+
+describe('ConversationPage — stream chunk batching', () => {
+  it('asks the stream hook to publish chunks once per frame', async () => {
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+
+    render(<ConversationPage />);
+
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+    expect(streamMocks.batchChunksPerFrame).toBe(true);
   });
 });
 

@@ -714,4 +714,78 @@ describe('ScheduledTaskCreatePage', () => {
       'Daily summary',
     );
   });
+
+  it('tells the user to contact an administrator when the scheduler consent was revoked', async () => {
+    createScheduledTaskMock.mockRejectedValue({
+      response: new Response(
+        JSON.stringify({ code: 'scheduledTaskAdminConsentRequired' }),
+        { status: 403 },
+      ),
+    });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'toolsetSignin.adminConsentRequired',
+        }),
+      );
+    });
+    expect(screen.getByRole('textbox', { name: 'displayName' })).toHaveProperty(
+      'value',
+      'Daily summary',
+    );
+  });
+
+  it("shows DIAL Scheduler's reason instead of the generic server message", async () => {
+    createScheduledTaskMock.mockRejectedValue({
+      response: new Response(
+        JSON.stringify({
+          message: 'DIAL Core returned a server error',
+          upstreamMessage: 'Quota exceeded for schedules',
+        }),
+        { status: 502 },
+      ),
+    });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Quota exceeded for schedules' }),
+      );
+    });
+  });
+
+  it('falls back to the localized message when Scheduler supplies no reason', async () => {
+    createScheduledTaskMock.mockRejectedValue({
+      response: new Response(
+        JSON.stringify({ message: 'DIAL Core request timed out' }),
+        { status: 503 },
+      ),
+    });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    await vi.waitFor(() => {
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'scheduledTasks.create.errorNotification',
+        }),
+      );
+    });
+  });
 });

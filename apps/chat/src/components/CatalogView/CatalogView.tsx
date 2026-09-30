@@ -70,6 +70,7 @@ import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { getCatalogSearchPlaceholder } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
+import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
@@ -496,6 +497,43 @@ const CatalogView: FC<Props> = ({
     [t],
   );
 
+  const handleDeleteSuccess = useCallback(
+    (item: CatalogItem) => {
+      notifyOperationSuccess(
+        resolveCatalogItemEntity(
+          item.type,
+          findDeploymentByIdOrReference(deployments, item.id),
+        ),
+        EntityOperation.Deleted,
+        { name: item.name },
+      );
+
+      /*
+       * A deleted item's id stays in the user-config favourites unless it is
+       * removed here, and an item re-created later at the same resource path
+       * would come back already starred (Issue #9143). The delete itself has
+       * succeeded, so a failed cleanup is only logged.
+       */
+      if (!favoriteIds.has(item.id)) return;
+      const removeFavorite = async () => {
+        try {
+          await toggleFavorite(
+            item.id,
+            false,
+            resolveFavoriteEntityType(item.type),
+          );
+        } catch (err) {
+          console.warn(
+            '[CatalogView] Failed to remove deleted item from favourites',
+            err,
+          );
+        }
+      };
+      void removeFavorite();
+    },
+    [deployments, favoriteIds, notifyOperationSuccess, toggleFavorite],
+  );
+
   const { handleEdit, handleDelete, createOptions, createSearch } =
     useCatalogEditNavigation({
       deployments,
@@ -515,15 +553,7 @@ const CatalogView: FC<Props> = ({
       refetchToolsets,
       refetchSkills,
       refetchDeployments,
-      onDeleteSuccess: (item) =>
-        notifyOperationSuccess(
-          resolveCatalogItemEntity(
-            item.type,
-            findDeploymentByIdOrReference(deployments, item.id),
-          ),
-          EntityOperation.Deleted,
-          { name: item.name },
-        ),
+      onDeleteSuccess: handleDeleteSuccess,
       labels: catalogEditNavigationLabels,
       onNotify: showErrorNotification,
       onSkillUploadClick: openSkillArchiveDialog,

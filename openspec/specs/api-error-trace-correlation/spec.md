@@ -8,7 +8,7 @@ A single helper that normalizes any API error into a message and trace ID, so a 
 
 ### Requirement: One normalization helper resolves message and trace ID from any API error
 `@epam/ai-dial-chat-hooks` SHALL export an async `getApiErrorDetails(error: unknown)`
-helper returning `{ status?: number; message: string | null; traceId?: string }`, supporting both
+helper returning `{ status?: number; message: string | null; traceId?: string; code?: string; upstreamCode?: string; upstreamMessage?: string }`, supporting both
 the generated `@epam/ai-dial-chat-api-client` `ResponseError` (which retains the original
 `Response`) and a host's own raw-fetch request error, such as `ApiRequestError` from
 `apps/chat/src/server-api/base.ts`.
@@ -34,6 +34,12 @@ body that cannot be parsed as JSON SHALL yield `message: null`, matching `getApi
 existing behavior rather than diverging from it. The response body SHALL be read via
 `response.clone()` (or an equivalent single-consumption-safe strategy) so no caller can trigger a
 "body already used" error.
+
+When the parsed JSON body is an object, the helper SHALL also return its top-level `code`,
+`upstreamCode`, and `upstreamMessage` properties, each only when it is a non-empty string, and omit
+each key otherwise (no `undefined`-valued keys). These are generic API error-body fields: the
+library SHALL NOT interpret, translate, or choose between them — deciding what to display stays
+with the host. `message` resolution is unaffected by them.
 
 #### Scenario: Trace ID resolved from a JSON error body
 - **WHEN** an API call fails and the response JSON body includes a valid `traceparent`
@@ -65,6 +71,17 @@ existing behavior rather than diverging from it. The response body SHALL be read
   `getApiErrorStatus`, `isConversationNotFoundError`, or `ApiErrorDetails`
 - **THEN** it imports the name from `@epam/ai-dial-chat-hooks`, and no
   `apps/chat/src/server-api/api-error.ts` module exists to forward it
+
+#### Scenario: Domain and upstream error fields are preserved
+- **WHEN** an API call fails with a JSON body `{ "message": "DIAL Core returned a server error",
+  "code": "scheduledTaskAdminConsentRequired", "upstreamCode": "consent_revoked",
+  "upstreamMessage": "Application consent revoked" }`
+- **THEN** `getApiErrorDetails` returns `code`, `upstreamCode`, and `upstreamMessage` with those
+  values, and `message` is still `DIAL Core returned a server error`
+
+#### Scenario: Non-string or empty error fields are omitted
+- **WHEN** the body carries `upstreamCode: 42` and `upstreamMessage: ""`
+- **THEN** the result has no `upstreamCode` and no `upstreamMessage` keys
 
 ### Requirement: Malformed or absent trace data is never surfaced
 `getApiErrorDetails` SHALL validate any candidate `traceparent` against the W3C Trace Context shape

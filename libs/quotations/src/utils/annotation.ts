@@ -83,8 +83,8 @@ const readPdfRegionEdges = (
  * carries both coordinate forms. Both shapes share one validation gate
  * (integer `page >= 1`, four finite coordinates) so that highlight geometry
  * (`annotationsToPdfHighlights`) and page navigation (`getAnnotationPdfPage`)
- * can never disagree about which selectors they understand — both entry
- * points call this one reader.
+ * agree whenever a selector carries geometry. Navigation additionally accepts
+ * a page-only selector (`readPdfSelectorPage`), which has no highlight.
  */
 const readPdfSelectorBox = (selector: AnnotationSelector): BBox | undefined => {
   if (!isAnnotationSelector(selector)) return undefined;
@@ -116,6 +116,25 @@ const readPdfSelectorBox = (selector: AnnotationSelector): BBox | undefined => {
   }
 
   return { page, x1: edges.x1, y1: edges.y1, x2: edges.x2, y2: edges.y2 };
+};
+
+/*
+ * Reads the page of a `pdf_bbox`/`pdf_region` selector regardless of its
+ * geometry, or `undefined` when the selector is not a PDF selector or its
+ * `page` is not an integer `>= 1`. Lets navigation open a cited page whose
+ * selector carries no usable box, e.g. `{ type: 'pdf_region', page: 2 }`.
+ */
+const readPdfSelectorPage = (
+  selector: AnnotationSelector,
+): number | undefined => {
+  if (!isAnnotationSelector(selector)) return undefined;
+  const s = selector as unknown as Record<string, unknown>;
+  if (s['type'] !== 'pdf_bbox' && s['type'] !== 'pdf_region') return undefined;
+
+  const page = s['page'];
+  return typeof page === 'number' && Number.isInteger(page) && page >= 1
+    ? page
+    : undefined;
 };
 
 /*
@@ -256,10 +275,13 @@ export const annotationHighlightId = (
     : (annotationIdentityKey(annotation) ?? String(fallbackIndex));
 
 /**
- * Returns the first positive integer PDF page in the annotation's body selectors,
- * or `undefined` when none exists. Recognizes `pdf_bbox` selectors and both
- * `pdf_region` coordinate forms; a page is returned only for a selector whose
- * geometry also validates (see `readPdfSelectorBox`).
+ * Returns the PDF page to open for the annotation, or `undefined` when none
+ * exists. Recognizes `pdf_bbox` selectors and both `pdf_region` coordinate
+ * forms. The first selector whose geometry validates wins (see
+ * `readPdfSelectorBox`), so the page matches the selected highlight; when no
+ * selector has valid geometry, the first `pdf_bbox`/`pdf_region` selector
+ * with a positive integer `page` is used, so a page-only selector still
+ * navigates without a highlight.
  */
 export const getAnnotationPdfPage = (
   annotation: Annotation,
@@ -272,6 +294,10 @@ export const getAnnotationPdfPage = (
     if (!isAnnotationSelector(s)) continue;
     const box = readPdfSelectorBox(s);
     if (box != null) return box.page;
+  }
+  for (const s of selectors) {
+    const page = readPdfSelectorPage(s);
+    if (page != null) return page;
   }
   return undefined;
 };

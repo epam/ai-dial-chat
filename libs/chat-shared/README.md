@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.23`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.15.0-dev.27`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.15.0-dev.23
-- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.16 \*
+- `@epam/ai-dial-ui-kit` ^0.15.0-dev.27
+- `@epam/ai-dial-react-file-manager` ^0.3.0-dev.19 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -433,6 +433,10 @@ times; `copiedLabel` is announced through the block's own
 behind a `Suspense` boundary — `value` is shown immediately as plain,
 unhighlighted text via the fallback, then swapped for the highlighted output
 once the engine resolves. A language-less block never loads the engine at all.
+Blocks exceeding 50,000 UTF-16 code units overall or 2,000 on any line also
+bypass the engine and display complete plain text. Copy and download retain
+the original content, and the language label is preserved. This size guard
+reduces expensive highlighting; it is not an execution timeout.
 
 ```tsx
 import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
@@ -444,6 +448,19 @@ import { MarkdownCodeBlock } from '@epam/ai-dial-chat-shared';
   copyLabel="Copy code"
   copiedLabel="Copied!"
 />;
+```
+
+### isSyntaxHighlightingAllowed
+
+`isSyntaxHighlightingAllowed(text: string): boolean` is the shared size guard
+for synchronous syntax highlighting. It permits up to 50,000 UTF-16 code units
+overall and 2,000 per line, inclusively, recognizing LF, CRLF, and CR endings.
+Callers render complete plain text when it returns `false`.
+
+```ts
+import { isSyntaxHighlightingAllowed } from '@epam/ai-dial-chat-shared';
+
+const canHighlight = isSyntaxHighlightingAllowed('const answer = 42;');
 ```
 
 ### MarkdownTable

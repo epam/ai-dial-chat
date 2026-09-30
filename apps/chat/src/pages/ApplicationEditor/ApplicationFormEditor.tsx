@@ -74,11 +74,16 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   );
 
   /*
-   * Set by a metadata-first create. Keeping it as the re-seed key stops the
-   * Metadata from being re-seeded when the new deployment later shows up in
-   * the list, so edits typed after Create survive.
+   * True once a metadata-first create has switched this session into edit
+   * mode in place. `switchToCreatedApp`'s deployments-list refetch is
+   * fire-and-forget and does not gate the form as busy, so the user can keep
+   * typing while it is in flight; freezing the reseed key at `undefined` from
+   * that point on (below) means the resolved deployment, whenever it arrives,
+   * never overwrites those in-progress edits. A fresh mount (e.g. a reload)
+   * always starts `false`, so edit mode entered that way still reseeds once
+   * from the resolved deployment as usual.
    */
-  const [createdAppId, setCreatedAppId] = useState('');
+  const [wasCreatedThisSession, setWasCreatedThisSession] = useState(false);
   const { deployment, isResolving } = useEditedApplication(appId);
   const metadataInitialValues = useMemo(
     () =>
@@ -90,7 +95,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const metadata = useMetadataForm({
     initialValues: metadataInitialValues,
     validationOptions: definition.metadataValidation,
-    reseedKey: createdAppId || deployment?.id,
+    reseedKey: wasCreatedThisSession ? undefined : deployment?.id,
   });
 
   const [setup, setSetup] = useState<ApplicationSetupValues>(
@@ -206,7 +211,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
 
   const switchToCreatedApp = useCallback(
     (newAppId: string) => {
-      setCreatedAppId(newAppId);
+      setWasCreatedThisSession(true);
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);

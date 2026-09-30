@@ -23,6 +23,7 @@ import {
   clearAttachmentCache,
   hasAttachmentTextSource,
   referenceAttachmentToPdfCanvasContent,
+  resolveHtmlCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
@@ -58,6 +59,7 @@ const MOCK_OOXML_EXTENSION_TO_FILE_TYPE: Record<string, string> = {
 vi.mock('@epam/ai-dial-attachment-canvas', () => ({
   AttachmentContentType: {
     Error: 'error',
+    Html: 'html',
     Image: 'image',
     Json: 'json',
     Markdown: 'markdown',
@@ -525,6 +527,79 @@ describe('resolveJsonCanvasContent', () => {
   });
 });
 
+describe('resolveHtmlCanvasContent', () => {
+  const oversizedHtml = `<html>${'a'.repeat(1_048_577)}</html>`;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+  });
+
+  it('returns url + isSameOriginUrl with a lazy resolveSourceText when a DIAL download URL resolves, without fetching eagerly', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve('<html><body>Hi</body></html>'),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await resolveHtmlCanvasContent(
+      makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
+      resolvers,
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      type: AttachmentContentType.Html,
+      url: '/download?path=path/page.html',
+      isSameOriginUrl: true,
+    });
+
+    const sourceText = await (
+      result as { resolveSourceText: () => Promise<string> }
+    ).resolveSourceText();
+    expect(sourceText).toBe('<html><body>Hi</body></html>');
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it('resolveSourceText rejects when the lazy fetch fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+    );
+    const result = await resolveHtmlCanvasContent(
+      makeRemoteAttachment('page.html', 'files/bucket/path/page.html'),
+      resolvers,
+    );
+    expect(result).toMatchObject({
+      type: AttachmentContentType.Html,
+      url: '/download?path=path/page.html',
+    });
+
+    await expect(
+      (
+        result as { resolveSourceText: () => Promise<string> }
+      ).resolveSourceText(),
+    ).rejects.toThrow();
+  });
+
+  it('returns srcdoc only when there is no DIAL download URL and the text is small', async () => {
+    const result = await resolveHtmlCanvasContent(
+      makeLocalAttachment('page.html', '<html><body>Local</body></html>'),
+      resolvers,
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Html,
+      srcdoc: '<html><body>Local</body></html>',
+    });
+  });
+
+  it('returns null when there is no DIAL download URL and the text is oversized', async () => {
+    const result = await resolveHtmlCanvasContent(
+      makeLocalAttachment('page.html', oversizedHtml),
+      resolvers,
+    );
+    expect(result).toBeNull();
+  });
+});
+
 describe('referenceAttachmentToPdfCanvasContent', () => {
   it('returns null when the url does not target a PDF', () => {
     expect(
@@ -833,7 +908,7 @@ describe('annotationToPdfCanvasContent', () => {
     );
   });
 
-  it('sets page to undefined and produces no highlight for a malformed pdf_region selector', () => {
+  it('keeps the page but produces no highlight for a malformed pdf_region selector', () => {
     const annotation: Annotation = {
       index: 0,
       body: {
@@ -846,8 +921,88 @@ describe('annotationToPdfCanvasContent', () => {
         },
         selector: {
           type: 'pdf_region',
-          page: 1,
+          page: 3,
           bbox: { lt: [1], wh: [2, 3] },
+        },
+      },
+    };
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBe(3);
+    expect(result?.highlights).toEqual([
+      {
+        id: result?.selectedHighlightId,
+        bboxes: [{ page: 3, x1: 0, y1: 0, x2: 0, y2: 0 }],
+        style: { backgroundColor: 'transparent', opacity: 0 },
+      },
+    ]);
+    expect(result?.selectedHighlightId).toMatch(/^page-anchor-/);
+  });
+
+  it('opens the cited page for a page-only pdf_region selector without a bbox', () => {
+    const annotation = {
+      target: { selector: { type: 'html_tag', tag: 'cit', id: '14a0ba' } },
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
+        },
+        selector: [{ type: 'pdf_region', page: 2 }],
+      },
+    } as Annotation;
+    const result = annotationToPdfCanvasContent(annotation, [], resolvers);
+    expect(result?.page).toBe(2);
+    expect(result?.highlights).toHaveLength(1);
+    expect(result?.highlights?.[0]).toMatchObject({
+      id: result?.selectedHighlightId,
+      bboxes: [{ page: 2, x1: 0, y1: 0, x2: 0, y2: 0 }],
+      style: { opacity: 0 },
+    });
+  });
+
+  it('keeps sibling highlights and selects the page anchor for a page-only annotation in a group', () => {
+    const source = {
+      type: 'attachment',
+      attachment: { type: 'application/pdf', url: 'files/bucket/report.pdf' },
+    };
+    const sibling = {
+      index: 0,
+      body: {
+        source,
+        selector: { type: 'pdf_bbox', page: 1, x1: 1, y1: 1, x2: 5, y2: 5 },
+      },
+    } as Annotation;
+    const pageOnly = {
+      index: 1,
+      body: { source, selector: [{ type: 'pdf_region', page: 4 }] },
+    } as Annotation;
+    const group = {
+      annotations: [sibling, pageOnly],
+    } as unknown as AnnotationGroup;
+
+    const result = annotationToPdfCanvasContent(pageOnly, [group], resolvers);
+
+    expect(result?.page).toBe(4);
+    expect(result?.highlights).toHaveLength(2);
+    expect(result?.highlights?.[0].id).toBe('0');
+    expect(result?.selectedHighlightId).toBe('page-anchor-1');
+    expect(result?.highlights?.[1]).toMatchObject({
+      id: 'page-anchor-1',
+      bboxes: [{ page: 4, x1: 0, y1: 0, x2: 0, y2: 0 }],
+    });
+  });
+
+  it('leaves page undefined for an annotation without a body selector', () => {
+    const annotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'files/bucket/report.pdf',
+          },
         },
       },
     };

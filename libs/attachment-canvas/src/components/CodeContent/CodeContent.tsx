@@ -1,5 +1,6 @@
 import {
   CodeBlockTheme,
+  isSyntaxHighlightingAllowed,
   mergeClasses,
   restrainedSyntaxTheme,
 } from '@epam/ai-dial-chat-shared';
@@ -53,7 +54,12 @@ export interface CodeContentProps {
 export const CodeContent: FC<CodeContentProps> = memo(
   ({ content, codeBlockTheme = CodeBlockTheme.Light, labels }) => {
     const { text, language } = content;
-    const isPlain = language == null || language === 'plaintext';
+    const canHighlight = useMemo(
+      () => isSyntaxHighlightingAllowed(text),
+      [text],
+    );
+    const isPlain =
+      language == null || language === 'plaintext' || !canHighlight;
     const syntaxTheme = SYNTAX_THEME[codeBlockTheme];
     const isLightTheme = codeBlockTheme === CodeBlockTheme.Light;
 

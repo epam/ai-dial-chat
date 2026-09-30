@@ -34,6 +34,7 @@ export * from './utils/format-last-used';
 export * from './utils/format-file-size';
 export * from './utils/format-price';
 export * from './utils/file-download';
+export * from './utils/syntax-highlighting';
 export * from './constants/entity-colors';
 export * from './utils/prompt-variables';
 export * from './utils/generate-uuid';

@@ -360,6 +360,8 @@ export enum SkillSelectorI18nKeys {
   ModalTitle = 'skillSelector.modalTitle',
   NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
   UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
+  DeletedTooltipLabel = 'skillSelector.deletedTooltipLabel',
+  NotSharedTooltipLabel = 'skillSelector.notSharedTooltipLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
 }
 
@@ -613,6 +615,7 @@ export enum DialFileManagerI18nKeys {
   MyFilesTreeHeader = 'dialFileManager.myFiles.treeHeader',
   MyFilesEmptyStateTitle = 'dialFileManager.myFiles.emptyStateTitle',
   MyFilesEmptyStateDescription = 'dialFileManager.myFiles.emptyStateDescription',
+  SharedRootFolder = 'dialFileManager.shared.rootFolder',
   SharedEmptyStateTitle = 'dialFileManager.shared.emptyStateTitle',
   SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
@@ -1256,6 +1259,8 @@ export enum VoiceRecordingI18nKeys {
 export enum ToolsI18nKeys {
   MenuTitle = 'tools.menuTitle',
   RemoveTool = 'tools.removeTool',
+  StateOn = 'tools.stateOn',
+  StateOff = 'tools.stateOff',
 }
 
 export enum ConversationInputI18nKeys {

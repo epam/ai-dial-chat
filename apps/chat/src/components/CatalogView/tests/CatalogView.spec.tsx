@@ -5,6 +5,7 @@ import {
   getCredentialsBadgeState,
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
+import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
@@ -28,6 +29,8 @@ import { useCatalogActiveTabPreference } from '../../../hooks/useCatalogActiveTa
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
+import { deletePrompt } from '../../../server-api/prompts.api';
+import { deleteSkill } from '../../../server-api/skills.api';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import CatalogView from '../CatalogView';
@@ -1223,6 +1226,33 @@ describe('CatalogView', () => {
         '/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2FAI%2Fsummarize',
       );
     });
+
+    /* Issue #9143: a prompt re-created at the same path must not come back starred. */
+    it('removes a deleted prompt from favourites', async () => {
+      enablePrompts();
+      mockPrompts();
+      const toggleFavorite = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set([personalPrompt.id]),
+        isLoading: false,
+        toggleFavorite,
+      });
+      vi.mocked(deletePrompt).mockResolvedValue(undefined);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: `delete ${personalPrompt.id}` }),
+      );
+
+      expect(deletePrompt).toHaveBeenCalledWith(personalPrompt.id);
+      await waitFor(() =>
+        expect(toggleFavorite).toHaveBeenCalledWith(
+          personalPrompt.id,
+          false,
+          FavoriteEntityType.Prompt,
+        ),
+      );
+    });
   });
 
   describe('prompt download', () => {
@@ -1395,6 +1425,79 @@ describe('CatalogView', () => {
       expect(
         screen.getByRole('button', { name: `revoke ${skillId}` }),
       ).toBeTruthy();
+    });
+
+    /* Issue #9143: a skill re-created at the same path must not come back starred. */
+    it('removes a deleted skill from favourites', async () => {
+      enableSkills();
+      mockSkills();
+      const skillId = 'skills/my-bucket/analysis/revenue-skill';
+      const toggleFavorite = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set([skillId]),
+        isLoading: false,
+        toggleFavorite,
+      });
+      vi.mocked(deleteSkill).mockResolvedValue({} as never);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: `delete ${skillId}` }),
+      );
+
+      expect(deleteSkill).toHaveBeenCalledWith(
+        'my-bucket',
+        'analysis/revenue-skill',
+      );
+      await waitFor(() =>
+        expect(toggleFavorite).toHaveBeenCalledWith(
+          skillId,
+          false,
+          FavoriteEntityType.Skill,
+        ),
+      );
+    });
+
+    it('leaves favourites untouched when the deleted skill was not starred', async () => {
+      enableSkills();
+      mockSkills();
+      const skillId = 'skills/my-bucket/analysis/revenue-skill';
+      const toggleFavorite = vi.fn();
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set(),
+        isLoading: false,
+        toggleFavorite,
+      });
+      vi.mocked(deleteSkill).mockResolvedValue({} as never);
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: `delete ${skillId}` }),
+      );
+
+      await waitFor(() => expect(deleteSkill).toHaveBeenCalled());
+      expect(toggleFavorite).not.toHaveBeenCalled();
+    });
+
+    it('keeps a starred skill in favourites when its delete fails', async () => {
+      enableSkills();
+      mockSkills();
+      const skillId = 'skills/my-bucket/analysis/revenue-skill';
+      const toggleFavorite = vi.fn();
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set([skillId]),
+        isLoading: false,
+        toggleFavorite,
+      });
+      vi.mocked(deleteSkill).mockRejectedValue(new Error('boom'));
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: `delete ${skillId}` }),
+      );
+
+      await waitFor(() => expect(deleteSkill).toHaveBeenCalled());
+      expect(toggleFavorite).not.toHaveBeenCalled();
     });
 
     it('notifies once when the skill listing fails and still renders the catalog', async () => {

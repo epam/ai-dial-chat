@@ -56,14 +56,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   Dropdown: ({
     children,
+    items,
     onOpenChange,
   }: {
     children: React.ReactElement<{ onClick?: () => void }>;
+    items?: Array<{ key: string; label: React.ReactNode }>;
     onOpenChange?: (isOpen: boolean) => void;
-  }) =>
-    React.cloneElement(children, {
-      onClick: () => onOpenChange?.(true),
-    }),
+  }) => (
+    <>
+      {React.cloneElement(children, {
+        onClick: () => onOpenChange?.(true),
+      })}
+      <ul aria-label="menu items">
+        {items?.map((menuItem) => (
+          <li key={menuItem.key}>{menuItem.label}</li>
+        ))}
+      </ul>
+    </>
+  ),
   GhostIconButton: React.forwardRef<
     HTMLButtonElement,
     { 'aria-label'?: string; onClick?: () => void }
@@ -197,6 +207,70 @@ describe('ConversationRow', () => {
     fireEvent.click(trigger);
 
     expect(onActionMenuOpen).toHaveBeenCalledWith(baseItem, trigger);
+  });
+
+  describe('memoisation', () => {
+    it('does not rebuild the action items when re-rendered with the same props', () => {
+      const getActions = vi.fn(() => [{ key: 'pin', label: 'Pin' }]);
+      const onSelectConversation = vi.fn();
+      const { rerender } = render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+          getActions={getActions}
+        />,
+      );
+
+      rerender(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+          getActions={getActions}
+        />,
+      );
+
+      expect(getActions).toHaveBeenCalledOnce();
+    });
+
+    it('shows new action items when the host passes a new getActions while the menu is open', () => {
+      const onSelectConversation = vi.fn();
+      const { rerender } = render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+          getActions={() => [{ key: 'publish', label: 'Publish' }]}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+      rerender(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={onSelectConversation}
+          getActions={() => [{ key: 'unpublish', label: 'Unpublish' }]}
+        />,
+      );
+
+      expect(screen.getByText('Unpublish')).toBeTruthy();
+      expect(screen.queryByText('Publish')).toBeNull();
+    });
+
+    it('renders no action trigger when getActions returns no items', () => {
+      render(
+        <ConversationRow
+          item={baseItem}
+          isActive={false}
+          onSelectConversation={vi.fn()}
+          getActions={() => []}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
+    });
   });
 
   describe('leading icon', () => {

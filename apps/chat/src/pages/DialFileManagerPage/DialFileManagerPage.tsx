@@ -61,13 +61,15 @@ const DialFileManagerPage: FC = () => {
   } = useDialFileManagerTabs(tabLabels, DialFileManagerTabs.All);
 
   // Every configured source tab becomes a top-level folder of the All tab.
-  const sections = useMemo(
-    (): DialFileManagerSection[] =>
-      DIAL_FILE_MANAGER_SECTION_TABS.filter(
-        (tab) => fileManagerTabs == null || fileManagerTabs.includes(tab),
-      ).map((tab) => ({ tab, rootLabel: tabLabels[tab] })),
-    [fileManagerTabs, tabLabels],
-  );
+  const sections = useMemo((): DialFileManagerSection[] => {
+    // The Shared root folder uses a shorter name than its "Shared with Me" tab.
+    const rootLabels: Partial<Record<DialFileManagerTabs, string>> = {
+      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.SharedRootFolder),
+    };
+    return DIAL_FILE_MANAGER_SECTION_TABS.filter(
+      (tab) => fileManagerTabs == null || fileManagerTabs.includes(tab),
+    ).map((tab) => ({ tab, rootLabel: rootLabels[tab] ?? tabLabels[tab] }));
+  }, [fileManagerTabs, tabLabels, t]);
 
   const { tabs } = useDialFileManagerTabConfig(
     activeTab,

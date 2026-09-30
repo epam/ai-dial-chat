@@ -377,6 +377,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       ChatI18nKeys.GenerationPersistenceError,
     ),
     onStreamError: logConversationStreamError,
+    /* One commit per frame while a reply streams, not one per network read. */
+    batchChunksPerFrame: true,
   });
 
   /*
@@ -723,6 +725,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const toolsChipLabels = useMemo(
     () => ({
       removeLabel: (label: string) => t(ToolsI18nKeys.RemoveTool, { label }),
+      stateOnLabel: t(ToolsI18nKeys.StateOn),
+      stateOffLabel: t(ToolsI18nKeys.StateOff),
     }),
     [t],
   );
