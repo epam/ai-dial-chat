@@ -1,6 +1,6 @@
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import type { EntityHeaderItem } from '../../models/entity';
-import { ConfirmationVariant } from '../../types/confirmation';
 import { ResourceSummary } from '../ResourceSummary/ResourceSummary';
 import styles from './ConfirmationIdentityCard.module.scss';
 
@@ -26,8 +26,8 @@ export interface ConfirmationIdentityCardProps {
   item?: EntityHeaderItem;
   /** Row content rendered instead of the entity identity, for a resource that is not an `EntityHeaderItem`. */
   children?: ReactNode;
-  /** Palette of the card surface. Default: `ConfirmationVariant.Info`. */
-  variant?: ConfirmationVariant;
+  /** Palette of the card surface. Default: `ConfirmationPopupVariant.Info`. */
+  variant?: ConfirmationPopupVariant;
   /** Size of the entity icon in pixels. Default: `40`. */
   iconSize?: number;
   /** Style overrides. */
@@ -38,11 +38,11 @@ export interface ConfirmationIdentityCardProps {
 export const ConfirmationIdentityCard: FC<ConfirmationIdentityCardProps> = ({
   item,
   children,
-  variant = ConfirmationVariant.Info,
+  variant = ConfirmationPopupVariant.Info,
   iconSize = 40,
   styles: stylesProp,
 }) => {
-  const isDanger = variant === ConfirmationVariant.Danger;
+  const isDanger = variant === ConfirmationPopupVariant.Danger;
   const colors = stylesProp?.colors;
 
   /*

@@ -1,7 +1,7 @@
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { EntityHeaderItem } from '../../../models/entity';
-import { ConfirmationVariant } from '../../../types/confirmation';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { ConfirmationIdentityCard } from '../ConfirmationIdentityCard';
 
@@ -47,7 +47,9 @@ describe('ConfirmationIdentityCard surface', () => {
   });
 
   it('uses the danger surface for the danger variant', () => {
-    const { container } = renderCard({ variant: ConfirmationVariant.Danger });
+    const { container } = renderCard({
+      variant: ConfirmationPopupVariant.Danger,
+    });
 
     expect(container.firstElementChild?.className).toContain('danger');
   });
@@ -63,7 +65,7 @@ describe('ConfirmationIdentityCard surface', () => {
 
   it('applies the danger surface and border overrides', () => {
     const { container } = renderCard({
-      variant: ConfirmationVariant.Danger,
+      variant: ConfirmationPopupVariant.Danger,
       styles: {
         colors: {
           dangerBackground: 'rgb(4, 5, 6)',

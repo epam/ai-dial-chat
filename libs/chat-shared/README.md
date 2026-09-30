@@ -648,16 +648,17 @@ still accepted; new consumers should use `styles.colors`.
 
 Tinted card echoing the resource a confirmation is about, so the user sees
 exactly what the action will affect. Defaults to the `Info` surface; pass
-`ConfirmationVariant.Danger` for destructive messaging. Pass `children`
+`ConfirmationPopupVariant.Danger` for destructive messaging. Pass `children`
 instead of `item` for a resource that is not an `EntityHeaderItem`.
 
 ```tsx
-import {
-  ConfirmationIdentityCard,
-  ConfirmationVariant,
-} from '@epam/ai-dial-chat-shared';
+import { ConfirmationIdentityCard } from '@epam/ai-dial-chat-shared';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 
-<ConfirmationIdentityCard item={item} variant={ConfirmationVariant.Danger} />;
+<ConfirmationIdentityCard
+  item={item}
+  variant={ConfirmationPopupVariant.Danger}
+/>;
 ```
 
 ### ConfirmationView
@@ -671,14 +672,12 @@ renders them as its body and footer, which is why they are two components
 rather than one.
 
 ```tsx
-import {
-  ConfirmationView,
-  ConfirmationVariant,
-} from '@epam/ai-dial-chat-shared';
+import { ConfirmationView } from '@epam/ai-dial-chat-shared';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 
 <ConfirmationView
   item={item}
-  variant={ConfirmationVariant.Danger}
+  variant={ConfirmationPopupVariant.Danger}
   message={
     <>
       Are you sure you want to delete <strong>{item.name}</strong>? This action
@@ -703,15 +702,13 @@ swaps that icon for a spinner, disables both actions, and announces
 step whose input is unsatisfied can still be cancelled.
 
 ```tsx
-import {
-  ConfirmationFooter,
-  ConfirmationVariant,
-} from '@epam/ai-dial-chat-shared';
+import { ConfirmationFooter } from '@epam/ai-dial-chat-shared';
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 
 <ConfirmationFooter
   confirmLabel="Delete"
   cancelLabel="Cancel"
-  variant={ConfirmationVariant.Danger}
+  variant={ConfirmationPopupVariant.Danger}
   loadingStatusLabel="Deleting"
   onConfirm={handleDelete}
   onCancel={handleCancel}

@@ -1,6 +1,6 @@
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import type { EntityHeaderItem } from '../../models/entity';
-import { ConfirmationVariant } from '../../types/confirmation';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import { ConfirmationIdentityCard } from '../ConfirmationIdentityCard/ConfirmationIdentityCard';
@@ -41,8 +41,8 @@ export interface ConfirmationViewProps {
   message: ReactNode;
   /** Consequences listed as bullets under the message. An empty or omitted list renders nothing. */
   consequences?: string[];
-  /** Palette of the identity card. Default: `ConfirmationVariant.Info`. */
-  variant?: ConfirmationVariant;
+  /** Palette of the identity card. Default: `ConfirmationPopupVariant.Info`. */
+  variant?: ConfirmationPopupVariant;
   /** Typography class applied to the message and the bullet list. Defaults to `'dial-small-text'`. */
   messageClassName?: string;
   /** Style overrides. */
@@ -64,7 +64,7 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
   identity,
   message,
   consequences,
-  variant = ConfirmationVariant.Info,
+  variant = ConfirmationPopupVariant.Info,
   messageClassName = 'dial-small-text',
   styles: stylesProp,
   children,

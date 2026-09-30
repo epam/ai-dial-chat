@@ -1,4 +1,5 @@
 import {
+  ConfirmationPopupVariant,
   DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -8,7 +9,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconTrashX } from '@tabler/icons-react';
 import { FC } from 'react';
-import { ConfirmationVariant } from '../../types/confirmation';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import styles from './ConfirmationView.module.scss';
@@ -31,8 +31,8 @@ export interface ConfirmationFooterProps {
   confirmLabel: string;
   /** Label of the cancel button. */
   cancelLabel: string;
-  /** Palette of the confirm button; `Danger` also gives it a leading trash icon. Default: `ConfirmationVariant.Info`. */
-  variant?: ConfirmationVariant;
+  /** Palette of the confirm button; `Danger` also gives it a leading trash icon. Default: `ConfirmationPopupVariant.Info`. */
+  variant?: ConfirmationPopupVariant;
   /** Whether the confirmed action is in flight. Default: `false`. */
   isLoading?: boolean;
   /**
@@ -56,7 +56,7 @@ export interface ConfirmationFooterProps {
 export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
   confirmLabel,
   cancelLabel,
-  variant = ConfirmationVariant.Info,
+  variant = ConfirmationPopupVariant.Info,
   isLoading = false,
   isConfirmDisabled = false,
   loadingStatusLabel,
@@ -64,7 +64,7 @@ export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  const isDanger = variant === ConfirmationVariant.Danger;
+  const isDanger = variant === ConfirmationPopupVariant.Danger;
   const cssVars = buildCssVars({
     '--cfm-footer-border': stylesProp?.colors?.border,
   });

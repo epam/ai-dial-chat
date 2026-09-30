@@ -19,7 +19,6 @@ export * from './types/attachment';
 export * from './types/entity-type';
 export * from './types/mime-type';
 export * from './types/code-editor';
-export * from './types/confirmation';
 export * from './types/file-manager-node';
 export * from './utils/annotation';
 export * from './utils/string-utils';

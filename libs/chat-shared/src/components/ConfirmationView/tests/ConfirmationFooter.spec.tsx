@@ -1,7 +1,7 @@
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ConfirmationVariant } from '../../../types/confirmation';
 import { ConfirmationFooter } from '../ConfirmationFooter';
 
 const renderFooter = (
@@ -83,7 +83,7 @@ describe('ConfirmationFooter', () => {
 /* eslint-disable testing-library/no-container, testing-library/no-node-access */
 describe('ConfirmationFooter presentation', () => {
   it('marks the confirm button with a trash icon for the danger variant', () => {
-    renderFooter({ variant: ConfirmationVariant.Danger });
+    renderFooter({ variant: ConfirmationPopupVariant.Danger });
     const confirmButton = screen.getByRole('button', { name: 'Delete' });
 
     expect(confirmButton.querySelector('svg')).toBeTruthy();

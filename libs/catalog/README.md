@@ -599,7 +599,8 @@ import {
 
 /*
  * CatalogEntityType is owned by @epam/ai-dial-chat-shared, not this lib, and
- * DetailsConfirmationVariant re-exports that package's ConfirmationVariant.
+ * DetailsConfirmationVariant re-exports the kit's ConfirmationPopupVariant,
+ * the same palette `ConfirmationPopup` is rendered with.
  */
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
