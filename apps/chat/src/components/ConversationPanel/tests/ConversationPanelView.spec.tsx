@@ -232,12 +232,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       header,
       children,
       onClose,
+      footer,
       mainButtons,
     }: {
       open: boolean;
       header?: ReactNode;
       children?: ReactNode;
       onClose?: () => void;
+      footer?: ReactNode;
       mainButtons?: Array<{
         label: ReactNode;
         disabled?: boolean;
@@ -253,6 +255,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
           {header && <h2>{header}</h2>}
           <button aria-label="Close popup" onClick={onClose} />
           {children}
+          {footer}
           {mainButtons?.map((button, index) => (
             <button
               key={index}
