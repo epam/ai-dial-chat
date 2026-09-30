@@ -1249,3 +1249,17 @@ identical to the chrome used for other content types.
 - **WHEN** `AttachmentCanvas` is rendered with a `GroupedVisualizerCanvasContent`
 - **THEN** the panel body contains a mounted `VisualizerCanvasRenderer`
 - **AND** the panel chrome behaves as it does for every other content type
+
+### Requirement: `AttachmentContentType.McpApp` content type in the canvas routing table
+
+The canvas's content-renderer table SHALL carry an `McpApp` row rendered by `McpAppCanvasRenderer`, whose payload and behaviour are defined in the `mcp-app-canvas` capability. The payload's `html` is fetched by `useOpenMcpAppCanvas` before the canvas opens, and its `sandboxUrl` points at the isolated-origin `mcp-app-sandbox-proxy` app; the canvas itself fetches or resolves neither. Unlike every other row in the table, this content type is never reached through `useOpenAttachmentCanvas`/`openFileCanvas`'s attachment routing. It is reached only through `useOpenMcpAppCanvas`, when the user activates the expand-to-canvas button (or the reload button while expanded) on a matched message's inline MCP App preview. The canvas never opens an MCP App automatically (see the `mcp-app-trigger` capability).
+
+#### Scenario: McpApp is not reachable through the attachment routing table
+
+- **WHEN** `openFileCanvas` runs its MIME/extension routing for any `DisplayAttachment`
+- **THEN** it never produces an `McpAppCanvasContent` — that content type is only constructed by `useOpenMcpAppCanvas`
+
+#### Scenario: Opening an MCP app closes other panels the same way every other trigger does
+
+- **WHEN** `useOpenMcpAppCanvas` opens the canvas with an `McpAppCanvasContent`
+- **THEN** the conversation sources panel and conversation history panel are closed first, per the existing mutual-exclusivity behavior shared by every canvas open trigger
