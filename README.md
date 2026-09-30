@@ -140,7 +140,7 @@ For the production CSP browser check, run
 
 ## Prerequisites
 
-- **Node.js**: 24 or higher (production images build on `node:24.17-alpine`)
+- **Node.js**: 24 or higher (production images build on `node:24.21-alpine3.24`)
 - **npm**: 11 or higher (bundled with Node 24)
 - **Git**: Latest version
 
@@ -572,6 +572,9 @@ The NestJS API serves both the API endpoints and the built React application:
    enabled) fall through to the React app's `index.html`
 
 `Dockerfile` at the repository root builds this arrangement into a single image.
+Both production images use npm during the build and dependency installation,
+then remove npm/npx and npm's bundled dependencies and cache from the final image.
+The applications start directly with `node`; runtime npm commands are unavailable.
 
 ### Environment Variables in Production
 
