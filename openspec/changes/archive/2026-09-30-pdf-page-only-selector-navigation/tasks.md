@@ -18,4 +18,8 @@ Architecture guard: the change stays inside `libs/quotations` (pure selector par
 
   **Verification:** `npm run validate:docs`.
 
-- [ ] 1.5 Manually verify in the app: preview a PDF citation whose annotation has `[{ type: 'pdf_region', page: 2 }]` and confirm the viewer opens page 2 with no highlight; confirm a geometry-backed citation still highlights and scrolls as before.
+- [x] 1.6 Add an invisible page-anchor highlight in `annotationToPdfCanvasContent` for an annotation with a page but no matching generated highlight, sharing its shape with `referenceAttachmentToPdfCanvasContent`; cover the single and grouped cases in `attachment-canvas.spec.ts`.
+
+  **Verification:** `npm exec nx test @epam/ai-dial-chat-hooks`, `npm exec nx lint @epam/ai-dial-chat-hooks`.
+
+- [ ] 1.5 Manually verify in the app: preview a PDF citation whose annotation has `[{ type: 'pdf_region', page: 2 }]` and confirm the viewer opens page 2 with no visible highlight; confirm a geometry-backed citation still highlights and scrolls as before.

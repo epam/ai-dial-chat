@@ -110,7 +110,7 @@ When opening a PDF citation or a reference-only PDF-page chip in the attachment 
 
 `PdfContent` (`libs/attachment-canvas/src/components/PdfContent/PdfContent.tsx`) SHALL accept a `selectedPageNumber?: number` prop, forward it directly to the vendor `DocumentPreview`'s own `selectedPageNumber` prop, and prefer it over the highlight-bbox lookup when initialising and syncing its internal `selectedPage` state (which also drives the thumbnails panel's scroll position). `AttachmentCanvasBody` SHALL pass `content.page` as this prop when rendering `PdfCanvasContent`.
 
-The mapper SHALL find the group by exact annotation membership, not source URL alone, and include highlights only from that group's annotations for the selected PDF. It SHALL omit a selected highlight ID when no generated highlight matches. Highlight generation SHALL ignore malformed selectors, invalid pages, and non-finite coordinates, while retaining valid zero-area boxes. Download behavior and non-PDF routing SHALL remain unchanged.
+The mapper SHALL find the group by exact annotation membership, not source URL alone, and include highlights only from that group's annotations for the selected PDF. When no generated highlight matches the clicked annotation but `page` is set, it SHALL append an invisible page-anchor highlight — a zero-area box at the top of that page (`x1 = y1 = x2 = y2 = 0`), transparent, `opacity: 0`, the same shape `referenceAttachmentToPdfCanvasContent` uses — with an id distinct from every generated highlight, and select it. Selecting a highlight routes the vendor viewer through highlight navigation, which runs after its initial auto-zoom; a bare `selectedPageNumber` is applied before that zoom and reset to page 1 by it. It SHALL omit a selected highlight ID only when no generated highlight matches and `page` is `undefined`. Highlight generation SHALL ignore malformed selectors, invalid pages, and non-finite coordinates, while retaining valid zero-area boxes. Download behavior and non-PDF routing SHALL remain unchanged.
 
 The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page or selected highlight is present. This prevents wrapper-originated resets; asynchronous vendor auto-zoom resets remain a diagnostic investigation, not a verified fix in this change.
 
@@ -162,12 +162,17 @@ The wrapper SHALL NOT schedule its default-page-1 fallback when an explicit page
 #### Scenario: A page-only citation opens its page without a highlight
 
 - **WHEN** the user clicks Preview for a PDF citation whose annotation has `body.selector: [{ type: 'pdf_region', page: 2 }]` and no `bbox`
-- **THEN** the canvas opens with `PdfCanvasContent.page === 2`, empty `highlights`, and no `selectedHighlightId`, and the viewer navigates to page 2
+- **THEN** the canvas opens with `PdfCanvasContent.page === 2` and `highlights` holding only an invisible zero-area page-anchor box on page 2, which is the `selectedHighlightId`, and the viewer navigates to page 2 with no visible highlight
 
 #### Scenario: A malformed region keeps its page
 
 - **WHEN** the clicked annotation has a single `pdf_region` selector with `page: 3` and a malformed `bbox` (`lt: [1]`)
-- **THEN** `PdfCanvasContent.page === 3`, `highlights` is empty, and `selectedHighlightId` is `undefined`
+- **THEN** `PdfCanvasContent.page === 3`, and `highlights` holds only the selected invisible page-anchor box on page 3
+
+#### Scenario: A page-only annotation keeps its group's other highlights
+
+- **WHEN** the clicked page-only annotation (page 4) shares a citation group and PDF with an annotation that has valid geometry on page 1
+- **THEN** `highlights` carries the sibling's page-1 highlight followed by the page-4 anchor, and `selectedHighlightId` is the anchor's id
 
 #### Scenario: Missing or invalid page data falls back to the existing default
 

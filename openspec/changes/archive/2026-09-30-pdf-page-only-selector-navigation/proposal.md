@@ -12,13 +12,14 @@ A related report (a conversation whose cited annotation `b3d83b` has no `body.se
 
 - `getAnnotationPdfPage` keeps preferring the first selector with valid geometry, so the opened page still matches the selected highlight.
 - When no selector has valid geometry, it falls back to the first `pdf_bbox`/`pdf_region` selector whose `page` is an integer `>= 1`.
-- Highlights are unchanged: a selector without valid geometry still produces no highlight.
+- Highlight geometry is unchanged: a selector without valid geometry produces no highlight from `annotationsToPdfHighlights`.
+- `annotationToPdfCanvasContent` adds an invisible zero-area page-anchor highlight for such a page and selects it, as `referenceAttachmentToPdfCanvasContent` already does for `#page=N` references. The vendor viewer applies a bare page request before its initial auto-zoom, which resets it to page 1; highlight navigation runs after that zoom. The root cause is fixed upstream in `@epam/pdf-highlighter-kit` (`setPage` now updates `currentPage`); the anchor keeps navigation working until that release reaches this repo.
 - Consequence: `annotationToPdfCanvasContent` sets `page` for page-only citations, and the sources sidebar qualifies such PDF sources with `#page=N` (its spec already defers to `getAnnotationPdfPage`).
 
 ### Non-goals
 
 - Locating a citation by searching its `quote` text in the PDF.
-- Synthesising a highlight for a page-only selector.
+- A visible highlight for a page-only selector.
 - Changing the wire, persisted, or `customViewState` annotation formats, or the backend.
 
 ## Capabilities

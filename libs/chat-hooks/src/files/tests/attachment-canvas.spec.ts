@@ -928,8 +928,14 @@ describe('annotationToPdfCanvasContent', () => {
     };
     const result = annotationToPdfCanvasContent(annotation, [], resolvers);
     expect(result?.page).toBe(3);
-    expect(result?.highlights).toEqual([]);
-    expect(result?.selectedHighlightId).toBeUndefined();
+    expect(result?.highlights).toEqual([
+      {
+        id: result?.selectedHighlightId,
+        bboxes: [{ page: 3, x1: 0, y1: 0, x2: 0, y2: 0 }],
+        style: { backgroundColor: 'transparent', opacity: 0 },
+      },
+    ]);
+    expect(result?.selectedHighlightId).toMatch(/^page-anchor-/);
   });
 
   it('opens the cited page for a page-only pdf_region selector without a bbox', () => {
@@ -948,8 +954,44 @@ describe('annotationToPdfCanvasContent', () => {
     } as Annotation;
     const result = annotationToPdfCanvasContent(annotation, [], resolvers);
     expect(result?.page).toBe(2);
-    expect(result?.highlights).toEqual([]);
-    expect(result?.selectedHighlightId).toBeUndefined();
+    expect(result?.highlights).toHaveLength(1);
+    expect(result?.highlights?.[0]).toMatchObject({
+      id: result?.selectedHighlightId,
+      bboxes: [{ page: 2, x1: 0, y1: 0, x2: 0, y2: 0 }],
+      style: { opacity: 0 },
+    });
+  });
+
+  it('keeps sibling highlights and selects the page anchor for a page-only annotation in a group', () => {
+    const source = {
+      type: 'attachment',
+      attachment: { type: 'application/pdf', url: 'files/bucket/report.pdf' },
+    };
+    const sibling = {
+      index: 0,
+      body: {
+        source,
+        selector: { type: 'pdf_bbox', page: 1, x1: 1, y1: 1, x2: 5, y2: 5 },
+      },
+    } as Annotation;
+    const pageOnly = {
+      index: 1,
+      body: { source, selector: [{ type: 'pdf_region', page: 4 }] },
+    } as Annotation;
+    const group = {
+      annotations: [sibling, pageOnly],
+    } as unknown as AnnotationGroup;
+
+    const result = annotationToPdfCanvasContent(pageOnly, [group], resolvers);
+
+    expect(result?.page).toBe(4);
+    expect(result?.highlights).toHaveLength(2);
+    expect(result?.highlights?.[0].id).toBe('0');
+    expect(result?.selectedHighlightId).toBe('page-anchor-1');
+    expect(result?.highlights?.[1]).toMatchObject({
+      id: 'page-anchor-1',
+      bboxes: [{ page: 4, x1: 0, y1: 0, x2: 0, y2: 0 }],
+    });
   });
 
   it('leaves page undefined for an annotation without a body selector', () => {
